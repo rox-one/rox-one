@@ -1,3 +1,5 @@
+import { getRoxAccountAuthority } from '../auth/rox-account-authority.ts';
+import { redactRegisteredSecrets } from '../secrets/redact.ts';
 /**
  * OmpAgent — craft-agents backend driving the OMP CLI (`omp --mode rpc`).
  *
@@ -46,7 +48,7 @@ import { spawn, execFile, type ChildProcess } from 'node:child_process';
 import type { LoadAllSkillsOptions } from '../skills/storage.ts';
 import { createInterface, type Interface as ReadlineInterface } from 'node:readline';
 import { homedir } from 'node:os';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve, isAbsolute, delimiter } from 'node:path';
 import { mkdirSync, readFileSync, readdirSync, copyFileSync, cpSync, existsSync } from 'node:fs';
 import { getSessionPath } from '../sessions/storage.ts';
 import { loadProjectById, getProjectAssetsPath, listProjectAssets, getProjectMemoryPath, loadProjectMemory } from '../projects/storage.ts';
@@ -66,6 +68,9 @@ import { randomUUID } from 'node:crypto';
 import { OmpRuntimeObserver } from './omp-runtime-observer.ts';
 import { OmpRuntimeTraceBridge } from './omp-runtime-trace-bridge.ts';
 import { known, unknown, type RuntimeAgentObservation, type RuntimeContent } from '@rox/core/runtime-trace';
+import { whichTool } from '../toolchain/exec.ts';
+import { setupI18n } from '../i18n/index.ts';
+
 
 import { AbortReason } from './backend/types.ts';
 import type {
@@ -90,6 +95,7 @@ import {
   isOmpStartupError,
   ompStartupErrorToAgentError,
   OmpStartupError,
+  scrubOmpStderr,
 } from './errors.ts';
 
 // Host-tool bridge: same defs/executor semantics as PiAgent (register_tools +
@@ -326,7 +332,9 @@ export class OmpAgent extends BaseAgent {
     };
     this.eventQueue.enqueue({ type: 'runtime_observation', observation });
   }
-  private async prepareNativeInvocation(bin: string, env: NodeJS.ProcessEnv): Promise<{bin:string; prefix:string[]; dispose:()=>void}> {
+  private async prepareNativeInvocation(bin: string, env: NodeJS.ProcessEnv, cwd = this.resolvedCwd()): Promise<{bin:string; prefix:string[]; dispose:()=>void; runtime?:true}> {
+    bin = resolve(cwd, bin);
+
     const packageDir = join(dirname(bin), '..', 'package');
     if (!existsSync(join(packageDir, 'src/session/agent-session.ts'))) {
       // Protocol fixtures intentionally have no native package. Production cannot
@@ -334,10 +342,27 @@ export class OmpAgent extends BaseAgent {
       if (process.env.NODE_ENV === 'test') return { bin, prefix: [], dispose: () => {} };
       throw new Error('ROX mandatory native modes require the managed pinned OMP package; select the managed runtime instead of this external executable');
     }
-    const bun = env.CRAFT_BUN_PATH || await getToolchain().resolver.findExecutable('bun');
-    if (!bun) throw new Error('Bun runtime is unavailable for mandatory OMP policy');
+    let bun = env.CRAFT_BUN_PATH?.trim() || await getToolchain().resolver.findExecutable('bun');
+    if (!bun) throw this.nativeRuntimeError('bun');
+    if (!isAbsolute(bun) && /[\\/]/.test(bun)) bun = resolve(cwd, bun);
+    else if (!isAbsolute(bun)) {
+      const pathKey = Object.keys(env).sort().find(key => key.toUpperCase() === 'PATH');
+      const path = (pathKey ? env[pathKey] ?? '' : '').split(delimiter).filter(Boolean)
+        .map(dir => resolve(cwd, dir.replace(/^"(.*)"$/, '$1'))).join(delimiter);
+      bun = await whichTool(bun, path) ?? bun;
+    }
+    if (/\.(cmd|bat)$/i.test(bun)) throw this.nativeRuntimeError(bun);
     const overlay = prepareOmpNativePolicy(packageDir, join(resolveConfigDir(), 'runtime', 'omp-native'));
-    return { bin: bun, prefix: [overlay.entry], dispose: overlay.dispose };
+    return { bin: bun, prefix: [overlay.entry], dispose: overlay.dispose, runtime: true };
+  }
+
+  private nativeRuntimeError(bin: string, cause?: Error): OmpStartupError {
+    const detail = cause ? scrubOmpStderr(cause.message) : '';
+    return new OmpStartupError({ code: 'OMP_NOT_CONFIGURED',
+      message: setupI18n().t('errors.omp.runtimeUnavailable.message', { path: scrubOmpStderr(bin) })
+        + (detail ? `\n${(cause as NodeJS.ErrnoException).code === 'ENOENT' && !/\bENOENT\b/.test(detail) ? 'ENOENT: ' : ''}${detail}` : ''),
+      cause,
+    });
   }
   /** RX-TSK-0402 Phase 1 (G4): OMP sessions resolve mentions across the
    * merged craft+OMP registry; craft wins on slug conflicts. */
@@ -365,6 +390,8 @@ export class OmpAgent extends BaseAgent {
   /** A mode change must finish retiring its child before another turn claims the event queue. */
   private permissionModeRespawnPromise: Promise<void> | null = null;
   private modelSelectionPromise: Promise<void> | null = null;
+  /** Credential/catalog changes invalidate startup and all outputs of the old turn. */
+  private modelAccountDomainGeneration = 0;
   private rpcTransport = new OmpRpcTransport();
   private supportsRpcV2 = false;
   /** True from spawn until the ready handshake settles (ready / typed failure). */
@@ -376,6 +403,8 @@ export class OmpAgent extends BaseAgent {
   /** Monotonic spawn counter — stale exit/close events from a previous child
    *  must never settle a newer child's startup handshake. */
   private startupGeneration = 0;
+  private launchGeneration = 0;
+  private destroyed = false;
 
   /** Permission policy captured at spawn — respawn required to change. */
   private autoApproveAtSpawn = false;
@@ -386,7 +415,7 @@ export class OmpAgent extends BaseAgent {
   private pendingPermissions = new Map<string, PendingPermission>();
 
   // Host-tool bridge state
-  private pendingHostToolCalls = new Map<string, { cancelled: boolean }>();
+  private pendingHostToolCalls = new Map<string, { cancelled: boolean; onCancelled?: () => void }>();
   private pendingHostToolPermissions = new Map<string, (allowed: boolean) => void>();
   /**
    * Fingerprint of complete host tool definitions last acknowledged by
@@ -479,8 +508,18 @@ export class OmpAgent extends BaseAgent {
   private branchHandshakeApplied = false;
   private historyCleared = false;
 
+  private accountUnsubscribe?: () => void;
+  private oneShotChildren = new Set<ChildProcess>();
+
   constructor(config: BackendConfig) {
     super(config, config.model || '');
+    if (config.roxExecutionContext) {
+      this.accountUnsubscribe = getRoxAccountAuthority().onInvalidated(caller => {
+        if (caller.issuer !== config.roxExecutionContext!.caller.issuer || caller.subject !== config.roxExecutionContext!.caller.subject) return;
+        this.killSubprocessSync();
+        for (const child of this.oneShotChildren) child.kill('SIGKILL');
+      });
+    }
 
     // OMP branching (G3): supported via transcript entry anchors. The live
     // gate is the supportsBranching getter below — a branch needs at least
@@ -515,6 +554,10 @@ export class OmpAgent extends BaseAgent {
     return wd;
   }
 
+  private assertLaunchCurrent(generation: number): void {
+    if (this.destroyed || generation !== this.launchGeneration) throw new OmpStartupAbortedError();
+  }
+
   private async ensureSubprocess(): Promise<void> {
     if (this.spawnPromise) {
       // A spawn is already in flight (concurrent chat during startup) — share
@@ -527,10 +570,15 @@ export class OmpAgent extends BaseAgent {
       // known-dead promise.
       await this.subprocessReady;
     } else {
-      this.spawnPromise = this.spawnSubprocess().finally(() => {
-        this.spawnPromise = null;
+      const generation = this.startupGeneration + 1;
+      const pending = this.spawnSubprocess().catch(error => {
+        if (generation === this.startupGeneration) this.settleReady(error);
+        throw error;
+      }).finally(() => {
+        if (this.spawnPromise === pending) this.spawnPromise = null;
       });
-      await this.spawnPromise;
+      this.spawnPromise = pending;
+      await pending;
     }
     // Branch fork: after spawn, attach to the parent OMP transcript and cut
     // it at the persisted anchor. Runs exactly once per agent instance.
@@ -704,12 +752,35 @@ export class OmpAgent extends BaseAgent {
   }
 
   private async spawnSubprocess(): Promise<void> {
+    const accountDomainGeneration = this.modelAccountDomainGeneration;
+    const launchGeneration = this.launchGeneration;
+    this.assertLaunchCurrent(launchGeneration);
+    const generation = ++this.startupGeneration;
+    const assertAttempt = () => {
+      this.assertLaunchCurrent(launchGeneration);
+      if (generation !== this.startupGeneration) throw new OmpStartupAbortedError();
+      if (accountDomainGeneration !== this.modelAccountDomainGeneration) throw new OmpStartupAbortedError('OMP model credential domain changed during startup');
+      if (this.config.roxExecutionContext) getRoxAccountAuthority().assertCurrent(this.config.roxExecutionContext);
+    };
+    // Own startup before resolving anything: there may be no child to kill yet.
+    const readyPromise = new Promise<void>((resolve, reject) => {
+      this.subprocessReadyResolve = resolve;
+      this.subprocessReadyReject = reject;
+    });
+    this.subprocessReady = readyPromise;
+    this.startupInFlight = true;
+    this.readyAccepted = false;
+    this.recentStderr = '';
+    readyPromise.catch(() => {});
+
     // OMP_CLI_PATH env → toolchain/PATH lookup → friendly error while the
     // toolchain is still installing → last-resort 'omp' (ENOENT path preserved).
     let bin: string;
     try {
       bin = await resolveOmpExecutableOrExplain();
+      assertAttempt();
     } catch (error) {
+      assertAttempt();
       throw new OmpStartupError({
         code: 'OMP_NOT_CONFIGURED',
         message: error instanceof Error ? error.message : String(error),
@@ -759,20 +830,6 @@ export class OmpAgent extends BaseAgent {
 
     this.debug(`Spawning OMP subprocess: ${bin} ${args.join(' ')} (cwd=${cwd})`);
 
-    const readyPromise = new Promise<void>((resolve, reject) => {
-      this.subprocessReadyResolve = resolve;
-      this.subprocessReadyReject = reject;
-    });
-    this.subprocessReady = readyPromise;
-    this.startupInFlight = true;
-    this.readyAccepted = false;
-    this.recentStderr = '';
-    this.startupGeneration += 1;
-    // Startup failure reaches the ensureSubprocess() awaiter via rejection;
-    // attach a no-op handler so a rejection surfacing before that await never
-    // trips unhandledRejection.
-    readyPromise.catch(() => {});
-
     let storedOmpKey: string | null = null;
     const connectionSlug = this.config.connectionSlug || ROX_DEFAULT_CONNECTION_SLUG;
     try {
@@ -780,6 +837,7 @@ export class OmpAgent extends BaseAgent {
     } catch {
       storedOmpKey = null;
     }
+    assertAttempt();
     const usesPublicRoxCatalog = isRoxPublicModelId(this._model ?? '');
     if (!usesPublicRoxCatalog) {
       ensureOmpRoxFirstRun({
@@ -802,13 +860,18 @@ export class OmpAgent extends BaseAgent {
       ...credentialEnv,
       ...(this.config.envOverrides ?? {}),
     });
+    assertAttempt();
+    const accountCredential = usesPublicRoxCatalog ? await this.publicAccountCredential(true) : null;
+    assertAttempt();
+    if (accountCredential) { env.ROX_API_KEY = accountCredential.apiKey; env.ROX_BASE_URL = accountCredential.baseUrl; }
+
     // Public Rox routes have their own canonical catalog. User/named OMP
     // profiles remain untouched, and inherited env overrides cannot redirect
     // this child to a different profile or provider.
     const runtimeConfig = prepareOmpRoxRuntimeConfig({
       runtimeRoot: join(resolveConfigDir(), 'runtime', 'omp'),
       apiKey: env.ROX_API_KEY,
-      baseUrl: getLlmConnection(connectionSlug)?.baseUrl,
+      baseUrl: accountCredential?.baseUrl ?? getLlmConnection(connectionSlug)?.baseUrl,
       publicRoxCatalog: usesPublicRoxCatalog,
       sourceAgentDir: env.PI_CODING_AGENT_DIR,
       configFiles: env.PI_CONFIG_FILES,
@@ -829,22 +892,28 @@ export class OmpAgent extends BaseAgent {
       this.reportRuntimeObservationFailure('Native observation transport could not initialize');
     }
     let nativeInvocation: Awaited<ReturnType<OmpAgent['prepareNativeInvocation']>>;
-    try { nativeInvocation = await this.prepareNativeInvocation(bin, env); }
+    try { nativeInvocation = await this.prepareNativeInvocation(bin, env, cwd); }
     catch (error) {
       observer?.dispose();
       if (this.runtimeObserver === observer) this.runtimeObserver = null;
       try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
+      assertAttempt();
       throw error;
     }
     env.OMP_APP_NAME = 'rox';
     let child: ChildProcess;
     try {
-      child = spawn(nativeInvocation.bin, [...nativeInvocation.prefix, ...args], { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
+      assertAttempt();
+      child = spawn(nativeInvocation.bin, [...nativeInvocation.prefix, ...args], { cwd, env, shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
     } catch (error) {
       observer?.dispose();
       if (this.runtimeObserver === observer) this.runtimeObserver = null;
       try { runtimeConfig?.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
       try { nativeInvocation.dispose(); } catch { this.debug('OMP native overlay cleanup could not complete'); }
+      assertAttempt();
+      if (nativeInvocation.runtime && (error as NodeJS.ErrnoException).code === 'ENOENT') {
+        throw this.nativeRuntimeError(nativeInvocation.bin, error as Error);
+      }
       throw error;
     }
     // Capture this attempt's disposer: a predecessor closing after respawn
@@ -890,7 +959,7 @@ export class OmpAgent extends BaseAgent {
       const text = data.toString();
       // Evidence BEFORE ring eviction — a single chunk can exceed the ring
       // and wash away its own head (pipe reads are up to 64KB).
-      const evidence = childStderr + text;
+      const evidence = redactRegisteredSecrets(childStderr + text);
       childStderr = evidence.slice(-OMP_STDERR_RING_LIMIT);
       if (isCurrentChild()) {
         if (text.includes('ROX_RUNTIME_OBSERVER_ERROR')) {
@@ -928,9 +997,9 @@ export class OmpAgent extends BaseAgent {
         // Spawn-time failure — typed and actionable (ENOENT = binary missing).
         const errno = (error as NodeJS.ErrnoException).code;
         this.settleReady(errno === 'ENOENT'
-          ? new OmpStartupError({
+          ? nativeInvocation.runtime ? this.nativeRuntimeError(nativeInvocation.bin, error) : new OmpStartupError({
               code: 'OMP_NOT_CONFIGURED',
-              message: `OMP executable not found at "${bin}".`,
+              message: `OMP executable not found at "${nativeInvocation.bin}".`,
               hint: 'Install the omp CLI, wait for the toolchain download to finish, or set OMP_CLI_PATH to a valid omp binary.',
               stderr: this.recentStderr.trim(),
               cause: error,
@@ -1069,6 +1138,7 @@ export class OmpAgent extends BaseAgent {
    * Graceful shutdown: close stdin → SIGTERM → SIGKILL fallback.
    */
   private async killSubprocessGracefully(timeoutMs = 2_000): Promise<void> {
+    this.launchGeneration += 1;
     const child = this.subprocess;
     // Settle any pending startup wait — a killed subprocess never completes
     // the ready handshake. No-op once the handshake has settled.
@@ -1120,6 +1190,7 @@ export class OmpAgent extends BaseAgent {
   }
 
   private killSubprocessSync(): void {
+    this.launchGeneration += 1;
     const child = this.subprocess;
     // Unblock any startup waiter — a killed subprocess never completes the
     // ready handshake. No-op once the handshake has settled.
@@ -1394,7 +1465,7 @@ export class OmpAgent extends BaseAgent {
       case 'host_tool_cancel': {
         const targetId = String(msg.targetId ?? '');
         const entry = this.pendingHostToolCalls.get(targetId);
-        if (entry) entry.cancelled = true;
+        if (entry) this.cancelHostToolInvocation(entry);
         break;
       }
 
@@ -1638,17 +1709,38 @@ export class OmpAgent extends BaseAgent {
     args: Record<string, unknown>,
     toolCallId?: string,
   ): Promise<void> {
-    const entry = { cancelled: false };
+    const entry: { cancelled: boolean; onCancelled?: () => void } = { cancelled: false };
     const runtimeRunId = this.runtimeObservationRunId;
     const originatingChild = this.subprocess;
+    const previousEntry = this.pendingHostToolCalls.get(frameId);
+    if (previousEntry) this.cancelHostToolInvocation(previousEntry);
     this.pendingHostToolCalls.set(frameId, entry);
-    const hostBashObserver = toolCallId
-      ? this.createHostBashObserver(toolCallId, runtimeRunId, () => !entry.cancelled && this.subprocess === originatingChild)
+    const runtimeObserver = toolCallId
+      ? this.createHostBashObserver(toolCallId, runtimeRunId, () => this.pendingHostToolCalls.get(frameId) === entry && !entry.cancelled && this.subprocess === originatingChild)
       : undefined;
+    let processStarted = false;
+    let executionSettled = false;
+    const hostBashObserver = runtimeObserver ? (evidence: HostBashObservation): void => {
+      if (evidence.phase === 'started') { processStarted = true; executionSettled = false; }
+      if (evidence.phase === 'completed' || evidence.phase === 'failed') executionSettled = true;
+      runtimeObserver(evidence);
+    } : undefined;
+    entry.onCancelled = () => {
+      // A transport cancellation stops delivery, not the separately executing host process.
+      // Only actual executor evidence may report termination, exit code or final duration.
+      if (!processStarted || executionSettled || this.subprocess !== originatingChild || this.runtimeObservationRunId !== runtimeRunId || !this._isProcessing || this.eventQueue.isComplete) return;
+      this.eventQueue.enqueue({ type: 'runtime_observation', observation: {
+        sourceEventId: randomUUID(), sourceId: `omp-host-cancellation:${runtimeRunId}:${frameId}`, sourceSeq: 1,
+        agentId: 'root', toolUseId: toolCallId, spanId: toolCallId ? `tool:${toolCallId}` : undefined,
+        occurredAt: known(Date.now(), 'OMP host invocation cancellation'), clockDomain: 'rox-host', origin: 'observed',
+        kind: 'trace.coverage', payload: { coverage: { state: 'partial', source: 'runtime', missing: ['unconfirmed-host-process-termination'] } },
+      } });
+    };
 
     const finish = (text: string, isError: boolean): void => {
+      if (this.pendingHostToolCalls.get(frameId) !== entry) return;
       this.pendingHostToolCalls.delete(frameId);
-      if (entry.cancelled) return; // OMP already moved on (host_tool_cancel)
+      if (!originatingChild || entry.cancelled || this.subprocess !== originatingChild || this.runtimeObservationRunId !== runtimeRunId) return;
       this.send({
         type: 'host_tool_result',
         id: frameId,
@@ -1693,6 +1785,7 @@ export class OmpAgent extends BaseAgent {
         }
       }
 
+      if (!originatingChild || this.pendingHostToolCalls.get(frameId) !== entry || entry.cancelled || this.subprocess !== originatingChild || this.runtimeObservationRunId !== runtimeRunId) return;
       const execution = this.executeHostSessionTool(toolName, args, hostBashObserver);
       const timeout = new Promise<{ content: string; isError: boolean }>((resolve) => {
         setTimeout(
@@ -1705,6 +1798,16 @@ export class OmpAgent extends BaseAgent {
     } catch (error) {
       finish(error instanceof Error ? error.message : String(error), true);
     }
+  }
+
+  private cancelHostToolInvocation(entry: { cancelled: boolean; onCancelled?: () => void }): void {
+    if (entry.cancelled) return;
+    entry.cancelled = true;
+    entry.onCancelled?.();
+  }
+
+  private cancelPendingHostToolInvocations(): void {
+    for (const entry of this.pendingHostToolCalls.values()) this.cancelHostToolInvocation(entry);
   }
 
   /** Execution evidence is scoped to this invocation, never to a cached context. */
@@ -2114,6 +2217,8 @@ export class OmpAgent extends BaseAgent {
   ): AsyncGenerator<AgentEvent> {
     const runtimeUserPrompt = this.pendingRuntimeUserPrompt ?? message;
     const runtimeSkills = new Map(this.pendingRuntimeSkills);
+    const launchGeneration = this.launchGeneration;
+
     // Permission changes retire the child asynchronously. Wait before claiming
     // this turn so its predecessor's intentional exit cannot fail the new turn
     // or leave ensureSubprocess using a child whose stdin is already closed.
@@ -2133,6 +2238,10 @@ export class OmpAgent extends BaseAgent {
       return;
     }
     this._isProcessing = true;
+    const accountDomainGeneration = this.modelAccountDomainGeneration;
+    const assertAccountDomain = () => {
+      if (accountDomainGeneration !== this.modelAccountDomainGeneration) throw new OmpStartupAbortedError('OMP model credential domain changed during turn');
+    };
     this.abortReason = undefined;
     this.eventQueue.reset();
     this.lastUsage = undefined;
@@ -2166,10 +2275,18 @@ export class OmpAgent extends BaseAgent {
     });
 
     try {
+      this.assertLaunchCurrent(launchGeneration);
+      if (isRoxPublicModelId(this._model ?? '')) await this.publicAccountCredential(true);
+      assertAccountDomain();
+      this.assertLaunchCurrent(launchGeneration);
       await this.ensureSubprocess();
+      assertAccountDomain();
+      this.assertLaunchCurrent(launchGeneration);
       this.runtimeObserver?.beginRun(this.runtimeObservationRunId);
 
+
       await this.sendCommand('set_thinking_level', { level: 'max' });
+      assertAccountDomain();
       // Refresh source state on every turn, just as Claude/Pi do. The static
       // system briefing routes tasks, while this block reports which sources
       // actually have tools, which need authentication, and where guides live.
@@ -2179,7 +2296,7 @@ export class OmpAgent extends BaseAgent {
         // prompt is async — failure response = turn failed. When the failure
         // is the subprocess crashing mid-turn, handleSubprocessExit already
         // reported it and closed the queue — don't double-report.
-        if (this.eventQueue.isComplete) return;
+        if (accountDomainGeneration !== this.modelAccountDomainGeneration || this.eventQueue.isComplete) return;
         this.eventQueue.enqueue({ type: 'error', message: `OMP prompt failed: ${error.message}` });
         this.eventQueue.complete();
       });
@@ -2205,6 +2322,8 @@ export class OmpAgent extends BaseAgent {
 
     try {
       for await (const event of this.eventQueue.drain()) {
+        if (accountDomainGeneration !== this.modelAccountDomainGeneration) return;
+        if (this.config.roxExecutionContext) getRoxAccountAuthority().assertCurrent(this.config.roxExecutionContext);
         yield event;
       }
     } finally {
@@ -2221,8 +2340,10 @@ export class OmpAgent extends BaseAgent {
   }
 
   async abort(reason?: string): Promise<void> {
+    this.launchGeneration += 1;
     this.debug(`abort(${reason ?? 'no reason'})`);
     this.emitAutomationEvent('Stop', { hook_event_name: 'Stop' });
+    this.cancelPendingHostToolInvocations();
 
     // Deny all pending permissions so the UI unblocks
     for (const [requestId, pending] of this.pendingPermissions) {
@@ -2250,8 +2371,10 @@ export class OmpAgent extends BaseAgent {
   }
 
   forceAbort(reason: AbortReason): void {
+    this.launchGeneration += 1;
     this.debug(`forceAbort(${reason})`);
     this.emitAutomationEvent('Stop', { hook_event_name: 'Stop' });
+    this.cancelPendingHostToolInvocations();
 
     this.abortReason = reason;
     this._isProcessing = false;
@@ -2260,6 +2383,9 @@ export class OmpAgent extends BaseAgent {
       this.respondExtensionUi(pending.uiRequestId, false, false);
     }
     this.pendingPermissions.clear();
+
+    const child = this.subprocess;
+    if (this.startupInFlight) this.killSubprocessSync();
 
     // For PlanSubmitted and AuthRequest, just interrupt the turn
     if (reason === AbortReason.PlanSubmitted || reason === AbortReason.AuthRequest) {
@@ -2275,7 +2401,6 @@ export class OmpAgent extends BaseAgent {
     }
     this.eventQueue.complete();
 
-    const child = this.subprocess;
     if (child) {
       child.kill('SIGTERM');
       setTimeout(() => {
@@ -2311,7 +2436,21 @@ export class OmpAgent extends BaseAgent {
   // ============================================================
 
   override setModel(model: string): void {
+    const changesAccountDomain = isRoxPublicModelId(this._model ?? '') !== isRoxPublicModelId(model);
     super.setModel(model);
+    if (changesAccountDomain) {
+      // RPC set_model cannot replace a process environment or its generated
+      // catalog. Fence any preparation/turn and retire the old credential owner.
+      this.modelAccountDomainGeneration += 1;
+      for (const helper of this.oneShotChildren) helper.kill('SIGKILL');
+      this.eventQueue.complete();
+      const child = this.subprocess;
+      this.killSubprocessSync();
+      if (child) setTimeout(() => {
+        if (child.exitCode === null && !child.signalCode) child.kill('SIGKILL');
+      }, 1_000).unref?.();
+      return; // The next chat rebuilds the correct private/public profile.
+    }
     if (!this.subprocess) return;
     void this.queueOmpModelSelection(model).catch((error) => {
       this.debug(`OMP model update failed; next prompt must verify it: ${error}`);
@@ -2414,15 +2553,33 @@ export class OmpAgent extends BaseAgent {
   // One-shot LLM calls (`omp -p <prompt>`)
   // ============================================================
 
+  private async publicAccountCredential(paid: boolean) {
+    if (!this.config.roxExecutionContext) throw new Error('ROX_TRUSTED_ACCOUNT_REQUIRED');
+    return getRoxAccountAuthority().inference(this.config.roxExecutionContext, paid);
+  }
+
   private async runOneShot(prompt: string, model?: string): Promise<string> {
+    const launchGeneration = this.launchGeneration;
+    const accountDomainGeneration = this.modelAccountDomainGeneration;
+    const invocationModel = model || (isRoxPublicModelId(this._model ?? '') ? this._model : undefined);
+    const assertOneShotOwner = () => {
+      // Preserve the account lease error when logout also retires launch work.
+      if (this.config.roxExecutionContext) getRoxAccountAuthority().assertCurrent(this.config.roxExecutionContext);
+      if (accountDomainGeneration !== this.modelAccountDomainGeneration) throw new OmpStartupAbortedError('OMP helper credential domain changed');
+      this.assertLaunchCurrent(launchGeneration);
+    };
+    assertOneShotOwner();
+
     this.debug(`runOneShot: resolving bin (prompt ${prompt.length} chars)`);
     const bin = await resolveOmpExecutableOrExplain();
     this.debug(`runOneShot: bin=${bin}`);
+    assertOneShotOwner();
     const cwd = this.resolvedCwd();
     const connectionSlug = this.config.connectionSlug || ROX_DEFAULT_CONNECTION_SLUG;
     let storedApiKey: string | null = null;
     try { storedApiKey = await getCredentialManager().getLlmApiKey(connectionSlug); } catch {}
-    const invocationModel = model || (isRoxPublicModelId(this._model ?? '') ? this._model : undefined);
+    assertOneShotOwner();
+
     const publicRoxCatalog = isRoxPublicModelId(invocationModel ?? '');
     if (!publicRoxCatalog) ensureOmpRoxFirstRun({ homeDir: homedir(), env: process.env, storedApiKey });
     const credentialEnv = buildOmpSpawnCredentialEnv({ env: process.env, storedApiKey });
@@ -2434,11 +2591,15 @@ export class OmpAgent extends BaseAgent {
       ...(this.config.envOverrides ?? {}),
     });
 
+    assertOneShotOwner();
+    const accountCredential = publicRoxCatalog ? await this.publicAccountCredential(true) : null;
+    assertOneShotOwner();
+    if (accountCredential) { env.ROX_API_KEY = accountCredential.apiKey; env.ROX_BASE_URL = accountCredential.baseUrl; }
     const runtimeConfig = prepareOmpRoxRuntimeConfig({
       runtimeRoot: join(resolveConfigDir(), 'runtime', 'omp'),
       publicRoxCatalog,
       apiKey: env.ROX_API_KEY,
-      baseUrl: getLlmConnection(connectionSlug)?.baseUrl,
+      baseUrl: accountCredential?.baseUrl ?? getLlmConnection(connectionSlug)?.baseUrl,
       sourceAgentDir: env.PI_CODING_AGENT_DIR,
       configFiles: env.PI_CONFIG_FILES,
     });
@@ -2454,25 +2615,36 @@ export class OmpAgent extends BaseAgent {
     const effectivePrompt = withOmpRequiredModes(prompt);
     const args = ['--no-session', '--thinking', 'max', ...(invocationModel ? ['--model', invocationModel] : []), '-p', effectivePrompt];
     let nativeInvocation: Awaited<ReturnType<OmpAgent['prepareNativeInvocation']>>;
-    try { nativeInvocation = await this.prepareNativeInvocation(bin, env); }
+    try { nativeInvocation = await this.prepareNativeInvocation(bin, env, cwd); }
     catch (error) {
       try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
+      assertOneShotOwner();
       throw error;
     }
+    try {
+      assertOneShotOwner();
+    }
+    catch (error) { runtimeConfig.dispose(); nativeInvocation.dispose(); throw error; }
     env.OMP_APP_NAME = 'rox';
     this.debug('runOneShot: spawning -p child');
     return new Promise<string>((resolve, reject) => {
       let child: ChildProcess;
-      try { child = spawn(nativeInvocation.bin, [...nativeInvocation.prefix, ...args], { cwd, env }); }
+      try {
+        assertOneShotOwner();
+        child = spawn(nativeInvocation.bin, [...nativeInvocation.prefix, ...args], { cwd, env, shell: false, windowsHide: true });
+      }
       catch (error) {
         try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
         try { nativeInvocation.dispose(); } catch { this.debug('OMP native overlay cleanup could not complete'); }
-        reject(error); return;
+        reject(nativeInvocation.runtime && (error as NodeJS.ErrnoException).code === 'ENOENT'
+          ? this.nativeRuntimeError(nativeInvocation.bin, error as Error) : error); return;
       }
       child.once('close', () => {
         try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
         try { nativeInvocation.dispose(); } catch { this.debug('OMP native overlay cleanup could not complete'); }
       });
+      this.oneShotChildren.add(child);
+      child.once('close', () => this.oneShotChildren.delete(child));
       this.debug(`runOneShot: spawned pid=${child.pid}`);
       const timer = setTimeout(() => {
         child.kill('SIGKILL');
@@ -2484,12 +2656,14 @@ export class OmpAgent extends BaseAgent {
       child.stderr?.on('data', (d: Buffer) => { stderr += d.toString() });
       child.on('error', (err) => {
         clearTimeout(timer);
-        reject(new Error(`omp -p failed: ${err.message}`));
+        reject(nativeInvocation.runtime && (err as NodeJS.ErrnoException).code === 'ENOENT'
+          ? this.nativeRuntimeError(nativeInvocation.bin, err) : new Error(`omp -p failed: ${err.message}`));
       });
       child.on('close', (code) => {
         clearTimeout(timer);
+        try { assertOneShotOwner(); } catch (error) { reject(error); return; }
         if (code !== 0) {
-          reject(new Error(`omp -p failed (exit ${code})${stderr ? ` (${stderr.trim().slice(0, 300)})` : ''}`));
+          reject(new Error(`omp -p failed (exit ${code})${stderr ? ` (${redactRegisteredSecrets(stderr).trim().slice(0, 300)})` : ''}`));
           return;
         }
         resolve(stdout.trim());
@@ -2522,6 +2696,7 @@ export class OmpAgent extends BaseAgent {
     // truthfully, never fabricated (packages/shared/CLAUDE.md §queryLlm
     // backend contract).
     const requestedModel = request.model?.trim() || undefined;
+    if (isRoxPublicModelId(this._model ?? '') && requestedModel && !isRoxPublicModelId(requestedModel)) throw new Error('ROX_PUBLIC_MODEL_REQUIRED');
     if (requestedModel) {
       try {
         const text = await this.runOneShot(prompt, requestedModel);
@@ -2571,6 +2746,10 @@ export class OmpAgent extends BaseAgent {
   }
 
   destroy(): void {
+    this.destroyed = true;
+    this.accountUnsubscribe?.();
+    for (const child of this.oneShotChildren) child.kill('SIGKILL');
+
     this.stopConfigWatcher();
 
     this.failPendingRequests(new Error('OmpAgent destroyed'));
@@ -2584,7 +2763,7 @@ export class OmpAgent extends BaseAgent {
   }
 
   protected override debug(message: string): void {
-    this.onDebug?.(`[omp] ${message}`);
+    this.onDebug?.(redactRegisteredSecrets(`[omp] ${message}`));
   }
 }
 

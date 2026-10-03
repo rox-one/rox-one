@@ -1,0 +1,311 @@
+{
+  "source_pr": 1444,
+  "source_head": "c2e8f07b5cb8a1b1659781e1fe4dd4d0f0207727",
+  "source_merge_base": "bbba69ecb1f59973ff0f0f466054530f1dff947e",
+  "comparison_main": "f1001ca8888e4afb10da9db48c3747f403108c93",
+  "scope": "Selective actual producer recovery qualified, pending publication/root merge; historical collector1485 already merged and renderer remains historical-owned.",
+  "updated_at_utc": "2026-10-03T23:22:36.004350+00:00",
+  "rows": [
+    {
+      "path": "packages/messaging-gateway/src/gateway.ts",
+      "source_blob": "9869ab099c4a4a45adfbd67d22d88f1b97331e50",
+      "base_blob": "c5bf70d445b6d7ce1dfa1215bd65252c0589d8be",
+      "current_blob": "c5bf70d445b6d7ce1dfa1215bd65252c0589d8be",
+      "source_symbols": [
+        "handlePlanButton",
+        "PendingCompactAccept",
+        "finishPendingCompactAccept"
+      ],
+      "status": "implemented_verified_pending_delivery",
+      "finding": "Actual button accept/compact dispatch currently loses the captured channel/button origin across deferred compaction.",
+      "recovery": "Add metadata after existing binding/token/access checks; retain current gateway authorization and duplicate/deferred acceptance behavior.",
+      "dependencies": [
+        "ISessionManager.acceptPlan runtimeLaunch option"
+      ],
+      "qualified_blob": "9869ab099c4a4a45adfbd67d22d88f1b97331e50",
+      "qualified_sha256": "ffac17662d9edb1bf516317ab5594e4889d86ee0dd7bc0be084456c33211c32d"
+    },
+    {
+      "path": "packages/server-core/src/handlers/session-manager-interface.ts",
+      "source_blob": "86fa2e9a6f1786b364b9721ccc2d6547e37132d0",
+      "base_blob": "273bdcabcd1ee746a254edfdbd85243a0e67bfd5",
+      "current_blob": "c6ec3713df33163666da277d4c9ad71fc569d771",
+      "source_symbols": [
+        "ISessionManager.acceptPlan"
+      ],
+      "status": "implemented_verified_pending_delivery",
+      "finding": "acceptPlan currently has no passive launch option; gateway metadata cannot flow through actual accept consumer.",
+      "recovery": "Optional third metadata argument, preserving legacy callers.",
+      "dependencies": [],
+      "qualified_blob": "8321d5ce731cfcfe66f21ae78dac48414957da36",
+      "qualified_sha256": "5fc8efc41fa7b7aac618fd2f450fdff89c6ad24feee211a072be81a81b70ac2b"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/automations.ts",
+      "source_blob": "842d4c38b764bd51a24cfcf8b91f698c58373535",
+      "base_blob": "437c24a60a35e9dcf424cd81ffc893666f58263f",
+      "current_blob": "ffdad1de0cf326ea7c9886b68aeb866f4083f2c9",
+      "source_symbols": [
+        "executePromptAutomation"
+      ],
+      "status": "implemented_verified_pending_delivery",
+      "finding": "Server test action omits generated-dispatch provenance, so fallback can look manual.",
+      "recovery": "Explicit unknown trigger with automationId; metadata never grants native authority.",
+      "dependencies": [],
+      "qualified_blob": "0c0c782335d8f854d2fe6e9c887fde40d4fa0cf4",
+      "qualified_sha256": "958300d55655f688b2f2bbae499e615b0fccf3c4629ee85a641d0f06884eed8b"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/cloud-runs.ts",
+      "source_blob": "f6ea56da164491d01363e4583c72a8d886e7a12f",
+      "base_blob": "976f3364c66ad2cf22939ad42464d8ab726dee6d",
+      "current_blob": "976f3364c66ad2cf22939ad42464d8ab726dee6d",
+      "source_symbols": [
+        "import run generated summary sendMessage"
+      ],
+      "status": "implemented_verified_pending_delivery",
+      "finding": "Imported cloud-run summary has no generated provenance.",
+      "recovery": "Add unknown cloud-run trigger through existing bounded authorized import; no new submit or credential behavior.",
+      "dependencies": [],
+      "qualified_blob": "f6ea56da164491d01363e4583c72a8d886e7a12f",
+      "qualified_sha256": "f185c74168577a6eba26e2436b8f50844a66f9950505eec728877ed702511170"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/tasks.ts",
+      "source_blob": "f341a8d505c295d6903a4c89e64c149473094283",
+      "base_blob": "81862ebca21f0e55a93f2ca58ea1ce9276a1a2c3",
+      "current_blob": "81862ebca21f0e55a93f2ca58ea1ce9276a1a2c3",
+      "source_symbols": [
+        "draft generation sendMessage"
+      ],
+      "status": "implemented_verified_pending_delivery",
+      "finding": "Task draft generated prompt can acquire manual launch fallback.",
+      "recovery": "Add unknown task-draft trigger; preserve canonical task/session ownership.",
+      "dependencies": [],
+      "qualified_blob": "f341a8d505c295d6903a4c89e64c149473094283",
+      "qualified_sha256": "94d946d98ec29a11c55fda969d95c9d520a5da605e50d78abab587b57b663c9e"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/sessions.ts",
+      "source_blob": "bfc37c60b9d437d917fc270c1c9099e7801a5d17",
+      "base_blob": "8983c00077c80f30dd2e419773249218ce149e5b",
+      "current_blob": "0876ad2492cab9c7cb5498d53a21e7f3aa11368d",
+      "source_symbols": [
+        "SEND_MESSAGE handler",
+        "nativeSessionSendOptions"
+      ],
+      "status": "implemented_verified_pending_delivery",
+      "finding": "Non-native producer runtimeLaunch currently is not validated or forwarded; malformed telemetry could fall back to original user input classification.",
+      "recovery": "Use isRuntimeLaunch; malformed supplied data becomes unknown. Keep current SSO roxExecutionContext and nativeMemoryContext, native options strip and post-await checks.",
+      "dependencies": [
+        "core isRuntimeLaunch validation"
+      ],
+      "qualified_blob": "ce3c2d2d4446f99e55bed04c95846215333544ae",
+      "qualified_sha256": "5abfd5636c2d77a63422a11006a4d18eb0532f9377721e94b5c462aed5e9d982"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/native-session-scope.ts",
+      "source_blob": "c40d9339a80a5c97aa9961bb30a540435c66f6e4",
+      "base_blob": "76e3ff1115b56a3088b108bd9b2ff1a7002f2f89",
+      "current_blob": "76e3ff1115b56a3088b108bd9b2ff1a7002f2f89",
+      "source_symbols": [
+        "nativeRuntimeTraceEvent",
+        "nativeRuntimeTraceRunSummary"
+      ],
+      "status": "implemented_verified_pending_delivery",
+      "finding": "Current projection permits generated root prompt/header excerpts and workflow labels/criteria/result content at native read boundary.",
+      "recovery": "Project only observed original root manual request with durable message/root identity; conservative redaction of workflow/artifact metadata and host verdicts; preserve actor/workspace authority.",
+      "dependencies": [],
+      "qualified_blob": "c40d9339a80a5c97aa9961bb30a540435c66f6e4",
+      "qualified_sha256": "350f849c3e45e5082945fc816e07ab090e249defc3a8e37ac5d9313c8eb805a0"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/runtime-trace.ts",
+      "source_blob": "e72c46464af4186aaf0d5e4e520eef46b27b7ef8",
+      "base_blob": "37878c59632c6193d839f2b63852920832871030",
+      "current_blob": "37878c59632c6193d839f2b63852920832871030",
+      "source_symbols": [
+        "GET_SNAPSHOT"
+      ],
+      "status": "implemented_verified_pending_delivery",
+      "finding": "Current native snapshot copies run summary prompt instead of deriving it from authorized observed root request.",
+      "recovery": "Apply nativeRuntimeTraceRunSummary after existing checkCurrent; no root scope/actor/header exemption.",
+      "dependencies": [],
+      "qualified_blob": "e72c46464af4186aaf0d5e4e520eef46b27b7ef8",
+      "qualified_sha256": "3ffa151446c12616c5d049ca5c066d612ffd7187ea31e37e373d10cea19af76e"
+    },
+    {
+      "path": "packages/server-core/src/sessions/SessionManager.ts",
+      "source_blob": "ea41f226accac88f934868733f4a9620c2d3ea57",
+      "base_blob": "2bceb1164d9cbf6f1cc035e00f2ce4eae6c03cf5",
+      "current_blob": "07f29a98bb7107948bff77c52278b3a51bd0ef1f",
+      "source_symbols": [
+        "sendMessage runtime trace begin/capture",
+        "processEvent",
+        "onProcessingStopped",
+        "onSpawnSession",
+        "runtimeLaunchForAutomationPrompt",
+        "acceptPlan",
+        "generated retries/messages"
+      ],
+      "status": "implemented_verified_pending_delivery",
+      "finding": "Current iterator/context/message/finish observations resolve active root later; successor can inherit a predecessor event. Child creation snapshots the active parent only after async creation/read. Scheduler metadata loses timezone/original instant.",
+      "recovery": "Capture exact runtimeOrigin from begin, pass through capture/event/publish/finish; keep suppliedExecution third processEvent argument and add origin separately. Capture parent origin before child creation while retaining current assertOwner, inheritedExecution authority bind and roxExecutionContext. Explicit generated/channel/delegated metadata is passive only.",
+      "dependencies": [
+        "RuntimeTraceService origin-aware methods and RuntimeLaunch new optional clocks"
+      ],
+      "qualified_blob": "12413e5339752ff4aaf529f2b389c9b6ac2d6f29",
+      "qualified_sha256": "7f0272907e07ff81b5299e1f99628cf5b026201773671a6087cfbd0ebd0d1e2f"
+    },
+    {
+      "path": "packages/server-core/src/tasks/TaskRunner.ts",
+      "source_blob": "c78fda8bc67d158ed04443ff67d790d2c9b86621",
+      "base_blob": "7f67b13bca4ec56cc067cdd601d3603283a76eee",
+      "current_blob": "7f67b13bca4ec56cc067cdd601d3603283a76eee",
+      "source_symbols": [
+        "ConductorSessionHost.sendMessage",
+        "dispatch",
+        "handleVerdict",
+        "log observationQueue"
+      ],
+      "status": "implemented_verified_pending_delivery",
+      "finding": "Current queued conductor observation rereads output after authority repair may replace version; no durable output/outputRef/messageId in producer and task prompts can classify manual.",
+      "recovery": "Capture output version immediately after authority writes, then enqueue passive copy/ref/messageId; generated task launches tag exact spec/run/node. Observer/readback failure must not change canonical DAG result.",
+      "dependencies": [
+        "TaskRuntimeObservation output/outputRef/messageId fields"
+      ],
+      "qualified_blob": "c78fda8bc67d158ed04443ff67d790d2c9b86621",
+      "qualified_sha256": "7475f19e1dd6f087827423e8c6e222a6f198b0fc0b1817b6e1a08fb9c38d1180"
+    },
+    {
+      "path": "packages/shared/src/agent/omp-agent.ts",
+      "source_blob": "2b8eac050a4fa572f1075db233fb8816a4afd88b",
+      "base_blob": "f4d22a289e687acc06a13985999c1be8d4408c70",
+      "current_blob": "f1cc66da26489459278f8605cfeb644ac14a92ec",
+      "source_symbols": [
+        "executeHostToolInvocation",
+        "cancelHostToolInvocation",
+        "abort",
+        "forceAbort"
+      ],
+      "status": "implemented_verified_pending_delivery",
+      "finding": "Late host result can delete a successor reused frame entry or dispatch after permission wait/cancel; source cancellation adds honest partial coverage instead of fabricated termination.",
+      "recovery": "Apply only invocation entry/original child/run checks and cancellation coverage. Preserve current native policy18.4.12, both windowsHide options, SSO modelAccountDomainGeneration, oneShotChildren and host Bash env/process lifetime. No old source whole-file replacement.",
+      "dependencies": [],
+      "qualified_blob": "3aa374c46ab4e94ae8fe05c6f9a3df9e3e3b2865",
+      "qualified_sha256": "859ced3418bcd0d4c621cbd0eaa79571a747410be5420458ac4b6f4499b91f11"
+    },
+    {
+      "path": "packages/shared/src/agent/omp-runtime-observer.ts",
+      "source_blob": "be96d5a778f9bfd45d85417a29d47495151606e8",
+      "base_blob": "6954d351bbe222f46e2de3f4bd490d6cc1cef02c",
+      "current_blob": "6954d351bbe222f46e2de3f4bd490d6cc1cef02c",
+      "source_symbols": [
+        "native extension sanitized",
+        "identityKey/rememberIdentity",
+        "task:subagent:lifecycle",
+        "before_agent_start",
+        "taskInvocations"
+      ],
+      "status": "implemented_verified_pending_delivery",
+      "finding": "Current observer keys identity by child alone, has parent fallback after ambiguity and lacks exact native task lifecycle binding; short/overlapping/quoted/JSON/header credential projection gaps.",
+      "recovery": "Use parent+id captured reservation generation with ambiguous receipts fail closed; map native lifecycle actual id/index/toolCall. Retain native private spool and quotas; verify privacy adversarial cases and current managed native loop.",
+      "dependencies": [
+        "OmpRuntimeTraceBridge subagent_identity handling"
+      ],
+      "qualified_blob": "405852dfdcd3d8b0c0d3e583b4daac0a7227dd47",
+      "qualified_sha256": "645b0a4755a9a524c0c85afc112c9d2811826af630b44704346c501aa2c4626a"
+    },
+    {
+      "path": "packages/shared/src/agent/omp-runtime-trace-bridge.ts",
+      "source_blob": "723df0126aeec64ccf6c38ca34e5f31f16e3f135",
+      "base_blob": "9e99c0dc1b15b289cfda337ff711c4a8cb3a68a7",
+      "current_blob": "9e99c0dc1b15b289cfda337ff711c4a8cb3a68a7",
+      "source_symbols": [
+        "beginRun",
+        "map subagent_identity",
+        "parentSpans/nativeIdentities"
+      ],
+      "status": "implemented_verified_pending_delivery",
+      "finding": "Current bridge cannot resolve lifecycle generated child IDs to actual task/eval kind/parent tool span.",
+      "recovery": "Consume actual matching child registry parent, reset maps each run, maintain stale run/sequence rejection; never synthesize actual child identity from names.",
+      "dependencies": [],
+      "qualified_blob": "723df0126aeec64ccf6c38ca34e5f31f16e3f135",
+      "qualified_sha256": "5bd28405544e1e55759667a4f8d9f2ac4aa61e6ca0e086a7a3c573de76626203"
+    },
+    {
+      "path": "scripts/probes/runtime-map-native-loop.ts",
+      "source_blob": "4ba90be0fdfaed807ed06cc446c86802b79395b7",
+      "base_blob": "c9c7ef1fed16121eaed6befd9d9c3e729aaef1fc",
+      "current_blob": "c9c7ef1fed16121eaed6befd9d9c3e729aaef1fc",
+      "source_symbols": [
+        "main custom native fixture provider",
+        "EventBus",
+        "providerContexts/contextComparisons"
+      ],
+      "status": "implemented_verified_pending_delivery",
+      "finding": "Existing probe lacks shared native event bus, restricted model/context readback and actual transformed provider Context fingerprint comparison.",
+      "recovery": "Recover bounded fixture evidence with hashes/lengths only, zero paid/network provider use. Fixture native SDK control proves that boundary; never claim installed app or HTTP wire payload.",
+      "dependencies": [
+        "updated OMP observer/bridge",
+        "pinned native SDK18.4.12"
+      ],
+      "qualified_blob": "4ba90be0fdfaed807ed06cc446c86802b79395b7",
+      "qualified_sha256": "80ee4a4f785478a9dfc7f76d3a0479c91cf1834728ee942375f11790094e726b"
+    }
+  ],
+  "critical_conflicts": [
+    {
+      "path": "packages/server-core/src/sessions/SessionManager.ts",
+      "symbol": "processEvent",
+      "finding": "Current third argument is suppliedExecution?:RoxExecutionContext with assertOwner before/after trace/publish awaits. Source third argument is originRun. Whole signature/body replacement would discard SSO ownership.",
+      "required": "Keep current third actor argument; origin must be independent fourth argument or options field."
+    },
+    {
+      "path": "packages/server-core/src/sessions/SessionManager.ts",
+      "symbol": "onSpawnSession",
+      "finding": "Current callback retains assertOwner plus inherited account execution authority bind before child dispatch. Old source helper omits that current code.",
+      "required": "Selectively capture parent runtime lease in current callback; never replace with old helper whole body."
+    },
+    {
+      "path": "packages/shared/src/agent/omp-agent.ts",
+      "symbol": "runOneShot/prepareNativeInvocation",
+      "finding": "Source predecessor lacks newer current oneShot account generation/tracking and WindowsHide changes.",
+      "required": "Preserve all current native policy/account fences and both hidden-window options; only host-invocation cancellation delta is owned."
+    }
+  ],
+  "ready_slices": [
+    {
+      "id": "task-output-and-origin-producers",
+      "paths": [
+        "TaskRunner.ts",
+        "gateway.ts",
+        "session-manager-interface.ts",
+        "SessionManager.ts",
+        "handlers/rpc/automations.ts",
+        "cloud-runs.ts",
+        "tasks.ts",
+        "sessions.ts"
+      ],
+      "dependency": "Historical qualified collector API source commit; current SSO selective integration and actual delayed iterator/repair/compact negative tests required."
+    },
+    {
+      "id": "native-projection-and-observer",
+      "paths": [
+        "native-session-scope.ts",
+        "runtime-trace.ts",
+        "omp-agent.ts",
+        "omp-runtime-observer.ts",
+        "omp-runtime-trace-bridge.ts",
+        "runtime-map-native-loop.ts"
+      ],
+      "dependency": "Same frozen collector fields; preserve current SSO/host Bash; actual fixture native loop and malicious secret/cancellation/cross-turn negatives required."
+    }
+  ],
+  "test_ownership": {
+    "historical": "core/projector, service/privacy/conductor independent suites and renderer",
+    "producer": "runtime-launch-producers fixture/test, sessions-runtime-launch, gateway-button-access, dependent artifact-readback, cancellation/delegation compatibility, OMP observer/watch and actual native probe"
+  },
+  "acceptance": "Source-backed genuine gaps; no final feature/native acceptance yet. Every source path is tied to actual consumers; no whole old tree merge.",
+  "qualified_revision": "1a41976f8b85aed45eb8a886a92a8a3c143e035d"
+}

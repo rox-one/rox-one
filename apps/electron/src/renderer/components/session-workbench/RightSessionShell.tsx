@@ -54,7 +54,7 @@ export function RightSessionShell({
         <div className="min-w-0 flex-1 truncate text-sm font-medium">{t('notes.sideSession.title')}</div>
         <button
           type="button"
-          className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
+          className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
           onClick={onClose}
           title={t('notes.sideSession.close')}
         >
@@ -80,7 +80,7 @@ export function RightSessionShell({
           data-testid={RIGHT_SESSION_PROMPT_TEST_ID}
           value={prompt}
           onChange={(e) => onPromptChange(e.target.value)}
-          className="min-h-0 flex-1 w-full resize-none rounded-[8px] border border-border/60 bg-background p-2.5 text-xs leading-relaxed outline-none focus-visible:border-foreground/30"
+          className="min-h-0 flex-1 w-full resize-none rounded-[var(--radius-card)] border border-border/60 bg-background p-2.5 text-xs leading-relaxed outline-none focus-visible:border-foreground/30"
           placeholder={t('notes.sideSession.promptPlaceholder')}
         />
         <div className="flex items-center justify-end gap-2 shrink-0">

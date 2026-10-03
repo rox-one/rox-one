@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
+import { parseAnsi } from '@rox/ui'
 
 /**
  * Inspector command surface. Uses /bin/zsh -lc via IPC when available;
@@ -53,7 +54,11 @@ export function InspectorTerminal({ cwd, autoFocus = false }: { cwd?: string; au
             key={i}
             className={cn('whitespace-pre-wrap break-all', line.startsWith('$ ') && 'opacity-80')}
           >
-            {line}
+            {parseAnsi(line, { themeAware: true }).map((span, index) => (
+              <span key={index} style={{ color: span.fg, backgroundColor: span.bg, fontWeight: span.bold ? 'bold' : undefined }}>
+                {span.text}
+              </span>
+            ))}
           </pre>
         ))}
       </div>

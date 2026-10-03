@@ -1,0 +1,22 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/main/__tests__/rox-connect-flow.test.ts:
+(pass) Rox Connect attempt ownership > never saves an old approval after restart [810.21ms]
+(pass) Rox Connect attempt ownership > ignores stale errors and allows retry after a current approval fails [8.72ms]
+(pass) Rox Connect attempt ownership > cannot reconnect from a late approved response after logout [1.56ms]
+(pass) Rox Connect attempt ownership > waits for an in-progress secure write before final logout deletion [29.15ms]
+(pass) Rox Connect attempt ownership > rejects old HTTP starts that complete after a newer attempt [328.50ms]
+
+packages/server-core/src/handlers/rpc/__tests__/onboarding.test.ts:
+(pass) onboarding:getAuthState > treats a ready central inference account as configured when legacy local OMP auth is absent [345.70ms]
+(pass) onboarding:getAuthState > requires Pocket authentication even when provider setup is deferred [0.18ms]
+(pass) onboarding:getAuthState > preserves provider deferral while requiring the independent Pocket gate [0.10ms]
+(pass) onboarding:getAuthState > persists explicit setup deferral only when the user chooses it [0.17ms]
+(pass) onboarding:getRoxBalance > is registered and reports «disconnected» without a Rox cloud session [122.82ms]
+(pass) onboarding:ensureFirstSession > returns the persisted assistant conversation without starting OAuth or credential setup [0.14ms]
+(pass) onboarding:ensureFirstSession > requires a workspace before creating a greeting [0.24ms]
+
+ 12 pass
+ 0 fail
+ 31 expect() calls
+Ran 12 tests across 2 files. [12.58s]

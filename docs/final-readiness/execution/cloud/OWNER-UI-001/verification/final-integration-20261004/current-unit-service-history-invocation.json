@@ -1,0 +1,45 @@
+{
+  "startedAt": "2026-10-03T22:03:06.743Z",
+  "command": [
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+    "test",
+    "./apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts",
+    "./apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.immediate-history.test.ts",
+    "./apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.history-switch-lease.test.ts",
+    "--timeout",
+    "30000"
+  ],
+  "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+  "head": "37ecdb59b3be817fe02bb8c2514a0aee859d15cd",
+  "bunVersion": "1.3.14",
+  "nodeVersion": "v24.21.0",
+  "sourceHashes": {
+    "./apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts": "1cf8749d7eabf573fdebd3cb2a8ec27b6e59e5a51f6756ef4206595aa3860860",
+    "./apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.immediate-history.test.ts": "a6536dfd9d538dd0cbb9aaa7ff9410038d351850f68ee0cef72b78ebffb7df3d",
+    "./apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.history-switch-lease.test.ts": "63afe825002251bcbf513a7ebfd495f87cf9422a38a2fb55df5df60e9ee025c8"
+  },
+  "environmentKeys": [
+    "HOME",
+    "USER",
+    "LOGNAME",
+    "LANG",
+    "PATH",
+    "TMPDIR",
+    "XDG_CONFIG_HOME",
+    "ROX_CONFIG_DIR",
+    "CRAFT_CONFIG_DIR",
+    "GSTACK_HOME",
+    "GSTACK_TEST_LEGACY_ROOT",
+    "PLAYWRIGHT_BROWSERS_PATH"
+  ],
+  "providerCredentialsForwarded": false,
+  "exitCode": 0,
+  "finishedAt": "2026-10-03T22:03:07.783Z",
+  "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/gstack-test-2026-10-03T22-03-06-738Z/output.log",
+  "logSha256": "898eba3c5ed3331e7296336ded99cbbb670f7e0621b390c3b055c2464c6758f3",
+  "counts": {
+    "pass": 23,
+    "fail": 0,
+    "skip": 0
+  }
+}

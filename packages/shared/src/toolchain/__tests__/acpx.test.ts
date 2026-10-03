@@ -7,6 +7,7 @@ import { ACPX_NPM_PIN, getNpmLock } from '../npm-locks';
 import { MANIFEST_DATA, TOOL_PLATFORM_MATRIX } from '../manifest-data';
 import { ALL_TOOL_NAMES } from '../types';
 import { ACPX_NPM_PIN as RENDERER_ACPX_PIN, getNpmLock as getRendererNpmLock } from '../../../../../apps/electron/src/renderer/shims/npm-locks-stub';
+import { captureTestCommand } from '../../../../../scripts/test-all';
 const roots: string[] = [];
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); });
 describe('managed acpx', () => {
@@ -45,8 +46,12 @@ describe('managed acpx', () => {
     expect(readFileSync(join(root, 'bin/acpx.cmd'), 'utf8')).toContain('ROX_NODE_PATH');
     const launcher = join(root, 'bin', process.platform === 'win32' ? 'acpx.cmd' : 'acpx');
     const command = process.platform === 'win32' ? ['cmd.exe', '/d', '/c', launcher] : [launcher];
-    const processResult = Bun.spawn(command, { env: { ...process.env, ROX_NODE_PATH: Bun.which('node')! }, stdout: 'pipe', stderr: 'pipe' });
-    expect(await processResult.exited).toBe(0);
-    expect(await new Response(processResult.stdout).text()).toBe('node\n');
+    // The actual Node broker records launcher bytes after close, avoiding Bun
+    // 1.3.14's macOS test pipe/descriptor capture loss without mocking the CLI.
+    const processResult = await captureTestCommand(command, {
+      environment: { ...process.env, ROX_NODE_PATH: Bun.which('node')! },
+    });
+    expect(processResult.exitCode).toBe(0);
+    expect(processResult.stdout).toBe('node\n');
   });
 });

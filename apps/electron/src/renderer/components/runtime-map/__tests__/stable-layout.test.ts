@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'bun:test'
 import { buildRuntimeGraph, projectRuntimeEvents, reduceRuntimeEvent, type RuntimeEvent } from '@rox/core/runtime-trace'
 import { createRuntimeTraceFixture } from '@rox/core/runtime-trace/fixture'
-import { layoutRuntimeGraph, nodeMatches, windowRuntimeNodes, COLUMN_WIDTH } from '../layout/stable-layout'
+import { layoutRuntimeGraph, nodeMatches, windowRuntimeNodes } from '../layout/stable-layout'
 
 describe('runtime canvas real-observation layout', () => {
   it('places actual workers below parent and gives each assignment a lane', () => {

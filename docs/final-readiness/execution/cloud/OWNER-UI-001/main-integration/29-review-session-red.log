@@ -1,0 +1,50 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+killed 2 dangling processes
+
+# Unhandled error between tests
+-------------------------------
+211 |
+212 |   it('explicit navigation preserves spelling only after session workspace validation', async () => {
+213 |     await open('allSessions/session/s1')
+214 |     for (const invalidId of ['missing', 's2']) {
+215 |       await page.evaluate(id => (window as any).ui001.navigate(`allSessions/session/${id}?keep=1`, { skipAutoSelect: true }), invalidId)
+216 |       await page.waitForFunction(() => !(window as any).ui001.snapshot().state.details)
+                       ^
+error: forFunction: Target page, context or browser has been closed
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:216:18
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+-------------------------------
+
+138 |     await new Promise<void>(resolve => server.once('listening', resolve))
+139 |     base = `http://127.0.0.1:${(server.address() as any).port}`
+140 |     browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE })
+141 |   }, 60000)
+142 |   beforeEach(async () => { context = await browser.newContext(); page = await context.newPage() }, 15000)
+143 |   afterEach(async () => { await context?.close() }, 15000)
+                                               ^
+error: close: Target page, context or browser has been closed
+Browser logs:
+
+<launching> /Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --enable-use-zoom-for-dsf=false --use-angle --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/playwright_chromiumdev_profile-BQRiiw --remote-debugging-pipe --no-startup-window
+<launched> pid=41428
+[pid=41428][err] [1003/164950.470699:ERROR:ui/gl/gl_display.cc:665] Initialization of all (0) EGL display types failed.
+[pid=41428][err] [1003/164950.472752:ERROR:ui/gl/init/gl_initializer_mac.cc:127] GLDisplayEGL::Initialize failed.
+[pid=41428][err] [1003/164950.473117:ERROR:ui/gl/gl_display.cc:665] Initialization of all (0) EGL display types failed.
+[pid=41428][err] [1003/164950.473143:ERROR:ui/gl/init/gl_initializer_mac.cc:127] GLDisplayEGL::Initialize failed.
+[pid=41428][err] [1003/164950.486582:ERROR:components/viz/service/main/viz_main_impl.cc:190] Exiting GPU process due to errors during initialization
+[pid=41428][err] [1003/164951.660708:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[pid=41428][err] [1003/164951.913169:ERROR:ui/display/mac/cv_display_link_mac.mm:195] CVDisplayLinkCreateWithCGDisplay failed. CVReturn: -6670
+[pid=41428][err] [1003/164952.068405:INFO:CONSOLE:23520] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:53568/fixture.js (23520)
+[pid=41428][err] [1003/164952.098551:INFO:CONSOLE:27720] "react-i18next:: useTranslation: You will need to pass in an i18next instance by using initReactI18next [object Object]", source: http://127.0.0.1:53568/fixture.js (27720)
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:143:42
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+(fail) UI-001 actual navigation in Chromium > explicit navigation preserves spelling only after session workspace validation [31215.68ms]
+  ^ this test timed out after 30000ms.
+
+ 0 pass
+ 8 filtered out
+ 1 fail
+ 1 error
+Ran 1 test across 1 file. [35.45s]

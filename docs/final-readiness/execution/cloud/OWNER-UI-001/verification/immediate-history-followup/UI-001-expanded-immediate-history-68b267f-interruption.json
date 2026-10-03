@@ -1,0 +1,105 @@
+{
+  "sourceRevision": "68b267f6486d25d45fa25178bcc537e246e98921",
+  "interruptedAtUtc": "2026-10-03T21:05:52.998341+00:00",
+  "reason": "Coordinator explicitly stopped obsolete candidate full validation because main advanced across NavigationContext and critical inputs; intentional source integration remedy, not compiler/test failure.",
+  "observedOwnedProcesses": [
+    {
+      "pid": 81369,
+      "ppid": 80815,
+      "command": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun run --bun validate:ci"
+    },
+    {
+      "pid": 81371,
+      "ppid": 81369,
+      "command": "/bin/bash -c bun run validate:dev && bun run lint:i18n:parity && bun run lint:i18n:sorted && bun run lint:i18n:coverage"
+    },
+    {
+      "pid": 81372,
+      "ppid": 81371,
+      "command": "bun run validate:dev"
+    },
+    {
+      "pid": 81373,
+      "ppid": 81372,
+      "command": "/bin/bash -c bun run typecheck:all && bun run test:shared:all && bun run test:connection-fabric && bun run test:config-isolation && bun run test:doc-tools"
+    },
+    {
+      "pid": 81374,
+      "ppid": 81373,
+      "command": "bun run typecheck:all"
+    },
+    {
+      "pid": 81375,
+      "ppid": 81374,
+      "command": "/bin/bash -c cd packages/core && bun run tsc --noEmit && cd ../shared && bun run tsc --noEmit && cd ../server-core && bun run tsc --noEmit && cd ../server && bun run tsc --noEmit && cd ../session-tools-core && bun run tsc --noEmit && cd ../pi-agent-server && bun run typecheck && cd ../../apps/electron && bun run typecheck && cd ../../packages/ui && bun run tsc --noEmit && cd ../.. && bun run typecheck:pages-worker && bun run workspace-service:typecheck"
+    },
+    {
+      "pid": 82063,
+      "ppid": 81375,
+      "command": "bun run tsc --noEmit"
+    },
+    {
+      "pid": 82065,
+      "ppid": 82063,
+      "command": "node /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/node_modules/.bin/tsc --noEmit"
+    }
+  ],
+  "signals": [
+    {
+      "pid": 82065,
+      "signal": "SIGTERM",
+      "sent": true
+    },
+    {
+      "pid": 82063,
+      "signal": "SIGTERM",
+      "sent": true
+    },
+    {
+      "pid": 81375,
+      "signal": "SIGTERM",
+      "sent": true
+    },
+    {
+      "pid": 81374,
+      "signal": "SIGTERM",
+      "sent": true
+    },
+    {
+      "pid": 81373,
+      "signal": "SIGTERM",
+      "sent": true
+    },
+    {
+      "pid": 81372,
+      "signal": "SIGTERM",
+      "sent": true
+    },
+    {
+      "pid": 81371,
+      "signal": "SIGTERM",
+      "sent": true
+    },
+    {
+      "pid": 81369,
+      "signal": "SIGTERM",
+      "sent": true
+    }
+  ],
+  "orchestratorAllowedToSealInterruptedReceipt": true,
+  "fullDoDClosed": false,
+  "verificationReceipt": {
+    "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/outputs/UI-001-expanded-immediate-history-candidate-68b267f-verification.json",
+    "sha256": "215dd76b92623e0861d164d8e29d99774405e7ff71e4b645b55c2907257ce24c"
+  },
+  "orchestratorObservedExitCode": 1,
+  "orchestratorExitQualification": "Success assertion correctly refused to claim full validation after intentional -15 interruption; receipt sealed before assertion.",
+  "productSourceInventoryCount": 11051,
+  "productSourceBytesUnchanged": true,
+  "sourceRevisionUnchanged": true,
+  "trackedSourcesUnchanged": true,
+  "focusedStarted": false,
+  "remainingObservedOwnedPids": [],
+  "sourceInventoryBeforeSha256": "d73e95317178515cd12fc86b5c507668b09ca983d65faebe7bb6e1a4c9f4e59d",
+  "sourceInventoryAfterSha256": "d73e95317178515cd12fc86b5c507668b09ca983d65faebe7bb6e1a4c9f4e59d"
+}

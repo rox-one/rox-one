@@ -150,7 +150,7 @@ export interface ISessionManager {
     existingMessageId?: string,
     _isAuthRetry?: boolean,
     onAck?: (messageId: string) => void,
-    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext; runtimeLaunch?: import('@rox/core/runtime-trace').RuntimeLaunch },
+    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext; roxExecutionContext?: import('@rox/shared/auth').RoxExecutionContext; runtimeLaunch?: import('@rox/core/runtime-trace').RuntimeLaunch },
     _internalRetryKind?: 'auth' | 'failover',
   ): Promise<void>
   cancelProcessing(sessionId: string, silent?: boolean): Promise<void>
@@ -213,7 +213,7 @@ export interface ISessionManager {
    * Used by the messaging gateway so Telegram/WhatsApp accept buttons produce
    * the same server-side effect as the desktop accept button.
    */
-  acceptPlan(sessionId: string, planPath?: string): Promise<void>
+  acceptPlan(sessionId: string, planPath?: string, runtimeLaunch?: import('@rox/core/runtime-trace').RuntimeLaunch): Promise<void>
 
   // ---------------------------------------------------------------------------
   // Sharing
@@ -271,16 +271,16 @@ export interface ISessionManager {
   getSessionProvenance(sessionId: string): SessionProvenance | null
   /** One-shot mini completion against the workspace's default connection (self-learning
    *  spec L2 conflict checks). Resolves the workspace by id — throws when unknown. */
-  runDistillOneShot(workspaceId: string, prompt: string): Promise<string>
-  refreshTitle(sessionId: string): Promise<{ success: boolean; title?: string; error?: string }>
-  improveDraft(sessionId: string, text: string): Promise<{ success: boolean; text?: string; error?: string }>
+  runDistillOneShot(workspaceId: string, prompt: string, roxExecutionContext?: import('@rox/shared/auth').RoxExecutionContext): Promise<string>
+  refreshTitle(sessionId: string, roxExecutionContext?: import('@rox/shared/auth').RoxExecutionContext): Promise<{ success: boolean; title?: string; error?: string }>
+  improveDraft(sessionId: string, text: string, roxExecutionContext?: import('@rox/shared/auth').RoxExecutionContext): Promise<{ success: boolean; text?: string; error?: string }>
   /** Connection/model a sessionless one-shot on this workspace would use (Project screen AI). */
   describeWorkspaceLlm?(workspaceId: string): { available: boolean; connectionName?: string; model?: string; reason?: string }
   /** Sessionless one-shot on the workspace's default connection/model; throws the real provider error. */
   queryWorkspaceLlm?(
     workspaceId: string,
     request: { prompt: string; systemPrompt?: string; maxTokens?: number; temperature?: number },
-    options?: { timeoutMs?: number },
+    options?: { timeoutMs?: number; roxExecutionContext?: import('@rox/shared/auth').RoxExecutionContext },
   ): Promise<{ text: string; model?: string; requestedModel?: string; effectiveModel?: string | null; warning?: string }>
   /** One-shot LLM query on the session's connection/model; throws the real provider error. */
   querySessionLlm?(
@@ -363,6 +363,8 @@ export interface ISessionManager {
  * overrides) can be added without churn at every call site.
  */
 export interface ExecutePromptAutomationInput {
+  /** Host supplied only; never copied from RPC payload. */
+  roxExecutionContext?: import('@rox/shared/auth').RoxExecutionContext
   runtimeLaunch?: import('@rox/core/runtime-trace').RuntimeLaunch
   workspaceId: string
   workspaceRootPath: string

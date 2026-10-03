@@ -200,16 +200,18 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     import('@rox/server-core/handlers/rpc/messaging'),
   ])
 
-  const [meetings, personalTasks, feed] = await Promise.all([
+  const [meetings, personalTasks, feed, runtimeTrace] = await Promise.all([
     import('@rox/server-core/handlers/rpc/meetings'),
     import('@rox/server-core/handlers/rpc/personal-tasks'),
     import('@rox/server-core/handlers/rpc/feed'),
+    import('@rox/server-core/handlers/rpc/runtime-trace'),
   ])
 
   return new Set([
     ...meetings.MEETING_HANDLED_CHANNELS,
     ...personalTasks.PERSONAL_TASKS_HANDLED_CHANNELS,
     ...feed.FEED_HANDLED_CHANNELS,
+    ...runtimeTrace.HANDLED_CHANNELS,
     ...auth.HANDLED_CHANNELS,
     ...automations.HANDLED_CHANNELS,
     ...browserPane.HANDLED_CHANNELS,
@@ -265,7 +267,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
 }
 
 async function getExpectedGuiChannels(): Promise<Set<string>> {
-  const [browser, system, workspace, settings, siyuan, extensionHost, extensionSurface] = await Promise.all([
+  const [browser, system, workspace, settings, siyuan, extensionHost, extensionSurface, voiceClipboard] = await Promise.all([
     import('../browser'),
     import('../system'),
     import('../workspace'),
@@ -273,6 +275,7 @@ async function getExpectedGuiChannels(): Promise<Set<string>> {
     import('../siyuan'),
     import('../extension-host'),
     import('../extension-surface'),
+    import('../voice-clipboard'),
   ])
 
   return new Set([
@@ -283,7 +286,7 @@ async function getExpectedGuiChannels(): Promise<Set<string>> {
     ...siyuan.HANDLED_CHANNELS,
     ...extensionHost.HANDLED_CHANNELS,
     ...extensionSurface.HANDLED_CHANNELS,
-    'voice:copyText',
+    ...voiceClipboard.HANDLED_CHANNELS,
   ])
 }
 

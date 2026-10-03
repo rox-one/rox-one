@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import type { ZenShellSnapshot } from '../../shared/shell-appearance'
 import { subscribeDesktopShellAppearance } from '@/lib/shell-appearance-subscription'
+import { resolveWebChromeMaterial, subscribeWebChromePreference } from '@/lib/web-chrome-preference'
 
 function applySnapshot(snapshot: ZenShellSnapshot): void {
   const root = document.documentElement
@@ -23,7 +24,22 @@ function applySnapshot(snapshot: ZenShellSnapshot): void {
 export function useShellAppearance(): void {
   useEffect(() => {
     const api = typeof window === 'undefined' ? undefined : window.electronAPI
+    const root = document.documentElement
+    const runtime = api?.getRuntimeEnvironment?.() === 'electron' ? 'electron' : 'web'
+    root.dataset.shellRuntime = runtime
+    // A desktop window starts solid until the main compositor acknowledges
+    // a healthy material. Browser CSS glass has its own capability policy.
+    root.dataset.shellMaterial = 'solid'
+    if (runtime === 'web') {
+      return subscribeWebChromePreference(preference => {
+        root.dataset.shellCssMaterial = resolveWebChromeMaterial(preference)
+        if (preference.enabled) root.dataset.shellStyle = 'zen'
+        else if (root.dataset.shellStyle === 'zen') delete root.dataset.shellStyle
+      })
+    }
+    delete root.dataset.shellCssMaterial
     return subscribeDesktopShellAppearance(api, applySnapshot, error => {
+      root.dataset.shellMaterial = 'solid'
       if (error) console.warn('Desktop shell appearance unavailable:', error)
     })
   }, [])

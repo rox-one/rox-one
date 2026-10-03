@@ -1,3 +1,5 @@
+import { createPocketAccountStore } from './pocket-account-store'
+import { RoxAccountAuthority, setRoxAccountAuthority } from '@rox/shared/auth'
 import { validateConfigurationCliEntries } from './configuration-cli-compat'
 import { resolveNumberedUserDataDir } from './numbered-user-data'
 // Load user's shell environment first (before other imports that may use env)
@@ -113,7 +115,7 @@ import { WindowManager } from './window-manager'
 import { readBoundWindowWorkspace } from './bootstrap-window-workspace'
 import { stopAllExtensionHosts } from './extension-host-manager'
 import { loadWindowState, saveWindowState } from './window-state'
-import { getWorkspaces, getWorkspaceByNameOrId, loadStoredConfig, addWorkspace, saveConfig, CONFIG_DIR } from '@rox/shared/config'
+import { getWorkspaces, getWorkspaceByNameOrId, loadStoredConfig, addWorkspace, saveConfig, getConfigPath, createInitialStoredConfig, CONFIG_DIR } from '@rox/shared/config'
 import { getDefaultWorkspacesDir } from '@rox/shared/workspaces'
 import { resolveWorkspaceMachineName } from '@rox/shared/os/user-display-name'
 import { ensureDemoPage } from '@rox/shared/pages'
@@ -280,8 +282,8 @@ if (userDataOverride) {
 }
 
 function registerDeeplinkScheme(scheme: string): void {
-  // Isolated developer verification must preserve the user's OS URL associations.
-  // Packaged applications retain the primary and legacy registrations.
+  // Isolated native verification must not replace the user's OS URL associations.
+  // Packaged applications always retain the primary and legacy registrations.
   if (!app.isPackaged && process.env.ROX_DEV_DISABLE_PROTOCOL_REGISTRATION === '1') return
 
   if (process.defaultApp) {
@@ -376,7 +378,8 @@ async function createInitialWindows(): Promise<void> {
   if (workspaces.length === 0) {
     // Ensure config file exists (addWorkspace requires it)
     if (!loadStoredConfig()) {
-      saveConfig({ workspaces: [], activeWorkspaceId: null, activeSessionId: null })
+      if (existsSync(getConfigPath())) throw new Error('Unable to load existing global config')
+      saveConfig(createInitialStoredConfig())
     }
     const defaultPath = join(getDefaultWorkspacesDir(), 'my-workspace')
     const workspaceName = resolveWorkspaceMachineName()
@@ -929,6 +932,7 @@ app.whenReady().then(async () => {
         },
         bindRpcServer: (sm, server) => sm.setRpcServer(server),
         createHandlerDeps: ({ sessionManager: sm, platform: p, oauthFlowStore: ofs, nativeAuthority, nativeJournal, collaborationSync }) => {
+          setRoxAccountAuthority(new RoxAccountAuthority(createPocketAccountStore({ directory: join(app.getPath('userData'), 'pocket-accounts'), safeStorage })))
           localNativeAuthority = nativeAuthority
           const browserCredentialPermissions = createBrowserCredentialPermissionAdapter({
             async confirm(request) {

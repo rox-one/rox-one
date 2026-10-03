@@ -931,81 +931,9 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
 // NavigationState Parsing (new unified system)
 // =============================================================================
 
-/**
- * Require complete view-route shapes at the renderer boundary. The legacy
- * parser remains permissive for callers that still rely on its old contract.
- * IDs containing slashes use the encoded single segment produced by builders.
- */
-function hasCompleteViewRouteShape(route: string): boolean {
-  if (route.includes('#') || /[\u0000-\u001f\u007f]/.test(route)) return false
-  const segments = route.split('?')[0].split('/')
-  if (segments.some(segment => !segment)) return false
-  const [root, second, third] = segments
-  const count = segments.length
-  const detail = (name: string) => count === 1 || (count === 3 && second === name)
-
-  switch (root) {
-    case 'allSessions':
-    case 'flagged':
-    case 'archived':
-    case 'board':
-      return detail('session')
-    case 'state':
-    case 'label':
-    case 'view':
-      return count === 2 || (count === 4 && third === 'session')
-    case 'search':
-    case 'table':
-    case 'heatmap':
-    case 'memory':
-    case 'home':
-    case 'connections':
-      return count === 1
-    case 'sources': {
-      const filtered = ['api', 'mcp', 'local'].includes(second)
-      return detail('source') || (filtered && (count === 2 || (count === 4 && third === 'source')))
-    }
-    case 'automations': {
-      const filtered = ['scheduled', 'event', 'agentic'].includes(second)
-      return detail('automation') || (filtered && (count === 2 || (count === 4 && third === 'automation')))
-    }
-    case 'skills': return detail('skill')
-    case 'projects': return detail('project')
-    case 'pages': return detail('page')
-    case 'notes': return detail('note')
-    case 'tasks': return detail('task')
-    case 'meetings': return detail('meeting')
-    case 'inbox':
-    case 'feed': return detail('item')
-    case 'settings': return count === 1 || count === 2
-    case 'browser': return count === 3 && second === 'instance'
-    case 'knowledge':
-      return count === 1 || (count === 3 && ['notebook', 'document', 'block', 'database', 'asset', 'view'].includes(second))
-    case 'cloud-run':
-    case 'diff':
-    case 'terminal': return count === 1 || count === 2
-    case 'extension': return count <= 3
-    default: return isExtraScreenId(root) && detail('item')
-  }
-}
-
-/**
- * Resolve view routes without replacing unknown or malformed addresses with a
- * different screen. Action dispatch stays with the caller; this is view-only.
- */
-export function parseRouteToNavigationStateOrUnavailable(
-  route: string,
-  sidebarParam?: string
-): NavigationState {
-  if (hasCompleteViewRouteShape(route)) {
-    const state = parseRouteToNavigationState(route, sidebarParam)
-    if (state) return state
-  }
-  const rightSidebar = parseRightSidebarParam(sidebarParam)
-  return {
-    navigator: 'unavailable', route, details: null,
-    ...(rightSidebar ? { rightSidebar } : {}),
-  }
+/** Shared runtime boundary; retain the current public name for all callers. */
+export function parseRouteToNavigationStateOrUnavailable(route: string, sidebarParam?: string): NavigationState {
+  return resolveViewRoute(route, sidebarParam)
 }
 
 /**
@@ -1062,6 +990,66 @@ export function parseRouteToNavigationState(
  */
 export function resolveRouteNavigationState(route: string, sidebarParam?: string): NavigationState {
   return parseRouteToNavigationStateOrUnavailable(route, sidebarParam)
+}
+
+/**
+ * Resolve a panel/deep-link view without discarding its original address.
+ * Stored action routes are views here and must never execute during restore.
+ * The nullable parser retains its legacy degradation contract; mounted runtime
+ * consumers use this boundary to reject lossy parsing across all navigators.
+ */
+export function resolveViewRoute(route: string, sidebarParam?: string): NavigationState {
+  const unavailable: UnavailableNavigationState = { navigator: 'unavailable', route, details: null }
+  const rightSidebar = parseRightSidebarParam(sidebarParam)
+  if (rightSidebar) unavailable.rightSidebar = rightSidebar
+  try {
+    if (route.includes('#') || /[\u0000-\u001f\u007f]/.test(route)) return unavailable
+    // Some legacy routes retain encoded slugs, but malformed encoding is never
+    // a valid entity address, even when that parser branch does not decode it.
+    const path = route.split('?')[0]
+    // Empty namespace separators are legacy aliases. Opaque rest-of-path IDs
+    // retain every separator after their first byte; folding them could select
+    // a different document/run/terminal. Notes keeps its filesystem alias.
+    const rawSegments = path.split('/')
+    const namespaceSegments = rawSegments.filter(Boolean)
+    const opaquePrefixLength = ['knowledge', 'extension'].includes(namespaceSegments[0] ?? '')
+      && namespaceSegments.length >= 3 ? 2
+      : ['cloud-run', 'terminal', 'diff'].includes(namespaceSegments[0] ?? '')
+        && namespaceSegments.length >= 2 ? 1 : null
+    let normalizedPath = namespaceSegments.join('/')
+    if (opaquePrefixLength !== null) {
+      let namespaceCount = 0
+      let idStart = 0
+      for (; idStart < rawSegments.length; idStart++) {
+        if (rawSegments[idStart] && ++namespaceCount === opaquePrefixLength) { idStart++; break }
+      }
+      while (idStart < rawSegments.length && rawSegments[idStart] === '') idStart++
+      normalizedPath = namespaceSegments.slice(0, opaquePrefixLength).join('/')
+        + '/' + rawSegments.slice(idStart).join('/')
+    }
+    const decodedPath = decodeURIComponent(normalizedPath)
+    const query = route.slice(path.length)
+    // Keep published rest-of-path entity addresses through the strict raw
+    // grammar. Encode the complete legacy ID as one segment before parsing;
+    // never select only its prefix. Existing escapes are decoded exactly once.
+    const segments = normalizedPath.split('/')
+    const restStart = segments[0] === 'knowledge' && segments.length > 3 ? 2
+      : segments[0] === 'extension' && segments.length > 3 ? 2
+      : ['cloud-run', 'terminal', 'diff'].includes(segments[0]) && segments.length > 2 ? 1 : null
+    const parsePath = restStart === null ? normalizedPath
+      : segments.slice(0, restStart).join('/') + '/' + encodeURIComponent(decodeURIComponent(segments.slice(restStart).join('/')))
+    const state = parseRouteToNavigationState(parsePath + query, sidebarParam)
+    if (!state) return unavailable
+    // Compare the full address, allowing equivalent entity encoding and the
+    // established settings aliases. A parser fallback must not drop a suffix.
+    const canonicalPath = decodeURIComponent(buildRouteFromNavigationState(state).split('?')[0])
+    const aliasedPath = decodedPath === 'settings/toolchain' ? 'settings/runtime'
+      : decodedPath === 'settings/preferences' ? 'settings/context' : decodedPath
+    if (canonicalPath !== aliasedPath) return unavailable
+    return state
+  } catch {
+    return unavailable
+  }
 }
 
 /**

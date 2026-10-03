@@ -1,0 +1,486 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/main/__tests__/pocket-account-store.test.ts:
+(pass) Pocket OS protected vault > uses injected OS encryption on darwin and restores caller/account scope [8.87ms]
+(pass) Pocket OS protected vault > uses injected OS encryption on win32 and restores caller/account scope [93.91ms]
+(pass) Pocket OS protected vault > fails closed without OS encryption and on unsupported headless Linux [0.87ms]
+(pass) Pocket OS protected vault > rejects a substituted vault directory [0.54ms]
+
+packages/shared/src/auth/__tests__/rox-pocket-client.test.ts:
+(pass) Pocket v2 proof client > uses S256 proof and operation id exclusively in main requests [2.22ms]
+(pass) Pocket v2 proof client > rejects foreign broker redirect and malformed token envelopes [179.02ms]
+(pass) Pocket v2 proof client > cancels a late approval even when HTTP transport ignores its abort [3.59ms]
+(pass) Pocket v2 proof client > rejects foreign-account credential and a redirected inference base [1.89ms]
+(pass) Pocket v2 proof client > projects account snapshot without credential canaries even if the server sends accidental extra fields [1.57ms]
+(pass) Pocket v2 proof client > reuses the same redemption proof after a dropped approved response [2016.81ms]
+
+packages/shared/src/auth/__tests__/rox-account-authority.test.ts:
+(pass) Pocket host account authority > does not share native/local account credentials and never projects tokens/key [9.41ms]
+(pass) Pocket host account authority > keeps zero balance authenticated and ready but rejects paid dispatch [0.47ms]
+(pass) Pocket host account authority > fences old executor and durable session/automation bindings on account switch [0.94ms]
+(pass) Pocket host account authority > restores exact owned resources after restart without ambient fallback [0.33ms]
+(pass) Pocket host account authority > persists refresh operation proof before dispatch, retries same id after dropped response [2.82ms]
+(pass) Pocket host account authority > refreshes expired access and durably clears pending proof before inference without a UI poll [3.62ms]
+(pass) Pocket host account authority > ignores a late bootstrap response after logout and removes persisted secrets [17.26ms]
+(pass) Pocket host account authority > uses sealed prior access proof to revoke a device after an in-flight refresh rotation [11.37ms]
+(pass) Pocket host account authority > fences a running executor when account key generation changes [0.41ms]
+(pass) Pocket host account authority > invalidates the running executor when the active key is revoked [0.50ms]
+(pass) Pocket host account authority > keeps failed device revocation sealed for retry after process restart [0.97ms]
+(pass) Pocket host account authority > revokes via logout-only prior access proof without an expired refresh replay [0.24ms]
+
+packages/shared/src/i18n/__tests__/p35-374-blockkramdown-wrap-locales.test.ts:
+(pass) P35-374 leftover Russian kramdown wrapping on knowledge.surface.copy.blockKramdown > wraps leftover kramdown as sibling Kramdown, then English stays English [47.93ms]
+(pass) P35-374 leftover Russian kramdown wrapping on knowledge.surface.copy.blockKramdown > resolves English through setupI18n after changeLanguage(en) [0.41ms]
+
+packages/shared/src/i18n/__tests__/p35-353-tableflags-wrap-locales.test.ts:
+(pass) P35-353 leftover Russian флаг wrapping on table.flags > wraps leftover флаги as sibling пометки, then English stays English [0.89ms]
+(pass) P35-353 leftover Russian флаг wrapping on table.flags > resolves English through setupI18n after changeLanguage(en) [0.77ms]
+
+packages/shared/src/i18n/__tests__/p35-330-usagehint-wrap-locales.test.ts:
+(pass) P35-330 leftover Russian ран wrapping on cloudRuns.usageHint > wraps leftover раннера as sibling запуск, then English stays English [1.94ms]
+(pass) P35-330 leftover Russian ран wrapping on cloudRuns.usageHint > resolves English through setupI18n after changeLanguage(en) [0.44ms]
+
+packages/shared/src/i18n/__tests__/p35-351-unflag-wrap-locales.test.ts:
+(pass) P35-351 leftover Russian флаг wrapping on collection.bulk.unflag > wraps leftover флаг as sibling пометка, then English stays English [27.48ms]
+(pass) P35-351 leftover Russian флаг wrapping on collection.bulk.unflag > resolves English through setupI18n after changeLanguage(en) [9.96ms]
+
+packages/shared/src/i18n/__tests__/p35-312-bundledskillscount-wrap-locales.test.ts:
+(pass) P35-312 leftover Russian wrapping on settings.context.bundledSkillsCount > wraps leftover скилл as sibling навык, then English stays English [68.25ms]
+(pass) P35-312 leftover Russian wrapping on settings.context.bundledSkillsCount > resolves English through setupI18n after changeLanguage(en) [0.16ms]
+
+packages/shared/src/i18n/__tests__/p35-332-cloudruns-omp-wrap-locales.test.ts:
+(pass) P35-332 leftover Russian ран wrapping on cloudRuns.omp > wraps leftover раннер as sibling запуск, then English stays English [0.69ms]
+(pass) P35-332 leftover Russian ран wrapping on cloudRuns.omp > resolves English through setupI18n after changeLanguage(en) [0.08ms]
+
+packages/shared/src/i18n/__tests__/p35-380-extensionid-wrap-locales.test.ts:
+(pass) P35-380 leftover Russian Id wrapping on extensions.developer.urlAllowlistExtensionId > wraps leftover field-label Id as Latin ID, then English stays English [6.62ms]
+(pass) P35-380 leftover Russian Id wrapping on extensions.developer.urlAllowlistExtensionId > resolves English through setupI18n after changeLanguage(en) [0.17ms]
+
+packages/shared/src/i18n/__tests__/p35-321-cloudrunimported-wrap-locales.test.ts:
+(pass) P35-321 leftover Russian ран wrapping on settings.account.event.cloudRunImported > wraps leftover ран as sibling запуск, then English stays English [0.27ms]
+(pass) P35-321 leftover Russian ран wrapping on settings.account.event.cloudRunImported > resolves English through setupI18n after changeLanguage(en) [0.09ms]
+
+packages/shared/src/i18n/__tests__/p35-359-saveplaceholder-wrap-locales.test.ts:
+(pass) P35-359 leftover Russian слайс wrapping on collection.slice.savePlaceholder > wraps leftover слайс as sibling срез, then English stays English [13.48ms]
+(pass) P35-359 leftover Russian слайс wrapping on collection.slice.savePlaceholder > resolves English through setupI18n after changeLanguage(en) [1.58ms]
+
+packages/shared/src/i18n/__tests__/p35-396-invitetarget-wrap-locales.test.ts:
+(pass) P35-396 leftover Russian email wrapping on settings.orgs.inviteTarget > wraps leftover email as sibling почта, then English stays English [0.52ms]
+(pass) P35-396 leftover Russian email wrapping on settings.orgs.inviteTarget > resolves English through setupI18n after changeLanguage(en) [0.25ms]
+
+packages/shared/src/i18n/__tests__/p35-348-bindingowner-wrap-locales.test.ts:
+(pass) P35-348 leftover Russian биндинг wrapping on telegram bindingPopover ownerControl.description > wraps leftover биндинг as sibling привязка, then English stays English [93.18ms]
+(pass) P35-348 leftover Russian биндинг wrapping on telegram bindingPopover ownerControl.description > resolves English through setupI18n after changeLanguage(en) [0.34ms]
+
+packages/shared/src/i18n/__tests__/p35-328-compactusecase-wrap-locales.test.ts:
+(pass) P35-328 leftover Russian слэш wrapping on cli.command.compact.useCase > wraps leftover слэш-меню as sibling косая черта, then English stays English [0.41ms]
+(pass) P35-328 leftover Russian слэш wrapping on cli.command.compact.useCase > resolves English through setupI18n after changeLanguage(en) [0.06ms]
+
+packages/shared/src/i18n/__tests__/p35-378-notowner-id-wrap-locales.test.ts:
+(pass) P35-378 leftover Russian id wrapping on settings.messaging.telegram.access.pending.audit.notOwner > wraps leftover prose id as sibling идентификатор, then English stays English [3.89ms]
+(pass) P35-378 leftover Russian id wrapping on settings.messaging.telegram.access.pending.audit.notOwner > resolves English through setupI18n after changeLanguage(en) [0.20ms]
+
+packages/shared/src/i18n/__tests__/p35-354-playbookholes-wrap-locales.test.ts:
+(pass) P35-354 leftover Russian плейбук wrapping on entityView.playbookHoles > wraps leftover плейбука as sibling сценария, then English stays English [2.00ms]
+(pass) P35-354 leftover Russian плейбук wrapping on entityView.playbookHoles > resolves English through setupI18n after changeLanguage(en) [0.65ms]
+
+packages/shared/src/i18n/__tests__/p35-389-devbody-host-wrap-locales.test.ts:
+(pass) P35-389 leftover Russian хост wrapping on extensions.developer.body > wraps leftover в этом хосте as sibling в этом хосте расширений, then English stays English [132.42ms]
+(pass) P35-389 leftover Russian хост wrapping on extensions.developer.body > resolves English through setupI18n after changeLanguage(en) [0.09ms]
+
+packages/shared/src/i18n/__tests__/p35-344-workbenchforkhint-wrap-locales.test.ts:
+(pass) P35-344 leftover Russian форк wrapping on entityView.workbenchForkHint > wraps leftover форк as sibling ветка, then English stays English [29.05ms]
+(pass) P35-344 leftover Russian форк wrapping on entityView.workbenchForkHint > resolves English through setupI18n after changeLanguage(en) [4.16ms]
+
+packages/shared/src/i18n/__tests__/p35-337-shadowdeny-wrap-locales.test.ts:
+(pass) P35-337 leftover Russian ревью wrapping on chat.permissionShadow.deny > wraps leftover ревью as sibling проверка, then English stays English [1.58ms]
+(pass) P35-337 leftover Russian ревью wrapping on chat.permissionShadow.deny > resolves English through setupI18n after changeLanguage(en) [0.16ms]
+
+packages/shared/src/i18n/__tests__/p35-340-vibehint-wrap-locales.test.ts:
+(pass) P35-340 leftover Russian вайб wrapping on toast.vibeHint > wraps leftover вайб as sibling творческий сценарий, then English stays English [11.96ms]
+(pass) P35-340 leftover Russian вайб wrapping on toast.vibeHint > resolves English through setupI18n after changeLanguage(en) [0.09ms]
+
+packages/shared/src/i18n/__tests__/p35-362-nosiyuanexec-wrap-locales.test.ts:
+(pass) P35-362 leftover Russian Extension Host wrapping on extensions.host.noSiyuanExec > wraps leftover Extension Host as sibling хост расширений, then English stays English [1.22ms]
+(pass) P35-362 leftover Russian Extension Host wrapping on extensions.host.noSiyuanExec > resolves English through setupI18n after changeLanguage(en) [0.14ms]
+
+packages/shared/src/i18n/__tests__/p35-369-renamenotedesc-wrap-locales.test.ts:
+(pass) P35-369 leftover Russian markdown wrapping on notes.dialog.renameNoteDesc > wraps leftover markdown-файл as sibling Markdown-файл, then English stays English [0.27ms]
+(pass) P35-369 leftover Russian markdown wrapping on notes.dialog.renameNoteDesc > resolves English through setupI18n after changeLanguage(en) [0.08ms]
+
+packages/shared/src/i18n/__tests__/p35-341-vibelabel-wrap-locales.test.ts:
+(pass) P35-341 leftover Russian вайб wrapping on cli.command.vibe.label > wraps leftover вайб as sibling творческий сценарий, then English stays English [1.23ms]
+(pass) P35-341 leftover Russian вайб wrapping on cli.command.vibe.label > resolves English through setupI18n after changeLanguage(en) [0.44ms]
+
+packages/shared/src/i18n/__tests__/p35-383-connectpagedesc-wrap-locales.test.ts:
+(pass) P35-383 leftover Russian Server wrapping on workspace.connectRemotePageDesc > wraps leftover Rox Server as sibling сервер Rox, then English stays English [0.64ms]
+(pass) P35-383 leftover Russian Server wrapping on workspace.connectRemotePageDesc > resolves English through setupI18n after changeLanguage(en) [0.11ms]
+
+packages/shared/src/i18n/__tests__/p35-360-nomatchslice-wrap-locales.test.ts:
+(pass) P35-360 leftover Russian слайс wrapping on session.noMatchingSessionsDesc > wraps leftover слайс as sibling срез, then English stays English [0.26ms]
+(pass) P35-360 leftover Russian слайс wrapping on session.noMatchingSessionsDesc > resolves English through setupI18n after changeLanguage(en) [2.16ms]
+
+packages/shared/src/i18n/__tests__/p35-363-sandboxhint-wrap-locales.test.ts:
+(pass) P35-363 leftover Russian Extension Host wrapping on extensions.runtime.craft-sandbox.hint > wraps leftover Extension Host as sibling хост расширений, then English stays English [0.54ms]
+(pass) P35-363 leftover Russian Extension Host wrapping on extensions.runtime.craft-sandbox.hint > resolves English through setupI18n after changeLanguage(en) [0.15ms]
+
+packages/shared/src/i18n/__tests__/p35-325-sandboxhint-wrap-locales.test.ts:
+(pass) P35-325 leftover Russian ран wrapping on settings.cloudRuns.sandboxHint > wraps leftover рана as sibling запуск, then English stays English [0.86ms]
+(pass) P35-325 leftover Russian ран wrapping on settings.cloudRuns.sandboxHint > resolves English through setupI18n after changeLanguage(en) [0.11ms]
+
+packages/shared/src/i18n/__tests__/p35-324-maxwallclockhint-wrap-locales.test.ts:
+(pass) P35-324 leftover Russian ран wrapping on settings.cloudRuns.maxWallClockHint > wraps leftover рана/ран as sibling запуск, then English stays English [0.23ms]
+(pass) P35-324 leftover Russian ран wrapping on settings.cloudRuns.maxWallClockHint > resolves English through setupI18n after changeLanguage(en) [0.06ms]
+
+packages/shared/src/i18n/__tests__/p35-370-renameassetdesc-wrap-locales.test.ts:
+(pass) P35-370 leftover Russian markdown wrapping on notes.dialog.renameAssetDesc > wraps leftover markdown-ссылки as sibling Markdown-ссылки, then English stays English [0.45ms]
+(pass) P35-370 leftover Russian markdown wrapping on notes.dialog.renameAssetDesc > resolves English through setupI18n after changeLanguage(en) [0.09ms]
+
+packages/shared/src/i18n/__tests__/p35-collapse-830-locales.test.ts:
+(pass) P35 leftover wrap collapse #830-#839 > applies every unique leftover wrap on current Russian catalog keys [22.22ms]
+(pass) P35 leftover wrap collapse #830-#839 > does not drop #828/#827/#526 connection and settings loadConfig keys [0.11ms]
+
+packages/shared/src/i18n/__tests__/p35-364-registrystub-wrap-locales.test.ts:
+(pass) P35-364 leftover Russian stub wrapping on extensions.registries.stub > wraps leftover stub as sibling заглушка, then English stays English [0.31ms]
+(pass) P35-364 leftover Russian stub wrapping on extensions.registries.stub > resolves English through setupI18n after changeLanguage(en) [0.37ms]
+
+packages/shared/src/i18n/__tests__/p35-333-bundledtitle-wrap-locales.test.ts:
+(pass) P35-333 leftover Russian пресет wrapping on settings.context.bundledTitle > wraps leftover пресет as sibling шаблон, then English stays English [0.24ms]
+(pass) P35-333 leftover Russian пресет wrapping on settings.context.bundledTitle > resolves English through setupI18n after changeLanguage(en) [0.08ms]
+
+packages/shared/src/i18n/__tests__/p35-336-shadowreview-wrap-locales.test.ts:
+(pass) P35-336 leftover Russian ревью wrapping on chat.permissionShadow.allow > wraps leftover ревью as sibling проверка, then English stays English [0.28ms]
+(pass) P35-336 leftover Russian ревью wrapping on chat.permissionShadow.allow > resolves English through setupI18n after changeLanguage(en) [0.08ms]
+
+packages/shared/src/i18n/__tests__/p35-338-shadowtimeout-wrap-locales.test.ts:
+(pass) P35-338 leftover Russian ревью wrapping on chat.permissionShadow.timeout > wraps leftover ревью as sibling проверка, then English stays English [0.23ms]
+(pass) P35-338 leftover Russian ревью wrapping on chat.permissionShadow.timeout > resolves English through setupI18n after changeLanguage(en) [6.83ms]
+
+packages/shared/src/i18n/__tests__/p35-397-invitedesc-wrap-locales.test.ts:
+(pass) P35-397 leftover Russian email wrapping on settings.orgs.inviteDesc > wraps leftover email as sibling почте, then English stays English [0.26ms]
+(pass) P35-397 leftover Russian email wrapping on settings.orgs.inviteDesc > resolves English through setupI18n after changeLanguage(en) [0.07ms]
+
+packages/shared/src/i18n/__tests__/p35-394-botinstr-wrap-locales.test.ts:
+(pass) P35-394 leftover English Bot Token wrapping on settings.messaging.discord.instructions > wraps leftover Bot Token as токен бота, then English stays English [3.91ms]
+(pass) P35-394 leftover English Bot Token wrapping on settings.messaging.discord.instructions > resolves English through setupI18n after changeLanguage(en) [1.09ms]
+
+packages/shared/src/i18n/__tests__/p35-385-hostrestart-wrap-locales.test.ts:
+(pass) P35-385 leftover Russian хост wrapping on extensions.developer.hostRestart > wraps leftover хост as sibling хост расширений, then English stays English [0.31ms]
+(pass) P35-385 leftover Russian хост wrapping on extensions.developer.hostRestart > resolves English through setupI18n after changeLanguage(en) [0.08ms]
+
+packages/shared/src/i18n/__tests__/p35-387-hoststop-wrap-locales.test.ts:
+(pass) P35-387 leftover Russian хост wrapping on extensions.developer.hostStop > wraps leftover хост as sibling хост расширений, then English stays English [0.31ms]
+(pass) P35-387 leftover Russian хост wrapping on extensions.developer.hostStop > resolves English through setupI18n after changeLanguage(en) [0.08ms]
+
+packages/shared/src/i18n/__tests__/finish-visual-locales.test.ts:
+(pass) finish-visual leftover chrome locales > keeps Russian copy distinct from English for leftover chrome [0.09ms]
+
+packages/shared/src/i18n/__tests__/p35-334-publicationgated-wrap-locales.test.ts:
+(pass) P35-334 leftover Russian шаринг wrapping on collaboration.publicationGated > wraps leftover шаринг as sibling общий доступ, then English stays English [0.28ms]
+(pass) P35-334 leftover Russian шаринг wrapping on collaboration.publicationGated > resolves English through setupI18n after changeLanguage(en) [0.08ms]
+
+packages/shared/src/i18n/__tests__/p35-322-source-cloudrunimported-wrap-locales.test.ts:
+(pass) P35-322 leftover Russian ран wrapping on settings.account.source.cloudRunImported > wraps leftover ран as sibling запуск, then English stays English [0.21ms]
+(pass) P35-322 leftover Russian ран wrapping on settings.account.source.cloudRunImported > resolves English through setupI18n after changeLanguage(en) [0.06ms]
+
+packages/shared/src/i18n/__tests__/p35-collapse-842-locales.test.ts:
+(pass) P35 leftover wrap collapse #842-#847 > applies every unique leftover wrap on current Russian catalog keys [0.23ms]
+(pass) P35 leftover wrap collapse #842-#847 > does not drop #840/#828/#827/#526 connection and settings loadConfig keys [0.15ms]
+
+packages/shared/src/i18n/__tests__/p35-collapse-866-locales.test.ts:
+(pass) P35 leftover wrap collapse #866-#872 > applies every unique leftover wrap on current Russian catalog keys [0.22ms]
+(pass) P35 leftover wrap collapse #866-#872 > does not drop #848/#840/#828/#827/#526 connection and settings loadConfig keys [0.03ms]
+
+packages/shared/src/i18n/__tests__/p35-384-allhosts-wrap-locales.test.ts:
+(pass) P35-384 leftover Russian хост wrapping on extensions.developer.allHosts > wraps leftover хост as sibling хосты расширений, then English stays English [0.29ms]
+(pass) P35-384 leftover Russian хост wrapping on extensions.developer.allHosts > resolves English through setupI18n after changeLanguage(en) [0.08ms]
+
+packages/shared/src/i18n/__tests__/p35-381-server-wrap-locales.test.ts:
+(pass) P35-381 leftover Russian Server wrapping on settings.accounts.localProfileDesc > wraps leftover Server as sibling URL сервера Rox, then English stays English [4.60ms]
+(pass) P35-381 leftover Russian Server wrapping on settings.accounts.localProfileDesc > resolves English through setupI18n after changeLanguage(en) [0.25ms]
+
+packages/shared/src/i18n/__tests__/p35-327-contextreadonly-wrap-locales.test.ts:
+(pass) P35-327 leftover Russian промпт wrapping on inspector.context.readOnly > wraps leftover промпта as sibling запрос, then English stays English [0.70ms]
+(pass) P35-327 leftover Russian промпт wrapping on inspector.context.readOnly > resolves English through setupI18n after changeLanguage(en) [0.08ms]
+
+packages/shared/src/i18n/__tests__/p35-343-workbenchfork-wrap-locales.test.ts:
+(pass) P35-343 leftover Russian форк wrapping on entityView.workbenchFork > wraps leftover форк as sibling ветка, then English stays English [0.32ms]
+(pass) P35-343 leftover Russian форк wrapping on entityView.workbenchFork > resolves English through setupI18n after changeLanguage(en) [0.08ms]
+
+packages/shared/src/i18n/__tests__/p35-350-unifiedshell-desc-wrap-locales.test.ts:
+(pass) P35-350 leftover Russian unified shell wrapping on settings.appearance.workbenchUnifiedShellDesc > wraps leftover unified shell as sibling единая оболочка, then English stays English [0.54ms]
+(pass) P35-350 leftover Russian unified shell wrapping on settings.appearance.workbenchUnifiedShellDesc > resolves English through setupI18n after changeLanguage(en) [0.18ms]
+
+packages/shared/src/i18n/__tests__/locale-registry.test.ts:
+(pass) locale registry completeness > contains exactly the approved twelve language codes [0.03ms]
+(pass) locale registry completeness > every locale file on disk is registered in LOCALE_REGISTRY [0.04ms]
+(pass) locale registry completeness > every registry entry has a locale file on disk [0.04ms]
+(pass) locale registry entries > en has a non-empty nativeName [0.02ms]
+(pass) locale registry entries > en has messages (non-empty object) [0.01ms]
+(pass) locale registry entries > en has a dateLocale [0.03ms]
+(pass) locale registry entries > ru has a non-empty nativeName
+(pass) locale registry entries > ru has messages (non-empty object)
+(pass) locale registry entries > ru has a dateLocale
+(pass) locale registry entries > es has a non-empty nativeName
+(pass) locale registry entries > es has messages (non-empty object) [0.14ms]
+(pass) locale registry entries > es has a dateLocale
+(pass) locale registry entries > zh-Hans has a non-empty nativeName
+(pass) locale registry entries > zh-Hans has messages (non-empty object) [0.11ms]
+(pass) locale registry entries > zh-Hans has a dateLocale
+(pass) locale registry entries > zh-Hant has a non-empty nativeName
+(pass) locale registry entries > zh-Hant has messages (non-empty object) [0.11ms]
+(pass) locale registry entries > zh-Hant has a dateLocale
+(pass) locale registry entries > ja has a non-empty nativeName
+(pass) locale registry entries > ja has messages (non-empty object) [0.12ms]
+(pass) locale registry entries > ja has a dateLocale
+(pass) locale registry entries > de has a non-empty nativeName
+(pass) locale registry entries > de has messages (non-empty object) [0.11ms]
+(pass) locale registry entries > de has a dateLocale
+(pass) locale registry entries > hu has a non-empty nativeName
+(pass) locale registry entries > hu has messages (non-empty object) [0.10ms]
+(pass) locale registry entries > hu has a dateLocale
+(pass) locale registry entries > pl has a non-empty nativeName
+(pass) locale registry entries > pl has messages (non-empty object) [0.11ms]
+(pass) locale registry entries > pl has a dateLocale
+(pass) locale registry entries > fr has a non-empty nativeName
+(pass) locale registry entries > fr has messages (non-empty object) [0.11ms]
+(pass) locale registry entries > fr has a dateLocale
+(pass) locale registry entries > ko has a non-empty nativeName
+(pass) locale registry entries > ko has messages (non-empty object) [0.11ms]
+(pass) locale registry entries > ko has a dateLocale
+(pass) locale registry entries > ar has a non-empty nativeName
+(pass) locale registry entries > ar has messages (non-empty object) [0.11ms]
+(pass) locale registry entries > ar has a dateLocale
+(pass) derived exports > SUPPORTED_LANGUAGE_CODES contains exactly the approved codes [0.03ms]
+(pass) derived exports > SUPPORTED_LANGUAGE_CODES matches registry keys [0.03ms]
+(pass) derived exports > LANGUAGES has an entry for every supported code [0.04ms]
+(pass) derived exports > LANGUAGES nativeNames match registry [0.02ms]
+(pass) getDateLocale > en resolves to English (US) [0.02ms]
+(pass) getDateLocale > ru resolves to Russian
+(pass) getDateLocale > es resolves to Spanish
+(pass) getDateLocale > zh-Hans resolves to Simplified Chinese [0.01ms]
+(pass) getDateLocale > ja resolves to Japanese
+(pass) getDateLocale > de resolves to German
+(pass) getDateLocale > ko resolves to Korean [0.01ms]
+(pass) getDateLocale > ar resolves to Arabic
+(pass) getDateLocale > unknown locale falls back to English
+
+packages/shared/src/i18n/__tests__/p35-358-slicesave-wrap-locales.test.ts:
+(pass) P35-358 leftover Russian слайс wrapping on collection.slice.save > wraps leftover слайс as sibling срез, then English stays English [0.28ms]
+(pass) P35-358 leftover Russian слайс wrapping on collection.slice.save > resolves English through setupI18n after changeLanguage(en) [0.08ms]
+
+packages/shared/src/i18n/__tests__/p35-collapse-wrap-locales.test.ts:
+(pass) P35 leftover wrap collapse > renders account health counts and failures with the real catalogs [1.51ms]
+(pass) P35 leftover wrap collapse > applies every unique leftover wrap on current Russian catalog keys [6.98ms]
+(pass) P35 leftover wrap collapse > does not drop #827/#526 connection and settings loadConfig keys [0.10ms]
+
+packages/shared/src/i18n/__tests__/p35-352-tableflag-wrap-locales.test.ts:
+(pass) P35-352 leftover Russian флаг wrapping on collection.table.column.flag > wraps leftover флаг as sibling пометка, then English stays English [0.39ms]
+(pass) P35-352 leftover Russian флаг wrapping on collection.table.column.flag > resolves English through setupI18n after changeLanguage(en) [0.19ms]
+
+packages/shared/src/i18n/__tests__/p35-386-hoststart-wrap-locales.test.ts:
+(pass) P35-386 leftover Russian хост wrapping on extensions.developer.hostStart > wraps leftover хост as sibling хост расширений, then English stays English [0.57ms]
+(pass) P35-386 leftover Russian хост wrapping on extensions.developer.hostStart > resolves English through setupI18n after changeLanguage(en) [0.19ms]
+
+packages/shared/src/i18n/__tests__/p35-361-extnohosts-wrap-locales.test.ts:
+(pass) P35-361 leftover Russian Extension Host wrapping on extensions.developer.noHosts > wraps leftover Extension Host as sibling хост расширений, then English stays English [0.24ms]
+(pass) P35-361 leftover Russian Extension Host wrapping on extensions.developer.noHosts > resolves English through setupI18n after changeLanguage(en) [0.08ms]
+
+packages/shared/src/i18n/__tests__/continue-visual-3-locales.test.ts:
+(pass) continue-visual-3 leftover chrome locales > keeps Russian copy distinct from English [0.12ms]
+
+packages/shared/src/i18n/__tests__/p35-388-hoststatus-wrap-locales.test.ts:
+(pass) P35-388 leftover Russian хост wrapping on extensions.developer.hostStatus > wraps leftover хоста as sibling хоста расширений, then English stays English [0.24ms]
+(pass) P35-388 leftover Russian хост wrapping on extensions.developer.hostStatus > resolves English through setupI18n after changeLanguage(en) [0.41ms]
+
+packages/shared/src/i18n/__tests__/p35-377-senderid-wrap-locales.test.ts:
+(pass) P35-377 leftover Russian id wrapping on settings.messaging.telegram.access.pending.audit.notOnBindingAllowlist > wraps leftover prose id as sibling идентификатор, then English stays English [0.28ms]
+(pass) P35-377 leftover Russian id wrapping on settings.messaging.telegram.access.pending.audit.notOnBindingAllowlist > resolves English through setupI18n after changeLanguage(en) [0.89ms]
+
+packages/shared/src/i18n/__tests__/p35-365-copymarkdown-wrap-locales.test.ts:
+(pass) P35-365 leftover Russian markdown wrapping on knowledge.surface.copy.markdown > wraps leftover lowercase markdown as sibling Markdown, then English stays English [1.34ms]
+(pass) P35-365 leftover Russian markdown wrapping on knowledge.surface.copy.markdown > resolves English through setupI18n after changeLanguage(en) [0.15ms]
+
+packages/shared/src/i18n/__tests__/p35-323-maxllmtokenshint-wrap-locales.test.ts:
+(pass) P35-323 leftover Russian ран wrapping on settings.cloudRuns.maxLlmTokensHint > wraps leftover ран as sibling запуск, then English stays English [0.39ms]
+(pass) P35-323 leftover Russian ран wrapping on settings.cloudRuns.maxLlmTokensHint > resolves English through setupI18n after changeLanguage(en) [0.33ms]
+
+packages/shared/src/i18n/__tests__/p35-376-notebookid-wrap-locales.test.ts:
+(pass) P35-376 leftover Russian id wrapping on knowledge.publish.field.notebookIdPlaceholder > wraps leftover id as sibling ID, then English stays English [0.82ms]
+(pass) P35-376 leftover Russian id wrapping on knowledge.publish.field.notebookIdPlaceholder > resolves English through setupI18n after changeLanguage(en) [1.63ms]
+
+packages/shared/src/i18n/__tests__/p35-373-promptexpand-wrap-locales.test.ts:
+(pass) P35-373 leftover Russian markdown wrapping on notes.ai.promptExpand > wraps leftover markdown as sibling Markdown, then English stays English [0.26ms]
+(pass) P35-373 leftover Russian markdown wrapping on notes.ai.promptExpand > resolves English through setupI18n after changeLanguage(en) [0.09ms]
+
+packages/shared/src/i18n/__tests__/p35-398-infisical-email-wrap-locales.test.ts:
+(pass) P35-398 leftover Russian email wrapping on security.infisical.hint > wraps leftover email as sibling почте, then English stays English [0.23ms]
+(pass) P35-398 leftover Russian email wrapping on security.infisical.hint > resolves English through setupI18n after changeLanguage(en) [0.07ms]
+
+packages/shared/src/i18n/__tests__/p35-345-mapforkversion-wrap-locales.test.ts:
+(pass) P35-345 leftover Russian форк wrapping on entityView.mapForkVersion > wraps leftover форк as sibling ветка, then English stays English [3.33ms]
+(pass) P35-345 leftover Russian форк wrapping on entityView.mapForkVersion > resolves English through setupI18n after changeLanguage(en) [0.28ms]
+
+packages/shared/src/i18n/__tests__/p35-305-projectinfo-details-wrap-locales.test.ts:
+(pass) P35-305 leftover Russian промпт wrapping on projectInfo.details > wraps leftover промпт as sibling запрос, then English stays English [0.24ms]
+(pass) P35-305 leftover Russian промпт wrapping on projectInfo.details > resolves English through setupI18n after changeLanguage(en) [0.20ms]
+
+packages/shared/src/i18n/__tests__/p35-342-outlinefork-wrap-locales.test.ts:
+(pass) P35-342 leftover Russian форк wrapping on entityView.outlineFork > wraps leftover форк as sibling ветка, then English stays English [0.26ms]
+(pass) P35-342 leftover Russian форк wrapping on entityView.outlineFork > resolves English through setupI18n after changeLanguage(en) [1.85ms]
+
+packages/shared/src/i18n/__tests__/p35-347-bindingdisabled-wrap-locales.test.ts:
+(pass) P35-347 leftover Russian биндинг wrapping on telegram bindingPopover disabled.description > wraps leftover биндинг as sibling привязка, then English stays English [0.21ms]
+(pass) P35-347 leftover Russian биндинг wrapping on telegram bindingPopover disabled.description > resolves English through setupI18n after changeLanguage(en) [0.08ms]
+
+packages/shared/src/i18n/__tests__/p35-335-skillpack-wrap-locales.test.ts:
+(pass) P35-335 leftover Russian пак wrapping on marketplace.kind.skillpack > wraps leftover пак as sibling пакет, then English stays English [0.70ms]
+(pass) P35-335 leftover Russian пак wrapping on marketplace.kind.skillpack > resolves English through setupI18n after changeLanguage(en) [3.71ms]
+
+packages/shared/src/i18n/__tests__/p35-371-inspectornostasks-wrap-locales.test.ts:
+(pass) P35-371 leftover Russian markdown wrapping on notes.inspector.noTasks > wraps leftover markdown-задач as sibling Markdown-задач, then English stays English [0.22ms]
+(pass) P35-371 leftover Russian markdown wrapping on notes.inspector.noTasks > resolves English through setupI18n after changeLanguage(en) [0.07ms]
+
+packages/shared/src/i18n/__tests__/p35-339-shadowunverified-wrap-locales.test.ts:
+(pass) P35-339 leftover Russian ревью wrapping on chat.permissionShadow.unverified > wraps leftover ревью as sibling проверка, then English stays English [0.32ms]
+(pass) P35-339 leftover Russian ревью wrapping on chat.permissionShadow.unverified > resolves English through setupI18n after changeLanguage(en) [0.08ms]
+
+packages/shared/src/i18n/__tests__/p35-346-cloudrunsfork-wrap-locales.test.ts:
+(pass) P35-346 leftover Russian форк wrapping on cloudRuns.fork > wraps leftover форк as sibling ветка, then English stays English [0.18ms]
+(pass) P35-346 leftover Russian форк wrapping on cloudRuns.fork > resolves English through setupI18n after changeLanguage(en) [0.08ms]
+
+packages/shared/src/i18n/__tests__/p35-379-promptcompletion-wrap-locales.test.ts:
+(pass) P35-379 leftover Russian prompt+completion wrapping on settings.cloudRuns.maxLlmTokensHint > wraps leftover prompt+completion as sibling вход+выход, then English stays English [0.23ms]
+(pass) P35-379 leftover Russian prompt+completion wrapping on settings.cloudRuns.maxLlmTokensHint > resolves English through setupI18n after changeLanguage(en) [0.65ms]
+
+packages/shared/src/i18n/__tests__/p35-313-bundledtitle-wrap-locales.test.ts:
+(pass) P35-313 leftover Russian скилл wrapping on settings.context.bundledTitle > wraps leftover скиллов as sibling навыков, then English stays English [0.22ms]
+(pass) P35-313 leftover Russian скилл wrapping on settings.context.bundledTitle > resolves English through setupI18n after changeLanguage(en) [0.05ms]
+
+packages/shared/src/i18n/__tests__/p35-367-notescopypath-wrap-locales.test.ts:
+(pass) P35-367 leftover Russian markdown wrapping on notes.menu.copyPath > wraps leftover lowercase markdown as sibling Markdown, then English stays English [2.95ms]
+(pass) P35-367 leftover Russian markdown wrapping on notes.menu.copyPath > resolves English through setupI18n after changeLanguage(en) [0.63ms]
+
+packages/shared/src/i18n/__tests__/p35-393-bottoken-wrap-locales.test.ts:
+(pass) P35-393 leftover English Bot Token wrapping on settings.messaging.discord.tokenLabel > wraps leftover Bot Token as sibling Токен бота, then English stays English [1.78ms]
+(pass) P35-393 leftover English Bot Token wrapping on settings.messaging.discord.tokenLabel > resolves English through setupI18n after changeLanguage(en) [0.45ms]
+
+packages/shared/src/i18n/__tests__/p35-390-backend-wrap-locales.test.ts:
+(pass) P35-390 leftover Russian Backend wrapping on onboarding.apiSetup.craftAgentsBackend > wraps leftover Backend as sibling бэкенд Rox, then English stays English [1.78ms]
+(pass) P35-390 leftover Russian Backend wrapping on onboarding.apiSetup.craftAgentsBackend > resolves English through setupI18n after changeLanguage(en) [0.37ms]
+
+packages/shared/src/i18n/__tests__/p35-382-connectremote-wrap-locales.test.ts:
+(pass) P35-382 leftover Russian Server wrapping on workspace.connectRemoteDesc > wraps leftover Rox Server as sibling сервер Rox, then English stays English [0.23ms]
+(pass) P35-382 leftover Russian Server wrapping on workspace.connectRemoteDesc > resolves English through setupI18n after changeLanguage(en) [0.09ms]
+
+packages/shared/src/i18n/__tests__/p35-375-custombash-wrap-locales.test.ts:
+(pass) P35-375 leftover Russian bash wrapping on settings.permissions.customBashPattern > wraps leftover bash as sibling Bash, then English stays English [1.34ms]
+(pass) P35-375 leftover Russian bash wrapping on settings.permissions.customBashPattern > resolves English through setupI18n after changeLanguage(en) [0.13ms]
+
+packages/shared/src/i18n/__tests__/p35-329-topichelp-wrap-locales.test.ts:
+(pass) P35-329 leftover Russian ран wrapping on cloudRuns.topicHelp > wraps leftover раннер as sibling запуск, then English stays English [2.27ms]
+(pass) P35-329 leftover Russian ран wrapping on cloudRuns.topicHelp > resolves English through setupI18n after changeLanguage(en) [0.09ms]
+
+packages/shared/src/i18n/__tests__/p35-372-extracttasks-wrap-locales.test.ts:
+(pass) P35-372 leftover Russian markdown wrapping on notes.ai.promptExtractTasks > wraps leftover markdown-список as Markdown-список, then English stays English [0.24ms]
+(pass) P35-372 leftover Russian markdown wrapping on notes.ai.promptExtractTasks > resolves English through setupI18n after changeLanguage(en) [0.07ms]
+
+packages/shared/src/i18n/__tests__/p35-366-exportmarkdown-wrap-locales.test.ts:
+(pass) P35-366 leftover Russian markdown wrapping on knowledge.surface.export.markdown > wraps leftover lowercase markdown as sibling Markdown, then English stays English [0.22ms]
+(pass) P35-366 leftover Russian markdown wrapping on knowledge.surface.export.markdown > resolves English through setupI18n after changeLanguage(en) [0.07ms]
+
+packages/shared/src/i18n/__tests__/p35-326-webhookhint-wrap-locales.test.ts:
+(pass) P35-326 leftover Russian ран wrapping on settings.cloudRuns.webhookHint > wraps leftover рана as sibling запуск, then English stays English [0.52ms]
+(pass) P35-326 leftover Russian ран wrapping on settings.cloudRuns.webhookHint > resolves English through setupI18n after changeLanguage(en) [0.12ms]
+
+packages/shared/src/i18n/__tests__/p35-355-playbookholeempty-wrap-locales.test.ts:
+(pass) P35-355 leftover Russian плейбук wrapping on entityView.playbookHoleEmpty > wraps leftover плейбука as sibling сценария, then English stays English [0.29ms]
+(pass) P35-355 leftover Russian плейбук wrapping on entityView.playbookHoleEmpty > resolves English through setupI18n after changeLanguage(en) [0.11ms]
+
+packages/shared/src/i18n/__tests__/p35-368-pathcopied-wrap-locales.test.ts:
+(pass) P35-368 leftover Russian markdown wrapping on notes.toast.pathCopied > wraps leftover lowercase markdown as sibling Markdown, then English stays English [0.25ms]
+(pass) P35-368 leftover Russian markdown wrapping on notes.toast.pathCopied > resolves English through setupI18n after changeLanguage(en) [0.07ms]
+
+packages/shared/src/i18n/__tests__/p35-356-sliceflagged-wrap-locales.test.ts:
+(pass) P35-356 leftover Russian флаг wrapping on collection.slice.flagged > wraps leftover флажком as sibling пометкой, then English stays English [0.25ms]
+(pass) P35-356 leftover Russian флаг wrapping on collection.slice.flagged > resolves English through setupI18n after changeLanguage(en) [0.24ms]
+
+packages/shared/src/i18n/__tests__/p35-392-pagesguide-wrap-locales.test.ts:
+(pass) P35-392 leftover English Pages wrapping on pages.designWithAgentPrompt > wraps leftover Pages as sibling страниц, then English stays English [0.40ms]
+(pass) P35-392 leftover English Pages wrapping on pages.designWithAgentPrompt > resolves English through setupI18n after changeLanguage(en) [0.08ms]
+
+packages/shared/src/i18n/__tests__/locale-parity.test.ts:
+(pass) i18n locale parity > hu has all EN keys [1.60ms]
+(pass) i18n locale parity > hu has no extra keys beyond EN [0.64ms]
+(pass) i18n locale parity > hu interpolation variables match EN [4.71ms]
+(pass) i18n locale parity > ja has all EN keys [1.31ms]
+(pass) i18n locale parity > ja has no extra keys beyond EN [4.69ms]
+(pass) i18n locale parity > ja interpolation variables match EN [10.04ms]
+(pass) i18n locale parity > de has all EN keys [0.36ms]
+(pass) i18n locale parity > de has no extra keys beyond EN [0.30ms]
+(pass) i18n locale parity > de interpolation variables match EN [3.82ms]
+(pass) i18n locale parity > ru has all EN keys [0.36ms]
+(pass) i18n locale parity > ru has no extra keys beyond EN [2.61ms]
+(pass) i18n locale parity > ru interpolation variables match EN [6.05ms]
+(pass) i18n locale parity > pl has all EN keys [3.26ms]
+(pass) i18n locale parity > pl has no extra keys beyond EN [0.55ms]
+(pass) i18n locale parity > pl interpolation variables match EN [4.93ms]
+(pass) i18n locale parity > zh-Hans has all EN keys [1.34ms]
+(pass) i18n locale parity > zh-Hans has no extra keys beyond EN [0.34ms]
+(pass) i18n locale parity > zh-Hans interpolation variables match EN [6.95ms]
+(pass) i18n locale parity > fr has all EN keys [1.52ms]
+(pass) i18n locale parity > fr has no extra keys beyond EN [0.38ms]
+(pass) i18n locale parity > fr interpolation variables match EN [5.59ms]
+(pass) i18n locale parity > ko has all EN keys [1.32ms]
+(pass) i18n locale parity > ko has no extra keys beyond EN [1.34ms]
+(pass) i18n locale parity > ko interpolation variables match EN [32.48ms]
+(pass) i18n locale parity > es has all EN keys [0.38ms]
+(pass) i18n locale parity > es has no extra keys beyond EN [1.12ms]
+(pass) i18n locale parity > es interpolation variables match EN [30.11ms]
+(pass) i18n locale parity > ar has all EN keys [0.37ms]
+(pass) i18n locale parity > ar has no extra keys beyond EN [0.35ms]
+(pass) i18n locale parity > ar interpolation variables match EN [12.09ms]
+(pass) i18n locale parity > zh-Hant has all EN keys [0.36ms]
+(pass) i18n locale parity > zh-Hant has no extra keys beyond EN [0.82ms]
+(pass) i18n locale parity > zh-Hant interpolation variables match EN [4.35ms]
+(pass) i18n locale parity > hu plural forms are complete (_one has _other and vice versa) [3.50ms]
+(pass) i18n locale parity > ja plural forms are complete (_one has _other and vice versa) [1.50ms]
+(pass) i18n locale parity > de plural forms are complete (_one has _other and vice versa) [3.69ms]
+(pass) i18n locale parity > ru plural forms are complete (_one has _other and vice versa) [1.03ms]
+(pass) i18n locale parity > pl plural forms are complete (_one has _other and vice versa) [1.64ms]
+(pass) i18n locale parity > en plural forms are complete (_one has _other and vice versa) [1.20ms]
+(pass) i18n locale parity > zh-Hans plural forms are complete (_one has _other and vice versa) [1.59ms]
+(pass) i18n locale parity > fr plural forms are complete (_one has _other and vice versa) [0.44ms]
+(pass) i18n locale parity > ko plural forms are complete (_one has _other and vice versa) [0.52ms]
+(pass) i18n locale parity > es plural forms are complete (_one has _other and vice versa) [0.42ms]
+(pass) i18n locale parity > ar plural forms are complete (_one has _other and vice versa) [0.46ms]
+(pass) i18n locale parity > zh-Hant plural forms are complete (_one has _other and vice versa) [0.42ms]
+(pass) i18n locale parity > hu keys are sorted alphabetically [5.02ms]
+(pass) i18n locale parity > ja keys are sorted alphabetically [2.09ms]
+(pass) i18n locale parity > de keys are sorted alphabetically [1.37ms]
+(pass) i18n locale parity > ru keys are sorted alphabetically [1.67ms]
+(pass) i18n locale parity > pl keys are sorted alphabetically [1.26ms]
+(pass) i18n locale parity > en keys are sorted alphabetically [1.24ms]
+(pass) i18n locale parity > zh-Hans keys are sorted alphabetically [1.24ms]
+(pass) i18n locale parity > fr keys are sorted alphabetically [2.10ms]
+(pass) i18n locale parity > ko keys are sorted alphabetically [1.25ms]
+(pass) i18n locale parity > es keys are sorted alphabetically [1.24ms]
+(pass) i18n locale parity > ar keys are sorted alphabetically [1.23ms]
+(pass) i18n locale parity > zh-Hant keys are sorted alphabetically [1.28ms]
+
+packages/shared/src/i18n/__tests__/p35-357-slicesaved-wrap-locales.test.ts:
+(pass) P35-357 leftover Russian слайс wrapping on collection.slice.saved > wraps leftover слайсы as sibling срезы, then English stays English [0.55ms]
+(pass) P35-357 leftover Russian слайс wrapping on collection.slice.saved > resolves English through setupI18n after changeLanguage(en) [0.28ms]
+
+packages/shared/src/i18n/__tests__/security-settings-locales.test.ts:
+(pass) security settings locale keys > keeps one sorted, complete security key set in every current locale [84.76ms]
+(pass) security settings locale keys > keeps the canonical Russian title and description user-facing [9.10ms]
+
+packages/shared/src/i18n/__tests__/p35-331-providerhint-wrap-locales.test.ts:
+(pass) P35-331 leftover Russian ран wrapping on settings.cloudRuns.providerHint > wraps leftover раннер as sibling запуск, then English stays English [0.30ms]
+(pass) P35-331 leftover Russian ран wrapping on settings.cloudRuns.providerHint > resolves English through setupI18n after changeLanguage(en) [0.06ms]
+
+ 300 pass
+ 0 fail
+ 6530 expect() calls
+Ran 300 tests across 90 files. [6.86s]

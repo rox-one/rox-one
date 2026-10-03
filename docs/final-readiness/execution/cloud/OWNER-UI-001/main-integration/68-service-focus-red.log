@@ -1,0 +1,55 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-navigation.test.ts:
+ 9 |   it('cannot classify unavailable or malformed addresses as an existing service', () => {
+10 |     for (const route of ['knowledge/unknown/doc', 'allSessions/session/s1/future', 'notes/note/%GG', 'future/session/private']) {
+11 |       const store = createStore()
+12 |       store.set(pushPanelAtom, { route: route as ViewRoute })
+13 |       for (const destination of APP_NAV_DESTINATIONS) {
+14 |         expect(findServicePanel(store.get(panelStackAtom), store.get(focusedPanelIdAtom), destination.id)).toBeUndefined()
+                                                                                                                ^
+error: expect(received).toBeUndefined()
+
+Received: {
+  id: "panel-1-1791042757327",
+  route: "knowledge/unknown/doc",
+  proportion: 1,
+  panelType: "other",
+  laneId: "main",
+}
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-navigation.test.ts:14:108)
+(fail) UI-001 retained addresses and service focus > cannot classify unavailable or malformed addresses as an existing service [7.70ms]
+17 |   })
+18 |   it('refuses to focus an unavailable panel and preserves its address', () => {
+19 |     const store = createStore()
+20 |     store.set(pushPanelAtom, { route: 'knowledge/unknown/doc' as ViewRoute })
+21 |     const panels = store.get(panelStackAtom), focused = store.get(focusedPanelIdAtom)
+22 |     expect(store.set(focusServicePanelAtom, 'sessions')).toBe(false)
+                                                              ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-navigation.test.ts:22:58)
+(fail) UI-001 retained addresses and service focus > refuses to focus an unavailable panel and preserves its address [1.05ms]
+28 |     store.set(pushPanelAtom, { route: 'allSessions/session/s1' as ViewRoute })
+29 |     const target = store.get(focusedPanelIdAtom)
+30 |     store.set(pushPanelAtom, { route: 'knowledge/unknown/doc' as ViewRoute })
+31 |     const panels = store.get(panelStackAtom)
+32 |     expect(store.set(focusServicePanelAtom, 'sessions')).toBe(true)
+33 |     expect(store.get(focusedPanelIdAtom)).toBe(target)
+                                               ^
+error: expect(received).toBe(expected)
+
+Expected: "panel-3-1791042757335"
+Received: "panel-4-1791042757335"
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-navigation.test.ts:33:43)
+(fail) UI-001 retained addresses and service focus > focuses a valid service sibling while preserving all retained panel identities [2.74ms]
+
+ 0 pass
+ 3 fail
+ 4 expect() calls
+Ran 3 tests across 1 file. [7.74s]

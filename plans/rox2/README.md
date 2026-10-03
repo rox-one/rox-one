@@ -21,6 +21,11 @@ Do not infer product readiness from the number of merged PRs.
 | `emit.ts` | `bun plans/rox2/emit.ts` |
 | `packages/core/src/rox2/platform-contract.ts` | Entity / event / result / context contract |
 
+The 200 charter card identifiers are stable. `discoverAdditionalRox2RpcFiles()`
+reports handlers added after the charter separately, so adding a source file
+cannot renumber existing cards or move `ROX2-200`. Those additions require their
+own scope and acceptance decision; discovery does not mark them implemented.
+
 ## Evidence classes
 
 Every claim is one of: `reproduced` / `statically-confirmed` / `documented` / `needs-verification` / `new-requirement`.

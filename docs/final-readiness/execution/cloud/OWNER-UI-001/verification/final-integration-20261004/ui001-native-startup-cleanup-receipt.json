@@ -1,0 +1,39 @@
+{
+  "kind": "native-test-startup-observability-and-owned-cleanup",
+  "observedAt": "2026-10-03T20:36:48.551200+00:00",
+  "productionSourceChanged": false,
+  "originalWindowsSmoke": {
+    "jobId": 111279491239,
+    "sourceCheckout": "19d505b92e9a4773ad6ea0bcf4cec62d02d09780",
+    "status": "failed",
+    "firstWindowTimeoutMs": 30000,
+    "log": "ui001-2e3d-windows-native-smoke.log"
+  },
+  "changedFixturePaths": [
+    "tests/e2e/product-tour/native-harness.ts",
+    "tests/e2e/product-tour/native-startup.ts",
+    "tests/e2e/product-tour/rox-readiness-ui-001.native-startup.test.ts"
+  ],
+  "test": {
+    "command": "bun test tests/e2e/product-tour/rox-readiness-ui-001.native-startup.test.ts",
+    "bun": "1.3.14",
+    "passed": 3,
+    "failed": 0,
+    "assertions": 20,
+    "logSha256": "098fd0585f4dcb56dbda5994b3ee84e22c96e19586e25b4c3a7e84ebd13b3b58"
+  },
+  "behavior": [
+    "original firstWindow deadline unchanged",
+    "captures bounded actual child stdout/stderr on missing window",
+    "joins own Electron close/profile cleanup before failure returns",
+    "preserves first-window and diagnostic/cleanup failures together",
+    "ready window retains caller ownership",
+    "isolated fixture opts out of both OS protocol registrations"
+  ],
+  "nativeAcceptanceClosed": false,
+  "sourceSha256": {
+    "tests/e2e/product-tour/native-harness.ts": "36c6f81ddb52807f3d9afdb3707e97b185ee6087329031176fac33ae58b35a0f",
+    "tests/e2e/product-tour/native-startup.ts": "fdb4e45205f568454c0435cd1d7773975fe048e7c28395ef84e03d55cf581465",
+    "tests/e2e/product-tour/rox-readiness-ui-001.native-startup.test.ts": "3c57e267054b63493d9d421691030f605ba508dd3693c7ad7bd197cd12e27b3a"
+  }
+}

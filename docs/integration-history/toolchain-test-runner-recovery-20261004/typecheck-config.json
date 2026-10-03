@@ -1,0 +1,21 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "types": ["bun"],
+    "typeRoots": ["../../../node_modules/@types"],
+    "baseUrl": "../../..",
+    "paths": {
+      "@rox/shared": ["packages/shared/src/index.ts"],
+      "@rox/shared/*": ["packages/shared/src/*"],
+      "@rox/core": ["packages/core/src/index.ts"],
+      "@rox/core/*": ["packages/core/src/*"]
+    }
+  },
+  "include": [
+    "../../../scripts/test-all.ts",
+    "../../../scripts/rox-readiness-ui-001.runner.test.ts",
+    "../../../packages/shared/src/toolchain/manager.ts",
+    "../../../packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-recovery.test.ts"
+  ],
+  "exclude": []
+}

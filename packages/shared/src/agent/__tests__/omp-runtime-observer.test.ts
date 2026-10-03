@@ -21,12 +21,14 @@ const native = (hook: string, payload: Record<string, unknown>, overrides: Parti
 describe('OMP native runtime observation transport', () => {
   it('binds real hook payloads without mutating tools, permissions or prompt', async () => {
     const root = mkdtempSync(join(tmpdir(), 'rox-observation-'));
-    const previousEnv = { path: process.env.ROX_RUNTIME_OBSERVATION_PATH, control: process.env.ROX_RUNTIME_CONTROL_PATH, key: process.env.ROX_API_KEY };
+    const previousEnv = { path: process.env.ROX_RUNTIME_OBSERVATION_PATH, control: process.env.ROX_RUNTIME_CONTROL_PATH, key: process.env.ROX_API_KEY,
+      shortToken: process.env.ROX_OBSERVER_SHORT_TOKEN, longerToken: process.env.ROX_OBSERVER_LONGER_TOKEN };
     const events: OmpRuntimeObservation[] = [];
     const errors: Error[] = [];
     const observer = new OmpRuntimeObserver(join(root, 'observer'), event => { if (event.agent.id === 'ActualNativeId') events.push(event); }, error => errors.push(error));
     try {
-      Object.assign(process.env, observer.env, { ROX_API_KEY: 'SECRET_FIXTURE_API_KEY' });
+      Object.assign(process.env, observer.env, { ROX_API_KEY: 'SECRET_FIXTURE_API_KEY',
+        ROX_OBSERVER_SHORT_TOKEN: 'six7!?', ROX_OBSERVER_LONGER_TOKEN: 'SECRET_FIXTURE_API_KEY_private-suffix' });
       observer.beginRun('current-turn');
       const handlers = new Map<string, Function>();
       const tools = Object.freeze(['read', 'yield']);
@@ -49,7 +51,9 @@ describe('OMP native runtime observation transport', () => {
       Object.defineProperty(args, 'publicGetter', { enumerable: true, get: () => { accessorReads++; return 'uncaptured'; } });
       expect(handlers.get('before_agent_start')!(prompt, ctx)).toBeUndefined();
       expect(handlers.get('tool_execution_start')!({ toolCallId: 'real-call', toolName: 'read', args }, ctx)).toBeUndefined();
-      handlers.get('tool_execution_end')!({ toolCallId: 'real-call', toolName: 'read', result: { content: [{ type: 'text', text: 'read result' }] }, isError: false }, ctx);
+      const privateText = 'password="unregistered quoted value" password=\'unregistered single value\'\nCookie: session=unregistered-cookie; private-attr=value\nKnown opaque values: six7!? SECRET_FIXTURE_API_KEY_private-suffix';
+      const privateJSON = JSON.stringify({ password: 'unregistered JSON value', env: { CUSTOM: 'unregistered ENV value' }, inputTokens: 99 });
+      handlers.get('tool_execution_end')!({ toolCallId: 'real-call', toolName: 'read', result: { content: [{ type: 'text', text: privateText }, { type: 'text', text: privateJSON }] }, isError: false }, ctx);
       observer.drain();
       expect(events).toHaveLength(3);
       expect(events[0]!.agent).toEqual({ ...ctx.agent, name: 'scout [REDACTED]' });
@@ -67,11 +71,17 @@ describe('OMP native runtime observation transport', () => {
       const stored = readFileSync(observer.env.ROX_RUNTIME_OBSERVATION_PATH!, 'utf8');
       expect(stored).not.toContain('SECRET_FIXTURE_API_KEY');
       expect(stored).not.toContain('pixels');
+      for (const value of ['unregistered quoted value', 'unregistered single value', 'unregistered-cookie', 'unregistered JSON value', 'unregistered ENV value', 'six7!?', '_private-suffix']) {
+        expect(stored).not.toContain(value);
+        expect(JSON.stringify(events)).not.toContain(value);
+      }
+      expect(stored).toContain('inputTokens');
       expect(errors).toHaveLength(0);
     } finally {
       observer.dispose();
       expect(existsSync(join(root, 'observer'))).toBe(false);
-      for (const [key, value] of Object.entries({ ROX_RUNTIME_OBSERVATION_PATH: previousEnv.path, ROX_RUNTIME_CONTROL_PATH: previousEnv.control, ROX_API_KEY: previousEnv.key })) {
+      for (const [key, value] of Object.entries({ ROX_RUNTIME_OBSERVATION_PATH: previousEnv.path, ROX_RUNTIME_CONTROL_PATH: previousEnv.control, ROX_API_KEY: previousEnv.key,
+        ROX_OBSERVER_SHORT_TOKEN: previousEnv.shortToken, ROX_OBSERVER_LONGER_TOKEN: previousEnv.longerToken })) {
         if (value === undefined) delete process.env[key]; else process.env[key] = value;
       }
       rmSync(root, { recursive: true, force: true });
@@ -114,6 +124,37 @@ describe('OMP native runtime observation transport', () => {
       observer.drain();
       expect(events[0]!.truncated).toBe(true);
       expect((events[0]!.payload.prompt as string).length).toBe(32768);
+    } finally {
+      observer.dispose();
+      if (previous.path === undefined) delete process.env.ROX_RUNTIME_OBSERVATION_PATH; else process.env.ROX_RUNTIME_OBSERVATION_PATH = previous.path;
+      if (previous.control === undefined) delete process.env.ROX_RUNTIME_CONTROL_PATH; else process.env.ROX_RUNTIME_CONTROL_PATH = previous.control;
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('binds delayed descendant starts to their actual native spawn reservation', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'rox-observation-'));
+    const previous = { path: process.env.ROX_RUNTIME_OBSERVATION_PATH, control: process.env.ROX_RUNTIME_CONTROL_PATH };
+    const events: OmpRuntimeObservation[] = [];
+    const observer = new OmpRuntimeObserver(join(root, 'observer'), event => events.push(event), () => {});
+    try {
+      Object.assign(process.env, observer.env);
+      observer.beginRun('originating-run');
+      const factory = (await import(observer.extensionPath)).default;
+      const parentHooks = new Map<string, Function>();
+      const childHooks = new Map<string, Function>();
+      const api = (hooks: Map<string, Function>) => ({ on: (name: string, handler: Function) => hooks.set(name, handler),
+        getActiveTools: () => ['read'], getAllTools: () => [{ name: 'read' }, { name: 'hidden-tool' }], getThinkingLevel: () => 'high' });
+      factory(api(parentHooks)); factory(api(childHooks));
+      const parent = { agent: { kind: 'main', id: 'Main', name: 'main', depth: 0 }, sessionManager: { getSessionId: () => 'parent-session' }, cwd: '/fixture', getContextUsage: () => undefined };
+      const child = { ...parent, agent: { kind: 'sub', id: 'reserved-child', name: 'child', depth: 1, parentId: 'Main' } };
+      parentHooks.get('before_agent_start')!({ prompt: 'parent', systemPrompt: [] }, parent);
+      parentHooks.get('before_subagent_spawn')!({ invocationKind: 'task', spawnKey: 'reserved-child' }, parent);
+      observer.beginRun('next-user-run');
+      childHooks.get('before_agent_start')!({ prompt: 'delayed actual child', systemPrompt: [] }, child);
+      observer.drain();
+      expect(events.at(-1)?.runId).toBe('originating-run');
+      expect(events.at(-1)?.payload.toolDefinitions).toEqual([{ name: 'read' }]);
     } finally {
       observer.dispose();
       if (previous.path === undefined) delete process.env.ROX_RUNTIME_OBSERVATION_PATH; else process.env.ROX_RUNTIME_OBSERVATION_PATH = previous.path;
@@ -173,6 +214,111 @@ describe('OMP native runtime observation transport', () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it('binds actual native lifecycle ids and parent tool calls for synchronous and renamed tasks', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'rox-observation-'));
+    const previous = { path: process.env.ROX_RUNTIME_OBSERVATION_PATH, control: process.env.ROX_RUNTIME_CONTROL_PATH };
+    const raw: OmpRuntimeObservation[] = [];
+    const bridge = new OmpRuntimeTraceBridge(); bridge.beginRun('original-dispatch', 'parent request');
+    const observations: ReturnType<OmpRuntimeTraceBridge['map']> = [];
+    const observer = new OmpRuntimeObserver(join(root, 'observer'), event => { raw.push(event); observations.push(...bridge.map(event)); }, () => {});
+    try {
+      Object.assign(process.env, observer.env);
+      observer.beginRun('original-dispatch');
+      const listeners: Function[] = [];
+      const factory = (await import(observer.extensionPath)).default;
+      const hooks = new Map<string, Function>();
+      const childHooks = new Map<string, Function>();
+      const api = (handlers: Map<string, Function>) => ({ on: (name: string, handler: Function) => handlers.set(name, handler),
+        events: { on: (channel: string, listener: Function) => { if (channel === 'task:subagent:lifecycle') listeners.push(listener); return () => {}; } },
+        getActiveTools: () => ['read'], getAllTools: () => [{ name: 'read' }], getThinkingLevel: () => 'high' });
+      factory(api(hooks)); factory(api(childHooks));
+      const parent = { agent: { kind: 'main', id: 'Main', name: 'main', depth: 0 }, sessionManager: { getSessionId: () => 'native-parent' }, cwd: '/fixture', getContextUsage: () => undefined };
+      const child = (id: string) => ({ ...parent, agent: { kind: 'sub', id, name: 'worker', depth: 1, parentId: 'Main' }, sessionManager: { getSessionId: () => `native-${id}` } });
+      hooks.get('before_agent_start')!({ prompt: 'parent', systemPrompt: [] }, parent);
+      hooks.get('tool_execution_start')!({ toolName: 'task', toolCallId: 'actual-parent-call', args: {} }, parent);
+      hooks.get('before_subagent_spawn')!({ invocationKind: 'task', spawnKey: 'actual-parent-call:0' }, parent);
+      observer.beginRun('new-user-control');
+      for (const listener of listeners) listener({ status: 'started', id: 'NativeAllocatedId', parentToolCallId: 'actual-parent-call', index: 0 });
+      childHooks.get('before_agent_start')!({ prompt: 'actual child assignment', systemPrompt: [] }, child('NativeAllocatedId'));
+      // A named synchronous task gets a uniqueness suffix after spawn hook.
+      hooks.get('before_subagent_spawn')!({ invocationKind: 'task', spawnKey: 'requested-label' }, parent);
+      for (const listener of listeners) listener({ status: 'started', id: 'requested-label-2', parentToolCallId: 'actual-parent-call', index: 1 });
+      childHooks.get('before_agent_start')!({ prompt: 'actual renamed task', systemPrompt: [] }, child('requested-label-2'));
+      observer.drain();
+      const identities = raw.filter(event => event.hook === 'subagent_identity');
+      expect(identities.map(event => event.payload.id)).toEqual(['NativeAllocatedId', 'requested-label-2']);
+      expect(identities.every(event => event.runId === 'original-dispatch')).toBe(true);
+      const assignments = observations.filter(event => event.kind === 'agent.assigned');
+      expect(assignments.map(event => event.agentId)).toEqual(['NativeAllocatedId', 'requested-label-2']);
+      expect(assignments.every(event => event.kind === 'agent.assigned' && event.payload.assignment.nativeKind === 'task' && event.parentSpanId === 'tool:actual-parent-call')).toBe(true);
+    } finally {
+      observer.dispose();
+      if (previous.path === undefined) delete process.env.ROX_RUNTIME_OBSERVATION_PATH; else process.env.ROX_RUNTIME_OBSERVATION_PATH = previous.path;
+      if (previous.control === undefined) delete process.env.ROX_RUNTIME_CONTROL_PATH; else process.env.ROX_RUNTIME_CONTROL_PATH = previous.control;
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+it('refuses late lifecycle and result bindings after the same parent dispatch receipt is reused across runs', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'rox-observer-custody-'));
+  const previous = { path: process.env.ROX_RUNTIME_OBSERVATION_PATH, control: process.env.ROX_RUNTIME_CONTROL_PATH };
+  const events: OmpRuntimeObservation[] = [];
+  const observer = new OmpRuntimeObserver(join(root, 'observer'), event => events.push(event), () => {});
+  const stderr = process.stderr.write;
+  const diagnostics: string[] = [];
+  try {
+    Object.assign(process.env, observer.env);
+    process.stderr.write = ((value: string) => { diagnostics.push(value); return true; }) as typeof process.stderr.write;
+    const factory = (await import(observer.extensionPath)).default;
+    const parentHooks = new Map<string, Function>();
+    const childHooks = new Map<string, Function>();
+    const listeners: Function[] = [];
+    const api = (hooks: Map<string, Function>) => ({ on: (name: string, handler: Function) => hooks.set(name, handler),
+      events: { on: (name: string, handler: Function) => { if (name === 'task:subagent:lifecycle') listeners.push(handler); } },
+      getActiveTools: () => ['read'], getAllTools: () => [{ name: 'read' }], getThinkingLevel: () => 'high' });
+    factory(api(parentHooks)); factory(api(childHooks));
+    const parent = { agent: { kind: 'main', id: 'Main', name: 'main', depth: 0 }, sessionManager: { getSessionId: () => 'native-parent' }, cwd: '/fixture', getContextUsage: () => undefined };
+    const child = (id: string) => ({ ...parent, agent: { kind: 'sub', id, name: 'worker', depth: 1, parentId: 'Main' }, sessionManager: { getSessionId: () => `native-${id}` } });
+    const dispatch = (run: string, call: string, spawnKey: string) => {
+      observer.beginRun(run);
+      parentHooks.get('before_agent_start')!({ prompt: run, systemPrompt: [] }, parent);
+      parentHooks.get('tool_execution_start')!({ toolName: 'task', toolCallId: call, args: {} }, parent);
+      parentHooks.get('before_subagent_spawn')!({ invocationKind: 'task', spawnKey }, parent);
+    };
+    dispatch('original-run', 'reused-call', 'reused-call:0');
+    dispatch('successor-run', 'reused-call', 'reused-call:0');
+    for (const listener of listeners) listener({ status: 'started', id: 'LateOriginalChild', parentToolCallId: 'reused-call', index: 0 });
+    childHooks.get('before_agent_start')!({ prompt: 'late original child', systemPrompt: [] }, child('LateOriginalChild'));
+    parentHooks.get('tool_execution_end')!({ toolCallId: 'reused-call', toolName: 'task', result: { details: { results: [{ index: 0, id: 'LateResultChild' }] } } }, parent);
+    childHooks.get('before_agent_start')!({ prompt: 'late original result child', systemPrompt: [] }, child('LateResultChild'));
+    dispatch('successor-run', 'fresh-call', 'fresh-call:0');
+    childHooks.get('before_agent_start')!({ prompt: 'late child after reused reservation closes', systemPrompt: [] }, child('LateChildAfterClosure'));
+
+    // Renamed task actors have no exact spawn-key lookup; the genuine parent
+    // call fallback must also refuse a call receipt reused by another run.
+    dispatch('renamed-original-run', 'reused-renamed-call', 'requested-label-A');
+    dispatch('renamed-successor-run', 'reused-renamed-call', 'requested-label-B');
+    for (const listener of listeners) listener({ status: 'started', id: 'requested-label-A-2', parentToolCallId: 'reused-renamed-call', index: 0 });
+    childHooks.get('before_agent_start')!({ prompt: 'late renamed child', systemPrompt: [] }, child('requested-label-A-2'));
+    observer.drain();
+    expect(events.filter(event => event.hook === 'subagent_identity')).toHaveLength(0);
+    expect(events.filter(event => event.agent.kind === 'sub')).toHaveLength(0);
+    expect(diagnostics.join('')).toContain('cannot bind native child');
+    for (const listener of listeners) listener({ status: 'started', id: 'FreshProvenChild', parentToolCallId: 'fresh-call', index: 0 });
+    childHooks.get('before_agent_start')!({ prompt: 'fresh child with exact native receipt', systemPrompt: [] }, child('FreshProvenChild'));
+    observer.drain();
+    expect(events.filter(event => event.hook === 'subagent_identity').map(event => event.payload.id)).toEqual(['FreshProvenChild']);
+    expect(events.filter(event => event.agent.kind === 'sub').map(event => event.agent.id)).toEqual(['FreshProvenChild']);
+    expect(events.at(-1)?.runId).toBe('successor-run');
+  } finally {
+    process.stderr.write = stderr;
+    observer.dispose();
+    if (previous.path === undefined) delete process.env.ROX_RUNTIME_OBSERVATION_PATH; else process.env.ROX_RUNTIME_OBSERVATION_PATH = previous.path;
+    if (previous.control === undefined) delete process.env.ROX_RUNTIME_CONTROL_PATH; else process.env.ROX_RUNTIME_CONTROL_PATH = previous.control;
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 describe('OMP typed native runtime bridge', () => {
@@ -194,6 +340,16 @@ describe('OMP typed native runtime bridge', () => {
     expect(context.payload.snapshot.inputTokens).toMatchObject({ state: 'known', value: 25, origin: 'estimated' });
     expect(context.payload.snapshot.coverage.state).toBe('partial');
     expect(context.payload.snapshot.blocks[0]?.content.tokens).toEqual({ state: 'unknown', reason: 'not-emitted' });
+  });
+
+  it('uses the actual registry parent when mirrored native buses reuse a provider tool id', () => {
+    const bridge = new OmpRuntimeTraceBridge(); bridge.beginRun('current-turn', 'request');
+    bridge.map(native('subagent_identity', { id: 'Grandchild', invocationKind: 'task', parentToolCallId: 'same-provider-call', index: 0 }, { agent: { kind: 'main', id: 'Main', name: 'main', depth: 0 }, nativeSessionId: 'root-native' }));
+    bridge.map(native('subagent_identity', { id: 'Grandchild', invocationKind: 'task', parentToolCallId: 'same-provider-call', index: 0 }, { agent: { kind: 'sub', id: 'ActualParent', name: 'parent', depth: 1, parentId: 'Main' }, nativeSessionId: 'actual-parent-native' }));
+    const events = bridge.map(native('before_agent_start', { prompt: 'actual grandchild', systemPrompt: [], tools: ['read', 'yield'] }, { agent: { kind: 'sub', id: 'Grandchild', name: 'grandchild', depth: 2, parentId: 'ActualParent' }, nativeSessionId: 'grandchild-native' }));
+    const assignment = events.find(event => event.kind === 'agent.assigned');
+    expect(assignment?.parentAgentId).toBe('ActualParent');
+    expect(assignment?.parentSpanId).toBe('native:actual-parent-native:tool:same-provider-call');
   });
 
   it('does not duplicate root tool/reasoning/usage and drops stale cancelled turns', () => {
@@ -341,13 +497,17 @@ describe('OMP typed native runtime bridge', () => {
       eventQueue: { enqueue: (event: AgentEvent) => void; isComplete: boolean };
     };
     const events: AgentEvent[] = [];
+    let actualSidecarCalls = 0;
+    setHostBashPort(async () => { actualSidecarCalls++; throw new Error('env-less fixture sidecar must be bypassed'); });
     internals._isProcessing = true;
     internals.runtimeObservationRunId = 'originating-run';
     internals.eventQueue.enqueue = event => events.push(event);
     const observer = internals.createHostBashObserver('exact-provider-tool-id', 'originating-run', () => true);
     const cached = internals.getSessionToolContext();
     try {
+      expect(typeof cached.getHostBashEnv).toBe('function');
       const result = await internals.executeHostSessionTool('bash', { command: "printf 'actual-out'; printf 'actual-err' >&2; exit 7" }, observer);
+      expect(actualSidecarCalls).toBe(0);
       expect(result.isError).toBe(true);
       expect(cached.hostBashObserver).toBeUndefined();
       const observations = events.flatMap(event => event.type === 'runtime_observation' ? [event.observation] : []);
@@ -363,14 +523,15 @@ describe('OMP typed native runtime bridge', () => {
       observer({ phase: 'completed', execution: 'local', command: 'old', cwd: fake.workspaceRoot,
         occurredAt: Date.now(), monotonicMs: performance.now(), result: { stdout: 'late', stderr: '', exitCode: 0, timedOut: false, cwd: fake.workspaceRoot, durationMs: 1 } });
       expect(events).toHaveLength(captured);
-    } finally { internals._isProcessing = false; agent.destroy(); fake.cleanup(); }
+    } finally { setHostBashPort(null); internals._isProcessing = false; agent.destroy(); fake.cleanup(); }
   });
 
-  it('creates a new attempt only for an actually started sidecar-to-local fallback', async () => {
+  it('creates a new attempt only for an actually started legacy-port fallback without a managed environment', async () => {
     const fake = createFakeOmp();
     const agent = new OmpAgent(makeOmpConfig(fake));
     const internals = agent as unknown as {
       _isProcessing: boolean; runtimeObservationRunId: string;
+      getSessionToolContext: () => SessionToolContext;
       createHostBashObserver: (toolCallId: string, generation: string, active: () => boolean) => (evidence: HostBashObservation) => void;
       executeHostSessionTool: (name: string, args: Record<string, unknown>, observer?: (evidence: HostBashObservation) => void) => Promise<{ content: string; isError: boolean }>;
       eventQueue: { enqueue: (event: AgentEvent) => void };
@@ -382,6 +543,11 @@ describe('OMP typed native runtime bridge', () => {
     internals.runtimeObservationRunId = 'actual-fallback-run';
     internals.eventQueue.enqueue = event => events.push(event);
     try {
+      const actualContext = internals.getSessionToolContext();
+      expect(typeof actualContext.getHostBashEnv).toBe('function');
+      // The optional legacy port cannot accept managed per-call environments.
+      // Clone only this fixture caller; the production cached context is intact.
+      internals.getSessionToolContext = () => ({ ...actualContext, getHostBashEnv: undefined });
       const observer = internals.createHostBashObserver('same-native-tool-id', 'actual-fallback-run', () => true);
       const result = await internals.executeHostSessionTool('bash', { command: "printf 'local-fallback-output'" }, observer);
       expect(actualSidecarCalls).toBe(1);

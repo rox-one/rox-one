@@ -16,6 +16,7 @@ import type {
   PermissionRequest as BasePermissionRequest,
 } from '@rox/core/types'
 import type { KnowledgeRef } from '@rox/core/knowledge'
+import type { RuntimeLaunch } from '@rox/core/runtime-trace'
 import type { PermissionMode } from '../agent/mode-types'
 import type { ThinkingLevel } from '../agent/thinking-levels'
 import type { CustomEndpointConfig, LlmProviderType } from '../config/llm-connections'
@@ -481,6 +482,8 @@ export type SessionEvent =
   | { type: 'messages_replaced'; sessionId: string; messages: Message[] }
 
 export interface SendMessageOptions {
+  /** Producer telemetry only; native principals cannot supply this metadata. */
+  runtimeLaunch?: RuntimeLaunch
   skillSlugs?: string[]
   badges?: ContentBadge[]
   optimisticMessageId?: string

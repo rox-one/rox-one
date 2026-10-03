@@ -7,11 +7,14 @@ import {
   resolveRouteNavigationState, buildRouteFromNavigationState,
 } from '../../../shared/route-parser'
 import { isSessionsNavigation, getNavigationStateKey, parseNavigationStateKey } from '../../../shared/types'
+import { routes } from '../../../shared/routes'
 import { preserveRouteQuery, normalizePanelRouteForReconcile } from '../navigation-reconcile'
 import { rendererEffect as productionRendererEffect, deferred, settle } from '../../components/app-shell/__tests__/rox-readiness-ui-001.effect-harness'
 
 import { decodePanelEntries, encodePanelEntries } from '../../lib/panel-url'
 import { focusedPanelIdAtom, focusedPanelRouteAtom } from '../../atoms/panel-stack'
+import { runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey } from '../../atoms/runtime-trace'
+import { parseRuntimeMapViewRequest } from '../../../shared/runtime-map-link'
 
 const sourcePath = process.env.ROX_UI001_NAV_SOURCE
   ? pathToFileURL(process.env.ROX_UI001_NAV_SOURCE) : new URL('../NavigationContext.tsx', import.meta.url)
@@ -22,19 +25,26 @@ const callbacks = new Map<string, string>()
 // Supply the merged production lifecycle/codec boundaries without changing any callback body.
 function mergedBindings(bindings: Record<string, any>): Record<string, any> {
   const owner = bindings.pendingNavigationRef?.current?.owner ?? { active: true, revision: 0 }
-  return { navigationOwnerRef: { current: owner }, decodePanelEntries, encodePanelEntries,
+  const scope = { navigationOwnerRef: { current: owner }, decodePanelEntries, encodePanelEntries, preserveRouteQuery,
+    runtimeMapOpenRequestAtomFamily, runtimeTraceScopeKey, parseRuntimeMapViewRequest,
     parseRouteToNavigationStateOrUnavailable: resolveRouteNavigationState,
     isReady: true, isSessionsReady: true, pendingUrlRestoreRef: { current: null },
+    historyMountedRef: { current: true }, historyReconcileRevisionRef: { current: 0 },
+    isPopstateSwitchRef: { current: false }, suppressPushRef: { current: false },
+    lastSemanticHistoryKeyRef: { current: '' }, getSemanticHistoryKey: () => '',
+    requestAnimationFrame: (run: () => void) => run(), maybePushHistoryForSemanticChange: () => {},
+    rightSidebarRef: { current: undefined },
     previousWorkspaceSlugRef: { current: null }, requestedWorkspaceSlugRef: { current: bindings.workspaceSlug ?? bindings.workspaceId },
     setRequestedWorkspaceSlug: () => {}, suppressAutoSelectRef: { current: false },
-    setNavigationRevision: () => {}, focusedPanelIdAtom, focusedPanelRouteAtom, preserveRouteQuery,
-    historyReconcileRevisionRef: { current: 0 }, historyMountedRef: { current: true },
-    isPopstateSwitchRef: { current: false }, suppressPushRef: { current: false },
-    rightSidebarRef: { current: undefined }, finishHistoryReconcile: () => {},
+    setNavigationRevision: () => {}, focusedPanelIdAtom, focusedPanelRouteAtom,
     ...bindings }
+  return { ...scope, requestRuntimeSelection: productionCallback('requestRuntimeSelection', scope) }
 }
 function rendererEffect(path: URL, text: string, bindings: Record<string, any>) {
-  return productionRendererEffect(path, text, mergedBindings(bindings))
+  const scope = mergedBindings(bindings)
+  // Bind the actual merged lifecycle callback, with fixture scheduling/store boundaries.
+  scope.finishHistoryReconcile = callback('finishHistoryReconcile', scope)
+  return productionRendererEffect(path, text, scope)
 }
 
 // Execute production callbacks, replacing only their transport/store boundaries.
@@ -48,6 +58,11 @@ function callback(name: string, inputBindings: Record<string, any>) {
       get: (atom: unknown) => atom === focusedPanelIdAtom ? 'fixture' : route,
       set: (atom: unknown, value: unknown) => { if (atom === bindings.updateFocusedPanelRouteAtom) route = String(value); originalSet(atom, value) } }
   }
+  return productionCallback(name, bindings)
+}
+
+// Bind new composed operations to their actual source callback and imported atoms.
+function productionCallback(name: string, bindings: Record<string, any>) {
   const cached = callbacks.get(name)
   if (cached) return Function(...Object.keys(bindings), cached)(...Object.values(bindings))
   let expression: ts.Expression | undefined
@@ -90,7 +105,7 @@ function pendingEffect(bindings: Record<string, any>) {
   if (bindings.pendingNavigationRef?.current && !bindings.pendingNavigationRef.current.owner) {
     bindings.pendingNavigationRef.current.owner = { active: true, revision: 0 }
   }
-  return rendererEffect(sourcePath, 'pendingNavigationRef.current = null', {
+  return rendererEffect(sourcePath, 'const pending = pendingNavigationRef.current', {
     isSessionsReady: true, initialRouteRestoredRef: { current: true }, isPopstateSwitchRef: { current: false },
     requestedWorkspaceSlugRef: { current: bindings.workspaceId }, workspaceSlug: bindings.workspaceId,
     ...bindings,
@@ -409,6 +424,40 @@ describe('UI-001 address preservation through actual navigation callbacks', () =
         resolveAutoSelectionRef: { current: (state: unknown) => state }, setRightSidebar: () => {},
       })(new URLSearchParams({ route }))
       expect(writes.at(-1)).toEqual({ entries: [{ route, proportion: 1 }], focusedIndex: 0 })
+    }
+  })
+
+  it('restores corrupt panel transports to their unavailable address without selecting an unrelated chat', () => {
+    for (const panels of ['v2:{', 'json:{', 'v2:[{"route":null,"proportion":1}]', '[["notes/note/selected",1]', 'v2:[]', 'json:[]', '']) {
+      const writes: any[] = []
+      let autoSelections = 0
+      callback('reconcileFromUrlParams', {
+        routes, store: { set: (_key: unknown, value: unknown) => writes.push(value) }, reconcilePanelStackAtom: {},
+        parseRouteToNavigationState, normalizePanelRouteForReconcile, buildRouteFromNavigationState,
+        resolveAutoSelectionRef: { current: (state: any) => {
+          autoSelections++
+          return { ...state, details: { type: 'session', sessionId: 'unrelated-existing-chat' } }
+        } }, setRightSidebar: () => {},
+      })(new URLSearchParams({ panels }))
+      const expectedRoute = panels || '?panels='
+      expect(writes).toEqual([{ entries: [{ route: expectedRoute, proportion: 1 }], focusedIndex: 0 }])
+      expect(resolveRouteNavigationState(expectedRoute)).toEqual({ navigator: 'unavailable', route: expectedRoute, details: null })
+      expect(autoSelections).toBe(0)
+    }
+  })
+
+  it('retains explicit entity addresses and nested note identities beside a corrupt optional panel layout', () => {
+    for (const route of ['sources/source/current?keep=a%2Fb', 'notes/note/parent/child?keep=a%2Fb', 'unknown/raw']) {
+      const writes: any[] = []
+      callback('reconcileFromUrlParams', {
+        routes, store: { set: (_key: unknown, value: unknown) => writes.push(value) }, reconcilePanelStackAtom: {},
+        parseRouteToNavigationState, normalizePanelRouteForReconcile, buildRouteFromNavigationState,
+        resolveAutoSelectionRef: { current: () => { throw new Error('Explicit target must not auto-select') } },
+        setRightSidebar: () => {},
+      })(new URLSearchParams({ route, panels: 'v2:{' }))
+      expect(writes).toEqual([{ entries: [{ route, proportion: 1 }], focusedIndex: 0 }])
+      if (route.startsWith('notes/')) expect(resolveRouteNavigationState(route)).toMatchObject({ navigator: 'notes', details: { type: 'note', noteId: 'parent/child' } })
+      if (route.startsWith('sources/')) expect(resolveRouteNavigationState(route)).toMatchObject({ navigator: 'sources', details: { type: 'source', sourceSlug: 'current' } })
     }
   })
 

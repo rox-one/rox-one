@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 2,
+  "task_id": "platform_scout",
+  "attempt_id": "69555fc7272745fd5fbf08ec5f156540",
+  "packet_hash": "5365fea19f39c0ce62ddd1a902ecc514b0c5e25e9692d60507107e72df42770c",
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "createdAt": "2026-10-03T21:03:09.689868+00:00",
+  "actualProductRevision": "02237c3874b2c1e31c46ddefdc4b74d255f94fb7",
+  "incomingMainRevision": "f86660e7d84fbe35342d90b56db0189ae4e62ed4",
+  "currentHead": "02237c3874b2c1e31c46ddefdc4b74d255f94fb7",
+  "writerClosed": true,
+  "ownedChangedPaths": [
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts",
+      "sha256": "01a37265091f4f4320cfc0a355ef881fce772f12c68c608e91de1414320a683c",
+      "fixtureModified": true
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts",
+      "sha256": "1d435d3d9243a15cd744edee5f2caaa7c60c76484483c5d31dcee8eda16110cc",
+      "fixtureModified": true
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/__tests__/rox-readiness-ui-001.page-lifecycle.test.ts",
+      "sha256": "775b6bd1f496e5f4e3f05b7fbbc6640539eb034b5e400a0d90ed623c1177f1ce",
+      "fixtureModified": true
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts",
+      "sha256": "af1a35cbf163f1304196a22ac1ea4bdaa69a4bbc2540c3c1596e955edf272173",
+      "fixtureModified": true
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/__tests__/fixtures/focus-notification-runner.ts",
+      "sha256": "53f9a625b34a82d0353048953d43aa695f6ef1ad33bb1e6ab309b3aa968e279d",
+      "fixtureModified": true
+    },
+    {
+      "path": "apps/electron/src/renderer/components/__tests__/renderer-contract-recovery.isolated.tsx",
+      "sha256": "a822ca11de9c779157ec7366d601a44930cfd5c2048a8488406561d223a01335",
+      "fixtureModified": true
+    },
+    {
+      "path": "apps/electron/src/renderer/components/__tests__/renderer-contract-recovery.test.ts",
+      "sha256": "e8d26238d93d46e2c29e47c2f21d8f639e13d91087feb3a1d72cfbada8d147b9",
+      "fixtureModified": true
+    }
+  ],
+  "productSourcesModified": false,
+  "sourceWriteStatus": "six fixtures included in5890; seventh exact outer wrapper staged for root integration",
+  "originalFixtureAssertionsBodiesDeadlinesPreserved": true,
+  "fixturePreservationProof": {
+    "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/ci-followup-2e3d/fixture-preservation.json",
+    "sha256": "8b07bfd1b88215cc99c53df5c429a819771b7416344fec455e71b31decb50f4c"
+  },
+  "seventhWrapperSetupOnly": {
+    "proof": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/ci-followup-2e3d/renderer-wrapper-transport-preservation.json",
+    "sha256": "44e679b9c1ced59b5f18e6204244b9d37e85fc920423747e268e05cf7815e0e8",
+    "assertionsPreserved": 3,
+    "unchangedPreloadsCwdArgv": true,
+    "childDeadlineMs": 15000,
+    "outerDeadlineMs": 20000,
+    "usesExistingExportedCaptureHelper": true,
+    "helperDefinitionHashes": {
+      "NODE_CAPTURE_DRIVER": "c3394f9f011b0fbcde01d12f8a1a33ef5342b17ee8d3207838f4510daa0698f8",
+      "captureTestCommand": "c6198584ae26e039d9c913c47cd738eefc4245030e46033bc3af97f74df52345"
+    }
+  },
+  "localQualifiedSixSuiteGreen": {
+    "receipt": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/gstack-test-2026-10-03T20-58-43-974Z/invocation.json",
+    "receiptSha256": "c828d3b708c7cb1b346991655273cc4712c555735a29950e79812d1bd3d71656",
+    "result": {
+      "startedAt": "2026-10-03T20:58:43.981Z",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+        "test",
+        "./apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts",
+        "./apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts",
+        "./apps/electron/src/renderer/components/pages/__tests__/rox-readiness-ui-001.page-lifecycle.test.ts",
+        "./apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts",
+        "./apps/electron/src/renderer/hooks/__tests__/focus-notification-scope.test.ts",
+        "./apps/electron/src/renderer/components/__tests__/renderer-contract-recovery.test.ts",
+        "--timeout",
+        "30000"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+      "head": "02237c3874b2c1e31c46ddefdc4b74d255f94fb7",
+      "bunVersion": "1.3.14",
+      "nodeVersion": "v24.21.0",
+      "sourceHashes": {
+        "./apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts": "01a37265091f4f4320cfc0a355ef881fce772f12c68c608e91de1414320a683c",
+        "./apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts": "1d435d3d9243a15cd744edee5f2caaa7c60c76484483c5d31dcee8eda16110cc",
+        "./apps/electron/src/renderer/components/pages/__tests__/rox-readiness-ui-001.page-lifecycle.test.ts": "775b6bd1f496e5f4e3f05b7fbbc6640539eb034b5e400a0d90ed623c1177f1ce",
+        "./apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts": "af1a35cbf163f1304196a22ac1ea4bdaa69a4bbc2540c3c1596e955edf272173",
+        "./apps/electron/src/renderer/hooks/__tests__/focus-notification-scope.test.ts": "5a5afc8af1aab61831417c6423999e0063db7a520293248176de6aa55a504944",
+        "./apps/electron/src/renderer/components/__tests__/renderer-contract-recovery.test.ts": "e8d26238d93d46e2c29e47c2f21d8f639e13d91087feb3a1d72cfbada8d147b9"
+      },
+      "environmentKeys": [
+        "HOME",
+        "USER",
+        "LOGNAME",
+        "LANG",
+        "PATH",
+        "TMPDIR",
+        "XDG_CONFIG_HOME",
+        "ROX_CONFIG_DIR",
+        "CRAFT_CONFIG_DIR",
+        "GSTACK_HOME",
+        "GSTACK_TEST_LEGACY_ROOT",
+        "PLAYWRIGHT_BROWSERS_PATH"
+      ],
+      "providerCredentialsForwarded": false,
+      "exitCode": 0,
+      "finishedAt": "2026-10-03T20:58:59.357Z",
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/gstack-test-2026-10-03T20-58-43-974Z/output.log",
+      "logSha256": "e9f68ae83c0d68e0936fb5e0a2802e1c5f58de8f69a7ee4719d7084e3f5d6dfd",
+      "counts": {
+        "pass": 42,
+        "fail": 0,
+        "skip": 0
+      }
+    }
+  },
+  "actualFinalMergedMountedGreen": {
+    "receipt": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/platform_final_f866_verification.json",
+    "receiptSha256": "d27e717615e659c1f3062c631f12292911be369cbbe7a8f90882c9869f7dc32d",
+    "counts": {
+      "navigation": 28,
+      "mainContentPanel": 14,
+      "skillInfo": 6,
+      "pass": 48,
+      "fail": 0,
+      "skip": 0,
+      "cancelled": 0
+    }
+  },
+  "failureHistoryPreserved": [
+    {
+      "scope": "original full frozen Linux2e3d",
+      "report": "/proof/full-results/run-K2Dvku/report.json",
+      "counts": {
+        "files": 1881,
+        "pass": 1775,
+        "fail": 70,
+        "blocked": 36
+      }
+    },
+    {
+      "scope": "first local six repair replay",
+      "receipt": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/gstack-test-2026-10-03T20-26-02-540Z/invocation.json",
+      "counts": {
+        "pass": 41,
+        "fail": 1
+      },
+      "cause": "controlled SSR window needed event-registration methods"
+    },
+    {
+      "scope": "additional merged replay incorrectly treated relative args as discovery filters",
+      "receipt": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/gstack-test-2026-10-03T20-47-37-502Z/invocation.json",
+      "counts": {
+        "pass": 41,
+        "fail": 12
+      },
+      "actualFiles": 18,
+      "actualCases": 53,
+      "cause": "Bun relative path filters selected copied fixtures under private proof payload too; exact ./ arguments retained canonical six files on followup"
+    },
+    {
+      "scope": "exact merged six with original spawnSync outer",
+      "receipt": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/gstack-test-2026-10-03T20-49-16-531Z/invocation.json",
+      "counts": {
+        "pass": 41,
+        "fail": 1
+      },
+      "cause": "original actual Bun spawnSync SSR child exceeded unchanged15000ms"
+    },
+    {
+      "scope": "standalone original outer",
+      "receipt": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/gstack-test-2026-10-03T20-55-48-642Z/invocation.json",
+      "counts": {
+        "pass": 0,
+        "fail": 1
+      },
+      "cause": "same unchanged15000ms actual child deadline"
+    },
+    {
+      "scope": "initial external probe recorder",
+      "directory": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/renderer-probe-2026-10-03T20-51-52-642Z",
+      "status": "recorder failed because child emitted zero bytes; no qualified result receipt exists from this attempt"
+    },
+    {
+      "scope": "external Node24 unchanged actual SSR child success",
+      "receipt": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/renderer-probe-2026-10-03T20-53-59-667Z/invocation.json",
+      "exitCode": 0,
+      "realSSRExpectExpressions": 6,
+      "successMarker": true,
+      "elapsedSeconds": 10.55,
+      "deadlineMs": 15000
+    }
+  ],
+  "ciAnalysisReceipt": {
+    "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/ci-followup-2e3d/fixture-and-ci-result.json",
+    "sha256": "9db765a77f338efc2f6ffbe56978772ee4d8c0b8a279a272497e3fc0caabd940"
+  },
+  "linuxReplayStatus": "peer executing immutable sparse-overlay original packet against detached private2e3d base; result pending",
+  "linuxPacketUnmodified": {
+    "manifest": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/ui001-integration-scouts/ci-followup-2e3d/overlay-manifest.json",
+    "sha256": "9c62ba5f27ee5c7743c8c492d9b998dc1f3375a8cccb09992676df728b9e7cb1",
+    "payloadHash": "1b104ef5259f4d9fe225700765af6632e4c9f81775857b742c2fdb8a5212d357"
+  },
+  "githubMutationsByWorker": false,
+  "nativeForegroundAcceptanceByWorker": false,
+  "providerCalls": false,
+  "externalPrerequisites": [
+    "fresh remote final-candidate component-recovery/product-tour-native replays after root workflow/source-manifest changes",
+    "real Windows first-window acceptance and macOS native foreground acceptance remain external to these headless proofs"
+  ],
+  "fullDoDClosed": false
+}

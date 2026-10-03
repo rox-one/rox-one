@@ -1,0 +1,172 @@
+{
+  "owner": "recent_features",
+  "state": "CURRENT_RUNTIME_MERGE_OWNED_SLICE_FROZEN_STAGED_UNCOMMITTED",
+  "checkout": "/private/tmp/rox-branch-integration-20261003/credential-meta-review-worktree",
+  "head": "2358e21c956bd3c404077e51a2a740d6c310af5c",
+  "merge_head": "f86660e7d84fbe35342d90b56db0189ae4e62ed4",
+  "source_sso_freeze": "26441ca2949c4fa8c01c44cee6b9734fe4c8dfd1",
+  "current_runtime_main": "f86660e7d84fbe35342d90b56db0189ae4e62ed4",
+  "recorded_at": "2026-10-03T20:38:45.071996+00:00",
+  "files": [
+    {
+      "path": "packages/server-core/src/sessions/SessionManager.ts",
+      "sha256": "730842d43d0d1a60a954d817e8137c168b2e562e6fe6cc6887942aee6f50bc16",
+      "working_blob": "07f29a98bb7107948bff77c52278b3a51bd0ef1f",
+      "staged_blob": "07f29a98bb7107948bff77c52278b3a51bd0ef1f"
+    },
+    {
+      "path": "packages/server-core/src/memory/MemoryService.ts",
+      "sha256": "159e9ca63489be82c62c22124a52de741be17afa1d1477338bd3a30d3d4c580e",
+      "working_blob": "aab684f1e2c332f826878879c624f373117171a8",
+      "staged_blob": "aab684f1e2c332f826878879c624f373117171a8"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/sessions.ts",
+      "sha256": "3609205799c561a647dfda608e4b82aebb0bd1692752368258e362957caec578",
+      "working_blob": "0876ad2492cab9c7cb5498d53a21e7f3aa11368d",
+      "staged_blob": "0876ad2492cab9c7cb5498d53a21e7f3aa11368d"
+    },
+    {
+      "path": "packages/server-core/src/handlers/session-manager-interface.ts",
+      "sha256": "715610eb1452ba79724862b0de2fa06e7966e246ab4541b939b54c1be5aae472",
+      "working_blob": "c6ec3713df33163666da277d4c9ad71fc569d771",
+      "staged_blob": "c6ec3713df33163666da277d4c9ad71fc569d771"
+    },
+    {
+      "path": "packages/shared/src/agent/omp-agent.ts",
+      "sha256": "bb8ff894ce6df443b54ce0669d9de8d7f8e06727372155920b3df8795ad1983c",
+      "working_blob": "f1cc66da26489459278f8605cfeb644ac14a92ec",
+      "staged_blob": "f1cc66da26489459278f8605cfeb644ac14a92ec"
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts",
+      "sha256": "80922e70a8cee7bdfacd8f9a5f7afba67ee6804bd4ac9822f2b9d7f5ef991b9b",
+      "working_blob": "fe3577c708451933efa9bb6528f3df8b9ea1720e",
+      "staged_blob": "fe3577c708451933efa9bb6528f3df8b9ea1720e"
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/omp-query-llm.test.ts",
+      "sha256": "b10cc0e1410c0e7b1a94a32333abee828766cf978bfd7233c396e237d36a5b83",
+      "working_blob": "d9bdb529bdca5cf74adb8383babbc60f2b17b8c8",
+      "staged_blob": "d9bdb529bdca5cf74adb8383babbc60f2b17b8c8"
+    },
+    {
+      "path": "packages/server-core/src/sessions/pocket-session-resource-owner.test.ts",
+      "sha256": "9fd646ecb520ad6defa4ec10668ec999d12f8e34436f2997b36457f67a9565c9",
+      "working_blob": "2cd13f3858ca1684e59d90ceab72d7676bbedb83",
+      "staged_blob": "2cd13f3858ca1684e59d90ceab72d7676bbedb83"
+    }
+  ],
+  "merge_owned_changed_paths": [
+    "packages/server-core/src/sessions/SessionManager.ts",
+    "packages/server-core/src/handlers/session-manager-interface.ts",
+    "packages/shared/src/agent/omp-agent.ts",
+    "packages/server-core/src/sessions/pocket-session-resource-owner.test.ts"
+  ],
+  "tests": [
+    {
+      "name": "OMP actual model domain/public credential/helper/query",
+      "pass": 23,
+      "fail": 0,
+      "assertions": 88,
+      "log": "sso-runtime-omp-domain-final.log"
+    },
+    {
+      "name": "actual SessionManager cloud/native owner/helper/registered RPC plus native memory/midstream/spawn",
+      "pass": 11,
+      "fail": 0,
+      "assertions": 61,
+      "log": "sso-runtime-current-native-owner-final.log"
+    },
+    {
+      "name": "MemoryService",
+      "pass": 51,
+      "fail": 0,
+      "assertions": 131,
+      "log": "sso-runtime-memory-service-final.log"
+    },
+    {
+      "name": "RuntimeMap projector/collector/journal/privacy/real shell/observer/ingress/UI model",
+      "pass": 121,
+      "fail": 0,
+      "assertions": 491,
+      "files": 17,
+      "log": "sso-runtime-collector-qualified.log"
+    },
+    {
+      "name": "current full strict server-core types with local transport alias resolution",
+      "exit": 0,
+      "log": "sso-runtime-server-core-local-types-qualified.log"
+    }
+  ],
+  "new_combined_control": {
+    "before_log": "sso-runtime-collector-owner-before-text.log",
+    "before_pass": 0,
+    "before_fail": 1,
+    "actual_obsolete_streamed_text": "obsolete account A output",
+    "after_scope": "retained account context before/after collector, completion publication before message mutation, native authorization after collector and before backend/chat effects",
+    "after_controls": [
+      "held account delta",
+      "held account completed message",
+      "native memory grant revocation during collector await"
+    ]
+  },
+  "preserved": [
+    "frozen sealed queue owner and missing-authority fail closed",
+    "callerClientId/nativeMemoryContext queued replay",
+    "cloud account resource leases/callback freeze",
+    "one-shot model domain fences + child retirement",
+    "RuntimeMap actual emitter/tool invocation/run identities and passive collector",
+    "native explicit current actor consent/permissions and immutable privacy boundaries"
+  ],
+  "limits": [
+    "Uncommitted shared integration, parent owns final reconciliation/commit/remote PR/merge",
+    "Parent-owned auth/native/UI/Windows/aggregate checks not accepted by this owned slice",
+    "Pending RuntimeMap observer delta must be preserved by normal scoped reconciliation",
+    "No installed credentials, microphone, clipboard, account settings or native OS state mutated",
+    "Root owns UI/client/authority/registered native/Windows/source609 reconciliation; this receipt qualifies the owned source slice only",
+    "Standard nominal transport symlink diagnostic retained; successful full strict configuration resolves only @rox/server-core/transport locally, with no file exclusion/diagnostic suppression"
+  ],
+  "artifacts": [
+    {
+      "path": "/tmp/rox-branch-integration-20261003/sso-runtime-omp-domain-final.log",
+      "bytes": 3338,
+      "sha256": "310fd66158b5f4fe4b4270ee870038486dd20e3f38d29971cd91b741ea1295f2"
+    },
+    {
+      "path": "/tmp/rox-branch-integration-20261003/sso-runtime-current-native-owner-final.log",
+      "bytes": 1926,
+      "sha256": "b38dd4bc0db49ae005fcdac005629ef35c59cb62a63a014f967733d59cc91f1f"
+    },
+    {
+      "path": "/tmp/rox-branch-integration-20261003/sso-runtime-memory-service-final.log",
+      "bytes": 5139,
+      "sha256": "e5b2316c66ae07b355eeb91fce51b929b27d046487c6084c80b0d274358b8195"
+    },
+    {
+      "path": "/tmp/rox-branch-integration-20261003/sso-runtime-collector-qualified.log",
+      "bytes": 15420,
+      "sha256": "679e80345bbcc4e348e97d9776164675931cd695ae18b3ec51a06d9ca8bd09e0"
+    },
+    {
+      "path": "/tmp/rox-branch-integration-20261003/sso-runtime-server-core-local-types-qualified.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/rox-branch-integration-20261003/sso-runtime-collector-owner-before.log",
+      "bytes": 981,
+      "sha256": "1f0ea7cb72b152baceac375803e8fc2242bb4150944ffc4f1087b0f3bce97596"
+    },
+    {
+      "path": "/tmp/rox-branch-integration-20261003/sso-runtime-collector-owner-before-text.log",
+      "bytes": 944,
+      "sha256": "02f8a76d9317bc1f4d65d7729f22eee08a2a3a83dae8d192bf19c1db93cab273"
+    },
+    {
+      "path": "/tmp/rox-branch-integration-20261003/sso-server-core-local-resolution.tsconfig.json",
+      "bytes": 1539,
+      "sha256": "aae966677f19763b3bf047034e4940d0d993b4782ae1266533754740aa13cfac"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "sourceBase": "e572bbdf0b6952b3a0274f1312f347157aee52d1",
+  "sourceRevision": "37ecdb59b3be817fe02bb8c2514a0aee859d15cd",
+  "originalValidation": "TypeScript TS1117/TS2300; actual error preserved in ui001-e572-final-validate-ci.log",
+  "changes": "Remove only duplicate import/shorthand/unused duplicate useTourTarget fixture property from automatic main merge; callback bodies/assertions/deadlines unchanged.",
+  "paths": {
+    "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts": {
+      "before": "b994032e33cc8e44e443f111835f9fc95b25a33854d67ef28fec4332d74c6f6a",
+      "after": "c871ac28316e70416cfb54a95d102345d405e81beecf15d5f0f049730d7724f7"
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts": {
+      "before": "3d0e9b26c9d2b5a2377c1ddaeff8f99e2b8072e28b6b6f532a91ab44595ffed8",
+      "after": "2843593a4704eaaafc044a9d5e26f04eb7aefa761097ab41ad24e8fd7c92c288"
+    }
+  },
+  "productSourceChanged": false
+}

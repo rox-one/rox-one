@@ -7,10 +7,11 @@
 
 import { describe, it, expect, afterEach } from 'bun:test'
 import WebSocket from 'ws'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { captureTestCommand } from '../../../../../scripts/test-all'
 import { WsRpcServer } from '../server'
 import { PROTOCOL_VERSION } from '@rox/shared/protocol'
 
@@ -364,8 +365,8 @@ it('a completed real WS request followed by server.close exits a Bun child natur
   const configDir = mkdtempSync(join(tmpdir(), 'ws-natural-shutdown-'))
   const serverUrl = pathToFileURL(join(import.meta.dir, '../server.ts')).href
   const protocolUrl = pathToFileURL(join(import.meta.dir, '../../../../shared/src/protocol/index.ts')).href
-  let deadline: ReturnType<typeof setTimeout> | undefined
-  const child = Bun.spawn(['bun', '-e', `
+  const shutdownReceipt = join(configDir, 'shutdown.json')
+  const command = [process.execPath, '-e', `
 const {WsRpcServer}=await import(${JSON.stringify(serverUrl)});
 const {default:WebSocket}=await import('ws');
 const {once}=await import('node:events');
@@ -389,22 +390,39 @@ await closed;
 await disconnected;
 console.log('real-request-completed; server-closed; natural-exit');
 // No process.exit(), unref(), timer clearing or server internals in this child.
-`], { env: { ...process.env, CRAFT_CONFIG_DIR: configDir, ROX_CONFIG_DIR: configDir }, stdout: 'pipe', stderr: 'pipe' })
+`]
+  // Node owns the real Bun child's streams; Bun's nested capture can lose them.
+  // This supervisor preserves the original 3000 ms natural-exit deadline.
+  const supervisor = `
+import {spawn} from 'node:child_process';
+import {writeFileSync} from 'node:fs';
+const command=${JSON.stringify(command)};
+const child=spawn(command[0],command.slice(1),{env:process.env,stdio:['ignore','pipe','pipe']});
+child.stdout.on('data',chunk=>process.stdout.write(chunk));
+child.stderr.on('data',chunk=>process.stderr.write(chunk));
+process.once('SIGTERM',()=>child.kill());
+process.once('SIGINT',()=>child.kill());
+let deadline;
+const closed=new Promise(resolve=>child.once('close',resolve));
+const exited=new Promise(resolve=>child.once('exit',resolve));
+child.once('error',error=>{console.error(error);process.exitCode=1});
+const exitedNaturally=await Promise.race([exited.then(()=>true),new Promise(resolve=>{deadline=setTimeout(()=>resolve(false),3000)})]);
+if(!exitedNaturally)child.kill();
+const exit=await closed;
+clearTimeout(deadline);
+writeFileSync(${JSON.stringify(shutdownReceipt)},JSON.stringify({exitedNaturally,exit}),{flag:'wx',mode:0o600});
+`
   try {
-    const exitedNaturally = await Promise.race([
-      child.exited.then(() => true),
-      new Promise<false>(resolve => { deadline = setTimeout(() => resolve(false), 3000) }),
-    ])
-    if (!exitedNaturally) child.kill()
-    const [exit, stdout, stderr] = await Promise.all([
-      child.exited, new Response(child.stdout).text(), new Response(child.stderr).text(),
-    ])
+    const { exitCode: supervisorExit, stdout, stderr } = await captureTestCommand(
+      ['node', '--input-type=module', '-e', supervisor],
+      { environment: { ...process.env, CRAFT_CONFIG_DIR: configDir, ROX_CONFIG_DIR: configDir } },
+    )
+    if (supervisorExit !== 0) throw new Error(`Natural-exit supervisor failed: ${supervisorExit}`)
+    const { exitedNaturally, exit } = JSON.parse(readFileSync(shutdownReceipt, 'utf8'))
     expect(stdout).toBe('real-request-completed; server-closed; natural-exit\n')
     expect(stderr).toBe('')
     expect({ exitedNaturally, exit }).toEqual({ exitedNaturally: true, exit: 0 })
   } finally {
-    if (deadline) clearTimeout(deadline)
-    if (child.exitCode === null) { child.kill(); await child.exited }
     rmSync(configDir, { recursive: true, force: true })
   }
 }, 10000)

@@ -1,0 +1,301 @@
+{
+  "task_id": "source_review",
+  "attempt_id": "28586c49ffa159b4e2a4d554df46b9e0",
+  "packet_hash": "2ad67e8072153eaf29a7785d31cc91b584afa336883eb3a9d2e02abcaf1526e3",
+  "request_id": "ui001-full-integration-e61c84b1",
+  "scope": "Two registration collaborator fixture repairs plus read-only unknown-error and gateway merge requalification",
+  "created_utc": "2026-10-03T21:22:43.819526+00:00",
+  "checkout": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+  "actual_head_at_receipt": "e572bbdf0b6952b3a0274f1312f347157aee52d1",
+  "merge_target": "bb047b946da41346301cffe88a43db0adf621dcf",
+  "writer_closed": true,
+  "owned_changed_paths": [
+    "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+    "apps/electron/src/main/handlers/__tests__/registration.test.ts"
+  ],
+  "production_changes": [],
+  "implementation": {
+    "cause": "Incoming core RPC index now calls registerRuntimeTraceHandlers; retained expected core inventory did not import its declared channels. Previous voiceClipboard canonical GUI inventory was retained.",
+    "minimal_change": "Add one runtimeTrace collaborator to existing async import tuple and spread canonical runtimeTrace.HANDLED_CHANNELS in each expected core channel set. No literal channel duplication or product authority change.",
+    "case_callbacks_assertions_explicit_deadlines_identical": true,
+    "patch_receipt": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/fixture-patch.json",
+    "patch_receipt_sha256": "74f0a5206a39a60de7cdbca0fdb24792d941ebb694cbc4a99841b0e803bce559"
+  },
+  "source_changes": {
+    "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts": {
+      "original_sha256": "56d67407f5415855c16d73094af5e77faa86a81114cf874096d6d287cd28765f",
+      "current_sha256": "a7ad54b55719e81d0a5126bde135d54fe58c20a240e71158388540d37b92828e",
+      "case_callbacks_and_assertions_and_deadlines_identical": true,
+      "diff": "diff --git a/apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts b/apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts\nindex 6f50881e6..5e812eae2 100644\n--- a/apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts\n+++ b/apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts\n@@ -200,16 +200,18 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {\n     import('@rox/server-core/handlers/rpc/messaging'),\n   ])\n \n-  const [meetings, personalTasks, feed] = await Promise.all([\n+  const [meetings, personalTasks, feed, runtimeTrace] = await Promise.all([\n     import('@rox/server-core/handlers/rpc/meetings'),\n     import('@rox/server-core/handlers/rpc/personal-tasks'),\n     import('@rox/server-core/handlers/rpc/feed'),\n+    import('@rox/server-core/handlers/rpc/runtime-trace'),\n   ])\n \n   return new Set([\n     ...meetings.MEETING_HANDLED_CHANNELS,\n     ...personalTasks.PERSONAL_TASKS_HANDLED_CHANNELS,\n     ...feed.FEED_HANDLED_CHANNELS,\n+    ...runtimeTrace.HANDLED_CHANNELS,\n     ...auth.HANDLED_CHANNELS,\n     ...automations.HANDLED_CHANNELS,\n     ...browserPane.HANDLED_CHANNELS,\n"
+    },
+    "apps/electron/src/main/handlers/__tests__/registration.test.ts": {
+      "original_sha256": "adb3c3b8457b31b9cd97e48fbad57f4be827152bec74ff1cfd1b59e6b5db899b",
+      "current_sha256": "26d6f3d8ed2e86248c8746faccd3f17e86580497ef5096d459c10dcca7d4e753",
+      "case_callbacks_and_assertions_and_deadlines_identical": true,
+      "diff": "diff --git a/apps/electron/src/main/handlers/__tests__/registration.test.ts b/apps/electron/src/main/handlers/__tests__/registration.test.ts\nindex aed7d8e7a..e8a75f9fe 100644\n--- a/apps/electron/src/main/handlers/__tests__/registration.test.ts\n+++ b/apps/electron/src/main/handlers/__tests__/registration.test.ts\n@@ -208,17 +208,19 @@ async function getExpectedChannels(): Promise<Set<string>> {\n     import('../voice-clipboard'),\n   ])\n \n-  const [meetings, personalTasks, feed, privacy] = await Promise.all([\n+  const [meetings, personalTasks, feed, privacy, runtimeTrace] = await Promise.all([\n     import('@rox/server-core/handlers/rpc/meetings'),\n     import('@rox/server-core/handlers/rpc/personal-tasks'),\n     import('@rox/server-core/handlers/rpc/feed'),\n     import('@rox/server-core/handlers/rpc/privacy'),\n+    import('@rox/server-core/handlers/rpc/runtime-trace'),\n   ])\n \n   return new Set([\n     ...meetings.MEETING_HANDLED_CHANNELS,\n     ...personalTasks.PERSONAL_TASKS_HANDLED_CHANNELS,\n     ...feed.FEED_HANDLED_CHANNELS,\n+    ...runtimeTrace.HANDLED_CHANNELS,\n     ...auth.HANDLED_CHANNELS,\n     ...automations.HANDLED_CHANNELS,\n     ...cloudRuns.HANDLED_CHANNELS,\n"
+    }
+  },
+  "runs": [
+    {
+      "path": "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+        "test",
+        "--timeout",
+        "30000",
+        "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+      "source_before_sha256": "a7ad54b55719e81d0a5126bde135d54fe58c20a240e71158388540d37b92828e",
+      "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/registration-profiles-qualified-private-home",
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/registration-profiles-qualified.log",
+      "start_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+      "exit_code": 0,
+      "elapsed_ms": 27510,
+      "source_after_sha256": "a7ad54b55719e81d0a5126bde135d54fe58c20a240e71158388540d37b92828e",
+      "log_sha256": "a4423accd81c6cbedf9d5e46b39f1be6f7ddad4d82b3099e0ccc0b4428ec042f",
+      "end_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+      "summary": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0,
+        "assertions": 4
+      }
+    },
+    {
+      "path": "apps/electron/src/main/handlers/__tests__/registration.test.ts",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+        "test",
+        "--timeout",
+        "30000",
+        "apps/electron/src/main/handlers/__tests__/registration.test.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+      "source_before_sha256": "26d6f3d8ed2e86248c8746faccd3f17e86580497ef5096d459c10dcca7d4e753",
+      "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/registration-qualified-private-home",
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/registration-qualified.log",
+      "start_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+      "exit_code": 0,
+      "elapsed_ms": 11489,
+      "source_after_sha256": "26d6f3d8ed2e86248c8746faccd3f17e86580497ef5096d459c10dcca7d4e753",
+      "log_sha256": "817d72b05204e0bc29ddc2100c164f39785e3fff33e7dfc096b18fa11f2584e9",
+      "end_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+      "summary": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0,
+        "assertions": 4
+      }
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/__tests__/unknown-error-i18n.test.ts",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+        "test",
+        "apps/electron/src/renderer/lib/__tests__/unknown-error-i18n.test.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+      "source_before_sha256": "7c90f7d7d0ce39678ce5b09fd02110b5e005cc85ec9dbbdb0829f2f5afefa0ae",
+      "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/unknown-error-i18n-private-home",
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/unknown-error-i18n.log",
+      "start_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+      "exit_code": 0,
+      "elapsed_ms": 621,
+      "source_after_sha256": "7c90f7d7d0ce39678ce5b09fd02110b5e005cc85ec9dbbdb0829f2f5afefa0ae",
+      "log_sha256": "80631832cb098488583bac20b32039d64728e221e969f56a98b48e86df682aa3",
+      "end_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+      "summary": {
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0,
+        "assertions": 15
+      }
+    },
+    {
+      "path": "packages/messaging-gateway/src/__tests__/access-control.test.ts",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+        "test",
+        "packages/messaging-gateway/src/__tests__/access-control.test.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+      "source_before_sha256": "d36033d8d159e01e1e98c78721c23768bec76aae9a083e9e82813a2616cf370b",
+      "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/access-control-private-home",
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/access-control.log",
+      "start_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+      "exit_code": 0,
+      "elapsed_ms": 373,
+      "source_after_sha256": "d36033d8d159e01e1e98c78721c23768bec76aae9a083e9e82813a2616cf370b",
+      "log_sha256": "64bc92bc4d35dccb18f30fc7e18f73d064f6ace2903951f85889f6343fa5a3fe",
+      "end_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+      "summary": {
+        "passed": 20,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0,
+        "assertions": 76
+      }
+    },
+    {
+      "path": "packages/messaging-gateway/src/__tests__/gateway-button-access.test.ts",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+        "test",
+        "packages/messaging-gateway/src/__tests__/gateway-button-access.test.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+      "source_before_sha256": "64a61cb0de23052aad81ff90cfc95c420aa956880b191167bec046f705b90b9a",
+      "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/gateway-button-access-private-home",
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/gateway-button-access.log",
+      "start_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+      "exit_code": 0,
+      "elapsed_ms": 2142,
+      "source_after_sha256": "64a61cb0de23052aad81ff90cfc95c420aa956880b191167bec046f705b90b9a",
+      "log_sha256": "fd98ff478fc4f05be44044087e4f592a2706361cbf9c87ef8771579695628912",
+      "end_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+      "summary": {
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0,
+        "assertions": 16
+      }
+    },
+    {
+      "path": "packages/messaging-gateway/src/__tests__/gateway-button-perm.test.ts",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+        "test",
+        "packages/messaging-gateway/src/__tests__/gateway-button-perm.test.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+      "source_before_sha256": "2809a7a5a4744dbaaba114270b3124b80cc13605659e228513eb88e84f14f108",
+      "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/gateway-button-perm-private-home",
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/gateway-button-perm.log",
+      "start_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+      "exit_code": 0,
+      "elapsed_ms": 2578,
+      "source_after_sha256": "2809a7a5a4744dbaaba114270b3124b80cc13605659e228513eb88e84f14f108",
+      "log_sha256": "a2845445b9e547f24f7ad404ef67fbd208da975052ec4b90abd2405c5ac1beb5",
+      "end_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+      "summary": {
+        "passed": 8,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0,
+        "assertions": 25
+      }
+    }
+  ],
+  "totals": {
+    "passed": 46,
+    "failed": 0,
+    "skipped": 0,
+    "errors": 0,
+    "assertions": 140
+  },
+  "registration_qualification_envelope": {
+    "cli_timeout_ms": 30000,
+    "original_implicit_default_timeout_ms": 5000,
+    "original_explicit_case_args_unchanged": true,
+    "default5000_failure_still_preserved": true,
+    "same_CI_envelope_authorized_by_parent": true
+  },
+  "negative_history": {
+    "original_six_file_readonly_result": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/red-result.json",
+    "original_result_sha256": "141d79963e527cc9c34cdd6b509b326cf1f285e9e437c51bdd14cf444ac17978",
+    "original_total": {
+      "passed": 43,
+      "failed": 3,
+      "skipped": 0,
+      "errors": 2,
+      "assertions": 139
+    },
+    "registration_default5000_failures": [
+      {
+        "path": "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+        "command": [
+          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+          "test",
+          "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts"
+        ],
+        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+        "source_before_sha256": "56d67407f5415855c16d73094af5e77faa86a81114cf874096d6d287cd28765f",
+        "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/registration-profiles-private-home",
+        "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/registration-profiles.log",
+        "start_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+        "exit_code": 1,
+        "elapsed_ms": 8980,
+        "source_after_sha256": "56d67407f5415855c16d73094af5e77faa86a81114cf874096d6d287cd28765f",
+        "log_sha256": "2b1971f320a95f8b38c0dcea7711e5ef450b94b89198ca752b0011e1c8ae6b89",
+        "end_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+        "summary": {
+          "passed": 0,
+          "failed": 2,
+          "skipped": 0,
+          "errors": 1,
+          "assertions": 4
+        }
+      },
+      {
+        "path": "apps/electron/src/main/handlers/__tests__/registration.test.ts",
+        "command": [
+          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain/node_modules/.bin/bun",
+          "test",
+          "apps/electron/src/main/handlers/__tests__/registration.test.ts"
+        ],
+        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1",
+        "source_before_sha256": "adb3c3b8457b31b9cd97e48fbad57f4be827152bec74ff1cfd1b59e6b5db899b",
+        "home": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/registration-private-home",
+        "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/registration.log",
+        "start_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+        "exit_code": 1,
+        "elapsed_ms": 7406,
+        "source_after_sha256": "adb3c3b8457b31b9cd97e48fbad57f4be827152bec74ff1cfd1b59e6b5db899b",
+        "log_sha256": "be9a9f51436c6615be74702879176dab62fb8bc35ee4f5004ee6a2ed94656c50",
+        "end_head": "d3d0ea257d8f251971ef8dabfb2c5f09fe411804",
+        "summary": {
+          "passed": 1,
+          "failed": 1,
+          "skipped": 0,
+          "errors": 1,
+          "assertions": 3
+        }
+      }
+    ],
+    "causes_observed": [
+      "Original core test callbacks timed out at implicit5000ms before completing async imports.",
+      "Their later completion independently identified exactly three missing runtimeTrace declared channels.",
+      "In profile file, timed-out first callback continued registration after beforeEach reset for second case. GUI extra-core list is a test timeout continuation artifact; unchanged GUI production registrar has no call to core registrar. Exact original GUI callback passes under existing30000msCI envelope."
+    ]
+  },
+  "qualified_registration_receipt": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-final-e61c84b1/work/test-all/local-proof/ui001-integration-scouts/registration-gateway-bb047/registration-qualified-result.json",
+  "qualified_registration_receipt_sha256": "8bf37f0b4414edad5f2c6693c9213270eebc1053948a3a6d21a31a31ca881915",
+  "subject_hashes": {
+    "apps/electron/src/main/handlers/index.ts": "e7b1e942f5cc5ff69c586ad2cc28637fae49fc080ae899b5e114d93b76cf15ba",
+    "apps/electron/src/main/handlers/voice-clipboard.ts": "9005ef55cee7f7cfc3f4705974298a651d9e0feeeaf1be4848ea9ea53b1c4ec9",
+    "packages/server-core/src/handlers/rpc/index.ts": "7e14e9b31518f284ea80c1f3eddd148f16f689024839f3e5a8db94efd832cbcb",
+    "packages/server-core/src/handlers/rpc/runtime-trace.ts": "fd1ff202b5935a42c0ff654f91307137e95b9cc5cab4a7a224b2f2fc36779368"
+  },
+  "subject_hashes_stable_during_qualified_run": true,
+  "checks": {
+    "stage_only_two_owned_paths": true,
+    "staged_diff_check_exit_code": 0,
+    "staged_bytes_match_working_files": {
+      "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts": true,
+      "apps/electron/src/main/handlers/__tests__/registration.test.ts": true
+    },
+    "fixture_callback_bytes_unchanged": true
+  },
+  "limits": [
+    "This is bounded fixture and callback qualification, not full product/native/provider acceptance.",
+    "Original default5000ms reds remain distinct from authorized CI30000ms greens.",
+    "Cold registration imports consumed23.72s and9.80s, so postmerge wholeCI must execute serially without concurrent product build; current host load correlation was observed but not asserted as sole causation.",
+    "Remaining platform UI merge conflicts and wholeCI/build/GitHub delivery belong to parent."
+  ],
+  "fullDoDClosed": false
+}

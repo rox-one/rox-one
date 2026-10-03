@@ -1,0 +1,29 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+(pass) UI-001 actual navigation in Chromium > unknown single link survives reload and never selects its nested session [1784.35ms]
+(pass) UI-001 actual navigation in Chromium > malformed encoding and legacy lossy degradation retain their own unavailable surface [6307.37ms]
+(pass) UI-001 actual navigation in Chromium > multi-panel restore retains valid sibling, unavailable focus and proportions across reload [3465.19ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list "[]" restores the focused address during history and reload [1580.75ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list " [] " restores the focused address during history and reload [2770.70ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list ",," restores the focused address during history and reload [5989.79ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list "[" restores the focused address during history and reload [2435.40ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list "[1]" restores the focused address during history and reload [2722.65ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list "[[\"tasks\"]]" restores the focused address during history and reload [3206.57ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list "  " restores the focused address during history and reload [2821.08ms]
+(pass) UI-001 actual navigation in Chromium > known routes with empty separators resolve their surface and query through navigation and reload [1850.08ms]
+(pass) UI-001 actual navigation in Chromium > actual navigate and deep-link callbacks preserve unavailable route and browser back/forward [1596.30ms]
+(pass) UI-001 actual navigation in Chromium > stored action address cannot execute, while explicit action callback still runs once [1693.92ms]
+(pass) UI-001 actual navigation in Chromium > explicit navigation preserves spelling only after session workspace validation [1959.22ms]
+(pass) UI-001 actual navigation in Chromium > pending search replay retains query and new-panel options [1446.57ms]
+(pass) UI-001 actual navigation in Chromium > latest pending unknown address wins without selecting a previous valid session [1573.72ms]
+(pass) UI-001 actual navigation in Chromium > additional query parameters survive list auto-selection, navigation, history and reload [4524.69ms]
+(pass) UI-001 actual navigation in Chromium > literal commas, percent encoding and unknown addresses retain separate panels after reload [2991.85ms]
+(pass) UI-001 actual navigation in Chromium > compact menu labels unavailable panels consistently and Sessions opens its own service [2791.66ms]
+(pass) UI-001 actual navigation in Chromium > desktop unavailable links remove the unrelated navigator and resize boundary [4199.56ms]
+(pass) UI-001 actual navigation in Chromium > workspace restoration and history keep each workspace address [2499.62ms]
+
+ 21 pass
+ 0 fail
+ 321 expect() calls
+Ran 21 tests across 1 file. [68.89s]

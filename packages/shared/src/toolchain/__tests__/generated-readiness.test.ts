@@ -33,6 +33,8 @@ function frozenSource(versionDir: string): void {
   fs.mkdirSync(path.join(source, '.git'), { recursive: true });
   fs.writeFileSync(path.join(source, '.git', 'HEAD'), `${lock.commit}\n`);
   fs.writeFileSync(path.join(source, 'bun.lock'), 'retained frozen upstream fixture\n');
+  fs.writeFileSync(path.join(source, 'package.json'), '{"name":"gbrain","bin":{"gbrain":"cli.js"}}\n');
+  put(path.join(source, 'cli.js'));
   fs.writeFileSync(path.join(versionDir, TOOLCHAIN_INSTALL_COMPLETE_MARKER), JSON.stringify({
     format: 'git-npm-local-source-v1', repo: lock.repo, commit: lock.commit,
   }));
@@ -76,7 +78,12 @@ for (const platform of ['linux-x64', 'win32-x64'] as const) {
       expect((await manager.status())[0]?.phase).toBe('missing');
       frozenSource(version);
       fs.rmSync(current, { recursive: true });
-      fs.symlinkSync(version, current, process.platform === 'win32' ? 'junction' : 'dir');
+      if (win) {
+        // The real Windows publication fallback is a complete physical copy.
+        fs.cpSync(version, current, { recursive: true, dereference: true });
+      } else {
+        fs.symlinkSync(version, current, 'dir');
+      }
       expect((await manager.status())[0]?.phase).toBe('ready');
       fs.rmSync(path.join(version, 'bin', `gbrain${suffix}`));
       fs.mkdirSync(path.join(version, 'bin', `gbrain${suffix}`));

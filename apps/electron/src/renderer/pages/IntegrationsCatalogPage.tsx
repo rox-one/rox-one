@@ -92,7 +92,8 @@ export default function IntegrationsCatalogPage({ workspaceId, workspaceRootPath
     navigate(routes.view.sources({ sourceSlug: source.config.slug }))
   }
   return (
-    <div className="flex h-full min-w-0 flex-col overflow-hidden" data-testid="integrations-catalog">
+    <div className="flex h-full min-w-0 flex-col overflow-hidden" data-testid="integrations-catalog"
+      style={{ '--muted-foreground': 'color-mix(in oklch, var(--foreground) 78%, var(--background))' } as React.CSSProperties}>
       <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border/50 p-4">
         <div className="mr-auto"><h1 className="flex items-center gap-2 text-base font-semibold"><DatabaseZap className="size-4" />{t('capabilityCatalog.integrationsTitle')}</h1><p className="mt-1 text-xs text-muted-foreground">{t('capabilityCatalog.integrationsDescription')}</p></div>
         <label className="relative"><Search className="absolute left-2 top-2 size-3.5 text-muted-foreground" /><input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder={t('capabilityCatalog.searchIntegrations')} aria-label={t('capabilityCatalog.searchIntegrations')} className="h-8 w-52 max-w-full rounded-md border border-border/60 bg-transparent pl-7 pr-2 text-xs" /></label>
@@ -104,7 +105,7 @@ export default function IntegrationsCatalogPage({ workspaceId, workspaceRootPath
           <button type="button" aria-pressed={category === 'all' && !connectedOnly} onClick={() => { setCategory('all'); setConnectedOnly(false) }} className={`shrink-0 rounded-md px-2.5 py-2 text-left text-xs ${category === 'all' && !connectedOnly ? 'bg-foreground/5 text-foreground' : 'text-muted-foreground hover:bg-foreground/[0.03]'}`}>{t('capabilityCatalog.all')}</button>
           <button type="button" aria-pressed={connectedOnly} onClick={() => setConnectedOnly(value => !value)} className={`shrink-0 rounded-md px-2.5 py-2 text-left text-xs ${connectedOnly ? 'bg-foreground/5 text-foreground' : 'text-muted-foreground hover:bg-foreground/[0.03]'}`}>{t('capabilityCatalog.status.connected')}</button>
           <span className="hidden px-2.5 pb-1 pt-4 text-[10px] uppercase tracking-wide text-muted-foreground md:block">{t('capabilityCatalog.category')}</span>
-          {CAPABILITY_CATEGORIES.map(item => <button key={item} type="button" aria-pressed={category === item} onClick={() => setCategory(item)} className={`shrink-0 rounded-md px-2.5 py-2 text-left text-xs ${category === item ? 'bg-foreground/5 text-foreground' : 'text-muted-foreground hover:bg-foreground/[0.03]'}`}>{t(`capabilityCatalog.categories.${item}`)} <span className="ml-1 text-muted-foreground/60">{allRows.filter(row => row.categories.includes(item)).length}</span></button>)}
+          {CAPABILITY_CATEGORIES.map(item => <button key={item} type="button" aria-pressed={category === item} onClick={() => setCategory(item)} className={`shrink-0 rounded-md px-2.5 py-2 text-left text-xs ${category === item ? 'bg-foreground/5 text-foreground' : 'text-muted-foreground hover:bg-foreground/[0.03]'}`}>{t(`capabilityCatalog.categories.${item}`)} <span className="ml-1 text-muted-foreground">{allRows.filter(row => row.categories.includes(item)).length}</span></button>)}
         </nav>
         <main className="min-w-0 flex-1 overflow-auto p-4 md:p-6">
           {error && <p role="alert" className="mb-4 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive">{error}</p>}

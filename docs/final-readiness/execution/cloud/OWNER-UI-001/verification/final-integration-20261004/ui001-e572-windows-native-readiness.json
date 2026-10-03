@@ -1,0 +1,35 @@
+{
+  "commitSha": "0d09346024ef949abaf031a743318583cbbc91a0",
+  "trackedWorktreeDirty": true,
+  "platform": "win32",
+  "status": "NOT_RUN",
+  "releaseBlocking": true,
+  "automatedSmoke": {
+    "status": "FAIL",
+    "scope": "Real Electron fresh setup / no automatic tour",
+    "exitCode": 1,
+    "runner": "node-playwright-cli",
+    "timeoutMs": 180000,
+    "elapsedMs": 54981,
+    "timedOut": false,
+    "signal": null,
+    "error": null
+  },
+  "cases": [
+    {
+      "id": "NATIVE-01",
+      "status": "NOT_RUN",
+      "reason": "Full macOS Start/Pause/Resume, menu and native-dialog acceptance needs recorded platform evidence."
+    },
+    {
+      "id": "NATIVE-02",
+      "status": "NOT_RUN",
+      "reason": "Full Windows Start/Pause/Resume, Git Bash, menu and drawer acceptance needs recorded platform evidence."
+    },
+    {
+      "id": "NATIVE-03",
+      "status": "NOT_RUN",
+      "reason": "OS microphone permission denial requires an operator and recorded system-dialog evidence."
+    }
+  ]
+}

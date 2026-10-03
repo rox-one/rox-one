@@ -34,9 +34,15 @@ interface SkillInfoPageProps {
 
 export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory }: SkillInfoPageProps) {
   const { t } = useTranslation()
-  const [skill, setSkill] = useState<LoadedSkill | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const requestKey = JSON.stringify([workspaceId, skillSlug, workingDirectory])
+  const [detail, setDetail] = useState<{ key: string; skill: LoadedSkill | null; error: string | null; loading: boolean } | null>(null)
+  const current = detail?.key === requestKey ? detail : null
+  const skill = current?.skill ?? null
+  const loading = current?.loading ?? true
+  const error = current?.error ?? null
+  const setSkill = useCallback((updated: LoadedSkill | null) => setDetail(value =>
+    value?.key === requestKey ? { ...value, skill: updated, error: null, loading: false } : value,
+  ), [requestKey])
   const activeWorkspace = useActiveWorkspace()
   const canRevealLocally = !activeWorkspace?.remoteServer
 
@@ -53,65 +59,61 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
     scopeOwnerRef.current = owner
     loadedSkillRef.current = null
     ++catalogRevisionRef.current
-    setSkill(null)
-    setLoading(true)
-    setError(null)
+    setDetail({ key: requestKey, skill: null, error: null, loading: true })
     setSaving(false)
     return () => { owner.active = false; ++catalogRevisionRef.current }
-  }, [workspaceId, skillSlug, workingDirectory])
+  }, [workspaceId, skillSlug, workingDirectory, requestKey])
 
-  // Load skill data
+  // Load only the selected detail, with main's scope and edit ownership guards.
   useEffect(() => {
     let cancelled = false
     const owner = scopeOwnerRef.current
-    setLoading(true)
-    setError(null)
+    setDetail(value => value?.key === requestKey
+      ? { ...value, error: null, loading: true }
+      : { key: requestKey, skill: null, error: null, loading: true })
 
     const load = async (background = false) => {
       const request = ++catalogRevisionRef.current
+      const isCurrent = () => !cancelled && owner.active && scopeOwnerRef.current === owner
+        && request === catalogRevisionRef.current
       try {
-        const skills = await window.electronAPI.getSkills(workspaceId, workingDirectory)
-        if (cancelled || !owner.active || scopeOwnerRef.current !== owner || request !== catalogRevisionRef.current) return
-        const found = skills.find((s) => s.slug === skillSlug) ?? null
+        const found = await window.electronAPI.getSkillDetails(workspaceId, skillSlug, workingDirectory)
+        if (!isCurrent()) return
         if (!found) {
-          setError(t('skillInfo.notFound'))
-          setSkill(null)
+          setDetail({ key: requestKey, skill: null, error: t('skillInfo.notFound'), loading: false })
           loadedSkillRef.current = null
           return
         }
         const previous = loadedSkillRef.current
         loadedSkillRef.current = found
         setSkill(found)
-        setError(null)
         // Refresh fields which still match the last canonical snapshot. Keep
         // local edits when a watcher changes another field or reloads the file.
         setEditName(value => previous && value !== previous.metadata.name ? value : found.metadata.name)
         setEditDescription(value => previous && value !== previous.metadata.description ? value : found.metadata.description)
         setEditContent(value => previous && value !== (previous.content || '') ? value : found.content || '')
-      } catch (err) {
-        if (cancelled || !owner.active || scopeOwnerRef.current !== owner || request !== catalogRevisionRef.current) return
+      } catch {
+        if (!isCurrent()) return
         if (!background || !loadedSkillRef.current) {
-          setError(err instanceof Error ? err.message : t('skillInfo.failedToLoad'))
+          setDetail({ key: requestKey, skill: null, error: t('skillInfo.failedToLoad'), loading: false })
         }
       } finally {
-        if (!cancelled && owner.active && scopeOwnerRef.current === owner && request === catalogRevisionRef.current) setLoading(false)
+        if (isCurrent()) setDetail(value => value?.key === requestKey ? { ...value, loading: false } : value)
       }
     }
 
     const cleanup = window.electronAPI.onSkillsChanged?.((changedWorkspaceId) => {
       if (cancelled || changedWorkspaceId !== workspaceId) return
-      // Watcher payloads only contain workspace skills. Resolve the complete
-      // project/global/OMP catalog with the same directory as the first read.
+      // Watcher payloads are metadata; reload the selected body in its original scope.
       void load(true)
     })
     void load()
-
     return () => {
       cancelled = true
       ++catalogRevisionRef.current
       cleanup?.()
     }
-  }, [workspaceId, skillSlug, workingDirectory, t])
+  }, [workspaceId, skillSlug, workingDirectory, requestKey, setSkill, t])
 
   const handleOpenInFinder = useCallback(async () => {
     if (!canRevealLocally || !skill) return
@@ -176,7 +178,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
     } finally {
       if (isCurrent()) setSaving(false)
     }
-  }, [saving, skill, editName, editDescription, editContent, workspaceId, skillSlug, t])
+  }, [saving, skill, editName, editDescription, editContent, workspaceId, skillSlug, setSkill, t])
 
   const skillName = skill?.metadata.name || skillSlug
   const canDeleteSkill = skill?.source === 'workspace'
@@ -202,7 +204,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
       type="button"
       variant="ghost"
       size="sm"
-      className="h-8 px-3 rounded-[6px] bg-background/60 shadow-minimal text-foreground/60 hover:text-foreground"
+      className="h-8 px-3 rounded-[var(--radius-control)] bg-background/60 shadow-minimal text-foreground/60 hover:text-foreground"
     >
       {t('common.askAi')}
     </Button>
@@ -222,7 +224,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
             skillName={skillName}
             onOpenInNewWindow={handleOpenInNewWindow}
             onShowInFinder={handleOpenInFinder}
-            canShowInFinder={canRevealLocally}
+            canShowInFinder={canRevealLocally && skill?.source !== 'omp'}
             onDelete={canDeleteSkill ? handleDelete : undefined}
             canDelete={canDeleteSkill}
             deleteLabel={canDeleteSkill ? t('skillInfo.deleteSkill') : t('skillInfo.managedByProject')}
@@ -247,21 +249,21 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
                   <Button
                     type="button"
                     size="sm"
-                    className="h-8 px-3 rounded-[6px]"
+                    className="h-8 px-3 rounded-[var(--radius-card)]"
                     disabled={saving}
                     onClick={() => void handleSave()}
                   >
                     {saving ? t('common.saving') : t('common.save')}
                   </Button>
                 )}
-                <EditPopover
+                {skill.source !== 'omp' && <EditPopover
                   trigger={askAiTrigger}
                   {...getEditConfig('skill-metadata', skill.path)}
                   secondaryAction={{
                     label: t('common.editFile'),
                     filePath: `${skill.path}/SKILL.md`,
                   }}
-                />
+                />}
               </div>
             }
           >
@@ -327,13 +329,15 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
                   {skill.metadata.description}
                 </Info_Table.Row>
                 <Info_Table.Row label={t('common.source')}>
-                  {skill.source === 'project' ? t('skillInfo.sourceProject') :
+                  {skill.source === 'omp' ? t('skillsList.ompBadge') :
+                   skill.source === 'project' ? t('skillInfo.sourceProject') :
                    skill.source === 'global' ? t('skillInfo.sourceGlobal') :
                    t('skillInfo.sourceWorkspace')}
                 </Info_Table.Row>
                 <Info_Table.Row label={t('common.location')}>
                   <button
                     onClick={handleLocationClick}
+                    disabled={!canRevealLocally || skill.source === 'omp'}
                     className="hover:underline cursor-pointer text-left"
                   >
                     {formatPath(skill.path)}
@@ -354,7 +358,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
                 <p className="text-xs text-muted-foreground mb-3">
                   {t('skillInfo.permissionModesDesc')}
                 </p>
-                <div className="rounded-[8px] border border-border/50 overflow-hidden">
+                <div className="rounded-[var(--radius-card)] border border-border/50 overflow-hidden">
                   <table className="w-full text-sm">
                     <tbody>
                       <tr className="border-b border-border/30">
@@ -394,21 +398,21 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
                   <Button
                     type="button"
                     size="sm"
-                    className="h-8 px-3 rounded-[6px]"
+                    className="h-8 px-3 rounded-[var(--radius-card)]"
                     disabled={saving}
                     onClick={() => void handleSave()}
                   >
                     {saving ? t('common.saving') : t('common.save')}
                   </Button>
                 )}
-                <EditPopover
+                {skill.source !== 'omp' && <EditPopover
                   trigger={askAiTrigger}
                   {...getEditConfig('skill-instructions', skill.path)}
                   secondaryAction={{
                     label: t('common.editFile'),
                     filePath: `${skill.path}/SKILL.md`,
                   }}
-                />
+                />}
               </div>
             }
           >

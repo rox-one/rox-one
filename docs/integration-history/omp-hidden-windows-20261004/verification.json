@@ -1,0 +1,82 @@
+{
+  "source_pr": 1436,
+  "source_head": "384843bfc4cf7d4a1f34c902a66a9a3198043c9f",
+  "qualification_base": "47b5fcd270ff7abff163533b60f4d9fa5d5f8f27",
+  "qualified_source": "5d7a93b8493ad5f3380fa8409a0e06b069b0894f",
+  "reconciled_source": "d19871b4aa104341769a94948a47965cf70a6fdb",
+  "main_reconciled": "790216a785189279c376f5b144f76dc2da97795b",
+  "production_scope": "Two actual OmpAgent native spawn options only: windowsHide true for RPC and one-shot; no shell, runtime, model, credential, observation or process ownership change.",
+  "qualification": {
+    "before_actual_callers": {
+      "pass": 0,
+      "fail": 2,
+      "assertions": 6,
+      "outcome": "Both real controlled OMP children completed; missing windowsHide reproduced at actual spawn options."
+    },
+    "after_aggregate": {
+      "pass": 30,
+      "fail": 0,
+      "assertions": 123,
+      "files": 5,
+      "outer_runner_timeout_ms": 45000,
+      "outcome": "Current RPC/helper child options, exact literal argv/no shell side effect, account generation, one-shot stale response, native policy, query model and startup/recovery controls."
+    },
+    "shared_strict_types": {
+      "exit": 0,
+      "log_bytes": 0
+    },
+    "reconciliation": "Current main OmpAgent blob equals the qualified base; the delivered production diff is still exactly two launch options. Fresh main spec/plan union retains every current section; own additions only."
+  },
+  "failure_history": [
+    "First test import named nonexistent module; corrected to current omp-history helper; not negative product evidence.",
+    "Valid before implementation: actual RPC and helper completed, then both launch-option assertions failed.",
+    "First aggregate used default 5s outer timeout: one unchanged startup fixture exceeded it under host load; 29 passed. Rerun only increases outer test allowance; internal ready/drain/error deadlines and assertions remain intact."
+  ],
+  "limits": [
+    "Controlled protocol fixture uses current NODE_ENV=test seam on macOS; no native Windows console visibility acceptance.",
+    "No installed native 18.4.12 policy overlay or user credentials were exercised.",
+    "Seven old external-launcher portability test paths remain source-preserved and explicitly superseded/deferred in the original1436 ledger; this PR does not restore policy-bypassing external batch launchers.",
+    "No full renderer build rerun is required for two child process options; aggregate UI/native/Windows acceptance remains separate."
+  ],
+  "runtime": {
+    "bun": "1.3.14",
+    "host": "macOS-27.0-arm64-arm-64bit",
+    "config": "Existing scripts/test-config-isolation.ts preload uses an owned throwaway ROX/CRAFT profile."
+  },
+  "blobs": {
+    "packages/shared/src/agent/omp-agent.ts": "acf7adc66eb8e7ec307245e6a31e308d14916a95",
+    "packages/shared/src/agent/__tests__/omp-hidden-window.test.ts": "24d3df55cea334d6faae5b7b0472c06c6ea9bfc2"
+  },
+  "logs": [
+    {
+      "source_log": "omp-hidden-window-before.log",
+      "retained_log": "docs/integration-history/omp-hidden-windows-20261004/omp-hidden-window-before.log.gz",
+      "sha256": "c20dcadecc0a409eee52c344ac21500736c01c94f1cc171c0dafdaa35377da1c",
+      "bytes": 432
+    },
+    {
+      "source_log": "omp-hidden-window-before-valid.log",
+      "retained_log": "docs/integration-history/omp-hidden-windows-20261004/omp-hidden-window-before-valid.log.gz",
+      "sha256": "cdc635c2a9d6fd636132ae8a0dc0c1f2eb228d0b8f9159d54f78e1c510164b1f",
+      "bytes": 2116
+    },
+    {
+      "source_log": "omp-hidden-window-after.log",
+      "retained_log": "docs/integration-history/omp-hidden-windows-20261004/omp-hidden-window-after.log.gz",
+      "sha256": "f2789a13b7171e86a9368d1256c4723dd3c158f44916c404dfa39c9a24665c5e",
+      "bytes": 5321
+    },
+    {
+      "source_log": "omp-hidden-window-after-bounded.log",
+      "retained_log": "docs/integration-history/omp-hidden-windows-20261004/omp-hidden-window-after-bounded.log.gz",
+      "sha256": "f76ab5536c846a1e2ba44df69708ffedc50c162f69fa67cc841f26cf084c16e8",
+      "bytes": 4165
+    },
+    {
+      "source_log": "omp-hidden-shared-types.log",
+      "retained_log": "docs/integration-history/omp-hidden-windows-20261004/omp-hidden-shared-types.log.gz",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ]
+}

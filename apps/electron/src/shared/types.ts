@@ -1645,6 +1645,7 @@ export interface ElectronAPI {
     connected: boolean
     authBaseUrl: string
     user: { id?: string; email?: string; name?: string } | null
+    account?: import('@rox/shared/auth').RoxAccountSnapshot | null
     connectError?: string | null
     connectExpiresAt?: number | null
   }>
@@ -1918,6 +1919,7 @@ export interface ElectronAPI {
 
   // Skills
   getSkills(workspaceId: string, workingDirectory?: string): Promise<LoadedSkill[]>
+  getSkillDetails(workspaceId: string, skillSlug: string, workingDirectory?: string): Promise<LoadedSkill | null>
   getSkillFiles?(workspaceId: string, skillSlug: string): Promise<SkillFile[]>
   updateSkill(
     workspaceId: string,

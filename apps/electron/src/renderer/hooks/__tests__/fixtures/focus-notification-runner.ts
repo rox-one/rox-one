@@ -15,7 +15,7 @@ const notifications: unknown[][] = []
 Object.assign(globalThis, { window: {
   localStorage: { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { writes++; values.set(key, value) } },
   dispatchEvent: () => true,
-  electronAPI: { isChannelAvailable: () => gui, showNotification: (...args: unknown[]) => notifications.push(args) },
+  electronAPI: { isChannelAvailable: () => gui, showNotification: async (...args: unknown[]) => { notifications.push(args) } },
 } })
 const focusPath = process.argv[2] || new URL('../../../lib/focus-session.ts', import.meta.url).pathname
 const focus = await import(focusPath) as typeof import('../../../lib/focus-session')

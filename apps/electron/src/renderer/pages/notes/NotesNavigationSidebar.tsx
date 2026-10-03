@@ -96,7 +96,7 @@ function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavig
           onClick={() => actions.onOpenNote(note.id)}
           style={{ paddingLeft: `${10 + depth * 12}px`, contentVisibility: 'auto', containIntrinsicSize: '0 44px' }}
           className={cn(
-            'notes-list-item mb-0.5 w-full rounded-[6px] pr-2.5 py-1.5 text-left outline-none hover:bg-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-ring',
+            'notes-list-item mb-0.5 w-full rounded-[var(--radius-control)] pr-2.5 py-1.5 text-left outline-none hover:bg-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-ring',
             activeNoteId === note.id && 'notes-list-item-active',
             isDragging && 'opacity-50',
           )}
@@ -110,7 +110,7 @@ function NoteNavigationItem({ note, depth, activeNoteId, ...actions }: NoteNavig
           {note.tags.length > 0 && (
             <span className="mt-1 flex flex-wrap gap-1 pl-5">
               {note.tags.slice(0, 3).map(tag => (
-                <span key={tag} className="rounded-[4px] bg-foreground/[0.06] px-1.5 py-0.5 text-[10px] text-muted-foreground">#{tag}</span>
+                <span key={tag} className="rounded-[var(--radius-control)] bg-foreground/[0.06] px-1.5 py-0.5 text-[10px] text-muted-foreground">#{tag}</span>
               ))}
             </span>
           )}
@@ -184,7 +184,7 @@ function FolderNavigationItem({ node, depth, activeNoteId, collapsedFolders, onT
               onToggleFolder(node.fullPath)
             }}
             className={cn(
-              'mb-0.5 flex h-7 cursor-pointer list-none items-center gap-1 rounded-[6px] pr-2 text-sm font-medium text-muted-foreground outline-none hover:bg-foreground/[0.04] focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden',
+              'mb-0.5 flex h-7 cursor-pointer list-none items-center gap-1 rounded-[var(--radius-control)] pr-2 text-sm font-medium text-muted-foreground outline-none hover:bg-foreground/[0.04] focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden',
               isOver && 'ring-2 ring-primary/40 bg-primary/[0.06]',
             )}
             style={{ paddingLeft: `${8 + depth * 12}px` }}

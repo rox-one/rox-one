@@ -234,7 +234,7 @@ export default function KnowledgeSettingsPage() {
                     )}
                   </span>
                   <textarea
-                    className="h-16 w-full rounded-[6px] border border-border/60 bg-background px-2 py-1.5 text-xs"
+                    className="h-16 w-full rounded-[var(--radius-card)] border border-border/60 bg-background px-2 py-1.5 text-xs"
                     value={aiPrompts[mode] ?? ''}
                     placeholder={t(NOTES_AI_PROMPT_KEYS[mode])}
                     onChange={(event) => setAiPrompts((prev) => ({ ...prev, [mode]: event.target.value }))}

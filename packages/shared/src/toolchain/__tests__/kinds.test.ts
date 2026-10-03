@@ -538,4 +538,3 @@ describe('kinds: cli-anything pip', () => {
     expect(body).toContain('cli_hub.cli');
   });
 });
-

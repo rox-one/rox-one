@@ -87,7 +87,7 @@ function drawerSectionLabel(text: string) {
 }
 
 const drawerRowClass =
-  'flex w-full items-center gap-3 px-3 py-3 rounded-[10px] text-left text-sm transition-colors hover:bg-foreground/5 outline-none disabled:opacity-50 disabled:pointer-events-none'
+  'flex w-full items-center gap-3 px-3 py-3 rounded-[var(--radius-control)] text-left text-sm transition-colors hover:bg-foreground/5 outline-none disabled:opacity-50 disabled:pointer-events-none'
 
 export function AccountMenu({
   compact = false,
@@ -345,7 +345,7 @@ export function AccountMenu({
       ref={tourWorkspaceTarget}
       data-account-menu={compact ? 'compact' : 'topbar'}
       className={cn(
-        'header-icon-btn titlebar-no-drag ml-1 flex min-w-0 items-center justify-start gap-0.5 h-[30px] rounded-[8px] border border-border/50 bg-[var(--surface-elevated)] text-[13px] text-foreground/70 hover:bg-foreground/5 hover:text-foreground transition-colors cursor-pointer data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground',
+        'header-icon-btn titlebar-no-drag ml-1 flex min-w-0 items-center justify-start gap-0.5 h-[30px] rounded-[var(--radius-control)] border border-border/50 bg-[var(--surface-elevated)] text-[13px] text-foreground/70 hover:bg-foreground/5 hover:text-foreground transition-colors cursor-pointer data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground',
         compact ? 'flex-1 px-2' : 'flex-1 px-3',
       )}
       aria-label={t('workspace.selectWorkspace')}
@@ -433,7 +433,7 @@ export function AccountMenu({
                   <div
                     key={workspace.id}
                     className={cn(
-                      'flex items-center gap-1 rounded-[10px] transition-colors',
+                      'flex items-center gap-1 rounded-[var(--radius-control)] transition-colors',
                       isActive ? 'bg-foreground/5' : 'hover:bg-foreground/5',
                       disconnected && 'opacity-60',
                     )}
@@ -486,7 +486,7 @@ export function AccountMenu({
                       <button
                         type="button"
                         onClick={() => void handleRemoveWorkspace(workspace)}
-                        className="shrink-0 h-9 w-9 rounded-[8px] flex items-center justify-center text-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        className="shrink-0 h-9 w-9 rounded-[var(--radius-control)] flex items-center justify-center text-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
                         aria-label={t('workspace.removeWorkspace')}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -496,7 +496,7 @@ export function AccountMenu({
                       <button
                         type="button"
                         onClick={() => selectWorkspace(workspace, true)}
-                        className="shrink-0 h-9 w-9 rounded-[8px] flex items-center justify-center text-foreground/50 hover:text-foreground hover:bg-foreground/10 transition-colors mr-1"
+                        className="shrink-0 h-9 w-9 rounded-[var(--radius-control)] flex items-center justify-center text-foreground/50 hover:text-foreground hover:bg-foreground/10 transition-colors mr-1"
                         aria-label={t('sidebarMenu.openInNewWindow')}
                       >
                         <ExternalLink className="h-4 w-4" />

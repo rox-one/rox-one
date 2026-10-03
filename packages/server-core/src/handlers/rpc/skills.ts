@@ -7,6 +7,7 @@ import type { RequestContext, RpcServer } from '@rox/server-core/transport'
 import { pushTyped } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { exportSkillToProject, pruneUnusedSkills, readUsage } from '../../memory/skill-usage'
+import { getWorkspaceAllowedDirs, validateFilePath } from '../utils'
 import {
   isClaimableLive,
   rpcSkillsActResult,
@@ -31,6 +32,7 @@ function assertSkillWorkspace(ctx: RequestContext, workspaceId: string, deps: Ha
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.skills.GET,
+  RPC_CHANNELS.skills.GET_DETAILS,
   RPC_CHANNELS.skills.GET_FILES,
   RPC_CHANNELS.skills.UPDATE,
   RPC_CHANNELS.skills.DELETE,
@@ -72,6 +74,30 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     const skills = loadAllSkills(workspace.rootPath, effectiveWorkingDir, { includeOmp: true, includeShadowedOmp: true })
     deps.platform.logger?.info(`SKILLS_GET: Loaded ${skills.length} skills from ${workspace.rootPath}`)
     return skills
+  }, { nativeAction: 'read' })
+
+  // Selected-only read: workspace and project authority are resolved on the server.
+  server.handle(RPC_CHANNELS.skills.GET_DETAILS, async (ctx, workspaceId: string, skillSlug: string, workingDirectory?: string) => {
+    assertSkillWorkspace(ctx, workspaceId, deps)
+    const read = rpcSkillsReadResult({ source: 'native', nativeId: skillSlug })
+    if (!isClaimableLive(read.result)) throw new Error('skill read is not live')
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) return null
+    let projectRoot: string | undefined
+    if (workingDirectory && existsSync(workingDirectory)) {
+      const { loadWorkspaceProjects } = await import('@rox/shared/projects')
+      const projectDirs = loadWorkspaceProjects(workspace.rootPath).flatMap(project => project.config.workingDirectory ? [project.config.workingDirectory] : [])
+      const sessionDirs = deps.sessionManager.getSessions(workspaceId)
+        .filter(session => session.workspaceId === workspaceId && session.workingDirectory)
+        .map(session => session.workingDirectory!)
+      projectRoot = await validateFilePath(workingDirectory,
+        [...getWorkspaceAllowedDirs(workspaceId), ...projectDirs, ...sessionDirs],
+        { includeHome: false, includeTmp: false })
+    }
+    const { loadSkillDetails } = await import('@rox/shared/skills')
+    assertSkillWorkspace(ctx, workspaceId, deps)
+    if (ctx.principal && !server.isRequestContextCurrent?.(ctx, 'read')) throw new Error('Workspace access denied')
+    return loadSkillDetails(workspace.rootPath, skillSlug, projectRoot)
   }, { nativeAction: 'read' })
 
   // Get files in a skill directory

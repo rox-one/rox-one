@@ -63,7 +63,7 @@ const PRIORITY_ORDER: SessionPriority[] = ['urgent', 'high', 'medium', 'low', 'n
 const NONE_LABEL_VALUE = '__collection_no_label__'
 
 const ICON_BTN =
-  'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[4px] text-muted-foreground transition-colors hover:bg-foreground/3 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/70 data-[state=open]:bg-foreground/3 data-[state=open]:text-foreground'
+  'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground transition-colors hover:bg-foreground/3 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/70 data-[state=open]:bg-foreground/3 data-[state=open]:text-foreground'
 
 const PROPERTY_CLUSTER_CLASS = 'flex shrink-0 items-center gap-0.5'
 
@@ -377,7 +377,7 @@ export function SessionTableRow({
 
       <button
         type="button"
-        className="min-w-0 flex-1 truncate text-left hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/70 rounded-[4px]"
+        className="min-w-0 flex-1 truncate text-left hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/70 rounded-[var(--radius-control)]"
         onClick={() => onOpen(meta.id)}
         title={title}
       >

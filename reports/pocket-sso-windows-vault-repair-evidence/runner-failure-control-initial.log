@@ -1,0 +1,11 @@
+20 |     const start = Date.now()
+21 |     const [exit, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()])
+22 |     const raw = readFileSync(join(workspace, 'reports/pocket-sso-native-vault', process.platform+'.json'), 'utf8')
+23 |     const receipt = JSON.parse(raw)
+24 |     if (exit !== 1 || receipt.nativeStoreRestartPassed !== false || stdout.includes(secret) || stderr.includes(secret) || raw.includes(secret) || readdirSync(workspace).some(name=>name.startsWith('rox-pocket-native-vault-')) || Date.now()-start>10000) throw Error('failure_boundary_control_failed')
+25 |     if (mode==='failed' && (receipt.failure.code!=='ROX_SECURE_STORE_WRITE_FAILED' || receipt.receipts[0].stage!=='account_write')) throw Error('stage_projection_control_failed')
+                                                                                                                                               ^
+error: stage_projection_control_failed
+      at /Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/reports/pocket-sso-windows-vault-repair-evidence/runner-failure-control.ts:25:139
+
+Bun v1.3.14 (macOS arm64)

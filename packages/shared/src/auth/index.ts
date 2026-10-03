@@ -17,3 +17,6 @@ export * from './oauth-relay.ts';
 export * from './pkce.ts';
 export * from './state.ts';
 export * from './rox-cloud.ts';
+export * from './rox-connect-flow.ts';
+export * from './rox-pocket-client.ts';
+export * from './rox-account-authority.ts';

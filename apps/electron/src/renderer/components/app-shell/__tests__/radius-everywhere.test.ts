@@ -2,12 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-/**
- * Rounded-panel shell (Mark, 2026-09-29): every shell pane is a flat,
- * borderless rounded box (`--rox-radius-panel` 10px) separated by a 4px
- * PANEL_GAP / edge inset so the rounding reads against the background.
- * No outlines or shadows; high contrast gets an inset 1px ring.
- */
+/** Rectangular shell panes share a single hairline boundary. */
 const appShell = join(import.meta.dir, '..')
 const platform = join(import.meta.dir, '../../../platform')
 const stack = readFileSync(join(appShell, 'PanelStackContainer.tsx'), 'utf8')
@@ -20,33 +15,20 @@ const uiCss = readFileSync(join(import.meta.dir, '../../../../../../../packages/
 const rendererCss = readFileSync(join(import.meta.dir, '../../../index.css'), 'utf8')
 
 describe('one-surface shell', () => {
-  it('rounded panels sit on a 4px gap/inset grid', () => {
-    expect(constants).toContain('export const RADIUS_EDGE = 8')
-    expect(constants).toContain('export const RADIUS_INNER = 8')
-    expect(constants).toContain('export const PANEL_GAP = 4')
-    expect(constants).toContain('export const PANEL_EDGE_INSET = 4')
+  it('rectangular shell panes meet with no gap or inset', () => {
+    expect(constants).toContain('export const PANEL_GAP = 0')
+    expect(constants).toContain('export const PANEL_EDGE_INSET = 0')
     expect(constants).toContain('export const CENTER_MIN_WIDTH = 420')
   })
 
   it('renders sidebar and navigator as flush panes with a hairline divider', () => {
-    const sidebarStart = stack.indexOf('data-panel-role="sidebar"')
-    const navigatorStart = stack.indexOf('data-panel-role="navigator"')
-    const contentStart = stack.indexOf('data-panel-grid-viewport="true"')
-    expect(sidebarStart).toBeGreaterThan(-1)
-    expect(navigatorStart).toBeGreaterThan(sidebarStart)
-    expect(contentStart).toBeGreaterThan(navigatorStart)
-    const sidebar = stack.slice(sidebarStart, navigatorStart)
-    const navigator = stack.slice(navigatorStart, contentStart)
-    for (const pane of [sidebar, navigator]) {
-      expect(pane).toContain('rox-shell-pane')
-      expect(pane).not.toContain('rox-panel')
-      expect(pane).not.toContain('shadow-middle')
-      expect(pane).not.toContain('borderTopLeftRadius')
-    }
-    expect(sidebar).toContain("overflowX: 'clip', overflowY: 'visible'")
-    expect(sidebar).toContain("display: isCompact ? 'none' : undefined")
-    expect(navigator).toContain('rox-shell-divider-r')
-    expect(navigator).toContain("position: isCompact ? 'absolute' : 'relative'")
+    // Grid, focus and compact arrangements now share one persistent container.
+    const sidebar = stack.slice(stack.indexOf('data-panel-role="sidebar"'), stack.indexOf('data-panel-role="navigator"'))
+    expect(sidebar).toContain('rox-shell-pane')
+    expect(sidebar).toContain('rox-shell-divider-r')
+    expect(sidebar).not.toContain('rox-panel')
+    expect(sidebar).not.toContain('shadow-middle')
+    expect(sidebar).not.toContain('borderTopLeftRadius')
     expect(stack).not.toContain('RADIUS_EDGE')
   })
 
@@ -74,9 +56,9 @@ describe('one-surface shell', () => {
   it('defines divider tokens for standard and high contrast', () => {
     expect(uiCss).toContain('--rox-shell-divider: color-mix(in oklch, var(--foreground) 6%, transparent);')
     expect(uiCss).toContain('--rox-shell-divider: color-mix(in oklch, var(--foreground) 10%, transparent);')
-    expect(uiCss).toContain('--rox-radius-panel: 10px;')
+    expect(uiCss).toContain('--rox-radius-panel: 0px;')
     expect(uiCss).toMatch(/\.rox-shell-pane\s*\{[^}]*border-radius:\s*var\(--rox-radius-panel\);[^}]*box-shadow:\s*none;/)
     expect(uiCss).toMatch(/html\[data-contrast="high"\] \.rox-shell-pane\s*\{[^}]*inset 0 0 0 1px/)
-    expect(rendererCss).toContain('html[data-scenic] .rox-shell-pane')
+    expect(rendererCss).not.toMatch(/\.rox-shell-pane[^}]*border-radius:\s*(10|12)px/)
   })
 })

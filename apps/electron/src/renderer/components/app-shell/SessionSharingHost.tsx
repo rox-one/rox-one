@@ -221,7 +221,7 @@ export function SessionSharingHost({ activeWorkspaceId, onSwitchWorkspace }: {
   const destination = parseSessionLink(url)
   return (
     <Dialog open={dialog !== null} onOpenChange={open => { if (!open && !pendingRef.current) { dialogVersionRef.current++; setDialog(null) } }}>
-      <DialogContent className={dialog === 'remote' ? 'rounded-2xl sm:max-w-3xl' : 'rounded-2xl'} showCloseButton={!busy}>
+      <DialogContent className={dialog === 'remote' ? 'rounded-[var(--radius-card)] sm:max-w-3xl' : 'rounded-[var(--radius-card)]'} showCloseButton={!busy}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {dialog === 'link' && link?.kind === 'invite' ? <UserPlus className="size-5 text-accent" /> : <Link2 className="size-5 text-accent" />}
@@ -254,7 +254,7 @@ export function SessionSharingHost({ activeWorkspaceId, onSwitchWorkspace }: {
               <p>{t('sessionSharing.publishedAt', { date: new Date(remoteSession.publishedAt).toLocaleString() })}</p>
               {remoteSession.transcriptTruncated && <p>{t('sessionSharing.transcriptTruncated')}</p>}
             </div>
-            <div className="max-h-[60vh] overflow-y-auto rounded-xl border border-border p-4" aria-live="polite">
+            <div className="max-h-[60vh] overflow-y-auto rounded-[var(--radius-card)] border border-border p-4" aria-live="polite">
               {remoteSession.messages.map(message => (
                 <article key={message.id} className="mb-5 last:mb-0" data-message-role={message.role}>
                   <p className="mb-1 text-xs text-muted-foreground">{message.role === 'user' ? t('sessionSharing.messageUser') : t('sessionSharing.messageAssistant')}</p>

@@ -63,14 +63,18 @@ function mountedStore(target: typeof targets[number]) {
   disposers.push(store.sub(target.atom, () => {}))
   return store
 }
-function emit(key: string | null, newValue: string | null, area: Storage = storage) {
+function emitQueued(key: string | null, newValue: string | null, area: Storage = storage) {
   for (const listener of [...listeners]) listener({ key, newValue, storageArea: area } as StorageEvent)
 }
-function writeAndEmit(key: string | null, newValue: string | null) {
-  if (key === null) storage.clear()
-  else if (newValue === null) storage.removeItem(key)
-  else storage.setItem(key, newValue)
-  emit(key, newValue)
+function emit(key: string | null, newValue: string | null, area: Storage = storage, updateCanonical = true) {
+  // A live write changes its backing store before the receiving window is notified.
+  // Queued historical snapshots leave a newer canonical value untouched.
+  if (updateCanonical) {
+    if (key === null) area.clear()
+    else if (newValue === null) area.removeItem(key)
+    else area.setItem(key, newValue)
+  }
+  emitQueued(key, newValue, area)
 }
 
 describe('ROX UI-001 real Jotai layout storage behavior', () => {
@@ -132,45 +136,64 @@ describe('ROX UI-001 real Jotai layout storage behavior', () => {
       expect(() => store.set(target.atom, RESET)).not.toThrow()
       expect(store.get(target.atom)).toBe(target.fallback)
     })
-    it(`${target.name}: reads canonical storage through corrupt values, deletion and clear`, () => {
+    it(`${target.name}: normalizes current canonical storage through races, corrupt values and deletion`, () => {
       const store = mountedStore(target)
-      writeAndEmit(target.key, String(target.fallback + 20.6))
-      expect(store.get(target.atom)).toBe(target.fallback + 21)
-      writeAndEmit(target.key, '-20')
-      expect(store.get(target.atom)).toBe(target.min)
-      writeAndEmit(target.key, '10000')
+      storage.setItem(target.key, String(target.max)) // Store advanced beyond queued snapshots.
+      emitQueued(target.key, String(target.fallback + 20.6))
       expect(store.get(target.atom)).toBe(target.max)
-      writeAndEmit(target.key, 'malformed')
-      expect(store.get(target.atom)).toBe(target.fallback)
-      writeAndEmit(target.key, String(target.min))
-      writeAndEmit(target.key, null)
-      expect(store.get(target.atom)).toBe(target.fallback)
-      expect(storage.getItem(target.key)).toBeNull()
-      writeAndEmit(target.key, String(target.min))
-      writeAndEmit(null, null)
-      expect(store.get(target.atom)).toBe(target.fallback)
-    })
-    it(`${target.name}: ignores obsolete queued writes, deletion and clear snapshots`, () => {
-      const store = mountedStore(target)
-      storage.setItem(target.key, String(target.max)) // Canonical preference is newer than these events.
-      emit(target.key, String(target.min))
+      emitQueued(target.key, null)
       expect(store.get(target.atom)).toBe(target.max)
-      emit(target.key, null)
-      expect(store.get(target.atom)).toBe(target.max)
-      emit(null, null)
+      emitQueued(null, null)
       expect(store.get(target.atom)).toBe(target.max)
       expect(storage.getItem(target.key)).toBe(String(target.max))
-      storage.removeItem(target.key)
-      emit(target.key, String(target.max))
+      expect(mountedStore(target).get(target.atom)).toBe(target.max)
+      emit(target.key, String(target.fallback + 20.6))
+      expect(store.get(target.atom)).toBe(target.fallback + 21)
+      emit(target.key, '-20')
+      expect(store.get(target.atom)).toBe(target.min)
+      emit(target.key, '10000')
+      expect(store.get(target.atom)).toBe(target.max)
+      emit(target.key, 'malformed')
+      expect(store.get(target.atom)).toBe(target.fallback)
+      emit(target.key, String(target.min))
+      emit(target.key, null)
       expect(store.get(target.atom)).toBe(target.fallback)
       expect(storage.getItem(target.key)).toBeNull()
+      expect(mountedStore(target).get(target.atom)).toBe(target.fallback)
+      emit(target.key, String(target.min))
+      expect(mountedStore(target).get(target.atom)).toBe(target.min)
+      emit(null, null)
+      expect(store.get(target.atom)).toBe(target.fallback)
+      expect(storage.getItem(target.key)).toBeNull()
+      expect(mountedStore(target).get(target.atom)).toBe(target.fallback)
+    })
+    it(`${target.name}: reads current storage through queued races, corrupt values and deletion`, () => {
+      const store = mountedStore(target)
+      storage.setItem(target.key, String(target.max)) // Store advanced beyond a queued snapshot.
+      emit(target.key, String(target.fallback + 20.6), storage, false)
+      expect(store.get(target.atom)).toBe(target.max)
+      expect(storage.getItem(target.key)).toBe(String(target.max))
+      emit(target.key, String(target.fallback + 20.6))
+      expect(store.get(target.atom)).toBe(target.fallback + 21)
+      emit(target.key, '-20')
+      expect(store.get(target.atom)).toBe(target.min)
+      emit(target.key, '10000')
+      expect(store.get(target.atom)).toBe(target.max)
+      emit(target.key, 'malformed')
+      expect(store.get(target.atom)).toBe(target.fallback)
+      emit(target.key, String(target.min))
+      emit(target.key, null)
+      expect(store.get(target.atom)).toBe(target.fallback)
+      expect(storage.getItem(target.key)).toBeNull()
+      emit(target.key, String(target.min))
+      emit(null, null)
+      expect(store.get(target.atom)).toBe(target.fallback)
     })
     it(`${target.name}: filters other keys/storage areas and releases subscriptions`, () => {
       const store = createStore()
       const first = store.sub(target.atom, () => {})
       const second = store.sub(target.atom, () => {})
       expect(listeners.size).toBe(1)
-      storage.setItem(target.key, String(target.max))
       emit('another-key', String(target.max))
       emit(target.key, String(target.max), new MemoryStorage())
       emit(null, null, new MemoryStorage())
@@ -181,7 +204,7 @@ describe('ROX UI-001 real Jotai layout storage behavior', () => {
       expect(store.get(target.atom)).toBe(target.max)
       second()
       expect(listeners.size).toBe(0)
-      writeAndEmit(target.key, String(target.min))
+      emit(target.key, String(target.min))
       expect(store.get(target.atom)).toBe(target.max)
     })
   }

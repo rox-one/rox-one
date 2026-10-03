@@ -80,11 +80,8 @@ function encodeWireValue(value: unknown): unknown {
   }
 
   if (isRecord(value)) {
-    const encoded: Record<string, unknown> = {}
-    for (const [key, val] of Object.entries(value)) {
-      encoded[key] = encodeWireValue(val)
-    }
-    return encoded
+    // Create own data properties: arbitrary RPC keys must never invoke __proto__.
+    return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, encodeWireValue(val)]))
   }
 
   return value
@@ -103,11 +100,7 @@ function decodeWireValue(value: unknown): unknown {
       return base64ToBytes(value[WIRE_BASE64_KEY])
     }
 
-    const decoded: Record<string, unknown> = {}
-    for (const [key, val] of Object.entries(value)) {
-      decoded[key] = decodeWireValue(val)
-    }
-    return decoded
+    return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, decodeWireValue(val)]))
   }
 
   return value
@@ -115,20 +108,21 @@ function decodeWireValue(value: unknown): unknown {
 
 function isWireError(value: unknown): boolean {
   return isRecord(value)
+    && Object.hasOwn(value, 'code') && Object.hasOwn(value, 'message')
     && value.code != null
     && typeof value.message === 'string'
 }
 
 export function validateEnvelopeShape(value: unknown): value is MessageEnvelope {
   if (!isRecord(value)) return false
-  if (typeof value.id !== 'string' || value.id.length === 0) return false
-  if (typeof value.type !== 'string' || !MESSAGE_TYPES.has(value.type)) return false
+  if (!Object.hasOwn(value, 'id') || typeof value.id !== 'string' || value.id.length === 0) return false
+  if (!Object.hasOwn(value, 'type') || typeof value.type !== 'string' || !MESSAGE_TYPES.has(value.type)) return false
 
-  if (value.type === 'handshake_ack' && (typeof value.clientId !== 'string' || value.clientId.length === 0)) {
+  if (value.type === 'handshake_ack' && (!Object.hasOwn(value, 'clientId') || typeof value.clientId !== 'string' || value.clientId.length === 0)) {
     return false
   }
 
-  if ((value.type === 'request' || value.type === 'event') && typeof value.channel !== 'string') {
+  if ((value.type === 'request' || value.type === 'event') && (!Object.hasOwn(value, 'channel') || typeof value.channel !== 'string')) {
     return false
   }
 

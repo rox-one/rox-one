@@ -37,7 +37,7 @@ export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disable
       data-testid={testId}
       data-rail-row=""
       className={cn(
-        'rox-rail-row flex h-[28px] shrink-0 items-center rounded-[6px] text-[13px] leading-none transition-colors',
+        'rox-rail-row flex h-[28px] shrink-0 items-center rounded-[var(--radius-control)] text-[13px] leading-none transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
         collapsed ? 'w-[28px] justify-center' : 'w-full gap-[8px] px-[8px] text-left',
         disabled

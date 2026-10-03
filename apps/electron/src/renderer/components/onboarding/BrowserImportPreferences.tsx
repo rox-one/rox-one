@@ -32,7 +32,7 @@ export function BrowserImportPreferences({
         const { key, icon: Icon, color } = CATEGORY_ROWS[category]
         const checked = selected?.includes(category) ?? false
         return (
-          <label key={category} className={cn('flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm transition-colors motion-reduce:transition-none',
+          <label key={category} className={cn('flex cursor-pointer items-center gap-2.5 rounded-[var(--radius-control)] border px-3 py-2.5 text-sm transition-colors motion-reduce:transition-none',
             checked ? 'border-accent/25 bg-accent/5' : 'border-border/60 bg-background/30 hover:bg-foreground/5')}>
             <input type="checkbox" checked={checked} className="accent-accent" data-browser-import-category={category}
               onChange={() => {

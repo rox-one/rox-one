@@ -1,0 +1,42 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/agent/__tests__/omp-public-runtime.test.ts:
+431 |       throw new Error(`event generator did not complete within ${timeoutMs}ms (got ${events.length} events)`);
+432 |     }
+433 |     const result = await Promise.race([
+434 |       gen.next(),
+435 |       new Promise<never>((_, reject) =>
+436 |         setTimeout(() => reject(new Error(`event generator stalled after ${events.length} events`)), remaining),
+                                          ^
+error: event generator stalled after 0 events
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/shared/src/agent/__tests__/omp-fake-cli.ts:436:37)
+(fail) actual OmpAgent private public catalog lifecycle > confirms the R1 Max provider/model before executing a new default-model turn [21406.67ms]
+426 |   timeoutMs = Math.max(timeoutMs, Number(process.env.ROX_OMP_TEST_TIMEOUT_MS) || 0);
+427 |   const deadline = Date.now() + timeoutMs;
+428 |   for (;;) {
+429 |     const remaining = deadline - Date.now();
+430 |     if (remaining <= 0) {
+431 |       throw new Error(`event generator did not complete within ${timeoutMs}ms (got ${events.length} events)`);
+                      ^
+error: event generator did not complete within 8000ms (got 1 events)
+      at drainWithTimeout (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/shared/src/agent/__tests__/omp-fake-cli.ts:431:17)
+(fail) actual OmpAgent private public catalog lifecycle > uses trusted account key after final environment assembly despite wrong ambient/connection/session keys [13690.02ms]
+(pass) actual OmpAgent private public catalog lifecycle > keeps the successor profile when the predecessor close disposer arrives after actual respawn [15127.45ms]
+426 |   timeoutMs = Math.max(timeoutMs, Number(process.env.ROX_OMP_TEST_TIMEOUT_MS) || 0);
+427 |   const deadline = Date.now() + timeoutMs;
+428 |   for (;;) {
+429 |     const remaining = deadline - Date.now();
+430 |     if (remaining <= 0) {
+431 |       throw new Error(`event generator did not complete within ${timeoutMs}ms (got ${events.length} events)`);
+                      ^
+error: event generator did not complete within 8000ms (got 1 events)
+      at drainWithTimeout (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/shared/src/agent/__tests__/omp-fake-cli.ts:431:17)
+(fail) actual OmpAgent private public catalog lifecycle > removes the private profile after an actual pre-ready child failure [9352.07ms]
+(pass) actual OmpAgent private public catalog lifecycle > runs actual mini/title and call_llm children with the account key and aborts old identity after logout [6770.46ms]
+(pass) actual OmpAgent private public catalog lifecycle > never dispatches zero balance or ownerless public executions [4511.47ms]
+(pass) actual OmpAgent private public catalog lifecycle > kills an actual in-flight one-shot at logout and never accepts its delayed result [1783.46ms]
+
+ 4 pass
+ 3 fail
+ 18 expect() calls
+Ran 7 tests across 1 file. [105.08s]
