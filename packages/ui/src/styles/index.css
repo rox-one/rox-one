@@ -17,6 +17,7 @@
  *
  * The legacy background/foreground aliases remain available for existing
  * Tailwind utilities and shared components.
+ */
 
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
