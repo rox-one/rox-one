@@ -40,7 +40,9 @@ type LoadState =
 export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const [state, setState] = React.useState<LoadState>({ kind: 'loading' })
+  const [attempt, setAttempt] = React.useState(0)
+  const [snapshot, setSnapshot] = React.useState<{ runId: string | null; state: LoadState }>({ runId, state: { kind: 'loading' } })
+  const state: LoadState = snapshot.runId === runId ? snapshot.state : { kind: 'loading' }
 
   const openSettings = React.useCallback(() => {
     navigate(routes.view.settings('cloudRuns'))
@@ -48,13 +50,20 @@ export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps)
 
   React.useEffect(() => {
     let cancelled = false
+    let pending = false
+    const setState = (state: LoadState) => {
+      if (!cancelled) setSnapshot({ runId, state })
+    }
+    setState({ kind: 'loading' })
 
     async function load() {
-      if (!runId) return
+      if (!runId || pending || cancelled) return
+      pending = true
 
       const api = typeof window !== 'undefined' ? window.electronAPI : undefined
       if (!api?.listCloudRuns || !api?.getCloudRunsConfig) {
         if (!cancelled) setState({ kind: 'unavailable', reason: 'no-api' })
+        pending = false
         return
       }
 
@@ -104,14 +113,23 @@ export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps)
             message: error instanceof Error ? error.message : String(error),
           })
         }
+      } finally {
+        pending = false
       }
     }
 
     void load()
+    // Cloud-run RPC currently has no change broadcast. Refresh boundedly while
+    // this address is mounted so completion/deletion reaches the selected host.
+    const timer = runId ? window.setInterval(() => { void load() }, 5000) : undefined
+    const onFocus = () => { void load() }
+    window.addEventListener('focus', onFocus)
     return () => {
       cancelled = true
+      if (timer !== undefined) window.clearInterval(timer)
+      window.removeEventListener('focus', onFocus)
     }
-  }, [runId])
+  }, [runId, attempt])
 
   if (!runId) {
     return (
@@ -171,6 +189,10 @@ export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps)
             {t('cloudRuns.surface.useChipHint')}
           </p>
         )}
+        <button type="button" onClick={() => setAttempt((value) => value + 1)} data-testid="cloud-run-surface-retry"
+          className="inline-flex h-8 items-center rounded-md border px-3 text-xs focus-visible:ring-2 focus-visible:ring-ring">
+          {t('common.retry')}
+        </button>
         <button
           type="button"
           className="inline-flex h-8 items-center rounded-md border border-border/60 bg-foreground/[0.03] px-3 text-xs font-medium text-foreground hover:bg-foreground/5"

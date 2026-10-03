@@ -1,0 +1,9 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+(fail) UI-001 mounted NavigationProvider raw URL/readiness/history > (unnamed) [30000.40ms]
+  ^ a beforeEach/afterEach hook timed out for this test.
+
+ 0 pass
+ 1 fail
+Ran 1 test across 1 file. [37.26s]

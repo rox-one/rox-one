@@ -3865,6 +3865,8 @@
   "notes.palette.session": "Sesje",
   "notes.palette.task": "Zadania",
   "notes.palette.title": "Wzmianki i polecenia",
+  "notes.route.notFound": "Ta notatka nie jest już dostępna",
+  "notes.route.unavailable": "Nie udało się otworzyć tej notatki",
   "notes.save.autosaveHint": "Notatki zapisują się podczas pisania",
   "notes.save.autosaving": "Autozapis",
   "notes.save.failed": "Zapis nie powiódł się",

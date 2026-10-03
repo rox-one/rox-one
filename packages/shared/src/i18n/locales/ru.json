@@ -3879,6 +3879,8 @@
   "notes.palette.session": "Сессии",
   "notes.palette.task": "Задачи",
   "notes.palette.title": "Упоминания и команды",
+  "notes.route.notFound": "Эта заметка больше недоступна",
+  "notes.route.unavailable": "Не удалось открыть заметку",
   "notes.save.autosaveHint": "Заметки сохраняются автоматически",
   "notes.save.autosaving": "Автосохранение",
   "notes.save.failed": "Ошибка сохранения",

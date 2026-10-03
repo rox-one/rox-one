@@ -342,6 +342,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [indexHealth, setIndexHealth] = React.useState<NoteIndexHealth>(EMPTY_NOTE_INDEX_HEALTH)
   const [indexRebuilding, setIndexRebuilding] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
+  const [noteOpenError, setNoteOpenError] = React.useState<{ workspaceId: string; noteId: string; code: string } | null>(null)
   const [saving, setSaving] = React.useState(false)
   const [dirty, setDirty] = React.useState(false)
   const [saveError, setSaveError] = React.useState<string | null>(null)
@@ -408,6 +409,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const assetsRequestRef = React.useRef(0)
   const readsMountedRef = React.useRef(false)
   const readWorkspaceRef = React.useRef(activeWorkspaceId)
+  const readWorkspaceGenerationRef = React.useRef(0)
   const [notesReadError, setNotesReadError] = React.useState<{ workspaceId: string; code: string } | null>(null)
   const [assetsReadError, setAssetsReadError] = React.useState<{ workspaceId: string; code: string } | null>(null)
   const readUnavailable = notesReadError?.workspaceId === activeWorkspaceId ? notesReadError
@@ -416,10 +418,12 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     // A committed workspace lease invalidates A requests even across A → B → A.
     readWorkspaceRef.current = activeWorkspaceId
     readsMountedRef.current = true
+    ++readWorkspaceGenerationRef.current
     ++notesListRequestRef.current
     ++assetsRequestRef.current
     return () => {
       readsMountedRef.current = false
+      ++readWorkspaceGenerationRef.current
       ++notesListRequestRef.current
       ++assetsRequestRef.current
     }
@@ -442,6 +446,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const revisionsRef = React.useRef(new Map<string, string>())
   const pendingCommitsRef = React.useRef(new Map<string, MarkdownCommitCommand>())
   const workspaceIdRef = React.useRef(activeWorkspaceId)
+  React.useLayoutEffect(() => {
+    workspaceIdRef.current = activeWorkspaceId
+    ++openNoteRequestRef.current
+    return () => { ++openNoteRequestRef.current }
+  }, [activeWorkspaceId])
   const [contentResolution, setContentResolution] = React.useState<ContentResolution | ContentFailure | null>(null)
   const [sourceInfoOpen, setSourceInfoOpen] = React.useState(false)
   const [committedBlockTree, setCommittedBlockTree] = React.useState<BlockTreeResult | null>(null)
@@ -700,7 +709,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeWorkspaceId, notes])
 
   const openNote = React.useCallback(async (noteId: string) => {
+    if (!readsMountedRef.current || readWorkspaceRef.current !== activeWorkspaceId) return
     const request = ++openNoteRequestRef.current
+    const isCurrent = () => readsMountedRef.current && request === openNoteRequestRef.current
+      && workspaceIdRef.current === activeWorkspaceId && readWorkspaceRef.current === activeWorkspaceId
+    setNoteOpenError(null)
     if (!activeWorkspaceId) {
       setActiveNote(null)
       contentRef.current = ''
@@ -712,6 +725,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     }
     const read = soupDocumentReadResult({ source: 'native', nativeId: noteId })
     if (!isClaimableLive(read.result)) {
+      setNoteOpenError({ workspaceId: activeWorkspaceId, noteId, code: 'CAPABILITY_UNAVAILABLE' })
+      setActiveNote(null)
       setLoading(false)
       return
     }
@@ -719,11 +734,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     setContentResolution(null)
     try {
       const note = await window.electronAPI.readNote(activeWorkspaceId, noteId)
-      if (request !== openNoteRequestRef.current || workspaceIdRef.current !== activeWorkspaceId) return
+      if (!isCurrent()) return
       const resolution = window.electronAPI.isChannelAvailable(RPC_CHANNELS.content.RESOLVE)
         ? await window.electronAPI.resolveContent({ workspaceId: activeWorkspaceId, entityId: `note:${note.nativeId ?? note.id}` })
         : { status: 'error' as const, code: 'missingDependency' as const }
-      if (request !== openNoteRequestRef.current || workspaceIdRef.current !== activeWorkspaceId) return
+      if (!isCurrent()) return
       // Projection metadata never grants a path-based alias a native write authority.
       if (resolution.status !== 'error' && resolution.origin.nativeId !== (note.nativeId ?? note.id)) {
         throw Object.assign(new Error(t('notes.content.authorityChanged')), { code: 'DOCUMENT_AUTHORITY_CHANGED' })
@@ -751,8 +766,10 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       setExternalChange(null)
       setTagDraft(note.tags.join(', '))
     } catch (error) {
-      if (request !== openNoteRequestRef.current || workspaceIdRef.current !== activeWorkspaceId) return
+      if (!isCurrent()) return
+      setNoteOpenError({ workspaceId: activeWorkspaceId, noteId, code: capabilityErrorCode(error) })
       toast.error(error instanceof Error ? error.message : t('notes.toast.openFailed'))
+      activeNoteIdRef.current = null
       setActiveNote(null)
       contentRef.current = ''
       dirtyRef.current = false
@@ -760,7 +777,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       setDirty(false)
       setSaving(false)
     } finally {
-      if (request === openNoteRequestRef.current && workspaceIdRef.current === activeWorkspaceId) setLoading(false)
+      if (isCurrent()) setLoading(false)
     }
   }, [activeWorkspaceId, t])
 
@@ -789,6 +806,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     refreshAssets()
     void refreshIndexHealth()
     if (!activeWorkspaceId) return
+    const workspaceGeneration = readWorkspaceGenerationRef.current
+    let subscribed = true
+    const isCurrentSubscription = () => subscribed && readsMountedRef.current
+      && readWorkspaceGenerationRef.current === workspaceGeneration
+      && readWorkspaceRef.current === activeWorkspaceId
     void nativeNotesSync.start(activeWorkspaceId)
       .then(() => nativeNotesSync.flush())
       .catch(error => {
@@ -799,7 +821,30 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     }).then(() => { void refreshIndexHealth() })
     const unsubscribe = window.electronAPI.onNotesChanged((rawPayload) => {
       const payload = normalizeChangedPayload(rawPayload)
-      if (payload.workspaceId !== activeWorkspaceId) return
+      if (!isCurrentSubscription() || payload.workspaceId !== activeWorkspaceId) return
+
+      const selectedTarget = selectedNoteId ? parseNoteBlockAddress(selectedNoteId).noteId : null
+      if (payload.reason === 'delete' && payload.noteId && (payload.noteId === activeNoteIdRef.current || payload.noteId === selectedTarget)) {
+        ++openNoteRequestRef.current
+        setLoading(false)
+        setSaving(false)
+        setNoteOpenError({ workspaceId: activeWorkspaceId, noteId: payload.noteId, code: 'NOT_FOUND' })
+        setContentResolution({ status: 'error', code: 'deleted' })
+        saveBlockedRef.current = true
+        setSaveNeedsReload(true)
+        refreshNotes()
+        refreshAssets()
+        if (dirtyRef.current && payload.noteId === activeNoteIdRef.current) {
+          setSaveError(t('notes.content.deleted'))
+          return
+        }
+        activeNoteIdRef.current = null
+        setActiveNote(null)
+        contentRef.current = ''
+        setContent('')
+        setDirty(false)
+        return
+      }
 
       if (payload.reason === 'descriptor' && payload.noteId === activeNoteIdRef.current) {
         const noteId = payload.noteId
@@ -807,11 +852,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
         const opening = openNoteRequestRef.current
         setContentResolution(null)
         void window.electronAPI.resolveContent({ workspaceId: activeWorkspaceId, entityId: `note:${nativeId}` }).then(resolution => {
-          if (workspaceIdRef.current !== activeWorkspaceId || activeNoteIdRef.current !== noteId || openNoteRequestRef.current !== opening) return
+          if (!isCurrentSubscription() || workspaceIdRef.current !== activeWorkspaceId || activeNoteIdRef.current !== noteId || openNoteRequestRef.current !== opening) return
           setContentResolution(resolution)
           if (resolution.status !== 'ok' || !resolution.capabilities.write) setSaveNeedsReload(true)
         }).catch(() => {
-          if (workspaceIdRef.current === activeWorkspaceId && activeNoteIdRef.current === noteId) {
+          if (isCurrentSubscription() && workspaceIdRef.current === activeWorkspaceId && activeNoteIdRef.current === noteId && openNoteRequestRef.current === opening) {
             setContentResolution({ status: 'error', code: 'denied' })
             setSaveNeedsReload(true)
           }
@@ -836,13 +881,14 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     })
 
     return () => {
+      subscribed = false
       unsubscribe()
       void nativeNotesSync.stop().catch(error => {
         toast.error(error instanceof Error ? error.message : t('notes.toast.watchFailed'))
       })
       window.electronAPI.unwatchNotes(activeWorkspaceId).catch(() => {})
     }
-  }, [activeWorkspaceId, openNote, refreshAssets, refreshIndexHealth, refreshNotes, t])
+  }, [activeWorkspaceId, selectedNoteId, openNote, refreshAssets, refreshIndexHealth, refreshNotes, t])
 
   React.useEffect(() => {
     if (selectedNoteId) {
@@ -850,6 +896,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       return
     }
     setActiveNote(null)
+    setNoteOpenError(null)
     contentRef.current = ''
     dirtyRef.current = false
     setContent('')
@@ -2312,6 +2359,14 @@ h1,h2,h3{margin-top:1.5em}
             <div className="h-full grid place-items-center">
               {loading ? (
                 <div className="text-sm text-muted-foreground">{t('notes.empty.loading')}</div>
+              ) : noteOpenError?.workspaceId === activeWorkspaceId && noteOpenError.noteId === (selectedNoteId ? parseNoteBlockAddress(selectedNoteId).noteId : null) ? (
+                <div className="flex max-w-md flex-col items-center gap-3 p-6 text-center text-sm text-muted-foreground"
+                  role="status" data-testid={noteOpenError.code === 'NOT_FOUND' ? 'route-note-missing' : 'route-note-unavailable'} data-error-code={noteOpenError.code}
+                  data-state={noteOpenError.code === 'NOT_FOUND' ? 'not-found' : 'unavailable'}>
+                  <p>{t(noteOpenError.code === 'NOT_FOUND' ? 'notes.route.notFound' : 'notes.route.unavailable')}</p>
+                  <Button variant="outline" onClick={() => void openNote(noteOpenError.noteId)}>{t('common.retry')}</Button>
+                  <Button variant="ghost" onClick={() => navigate(routes.view.notes())}>{t('common.backToList')}</Button>
+                </div>
               ) : (
                 <div className="w-[420px] max-w-[calc(100%-48px)] p-4 text-center" data-notes-empty="">
                   <div className="text-sm font-medium">{t('notes.empty.noNote')}</div>

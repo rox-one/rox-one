@@ -1,0 +1,41 @@
+{
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "sourceRevision": "e35aa30af754a660ca595e50c7168c88d9696223",
+  "recordedAtUtc": "2026-10-03T16:08:08.706357+00:00",
+  "lane": "main",
+  "actualBuildCommand": [
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/docs/final-readiness/execution/cloud/OWNER-UI-001/verification/expanded/harness/rox-readiness-ui-001.bundle-fixture.ts",
+    "main",
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.main-fixture-e35aa30af754.js"
+  ],
+  "inputCount": 125,
+  "trackedSourceInputCount": 33,
+  "dependencyInputCount": 92,
+  "committedSourceMismatches": [],
+  "diskInputMismatches": [],
+  "bundleSha256": "e87895f4c29b62b218d72e773da103d0a7bd0a411696a1577e66541a37e82285",
+  "allInputsEqualToPriorProof": true,
+  "bundleBytesEqualToPriorProof": true,
+  "requiresMountedReplay": false,
+  "priorObservedSourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+  "priorObservedTest": {
+    "pass": 11,
+    "fail": 0,
+    "assertions": 23,
+    "cases": 11,
+    "runtime": "Node v26.8.2 actual source callbacks adapter + isolated headless Chrome153",
+    "log": "rox-readiness-ui-001.main-node-final-5e549.log",
+    "result": "rox-readiness-ui-001.mounted-result-5e549.json"
+  },
+  "NavigationContextIsMainFixtureInput": false,
+  "limitations": [
+    "NavigationContext is an explicit fixture seam in this lane; this receipt does not verify the remoteWorkspaceId-only listener repair. The separately mounted real NavigationProvider lane owns that proof.",
+    "Existing result is retained only if every input and output byte matches; no new11-case execution is claimed by this receipt.",
+    "Original installed Windows/macOS/hosted-web/service full acceptance remains independent and incomplete."
+  ],
+  "fullDoDClosed": false
+}

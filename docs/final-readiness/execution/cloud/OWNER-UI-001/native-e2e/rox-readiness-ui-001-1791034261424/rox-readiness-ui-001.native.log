@@ -1,0 +1,228 @@
+2026-10-03T13:32:27.523Z INFO   2026-10-03T13:32:27.523Z [PowerShellValidator] Root set to: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/apps/electron/dist/resources
+2026-10-03T13:32:27.523Z [PowerShellValidator] Root set to: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/apps/electron/dist/resources
+2026-10-03T13:32:27.523Z [docs] Synced 0 docs
+2026-10-03T13:32:27.524Z [bundled-skills] Bundle root not found — skipping sync
+2026-10-03T13:32:27.523Z INFO   2026-10-03T13:32:27.523Z [docs] Synced 0 docs
+2026-10-03T13:32:27.524Z INFO   2026-10-03T13:32:27.524Z [bundled-skills] Bundle root not found — skipping sync
+2026-10-03T13:32:27.525Z INFO   2026-10-03T13:32:27.525Z [release-notes] Synced 0 release notes
+2026-10-03T13:32:27.525Z [release-notes] Synced 0 release notes
+2026-10-03T13:32:27.525Z INFO  [main] Registered thumbnail:// protocol handler
+2026-10-03T13:32:27.526Z INFO   [proxy] Applying proxy settings: {"enabled":false,"source":"system","hasHttpProxy":false,"hasHttpsProxy":false,"hasNoProxy":false}
+2026-10-03T13:32:27.574Z INFO  [main] Badge icon initialized: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/apps/electron/resources/icon.png
+2026-10-03T13:32:27.575Z INFO  [main] Instance badge set: 96
+2026-10-03T13:32:27.575Z INFO  [main] [browser-pane] Toolbar IPC handlers registered
+2026-10-03T13:32:27.576Z INFO  [main] [browser-pane] Capability IPC handler registered
+2026-10-03T13:32:27.590Z INFO   2026-10-03T13:32:27.590Z [config] No bundled assets dir found - using fallback config-defaults
+2026-10-03T13:32:27.591Z INFO   [bootstrap] Config artifacts initialized
+2026-10-03T13:32:27.590Z [config] No bundled assets dir found - using fallback config-defaults
+2026-10-03T13:32:27.593Z INFO   [bootstrap] Global config found
+(node:25414) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `Electron --trace-warnings ...` to show where the warning was created)
+2026-10-03T13:32:27.622Z INFO   [session] [browser-pane] setRpcServer called — remote browser bridge is now available
+2026-10-03T13:32:27.624Z INFO  [main] [messaging-gateway] messaging bootstrap created {"timestamp":"2026-10-03T13:32:27.623Z","level":"info","scope":"messaging-gateway","component":"bootstrap","event":"messaging_bootstrap_created","workerEntry":"/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/packages/messaging-whatsapp-worker/dist/worker.cjs","nodeBin":"(host default)","pairingMode":"qr","message":"messaging bootstrap created"}
+2026-10-03T13:32:27.636Z INFO   2026-10-03T13:32:27.636Z [config] Seeded default rox-kimi connection (existing config had no LLM connections)
+2026-10-03T13:32:27.638Z INFO   2026-10-03T13:32:27.638Z [CredentialManager] Backend available: secure-storage (priority 100)
+2026-10-03T13:32:27.638Z INFO   2026-10-03T13:32:27.638Z [CredentialManager] Using backend: secure-storage
+2026-10-03T13:32:27.640Z INFO   [session] Reinitializing auth for connection: rox-kimi (none)
+2026-10-03T13:32:27.640Z INFO   [session] Auth env vars set for connection: rox-kimi
+2026-10-03T13:32:27.640Z INFO   2026-10-03T13:32:27.640Z [summarize] resetSummarizationClient called (no-op)
+2026-10-03T13:32:27.636Z [config] Seeded default rox-kimi connection (existing config had no LLM connections)
+2026-10-03T13:32:27.638Z [CredentialManager] Backend available: secure-storage (priority 100)
+2026-10-03T13:32:27.638Z [CredentialManager] Using backend: secure-storage
+2026-10-03T13:32:27.640Z [summarize] resetSummarizationClient called (no-op)
+2026-10-03T13:32:27.653Z [ConfigWatcher] Starting for workspace: ui-001
+2026-10-03T13:32:27.652Z INFO   [session] Setting up ConfigWatcher for workspace: ec52bb9c-5316-159d-bb57-67e9e9b8f1ae (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/workspaces/ui-001)
+2026-10-03T13:32:27.653Z INFO   2026-10-03T13:32:27.653Z [ConfigWatcher] Starting for workspace: ui-001
+2026-10-03T13:32:27.654Z INFO   2026-10-03T13:32:27.654Z [ConfigWatcher] Watching global configs: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX
+2026-10-03T13:32:27.654Z INFO   2026-10-03T13:32:27.654Z [ConfigWatcher] Setting up workspace watcher for: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/workspaces/ui-001
+2026-10-03T13:32:27.655Z INFO   2026-10-03T13:32:27.655Z [ConfigWatcher] Watching workspace recursively: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/workspaces/ui-001
+2026-10-03T13:32:27.655Z INFO   2026-10-03T13:32:27.655Z [ConfigWatcher] Watching app themes directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/themes
+2026-10-03T13:32:27.655Z INFO   2026-10-03T13:32:27.655Z [ConfigWatcher] Watching app permissions directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/permissions
+2026-10-03T13:32:27.655Z INFO   2026-10-03T13:32:27.655Z [ConfigWatcher] Watching context docs directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/context
+2026-10-03T13:32:27.654Z [ConfigWatcher] Watching global configs: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX
+2026-10-03T13:32:27.654Z [ConfigWatcher] Setting up workspace watcher for: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/workspaces/ui-001
+2026-10-03T13:32:27.655Z [ConfigWatcher] Watching workspace recursively: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/workspaces/ui-001
+2026-10-03T13:32:27.655Z [ConfigWatcher] Watching app themes directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/themes
+2026-10-03T13:32:27.655Z [ConfigWatcher] Watching app permissions directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/permissions
+2026-10-03T13:32:27.655Z [ConfigWatcher] Watching context docs directory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/context
+2026-10-03T13:32:27.656Z INFO   2026-10-03T13:32:27.656Z [ConfigWatcher] Known sources: ["applications","codegraph","context7","deepwiki","everything-mcp","exa","firecrawl","firecrawl-mcp","mem0","memory","notes","playwright","projects","qdrant","qmd","sessions","tasks","telegram-mcp","telegram-support","ui001-local-source","weaviate","windows-commander","windows-mcp","workspace-tree"]
+2026-10-03T13:32:27.656Z INFO   2026-10-03T13:32:27.656Z [ConfigWatcher] Known skills: ["ui001-workspace-skill"]
+2026-10-03T13:32:27.656Z INFO   2026-10-03T13:32:27.656Z [ConfigWatcher] Known themes: []
+2026-10-03T13:32:27.656Z [ConfigWatcher] Known sources: ["applications","codegraph","context7","deepwiki","everything-mcp","exa","firecrawl","firecrawl-mcp","mem0","memory","notes","playwright","projects","qdrant","qmd","sessions","tasks","telegram-mcp","telegram-support","ui001-local-source","weaviate","windows-commander","windows-mcp","workspace-tree"]
+2026-10-03T13:32:27.656Z [ConfigWatcher] Known skills: ["ui001-workspace-skill"]
+2026-10-03T13:32:27.656Z [ConfigWatcher] Known themes: []
+2026-10-03T13:32:27.657Z INFO   2026-10-03T13:32:27.657Z [ConfigWatcher] Started watching files
+2026-10-03T13:32:27.657Z [ConfigWatcher] Started watching files
+2026-10-03T13:32:27.657Z [PERF] configWatcher.start: 4.19ms (ensureDir:0.2ms → watchGlobalConfigs:1.4ms → watchWorkspaceDir:1.8ms → watchAppThemesDir:2.1ms → watchAppPermissionsDir:2.3ms → watchContextDocsDir:2.5ms → scanSources:3.0ms → scanSkills:3.2ms → scanAppThemes:3.4ms → initLlmConnectionsHash:4.0ms) {"workspaceId":"ui-001"}
+2026-10-03T13:32:27.660Z INFO   2026-10-03T13:32:27.660Z [event-bus] DEBUG [EventBus] Created for workspace: ec52bb9c-5316-159d-bb57-67e9e9b8f1ae
+2026-10-03T13:32:27.660Z [event-bus] DEBUG [EventBus] Created for workspace: ec52bb9c-5316-159d-bb57-67e9e9b8f1ae
+2026-10-03T13:32:27.676Z INFO   2026-10-03T13:32:27.676Z [automation-system] DEBUG [AutomationSystem] Loaded 30 actions from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/workspaces/ui-001/automations.json
+2026-10-03T13:32:27.676Z [automation-system] DEBUG [AutomationSystem] Loaded 30 actions from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/workspaces/ui-001/automations.json
+2026-10-03T13:32:27.678Z INFO   2026-10-03T13:32:27.678Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T13:32:27.678Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T13:32:27.678Z [prompt-handler] DEBUG [PromptHandler] Subscribed to event bus
+2026-10-03T13:32:27.678Z INFO   2026-10-03T13:32:27.678Z [prompt-handler] DEBUG [PromptHandler] Subscribed to event bus
+2026-10-03T13:32:27.678Z INFO   2026-10-03T13:32:27.678Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T13:32:27.678Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T13:32:27.678Z [retry-scheduler] DEBUG [RetryScheduler] Started
+2026-10-03T13:32:27.678Z INFO   2026-10-03T13:32:27.678Z [retry-scheduler] DEBUG [RetryScheduler] Started
+2026-10-03T13:32:27.679Z INFO   2026-10-03T13:32:27.679Z [webhook-handler] DEBUG [WebhookHandler] Subscribed to event bus
+2026-10-03T13:32:27.679Z INFO   2026-10-03T13:32:27.679Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T13:32:27.679Z INFO   2026-10-03T13:32:27.679Z [event-log-handler] DEBUG [EventLogHandler] Subscribed to event bus, logging to /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/workspaces/ui-001/events.jsonl
+2026-10-03T13:32:27.679Z INFO   2026-10-03T13:32:27.679Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T13:32:27.679Z [webhook-handler] DEBUG [WebhookHandler] Subscribed to event bus
+2026-10-03T13:32:27.679Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T13:32:27.679Z [event-log-handler] DEBUG [EventLogHandler] Subscribed to event bus, logging to /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/workspaces/ui-001/events.jsonl
+2026-10-03T13:32:27.679Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T13:32:27.679Z INFO   2026-10-03T13:32:27.679Z [script-handler] DEBUG [ScriptHandler] Subscribed to event bus
+2026-10-03T13:32:27.680Z INFO   2026-10-03T13:32:27.680Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T13:32:27.680Z INFO   2026-10-03T13:32:27.680Z [knowledge-handler] DEBUG [KnowledgeHandler] Subscribed to event bus
+2026-10-03T13:32:27.680Z INFO   2026-10-03T13:32:27.680Z [automation-system] DEBUG [AutomationSystem] Handlers created and subscribed
+2026-10-03T13:32:27.679Z [script-handler] DEBUG [ScriptHandler] Subscribed to event bus
+2026-10-03T13:32:27.680Z [event-bus] DEBUG [EventBus] Registered any-handler
+2026-10-03T13:32:27.680Z [knowledge-handler] DEBUG [KnowledgeHandler] Subscribed to event bus
+2026-10-03T13:32:27.680Z [automation-system] DEBUG [AutomationSystem] Handlers created and subscribed
+2026-10-03T13:32:27.680Z INFO   2026-10-03T13:32:27.680Z [automation-system] DEBUG [AutomationSystem] Scheduler started
+2026-10-03T13:32:27.680Z [automation-system] DEBUG [AutomationSystem] Scheduler started
+2026-10-03T13:32:27.681Z INFO   2026-10-03T13:32:27.681Z [automation-system] DEBUG [AutomationSystem] Created for workspace: ec52bb9c-5316-159d-bb57-67e9e9b8f1ae
+2026-10-03T13:32:27.681Z [automation-system] DEBUG [AutomationSystem] Created for workspace: ec52bb9c-5316-159d-bb57-67e9e9b8f1ae
+2026-10-03T13:32:27.681Z INFO   [session] Initialized AutomationSystem for workspace ec52bb9c-5316-159d-bb57-67e9e9b8f1ae
+2026-10-03T13:32:27.684Z [PERF] session.listSessions: 1.33ms (readdir:0.1ms → parsed:1.3ms) {"count":2}
+2026-10-03T13:32:27.685Z [Mode] Set permission mode to allow-all for session 261003-copper-ivy (changedBy=restore, modeVersion=1)
+2026-10-03T13:32:27.685Z [Mode] Set permission mode to allow-all for session 261003-golden-frost (changedBy=restore, modeVersion=1)
+2026-10-03T13:32:27.685Z INFO   2026-10-03T13:32:27.685Z [Mode] Set permission mode to allow-all for session 261003-copper-ivy (changedBy=restore, modeVersion=1)
+2026-10-03T13:32:27.685Z INFO   2026-10-03T13:32:27.685Z [Mode] Set permission mode to allow-all for session 261003-golden-frost (changedBy=restore, modeVersion=1)
+2026-10-03T13:32:27.685Z INFO   [session] Loaded 2 sessions from disk (metadata only)
+2026-10-03T13:32:27.698Z INFO   Rox server listening on ws://127.0.0.1:64175
+2026-10-03T13:32:27.700Z INFO  [main] [messaging] Fan-out sink active for 1 workspace(s)
+2026-10-03T13:32:27.701Z INFO   2026-10-03T13:32:27.701Z [SourceCredentialManager] getApiCredential for codegraph: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:27.702Z INFO   2026-10-03T13:32:27.702Z [SourceCredentialManager] getApiCredential for context7: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:27.701Z [SourceCredentialManager] getApiCredential for codegraph: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:27.702Z [SourceCredentialManager] getApiCredential for context7: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:27.841Z INFO  [window] Created window for workspace ec52bb9c-5316-159d-bb57-67e9e9b8f1ae (focused: false)
+2026-10-03T13:32:27.843Z INFO  [main] Created window for first workspace: UI-001 acceptance
+2026-10-03T13:32:27.847Z INFO  [main] [power] Power manager initialized {"settingEnabled":false}
+2026-10-03T13:32:27.847Z INFO   2026-10-03T13:32:27.847Z [SourceCredentialManager] getApiCredential for codegraph: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:27.847Z INFO   2026-10-03T13:32:27.847Z [SourceCredentialManager] getApiCredential for context7: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:27.847Z [SourceCredentialManager] getApiCredential for codegraph: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:27.847Z [SourceCredentialManager] getApiCredential for context7: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:27.849Z INFO  [main] [auto-update] Skipping auto-update in dev mode
+2026-10-03T13:32:27.849Z INFO  [main] App initialized successfully
+2026-10-03T13:32:27.849Z INFO  [main] Debug mode enabled - logs at: /Users/t/Library/Logs/@rox/electron/main.log
+2026-10-03T13:32:27.849Z INFO  [main] Messaging gateway log path: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/logs/messaging-gateway.log
+2026-10-03T13:32:27.850Z INFO   2026-10-03T13:32:27.850Z [SourceServerBuilder] Built MCP server for codegraph
+2026-10-03T13:32:27.850Z INFO   2026-10-03T13:32:27.850Z [SourceServerBuilder] Built MCP server for context7
+2026-10-03T13:32:27.850Z [SourceServerBuilder] Built MCP server for codegraph
+2026-10-03T13:32:27.850Z [SourceServerBuilder] Built MCP server for context7
+2026-10-03T13:32:27.850Z [PERF] sources.buildServers: 5.08ms (credentials.loaded:4.3ms → servers.built:5.1ms) {"count":1,"mcpCount":1,"apiCount":0}
+2026-10-03T13:32:27.850Z [PERF] sources.buildServers: 5.03ms (credentials.loaded:4.8ms → servers.built:5.0ms) {"count":1,"mcpCount":1,"apiCount":0}
+2026-10-03T13:32:27.953Z INFO   2026-10-03T13:32:27.953Z [SourceCredentialManager] getApiCredential for deepwiki: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:27.953Z INFO   2026-10-03T13:32:27.953Z [SourceCredentialManager] getApiCredential for deepwiki: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:27.954Z INFO   2026-10-03T13:32:27.954Z [SourceServerBuilder] Built MCP server for deepwiki
+2026-10-03T13:32:27.953Z [SourceCredentialManager] getApiCredential for deepwiki: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:27.953Z [SourceCredentialManager] getApiCredential for deepwiki: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:27.954Z [SourceServerBuilder] Built MCP server for deepwiki
+2026-10-03T13:32:27.954Z [PERF] sources.buildServers: 0.39ms (credentials.loaded:0.2ms → servers.built:0.4ms) {"count":1,"mcpCount":1,"apiCount":0}
+2026-10-03T13:32:28.023Z INFO   [bootstrap] Toolchain ensureAll scheduled
+2026-10-03T13:32:28.087Z INFO   2026-10-03T13:32:28.087Z [ConfigWatcher] Source config changed: codegraph
+2026-10-03T13:32:28.088Z INFO   [session] Source 'codegraph' changed: updated
+2026-10-03T13:32:28.087Z [ConfigWatcher] Source config changed: codegraph
+2026-10-03T13:32:28.902Z INFO   2026-10-03T13:32:28.902Z [ws-rpc-server] INFO  Client connected {"clientId":"ea10e1f4-4e88-4168-abb9-565a5f4ac606","webContentsId":1,"workspaceId":"ec52bb9c-5316-159d-bb57-67e9e9b8f1ae"}
+2026-10-03T13:32:28.902Z [ws-rpc-server] INFO  Client connected {"clientId":"ea10e1f4-4e88-4168-abb9-565a5f4ac606","webContentsId":1,"workspaceId":"ec52bb9c-5316-159d-bb57-67e9e9b8f1ae"}
+2026-10-03T13:32:29.148Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T13:32:29.157Z INFO  [main] [i18n] changeLanguage IPC applied {"incoming":"ru","previousResolved":"ru","newResolved":"ru"}
+2026-10-03T13:32:29.220Z INFO   personalTasks: migrated 0 task(s) from localStorage (skipped 0)
+2026-10-03T13:32:29.269Z INFO   2026-10-03T13:32:29.269Z [SourceCredentialManager] getApiCredential for everything-mcp: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.269Z [SourceCredentialManager] getApiCredential for everything-mcp: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.270Z INFO   2026-10-03T13:32:29.270Z [SourceCredentialManager] getApiCredential for firecrawl-mcp: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.270Z [SourceCredentialManager] getApiCredential for firecrawl-mcp: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.271Z INFO   2026-10-03T13:32:29.271Z [SourceCredentialManager] No credential found for MCP source mem0
+2026-10-03T13:32:29.271Z [SourceCredentialManager] No credential found for MCP source mem0
+2026-10-03T13:32:29.272Z INFO   2026-10-03T13:32:29.272Z [SourceCredentialManager] No credential found for MCP source mem0
+2026-10-03T13:32:29.272Z [SourceCredentialManager] No credential found for MCP source mem0
+2026-10-03T13:32:29.272Z [SourceCredentialManager] getApiCredential for mem0: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.272Z INFO   2026-10-03T13:32:29.272Z [SourceCredentialManager] getApiCredential for mem0: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.273Z INFO   2026-10-03T13:32:29.273Z [SourceCredentialManager] getApiCredential for playwright: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.273Z [SourceCredentialManager] getApiCredential for playwright: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.274Z [SourceCredentialManager] getApiCredential for playwright: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.274Z INFO   2026-10-03T13:32:29.274Z [SourceCredentialManager] getApiCredential for playwright: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.274Z [SourceServerBuilder] Built MCP server for playwright
+2026-10-03T13:32:29.274Z [PERF] sources.buildServers: 0.61ms (credentials.loaded:0.3ms → servers.built:0.6ms) {"count":1,"mcpCount":1,"apiCount":0}
+2026-10-03T13:32:29.274Z INFO   2026-10-03T13:32:29.274Z [SourceServerBuilder] Built MCP server for playwright
+2026-10-03T13:32:29.282Z INFO   2026-10-03T13:32:29.282Z [ConfigWatcher] preferences.json changed
+2026-10-03T13:32:29.282Z [ConfigWatcher] preferences.json changed
+2026-10-03T13:32:29.418Z INFO   2026-10-03T13:32:29.418Z [ConfigWatcher] Source config changed: context7
+2026-10-03T13:32:29.419Z INFO   [session] Source 'context7' changed: updated
+2026-10-03T13:32:29.427Z INFO   2026-10-03T13:32:29.427Z [ConfigWatcher] Source config changed: everything-mcp
+2026-10-03T13:32:29.427Z INFO   [session] Source 'everything-mcp' changed: updated
+2026-10-03T13:32:29.418Z [ConfigWatcher] Source config changed: context7
+2026-10-03T13:32:29.427Z [ConfigWatcher] Source config changed: everything-mcp
+2026-10-03T13:32:29.433Z INFO   2026-10-03T13:32:29.433Z [ConfigWatcher] Source config changed: firecrawl-mcp
+2026-10-03T13:32:29.433Z [ConfigWatcher] Source config changed: firecrawl-mcp
+2026-10-03T13:32:29.434Z INFO   [session] Source 'firecrawl-mcp' changed: updated
+2026-10-03T13:32:29.439Z INFO   2026-10-03T13:32:29.439Z [ConfigWatcher] Source config changed: mem0
+2026-10-03T13:32:29.441Z INFO   [session] Source 'mem0' changed: updated
+2026-10-03T13:32:29.439Z [ConfigWatcher] Source config changed: mem0
+2026-10-03T13:32:29.960Z INFO   2026-10-03T13:32:29.960Z [SourceCredentialManager] getApiCredential for qdrant: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.961Z INFO   2026-10-03T13:32:29.961Z [SourceCredentialManager] getApiCredential for qdrant: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.961Z INFO   2026-10-03T13:32:29.961Z [SourceServerBuilder] Built MCP server for qdrant
+2026-10-03T13:32:29.960Z [SourceCredentialManager] getApiCredential for qdrant: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.961Z [SourceCredentialManager] getApiCredential for qdrant: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.961Z [SourceServerBuilder] Built MCP server for qdrant
+2026-10-03T13:32:29.961Z [PERF] sources.buildServers: 0.60ms (credentials.loaded:0.4ms → servers.built:0.6ms) {"count":1,"mcpCount":1,"apiCount":0}
+2026-10-03T13:32:29.976Z INFO   2026-10-03T13:32:29.976Z [SourceCredentialManager] getApiCredential for qmd: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.977Z INFO   2026-10-03T13:32:29.977Z [SourceCredentialManager] getApiCredential for qmd: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.977Z INFO   2026-10-03T13:32:29.977Z [SourceServerBuilder] Built MCP server for qmd
+2026-10-03T13:32:29.976Z [SourceCredentialManager] getApiCredential for qmd: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.977Z [SourceCredentialManager] getApiCredential for qmd: cred.value exists=false, headerNames=undefined
+2026-10-03T13:32:29.977Z [SourceServerBuilder] Built MCP server for qmd
+2026-10-03T13:32:29.977Z [PERF] sources.buildServers: 0.42ms (credentials.loaded:0.2ms → servers.built:0.4ms) {"count":1,"mcpCount":1,"apiCount":0}
+2026-10-03T13:32:30.101Z INFO   2026-10-03T13:32:30.101Z [ConfigWatcher] Source config changed: deepwiki
+2026-10-03T13:32:30.101Z [ConfigWatcher] Source config changed: deepwiki
+2026-10-03T13:32:30.103Z INFO   [session] Source 'deepwiki' changed: updated
+2026-10-03T13:32:30.127Z INFO   2026-10-03T13:32:30.127Z [ConfigWatcher] Source config changed: qdrant
+2026-10-03T13:32:30.128Z INFO   [session] Source 'qdrant' changed: updated
+2026-10-03T13:32:30.127Z [ConfigWatcher] Source config changed: qdrant
+2026-10-03T13:32:30.312Z INFO  [window] Updated window 1 from workspace ec52bb9c-5316-159d-bb57-67e9e9b8f1ae to ec52bb9c-5316-159d-bb57-67e9e9b8f1ae
+2026-10-03T13:32:30.313Z [PERF] ipc.switchWorkspace: 0.57ms {"workspaceId":"ec52bb9c-5316-159d-bb57-67e9e9b8f1ae"}
+2026-10-03T13:32:30.322Z INFO   2026-10-03T13:32:30.322Z [ConfigWatcher] preferences.json changed
+2026-10-03T13:32:30.322Z [ConfigWatcher] preferences.json changed
+2026-10-03T13:32:30.409Z INFO   AUTOMATIONS_GET: Loading automations for workspace: ec52bb9c-5316-159d-bb57-67e9e9b8f1ae
+2026-10-03T13:32:30.420Z INFO   SKILLS_GET: Loading skills for workspace: ec52bb9c-5316-159d-bb57-67e9e9b8f1ae
+2026-10-03T13:32:30.427Z INFO   AUTOMATIONS_GET: Reading config from: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/workspaces/ui-001/automations.json
+2026-10-03T13:32:30.429Z DEBUG  [session] Cold-load triggered for persistSession on 261003-copper-ivy
+2026-10-03T13:32:30.429Z DEBUG  [session] Cold-hydrated 0 messages for session 261003-copper-ivy
+2026-10-03T13:32:30.431Z DEBUG  [session] Cold-load triggered for persistSession on 261003-golden-frost
+2026-10-03T13:32:30.431Z DEBUG  [session] Cold-hydrated 0 messages for session 261003-golden-frost
+2026-10-03T13:32:30.432Z INFO   [sessions:get] result {"ctxWorkspaceId":"ec52bb9c-5316-159d-bb57-67e9e9b8f1ae","webContentsId":1,"windowWorkspaceId":"ec52bb9c-5316-159d-bb57-67e9e9b8f1ae","resolvedWorkspaceId":"ec52bb9c-5316-159d-bb57-67e9e9b8f1ae","returnedCount":2,"returnedWorkspaceIds":{"ec52bb9c-5316-159d-bb57-67e9e9b8f1ae":2},"returnedIds":{"count":2,"ids":["261003-copper-ivy","261003-golden-frost"],"truncated":false}}
+2026-10-03T13:32:30.434Z INFO   2026-10-03T13:32:30.434Z [loadViewsConfig] No config found, seeding with default views
+2026-10-03T13:32:30.429Z [PERF] session.loadSession: 0.20ms {"sessionId":"261003-copper-ivy"}
+2026-10-03T13:32:30.431Z [PERF] session.loadSession: 0.25ms {"sessionId":"261003-golden-frost"}
+2026-10-03T13:32:30.432Z [PERF] rpc.getSessions: 3.78ms
+2026-10-03T13:32:30.434Z [loadViewsConfig] No config found, seeding with default views
+2026-10-03T13:32:30.757Z INFO   2026-10-03T13:32:30.757Z [Skills] Unknown icon format, must be emoji or URL: research-publish.svg
+2026-10-03T13:32:30.757Z [Skills] Unknown icon format, must be emoji or URL: research-publish.svg
+2026-10-03T13:32:30.769Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/workspaces/ui-001
+2026-10-03T13:32:30.773Z INFO   2026-10-03T13:32:30.773Z [PersistenceQueue] Session 261003-copper-ivy metadata mismatch detected (local preserved, previousSig=<none>)
+2026-10-03T13:32:30.773Z INFO   2026-10-03T13:32:30.773Z [PersistenceQueue] Session 261003-golden-frost metadata mismatch detected (local preserved, previousSig=<none>)
+2026-10-03T13:32:30.773Z [PersistenceQueue] Session 261003-copper-ivy metadata mismatch detected (local preserved, previousSig=<none>)
+2026-10-03T13:32:30.773Z [PersistenceQueue] Session 261003-golden-frost metadata mismatch detected (local preserved, previousSig=<none>)
+2026-10-03T13:32:30.821Z INFO   AUTOMATIONS_GET: Loaded 16 event type(s) from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/workspaces/ui-001/automations.json
+2026-10-03T13:32:30.825Z INFO   2026-10-03T13:32:30.825Z [PersistenceQueue] Wrote session 261003-golden-frost
+2026-10-03T13:32:30.826Z INFO   2026-10-03T13:32:30.826Z [PersistenceQueue] Wrote session 261003-copper-ivy
+2026-10-03T13:32:30.825Z [PersistenceQueue] Wrote session 261003-golden-frost
+2026-10-03T13:32:30.826Z [PersistenceQueue] Wrote session 261003-copper-ivy
+2026-10-03T13:32:32.104Z [PERF] session.loadSession: 0.26ms {"sessionId":"261003-copper-ivy"}
+2026-10-03T13:32:32.509Z [PERF] rpc.getSessionMessages: 396.73ms
+2026-10-03T13:32:32.776Z [PERF] session.loadSession: 0.13ms {"sessionId":"261003-copper-ivy"}
+2026-10-03T13:32:32.776Z INFO   SKILLS_GET: Loading skills for workspace: ec52bb9c-5316-159d-bb57-67e9e9b8f1ae, workingDirectory: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/workspaces/ui-001
+2026-10-03T13:32:32.777Z [PERF] session.loadSession: 0.14ms {"sessionId":"261003-copper-ivy"}
+2026-10-03T13:32:32.777Z [PERF] session.loadSession: 0.14ms {"sessionId":"261003-copper-ivy"}
+2026-10-03T13:32:32.778Z [PERF] session.loadSession: 0.09ms {"sessionId":"261003-copper-ivy"}
+2026-10-03T13:32:32.781Z [PERF] session.loadSession: 0.07ms {"sessionId":"261003-copper-ivy"}
+2026-10-03T13:32:32.853Z INFO   2026-10-03T13:32:32.853Z [Skills] Unknown icon format, must be emoji or URL: research-publish.svg
+2026-10-03T13:32:32.853Z [Skills] Unknown icon format, must be emoji or URL: research-publish.svg
+2026-10-03T13:32:32.865Z INFO   SKILLS_GET: Loaded 731 skills from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-J5XcrX/workspaces/ui-001
+2026-10-03T13:32:33.084Z [PERF] session.loadSession: 0.10ms {"sessionId":"261003-copper-ivy"}
+2026-10-03T13:32:33.759Z [PERF] session.loadSession: 0.17ms {"sessionId":"261003-copper-ivy"}
+2026-10-03T13:32:33.766Z [PERF] session.loadSession: 0.09ms {"sessionId":"261003-copper-ivy"}

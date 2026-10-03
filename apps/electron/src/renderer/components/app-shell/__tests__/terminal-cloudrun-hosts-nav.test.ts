@@ -57,12 +57,12 @@ describe('MainContentPanel terminal + cloud-run hosts (#571)', () => {
     expect(mainContentSource).toContain("t('extensions.surface.noViewSelected')")
   })
 
-  it('terminal host uses InspectorTerminal or honest empty + dock path', () => {
-    expect(terminalPage).toContain('InspectorTerminal')
+  it('terminal preserves unsupported IDs on unavailable surface with an explicit dock path', () => {
+    expect(terminalPage).not.toContain('<InspectorTerminal')
     expect(terminalPage).toContain('bottomTerminalOpenAtom')
     expect(terminalPage).toContain("t('terminal.surface.noTerminalSelected')")
     expect(terminalPage).toContain("t('terminal.surface.openDock')")
-    expect(terminalPage).toContain("data-testid=\"terminal-surface-host\"")
+    expect(terminalPage).toContain("data-testid=\"terminal-surface-unavailable\"")
     expect(terminalPage).toContain("data-testid=\"terminal-surface-empty\"")
   })
 

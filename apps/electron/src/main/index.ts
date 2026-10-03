@@ -277,9 +277,13 @@ function registerDeeplinkScheme(scheme: string): void {
   }
 }
 
-registerDeeplinkScheme(DEEPLINK_SCHEME)
-if (DEEPLINK_SCHEME !== LEGACY_DEEPLINK_SCHEME) {
-  registerDeeplinkScheme(LEGACY_DEEPLINK_SCHEME)
+// Isolated product tests still exercise deep-link dispatch, while avoiding
+// changes to the user's OS protocol handlers for either supported scheme.
+if (!(process.env.NODE_ENV === 'test' && process.env.ROX_SKIP_PROTOCOL_REGISTRATION === '1')) {
+  registerDeeplinkScheme(DEEPLINK_SCHEME)
+  if (DEEPLINK_SCHEME !== LEGACY_DEEPLINK_SCHEME) {
+    registerDeeplinkScheme(LEGACY_DEEPLINK_SCHEME)
+  }
 }
 
 // Apply network proxy settings early (Node-level only — Electron sessions require app.whenReady)
