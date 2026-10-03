@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-for (const scenario of ['spawn', 'legacy']) {
+for (const scenario of ['spawn', 'spawn-race', 'spawn-untraced-parent', 'background-nudge', 'system-dispatch', 'legacy']) {
   test(`production trace ${scenario} fixture uses isolated canonical storage`, async () => {
     const root = mkdtempSync(join(tmpdir(), 'rox-trace-contract-'))
     try {

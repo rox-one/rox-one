@@ -1,0 +1,31 @@
+{
+  "rows": [
+    {
+      "phase": "red",
+      "receipt": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/outputs/UI-001-expanded-strict-navigation-red-c522e7c-20261003T200525Z/result.json",
+      "sha256": "8cd055bf89d883c3171b8ec86ecf6812ef0eb0253e1221c47f3b5a044f1df655",
+      "sourceRevision": "c522e7c0134a0d168b16ad3d0eaa4aa06cd09d58",
+      "pass": 15,
+      "fail": 2,
+      "scriptSha256": "cbe1e589f1b3ad93da11e2c8e04d8fe44cd601b3fc82a1c2f0d6fc1f45ab8604",
+      "allActualBrowserInputsMatchBeforeBuildAfter": true,
+      "headUnchanged": true,
+      "remainingOwnedProcesses": []
+    },
+    {
+      "phase": "green",
+      "receipt": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/outputs/UI-001-expanded-strict-navigation-green-be7c24a-20261003T200935Z/result.json",
+      "sha256": "ae14513d147371d52975924d60164b7ece6110f15c73422137ee9398ff49c30f",
+      "sourceRevision": "be7c24a074a7728becdf9ad608b2c41174568124",
+      "pass": 17,
+      "fail": 0,
+      "scriptSha256": "cbe1e589f1b3ad93da11e2c8e04d8fe44cd601b3fc82a1c2f0d6fc1f45ab8604",
+      "allActualBrowserInputsMatchBeforeBuildAfter": true,
+      "headUnchanged": true,
+      "remainingOwnedProcesses": []
+    }
+  ],
+  "fixtureAssertionsOrTimeoutsChanged": false,
+  "observedCause": "Product layout lease invalidated initial restoration RAF during StrictMode replay. Re-arm matching replay release while retaining semantic history key.",
+  "fullDoDClosed": false
+}

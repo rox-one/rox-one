@@ -96,6 +96,11 @@ export function evaluateBindingAccess(input: BindingAccessInput): AccessDecision
   const { msg, workspaceConfig, binding } = input
   if (msg.senderIsBot) return { kind: 'reject', reason: 'bot-sender' }
 
+  // Platform disabling also applies to bindings created before the change.
+  if (readPlatformAccessMode(workspaceConfig, msg.platform) === 'disabled') {
+    return { kind: 'reject', reason: 'disabled' }
+  }
+
   const mode = normalizeMessagingAccessMode(binding.config.accessMode)
   if (mode === 'disabled') return { kind: 'reject', reason: 'disabled' }
   if (mode === 'public-inbox') return { kind: 'public-inbox' }

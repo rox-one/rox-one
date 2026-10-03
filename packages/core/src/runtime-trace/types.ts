@@ -67,6 +67,12 @@ export interface RuntimeLaunch {
   scheduleId?: string
   triggerId?: string
   occurrenceId?: string
+  /** IANA timezone actually reported by the scheduling producer. */
+  timezone?: string
+  /** Scheduled instant, when recorded by the existing scheduler. */
+  scheduledAt?: Measurement<number>
+  /** Actual producer dispatch instant; distinct from the planned instant. */
+  dispatchedAt?: Measurement<number>
   channel?: CapabilityRef
 }
 export interface AgentAssignment {

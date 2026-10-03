@@ -149,7 +149,7 @@ import { listLabels, loadLabelConfig } from '@rox/shared/labels/storage'
 import { extractLabelId, resolveSessionLabels, findTaskItemLabelId } from '@rox/shared/labels'
 import { ensureLabelsExist, ensureTaskItemLabel } from '@rox/shared/labels/crud'
 import { loadStatusConfig } from '@rox/shared/statuses/storage'
-import { AutomationSystem, createPromptHistoryEntry, appendAutomationHistoryEntry, type AutomationSystemMetadataSnapshot, type KnowledgeActionExecutor, type CloudRunSubmitExecutor, type KnowledgeActionExecutorContext, type KnowledgeAutomationAction, type CloudRunSubmitAction, type CloudRunSubmitExecutorContext } from '@rox/shared/automations'
+import { AutomationSystem, createPromptHistoryEntry, appendAutomationHistoryEntry, type AutomationSystemMetadataSnapshot, type KnowledgeActionExecutor, type CloudRunSubmitExecutor, type KnowledgeActionExecutorContext, type KnowledgeAutomationAction, type CloudRunSubmitAction, type CloudRunSubmitExecutorContext, type PendingPrompt } from '@rox/shared/automations'
 import { claimAutomationOccurrence, recoverAutomationOccurrences, setAutomationOccurrenceOutcome } from '@rox/shared/automations'
 import { ServerKnowledgeActionExecutor } from '../knowledge/automation-actions'
 import { KnowledgeBridgeService } from '../knowledge/bridge-service'
@@ -2010,7 +2010,7 @@ export class SessionManager implements ISessionManager {
                   thinkingLevel: pending.thinkingLevel,
                   automationName: pending.automationName,
                   telegramTopic: pending.telegramTopic,
-                  runtimeLaunch: { kind: pending.scheduledAt ? 'scheduled' : 'unknown', scheduleId: pending.scheduledAt ? pending.matcherId : undefined, triggerId: pending.matcherId, occurrenceId: pending.occurrenceKey },
+                  runtimeLaunch: this.runtimeLaunchForAutomationPrompt(pending),
                 })
                 if (occurrence) {
                   setAutomationOccurrenceOutcome(workspaceRootPath, occurrence.key, occurrence.runId, 'succeeded')
@@ -2925,7 +2925,8 @@ export class SessionManager implements ISessionManager {
 
     // Send the result as a new message to resume conversation
     // Use empty arrays for attachments since this is a system-generated message
-    await this.sendMessage(sessionId, resultContent, [], [], {})
+    await this.sendMessage(sessionId, resultContent, [], [], {}, undefined, undefined, undefined,
+      { runtimeLaunch: { kind: 'unknown', triggerId: `auth-result:${result.requestId}` } })
 
     sessionLog.info(`Auth request completed for ${result.sourceSlug}: ${result.success ? 'success' : 'failed'}`)
   }
@@ -4189,6 +4190,9 @@ export class SessionManager implements ISessionManager {
 
   private createSpawnSessionHandler(managed: ManagedSession): NonNullable<AgentInstance['onSpawnSession']> {
     return async (request) => {
+      // The guarded host invocation owns this launch; child creation may outlive its chat turn.
+      const parentRun = this.runtimeTrace.getActive(managed.id)
+      const launchOrigin = parentRun ? { ...parentRun } : undefined
       sessionLog.info(`Spawn session request from session ${managed.id}:`, request.name || '(unnamed)')
 
       const session = await this.createSession(managed.workspace.id, {
@@ -4235,18 +4239,18 @@ export class SessionManager implements ISessionManager {
       }
 
       await this.captureRuntime(async () => {
-        const run = this.runtimeTrace.getActive(managed.id)
+        const run = launchOrigin
         if (!run) return
         await this.runtimeTrace.assign(managed.id, session.id, { name: session.name || request.name || session.id,
           task: await this.runtimeTrace.content(run, request.prompt), prompt: await this.runtimeTrace.content(run, request.prompt),
           sessionId: session.id, nativeKind: 'rox-session', permissionMode: session.permissionMode,
-          model: { requested: session.model, confirmed: unknown('not-emitted'), contextWindow: unknown('not-emitted') } })
+          model: { requested: session.model, confirmed: unknown('not-emitted'), contextWindow: unknown('not-emitted') } }, run)
       })
 
       // (session_created is emitted by createSession above.)
 
       // Fire and forget — send the message but don't await completion
-      this.sendMessage(session.id, request.prompt, fileAttachments).catch(err => {
+      this.sendMessage(session.id, request.prompt, fileAttachments, undefined, undefined, undefined, undefined, undefined, { runtimeLaunch: { kind: 'delegated' } }).catch(err => {
         sessionLog.error(`Failed to send message to spawned session ${session.id}:`, err)
       })
 
@@ -5481,7 +5485,8 @@ export class SessionManager implements ISessionManager {
           // target starts processing immediately. sendMessage throws for an
           // unknown session — that rejection propagates to the handler's catch.
           const targetBusy = this.sessions.get(sessionId)?.isProcessing === true
-          await this.sendMessage(sessionId, message, fileAttachments)
+          await this.sendMessage(sessionId, message, fileAttachments, undefined, undefined, undefined, undefined, undefined,
+            { runtimeLaunch: { kind: 'delegated', triggerId: `agent-message:${managed.id}` } })
           return {
             delivery: targetBusy ? ('queued' as const) : ('delivered' as const),
             targetBusy,
@@ -5881,7 +5886,7 @@ export class SessionManager implements ISessionManager {
    * prompts, then sends the approval message through the normal sendMessage
    * path.
    */
-  async acceptPlan(sessionId: string, _planPath?: string): Promise<void> {
+  async acceptPlan(sessionId: string, _planPath?: string, runtimeLaunch?: RuntimeLaunch): Promise<void> {
     const managed = this.sessions.get(sessionId)
     if (!managed) {
       sessionLog.warn(`acceptPlan: session ${sessionId} not found`)
@@ -5892,7 +5897,8 @@ export class SessionManager implements ISessionManager {
       this.setSessionPermissionMode(sessionId, 'allow-all')
     }
 
-    await this.sendMessage(sessionId, PLAN_APPROVAL_MESSAGE)
+    await this.sendMessage(sessionId, PLAN_APPROVAL_MESSAGE, undefined, undefined, undefined, undefined, undefined, undefined,
+      runtimeLaunch ? { runtimeLaunch } : undefined)
   }
 
   // ============================================
@@ -7898,7 +7904,7 @@ export class SessionManager implements ISessionManager {
           undefined,
           false,
           undefined,
-          undefined,
+          { runtimeLaunch: { kind: 'unknown', triggerId: 'retry:failover' } },
           'failover',
         )
         sessionLog.info(`[rate-limit-failover] Retry on ${failoverConnection.slug} completed for session ${sessionId}`)
@@ -7980,7 +7986,9 @@ export class SessionManager implements ISessionManager {
             retryStoredAttachments,
             retryOptions,
             undefined,  // existingMessageId
-            true        // _isAuthRetry - prevents infinite retry loop
+            true,       // _isAuthRetry - prevents infinite retry loop
+            undefined,
+            { runtimeLaunch: { kind: 'unknown', triggerId: 'retry:auth' } },
           )
           sessionLog.info(`[auth-retry] Retry completed for session ${sessionId}`)
         } else {
@@ -10140,7 +10148,8 @@ export class SessionManager implements ISessionManager {
           // Ride the normal turn machinery (resume + persistence). `hidden: true`
           // keeps the nudge out of the transcript — the agent's response (the
           // presented result) renders as a normal assistant turn.
-          void this.sendMessage(sessionId, nudge, [], [], { hidden: true }).catch((err) => {
+          void this.sendMessage(sessionId, nudge, [], [], { hidden: true }, undefined, undefined, undefined,
+            { runtimeLaunch: { kind: 'unknown', triggerId: `background-task:${event.taskId}` } }).catch((err) => {
             sessionLog.error(`[bg-lifecycle] failed to surface completed task ${event.taskId}:`, err)
           })
         }
@@ -10212,7 +10221,8 @@ export class SessionManager implements ISessionManager {
           // so a legacy renderer's duplicate RPC arriving ~50ms later gets dropped.
           // The pending slot is cleared by the deadline check in sendMessage, by the
           // next matching sendMessage that drops as a duplicate, or by session deletion.
-          this.sendMessage(sessionId, messageWithSuffix).catch(err => {
+          this.sendMessage(sessionId, messageWithSuffix, undefined, undefined, undefined, undefined, undefined, undefined,
+            { runtimeLaunch: { kind: 'unknown', triggerId: `source-activated:${event.sourceSlug}` } }).catch(err => {
             sessionLog.error(`Auto-retry sendMessage failed for ${sessionId}:`, err)
           })
         }, 100)
@@ -10370,6 +10380,21 @@ export class SessionManager implements ISessionManager {
     }
   }
 
+  /** Preserve the scheduler's instant and timezone separately from actual dispatch time. */
+  private runtimeLaunchForAutomationPrompt(pending: Pick<PendingPrompt, 'scheduledAt' | 'scheduledTimezone' | 'matcherId' | 'occurrenceKey'>): RuntimeLaunch {
+    const instant = typeof pending.scheduledAt === 'string' ? Date.parse(pending.scheduledAt) : NaN
+    const scheduled = Number.isFinite(instant) && instant >= 0
+    return {
+      kind: scheduled ? 'scheduled' : 'unknown',
+      scheduleId: scheduled ? pending.matcherId : undefined,
+      triggerId: pending.matcherId,
+      occurrenceId: pending.occurrenceKey,
+      timezone: pending.scheduledTimezone,
+      scheduledAt: scheduled ? known(instant, 'automation-scheduler') : unknown(pending.scheduledAt ? 'partial' : 'not-emitted'),
+      dispatchedAt: known(Date.now(), 'automation-dispatch'),
+    }
+  }
+
   /**
    * Execute a prompt automation by creating a new session and sending the prompt.
    *
@@ -10396,6 +10421,9 @@ export class SessionManager implements ISessionManager {
       waitForCompletion,
       runtimeLaunch,
     } = input
+
+    // Older automation callers omit provenance, but this is still a generated dispatch.
+    const observedLaunch = runtimeLaunch ?? { kind: 'unknown' as const }
 
     // Warn if llmConnection was specified but doesn't resolve
     if (llmConnection) {
@@ -10468,7 +10496,7 @@ export class SessionManager implements ISessionManager {
     if (waitForCompletion === false) {
       void this.sendMessage(session.id, prompt, undefined, undefined, {
         skillSlugs: resolved?.skillSlugs,
-      }, undefined, undefined, undefined, { runtimeLaunch }).catch((err) => {
+      }, undefined, undefined, undefined, { runtimeLaunch: observedLaunch }).catch((err) => {
         sessionLog.error('[Automations] background sendMessage failed for test run', {
           sessionId: session.id,
           error: err instanceof Error ? err.message : String(err),
@@ -10479,7 +10507,7 @@ export class SessionManager implements ISessionManager {
 
     await this.sendMessage(session.id, prompt, undefined, undefined, {
       skillSlugs: resolved?.skillSlugs,
-    }, undefined, undefined, undefined, { runtimeLaunch })
+    }, undefined, undefined, undefined, { runtimeLaunch: observedLaunch })
 
     return { sessionId: session.id }
   }

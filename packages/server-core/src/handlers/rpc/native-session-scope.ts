@@ -134,7 +134,9 @@ export function nativeRuntimeTraceEvent(event: RuntimeEvent): RuntimeEvent {
     case 'acceptance.started': case 'acceptance.completed': copy.payload.acceptance.criterion = '[REDACTED]'; copy.payload.acceptance.evidence = [redacted()]; break
     case 'artifact.created': copy.payload.artifact.label = '[REDACTED]'; copy.payload.artifact.uri = undefined; copy.payload.artifact.content = redacted(); break
     case 'result.published':
-      if (!copy.messageId || copy.parentAgentId || copy.runId !== copy.rootRunId) copy.payload.content = redacted()
+      // TaskRunner's durable verdict is host workflow output even when its assistant message has a real ID.
+      if (!copy.messageId || copy.parentAgentId || copy.runId !== copy.rootRunId
+        || copy.payload.artifactIds?.some(id => id.startsWith('task-verdict-output:'))) copy.payload.content = redacted()
       break
     case 'context.compacted': copy.payload.snapshot = undefined; copy.payload.summary = redacted(); break
     case 'approval.requested': copy.payload.description = '[REDACTED]'; break

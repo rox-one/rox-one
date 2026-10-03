@@ -1,335 +1,335 @@
 {
   "capabilityCatalog.all": {
-    "ru": "Все",
-    "en": "All"
+    "en": "All",
+    "ru": "Все"
   },
   "capabilityCatalog.allCategories": {
-    "ru": "Все категории",
-    "en": "All categories"
+    "en": "All categories",
+    "ru": "Все категории"
   },
   "capabilityCatalog.allIntegrations": {
-    "ru": "Все интеграции",
-    "en": "All integrations"
+    "en": "All integrations",
+    "ru": "Все интеграции"
   },
   "capabilityCatalog.allScopes": {
-    "ru": "Все области",
-    "en": "All scopes"
+    "en": "All scopes",
+    "ru": "Все области"
   },
   "capabilityCatalog.allTypes": {
-    "ru": "Все типы",
-    "en": "All types"
+    "en": "All types",
+    "ru": "Все типы"
   },
   "capabilityCatalog.authFailed": {
-    "ru": "Не удалось подтвердить авторизацию.",
-    "en": "Could not confirm authentication."
+    "en": "Could not confirm authentication.",
+    "ru": "Не удалось подтвердить авторизацию."
   },
   "capabilityCatalog.categories.analytics": {
-    "ru": "Аналитика",
-    "en": "Analytics"
+    "en": "Analytics",
+    "ru": "Аналитика"
   },
   "capabilityCatalog.categories.code": {
-    "ru": "Код и сборки",
-    "en": "Code and builds"
+    "en": "Code and builds",
+    "ru": "Код и сборки"
   },
   "capabilityCatalog.categories.communication": {
-    "ru": "Коммуникации",
-    "en": "Communication"
+    "en": "Communication",
+    "ru": "Коммуникации"
   },
   "capabilityCatalog.categories.design": {
-    "ru": "Дизайн",
-    "en": "Design"
+    "en": "Design",
+    "ru": "Дизайн"
   },
   "capabilityCatalog.categories.feedback": {
-    "ru": "Обратная связь клиентов",
-    "en": "Customer feedback"
+    "en": "Customer feedback",
+    "ru": "Обратная связь клиентов"
   },
   "capabilityCatalog.categories.knowledge": {
-    "ru": "Документы и знания",
-    "en": "Docs and knowledge"
+    "en": "Docs and knowledge",
+    "ru": "Документы и знания"
   },
   "capabilityCatalog.categories.local": {
-    "ru": "Локальные файлы и инструменты",
-    "en": "Local files and tools"
+    "en": "Local files and tools",
+    "ru": "Локальные файлы и инструменты"
   },
   "capabilityCatalog.categories.models": {
-    "ru": "Модели",
-    "en": "Models"
+    "en": "Models",
+    "ru": "Модели"
   },
   "capabilityCatalog.categories.monitoring": {
-    "ru": "Мониторинг",
-    "en": "Monitoring"
+    "en": "Monitoring",
+    "ru": "Мониторинг"
   },
   "capabilityCatalog.categories.other": {
-    "ru": "Другое",
-    "en": "Other"
+    "en": "Other",
+    "ru": "Другое"
   },
   "capabilityCatalog.categories.planning": {
-    "ru": "Задачи и планирование",
-    "en": "Issues and planning"
+    "en": "Issues and planning",
+    "ru": "Задачи и планирование"
   },
   "capabilityCatalog.category": {
-    "ru": "Категории",
-    "en": "Categories"
+    "en": "Categories",
+    "ru": "Категории"
   },
   "capabilityCatalog.columns.author": {
-    "ru": "Автор",
-    "en": "Author"
+    "en": "Author",
+    "ru": "Автор"
   },
   "capabilityCatalog.columns.category": {
-    "ru": "Категория",
-    "en": "Category"
+    "en": "Category",
+    "ru": "Категория"
   },
   "capabilityCatalog.columns.description": {
-    "ru": "Что делает",
-    "en": "Description"
+    "en": "Description",
+    "ru": "Что делает"
   },
   "capabilityCatalog.columns.name": {
-    "ru": "Навык",
-    "en": "Skill"
+    "en": "Skill",
+    "ru": "Навык"
   },
   "capabilityCatalog.columns.updated": {
-    "ru": "Обновлён",
-    "en": "Updated"
+    "en": "Updated",
+    "ru": "Обновлён"
   },
   "capabilityCatalog.columns.usage": {
-    "ru": "Попадания в промпт",
-    "en": "Prompt mentions"
+    "en": "Prompt mentions",
+    "ru": "Попадания в промпт"
   },
   "capabilityCatalog.configure": {
-    "ru": "Настроить",
-    "en": "Configure"
+    "en": "Configure",
+    "ru": "Настроить"
   },
   "capabilityCatalog.connect": {
-    "ru": "Подключить",
-    "en": "Connect"
+    "en": "Connect",
+    "ru": "Подключить"
   },
   "capabilityCatalog.credentialsAndPolicies": {
-    "ru": "Учётные данные и политики",
-    "en": "Credentials and policies"
+    "en": "Credentials and policies",
+    "ru": "Учётные данные и политики"
   },
   "capabilityCatalog.dependencies": {
-    "ru": "Необходимые источники",
-    "en": "Required sources"
+    "en": "Required sources",
+    "ru": "Необходимые источники"
   },
   "capabilityCatalog.details": {
-    "ru": "Сведения и настройки",
-    "en": "Details and settings"
+    "en": "Details and settings",
+    "ru": "Сведения и настройки"
   },
   "capabilityCatalog.disable": {
-    "ru": "Выключить",
-    "en": "Disable"
+    "en": "Disable",
+    "ru": "Выключить"
   },
   "capabilityCatalog.disablePack": {
-    "ru": "Выключить набор {{name}}",
-    "en": "Disable {{name}} pack"
+    "en": "Disable {{name}} pack",
+    "ru": "Выключить набор {{name}}"
   },
   "capabilityCatalog.enable": {
-    "ru": "Включить",
-    "en": "Enable"
+    "en": "Enable",
+    "ru": "Включить"
   },
   "capabilityCatalog.enablePack": {
-    "ru": "Включить набор {{name}}",
-    "en": "Enable {{name}} pack"
+    "en": "Enable {{name}} pack",
+    "ru": "Включить набор {{name}}"
   },
   "capabilityCatalog.individualSkills": {
-    "ru": "Отдельные навыки",
-    "en": "Individual skills"
+    "en": "Individual skills",
+    "ru": "Отдельные навыки"
   },
   "capabilityCatalog.integrationsDescription": {
-    "ru": "Источники, их назначения и подтверждённое состояние подключения.",
-    "en": "Sources, their purpose and confirmed connection state."
+    "en": "Sources, their purpose and confirmed connection state.",
+    "ru": "Источники, их назначения и подтверждённое состояние подключения."
   },
   "capabilityCatalog.integrationsTitle": {
-    "ru": "Интеграции",
-    "en": "Integrations"
+    "en": "Integrations",
+    "ru": "Интеграции"
   },
   "capabilityCatalog.loadFailed": {
-    "ru": "Не удалось загрузить каталог.",
-    "en": "Could not load the catalog."
+    "en": "Could not load the catalog.",
+    "ru": "Не удалось загрузить каталог."
   },
   "capabilityCatalog.modelLoadFailed": {
-    "ru": "Не удалось прочитать модельные подключения.",
-    "en": "Could not read model connections."
+    "en": "Could not read model connections.",
+    "ru": "Не удалось прочитать модельные подключения."
   },
   "capabilityCatalog.noAuth": {
-    "ru": "не требуется",
-    "en": "not required"
+    "en": "not required",
+    "ru": "не требуется"
   },
   "capabilityCatalog.noResults": {
-    "ru": "Нет подходящих ресурсов.",
-    "en": "No matching resources."
+    "en": "No matching resources.",
+    "ru": "Нет подходящих ресурсов."
   },
   "capabilityCatalog.open": {
-    "ru": "Открыть",
-    "en": "Open"
+    "en": "Open",
+    "ru": "Открыть"
   },
   "capabilityCatalog.packDisabled": {
-    "ru": "Выключен",
-    "en": "Disabled"
+    "en": "Disabled",
+    "ru": "Выключен"
   },
   "capabilityCatalog.packEnabled": {
-    "ru": "Включён",
-    "en": "Enabled"
+    "en": "Enabled",
+    "ru": "Включён"
   },
   "capabilityCatalog.packInstalled": {
-    "ru": "Установлено {{installed}} из {{count}}",
-    "en": "Installed {{installed}} of {{count}}"
+    "en": "Installed {{installed}} of {{count}}",
+    "ru": "Установлено {{installed}} из {{count}}"
   },
   "capabilityCatalog.packLoadFailed": {
-    "ru": "Не удалось прочитать наборы навыков.",
-    "en": "Could not read skill packs."
+    "en": "Could not read skill packs.",
+    "ru": "Не удалось прочитать наборы навыков."
   },
   "capabilityCatalog.packPartial": {
-    "ru": "Набор включён частично. Проверь недостающие навыки.",
-    "en": "Pack enabled partially. Check the missing skills."
+    "en": "Pack enabled partially. Check the missing skills.",
+    "ru": "Набор включён частично. Проверь недостающие навыки."
   },
   "capabilityCatalog.packUpdateFailed": {
-    "ru": "Не удалось подтвердить изменение набора.",
-    "en": "Could not confirm the pack change."
+    "en": "Could not confirm the pack change.",
+    "ru": "Не удалось подтвердить изменение набора."
   },
   "capabilityCatalog.permissionRequirement": {
-    "ru": "Авторизация: {{auth}}. Доступ в сессии настраивается отдельно.",
-    "en": "Authentication: {{auth}}. Session access is configured separately."
+    "en": "Authentication: {{auth}}. Session access is configured separately.",
+    "ru": "Авторизация: {{auth}}. Доступ в сессии настраивается отдельно."
   },
   "capabilityCatalog.promptHitsHint": {
-    "ru": "Число запусков, где навык был указан в промпте. Это не число успешных выполнений.",
-    "en": "Spawns with this skill in the prompt, not successful executions."
+    "en": "Spawns with this skill in the prompt, not successful executions.",
+    "ru": "Число запусков, где навык был указан в промпте. Это не число успешных выполнений."
   },
   "capabilityCatalog.promptHits_few": {
-    "ru": "{{count}} попадания",
-    "en": "{{count}} mentions"
+    "en": "{{count}} mentions",
+    "ru": "{{count}} попадания"
   },
   "capabilityCatalog.promptHits_many": {
-    "ru": "{{count}} попаданий",
-    "en": "{{count}} mentions"
+    "en": "{{count}} mentions",
+    "ru": "{{count}} попаданий"
   },
   "capabilityCatalog.promptHits_one": {
-    "ru": "{{count}} попадание",
-    "en": "{{count}} mention"
+    "en": "{{count}} mention",
+    "ru": "{{count}} попадание"
   },
   "capabilityCatalog.promptHits_other": {
-    "ru": "{{count}} попаданий",
-    "en": "{{count}} mentions"
+    "en": "{{count}} mentions",
+    "ru": "{{count}} попаданий"
   },
   "capabilityCatalog.readbackFailed": {
-    "ru": "Повторное чтение не подтвердило сохранение.",
-    "en": "Readback did not confirm the saved change."
+    "en": "Readback did not confirm the saved change.",
+    "ru": "Повторное чтение не подтвердило сохранение."
   },
   "capabilityCatalog.reconnect": {
-    "ru": "Переподключить",
-    "en": "Reconnect"
+    "en": "Reconnect",
+    "ru": "Переподключить"
   },
   "capabilityCatalog.resourceAction": {
-    "ru": "{{action}}: {{name}}",
-    "en": "{{action}}: {{name}}"
+    "en": "{{action}}: {{name}}",
+    "ru": "{{action}}: {{name}}"
   },
   "capabilityCatalog.scope": {
-    "ru": "Область действия",
-    "en": "Scope"
+    "en": "Scope",
+    "ru": "Область действия"
   },
   "capabilityCatalog.scopes.global": {
-    "ru": "Глобально",
-    "en": "Global"
+    "en": "Global",
+    "ru": "Глобально"
   },
   "capabilityCatalog.scopes.omp": {
-    "ru": "OMP",
-    "en": "OMP"
+    "en": "OMP",
+    "ru": "OMP"
   },
   "capabilityCatalog.scopes.project": {
-    "ru": "Проект",
-    "en": "Project"
+    "en": "Project",
+    "ru": "Проект"
   },
   "capabilityCatalog.scopes.session": {
-    "ru": "Сессия",
-    "en": "Session"
+    "en": "Session",
+    "ru": "Сессия"
   },
   "capabilityCatalog.scopes.workspace": {
-    "ru": "Рабочее пространство",
-    "en": "Workspace"
+    "en": "Workspace",
+    "ru": "Рабочее пространство"
   },
   "capabilityCatalog.searchIntegrations": {
-    "ru": "Поиск интеграций",
-    "en": "Search integrations"
+    "en": "Search integrations",
+    "ru": "Поиск интеграций"
   },
   "capabilityCatalog.searchSkills": {
-    "ru": "Поиск навыков",
-    "en": "Search skills"
+    "en": "Search skills",
+    "ru": "Поиск навыков"
   },
   "capabilityCatalog.selectResource": {
-    "ru": "Выбрать {{name}}",
-    "en": "Select {{name}}"
+    "en": "Select {{name}}",
+    "ru": "Выбрать {{name}}"
   },
   "capabilityCatalog.showDetails": {
-    "ru": "Показать сведения о {{name}}",
-    "en": "Show details for {{name}}"
+    "en": "Show details for {{name}}",
+    "ru": "Показать сведения о {{name}}"
   },
   "capabilityCatalog.skillsDescription": {
-    "ru": "Наборы инструкций и навыки из текущего рабочего пространства.",
-    "en": "Instruction packs and skills in the current workspace."
+    "en": "Instruction packs and skills in the current workspace.",
+    "ru": "Наборы инструкций и навыки из текущего рабочего пространства."
   },
   "capabilityCatalog.skillsTitle": {
-    "ru": "Навыки",
-    "en": "Skills"
+    "en": "Skills",
+    "ru": "Навыки"
   },
   "capabilityCatalog.status.authenticated": {
-    "ru": "Учётные данные проверены",
-    "en": "Credentials verified"
+    "en": "Credentials verified",
+    "ru": "Учётные данные проверены"
   },
   "capabilityCatalog.status.available": {
-    "ru": "Доступен",
-    "en": "Available"
+    "en": "Available",
+    "ru": "Доступен"
   },
   "capabilityCatalog.status.connected": {
-    "ru": "Подключено",
-    "en": "Connected"
+    "en": "Connected",
+    "ru": "Подключено"
   },
   "capabilityCatalog.status.failed": {
-    "ru": "Проверка подключения не пройдена",
-    "en": "Connection check failed"
+    "en": "Connection check failed",
+    "ru": "Проверка подключения не пройдена"
   },
   "capabilityCatalog.status.local_disabled": {
-    "ru": "Выключено",
-    "en": "Disabled"
+    "en": "Disabled",
+    "ru": "Выключено"
   },
   "capabilityCatalog.status.needs_auth": {
-    "ru": "Требуется авторизация",
-    "en": "Authentication required"
+    "en": "Authentication required",
+    "ru": "Требуется авторизация"
   },
   "capabilityCatalog.status.shadowed": {
-    "ru": "Перекрыт навыком ROX",
-    "en": "Shadowed by a ROX skill"
+    "en": "Shadowed by a ROX skill",
+    "ru": "Перекрыт навыком ROX"
   },
   "capabilityCatalog.status.untested": {
-    "ru": "Подключение не проверено",
-    "en": "Connection not tested"
+    "en": "Connection not tested",
+    "ru": "Подключение не проверено"
   },
   "capabilityCatalog.technicalType": {
-    "ru": "Тип подключения",
-    "en": "Connection type"
+    "en": "Connection type",
+    "ru": "Тип подключения"
   },
   "capabilityCatalog.types.api": {
-    "ru": "API",
-    "en": "API"
+    "en": "API",
+    "ru": "API"
   },
   "capabilityCatalog.types.local": {
-    "ru": "Локальный",
-    "en": "Local"
+    "en": "Local",
+    "ru": "Локальный"
   },
   "capabilityCatalog.types.mcp": {
-    "ru": "MCP",
-    "en": "MCP"
+    "en": "MCP",
+    "ru": "MCP"
   },
   "capabilityCatalog.types.model": {
-    "ru": "Модельное подключение",
-    "en": "Model connection"
+    "en": "Model connection",
+    "ru": "Модельное подключение"
   },
   "capabilityCatalog.types.skill": {
-    "ru": "Навык",
-    "en": "Skill"
+    "en": "Skill",
+    "ru": "Навык"
   },
   "capabilityCatalog.usedInRun": {
-    "ru": "Использован в выбранном запуске",
-    "en": "Used in the selected run"
+    "en": "Used in the selected run",
+    "ru": "Использован в выбранном запуске"
   },
   "runtimeMap.acceptance.failed": {
     "en": "Check failed",
@@ -518,6 +518,10 @@
   "runtimeMap.description": {
     "en": "Description",
     "ru": "Описание"
+  },
+  "runtimeMap.dispatchTime": {
+    "en": "Dispatch time",
+    "ru": "Время отправки"
   },
   "runtimeMap.duration": {
     "en": "Duration",
@@ -807,6 +811,22 @@
     "en": "Main agent",
     "ru": "Основной агент"
   },
+  "runtimeMap.measurementOrigin.derived": {
+    "en": "Derived",
+    "ru": "Вычислено"
+  },
+  "runtimeMap.measurementOrigin.estimated": {
+    "en": "Estimated",
+    "ru": "Оценка"
+  },
+  "runtimeMap.measurementOrigin.observed": {
+    "en": "Observed",
+    "ru": "Наблюдалось"
+  },
+  "runtimeMap.measurementProvenance": {
+    "en": "Measurement provenance",
+    "ru": "Происхождение измерения"
+  },
   "runtimeMap.memoryState.committed": {
     "en": "Memory write confirmed",
     "ru": "Запись в память подтверждена"
@@ -875,6 +895,10 @@
     "en": "Not provided or not recorded",
     "ru": "Не предоставлено или не записано"
   },
+  "runtimeMap.occurrence": {
+    "en": "Occurrence",
+    "ru": "Срабатывание"
+  },
   "runtimeMap.openCapability": {
     "en": "Open capability",
     "ru": "Открыть возможность"
@@ -919,6 +943,10 @@
     "en": "Plan v{{version}} · {{count}} tasks",
     "ru": "План v{{version}} · задач: {{count}}"
   },
+  "runtimeMap.plannedTime": {
+    "en": "Planned time",
+    "ru": "Плановое время"
+  },
   "runtimeMap.previousEvent": {
     "en": "Previous recorded event",
     "ru": "Предыдущее записанное событие"
@@ -928,8 +956,8 @@
     "ru": "Предыдущие события"
   },
   "runtimeMap.processTerminationUnknown": {
-    "ru": "Завершение процесса не подтверждено",
-    "en": "Process termination is unconfirmed"
+    "en": "Process termination is unconfirmed",
+    "ru": "Завершение процесса не подтверждено"
   },
   "runtimeMap.provenance.explicit": {
     "en": "Explicit explanation from the agent",
@@ -1024,8 +1052,8 @@
     "ru": "Показать полный записанный текст"
   },
   "runtimeMap.showOnMap": {
-    "ru": "Показать на карте",
-    "en": "Show on map"
+    "en": "Show on map",
+    "ru": "Показать на карте"
   },
   "runtimeMap.skill.applied": {
     "en": "Application explicitly recorded",
@@ -1090,6 +1118,10 @@
   "runtimeMap.timeline": {
     "en": "Timeline mode",
     "ru": "Режим шкалы времени"
+  },
+  "runtimeMap.timezone": {
+    "en": "Timezone",
+    "ru": "Часовой пояс"
   },
   "runtimeMap.title": {
     "en": "Runtime map",
@@ -1156,67 +1188,67 @@
     "ru": "Рабочая директория"
   },
   "starterPrompts.dependencies": {
-    "ru": "Необходимые возможности",
-    "en": "Required capabilities"
+    "en": "Required capabilities",
+    "ru": "Необходимые возможности"
   },
   "starterPrompts.dismiss": {
-    "ru": "Скрыть рекомендации",
-    "en": "Dismiss suggestions"
+    "en": "Dismiss suggestions",
+    "ru": "Скрыть рекомендации"
   },
   "starterPrompts.plan": {
-    "ru": "Разложить задачу на шаги",
-    "en": "Break a task into steps"
+    "en": "Break a task into steps",
+    "ru": "Разложить задачу на шаги"
   },
   "starterPrompts.planPrompt": {
-    "ru": "Помоги разложить задачу на шаги: цель, зависимости, исполнители и критерии готовности.",
-    "en": "Help break a task into steps: goal, dependencies, owners and acceptance criteria."
+    "en": "Help break a task into steps: goal, dependencies, owners and acceptance criteria.",
+    "ru": "Помоги разложить задачу на шаги: цель, зависимости, исполнители и критерии готовности."
   },
   "starterPrompts.process": {
-    "ru": "Превратить повторяющуюся задачу в процесс",
-    "en": "Turn a recurring task into a process"
+    "en": "Turn a recurring task into a process",
+    "ru": "Превратить повторяющуюся задачу в процесс"
   },
   "starterPrompts.processPrompt": {
-    "ru": "Помоги превратить повторяющуюся задачу в процесс с понятными входами, шагами, проверками и результатом.",
-    "en": "Help turn a recurring task into a process with clear inputs, steps, checks and results."
+    "en": "Help turn a recurring task into a process with clear inputs, steps, checks and results.",
+    "ru": "Помоги превратить повторяющуюся задачу в процесс с понятными входами, шагами, проверками и результатом."
   },
   "starterPrompts.review": {
-    "ru": "Проверить изменения в проекте",
-    "en": "Review project changes"
+    "en": "Review project changes",
+    "ru": "Проверить изменения в проекте"
   },
   "starterPrompts.reviewPrompt": {
-    "ru": "Проверь последние изменения в проекте через {{name}}. Найди существенные ошибки и предложи порядок исправлений.",
-    "en": "Review recent project changes using {{name}}. Identify material issues and suggest the order of fixes."
+    "en": "Review recent project changes using {{name}}. Identify material issues and suggest the order of fixes.",
+    "ru": "Проверь последние изменения в проекте через {{name}}. Найди существенные ошибки и предложи порядок исправлений."
   },
   "starterPrompts.skillPrompt": {
-    "ru": "Помоги решить задачу с помощью навыка «{{name}}». Сначала уточни цель и ожидаемый результат.",
-    "en": "Help me solve a task using {{name}}. First clarify the goal and expected outcome."
+    "en": "Help me solve a task using {{name}}. First clarify the goal and expected outcome.",
+    "ru": "Помоги решить задачу с помощью навыка «{{name}}». Сначала уточни цель и ожидаемый результат."
   },
   "starterPrompts.structure": {
-    "ru": "Структурировать мои материалы",
-    "en": "Structure my materials"
+    "en": "Structure my materials",
+    "ru": "Структурировать мои материалы"
   },
   "starterPrompts.structurePrompt": {
-    "ru": "Помоги структурировать материалы, которые я добавлю: выдели темы, связи и открытые вопросы.",
-    "en": "Help structure the materials I will add: identify topics, connections and open questions."
+    "en": "Help structure the materials I will add: identify topics, connections and open questions.",
+    "ru": "Помоги структурировать материалы, которые я добавлю: выдели темы, связи и открытые вопросы."
   },
   "starterPrompts.suggestions": {
-    "ru": "Рекомендации для начала",
-    "en": "Starter suggestions"
+    "en": "Starter suggestions",
+    "ru": "Рекомендации для начала"
   },
   "starterPrompts.summarize": {
-    "ru": "Собрать сводку последних материалов",
-    "en": "Summarize recent materials"
+    "en": "Summarize recent materials",
+    "ru": "Собрать сводку последних материалов"
   },
   "starterPrompts.summaryPrompt": {
-    "ru": "Собери сводку последних материалов из {{name}}, со ссылками на источники и краткими выводами.",
-    "en": "Summarize recent materials from {{name}}, with source links and concise conclusions."
+    "en": "Summarize recent materials from {{name}}, with source links and concise conclusions.",
+    "ru": "Собери сводку последних материалов из {{name}}, со ссылками на источники и краткими выводами."
   },
   "starterPrompts.useSkill": {
-    "ru": "Применить навык «{{name}}»",
-    "en": "Use {{name}}"
+    "en": "Use {{name}}",
+    "ru": "Применить навык «{{name}}»"
   },
   "starterPrompts.welcome": {
-    "ru": "Что сделаем сегодня?",
-    "en": "What shall we do today?"
+    "en": "What shall we do today?",
+    "ru": "Что сделаем сегодня?"
   }
 }

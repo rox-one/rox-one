@@ -1,9 +1,10 @@
-import type { CapabilityRef, RuntimeContextSnapshot, RuntimeEvent, RuntimeGraph, RuntimeNode, RuntimeStatus } from '@rox/core/runtime-trace'
+import type { CapabilityRef, Measurement, RuntimeContextSnapshot, RuntimeEvent, RuntimeGraph, RuntimeNode, RuntimeStatus } from '@rox/core/runtime-trace'
 import { safePreview, measurementText } from './measurements'
+import { runtimeLaunchDetails } from './launch-details'
 
 export interface ContextGroupRow {
   id: string; title?: string; titleKey?: string; summary?: string; summaryKey?: string
-  status?: RuntimeStatus; node: RuntimeNode; sourceEventId: string; sourceAgentId: string; contextSnapshotId?: string; capability?: CapabilityRef
+  status?: RuntimeStatus; node: RuntimeNode; sourceEventId: string; sourceAgentId: string; contextSnapshotId?: string; capability?: CapabilityRef; measurement?: Measurement<number>
 }
 export interface ContextGroup { id: string; titleKey: string; column: 0 | 1 | 2; rows: ContextGroupRow[] }
 export interface RuntimeContextGroups { agentId?: string; snapshot?: RuntimeContextSnapshot; snapshotNode?: RuntimeNode; groups: ContextGroup[] }
@@ -63,6 +64,7 @@ export function buildRuntimeContextGroups(graph: RuntimeGraph, selectedAgentId =
       launch.rows.push({ id: accepted.eventId, titleKey: `runtimeMap.launch.${data.kind}`, ...source })
       if (data.scheduleId) launch.rows.push({ id: `${accepted.eventId}:schedule`, titleKey: 'runtimeMap.schedule', summary: safePreview(data.scheduleId, 120), ...source })
       if (data.triggerId) launch.rows.push({ id: `${accepted.eventId}:trigger`, titleKey: 'runtimeMap.contextGroup.trigger', summary: safePreview(data.triggerId, 120), ...source })
+      for (const detail of runtimeLaunchDetails(data)) launch.rows.push({ id: `${accepted.eventId}:${detail.id}`, titleKey: detail.labelKey, summary: detail.value, summaryKey: detail.valueKey, measurement: detail.measurement, ...source })
       if (data.channel) launch.rows.push({ id: `${accepted.eventId}:channel`, titleKey: 'runtimeMap.contextGroup.channel', summary: safePreview(data.channel.label, 120), ...source, capability: data.channel })
     }
   }

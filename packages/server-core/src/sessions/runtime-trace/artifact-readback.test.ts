@@ -5,7 +5,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { parseTaskSpec, readNodeOutput, readRunLog, saveTaskSpec } from '@rox/shared/tasks'
 import type { CreateSessionOptions } from '@rox/shared/protocol'
-import { buildRuntimeGraph, isRuntimeEvent, projectRuntimeEvents, type RuntimeEvent } from '@rox/core/runtime-trace'
+import { buildRuntimeGraph, isRuntimeEvent, projectRuntimeEvents, type RuntimeEvent, type RuntimeLaunch } from '@rox/core/runtime-trace'
+import { nativeRuntimeTraceEvent } from '../../handlers/rpc/native-session-scope'
 import { TaskRunner, type ConductorSessionHost } from '../../tasks/TaskRunner'
 import type { SessionCompletionEvent } from '../SessionManager'
 import { RuntimeTraceService, type RuntimeTraceSession } from './service'
@@ -26,7 +27,9 @@ describe('TaskRunner artifact filesystem readback', () => {
     const taskId = 'artifact-readback', taskRunId = 'artifact-run', workspaceId = 'artifact-workspace'
     const input = 'Primary input: the observed value is 42.'
     const report = 'Report: the primary input confirms the observed value is 42.'
-    const answer = 'The saved report matches the primary input.\nVERDICT: PASS'
+    const privateHostPath = join(root, 'private-host-template.txt')
+    await writeFile(privateHostPath, 'Host verification instruction')
+    const answer = `The saved report matches the primary input. Host verifier used ${privateHostPath}.\nVERDICT: PASS`
     const parsed = parseTaskSpec({ id: taskId, title: 'Persist and verify report', goal: 'Create a report from the actual input', acceptance_criteria: 'The report preserves the input value', max_iterations: 0,
       defaults: { permissionMode: 'allow-all' }, nodes: [
         { id: 'input', prompt: 'Collect the primary input', outputs: [{ name: 'source' }] },
@@ -39,7 +42,7 @@ describe('TaskRunner artifact filesystem readback', () => {
     const events: RuntimeEvent[] = []
     const collector = new RuntimeTraceService(id => sessions.get(id), event => events.push(event))
     const listeners = new Set<(event: SessionCompletionEvent) => void>()
-    const sent: Array<{ sessionId: string; message: string }> = []
+    const sent: Array<{ sessionId: string; message: string; runtimeLaunch?: RuntimeLaunch }> = []
     const finalText = new Map<string, string>()
     const host: ConductorSessionHost = {
       async createSession(actualWorkspaceId: string, options: CreateSessionOptions) {
@@ -47,9 +50,10 @@ describe('TaskRunner artifact filesystem readback', () => {
         sessions.set(id, { id, workspaceId: actualWorkspaceId, parentSessionId: options.parentSessionId, directory: join(root, 'sessions', id) })
         return { id }
       },
-      async sendMessage(sessionId, message) {
-        sent.push({ sessionId, message })
-        if (sessionId !== 'orchestrator') await collector.begin(sessionId, message)
+      async sendMessage(...args) {
+        const [sessionId, message] = args
+        sent.push({ sessionId, message, runtimeLaunch: args[8]?.runtimeLaunch })
+        if (sessionId !== 'orchestrator') await collector.begin(sessionId, message, { launch: args[8]?.runtimeLaunch })
       },
       async setSessionStatus() {}, async setKanbanColumn() {}, async setTaskNodeCount() {}, async cancelProcessing() {},
       getSessionWorkingDirectory() { return root }, getSessionFinalText(id) { return finalText.get(id) },
@@ -86,9 +90,11 @@ describe('TaskRunner artifact filesystem readback', () => {
     await complete('child-input', input)
     await until(() => sent.some(entry => entry.sessionId === 'child-report'))
     expect(sent.find(entry => entry.sessionId === 'child-report')?.message).toBe(`Write a report using ${input}`)
+    expect(sent.find(entry => entry.sessionId === 'child-report')?.runtimeLaunch).toEqual({ kind: 'delegated', triggerId: `task:${taskId}:${taskRunId}:node:report` })
     await complete('child-report', report)
     await until(() => events.some(event => event.kind === 'acceptance.started'))
     expect(sent.find(entry => entry.sessionId === 'orchestrator')?.message).toContain(report)
+    expect(sent.find(entry => entry.sessionId === 'orchestrator')?.runtimeLaunch).toEqual({ kind: 'unknown', triggerId: `task:${taskId}:${taskRunId}:verification` })
     await complete('orchestrator', answer)
     await until(() => events.some(event => event.kind === 'run.completed' && event.runId === event.rootRunId))
     expect(runner.getRunState(taskId, taskRunId)?.status).toBe('completed')
@@ -115,6 +121,10 @@ describe('TaskRunner artifact filesystem readback', () => {
     expect(artifact.kind === 'artifact.created' && artifact.payload.artifact.evidenceEventIds).toContain(childResult.eventId)
     expect(artifact.kind === 'artifact.created' && artifact.payload.artifact.evidenceEventIds?.every(id => snapshot.events.some(event => event.eventId === id))).toBe(true)
     expect(finalAnswer).toMatchObject({ rootRunId, messageId: 'answer-orchestrator' })
+    const nativeAnswer = nativeRuntimeTraceEvent(finalAnswer)
+    expect(nativeAnswer.kind === 'result.published' && nativeAnswer.payload.content.availability).toBe('redacted')
+    expect(JSON.stringify(nativeAnswer)).not.toContain(privateHostPath)
+    expect(isRuntimeEvent(nativeAnswer)).toBe(true)
     expect(finalAnswer.kind === 'result.published' && finalAnswer.payload.artifactIds).toContain(`task-output:${taskRunId}:report`)
     expect(finalAnswer.kind === 'result.published' && finalAnswer.payload.evidenceEventIds).toContain(acceptance.eventId)
     expect(new Set(snapshot.events.map(event => event.eventId)).size).toBe(snapshot.events.length)

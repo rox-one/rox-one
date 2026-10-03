@@ -44,17 +44,24 @@ let emitterCount = 0;
 // spawn reservation binds delayed starts to their dispatching user turn.
 const assignedRuns = new Map();
 const parentReservations = new Map();
+const ambiguousParents = new Set();
 let reservationQuotaExceeded = false;
 const identityKey = (id, parentId) => JSON.stringify([parentId, id]);
+const ambiguousIdentity = (id, parentId) => {
+  const key = identityKey(id, parentId);
+  return assignedRuns.has(key) && !assignedRuns.get(key);
+};
 const rememberIdentity = (id, reservation) => {
   const key = identityKey(id, reservation.parentId);
   if (assignedRuns.size >= 256 && !assignedRuns.has(key)) { reservationQuotaExceeded = true; return; }
   const previous = assignedRuns.get(key);
   // A reused actor receipt across turns cannot identify a delayed start safely.
-  assignedRuns.set(key, assignedRuns.has(key) && (!previous || previous.runId !== reservation.runId) ? undefined : reservation);
+  const ambiguous = assignedRuns.has(key) && (!previous || previous.runId !== reservation.runId);
+  if (ambiguous) ambiguousParents.add(reservation.parentId);
+  assignedRuns.set(key, ambiguous ? undefined : reservation);
 };
 const sensitive = /^(?:authorization|proxy.?authorization|cookie|set.?cookie|password|passwd|secret|client.?secret|api.?key|access.?token|refresh.?token|id.?token|private.?key|credentials?|env|environment|envOverrides|base64|thumbnailBase64|dataUrl)$/i;
-const knownSecrets = Object.entries(process.env).filter(([key, value]) => /(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i.test(key) && value && value.length >= 8).map(([, value]) => value);
+const knownSecrets = Object.entries(process.env).filter(([key, value]) => /(?:KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)/i.test(key) && value && value.length >= 4).map(([, value]) => value).sort((a, b) => b.length - a.length);
 function sanitized(value, state, depth = 0, key = '') {
   if (sensitive.test(key)) return '[REDACTED]';
   if (typeof value === 'string') {
@@ -114,6 +121,7 @@ export default function roxRuntimeObserver(pi) {
   let quotaReported = false;
   const spawnReservations = new Map();
   const taskInvocations = new Map();
+  const taskInvocationRuns = new Map();
   const write = (hook, payload, ctx, observedRunId = runId) => {
     if (!observedRunId) return;
     try {
@@ -149,9 +157,13 @@ export default function roxRuntimeObserver(pi) {
       const direct = assignedRuns.get(key);
       const reservations = parentReservations.get(ctx.agent.parentId);
       const candidates = new Set(reservations ? [...reservations.values()].map(value => value.runId) : []);
-      const ambiguousIdentity = assignedRuns.has(key) && !direct;
-      runId = !reservationQuotaExceeded && !ambiguousIdentity && direct && direct.parentId === ctx.agent.parentId
-        ? direct.runId : !reservationQuotaExceeded && !ambiguousIdentity && candidates.size === 1 ? [...candidates][0] : undefined;
+      const ambiguousActor = assignedRuns.has(key) && !direct;
+      // Closing an ambiguous dispatch does not prove its pending child vanished.
+      // Exact actor receipts remain usable; parent-only fallback stays refused.
+      const ambiguousParentReceipt = ambiguousParents.has(ctx.agent.parentId)
+        || (reservations && [...reservations.keys()].some(id => ambiguousIdentity(id, ctx.agent.parentId)));
+      runId = !reservationQuotaExceeded && !ambiguousActor && direct && direct.parentId === ctx.agent.parentId
+        ? direct.runId : !reservationQuotaExceeded && !ambiguousActor && !ambiguousParentReceipt && candidates.size === 1 ? [...candidates][0] : undefined;
       if (!runId) { process.stderr.write('ROX_RUNTIME_OBSERVER_ERROR cannot bind native child to originating run\n'); return; }
     } else runId = control.runId;
     const activeTools = pi.getActiveTools();
@@ -189,7 +201,7 @@ export default function roxRuntimeObserver(pi) {
     // actual TaskTool invocation, including its captured dispatch generation.
     const reserved = key && spawnReservations.get(key);
     const reservation = reserved ?? taskInvocations.get(payload.parentToolCallId);
-    if (!reservation) return;
+    if (!reservation || reservationQuotaExceeded || (reserved && ambiguousIdentity(key, reservation.parentId))) return;
     if (reserved) spawnReservations.delete(key);
     rememberIdentity(payload.id, reservation);
     write('subagent_identity', { id: payload.id, invocationKind: reservation.invocationKind,
@@ -208,8 +220,9 @@ export default function roxRuntimeObserver(pi) {
       const id = own(result, 'id');
       const childIndex = own(result, 'index');
       if (typeof id !== 'string' || !Number.isSafeInteger(childIndex)) continue;
-      const reservation = reservations.get(callId + ':' + childIndex);
-      if (reservation) rememberIdentity(id, reservation);
+      const spawnKey = callId + ':' + childIndex;
+      const reservation = reservations.get(spawnKey);
+      if (reservation && !ambiguousIdentity(spawnKey, ctx.agent.id)) rememberIdentity(id, reservation);
     }
     for (const key of reservations.keys()) if (key.startsWith(callId + ':')) reservations.delete(key);
     if (!reservations.size) parentReservations.delete(ctx.agent.id);
@@ -221,8 +234,19 @@ export default function roxRuntimeObserver(pi) {
     'tool_approval_requested', 'tool_approval_resolved']) {
     pi.on(hook, (event, ctx) => {
       if (hook === 'tool_execution_start' && event.toolName === 'task' && typeof event.toolCallId === 'string') {
+        const key = identityKey(event.toolCallId, ctx.agent.id);
+        if (taskInvocationRuns.size >= 128 && !taskInvocationRuns.has(key)) reservationQuotaExceeded = true;
+        else {
+          const previous = taskInvocationRuns.get(key);
+          const ambiguous = taskInvocationRuns.has(key) && (!previous || previous !== runId);
+          if (ambiguous) ambiguousParents.add(ctx.agent.id);
+          taskInvocationRuns.set(key, ambiguous ? undefined : runId);
+        }
         if (taskInvocations.size >= 128 && !taskInvocations.has(event.toolCallId)) taskInvocations.delete(taskInvocations.keys().next().value);
-        taskInvocations.set(event.toolCallId, { runId, parentId: ctx.agent.id, ctx, invocationKind: 'task' });
+        // A reused parent call id does not identify an old asynchronous launch.
+        // Retain its ambiguity even after a tool-end removes the active entry.
+        taskInvocations.set(event.toolCallId, taskInvocationRuns.get(key) === runId && runId
+          ? { runId, parentId: ctx.agent.id, ctx, invocationKind: 'task' } : undefined);
       }
       if (hook === 'tool_execution_end') releaseReservations(event, ctx);
       write(hook, event, ctx);

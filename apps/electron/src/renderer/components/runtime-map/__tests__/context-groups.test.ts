@@ -25,7 +25,7 @@ describe('observed context presentation groups', () => {
     expect(data.groups.find(group => group.id === 'tools')!.rows).toHaveLength(1)
     expect(data.groups.find(group => group.id === 'tools')!.rows[0]!.summaryKey).toBe('runtimeMap.contextGroup.toolSchema')
     expect(data.groups.find(group => group.id === 'agents')!.rows).toHaveLength(2)
-    expect(data.groups.find(group => group.id === 'launch')!.rows).toHaveLength(1)
+    expect(data.groups.find(group => group.id === 'launch')!.rows).toHaveLength(2)
     expect(JSON.stringify(graph)).toBe(before)
   })
   it('separates child snapshot/model, allowed tools and actual calls from root configuration', () => {
@@ -46,7 +46,8 @@ describe('observed context presentation groups', () => {
     expect(buildRuntimeContextGroups(graph, 'fixture-child-b').snapshot).toBeUndefined()
     expect(buildRuntimeContextGroups(graph, 'fixture-child-b').groups.find(group => group.id === 'instructions')!.rows).toHaveLength(0)
     const launch = buildRuntimeContextGroups(graph).groups.find(group => group.id === 'launch')!.rows
-    expect(launch.map(row => row.titleKey)).toEqual(['runtimeMap.launch.manual'])
+    expect(launch.map(row => row.titleKey)).toEqual(['runtimeMap.launch.manual', 'runtimeMap.dispatchTime'])
+    expect(launch[1]!.summaryKey).toBe('runtimeMap.unknown')
   })
   it('does not infer root identity from an orphan snapshot in a shared native run', () => {
     const event = fixture().find(item => item.eventId === 'child-context-event')!

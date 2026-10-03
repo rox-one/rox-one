@@ -47,13 +47,78 @@ const SETTINGS_IDS = [
   'shortcuts',
 ] as const
 
+// Issue #315 assigns durable card ids to its 52 charter RPC files. New
+// handlers belong to a later scope decision; discovery must not renumber the
+// original 200 cards or make the checked-in registry silently obsolete.
+const CHARTER_RPC_FILES = [
+  'auth.ts',
+  'automations.ts',
+  'browser-pane.ts',
+  'browser-profile-import.ts',
+  'bundled-skills.ts',
+  'cloud-runs.ts',
+  'collection.ts',
+  'command-gateway.ts',
+  'context-docs.ts',
+  'environment.ts',
+  'extensions.ts',
+  'fabric-runtime.ts',
+  'fabric.ts',
+  'files.ts',
+  'gamification.ts',
+  'identity.ts',
+  'kanban.ts',
+  'knowledge.ts',
+  'labels.ts',
+  'llm-connections.ts',
+  'marketplace.ts',
+  'memory-insights.ts',
+  'memory-io.ts',
+  'memory-proposals.ts',
+  'memory.ts',
+  'messaging.ts',
+  'mindmap.ts',
+  'notes-import.ts',
+  'notes.ts',
+  'oauth.ts',
+  'onboarding.ts',
+  'openclaw.ts',
+  'orgs.ts',
+  'pages.ts',
+  'plugin-bridge.ts',
+  'privacy.ts',
+  'projects.ts',
+  'resources.ts',
+  'server.ts',
+  'session-foreign-import.ts',
+  'sessions.ts',
+  'settings.ts',
+  'skills-pending.ts',
+  'skills.ts',
+  'sources.ts',
+  'statuses.ts',
+  'system.ts',
+  'tasks.ts',
+  'toolchain.ts',
+  'transfer.ts',
+  'voice.ts',
+  'workspace.ts',
+] as const
 const RPC_DIR = join(import.meta.dir, '../../packages/server-core/src/handlers/rpc')
 
-function rpcHandlerFiles(): string[] {
+/** Report additions explicitly, without changing the original program ids. */
+export function discoverAdditionalRox2RpcFiles(): string[] {
+  const charter = new Set<string>(CHARTER_RPC_FILES)
   return readdirSync(RPC_DIR)
-    .filter((name) => name.endsWith('.ts') && !name.includes('.test.') && name !== 'index.ts')
+    .filter((name) => name.endsWith('.ts') && !name.includes('.test.')
+      && name !== 'index.ts' && name !== 'memory-test-setup.ts'
+      && name !== 'meetings.ts' && !charter.has(name))
     .sort()
     .map((name) => `packages/server-core/src/handlers/rpc/${name}`)
+}
+
+function rpcHandlerFiles(): string[] {
+  return CHARTER_RPC_FILES.map((name) => `packages/server-core/src/handlers/rpc/${name}`)
 }
 
 function card(index: number, draft: Draft): Rox2Card {

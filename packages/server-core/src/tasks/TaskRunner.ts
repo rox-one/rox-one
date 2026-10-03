@@ -21,6 +21,7 @@
 import type { CreateSessionOptions } from '@rox/shared/protocol';
 import type { SessionCompletionEvent } from '../sessions/SessionManager';
 import type { TaskRuntimeObservation } from '../sessions/runtime-trace/conductor';
+import type { ISessionManager } from '../handlers/session-manager-interface';
 import {
   type TaskSpec,
   type TaskNode,
@@ -51,7 +52,7 @@ export interface ConductorSessionHost {
   /** Creates the child session AND announces it to the renderer (createSession emits
    *  session_created by default), so the subtask appears on the board with its real title. */
   createSession(workspaceId: string, options: CreateSessionOptions): Promise<{ id: string }>;
-  sendMessage(sessionId: string, message: string): Promise<void>;
+  sendMessage(...args: Parameters<ISessionManager['sendMessage']>): Promise<void>;
   setSessionStatus(sessionId: string, status: string): Promise<void>;
   setKanbanColumn(sessionId: string, column: string | null): Promise<void>;
   /** Records the total DAG node count on the orchestrator session for a stable board progress denominator. */
@@ -396,7 +397,8 @@ class ActiveRun {
       if (this.opts.orchestratorSessionId) {
         try { await this.deps.host.assignTaskRuntimeChild?.(this.opts.orchestratorSessionId, child.id, prompt, node, this.runId); } catch { /* A passive observer never changes task dispatch. */ }
       }
-      await this.deps.host.sendMessage(child.id, prompt);
+      await this.deps.host.sendMessage(child.id, prompt, undefined, undefined, undefined, undefined, undefined, undefined,
+        { runtimeLaunch: { kind: 'delegated', triggerId: `task:${this.spec.id}:${this.runId}:node:${node.id}` } });
     } catch (err) {
       this.failNode(node.id, `dispatch failed: ${(err as Error).message}`);
     }
@@ -616,7 +618,8 @@ class ActiveRun {
   /** Send to the orchestrator, failing the run (rather than hanging in `verifying`) if the send rejects. */
   private async sendToOrchestrator(orchestrator: string, message: string): Promise<void> {
     try {
-      await this.deps.host.sendMessage(orchestrator, message);
+      await this.deps.host.sendMessage(orchestrator, message, undefined, undefined, undefined, undefined, undefined, undefined,
+        { runtimeLaunch: { kind: 'unknown', triggerId: `task:${this.spec.id}:${this.runId}:verification` } });
     } catch {
       // The verdict will never arrive — detach the listener and settle as failed instead of hanging.
       this.verdictOff?.();

@@ -5,6 +5,7 @@ import type { ToolResult } from '../types.ts';
 import { createSanitizedEnv } from '../runtime/sandbox-env.ts';
 import { resolveHostBashCwd } from '../runtime/host-bash-cwd.ts';
 import { getHostBashPort, type HostBashExecResult, type HostBashObserver } from '../runtime/host-bash-port.ts';
+import { prepareHostBashEnv, resolveHostBashShell, killHostBashProcessTree, HOST_BASH_KILL_GRACE_MS } from '../runtime/host-bash-process.ts';
 import {
   isHostBashSandboxEnabled,
   planHostBashSandbox,
@@ -30,29 +31,6 @@ function truncateOutput(text: string): { text: string; truncated: boolean } {
   };
 }
 
-function killProcessTree(pid: number): void {
-  try {
-    if (process.platform === 'win32') {
-      process.kill(pid, 'SIGKILL');
-      return;
-    }
-    process.kill(-pid, 'SIGKILL');
-  } catch {
-    try {
-      process.kill(pid, 'SIGKILL');
-    } catch {
-      /* already dead */
-    }
-  }
-}
-
-function resolveShell(): { command: string; argsPrefix: string[] } {
-  if (process.platform === 'win32') {
-    return { command: 'bash', argsPrefix: ['-lc'] };
-  }
-  return { command: '/bin/bash', argsPrefix: ['-lc'] };
-}
-
 /**
  * Craft-executed host-tool Bash.
  *
@@ -70,6 +48,7 @@ export async function runHostBash(req: {
   cwd: string;
   workspaceRoot?: string;
   timeoutMs?: number;
+  envProvider?: () => Promise<NodeJS.ProcessEnv>;
   observer?: HostBashObserver;
 }): Promise<ToolResult> {
   const command = typeof req.command === 'string' ? req.command.trim() : '';
@@ -82,18 +61,25 @@ export async function runHostBash(req: {
   }
   const cwd = jailed.cwd;
 
+  if (req.timeoutMs !== undefined && !Number.isFinite(req.timeoutMs)) {
+    return errorResponse('bash timeoutMs must be finite.');
+  }
   const timeoutMs = Math.min(
     Math.max(req.timeoutMs ?? HOST_BASH_DEFAULT_TIMEOUT_MS, 1),
     HOST_BASH_MAX_TIMEOUT_MS,
   );
 
   const notify = (observation: Omit<Parameters<HostBashObserver>[0], 'command' | 'cwd' | 'occurredAt' | 'monotonicMs'>): void => {
-    try { req.observer?.({ command, cwd, occurredAt: Date.now(), monotonicMs: performance.now(), ...observation }); } catch { /* Observability never changes process execution or fallback. */ }
+    const snapshot = observation.result ? { ...observation, result: { ...observation.result } } : observation;
+    try { req.observer?.({ command, cwd, occurredAt: Date.now(), monotonicMs: performance.now(), ...snapshot }); } catch { /* Observability never changes process execution or fallback. */ }
   };
 
   const sandboxEnabled = isHostBashSandboxEnabled();
   const port = getHostBashPort();
-  if (port && !sandboxEnabled) {
+  // This legacy native port cannot receive a per-call managed environment.
+  // Keep it available to callers without a provider; do not silently lose
+  // managed tool resolution for the real session registry.
+  if (port && !sandboxEnabled && !req.envProvider) {
     try {
       notify({ phase: 'started', execution: 'sidecar' });
       const remote = await port({
@@ -110,9 +96,38 @@ export async function runHostBash(req: {
     }
   }
 
-  const env = createSanitizedEnv();
-  const shell = resolveShell();
-  const shellArgs = [...shell.argsPrefix, command];
+  const deadline = performance.now() + timeoutMs;
+  let env: NodeJS.ProcessEnv;
+  if (req.envProvider) {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const provided = await Promise.race([
+        req.envProvider(),
+        new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), timeoutMs); }),
+      ]);
+      if (!provided || performance.now() >= deadline) {
+        return errorResponse('host-tool bash environment preparation timed out; command was not started.');
+      }
+      env = createSanitizedEnv(provided);
+    } catch {
+      return errorResponse('host-tool bash environment preparation failed; command was not started.');
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  } else {
+    env = createSanitizedEnv();
+  }
+  let shell: ReturnType<typeof resolveHostBashShell>;
+  try { shell = resolveHostBashShell(env); } catch {
+    return errorResponse('Native Git Bash was not found. Configure CLAUDE_CODE_GIT_BASH_PATH to bash.exe.');
+  }
+  env = prepareHostBashEnv(env, shell.command);
+  // Managed Windows Python ships python.exe; nested Bash inherits the same
+  // explicit alias rather than falling through to a WindowsApps stub.
+  const script = process.platform === 'win32' && env.CRAFT_HOST_BASH_PYTHON
+    ? `python3() { "$CRAFT_HOST_BASH_PYTHON" "$@"; }; export -f python3;\n${command}`
+    : command;
+  const shellArgs = [...shell.argsPrefix, script];
   const jailRoot = req.workspaceRoot?.trim() || cwd;
   const sandbox = sandboxEnabled ? planHostBashSandbox(shell.command, shellArgs, jailRoot) : null;
   if (sandbox && sandbox.status !== 'enforced') {
@@ -123,6 +138,10 @@ export async function runHostBash(req: {
   const spawnCommand = sandbox?.command ?? shell.command;
   const spawnArgs = sandbox?.args ?? shellArgs;
   const memoryCap = HOST_BASH_MAX_OUTPUT_CHARS * 2;
+
+  if (performance.now() >= deadline) {
+    return errorResponse('host-tool bash preparation timed out; command was not started.');
+  }
 
   const startedAt = performance.now();
   notify({ phase: 'started', execution: 'local', shell: shell.command });
@@ -135,24 +154,45 @@ export async function runHostBash(req: {
       stdoutTruncated: boolean;
       stderrTruncated: boolean;
     }>((resolvePromise, reject) => {
+      const before = Date.now();
       const child = spawn(spawnCommand, spawnArgs, {
         cwd,
         env,
         stdio: ['ignore', 'pipe', 'pipe'],
         detached: process.platform !== 'win32',
+        windowsHide: true,
       });
 
+      const spawnedAt = { before, after: Date.now() };
       let stdout = '';
       let stderr = '';
       let timedOut = false;
+      let settled = false;
+      let exitedAt: number | undefined;
+      let teardownTimer: ReturnType<typeof setTimeout> | undefined;
       let stdoutTruncated = false;
       let stderrTruncated = false;
       const pid = child.pid;
 
+      const finish = (code: number | null) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(killTimer);
+        if (teardownTimer) clearTimeout(teardownTimer);
+        child.stdout.destroy();
+        child.stderr.destroy();
+        resolvePromise({ stdout, stderr, code, timedOut, stdoutTruncated, stderrTruncated });
+      };
+
       const killTimer = setTimeout(() => {
         timedOut = true;
-        if (typeof pid === 'number') killProcessTree(pid);
-      }, timeoutMs);
+        teardownTimer = setTimeout(() => finish(null), HOST_BASH_KILL_GRACE_MS);
+        if (typeof pid === 'number') {
+          void killHostBashProcessTree(pid, spawnedAt, exitedAt, () => {
+            if (exitedAt === undefined) child.kill('SIGKILL');
+          }).catch(() => {}).finally(() => finish(null));
+        } else finish(null);
+      }, Math.max(1, deadline - performance.now()));
 
       child.stdout.on('data', (chunk: Buffer) => {
         const received = chunk.toString();
@@ -169,12 +209,14 @@ export async function runHostBash(req: {
         if (retained) notify({ phase: 'output', execution: 'local', shell: shell.command, stderr: retained });
       });
 
-      child.on('close', (code) => {
+      child.once('exit', () => { exitedAt = Date.now(); });
+      child.once('close', (code) => { if (!timedOut) finish(code); });
+      child.once('error', (err) => {
+        if (settled) return;
+        settled = true;
         clearTimeout(killTimer);
-        resolvePromise({ stdout, stderr, code, timedOut, stdoutTruncated, stderrTruncated });
-      });
-      child.on('error', (err) => {
-        clearTimeout(killTimer);
+        if (teardownTimer) clearTimeout(teardownTimer);
+        child.stdout.destroy(); child.stderr.destroy();
         reject(err);
       });
     });
@@ -193,9 +235,9 @@ export async function runHostBash(req: {
     notify({ phase: 'completed', execution: 'local', shell: shell.command, result: structured });
     return formatHostBashResult(structured, sandbox ?? undefined);
   } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    notify({ phase: 'failed', execution: 'local', shell: shell.command, error: msg });
-    return errorResponse(`Error running host-tool bash: ${msg}`);
+    const message = 'Error running host-tool bash: the command could not be started.';
+    notify({ phase: 'failed', execution: 'local', shell: shell.command, error: message });
+    return errorResponse(message);
   }
 }
 
@@ -209,17 +251,16 @@ export async function handleHostBash(
     cwd,
     workspaceRoot: ctx.workspacePath,
     timeoutMs: args.timeoutMs,
+    envProvider: ctx.getHostBashEnv,
     observer: ctx.hostBashObserver,
   });
 }
 
 function formatHostBashResult(result: HostBashExecResult, sandbox?: HostBashSandboxPlan): ToolResult {
-  const stdout = result.stdoutTruncated
-    ? { text: result.stdout, truncated: true }
-    : truncateOutput(result.stdout);
-  const stderr = result.stderrTruncated
-    ? { text: result.stderr, truncated: true }
-    : truncateOutput(result.stderr);
+  const stdout = truncateOutput(result.stdout);
+  const stderr = truncateOutput(result.stderr);
+  stdout.truncated ||= result.stdoutTruncated === true;
+  stderr.truncated ||= result.stderrTruncated === true;
   const lines: string[] = [
     `exitCode: ${result.exitCode ?? 'null'}`,
     `durationMs: ${result.durationMs}`,

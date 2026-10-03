@@ -89,7 +89,16 @@ const server = Bun.serve({ hostname: '127.0.0.1', port: 4177, idleTimeout: 0, as
         agentId: contextFixtureAgentIds.missing, parentAgentId: 'root', name: 'Child without snapshot', nativeKind: 'task',
         task: { text: 'Context snapshot was not emitted.' }, prompt: { text: 'Explicit assignment without snapshot.' },
       } }))
-      return json({ rootSnapshotId: rootSnapshot.id, childSnapshotId: childSnapshot.id, agents: contextFixtureAgentIds })
+      // The production collector owns canonical IDs; return the published assignments,
+      // rather than treating the worker-local fixture aliases as renderer identities.
+      const assignedAgent = (sourceSeq: number) => {
+        const assignment = events.find(event => event.rootRunId === run!.rootRunId && event.kind === 'agent.assigned'
+          && event.sourceId === 'explicit-context-fixture' && event.sourceEventId === `context-fixture:${sourceSeq}`)
+        if (!assignment || assignment.kind !== 'agent.assigned') throw new Error('Context fixture assignment was not published')
+        return assignment.payload.assignment.agentId
+      }
+      return json({ rootSnapshotId: rootSnapshot.id, childSnapshotId: childSnapshot.id,
+        agents: { child: assignedAgent(1), missing: assignedAgent(3) } })
     }
     if (path === '/large' && request.method === 'POST') {
       if (!run) return json({ error: 'No active test run' }, 409)

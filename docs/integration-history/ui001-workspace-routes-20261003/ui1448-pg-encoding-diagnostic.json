@@ -1,0 +1,9 @@
+{
+  "initdb_before_encoding": "SQL_ASCII",
+  "locale": "C",
+  "failed_constraint": "project_name_check",
+  "input": "10000 Cyrillic characters",
+  "cause": "SQL_ASCII counts the 20000 UTF8 bytes as 20000 database characters",
+  "fixture_repair": "--encoding=UTF8",
+  "production_source_modified": false
+}

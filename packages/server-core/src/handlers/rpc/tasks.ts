@@ -257,7 +257,8 @@ export function registerTasksHandlers(server: RpcServer, deps: HandlerDeps): voi
           finish(() => resolve(text))
         })
         timer = setTimeout(() => finish(() => reject(new Error('Task generation timed out'))), GENERATE_TIMEOUT_MS)
-        void Promise.resolve(deps.sessionManager.sendMessage(sessionId, prompt))
+        void Promise.resolve(deps.sessionManager.sendMessage(sessionId, prompt, undefined, undefined, undefined, undefined, undefined, undefined,
+          { runtimeLaunch: { kind: 'unknown', triggerId: `task-draft:${sessionId}` } }))
           .catch((err: unknown) => finish(() => reject(err instanceof Error ? err : new Error(String(err)))))
       })
 

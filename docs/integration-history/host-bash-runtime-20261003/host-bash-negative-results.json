@@ -1,0 +1,49 @@
+{
+  "baseline": "6a2020fcc31d07b84208d56073a9c469caaefb9a",
+  "results": [
+    {
+      "checkout": "/tmp/rox-branch-integration-20261003/host-bash-negative-worktree",
+      "kind": "startup",
+      "accepted": false,
+      "elapsedMs": 704,
+      "leaked": true,
+      "pidRecorded": false,
+      "exitCode": 0,
+      "stdout": "{\"content\":[{\"type\":\"text\",\"text\":\"exitCode: 0\\ndurationMs: 105\\ntimedOut: false\\ncwd: /private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/host-negative-startup-nBg8Ni\\n\\nstdout:\\ncredential:private-startup-canary\"}],\"structuredContent\":{},\"isError\":false}\n",
+      "stderr": ""
+    },
+    {
+      "checkout": "/tmp/rox-branch-integration-20261003/host-bash-negative-worktree",
+      "kind": "pipes",
+      "accepted": false,
+      "elapsedMs": 6502,
+      "leaked": false,
+      "pidRecorded": true,
+      "watchdog": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "checkout": "/tmp/rox-branch-integration-20261003/host-bash-worktree",
+      "kind": "startup",
+      "accepted": true,
+      "elapsedMs": 566,
+      "leaked": false,
+      "pidRecorded": false,
+      "exitCode": 0,
+      "stdout": "{\"content\":[{\"type\":\"text\",\"text\":\"exitCode: 0\\ndurationMs: 32\\ntimedOut: false\\ncwd: /private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/host-negative-startup-6Ez1F9\\n\\nstdout:\\ncredential:\"}],\"structuredContent\":{},\"isError\":false}\n",
+      "stderr": ""
+    },
+    {
+      "checkout": "/tmp/rox-branch-integration-20261003/host-bash-worktree",
+      "kind": "pipes",
+      "accepted": true,
+      "elapsedMs": 2074,
+      "leaked": false,
+      "pidRecorded": true,
+      "exitCode": 0,
+      "stdout": "{\"content\":[{\"type\":\"text\",\"text\":\"[ERROR] exitCode: null\\ndurationMs: 1474\\ntimedOut: true\\ncwd: /private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/host-negative-pipes-v2LsfZ\\n\\nstdout:\\nbefore-root-exit\\n\"}],\"structuredContent\":{},\"isError\":true}\n",
+      "stderr": ""
+    }
+  ]
+}

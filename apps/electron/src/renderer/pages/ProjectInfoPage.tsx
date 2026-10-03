@@ -72,6 +72,8 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const projectMountedRef = useRef(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const projectReadsMountedRef = projectMountedRef
+  const projectReadRevisionRef = projectRequestRef
   useEffect(() => tour.capability('projects.available', loading
     ? { state: 'pending', reason: 'installing' }
     : error ? { state: 'unavailable', reason: 'api-unavailable' }
@@ -103,6 +105,14 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const [newCycleStart, setNewCycleStart] = useState('')
   const [newCycleEnd, setNewCycleEnd] = useState('')
   const [newCycleTimezone, setNewCycleTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone)
+
+  React.useLayoutEffect(() => {
+    projectReadsMountedRef.current = true
+    return () => {
+      projectReadsMountedRef.current = false
+      projectReadRevisionRef.current += 1
+    }
+  }, [workspaceId, projectSlug])
 
   const selectedCycle = useMemo(
     () => okrCycles.find((cycle) => cycle.id === selectedCycleId) ?? null,
@@ -256,8 +266,9 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
 
   // Load project (and re-load on broadcast)
   const loadProject = useCallback(async () => {
-    if (!projectMountedRef.current) return
-    const request = ++projectRequestRef.current
+    const request = ++projectReadRevisionRef.current
+    const isCurrent = () => projectReadsMountedRef.current && request === projectReadRevisionRef.current
+    if (!isCurrent()) return
     if (!workspaceId) {
       setProject(null)
       setError(t('common.unavailable'))
@@ -276,7 +287,7 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
     setError(null)
     try {
       const result = await window.electronAPI.getProject(workspaceId, projectSlug)
-      if (request !== projectRequestRef.current) return
+      if (!isCurrent()) return
       if (!result) {
         setError(t('projectInfo.notFound'))
         setProject(null)
@@ -290,12 +301,12 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
       setEditDetails(loaded.config.details ?? '')
       setEditColor(loaded.config.color ?? '')
     } catch (err) {
-      if (request !== projectRequestRef.current) return
+      if (!isCurrent()) return
       console.error('[ProjectInfoPage] Failed to load project:', err)
       setProject(null)
-      setError(err instanceof Error ? err.message : String(err))
+      setError(t('common.unavailable'))
     } finally {
-      if (request === projectRequestRef.current) setLoading(false)
+      if (isCurrent()) setLoading(false)
     }
   }, [workspaceId, projectSlug, t])
 
@@ -523,6 +534,20 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
       toast.error(t('projectInfo.iconUploadFailed'))
     }
   }, [workspaceId, project, loadProject, t])
+
+  if (!loading && error) {
+    return (
+      <Info_Page>
+        <Info_Page.Header title={projectSlug} />
+        <div role="status" aria-live="polite" data-testid="project-surface-unavailable" className="flex flex-1 flex-col items-center justify-center gap-3 p-4 text-center text-muted-foreground">
+          <p className="text-sm">{error}</p>
+          <button type="button" data-testid="project-surface-retry" onClick={() => void loadProject()} className="rounded-md border border-border px-3 py-1 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            {t('common.retry')}
+          </button>
+        </div>
+      </Info_Page>
+    )
+  }
 
   return (
     <Info_Page

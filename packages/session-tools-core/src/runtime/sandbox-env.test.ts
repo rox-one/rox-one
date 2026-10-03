@@ -30,6 +30,13 @@ describe('sandbox-env', () => {
     }
   });
 
+  it('uses Windows case-insensitive credential names without changing POSIX semantics', () => {
+    const base = { aws_session_token: 'private-case-canary', rOx_SeCrEt_fixture: 'private-case-canary', SAFE_VAR: 'ok', ROX_SECRETS: 'near-miss' };
+    expect(createSanitizedEnv(base, 'win32')).toEqual({ SAFE_VAR: 'ok', ROX_SECRETS: 'near-miss' });
+    expect(createSanitizedEnv(base, 'linux')).toEqual(base);
+    expect(base.aws_session_token).toBe('private-case-canary');
+  });
+
   it('strips secrets-runtime staging vars (INFISICAL_TOKEN + ROX_SECRET_ prefix)', () => {
     const sanitized = createSanitizedEnv({
       SAFE_VAR: 'ok',

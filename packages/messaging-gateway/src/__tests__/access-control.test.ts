@@ -212,7 +212,7 @@ describe('platform accessMode disabled (RX-TSK-0416)', () => {
   it('evaluatePreBindingAccess: blocks everyone, even before pairing', async () => {
     const { evaluatePreBindingAccess } = await import('../access-control.ts')
     const r = evaluatePreBindingAccess({ msg: msg('u1'), workspaceConfig: ws('disabled') })
-    expect(r).toEqual({ allow: false, reason: 'mode-disabled' })
+    expect(r).toEqual({ kind: 'reject', reason: 'disabled' })
   })
 
   it('evaluateBindingAccess: beats binding-level open and the owners list', async () => {
@@ -227,12 +227,12 @@ describe('platform accessMode disabled (RX-TSK-0416)', () => {
       workspaceConfig: ws('disabled'),
       binding: { config: { accessMode: 'allow-list', allowedSenderIds: [] } as never },
     })
-    expect(nonOwner).toEqual({ allow: false, reason: 'mode-disabled' })
-    expect(owner).toEqual({ allow: false, reason: 'mode-disabled' })
+    expect(nonOwner).toEqual({ kind: 'reject', reason: 'disabled' })
+    expect(owner).toEqual({ kind: 'reject', reason: 'disabled' })
   })
 
   it('buildRejectionReply explains the disabled mode', async () => {
     const { buildRejectionReply } = await import('../access-control.ts')
-    expect(buildRejectionReply('mode-disabled')).toContain('disabled')
+    expect(buildRejectionReply('disabled')).toContain('disabled')
   })
 })

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from 'bun:test'
 import type { ElectronAPI } from '../../../../shared/types'
 import { emptyRadarData, type RadarSweep } from '../radar/radar-model'
+import type { RuntimeLaunch } from '@rox/core/runtime-trace'
 
 const memory = new Map<string, string>()
 let owner = 'workspace-A'
@@ -57,10 +58,32 @@ describe('source-backed radar lifecycle', () => {
     expect(await daily).toEqual(sweep)
     expect(calls.filter(call => call.name === 'create')).toHaveLength(1)
     expect(calls.filter(call => call.name === 'send')).toHaveLength(1)
+    expect(calls.find(call => call.name === 'send')!.args).toHaveLength(2)
     expect(calls.find(call => call.name === 'create')!.args[1]).toEqual({ name: 'Radar', permissionMode: 'safe', enabledSourceSlugs: ['brave'] })
     expect(sweep.feedItems?.[0]?.source).toBe('Real feed source')
     expect((await runRadarSweep(owner, 'manual', 'en', 'Radar', current())).id).toBe(sweep.id)
     expect(calls.filter(call => call.name === 'create')).toHaveLength(1)
+  })
+  test('daily dispatch carries its saved occurrence and observed timezone without inventing an exact schedule instant', async () => {
+    const deferred = Promise.withResolvers<{ id: string }>(); creationGate = deferred.promise
+    const pending = runRadarSweep(owner, 'daily', 'en', 'Daily Radar', current())
+    await new Promise(resolve => setTimeout(resolve, 0))
+    const claim = loadRadar(owner).sweeps[0]!
+    expect(claim).toMatchObject({ trigger: 'daily', status: 'starting' })
+    expect(calls.some(call => call.name === 'send')).toBe(false)
+    const beforeDispatch = Date.now()
+    deferred.resolve({ id: 'daily-session' })
+    const sweep = await pending
+    const options = calls.find(call => call.name === 'send')!.args[4] as { runtimeLaunch: RuntimeLaunch }
+    expect(options.runtimeLaunch).toMatchObject({ kind: 'scheduled', scheduleId: `rox.radar.claim.v1:${owner}`,
+      triggerId: claim.date, occurrenceId: claim.id, scheduledAt: { state: 'unknown', reason: 'not-recorded' } })
+    expect(options.runtimeLaunch.timezone).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone)
+    expect(options.runtimeLaunch.dispatchedAt).toMatchObject({ state: 'known', source: 'radar-dispatch' })
+    const dispatchedAt = options.runtimeLaunch.dispatchedAt!
+    expect(dispatchedAt.state === 'known' && dispatchedAt.value >= beforeDispatch && dispatchedAt.value <= Date.now()).toBe(true)
+    expect(sweep.id).toBe(claim.id)
+    expect(loadRadar(owner).sweeps[0]!.id).toBe(claim.id)
+    expect(calls.filter(call => call.name === 'send')).toHaveLength(1)
   })
   test('a finished empty response becomes a persisted error and retry creates a new run', async () => {
     seedSweep(); snapshot = { isProcessing: false, messages: [] }
