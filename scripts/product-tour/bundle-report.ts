@@ -10,7 +10,7 @@ const baseline = process.argv[2]
 if (!baseline) throw new Error('Usage: bun scripts/product-tour/bundle-report.ts BASELINE_RENDERER_DIST [CANDIDATE_RENDERER_DIST]')
 const candidate = process.argv[3] ?? join(repository, 'apps/electron/dist/renderer')
 function files(directory: string): string[] { return readdirSync(directory).flatMap(name => { const path = join(directory, name); return statSync(path).isDirectory() ? files(path) : [path] }) }
-const forbidden = ['rox-product-tour-application-test-only', 'rox-product-tour-component-test-only', '__productTourApplication', '__productTourComponent', 'owned-product-tour-bootstrap', 'product-tour-owned-workspace']
+const forbidden = ['rox-product-tour-application-test-only', 'rox-product-tour-component-test-only', '__productTourApplication', '__productTourComponent', 'owned-product-tour-bootstrap', 'product-tour-owned-workspace', 'rox-learning-results-fixture', '__learningResults']
 function inspect(directory: string) {
   const paths = files(resolve(directory))
   const measure = (suffix: string) => paths.filter(path => path.endsWith(suffix)).reduce((sum, path) => { const content = readFileSync(path); return { files: sum.files + 1, rawBytes: sum.rawBytes + content.length, gzipBytes: sum.gzipBytes + gzipSync(content, { level: 9, mtime: 0 } as any).length } }, { files: 0, rawBytes: 0, gzipBytes: 0 })
@@ -23,7 +23,7 @@ const before = inspect(baseline), after = inspect(candidate)
 const report = {
   caseId: 'BUILD-01', commitSha: spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repository, encoding: 'utf8' }).stdout.trim(),
   trackedWorktreeDirty: !!spawnSync('git', ['status', '--porcelain', '--untracked-files=no'], { cwd: repository, encoding: 'utf8' }).stdout.trim(),
-  baseline: before, candidate: after,
+  fixtureMarkersChecked: forbidden.length, baseline: before, candidate: after,
   delta: { jsRawBytes: after.js.rawBytes - before.js.rawBytes, jsGzipBytes: after.js.gzipBytes - before.js.gzipBytes, cssRawBytes: after.css.rawBytes - before.css.rawBytes, cssGzipBytes: after.css.gzipBytes - before.css.gzipBytes },
   status: after.leakedMarkers.length === 0 && after.js.files > 0 && before.js.files > 0 ? 'PASS' : 'FAIL',
   method: 'Sum raw file bytes and gzip level 9 bytes independently per JS/CSS file; source maps excluded. Builds must be produced separately at recorded SHAs.',
