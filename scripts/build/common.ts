@@ -597,7 +597,7 @@ export function buildMcpServers(config: BuildConfig): void {
   if (existsSync(join(cloudRunnerDir, 'src'))) {
     mkdirSync(join(cloudRunnerDir, 'dist'), { recursive: true });
     execSync(
-      `bun build ${join(cloudRunnerDir, 'src', 'runners', 'stub-runner.ts')} --outfile ${cloudRunnerOut} --target bun --format esm`,
+      `bun build "${join(cloudRunnerDir, 'src', 'runners', 'stub-runner.ts')}" --outfile "${cloudRunnerOut}" --target bun --format esm`,
       { cwd: rootDir, stdio: 'inherit', shell: true }
     );
     if (!existsSync(cloudRunnerOut)) {
@@ -612,7 +612,7 @@ export function buildMcpServers(config: BuildConfig): void {
   if (existsSync(join(piDir, 'src'))) {
     mkdirSync(join(piDir, 'dist'), { recursive: true });
     execSync(
-      `bun build ${join(piDir, 'src', 'index.ts')} --outdir ${join(piDir, 'dist')} --target bun --format esm --external koffi`,
+      `bun build "${join(piDir, 'src', 'index.ts')}" --outdir "${join(piDir, 'dist')}" --target bun --format esm --external koffi`,
       { cwd: rootDir, stdio: 'inherit', shell: true }
     );
     if (!existsSync(piOut)) {
