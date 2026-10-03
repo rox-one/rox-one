@@ -1,0 +1,169 @@
+{
+  "qualified_production_revision": "58399b07fa369e612fedde2192a32ee99005ff40",
+  "comparison_main": "f51d610b689840427139c29621ffa1bb778df619",
+  "source": {
+    "pr": 1444,
+    "branch": "codex/live-runtime-map-20261003",
+    "sha": "c2e8f07b5cb8a1b1659781e1fe4dd4d0f0207727"
+  },
+  "dependencies": {
+    "collector1485": "439b9d4f141fe8d484f57f0fa55681de7b7af966",
+    "actual_producers": "separate pr_scout layer; not certified by synthetic executor fixtures"
+  },
+  "checks": {
+    "actual_renderer_journal_context_catalog_continuity_native_zoom": {
+      "pass": 19,
+      "fail": 0,
+      "skipped": 0,
+      "cases": "context/continuity/overview/catalog/browser-zoom"
+    },
+    "actual_mounted_current_navigation_node_lifecycle": {
+      "pass": 39,
+      "fail": 0
+    },
+    "focused_projection_layout_metadata_links_catalog_scope": {
+      "pass": 29,
+      "fail": 0,
+      "assertions": 124
+    },
+    "all12_locale_parity_and_context_helpers": {
+      "pass": 282,
+      "fail": 0,
+      "assertions": 6513
+    },
+    "actual_parser_routing_logger_only_fixture": {
+      "pass": 34,
+      "fail": 0,
+      "assertions": 144
+    },
+    "actual_lazy_reject_retry_preserves_mounted_chat": {
+      "pass": 1,
+      "fail": 0,
+      "retained_previous_source_proof": "same changed production blobs; current main is newer"
+    },
+    "full_electron_types": {
+      "exit": 0,
+      "runtime": "Node22"
+    },
+    "full_webui_types": {
+      "exit": 0,
+      "runtime": "Node22"
+    },
+    "renderer_build": {
+      "exit": 0,
+      "mechanism": "current Playwright source-fingerprinted production component build"
+    }
+  },
+  "production_manifest": {
+    "apps/electron/src/main/deep-link.ts": "23c5fd0a78a666aad87742edee7b850984a7c58c13547652c4702abb0ddd8ed7",
+    "apps/electron/src/renderer/atoms/runtime-trace.ts": "5fef4b879dcafff292ff786a27dc96d3b844246268e87beb2bed1c272981b84b",
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "32c891506bccb48f4acff541eb3e081169c67da52a0f41d87e472339ef5cb846",
+    "apps/electron/src/renderer/components/runtime-map/ChatRuntimeSplit.tsx": "943a74ddb3b107afbaa1615fcdcd378b798f0fbe98bb92f3bbd4bb9e4dff7592",
+    "apps/electron/src/renderer/components/runtime-map/RuntimeCanvas.tsx": "7e2619ac3be33df5df107b04f038a87f4b9f65f70d1fe350563623cab310a72a",
+    "apps/electron/src/renderer/components/runtime-map/RuntimeContextCanvas.tsx": "01514d511a44eb820e6bf112823a632d2f7329517b62d5a7f137f98b76a7b6f2",
+    "apps/electron/src/renderer/components/runtime-map/RuntimeMapDock.tsx": "9253df58a65933a25e5d70829b5f87e0cfc6f38a649fce003f03fc80dca60563",
+    "apps/electron/src/renderer/components/runtime-map/RuntimeToolbar.tsx": "b95d9a155559cd214633e50bd7200ca9c257d806e7f22be39fa18ab49ad4c1d5",
+    "apps/electron/src/renderer/components/runtime-map/context-groups.ts": "4d821d3fa6ffa986d69e2214be1251f1c923b578b875d68c44b4e0ff57db88a0",
+    "apps/electron/src/renderer/components/runtime-map/coverage-text.ts": "08ef6386e84c9ba53af378f2c3db7d4dacf72f524287dacaace09f9bbd28c479",
+    "apps/electron/src/renderer/components/runtime-map/index.ts": "6ab74267b74d81324c815e1f07feca46878f3ef617b2acd33b813113c5349fc4",
+    "apps/electron/src/renderer/components/runtime-map/inspector/RuntimeInspector.tsx": "307da2977524f4c5a643f9df4f656013bc4b32d05b7de548033863e8423d748b",
+    "apps/electron/src/renderer/components/runtime-map/launch-details.ts": "a7b40a97219b124b171a32910af633d891e60a298271eadc98bfe490af587fb9",
+    "apps/electron/src/renderer/components/runtime-map/layout/initial-geometry.ts": "dfcc0604dbe205938ce7401eb65bc86fadd9e1e4849e15049bca1a9b880dd0be",
+    "apps/electron/src/renderer/components/runtime-map/layout/reconcile-flow-nodes.ts": "1532d8ec01c903cbc1476fe9ffb2d81dff326b3697303bbcde28d81ded3f677c",
+    "apps/electron/src/renderer/components/runtime-map/layout/viewport-policy.ts": "6b8b1f26cca05c97338d09ed5a86e635c17ce1182779e24df227a87fa6a36cc6",
+    "apps/electron/src/renderer/components/runtime-map/measurements.ts": "d240b753a99b57b96bf6e5f24234c345fad79c18f355ae90b62ee8ea3762b839",
+    "apps/electron/src/renderer/components/runtime-map/public-metadata.ts": "ffbea67bd9020ba8345558c3ecb9b664137be88c587fc172a4e47b225a52f5bb",
+    "apps/electron/src/renderer/components/runtime-map/runtime-map.css": "21f41c855aac82867ce8b52ca5b0ebe67e2a987232d5a9b2d879a67fb8dec377",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "d8425972ae3b1a4ea6110373377fee18f15722b0d8a573b9221af77e2d71c37b",
+    "apps/electron/src/renderer/event-processor/runtime-trace-ingress.ts": "d964cc6decca28b2dcf4356f09b09d7426cbeef68c423bb10c1907db4e7a1c77",
+    "apps/electron/src/renderer/hooks/useRuntimeTrace.ts": "4309fd5fbe8e777093e924b6a2a7431e5936e3f69607ceb34eb713cb4e5edf0b",
+    "apps/electron/src/renderer/lib/extra-screens/agent-run.ts": "8d7989f2161ae15c48c1ec0139ec3c755c6aa280a2dfa48f61062f2ee549a2b8",
+    "apps/electron/src/renderer/lib/runtime-catalog-capabilities.ts": "6e729f7b21381c29202498843642b20a1be1fe6a0e926f8de86ed897c2070872",
+    "apps/electron/src/renderer/pages/ChatPage.tsx": "5a48dd3e1cdd8aa172313f279bc8c2cca447372b4306af93970f11a191bec0ff",
+    "apps/electron/src/renderer/pages/IntegrationsCatalogPage.tsx": "3f915263ffa29e5059cd3518cc6e6e9b156e89d650f26dc9ce0badd7bcd29d83",
+    "apps/electron/src/renderer/pages/SkillsCatalogPage.tsx": "ee20b6535c44c1a5a5071533570d1a5802f874d394edd640f2563b685c1bc93a",
+    "apps/electron/src/renderer/pages/extra-screens/radar/radar-store.ts": "88491eacb21292ab6f98cd185c53efa198207db0bd95501a123e0dd1a0d485bb",
+    "apps/electron/src/shared/runtime-map-link.ts": "8ec7215232e69033122077921c1c8f567db1036ee49731f9e4d0f1503dcae1b7",
+    "packages/shared/src/i18n/locales/ar.json": "419d3b900e5c5ed168cab4f4f5750eddfb532ae8abdee5271133798fae770d57",
+    "packages/shared/src/i18n/locales/de.json": "43922562575cc18d445d5b2e0a24b25a074b7f895b2bbe86036379b690054b89",
+    "packages/shared/src/i18n/locales/en.json": "268c3fcb0254d3fb384f3daa474473dc4fb8e2213189a85724b3437fdf23c1b9",
+    "packages/shared/src/i18n/locales/es.json": "89fdf1b69c5a824724f61fff1b62c7311389f0075829ef3fece80678279ea5da",
+    "packages/shared/src/i18n/locales/fr.json": "397cd1ac1546f048a94aa9b2e8ba35ed704b69cdce4c63d2b96144d8081859ab",
+    "packages/shared/src/i18n/locales/hu.json": "16ff0307cbe7f6b1c624c39370f4520021af20ee8a2a169becc2b8164dd71fa1",
+    "packages/shared/src/i18n/locales/ja.json": "c03dc58847324646af3a2b879e0d4281e3072f7928a2ba0780e67c84d4a9aa12",
+    "packages/shared/src/i18n/locales/ko.json": "32116beb62e7f89b806e8b5871b7b471aa02fab871006db205ded4feecce2bcc",
+    "packages/shared/src/i18n/locales/pl.json": "2482598d8ac4366d2ede47280b093e6d1cf1f4cc1156439dee228c5e03d9c161",
+    "packages/shared/src/i18n/locales/ru.json": "7c2b8dd2f986b5e9a51758e86e0c4991901ca12768443551b23bb8270ceb0957",
+    "packages/shared/src/i18n/locales/zh-Hans.json": "20b69a5d2fe96160a6ec903fffefa6327fb140af5f6dd56a6ce919fcce55f4b0",
+    "packages/shared/src/i18n/locales/zh-Hant.json": "dcadaef07368c0a066c94db0cb2f67c85513af7f55ce209c0f9989b5fe07f6ef"
+  },
+  "deleted_paths_against_main": [],
+  "branches_deleted": false,
+  "retained_failures": {
+    "valid_context_before": {
+      "pass": 0,
+      "fail": 1,
+      "behavior": "valid current runtime observation/journal; grouped context canvas absent"
+    },
+    "source_context_controls": {
+      "behavior": "pane intercepted actual context More click; fixed node pointerEvents only"
+    },
+    "initial_full_browser": {
+      "pass": 13,
+      "fail": 6,
+      "causes": [
+        "missing browser installation",
+        "Mac native select/modifier assumptions",
+        "context pointer interception"
+      ]
+    },
+    "repaired_first_browser": {
+      "pass": 12,
+      "fail": 1,
+      "cause": "branded Chrome unpacked extension unsupported"
+    },
+    "fixture_setup_errors": [
+      "CatalogHarness source-manifest file missing",
+      "mandatory explicit observation clockDomain missing"
+    ],
+    "native_parser_initial": "local frozen dependency install lacks Electron; declared logger-only fixture then actual parser/routing34/0",
+    "wrong_webui_path": "apps/web-ui unavailable, rerun actual apps/webui passed"
+  },
+  "boundaries": [
+    "Actual production components and canonical journal with an explicitly synthetic deterministic executor; no live model/provider or installed desktop acceptance.",
+    "True native Chromium tabs.setZoom/getZoom2 with isolated temporary extension/profile; not CSS or DPR emulation.",
+    "Platform fixtures retain actual native select change and Meta multiselect on macOS; native OS popup arrow semantics are not certified.",
+    "MainContentPanel catalogue phase ingress is scope-checked by helper controls and current consumer types; this fixture does not certify all real producer paths.",
+    "The 10k fixture projects a bounded 200-card window; no host latency benchmark or performance release threshold claim.",
+    "Preserves merged immediate history, strict resolveViewRoute, account/workspace ownership, Product Learning and current Zed appearance."
+  ],
+  "evidence_sha256": {
+    "runtime-view-final-units-locales.log.gz": "39bd580d18a91855a4372abfaf5ae7a3aa7d3f1295e125c4c34ce9dfcc6ddf93",
+    "runtime-view-webui-types.log.gz": "70fa7b0be94bac05b40a1f2bc3a669069d8cf2c05a9cb96b7635137c3fb30cfd",
+    "actual-browser-zoom-200.png": "8411e4f29bf9efa4083b32435519c53700b8edfda9eed3fcc78b1dcabb34b191",
+    "runtime-view-final-navigation.log.gz": "7aa5dbbf40b52ca82722688558aacc7e9461747555317e8637e8d0b0bf61fd38",
+    "runtime-view-actual-browser.log.gz": "0d6d6dbc0b743cfcce1c0759bf0d8caaa9c0a4683aecf91209b1f26c47e1edcd",
+    "parser-logger-preload.ts": "ae5a809000297e518f376846a60ff0e23a38a3cdea8902488d653d1c7dc05126",
+    "context-child-dark.png": "2d0bb01a0d3c40d6de838c959155445c0a3bf3f15f6c51cd6c5e573bdb01a392",
+    "runtime-view-final-focused.log.gz": "295f1cdd0f60551c4b2b1e6cbb6d9a4146b5883141cafe00dbc35caf62c0f56f",
+    "runtime-view-final-browser.log.gz": "7a31a6c0a4731ad12ecd8b01c3bbb14dc59ddb58be9f42d4b31d27f754b84a69",
+    "runtime-view-lazy-browser-current.log.gz": "3c62b42ed07e09d73d3aa508ba4b7a4d8725a08231fb372328812afa2f9dcfbe",
+    "runtime-view-lazy-browser.log.gz": "cc3731918637c86d0e76c531876d9ffc3a0e339badd6cba0b5d18c77489631c5",
+    "runtime-view-context-before-canonical.log.gz": "fe83e128ff7f885bea6f7c83f6c26a8e532d05ff842d49adb57fae30d3eadfdf",
+    "runtime-view-deep-link-current.log.gz": "f01dadd2a47995c1bdb8eec11e3f7f0f79c91251a4059bf1836a383ec5aee915",
+    "runtime-view-final-webui-types.log.gz": "d7fc685f670346f4f2dbf7851004732da1b4cc0de4d21f38649b51a3dcd88b32",
+    "browser-results.json": "cc175774666223bc9d8fde6be6c547e2fbe92811d0d5a33112db59f3e5f7ad7e",
+    "runtime-view-test-chromium-install.log.gz": "5e8405adcca6200c89cb1d8c03a26411713df1ab7a2264558203302952bf9d45",
+    "navigation-node-source.json": "1c818bb717503c93dece3d0553f48fc4257611a40938c77f778dad7a80556302",
+    "runtime-view-final-electron-types.log.gz": "e59de34e1a6de36a22b53b65ee96fdd67a113cba0c7590e20a34a09815f6e474",
+    "runtime-view-deep-link-logger-fixture.log.gz": "c1655bee526a6de4b09e351bca7160e8fa481377e5c73c73204ab00302e3ac9a",
+    "runtime-view-context-before-valid-clock.log.gz": "f9328b85edba740eee55fc9f4166b48be577a8cdc0ef6dc9c206fcbf774d4197",
+    "runtime-view-context-before.log.gz": "9cbfd329c3fe2bbdb056bc62b8886a50e05f7b0d786e7423fcfe2474f5bb0f8b",
+    "runtime-view-repaired-browser.log.gz": "0decb7b285f0828e7c4e13ec5d809214292463f2b46c8365b80acfa0b5923f3e"
+  },
+  "post_qualification_main_composition": {
+    "main": "a199e039bbcdfde9d920e31d81e2e00f58d5e478",
+    "all41_qualified_production_blobs_unchanged": true,
+    "docs_conflicts_resolved_by_additive_union": true
+  }
+}
