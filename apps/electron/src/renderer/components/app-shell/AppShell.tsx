@@ -119,11 +119,11 @@ import { getSessionTitle } from "@/utils/session"
 import { useSetAtom } from "jotai"
 import type { Session, Workspace, FileAttachment, PermissionRequest, LoadedSource, LoadedSkill, PermissionMode, SourceFilter, AutomationFilter } from "../../../shared/types"
 import { sessionMetaMapAtom, sendToWorkspaceAtom, type SessionMeta } from "@/atoms/sessions"
-import { collectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
+import { collectionDisplayAtom, loadCollectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
 import { CompactSessionListFilter } from "./CompactSessionListFilter"
-import { collectionFiltersAtom, collectionFilterKeyAtom } from "@/atoms/collection-filters"
+import { collectionFiltersAtom, collectionFilterKeyAtom, loadCollectionFiltersAtom } from "@/atoms/collection-filters"
 import { chipsAfterRailChange, railViewNavigation, skipRailChipClearOnce, userSliceNavigation } from "./collection/collection-rail-filters"
-import { compareSessions, DEFAULT_COLLECTION_FILTERS, filterSessionMeta } from "@craft-agent/shared/sessions/collection"
+import { compareSessions, filterSessionMeta } from "@craft-agent/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
 import { skillsAtom } from "@/atoms/skills"
 import { panelStackAtom, panelCountAtom, focusedPanelIdAtom, focusedSessionIdAtom, focusNextPanelAtom, focusPrevPanelAtom, parseSessionIdFromRoute } from "@/atoms/panel-stack"
@@ -633,6 +633,8 @@ function AppShellContent({
 
   const collectionDisplay = useAtomValue(collectionDisplayAtom)
   const setCollectionDisplay = useSetAtom(setCollectionDisplayAtom)
+  const loadCollectionDisplay = useSetAtom(loadCollectionDisplayAtom)
+  const loadCollectionFilters = useSetAtom(loadCollectionFiltersAtom)
   const collectionFilters = useAtomValue(collectionFiltersAtom)
   const setCollectionFilters = useSetAtom(collectionFiltersAtom)
   const setCollectionFilterKey = useSetAtom(collectionFilterKeyAtom)
@@ -721,31 +723,26 @@ function AppShellContent({
   const [searchActive, setSearchActive] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState('')
 
-  // Grouping mode for chat list: CollectionDisplay.groupBy is live; viewFiltersMap
-  // groupingMode is leftover compact cycle chrome when groupBy is none.
+  // Grouping mode for chat list: CollectionDisplay.groupBy is the single
+  // driver (MOD-COLLECTIONS-01 unification). The legacy per-view
+  // `groupingMode` in localStorage `view-filters` is neither read nor written
+  // anymore; `groupBy === 'none'` means date groups. Group labels are
+  // preserved in session-list/list-grouping (historic key shapes kept).
   const isStateSubView = sessionFilter?.kind === 'state'
 
   const chatGroupingMode: ChatGroupingMode = isStateSubView
     ? 'date'
     : collectionDisplay.groupBy === 'status'
       ? 'status'
-      : collectionDisplay.groupBy === 'none'
-        ? (viewFiltersMap[sessionFilterKey ?? '']?.groupingMode ?? 'date')
+      : collectionDisplay.groupBy === 'project'
+        ? 'project'
         : 'date'
 
   const setChatGroupingMode = useCallback((mode: ChatGroupingMode) => {
-    setViewFiltersMap(prev => {
-      if (!sessionFilterKey) return prev
-      const existing = prev[sessionFilterKey] ?? { statuses: {}, labels: {} }
-      return {
-        ...prev,
-        [sessionFilterKey]: { ...existing, groupingMode: mode }
-      }
-    })
     void setCollectionDisplay({
-      groupBy: mode === 'status' ? 'status' : 'none',
+      groupBy: mode === 'status' ? 'status' : mode === 'project' ? 'project' : 'none',
     })
-  }, [sessionFilterKey, setCollectionDisplay])
+  }, [setCollectionDisplay])
 
   const compactViewFilters = sessionFilterKey ? viewFiltersMap[sessionFilterKey] : undefined
 
@@ -969,7 +966,12 @@ function AppShellContent({
   }, [activeWorkspaceId])
 
   // Reset UI state when workspace changes
-  // This prevents stale search queries, focused items, and filter state from persisting
+  // This prevents stale search queries and focused items from persisting.
+  // CollectionDisplay / CollectionFilters are workspace-persisted
+  // (collection/display.json + collection/filters.json via RPC): reload them
+  // for the new workspace so chips survive restart/switch (FR-11) instead of
+  // resetting to defaults (which would also persist the reset over the saved
+  // filters on the next write).
   const previousWorkspaceRef = React.useRef<string | null>(null)
   React.useEffect(() => {
     if (!activeWorkspaceId) return
@@ -978,7 +980,8 @@ function AppShellContent({
 
     // Clear transient UI state only on workspace SWITCH (not initial mount)
     if (previousWorkspaceId !== null && previousWorkspaceId !== activeWorkspaceId) {
-      setCollectionFilters({ ...DEFAULT_COLLECTION_FILTERS })
+      void loadCollectionDisplay(activeWorkspaceId)
+      void loadCollectionFilters(activeWorkspaceId)
 
       // Clear search state
       setSearchActive(false)
@@ -1002,7 +1005,7 @@ function AppShellContent({
     }
 
     previousWorkspaceRef.current = activeWorkspaceId
-  }, [activeWorkspaceId])
+  }, [activeWorkspaceId, loadCollectionDisplay, loadCollectionFilters])
 
   // Load sources from backend on mount
   React.useEffect(() => {
