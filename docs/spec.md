@@ -1,3 +1,7 @@
+# Golden Gate surface tab recovery — 2026-10-03
+
+Recover Golden Gate title-loader success-only bounded caching, shared pending requests, failed/offline retry on navigation, and actual SurfaceTabs roving keyboard navigation/close focus. Preserve the current route registries, compact top-bar portal, embedded browser exclusion, authenticated Knowledge API and native authority. No source connection or filesystem authority is added.
+
 # Golden Gate meeting request ownership recovery (2026-10-03)
 
 Recover the proven missing request-ownership semantics in the current routed local MeetingsPage: committed workspace generations, latest per-meeting reads, coalesced writes, no stale navigation/errors, and preservation of text edited during submission. Catalogue snapshots retain newer pushed changes. Notes already owns equivalent read/save generations; no unused Notes helper is imported. Source PR584 and adapted-export hashes are in docs/golden-meeting-request-source.json. Microphone/provider/native authorization acceptance remains outside this bounded UI callback proof.
