@@ -1,5 +1,10 @@
 # Unified Rox / Conation / RMA / Golden Gate behavioral specification
 
+## Desktop runtime 0.11.8 delivery — 2026-10-03
+
+The bounded OMP runtime, transcript/branch recovery, ROX context migration, bundled skills and macOS/Windows release work is tracked in [runtime specification](runtime-0.11.8-spec.md) and [parallel plan](runtime-0.11.8-plan.md). This delivery has its own source, native acceptance and release evidence; the broader program below retains its current acceptance state.
+
+
 ## Current target and execution scope — 2026-10-03
 
 Windows10/11, macOS and hosted Web remain simultaneous completion targets. [Current dispatch and unavoidable dependencies](final-readiness/17-parallel-launch-plan.ru.md) preserve every original requirement/DoD and schedule445 executable leaves plus180 parent acceptance rollups. Historical sequential stage notes below do not supersede the user's latest concurrent-work authorization. PR integration and bounded source/fixture/runtime checks do not certify signed installed or production-hosted release behavior.
