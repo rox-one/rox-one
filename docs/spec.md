@@ -418,6 +418,14 @@ The [original spec](integration-history/pr1321/spec.md) remains preserved. Curre
 
 The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 is reconciled with this independent integration. Its original [spec](integration-history/remote-main-3dd1f98b7/spec.md) and release archive preserve all historical scope. Desktop0.11.6, native staging and dedicated GitHub/CircleCI packaging pipelines are retained; their presence does not establish signed installed Windows10/11/macOS or hosted acceptance. The current [445-leaf parallel allocation](final-readiness/parallel-work/launch-plan.json) governs development dispatch.
 
+## Remaining browser and helper control translations (2026-10-03)
+
+Recover useful missing runtime localization from P35 branches 65, 70, 78, 80 and
+103. Browser/VPS buttons, accessibility labels, fallback image text, permission
+tool label, recognition language choices and Knowledge omnibox commands must
+resolve through the existing translation runtime. Preserve caller-provided page,
+plugin and custom labels. New keys must be present and ASCII-sorted in all 12
+current locale catalogs; earlier documentation's 10-locale count is stale.
 
 ## Branch integration request — 2026-10-03
 
