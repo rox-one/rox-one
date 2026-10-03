@@ -215,7 +215,7 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
       },
     })
     base = `http://127.0.0.1:${server.port}`
-    browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE })
+    browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE, args: ['--disable-gpu'] })
   }, 60000)
   beforeEach(async () => { context = await browser.newContext(); page = await context.newPage() }, 15000)
   afterEach(async () => { await context?.close() }, 15000)

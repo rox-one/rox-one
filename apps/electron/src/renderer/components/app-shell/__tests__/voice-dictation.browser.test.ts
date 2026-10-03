@@ -41,7 +41,10 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
     }
     const close = browser?.close()
     if (ownedBrowserPid) {
-      try { process.kill(-ownedBrowserPid, 'SIGKILL') }
+      try {
+        const group = Number(execFileSync('ps', ['-p', String(ownedBrowserPid), '-o', 'pgid='], { encoding: 'utf8' }).trim())
+        process.kill(group === ownedBrowserPid ? -ownedBrowserPid : ownedBrowserPid, 'SIGKILL')
+      }
       catch (error) {
         if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error
         // Bun's Node child-process adapter can omit the detached POSIX group.
@@ -60,8 +63,13 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
           if (!(error && typeof error === 'object' && 'status' in error && error.status === 1)) throw error
         }
       }
-      await Promise.race([owned?.exited, Bun.sleep(5000)])
-      if (owned?.exitCode === null) throw new Error('Owned fixture server could not be reaped')
+      const exited = await Promise.race([
+        owned?.exited.then(code => ({ code })),
+        Bun.sleep(5000).then(() => undefined),
+      ])
+      // Bun leaves exitCode null for a signal exit; the resolved exited promise
+      // is the authoritative reap receipt for this owned killed subprocess.
+      if (owned && !exited) throw new Error('Owned fixture server could not be reaped')
     } finally {
       if (ownedBrowserDirectory) rmSync(ownedBrowserDirectory, { recursive: true, force: true })
     }
