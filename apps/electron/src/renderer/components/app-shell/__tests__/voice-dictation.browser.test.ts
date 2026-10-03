@@ -339,7 +339,7 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
     expect((await calls()).filter(call => call.method === 'getUserMedia')).toEqual([])
     await load('learning=true&refusedStart=true'); await hotkey('ptt-down'); await waitForCall('stopTrack')
     expect((await learning()).signals).toEqual([])
-    expect((await learning()).handoffs.map(item => item.open)).toEqual([true, false])
+    expect((await learning()).handoffs.map((item: { open: boolean }) => item.open)).toEqual([true, false])
     await load('learning=true&noSpeech=true'); await start(); await finish()
     await expectDOM(page.getByRole('button', { name: 'Dictate', exact: true })).toBeEnabled()
     expect((await learning()).signals).toEqual([])
