@@ -90,4 +90,35 @@ describe('UI-001 panel URL transport', () => {
     }
   })
 
+  const sessionRoute = 'allSessions/session/a'
+  const browserRoute = 'browser/instance/b'
+  const mixedWeights = [
+    ['tuple zero', JSON.stringify([[sessionRoute, 0], [browserRoute, 1]])],
+    ['tuple null', JSON.stringify([[sessionRoute, null], [browserRoute, 1]])],
+    ['tuple negative', JSON.stringify([[sessionRoute, -1], [browserRoute, 1]])],
+    ['json missing', 'json:' + JSON.stringify([{ route: sessionRoute }, { route: browserRoute, proportion: 1 }])],
+    ['json zero', 'json:' + JSON.stringify([{ route: sessionRoute, proportion: 0 }, { route: browserRoute, proportion: 1 }])],
+    ['legacy zero', `${sessionRoute}:0,${browserRoute}:1`],
+    ['legacy missing', `${sessionRoute},${browserRoute}:1`],
+  ] as const
+  for (const [name, panels] of mixedWeights) {
+    it(`snapshot repairs ${name} before persistence and retains the usable split after reload`, () => {
+      const search = '?' + new URLSearchParams({ panels, fi: '1' })
+      const snapshot = snapshotFromUrlSearch(search, 'workspace-a', 123)
+      expect(snapshot?.tabs.map(tab => tab.proportion)).toEqual([0.5, 0.5])
+      expect(snapshot?.tabs.map(tab => tab.tab)).toEqual([
+        { kind: 'session', sessionId: 'a' }, { kind: 'browser', tabId: 'b' },
+      ])
+      expect(snapshot?.focusedIndex).toBe(1)
+      expect(snapshot?.workspaceId).toBe('workspace-a')
+      expect(snapshotFromUrlSearch(snapshotToUrlSearch(snapshot!), 'workspace-a', 123)).toEqual(snapshot)
+    })
+  }
+  it('snapshot retains and rescales valid unequal tuple weights', () => {
+    const panels = JSON.stringify([[sessionRoute, 0.2], [browserRoute, 0.6]])
+    const snapshot = snapshotFromUrlSearch('?' + new URLSearchParams({ panels }), 'workspace-a', 123)
+    expect(snapshot?.tabs[0]?.proportion).toBeCloseTo(0.25)
+    expect(snapshot?.tabs[1]?.proportion).toBeCloseTo(0.75)
+  })
+
 })
