@@ -6,13 +6,14 @@ import { useTheme } from '@/hooks/useTheme'
 import type { ThemeOverrides } from '@config/theme'
 import { useSetAtom, useStore, useAtomValue, useAtom } from 'jotai'
 import type { Session, Workspace, SessionEvent, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, SetupNeeds, SessionStatus, NewChatActionParams, ContentBadge, LlmConnectionWithStatus, PermissionModeState } from '../shared/types'
-import type { SessionDraft, DraftAttachmentRef } from '@craft-agent/shared/config'
+import type { SessionDraft, DraftAttachmentRef } from '@rox/shared/config'
 import type { SessionOptions, SessionOptionUpdates } from './hooks/useSessionOptions'
 import { defaultSessionOptions, mergeSessionOptions } from './hooks/useSessionOptions'
 import { generateMessageId } from '../shared/types'
 import { useEventProcessor } from './event-processor'
 import type { AgentEvent, Effect } from './event-processor'
 import { AppShell } from '@/components/app-shell/AppShell'
+import { SessionSharingHost } from '@/components/app-shell/SessionSharingHost'
 import { collectionBulkOperationRegistry } from '@/components/app-shell/collection/collection-bulk-optimistic'
 import { WorkspaceIconRail } from '@/components/app-shell/WorkspaceIconRail'
 import { getTopBarLeftInset, shouldShowWorkspaceIconRail, WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT } from '@/components/app-shell/workspace-rail'
@@ -24,7 +25,7 @@ import { WorkspacePicker } from '@/components/workspace'
 import { ResetConfirmationDialog } from '@/components/ResetConfirmationDialog'
 import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog'
 import { SplashScreen } from '@/components/SplashScreen'
-import { TooltipProvider } from '@craft-agent/ui'
+import { TooltipProvider } from '@rox/ui'
 import { FocusProvider } from '@/context/FocusContext'
 import { ModalProvider } from '@/context/ModalContext'
 import { DismissibleLayerProvider } from '@/context/DismissibleLayerContext'
@@ -44,8 +45,8 @@ import { getSessionsToRefreshAfterStaleReconnect } from './lib/reconnect-recover
 import { formatSessionLoadFailure, shouldTreatSessionLoadFailureAsTransportFallback } from './lib/session-load'
 import { readLocalSessionCapability, loadCallerSessionInventory } from './lib/caller-session-loading'
 import { markSessionsReadyThenReconcile } from '@/lib/splash-sessions-ready'
-import { extractWorkspaceSlugFromPath } from '@craft-agent/shared/utils/workspace-slug'
-import { DEFAULT_THINKING_LEVEL } from '@craft-agent/shared/agent/thinking-levels'
+import { extractWorkspaceSlugFromPath } from '@rox/shared/utils/workspace-slug'
+import { DEFAULT_THINKING_LEVEL } from '@rox/shared/agent/thinking-levels'
 import { initRendererPerf } from './lib/perf'
 import {
   initializeSessionsAtom,
@@ -83,7 +84,7 @@ import {
   CodePreviewOverlay,
   DocumentFormattedMarkdownOverlay,
   JSONPreviewOverlay,
-} from '@craft-agent/ui'
+} from '@rox/ui'
 import { useLinkInterceptor, type FilePreviewState } from '@/hooks/useLinkInterceptor'
 import { queueInternalBrowserUrl } from '@/components/browser/internal-browser-queue'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
@@ -454,12 +455,24 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
   // Ref for sessionOptions to access current value in event handlers without re-registering
   const sessionOptionsRef = useRef(sessionOptions)
+  const permissionModeRequestsRef = useRef(new Map<string, {
+    requestId: number
+    pending: boolean
+    rollbackMode: SessionOptions['permissionMode']
+    rollbackVersion?: number
+  }>())
   // Keep ref in sync with state
   useEffect(() => {
     sessionOptionsRef.current = sessionOptions
   }, [sessionOptions])
 
   const applyPermissionModeState = useCallback((sessionId: string, state: PermissionModeState, source: 'event' | 'reconcile') => {
+    const pending = permissionModeRequestsRef.current.get(sessionId)
+    if (pending && state.modeVersion >= (pending.rollbackVersion ?? -1)) {
+      permissionModeRequestsRef.current.set(sessionId, {
+        ...pending, rollbackMode: state.permissionMode, rollbackVersion: state.modeVersion,
+      })
+    }
     setSessionOptions(prev => {
       const next = new Map(prev)
       const current = next.get(sessionId) ?? defaultSessionOptions
@@ -498,22 +511,24 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     })
   }, [])
 
-  const reconcilePermissionModeState = useCallback(async (sessionId: string) => {
-    if (callerAuthorityRef.current !== 'local') return
+  const reconcilePermissionModeState = useCallback(async (sessionId: string, shouldApply: () => boolean = () => true) => {
+    if (callerAuthorityRef.current !== 'local') return null
     try {
       const result = await readLocalSessionCapability({
         getAuthority: () => callerAuthorityRef.current,
         request: () => window.electronAPI.getSessionPermissionModeState(sessionId),
       })
-      if (result.kind === 'unavailable' || callerAuthorityRef.current !== 'local') return
+      if (result.kind === 'unavailable' || callerAuthorityRef.current !== 'local' || !shouldApply()) return null
       const state = result.value
-      if (!state) return
+      if (!state) return null
       applyPermissionModeState(sessionId, state, 'reconcile')
+      return state
     } catch (error) {
       window.electronAPI.debugLog('[ModeSync] Failed to reconcile permission mode', {
         sessionId,
         error: error instanceof Error ? error.message : String(error),
       })
+      return null
     }
   }, [applyPermissionModeState])
 
@@ -1750,6 +1765,10 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
    * Handles persistence and backend sync for each option type.
    */
   const handleSessionOptionsChange = useCallback((sessionId: string, updates: SessionOptionUpdates) => {
+    const previous = sessionOptionsRef.current.get(sessionId) ?? defaultSessionOptions
+    const optimistic = new Map(sessionOptionsRef.current)
+    optimistic.set(sessionId, mergeSessionOptions(previous, updates))
+    sessionOptionsRef.current = optimistic
     setSessionOptions(prev => {
       const next = new Map(prev)
       const current = next.get(sessionId) ?? defaultSessionOptions
@@ -1759,14 +1778,51 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
     // Handle persistence/backend for specific options
     if (updates.permissionMode !== undefined) {
-      // Sync permission mode change with backend
-      window.electronAPI.sessionCommand(sessionId, { type: 'setPermissionMode', mode: updates.permissionMode })
+      const requestedMode = updates.permissionMode
+      const requestAuthority = callerAuthorityRef.current
+      const previousRequest = permissionModeRequestsRef.current.get(sessionId)
+      const requestId = (previousRequest?.requestId ?? 0) + 1
+      permissionModeRequestsRef.current.set(sessionId, {
+        requestId, pending: true,
+        rollbackMode: previousRequest?.pending ? previousRequest.rollbackMode : previous.permissionMode,
+        rollbackVersion: previousRequest?.pending ? previousRequest.rollbackVersion : previous.permissionModeVersion,
+      })
+      const isCurrent = () => permissionModeRequestsRef.current.get(sessionId)?.requestId === requestId
+        && callerAuthorityRef.current === requestAuthority && sessionOptionsRef.current.has(sessionId)
+      void (async () => {
+        try {
+          await window.electronAPI.sessionCommand(sessionId, { type: 'setPermissionMode', mode: requestedMode })
+          if (isCurrent()) await reconcilePermissionModeState(sessionId, isCurrent)
+        } catch (error) {
+          if (!isCurrent()) return
+          const authoritative = await reconcilePermissionModeState(sessionId, isCurrent)
+          if (!isCurrent()) return
+          const rollback = permissionModeRequestsRef.current.get(sessionId)!
+          if (!authoritative || authoritative.modeVersion < (rollback.rollbackVersion ?? -1)) {
+            // No readback is available. Restore only our pending optimistic mode;
+            // an authoritative event with a newer version must keep its value.
+            setSessionOptions(prev => {
+              const current = prev.get(sessionId) ?? defaultSessionOptions
+              if (current.permissionMode !== requestedMode || (current.permissionModeVersion ?? -1) > (rollback.rollbackVersion ?? -1)) return prev
+              const next = new Map(prev)
+              next.set(sessionId, { ...current, permissionMode: rollback.rollbackMode, permissionModeVersion: rollback.rollbackVersion })
+              return next
+            })
+          }
+          toast.error(t('toast.failedToChangePermissionMode'), {
+            description: error instanceof Error ? error.message : t('toast.unknownError'),
+          })
+        } finally {
+          const current = permissionModeRequestsRef.current.get(sessionId)
+          if (current?.requestId === requestId) permissionModeRequestsRef.current.set(sessionId, { ...current, pending: false })
+        }
+      })()
     }
     if (updates.thinkingLevel !== undefined) {
       // Sync thinking level change with backend (session-level, persisted)
       window.electronAPI.sessionCommand(sessionId, { type: 'setThinkingLevel', level: updates.thinkingLevel })
     }
-  }, [sessionOptions])
+  }, [reconcilePermissionModeState, t])
 
   // Handle input draft changes per session with debounced persistence
   const draftSaveTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
@@ -2267,7 +2323,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     openNewChat,
   ])
 
-  // Platform actions for @craft-agent/ui components (overlays, etc.)
+  // Platform actions for @rox/ui components (overlays, etc.)
   // Memoized to prevent re-renders when these callbacks don't change
   // NOTE: Must be defined before early returns to maintain consistent hook order
   const platformActions = useMemo(() => ({
@@ -2422,6 +2478,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           {/* W3 Omnibox — unified ⌘K palette (S-04). Renderer hotkey + embedded
               SiYuan webContents ⌘K bridge are both implemented. */}
           <OmniboxHost />
+          <SessionSharingHost activeWorkspaceId={windowWorkspaceId} onSwitchWorkspace={handleSelectWorkspace} />
 
           {/* Splash screen overlay - fades out when fully ready */}
           {showSplash && (

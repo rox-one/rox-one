@@ -23,6 +23,8 @@ const OVERLAY_SELECTORS = [
 
   // Dropdown menus
   '[data-slot="dropdown-menu-content"]',
+  // Shared StyledDropdown uses Radix directly and has no data-slot attribute.
+  '[role="menu"][data-state="open"]',
 
   // Context menus (right-click)
   '[data-slot="context-menu-content"]',
@@ -39,7 +41,7 @@ const OVERLAY_SELECTORS = [
   // Inline menus (@mention, /slash, #label autocomplete)
   '[data-inline-menu]',
 
-  // Dialog-mode islands (from @craft-agent/ui Island primitive)
+  // Dialog-mode islands (from @rox/ui Island primitive)
   '[data-ca-island-dialog="true"][data-state="open"]',
 ]
 

@@ -1,0 +1,13 @@
+{
+  "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts": "aee8f356a0856cd5979d9bfd35d528aa50ea7617a3a16dddc2a13b775450cbeb",
+  "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts": "15b3e7e16a1ce49c5e2d58ff8b034a08d89dce69de95e0598244c2e879dd2f93",
+  "apps/electron/src/renderer/atoms/unified-shell.ts": "d085966c69ee1e51c069f63b787bc14efcc965e44090429d3b528c1d965e656a",
+  "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "9e846df3d0a47b9c891fba6b937561c4308a142385e6269254c75b5d5b008f03",
+  "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "ecae73e3633d6fbf0ab8d8b8be4ee260c795edb9ef67b5396e6938cb294b0a95",
+  "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts": "fe9e63116954b723c75e782fb76f14d8a7772ea7f49f63a2c2543e7ccfafc83a",
+  "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.effect-harness.ts": "3502da43b05c44370a2348d82ccc350d6937c01a011989464f74b4955c046f7b",
+  "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts": "22b6594102821308ab435ac468674338f5d7e4ff13909c8fcd851bf648dfac6f",
+  "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.selected-resource.test.ts": "05d2d670a3f4644c28111d072f738bd6cb73464a180690e1a960b3e91b06dd0e",
+  "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts": "d9bbd9ef0569cd9fc18680c3c0100af78a0bac44de0d4e95a2f33037adf01140",
+  "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+}

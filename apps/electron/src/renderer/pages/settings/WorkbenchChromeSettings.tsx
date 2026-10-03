@@ -18,7 +18,7 @@ import {
   featureWorkbenchTabGroupsV2Atom,
   featureWorkbenchTopChromeV2Atom,
 } from '@/atoms/unified-shell'
-import { HARNESS_SKIP_LIST } from '@craft-agent/core/platform'
+import { HARNESS_SKIP_LIST } from '@rox/core/platform'
 import { BUILT_MODE_SCREENS, MODE_SCREEN_FLAG_ATOMS, type ModeScreenId } from '@/atoms/mode-flags'
 import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/components/settings'
 import { ExtraScreensSettings } from './ExtraScreensSettings'

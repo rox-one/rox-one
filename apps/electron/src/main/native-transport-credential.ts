@@ -1,4 +1,4 @@
-import type { CredentialManager } from '@craft-agent/shared/credentials'
+import type { CredentialManager } from '@rox/shared/credentials'
 import type { HandlerDeps } from './handlers/handler-deps'
 
 type Authority = NonNullable<HandlerDeps['nativeData']>['authority']

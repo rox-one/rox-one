@@ -144,17 +144,17 @@ These statements are source observations. See [service reconciliation](11-servic
 | `@img/sharp-linux-arm64` | `0.34.5` | optionalDependencies |
 | `@img/sharp-linux-x64` | `0.34.5` | optionalDependencies |
 
-## [CANDIDATE-DEP] @craft-agent/cli — [apps/cli/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/cli/package.json#L1)
+## [CANDIDATE-DEP] @rox/cli — [apps/cli/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/cli/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/server-core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
+| `@rox/server-core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
 | `@types/bun` | `latest` | devDependencies |
 | `@types/node` | `^22.0.0` | devDependencies |
 | `typescript` | `^5.8.2` | devDependencies |
 
-## [CANDIDATE-DEP] @craft-agent/cloud-gateway — [apps/cloud-gateway/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/cloud-gateway/package.json#L1)
+## [CANDIDATE-DEP] @rox/cloud-gateway — [apps/cloud-gateway/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/cloud-gateway/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
@@ -163,15 +163,15 @@ These statements are source observations. See [service reconciliation](11-servic
 | `typescript` | `^5.9.0` | devDependencies |
 | `wrangler` | `^4.115.0` | devDependencies |
 
-## [CANDIDATE-DEP] @craft-agent/electron — [apps/electron/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/package.json#L1)
+## [CANDIDATE-DEP] @rox/electron — [apps/electron/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/messaging-gateway` | `workspace:*` | dependencies |
-| `@craft-agent/server-core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
-| `@craft-agent/ui` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/messaging-gateway` | `workspace:*` | dependencies |
+| `@rox/server-core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
+| `@rox/ui` | `workspace:*` | dependencies |
 | `@dnd-kit/core` | `^6.3.1` | dependencies |
 | `@dnd-kit/sortable` | `^10.0.0` | dependencies |
 | `@dnd-kit/utilities` | `^3.2.2` | dependencies |
@@ -213,12 +213,12 @@ These statements are source observations. See [service reconciliation](11-servic
 | `ws` | `^8.19.0` | dependencies |
 | `@types/ws` | `^8.18.1` | devDependencies |
 
-## [CANDIDATE-DEP] @craft-agent/viewer — [apps/viewer/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/viewer/package.json#L1)
+## [CANDIDATE-DEP] @rox/viewer — [apps/viewer/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/viewer/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/ui` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/ui` | `workspace:*` | dependencies |
 | `react` | `^18.3.1` | dependencies |
 | `react-dom` | `^18.3.1` | dependencies |
 | `react-i18next` | `^17.0.2` | dependencies |
@@ -238,13 +238,13 @@ These statements are source observations. See [service reconciliation](11-servic
 | `typescript` | `^5.7.3` | devDependencies |
 | `vite` | `^6.2.5` | devDependencies |
 
-## [CANDIDATE-DEP] @craft-agent/webui — [apps/webui/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/webui/package.json#L1)
+## [CANDIDATE-DEP] @rox/webui — [apps/webui/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/webui/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
-| `@craft-agent/ui` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
+| `@rox/ui` | `workspace:*` | dependencies |
 | `i18next` | `^26.0.3` | dependencies |
 | `i18next-browser-languagedetector` | `^8.2.1` | dependencies |
 | `jotai` | `^2.16.0` | dependencies |
@@ -253,22 +253,22 @@ These statements are source observations. See [service reconciliation](11-servic
 | `react-i18next` | `^17.0.2` | dependencies |
 | `sonner` | `^2.0.7` | dependencies |
 
-## [CANDIDATE-DEP] @craft-agent/workspace-service — [apps/workspace-service/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/workspace-service/package.json#L1)
+## [CANDIDATE-DEP] @rox/workspace-service — [apps/workspace-service/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/workspace-service/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/server-core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
+| `@rox/server-core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
 | `jose` | `^6.0.0` | dependencies |
 | `ws` | `^8.19.0` | dependencies |
 
-## [CANDIDATE-DEP] @craft-agent/cloud-runner — [packages/cloud-runner/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/cloud-runner/package.json#L1)
+## [CANDIDATE-DEP] @rox/cloud-runner — [packages/cloud-runner/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/cloud-runner/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
 | None declared | — | Source/contracts package |
 
-## [CANDIDATE-DEP] @craft-agent/core — [packages/core/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/core/package.json#L1)
+## [CANDIDATE-DEP] @rox/core — [packages/core/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/core/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
@@ -277,7 +277,7 @@ These statements are source observations. See [service reconciliation](11-servic
 | `@anthropic-ai/claude-agent-sdk` | `0.3.258` | peerDependencies |
 | `@modelcontextprotocol/sdk` | `>=1.29.0` | peerDependencies |
 
-## [CANDIDATE-DEP] @craft-agent/messaging-discord-worker — [packages/messaging-discord-worker/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/messaging-discord-worker/package.json#L1)
+## [CANDIDATE-DEP] @rox/messaging-discord-worker — [packages/messaging-discord-worker/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/messaging-discord-worker/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
@@ -285,22 +285,22 @@ These statements are source observations. See [service reconciliation](11-servic
 | `@types/node` | `^22.0.0` | devDependencies |
 | `typescript` | `^5.8.2` | devDependencies |
 
-## [CANDIDATE-DEP] @craft-agent/messaging-gateway — [packages/messaging-gateway/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/messaging-gateway/package.json#L1)
+## [CANDIDATE-DEP] @rox/messaging-gateway — [packages/messaging-gateway/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/messaging-gateway/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/messaging-discord-worker` | `workspace:*` | dependencies |
-| `@craft-agent/messaging-whatsapp-worker` | `workspace:*` | dependencies |
-| `@craft-agent/server-core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/messaging-discord-worker` | `workspace:*` | dependencies |
+| `@rox/messaging-whatsapp-worker` | `workspace:*` | dependencies |
+| `@rox/server-core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
 | `@larksuiteoapi/node-sdk` | `^1.62.1` | dependencies |
 | `grammy` | `^1.35.0` | dependencies |
 | `qrcode-terminal` | `0.12.0` | dependencies |
 | `@types/node` | `^22.0.0` | devDependencies |
 | `typescript` | `^5.8.2` | devDependencies |
 
-## [CANDIDATE-DEP] @craft-agent/messaging-whatsapp-worker — [packages/messaging-whatsapp-worker/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/messaging-whatsapp-worker/package.json#L1)
+## [CANDIDATE-DEP] @rox/messaging-whatsapp-worker — [packages/messaging-whatsapp-worker/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/messaging-whatsapp-worker/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
@@ -308,12 +308,12 @@ These statements are source observations. See [service reconciliation](11-servic
 | `@types/node` | `^22.0.0` | devDependencies |
 | `typescript` | `^5.8.2` | devDependencies |
 
-## [CANDIDATE-DEP] @craft-agent/pi-agent-server — [packages/pi-agent-server/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/pi-agent-server/package.json#L1)
+## [CANDIDATE-DEP] @rox/pi-agent-server — [packages/pi-agent-server/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/pi-agent-server/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/session-tools-core` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/session-tools-core` | `workspace:*` | dependencies |
 | `@earendil-works/pi-agent-core` | `0.85.1` | dependencies |
 | `@earendil-works/pi-ai` | `0.85.1` | dependencies |
 | `@earendil-works/pi-coding-agent` | `0.85.1` | dependencies |
@@ -323,14 +323,14 @@ These statements are source observations. See [service reconciliation](11-servic
 | `turndown` | `^7.2.0` | dependencies |
 | `@types/node` | `^22.0.0` | devDependencies |
 
-## [CANDIDATE-DEP] @craft-agent/server-core — [packages/server-core/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/server-core/package.json#L1)
+## [CANDIDATE-DEP] @rox/server-core — [packages/server-core/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/server-core/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/cloud-runner` | `workspace:*` | dependencies |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/session-tools-core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
+| `@rox/cloud-runner` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/session-tools-core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
 | `@earendil-works/pi-ai` | `0.85.1` | dependencies |
 | `@tursodatabase/database` | `0.7.2` | dependencies |
 | `@xenova/transformers` | `2.17.2` | dependencies |
@@ -341,45 +341,45 @@ These statements are source observations. See [service reconciliation](11-servic
 | `ws` | `^8.19.0` | dependencies |
 | `typescript` | `^5.8.2` | devDependencies |
 
-## [CANDIDATE-DEP] @craft-agent/server — [packages/server/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/server/package.json#L1)
+## [CANDIDATE-DEP] @rox/server — [packages/server/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/server/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/messaging-gateway` | `workspace:*` | dependencies |
-| `@craft-agent/server-core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/messaging-gateway` | `workspace:*` | dependencies |
+| `@rox/server-core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
 | `@types/node` | `^22.0.0` | devDependencies |
 | `typescript` | `^5.8.2` | devDependencies |
 | `ws` | `^8.16.0` | devDependencies |
 
-## [CANDIDATE-DEP] @craft-agent/session-mcp-server — [packages/session-mcp-server/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/session-mcp-server/package.json#L1)
+## [CANDIDATE-DEP] @rox/session-mcp-server — [packages/session-mcp-server/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/session-mcp-server/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/session-tools-core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
+| `@rox/session-tools-core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
 | `@modelcontextprotocol/sdk` | `^1.29.0` | dependencies |
 | `zod` | `^4.0.0` | dependencies |
 | `@types/node` | `^22.0.0` | devDependencies |
 
-## [CANDIDATE-DEP] @craft-agent/session-tools-core — [packages/session-tools-core/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/session-tools-core/package.json#L1)
+## [CANDIDATE-DEP] @rox/session-tools-core — [packages/session-tools-core/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/session-tools-core/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
 | `beautiful-mermaid` | `*` | dependencies |
 | `gray-matter` | `^4.0.3` | dependencies |
 | `zod` | `^3.23.0` | dependencies |
 | `zod-to-json-schema` | `^3.25.0` | dependencies |
 | `typescript` | `^5.8.2` | devDependencies |
 
-## [CANDIDATE-DEP] @craft-agent/shared — [packages/shared/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/shared/package.json#L1)
+## [CANDIDATE-DEP] @rox/shared — [packages/shared/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/shared/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/session-tools-core` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/session-tools-core` | `workspace:*` | dependencies |
 | `@earendil-works/pi-agent-core` | `0.85.1` | dependencies |
 | `@earendil-works/pi-ai` | `0.85.1` | dependencies |
 | `@earendil-works/pi-coding-agent` | `0.85.1` | dependencies |
@@ -400,12 +400,12 @@ These statements are source observations. See [service reconciliation](11-servic
 | `@modelcontextprotocol/sdk` | `>=1.29.0` | peerDependencies |
 | `zod` | `>=4.0.0` | peerDependencies |
 
-## [CANDIDATE-DEP] @craft-agent/ui — [packages/ui/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/ui/package.json#L1)
+## [CANDIDATE-DEP] @rox/ui — [packages/ui/package.json](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/ui/package.json#L1)
 
 | Dependency | Constraint | Role |
 | --- | --- | --- |
-| `@craft-agent/core` | `workspace:*` | dependencies |
-| `@craft-agent/shared` | `workspace:*` | dependencies |
+| `@rox/core` | `workspace:*` | dependencies |
+| `@rox/shared` | `workspace:*` | dependencies |
 | `@paper-design/shaders-react` | `^0.0.69` | dependencies |
 | `@types/mdast` | `^4.0.0` | dependencies |
 | `@uiw/react-json-view` | `^2.0.0-alpha.40` | dependencies |

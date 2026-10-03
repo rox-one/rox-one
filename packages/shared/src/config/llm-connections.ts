@@ -20,7 +20,7 @@ import type { CredentialManager } from '../credentials/manager.ts';
 import {
   ROX_DEFAULT_PARENT_MODEL,
   ROX_DEFAULT_SUBAGENT_MODEL,
-  toRoxPublicModelDefinitions,
+  toRoxSelectableModelDefinitions,
 } from './rox-public-models.ts';
 
 // ============================================================
@@ -623,6 +623,8 @@ export function getModelsForProviderType(providerType: LlmProviderType, piAuthPr
     return _piModelResolver(piAuthProvider);
   }
 
+  if (providerType === 'omp') return toRoxSelectableModelDefinitions();
+
   // Anthropic uses Claude models with bare Anthropic IDs.
   return ANTHROPIC_MODELS;
 }
@@ -708,15 +710,15 @@ export function getDefaultModelsForConnection(providerType: LlmProviderType, piA
     return models;
   }
   if (isCompatProvider(providerType)) return [];  // Dynamic — user specifies
-  if (providerType === 'omp') return toRoxPublicModelDefinitions();
+  if (providerType === 'omp') return toRoxSelectableModelDefinitions();
   // anthropic
   return ANTHROPIC_MODELS;
 }
 
 /**
  * Get the default model ID for a connection's provider type.
- * Derived from the first entry in getDefaultModelsForConnection() — except
- * OMP, which defaults to `rox/standard` even though explore is listed first.
+ * Derived from the first entry in getDefaultModelsForConnection().
+ * The built-in Rox connection defaults to `rox/r1-max`.
  *
  * @param providerType - Provider type from the connection
  * @param piAuthProvider - Optional Pi auth provider for filtering Pi models

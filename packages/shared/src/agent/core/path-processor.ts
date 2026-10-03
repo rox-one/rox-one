@@ -1,3 +1,4 @@
+import { resolveConfigDir } from '../../config/env.ts';
 /**
  * PathProcessor - Path Expansion and Normalization
  *
@@ -30,11 +31,11 @@ export { expandPath, normalizePath, pathStartsWith, toPortablePath };
  * These files have specific formats (JSON, TOML, YAML) that can break apps if malformed.
  */
 const CONFIG_FILE_PATTERNS = [
-  // Craft Agent configs
-  /\.craft-agent\/.*\/(config|permissions|theme|guide|labels|statuses)\.json$/,
-  /\.craft-agent\/config\.json$/,
-  /\.craft-agent\/preferences\.json$/,
-  /\.craft-agent\/.*\/SKILL\.md$/,
+  // ROX configs (legacy paths accepted for compatibility)
+  /\.(?:rox|craft-agents?)\/.*\/(config|permissions|theme|guide|labels|statuses)\.json$/,
+  /\.(?:rox|craft-agents?)\/config\.json$/,
+  /\.(?:rox|craft-agents?)\/preferences\.json$/,
+  /\.(?:rox|craft-agents?)\/.*\/SKILL\.md$/,
   // Common config files
   /package\.json$/,
   /tsconfig\.json$/,
@@ -155,7 +156,12 @@ export class PathProcessor {
    */
   isConfigFile(filePath: string): boolean {
     const normalized = this.normalizeForComparison(this.expandPath(filePath));
-    return CONFIG_FILE_PATTERNS.some((pattern) => pattern.test(normalized));
+    const root = resolveConfigDir().replace(/\\/g, '/').replace(/\/$/, '');
+    const comparableRoot = process.platform === 'win32' ? root.toLowerCase() : root;
+    const configuredPath = normalized.startsWith(comparableRoot + '/')
+      ? '/.rox/' + normalized.slice(comparableRoot.length + 1)
+      : normalized;
+    return CONFIG_FILE_PATTERNS.some((pattern) => pattern.test(configuredPath));
   }
 
   /**

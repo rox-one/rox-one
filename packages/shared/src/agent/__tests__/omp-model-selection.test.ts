@@ -17,7 +17,7 @@ function setup(scenario: string, model = 'rox/standard') {
 }
 
 async function waitForRpcFrame(fake: FakeOmp, predicate: (frame: Record<string, unknown>) => boolean) {
-  const deadline = Date.now() + 2_000;
+  const deadline = Date.now() + Math.max(2_000, Number(process.env.ROX_OMP_TEST_TIMEOUT_MS) || 0);
   while (Date.now() < deadline) {
     const frame = fake.readRpcLog().find(predicate);
     if (frame) return frame;
@@ -134,6 +134,7 @@ describe('OMP requested model before provider execution', () => {
     const parentDir = join(parentSessionPath, 'omp');
     mkdirSync(parentDir, { recursive: true });
     writeFileSync(join(parentDir, '2026-09-30_parent.jsonl'), [
+      { type:'session', version:3, id:'parent-omp', cwd:fake.workspaceRoot },
       { type: 'message', id: 'user1', message: { role: 'user' } },
       { type: 'message', id: 'assistant1', message: { role: 'assistant' } },
       { type: 'message', id: 'user2', message: { role: 'user' } },
@@ -145,7 +146,7 @@ describe('OMP requested model before provider execution', () => {
     await chatEvents(agent, 'branch turn', 8_000);
     const frames = fake.readRpcLog();
     expect(frames.findIndex((frame) => frame.type === 'set_model'))
-      .toBeGreaterThan(frames.findIndex((frame) => frame.type === 'branch'));
+      .toBeGreaterThan(frames.findIndex((frame) => frame.type === 'fork'));
     expect(frames.find((frame) => frame.type === 'prompt')?.observedModel)
       .toEqual({ provider: 'rox', id: 'standard' });
   });

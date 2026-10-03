@@ -1,17 +1,17 @@
 /**
  * Page Types (shared layer)
  *
- * The domain/protocol types live in @craft-agent/core (renderer-safe); this
+ * The domain/protocol types live in @rox/core (renderer-safe); this
  * module re-exports them and adds the storage-layer shapes that carry
  * absolute paths or creation inputs.
  *
- * File structure: see the docblock in @craft-agent/core types/page.ts.
+ * File structure: see the docblock in @rox/core types/page.ts.
  */
 
-import type { PageActionGrant, PageConfig, PageKind, PageRefreshSpec } from '@craft-agent/core';
+import type { PageActionGrant, PageConfig, PageKind, PageRefreshSpec } from '@rox/core';
 
 // Re-export the core page types so consumers can import everything from
-// '@craft-agent/shared/pages' (mirrors how sources/projects expose types).
+// '@rox/shared/pages' (mirrors how sources/projects expose types).
 export type {
   PageKind,
   PageScriptRuntime,
@@ -29,7 +29,7 @@ export type {
   PageShareInfo,
   PageThumbnailInfo,
   PageConfig,
-} from '@craft-agent/core';
+} from '@rox/core';
 
 /**
  * Whether a grant is currently usable: bound to the given content digest and

@@ -1,5 +1,5 @@
-import { loadSession as defaultLoadStoredSession, updateSessionMetadata as defaultUpdateSessionMetadata } from '@craft-agent/shared/sessions'
-import type { SessionEvent, ShareResult } from '@craft-agent/shared/protocol'
+import { loadSession as defaultLoadStoredSession, updateSessionMetadata as defaultUpdateSessionMetadata } from '@rox/shared/sessions'
+import type { SessionEvent, ShareResult } from '@rox/shared/protocol'
 
 export interface ShareLogger {
   info(...args: unknown[]): void
@@ -109,7 +109,7 @@ export async function mapShareApiError(
 }
 
 async function defaultViewerUrl(): Promise<string> {
-  const { VIEWER_URL } = await import('@craft-agent/shared/branding')
+  const { VIEWER_URL } = await import('@rox/shared/branding')
   return VIEWER_URL
 }
 

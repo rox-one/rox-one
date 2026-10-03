@@ -8,7 +8,7 @@ import { NativeAuthority, type NativeIssuedCredential } from '../../../authority
 import { NativeJournal } from '../../../authority/native-journal.ts'
 import { CollaborationSyncService } from '../../../collaboration/sync-service.ts'
 import { WsRpcServer } from '../../../transport/server.ts'
-import { PROTOCOL_VERSION, RPC_CHANNELS, type MessageEnvelope } from '@craft-agent/shared/protocol'
+import { PROTOCOL_VERSION, RPC_CHANNELS, type MessageEnvelope } from '@rox/shared/protocol'
 import { deserializeEnvelope } from '../../../transport/codec.ts'
 import { registerNativeDataHandlers } from '../native-data.ts'
 import { registerNotesHandlers } from '../notes.ts'

@@ -46,7 +46,7 @@ describe('ship-rox-chrome-leftover-post-960', () => {
     expect(collapsed).not.toContain('mt-1 mb-1')
   })
 
-  it('uses rounded pane spacing without duplicate bottom dock margins', () => {
+  it('preserves rounded shell gaps without extra terminal dock margins', () => {
     const constants = readFileSync(join(appShell, 'panel-constants.ts'), 'utf8')
     expect(constants).toContain('PANEL_STACK_TOP_INSET = 4')
     expect(constants).toContain('PANEL_STACK_BOTTOM_INSET = 0')

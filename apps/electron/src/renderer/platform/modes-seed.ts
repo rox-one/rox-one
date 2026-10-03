@@ -6,7 +6,7 @@
  * nulls their rootRoute while the flag is off — that is the capability gate
  * behind `requiredCapabilities`.
  */
-import type { ModeContribution } from '@craft-agent/core/platform'
+import type { ModeContribution } from '@rox/core/platform'
 import { routes } from '../../shared/routes'
 import {
   isHomeNavigation,
@@ -140,7 +140,7 @@ export function resolveSeededModes(
   })
 }
 
-/** ⌥⌘1…7 → the n-th mode of the pill (order-sorted), or null. */
+/** ⌘/Ctrl 1…7 → the n-th mode of the pill (order-sorted), or null. */
 export function modeForSlot(modes: readonly ModeContribution[], slot: number): ModeContribution | null {
   const sorted = [...modes].sort((a, b) => a.order - b.order)
   return sorted[slot - 1] ?? null

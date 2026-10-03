@@ -13,9 +13,9 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, mock } from 'bun
 import { mkdtempSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { CredentialId } from '@craft-agent/shared/credentials'
-import type { HandlerFn, RequestContext, RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { CredentialId } from '@rox/shared/credentials'
+import type { HandlerFn, RequestContext, RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
 import type {
   ApplyResult,
@@ -24,8 +24,8 @@ import type {
   PublishApplyResult,
   PublishDraft,
   PublishPrepareResult,
-} from '@craft-agent/core/knowledge'
-import { InMemoryKnowledgeProvider } from '@craft-agent/core/knowledge'
+} from '@rox/core/knowledge'
+import { InMemoryKnowledgeProvider } from '@rox/core/knowledge'
 import { KnowledgeConnectionsStore, KnowledgeMutationProposalsStore } from '../../../knowledge'
 import type { KnowledgeProposalFileRecord } from '../../../knowledge/bridge-service'
 import type { SaveConnectionInput } from '../../../knowledge'
@@ -34,7 +34,7 @@ import { HANDLED_CHANNELS, registerKnowledgeHandlers, __setKnowledgeTestConstruc
 const credentials = new Map<string, { value: string }>()
 let workspaceRoot: string
 
-mock.module('@craft-agent/shared/credentials', () => ({
+mock.module('@rox/shared/credentials', () => ({
   getCredentialManager: () => ({
     async get(id: CredentialId) {
       return credentials.get(`${id.type}::${id.workspaceId}::${id.sourceId}`) ?? null
@@ -46,7 +46,7 @@ mock.module('@craft-agent/shared/credentials', () => ({
   }),
 }))
 
-mock.module('@craft-agent/shared/config', () => ({
+mock.module('@rox/shared/config', () => ({
   getWorkspaceByNameOrId: (id: string) =>
     id === 'ws1' ? { id: 'ws1', name: 'ws1', rootPath: workspaceRoot } : null,
   getWorkspaces: () =>

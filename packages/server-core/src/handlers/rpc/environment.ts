@@ -2,22 +2,22 @@
  * Environment questionnaire RPC — local prefs for onboarding and Settings.
  */
 
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   loadEnvironmentPrefs,
   pendingQuestionIds,
   saveEnvironmentPrefs,
   type EnvironmentPrefs,
-} from '@craft-agent/shared/environment'
-import type { RpcServer } from '@craft-agent/server-core/transport'
-import { pushTyped } from '@craft-agent/server-core/transport'
+} from '@rox/shared/environment'
+import type { RpcServer } from '@rox/server-core/transport'
+import { pushTyped } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   isClaimableLive,
   rpcEnvironmentActResult,
   rpcEnvironmentListResult,
   rpcEnvironmentReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.environment.GET,

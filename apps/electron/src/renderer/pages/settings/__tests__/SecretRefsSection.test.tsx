@@ -56,7 +56,7 @@ describe('RuntimeSettingsPage mounts SecretRefsSection', () => {
     expect(section).not.toContain("<select")
     expect(section).toContain('PremiumMenuSelect')
     expect(section).toContain('INFISICAL_UNAVAILABLE')
-    expect(section).not.toContain("@craft-agent/shared/agent")
+    expect(section).not.toContain("@rox/shared/agent")
     expect(page).toContain('getToolchainDisabled?.()')
     expect(page).toContain('getDefaultThinkingLevel?.()')
     expect(page).toContain('getEnvOverrides?.()')

@@ -1,7 +1,7 @@
 {
   "dependencies": {
-    "@craft-agent/core": "workspace:*",
-    "@craft-agent/session-tools-core": "workspace:*",
+    "@rox/core": "workspace:*",
+    "@rox/session-tools-core": "workspace:*",
     "@earendil-works/pi-agent-core": "0.85.1",
     "@earendil-works/pi-ai": "0.85.1",
     "@earendil-works/pi-coding-agent": "0.85.1",
@@ -47,11 +47,17 @@
     "./branding": "./src/branding.ts",
     "./browser": "./src/browser/index.ts",
     "./browser/profile-import": "./src/browser/profile-import.ts",
+    "./browser/browser-credential-host": "./src/browser/browser-credential-host.ts",
+    "./browser/profile-native-credentials": "./src/browser/profile-native-credentials.ts",
+    "./browser/profile-native-data": "./src/browser/profile-native-data.ts",
     "./browser/retained-pane": "./src/browser/retained-pane.ts",
     "./collaboration": "./src/collaboration/index.ts",
+    "./collaboration/durable-store": "./src/collaboration/durable-store.ts",
+    "./collaboration/session-publication": "./src/collaboration/session-publication.ts",
     "./colors": "./src/colors/index.ts",
     "./config": "./src/config/index.ts",
     "./config/paths": "./src/config/paths.ts",
+    "./config/rox-public-models": "./src/config/rox-public-models.ts",
     "./config/types": "./src/config/types.ts",
     "./connections": "./src/connections/index.ts",
     "./context-docs": "./src/context-docs/index.ts",
@@ -122,6 +128,7 @@
     "./toolchain/types": "./src/toolchain/types.ts",
     "./tools": "./src/tools/index.ts",
     "./utils": "./src/utils/index.ts",
+    "./utils/files": "./src/utils/files.ts",
     "./utils/icon": "./src/utils/icon.ts",
     "./utils/icon-constants": "./src/utils/icon-constants.ts",
     "./utils/logo": "./src/utils/logo.ts",
@@ -149,7 +156,7 @@
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",
-  "name": "@craft-agent/shared",
+  "name": "@rox/shared",
   "peerDependencies": {
     "@anthropic-ai/claude-agent-sdk": "0.3.258",
     "@modelcontextprotocol/sdk": ">=1.29.0",
@@ -162,5 +169,5 @@
   },
   "type": "module",
   "types": "src/index.ts",
-  "version": "0.11.7"
+  "version": "0.11.8"
 }

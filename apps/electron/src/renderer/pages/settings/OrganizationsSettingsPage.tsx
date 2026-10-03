@@ -13,7 +13,7 @@ import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { routes } from '@/lib/navigate'
-import { Spinner } from '@craft-agent/ui'
+import { Spinner } from '@rox/ui'
 import { toast } from 'sonner'
 import {
   SettingsSection,
@@ -28,11 +28,11 @@ import type {
   OrgInvitePublic,
   OrgMember,
   OrgRole,
-} from '@craft-agent/shared/orgs'
+} from '@rox/shared/orgs'
 import type { Workspace } from '../../../shared/types'
 import { getTeamSpacesForOrganization } from './organization-team-spaces'
 import { formatOrgMemberIdentity } from './organization-member-identity'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
 import { TeamOrgSettingsSection } from '@/components/team/TeamOrgSettingsSection'
 

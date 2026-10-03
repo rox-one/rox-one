@@ -1,0 +1,74 @@
+{
+  "author": "ROX",
+  "modifiedAt": "2026-10-03",
+  "upstream": "https://github.com/garrytan/gstack",
+  "upstreamCommit": "f30b7b788a210d217ea3125bf3001b29cbc2a463",
+  "upstreamLicense": "MIT",
+  "note": "Upstream license/copyright notices retained. Local modifications are identified by portable paths and SHA256; local validation is separate from remote scanner closure.",
+  "securityPatches": [
+    {
+      "pack": "gstack",
+      "path": "gstack/make-pdf/src/diagram-prepass.ts",
+      "alerts": [
+        808
+      ],
+      "change": "Local images read through one nonblocking no-follow descriptor with size-bounded buffer; diagram SVG reconstructed via separate conservative parser allowlist.",
+      "sha256": "b07baddacfe445a25df366315c90389f67a5f90a2f7aab404e5635c94d7a5463"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/make-pdf/src/htmlparser2.d.ts",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "9ff5c564e35552e747e20a7634c90000d14e543562949c8a3295748bc9dc835a"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/make-pdf/src/orchestrator.ts",
+      "alerts": [
+        902,
+        707,
+        706,
+        705,
+        608
+      ],
+      "change": "Default output directory is mkdtemp private; explicit HTML/DOCX outputs use opened no-follow descriptors with ownership/type checks and fchmod0600 before mutation.",
+      "sha256": "b58b9a5f4f05a3cb9d11d9cf4bdc079c362c0e7514b4bc4e1a699b59a4f8395f"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/make-pdf/src/render.ts",
+      "alerts": [
+        585,
+        584,
+        583,
+        582,
+        581,
+        580,
+        579,
+        578,
+        568,
+        567
+      ],
+      "change": "stripNonRendering/stripTags are text/heading/preamble classifiers, not sanitizer. Their displayed metadata is escaped; the actual HTML boundary now uses sanitizeParsedHtml.; Regex blacklist replaced by parser-based reconstructed HTML allowlist; malformed tags, foreign SVG/MathML, handlers, unsafe URLs dropped; post-sanitizer quote decoding removed. Both copies regression tested.",
+      "sha256": "48fa42fefe5729352c6c5fbff055c7044c15f0432f48e846a9e39035d566daa9"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/make-pdf/src/safe-html.ts",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "b43a522bd3c8deba90b2013e213353a50914a49c6d4bbc06108c198d73d0e275"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/make-pdf/src/setup.ts",
+      "alerts": [
+        708
+      ],
+      "change": "Smoke fixture uses exclusive wx0600 in private random output directory.",
+      "sha256": "e3b503868ab5e7b8b257ae40b4ab86b0ec8a83f864dce5630db60ede44d7fdb8"
+    }
+  ],
+  "removedFiles": []
+}

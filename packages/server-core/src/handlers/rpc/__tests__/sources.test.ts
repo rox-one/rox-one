@@ -20,20 +20,20 @@ import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { CredentialId } from '@craft-agent/shared/credentials'
-import { loadSourceConfig, saveSourceConfig, type FolderSourceConfig } from '@craft-agent/shared/sources'
-import { createWorkspaceAtPath, loadWorkspaceConfig, saveWorkspaceConfig } from '@craft-agent/shared/workspaces'
-import type { HandlerFn, RequestContext, RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { CredentialId } from '@rox/shared/credentials'
+import { loadSourceConfig, saveSourceConfig, type FolderSourceConfig } from '@rox/shared/sources'
+import { createWorkspaceAtPath, loadWorkspaceConfig, saveWorkspaceConfig } from '@rox/shared/workspaces'
+import type { HandlerFn, RequestContext, RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
 import { KnowledgeConnectionsStore } from '../../../knowledge'
 import { registerSourcesHandlers } from '../sources'
-import { resolveConfigDir } from '@craft-agent/shared/config/paths'
+import { resolveConfigDir } from '@rox/shared/config/paths'
 
 // Credential id string ↔ in-memory store key (`type::workspaceId::sourceId`).
 const credentials = new Map<string, { value: string }>()
 
-mock.module('@craft-agent/shared/credentials', () => ({
+mock.module('@rox/shared/credentials', () => ({
   getCredentialManager: () => ({
     async get(id: CredentialId) {
       return credentials.get(`${id.type}::${id.workspaceId}::${id.sourceId}`) ?? null
@@ -52,7 +52,7 @@ const mockWorkspaces = [
   { id: 'ws-active', name: 'ws-active', rootPath: '' },
 ]
 
-mock.module('@craft-agent/shared/config', () => ({
+mock.module('@rox/shared/config', () => ({
   getWorkspaceByNameOrId: (nameOrId: string) =>
     mockWorkspaces.find((w) => w.id === nameOrId || w.name === nameOrId) ?? null,
   getWorkspaces: () => [...mockWorkspaces],

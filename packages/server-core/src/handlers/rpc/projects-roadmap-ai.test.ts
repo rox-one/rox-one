@@ -3,8 +3,8 @@ import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import ts from 'typescript'
-import * as shared from '@craft-agent/shared/projects'
-import { CodedError } from '@craft-agent/shared/protocol'
+import * as shared from '@rox/shared/projects'
+import { CodedError } from '@rox/shared/protocol'
 import { NativeAuthority, type NativeIssuedCredential } from '../../authority/native-authority'
 import type { RequestContext } from '../../transport/types'
 
@@ -29,7 +29,7 @@ function actualAi(environment: Record<string, unknown>): (ctx: RequestContext, w
   const compiled = ts.transpileModule(`${workspaceGate.getText(source)}\nconst actual = ${callback.getText(source)};`, {
     compilerOptions: { target: ts.ScriptTarget.ESNext },
   }).outputText
-  const importExpression = /import\(['"]@craft-agent\/shared\/projects['"]\)/g
+  const importExpression = /import\(['"]@rox\/shared\/projects['"]\)/g
   if ([...compiled.matchAll(importExpression)].length !== 1) throw new Error('Expected exactly one shared-projects import seam')
   const code = compiled.replace(importExpression, 'loadShared()')
   return new Function(...Object.keys(environment), `${code}; return actual;`)(...Object.values(environment))

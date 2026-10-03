@@ -16,9 +16,9 @@ import {
   hashKnowledgeContent,
   type KnowledgeNode,
   type KnowledgeRef,
-} from '@craft-agent/core/knowledge'
-import { evaluateConditions } from '@craft-agent/shared/automations'
-import type { AutomationCondition, KnowledgeAutomationAction } from '@craft-agent/shared/automations'
+} from '@rox/core/knowledge'
+import { evaluateConditions } from '@rox/shared/automations'
+import type { AutomationCondition, KnowledgeAutomationAction } from '@rox/shared/automations'
 import { AutomationLoopGuard } from '../automation-loop-guard'
 import {
   KnowledgeChangeWatcher,

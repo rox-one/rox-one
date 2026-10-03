@@ -1,4 +1,4 @@
-import type { AnnotationAuthor, AnnotationV1 } from '@craft-agent/core'
+import type { AnnotationAuthor, AnnotationV1 } from '@rox/core'
 
 export const DEFAULT_REACTION_EMOJI = '❤️'
 export const DISLIKE_REACTION_EMOJI = '👎'

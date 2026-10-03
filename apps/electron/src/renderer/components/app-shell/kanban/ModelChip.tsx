@@ -1,5 +1,5 @@
 import { getModelDisplayName, getModelShortName, getModelProvider } from '@config/models'
-import { collectionHarnessProvider } from '@craft-agent/shared/sessions/collection'
+import { collectionHarnessProvider } from '@rox/shared/sessions/collection'
 import { getProviderIcon } from '@/lib/provider-icons'
 import { cn } from '@/lib/utils'
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { DEFAULT_COLLECTION_FILTERS } from '@craft-agent/shared/sessions/collection'
+import { DEFAULT_COLLECTION_FILTERS } from '@rox/shared/sessions/collection'
 import { createSavedSlice } from '../collection-slices'
 import { chipsAfterRailChange, persistUserCollectionSlices, railViewNavigation, userSliceNavigation } from '../collection-rail-filters'
 

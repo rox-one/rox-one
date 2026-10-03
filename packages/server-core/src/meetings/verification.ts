@@ -1,5 +1,5 @@
-import type { OperationResultV2 } from '@craft-agent/core/meetings'
-import { isUiVerified } from '@craft-agent/core/meetings'
+import type { OperationResultV2 } from '@rox/core/meetings'
+import { isUiVerified } from '@rox/core/meetings'
 
 export function verificationLabel(result: OperationResultV2): 'verified' | 'unknown' | 'pending' {
   if (isUiVerified(result)) return 'verified'

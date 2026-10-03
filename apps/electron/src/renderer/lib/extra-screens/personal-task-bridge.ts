@@ -3,8 +3,8 @@
  * live in the renderer store (`lib/personal-tasks`); when the `personalTasks:*`
  * IPC lands this is the single place to switch.
  */
-import type { PersonalTask } from '@craft-agent/core/tasks/personal'
-import { PersonalTaskStore } from '@craft-agent/core/tasks/personal'
+import type { PersonalTask } from '@rox/core/tasks/personal'
+import { PersonalTaskStore } from '@rox/core/tasks/personal'
 import { loadPersonalTaskStore, persistPersonalTaskStore, persistPersonalTaskConfirmed } from '../personal-tasks'
 
 export function listPersonalTasks(): PersonalTask[] {

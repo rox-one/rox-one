@@ -1,0 +1,77 @@
+{
+  "sourceParentRevision": "3027028c6c8cb420efe3ea4b255ac725747de9e5",
+  "artifacts": [
+    {
+      "original": "/tmp/rox-wp48-domain/native-v2/manifest.json",
+      "copy": "plans/compound-implementation/evidence/wp48/native-v2-proof/00-manifest.json",
+      "sha256": "9be658a3be679eb23158d88cc5007477832c67688453d5ca052ac1636de19531"
+    },
+    {
+      "original": "/tmp/rox-wp48-domain/native-v2-handoff.md",
+      "copy": "plans/compound-implementation/evidence/wp48/native-v2-proof/01-native-v2-handoff.md",
+      "sha256": "d12d508eaaa3ca86e0b186aaf0205d99d3cd768e4d711e5e5a00050a9cb78bd7"
+    },
+    {
+      "original": "/tmp/rox-wp48-native-independent-ultra-20260930/v2/review-report.json",
+      "copy": "plans/compound-implementation/evidence/wp48/native-v2-proof/02-review-report.json",
+      "sha256": "fc60997f1473f753b275cf7918cdd57e00739044fd4839fc8bd19f1976494e1c"
+    },
+    {
+      "original": "/tmp/rox-wp48-native-independent-ultra-20260930/v2/report-receipt.json",
+      "copy": "plans/compound-implementation/evidence/wp48/native-v2-proof/03-report-receipt.json",
+      "sha256": "3415edbc3ee8fce11938ff8b674cbfe4b8e705b58461df193a1e9e09e3e48c86"
+    },
+    {
+      "original": "/tmp/rox-wp48-native-independent-ultra-20260930/v2/execution.log",
+      "copy": "plans/compound-implementation/evidence/wp48/native-v2-proof/04-execution.log",
+      "sha256": "5a47c38280b251b14a4ba64e7767cb08e3b79357f9ddcaa663a2930d1fc06b30"
+    },
+    {
+      "original": "/tmp/rox-wp48-native-independent-ultra-20260930/v2/final-seal-receipt.json",
+      "copy": "plans/compound-implementation/evidence/wp48/native-v2-proof/05-final-seal-receipt.json",
+      "sha256": "d6a5b6c7e32beeb2eb68250764fe876d07fb0b5a8411f698e63c758c8cc8070e"
+    },
+    {
+      "original": "/tmp/rox-wp48-native-v2-root-tests.log",
+      "copy": "plans/compound-implementation/evidence/wp48/native-v2-proof/06-rox-wp48-native-v2-root-tests.log",
+      "sha256": "5bb7e16c05adc9a57d8c33bd9e2e358c19dbb740bb19bb680489fbbe9bf1a64c"
+    },
+    {
+      "original": "/tmp/rox-wp48-native-v2-root-offline-neighbor.log",
+      "copy": "plans/compound-implementation/evidence/wp48/native-v2-proof/07-rox-wp48-native-v2-root-offline-neighbor.log",
+      "sha256": "9676503b03f4453f1d3809fca28f7559f4e678e4ea3a819465d9d0e46fdb9679"
+    },
+    {
+      "original": "/tmp/rox-wp48-native-v2-root-service-ts.log",
+      "copy": "plans/compound-implementation/evidence/wp48/native-v2-proof/08-rox-wp48-native-v2-root-service-ts.log",
+      "sha256": "8366207267355d3e3d5bf3bf6e8c94c5f93f6078c34f08973fa2b38cdda6cc92"
+    },
+    {
+      "original": "/tmp/rox-wp48-native-v2-root-electron-ts.log",
+      "copy": "plans/compound-implementation/evidence/wp48/native-v2-proof/09-rox-wp48-native-v2-root-electron-ts.log",
+      "sha256": "507e98043363379c4909eba859dfb458091be211ff2acd31737844b0531132a2"
+    },
+    {
+      "original": "/tmp/rox-wp48-native-v2-main-build.log",
+      "copy": "plans/compound-implementation/evidence/wp48/native-v2-proof/10-rox-wp48-native-v2-main-build.log",
+      "sha256": "81c551697ee970977f8905f55014fee423c55133e2dd09672ff7e9b855bdb8c7"
+    },
+    {
+      "original": "/tmp/rox-wp48-native-v2-preload-build.log",
+      "copy": "plans/compound-implementation/evidence/wp48/native-v2-proof/11-rox-wp48-native-v2-preload-build.log",
+      "sha256": "597ba4325d1fa9ba9318355f79ca355940c3656b2e8fc6c3caa325a24bd47dd2"
+    },
+    {
+      "original": "/tmp/rox-wp48-native-v2-renderer-build.log",
+      "copy": "plans/compound-implementation/evidence/wp48/native-v2-proof/12-rox-wp48-native-v2-renderer-build.log",
+      "sha256": "8d5d9e55be4fda6a6c9a04febea2abaca699ab3399f8017c37919011c5fdad38"
+    },
+    {
+      "original": "/tmp/rox-wp48-package-root-tests.log",
+      "copy": "plans/compound-implementation/evidence/wp48/native-v2-proof/13-rox-wp48-package-root-tests.log",
+      "sha256": "fdbc8119e8006d2124aeac3e8b6ef7fe6278cdd101514022f7388b43d6477a59"
+    }
+  ],
+  "nativePanelAccepted": false,
+  "fullDoD": false
+}

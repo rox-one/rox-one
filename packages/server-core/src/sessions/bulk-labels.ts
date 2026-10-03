@@ -3,8 +3,8 @@ import {
   type BulkUpdateSessionsInput,
   type BulkUpdateSessionsPatch,
   type SessionPriority,
-} from '@craft-agent/shared/protocol'
-import { assertValidBulkLabelPatch } from '@craft-agent/shared/sessions/collection'
+} from '@rox/shared/protocol'
+import { assertValidBulkLabelPatch } from '@rox/shared/sessions/collection'
 
 const BULK_PATCH_FIELDS: Record<keyof BulkUpdateSessionsPatch, true> = {
   sessionStatus: true,

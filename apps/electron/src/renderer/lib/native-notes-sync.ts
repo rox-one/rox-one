@@ -1,5 +1,5 @@
-import type { NativeDataEntitySnapshot, NativeDataMutationInput, NativeDataReadEntityInput, NativeDataReceipt, NoteDocument } from '@craft-agent/shared/protocol/dto'
-import { isNativeReplicaNetworkLoss, type NativeReplicaPublicApi } from '@craft-agent/shared/protocol/native-replica'
+import type { NativeDataEntitySnapshot, NativeDataMutationInput, NativeDataReadEntityInput, NativeDataReceipt, NoteDocument } from '@rox/shared/protocol/dto'
+import { isNativeReplicaNetworkLoss, type NativeReplicaPublicApi } from '@rox/shared/protocol/native-replica'
 
 export interface NativeNotesApi {
   nativeReplica: NativeReplicaPublicApi

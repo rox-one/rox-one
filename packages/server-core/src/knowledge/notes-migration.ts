@@ -10,8 +10,8 @@
 import { createHash } from 'crypto'
 import { link, lstat, mkdir, readdir, readFile, realpath, rename, unlink, writeFile } from 'fs/promises'
 import { basename, dirname, isAbsolute, join, posix, relative, resolve, sep } from 'path'
-import { assertNotesImportPaths, getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { getDefaultWorkspacesDir, loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
+import { assertNotesImportPaths, getWorkspaceByNameOrId } from '@rox/shared/config'
+import { getDefaultWorkspacesDir, loadWorkspaceConfig } from '@rox/shared/workspaces'
 import matter from 'gray-matter'
 
 export const NOTES_MIGRATION_MAP_VERSION = 2 as const

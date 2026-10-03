@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'bun:test'
-import { createPinnedMap, deriveNoteMindMap } from '@craft-agent/core/mindmap'
+import { createPinnedMap, deriveNoteMindMap } from '@rox/core/mindmap'
 import { clearPinLocal, loadPinLocal, pinStorageKey, savePinLocal } from '../pin-store'
 
 const memory = new Map<string, string>()

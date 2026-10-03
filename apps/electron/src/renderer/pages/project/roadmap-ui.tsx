@@ -7,7 +7,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { roadmapId, type RoadmapItem } from '@craft-agent/shared/projects/roadmap'
+import { roadmapId, type RoadmapItem } from '@rox/shared/projects/roadmap'
 
 export function Section({
   id,

@@ -5,13 +5,14 @@ import {
   buildRestartCommand,
   buildWriteTokenCommand,
   CHECK_INSTALLED_COMMAND,
+  IMPORT_LEGACY_INSTALL_COMMAND,
   KILL_MANAGED_SERVER_COMMAND,
   REMOTE_LOG_PATH,
   REMOTE_TOKEN_PATH,
   type ServerBootstrapDeps,
   type BootstrapProgress,
 } from '../ssh-tunnel/server-bootstrap.ts'
-import type { SshHostConfig } from '@craft-agent/shared/config'
+import type { SshHostConfig } from '@rox/shared/config'
 
 const HOST: SshHostConfig = {
   id: 'box',
@@ -89,11 +90,11 @@ describe('buildWriteTokenCommand', () => {
 
 describe('buildStartCommand', () => {
   it('extracts, reads token from file, detaches under nohup, logs to a file', () => {
-    const cmd = buildStartCommand('~/.craft-agent/x.tar.gz', 9200)
-    expect(cmd).toContain('tar -xzf ~/.craft-agent/x.tar.gz')
-    expect(cmd).toContain(`CRAFT_SERVER_TOKEN="$(cat ${REMOTE_TOKEN_PATH})"`)
-    expect(cmd).toContain('CRAFT_RPC_PORT=9200')
-    expect(cmd).toContain('CRAFT_CONFIG_DIR=')
+    const cmd = buildStartCommand('~/.rox/x.tar.gz', 9200)
+    expect(cmd).toContain('tar -xzf ~/.rox/x.tar.gz')
+    expect(cmd).toContain(`ROX_SERVER_TOKEN="$(cat ${REMOTE_TOKEN_PATH})"`)
+    expect(cmd).toContain('ROX_RPC_PORT=9200')
+    expect(cmd).toContain('ROX_CONFIG_DIR=')
     expect(cmd).toContain('nohup')
     expect(cmd).toContain(REMOTE_LOG_PATH)
     expect(cmd).toContain('&')
@@ -287,5 +288,23 @@ describe('bootstrapRemoteServer — restart path (server died, install intact)',
     // Default mock returns '' for the install check → straight to full install.
     expect(rec.uploads).toHaveLength(1)
     expect(rec.remoteCommands).not.toContain(buildRestartCommand(HOST.remotePort))
+  })
+})
+
+
+describe('legacy managed remote compatibility', () => {
+  it('imports before writing canonical token and restarting with explicit aliases', async () => {
+    const commands: string[] = []
+    const { deps, rec } = makeDeps({
+      initialToken: 'saved-token', probeResults: [false, true],
+      runRemote: async (_host, command) => {
+        commands.push(command)
+        return command === CHECK_INSTALLED_COMMAND ? 'LEGACY_INSTALLED\n' : ''
+      },
+    })
+    await bootstrapRemoteServer(HOST, deps)
+    expect(commands.indexOf(IMPORT_LEGACY_INSTALL_COMMAND)).toBeLessThan(commands.indexOf(buildWriteTokenCommand()))
+    expect(commands).toContain(buildRestartCommand(HOST.remotePort, true))
+    expect(rec.uploads).toHaveLength(0)
   })
 })

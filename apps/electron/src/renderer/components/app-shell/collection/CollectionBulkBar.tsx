@@ -7,7 +7,7 @@ import {
   BULK_UPDATE_MAX_IDS,
   type BulkUpdateSessionsPatch,
   type SessionPriority,
-} from '@craft-agent/shared/protocol'
+} from '@rox/shared/protocol'
 import { extractSessionMeta, sessionMetaMapAtom } from '@/atoms/sessions'
 import { sessionSelection } from '@/hooks/useEntitySelection'
 import type { SessionStatus, SessionStatusId } from '@/config/session-status-config'
@@ -28,7 +28,7 @@ import {
   mapReduceProductResult,
   mapReduceVisibleSessions,
 } from './collection-map-reduce'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+import { isClaimableLive } from '@rox/core/rox2'
 
 export interface CollectionBulkBarProps {
   workspaceId: string | null | undefined

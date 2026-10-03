@@ -9,17 +9,13 @@ const notesPageSource = readFileSync(join(__dirname, '../../../pages/NotesPage.t
 
 describe('local Notes entry points', () => {
   it('wires the primary shell sidebar and keyboard navigation to Notes', () => {
-    const keyboardItems = appShellSource.slice(
-      appShellSource.indexOf('const unifiedSidebarItems'),
-      appShellSource.indexOf('// Toggle folder'),
-    )
     const primaryLinks = appShellSource.slice(
       appShellSource.indexOf('id: "nav:projects"'),
       appShellSource.indexOf('// --- Separator before footer ---'),
     )
 
-    expect(keyboardItems).toContain("result.push({ id: 'nav:notes', type: 'nav', action: handleNotesClick })")
-    expect(keyboardItems).not.toContain("result.push({ id: 'nav:knowledge'")
+    expect(appShellSource).toContain('onKeyDown={handleSidebarTreeKeyDown}')
+    expect(notesPageSource).toContain('<ShellSidebarPortal')
     expect(primaryLinks).toContain('id: "nav:notes"')
     expect(primaryLinks).toContain('onClick: handleNotesClick')
     expect(primaryLinks).not.toContain('id: "nav:knowledge"')

@@ -1,0 +1,104 @@
+{
+  "author": "ROX",
+  "modifiedAt": "2026-10-03",
+  "upstream": "https://github.com/garrytan/gstack",
+  "upstreamCommit": "f30b7b788a210d217ea3125bf3001b29cbc2a463",
+  "upstreamLicense": "MIT",
+  "note": "Upstream license/copyright notices retained. Local modifications are identified by portable paths and SHA256; local validation is separate from remote scanner closure.",
+  "securityPatches": [
+    {
+      "pack": "gstack",
+      "path": "gstack/ios-qa/daemon/src/audit.ts",
+      "alerts": [
+        921,
+        920
+      ],
+      "change": "Audit/attempt rows are intentional authorized local security logs; appendSecureFile enforces no-follow regular owned single-link descriptor and fchmod0600 before write. Salt read via stable bounded4096 descriptor. Both-copy regressions reject symlink victim writes.",
+      "sha256": "e1783e4af5162910b38dc074a1092d240d2d004e926eb5b43a2e5544f404f4cb"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/ios-qa/daemon/src/devicectl.ts",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "fa17fb2b51e2261d657952c648751311b2fb997a2d7e4da0931d29523171c525"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/ios-qa/daemon/src/single-instance.ts",
+      "alerts": [
+        805,
+        804
+      ],
+      "change": "readBoundedStable uses nofollow descriptor+identity checks; exclusive pidfile claim; new private mutation-lock serializes stale recovery and generation-checked release; tests reject duplicate claim and preserve differentgeneration.",
+      "sha256": "0f024f90fa3d7411a21c1dbb038344e4d982449436817f0b0838a6ede18d365c"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/ios-qa/daemon/src/tunnel-bootstrap.ts",
+      "alerts": [
+        897,
+        896,
+        895
+      ],
+      "change": "Explicit user-selected paired iPhone bootstrap intentionally copies app-container boot credential and sends it only to validated IPv6 endpoint + integer port1..65535 to rotate. All health/rotation fetches redirect manual; fixtures prove no following cross-host bearer redirect, invalid authority rejected. No live devices used.",
+      "sha256": "cbf6fd025b3971865f3a2e73fdfb7f7110a305210377c271af81e4c241f9bf8b"
+    },
+    {
+      "pack": "gstack",
+      "path": "gstack/ios-qa/scripts/gen-accessors.ts",
+      "alerts": [
+        807
+      ],
+      "change": "Cache reads boundedstable descriptor; cached and generated outputs writeSecureFile nofollow+singlelink+ownership+0600 descriptor, no pathname copy sink.",
+      "sha256": "07063e15edc9727850195b65de15518720032a21bca3c04907ff53a6dbb0e1ae"
+    }
+  ],
+  "removedFiles": [
+    {
+      "path": "gstack/ios-qa/daemon/test/session-tokens.test.ts",
+      "originalSha256": "cd9309c8ca80998ed156f7c1ab497d9f86decc5b9aca5db981b9f20a603a71a3",
+      "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+    },
+    {
+      "path": "gstack/ios-qa/daemon/test/cli-mint.test.ts",
+      "originalSha256": "92dac3583d666589e055892d4e522e4e581a1ec8512c7399dd9c840db0f6b1e8",
+      "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+    },
+    {
+      "path": "gstack/ios-qa/daemon/test/audit.test.ts",
+      "originalSha256": "cee7d31c2b0a3f75ecf8e0101c82f955e6ffd2d5c519030212e373cd2d926bd7",
+      "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+    },
+    {
+      "path": "gstack/ios-qa/daemon/test/daemon-integration.test.ts",
+      "originalSha256": "35aab3b21875b38b654ce62bad11eb06fb6fa67cbd2120f7c456d78c2f445b43",
+      "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+    },
+    {
+      "path": "gstack/ios-qa/daemon/test/proxy-classify.test.ts",
+      "originalSha256": "f50bfeaeb7ffeba1b0fa55fcebb5f908c29400ecc2da359013d7546720ca85e3",
+      "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+    },
+    {
+      "path": "gstack/ios-qa/daemon/test/tunnel-bootstrap.test.ts",
+      "originalSha256": "0f04d5711c9d4a5104582fc4d80e4d46937abc99a0fb41f951f4aa06e1184339",
+      "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+    },
+    {
+      "path": "gstack/ios-qa/daemon/test/tailscale-localapi.test.ts",
+      "originalSha256": "2731faf6400406d78e35261222fed0c9d52f184a87609fcc12d6c0d4288c9b9f",
+      "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+    },
+    {
+      "path": "gstack/ios-qa/daemon/test/single-instance.test.ts",
+      "originalSha256": "29e049959ffe51aef52383e23582bf63436f75cfb0487ffe7ca2a731cf884422",
+      "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+    },
+    {
+      "path": "gstack/ios-qa/daemon/test/auth-mint.test.ts",
+      "originalSha256": "3fe3ce7eb6a042dde5f97f00d910be86470ea2fc13e8e02cad1c509da7db53a0",
+      "reason": "Standalone upstream test runner, not named by setup/build/SKILL/runtime dependencies; no CodeQL exclusion."
+    }
+  ]
+}

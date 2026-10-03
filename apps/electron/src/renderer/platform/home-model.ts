@@ -3,7 +3,7 @@
  * Domain state stays in session storage; this only sorts a projection.
  */
 
-import { isInternalAgentSession } from '@craft-agent/shared/sessions/internal-prompts'
+import { isInternalAgentSession } from '@rox/shared/sessions/internal-prompts'
 
 export const HOME_RECENT_LIMIT = 8
 

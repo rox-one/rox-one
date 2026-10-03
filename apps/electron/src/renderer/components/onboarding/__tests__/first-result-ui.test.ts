@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { isAccountRegistered } from '@craft-agent/core/rox2'
+import { isAccountRegistered } from '@rox/core/rox2'
 import {
   createDefaultFirstResultPorts,
   createOfflineFirstResult,

@@ -11,7 +11,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import type { KnowledgeNode, KnowledgeProvider, KnowledgeRef } from '@craft-agent/core/knowledge'
+import type { KnowledgeNode, KnowledgeProvider, KnowledgeRef } from '@rox/core/knowledge'
 import {
   getSharedAutomationLoopGuard,
   type AutomationLoopGuard,

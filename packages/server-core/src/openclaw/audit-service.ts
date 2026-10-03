@@ -9,11 +9,11 @@ import type {
   SecurityDomain,
   SecurityDomainSummary,
   SecurityFinding,
-} from '@craft-agent/shared/openclaw'
+} from '@rox/shared/openclaw'
 import {
   fingerprintSecurityFinding,
   sanitizeSecurityText,
-} from '@craft-agent/shared/openclaw'
+} from '@rox/shared/openclaw'
 import type { CraftAuditCollection, OpenClawAuditCollection } from './collectors.ts'
 import type { OpenClawAuditRuntime, OpenClawAuditRuntimeProvider } from './runtime-manager.ts'
 import { OpenClawOperationError } from './runtime-manager.ts'

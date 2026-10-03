@@ -52,7 +52,7 @@ if (process.argv.includes('--intent-readback')) {
   const profile = process.env.ROX_CONFIG_DIR
   if (!profile?.includes('rox-wp01-electron-offline-')) throw new Error('Owned offline profile required')
   const { localWorkspaceId } = JSON.parse(await Bun.stdin.text()) as { localWorkspaceId: string }
-  const { getCredentialManager } = await import('@craft-agent/shared/credentials')
+  const { getCredentialManager } = await import('@rox/shared/credentials')
   const { createAuthorityJournalPorts } = await import('../../../apps/electron/src/main/project-authority-journal')
   const { PROJECT_CREATE_INTENT_CREDENTIAL_NAME, PROJECT_CREATE_BINDING_CREDENTIAL_NAME } = await import('../../../apps/electron/src/main/project-create-intent')
   const { PROJECT_AUTHORITY_CREDENTIAL_NAME } = await import('../../../apps/electron/src/shared/project-authority')
@@ -86,8 +86,8 @@ if (process.argv.includes('--private-http-readback')) {
   const profile = process.env.ROX_CONFIG_DIR
   if (!profile?.includes('rox-wp01-electron-offline-')) throw new Error('Owned offline profile required')
   const { localWorkspaceId, entityId } = JSON.parse(await Bun.stdin.text()) as { localWorkspaceId: string; entityId: string }
-  const { getCredentialManager } = await import('@craft-agent/shared/credentials')
-  const { loadStoredConfig } = await import('@craft-agent/shared/config')
+  const { getCredentialManager } = await import('@rox/shared/credentials')
+  const { loadStoredConfig } = await import('@rox/shared/config')
   const { PROJECT_AUTHORITY_CREDENTIAL_NAME, requireProjectAuthorityConfiguration } = await import('../../../apps/electron/src/shared/project-authority')
   const workspace = loadStoredConfig()?.workspaces.find(value => value.id === localWorkspaceId)
   const authority = requireProjectAuthorityConfiguration(workspace?.projectAuthority)

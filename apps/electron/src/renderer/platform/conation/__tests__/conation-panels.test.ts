@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'bun:test'
-import { createPanelRegistry } from '@craft-agent/core/platform'
+import { createPanelRegistry } from '@rox/core/platform'
 import {
   CONATION_INSPECTOR_PANEL_ID,
   conationInspectorContribution,
   registerConationPanels,
 } from '../conation-panels'
 import { isConationInspectorEnabled } from '@/atoms/conation-shell'
-import { CONATION_SHELL_FEATURE_FLAGS, CONATION_SHELL_FLAG } from '@craft-agent/core/conation/shell'
+import { CONATION_SHELL_FEATURE_FLAGS, CONATION_SHELL_FLAG } from '@rox/core/conation/shell'
 
 describe('registerConationPanels', () => {
   it('is a no-op when shell or inspector flag is off', () => {

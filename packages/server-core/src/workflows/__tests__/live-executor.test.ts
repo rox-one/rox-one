@@ -5,7 +5,7 @@ import {
   createDraftSpec,
   isProductionWorkflowSuccess,
   runWorkflow,
-} from '@craft-agent/shared/workflows'
+} from '@rox/shared/workflows'
 import {
   createInMemoryReceiptStore,
   createLoopbackModelGateway,
@@ -14,8 +14,8 @@ import {
   isLiveWorkflowProductionSuccess,
   LiveWorkflowExecutor,
 } from '../index.ts'
-import type { SessionWorkflowSpec } from '@craft-agent/shared/workflows'
-import type { OperationResultV2 } from '@craft-agent/core/meetings'
+import type { SessionWorkflowSpec } from '@rox/shared/workflows'
+import type { OperationResultV2 } from '@rox/core/meetings'
 import type { WorkflowModelGateway, WorkflowToolRegistry } from '../types.ts'
 
 const NOW = 1_700_000_000_000

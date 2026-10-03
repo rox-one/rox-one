@@ -63,8 +63,8 @@ const FORBIDDEN_IN_NORMAL_UI: Array<{ id: string; pattern: RegExp }> = [
   { id: '~/.omp', pattern: /~\/\.omp\b|\/\.omp\// },
   { id: 'oh-my-pi', pattern: /oh-my-pi/i },
   { id: 'Hermes', pattern: /\bHermes\b/ },
-  { id: 'Craft Agents', pattern: /Craft Agents/ },
-  { id: 'Craft Agent', pattern: /Craft Agent(?!s)/ },
+  { id: 'ROX', pattern: /ROX/ },
+  { id: 'ROX', pattern: /ROX(?!s)/ },
   { id: 'Craft', pattern: /\bCraft\b/ },
   // Latin "Pi" as a whole word — not French Pièces / Pile / etc.
   { id: 'Pi', pattern: /(?<![A-Za-z\u00C0-\u024F])Pi(?![A-Za-z\u00C0-\u024F])/ },
@@ -73,7 +73,7 @@ const FORBIDDEN_IN_NORMAL_UI: Array<{ id: string; pattern: RegExp }> = [
 export function localeValueViolations(key: string, value: string): string[] {
   if (isAllowlistedLocaleKey(key)) return []
   // Craft Docs / craft.do are the external product, not this app.
-  if (/Craft Docs|Craft space|craft\.do/i.test(value) && !/Craft Agents|Craft Agent(?!s)/.test(value)) {
+  if (/Craft Docs|Craft space|craft\.do/i.test(value) && !/ROX|ROX(?!s)/.test(value)) {
     return []
   }
   return FORBIDDEN_IN_NORMAL_UI.filter((rule) => rule.pattern.test(value)).map((rule) => rule.id)

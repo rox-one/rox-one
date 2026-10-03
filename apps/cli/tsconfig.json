@@ -19,10 +19,10 @@
     "noUnusedParameters": false,
     "baseUrl": ".",
     "paths": {
-      "@craft-agent/shared": ["../../packages/shared/src/index.ts"],
-      "@craft-agent/shared/*": ["../../packages/shared/src/*"],
-      "@craft-agent/server-core": ["../../packages/server-core/src/index.ts"],
-      "@craft-agent/server-core/*": ["../../packages/server-core/src/*"]
+      "@rox/shared": ["../../packages/shared/src/index.ts"],
+      "@rox/shared/*": ["../../packages/shared/src/*"],
+      "@rox/server-core": ["../../packages/server-core/src/index.ts"],
+      "@rox/server-core/*": ["../../packages/server-core/src/*"]
     }
   },
   "include": ["src/**/*", "../../packages/shared/src/**/*.d.ts"],

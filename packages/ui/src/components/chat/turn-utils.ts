@@ -5,9 +5,9 @@
  * Converts the flat Message[] array into grouped turns for email-like display.
  */
 
-import type { Message, StoredMessage, MessageRole } from '@craft-agent/core/types'
-import { isParentTaskTool } from '@craft-agent/shared/utils/toolNames'
-import { storedToMessage } from '@craft-agent/core/types'
+import type { Message, StoredMessage, MessageRole } from '@rox/core/types'
+import { isParentTaskTool } from '@rox/shared/utils/toolNames'
+import { storedToMessage } from '@rox/core/types'
 
 export { storedToMessage }
 import type { ActivityItem, ActivityStatus, ActivityType, ResponseContent, TodoItem } from './TurnCard'

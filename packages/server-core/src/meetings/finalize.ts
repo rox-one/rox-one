@@ -2,8 +2,8 @@
  * Native finalize intent. Marks the journal completed without ASR text.
  * Not live Conation/SFU and not OS speech recognition.
  */
-import type { Meeting } from '@craft-agent/core/meetings'
-import { authorizeMeetingAction, type MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import type { Meeting } from '@rox/core/meetings'
+import { authorizeMeetingAction, type MeetingGrant } from '@rox/shared/meeting-agents'
 import { MeetingJournal } from './journal.ts'
 
 const NATIVE_PROVIDER = 'native-journal'

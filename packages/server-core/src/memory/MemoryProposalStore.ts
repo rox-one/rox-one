@@ -4,8 +4,8 @@
  */
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
-import type { MemoryProposal } from '@craft-agent/shared/memory/proposals'
-import { redactProposalSecrets } from '@craft-agent/shared/memory/proposals'
+import type { MemoryProposal } from '@rox/shared/memory/proposals'
+import { redactProposalSecrets } from '@rox/shared/memory/proposals'
 
 export class MemoryProposalStore {
   readonly filePath: string

@@ -13,7 +13,7 @@ import { describe, it, expect, afterEach } from 'bun:test'
 import { WsRpcServer } from '../server'
 import { WsRpcClient } from '../client'
 import { CLIENT_BROWSER_INVOKE, CLIENT_OPEN_FILE_DIALOG } from '../capabilities'
-import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 
 const TEST_TOKEN = 'test-token-with-enough-entropy-to-pass'
 

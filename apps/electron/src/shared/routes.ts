@@ -16,7 +16,7 @@
  */
 
 import type { SettingsSubpage } from './settings-registry'
-import type { PermissionMode } from '@craft-agent/shared/agent/mode-types'
+import type { PermissionMode } from '@rox/shared/agent/mode-types'
 import type { KnowledgeRefKind } from './types'
 import { buildExtraScreenRoute, type ExtraScreenId } from './extra-screens'
 

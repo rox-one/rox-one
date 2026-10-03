@@ -4,7 +4,7 @@
  * and opens Настройки → Организации, where the honest state is explained.
  */
 import * as React from 'react'
-import { selectInboxForUser } from '@craft-agent/shared/team'
+import { selectInboxForUser } from '@rox/shared/team'
 import { TEAM_FLAG, useTeamFlag, useTeamState } from './team-store'
 import { useTeamRoster } from './use-team-roster'
 

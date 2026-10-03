@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
-import { FilterableSelectPopover } from '@craft-agent/ui'
+import { FilterableSelectPopover } from '@rox/ui'
 
 import { cn } from '@/lib/utils'
 import { SkillAvatar } from '@/components/ui/skill-avatar'

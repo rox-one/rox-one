@@ -16,7 +16,7 @@ import {
   type TtsEngine,
   type VoiceHealth,
   type VoicePrefs,
-} from '@craft-agent/shared/voice'
+} from '@rox/shared/voice'
 import { createDesktopSettingsSession, readVoiceSettingsSnapshot, readVoiceSettingsHistory, type VoiceSettingsSnapshot, type VoiceSettingsHistory } from './desktop-settings-session'
 
 export function VoiceSettingsSection() {

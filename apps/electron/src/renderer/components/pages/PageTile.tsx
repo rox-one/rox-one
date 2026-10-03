@@ -9,7 +9,7 @@ import {
   StyledContextMenuContent,
   StyledContextMenuItem,
 } from '@/components/ui/styled-context-menu'
-import type { LoadedPage } from '@craft-agent/shared/pages/types'
+import type { LoadedPage } from '@rox/shared/pages/types'
 import { PAGE_KIND_ICONS, PageFreshness, PageKindBadge } from './page-visuals'
 import { useInView } from '@/hooks/useInView'
 import { useAppShellContext } from '@/context/AppShellContext'
@@ -33,7 +33,7 @@ interface PageTileProps {
  * back to a deterministic placeholder (kind glyph + title monogram + project
  * accent). "Fresh" = the poster's digest matches the current content digest,
  * mirroring `isThumbnailFresh` server-side (inlined here — the renderer must
- * not import Node-backed `@craft-agent/shared` code).
+ * not import Node-backed `@rox/shared` code).
  */
 export function PageTile({ page, project, onOpen, onDelete }: PageTileProps) {
   const { t } = useTranslation()

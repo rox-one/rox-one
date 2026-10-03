@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { bindSurfaceContext, sameContextSnapshot } from '@craft-agent/core/rox2'
+import { bindSurfaceContext, sameContextSnapshot } from '@rox/core/rox2'
 import {
   RIGHT_SESSION_FOCUS_TARGET,
   RIGHT_SESSION_PROMPT_TEST_ID,

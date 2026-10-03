@@ -4,7 +4,7 @@
  */
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { decideRecipientRequest, selectInboxForUser } from '@craft-agent/shared/team'
+import { decideRecipientRequest, selectInboxForUser } from '@rox/shared/team'
 import { dispatchTeam, TEAM_FLAG, teamActionContext, useTeamFlag, useTeamState } from './team-store'
 import { useTeamRoster } from './use-team-roster'
 import { memberName } from './team-labels'

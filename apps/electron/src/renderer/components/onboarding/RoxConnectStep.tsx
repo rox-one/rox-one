@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ExternalLink, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Spinner } from '@craft-agent/ui'
+import { Spinner } from '@rox/ui'
 import { CraftAgentsSymbol } from '@/components/icons/CraftAgentsSymbol'
 import { StepFormLayout } from './primitives'
 

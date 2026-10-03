@@ -1,11 +1,11 @@
-import type { CredentialRefId } from '@craft-agent/core/platform'
+import type { CredentialRefId } from '@rox/core/platform'
 import type {
   EnvFileImporter,
   InProcessCredentialBroker,
   LocalFileSecretProvider,
   ProviderMaterialization,
-} from '@craft-agent/shared/credentials'
-import { applyTrustedHttpHeader } from '@craft-agent/shared/credentials'
+} from '@rox/shared/credentials'
+import { applyTrustedHttpHeader } from '@rox/shared/credentials'
 
 import type { ConnectionRecord, WorkGraphKernel } from './index'
 

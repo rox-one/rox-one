@@ -40,6 +40,8 @@ interface ProfileStripProps {
   onClick: () => void
   className?: string
   defaultAvatarFallback?: React.ReactNode
+  /** Avatar-only presentation for the collapsed navigation rail. */
+  compact?: boolean
 }
 
 export function ProfileStrip({
@@ -47,15 +49,23 @@ export function ProfileStrip({
   onClick,
   className,
   defaultAvatarFallback,
+  compact = false,
 }: ProfileStripProps) {
   const { t } = useTranslation()
-  const displayName = data.displayName || t('profile.defaultName')
+  const detailsId = React.useId()
+  const displayName = data.displayName.trim() || t('profile.defaultName')
   const plan = data.plan ?? 'standard'
+  const planLabel = t(`settings.account.plan.${plan}`)
   const balanceLabel =
     data.balance === null || !Number.isFinite(data.balance)
       ? t('profile.balanceEmpty')
       : t('profile.balance', { amount: data.balance })
   const spentLabel = data.spentUsd != null && data.spentUsd > 0 ? formatCostUsd(data.spentUsd) : null
+  const accountDetails = [
+    planLabel,
+    `${t('profile.balanceLabel')} ${balanceLabel}`,
+    spentLabel ? t('profile.spent', { amount: spentLabel }) : null,
+  ].filter(Boolean).join(' · ')
   const avatarFallback = defaultAvatarFallback ?? (
     <img
       src={bundledDefaultAvatar}
@@ -69,15 +79,21 @@ export function ProfileStrip({
       type="button"
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-2 px-2 py-2 rounded-[8px]',
-        'text-left hover:bg-foreground/5 transition-colors',
+        'group min-w-0 w-full flex items-center overflow-hidden rounded-xl border border-foreground/5',
+        'bg-background/35 text-left shadow-minimal backdrop-blur-xl',
+        'hover:bg-background/65 hover:border-foreground/10 transition-[background-color,border-color,box-shadow] duration-200 motion-reduce:transition-none',
+        compact ? 'justify-center p-0.5' : 'gap-2.5 p-2.5',
         'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
         className,
       )}
       aria-label={t('profile.openSettings', { name: displayName })}
+      aria-describedby={detailsId}
+      title={`${displayName} · ${accountDetails}`}
       data-tutorial="profile-strip"
+      data-compact={compact || undefined}
     >
-      <Avatar className="h-8 w-8 shrink-0">
+      <span id={detailsId} className="sr-only">{accountDetails}</span>
+      <Avatar className={cn('shrink-0 rounded-xl ring-1 ring-foreground/10', compact ? 'size-8' : 'size-9')}>
         {data.avatar ? <AvatarImage src={data.avatar} alt="" /> : null}
         <AvatarFallback
           delayMs={0}
@@ -86,19 +102,24 @@ export function ProfileStrip({
           {avatarFallback}
         </AvatarFallback>
       </Avatar>
-      <span className="min-w-0 flex-1">
+      {!compact ? <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] font-medium text-foreground/90">
           {displayName}
         </span>
-        <span
-          className="block truncate text-[11px] text-muted-foreground"
-          data-testid="profile-strip-balance"
-          title={spentLabel ? t('profile.spentTooltip') : undefined}
-        >
-          {t(`settings.account.plan.${plan}`)} · {t('profile.balanceLabel')} {balanceLabel}
-          {spentLabel ? <> · {t('profile.spent', { amount: spentLabel })}</> : null}
+        <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[10px] leading-4">
+          <span className="truncate rounded-md border border-foreground/5 bg-foreground/5 px-1.5 font-medium text-foreground/70">
+            {planLabel}
+          </span>
+          <span
+            className="min-w-0 truncate text-muted-foreground tabular-nums"
+            data-testid="profile-strip-balance"
+            title={spentLabel ? t('profile.spentTooltip') : undefined}
+          >
+            {t('profile.balanceLabel')} {balanceLabel}
+          </span>
         </span>
-      </span>
+        {spentLabel ? <span className="mt-0.5 block truncate text-[10px] text-muted-foreground/70" title={t('profile.spentTooltip')}>{t('profile.spent', { amount: spentLabel })}</span> : null}
+      </span> : null}
     </button>
   )
 }

@@ -1,4 +1,4 @@
-import type { TeamActivityEvent, TeamMemberRef, TeamSyncStatus } from '@craft-agent/shared/team'
+import type { TeamActivityEvent, TeamMemberRef, TeamSyncStatus } from '@rox/shared/team'
 
 type T = (key: string, opts?: Record<string, unknown>) => string
 

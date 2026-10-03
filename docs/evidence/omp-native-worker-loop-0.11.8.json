@@ -1,0 +1,257 @@
+{
+  "scope": "Full native SDK parent prompt, actual task tool dispatch and restricted child provider loop using native in-memory mock stream. No external API or credentials.",
+  "ompVersion": "18.4.12",
+  "networkAttempts": 0,
+  "paidProviderRequests": 0,
+  "requestedThinking": "max",
+  "supportedMaximum": "high",
+  "parentThinking": "high",
+  "parentInitialThinking": "auto",
+  "childDefaultThinking": "medium",
+  "callerEffort": "lo",
+  "parentTools": [
+    "task",
+    "read"
+  ],
+  "revisedTask": {
+    "agent": "fixture-scout",
+    "task": "orchestrate workflowz ultrathink\n\nRead-only child assignment",
+    "solutionSpace": "fixed deterministic fixture",
+    "effort": "lo"
+  },
+  "requests": [
+    {
+      "kind": "parent",
+      "tools": [
+        "task",
+        "read"
+      ],
+      "reasoning": "high",
+      "systemPolicyPresent": true,
+      "projectedUserText": [
+        "<system-reminder>\nToday: 2026-10-03; current working directory: '/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-native-worker-loop-RbYdMK'. Do not repeat this information in your reply.\n</system-reminder>\norchestrate workflowz ultrathink\n\nDispatch the deterministic read-only child."
+      ],
+      "nativeNoticeText": [
+        "<system-notice>\nMulti-step reasoning: think carefully through the problem before responding.\n</system-notice>",
+        "<system-notice>\nUser message: orchestration request. Execute as orchestrator under this contract; it overrides tendencies to yield early, narrate, or do the work yourself.\n\n<role>\nDecompose, dispatch, verify, iterate. Substantial or parallelizable work: `task` subagents. Trivial self-contained edits: make inline when dispatch overhead exceeds edit cost. Tools: planning reads; `task` dispatch.\n</role>\n\n<rules>\n1. NEVER yield before closure. Phase completion is not a yield point: launch the next phase in the same turn. Stop only when every requested item is verifiably done or concrete `[blocked]` genuinely requires the user.\n2. Before dispatch, enumerate the full surface. Expand referenced audits, plans, checklists, phase lists, and file lists into flat items. \"Most\"/\"important\" items is failure. Re-read source documents; NEVER work from memory.\n3. Parallelize maximally; NEVER launch one-off `task`. Disjoint-scope edits MUST be parallel `task` calls in one message. Divisible work: split and dispatch together, never serially. Before exactly one subagent: find parallel work and dispatch it, or make the small change inline. Serialize only when a produced contract—types, schema, shared module—is consumed next; state the dependency.\n4. Every `task` self-contained; subagents share no context. Specify ≤3–5 explicit target paths (no globs), change APIs/patterns, edge cases, observable acceptance criteria. NEVER assume a shared plan.\n5. Verify each phase before the next. Breakage: dispatch fix-up subagents, then re-verify before advancing. NEVER declare a red tree done.\n6. Commit only if requested or repo workflow expects it: after each green phase, focused phase-naming message. NEVER commit red trees or unrequested work.\n7. Incomplete/wrong subagent work: spawn corrective subagent specifying the gap; NEVER silently fix it inline.\n8. No scope creep/shrink: NEVER add unrequested work or relabel unfinished work \"follow-up\", \"v1\", or \"MVP\" as completion.\n9. Subagents NEVER verify, lint, or format. Every `task` MUST say to skip gates/formatters; edit only. At phase end, orchestrator verifies and formats once across the union of changed files, avoiding redundant/racing formatter runs.\n10. Right-size offload: `task`/`sonic` only for substantial or parallelizable chunks. Trivial self-contained mechanical edits—delete one redundant glob, fix one config line, rename one symbol in one file—make inline; dispatch costs more than Target/Change/Acceptance description.\n</rules>\n\n<workflow>\n1. Ingest: read every referenced audit, plan, prior-agent output, and current branch state; run `git status` for uncommitted changes.\n2. Plan: materialize full work surface; list each phase's parallel units.\n3. Dispatch: launch all parallel `task` subagents in one message; collect every auto-delivered result before advancing.\n4. Verify: run gates; on failure dispatch fix-ups and re-verify. Never advance on red.\n5. Commit if applicable: focused phase-naming message.\n6. Advance: immediately start next. No inter-phase summary.\n7. Final verification: after last green phase, rerun full gates; confirm every item closed; yield terse status, not recap.\n</workflow>\n\n<anti-patterns>\n- Doing substantial/parallelizable work yourself rather than fanning out.\n- `task`/`sonic` Target/Change/Acceptance scaffolding for one trivial edit (for example, one redundant config line): edit inline.\n- Yielding after phase 1 with \"ready to continue?\".\n- Serial subagent dispatch when five can run in parallel.\n- Skipping between-phase verification because change \"looked safe\".\n- - Chat progress summaries instead of advancing.\n</anti-patterns>\n</system-notice>"
+      ]
+    },
+    {
+      "kind": "native-task-label-auxiliary",
+      "tools": [],
+      "systemPolicyPresent": false,
+      "projectedUserText": [
+        "<user>\norchestrate workflowz ultrathink\n\nRead-only child assignment\n</user>"
+      ],
+      "nativeNoticeText": []
+    },
+    {
+      "kind": "child",
+      "tools": [
+        "read",
+        "yield"
+      ],
+      "reasoning": "high",
+      "systemPolicyPresent": true,
+      "projectedUserText": [
+        "<system-reminder>\nToday: 2026-10-03; current working directory: '/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-native-worker-loop-RbYdMK'. Do not repeat this information in your reply.\n</system-reminder>\norchestrate workflowz ultrathink\n\nComplete assignment thoroughly:\n\norchestrate workflowz ultrathink\n\nRead-only child assignment"
+      ],
+      "nativeNoticeText": [
+        "<system-notice>\nMulti-step reasoning: think carefully through the problem before responding.\n</system-notice>"
+      ]
+    },
+    {
+      "kind": "parent",
+      "tools": [
+        "task",
+        "read"
+      ],
+      "reasoning": "high",
+      "systemPolicyPresent": true,
+      "projectedUserText": [
+        "<system-reminder>\nToday: 2026-10-03; current working directory: '/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-native-worker-loop-RbYdMK'. Do not repeat this information in your reply.\n</system-reminder>\norchestrate workflowz ultrathink\n\nDispatch the deterministic read-only child."
+      ],
+      "nativeNoticeText": [
+        "<system-notice>\nMulti-step reasoning: think carefully through the problem before responding.\n</system-notice>",
+        "<system-notice>\nUser message: orchestration request. Execute as orchestrator under this contract; it overrides tendencies to yield early, narrate, or do the work yourself.\n\n<role>\nDecompose, dispatch, verify, iterate. Substantial or parallelizable work: `task` subagents. Trivial self-contained edits: make inline when dispatch overhead exceeds edit cost. Tools: planning reads; `task` dispatch.\n</role>\n\n<rules>\n1. NEVER yield before closure. Phase completion is not a yield point: launch the next phase in the same turn. Stop only when every requested item is verifiably done or concrete `[blocked]` genuinely requires the user.\n2. Before dispatch, enumerate the full surface. Expand referenced audits, plans, checklists, phase lists, and file lists into flat items. \"Most\"/\"important\" items is failure. Re-read source documents; NEVER work from memory.\n3. Parallelize maximally; NEVER launch one-off `task`. Disjoint-scope edits MUST be parallel `task` calls in one message. Divisible work: split and dispatch together, never serially. Before exactly one subagent: find parallel work and dispatch it, or make the small change inline. Serialize only when a produced contract—types, schema, shared module—is consumed next; state the dependency.\n4. Every `task` self-contained; subagents share no context. Specify ≤3–5 explicit target paths (no globs), change APIs/patterns, edge cases, observable acceptance criteria. NEVER assume a shared plan.\n5. Verify each phase before the next. Breakage: dispatch fix-up subagents, then re-verify before advancing. NEVER declare a red tree done.\n6. Commit only if requested or repo workflow expects it: after each green phase, focused phase-naming message. NEVER commit red trees or unrequested work.\n7. Incomplete/wrong subagent work: spawn corrective subagent specifying the gap; NEVER silently fix it inline.\n8. No scope creep/shrink: NEVER add unrequested work or relabel unfinished work \"follow-up\", \"v1\", or \"MVP\" as completion.\n9. Subagents NEVER verify, lint, or format. Every `task` MUST say to skip gates/formatters; edit only. At phase end, orchestrator verifies and formats once across the union of changed files, avoiding redundant/racing formatter runs.\n10. Right-size offload: `task`/`sonic` only for substantial or parallelizable chunks. Trivial self-contained mechanical edits—delete one redundant glob, fix one config line, rename one symbol in one file—make inline; dispatch costs more than Target/Change/Acceptance description.\n</rules>\n\n<workflow>\n1. Ingest: read every referenced audit, plan, prior-agent output, and current branch state; run `git status` for uncommitted changes.\n2. Plan: materialize full work surface; list each phase's parallel units.\n3. Dispatch: launch all parallel `task` subagents in one message; collect every auto-delivered result before advancing.\n4. Verify: run gates; on failure dispatch fix-ups and re-verify. Never advance on red.\n5. Commit if applicable: focused phase-naming message.\n6. Advance: immediately start next. No inter-phase summary.\n7. Final verification: after last green phase, rerun full gates; confirm every item closed; yield terse status, not recap.\n</workflow>\n\n<anti-patterns>\n- Doing substantial/parallelizable work yourself rather than fanning out.\n- `task`/`sonic` Target/Change/Acceptance scaffolding for one trivial edit (for example, one redundant config line): edit inline.\n- Yielding after phase 1 with \"ready to continue?\".\n- Serial subagent dispatch when five can run in parallel.\n- Skipping between-phase verification because change \"looked safe\".\n- - Chat progress summaries instead of advancing.\n</anti-patterns>\n</system-notice>"
+      ]
+    }
+  ],
+  "hooks": [
+    {
+      "event": "before_agent_start",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "thinking": "high"
+    },
+    {
+      "event": "context",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "thinking": "high"
+    },
+    {
+      "event": "tool_call",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "thinking": "high",
+      "toolName": "task",
+      "input": {
+        "agent": "fixture-scout",
+        "task": "Read-only child assignment",
+        "solutionSpace": "fixed deterministic fixture",
+        "effort": "lo"
+      }
+    },
+    {
+      "event": "before_agent_start",
+      "agent": {
+        "kind": "sub",
+        "id": "SurprisingBuzzard",
+        "name": "fixture-scout",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "thinking": "high"
+    },
+    {
+      "event": "context",
+      "agent": {
+        "kind": "sub",
+        "id": "SurprisingBuzzard",
+        "name": "fixture-scout",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "thinking": "high"
+    },
+    {
+      "event": "tool_call",
+      "agent": {
+        "kind": "sub",
+        "id": "SurprisingBuzzard",
+        "name": "fixture-scout",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "thinking": "high",
+      "toolName": "yield",
+      "input": {
+        "data": {
+          "text": "CHILD_OK"
+        }
+      }
+    },
+    {
+      "event": "context",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "thinking": "high"
+    }
+  ],
+  "taskResult": {
+    "content": [
+      {
+        "type": "text",
+        "text": "<task-result id=\"SurprisingBuzzard\" agent=\"fixture-scout\" status=\"completed\" duration=\"190ms\">\n<meta lines=\"3\" size=\"24B\" />\n<output>\n{\n  \"text\": \"CHILD_OK\"\n}\n</output>\n</task-result>"
+      }
+    ],
+    "details": {
+      "projectAgentsDir": null,
+      "results": [
+        {
+          "index": 0,
+          "id": "SurprisingBuzzard",
+          "agent": "fixture-scout",
+          "agentSource": "user",
+          "task": "Complete assignment thoroughly:\n\norchestrate workflowz ultrathink\n\nRead-only child assignment",
+          "assignment": "orchestrate workflowz ultrathink\n\nRead-only child assignment",
+          "description": "PARENT_OK",
+          "exitCode": 0,
+          "output": "{\n  \"text\": \"CHILD_OK\"\n}",
+          "stderr": "",
+          "truncated": false,
+          "durationMs": 183,
+          "tokens": 0,
+          "requests": 1,
+          "contextWindow": 200000,
+          "modelOverride": [
+            "fixture/worker:medium"
+          ],
+          "resolvedModel": "fixture/worker:high",
+          "resolvedModelIdentity": "fixture/worker",
+          "resolvedThinkingLevel": "high",
+          "resolvedModelIsFallback": false,
+          "aborted": false,
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "totalTokens": 0,
+            "reasoningTokens": 0,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          },
+          "outputPath": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/omp-task-159778ee3ffa0432/SurprisingBuzzard.md",
+          "extractedToolData": {
+            "yield": [
+              {
+                "data": {
+                  "text": "CHILD_OK"
+                },
+                "status": "success"
+              }
+            ]
+          },
+          "outputMeta": {
+            "lineCount": 3,
+            "charCount": 24
+          }
+        }
+      ],
+      "totalDurationMs": 190,
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "reasoningTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "outputPaths": [
+        "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/omp-task-159778ee3ffa0432/SurprisingBuzzard.md"
+      ]
+    }
+  },
+  "assertionsPassed": true,
+  "boundary": "Native task label generation is a separate tool-free auxiliary completion without AgentSession thinking/context hooks; its text inherits the assignment keywords. No installed-app or remote provider acceptance."
+}

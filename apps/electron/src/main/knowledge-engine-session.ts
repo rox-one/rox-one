@@ -6,13 +6,13 @@
  * are never sent to the renderer.
  */
 import { session } from 'electron'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
+import { getCredentialManager } from '@rox/shared/credentials'
 import {
   KnowledgeConnectionsStore,
   SIYUAN_LOCAL_CONNECTION_ID,
   credentialIdFromRef,
   type KnowledgeConnectionRecord,
-} from '@craft-agent/server-core/knowledge'
+} from '@rox/server-core/knowledge'
 
 export const KNOWLEDGE_ENGINE_PARTITION = 'persist:knowledge-engine'
 

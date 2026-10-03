@@ -40,7 +40,7 @@ import type {
   PageScriptRuntime,
   PageConfig,
   PageRenderLease,
-} from '@craft-agent/core';
+} from '@rox/core';
 import { CONFIG_DIR } from '../config/paths.ts';
 import { createLogger } from '../utils/debug.ts';
 import { redactSensitiveValues } from '../utils/redaction.ts';

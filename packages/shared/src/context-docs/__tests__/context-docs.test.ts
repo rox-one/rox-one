@@ -31,15 +31,16 @@ import { getSystemPrompt } from '../../prompts/system.ts';
 
 const originalCwd = process.cwd();
 const originalConfigDir = process.env.CRAFT_CONFIG_DIR;
+const originalRoxConfigDir = process.env.ROX_CONFIG_DIR;
 
 const SOUL_TEMPLATE = `<!-- context-doc-version: 1 -->
-# Soul — Craft Agent
+# Soul — ROX
 
 SOUL_TEMPLATE_MARKER: direct tone, evidence-first.
 `;
 
 const RULES_TEMPLATE = `<!-- context-doc-version: 1 -->
-# Rules — Craft Agent
+# Rules — ROX
 
 RULES_TEMPLATE_MARKER: skills first, verify before done.
 `;
@@ -59,6 +60,7 @@ function setupDirs(): TestDirs {
   writeFileSync(join(templatesDir, 'soul.md'), SOUL_TEMPLATE);
   writeFileSync(join(templatesDir, 'rules.md'), RULES_TEMPLATE);
   process.env.CRAFT_CONFIG_DIR = configDir;
+  process.env.ROX_CONFIG_DIR = configDir;
   process.chdir(bundleRoot); // getBundledAssetsDir('context') resolves <cwd>/resources/context
   return { bundleRoot, configDir, templatesDir, docsDir: join(configDir, 'context') };
 }
@@ -70,6 +72,8 @@ function teardownDirs(dirs: TestDirs): void {
 
 afterEach(async () => {
   process.chdir(originalCwd);
+  if (originalRoxConfigDir === undefined) delete process.env.ROX_CONFIG_DIR;
+  else process.env.ROX_CONFIG_DIR = originalRoxConfigDir;
   if (originalConfigDir === undefined) delete process.env.CRAFT_CONFIG_DIR;
   else process.env.CRAFT_CONFIG_DIR = originalConfigDir;
   try {
@@ -398,5 +402,20 @@ describe('locallyEdited body comparison', () => {
     } finally {
       teardownDirs(dirs);
     }
+  });
+});
+
+describe('ROX context path isolation', () => {
+  it('uses ROX_CONFIG_DIR without an alias and ignores a conflicting legacy override', () => {
+    const dirs = setupDirs();
+    try {
+      delete process.env.CRAFT_CONFIG_DIR;
+      ensureContextDocs();
+      expect(readContextDoc('rules.md').content).toBe(RULES_TEMPLATE);
+      process.env.CRAFT_CONFIG_DIR = join(dirs.bundleRoot, 'legacy-unrelated');
+      writeContextDoc('rules.md', 'ROX_RULES_MARKER');
+      expect(getContextDocsPromptBlock()).toContain('ROX_RULES_MARKER');
+      expect(existsSync(join(dirs.bundleRoot, 'legacy-unrelated'))).toBe(false);
+    } finally { teardownDirs(dirs); }
   });
 });

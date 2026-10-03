@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { isAgentErrorCode } from '@craft-agent/core/types'
+import { isAgentErrorCode } from '@rox/core/types'
 import {
   parseError,
   classifyOmpStartupExit,

@@ -2,14 +2,14 @@
  * Pi SDK Event Adapter
  *
  * Maps Pi Agent Core events (AgentEvent / AgentSessionEvent) to
- * Craft Agent's AgentEvent format for UI compatibility.
+ * ROX's AgentEvent format for UI compatibility.
  *
  * Pi emits fine-grained lifecycle events. We translate them into
  * the same event vocabulary the renderer already understands from
  * Claude / Codex / Copilot backends.
  */
 
-import type { AgentEvent as CraftAgentEvent } from '@craft-agent/core/types';
+import type { AgentEvent as CraftAgentEvent } from '@rox/core/types';
 import type {
   AgentEvent as PiAgentEvent,
 } from '@earendil-works/pi-agent-core';
@@ -65,7 +65,7 @@ const RETRYABLE_PROVIDER_SIDE_PATTERN =
 type PiEvent = PiAgentEvent | AgentSessionEvent;
 
 /**
- * Maps Pi SDK events to Craft AgentEvents for UI compatibility.
+ * Maps Pi SDK events to ROXEvents for UI compatibility.
  *
  * Event mapping:
  * - message_update (text_delta in assistantMessageEvent) → text_delta
@@ -349,7 +349,7 @@ export class PiEventAdapter extends BaseEventAdapter {
   }
 
   /**
-   * Adapt a Pi SDK event to zero or more Craft AgentEvents.
+   * Adapt a Pi SDK event to zero or more ROXEvents.
    */
   *adaptEvent(event: PiEvent): Generator<CraftAgentEvent> {
     // Craft-injected event from pi-agent-server (not part of the Pi SDK).

@@ -5,8 +5,8 @@ import {
   type SshConnectionStatus,
 } from '../ssh-tunnel/connection-resolver.ts'
 import { isSshBacked } from '../../shared/ssh.ts'
-import type { RemoteServerConfig } from '@craft-agent/core/types'
-import type { SshHostConfig } from '@craft-agent/shared/config'
+import type { RemoteServerConfig } from '@rox/core/types'
+import type { SshHostConfig } from '@rox/shared/config'
 
 const HOST: SshHostConfig = {
   id: 'my-host',

@@ -7,7 +7,7 @@ import {
   createAutomationsProvider,
   createKnowledgeProvider,
 } from '../omnibox-providers'
-import type { ResourceSearchContext } from '@craft-agent/core/platform'
+import type { ResourceSearchContext } from '@rox/core/platform'
 import { parseRoute } from '../../../shared/route-parser'
 import { searchHitRoute } from '@/knowledge/KnowledgeHome'
 

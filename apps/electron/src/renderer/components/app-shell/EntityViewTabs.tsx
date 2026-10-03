@@ -15,7 +15,7 @@ import {
   Share2,
   type LucideIcon,
 } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { cn } from '@/lib/utils'
 import * as storage from '@/lib/local-storage'
 

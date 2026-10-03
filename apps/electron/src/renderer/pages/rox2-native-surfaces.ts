@@ -11,7 +11,7 @@ import {
   type Rox2Entity,
   type Rox2EntityKind,
   type Rox2Result,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const NATIVE_RAIL_SURFACE_IDS = [
   'projects',

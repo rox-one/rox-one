@@ -3,7 +3,7 @@
  *
  * Output conventions (agent-readable markdown-ish text):
  * - Every payload carries provenance: connection id, `provider/kind/id` refs and
- *   `siyuan://` deep links (grammar owned by @craft-agent/core/knowledge refs.ts —
+ *   `siyuan://` deep links (grammar owned by @rox/core/knowledge refs.ts —
  *   never re-implemented here).
  * - Responses are bounded: item/snippet/body caps live next to the handlers that
  *   enforce them; truncation is always signposted with a visible marker.
@@ -13,8 +13,8 @@
  *   never throw raw and never hang.
  */
 
-import { KnowledgeError, serializeKnowledgeRef, siyuanDeepLink } from '@craft-agent/core/knowledge';
-import type { KnowledgeRef } from '@craft-agent/core/knowledge';
+import { KnowledgeError, serializeKnowledgeRef, siyuanDeepLink } from '@rox/core/knowledge';
+import type { KnowledgeRef } from '@rox/core/knowledge';
 import type { ToolResult } from '../types.ts';
 import { errorResponse } from '../response.ts';
 import { getKnowledgeToolRuntime, type KnowledgeToolRuntime } from './runtime.ts';

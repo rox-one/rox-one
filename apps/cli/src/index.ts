@@ -8,8 +8,8 @@
  */
 
 import { resolve } from 'path'
-import { formatTypedErrorForCli } from '@craft-agent/shared/agent'
-import { getEnv } from '@craft-agent/shared/config'
+import { formatTypedErrorForCli } from '@rox/shared/agent'
+import { getEnv } from '@rox/shared/config'
 import { CliRpcClient } from './client.ts'
 
 export function formatCliSessionError(ev: { type: string; error?: unknown }): string | null {
