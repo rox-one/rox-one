@@ -653,6 +653,20 @@ export function FreeFormInput({
   const [isFocused, setIsFocused] = React.useState(false)
   const [inputMaxHeight, setInputMaxHeight] = React.useState(540)
   const [modelDropdownOpen, setModelDropdownOpen] = React.useState(false)
+  const modelPickerObservation = React.useRef<{ observation: TourObservation | null; emitted: boolean } | null>(null)
+  React.useEffect(() => {
+    const pending = modelPickerObservation.current
+    if (!pending) return
+    if (modelDropdownOpen && !pending.emitted) {
+      // Native DropdownMenu registration commits before this parent effect publishes evidence.
+      tourSignals.handoff(pending.observation, true)
+      pending.emitted = true
+      tourSignals.emit(pending.observation, 'model-picker.opened', 'observed', 'ui-observation')
+    } else if (!modelDropdownOpen) {
+      modelPickerObservation.current = null
+      if (pending.emitted) tourSignals.handoff(pending.observation, false)
+    }
+  }, [modelDropdownOpen, tourSignals])
 
   // Input settings (loaded from config)
   const [autoCapitalisation, setAutoCapitalisation] = React.useState(true)
@@ -2467,7 +2481,10 @@ export function FreeFormInput({
           <div className="flex items-center shrink-0">
           {/* 5. Model/Connection Selector - Hidden in compact mode (EditPopover embedding) */}
           {!compactMode && (
-          <DropdownMenu open={modelDropdownOpen} onOpenChange={next => { const observation = next ? tourSignals.capture() : null; setModelDropdownOpen(next); if (next) tourSignals.emit(observation, 'model-picker.opened', 'observed', 'ui-observation') }}>
+          <DropdownMenu open={modelDropdownOpen} onOpenChange={next => {
+            if (next) modelPickerObservation.current = { observation: tourSignals.capture(), emitted: false }
+            setModelDropdownOpen(next)
+          }}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>

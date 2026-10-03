@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
