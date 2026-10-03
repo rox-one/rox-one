@@ -73,7 +73,12 @@ function auditDeniedOrganizationMutation<T>(
 export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void {
   ensureLocalUserIdentity()
 
-  server.handle(RPC_CHANNELS.orgs.LIST, async (ctx) => {
+  // Organization/account administration needs an Electron-main binding.
+  // Only the actor-scoped self-profile handlers explicitly opt into native access.
+  const handle: RpcServer['handle'] = (channel, handler, options) =>
+    server.handle(channel, handler, { access: 'localElectron', ...options })
+
+  handle(RPC_CHANNELS.orgs.LIST, async (ctx) => {
     const listed = rpcOrgsListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []
     const principal = ctx.principal
@@ -85,7 +90,7 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
     }))
   }, { nativeAction: 'read' })
 
-  server.handle(RPC_CHANNELS.orgs.CREATE, async (ctx, input: CreateOrganizationInput) => {
+  handle(RPC_CHANNELS.orgs.CREATE, async (ctx, input: CreateOrganizationInput) => {
     const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: input?.name || 'org' })
     if (!isClaimableLive(act)) throw new Error('org create is not live')
     const org = createOrganization(input ?? { name: '' }, actorFromContext(ctx))
@@ -93,7 +98,7 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
     return org
   }, { nativeAction: 'write' })
 
-  server.handle(RPC_CHANNELS.orgs.INVITE, async (ctx, input: InviteToOrgInput) => {
+  handle(RPC_CHANNELS.orgs.INVITE, async (ctx, input: InviteToOrgInput) => {
     const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: input?.orgId || 'invite' })
     if (!isClaimableLive(act)) throw new Error('org invite is not live')
     return auditDeniedOrganizationMutation(ctx, input?.orgId ?? '', 'invite', () =>
@@ -101,7 +106,7 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
     )
   }, { nativeAction: 'write' })
 
-  server.handle(RPC_CHANNELS.orgs.ACCEPT, async (ctx, input: AcceptInviteInput) => {
+  handle(RPC_CHANNELS.orgs.ACCEPT, async (ctx, input: AcceptInviteInput) => {
     const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: input?.token || 'invite' })
     if (!isClaimableLive(act)) throw new Error('org accept is not live')
     const orgId = findInviteByToken(input.token)?.orgId ?? ''
@@ -110,7 +115,7 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
     )
   }, { nativeAction: 'write' })
 
-  server.handle(
+  handle(
     RPC_CHANNELS.orgs.UPDATE_MEMBER_ROLE,
     async (ctx, orgId: string, userId: string, role: OrgRole) => {
       const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: orgId || 'role' })
@@ -123,7 +128,7 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
     { nativeAction: 'write' },
   )
 
-  server.handle(
+  handle(
     RPC_CHANNELS.orgs.REMOVE_MEMBER,
     async (ctx, orgId: string, userId: string) => {
       const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: orgId || 'remove-member' })
@@ -135,7 +140,7 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
     { nativeAction: 'write' },
   )
 
-  server.handle(
+  handle(
     RPC_CHANNELS.orgs.REVOKE_INVITE,
     async (ctx, orgId: string, inviteId: string) => {
       const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: orgId || 'revoke-invite' })
@@ -147,14 +152,14 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
     { nativeAction: 'write' },
   )
 
-  server.handle(RPC_CHANNELS.orgs.LIST_MEMBERS, async (ctx, orgId: string) => {
+  handle(RPC_CHANNELS.orgs.LIST_MEMBERS, async (ctx, orgId: string) => {
     const read = rpcOrgsReadResult({ source: 'native', nativeId: orgId })
     if (!isClaimableLive(read.result)) return []
     const viewerUserId = ctx.principal?.subject ?? getLocalIdentity().userId
     return listOrgMembers(orgId, viewerUserId)
   }, { nativeAction: 'read' })
 
-  server.handle(RPC_CHANNELS.orgs.GET_IDENTITY, async (ctx): Promise<OrgCallerIdentity> => {
+  handle(RPC_CHANNELS.orgs.GET_IDENTITY, async (ctx): Promise<OrgCallerIdentity> => {
     const read = rpcOrgsReadResult({ source: 'native', nativeId: 'local' })
     if (!isClaimableLive(read.result)) throw new Error('org identity is not live')
     const principal = ctx.principal
@@ -164,9 +169,9 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
         ...deps.nativeData.authority.getSelfProfile(principal, ctx.workspaceId) }
     }
     return { ...getLocalIdentity(), authority: 'local' }
-  }, { nativeAction: 'read' })
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 
-  server.handle(
+  handle(
     RPC_CHANNELS.orgs.UPDATE_IDENTITY,
     async (
       ctx,
@@ -197,10 +202,12 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
       loadPreferences()
       return getLocalIdentity()
     },
-    { access: 'localElectron', nativeAction: 'read' },
+    // A native read grant permits editing only the authenticated actor's
+    // private display name; organization/account mutations remain local.
+    { access: 'nativeOrLocalElectron', nativeAction: 'read' },
   )
 
-  server.handle(
+  handle(
     RPC_CHANNELS.orgs.SET_WORKSPACE_ORG,
     async (_ctx, workspaceId: string, orgId: string | null) => {
       if (typeof workspaceId !== 'string' || !workspaceId.trim()) {

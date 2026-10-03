@@ -3,7 +3,7 @@
  * transcript search, summary prompt/parse). No I/O.
  */
 import type { LocalMeeting, LocalTranscriptSegment } from '../../../shared/meetings-local'
-import { planMeetingActions, type MeetingProfileId } from '@rox/shared/meeting-agents'
+import { planMeetingActions, type MeetingProfileId } from '@rox/shared/meeting-agents/browser'
 
 export type LocalBucket = 'all' | 'today' | 'upcoming' | 'past' | 'live' | 'needsAction'
 

@@ -103,7 +103,11 @@ export function MobileAppMenu(props: AppMenuProps) {
   const [isDebugMode, setIsDebugMode] = useState(false)
 
   useEffect(() => {
-    window.electronAPI.isDebugMode().then(setIsDebugMode)
+    let active = true
+    void window.electronAPI.isDebugMode().then(value => {
+      if (active) setIsDebugMode(value)
+    }).catch(() => {})
+    return () => { active = false }
   }, [])
 
   const pages = useMemo(

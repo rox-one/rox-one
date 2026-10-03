@@ -17,7 +17,9 @@ import {
   useListKeys,
 } from '@/components/mode-screen/ModeScreen'
 import { navigate, routes } from '@/lib/navigate'
-import { createPersonalTask } from '@/lib/extra-screens/personal-task-bridge'
+import { useConfirmedTaskConversion } from '@/hooks/useConfirmedTaskConversion'
+import { useAtomValue } from 'jotai'
+import { windowWorkspaceIdAtom } from '@/atoms/sessions'
 import type { LocalMeeting } from '../../../../shared/meetings-local'
 import type { MailAttachment, MailFolder, MailFolderRole, MailMessage, MailPickedFile, MailSummary } from '../../../../shared/mail-local'
 import { mailSrcdoc, sanitizeMailHtml } from './mail-sanitize'
@@ -225,7 +227,7 @@ export function MailStatusBlock({ mail }: { mail: MailController }) {
       ) : s.state === 'provisioning' ? (
         <EmptyState title={t('inbox.mail.status.provisioning')} />
       ) : s.state === 'unreachable' ? (
-        <EmptyState title={t('inbox.mail.status.unreachable', { url: s.serverUrl })} body={t('inbox.mail.unreachableBody', { url: s.serverUrl })} action={serverForm} />
+        <EmptyState title={s.configured === false && !s.address ? t('inbox.mail.status.noMailbox') : t('inbox.mail.status.unreachable', { url: s.serverUrl })} body={t('inbox.mail.unreachableBody', { url: s.serverUrl })} action={serverForm} />
       ) : (
         <EmptyState title={t('inbox.mail.status.disabled', { flag: s.flag })} />
       )}
@@ -313,6 +315,7 @@ export function MailReader({ mail, message, onCompose, onEditDraft, onAfterRemov
   compact?: boolean
 }) {
   const { t } = useTranslation()
+  const workspaceId = useAtomValue(windowWorkspaceIdAtom)
   const fmt = useFormatters()
   const [notice, setNotice] = useState<{ text: string; path?: string; task?: boolean } | null>(null)
   const [picking, setPicking] = useState(false)
@@ -347,13 +350,12 @@ export function MailReader({ mail, message, onCompose, onEditDraft, onAfterRemov
     const r = await mail.act((api) => api.saveAttachment(emailId, a))
     setNotice({ text: t('inbox.mail.saved'), path: r.path })
   })
-  const toTask = () => {
-    const task = createPersonalTask({
+  const taskConversion = useConfirmedTaskConversion({ sourceKey: JSON.stringify([workspaceId, mail.status?.address, message.id]), source: message, workspaceId,
+    input: {
       title: message.subject.trim() || t('inbox.mail.noSubject'),
       notes: `${t('inbox.mail.from')}: ${addressLine(message.from)}\n${fmt.full(message.receivedAt)}\nmail-thread:${message.threadId}\n\n${message.preview}`,
-    })
-    setNotice({ text: t('inbox.mail.taskCreated'), task: !!task })
-  }
+    },
+  })
 
   return (
     <div className="flex min-h-full flex-col px-5 py-4" data-testid="mail-reader" data-id={message.id}>
@@ -377,10 +379,12 @@ export function MailReader({ mail, message, onCompose, onEditDraft, onAfterRemov
         </Button>
       </div>
       <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
-        <Button variant="ghost" onClick={toTask} data-testid="mail-to-task">{t('inbox.mail.toTask')}</Button>
+        <Button variant="ghost" disabled={taskConversion.busy || !!taskConversion.taskId} onClick={() => { void taskConversion.convert() }} data-testid="mail-to-task">{t('inbox.mail.toTask')}</Button>
         <Button variant="ghost" onClick={() => setPicking((v) => !v)} data-testid="mail-to-meeting" aria-expanded={picking}>{t('inbox.mail.toMeeting')}</Button>
       </div>
       {picking ? <MeetingPicker message={message} onDone={(text) => { setPicking(false); setNotice({ text }) }} /> : null}
+      {taskConversion.failed ? <div role="alert" data-testid="mail-task-error">{t('tasks.toastCreateFailed')}</div> : null}
+      {taskConversion.taskId ? <div role="status" data-testid="mail-task-created"><span>{t('inbox.mail.taskCreated')}</span><Button variant="ghost" onClick={() => navigate(routes.view.tasks(taskConversion.taskId!))}>{t('inbox.mail.openTask')}</Button></div> : null}
       {notice ? (
         <div role="status" className="mt-2 flex items-center gap-2 rounded-[6px] bg-foreground/[0.05] px-2.5 py-1.5 text-[12px]" data-testid="mail-notice">
           <span className="min-w-0 flex-1 truncate">{notice.text}</span>

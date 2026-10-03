@@ -106,6 +106,7 @@ import { CompactModelSelector } from './CompactModelSelector'
 import {
   formatTokenCount,
   getConnectionModelsForPicker,
+  getRuntimeModelsForPicker,
   getConnectionPickerMeta,
   groupConnectionsByProvider,
   stripPiPrefixForDisplay,
@@ -411,6 +412,8 @@ export function FreeFormInput({
   // Uses optional variant so playground (no provider) doesn't crash.
   const appShellCtx = useOptionalAppShellContext()
   const llmConnections = appShellCtx?.llmConnections ?? []
+  const runtimeSummary = appShellCtx?.sessionModelCatalog === undefined ? appShellCtx?.runtimeSummary : appShellCtx.sessionModelCatalog
+  const hasPublicRuntime = !!appShellCtx?.runtimeSummary || appShellCtx?.sessionModelCatalog !== undefined
   const workspaceDefaultConnection = appShellCtx?.workspaceDefaultLlmConnection
 
   // Derive connectionDefaultModel per-session from the effective connection.
@@ -447,11 +450,11 @@ export function FreeFormInput({
     const connection = llmConnections.find(c => c.slug === effectiveSlug)
 
     if (!connection) {
-      return ANTHROPIC_MODELS // Safety net — shouldn't happen
+      return runtimeSummary ? getRuntimeModelsForPicker(runtimeSummary, currentConnection) : hasPublicRuntime ? [] : ANTHROPIC_MODELS
     }
 
     return dedupModelsById(getConnectionModelsForPicker(connection))
-  }, [llmConnections, currentConnection, workspaceDefaultConnection, connectionUnavailable])
+  }, [llmConnections, runtimeSummary, hasPublicRuntime, currentConnection, workspaceDefaultConnection, connectionUnavailable])
 
   const availableThinkingLevels = THINKING_LEVELS
 
@@ -492,7 +495,7 @@ export function FreeFormInput({
   }, [llmConnections, currentConnection])
 
   // Effective connection: canonical fallback chain (session → workspace default → global default → first)
-  const effectiveConnection = resolveEffectiveConnectionSlug(currentConnection, workspaceDefaultConnection, llmConnections)
+  const effectiveConnection = appShellCtx?.sessionModelCatalog?.slug ?? resolveEffectiveConnectionSlug(currentConnection, workspaceDefaultConnection, llmConnections) ?? runtimeSummary?.slug
 
   // Effective connection details (with fallbacks) for model list
   // Unlike currentConnectionDetails which is null when no explicit connection is set,
@@ -1138,10 +1141,13 @@ export function FreeFormInput({
   const [homeDir, setHomeDir] = React.useState<string>('')
 
   React.useEffect(() => {
+    let current = true
     setRecentFolders(getRecentWorkingDirs(workspaceId))
-    window.electronAPI?.getHomeDir?.().then((dir: string) => {
-      if (dir) setHomeDir(dir)
-    })
+    setHomeDir('')
+    void window.electronAPI?.getHomeDir?.().then((dir: string) => {
+      if (current && dir) setHomeDir(dir)
+    }).catch(() => { /* A scoped native caller may not read the host home directory. */ })
+    return () => { current = false }
   }, [workspaceId])
 
   // Inline slash command hook (modes, features, and folders)

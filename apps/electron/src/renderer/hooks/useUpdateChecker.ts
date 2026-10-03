@@ -59,7 +59,7 @@ export function useUpdateChecker(): UseUpdateCheckerResult {
       },
       onDismiss: () => {
         // Persist dismissal so we don't show again after app restart
-        window.electronAPI.dismissUpdate(version)
+        void window.electronAPI.dismissUpdate(version).catch(() => {})
       },
     })
   }, [t])
@@ -113,7 +113,11 @@ export function useUpdateChecker(): UseUpdateCheckerResult {
 
   // Load initial state and check if update ready
   useEffect(() => {
+    let active = true
+    let revision = 0
+    let notificationEpoch = 0
     const checkAndNotify = async (info: UpdateInfo) => {
+      const epoch = ++notificationEpoch
       if (info.updateMode === 'manual') {
         showManualUpdateToast(info)
         return
@@ -123,6 +127,7 @@ export function useUpdateChecker(): UseUpdateCheckerResult {
 
       // Check if this version was dismissed
       const dismissedVersion = await window.electronAPI.getDismissedUpdateVersion()
+      if (!active || epoch !== notificationEpoch) return
       if (dismissedVersion === info.latestVersion) {
         return
       }
@@ -132,23 +137,32 @@ export function useUpdateChecker(): UseUpdateCheckerResult {
     }
 
     // Get initial update info
-    window.electronAPI.getUpdateInfo().then((info) => {
+    void window.electronAPI.getUpdateInfo().then((info) => {
+      if (!active || revision !== 0) return
       setUpdateInfo(info)
-      checkAndNotify(info)
+      void checkAndNotify(info).catch(() => {})
+    }).catch(() => {
+      if (active && revision === 0) setUpdateInfo(null)
     })
 
     // Subscribe to update availability changes
     const cleanupAvailable = window.electronAPI.onUpdateAvailable((info) => {
+      if (!active) return
+      revision += 1
       setUpdateInfo(info)
-      checkAndNotify(info)
+      void checkAndNotify(info).catch(() => {})
     })
 
     // Subscribe to download progress updates
     const cleanupProgress = window.electronAPI.onUpdateDownloadProgress((progress) => {
+      if (!active) return
+      revision += 1
       setUpdateInfo((prev) => prev ? { ...prev, downloadProgress: progress } : prev)
     })
 
     return () => {
+      active = false
+      notificationEpoch += 1
       cleanupAvailable()
       cleanupProgress()
     }

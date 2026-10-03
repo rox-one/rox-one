@@ -62,6 +62,7 @@ export const RPC_CHANNELS = {
     GET_PROVENANCE: 'sessions:getProvenance',
     EVENT: 'session:event',
     GET_MODEL: 'session:getModel',
+    GET_MODEL_CATALOG: 'session:getModelCatalog',
     SET_MODEL: 'session:setModel',
     GET_FILES: 'sessions:getFiles',
     GET_NOTES: 'sessions:getNotes',

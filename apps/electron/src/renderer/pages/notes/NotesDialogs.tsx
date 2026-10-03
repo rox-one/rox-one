@@ -71,6 +71,8 @@ export interface NotesDialogsProps {
   // Assets dialog
   assetDialogOpen: boolean
   allAssets: NoteAsset[]
+  assetsUnavailable?: string
+  onRetryAssets?(): void
   orphanAssets: NoteAsset[]
   assetBusy: boolean
   onAssetDialogOpenChange(open: boolean): void
@@ -115,7 +117,7 @@ export function NotesDialogs({
   deleteDialogOpen, onDeleteDialogOpenChange, onDeleteNote,
   externalChange, onDismissExternalChange, onReloadNote,
   missingLinkTarget, onDismissMissingLink, onCreateMissingLink,
-  assetDialogOpen, allAssets, orphanAssets, assetBusy,
+  assetDialogOpen, allAssets, orphanAssets, assetBusy, assetsUnavailable, onRetryAssets,
   onAssetDialogOpenChange, onImportAsset, onCleanUnusedAssets, onOpenFile,
   onOpenAssetRenameDialog, onDeleteAsset,
   assetRenameTarget, assetRenameName,
@@ -254,24 +256,29 @@ export function NotesDialogs({
           </DialogHeader>
           <div className="flex items-center justify-between gap-2">
             <div className="text-xs text-muted-foreground">
-              {t('notes.dialog.assetsSummary', {
+              {assetsUnavailable ? t('common.unavailable') : t('notes.dialog.assetsSummary', {
                 total: allAssets.length,
                 unused: orphanAssets.length,
               })}
             </div>
             <div className="flex items-center gap-1.5">
-              <Button variant="outline" size="sm" onClick={onImportAsset} disabled={assetBusy}>
+              <Button variant="outline" size="sm" onClick={onImportAsset} disabled={assetBusy || Boolean(assetsUnavailable)}>
                 <Upload className="mr-1.5 h-3.5 w-3.5" />
                 {t('notes.dialog.import')}
               </Button>
-              <Button variant="outline" size="sm" onClick={onCleanUnusedAssets} disabled={assetBusy || orphanAssets.length === 0}>
+              <Button variant="outline" size="sm" onClick={onCleanUnusedAssets} disabled={assetBusy || Boolean(assetsUnavailable) || orphanAssets.length === 0}>
                 <Eraser className="mr-1.5 h-3.5 w-3.5" />
                 {t('notes.dialog.cleanUnused')}
               </Button>
             </div>
           </div>
           <div className="max-h-[420px] overflow-y-auto rounded-[6px] border border-border/60">
-            {allAssets.length ? allAssets.map(asset => {
+            {assetsUnavailable ? (
+              <div className="space-y-2 px-3 py-10 text-center text-xs text-muted-foreground" data-testid="notes-dialog-assets-unavailable" data-error-code={assetsUnavailable}>
+                <p role="status">{t('common.unavailable')}</p>
+                <Button variant="outline" size="sm" onClick={onRetryAssets}>{t('common.retry')}</Button>
+              </div>
+            ) : allAssets.length ? allAssets.map(asset => {
               const refCount = asset.referencedBy?.length ?? 0
               const refLabel = asset.referencedBy?.slice(0, 2).map(ref => ref.title).join(', ')
               return (
@@ -316,7 +323,7 @@ export function NotesDialogs({
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => onAssetRenameTargetChange(null)}>{t('notes.dialog.cancel')}</Button>
-            <Button onClick={onRenameAsset} disabled={assetBusy || !assetRenameName.trim()}>{t('notes.dialog.rename')}</Button>
+            <Button onClick={onRenameAsset} disabled={assetBusy || Boolean(assetsUnavailable) || !assetRenameName.trim()}>{t('notes.dialog.rename')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -10,7 +10,7 @@ import {
   getBuiltinSourceCredential,
 } from '../builtin-sources.ts';
 import { computeSourceTokenStats } from '../source-stats.ts';
-import { getSourcesBySlugs, isSourceUsable, loadSource, loadWorkspaceSources } from '../storage.ts';
+import { getSourcesBySlugs, isSourceUsable, loadSource, loadWorkspaceSources, markSourceAuthenticated, saveSourceConfig } from '../storage.ts';
 import { sourceNeedsAuthentication } from '../credential-manager.ts';
 import { SERVER_SERVICE_KEYS } from '../../config/server-services.ts';
 
@@ -155,5 +155,61 @@ describe('builtin sources seed', () => {
     const source = loadSource(dir, 'exa')!;
     expect(source.config.connectionStatus).toBe('needs_auth');
     expect(isSourceUsable(source)).toBe(false);
+  });
+
+  it('does not persist shared authentication through rename, toggle or a serialized source update', () => {
+    ensureBuiltinSources(dir);
+    process.env.EXA_API_KEY = 'fixture-shared';
+    const projected = loadSource(dir, 'exa')!;
+    expect(projected.config).toMatchObject({ isAuthenticated: true });
+    const updated = JSON.parse(JSON.stringify(projected.config));
+    saveSourceConfig(dir, { ...updated, name: 'Renamed research', enabled: false });
+    const stored = JSON.parse(readFileSync(join(dir, 'sources', 'exa', 'config.json'), 'utf8'));
+    expect(stored.isAuthenticated).toBe(false);
+    expect(stored.connectionStatus).toBe('needs_auth');
+    expect(stored.builtinCredentialProjection).toBeUndefined();
+    saveSourceConfig(dir, { ...loadSource(dir, 'exa')!.config, enabled: true });
+    delete process.env.EXA_API_KEY;
+    const reloaded = loadSource(dir, 'exa')!;
+    expect(reloaded.config.name).toBe('Renamed research');
+    expect(reloaded.config.connectionStatus).toBe('needs_auth');
+    expect(reloaded.config).toMatchObject({ isAuthenticated: false });
+    expect(isSourceUsable(reloaded)).toBe(false);
+    // A session holding the previously loaded object cannot keep stale availability.
+    expect(isSourceUsable(projected)).toBe(false);
+  });
+
+  it('preserves user authentication established while a shared credential is available', () => {
+    ensureBuiltinSources(dir);
+    process.env.EXA_API_KEY = 'fixture-shared';
+    expect(markSourceAuthenticated(dir, 'exa')).toBe(true);
+    saveSourceConfig(dir, { ...loadSource(dir, 'exa')!.config, name: 'Personal Exa' });
+    delete process.env.EXA_API_KEY;
+    const source = loadSource(dir, 'exa')!;
+    expect(source.config).toMatchObject({ isAuthenticated: true });
+    expect(source.config.connectionStatus).toBe('connected');
+    expect(isSourceUsable(source)).toBe(true);
+  });
+
+  it('restores a failed user state after shared availability without losing its diagnostic', () => {
+    ensureBuiltinSources(dir);
+    process.env.EXA_API_KEY = 'fixture-shared';
+    const source = loadSource(dir, 'exa')!;
+    saveSourceConfig(dir, { ...source.config, connectionStatus: 'failed', connectionError: 'Provider quota exhausted' });
+    delete process.env.EXA_API_KEY;
+    const reloaded = loadSource(dir, 'exa')!;
+    expect(reloaded.config).toMatchObject({ isAuthenticated: false });
+    expect(reloaded.config.connectionStatus).toBe('failed');
+    expect(reloaded.config.connectionError).toBe('Provider quota exhausted');
+  });
+
+  it('also revokes an in-memory compatibility builtin after key withdrawal', () => {
+    process.env.EXA_API_KEY = 'fixture-shared';
+    const source = getBuiltinSources('ws', dir).find((entry) => entry.config.slug === 'exa')!;
+    expect(isSourceUsable(source)).toBe(true);
+    delete process.env.EXA_API_KEY;
+    expect(isSourceUsable(source)).toBe(false);
+    saveSourceConfig(dir, { ...source.config, name: 'Saved fallback' });
+    expect(loadSource(dir, 'exa')!.config).toMatchObject({ isAuthenticated: false, connectionStatus: 'needs_auth' });
   });
 });
