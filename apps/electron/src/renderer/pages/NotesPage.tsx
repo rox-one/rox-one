@@ -1,9 +1,9 @@
 import * as React from 'react'
-import { NotesResponsiveRail, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
+import { NotesRailTools, NotesResponsiveRail, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
 import { EMPTY_COMMENT_DRAFT, noteCommentDraftKey, updateCommentDraft, type NoteCommentDraft } from './notes/comment-drafts'
 import { capabilityErrorCode, readScopedCapability } from '@/lib/scoped-capability-read'
 import { hasNativeNotesTransport } from '@/lib/notes-capability'
-import { CalendarDays, ListTree, MessageSquare, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, Paperclip, Pencil, Plus, Search, SquarePen, Tags, Trash2 } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, Paperclip, Pencil, Plus, Search, SquarePen, Tags, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
@@ -2292,10 +2292,7 @@ h1,h2,h3{margin-top:1.5em}
             capabilities={noteViewCapabilities}
             className="min-w-0 flex-wrap"
           />
-          {noteView === 'standard' ? <div className="ml-auto flex shrink-0 gap-1 pr-2">
-            <button type="button" className="grid size-7 place-items-center rounded-md hover:bg-foreground/[0.08]" aria-label={t('notes.toc.title')} title={t('notes.toc.title')} aria-haspopup="dialog" aria-expanded={tocShown || railSheet === 'toc'} onClick={() => { if (tocShown) setRailLayout({ tocCollapsed: true }); else setRailSheet('toc') }}><ListTree className="size-3.5" aria-hidden /></button>
-            <button type="button" className="grid size-7 place-items-center rounded-md hover:bg-foreground/[0.08]" aria-label={t('notes.comments.title')} title={t('notes.comments.title')} aria-haspopup="dialog" aria-expanded={commentsShown || railSheet === 'comments'} onClick={() => { if (commentsShown) setRailLayout({ commentsCollapsed: true }); else setRailSheet('comments') }}><MessageSquare className="size-3.5" aria-hidden /></button>
-          </div> : null}
+          {noteView === 'standard' ? <NotesRailTools tocShown={tocShown} commentsShown={commentsShown} sheet={railSheet} onOpen={setRailSheet} onCollapse={(rail) => setRailLayout({ [`${rail}Collapsed`]: true })} /> : null}
           </div>
         ) : null}
 
@@ -2411,7 +2408,7 @@ h1,h2,h3{margin-top:1.5em}
             </div></div>
           ) : (
             <div ref={setDocRowEl} className="flex h-full min-h-0">
-            <NotesResponsiveRail inline={tocShown} open={railSheet === 'toc'} title={t('notes.toc.title')} onClose={() => setRailSheet(null)}>
+            <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView])} inline={tocShown} open={railSheet === 'toc'} title={t('notes.toc.title')} onClose={() => setRailSheet(null)}>
             <NotesToc
               markdown={content}
               width={railLayout.toc}
@@ -2657,7 +2654,7 @@ h1,h2,h3{margin-top:1.5em}
               label={t('notes.layout.resizeComments')}
               maximumWidth={Math.max(140, docRowWidth - NOTE_COLUMN_MIN - (tocShown ? railLayout.toc : 0))}
             /> : null}
-            {activeNote ? <NotesResponsiveRail inline={commentsShown} open={railSheet === 'comments'} title={t('notes.comments.title')} onClose={() => setRailSheet(null)}>
+            {activeNote ? <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView])} inline={commentsShown} open={railSheet === 'comments'} title={t('notes.comments.title')} onClose={() => setRailSheet(null)}>
               <NotesComments
                 noteId={activeNote.id}
                 draftQuote={commentDraftQuote}

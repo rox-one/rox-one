@@ -78,7 +78,7 @@ export function NotesRailSash({
   collapsed,
   onToggle,
   label,
-  maximumWidth = 480,
+  maximumWidth: requestedMaximumWidth = 480,
 }: {
   width: number
   onWidth: (width: number) => void
@@ -88,6 +88,7 @@ export function NotesRailSash({
   label: string
   maximumWidth?: number
 }) {
+  const maximumWidth = Number.isFinite(requestedMaximumWidth) ? Math.max(140, Math.min(480, Math.round(requestedMaximumWidth))) : 480
   const cleanupRef = React.useRef<(() => void) | null>(null)
   React.useEffect(() => () => cleanupRef.current?.(), [])
   return (
@@ -103,7 +104,7 @@ export function NotesRailSash({
         className="absolute inset-y-0 -left-1 w-2 cursor-col-resize bg-transparent hover:bg-foreground/15 focus-visible:bg-accent/40 focus-visible:outline-none"
         onDoubleClick={onToggle}
         onKeyDown={(event) => {
-          if (event.metaKey || event.ctrlKey || event.altKey) return
+          if (event.nativeEvent?.isComposing || event.keyCode === 229 || event.metaKey || event.ctrlKey || event.altKey) return
           if (event.key === 'Enter') { event.preventDefault(); onToggle?.(); return }
           const next = notesRailKeyWidth(width, event.key, invert, event.shiftKey)
           if (next != null) { event.preventDefault(); onWidth(Math.min(maximumWidth, next)) }

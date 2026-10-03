@@ -97,22 +97,20 @@ describe('actual Notes sash keyboard and pointer ownership', () => {
  })
 })
 
-test('actual NativeNotesPage hidden-tool buttons open sheets without writing saved widths; current view/sidebar/read authority remain consumers', () => {
+test('actual NativeNotesPage delegates tool visibility and current preference callbacks to its production controls', () => {
  const text = readFileSync(join(import.meta.dir, '../../NotesPage.tsx'), 'utf8'), ast = ts.createSourceFile('NotesPage.tsx', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
  const controls: ts.JsxAttribute[] = []
- function visit(node: ts.Node) { if (ts.isJsxAttribute(node) && node.name.getText(ast) === 'onClick' && node.initializer?.getText(ast).includes("setRailSheet('")) controls.push(node); ts.forEachChild(node, visit) }
- visit(ast); expect(controls.length).toBe(2)
- const updates: unknown[] = [], sheets: unknown[] = []
- for (const control of controls) {
-  const arrow = (control.initializer as ts.JsxExpression).expression!.getText(ast)
-  const code = ts.transpileModule(`return (${arrow});`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
-  const fn = new Function('tocShown', 'commentsShown', 'setRailLayout', 'setRailSheet', code)(false, false, (p: unknown) => updates.push(p), (p: unknown) => sheets.push(p)); fn()
- }
- expect(sheets).toEqual(['toc', 'comments']); expect(updates).toEqual([])
+ function visit(node: ts.Node) { if (ts.isJsxAttribute(node) && node.name.getText(ast) === 'onCollapse' && node.initializer?.getText(ast).includes('setRailLayout')) controls.push(node); ts.forEachChild(node, visit) }
+ visit(ast); expect(controls.length).toBe(1)
+ const updates: unknown[] = []
+ const arrow = (controls[0]!.initializer as ts.JsxExpression).expression!.getText(ast)
+ const code = ts.transpileModule(`return (${arrow});`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+ const fn = new Function('setRailLayout', code)((patch: unknown) => updates.push(patch)); fn('toc'); fn('comments')
+ expect(updates).toEqual([{ tocCollapsed: true }, { commentsCollapsed: true }])
+ expect(text).toContain('<NotesRailTools tocShown={tocShown} commentsShown={commentsShown} sheet={railSheet} onOpen={setRailSheet}')
  expect(text).toContain('const NOTE_COLUMN_MIN = 460'); expect(text).toContain('<EntityViewTabs'); expect(text).toContain('<ShellSidebarPortal')
- expect(text).toContain('<NotesResponsiveRail inline={tocShown}'); expect(text).toContain('<NotesResponsiveRail inline={commentsShown}')
+ expect(text).toContain('inline={tocShown}'); expect(text).toContain('inline={commentsShown}')
 })
-
 
 test('actual width observer keeps last useful width while a retained panel is hidden and disconnects on unmount', () => {
  let state = 0, reads = 0, width = 900, disconnected = 0, notify = () => {}
