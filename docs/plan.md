@@ -1,3 +1,10 @@
+## Connections consumer recovery plan — 2026-10-03
+
+1. Freeze source intent and current UI gap; backend1414 is the dependency. pr_scout owns page/lifecycle/device/connection-info consumers only; root owns main integration and SurfaceTabs/remaining Golden semantics.
+2. Restore safe inspect projection and shared committed-scope lifecycle controls, active lease consent, current test/repair/rotate, registered move target and public GitHub device flow. Preserve current page and unrelated inspector contracts.
+3. Exercise actual production page/inspector consumers with controlled backend promises: latest selection, A→B→A, duplicate writes, stale receipts, sanitized errors/retry, confirmations, URI/secret refusal, cancellation/late-start, one poll, slow_down, denial/expiry and scoped import refresh. Retain source history and all locale catalogs.
+4. Reconcile live main, freeze delivered candidate, run scoped UI/projection tests, renderer types/build and localization, record exact source/head/log receipt, push and attach a separate PR. Lead reviews and merges; real native/provider/backend acceptance remains explicit.
+
 ## Golden Gate device diagnostics recovery plan — 2026-10-03
 
 1. Historical scout identified exact source revision and runtime files absent from main; integration worker audited the diagnostic dependency closure and recorded source hashes.
