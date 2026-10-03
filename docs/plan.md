@@ -2,8 +2,15 @@
 
 1. Freeze final a6 source and import only contracts/core/persistence/analytics; pr_scout owns these interfaces, historical_sweep integrates dependent UI/runtime/current consumers without copying old shell/pages.
 2. Inspect evidence/correlation and durable ownership boundaries. Retain original negative controls; reproduce and fix diagnostic accessor validation/serialization race through single captured own data properties, preserving interfaces.
-3. Exercise pure engine and real Chromium IndexedDB across isolated windows, storage/transaction/future-version failures, scoped reset and privacy/retention. Verify renderer types/build without claiming route/native feature acceptance.
+3. Exercise pure engine and real Chromium IndexedDB across isolated windows, storage/transaction/future-version failures, scoped reset and privacy/retention. Verify all foundation modules with strict renderer compiler options and actual browser bundling without claiming route/native feature acceptance.
 4. Reconcile live main, freeze source/proof/log receipt, publish/attach a separate PR. Notify dependent worker of exact interfaces/head and preserve every original branch; lead reviews and merges.
+
+## Golden Gate Settings menu recovery plan — 2026-10-03
+
+1. Verify actual current consumers and source intent before import: current menu is a Popover with no arrow/typeahead model; Appearance and ZenShell custom SettingsRow slots lack label/description relationships.
+2. Recover pure source navigation/context helpers and adapt only current MenuSelect/Row behavior. Preserve existing classes/locale strings and keep SettingsSelect unchanged. pr_scout owns these files; root owns remaining Golden semantic audit and main merge.
+3. Execute real production row/menu/Radix controls: field descriptions/overrides, enabled filtered navigation without commit, typeahead/preview/Escape, search caret/empty result, IME/modifier/default-prevented and disabled choices/control, changing options, selection/focus return. Retain source helper/i18n tests and run Electron/WebUI types, renderer build and locale gates.
+4. Reconcile live main, freeze source/head/proof receipt, publish/attach a separate PR, preserving all original branches. Real native route/screenshot/provider and full feature acceptance remain separate.
 
 # Golden Gate surface tab recovery — 2026-10-03
 
@@ -772,3 +779,11 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 2. Recover the pure keyed draft map and bind current floating composer setters to workspace plus active document identity. Preserve current write/mutation authority and in-page draft lifetime.
 3. Execute actual component state/setters across A/B/workspace changes, stale edit/clear callbacks, missing identity and delimiter collisions. Restore exact pre-change NotesPage for negative proof, then restore candidate before final checks. Run current native read-lifecycle and comment controls plus consumed Electron types.
 4. Publish a separate codex PR with source/head/test provenance; root owns merge. Preserve original Golden branch and mark this one feature separately in its cumulative source disposition.
+
+
+## Golden service navigation and guidance recovery — 2026-10-03
+
+1. Historical integration owns selective `findServicePanel`/focus atom recovery onto the current registry and routes; compose it only into current AppShell root callbacks. Depend on the existing panel stack and its NavigationContext history subscriber. Keep explicit subroutes and compact Settings drill-in.
+2. Recover the source's workspace-scoped dismissal key/helper; compose it into today's flat SidebarChrome/PromoSlot using the existing all-locale `common.dismiss` key. Fence focus by captured workspace and connected/visible profile owner. Keep reminders independent.
+3. Execute actual component callbacks with real panel atoms and controlled local storage: mounted-route/draft preservation, preferred match, missing-service fallback, explicit subroutes, compact mode, durable workspace isolation and stale-callback focus. Verify current DOM keyboard/disclosure, panel lanes, promo policy and Electron types. Run before-source negative controls, restore exact files, reconcile live main without replacing later docs, publish a separate PR and retain all source branches.
+4. Acceptance is bounded source and renderer integration; do not claim installed native UI, old sidebar layout recovery, full Golden source-family completion or production acceptance.

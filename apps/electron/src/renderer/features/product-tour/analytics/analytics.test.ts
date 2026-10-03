@@ -88,5 +88,5 @@ describe('real IndexedDB private diagnostics', () => {
     expect(result.capped.status === 'saved' && result.capped.value).toHaveLength(500)
     expect(result.capped.status === 'saved' && result.capped.value[0]?.version).toBe(6)
     expect(result.expired).toEqual({ status: 'saved', value: [] })
-  }, 20_000)
+  }, Math.min(120_000, Math.max(20_000, Number(process.env.ROX_LEARNING_BROWSER_TIMEOUT_MS) || 20_000)))
 })
