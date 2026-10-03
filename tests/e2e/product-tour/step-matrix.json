@@ -218,8 +218,8 @@
         "kind": "signal",
         "signal": "dictation.inserted",
         "evidence": "observed",
-        "priorState": "after-activation",
-        "requireAcknowledgementAfterEvidence": false
+        "priorState": "same-attempt",
+        "requireAcknowledgementAfterEvidence": true
       },
       "handoff": false,
       "optional": false,
