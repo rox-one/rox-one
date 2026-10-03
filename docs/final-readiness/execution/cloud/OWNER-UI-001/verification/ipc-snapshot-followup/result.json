@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "scope": "Test-only IPC channel snapshot followup",
+  "sourceRevision": "b91f9ef55405794f3f53bcc904066e3aaa06fe4a",
+  "sourceTree": "0cc0aa137ab726a4ade479e1193a3fe993773596",
+  "testedUncommittedFixture": true,
+  "testSourceSha256": {
+    "apps/electron/src/shared/__tests__/ipc-channels.test.ts": "2a17f29561abb0475009283eec0eb4083618c79d25da22e5ece78d251b1f5c04"
+  },
+  "ownedChangedPaths": [
+    "apps/electron/src/shared/__tests__/ipc-channels.test.ts",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/ipc-snapshot-followup/**"
+  ],
+  "productSourceEdited": false,
+  "observedExitCode": 0,
+  "runtime": {
+    "bun": "1.3.14",
+    "bunRevision": "1.3.14+0d9b296af",
+    "node": "v24.21.0"
+  },
+  "failClosedOmpCliOverride": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/omp-forbidden-native-fallback",
+  "noProviderCalls": true,
+  "noProviderCallsScope": "Local IPC snapshot, protocol-routing and workspace-authorization tests only; no OMP/native/provider test launched.",
+  "authStoresChanged": false,
+  "authStoresChangedScope": "Real user/global/auth source stores; tests use configured temporary test roots and foreign-workspace denial before storage.",
+  "snapshotDelta": {
+    "previousExpectedCount": 811,
+    "currentExpectedCount": 812,
+    "addedSortedString": "skills:getDetails",
+    "countExpressionUnchanged": "EXPECTED_CHANNELS.length",
+    "functionalAssertionsUnchanged": true
+  },
+  "canonicalContractEvidence": [
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "line": 639,
+      "symbol": "RPC_CHANNELS.skills.GET_DETAILS"
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "line": 843,
+      "symbol": "REMOTE_ELIGIBLE_CHANNELS entry"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/skills.ts",
+      "line": 35,
+      "symbol": "HANDLED_CHANNELS entry"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/skills.ts",
+      "line": 80,
+      "symbol": "registerSkillsHandlers GET_DETAILS with workspace authorization and nativeAction:read"
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "line": 1922,
+      "symbol": "ElectronAPI.getSkillDetails returns Promise<LoadedSkill|null>"
+    }
+  ],
+  "tests": [
+    {
+      "stage": "file",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./apps/electron/src/shared/__tests__/ipc-channels.test.ts"
+      ],
+      "pid": 98010,
+      "observedExitCode": 0,
+      "durationSeconds": 0.055238962173461914,
+      "log": "../expanded-ipc-snapshot-file-green-b91f9ef.log",
+      "logSha256": "eb5a6b57751a633499dcd042068f086eea21a4d30d22be2de4e6692d926320cc",
+      "counts": {
+        "pass": 7,
+        "fail": 0,
+        "assertions": 7
+      }
+    },
+    {
+      "stage": "protocol-routing",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "./packages/shared/src/protocol/__tests__/routing.test.ts",
+        "./packages/server-core/src/handlers/rpc/__tests__/skills-workspace-auth.test.ts"
+      ],
+      "pid": 98016,
+      "observedExitCode": 0,
+      "durationSeconds": 0.46732211112976074,
+      "log": "../expanded-ipc-snapshot-protocol-routing-green-b91f9ef.log",
+      "logSha256": "04bfec3964223cbce062cb290e2d6951d9b25fa21977d0b72a1513d97316fd47",
+      "counts": {
+        "pass": 25,
+        "fail": 0,
+        "assertions": 1049
+      }
+    }
+  ],
+  "inputHashesBefore": {
+    "apps/electron/src/shared/__tests__/ipc-channels.test.ts": "2a17f29561abb0475009283eec0eb4083618c79d25da22e5ece78d251b1f5c04",
+    "apps/electron/src/shared/types.ts": "3881c305836e3a71fee8e0f62bb71f3c25a2ae223bc5b80d6ef3ccbee71a77e3",
+    "packages/shared/src/protocol/channels.ts": "113bef49350563b5f0cb666d9c99d4d207bb4eac7b38ca70256e6896a2048191",
+    "packages/shared/src/protocol/routing.ts": "e4322f896b2352bcf5cb8e72a1fc882c140597937439cc9d9f692235ecc37604",
+    "packages/shared/src/protocol/__tests__/routing.test.ts": "2dd173c127f8abf668eb98cfb69f882223871336b1d1e2b4c2162051c942ce37",
+    "packages/server-core/src/handlers/rpc/skills.ts": "1d0b170099f4c1d2ef68712ea51bb4e44109510b0e26c3f10c4c2d83129151bc",
+    "packages/server-core/src/handlers/rpc/__tests__/skills-workspace-auth.test.ts": "538da5005b85ae271c3a6eff76460c5d888114c1caece39d0128694f33363b20",
+    "bunfig.toml": "deeae6086535bc87b723805491fb04850c07c23f730fc8764137432cf15bd529",
+    "scripts/test-config-isolation.ts": "8b847732d8c6ef5f3e901914e8cf15178863ef5c1d68ae09a6d2958d94c5a373"
+  },
+  "inputHashesAfter": {
+    "apps/electron/src/shared/__tests__/ipc-channels.test.ts": "2a17f29561abb0475009283eec0eb4083618c79d25da22e5ece78d251b1f5c04",
+    "apps/electron/src/shared/types.ts": "3881c305836e3a71fee8e0f62bb71f3c25a2ae223bc5b80d6ef3ccbee71a77e3",
+    "packages/shared/src/protocol/channels.ts": "113bef49350563b5f0cb666d9c99d4d207bb4eac7b38ca70256e6896a2048191",
+    "packages/shared/src/protocol/routing.ts": "e4322f896b2352bcf5cb8e72a1fc882c140597937439cc9d9f692235ecc37604",
+    "packages/shared/src/protocol/__tests__/routing.test.ts": "2dd173c127f8abf668eb98cfb69f882223871336b1d1e2b4c2162051c942ce37",
+    "packages/server-core/src/handlers/rpc/skills.ts": "1d0b170099f4c1d2ef68712ea51bb4e44109510b0e26c3f10c4c2d83129151bc",
+    "packages/server-core/src/handlers/rpc/__tests__/skills-workspace-auth.test.ts": "538da5005b85ae271c3a6eff76460c5d888114c1caece39d0128694f33363b20",
+    "bunfig.toml": "deeae6086535bc87b723805491fb04850c07c23f730fc8764137432cf15bd529",
+    "scripts/test-config-isolation.ts": "8b847732d8c6ef5f3e901914e8cf15178863ef5c1d68ae09a6d2958d94c5a373"
+  },
+  "inputsStable": true,
+  "sourceRevisionUnchanged": true,
+  "failureHistory": [
+    {
+      "id": "remote-actual-tree-ipc-snapshot",
+      "jobId": 111308616973,
+      "reportedCandidate": "a8ec92a",
+      "actualCheckout": "94a08626e7bf5a5589a5514d23932bbb4d0f68d1",
+      "actualCheckoutTree": "0cc0aa137ab726a4ade479e1193a3fe993773596",
+      "actualMergeTree": "0cc0aa137ab726a4ade479e1193a3fe993773596",
+      "completeTreeEqualityVerifiedLocally": true,
+      "unitSummary": {
+        "pass": 912,
+        "skip": 174,
+        "fail": 2,
+        "assertions": 4057
+      },
+      "cause": "Incoming skills:getDetails canonical channel was absent from the sorted snapshot; both count and exact equality failed.",
+      "log": "logs/expanded-omp-final-ui-a8ec92a-job.log.gz",
+      "logSha256": "c7dff8f522e4e14c05de70819d7d6fdc7c2234d475472feab5acf558a4cd38e5"
+    },
+    {
+      "id": "local-unmodified-snapshot",
+      "observedExitCode": 1,
+      "counts": {
+        "pass": 5,
+        "fail": 2,
+        "assertions": 7
+      },
+      "cause": "Exact same811/812 and missing sortedskills:getDetails mismatch.",
+      "receipt": "expanded-ipc-snapshot-baseline-b91f9ef.json",
+      "log": "logs/expanded-ipc-snapshot-baseline-b91f9ef.log.gz"
+    }
+  ],
+  "qualification": [
+    "Only one expected wire string was added; no hardcoded count, weakened assertion, source API, handler, routing or timeout change.",
+    "Generator named by the snapshot comment (scripts/ipc-inventory.ts) is absent in this checkout; direct one-line snapshot repair was explicitly authorized.",
+    "No broad runtime/typecheck repeated for this test-only snapshot repair; remote CI and separate revision-bound UI proof retain their own receipts."
+  ],
+  "externalPrerequisites": [
+    "Remote CI on the committed followup candidate.",
+    "Original installed-platform/provider acceptance remains separate."
+  ],
+  "fullDoDClosed": false,
+  "logManifest": "log-manifest.json",
+  "createdAt": "2026-10-03T23:00:40.634366+00:00"
+}

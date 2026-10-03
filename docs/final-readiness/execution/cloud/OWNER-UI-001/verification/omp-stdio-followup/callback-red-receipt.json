@@ -1,0 +1,41 @@
+{
+  "inputRevision": "b91f9ef55405794f3f53bcc904066e3aaa06fe4a",
+  "command": [
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+    "test",
+    "./packages/shared/src/agent/__tests__/rox-readiness-ui-001.omp-stdio-close.test.ts"
+  ],
+  "nodeVersion": "v24.21.0",
+  "bunVersion": "1.3.14",
+  "childPid": 59955,
+  "observedExitCode": 1,
+  "startedAt": "2026-10-03T23:15:43.675447+00:00",
+  "finishedAt": "2026-10-03T23:15:45.142876+00:00",
+  "logPath": "logs/expanded-omp-stdio-callback-red-b91.log.gz",
+  "logSha256": "516c845814487609f32eaba2b1cb7542439db8062ff86acfb7ddd97c5aebe94c",
+  "before": {
+    "packages/shared/src/agent/omp-agent.ts": "fbe2b095deedc6f26bf7458fac1594f5e8e5e43874c00f732da5ef06364449f6",
+    "packages/shared/src/agent/omp-rpc-transport.ts": "11015bcd3e12234f87317bc41380ffc721f7e193a8174efcbd53ac2121d8869d",
+    "packages/shared/src/agent/errors.ts": "e01b9f2849882ec5dcd39d51532fd998d634f4e1b4c06acedaae0c32fc6500d2",
+    "packages/shared/src/agent/__tests__/rox-readiness-ui-001.omp-stdio-close.test.ts": "f24bfe9f61ff7a3573ff3a1330208f46c9724db9fc0a5137b15c27e6cb037987",
+    "package.json": "98724000f09751b73e02a3de7393022e5c23a98c27a1576904ae90dff2a0b24c"
+  },
+  "after": {
+    "packages/shared/src/agent/omp-agent.ts": "fbe2b095deedc6f26bf7458fac1594f5e8e5e43874c00f732da5ef06364449f6",
+    "packages/shared/src/agent/omp-rpc-transport.ts": "11015bcd3e12234f87317bc41380ffc721f7e193a8174efcbd53ac2121d8869d",
+    "packages/shared/src/agent/errors.ts": "e01b9f2849882ec5dcd39d51532fd998d634f4e1b4c06acedaae0c32fc6500d2",
+    "packages/shared/src/agent/__tests__/rox-readiness-ui-001.omp-stdio-close.test.ts": "f24bfe9f61ff7a3573ff3a1330208f46c9724db9fc0a5137b15c27e6cb037987",
+    "package.json": "98724000f09751b73e02a3de7393022e5c23a98c27a1576904ae90dff2a0b24c"
+  },
+  "sourcesStable": true,
+  "failClosedOmpCliOverride": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/omp-forbidden-native-fallback",
+  "noProviderCalls": true,
+  "noProcessesSpawnedByTest": true,
+  "counts": {
+    "pass": 1,
+    "fail": 6,
+    "assertions": 11
+  },
+  "rawLogSha256": "516c845814487609f32eaba2b1cb7542439db8062ff86acfb7ddd97c5aebe94c",
+  "archiveSha256": "c654af6e418c2e07be884f4082115a021d9e39611a49ab3b2b05e4520f4dd56e"
+}

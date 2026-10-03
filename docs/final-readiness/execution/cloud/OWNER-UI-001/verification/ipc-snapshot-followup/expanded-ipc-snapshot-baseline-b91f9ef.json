@@ -1,0 +1,15 @@
+{
+  "sourceRevision": "b91f9ef55405794f3f53bcc904066e3aaa06fe4a",
+  "command": [
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+    "test",
+    "./apps/electron/src/shared/__tests__/ipc-channels.test.ts"
+  ],
+  "pid": 96930,
+  "observedExitCode": 1,
+  "durationSeconds": 0.07428622245788574,
+  "testSourceSha256": "f5306442c37f90ba7b3595f1f5cbd6257ebb98dd2ea7d312fc1c21de0e24b50b",
+  "testSourceHashStable": true,
+  "log": "../expanded-ipc-snapshot-baseline-b91f9ef.log",
+  "logSha256": "4dd7bc60fd389bf8c0db27757d4c13ab24a4a200556251ca6145b27e1c74e43a"
+}

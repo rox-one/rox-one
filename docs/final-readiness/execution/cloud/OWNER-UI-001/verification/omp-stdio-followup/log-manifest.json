@@ -1,0 +1,77 @@
+{
+  "createdAt": "2026-10-03T23:23:42.695638+00:00",
+  "logs": [
+    {
+      "role": "callback-red",
+      "path": "logs/expanded-omp-stdio-callback-red-b91.log.gz",
+      "rawSha256": "516c845814487609f32eaba2b1cb7542439db8062ff86acfb7ddd97c5aebe94c",
+      "gzipSha256": "c654af6e418c2e07be884f4082115a021d9e39611a49ab3b2b05e4520f4dd56e",
+      "rawBytes": 22380,
+      "gzipBytes": 3134,
+      "observedExitCode": 1,
+      "counts": {
+        "pass": 1,
+        "fail": 6,
+        "assertions": 11
+      }
+    },
+    {
+      "role": "callback-green",
+      "path": "logs/expanded-omp-stdio-callback-green-b91.log.gz",
+      "rawSha256": "b2d4b02d5387bb548a209df0e1e9d852083f9f20a872cd1822339ac9eebe9fa4",
+      "gzipSha256": "579f66b392892ad9db2407ee93886b5e774d9cc27b80fc167226038ec9a8a5de",
+      "rawBytes": 1296,
+      "gzipBytes": 535,
+      "observedExitCode": 0,
+      "counts": {
+        "pass": 7,
+        "fail": 0,
+        "assertions": 29
+      }
+    },
+    {
+      "role": "relevant-collision",
+      "path": "logs/expanded-omp-stdio-relevant-collision-b91.log.gz",
+      "rawSha256": "1cf46b1c40205c716d5fbfd57555d20f5951ae760149f407ca083be683196e2d",
+      "gzipSha256": "6e192b08ef77fd714c9b691d42c026f741b5b41c0b7e9d43f4a0edc37fae475b",
+      "rawBytes": 11457,
+      "gzipBytes": 3482,
+      "observedExitCode": 0,
+      "counts": {
+        "pass": 80,
+        "fail": 0,
+        "assertions": 414
+      }
+    },
+    {
+      "role": "callback-final",
+      "path": "logs/expanded-omp-stdio-callback-final-b91.log.gz",
+      "rawSha256": "b4f6e8789418aee6c558663eab6a79f835e63b148048c799228438a346aa6d9f",
+      "gzipSha256": "f9cc844be95260b5fa61f97758cbc9e1bca93ce4bcedb8d9d95aee1655e9d01a",
+      "rawBytes": 1294,
+      "gzipBytes": 531,
+      "observedExitCode": 0,
+      "counts": {
+        "pass": 7,
+        "fail": 0,
+        "assertions": 29
+      }
+    },
+    {
+      "role": "historical-remote-onboarding-failure",
+      "path": "logs/expanded-omp-final-validate-a8ec92a-job.log.gz",
+      "rawSha256": "48b02c3dfff53d28d5fef9109148234ae81b2693f0ecf8496124c265d8e1b7e0",
+      "gzipSha256": "bb767a188ca72d42a43cb59e5fdc027b70bab4f1c98bcd7f477294ab6bcb51a6",
+      "rawBytes": 357780,
+      "gzipBytes": 76766,
+      "observedExitCode": 1,
+      "counts": {
+        "pass": 381,
+        "fail": 2,
+        "assertions": 1904,
+        "files": 31
+      },
+      "qualification": "This stage failed its first exact-message assertion in two incomplete-frame cases. It does not expose the actual error event/code. It is not a post-repair or current-head CI receipt."
+    }
+  ]
+}

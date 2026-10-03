@@ -1,0 +1,58 @@
+{
+  "inputRevision": "b91f9ef55405794f3f53bcc904066e3aaa06fe4a",
+  "workingTreeProductModified": true,
+  "command": [
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+    "test",
+    "./packages/shared/src/agent/__tests__/rox-readiness-ui-001.omp-stdio-close.test.ts"
+  ],
+  "nodeVersion": "v24.21.0",
+  "bunVersion": "1.3.14",
+  "childPid": 89583,
+  "observedDescendantPids": [],
+  "ownedPidsStillActive": [],
+  "observedExitCode": 0,
+  "startedAt": "2026-10-03T23:21:09.537146+00:00",
+  "finishedAt": "2026-10-03T23:21:12.332734+00:00",
+  "logPath": "logs/expanded-omp-stdio-callback-final-b91.log.gz",
+  "logSha256": "b4f6e8789418aee6c558663eab6a79f835e63b148048c799228438a346aa6d9f",
+  "before": {
+    "packages/shared/src/agent/omp-agent.ts": "e0472b686e2d9c8a35277af0b57e880ec495e67430e8edf1e52ea3303ecc0be0",
+    "packages/shared/src/agent/omp-rpc-transport.ts": "11015bcd3e12234f87317bc41380ffc721f7e193a8174efcbd53ac2121d8869d",
+    "packages/shared/src/agent/errors.ts": "e01b9f2849882ec5dcd39d51532fd998d634f4e1b4c06acedaae0c32fc6500d2",
+    "packages/shared/src/agent/omp-first-run.ts": "207e7f10c070f632dfb61bee5771db8435f44a15dc4002674edc9699fc4b88ff",
+    "packages/shared/src/agent/omp-native-policy.ts": "ad0de1c9200ee0b64898940dcb5bdfc5816f133178cd7c8c2686b5751fcd150b",
+    "packages/shared/src/agent/__tests__/omp-fake-cli.ts": "6368653751ee81dfc1fc2eff73ee90f8acfbf88f27023ecc5ad9dc28b2b182a3",
+    "packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts": "99d21b60c02cc34fb890a134165ba195803fffa1d629db7562d0cac7ed6ef7ab",
+    "packages/shared/src/agent/__tests__/rox-readiness-ui-001.omp-stdio-close.test.ts": "f24bfe9f61ff7a3573ff3a1330208f46c9724db9fc0a5137b15c27e6cb037987",
+    "packages/shared/src/auth/rox-account-authority.ts": "5a0366ae799c760451c1005afc1523531b342c48995b593985afa3dcb778b357",
+    "docs/omp-rpc-notes.md": "e300a4918902fa57e55094441af859f9c01f2117ef9c65869c4201531b54d48c",
+    "apps/electron/src/shared/__tests__/ipc-channels.test.ts": "2a17f29561abb0475009283eec0eb4083618c79d25da22e5ece78d251b1f5c04",
+    "package.json": "98724000f09751b73e02a3de7393022e5c23a98c27a1576904ae90dff2a0b24c"
+  },
+  "after": {
+    "packages/shared/src/agent/omp-agent.ts": "e0472b686e2d9c8a35277af0b57e880ec495e67430e8edf1e52ea3303ecc0be0",
+    "packages/shared/src/agent/omp-rpc-transport.ts": "11015bcd3e12234f87317bc41380ffc721f7e193a8174efcbd53ac2121d8869d",
+    "packages/shared/src/agent/errors.ts": "e01b9f2849882ec5dcd39d51532fd998d634f4e1b4c06acedaae0c32fc6500d2",
+    "packages/shared/src/agent/omp-first-run.ts": "207e7f10c070f632dfb61bee5771db8435f44a15dc4002674edc9699fc4b88ff",
+    "packages/shared/src/agent/omp-native-policy.ts": "ad0de1c9200ee0b64898940dcb5bdfc5816f133178cd7c8c2686b5751fcd150b",
+    "packages/shared/src/agent/__tests__/omp-fake-cli.ts": "6368653751ee81dfc1fc2eff73ee90f8acfbf88f27023ecc5ad9dc28b2b182a3",
+    "packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts": "99d21b60c02cc34fb890a134165ba195803fffa1d629db7562d0cac7ed6ef7ab",
+    "packages/shared/src/agent/__tests__/rox-readiness-ui-001.omp-stdio-close.test.ts": "f24bfe9f61ff7a3573ff3a1330208f46c9724db9fc0a5137b15c27e6cb037987",
+    "packages/shared/src/auth/rox-account-authority.ts": "5a0366ae799c760451c1005afc1523531b342c48995b593985afa3dcb778b357",
+    "docs/omp-rpc-notes.md": "e300a4918902fa57e55094441af859f9c01f2117ef9c65869c4201531b54d48c",
+    "apps/electron/src/shared/__tests__/ipc-channels.test.ts": "2a17f29561abb0475009283eec0eb4083618c79d25da22e5ece78d251b1f5c04",
+    "package.json": "98724000f09751b73e02a3de7393022e5c23a98c27a1576904ae90dff2a0b24c"
+  },
+  "sourcesStable": true,
+  "failClosedOmpCliOverride": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/omp-forbidden-native-fallback",
+  "internalChatTimeoutOverride": null,
+  "observedSignalsSent": [],
+  "counts": {
+    "pass": 7,
+    "fail": 0,
+    "assertions": 29
+  },
+  "rawLogSha256": "b4f6e8789418aee6c558663eab6a79f835e63b148048c799228438a346aa6d9f",
+  "archiveSha256": "f9cc844be95260b5fa61f97758cbc9e1bca93ce4bcedb8d9d95aee1655e9d01a"
+}

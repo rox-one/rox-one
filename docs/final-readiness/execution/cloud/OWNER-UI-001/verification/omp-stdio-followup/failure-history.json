@@ -1,0 +1,46 @@
+{
+  "preserveAllHistory": true,
+  "entries": [
+    {
+      "kind": "historical-remote-product-regression",
+      "log": "logs/expanded-omp-final-validate-a8ec92a-job.log.gz",
+      "observedExitCode": 1,
+      "counts": {
+        "pass": 381,
+        "fail": 2,
+        "assertions": 1904
+      },
+      "failedCases": [
+        "fails without a provider prompt for transport-incomplete",
+        "discards unfinished assembly on a failed child and negotiates a fresh child"
+      ],
+      "qualification": "Exact expected-message boolean was false; remote output does not reveal actual received error/code."
+    },
+    {
+      "kind": "deterministic-production-negative-control",
+      "receipt": "callback-red-receipt.json",
+      "observedExitCode": 1,
+      "counts": {
+        "pass": 1,
+        "fail": 6,
+        "assertions": 11
+      },
+      "qualification": "Actual production callbacks/codec/readline on unmodified product; six distinct late-drain failures. Exact held-first-chunk actual message is generic exit."
+    },
+    {
+      "kind": "retained-prior-onboarding-history",
+      "reference": "../omp-onboarding-followup/failure-history.json",
+      "qualification": "Original seven trusted-context fixture failures, ten loaded-host outer test timeouts and native escape/provider-unknown history retained unchanged, not promoted to no-provider status."
+    },
+    {
+      "kind": "final-green",
+      "receipt": "callback-final-receipt.json",
+      "observedExitCode": 0,
+      "counts": {
+        "pass": 7,
+        "fail": 0,
+        "assertions": 29
+      }
+    }
+  ]
+}

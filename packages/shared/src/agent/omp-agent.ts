@@ -985,13 +985,34 @@ export class OmpAgent extends BaseAgent {
       }
     });
 
-    child.on('exit', (code, signal) => {
-      if (!isCurrentChild()) {
-        this.debug(`Ignoring exit from stale OMP subprocess (code=${code}, signal=${signal})`);
-        return;
-      }
+    // 'exit' precedes drained stdout/stderr: retain this child's ownership
+    // until 'close' so readline can deliver the final lines and chunks. A
+    // descendant can inherit the pipes, so keep the existing bounded deadline
+    // as a failure fallback rather than waiting forever for their EOF.
+    const childReadline = this.readline;
+    let exitFallback: ReturnType<typeof setTimeout> | undefined;
+    let exitFinalized = false;
+    const finalizeExit = (code: number | null, signal: string | null) => {
+      if (exitFinalized) return;
+      exitFinalized = true;
+      if (exitFallback) clearTimeout(exitFallback);
+      // Close this attempt's reader even if it has become stale. At the
+      // fallback this releases this attempt's reader; it does not claim EOF.
+      childReadline.close();
+      if (!isCurrentChild()) return;
       try { this.rpcTransport.finish(); } catch (error) { this.failRpcTransport(error); }
       if (isCurrentChild()) this.handleSubprocessExit(child, code, signal, () => childStderr, () => latchedStartupError);
+    };
+    child.once('close', finalizeExit);
+    child.on('exit', (code, signal) => {
+      if (exitFinalized) return;
+      if (!isCurrentChild()) {
+        this.debug(`Ignoring exit from stale OMP subprocess (code=${code}, signal=${signal})`);
+        finalizeExit(code, signal);
+        return;
+      }
+      exitFallback = setTimeout(() => finalizeExit(code, signal), 250);
+      exitFallback.unref?.();
     });
 
     const handleTransportError = (error: Error) => {
@@ -1243,6 +1264,7 @@ export class OmpAgent extends BaseAgent {
     stderrEvidence: () => string,
     latchedStartupError: () => OmpStartupError | null,
   ): void {
+    if (this.subprocess !== child) return;
     this.debug(`OMP subprocess exited: code=${code}, signal=${signal}`);
     this.runtimeObserver?.drain();
 
@@ -1254,12 +1276,9 @@ export class OmpAgent extends BaseAgent {
     const exitReason = signal ? `signal ${signal}` : `code ${code}`;
 
     if (wasStartupPending) {
-      // Exit before the ready frame: settle the startup wait with a typed,
-      // stderr-classified error instead of letting chatImpl hang forever
-      // (the old code nulled the wait state, so neither the ready promise
-      // nor the 20s timeout guard could ever settle). 'exit' can fire before
-      // the final stderr flush, so classification defers to 'close' (bounded
-      // by a fallback timer).
+      // The stream-close handler (or its bounded inherited-pipe fallback)
+      // already collected stderr. Settle now: registering another 'close'
+      // listener here would miss the event that called this handler.
       const rejectCaptured = this.subprocessReadyReject;
       const wasAbort = this.abortReason !== undefined;
       const settle = () => {
@@ -1276,10 +1295,7 @@ export class OmpAgent extends BaseAgent {
           rejectCaptured?.(error);
         }
       };
-      child.once('close', settle);
-      const fallback = setTimeout(settle, 250);
-      fallback.unref?.();
-      child.once('close', () => clearTimeout(fallback));
+      settle();
     }
 
     this.subprocess = null;
