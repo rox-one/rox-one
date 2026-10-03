@@ -1,8 +1,9 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
-import { chmodSync, closeSync, lstatSync, mkdirSync, openSync, realpathSync, statSync } from 'node:fs'
+import { closeSync, lstatSync, mkdirSync, openSync, realpathSync, statSync } from 'node:fs'
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
 import { normalizeProfileAvatar, normalizeProfileEmail, type Profile, type UpdateProfileInput } from '@rox/core/platform/identity/types'
+import { requireOsOwner, requireOsPrivatePaths, secureOsPrivatePaths, VerifiedPrivateFileGuard } from './os-private-path.ts'
 
 export const NATIVE_AUTHORITY_ACTIONS = ['read', 'write', 'delete', 'subscribe', 'manage'] as const
 export type NativeAuthorityAction = (typeof NATIVE_AUTHORITY_ACTIONS)[number]
@@ -99,16 +100,12 @@ function pathsOverlap(first: string, second: string): boolean {
   return isContained(firstToSecond) || isContained(secondToFirst)
 }
 
-function requireOsOwner(path: string): void {
-  const uid = typeof process.getuid === 'function' ? process.getuid() : undefined
-  if (uid === undefined || statSync(path).uid !== uid) throw new Error('maintenance requires the state directory OS owner')
-}
-
 export class NativeAuthority {
   readonly #stateDir: string
   readonly #db: DatabaseSync
   readonly #issuerId: string
   readonly #listeners = new Set<(event: NativeAuthorityInvalidation) => void>()
+  readonly #privateDatabaseFiles = new VerifiedPrivateFileGuard()
   #closed = false
 
   #verifiedPrincipals = new WeakSet<object>()
@@ -123,8 +120,7 @@ export class NativeAuthority {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
       mkdirSync(supplied, { recursive: true, mode: 0o700 })
     }
-    requireOsOwner(supplied)
-    chmodSync(supplied, 0o700)
+    secureOsPrivatePaths([{ path: supplied, kind: 'directory' }])
     this.#stateDir = realpathSync(supplied)
     requireOsOwner(this.#stateDir)
     const databasePath = join(this.#stateDir, 'authority.sqlite')
@@ -134,11 +130,12 @@ export class NativeAuthority {
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
       const existingDatabase = lstatSync(databasePath)
-      if (existingDatabase.isSymbolicLink() || !existingDatabase.isFile() || existingDatabase.uid !== process.getuid?.() || existingDatabase.nlink !== 1) {
+      if (existingDatabase.isSymbolicLink() || !existingDatabase.isFile() || existingDatabase.nlink !== 1) {
         throw new Error('authority database must be an OS-owner private regular file')
       }
     }
-    chmodSync(databasePath, 0o600)
+    // Existing sidecars must also be owner-held/private before SQLite opens.
+    this.#secureDatabaseFiles()
     this.#db = new DatabaseSync(databasePath)
     this.#db.exec(`
       PRAGMA journal_mode = WAL;
@@ -221,6 +218,7 @@ export class NativeAuthority {
   bootstrapLocalAdministrator(label: string): NativeIssuedCredential {
     this.#assertOpen()
     requireOsOwner(this.#stateDir)
+    if (process.platform === 'win32') requireOsPrivatePaths(this.#databasePaths())
     if (!process.stdin.isTTY) throw new Error('administrator bootstrap requires an interactive host-local maintenance terminal')
     const labelValue = validLabel(label)
     this.#db.exec('BEGIN IMMEDIATE')
@@ -239,6 +237,7 @@ export class NativeAuthority {
   recoverLocalAdministrator(deviceLabel: string): NativeIssuedCredential {
     this.#assertOpen()
     requireOsOwner(this.#stateDir)
+    if (process.platform === 'win32') requireOsPrivatePaths(this.#databasePaths())
     if (!process.stdin.isTTY) throw new Error('administrator recovery requires an interactive host-local maintenance terminal')
     const label = validLabel(deviceLabel)
     const admin = this.#db.prepare("SELECT id FROM subjects WHERE role='admin' ORDER BY created_at LIMIT 1").get() as
@@ -814,12 +813,25 @@ export class NativeAuthority {
     }
   }
 
-  #secureDatabaseFiles(): void {
+  #databasePaths(): Array<{ path: string; kind: 'file' }> {
+    const files: Array<{ path: string; kind: 'file' }> = []
     for (const name of ['authority.sqlite', 'authority.sqlite-wal', 'authority.sqlite-shm']) {
-      try { chmodSync(join(this.#stateDir, name), 0o600) } catch (error) {
+      const path = join(this.#stateDir, name)
+      try { lstatSync(path); files.push({ path, kind: 'file' }) } catch (error) {
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
       }
     }
+    return files
+  }
+
+  #secureDatabaseFiles(): void {
+    const files = this.#databasePaths()
+    if (process.platform !== 'win32') { secureOsPrivatePaths(files); return }
+    // Initial/existing children are individually checked by the real OS probe.
+    // Only already-verified identities use the fast path; otherwise invalid
+    // remote credentials would launch synchronous PowerShell for every audit.
+    // The host OS owner is trusted (and can already replace this whole store).
+    this.#privateDatabaseFiles.secure(files)
   }
 
   #assertOpen(): void {
