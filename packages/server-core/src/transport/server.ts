@@ -86,6 +86,7 @@ interface RegisteredHandler {
   readonly nativeAction: RpcHandlerOptions['nativeAction']
   readonly timeoutMs: number
   readonly beforeResponse?: RpcHandlerOptions['beforeResponse']
+  readonly beforeWorkspaceResponse?: RpcHandlerOptions['beforeWorkspaceResponse']
 }
 
 export interface LocalClientBindingCandidate {
@@ -305,9 +306,13 @@ export class WsRpcServer implements RpcServer {
       throw new Error(`Handler already registered for channel: ${channel}`)
     }
     const access = options?.access
+    if (options?.beforeWorkspaceResponse && (access !== 'authenticatedWorkspace' || !this.workspaceAuthority)) {
+      throw new Error('Joint workspace response guard requires authenticatedWorkspace access and shared authority')
+    }
     const timeoutMs = options?.timeoutMs ?? WsRpcServer.HANDLER_TIMEOUT_MS
     if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 240_000) throw new Error('Invalid handler timeout')
-    this.handlers.set(channel, { handler, access, nativeAction: options?.nativeAction, timeoutMs, beforeResponse: options?.beforeResponse })
+    this.handlers.set(channel, { handler, access, nativeAction: options?.nativeAction, timeoutMs,
+      beforeResponse: options?.beforeResponse, beforeWorkspaceResponse: options?.beforeWorkspaceResponse })
     if (access === 'localElectron') {
       this.localElectronChannels.add(channel)
     }
@@ -1179,18 +1184,28 @@ export class WsRpcServer implements RpcServer {
       const outbound = this.workspaceAuthority ? await this.refreshWorkspaceClient(client) : null
       if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
       if (registration.beforeResponse) {
-        // Complete identity admission before the Resource guard. A later await
-        // would let Resource permission change after its final read check.
         const guardedOutbound = this.workspaceAuthority ? await this.refreshWorkspaceClient(client) : outbound
         if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
         await registration.beforeResponse({ ...ctx, ...(guardedOutbound ? { actor: guardedOutbound.actor } : {}) }, args ?? [], result)
-        // A trusted asynchronous Resource guard is another admission boundary:
-        // NativePrincipal grant generations and the current caller binding must
-        // still match after it settles, before any result is serialized.
+        // Preserve native grant generations and the original caller binding
+        // across every asynchronous host check.
+        if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+      }
+      if (registration.beforeWorkspaceResponse) {
+        // The final trusted admission checks live session/membership AND Resource
+        // permission together. An identity-only await after it would stale that
+        // Resource verdict, so this branch has no later asynchronous operation.
+        const guardedOutbound = await this.refreshWorkspaceClient(client)
+        if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+        await registration.beforeWorkspaceResponse({ ...ctx, actor: guardedOutbound.actor }, args ?? [], result)
+        if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+      } else if (this.workspaceAuthority) {
+        // Ordinary host checks can await while a session is revoked or replaced.
+        // Re-admit its original identity before invoking any result serializer.
+        await this.refreshWorkspaceClient(client)
         if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
       }
       const data = serializeEnvelope(response)
-      if (this.workspaceAuthority && !registration.beforeResponse) await this.refreshWorkspaceClient(client)
       if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
       this.safeSend(client.ws, data)
     } catch (err) {
