@@ -5,6 +5,13 @@
 3. Execute real production row/menu/Radix controls: field descriptions/overrides, enabled filtered navigation without commit, typeahead/preview/Escape, search caret/empty result, IME/modifier/default-prevented and disabled choices/control, changing options, selection/focus return. Retain source helper/i18n tests and run Electron/WebUI types, renderer build and locale gates.
 4. Reconcile live main, freeze source/head/proof receipt, publish/attach a separate PR, preserving all original branches. Real native route/screenshot/provider and full feature acceptance remain separate.
 
+## Connections consumer recovery plan — 2026-10-03
+
+1. Freeze source intent and current UI gap; backend1414 is the dependency. pr_scout owns page/lifecycle/device/connection-info consumers only; root owns main integration and SurfaceTabs/remaining Golden semantics.
+2. Restore safe inspect projection and shared committed-scope lifecycle controls, active lease consent, current test/repair/rotate, registered move target and public GitHub device flow. Preserve current page and unrelated inspector contracts.
+3. Exercise actual production page/inspector consumers with controlled backend promises: latest selection, A→B→A, duplicate writes, stale receipts, sanitized errors/retry, confirmations, URI/secret refusal, cancellation/late-start, one poll, slow_down, denial/expiry and scoped import refresh. Retain source history and all locale catalogs.
+4. Reconcile live main, freeze delivered candidate, run scoped UI/projection tests, renderer types/build and localization, record exact source/head/log receipt, push and attach a separate PR. Lead reviews and merges; real native/provider/backend acceptance remains explicit.
+
 ## Golden Gate persisted panel workspace recovery plan — 2026-10-03
 
 Closing a focused panel restores DOM focus only when the disconnected node belongs to that removed panel or tab. Preserve another live focus owner, dialog, IME, resize and hidden targets; exercise actual closePanelAtom and production PanelStackContainer in browser adverse controls.
