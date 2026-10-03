@@ -167,15 +167,18 @@ export function useNotifications({
     if (!hasGuiChannels) return
 
     // Get initial focus state
-    window.electronAPI.getWindowFocusState().then(setIsWindowFocused)
+    let current = true
+    void window.electronAPI.getWindowFocusState().then(focused => {
+      if (current) setIsWindowFocused(focused)
+    }).catch(() => { /* A thin native window may not expose host focus RPC. */ })
 
     // Subscribe to focus changes
     const cleanup = window.electronAPI.onWindowFocusChange((isFocused) => {
-      setIsWindowFocused(isFocused)
+      if (current) setIsWindowFocused(isFocused)
     })
 
-    return cleanup
-  }, [hasGuiChannels])
+    return () => { current = false; cleanup() }
+  }, [hasGuiChannels, workspaceId])
 
   // Subscribe to notification navigation (when user clicks a notification)
   useEffect(() => {

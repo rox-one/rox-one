@@ -46,7 +46,10 @@ import { useAutomations } from '@/hooks/useAutomations'
 import { useTeamState } from '@/components/team/team-store'
 import { useTeamRoster } from '@/components/team/use-team-roster'
 import { activityText } from '@/components/team/team-labels'
-import { createPersonalTask } from '@/lib/extra-screens/personal-task-bridge'
+import { createPersonalTaskConfirmed } from '@/lib/extra-screens/personal-task-bridge'
+import type { PersonalTask } from '@craft-agent/core/tasks/personal'
+import type { NoteDocument } from '../../shared/types'
+import { isNativeNoteDocument } from '@/lib/notes-write-authority'
 import {
   Badge,
   Button,
@@ -78,6 +81,7 @@ import {
 import { ColorFilter, ColorPicker, FEED_COLOR_HEX, SourceIcon, TagChip, TagEditor } from './feed/FeedParts'
 import { SourceEditor, SourcesView } from './feed/FeedSources'
 import { FeedSidebar, type FeedView } from './feed/FeedSidebar'
+import { useFeedCaller, type FeedCaller } from './feed/feed-caller'
 
 type View = FeedView
 type Density = 'list' | 'cards'
@@ -116,18 +120,18 @@ interface FeedPagePrefs {
   density: Density
 }
 
-function prefsKey(workspaceId: string | null): string {
-  return `${PREFS_KEY}:${workspaceId ?? 'unscoped'}`
+function prefsKey(workspaceId: string | null, caller?: FeedCaller): string {
+  return `${PREFS_KEY}:${workspaceId ?? 'unscoped'}${caller?.native ? `:native:${encodeURIComponent(caller.preferenceKey)}` : ''}`
 }
 
-function loadPrefs(workspaceId: string | null): FeedPagePrefs {
+function loadPrefs(workspaceId: string | null, caller?: FeedCaller): FeedPagePrefs {
   const defaults: FeedPagePrefs = {
     view: 'agents', chip: 'all', sourceFilter: null, query: '', colors: [], tagFilter: null,
     mark: 'all', order: 'newest', density: 'list',
   }
   try {
-    const raw = localStorage.getItem(prefsKey(workspaceId))
-    const legacy = raw === null && workspaceId ? localStorage.getItem(PREFS_KEY) : null
+    const raw = localStorage.getItem(prefsKey(workspaceId, caller))
+    const legacy = raw === null && workspaceId && !caller?.native ? localStorage.getItem(PREFS_KEY) : null
     const stored = JSON.parse(raw ?? legacy ?? '{}') as Partial<FeedPagePrefs>
     const storedView = stored.view
     const chips = Object.values(TAB_CHIPS).flat()
@@ -150,17 +154,50 @@ function loadPrefs(workspaceId: string | null): FeedPagePrefs {
 const INPUT = 'h-7 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 
 export default function FeedPage({ selectedId }: { selectedId?: string | null }) {
+  const { t } = useTranslation()
+  const shell = useOptionalAppShellContext()
+  const api = typeof window !== 'undefined' ? window.electronAPI : undefined
+  const scope = useFeedCaller(shell?.activeWorkspaceId ?? null, api)
+  if (!scope.caller) return <div className="flex h-full flex-col items-center justify-center gap-3" data-testid="feed-page">
+    <EmptyState title={t(scope.failed ? 'feed.loadError' : 'feed.loading')} />
+    {scope.failed ? <Button onClick={scope.retry}>{t('feed.refresh')}</Button> : null}
+  </div>
+  return <FeedPageForCaller key={scope.caller.key} selectedId={selectedId} caller={scope.caller} />
+}
+
+function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null; caller: FeedCaller }) {
   const { t, i18n } = useTranslation()
   const shell = useOptionalAppShellContext()
   const workspaceId = shell?.activeWorkspaceId ?? null
-  const api = typeof window !== 'undefined' ? window.electronAPI : undefined
+  const rawApi = typeof window !== 'undefined' ? window.electronAPI : undefined
+  const alive = useRef(true)
+  const current = useCallback(() => alive.current && caller.isCurrent(), [caller])
+  useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
+  // contextBridge exposes frozen properties; the facade must own a mutable
+  // target rather than replacing non-configurable methods on that object.
+  const api = useMemo(() => rawApi ? new Proxy({} as typeof rawApi, {
+    get(_target, property) {
+      const method = Reflect.get(rawApi, property)
+      const reads = ['feedList', 'feedPreviewSource', 'readNote']
+      const writes = ['feedAddSource', 'feedUpdateSource', 'feedRemoveSource', 'feedRefresh', 'feedSetXToken', 'feedClearX', 'feedAnnotate', 'createNote', 'saveNote']
+      if (typeof property !== 'string' || ![...reads, ...writes].includes(property) || typeof method !== 'function') return method
+      return async (...args: unknown[]) => {
+        if (!current()) throw new Error('Feed caller changed')
+        if (writes.includes(property)) await caller.verify()
+        if (!current()) throw new Error('Feed caller changed')
+        const result: unknown = await Reflect.apply(method, rawApi, args)
+        if (!current()) throw new Error('Feed caller changed')
+        return result
+      }
+    },
+  }) : undefined, [rawApi, caller, current])
 
   const [data, setData] = useState<FeedListResult>(EMPTY)
   const [loadedWorkspaceId, setLoadedWorkspaceId] = useState<string | null | undefined>()
   const [sourceDataWorkspaceId, setSourceDataWorkspaceId] = useState<string | null | undefined>()
   const loaded = loadedWorkspaceId !== undefined && loadedWorkspaceId === workspaceId
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [initialPrefs] = useState(() => loadPrefs(workspaceId))
+  const [initialPrefs] = useState(() => loadPrefs(workspaceId, caller))
   const [view, setView] = useState<View>(initialPrefs.view)
   const [chip, setChip] = useState<FeedChip>(initialPrefs.chip)
   const [sourceFilter, setSourceFilter] = useState<string | null>(initialPrefs.sourceFilter)
@@ -183,7 +220,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
     setLoadedWorkspaceId(undefined)
     setSourceDataWorkspaceId(undefined)
     setLoadError(null)
-    const stored = loadPrefs(workspaceId)
+    const stored = loadPrefs(workspaceId, caller)
     setView(stored.view)
     setChip(stored.chip)
     setSourceFilter(stored.sourceFilter)
@@ -194,16 +231,16 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
     setPrefs({ order: stored.order, density: stored.density })
     setPerDay({})
     setPrefsWorkspaceId(workspaceId)
-  }, [workspaceId])
+  }, [workspaceId, caller])
 
   useEffect(() => {
     if (prefsWorkspaceId !== workspaceId) return
     try {
-      localStorage.setItem(prefsKey(workspaceId), JSON.stringify({
+      localStorage.setItem(prefsKey(workspaceId, caller), JSON.stringify({
         view, chip, sourceFilter, query, colors: [...colors], tagFilter, mark, ...prefs,
       }))
     } catch { /* private mode */ }
-  }, [workspaceId, prefsWorkspaceId, view, chip, sourceFilter, query, colors, tagFilter, mark, prefs])
+  }, [workspaceId, prefsWorkspaceId, view, chip, sourceFilter, query, colors, tagFilter, mark, prefs, caller])
 
   const routeBound = selectedId !== undefined
   const currentId = routeBound ? selectedId ?? null : localSelected
@@ -214,7 +251,10 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
 
   // ── data ─────────────────────────────────────────────────────────────────
   const loadGeneration = useRef(0)
+  const dataRef = useRef(data)
+  dataRef.current = data
   const load = useCallback(async () => {
+    if (!current()) return
     const generation = ++loadGeneration.current
     if (!api?.feedList) {
       setLoadedWorkspaceId(workspaceId)
@@ -223,19 +263,19 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
     }
     try {
       const res = await api.feedList(workspaceId)
-      if (generation !== loadGeneration.current) return
+      if (generation !== loadGeneration.current || !current()) return
       setData(res ?? EMPTY)
       setSourceDataWorkspaceId(workspaceId)
       setLoadError(null)
     } catch (e) {
-      if (generation === loadGeneration.current) setLoadError(e instanceof Error ? e.message : String(e))
+      if (generation === loadGeneration.current && current()) setLoadError(e instanceof Error ? e.message : String(e))
     } finally {
-      if (generation === loadGeneration.current) {
+      if (generation === loadGeneration.current && current()) {
         setLoadedWorkspaceId(workspaceId)
         setNow(Date.now())
       }
     }
-  }, [api, workspaceId])
+  }, [api, workspaceId, current])
 
   useEffect(() => {
     void load()
@@ -243,9 +283,18 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
   }, [load])
   useEffect(() => api?.onFeedChanged?.(() => { void load() }), [api, load])
   useEffect(() => {
-    const id = setInterval(() => void load(), 60_000)
+    let refreshing = false
+    const poll = async () => {
+      if (refreshing || !current()) return
+      refreshing = true
+      try {
+        if (caller.native && dataRef.current.refreshAllowed && api?.feedRefresh) await api.feedRefresh('__due__')
+      } catch { /* Source status and canonical LIST remain available after refresh failure. */ }
+      finally { if (current()) await load(); refreshing = false }
+    }
+    const id = setInterval(() => void poll(), 60_000)
     return () => clearInterval(id)
-  }, [load])
+  }, [load, current, caller, api])
 
   useEffect(() => {
     if (loaded && sourceDataWorkspaceId === workspaceId && sourceFilter && !data.sources.some((source) => source.id === sourceFilter)) setSourceFilter(null)
@@ -265,8 +314,8 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
   const team = useTeamState()
   const roster = useTeamRoster()
   const teamItems = useMemo(
-    () => buildTeamItems(team.activity ?? [], (e) => activityText(e, roster.members, roster.selfUserId, t)),
-    [team.activity, roster.members, roster.selfUserId, t],
+    () => caller.native ? [] : buildTeamItems(team.activity ?? [], (e) => activityText(e, roster.members, roster.selfUserId, t)),
+    [caller.native, team.activity, roster.members, roster.selfUserId, t],
   )
   const sourceById = useMemo(() => new Map(data.sources.map((s) => [s.id, s])), [data.sources])
   const annotations = data.annotations
@@ -320,20 +369,22 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
   }
 
   const run = async (key: string, fn: () => Promise<unknown>) => {
+    if (!current()) return
     setBusy(key)
     setActionError(null)
     try {
-      await fn()
+      await caller.verify()
+      if (current()) await fn()
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : String(e))
+      if (current()) setActionError(e instanceof Error ? e.message : String(e))
     } finally {
-      setBusy(null)
+      if (current()) setBusy(null)
     }
   }
 
   // Optimistic annotations: apply locally, persist, feed:changed reloads.
   const annotate = useCallback((ids: string[], patch: FeedAnnotationPatch) => {
-    if (!ids.length) return
+    if (!ids.length || !current()) return
     setData((d) => {
       const next: Record<string, FeedItemAnnotation> = { ...(d.annotations ?? {}) }
       for (const id of ids) {
@@ -349,8 +400,8 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
       }
       return { ...d, annotations: next }
     })
-    if (api?.feedAnnotate) void api.feedAnnotate(ids, patch).catch((e: unknown) => setActionError(e instanceof Error ? e.message : String(e)))
-  }, [api])
+    if (api?.feedAnnotate) void api.feedAnnotate(ids, patch).catch((e: unknown) => { if (current()) { setActionError(e instanceof Error ? e.message : String(e)); void load() } })
+  }, [api, current, load])
 
   // Opening an item in the reading pane marks it read (external content only).
   useEffect(() => {
@@ -377,25 +428,46 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
     }
   }
 
+  const taskAttempts = useRef(new Map<string, PersonalTask>())
+  const noteAttempts = useRef(new Map<string, { note?: NoteDocument; createId: string; saveId: string; body?: string }>())
   const toTask = (item: FeedViewItem) => void run(`task:${item.id}`, async () => {
     const notes = [item.summary, item.url, item.sourceTitle ? t('feed.reader.fromSource', { source: item.sourceTitle }) : undefined].filter(Boolean).join('\n\n')
-    const task = createPersonalTask({ title: titleOf(item).slice(0, 200), notes })
-    setSent({ itemId: item.id, kind: 'task', id: task.id })
+    try {
+      const task = await createPersonalTaskConfirmed({ title: titleOf(item).slice(0, 200), notes }, taskAttempts.current.get(item.id))
+      if (current()) { taskAttempts.current.delete(item.id); setSent({ itemId: item.id, kind: 'task', id: task.id }) }
+    } catch (error) {
+      if (current() && error && typeof error === 'object' && 'task' in error) taskAttempts.current.set(item.id, error.task as PersonalTask)
+      throw new Error(t('tasks.toastCreateFailed'), { cause: error })
+    }
   })
 
   const toNote = (item: FeedViewItem) => void run(`note:${item.id}`, async () => {
     if (!workspaceId || !api?.createNote) throw new Error(t('feed.reader.noWorkspace'))
     const title = titleOf(item).replace(/[\\/:*?"<>|#]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) || t('feed.title')
-    const created = await api.createNote(workspaceId, title)
-    const body = [
+    const attempt: { note?: NoteDocument; createId: string; saveId: string; body?: string } = noteAttempts.current.get(item.id) ?? { createId: crypto.randomUUID(), saveId: crypto.randomUUID() }
+    noteAttempts.current.set(item.id, attempt)
+    const created = attempt.note ?? await api.createNote(workspaceId, title, undefined,
+      caller.native ? { operationId: attempt.createId, expectedRevision: null, schemaVersion: 1, recoverCreation: true } : undefined)
+    if (!current()) return
+    attempt.note = created
+    const body = attempt.body ?? [
       created.content?.trimEnd() || `# ${title}`,
       item.summary ?? '',
       item.url ? `[${t('feed.reader.original')}](${item.url})` : '',
       [item.sourceTitle ?? item.author, dateFmt.format(item.at)].filter(Boolean).join(' · '),
       item.tags.length ? item.tags.map((x) => `#${x.replace(/\s+/g, '-')}`).join(' ') : '',
     ].filter(Boolean).join('\n\n')
-    await api.saveNote(workspaceId, created.id, `${body}\n`)
-    setSent({ itemId: item.id, kind: 'note', id: created.id })
+    attempt.body = body
+    if (isNativeNoteDocument(created)) {
+      if (!created.nativeId || !Number.isSafeInteger(created.nativeRevision) || created.nativeRevision! < 1) throw new Error(t('notes.toast.saveFailed'))
+      await api.saveNote(workspaceId, created.id, `${body}\n`, undefined,
+        { operationId: attempt.saveId, expectedRevision: created.nativeRevision!, schemaVersion: 1 })
+    } else {
+      const opened = created.revision && created.sourceStoreId ? created : await api.readNote(workspaceId, created.id)
+      if (!opened.revision || !opened.sourceStoreId) throw new Error(t('notes.toast.saveFailed'))
+      await api.saveNote(workspaceId, created.id, `${body}\n`, opened.revision, opened.sourceStoreId)
+    }
+    if (current()) { noteAttempts.current.delete(item.id); setSent({ itemId: item.id, kind: 'note', id: created.id }) }
   })
 
   const onListKeys = useListKeys(ordered, selected && ordered.includes(selected) ? selected : null, (i) => select(i.id), openItem)
@@ -669,7 +741,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
             <p className="text-[11px] text-text-muted">{t('feed.x.privacy')}</p>
           </form>
         )}
-        {xResult?.state === 'error' ? <p role="alert" className="pt-2 text-[12px] text-destructive">{t('feed.x.error', { message: xResult.message ?? '' })}</p> : null}
+        {xResult?.state === 'error' ? <p role="alert" className="pt-2 text-[12px] text-destructive">{t('feed.x.error', { message: xResult.message === 'network-error' ? t('feed.loadError') : xResult.message ?? '' })}</p> : null}
       </Card>
     </div>
   )
@@ -734,7 +806,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
       ) : selected.url ? (
         <p className="max-w-[720px] pt-4 text-[12px] text-text-muted">{t('feed.reader.noSummary')}</p>
       ) : null}
-      {selected.error ? <pre className="mt-2 max-w-[720px] overflow-x-auto whitespace-pre-wrap rounded-[6px] bg-destructive/10 p-2 font-mono text-[12px] text-destructive">{selected.error}</pre> : null}
+      {selected.error ? <pre className="mt-2 max-w-[720px] overflow-x-auto whitespace-pre-wrap rounded-[6px] bg-destructive/10 p-2 font-mono text-[12px] text-destructive">{selected.error === 'automation-run-failed' ? t('feed.status.error') : selected.error}</pre> : null}
       {selected.url ? <p className="max-w-[720px] break-all pt-3 text-[11px] text-text-muted">{selected.url}</p> : null}
 
       {selected.kind === 'automation-run' ? (

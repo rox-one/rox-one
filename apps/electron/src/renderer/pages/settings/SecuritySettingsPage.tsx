@@ -112,6 +112,8 @@ export default function SecuritySettingsPage() {
   const [snapshotFreshness, setSnapshotFreshness] = React.useState<SnapshotFreshness>('unknown')
   const [runtimeResource, setRuntimeResource] = React.useState<SecurityResourceState<OpenClawRuntimeStatus>>({ scope: null, phase: 'loading', data: null })
   const [auditResource, setAuditResource] = React.useState<SecurityResourceState<SecurityAuditSnapshot | null>>({ scope: null, phase: 'loading', data: null })
+  const mounted = React.useRef(false)
+  React.useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const workspaceEpoch = React.useRef({ workspaceId, generation: 0 })
   if (workspaceEpoch.current.workspaceId !== workspaceId) workspaceEpoch.current = { workspaceId, generation: workspaceEpoch.current.generation + 1 }
   const runtimeLoader = React.useMemo(() => createSecurityResource<OpenClawRuntimeStatus>(state => {
@@ -199,7 +201,7 @@ export default function SecuritySettingsPage() {
   const performPendingAction = React.useCallback(async (action: PendingSecurityAction) => {
     if (!workspaceId || !securityActionLive(action.kind)) return
     const captured = workspaceEpoch.current
-    const isCurrent = () => workspaceEpoch.current === captured
+    const isCurrent = () => mounted.current && workspaceEpoch.current === captured
     const runtimeApi = window.electronAPI?.openclawRuntime
     const auditApi = window.electronAPI?.securityAudit
     const applyRuntime = (result: OpenClawRuntimeStatus) => {
@@ -260,8 +262,8 @@ export default function SecuritySettingsPage() {
     if (!action) return
     setBusyAction(action.kind); setActionError(false)
     try { await runConfirmedSecurityAction(action, performPendingAction) }
-    catch { if (workspaceEpoch.current === captured) setActionError(true) }
-    finally { if (workspaceEpoch.current === captured) setBusyAction(null) }
+    catch { if (mounted.current && workspaceEpoch.current === captured) setActionError(true) }
+    finally { if (mounted.current && workspaceEpoch.current === captured) setBusyAction(null) }
   }, [pendingAction, performPendingAction])
 
   const findings = displayedSnapshot?.findings ?? []
@@ -333,7 +335,7 @@ export default function SecuritySettingsPage() {
                 <div className="rounded-md border border-border/60 p-3">
                   <p className="text-xs text-muted-foreground">{t('security.runtime.openclawLabel')}</p>
                   <p className="mt-1 text-sm font-medium" aria-live="polite">
-                    {runtimeLoading ? t('security.loading') : t(`security.runtime.state.${displayedRuntime?.state ?? 'unavailable'}`)}
+                    {runtimeLoading ? t('security.loading') : displayedRuntime?.safeError === 'RUNTIME_MISSING' ? t('settings.toolchain.status.missing') : t(`security.runtime.state.${displayedRuntime?.state ?? 'unavailable'}`)}
                   </p>
                 </div>
                 <div className="rounded-md border border-border/60 p-3">
@@ -368,9 +370,9 @@ export default function SecuritySettingsPage() {
                 <Button size="sm" variant="outline" className="mt-2" disabled={auditLoading} onClick={() => void refreshAudit()}>{t('security.audit.refresh')}</Button>
               </div>}
               {displayedRuntime?.safeError && (
-                <p role="alert" className="text-sm text-destructive">
+                <p role={displayedRuntime.safeError === 'RUNTIME_MISSING' ? 'note' : 'alert'} className={displayedRuntime.safeError === 'RUNTIME_MISSING' ? 'text-sm text-muted-foreground' : 'text-sm text-destructive'}>
                   {displayedRuntime.safeError === 'RUNTIME_MISSING' ? t('security.openclaw.missing') : t('security.error.runtimeUnavailable')}
-                  
+
                 </p>
               )}
               {displayedSnapshot?.safeError && (
@@ -411,7 +413,7 @@ export default function SecuritySettingsPage() {
           </SettingsSection>
 
           <SettingsSection title={t('security.section.vault')}>
-            <SettingsCard className="space-y-3">
+            <SettingsCard className="space-y-3 p-4">
               <div>
                 <p className="text-sm font-medium">{t('security.infisical.title')}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{t('security.infisical.hint')}</p>
@@ -437,7 +439,7 @@ export default function SecuritySettingsPage() {
           </SettingsSection>
 
           <SettingsSection title={t('security.section.coverage')}>
-            <SettingsCard>
+            <SettingsCard className="p-4">
               <dl className="grid gap-3 sm:grid-cols-3">
                 <div>
                   <dt className="text-xs text-muted-foreground">{t('security.coverage.craft')}</dt>
@@ -460,7 +462,7 @@ export default function SecuritySettingsPage() {
           </SettingsSection>
 
           <SettingsSection title={t('security.section.summary')}>
-            <SettingsCard>
+            <SettingsCard className="p-4">
               <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                 <div><dt className="text-xs text-muted-foreground">{t('security.summary.critical')}</dt><dd className="text-lg font-semibold">{displayedSnapshot?.summary.critical ?? 0}</dd></div>
                 <div><dt className="text-xs text-muted-foreground">{t('security.summary.warning')}</dt><dd className="text-lg font-semibold">{displayedSnapshot?.summary.warn ?? 0}</dd></div>
@@ -621,7 +623,7 @@ export default function SecuritySettingsPage() {
 
           {hostControl && (
             <SettingsSection title={t('security.section.hostControls')}>
-              <SettingsCard className="space-y-3">
+              <SettingsCard className="space-y-3 p-4">
                 <p className="text-sm text-muted-foreground">{t('security.hostControls.description')}</p>
                 <div className="flex flex-wrap gap-2">
                   <Button

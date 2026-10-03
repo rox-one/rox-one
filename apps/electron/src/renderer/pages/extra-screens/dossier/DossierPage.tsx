@@ -10,7 +10,8 @@ import { useTranslation } from 'react-i18next'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
 import { readAgentRun, startAgentRun, type AgentRunSnapshot } from '@/lib/extra-screens/agent-run'
-import { createPersonalTask, isTaskOpen } from '@/lib/extra-screens/personal-task-bridge'
+import { isTaskOpen } from '@/lib/extra-screens/personal-task-bridge'
+import { useConfirmedTaskConversion } from '@/hooks/useConfirmedTaskConversion'
 import { loadWorkspaceJson, newLocalId, saveWorkspaceJson, subscribeWorkspaceJson } from '@/lib/extra-screens/storage'
 import {
   sessionTitle,
@@ -50,6 +51,7 @@ import {
   suggestContacts,
   type DossierData,
   type DossierEntity,
+  type DossierPromise,
   type DossierKind,
   type DossierSources,
   type DossierTouch,
@@ -346,6 +348,13 @@ function openTouch(touch: DossierTouch) {
   }
 }
 
+export function DossierPromiseToTask({ workspaceId, entity, promise }: { workspaceId: string | null; entity: DossierEntity; promise: DossierPromise }) {
+  const { t } = useTranslation()
+  const conversion = useConfirmedTaskConversion({ sourceKey: JSON.stringify([workspaceId, entity.id, promise.id]), source: promise, workspaceId,
+    input: { title: promise.text, notes: t('extraScreens.dossier.taskNote', { name: entity.name }) } })
+  return <span className="flex min-w-0 flex-wrap items-center gap-1"><ScreenButton variant="ghost" disabled={conversion.busy || !!conversion.taskId} className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100" onClick={() => { void conversion.convert() }}>{t('extraScreens.common.toTask')}</ScreenButton>{conversion.failed ? <span role="alert" data-testid="dossier-task-error" className="text-xs text-destructive">{t('tasks.toastCreateFailed')}</span> : null}{conversion.taskId ? <button type="button" className="text-xs text-accent" onClick={() => navigate(routes.view.tasks(conversion.taskId!))}>{t('extraScreens.common.taskCreated')}</button> : null}</span>
+}
+
 function DossierDetail({
   entity,
   sources,
@@ -370,7 +379,6 @@ function DossierDetail({
   const [brief, setBrief] = useState<AgentRunSnapshot | null>(null)
   const [briefError, setBriefError] = useState<string | null>(null)
   const [starting, setStarting] = useState(false)
-  const [taskCreated, setTaskCreated] = useState<string | null>(null)
 
   // Notes: full-text search per term (name + up to 3 aliases).
   const termsKey = [entity.name, ...entity.aliases].join('|')
@@ -536,16 +544,7 @@ function DossierDetail({
                 </Chip>
                 <span className={cn('min-w-0 flex-1 truncate', promise.done && 'text-muted-foreground line-through')}>{promise.text}</span>
                 {!promise.done && (
-                  <ScreenButton
-                    variant="ghost"
-                    className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-                    onClick={() => {
-                      const task = createPersonalTask({ title: promise.text, notes: t('extraScreens.dossier.taskNote', { name: entity.name }) })
-                      setTaskCreated(task.id)
-                    }}
-                  >
-                    {t('extraScreens.common.toTask')}
-                  </ScreenButton>
+                  <DossierPromiseToTask workspaceId={workspaceId} entity={entity} promise={promise} />
                 )}
                 <ScreenButton
                   variant="ghost"
@@ -561,11 +560,6 @@ function DossierDetail({
               <Chip active={promiseDir === 'theirs'} onClick={() => setPromiseDir('theirs')}>{t('extraScreens.dossier.theyPromised')}</Chip>
               <TextField value={promiseDraft} onChange={setPromiseDraft} onEnter={addPromise} placeholder={t('extraScreens.dossier.promisePlaceholder')} className="h-7" />
             </div>
-            {taskCreated && (
-              <button type="button" className="mt-1 text-[12px] text-accent" onClick={() => navigate(routes.view.tasks(taskCreated))}>
-                {t('extraScreens.common.taskCreated')}
-              </button>
-            )}
           </div>
         </div>
       </Card>

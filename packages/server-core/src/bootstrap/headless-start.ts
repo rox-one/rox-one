@@ -25,7 +25,10 @@ import { startNativeSidecar, stopNativeSidecar } from '../native/supervisor.ts'
 import { stopAllSourceIndexWatches } from '../sources/source-index-watch.ts'
 import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { projectNativeWorkspaceEvent } from '../handlers/rpc/native-session-scope'
+import { projectNativeRegisteredWorkspaceEvent } from '../handlers/rpc/native-session-scope'
+import { projectNativeNotesChanged } from '../handlers/rpc/native-notes-events'
+import { projectNativeFeedChanged } from '../handlers/rpc/native-feed'
+import { projectNativeInboxChanged } from '../handlers/rpc/native-inbox-events'
 
 interface ModelRefreshServiceLike {
   startAll(): void
@@ -478,23 +481,22 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     requireAuth: true,
     nativeAuthority,
     nativeEventChannels: new Set([
-      RPC_CHANNELS.sessions.EVENT, RPC_CHANNELS.sources.CHANGED, RPC_CHANNELS.memory.CHANGED,
-      RPC_CHANNELS.identity.CHANGED, RPC_CHANNELS.gamification.CHANGED, RPC_CHANNELS.toolchain.STATUS_CHANGED,
+      RPC_CHANNELS.sessions.EVENT, RPC_CHANNELS.sources.CHANGED, RPC_CHANNELS.memory.CHANGED, RPC_CHANNELS.notes.CHANGED, RPC_CHANNELS.feed.CHANGED,
+      RPC_CHANNELS.skillsPending.CHANGED, RPC_CHANNELS.messaging.PENDING_CHANGED, RPC_CHANNELS.messaging.BINDING_CHANGED,
+      RPC_CHANNELS.identity.CHANGED, RPC_CHANNELS.gamification.CHANGED, RPC_CHANNELS.toolchain.STATUS_CHANGED, RPC_CHANNELS.personalTasks.CHANGED,
       RPC_CHANNELS.voice.CHANGED, RPC_CHANNELS.voice.JOB, RPC_CHANNELS.voice.OVERLAY, RPC_CHANNELS.voice.HOTKEY,
     ]),
     nativeClientEventChannels: new Set([
-      RPC_CHANNELS.identity.CHANGED, RPC_CHANNELS.gamification.CHANGED, RPC_CHANNELS.toolchain.STATUS_CHANGED,
+      RPC_CHANNELS.identity.CHANGED, RPC_CHANNELS.gamification.CHANGED, RPC_CHANNELS.toolchain.STATUS_CHANGED, RPC_CHANNELS.personalTasks.CHANGED,
       RPC_CHANNELS.voice.CHANGED, RPC_CHANNELS.voice.JOB, RPC_CHANNELS.voice.OVERLAY, RPC_CHANNELS.voice.HOTKEY,
     ]),
     projectNativeEvent: (channel, args, workspaceId, principal) => {
-      if (channel === RPC_CHANNELS.sessions.EVENT || channel === RPC_CHANNELS.sources.CHANGED) {
-        const rootManager = sessionManager as unknown as { getWorkspaces?: () => Array<{ id: string; rootPath: string }> }
-        const workspace = rootManager.getWorkspaces?.().find(workspace => workspace.id === workspaceId)
-        if (!workspace || !nativeAuthority.authorize(principal, workspaceId, 'read', workspace.rootPath)) return null
-      }
-      return projectNativeWorkspaceEvent(channel, args, workspaceId, (sessionId, id) => {
-      const scopedManager = sessionManager as unknown as { getSessions?: (workspaceId: string) => Array<{ id: string; workspaceId: string }> }
-      return scopedManager.getSessions?.(id).some(session => session.id === sessionId && session.workspaceId === id) === true
+      if (channel === RPC_CHANNELS.notes.CHANGED) return projectNativeNotesChanged(nativeAuthority, args, workspaceId, principal)
+      if (channel === RPC_CHANNELS.skillsPending.CHANGED || channel === RPC_CHANNELS.messaging.PENDING_CHANGED || channel === RPC_CHANNELS.messaging.BINDING_CHANGED) return projectNativeInboxChanged(nativeAuthority, args, workspaceId, principal)
+      if (channel === RPC_CHANNELS.feed.CHANGED) return projectNativeFeedChanged(nativeAuthority, args, workspaceId, principal)
+      return projectNativeRegisteredWorkspaceEvent(nativeAuthority, channel, args, workspaceId, principal, (sessionId, id) => {
+        const scopedManager = sessionManager as unknown as { getSessions?: (workspaceId: string) => Array<{ id: string; workspaceId: string }> }
+        return scopedManager.getSessions?.(id).some(session => session.id === sessionId && session.workspaceId === id) === true
       })
     },
     validateToken: async (t) => secureTokenCompare(t, serverToken),

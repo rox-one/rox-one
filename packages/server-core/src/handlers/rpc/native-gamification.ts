@@ -47,7 +47,15 @@ export class NativeGamificationStore {
     const state = JSON.parse(String(row.state_json)) as GamificationState
     // Corrupt durable data fails closed; never silently resets earned progress.
     if (state.version !== 1 || !Number.isSafeInteger(state.xp) || state.xp < 0 ||
-      !state.quests || !Array.isArray(state.ratings)) throw new Error('Native XP state is invalid')
+      !state.quests || !Array.isArray(state.ratings) || QUEST_IDS.some(id => {
+        const quest = state.quests[id]
+        return !quest || quest.id !== id || !['available', 'completed', 'dismissed', 'snoozed', 'skipped_cloud'].includes(quest.status) ||
+          (quest.completedAt !== undefined && !Number.isFinite(quest.completedAt)) ||
+          (quest.snoozeUntil !== undefined && !Number.isFinite(quest.snoozeUntil))
+      }) || (state.dailyXp !== undefined && (!Array.isArray(state.dailyXp) || state.dailyXp.some(item =>
+        !item || !Number.isSafeInteger(item.day) || !Number.isSafeInteger(item.xp) || item.xp < 0)))) {
+      throw new Error('Native XP state is invalid')
+    }
     return state
   }
 

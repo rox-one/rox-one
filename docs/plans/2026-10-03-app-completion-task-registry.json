@@ -4,102 +4,760 @@
     {
       "id": "auth_profile_regression",
       "goal": "Вход и создание профиля",
-      "status": "implementation_verified_live_error_details_missing",
-      "evidence": "178 backend/native tests, 53 username/routing checks, 8 Chromium profile/auth scenarios; exact reported live error was not supplied."
+      "status": "implementation_verified_external_acceptance_blocked",
+      "evidence": "Confirmed authorization/profile defects fixed and focused-tested; exact user-reported production error and website approval remain separate.",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "login_profile"
+      ],
+      "evidenceIds": [
+        "auth_backend",
+        "auth_dom",
+        "auth_routing",
+        "native_bootstrap"
+      ],
+      "externalBlockers": [
+        "exact_login_error",
+        "rox_cloud_approval"
+      ],
+      "finalIntegration": "pending_root_final_serialized_results"
     },
     {
       "id": "deepgram_transcription",
       "goal": "Deepgram: транскрипция, диаризация и абзацы",
-      "status": "implementation_verified_live_access_blocked",
-      "evidence": "96 voice/meetings tests, 4 actual composer checks; types/lint pass. Actual provider blocked by environment HTTP policy; native and central bridge tasks separate."
+      "status": "implementation_verified_external_acceptance_blocked",
+      "evidence": "Backend transcription/ownership evidence plus latest 12 production Chromium dictation cases / 45 assertions: four rejected CANCEL sites preserve local cleanup, original startup failure, draft and retry with no page errors. The 12 cases supersede the earlier eight-case dictation run. Provider replies and microphone/recorder remain synthetic; final affected app/build gate pending.",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "transcription"
+      ],
+      "evidenceIds": [
+        "central_meetings",
+        "deepgram_adapter",
+        "native_voice",
+        "voice_cancel_current",
+        "voice_dom"
+      ],
+      "externalBlockers": [
+        "production_all_users",
+        "provider_live"
+      ],
+      "finalIntegration": "pending_root_final_serialized_results"
     },
     {
       "id": "native_voice_access",
       "goal": "Пользовательская изоляция голосовых RPC и доступ нативных пользователей",
-      "status": "verified",
-      "evidence": "17 focused real-native WS checks incl timeout abort, late response discard and new capture; broad114 regressions passed before integration."
+      "status": "backend_real_ws_and_cancel_dom_verified_final_app_pending",
+      "evidence": "Backend transcription/ownership evidence plus latest 12 production Chromium dictation cases / 45 assertions: four rejected CANCEL sites preserve local cleanup, original startup failure, draft and retry with no page errors. The 12 cases supersede the earlier eight-case dictation run. Provider replies and microphone/recorder remain synthetic; final affected app/build gate pending.",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "transcription"
+      ],
+      "evidenceIds": [
+        "central_meetings",
+        "deepgram_adapter",
+        "native_voice",
+        "voice_cancel_current",
+        "voice_dom"
+      ],
+      "externalBlockers": [],
+      "finalIntegration": "pending_root_final_serialized_results"
     },
     {
       "id": "native_runtime_transport",
       "goal": "Нативные сессии, события, права и запуск приложения под реальным пользователем",
-      "status": "in_progress",
-      "agent": "security_runtime"
+      "status": "implementation_focused_verified_final_app_pending",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "original_model_defaults",
+        "original_profile",
+        "original_session_actions",
+        "final_integration"
+      ],
+      "evidenceIds": [
+        "app_optional_rpc_rejections",
+        "asset_validation_missing_baseline",
+        "auth_backend",
+        "confirmed_task_conversions_current",
+        "final_routing_current",
+        "final_secret_scan_current",
+        "full_types_accepted_current",
+        "independent_reviews",
+        "locale_tests",
+        "model_caller",
+        "native_bootstrap",
+        "native_core_app",
+        "native_feed_current",
+        "native_inbox_current",
+        "native_inbox_producer_final",
+        "native_map_app_current",
+        "native_model_pure",
+        "native_note_xp_current",
+        "native_notes",
+        "native_notes_app_current",
+        "native_notes_create_recovery",
+        "native_notes_read_watch_assets",
+        "native_overview_app_current",
+        "native_overview_current",
+        "native_profile_app_current",
+        "native_roster_pure_current",
+        "native_sharing",
+        "native_sharing_ui",
+        "native_sidebar_pure",
+        "native_source_pure_current",
+        "native_tasks_app_current",
+        "native_tasks_current",
+        "native_transport",
+        "profile_layout",
+        "publisher_failure_current",
+        "resource_copy_current",
+        "routing_current",
+        "session_actions_dom",
+        "session_actions_units",
+        "shared_tsc",
+        "sharing_busy_chromium",
+        "startup_optional_effects",
+        "thin_preload_notes",
+        "voice_cancel_current"
+      ],
+      "externalBlockers": [],
+      "finalIntegration": "pending_root_final_serialized_results",
+      "evidence": "All assigned native authority/custody/source/sharing/Notes/startup seams are implemented and focused-verified. Four task conversions pass 19 production Chromium cases / 65 assertions; four voice CANCEL sites pass 12 / 45; native Notes XP authoritative gate passes 37 / 657. Source is frozen; root affected types/main/UI, full native replay and final reviews remain pending."
     },
     {
       "id": "meetings_central_transcription",
       "goal": "Транскрипция встреч через центральный Deepgram без ключей на устройстве",
-      "status": "in_progress"
+      "status": "implementation_verified_external_acceptance_blocked",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "transcription"
+      ],
+      "evidenceIds": [
+        "central_meetings",
+        "deepgram_adapter",
+        "native_voice",
+        "voice_dom"
+      ],
+      "externalBlockers": [
+        "production_all_users",
+        "provider_live"
+      ],
+      "finalIntegration": "pending_root_final_serialized_results",
+      "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance."
     },
     {
       "id": "message_actions_fork",
       "goal": "Лайки своих сообщений, слушать, форк и ветки",
-      "status": "verified",
-      "evidence": "57 initial tests/192 assertions; canonical native annotation actor integrated and 8 Chromium action scenarios + native identity/persistence checks passed; final integration pending."
+      "status": "implementation_verified_final_app_pending",
+      "evidence": "Focused action/reaction/fork evidence plus real OMP SDK offline proof; actual native message-button branch creates a durable child from SDK-owned anchors. Own-user like/reload/remove passed in the same partial core run. Its 16 startup/Sessions rejections keep overall app acceptance open.",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "own_message_likes",
+        "fork_branch",
+        "message_action_bar"
+      ],
+      "evidenceIds": [
+        "messages",
+        "native_core_app",
+        "native_transport",
+        "omp_sdk_offline"
+      ],
+      "externalBlockers": [],
+      "finalIntegration": "pending_root_final_serialized_results"
     },
     {
       "id": "default_service_connections",
       "goal": "Рабочие ключи и стандартные сервисы",
-      "status": "implementation_verified_live_access_blocked",
-      "evidence": "199 synthetic runtime/source/key-provisioning tests; provider CONNECT blocked by environment HTTP policy; production host not identified."
+      "status": "implementation_verified_external_acceptance_blocked",
+      "evidence": "All 11 supplied candidates network-unavailable at environment CONNECT boundary; none claimed working or deployed. No private key publication.",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "default_services"
+      ],
+      "evidenceIds": [
+        "services",
+        "source_policy"
+      ],
+      "externalBlockers": [
+        "production_all_users",
+        "provider_live"
+      ],
+      "finalIntegration": "pending_root_final_serialized_results"
     },
     {
       "id": "memory_readability",
       "goal": "Читаемая память",
-      "status": "verified",
-      "evidence": "14 Chromium behavior checks including edit failure/retry/persistence, keyboard, 320/680/920 widths and stale workspace responses; 7 existing tests; ESLint."
+      "status": "implementation_verified_final_app_pending",
+      "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance.",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "memory"
+      ],
+      "evidenceIds": [
+        "memory"
+      ],
+      "externalBlockers": [],
+      "finalIntegration": "pending_root_final_serialized_results"
     },
     {
       "id": "widget_design_presets",
       "goal": "Пресеты, цвет, насыщенность и контраст виджетов",
-      "status": "verified",
-      "evidence": "16 tests/1062 assertions; Chromium 20 widgets × 5 presets, 180 size samples at 1440/400/320px, persistence/reset/cancel and accessibility themes."
+      "status": "implementation_verified_final_app_pending",
+      "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance.",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "widget_design"
+      ],
+      "evidenceIds": [
+        "widget_dom",
+        "widget_unit"
+      ],
+      "externalBlockers": [],
+      "finalIntegration": "pending_root_final_serialized_results"
     },
     {
       "id": "skill_installation",
       "goal": "Установка навыков и симлинки без конфликтов имён",
-      "status": "in_progress"
+      "status": "implementation_verified_external_acceptance_blocked",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "skill_installation"
+      ],
+      "evidenceIds": [
+        "skill_rollback_current",
+        "skills",
+        "skills_acceptance",
+        "skills_rollback_fix"
+      ],
+      "externalBlockers": [
+        "native_skill_links"
+      ],
+      "finalIntegration": "pending_root_final_serialized_results",
+      "evidence": "Current rollback run28 includes inner isolated12; earlier 78 and inner 9 are overlapping previous runs, not additive."
     },
     {
       "id": "meeting_extraction_editing",
       "goal": "Автоизвлечение решений/задач и ручное редактирование",
-      "status": "in_progress"
+      "status": "implementation_focused_verified_final_app_pending",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "meeting_extraction"
+      ],
+      "evidenceIds": [
+        "extraction",
+        "confirmed_task_conversions_current"
+      ],
+      "externalBlockers": [],
+      "finalIntegration": "pending_root_final_serialized_results",
+      "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; final affected build/native review gates remain."
     },
     {
       "id": "radar_workflow",
       "goal": "Радар: настройка и результаты",
-      "status": "pending"
+      "status": "implementation_verified_external_acceptance_blocked",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "radar"
+      ],
+      "evidenceIds": [
+        "confirmed_task_conversions_current",
+        "radar_dom",
+        "radar_model",
+        "radar_visual",
+        "source_policy"
+      ],
+      "externalBlockers": [
+        "provider_live"
+      ],
+      "finalIntegration": "pending_root_final_serialized_results",
+      "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; final affected build/native review gates remain."
     },
     {
       "id": "quest_gamification",
       "goal": "Карточки, прогресс и соревновательные квесты",
-      "status": "in_progress"
+      "status": "implementation_verified_final_app_pending",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "quests"
+      ],
+      "evidenceIds": [
+        "native_note_xp_current",
+        "native_quests",
+        "native_tasks_app_current",
+        "quests"
+      ],
+      "externalBlockers": [],
+      "finalIntegration": "pending_root_final_serialized_results",
+      "evidence": "Native task earned receipt/deduplication and Notes post-canonical first_note award verified. Authoritative root combined gate 37/657 across four files includes 28 inner actual WS checks and overlaps older NativeReplica runs. Focused 1/3 wrapper is part of this scope, not additive. Award/retry/restart stays once-only, actor/caller scoped, receipt unchanged; denied/read/plan/assets/stale authority produce no reward. Final affected build/app pending."
     },
     {
       "id": "security_runtime",
       "goal": "Доступность рантайма в Безопасности",
-      "status": "in_progress",
-      "agent": "native_voice_access"
+      "status": "implementation_verified_final_app_pending",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "security"
+      ],
+      "evidenceIds": [
+        "app_optional_rpc_rejections",
+        "final_routing_current",
+        "final_secret_scan_current",
+        "native_transport",
+        "routing_current",
+        "security",
+        "startup_optional_effects"
+      ],
+      "externalBlockers": [],
+      "finalIntegration": "pending_root_final_serialized_results",
+      "evidence": "Rox Runtime remains independent of optional OpenClaw. Earlier App debug/update six-case catch proof plus final desktop/mobile debug/theme eight-case Chromium proof prevent optional denied probes from producing page errors. SessionTable initial optional preference denial is quiet; explicit writes retain normal error handling. Final clean native rerun remains pending."
     },
     {
       "id": "inbox_focus",
       "goal": "Входящие, переключатели и спокойное пустое состояние",
-      "status": "in_progress",
-      "agent": "meeting_extraction_editing"
+      "status": "implementation_focused_verified_final_app_pending",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "inbox"
+      ],
+      "evidenceIds": [
+        "inbox",
+        "confirmed_task_conversions_current",
+        "messaging_legacy_baseline",
+        "native_inbox_current",
+        "native_inbox_identity_current",
+        "native_inbox_producer_final"
+      ],
+      "externalBlockers": [],
+      "finalIntegration": "pending_root_final_serialized_results",
+      "evidence": "Trusted native MemoryService and messaging producers are implemented and focused-verified: 119 tests / 253 assertions across 7 files includes 11 scoped Inbox WS cases, real queued-turn actor context and 15 registry/gateway/Commands/WS cases. Durable private pairing, restart/client-close, same-owner repair, forged/foreign/stale/disabled denial and one exact scoped PENDING_CHANGED event passed. 24 Chromium / 32 assertions verifies consumer identity behavior. External messaging adapters/model boundaries are synthetic; actual rebuilt app remains pending. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; final affected build/native review gates remain."
     },
     {
       "id": "localization_completion",
       "goal": "Переводы новых и ранее незавершённых интерфейсов",
-      "status": "pending"
+      "status": "verified_current_locale_gate_pass_final_app_pending",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "final_integration"
+      ],
+      "evidenceIds": [
+        "independent_reviews",
+        "locale_tests",
+        "native_bootstrap",
+        "native_transport",
+        "routing_current",
+        "shared_tsc",
+        "sharing_busy_chromium"
+      ],
+      "externalBlockers": [],
+      "finalIntegration": "pending_root_final_serialized_results",
+      "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance."
     },
     {
       "id": "original_scope_acceptance",
       "goal": "Проверка полного исходного запроса в приложении",
-      "status": "pending"
+      "status": "implementation_verified_final_app_pending",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "original_shell",
+        "original_navigation",
+        "original_top_navigation",
+        "original_profile",
+        "original_widget_sizes",
+        "original_map",
+        "original_model_defaults",
+        "original_session_actions",
+        "original_defaults_import"
+      ],
+      "evidenceIds": [
+        "app_optional_rpc_rejections",
+        "asset_validation_missing_baseline",
+        "auth_backend",
+        "confirmed_task_conversions_current",
+        "final_routing_current",
+        "final_secret_scan_current",
+        "full_types_accepted_current",
+        "glass",
+        "import_backend",
+        "import_dom",
+        "inbox",
+        "map",
+        "model_caller",
+        "native_bootstrap",
+        "native_core_app",
+        "native_feed_current",
+        "native_inbox_current",
+        "native_inbox_producer_final",
+        "native_map_app_current",
+        "native_model_pure",
+        "native_note_xp_current",
+        "native_notes",
+        "native_notes_app_current",
+        "native_notes_create_recovery",
+        "native_notes_read_watch_assets",
+        "native_overview_app_current",
+        "native_overview_current",
+        "native_profile_app_current",
+        "native_roster_pure_current",
+        "native_sharing",
+        "native_sharing_ui",
+        "native_sidebar_pure",
+        "native_source_pure_current",
+        "native_tasks_app_current",
+        "native_tasks_current",
+        "native_transport",
+        "navigation",
+        "profile_layout",
+        "publisher_failure_current",
+        "resource_copy_current",
+        "session_actions_dom",
+        "session_actions_units",
+        "sharing_busy_chromium",
+        "startup_optional_effects",
+        "thin_preload_notes",
+        "top_navigation",
+        "voice_cancel_current",
+        "welcome_preferences",
+        "widget_sizes",
+        "widget_unit"
+      ],
+      "externalBlockers": [
+        "os_credential_permission",
+        "referenced_screenshot",
+        "windows_macos_compositor"
+      ],
+      "finalIntegration": "pending_root_final_serialized_results",
+      "evidence": "All 9 original areas implemented and focused-verified; preserve per-area hardware/provider/screenshot gaps rather than marking the entire scope unimplemented.",
+      "subtasks": [
+        {
+          "id": "original_shell",
+          "implementationStatus": "implemented",
+          "verification": "focused_verified",
+          "externalBlockers": [
+            "windows_macos_compositor"
+          ],
+          "finalAppAcceptance": "pending_root"
+        },
+        {
+          "id": "original_navigation",
+          "implementationStatus": "implemented",
+          "verification": "focused_verified",
+          "externalBlockers": [],
+          "finalAppAcceptance": "pending_root"
+        },
+        {
+          "id": "original_top_navigation",
+          "implementationStatus": "implemented",
+          "verification": "focused_verified",
+          "externalBlockers": [],
+          "finalAppAcceptance": "pending_root"
+        },
+        {
+          "id": "original_profile",
+          "implementationStatus": "implemented",
+          "verification": "focused_verified",
+          "externalBlockers": [],
+          "finalAppAcceptance": "pending_root"
+        },
+        {
+          "id": "original_widget_sizes",
+          "implementationStatus": "implemented",
+          "verification": "focused_verified",
+          "externalBlockers": [],
+          "finalAppAcceptance": "pending_root"
+        },
+        {
+          "id": "original_map",
+          "implementationStatus": "implemented",
+          "verification": "focused_verified",
+          "externalBlockers": [],
+          "finalAppAcceptance": "pending_root"
+        },
+        {
+          "id": "original_model_defaults",
+          "implementationStatus": "implemented",
+          "verification": "focused_verified",
+          "externalBlockers": [],
+          "finalAppAcceptance": "pending_root"
+        },
+        {
+          "id": "original_session_actions",
+          "implementationStatus": "implemented",
+          "verification": "focused_verified",
+          "externalBlockers": [],
+          "finalAppAcceptance": "pending_root"
+        },
+        {
+          "id": "original_defaults_import",
+          "implementationStatus": "implemented",
+          "verification": "focused_verified",
+          "externalBlockers": [
+            "referenced_screenshot",
+            "os_credential_permission"
+          ],
+          "finalAppAcceptance": "pending_root"
+        }
+      ]
     },
     {
       "id": "independent_review_completion",
       "goal": "Независимая проверка интеграции",
-      "status": "pending"
+      "status": "working_tree_reviewed_immutable_review_pending",
+      "implementationStatus": "source_reviewed",
+      "acceptanceRowIds": [
+        "final_integration"
+      ],
+      "evidenceIds": [
+        "asset_validation_missing_baseline",
+        "final_routing_current",
+        "final_secret_scan_current",
+        "independent_reviews",
+        "locale_tests",
+        "native_bootstrap",
+        "native_transport",
+        "resource_copy_current",
+        "routing_current",
+        "shared_tsc",
+        "startup_optional_effects"
+      ],
+      "externalBlockers": [],
+      "finalIntegration": "pending_root_final_serialized_results",
+      "evidence": "Reviewed source seams accepted; final immutable revision verification remains pending. Old ledger findings are historical until current root review is supplied."
+    },
+    {
+      "id": "native_tasks_completion",
+      "goal": "Нативные задачи: личное хранилище, подтверждённые ревизии и XP",
+      "status": "implementation_focused_verified_final_app_pending",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "original_navigation"
+      ],
+      "evidenceIds": [
+        "confirmed_task_conversions_current",
+        "native_tasks_app_current",
+        "native_tasks_current"
+      ],
+      "externalBlockers": [],
+      "finalIntegration": "pending_root_final_serialized_results",
+      "evidence": "26 tests / 103 assertions across 5 files, including 13 renderer authority/cache/transition recovery cases and a real native WS fixture. Rejected-switch recovery, lost ACK, ABA, unmount and late success are verified; final rebuilt Tasks UI remains pending. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; final affected build/native review gates remain."
+    },
+    {
+      "id": "native_feed_completion",
+      "goal": "Нативная лента: источники, аннотации и безопасная загрузка",
+      "status": "implementation_focused_verified_final_app_pending",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "original_navigation"
+      ],
+      "evidenceIds": [
+        "native_feed_current",
+        "native_notes_create_recovery"
+      ],
+      "externalBlockers": [
+        "external_rss_x"
+      ],
+      "finalIntegration": "pending_root_final_serialized_results",
+      "evidence": "49 tests / 164 assertions across 6 files include 42 inner real native WS checks and 11 Chromium scenarios. Feed explicitly opts into exact native Notes CREATE recovery; the final 71-test creation gate covers its 11 browser cases plus native/outbox/compatibility paths. Active-view refresh and acknowledged Note/Task conversions verified. External RSS/X and final rebuilt Feed UI remain pending."
+    },
+    {
+      "id": "native_inbox_completion",
+      "goal": "Нативные входящие: доступные очереди, события и границы извлечения",
+      "status": "implementation_focused_verified_final_app_pending",
+      "implementationStatus": "implemented",
+      "acceptanceRowIds": [
+        "inbox"
+      ],
+      "evidenceIds": [
+        "confirmed_task_conversions_current",
+        "messaging_legacy_baseline",
+        "native_inbox_current",
+        "native_inbox_identity_current",
+        "native_inbox_producer_final"
+      ],
+      "externalBlockers": [],
+      "finalIntegration": "pending_root_final_serialized_results",
+      "evidence": "Trusted native MemoryService and messaging producers are implemented and focused-verified: 119 tests / 253 assertions across 7 files includes 11 scoped Inbox WS cases, real queued-turn actor context and 15 registry/gateway/Commands/WS cases. Durable private pairing, restart/client-close, same-owner repair, forged/foreign/stale/disabled denial and one exact scoped PENDING_CHANGED event passed. 24 Chromium / 32 assertions verifies consumer identity behavior. External messaging adapters/model boundaries are synthetic; actual rebuilt app remains pending. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; final affected build/native review gates remain."
+    }
+  ],
+  "schema": 2,
+  "updatedAt": "2026-10-03T14:07:55.579218+00:00",
+  "finalized": false,
+  "acceptanceDocument": "docs/plans/2026-10-03-app-completion-acceptance.md",
+  "verificationDocument": "docs/plans/2026-10-03-app-completion-verification.md",
+  "countingPolicy": "Separate overlapping runs are never summed into a unique-test total; nested fixture counts are identified.",
+  "finalGates": {
+    "mainResourcesAssets": "main_and_resource_copy_pass_no_standalone_asset_validation_claim",
+    "preload": "latest_root_reported_pass",
+    "renderer": "root_reported_pass_before_new_meeting_conversion_fix_affected_rebuild_pending",
+    "typecheckAll": "pass_clean_consolidated_exit0_after_all_frozen_source_and_fixture_corrections",
+    "webui": "types_pass_latest_accepted_final_affected_build_pending",
+    "localeParity": "pass_7679_English_keys_11_other_locales_12_total_equal_sorted_coverage_7450_literal_refs_5379_unique",
+    "actualNativeApp": "partial_checkpoints_pass_map_investigation_and_final_affected_build_full_repeat_pending",
+    "immutableReview": "pending_root_explicit_result",
+    "electronNormalTypes": "pass_latest_accepted",
+    "subprocessBuild": "latest_root_reported_pass",
+    "sharedTypes": "latest_root_reported_pass",
+    "serverCoreTypes": "latest_root_reported_pass_after_fixture_annotation_correction",
+    "discordBuild": "latest_root_reported_pass",
+    "routing": "68_pass_0_fail_4382_assertions",
+    "secretScan": "latest_checkpoint_2862_files_13_values_0_matches_final_build_scope_pending_root",
+    "resourceCopy": "pass",
+    "assetValidation": "failed_preexisting_missing_scripts_validate_assets_ts",
+    "productionFreeze": "assigned_source_focused_frozen_final_root_affected_types_build_review_pending",
+    "workerPages": "absent_in_OSS_export_explicitly_skipped"
+  },
+  "actualAppProgress": {
+    "finalPass": false,
+    "coreBehaviorsReportedPassed": 7,
+    "genuineSdkButtonBranch": "actual_native_UI_pass_durable_child_real_SDK_owned_anchors",
+    "ownLikeReloadRemove": "reported_pass",
+    "routesFixedProfileModelSidebarRuntime": "reported_pass",
+    "startupSessionUnhandledRpcRejections": {
+      "count": 16,
+      "status": "historical_16_then2_resolved_fresh_core_7checks_zero_page_errors_final_repeat_pending"
+    },
+    "notesCrudInviteJoin": "actual_native_Notes_create_autosave_edit_revision2to3_watch_pass_InviteJoinRevoke5_pass_final_clean_script_pending",
+    "nativeCollectionGaps": {
+      "tasks": "26tests_103assert_focused_verified_final_app_pending",
+      "feed": "49tests_164assert_42innerWS_focused_verified_final_app_pending",
+      "inbox": "trusted_producers_and_consumers_focused_verified_119tests_253assert_final_app_pending"
+    },
+    "notesOptionalAssetRead": "fixed_focused_23tests_verified_final_app_pending",
+    "nativePureReadEvidence": {
+      "sources": "12tests_16assert_including10_nativeWS_startup_runtime_summary",
+      "roster": "11tests_15assert_overlaps_current_source_run"
+    },
+    "notesCreateRecovery": "explicit_Feed_recoverCreation_optin_71tests_842assert_ordinary_Notes_and_WebUI_preserved_at_capacity",
+    "appOptionalRpcRejections": "source_fix_verified_6_Chromium_cases_7assert_no_uncaught_errors_final_native_rerun_pending",
+    "homeModelsWidgetsStage": {
+      "modelsRoxR1Max": "reported_pass",
+      "widgetSMLPresetsReload": "reported_pass",
+      "uncaughtErrors": 4,
+      "context": "staged_old_backend_before_App_debug_update_catch_fix",
+      "cleanNewBackendAcceptance": "pending_root"
+    },
+    "startupOptionalEffects": {
+      "cases": 8,
+      "failed": 0,
+      "assertions": 11,
+      "pageErrors": 0,
+      "scope": "Production desktop/mobile menu and ThemeProvider in Chromium; frozen synthetic optional Electron transport",
+      "quietSessionTableInitialPrefs": "source_frozen_root_report_explicit_writes_preserved",
+      "sourceShaMatched": 7,
+      "finalNativeStartup": "fresh_core_7checks_zero_page_errors_final_full_repeat_pending"
+    },
+    "latestPartialNativeStage": {
+      "coreChecksReportedPassed": 6,
+      "genuineSdkBranch": "passed",
+      "sevenRoutes": "passed",
+      "notesCreateAutosaveEditWatch": "passed_revision_2_to_3",
+      "uncaughtErrors": 2,
+      "context": "old_renderer_bundle_before_final_desktop_mobile_debug_and_theme_catches",
+      "freshEightScriptAcceptance": "pending_root"
+    },
+    "meetingTaskConversion": "authoritative_root_19cases_65assert_0pageerrors_complete_fixture_9SHA_match_5production_unchanged",
+    "voiceCancelUnmount": "four_CANCEL_sites_fixed_12_Chromium_cases_45assert_0pageerrors_source_frozen_3SHA_match",
+    "freshNativeCheckpoint": {
+      "core": {
+        "checks": 7,
+        "pageErrors": 0
+      },
+      "notes": {
+        "checks": 4,
+        "pageErrors": 0
+      },
+      "tasks": {
+        "checks": 3,
+        "pageErrors": 0,
+        "savedInitialXP": "0_to_15_in_selector_failure_artifact",
+        "canonicalReceiptAndDedupe": "firstTaskEarned_true_XP15_to15_corrected_artifact"
+      },
+      "overview": {
+        "checks": 2,
+        "pageErrors": 0
+      },
+      "sharingMapProfileWidgets": "map_profile_pass_widgets_responsive_precondition_rerun_then_CDP_release_final_build_repeat",
+      "finalPass": false,
+      "map": {
+        "checks": 6,
+        "pageErrors": 0
+      },
+      "profile": {
+        "checks": 3,
+        "pageErrors": 0,
+        "scope": "save_reload_restore_fixed_geometry_seven_routes"
+      }
+    },
+    "nativeNoteXP": "authoritative_root37tests_657assert_4files_including28innerWS_source_frozen_Spec_accepted_final_main_app_pending",
+    "mapNativeCheckpoint": "complete_native_script6_checks_0errors_full_reload_cleanup_pass_no_source_bug"
+  },
+  "sourceSecretScan": {
+    "files": 2862,
+    "suppliedValues": 13,
+    "hits": 0,
+    "scope": "latest_source_and_artifact_checkpoint",
+    "evidence": "/tmp/rox-completion-final-secret-scan.json",
+    "latestRendererWebUIBundle": "new_build_running_final_scan_scope_pending_root"
+  },
+  "legacyBaselineFindings": [
+    {
+      "scope": "Messaging old DTO/access-mode/global-owner expectations",
+      "tests": 25,
+      "passed": 21,
+      "failed": 4,
+      "introducedByCurrentChange": false,
+      "evidence": "/tmp/rox-messaging-baseline-comparison.log",
+      "limits": "Reproduced on immutable HEAD baseline; does not claim the entire legacy suite passes."
+    }
+  ],
+  "legacyBuildCommand": {
+    "command": "build:validate",
+    "status": "failed_missing_script",
+    "missingPath": "apps/electron/scripts/validate-assets.ts",
+    "preexistingBaseline": true,
+    "evidence": "/tmp/rox-completion-accepted-assets.log",
+    "limits": "Resource copy passed separately; do not represent copy-assets as standalone asset validation."
+  },
+  "nativeAppGateScope": {
+    "plannedScripts": 8,
+    "coveredSurfaces": [
+      "Core/navigation/models/own likes/genuine SDK branch",
+      "Notes",
+      "Tasks",
+      "Overview",
+      "Authority-local sharing",
+      "Map",
+      "Profile",
+      "Widgets"
+    ],
+    "otherEvidenceRetained": [
+      "Memory production component",
+      "Meetings and extraction component/native WS",
+      "Radar component/model",
+      "Quests component/native WS",
+      "Inbox component/native WS"
+    ],
+    "notEstablished": [
+      "Live Deepgram/TTS/model/provider authentication",
+      "Hosted sharing relay/public publication",
+      "Actual connected mail",
+      "Windows/macOS compositor/OS consent",
+      "Exact unknown supplied login error and absent screenshot"
+    ],
+    "finalOutcome": "pending_corrected_source_native_repeat"
+  },
+  "finalFixtureCorrections": [
+    {
+      "scope": "Native note XP fixture asset.schemaVersion literal 1 narrowing",
+      "productionChanged": false,
+      "focusedResult": "1 wrapper / 3 assertions including 28 WS checks, pass",
+      "evidence": "/tmp/rox-completion-accepted-note-xp-fixture-types-fix.log",
+      "fullTypes": "resolved_clean_consolidated_typecheck_all_pass"
+    },
+    {
+      "scope": "Confirmed conversion fixture complete MailMessageDTO and no type assertion",
+      "productionChanged": false,
+      "focusedRerun": "/tmp/rox-completion-accepted-task-conversions.log pending root outcome",
+      "fullTypes": "resolved_clean_consolidated_typecheck_all_pass"
     }
   ]
 }

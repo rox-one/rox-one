@@ -24,6 +24,8 @@ function harness(overrides: Record<string, unknown> = {}, environmentOverrides: 
   const authorities: unknown[] = []
   const workspaces: unknown[] = []
   const configurations: unknown[] = []
+  const runtimeConfigurations: unknown[] = []
+  const workspaceConfigurations: unknown[] = []
   const setups: unknown[] = []
   const errors: unknown[] = []
   const api: Record<string, unknown> = {
@@ -46,6 +48,8 @@ function harness(overrides: Record<string, unknown> = {}, environmentOverrides: 
     setWindowWorkspaceId: (value: unknown) => workspaces.push(value),
     setSetupNeeds: (value: unknown) => setups.push(value), setLlmConnections: (value: unknown) => configurations.push(value),
     setDefaultLlmConnectionSlug: (value: unknown) => configurations.push(value),
+    setRuntimeSummary: (value: unknown) => runtimeConfigurations.push(value),
+    setWorkspaceDefaultLlmConnection: (value: unknown) => workspaceConfigurations.push(value),
     setAppState: (value: string) => states.push(value), setStartupBootstrapError: (value: unknown) => errors.push(value),
     resolveDefaultConnectionSlug: (connections: Array<{ slug: string }>) => connections[0]?.slug,
     // Even a stale profile fixture cannot act as startup identity.
@@ -54,7 +58,7 @@ function harness(overrides: Record<string, unknown> = {}, environmentOverrides: 
     ...environmentOverrides,
   }
   const actual = new Function(...Object.keys(environment), 'let cancelled = false; ' + code + '; return { run: actual, cancel: () => { cancelled = true } }')(...Object.values(environment))
-  return { ...actual, calls, states, authorities, workspaces, configurations, setups, errors }
+  return { ...actual, calls, states, authorities, workspaces, configurations, runtimeConfigurations, workspaceConfigurations, setups, errors }
 }
 
 describe('actual App startup caller boundary', () => {
@@ -82,6 +86,8 @@ describe('actual App startup caller boundary', () => {
     const h = harness()
     await h.run()
     expect(h.states).toEqual(['ready'])
+    expect(h.runtimeConfigurations).toEqual([summary])
+    expect(h.workspaceConfigurations).toEqual(['omp'])
     expect(h.authorities).toEqual(['native'])
     expect(h.workspaces).toEqual(['ws-a'])
     expect(h.configurations).toEqual([[], 'omp'])

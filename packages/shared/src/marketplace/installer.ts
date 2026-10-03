@@ -228,7 +228,7 @@ export function scanSkillDirs(checkoutDir: string, entry: MarketplaceEntry): Sca
   if (found.length === 0) return []
 
   const used = new Set<string>()
-  return found.map((dir) => {
+  return found.sort().map((dir) => {
     const wanted = dir === scanRoot ? entry.id : basename(dir)
     let name = wanted
     let n = 2
@@ -378,6 +378,8 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
 
     const collisions: string[] = []
     const swaps: StagedSwap[] = []
+    const swappedTargets = new Set<string>()
+    const rewrittenMarkers = new Map<string, MarketplaceLockRecord | null>()
 
     const installOne = (name: string, srcDir: string): void => {
       progress('install', name)
@@ -422,6 +424,7 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
       }
       const swap = swapStagedIntoPlace(staged, target)
       swaps.push(swap)
+      swappedTargets.add(target)
       const contentSha = sha256Directory(target)
       const pinKey = name // Integrity pins refer to the original checkout, never the local alias.
       const expected = entry.expectedContentSha256?.[pinKey]
@@ -440,6 +443,27 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
       if (entry.installMode === 'directory') {
         // Whole-repo pack (clone-only). Upstream install.sh is NEVER executed.
         installOne(entry.id, staging)
+        const target = record.targets[0]!
+        if (!existsSync(join(target, 'SKILL.md'))) {
+          record.skillViews = {}
+          for (const view of scanSkillDirs(target, entry)) {
+            const rel = relative(target, view.dir)
+            const prior = Object.entries(previous?.skillViews ?? {}).find(([, path]) => path === rel)?.[0]
+            const name = chooseManagedSkillName(entry.id, view.name, candidate => {
+              if (candidate === view.name || candidate in record.skillViews! || pathEntryExists(join(skillsDir, candidate))) return false
+              const link = linksRoot ? join(linksRoot, candidate) : null
+              return prior === candidate || !link || !pathEntryExists(link) || isSkillLinkTo(link, view.dir)
+            }, prior)
+            record.skillViews[name] = rel
+          }
+          if (Object.keys(record.skillViews).length > 0) record.skills = Object.keys(record.skillViews)
+          // Discovery reads views through the pack's existing provenance marker.
+          // A swapped target's backup already contains its original marker.
+          // Snapshot only markers rewritten in place on preserved local content;
+          // reading a swapped target here would capture the attempted NEW record.
+          if (!swappedTargets.has(target)) rewrittenMarkers.set(target, readInstallMarker(target))
+          writeInstallMarker(target, record)
+        }
       } else {
         const skills = scanSkillDirs(staging, entry)
         if (skills.length === 0) {
@@ -477,6 +501,12 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
           // Preserve the original error; backup remains available for recovery.
         }
       }
+      for (const [target, marker] of rewrittenMarkers) {
+        if (existsSync(target)) {
+          if (marker) writeInstallMarker(target, marker)
+          else removeInstallMarker(target)
+        }
+      }
       throw err
     }
     const result: MarketplaceInstallResult = {
@@ -497,9 +527,21 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
           // Preserve the original error; backup remains available for recovery.
         }
       }
+      for (const [target, marker] of rewrittenMarkers) {
+        if (existsSync(target)) {
+          if (marker) writeInstallMarker(target, marker)
+          else removeInstallMarker(target)
+        }
+      }
       throw err
     }
     for (const swap of swaps) swap.commit()
+    const activeLinkTargets = new Set(record.targets)
+    const directoryTarget = entry.installMode === 'directory' ? record.targets[0] : undefined
+    if (directoryTarget) for (const rel of Object.values(record.skillViews ?? {})) activeLinkTargets.add(join(directoryTarget, rel))
+    for (const [target, link] of Object.entries(previous?.skillLinks ?? {})) {
+      if (!activeLinkTargets.has(target) && isSkillLinkTo(link, target)) unlinkManagedSkill(target, dirname(link))
+    }
     for (const target of previous?.targets ?? []) {
       if (record.targets.includes(target)) continue
       const oldLink = previous?.skillLinks?.[target]
@@ -510,6 +552,14 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
       for (const target of record.targets) {
         const link = linkManagedSkill(target, linksRoot, basename(target))
         if (link) record.skillLinks![target] = link
+      }
+      const packTarget = entry.installMode === 'directory' ? record.targets[0] : undefined
+      if (packTarget) {
+        for (const [name, rel] of Object.entries(record.skillViews ?? {})) {
+          const target = join(packTarget, rel)
+          const link = linkManagedSkill(target, linksRoot, name)
+          if (link) record.skillLinks![target] = link
+        }
       }
       // Links are optional; a failed link must not invalidate a successful app installation.
       try { upsertLockRecord(paths.lockFile, record) } catch { /* Discovery reads the app store. */ }
@@ -703,6 +753,12 @@ export function removeEntry(id: string, options: { configDir?: string; lockPath?
 
   const removed: string[] = []
   const kept: RemovedKept[] = []
+
+  // Nested directory-pack links belong to descendants, not the parent target itself.
+  for (const [target, link] of Object.entries(record.skillLinks ?? {})) {
+    if (!record.targets.some(root => target.startsWith(root + sep)) || !isSkillLinkTo(link, target)) continue
+    unlinkManagedSkill(target, dirname(link))
+  }
 
   for (const target of record.targets) {
     if (record.kind === 'skillpack' && record.skillsRoot && (dirname(target) !== record.skillsRoot || !isSafeSkillName(basename(target)))) {

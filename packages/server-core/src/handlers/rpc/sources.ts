@@ -1,5 +1,5 @@
 import { join } from 'path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import { ensureDefaultMicroserviceSources, loadSourceConfig, loadWorkspaceSources, saveSourceConfig, saveSourceGuide, type FolderSourceConfig } from '@craft-agent/shared/sources'
 import { safeJsonParse } from '@craft-agent/shared/utils/files'
@@ -8,6 +8,8 @@ import { ensureRoxLayout, loadWorkspaceConfig, saveWorkspaceConfig } from '@craf
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { assertNativeWorkspace, nativeSources } from './native-session-scope'
+import { assertNativeMetadataRead } from './native-sidebar-metadata'
+import { readNativeSourceMetadata } from './native-source-metadata'
 import { KnowledgeConnectionsStore, credentialIdFromRef } from '../../knowledge'
 import {
   isClaimableLive,
@@ -55,6 +57,14 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
     assertNativeWorkspace(ctx, deps, workspaceId)
     const listed = rpcSourcesListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []
+    if (ctx.principal) {
+      const workspace = assertNativeMetadataRead(ctx, deps, server, workspaceId)!
+      if (deps.nativeData?.authority.resolveWorkspace(workspaceId)?.nativeRoot !== workspace.rootPath) throw new CodedError('FORBIDDEN', 'Workspace access denied')
+      const sources = readNativeSourceMetadata(workspaceId, workspace.rootPath)
+      assertNativeMetadataRead(ctx, deps, server, workspaceId, workspace.rootPath)
+      if (deps.nativeData?.authority.resolveWorkspace(workspaceId)?.nativeRoot !== workspace.rootPath) throw new CodedError('FORBIDDEN', 'Workspace access denied')
+      return sources
+    }
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) {
       log.error(`SOURCES_GET: Workspace not found: ${workspaceId}`)

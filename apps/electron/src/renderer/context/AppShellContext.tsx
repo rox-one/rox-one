@@ -26,6 +26,7 @@ import type {
   TestAutomationResult,
 } from '../../shared/types'
 import type { SessionStatus as SessionStatusConfig } from '@/config/session-status-config'
+import type { SessionModelCatalog, StartupRuntimeSummary } from '@craft-agent/shared/protocol'
 import type { SessionOptions, SessionOptionUpdates } from '../hooks/useSessionOptions'
 import { defaultSessionOptions } from '../hooks/useSessionOptions'
 import { sessionAtomFamily } from '../atoms/sessions'
@@ -56,6 +57,10 @@ export interface AppShellContextType {
   activeWorkspaceSlug: string | null
   /** All LLM connections with authentication status */
   llmConnections: LlmConnectionWithStatus[]
+  /** Native workspace model metadata, without account or credential status. */
+  runtimeSummary?: StartupRuntimeSummary | null
+  /** Scoped to the mounted chat; distinct from the workspace's default runtime. */
+  sessionModelCatalog?: SessionModelCatalog | null
   /** Default LLM connection slug for the current workspace */
   workspaceDefaultLlmConnection?: string
   /** Refresh LLM connections from config */

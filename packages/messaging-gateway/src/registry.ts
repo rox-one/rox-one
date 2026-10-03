@@ -48,6 +48,7 @@ import type {
   MessagingLogger,
   MessagingPlatformRuntimeInfo,
   PendingSender,
+  NativeMessagingContext,
   PlatformAccessMode,
   PlatformOwner,
   PlatformType,
@@ -115,6 +116,7 @@ export class MessagingGatewayRegistry implements IMessagingGatewayRegistry {
   /** In-flight WeChat QR logins awaiting a verify code from the UI, per workspace. */
   private readonly wechatVerifyResolvers = new Map<string, Array<(code: string) => void>>()
   private readonly pairing = new PairingCodeManager()
+  private nativeContextResolver?: (binding: MessagingBindingInfo) => NativeMessagingContext | undefined
   private readonly log: MessagingLogger
 
   constructor(private readonly opts: MessagingGatewayRegistryOptions) {
@@ -142,6 +144,10 @@ export class MessagingGatewayRegistry implements IMessagingGatewayRegistry {
   // -------------------------------------------------------------------------
   // Public registry lifecycle (called by the app bootstrap)
   // -------------------------------------------------------------------------
+
+  setNativeBindingContextResolver(resolve: (binding: MessagingBindingInfo) => NativeMessagingContext | undefined): void {
+    this.nativeContextResolver = resolve
+  }
 
   async initializeWorkspace(workspaceId: string): Promise<void> {
     if (this.workspaces.has(workspaceId)) return
@@ -420,15 +426,20 @@ export class MessagingGatewayRegistry implements IMessagingGatewayRegistry {
     workspaceId: string,
     sessionId: string,
     platform: string,
+    nativeContext?: NativeMessagingContext,
   ): { code: string; expiresAt: number; botUsername?: string } {
     if (!isKnownPlatform(platform)) {
       throw new Error(`Unknown messaging platform: ${platform}`)
     }
-    const state = this.workspaces.get(workspaceId) ?? this.bootstrapWorkspace(workspaceId)
+    const state = this.workspaces.get(workspaceId) ?? (nativeContext ? undefined : this.bootstrapWorkspace(workspaceId))
+    if (!state) throw new Error(`${capitalize(platform)} is not connected`)
     if (!state.gateway.hasConnectedAdapter(platform)) {
       throw new Error(`${capitalize(platform)} is not connected`)
     }
-    const gen = this.pairing.generate(workspaceId, sessionId, platform)
+    const config = state.configStore.get(), platformConfig = config.platforms[platform]
+    if (nativeContext && (!config.enabled || !platformConfig?.enabled || normalizeMessagingAccessMode(platformConfig.accessMode) === 'disabled')) throw new Error(`${capitalize(platform)} is not connected`)
+    nativeContext?.assertAuthorized()
+    const gen = this.pairing.generate(workspaceId, sessionId, platform, nativeContext)
     this.log.info('pairing code generated', {
       event: 'pairing_generated',
       workspaceId,
@@ -1062,23 +1073,28 @@ export class MessagingGatewayRegistry implements IMessagingGatewayRegistry {
     )
     const cfg = configStore.get()
     const gateway = new MessagingGateway({
+      resolveNativeBindingContext: binding => this.nativeContextResolver?.(toBindingInfo(binding)),
       sessionManager: this.opts.sessionManager,
       workspaceId,
       storageDir,
       legacyStorageDir,
       logger: baseLog,
       pairingConsumer: {
+        isNativeCode: (platform, code) => this.pairing.isNativeCode(workspaceId, platform, code),
         canConsume: (platform, senderId) =>
           this.pairing.canConsume(workspaceId, platform, senderId),
         consume: (platform, code) => {
           const entry = this.pairing.consume(workspaceId, platform, code)
           if (!entry) return null
+          const current = configStore.get(), platformConfig = current.platforms[platform]
+          if (entry.nativeContext && (!current.enabled || !platformConfig?.enabled || normalizeMessagingAccessMode(platformConfig.accessMode) === 'disabled')) return null
           if (entry.kind === 'workspace-supergroup') {
             return { kind: 'workspace-supergroup', workspaceId: entry.workspaceId }
           }
           // entry.kind === 'session'
           if (!entry.sessionId) return null
-          return { kind: 'session', workspaceId: entry.workspaceId, sessionId: entry.sessionId }
+          return { kind: 'session', workspaceId: entry.workspaceId, sessionId: entry.sessionId,
+            ...(entry.nativeContext ? { nativeContext: entry.nativeContext } : {}) }
         },
         bindWorkspaceSupergroup: async ({ platform, chatId, fallbackTitle }) => {
           if (!isKnownPlatform(platform)) {
@@ -1799,10 +1815,11 @@ export class MessagingGatewayRegistry implements IMessagingGatewayRegistry {
     workspaceId: string,
     platform: PlatformType,
     userId: string,
+    entryKey?: { reason?: import('./types').PendingRejectReason; bindingId?: string },
   ): boolean {
     const state = this.workspaces.get(workspaceId)
     if (!state) return false
-    return state.gateway.getPendingStore().dismiss(platform, userId)
+    return state.gateway.getPendingStore().dismiss(platform, userId, entryKey)
   }
 
   /**
@@ -1985,6 +2002,7 @@ export class MessagingGatewayRegistry implements IMessagingGatewayRegistry {
 
 function toBindingInfo(b: ChannelBinding): MessagingBindingInfo {
   return {
+    ...(b.nativeOwner ? { nativeOwner: { ...b.nativeOwner } } : {}),
     id: b.id,
     workspaceId: b.workspaceId,
     sessionId: b.sessionId,

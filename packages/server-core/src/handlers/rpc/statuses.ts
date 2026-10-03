@@ -2,6 +2,7 @@ import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import { assertNativeMetadataRead, readNativeStatuses } from './native-sidebar-metadata'
 import {
   isClaimableLive,
   rpcStatusesActResult,
@@ -14,9 +15,11 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.statuses.REORDER,
 ] as const
 
-export function registerStatusesHandlers(server: RpcServer, _deps: HandlerDeps): void {
+export function registerStatusesHandlers(server: RpcServer, deps: HandlerDeps): void {
   // List all statuses for a workspace
-  server.handle(RPC_CHANNELS.statuses.LIST, async (_ctx, workspaceId: string) => {
+  server.handle(RPC_CHANNELS.statuses.LIST, async (ctx, workspaceId: string) => {
+    const nativeWorkspace = assertNativeMetadataRead(ctx, deps, server, workspaceId)
+    if (nativeWorkspace) return readNativeStatuses(nativeWorkspace.rootPath)
     const listed = rpcStatusesListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) throw new Error('statuses list is not live')
     const read = rpcStatusesReadResult({ source: 'native', nativeId: workspaceId })
@@ -25,8 +28,9 @@ export function registerStatusesHandlers(server: RpcServer, _deps: HandlerDeps):
     if (!workspace) throw new Error('Workspace not found')
 
     const { listStatuses } = await import('@craft-agent/shared/statuses')
+    assertNativeMetadataRead(ctx, deps, server, workspaceId, workspace.rootPath)
     return listStatuses(workspace.rootPath)
-  })
+  }, { nativeAction: 'read' })
 
   // Reorder statuses (drag-and-drop). Receives new ordered array of status IDs.
   // Config watcher will detect the file change and broadcast STATUSES_CHANGED.

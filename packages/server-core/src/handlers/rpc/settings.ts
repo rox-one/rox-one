@@ -18,6 +18,9 @@ import {
   rpcSettingsListResult,
   rpcSettingsReadResult,
 } from '@craft-agent/core/rox2'
+import { assertNativeSession } from './native-session-scope'
+import { getWorkspaceRuntimeConnection, publicRuntimeSummary, readNativeRuntimeConnection, readNativeWorkspaceRuntimeConnection } from './native-model-catalog'
+import { getLlmConnection } from '@craft-agent/shared/config'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.workspace.SETTINGS_GET,
@@ -43,6 +46,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.caching.GET_ENABLE_1M_CONTEXT,
   RPC_CHANNELS.caching.SET_ENABLE_1M_CONTEXT,
   RPC_CHANNELS.sessions.GET_MODEL,
+  RPC_CHANNELS.sessions.GET_MODEL_CATALOG,
   RPC_CHANNELS.sessions.SET_MODEL,
   RPC_CHANNELS.settings.GET_DEFAULT_THINKING_LEVEL,
   RPC_CHANNELS.settings.SET_DEFAULT_THINKING_LEVEL,
@@ -144,16 +148,55 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
   // ============================================================
 
   // Get session-specific model
-  server.handle(RPC_CHANNELS.sessions.GET_MODEL, async (_ctx, sessionId: string, _workspaceId: string): Promise<string | null> => {
+  server.handle(RPC_CHANNELS.sessions.GET_MODEL_CATALOG, async (ctx, sessionId: string): Promise<import('@craft-agent/shared/protocol').SessionModelCatalog | null> => {
+    assertNativeSession(ctx, deps, server, sessionId)
     const session = await deps.sessionManager.getSession(sessionId)
+    assertNativeSession(ctx, deps, server, sessionId)
+    if (!session) return null
+    if (ctx.principal && session.workspaceId !== ctx.workspaceId) throw new CodedError('FORBIDDEN', 'Session access denied')
+    // A configured locked provider remains valid even after the workspace default changes.
+    // A removed locked provider must not fall through to the new workspace default.
+    const connection = ctx.principal
+      ? session.llmConnection ? readNativeRuntimeConnection(session.llmConnection) : readNativeWorkspaceRuntimeConnection(session.workspaceId)
+      : session.llmConnection ? getLlmConnection(session.llmConnection) : getWorkspaceRuntimeConnection(session.workspaceId)
+    if (!connection) return null
+    const summary = publicRuntimeSummary(connection, true)
+    assertNativeSession(ctx, deps, server, sessionId)
+    return { kind: 'configuration-only', sessionId: session.id, workspaceId: session.workspaceId,
+      slug: summary.slug, providerType: summary.providerType, defaultModel: summary.defaultModel, models: summary.models ?? [] }
+  }, { nativeAction: 'read' })
+
+  server.handle(RPC_CHANNELS.sessions.GET_MODEL, async (ctx, sessionId: string, workspaceId: string): Promise<string | null> => {
+    if (ctx.principal && workspaceId !== ctx.workspaceId) throw new CodedError('FORBIDDEN', 'Workspace access denied')
+    assertNativeSession(ctx, deps, server, sessionId)
+    const session = await deps.sessionManager.getSession(sessionId)
+    assertNativeSession(ctx, deps, server, sessionId)
     return session?.model ?? null
-  })
+  }, { nativeAction: 'read' })
 
   // Set session-specific model (and optionally connection)
-  server.handle(RPC_CHANNELS.sessions.SET_MODEL, async (_ctx, sessionId: string, workspaceId: string, model: string | null, connection?: string) => {
+  server.handle(RPC_CHANNELS.sessions.SET_MODEL, async (ctx, sessionId: string, workspaceId: string, model: string | null, connection?: string) => {
+    if (ctx.principal) {
+      if (workspaceId !== ctx.workspaceId) throw new CodedError('FORBIDDEN', 'Workspace access denied')
+      assertNativeSession(ctx, deps, server, sessionId)
+      const session = await deps.sessionManager.getSession(sessionId)
+      assertNativeSession(ctx, deps, server, sessionId)
+      if (!session || session.workspaceId !== workspaceId) throw new CodedError('FORBIDDEN', 'Session access denied')
+      const selected = readNativeWorkspaceRuntimeConnection(workspaceId)
+      const targetSlug = connection ?? session.llmConnection ?? selected?.slug
+      if (!targetSlug || targetSlug !== session.llmConnection && targetSlug !== selected?.slug) throw new CodedError('FORBIDDEN', 'Connection access denied')
+      // A started session keeps its locked provider. Selecting a model from a
+      // different provider would otherwise be persisted under the old connection.
+      if (session.llmConnection && targetSlug !== session.llmConnection && session.messages.some(message => message.role === 'user')) throw new CodedError('FORBIDDEN', 'Session connection is locked')
+      const target = targetSlug === selected?.slug ? selected : readNativeRuntimeConnection(targetSlug)
+      const catalog = target ? publicRuntimeSummary(target, true) : null
+      if (typeof model !== 'string' || !catalog?.models?.some(item => item.id === model)) throw new CodedError('FORBIDDEN', 'Model access denied')
+      if (!server.isRequestContextCurrent?.(ctx, 'write')) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+      connection = targetSlug
+    }
     await deps.sessionManager.updateSessionModel(sessionId, workspaceId, model, connection)
     deps.platform.logger.info(`Session ${sessionId} model updated to: ${model}${connection ? ` (connection: ${connection})` : ''}`)
-  })
+  }, { nativeAction: 'write' })
 
   // Open native folder dialog for selecting working directory (routed to client)
   server.handle(RPC_CHANNELS.dialog.OPEN_FOLDER, async (ctx) => {

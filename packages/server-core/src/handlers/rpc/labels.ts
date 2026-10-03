@@ -2,6 +2,7 @@ import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import { assertNativeMetadataRead, readNativeLabels } from './native-sidebar-metadata'
 import {
   isClaimableLive,
   rpcLabelsActResult,
@@ -16,17 +17,20 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.labels.DELETE,
 ] as const
 
-export function registerLabelsHandlers(server: RpcServer, _deps: HandlerDeps): void {
+export function registerLabelsHandlers(server: RpcServer, deps: HandlerDeps): void {
   // List all labels for a workspace
-  server.handle(RPC_CHANNELS.labels.LIST, async (_ctx, workspaceId: string) => {
+  server.handle(RPC_CHANNELS.labels.LIST, async (ctx, workspaceId: string) => {
+    const nativeWorkspace = assertNativeMetadataRead(ctx, deps, server, workspaceId)
+    if (nativeWorkspace) return readNativeLabels(nativeWorkspace.rootPath)
     const listed = rpcLabelsListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
     const { listLabels } = await import('@craft-agent/shared/labels/storage')
+    assertNativeMetadataRead(ctx, deps, server, workspaceId, workspace.rootPath)
     return listLabels(workspace.rootPath)
-  })
+  }, { nativeAction: 'read' })
 
   // Create a new label in a workspace
   server.handle(RPC_CHANNELS.labels.CREATE, async (_ctx, workspaceId: string, input: import('@craft-agent/shared/labels').CreateLabelInput) => {

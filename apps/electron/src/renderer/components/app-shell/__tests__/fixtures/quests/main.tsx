@@ -8,6 +8,8 @@ import type { QuestId, QuestRecord } from '@craft-agent/shared/gamification/clie
 import en from '../../../../../../../../../packages/shared/src/i18n/locales/en.json'
 import '../../../../../index.css'
 
+/* eslint-disable craft-agent/no-localstorage -- Synthetic backend state persists across fixture reloads; production quests use RPC custody. */
+
 const query = new URLSearchParams(location.search)
 const key = `quest-fixture-${query.get('case') ?? 'default'}`
 const base = () => ({ xp: 135, quests: defaultQuestRecords(), dailyXp: [{ day: Math.floor(Date.now() / 86400000), xp: 30 }, { day: Math.floor(Date.now() / 86400000) - 8, xp: 15 }] })

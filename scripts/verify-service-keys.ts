@@ -37,7 +37,7 @@ export async function verifyServiceKeys(candidates: ServiceKeyCandidate[], reque
           const catalog = await request('https://api.deepgram.com/v1/models', { headers, redirect: 'error', signal: AbortSignal.timeout(15_000) })
           if (catalog.ok) model = latestNovaModel(await catalog.json())
         } catch { /* speech request below records connectivity */ }
-        url = `https://api.deepgram.com/v1/listen?model=${encodeURIComponent(model)}&version=latest&diarize=true&paragraphs=true`
+        url = `https://api.deepgram.com/v1/listen?model=${encodeURIComponent(model)}&version=latest&diarize_model=latest&paragraphs=true`
         init = { method: 'POST', headers: { ...headers, 'Content-Type': 'audio/wav' }, body: wav }
         break
       }

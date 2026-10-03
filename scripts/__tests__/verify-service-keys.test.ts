@@ -41,6 +41,24 @@ describe('service credential validation and private provisioning', () => {
     expect(outcome.results.map((result) => result.result)).toEqual(['quota-exhausted', 'verified'])
     expect(outcome.selected).toEqual({ FIRECRAWL_API_KEY: 'second-fixture' })
   })
+  it('validates the latest prerecorded transcription and diarization contract with synthetic audio', async () => {
+    const requests: { url: URL; options?: RequestInit }[] = []
+    const outcome = await verifyServiceKeys([{ env: 'DEEPGRAM_API_KEY', key: 'deepgram-fixture' }], (async (input: unknown, options?: RequestInit) => {
+      const url = new URL(String(input)); requests.push({ url, options })
+      return url.pathname === '/v1/models' ? Response.json({ models: [] }) : Response.json({ metadata: {}, results: {} })
+    }) as typeof fetch)
+    expect(outcome.results[0]?.result).toBe('verified')
+    const speech = requests.find(({ url }) => url.pathname === '/v1/listen')!
+    expect(speech.url.searchParams.get('model')).toBe('nova-3')
+    expect(speech.url.searchParams.get('version')).toBe('latest')
+    expect(speech.url.searchParams.get('diarize_model')).toBe('latest')
+    expect(speech.url.searchParams.has('diarize')).toBe(false)
+    expect(speech.url.searchParams.get('paragraphs')).toBe('true')
+    expect(speech.options?.method).toBe('POST')
+    expect(new Headers(speech.options?.headers).get('Content-Type')).toBe('audio/wav')
+    expect(Buffer.from(speech.options?.body as Buffer).subarray(0, 4).toString()).toBe('RIFF')
+    expect(JSON.stringify(outcome.results)).not.toContain('deepgram-fixture')
+  })
   it('publishes multiple keys with actual LF, mode 0600 and preserves unselected deployment keys', () => {
     const path = join(dir, 'private.env')
     writeFileSync(path, 'DEEPGRAM_API_KEY=existing-fixture\nEXA_API_KEY=old-fixture\n', { mode: 0o600 })

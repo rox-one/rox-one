@@ -6,6 +6,8 @@
  */
 
 export interface MessagingBindingInfo {
+  /** Trusted native authority owner; legacy host bindings have no owner. */
+  nativeOwner?: { issuer: string; subject: string }
   id: string
   workspaceId: string
   sessionId: string
@@ -24,6 +26,13 @@ export interface MessagingBindingInfo {
   allowedSenderIds?: string[]
   /** Discord guild-channel routing. Absent on other platforms. */
   discordGuildTrigger?: 'mention' | 'all'
+}
+
+export interface NativeMessagingContext {
+  owner: { issuer: string; subject: string }
+  assertAuthorized: () => void
+  registerBinding?: (binding: MessagingBindingInfo) => void
+  canReplaceBinding?: (binding: MessagingBindingInfo) => boolean
 }
 
 /**
@@ -70,6 +79,8 @@ export type MessagingPendingRejectReason = 'not-owner' | 'not-on-binding-allowli
  * as "Pending requests".
  */
 export interface MessagingPendingSenderInfo {
+  /** Trusted native authority owner; legacy host requests remain private. */
+  nativeOwner?: { issuer: string; subject: string }
   platform: string
   userId: string
   displayName?: string
@@ -110,6 +121,7 @@ export interface MessagingConfigInfo {
 }
 
 export interface IMessagingGatewayRegistry {
+  setNativeBindingContextResolver?(resolve: (binding: MessagingBindingInfo) => NativeMessagingContext | undefined): void
   /** Get bindings for a workspace. */
   getBindings(workspaceId: string): MessagingBindingInfo[]
 
@@ -120,7 +132,7 @@ export interface IMessagingGatewayRegistry {
   updateConfig(workspaceId: string, config: Partial<MessagingConfigInfo>): Promise<void>
 
   /** Generate a pairing code for binding a session to a chat. */
-  generatePairingCode(workspaceId: string, sessionId: string, platform: string): { code: string; expiresAt: number; botUsername?: string }
+  generatePairingCode(workspaceId: string, sessionId: string, platform: string, nativeContext?: NativeMessagingContext): { code: string; expiresAt: number; botUsername?: string }
 
   /**
    * Generate a pairing code that, when typed in a Telegram supergroup,
@@ -264,7 +276,7 @@ export interface IMessagingGatewayRegistry {
   getPendingSenders(workspaceId: string, platform?: string): MessagingPendingSenderInfo[]
 
   /** Drop a pending sender without promoting them. */
-  dismissPendingSender(workspaceId: string, platform: string, userId: string): boolean
+  dismissPendingSender(workspaceId: string, platform: string, userId: string, entryKey?: { reason?: MessagingPendingRejectReason; bindingId?: string }): boolean
 
   /**
    * Allow a pending sender. Branches on the entry's `reason`:

@@ -1,14 +1,15 @@
 import type { AnnotationV1, Message } from '@craft-agent/core/types'
 import { CodedError, RPC_CHANNELS, type Session, type SessionEvent } from '@craft-agent/shared/protocol'
 import type { LoadedSource } from '@craft-agent/shared/sources'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
+import { readNativeWorkspaceRegistry } from './native-workspace-registry'
 import type { HandlerDeps } from '../handler-deps'
 import type { RequestContext, RpcServer } from '../../transport/types'
+import type { NativeAuthority, NativePrincipal } from '../../authority/native-authority'
 
 /** Workspace membership, not a renderer-supplied session id, defines native access. */
 export function assertNativeWorkspace(ctx: RequestContext, deps: HandlerDeps, workspaceId: string): void {
   if (!ctx.principal) return
-  const workspace = getWorkspaceByNameOrId(workspaceId)
+  const workspace = readNativeWorkspaceRegistry(workspaceId)
   if (ctx.workspaceId !== workspaceId || !workspace
     || !deps.nativeData?.authority.authorize(ctx.principal, workspaceId, 'read', workspace.rootPath)) {
     throw new CodedError('FORBIDDEN', 'Workspace access denied')
@@ -90,11 +91,18 @@ export function nativeSessionEvent(event: SessionEvent): SessionEvent | null {
     case 'text_complete': return { ...identity, type: event.type, text: event.text, isIntermediate: event.isIntermediate, turnId: event.turnId, timestamp: event.timestamp, messageId: event.messageId }
     case 'thinking_delta': case 'thinking_complete': return { ...identity, type: event.type, text: event.text, turnId: event.turnId }
     case 'complete': return { ...identity, type: event.type, tokenUsage: event.tokenUsage, hasUnread: event.hasUnread, reason: event.reason, didReceiveNewFinalMessage: event.didReceiveNewFinalMessage }
-    case 'error': return { type: 'error', sessionId: event.sessionId, error: 'Session request failed', timestamp: event.timestamp }
+    case 'error': return { type: 'error', sessionId: event.sessionId, error: 'native-session-request-failed', errorCode: 'NATIVE_SESSION_REQUEST_FAILED', timestamp: event.timestamp }
     case 'title_generated': return { ...identity, type: event.type, title: event.title }
     case 'name_changed': return { ...identity, type: event.type, name: event.name }
     case 'session_created': case 'session_deleted': case 'session_flagged': case 'session_unflagged': case 'session_archived': case 'session_unarchived': return { type: event.type, sessionId: event.sessionId }
     case 'session_status_changed': return { ...identity, type: event.type, sessionStatus: event.sessionStatus }
+    case 'session_model_changed': return { ...identity, type: event.type, model: event.model }
+    case 'permission_mode_changed':
+      return ['safe', 'ask', 'allow-all'].includes(event.permissionMode) ? {
+        ...identity, type: event.type, permissionMode: event.permissionMode,
+        previousPermissionMode: event.previousPermissionMode && ['safe', 'ask', 'allow-all'].includes(event.previousPermissionMode) ? event.previousPermissionMode : undefined,
+        modeVersion: Number.isFinite(event.modeVersion) ? event.modeVersion : undefined,
+      } : null
     case 'labels_changed': return { ...identity, type: event.type, labels: event.labels }
     default: return null
   }
@@ -115,4 +123,17 @@ export function projectNativeWorkspaceEvent(
     return [workspaceId, nativeSources(args[1] as LoadedSource[])]
   }
   return args
+}
+
+/** The headless native event fence must not call migration-capable host roster getters. */
+export function projectNativeRegisteredWorkspaceEvent(
+  authority: Pick<NativeAuthority, 'authorize' | 'resolveWorkspace'>, channel: string, args: readonly unknown[], workspaceId: string,
+  principal: NativePrincipal, sessionExists: (sessionId: string, workspaceId: string) => boolean,
+): readonly unknown[] | null {
+  if (channel === RPC_CHANNELS.sessions.EVENT || channel === RPC_CHANNELS.sources.CHANGED) {
+    const workspace = readNativeWorkspaceRegistry(workspaceId)
+    if (!workspace || authority.resolveWorkspace(workspaceId)?.nativeRoot !== workspace.rootPath
+      || !authority.authorize(principal, workspaceId, 'read', workspace.rootPath)) return null
+  }
+  return projectNativeWorkspaceEvent(channel, args, workspaceId, sessionExists)
 }

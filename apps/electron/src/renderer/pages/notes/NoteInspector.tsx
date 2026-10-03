@@ -74,6 +74,8 @@ export interface NoteInspectorProps {
   notes: NoteSummary[]
   allTasks: NoteTask[]
   allAssets: NoteAsset[]
+  assetsUnavailable?: string
+  onRetryAssets?(): void
   selectedTag: string | null
   tagDraft: string
   propertyEntries: [string, unknown][]
@@ -188,6 +190,8 @@ function ScalarPropertyField({ binding, writable, onSave }: {
 export function NoteInspector({
   activeNote,
   allAssets: _allAssets,
+  assetsUnavailable,
+  onRetryAssets,
   selectedTag,
   tagDraft,
   propertyEntries,
@@ -467,7 +471,12 @@ export function NoteInspector({
           </button>
         </div>
         <div className="space-y-1">
-          {currentNoteAssets.length ? currentNoteAssets.map(asset => (
+          {assetsUnavailable ? (
+            <div data-testid="notes-inspector-assets-unavailable" data-error-code={assetsUnavailable} className="space-y-2">
+              <p role="status" className="text-xs text-muted-foreground">{t('common.unavailable')}</p>
+              <button className="h-6 rounded-[6px] px-2 text-[11px] hover:bg-foreground/[0.06]" onClick={onRetryAssets}>{t('common.retry')}</button>
+            </div>
+          ) : currentNoteAssets.length ? currentNoteAssets.map(asset => (
             <button
               key={asset.relativePath}
               className="flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"

@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from 'bun:test'
-import { SqliteReplicaOutbox } from '@craft-agent/shared/account-replica'
+import { SqliteReplicaOutbox, type ReplicaOperation } from '@craft-agent/shared/account-replica'
 import { EventEmitter, once } from 'node:events'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -20,7 +20,8 @@ import { CHANNEL_MAP } from '../../transport/channel-map.ts'
 import { registerNativeReplicaIpc, NATIVE_REPLICA_IPC } from '../native-replica.ts'
 import type { IpcMain, IpcMainInvokeEvent } from 'electron'
 import type { NativeDataContext, NativeDataReceipt } from '@craft-agent/shared/protocol/dto'
-import type { NativeReplicaQueuedMutation } from '@craft-agent/shared/protocol/native-replica'
+import type { NativeReplicaEnqueueCreateIpcInput, NativeReplicaQueuedMutation } from '@craft-agent/shared/protocol/native-replica'
+import { DatabaseSync } from '../../../../../packages/shared/src/utils/sqlite-runtime.ts'
 import { createNativeReplicaBridge } from '../../preload/native-replica.ts'
 import { createNativeNotesSyncController } from '../../renderer/lib/native-notes-sync.ts'
 
@@ -626,4 +627,359 @@ for (const boundary of ['context-open', 'ipc-open', 'enqueue'] as const) test(`d
   expect(pending).toHaveLength(boundary === 'enqueue' ? 1 : 0)
   if (boundary === 'enqueue') expect(pending[0]).toMatchObject({ nativeId: 'Disposed boundary', expectedRevision: null })
   await fresh.nativeReplica.close(handle)
+})
+
+// Feed retries retain a caller attempt token; only main assigns the canonical journal operation.
+for (const loss of ['enqueue-result', 'mutation-result', 'ack-result', 'note-read', 'snapshot-read'] as const) test(`same native create attempt survives ${loss} loss without creating a second operation`, async () => {
+  const f = await fixture(true)
+  const client = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: f.issued.credential, autoReconnect: false })
+  cleanups.push(() => client.destroy())
+  const configDir = join(f.dir, `create-attempt-${loss}`)
+  let ipc = replicaIpcFixture(configDir)
+  const attempt = { operationId: `feed-create-attempt-${loss}`, expectedRevision: null, schemaVersion: 1, recoverCreation: true } as const
+  const queued: NativeReplicaQueuedMutation[] = []
+  const receipts: NativeDataReceipt[] = []
+  const readIds: string[] = []
+  let interrupted = false
+  let acknowledgements = 0
+  const observedClient = {
+    invoke: async (channel: string, ...args: unknown[]) => {
+      // No retry can recover an unrelated note by listing/searching for its title.
+      expect(channel).not.toBe(RPC_CHANNELS.notes.LIST)
+      expect(channel).not.toBe(RPC_CHANNELS.notes.SEARCH)
+      if (channel === RPC_CHANNELS.notes.READ) readIds.push(args[1] as string)
+      const result = await client.invoke(channel, ...args)
+      if (channel === RPC_CHANNELS.nativeData.MUTATE) receipts.push(result)
+      if (!interrupted && (
+        (loss === 'mutation-result' && channel === RPC_CHANNELS.nativeData.MUTATE) ||
+        (loss === 'note-read' && channel === RPC_CHANNELS.notes.READ) ||
+        (loss === 'snapshot-read' && channel === RPC_CHANNELS.nativeData.READ_ENTITY)
+      )) {
+        if (loss !== 'mutation-result') expect(acknowledgements).toBe(1)
+        interrupted = true
+        throw new Error(`simulated ${loss} loss`)
+      }
+      return result
+    },
+    getConnectionState: () => client.getConnectionState(),
+    onConnectionStateChanged: (listener: Parameters<WsRpcClient['onConnectionStateChanged']>[0]) => client.onConnectionStateChanged(listener),
+  }
+  const invokeIpc = async (channel: string, input: unknown) => {
+    const result = await ipc.call(channel, input)
+    if (channel === NATIVE_REPLICA_IPC.ENQUEUE_CREATE) queued.push(result)
+    if (channel === NATIVE_REPLICA_IPC.ACKNOWLEDGE && result === true) acknowledgements++
+    if (!interrupted && (
+      (loss === 'enqueue-result' && channel === NATIVE_REPLICA_IPC.ENQUEUE_CREATE) ||
+      (loss === 'ack-result' && channel === NATIVE_REPLICA_IPC.ACKNOWLEDGE)
+    )) {
+      interrupted = true
+      throw new Error(`simulated ${loss} loss`)
+    }
+    return result
+  }
+  const first = createNativeReplicaBridge({ client: observedClient, invokeIpc })
+  cleanups.push(first.dispose)
+  await expect(first.createNote(f.workspaceId, 'Feed retry identity', 'from-feed', attempt)).rejects.toThrow(`simulated ${loss} loss`)
+  expect(interrupted).toBe(true)
+  expect(queued).toHaveLength(1)
+  expect(queued[0]!.operationId).not.toBe(attempt.operationId)
+  first.dispose()
+
+  // Neither renderer nor main handler memory survives; only credential custody and SQLite remain.
+  const savedCredentialEntries = [...ipc.storedKeys.entries()]
+  ipc = replicaIpcFixture(configDir)
+  for (const [key, value] of savedCredentialEntries) ipc.storedKeys.set(key, value)
+  const fresh = createNativeReplicaBridge({ client: observedClient, invokeIpc })
+  cleanups.push(fresh.dispose)
+  const note = await fresh.createNote(f.workspaceId, 'Feed retry identity', 'from-feed', attempt)
+  expect(queued).toHaveLength(2)
+  expect(queued[1]).toEqual(queued[0])
+  expect(note).toMatchObject({ nativeId: queued[0]!.nativeId, nativeRevision: 1, content: queued[0]!.changes[0]!.content })
+  expect(readIds.every(id => id === queued[0]!.nativeId)).toBe(true)
+  expect(receipts).toHaveLength(loss === 'enqueue-result' ? 1 : 2)
+  expect(receipts.every(receipt => receipt.operationId === queued[0]!.operationId && receipt.revision === 1 && receipt.sequence === 1)).toBe(true)
+  if (receipts.length === 2) expect(receipts[1]).toEqual(receipts[0])
+  const handle = await fresh.nativeReplica.open(f.workspaceId)
+  expect(await fresh.nativeReplica.pending(handle)).toEqual([])
+  await fresh.nativeReplica.close(handle)
+  const changes = await client.invoke(RPC_CHANNELS.nativeData.PULL_CHANGES, { workspaceId: f.workspaceId, afterSequence: 0 })
+  expect(changes.changes).toHaveLength(1)
+  expect(changes.changes[0]).toEqual(receipts.at(-1))
+  expect(changes.entities).toHaveLength(1)
+  expect(changes.entities[0]).toMatchObject({ nativeId: queued[0]!.nativeId, revision: 1, files: queued[0]!.changes })
+  expect([...new Bun.Glob('**/*.md').scanSync({ cwd: join(f.root, 'notes') })]).toEqual(['from-feed/Feed retry identity.md'])
+  expect(readFileSync(join(f.root, queued[0]!.changes[0]!.path), 'utf8')).toBe(queued[0]!.changes[0]!.content!)
+})
+
+test('a durable native create attempt rejects a changed intent and another attempt cannot claim its existing note by title', async () => {
+  const f = await fixture(true)
+  const client = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: f.issued.credential, autoReconnect: false })
+  cleanups.push(() => client.destroy())
+  const ipc = replicaIpcFixture(join(f.dir, 'create-attempt-intent'))
+  const bridge = createNativeReplicaBridge({ client, invokeIpc: async (channel, input) => ipc.call(channel, input) })
+  cleanups.push(bridge.dispose)
+  const attempt = { operationId: 'feed-create-stable-intent', expectedRevision: null, schemaVersion: 1, recoverCreation: true } as const
+  const created = await bridge.createNote(f.workspaceId, 'Original feed note', undefined, attempt)
+  const source = await client.invoke(RPC_CHANNELS.nativeData.READ_ENTITY, { workspaceId: f.workspaceId, kind: 'notes', nativeId: created.nativeId! })
+  await expect(bridge.createNote(f.workspaceId, 'Changed feed title', undefined, attempt)).rejects.toThrow()
+  await expect(bridge.createNote(f.workspaceId, 'Original feed note', 'changed-folder', attempt)).rejects.toThrow()
+  const handle = await bridge.nativeReplica.open(f.workspaceId)
+  const plan = await client.invoke(RPC_CHANNELS.notes.PREPARE_CREATE, f.workspaceId, 'Original feed note')
+  await expect(Promise.resolve().then(() => ipc.call(NATIVE_REPLICA_IPC.ENQUEUE_CREATE, {
+    handle, callerAttemptId: attempt.operationId,
+    plan: { ...plan, mutation: { ...plan.mutation, changes: [{ ...plan.mutation.changes[0], content: '# Different caller payload\n' }] } },
+  }))).rejects.toThrow()
+  await expect(bridge.createNote(f.workspaceId, 'Original feed note', undefined, { ...attempt, operationId: 'a-distinct-feed-attempt' })).rejects.toThrow()
+  expect(await bridge.nativeReplica.pending(handle)).toEqual([])
+  await bridge.nativeReplica.close(handle)
+  expect(await client.invoke(RPC_CHANNELS.nativeData.READ_ENTITY, { workspaceId: f.workspaceId, kind: 'notes', nativeId: created.nativeId! })).toEqual(source)
+  const changes = await client.invoke(RPC_CHANNELS.nativeData.PULL_CHANGES, { workspaceId: f.workspaceId, afterSequence: 0 })
+  expect(changes.changes).toHaveLength(1)
+  expect(changes.entities).toHaveLength(1)
+  expect(existsSync(join(f.root, 'notes', 'Changed feed title.md'))).toBe(false)
+  expect(existsSync(join(f.root, 'notes', 'changed-folder'))).toBe(false)
+})
+
+for (const changedGrant of ['read-fence', 'write-fence', 'revoked'] as const) test(`persisted native create attempt cannot be reused after ${changedGrant} changes`, async () => {
+  const f = await fixture(true)
+  const client = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: f.issued.credential, autoReconnect: false })
+  cleanups.push(() => client.destroy())
+  const ipc = replicaIpcFixture(join(f.dir, `create-attempt-${changedGrant}`))
+  const attempt = { operationId: 'feed-create-permission-fenced', expectedRevision: null, schemaVersion: 1, recoverCreation: true } as const
+  let firstQueued: NativeReplicaQueuedMutation | undefined
+  const first = createNativeReplicaBridge({ client, invokeIpc: async (channel, input) => {
+    const result = await ipc.call(channel, input)
+    if (channel === NATIVE_REPLICA_IPC.ENQUEUE_CREATE) {
+      firstQueued = result
+      throw new Error('simulated enqueue response loss')
+    }
+    return result
+  } })
+  cleanups.push(first.dispose)
+  await expect(first.createNote(f.workspaceId, 'Fenced feed note', undefined, attempt)).rejects.toThrow('enqueue response loss')
+  expect(firstQueued).toBeDefined()
+  first.dispose()
+  if (changedGrant === 'revoked') f.authority.revokeWorkspaceGrant(f.admin.credential, f.issued.principal.subject, f.workspaceId)
+  else {
+    // Updating only one action yields an otherwise authorized caller with a fresh action epoch.
+    f.authority.grantWorkspace(f.admin.credential, f.issued.principal.subject, f.workspaceId, [changedGrant === 'read-fence' ? 'read' : 'write'])
+  }
+  let writes = 0
+  const observingClient = {
+    invoke: async (channel: string, ...args: unknown[]) => {
+      if (channel === RPC_CHANNELS.nativeData.MUTATE) writes++
+      return client.invoke(channel, ...args)
+    },
+    getConnectionState: () => client.getConnectionState(),
+    onConnectionStateChanged: (listener: Parameters<WsRpcClient['onConnectionStateChanged']>[0]) => client.onConnectionStateChanged(listener),
+  }
+  const fresh = createNativeReplicaBridge({ client: observingClient, invokeIpc: async (channel, input) => ipc.call(channel, input) })
+  cleanups.push(fresh.dispose)
+  await expect(fresh.createNote(f.workspaceId, 'Fenced feed note', undefined, attempt)).rejects.toThrow()
+  expect(writes).toBe(0)
+  expect(existsSync(join(f.root, firstQueued!.changes[0]!.path))).toBe(false)
+  if (changedGrant !== 'revoked') {
+    const handle = await fresh.nativeReplica.open(f.workspaceId)
+    expect(await fresh.nativeReplica.pending(handle)).toEqual([firstQueued!])
+    await fresh.nativeReplica.close(handle)
+    expect((await client.invoke(RPC_CHANNELS.nativeData.PULL_CHANGES, { workspaceId: f.workspaceId, afterSequence: 0 })).changes).toEqual([])
+  }
+})
+
+test('another native actor cannot retrieve or submit the first actor create attempt and read-only retries remain denied', async () => {
+  const f = await fixture(true)
+  const client = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: f.issued.credential, autoReconnect: false })
+  cleanups.push(() => client.destroy())
+  const ipc = replicaIpcFixture(join(f.dir, 'create-attempt-actors'))
+  const first = createNativeReplicaBridge({ client, invokeIpc: async (channel, input) => ipc.call(channel, input) })
+  cleanups.push(first.dispose)
+  const attempt = { operationId: 'shared-renderer-attempt-token', expectedRevision: null, schemaVersion: 1, recoverCreation: true } as const
+  const created = await first.createNote(f.workspaceId, 'Actor-owned feed note', undefined, attempt)
+  const source = await client.invoke(RPC_CHANNELS.nativeData.READ_ENTITY, { workspaceId: f.workspaceId, kind: 'notes', nativeId: created.nativeId! })
+  const other = f.authority.redeemEnrollment(f.authority.issueEnrollment(f.admin.credential, 'other feed actor', Date.now() + 60_000), 'other feed actor')!
+  f.authority.grantWorkspace(f.admin.credential, other.principal.subject, f.workspaceId, ['read'])
+  const otherClient = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: other.credential, autoReconnect: false })
+  cleanups.push(() => otherClient.destroy())
+  const foreignQueued: NativeReplicaQueuedMutation[] = []
+  const otherBridge = createNativeReplicaBridge({ client: otherClient, invokeIpc: async (channel, input) => {
+    const result = await ipc.call(channel, input)
+    if (channel === NATIVE_REPLICA_IPC.ENQUEUE_CREATE) foreignQueued.push(result)
+    return result
+  } })
+  cleanups.push(otherBridge.dispose)
+  await expect(otherBridge.createNote(f.workspaceId, 'Actor-owned feed note', undefined, attempt)).rejects.toThrow()
+  expect(foreignQueued).toEqual([])
+  f.authority.grantWorkspace(f.admin.credential, other.principal.subject, f.workspaceId, ['read', 'write'])
+  await expect(otherBridge.createNote(f.workspaceId, 'Actor-owned feed note', undefined, attempt)).rejects.toThrow()
+  expect(foreignQueued).toHaveLength(1)
+  const changes = await client.invoke(RPC_CHANNELS.nativeData.PULL_CHANGES, { workspaceId: f.workspaceId, afterSequence: 0 })
+  expect(changes.changes).toHaveLength(1)
+  expect(changes.changes[0].subject).toBe(f.issued.principal.subject)
+  expect(foreignQueued[0]!.operationId).not.toBe(changes.changes[0].operationId)
+  expect(await client.invoke(RPC_CHANNELS.nativeData.READ_ENTITY, { workspaceId: f.workspaceId, kind: 'notes', nativeId: created.nativeId! })).toEqual(source)
+  expect(changes.entities).toHaveLength(1)
+})
+
+for (const boundary of ['after-enqueue', 'after-ack'] as const) test(`native creation rechecks its original write epoch ${boundary} before submitting or returning a note`, async () => {
+  const f = await fixture(true)
+  const client = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: f.issued.credential, autoReconnect: false })
+  cleanups.push(() => client.destroy())
+  const ipc = replicaIpcFixture(join(f.dir, `create-write-epoch-${boundary}`))
+  let queued: NativeReplicaQueuedMutation | undefined
+  let writes = 0
+  let noteReads = 0
+  let changed = false
+  const observingClient = {
+    invoke: async (channel: string, ...args: unknown[]) => {
+      if (channel === RPC_CHANNELS.nativeData.MUTATE) writes++
+      if (channel === RPC_CHANNELS.notes.READ) noteReads++
+      return client.invoke(channel, ...args)
+    },
+    getConnectionState: () => client.getConnectionState(),
+    onConnectionStateChanged: (listener: Parameters<WsRpcClient['onConnectionStateChanged']>[0]) => client.onConnectionStateChanged(listener),
+  }
+  const bridge = createNativeReplicaBridge({ client: observingClient, invokeIpc: async (channel, input) => {
+    const result = await ipc.call(channel, input)
+    if (channel === NATIVE_REPLICA_IPC.ENQUEUE_CREATE) queued = result
+    if (!changed && channel === (boundary === 'after-enqueue' ? NATIVE_REPLICA_IPC.ENQUEUE_CREATE : NATIVE_REPLICA_IPC.ACKNOWLEDGE)) {
+      changed = true
+      // Read access stays byte-for-byte current; only the write authority epoch changes.
+      f.authority.grantWorkspace(f.admin.credential, f.issued.principal.subject, f.workspaceId, ['write'])
+    }
+    return result
+  } })
+  cleanups.push(bridge.dispose)
+  await expect(bridge.createNote(f.workspaceId, 'Boundary fenced feed note', undefined,
+    { operationId: `fenced-feed-${boundary}`, expectedRevision: null, schemaVersion: 1, recoverCreation: true })).rejects.toThrow()
+  expect(changed).toBe(true)
+  expect(queued).toBeDefined()
+  expect(writes).toBe(boundary === 'after-enqueue' ? 0 : 1)
+  expect(noteReads).toBe(0)
+  const handle = await bridge.nativeReplica.open(f.workspaceId)
+  expect(await bridge.nativeReplica.pending(handle)).toEqual(boundary === 'after-enqueue' ? [queued!] : [])
+  await bridge.nativeReplica.close(handle)
+  const changes = await client.invoke(RPC_CHANNELS.nativeData.PULL_CHANGES, { workspaceId: f.workspaceId, afterSequence: 0 })
+  expect(changes.changes).toHaveLength(boundary === 'after-enqueue' ? 0 : 1)
+  if (boundary === 'after-ack') expect(changes.changes[0]).toMatchObject({ operationId: queued!.operationId, revision: 1, sequence: 1 })
+  expect(existsSync(join(f.root, queued!.changes[0]!.path))).toBe(boundary === 'after-ack')
+})
+
+test('ordinary native Notes creation remains available at the explicit Feed retry custody limit without recording a new attempt', async () => {
+  const f = await fixture(true)
+  const client = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: f.issued.credential, autoReconnect: false })
+  cleanups.push(() => client.destroy())
+  const configDir = join(f.dir, 'normal-create-at-retry-capacity')
+  const ipc = replicaIpcFixture(configDir)
+  const enqueues: Array<{ input: NativeReplicaEnqueueCreateIpcInput; queued: NativeReplicaQueuedMutation }> = []
+  const bridge = createNativeReplicaBridge({ client, invokeIpc: async (channel, input) => {
+    const result = await ipc.call(channel, input)
+    if (channel === NATIVE_REPLICA_IPC.ENQUEUE_CREATE) enqueues.push({ input: input as NativeReplicaEnqueueCreateIpcInput, queued: result })
+    return result
+  } })
+  cleanups.push(bridge.dispose)
+  const stableAttempt = { operationId: 'existing-feed-attempt-at-capacity', expectedRevision: null, schemaVersion: 1, recoverCreation: true } as const
+  const original = await bridge.createNote(f.workspaceId, 'Original quota note', undefined, stableAttempt)
+  expect(enqueues).toHaveLength(1)
+  expect(enqueues[0]!.input.callerAttemptId).toBe(stableAttempt.operationId)
+  const material = JSON.parse([...ipc.storedKeys.values()][0].value) as { accountHash: string; deviceId: string; outboxKey: string }
+  const databasePath = [...new Bun.Glob('**/*.sqlite').scanSync({ cwd: join(configDir, 'account-replica'), absolute: true })][0]!
+  const outbox = new SqliteReplicaOutbox({ databasePath, key: Buffer.from(material.outboxKey, 'base64') })
+  cleanups.push(() => outbox.close())
+  const originalPlan = enqueues[0]!.input.plan
+  // Historical custody is local encrypted data. Only genuinely created notes reach the real journal.
+  for (let index = 1; index < 4096; index++) {
+    const nativeId = `historical-feed-attempt-${index}`
+    const operation: ReplicaOperation = {
+      id: crypto.randomUUID(), accountId: material.accountHash, deviceId: material.deviceId, workspaceId: f.workspaceId,
+      seq: 0, ts: Date.now(), category: 'notes', nativeId, expectedRevision: null, schemaVersion: 1,
+      changes: [{ path: `notes/${nativeId}.md`, content: '# Historical accepted local intent\n' }],
+    }
+    outbox.enqueueCreation(operation, {
+      callerAttemptId: `historical-stable-feed-attempt-${index}`, permissionFence: originalPlan.context.permissionFence,
+      writePermissionFence: originalPlan.writePermissionFence,
+    })
+    outbox.acknowledge(material.accountHash, f.workspaceId, operation.id, { serverSequence: index + 10, revision: 1 })
+  }
+  const inspection = new DatabaseSync(databasePath)
+  cleanups.push(() => inspection.close())
+  const retainedRows = () => inspection.prepare('SELECT * FROM native_creation_attempts WHERE account_id=? AND workspace_id=? ORDER BY attempt_digest')
+    .all(material.accountHash, f.workspaceId)
+  const atCapacity = retainedRows()
+  expect(atCapacity).toHaveLength(4096)
+  expect(outbox.pending(material.accountHash, f.workspaceId)).toEqual([])
+
+  // NotesPage always supplies generic mutation metadata even when creation recovery is not requested.
+  const ordinary = await bridge.createNote(f.workspaceId, 'Ordinary note at Feed capacity', undefined,
+    { operationId: crypto.randomUUID(), expectedRevision: null, schemaVersion: 1 })
+  expect(enqueues).toHaveLength(2)
+  expect(enqueues[1]!.input.callerAttemptId).toBeUndefined()
+  expect(ordinary).toMatchObject({ nativeId: enqueues[1]!.queued.nativeId, nativeRevision: 1 })
+  expect(retainedRows()).toEqual(atCapacity)
+  expect(outbox.pending(material.accountHash, f.workspaceId)).toEqual([])
+  expect(outbox.acknowledgement(material.accountHash, f.workspaceId, enqueues[1]!.queued.operationId)).toMatchObject({ revision: 1, serverSequence: 2 })
+  const withoutMetadata = await bridge.createNote(f.workspaceId, 'Ordinary note without mutation metadata')
+  expect(enqueues).toHaveLength(3)
+  expect(enqueues[2]!.input.callerAttemptId).toBeUndefined()
+  expect(withoutMetadata).toMatchObject({ nativeId: enqueues[2]!.queued.nativeId, nativeRevision: 1 })
+  expect(outbox.acknowledgement(material.accountHash, f.workspaceId, enqueues[2]!.queued.operationId)).toMatchObject({ revision: 1, serverSequence: 3 })
+  expect(retainedRows()).toEqual(atCapacity)
+  expect(outbox.pending(material.accountHash, f.workspaceId)).toEqual([])
+  await expect(bridge.createNote(f.workspaceId, 'Explicit attempt denied at capacity', undefined,
+    { ...stableAttempt, operationId: 'new-explicit-feed-attempt-at-capacity' })).rejects.toThrow('custody limit reached')
+  expect(retainedRows()).toEqual(atCapacity)
+  expect(outbox.pending(material.accountHash, f.workspaceId)).toEqual([])
+  expect(existsSync(join(f.root, 'notes', 'Explicit attempt denied at capacity.md'))).toBe(false)
+
+  const replay = await bridge.createNote(f.workspaceId, 'Original quota note', undefined, stableAttempt)
+  expect(replay).toEqual(original)
+  expect(enqueues[3]!.queued).toEqual(enqueues[0]!.queued)
+  expect(retainedRows()).toEqual(atCapacity)
+  expect(outbox.pending(material.accountHash, f.workspaceId)).toEqual([])
+  const changes = await client.invoke(RPC_CHANNELS.nativeData.PULL_CHANGES, { workspaceId: f.workspaceId, afterSequence: 0 })
+  expect(changes.changes).toHaveLength(3)
+  expect(changes.changes[0]).toMatchObject({ operationId: enqueues[0]!.queued.operationId, revision: 1, sequence: 1 })
+  expect(changes.changes[1]).toMatchObject({ operationId: enqueues[1]!.queued.operationId, revision: 1, sequence: 2 })
+  expect(changes.changes[2]).toMatchObject({ operationId: enqueues[2]!.queued.operationId, revision: 1, sequence: 3 })
+  expect(changes.entities).toHaveLength(3)
+  expect(readFileSync(join(f.root, enqueues[1]!.queued.changes[0]!.path), 'utf8')).toBe(ordinary.content)
+})
+
+test('invalid recovery markers and malformed creation metadata are rejected before durable enqueue or server mutation', async () => {
+  const f = await fixture(true)
+  const client = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: f.issued.credential, autoReconnect: false })
+  cleanups.push(() => client.destroy())
+  const ipc = replicaIpcFixture(join(f.dir, 'invalid-opted-in-create'))
+  let enqueues = 0
+  let writes = 0
+  const observedClient = {
+    invoke: async (channel: string, ...args: unknown[]) => {
+      if (channel === RPC_CHANNELS.nativeData.MUTATE) writes++
+      return client.invoke(channel, ...args)
+    },
+    getConnectionState: () => client.getConnectionState(),
+    onConnectionStateChanged: (listener: Parameters<WsRpcClient['onConnectionStateChanged']>[0]) => client.onConnectionStateChanged(listener),
+  }
+  const bridge = createNativeReplicaBridge({ client: observedClient, invokeIpc: async (channel, input) => {
+    if (channel === NATIVE_REPLICA_IPC.ENQUEUE_CREATE) enqueues++
+    return ipc.call(channel, input)
+  } })
+  cleanups.push(bridge.dispose)
+  const valid = { operationId: 'stable-feed-operation', expectedRevision: null, schemaVersion: 1, recoverCreation: true } as const
+  for (const malformed of [
+    { ...valid, operationId: '' },
+    { ...valid, operationId: 'x'.repeat(513) },
+    { ...valid, operationId: 'newline\nin-operation' },
+    { ...valid, expectedRevision: 1 },
+    { ...valid, schemaVersion: 2 },
+    { ...valid, recoverCreation: false },
+    { ...valid, recoverCreation: 'true' },
+    { ...valid, recoverCreation: 1 },
+  ]) await expect(bridge.createNote(f.workspaceId, 'Denied malformed feed creation', undefined,
+    malformed as unknown as NonNullable<Parameters<typeof bridge.createNote>[3]>)).rejects.toThrow('valid creation attempt')
+  expect(enqueues).toBe(0)
+  expect(writes).toBe(0)
+  expect(existsSync(join(f.root, 'notes', 'Denied malformed feed creation.md'))).toBe(false)
+  const changes = await client.invoke(RPC_CHANNELS.nativeData.PULL_CHANGES, { workspaceId: f.workspaceId, afterSequence: 0 })
+  expect(changes.changes).toEqual([])
+  expect(changes.entities).toEqual([])
 })

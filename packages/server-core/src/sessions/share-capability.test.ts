@@ -122,6 +122,26 @@ describe('mapShareApiError', () => {
 })
 
 describe('shareToViewer / updateShare / revokeShare', () => {
+  it('does not invent an invalid owner capability when initial publication is blocked', async () => {
+    for (const status of [401, 403]) {
+      const session = makeSession()
+      const { host, events, metadataPatches } = makeHost(session)
+      const result = await shareToViewer(host, 's1', {
+        getViewerUrl: async () => VIEWER,
+        loadStoredSession: () => ({ id: 's1' }),
+        updateSessionMetadata: async (rootPath, sessionId, patch) => {
+          metadataPatches.push({ rootPath, sessionId, patch })
+        },
+        fetch: async () => new Response('Blocked by gateway', { status }),
+      })
+      expect(result).toEqual({ success: false, error: 'Failed to upload session', errorCode: undefined })
+      expect(session.sharedOwnerKey).toBeUndefined()
+      expect(metadataPatches).toEqual([])
+      expect(events.some(event => event.event.type === 'session_shared')).toBe(false)
+      expect(session.isAsyncOperationOngoing).toBe(false)
+    }
+  })
+
   it('shareToViewer persists the returned ownerKey via metadata patch', async () => {
     const session = makeSession()
     const { host, events, metadataPatches } = makeHost(session)

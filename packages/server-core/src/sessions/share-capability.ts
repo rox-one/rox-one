@@ -22,6 +22,8 @@ export interface ShareCapabilityHost {
 }
 
 export interface ShareCapabilityDeps {
+  /** Trusted server callback; checked again after every asynchronous provider boundary. */
+  assertAuthorized?: () => void
   fetch?: (url: string, init?: RequestInit) => Promise<Response> | Response
   getViewerUrl?: () => Promise<string>
   loadStoredSession?: (rootPath: string, sessionId: string) => unknown
@@ -74,6 +76,7 @@ export function applyShareRevoked(session: {
 export async function mapShareApiError(
   response: Response,
   fallback: string,
+  options: { ownerMutation?: boolean } = {},
 ): Promise<{ success: false; error: string; errorCode?: string }> {
   let code: string | undefined
   let serverMessage: string | undefined
@@ -96,6 +99,9 @@ export async function mapShareApiError(
     }
   }
   if (response.status === 401 || response.status === 403) {
+    if (options.ownerMutation === false) {
+      return { success: false, error: serverMessage || fallback, errorCode: code }
+    }
     return {
       success: false,
       error: serverMessage || 'Share authorization failed. Re-share the session to generate a new owner key.',
@@ -119,6 +125,7 @@ function resolveDeps(deps: ShareCapabilityDeps = {}) {
     getViewerUrl: deps.getViewerUrl ?? defaultViewerUrl,
     loadStoredSession: deps.loadStoredSession ?? defaultLoadStoredSession,
     updateSessionMetadata: deps.updateSessionMetadata ?? defaultUpdateSessionMetadata,
+    assertAuthorized: deps.assertAuthorized ?? (() => {}),
   }
 }
 
@@ -148,15 +155,17 @@ export async function shareToViewer(
 
   beginAsyncOperation(host, managed, sessionId)
 
-  const { fetch, getViewerUrl, loadStoredSession, updateSessionMetadata } = resolveDeps(deps)
+  const { fetch, getViewerUrl, loadStoredSession, updateSessionMetadata, assertAuthorized } = resolveDeps(deps)
 
   try {
+    assertAuthorized()
     const storedSession = loadStoredSession(managed.workspace.rootPath, sessionId)
     if (!storedSession) {
       return { success: false, error: 'Session file not found' }
     }
 
     const viewerUrl = await getViewerUrl()
+    assertAuthorized()
     const response = await fetch(`${viewerUrl}/s/api`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -165,10 +174,11 @@ export async function shareToViewer(
 
     if (!response.ok) {
       host.log.error(`Share failed with status ${response.status}`)
-      return mapShareApiError(response, 'Failed to upload session')
+      return mapShareApiError(response, 'Failed to upload session', { ownerMutation: false })
     }
 
     const data = await response.json() as { id: string; url: string; ownerKey?: string }
+    assertAuthorized()
 
     // Store shared info in session. The ownerKey is the mutation capability
     // for this share — persisted locally, sent as Bearer on update/revoke,
@@ -180,6 +190,7 @@ export async function shareToViewer(
       sharedId: data.id,
       sharedOwnerKey: data.ownerKey,
     })
+    assertAuthorized()
 
     host.log.info(`Session ${sessionId} shared at ${data.url}`)
     host.sendEvent({ type: 'session_shared', sessionId, sharedUrl: data.url }, managed.workspace.id)
@@ -211,15 +222,17 @@ export async function updateShare(
 
   beginAsyncOperation(host, managed, sessionId)
 
-  const { fetch, getViewerUrl, loadStoredSession } = resolveDeps(deps)
+  const { fetch, getViewerUrl, loadStoredSession, assertAuthorized } = resolveDeps(deps)
 
   try {
+    assertAuthorized()
     const storedSession = loadStoredSession(managed.workspace.rootPath, sessionId)
     if (!storedSession) {
       return { success: false, error: 'Session file not found' }
     }
 
     const viewerUrl = await getViewerUrl()
+    assertAuthorized()
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...ownerCapabilityHeaders(managed.sharedOwnerKey),
@@ -235,6 +248,7 @@ export async function updateShare(
       return mapShareApiError(response, 'Failed to update shared session')
     }
 
+    assertAuthorized()
     host.log.info(`Session ${sessionId} share updated at ${managed.sharedUrl}`)
     return { success: true, url: managed.sharedUrl }
   } catch (error) {
@@ -264,10 +278,12 @@ export async function revokeShare(
 
   beginAsyncOperation(host, managed, sessionId)
 
-  const { fetch, getViewerUrl, updateSessionMetadata } = resolveDeps(deps)
+  const { fetch, getViewerUrl, updateSessionMetadata, assertAuthorized } = resolveDeps(deps)
 
   try {
+    assertAuthorized()
     const viewerUrl = await getViewerUrl()
+    assertAuthorized()
     const headers: Record<string, string> = {
       ...ownerCapabilityHeaders(managed.sharedOwnerKey),
     }
@@ -281,6 +297,7 @@ export async function revokeShare(
       return mapShareApiError(response, 'Failed to revoke share')
     }
 
+    assertAuthorized()
     applyShareRevoked(managed)
     const workspaceRootPath = managed.workspace.rootPath
     await updateSessionMetadata(workspaceRootPath, sessionId, {
@@ -288,6 +305,7 @@ export async function revokeShare(
       sharedId: undefined,
       sharedOwnerKey: undefined,
     })
+    assertAuthorized()
 
     host.log.info(`Session ${sessionId} share revoked`)
     host.sendEvent({ type: 'session_unshared', sessionId }, managed.workspace.id)

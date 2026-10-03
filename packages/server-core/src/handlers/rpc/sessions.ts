@@ -17,6 +17,10 @@ import { loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
 import { assertNativeSession, assertNativeWorkspace, nativeAnnotation, nativeSession } from './native-session-scope'
 import { awardNativeXpAndBroadcast } from './gamification'
 import type { RequestContext } from '../../transport/types'
+import type { NativeMemoryContext } from '../../memory/MemoryService'
+import { MemoryFileStore } from '../../memory/MemoryFileStore'
+import { dirname } from 'path'
+import { assertNativeInboxPath, assertNativeInboxWorkspace, nativeInboxOwner } from './native-inbox-scope'
 
 const VALID_THINKING_LEVELS_LIST = THINKING_LEVEL_IDS.map(id => `'${id}'`).join(', ')
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
@@ -25,6 +29,7 @@ import { setTransferableHandler } from './transfer'
 import { assertValidBulkUpdateInput, assertValidBulkUpdatePatch } from '../../sessions/bulk-labels'
 import { disposeBroInviteService, getBroInviteService } from '../../collaboration/bro-invite-service.ts'
 import { parseInviteUrl } from '@craft-agent/shared/collaboration'
+import { getNativeSessionCollaboration, NATIVE_SHARING_COMMANDS } from './native-session-collaboration'
 import {
   isClaimableLive,
   rpcSessionsActResult,
@@ -42,6 +47,18 @@ interface ClientSessionWatchState {
 const clientSessionWatches = new Map<string, ClientSessionWatchState>()
 
 const SESSION_GET_LOG_ID_LIMIT = 25
+
+function nativeMemoryContext(ctx: RequestContext, deps: HandlerDeps, server: RpcServer, workspaceId: string): NativeMemoryContext | undefined {
+  const owner = nativeInboxOwner(ctx)
+  if (!owner) return
+  const root = assertNativeInboxWorkspace(ctx, deps, server, workspaceId, 'write')!
+  return { owner, assertAuthorized: () => {
+    assertNativeInboxWorkspace(ctx, deps, server, workspaceId, 'write', root)
+    assertNativeInboxPath(root, ['memory'], true)
+    assertNativeInboxPath(root, ['skills', '.pending'], true)
+    assertNativeInboxPath(dirname(new MemoryFileStore('global').memoryDir), ['memory'], true)
+  } }
+}
 
 function summarizeIds(ids: Iterable<string>, limit = SESSION_GET_LOG_ID_LIMIT) {
   const all = Array.from(ids)
@@ -157,6 +174,7 @@ export const HANDLED_CHANNELS = [
 
 export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): void {
   const { sessionManager, platform } = deps
+  if (deps.nativeData) sessionManager.setNativeMemoryContextPolicy?.(workspaceId => deps.nativeData!.authority.isRegisteredWorkspace(workspaceId))
   const log = platform.logger
   server.onShutdown?.(disposeBroInviteService)
   // Provenance comes from the persistence acknowledgement, never an optimistic
@@ -288,7 +306,8 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     const end = perf.start('rpc.createSession', { workspaceId })
     // The renderer adds the session synchronously from this return value (App.tsx handleCreateSession),
     // so suppress the broadcast to avoid a redundant hydrate round-trip.
-    const session = await sessionManager.createSession(workspaceId, options, { emitCreatedEvent: false })
+    const session = await sessionManager.createSession(workspaceId, options, { emitCreatedEvent: false,
+      nativeMemoryContext: nativeMemoryContext(ctx, deps, server, workspaceId) })
     end()
     return ctx.principal ? nativeSession(session) : session
   }, { nativeAction: 'write' })
@@ -344,7 +363,8 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
       }
 
       sessionManager
-        .sendMessage(sessionId, message, attachments, storedAttachments, options, undefined, undefined, onAck, { callerClientId })
+        .sendMessage(sessionId, message, attachments, storedAttachments, options, undefined, undefined, onAck, { callerClientId,
+          nativeMemoryContext: nativeMemoryContext(ctx, deps, server, ctx.workspaceId!) })
         .then(() => {
           // sendMessage finished without firing onAck — should not happen in
           // practice (every code path that creates a user message acks).
@@ -421,8 +441,33 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     command: import('@craft-agent/shared/protocol').SessionCommand
   ) => {
     if (ctx.principal) {
+      if (command?.type === 'joinBroInvite') {
+        const target = parseInviteUrl(command.url)
+        if (!target) return { ok: false, error: 'invalid' }
+        // Join follows the invitation target, independently of the caller's open page.
+        sessionId = target.sessionId
+      }
       assertNativeSession(ctx, deps, server, sessionId)
-      const allowed = new Set(['addAnnotation', 'removeAnnotation', 'updateAnnotation', 'flag', 'unflag', 'archive', 'unarchive', 'rename', 'markRead', 'markUnread', 'setActiveViewing', 'setSessionStatus'])
+      if (NATIVE_SHARING_COMMANDS.has(command?.type)) {
+        const workspace = getWorkspaceByNameOrId(ctx.workspaceId!)
+        const assertCurrent = () => {
+          assertNativeSession(ctx, deps, server, sessionId)
+          const currentWorkspace = getWorkspaceByNameOrId(ctx.workspaceId!)
+          if (!workspace || currentWorkspace?.rootPath !== workspace.rootPath ||
+            !deps.nativeData?.authority.authorize(ctx.principal!, ctx.workspaceId!, 'write', workspace.rootPath) ||
+            !server.isRequestContextCurrent?.(ctx, 'write')) throw new CodedError('FORBIDDEN', 'Workspace write access denied')
+        }
+        assertCurrent()
+        const session = await sessionManager.getSession(sessionId)
+        assertCurrent()
+        if (!session || session.workspaceId !== ctx.workspaceId) throw new CodedError('FORBIDDEN', 'Session access denied')
+        const displayName = deps.nativeData!.authority.getSelfProfile(ctx.principal, ctx.workspaceId!).name ?? ''
+        return getNativeSessionCollaboration(server, deps.nativeData!.authority).command({
+          issuer: ctx.principal.issuer, subject: ctx.principal.subject,
+          workspaceId: ctx.workspaceId!, workspaceRootPath: workspace!.rootPath, sessionId,
+        }, command, session, assertCurrent, log, displayName)
+      }
+      const allowed = new Set(['addAnnotation', 'removeAnnotation', 'updateAnnotation', 'flag', 'unflag', 'archive', 'unarchive', 'rename', 'markRead', 'markUnread', 'setActiveViewing', 'setSessionStatus', 'setPermissionMode'])
       if (!allowed.has(command?.type)) throw new CodedError('FORBIDDEN', 'Native session command denied')
       if (command.type === 'setActiveViewing' && command.workspaceId !== ctx.workspaceId) throw new CodedError('FORBIDDEN', 'Workspace access denied')
       if (command.type === 'addAnnotation' || command.type === 'removeAnnotation' || command.type === 'updateAnnotation') {
@@ -466,6 +511,11 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         // Track which session user is actively viewing (for unread state machine)
         return sessionManager.setActiveViewingSession(sessionId, command.workspaceId)
       case 'setPermissionMode':
+        if (ctx.principal) {
+          if (!['safe', 'ask', 'allow-all'].includes(command.mode)) throw new CodedError('FORBIDDEN', 'Invalid permission mode')
+          assertNativeSession(ctx, deps, server, sessionId)
+          if (!server.isRequestContextCurrent?.(ctx, 'write')) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+        }
         return sessionManager.setSessionPermissionMode(sessionId, command.mode)
       case 'setThinkingLevel':
         // Validate thinking level before passing to session manager

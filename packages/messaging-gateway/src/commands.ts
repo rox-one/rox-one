@@ -13,6 +13,7 @@
 import type { ISessionManager } from '@craft-agent/server-core/handlers'
 import {
   evaluatePreBindingAccess,
+  evaluateBindingAccess,
   executeRejection,
   PUBLIC_INBOX_REPLY,
   REJECT_REPLY_COOLDOWN_MS,
@@ -29,6 +30,7 @@ import type {
   PlatformAdapter,
   PlatformOwner,
   PlatformType,
+  NativeMessagingContext,
 } from './types'
 
 const NOOP_LOGGER: MessagingLogger = {
@@ -44,7 +46,7 @@ const NOOP_LOGGER: MessagingLogger = {
  * supergroup chat at the workspace level).
  */
 export type PairingConsumeResult =
-  | { kind: 'session'; workspaceId: string; sessionId: string }
+  | { kind: 'session'; workspaceId: string; sessionId: string; nativeContext?: NativeMessagingContext }
   | { kind: 'workspace-supergroup'; workspaceId: string }
 
 /**
@@ -61,6 +63,7 @@ export interface PairingCodeConsumer {
   canConsume(platform: PlatformType, senderId: string): boolean
   /** Returns the pending pairing if the code is valid, or null. */
   consume(platform: PlatformType, code: string): PairingConsumeResult | null
+  isNativeCode?(platform: PlatformType, code: string): boolean
   /**
    * Register the supergroup that just paired itself. Invoked from
    * Commands.handlePair when the consumed code's kind is
@@ -82,6 +85,8 @@ export interface PairingCodeConsumer {
  * the first time anyone redeems a pairing code.
  */
 export interface AccessControlDeps {
+  onNativeBinding?: (bindingId: string, context: NativeMessagingContext) => void
+  getNativeContext?: (binding: import('./types').ChannelBinding) => NativeMessagingContext | undefined
   getWorkspaceConfig: () => MessagingConfig
   /**
    * Append the sender to the platform's owners list iff the list is currently
@@ -216,12 +221,13 @@ export class Commands {
     // an already-bound chat — `gateway.wireAdapter` always tries
     // `handleCommand` before `router.route`). `/pair` and `/help` always pass.
     if (!ALWAYS_ALLOWED_COMMANDS.has(cmd)) {
-      const verdict = evaluatePreBindingAccess({
+      const binding = this.bindingStore.findByChannel(msg.platform, msg.channelId, msg.threadId)
+      const verdict = binding?.nativeOwner ? evaluateBindingAccess({ msg, binding, workspaceConfig: this.access.getWorkspaceConfig() }) : evaluatePreBindingAccess({
         msg,
         workspaceConfig: this.access.getWorkspaceConfig(),
       })
       if (verdict.kind === 'reject') {
-        await this.sendRejection(adapter, msg, verdict.reason)
+        await this.sendRejection(adapter, msg, verdict.reason, binding?.nativeOwner ? { bindingId: binding.id, sessionId: binding.sessionId } : undefined)
         return true
       }
       if (verdict.kind === 'public-inbox') {
@@ -298,6 +304,7 @@ export class Commands {
     adapter: PlatformAdapter,
     msg: IncomingMessage,
     reason: AccessRejectReason,
+    extra?: { bindingId?: string; sessionId?: string },
   ): Promise<void> {
     await executeRejection(
       adapter,
@@ -308,6 +315,7 @@ export class Commands {
         ...(this.access.pendingStore ? { pendingStore: this.access.pendingStore } : {}),
       },
       this.log,
+      extra,
     )
   }
 
@@ -482,7 +490,7 @@ export class Commands {
     const wsConfig = this.access.getWorkspaceConfig()
     const wsMode = readPlatformAccessMode(wsConfig, adapter.platform)
     const owners = readPlatformOwners(wsConfig, adapter.platform)
-    if (
+    if (!this.pairingConsumer.isNativeCode?.(adapter.platform, code) &&
       wsMode === 'owner-control' &&
       owners.length > 0 &&
       !owners.some((o) => o.userId === msg.senderId)
@@ -507,11 +515,19 @@ export class Commands {
       return
     }
 
+    const existingBeforeLookup = this.bindingStore.findByChannel(adapter.platform, msg.channelId, msg.threadId)
+    if (existingBeforeLookup && (entry.kind === 'session' && entry.nativeContext
+      ? !entry.nativeContext.canReplaceBinding?.(existingBeforeLookup)
+      : !!existingBeforeLookup.nativeOwner)) {
+      await adapter.sendText(msg.channelId, 'Invalid or expired pairing code.', replyOpts)
+      return
+    }
+
     // Seed the first owner. The seeder is a no-op when the list is already
     // populated, so it's safe to call unconditionally on every successful
     // redeem. Failures are logged but never block the pair itself — losing
     // the seed only means the operator has to add the user manually later.
-    try {
+    if (!('nativeContext' in entry && entry.nativeContext)) try {
       await this.access.seedOwnerOnFirstPair(adapter.platform, {
         userId: msg.senderId,
         ...(msg.senderName ? { displayName: msg.senderName } : {}),
@@ -540,15 +556,24 @@ export class Commands {
       return
     }
 
-    this.bindingStore.bind(
+    entry.nativeContext?.assertAuthorized()
+    const existing = this.bindingStore.findByChannel(adapter.platform, msg.channelId, msg.threadId)
+    if (existing && (entry.nativeContext ? !entry.nativeContext.canReplaceBinding?.(existing) : !!existing.nativeOwner)) {
+      await adapter.sendText(msg.channelId, 'Invalid or expired pairing code.', replyOpts)
+      return
+    }
+    const binding = this.bindingStore.bind(
       entry.workspaceId,
       entry.sessionId,
       adapter.platform,
       msg.channelId,
       msg.senderName,
-      undefined,
+      entry.nativeContext ? { accessMode: 'owner-control', allowedSenderIds: [msg.senderId] } : undefined,
       msg.threadId,
+      entry.nativeContext?.owner,
+      entry.nativeContext?.registerBinding,
     )
+    if (entry.nativeContext) this.access.onNativeBinding?.(binding.id, entry.nativeContext)
 
     this.log.info('pairing code redeemed', {
       event: 'pairing_redeemed',
@@ -655,6 +680,7 @@ export class Commands {
     }
 
     const session = await this.sessionManager.getSession(binding.sessionId)
+    if (binding.nativeOwner && !this.access.getNativeContext?.(binding)) return
     const name = session?.name || binding.sessionId.slice(0, 8)
     const mode = binding.config.approvalChannel
     const responseMode = binding.config.responseMode

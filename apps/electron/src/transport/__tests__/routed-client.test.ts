@@ -58,6 +58,50 @@ const REMOTE_CHANNEL = RPC_CHANNELS.sessions.GET           // REMOTE_ELIGIBLE
 const SWITCH_CHANNEL = RPC_CHANNELS.window.SWITCH_WORKSPACE
 
 describe('RoutedClient', () => {
+  describe('workspace profile and runtime', () => {
+    it('reads central snapshots while runtime installation stays on the local host', async () => {
+      const local = stubClient()
+      const remote = stubClient()
+      const routed = new RoutedClient(local, remote)
+      routed.setWorkspaceMapping('local-a', 'remote-a')
+      for (const channel of [RPC_CHANNELS.toolchain.STATUS, RPC_CHANNELS.llmConnections.GET_STARTUP_SUMMARY, RPC_CHANNELS.orgs.GET_IDENTITY, RPC_CHANNELS.orgs.UPDATE_IDENTITY]) {
+        await routed.invoke(channel, 'local-a')
+        expect(remote.invoke).toHaveBeenCalledWith(channel, 'remote-a')
+        expect(local.invoke).not.toHaveBeenCalledWith(channel, expect.anything())
+      }
+      await routed.invoke(RPC_CHANNELS.toolchain.UPDATE)
+      await routed.invoke(RPC_CHANNELS.toolchain.SET_DISABLED, true)
+      expect(local.invoke).toHaveBeenCalledWith(RPC_CHANNELS.toolchain.UPDATE)
+      expect(local.invoke).toHaveBeenCalledWith(RPC_CHANNELS.toolchain.SET_DISABLED, true)
+      expect(remote.invoke).not.toHaveBeenCalledWith(RPC_CHANNELS.toolchain.UPDATE)
+      expect(remote.invoke).not.toHaveBeenCalledWith(RPC_CHANNELS.toolchain.SET_DISABLED, true)
+    })
+
+    for (const channel of [RPC_CHANNELS.toolchain.STATUS_CHANGED, RPC_CHANNELS.identity.CHANGED]) {
+      it(`delivers ${channel} from the current remote workspace and resubscribes on a switch`, async () => {
+        const local = stubClient({ invoke: mock(async () => ({ workspaceId: 'local-b', remoteServer: { url: 'wss://fixture.invalid', token: 'fixture', remoteWorkspaceId: 'remote-b' } })) })
+        const remoteA = stubClient()
+        const remoteB = stubClient()
+        const routed = new RoutedClient(local, remoteA)
+        routed.setWorkspaceMapping('local-a', 'remote-a')
+        routed.setClientFactory(() => remoteB)
+        const callback = mock(() => {})
+        const unsubscribe = routed.on(channel, callback)
+        const listeners = (client: WsRpcClient) => (client as unknown as { _listeners: Map<string, Set<(...args: unknown[]) => void>> })._listeners.get(channel)
+        expect(listeners(local)).toBeUndefined()
+        for (const listener of listeners(remoteA) ?? []) listener({ workspaceId: 'remote-a', ready: true })
+        expect(callback).toHaveBeenLastCalledWith({ workspaceId: 'local-a', ready: true })
+        await routed.invoke(SWITCH_CHANNEL)
+        expect(listeners(remoteA)?.size).toBe(0)
+        for (const listener of listeners(remoteB) ?? []) listener({ workspaceId: 'remote-b', ready: false })
+        expect(callback).toHaveBeenLastCalledWith({ workspaceId: 'local-b', ready: false })
+        expect(callback).toHaveBeenCalledTimes(2)
+        unsubscribe()
+        expect(listeners(remoteB)?.size).toBe(0)
+      })
+    }
+  })
+
   describe('routing', () => {
     it('routes LOCAL_ONLY invokes to localClient', async () => {
       const local = stubClient({ invoke: mock(async () => 'local-result') })

@@ -107,6 +107,10 @@ export interface FeedServiceOptions {
   onStatusChange?: () => void
   logger?: FeedServiceLogger
   tickMs?: number
+  /** Native actor custody supplies guarded storage instead of the device-global file. */
+  persistence?: { read(): unknown; write(state: unknown): void }
+  /** Request-owned native operations explicitly refresh within their permission fence. */
+  autoPollOnAdd?: boolean
 }
 
 export type AddSourceResult =
@@ -178,8 +182,9 @@ export class FeedService {
     if (this.state) return this.state
     let st: FeedState = { version: FEED_STATE_VERSION, sources: [], items: [], annotations: {} }
     try {
-      if (existsSync(this.file)) {
-        const raw = JSON.parse(readFileSync(this.file, 'utf-8')) as Partial<Omit<FeedState, 'version'>> & { version?: number }
+      if (this.opts.persistence || existsSync(this.file)) {
+        const raw = (this.opts.persistence ? this.opts.persistence.read() : JSON.parse(readFileSync(this.file, 'utf-8'))) as Partial<Omit<FeedState, 'version'>> & { version?: number } | null
+        if (!raw || typeof raw !== 'object') { this.state = st; return st }
         const annotations: Record<string, FeedItemAnnotation> = {}
         if (raw.annotations && typeof raw.annotations === 'object') {
           for (const [id, a] of Object.entries(raw.annotations)) {
@@ -196,6 +201,7 @@ export class FeedService {
         }
       }
     } catch (e) {
+      if (this.opts.persistence) throw e
       this.log?.warn(`feed: unreadable ${FEED_STATE_FILE}, starting empty (${e instanceof Error ? e.message : e})`)
     }
     this.state = st
@@ -207,6 +213,7 @@ export class FeedService {
   }
 
   private persist(next: FeedState): void {
+    if (this.opts.persistence) { this.opts.persistence.write(next); this.state = next; return }
     mkdirSync(dirname(this.file), { recursive: true })
     const tmp = `${this.file}.${process.pid}.${randomUUID()}.tmp`
     try {
@@ -296,7 +303,7 @@ export class FeedService {
     const next = this.cloneState()
     next.sources.push(source)
     this.changed(next)
-    void this.pollSource(source.id).catch((e) => {
+    if (this.opts.autoPollOnAdd !== false) void this.pollSource(source.id).catch((e) => {
       this.log?.warn(`feed: ${source.url} failed: ${e instanceof Error ? e.message : e}`)
     })
     return { ok: true, source: publicSource(source) }

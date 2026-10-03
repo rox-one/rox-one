@@ -238,9 +238,14 @@ export class MailService {
   async status(): Promise<MailStatus> {
     await this.activateMailbox()
     const cfg = this.config()
+    const savedConfig = this.readJson<MailConfig>('config.json')
+    const configured = !!this.record || !!this.env.ROX_MAIL_SERVER_URL?.trim()
+      || !!this.env.ROX_MAIL_DOMAIN?.trim() || parseBool(this.env.CRAFT_FEATURE_INBOX_MAIL) !== undefined
+      || !!savedConfig && Object.keys(savedConfig).length > 0
     const base: MailStatus = {
       flag: MAIL_FLAG,
       enabled: cfg.enabled,
+      configured,
       state: 'disabled',
       serverUrl: cfg.serverUrl,
       domain: cfg.domain,

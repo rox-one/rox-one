@@ -184,6 +184,7 @@ export function sourceErrorText(code: string | undefined, t: T): string | undefi
   if (!code) return undefined
   if (code === 'x-not-connected') return t('feed.sources.error.xNotConnected')
   if (code === 'timeout') return t('feed.sources.error.timeout')
+  if (code === 'network-error') return t('feed.loadError')
   if (code === 'not-a-feed' || code === 'unrecognized-content') return t('feed.sources.error.notAFeed')
   const http = /^http-(\d+)$/.exec(code)
   if (http) return t('feed.sources.error.http', { status: http[1] })

@@ -144,8 +144,9 @@ export function useSessionMenuActions({
     } catch (error) {
       const membership = error instanceof SessionLinkError && error.code === 'membership_required'
       const invalid = error instanceof SessionLinkError && error.code === 'invalid'
+      const busy = error instanceof SessionLinkError && error.code === 'SHARE_BUSY'
       toast.error(t(kind === 'invite' ? 'toast.failedToInvite' : 'toast.failedToShare'), {
-        description: membership ? t('sessionSharing.error.membership_required') : invalid ? t('sessionSharing.error.invalid') : error instanceof Error && error.message ? error.message : t('toast.unknownError'),
+        description: membership ? t('sessionSharing.error.membership_required') : invalid ? t('sessionSharing.error.invalid') : busy ? t('sessionSharing.error.busy') : error instanceof Error && error.message ? error.message : t('toast.unknownError'),
         action: membership ? { label: t('sidebar.settings'), onClick: () => navigate(routes.view.settings('account')) } : undefined,
       })
     } finally {
@@ -198,7 +199,8 @@ export function useSessionMenuActions({
         toast.success(t('chat.shareUpdated'))
       } else {
         const errorMsg = result && 'error' in result ? result.error : undefined
-        toast.error(t('chat.failedToUpdateShare'), { description: errorMsg })
+        const busy = result && 'errorCode' in result && result.errorCode === 'SHARE_BUSY'
+        toast.error(t('chat.failedToUpdateShare'), { description: busy ? t('sessionSharing.error.busy') : errorMsg })
       }
     } catch (error) {
       toast.error(t('chat.failedToUpdateShare'), { description: error instanceof Error ? error.message : t('toast.unknownError') })
@@ -212,7 +214,8 @@ export function useSessionMenuActions({
         toast.success(t('chat.sharingStopped'))
       } else {
         const errorMsg = result && 'error' in result ? result.error : undefined
-        toast.error(t('chat.failedToStopSharing'), { description: errorMsg })
+        const busy = result && 'errorCode' in result && result.errorCode === 'SHARE_BUSY'
+        toast.error(t('chat.failedToStopSharing'), { description: busy ? t('sessionSharing.error.busy') : errorMsg })
       }
     } catch (error) {
       toast.error(t('chat.failedToStopSharing'), { description: error instanceof Error ? error.message : t('toast.unknownError') })

@@ -1,3 +1,5 @@
+import { assertNativeWorkspace } from './native-session-scope'
+import { publicRuntimeSummary, readNativeWorkspaceRuntimeConnection } from './native-model-catalog'
 import { RPC_CHANNELS, type LlmConnectionSetup, type StartupRuntimeSummary } from '@craft-agent/shared/protocol'
 import { getLlmConnections, getLlmConnection, addLlmConnection, updateLlmConnection, deleteLlmConnection, getDefaultLlmConnection, setDefaultLlmConnection, touchLlmConnection, isCompatProvider, isAnthropicProvider, getDefaultModelsForConnection, getDefaultModelForConnection, resolveMidStreamBehavior, type LlmConnection, type LlmConnectionWithStatus, toBedrockNativeId, deriveBedrockRegionPrefix } from '@craft-agent/shared/config'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
@@ -541,12 +543,17 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
   // ============================================================
 
   // List all LLM connections (includes built-in and custom)
-  server.handle(RPC_CHANNELS.llmConnections.GET_STARTUP_SUMMARY, async (): Promise<StartupRuntimeSummary | null> => {
+  server.handle(RPC_CHANNELS.llmConnections.GET_STARTUP_SUMMARY, async (ctx): Promise<StartupRuntimeSummary | null> => {
+    if (ctx.principal) {
+      assertNativeWorkspace(ctx, deps, ctx.workspaceId ?? '')
+      const connection = readNativeWorkspaceRuntimeConnection(ctx.workspaceId!)
+      assertNativeWorkspace(ctx, deps, ctx.workspaceId!)
+      return connection ? publicRuntimeSummary(connection, true) : null
+    }
     const slug = getDefaultLlmConnection()
     const connection = slug ? getLlmConnection(slug) : null
-    return connection ? { kind: 'configuration-only', slug: connection.slug,
-      providerType: connection.providerType, isDefault: true } : null
-  }, { access: 'localElectron', nativeAction: 'read' })
+    return connection ? publicRuntimeSummary(connection, false) : null
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 
   server.handle(RPC_CHANNELS.llmConnections.LIST, async (): Promise<LlmConnection[]> => {
     const listed = rpcLlmConnectionsListResult({ source: 'native' })

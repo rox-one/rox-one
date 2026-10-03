@@ -5,6 +5,7 @@ import {
 } from '@config/llm-connections'
 import { ROX_VISIBLE_TERMS } from '@craft-agent/shared/identity'
 import type { ModelDefinition } from '@config/models'
+import type { SessionModelCatalog, StartupRuntimeSummary } from '@craft-agent/shared/protocol'
 import { connectionUsesBuiltInRoxModels, isRoxPublicModelId, isRoxLegacyInternalModelId, toRoxSelectableModelDefinitions } from '@craft-agent/shared/config/rox-public-models'
 
 /** Older installs may still send the five bundled endpoints before startup migration runs. */
@@ -17,6 +18,12 @@ export function getConnectionModelsForPicker(connection: Pick<LlmConnection, 'sl
     return [...toRoxSelectableModelDefinitions(), ...customModels]
   }
   return connection.models ?? getDefaultModelsForConnection(connection.providerType, connection.piAuthProvider)
+}
+
+/** The native catalog is public configuration; it carries no credential readiness. */
+export function getRuntimeModelsForPicker(summary: StartupRuntimeSummary | SessionModelCatalog, sessionConnection?: string): NonNullable<StartupRuntimeSummary['models']> {
+  if (sessionConnection && sessionConnection !== summary.slug) return []
+  return summary.models ?? []
 }
 
 /**

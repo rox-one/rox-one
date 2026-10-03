@@ -94,6 +94,7 @@ export type {
 export {
   getDocsSource,
   getBuiltinSources,
+  applyBuiltinSourceAvailability,
   isBuiltinSource,
   ensureBuiltinSources,
   ensureLocalNotesSource,

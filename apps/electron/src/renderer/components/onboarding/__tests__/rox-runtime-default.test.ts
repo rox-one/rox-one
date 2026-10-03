@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { ensureRoxRuntimeDefault, type RoxRuntimeDefaultApi } from '../rox-runtime-default'
+import type { StartupRuntimeSummary } from '@craft-agent/shared/protocol'
 
 type Conn = { slug: string; providerType?: string; isDefault?: boolean }
 
@@ -74,13 +75,15 @@ describe('ensureRoxRuntimeDefault native configuration-only boundary', () => {
     return { api, calls }
   }
   it('observes exact OMP default using only identity and configuration metadata', async () => {
-    const { api, calls } = nativeApi({ kind: 'configuration-only', slug: 'rox-kimi', providerType: 'omp', isDefault: true })
-    expect(await ensureRoxRuntimeDefault(api)).toEqual({ status: 'already-default', slug: 'rox-kimi' })
+    const summary = { kind: 'configuration-only', slug: 'rox-kimi', providerType: 'omp', isDefault: true } satisfies StartupRuntimeSummary
+    const { api, calls } = nativeApi(summary)
+    expect(await ensureRoxRuntimeDefault(api)).toEqual({ status: 'already-default', slug: 'rox-kimi', runtimeSummary: summary })
     expect(calls).toEqual(['identity', 'summary'])
   })
   it('preserves a non-OMP host default without inspecting or changing its credentials', async () => {
-    const { api, calls } = nativeApi({ kind: 'configuration-only', slug: 'selected-provider', providerType: 'pi', isDefault: true })
-    expect(await ensureRoxRuntimeDefault(api)).toEqual({ status: 'preserved-default', slug: 'selected-provider' })
+    const summary = { kind: 'configuration-only', slug: 'selected-provider', providerType: 'pi', isDefault: true } satisfies StartupRuntimeSummary
+    const { api, calls } = nativeApi(summary)
+    expect(await ensureRoxRuntimeDefault(api)).toEqual({ status: 'preserved-default', slug: 'selected-provider', runtimeSummary: summary })
     expect(calls).toEqual(['identity', 'summary'])
   })
   for (const [name, summary] of [

@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
-import { inboxStateAtom } from '@/atoms/inbox'
+import { inboxStateForWorkspace } from '@/atoms/inbox'
 import { isInternalAgentSession } from '@craft-agent/shared/sessions/internal-prompts'
 import {
   buildInboxItems,
@@ -21,17 +21,19 @@ import {
   type SessionLike,
 } from '@/pages/inbox/inbox-model'
 import type { TeamInboxItem } from '@craft-agent/shared/team'
+import { useInboxActorContext } from './useInboxActorContext'
 
 const EMPTY_MAP = new Map<string, never[]>()
 
 export type InboxRemoteSource = 'memory' | 'skills' | 'senders'
 
-export function useInboxItems(options: { withRemote?: boolean; teamInbox?: readonly TeamInboxItem[] } = {}) {
+export function useInboxItems(options: { withRemote?: boolean; teamInbox?: readonly TeamInboxItem[]; teamActorKey?: string | null } = {}) {
   const withRemote = options.withRemote ?? false
   const shell = useOptionalAppShellContext()
   const workspaceId = shell?.activeWorkspaceId ?? null
+  const { context, contextRef, identityError, refreshIdentity } = useInboxActorContext(workspaceId, withRemote)
   const sessionMap = useAtomValue(sessionMetaMapAtom)
-  const [state, setState] = useAtom(inboxStateAtom)
+  const [state, setState] = useAtom(inboxStateForWorkspace(workspaceId, context.actorKey))
   const [memory, setMemory] = useState<MemoryProposalLike[]>([])
   const [skills, setSkills] = useState<PendingSkillLike[]>([])
   const [senders, setSenders] = useState<PendingSenderLike[]>([])
@@ -39,9 +41,7 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
   const [loading, setLoading] = useState<Record<InboxRemoteSource, boolean>>({ memory: false, skills: false, senders: false })
   const [errors, setErrors] = useState<Partial<Record<InboxRemoteSource, string>>>({})
   const [hasSnapshot, setHasSnapshot] = useState<Record<InboxRemoteSource, boolean>>({ memory: false, skills: false, senders: false })
-  const [remoteWorkspaceId, setRemoteWorkspaceId] = useState(workspaceId)
-  const contextRef = useRef({ workspaceId })
-  if (contextRef.current.workspaceId !== workspaceId) contextRef.current = { workspaceId }
+  const [remoteContext, setRemoteContext] = useState(context)
   const requests = useRef<Record<InboxRemoteSource, number>>({ memory: 0, skills: 0, senders: 0 })
   const firstSeen = useRef(new Map<string, number>())
   const [now, setNow] = useState(() => Date.now())
@@ -53,10 +53,11 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
     setLoaded({ memory: false, skills: false, senders: false })
     setLoading({ memory: false, skills: false, senders: false })
     setErrors({})
-    setRemoteWorkspaceId(workspaceId)
+    setRemoteContext(context)
     setHasSnapshot({ memory: false, skills: false, senders: false })
     firstSeen.current.clear()
-  }, [workspaceId])
+    for (const key of ['memory', 'skills', 'senders'] as const) requests.current[key]++
+  }, [context])
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 60_000)
@@ -66,11 +67,14 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
   const load = useCallback(async (which?: InboxRemoteSource) => {
     const api = typeof window !== 'undefined' ? window.electronAPI : undefined
     if (!api || !workspaceId) return
-    const context = contextRef.current
+    const captured = contextRef.current
+    if (!captured.actorKey) { await refreshIdentity(); return }
+    const verified = await refreshIdentity()
+    if (contextRef.current !== captured || verified !== captured) return
     const run = async <T,>(key: InboxRemoteSource, fn: () => Promise<T> | undefined, set: (v: T) => void) => {
       if (which && which !== key) return
       const requestId = ++requests.current[key]
-      const current = () => contextRef.current === context && requests.current[key] === requestId
+      const current = () => contextRef.current === captured && requests.current[key] === requestId
       setLoading((previous) => ({ ...previous, [key]: true }))
       try {
         const request = fn()
@@ -95,24 +99,26 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
       run('skills', () => api.listPendingSkills?.(workspaceId), (v) => setSkills((v ?? []) as unknown as PendingSkillLike[])),
       run('senders', () => api.getMessagingPendingSenders?.(), (v) => setSenders((v ?? []) as PendingSenderLike[])),
     ])
-  }, [workspaceId])
+  }, [contextRef, refreshIdentity, workspaceId])
 
   useEffect(() => {
-    if (!withRemote) return
+    if (!withRemote || !context.actorKey) return
     void load()
     const api = window.electronAPI
     const offSenders = api?.onMessagingPendingChanged?.(() => void load('senders'))
     const offSkills = api?.onSkillsPendingChanged?.(() => void load('skills'))
-    const onFocus = () => void load('memory')
+    const offMemory = api?.onMemoryChanged?.((changedWorkspace) => { if (!changedWorkspace || changedWorkspace === workspaceId) void load('memory') })
+    const onFocus = () => void load()
     window.addEventListener('focus', onFocus)
-    const timer = window.setInterval(() => void load('memory'), 60_000)
+    const timer = window.setInterval(() => void load(), 60_000)
     return () => {
       offSenders?.()
       offSkills?.()
+      offMemory?.()
       window.removeEventListener('focus', onFocus)
       window.clearInterval(timer)
     }
-  }, [withRemote, load])
+  }, [withRemote, load, workspaceId, context])
 
   const sessions = useMemo(
     () => [...sessionMap.values()].filter((s) =>
@@ -125,20 +131,20 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
       sessions,
       permissions: shell?.pendingPermissions ?? EMPTY_MAP,
       credentials: shell?.pendingCredentials ?? EMPTY_MAP,
-      memoryProposals: withRemote && remoteWorkspaceId === workspaceId ? memory : [],
-      pendingSkills: withRemote && remoteWorkspaceId === workspaceId ? skills : [],
-      pendingSenders: withRemote && remoteWorkspaceId === workspaceId ? senders : [],
-      teamInbox: options.teamInbox,
+      memoryProposals: withRemote && remoteContext === context ? memory : [],
+      pendingSkills: withRemote && remoteContext === context ? skills : [],
+      pendingSenders: withRemote && remoteContext === context ? senders : [],
+      teamInbox: options.teamActorKey === undefined || options.teamActorKey === context.actorKey ? options.teamInbox : [],
       firstSeen: firstSeen.current,
       now,
     })
     for (const item of built) if (!firstSeen.current.has(item.id)) firstSeen.current.set(item.id, item.at)
     return built
-  }, [sessions, shell?.pendingPermissions, shell?.pendingCredentials, memory, skills, senders, options.teamInbox, withRemote, now, remoteWorkspaceId, workspaceId])
+  }, [sessions, shell?.pendingPermissions, shell?.pendingCredentials, memory, skills, senders, options.teamInbox, options.teamActorKey, withRemote, now, remoteContext, context])
 
   const allLoaded = loaded.memory && loaded.skills && loaded.senders
-  const allSuccessful = remoteWorkspaceId === workspaceId && allLoaded && !errors.memory && !errors.skills && !errors.senders
-  const staleSources = remoteWorkspaceId === workspaceId
+  const allSuccessful = remoteContext === context && allLoaded && !errors.memory && !errors.skills && !errors.senders
+  const staleSources = remoteContext === context
     ? (['memory', 'skills', 'senders'] as const).filter((key) => hasSnapshot[key] && !!errors[key])
     : []
   useEffect(() => {
@@ -156,14 +162,16 @@ export function useInboxItems(options: { withRemote?: boolean; teamInbox?: reado
     setState,
     counts,
     now,
-    loaded,
-    loading,
-    errors,
+    loaded: identityError ? { memory: true, skills: true, senders: true } : remoteContext === context ? loaded : { memory: false, skills: false, senders: false },
+    loading: remoteContext === context ? loading : { memory: false, skills: false, senders: false },
+    errors: identityError ? { memory: identityError, skills: identityError, senders: identityError } : remoteContext === context ? errors : {},
     staleSources,
     reload: load,
     workspaceId,
     shell,
     sessions,
+    actorContext: context,
+    actorContextRef: contextRef,
   }
 
 }

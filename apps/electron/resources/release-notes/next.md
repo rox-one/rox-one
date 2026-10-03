@@ -4,15 +4,19 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 
 ## Features
 
-- **Public ROX model endpoints** — The default OMP connection now lists `rox/explore`, `rox/standard`, `rox/max`, `rox/vision`, and `rox/fast` instead of the internal Kimi id. New sessions default to `rox/standard`. Child sessions spawned without an explicit model use `rox/fast`.
+- **Rox R1 Max default** — New sessions show Rox R1 Max (`rox/r1-max`) as the single built-in model; connected custom providers and locked session models remain available. The Standard mode is now named Chat. [#1391](https://github.com/rox-one/rox-one/pull/1391) · `ddf97e3`
+- **Workspace navigation and appearance** — Rounded glass panels, a single expandable contextual sidebar, a persistent user profile and seven primary navigation pills with Cmd/Ctrl+1–7 shortcuts. Widgets now resize vertically and offer saved color, saturation and contrast presets. [#1391](https://github.com/rox-one/rox-one/pull/1391) · `ddf97e3`
+- **Transcription and meeting follow-up** — Deepgram transcription selects the latest prerecorded model and diarizer, with speaker-separated paragraphs and timestamps. Meeting tasks and decisions are extracted automatically and remain editable. Shared services become available when their server credentials are configured. [#1391](https://github.com/rox-one/rox-one/pull/1391) · `ddf97e3`
 
 ## Improvements
 
+- **Readable workspace tools** — Clearer memory cards and incoming items, calmer empty states, distinct quest cards and durable XP, and source-aware radar setup and results. Message actions expose Listen and Branch beside Like, Copy and Quote. [#1391](https://github.com/rox-one/rox-one/pull/1391) · `ddf97e3`
 - **GitHub Copilot GPT-5.6 models** — GitHub Copilot connections now show GPT-5.6 Luna, Terra, and Sol when those models are available to the account.
 - **Native iOS workspace redesign** — Refined server onboarding, added searchable and filterable session rows, introduced document-style assistant responses and richer tool activity cards, surfaced model and permission controls in the composer, improved approval safety, and made the iPad session sidebar visible by default.
 
 ## Bug Fixes
 
+- **Native user workflows** — Corrected profile ownership, own-message reactions, SDK-backed branching, private task and note persistence, scoped incoming events, session invitations and optional startup errors. Map editing preserves the camera and supports colored translucent stickers, tools, conditions and frames; same-name skills use app-owned storage and stable aliases. [#1391](https://github.com/rox-one/rox-one/pull/1391) · `ddf97e3`
 - **OpenAI-compatible streams preserve chunks with empty tool-call arrays** — Custom endpoints that include `tool_calls: []` on ordinary content and terminal chunks no longer lose those chunks in the network interceptor, preventing valid responses from failing with `Stream ended without finish_reason`. Fixes [#995](https://github.com/craft-ai-agents/craft-agents-oss/issues/995).
 - **Reliable iOS session loading** — Long conversations now load without hitting Foundation's 1 MB WebSocket limit, session requests wait for active reconnects, transient failures retry automatically, and manual reconnects replace stale session clients without losing unsent drafts.
 

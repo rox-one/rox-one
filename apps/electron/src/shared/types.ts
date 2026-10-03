@@ -484,6 +484,7 @@ import type {
   NoteAssetRenameResult,
   NoteBacklink,
   NoteDocument,
+  NoteCreateOptions,
   NoteMutationOptions,
   NativeDataReadEntityInput,
   NativeDataMutationInput,
@@ -979,7 +980,7 @@ export interface ElectronAPI {
   checkProjectRepositoryFreshness(input: import('@craft-agent/shared/code-intelligence').RepositorySnapshotInput): Promise<import('@craft-agent/shared/code-intelligence').RepositoryFreshness>
   cancelProjectRepositoryRequest(input: import('@craft-agent/shared/code-intelligence').RepositoryProjectInput): Promise<boolean>
   saveNote(workspaceId: string, noteId: string, content: string, expectedRevision?: string, operationOrSourceStoreId?: NoteMutationOptions | string): Promise<NoteDocument>
-  createNote(workspaceId: string, title: string, folder?: string, operation?: NoteMutationOptions): Promise<NoteDocument>
+  createNote(workspaceId: string, title: string, folder?: string, operation?: NoteCreateOptions): Promise<NoteDocument>
   renameNote(workspaceId: string, noteId: string, nextTitle: string, operation?: NoteMutationOptions): Promise<NoteRenameResult>
   moveNote(workspaceId: string, noteId: string, targetFolder: string, operation: NoteMutationOptions): Promise<{ note: NoteDocument }>
   deleteNote(workspaceId: string, noteId: string, operation?: NoteMutationOptions): Promise<boolean>
@@ -1596,6 +1597,7 @@ export interface ElectronAPI {
 
   // Session-specific model (overrides global)
   getSessionModel(sessionId: string, workspaceId: string): Promise<string | null>
+  getSessionModelCatalog(sessionId: string): Promise<import('@craft-agent/shared/protocol').SessionModelCatalog | null>
   setSessionModel(sessionId: string, workspaceId: string, model: string | null, connection?: string): Promise<void>
 
   // Workspace Settings (per-workspace configuration)

@@ -41,6 +41,7 @@ export default function BrowserProfileImportPanel() {
   if (workspaceEpoch.current.id !== workspace?.id) {
     workspaceEpoch.current = { id: workspace?.id, generation: workspaceEpoch.current.generation + 1 }
   }
+  useEffect(() => () => { workspaceEpoch.current.generation += 1 }, [])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [profiles, setProfiles] = useState<DiscoveredProfile[]>([])
@@ -101,12 +102,13 @@ export default function BrowserProfileImportPanel() {
 
   const refreshDataAuto = useCallback(async () => {
     if (!workspace?.id) { setDataAuto(null); return }
+    const generation = workspaceEpoch.current.generation
     try {
       const status = await window.electronAPI.browserDataAutoImport({ workspaceId: workspace.id, action: 'status' })
-      if (activeWorkspaceId.current !== workspace.id) return
+      if (activeWorkspaceId.current !== workspace.id || workspaceEpoch.current.generation !== generation) return
       setDataAuto(status)
     } catch (err) {
-      if (activeWorkspaceId.current !== workspace.id) return
+      if (activeWorkspaceId.current !== workspace.id || workspaceEpoch.current.generation !== generation) return
       setError(err instanceof Error ? err.message : String(err))
     }
   }, [workspace?.id])
@@ -116,6 +118,7 @@ export default function BrowserProfileImportPanel() {
     setSelectedId(null)
     setSummary(null)
     setLoading(false)
+    setDataBusy(false)
     setError(null)
     void refreshDataAuto()
     const timer = window.setInterval(() => void refreshDataAuto(), 15_000)
@@ -128,16 +131,17 @@ export default function BrowserProfileImportPanel() {
 
   const updateDataAuto = useCallback(async (action: 'set' | 'run', enabled?: boolean) => {
     if (!workspace?.id || dataBusy) return
+    const generation = workspaceEpoch.current.generation
     setDataBusy(true)
     setError(null)
     try {
       const status = await window.electronAPI.browserDataAutoImport({
         workspaceId: workspace.id, action, enabled, profileId: enabled ? selectedId ?? undefined : undefined,
       })
-      if (activeWorkspaceId.current === workspace.id) setDataAuto(status)
+      if (activeWorkspaceId.current === workspace.id && workspaceEpoch.current.generation === generation) setDataAuto(status)
     } catch (err) {
-      if (activeWorkspaceId.current === workspace.id) setError(err instanceof Error ? err.message : String(err))
-    } finally { setDataBusy(false) }
+      if (activeWorkspaceId.current === workspace.id && workspaceEpoch.current.generation === generation) setError(err instanceof Error ? err.message : String(err))
+    } finally { if (workspaceEpoch.current.generation === generation) setDataBusy(false) }
   }, [workspace?.id, dataBusy, selectedId])
 
   const cookieBusy = cookieAuto?.state === 'importing'
@@ -271,26 +275,30 @@ export default function BrowserProfileImportPanel() {
 
   const rollback = useCallback(async () => {
     if (!workspace?.id || !summary?.rollbackToken || loading) return
+    const generation = workspaceEpoch.current.generation
     setLoading(true)
     setError(null)
     try {
       const result = await window.electronAPI.rollbackBrowserProfileImport({ workspaceId: workspace.id, token: summary.rollbackToken })
+      if (activeWorkspaceId.current !== workspace.id || workspaceEpoch.current.generation !== generation) return
       if (!result.ok) { setError(t('settings.browserImport.rollbackUnavailable')); return }
       setSummary(null)
       await refreshDataAuto()
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      if (activeWorkspaceId.current === workspace.id && workspaceEpoch.current.generation === generation) setError(err instanceof Error ? err.message : String(err))
     } finally {
-      setLoading(false)
+      if (workspaceEpoch.current.generation === generation) setLoading(false)
     }
   }, [loading, summary?.rollbackToken, t, workspace?.id, refreshDataAuto])
 
   const removeImported = useCallback(async () => {
     if (!workspace?.id || loading) return
+    const generation = workspaceEpoch.current.generation
     setLoading(true)
     setError(null)
     try {
       const deleted = await window.electronAPI.deleteImportedBrowserProfile(workspace.id)
+      if (activeWorkspaceId.current !== workspace.id || workspaceEpoch.current.generation !== generation) return
       setSummary({
         dryRun: false, profileId: selectedId ?? '',
         counts: { history: 0, bookmarks: 0, cookies: 0, credentials: 0, skipped: 0 },
@@ -298,9 +306,9 @@ export default function BrowserProfileImportPanel() {
       })
       await refreshDataAuto()
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      if (activeWorkspaceId.current === workspace.id && workspaceEpoch.current.generation === generation) setError(err instanceof Error ? err.message : String(err))
     } finally {
-      setLoading(false)
+      if (workspaceEpoch.current.generation === generation) setLoading(false)
     }
   }, [loading, selectedId, workspace?.id, refreshDataAuto])
 

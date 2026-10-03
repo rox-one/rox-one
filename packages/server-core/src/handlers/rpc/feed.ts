@@ -4,7 +4,7 @@
  *  - news / subscriptions: FeedService items (user sources, X home timeline)
  * Team activity lives in the renderer's local-first team store and is merged
  * there. feed:changed is pushed whenever sources/items change.
- * LOCAL_ONLY: sources, items and the X token are device-local.
+ * Native actors use workspace-server private custody; legacy Electron keeps device-local state.
  */
 import { readFile } from 'fs/promises'
 import { join } from 'path'
@@ -29,6 +29,9 @@ import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { FeedService, type AddSourceResult } from '../../feed/feed-service'
 import { createXApiAdapter, notConnectedXAdapter, type XSubscriptionsAdapter } from '../../feed/x-adapter'
+import { createNativeFeedOperation, type NativeFeedEnvironment } from './native-feed'
+import { CodedError } from '@craft-agent/shared/protocol'
+import type { RequestContext } from '../../transport/types'
 
 export const FEED_HANDLED_CHANNELS = [
   RPC_CHANNELS.feed.LIST,
@@ -80,14 +83,43 @@ export async function readAutomationRuns(workspaceRoot: string, limit = 200): Pr
   }
 }
 
-export function registerFeedHandlers(server: RpcServer, deps: HandlerDeps): void {
+export function registerFeedHandlers(server: RpcServer, deps: HandlerDeps, nativeEnvironment: NativeFeedEnvironment = {}): void {
   const log = deps.platform.logger
-  const svc = feedService()
-  svc.onChange = () => pushTyped(server, RPC_CHANNELS.feed.CHANGED, { to: 'all' }, { at: Date.now() })
-  svc.onStatusChange = svc.onChange
-  svc.start()
+  let legacyService: FeedService | null = null
+  const legacy = () => {
+    if (!legacyService) {
+      legacyService = feedService()
+      legacyService.onChange = () => pushTyped(server, RPC_CHANNELS.feed.CHANGED, { to: 'all' }, { at: Date.now() })
+      legacyService.onStatusChange = legacyService.onChange
+      legacyService.start()
+    }
+    return legacyService
+  }
+  const nativeLocks = new Map<string, Promise<unknown>>()
+  server.onShutdown?.(() => { legacyService?.stop(); nativeLocks.clear() })
+  const native = (context: RequestContext, action: 'read' | 'write') => createNativeFeedOperation(server, deps, context, action, nativeEnvironment)
+  const nativeWrite = async <T>(context: RequestContext, operation: (feed: ReturnType<typeof native>) => Promise<T> | T): Promise<T> => {
+    const scoped = native(context, 'write')
+    const previous = nativeLocks.get(scoped.key)
+    const pending = (async () => {
+      await previous?.catch(() => {})
+      scoped.assertCurrent()
+      const result = await operation(scoped)
+      scoped.assertCurrent()
+      return result
+    })()
+    nativeLocks.set(scoped.key, pending)
+    try { return await pending } finally { if (nativeLocks.get(scoped.key) === pending) nativeLocks.delete(scoped.key) }
+  }
+  const readOptions = { access: 'nativeOrLocalElectron' as const, nativeAction: 'read' as const }
+  const writeOptions = { access: 'nativeOrLocalElectron' as const, nativeAction: 'write' as const, timeoutMs: 90_000 }
 
-  server.handle(RPC_CHANNELS.feed.LIST, async (_ctx, workspaceId?: string | null): Promise<FeedListResult> => {
+  server.handle(RPC_CHANNELS.feed.LIST, async (ctx, workspaceId?: string | null): Promise<FeedListResult> => {
+    if (ctx.principal) {
+      if (workspaceId && workspaceId !== ctx.workspaceId) throw new CodedError('FORBIDDEN', 'Feed workspace access denied')
+      return native(ctx, 'read').list()
+    }
+    const svc = legacy()
     let sessions: FeedSessionLike[] = []
     try {
       sessions = deps.sessionManager.getSessions(workspaceId ?? undefined) as unknown as FeedSessionLike[]
@@ -104,32 +136,63 @@ export function registerFeedHandlers(server: RpcServer, deps: HandlerDeps): void
       x,
       generatedAt: Date.now(),
     }
-  })
+  }, readOptions)
 
-  server.handle(RPC_CHANNELS.feed.SOURCES_ADD, async (_ctx, url: string, intervalMin?: number, opts?: FeedAddSourceOptions): Promise<AddSourceResult> =>
-    svc.addSource(typeof url === 'string' ? url : '', {
+  server.handle(RPC_CHANNELS.feed.SOURCES_ADD, async (ctx, url: string, intervalMin?: number, opts?: FeedAddSourceOptions): Promise<AddSourceResult> => {
+    const options = {
       ...(opts && typeof opts === 'object' ? opts : {}),
       ...(typeof intervalMin === 'number' ? { intervalMin } : {}),
-    }))
+    }
+    if (ctx.principal) return nativeWrite(ctx, async feed => {
+      const result = feed.service.addSource(typeof url === 'string' ? url : '', options)
+      if (result.ok) {
+        await feed.service.pollSource(result.source.id)
+        return { ok: true as const, source: feed.service.listSources().find(source => source.id === result.source.id)! }
+      }
+      return result
+    })
+    return legacy().addSource(typeof url === 'string' ? url : '', options)
+  }, writeOptions)
 
-  server.handle(RPC_CHANNELS.feed.SOURCES_PREVIEW, async (_ctx, url: string): Promise<FeedPreviewResult> =>
-    svc.preview(typeof url === 'string' ? url : ''))
+  server.handle(RPC_CHANNELS.feed.SOURCES_PREVIEW, async (ctx, url: string): Promise<FeedPreviewResult> => {
+    const feed = ctx.principal ? native(ctx, 'read') : null
+    const result = await (feed?.service ?? legacy()).preview(typeof url === 'string' ? url : '')
+    feed?.assertCurrent()
+    return result
+  }, readOptions)
 
-  server.handle(RPC_CHANNELS.feed.ITEMS_ANNOTATE, async (_ctx, ids: string[] | string, patch: FeedAnnotationPatch) => ({
-    updated: svc.annotate(Array.isArray(ids) ? ids : [ids], patch && typeof patch === 'object' ? patch : {}),
-  }))
+  server.handle(RPC_CHANNELS.feed.ITEMS_ANNOTATE, async (ctx, ids: string[] | string, patch: FeedAnnotationPatch) => {
+    const values = Array.isArray(ids) ? ids : [ids]
+    const update = patch && typeof patch === 'object' ? patch : {}
+    if (ctx.principal) return nativeWrite(ctx, feed => {
+      const visible = new Set(feed.list().items.map(item => item.id))
+      return { updated: feed.service.annotate(values.filter(id => visible.has(id)), update) }
+    })
+    return { updated: legacy().annotate(values, update) }
+  }, writeOptions)
 
-  server.handle(RPC_CHANNELS.feed.SOURCES_REMOVE, async (_ctx, id: string) => ({ removed: svc.removeSource(String(id)) }))
+  server.handle(RPC_CHANNELS.feed.SOURCES_REMOVE, async (ctx, id: string) => ctx.principal
+    ? nativeWrite(ctx, feed => ({ removed: feed.service.removeSource(String(id)) }))
+    : ({ removed: legacy().removeSource(String(id)) }), writeOptions)
 
-  server.handle(RPC_CHANNELS.feed.SOURCES_UPDATE, async (_ctx, id: string, patch: FeedSourcePatch) =>
-    svc.updateSource(String(id), patch ?? {}))
+  server.handle(RPC_CHANNELS.feed.SOURCES_UPDATE, async (ctx, id: string, patch: FeedSourcePatch) => ctx.principal
+    ? nativeWrite(ctx, feed => feed.service.updateSource(String(id), patch ?? {}))
+    : legacy().updateSource(String(id), patch ?? {}), writeOptions)
 
-  server.handle(RPC_CHANNELS.feed.REFRESH, async (_ctx, id?: string | null) => {
+  server.handle(RPC_CHANNELS.feed.REFRESH, async (ctx, id?: string | null) => {
+    if (ctx.principal) return nativeWrite(ctx, async feed => {
+      if (id === '__due__') await feed.service.tick()
+      else await feed.service.refresh(id ?? undefined)
+      return { ok: true }
+    })
+    const svc = legacy()
     await svc.refresh(id ?? undefined)
     return { ok: true }
-  })
+  }, writeOptions)
 
-  server.handle(RPC_CHANNELS.feed.X_SET_TOKEN, async (_ctx, token: string): Promise<XConnectionStatus> => {
+  server.handle(RPC_CHANNELS.feed.X_SET_TOKEN, async (ctx, token: string): Promise<XConnectionStatus> => {
+    if (ctx.principal) return nativeWrite(ctx, feed => feed.setX(typeof token === 'string' ? token : ''))
+    const svc = legacy()
     const value = typeof token === 'string' ? token.trim() : ''
     if (!value) return { state: 'error', message: 'empty-token' }
     const status = await createXApiAdapter(value).status()
@@ -139,12 +202,14 @@ export function registerFeedHandlers(server: RpcServer, deps: HandlerDeps): void
     void svc.refresh('x').catch(() => {})
     log.info('feed: X token saved')
     return svc.xStatus(true)
-  })
+  }, writeOptions)
 
-  server.handle(RPC_CHANNELS.feed.X_CLEAR, async (): Promise<XConnectionStatus> => {
+  server.handle(RPC_CHANNELS.feed.X_CLEAR, async (ctx): Promise<XConnectionStatus> => {
+    if (ctx.principal) return nativeWrite(ctx, feed => feed.clearX())
+    const svc = legacy()
     await getCredentialManager().delete(FEED_X_CREDENTIAL).catch(() => false)
     svc.resetX()
     pushTyped(server, RPC_CHANNELS.feed.CHANGED, { to: 'all' }, { at: Date.now() })
     return { state: 'not-connected' }
-  })
+  }, writeOptions)
 }

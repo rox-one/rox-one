@@ -20,7 +20,7 @@ import type {
 import { validateSourceConfig } from '../config/validators.ts';
 import { debug } from '../utils/debug.ts';
 import { readJsonFileSync } from '../utils/files.ts';
-import { applyBuiltinSourceAvailability, getBuiltinSourceCredential, getBuiltinSources, isBuiltinSource, getDocsSource } from './builtin-sources.ts';
+import { applyBuiltinSourceAvailability, removeBuiltinSourceAvailability, getBuiltinSourceCredential, getBuiltinSources, isBuiltinSource, getDocsSource } from './builtin-sources.ts';
 import { expandPath, toPortablePath } from '../utils/paths.ts';
 import { getWorkspaceSourcesPath } from '../workspaces/storage.ts';
 // Circular import (credential-manager imports from this file) is safe here:
@@ -105,6 +105,8 @@ export function markSourceAuthenticated(
   }
 
   config.isAuthenticated = true;
+  // This path follows saving/refreshing an actual user-owned credential.
+  delete config.builtinCredentialProjection;
   config.connectionStatus = 'connected';
   config.connectionError = undefined;
 
@@ -135,7 +137,7 @@ export function saveSourceConfig(
   }
 
   // Convert local source paths to portable form
-  const storageConfig: FolderSourceConfig = { ...config, updatedAt: Date.now() };
+  const storageConfig: FolderSourceConfig = { ...removeBuiltinSourceAvailability(config), updatedAt: Date.now() };
   if (storageConfig.type === 'local' && storageConfig.local?.path) {
     storageConfig.local = {
       ...storageConfig.local,
@@ -411,7 +413,7 @@ export function isSourceUsable(source: LoadedSource): boolean {
   if (authType === 'none' || authType === undefined) return true;
 
   // Sources requiring auth must be authenticated
-  return source.config.isAuthenticated === true || !!getBuiltinSourceCredential(source);
+  return removeBuiltinSourceAvailability(source.config).isAuthenticated === true || !!getBuiltinSourceCredential(source);
 }
 
 /**

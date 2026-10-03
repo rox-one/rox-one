@@ -5,6 +5,7 @@ import type { CollaborationMutation, CollaborationSyncService } from '../../coll
 import type { NativeAuthority, NativePrincipal } from '../../authority/native-authority.ts'
 import type { JournalEntitySnapshot, JournalReceipt, NativeJournal } from '../../authority/native-journal.ts'
 import type { HandlerDeps } from '../handler-deps.ts'
+import { awardNativeXpAndBroadcast } from './gamification.ts'
 
 function nativeDataDependencies(deps: HandlerDeps): NativeDataRpcDependencies {
   const native = deps.nativeData
@@ -97,7 +98,19 @@ export function registerNativeDataHandlers(server: RpcServer, deps: HandlerDeps)
       schemaVersion: input.schemaVersion,
       changes: input.changes,
     }
-    return projectReceipt(sync.commit(principal, workspaceId, mutation))
+    const receipt = sync.commit(principal, workspaceId, mutation)
+    const createdFile = mutation.changes.length === 1 ? mutation.changes[0] : undefined
+    // PREPARE_CREATE -> replica MUTATE is the canonical Notes creation path.
+    // Award only its committed Markdown identity. Durable XP deduplication also
+    // lets an exact retry recover a missed optional award without changing the receipt.
+    if (mutation.expectedRevision === null && receipt.revision === 1 && !receipt.deleted &&
+      receipt.issuer === principal.issuer && receipt.subject === principal.subject &&
+      receipt.workspaceId === workspaceId && receipt.kind === 'notes' &&
+      receipt.nativeId === mutation.nativeId && receipt.operationId === mutation.operationId &&
+      createdFile?.path === `notes/${receipt.nativeId}.md` && typeof createdFile.content === 'string') {
+      awardNativeXpAndBroadcast(server, deps, ctx, 'first_note', JSON.stringify([workspaceId, receipt.nativeId]))
+    }
+    return projectReceipt(receipt)
   }, { nativeAction: 'write' })
 
   server.handle(RPC_CHANNELS.nativeData.PULL_CHANGES, (ctx, input: NativeDataPullChangesInput): NativeDataPullChangesOutput => {

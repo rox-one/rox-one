@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils'
 import { Badge, Button, EmptyState, SectionLabel, Tabs, type Tone } from '@/components/mode-screen/ModeScreen'
 import { extractionBusy, startMeetingExtraction } from '@/lib/meetings/auto-extraction'
 import { newLocalId, subscribeWorkspaceJson } from '@/lib/extra-screens/storage'
-import { createPersonalTask } from '@/lib/extra-screens/personal-task-bridge'
+import { useConfirmedTaskConversion } from '@/hooks/useConfirmedTaskConversion'
 import {
   DECISIONS_NS,
   loadDecisions,
@@ -43,6 +43,30 @@ import {
 } from './local-meetings-model'
 
 export type DetailTab = 'overview' | 'recording' | 'transcript' | 'decisions' | 'actions' | 'documents'
+
+export function MeetingActionToTask({ action, meeting, workspaceId, onChanged }: {
+  action: LocalMeetingAction; meeting: LocalMeeting; workspaceId: string | null; onChanged: (meeting: LocalMeeting) => void
+}) {
+  const { t } = useTranslation()
+  const api = meetingsApi()
+  const conversion = useConfirmedTaskConversion({
+    sourceKey: JSON.stringify([workspaceId, meeting.id, action.id]), source: action, workspaceId,
+    input: { title: action.text, notes: t('meetings.local.taskNotes', { title: meeting.title }) },
+    onConfirmed: async (task, current) => {
+      if (!api) return false
+      const fresh = await api.get(meeting.id)
+      if (!current() || !fresh || fresh.workspaceId !== meeting.workspaceId) return false
+      const original = fresh.actions.find(item => item.id === action.id)
+      if (!original || original.text !== action.text || original.taskId && original.taskId !== task.id) return false
+      if (original.taskId === task.id) { onChanged(fresh); return true }
+      const result = await api.saveAction(meeting.id, { actionId: action.id, patch: { taskId: task.id } })
+      if (!current() || !result.ok || result.value.actions.find(item => item.id === action.id)?.taskId !== task.id) return false
+      onChanged(result.value)
+      return true
+    },
+  })
+  return <><Button data-testid="meeting-action-to-task" disabled={conversion.busy} onClick={() => { void conversion.convert() }}>{t('meetings.local.toTask')}</Button>{conversion.failed ? <span role="alert" data-testid="meeting-task-error" className="text-xs text-destructive">{t('tasks.toastCreateFailed')}</span> : null}</>
+}
 
 const input = 'h-7 min-w-0 rounded-[6px] bg-foreground/[0.05] px-2 text-[13px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 
@@ -856,10 +880,7 @@ export function LocalMeetingDetail(props: {
             {a.taskId ? (
               <Button variant="ghost" onClick={() => navigate(routes.view.tasks(a.taskId))}>{t('meetings.local.openTask')}</Button>
             ) : (
-              <Button data-testid="meeting-action-to-task" onClick={() => {
-                const task = createPersonalTask({ title: a.text, notes: t('meetings.local.taskNotes', { title: m.title }) })
-                void saveAction(a.id, { taskId: task.id })
-              }}>{t('meetings.local.toTask')}</Button>
+              <MeetingActionToTask action={a} meeting={m} workspaceId={workspaceId} onChanged={onChanged} />
             )}
             <Button variant="ghost" aria-label={t('meetings.local.remove')} className="opacity-0 group-hover:opacity-100 focus:opacity-100" onClick={() => void saveAction(a.id, undefined, true)}>×</Button>
           </li>

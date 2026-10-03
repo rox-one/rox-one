@@ -228,6 +228,14 @@ client.handleCapability(CLIENT_BROWSER_INVOKE, async (req: BrowserCapabilityRequ
 // ---------------------------------------------------------------------------
 
 const api = buildClientApi(client, CHANNEL_MAP, (ch) => client.isChannelAvailable(ch))
+if (isClientOnly) {
+  // Window ownership lives in Electron main, including thin clients. A
+  // headless workspace service cannot answer desktop window channels.
+  api.getWindowWorkspace = async () => {
+    const value: unknown = ipcRenderer.sendSync('__get-workspace-id')
+    return typeof value === 'string' && value ? value : null
+  }
+}
 const nativeReplicaBridge = createNativeReplicaBridge({ client, invokeIpc: (channel, input) => ipcRenderer.invoke(channel, input) })
 ;(api as ElectronAPI).nativeReplica = nativeReplicaBridge.nativeReplica
 ;(api as ElectronAPI).nativeData.readEntity = nativeReplicaBridge.readEntity

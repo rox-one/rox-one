@@ -22,7 +22,11 @@ try { Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable:
 finally { if (descriptor) Object.defineProperty(process.stdin, 'isTTY', descriptor); else Reflect.deleteProperty(process.stdin, 'isTTY') }
 const ownRoot = join(configDir, 'own'), foreignRoot = join(configDir, 'foreign'); mkdirSync(ownRoot); mkdirSync(foreignRoot)
 authority.registerWorkspace(admin.credential, 'own', ownRoot); authority.registerWorkspace(admin.credential, 'foreign', foreignRoot)
-const enroll = (label: string) => authority.redeemEnrollment(authority.issueEnrollment(admin.credential, label, Date.now() + 60000), label)
+const enroll = (label: string) => {
+  const enrollment = authority.redeemEnrollment(authority.issueEnrollment(admin.credential, label, Date.now() + 60000), label)
+  if (!enrollment) throw new Error(`Fixture enrollment failed: ${label}`)
+  return enrollment
+}
 const alice = enroll('Alice'), bob = enroll('Bob')
 for (const person of [alice, bob]) authority.grantWorkspace(admin.credential, person.principal.subject, 'own', ['read', 'subscribe'])
 awardXp('session_completed'); const hostPath = join(configDir, 'gamification.json'), hostBefore = readFileSync(hostPath, 'utf8')
@@ -67,7 +71,7 @@ try {
   check('foreign-workspace-denied', await denied(() => connect(alice, 'foreign').invoke(RPC_CHANNELS.gamification.GET)))
   check('unknown-quest-denied', await denied(() => a.invoke(RPC_CHANNELS.gamification.QUEST, { action: 'complete', questId: 'forged' })))
   check('host-state-byte-preserved', readFileSync(hostPath, 'utf8') === hostBefore && loadGamificationState().xp === 25)
-  const storeDir = join(configDir, 'native-gamification'), storePath = join(storeDir, 'progress.sqlite')
+  const storeDir = join(state, 'native-gamification'), storePath = join(storeDir, 'progress.sqlite')
   check('private-custody-modes', (statSync(storeDir).mode & 0o777) === 0o700 && (statSync(storePath).mode & 0o777) === 0o600)
   await stop(); authority.close(); authority = new NativeAuthority({ stateDir: state }); await start(); a = connect(alice); b = connect(bob)
   check('xp-and-completed-state-survive-restart', (await get(a)).xp === 30 && (await get(a)).questRecords.find((q: any) => q.id === 'first_task').status === 'completed')
