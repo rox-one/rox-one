@@ -12,7 +12,7 @@ Workspace theme read/write/broadcast принимает только ID связ
 
 ID пресета — непрозрачное имя файла: пробелы, точки и Unicode сохраняются; `/`, `\\`, NUL, точные `.`/`..` и имена длиннее 250 UTF-8 байт запрещены. Web читает только regular JSON-файлы из директории тем, проверяет `PresetThemeSchema`, исключает symlinks и generic JSON. DTO не содержит host path. `file:` и относительные фоновые изображения не передаются в browser; допустимы HTTP(S) и image data URL. Выбор пресета проверяет его существование. Общие setters отклоняют отсутствующий/повреждённый config и проверяют записанное значение перед успешным ответом.
 
-Существующий `/api/config/workspaces` возвращает только `id`/`name` текущего workspace. Browser adapter строит по этой metadata и server-acknowledged ID один workspace DTO без filesystem path, remote credentials или host roster. Это metadata для renderer, не native authority.
+Существующий `/api/config/workspaces` возвращает только `id`/`name` текущего workspace. Browser adapter строит по этой metadata и server-acknowledged ID один workspace DTO без filesystem path, remote credentials или host roster. Это metadata для renderer, не native authority. Перед применением `loadAuthenticatedWebWorkspaceMetadata` проверяет web runtime и bound ID до/после асинхронного чтения, исключает чужие ID/невалидные имена и заново строит минимальный DTO. `callerAuthority` остаётся `null`; это не разрешает host session или native операции.
 
 Web ThemeProvider и Toaster монтируются после готовности authenticated transport: первоначальные config/preset reads выполняются через настоящий API.
 
@@ -22,6 +22,7 @@ Web ThemeProvider и Toaster монтируются после готовнос�
 bun test packages/server-core/src/webui/__tests__/appearance-rpc.test.ts
 bun test packages/server-core/src/transport/__tests__/server-lifecycle.test.ts
 bun test apps/webui/src/adapter/web-api.test.ts
+bun test apps/electron/src/renderer/lib/__tests__/authenticated-web-workspace-metadata.test.ts
 bun scripts/test/zed-appearance-web-acceptance.ts
 ```
 
@@ -36,8 +37,11 @@ bun scripts/test/zed-appearance-web-acceptance.ts
 - Реальный WS + JWT cookie + существующие handlers: **8 tests, 71 assertions, 0 failures**. Есть negative controls для bearer, invalid/no cookie, unbound/foreign workspace, cookie→bearer reconnect, path traversal/generic JSON/symlink, invalid theme/preferences, custom Unicode ID, missing/corrupt registry/folder и смены default workspace.
 - Существующий transport lifecycle: **11 tests, 22 assertions, 0 failures**.
 - Browser adapter: **6 tests, 16 assertions, 0 failures**. Workspace metadata не появляется до server acknowledgment; после него renderer получает только один ID/name DTO с пустым host path и без native authority.
+- Scoped metadata helper: **5 tests, 14 assertions, 0 failures**. Проверены смена binding во время чтения, фильтрация чужих/невалидных записей и исключение host path/native authority/credential fields.
 - Итоговая production UI matrix и screenshots записываются только после финальной сборки. Их статус и ограничения приведены в итоговом отчёте приёмки.
 
 Предварительная production-проба выявила потерю стандартного `backdrop-filter` при CSS minification: реальный Nordfox/Home и theme API работали, но computed blur оболочки был `none`. Проверка остановилась на этом несоответствии. Эта проба не считается пройденной приёмкой; финальный запуск сохраняет обязательную проверку blur.
+
+На первой frozen production сборке `1a17b9a9` прошли все 28 theme × route cases и reload/second-tab/live-tab/API readback, затем проверка остановилась на отсутствующей секции workspace themes. Адаптер возвращал safe metadata, но App не применял её, поскольку общая загрузка roster требовала `callerAuthority`, а web корректно сохраняет его `null`. Failed receipt и screenshot сохранены отдельно; helper/effect исправляют только отображение bound metadata. Итоговая приёмка выполняется повторно на новой сборке.
 
 Доступность Notes, session history и interactive terminal определяется существующим доменным/native transport. Отрисованное состояние «Недоступно» не подтверждает editor, document persistence, backend terminal или ANSI output. Эти поверхности требуют отдельной проверки через настоящий доступный transport; скрипт перечисляет такие ограничения явно и не подменяет их fixture-данными.

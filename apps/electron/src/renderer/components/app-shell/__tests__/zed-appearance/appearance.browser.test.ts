@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { createServer } from 'node:net'
 import { homedir } from 'node:os'
 import { resolve } from 'node:path'
-import { chromium, expect as playwrightExpect, type Browser, type BrowserContext, type Page } from 'playwright/test'
+import { chromium, expect as playwrightExpect, type Browser, type BrowserContext, type BrowserServer, type Page } from 'playwright/test'
 
 const fixture = import.meta.dirname
 const repository = resolve(fixture, '../../../../../../../..')
@@ -51,6 +51,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
   let server: ReturnType<typeof Bun.spawn> | undefined
   let compiling: ReturnType<typeof Bun.spawn> | undefined
   let browser: Browser
+  let browserServer: BrowserServer | undefined
   let context: BrowserContext
   let page: Page
   let fixtureUrl: string
@@ -61,6 +62,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     'apps/electron/src/renderer/index.css',
     'apps/electron/vite.config.ts',
     'apps/electron/src/renderer/context/ThemeContext.tsx',
+    'packages/shared/src/config/theme.ts',
     'apps/electron/src/renderer/hooks/useShellAppearance.ts',
     'apps/electron/src/renderer/lib/web-chrome-preference.ts',
     'apps/electron/src/renderer/components/app-shell/PanelResizeSash.tsx',
@@ -77,14 +79,25 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
   const stopResources = async () => {
     const ownedServer = server
     const ownedBuild = compiling
+    const ownedBrowserServer = browserServer
     server = undefined
     compiling = undefined
-    try { await browser?.close() } finally {
-      ownedServer?.kill()
-      ownedBuild?.kill()
-      await ownedServer?.exited
-      await ownedBuild?.exited
+    browserServer = undefined
+    const stopChild = async (child: typeof ownedServer) => {
+      if (!child) return
+      if (child.exitCode === null) child.kill()
+      const deadline = setTimeout(() => { if (child.exitCode === null) child.kill('SIGKILL') }, 2_000)
+      try { await child.exited } finally { clearTimeout(deadline) }
     }
+    const stopBrowser = async () => {
+      if (!ownedBrowserServer) return
+      const deadline = setTimeout(() => { void ownedBrowserServer.kill() }, 5_000)
+      try { await ownedBrowserServer.close() } finally { clearTimeout(deadline) }
+    }
+    // All handles refer to processes started by this fixture. Close in parallel
+    // so a preview-server shutdown cannot wait on a browser still holding HTTP
+    // sockets; bounded termination never targets another task's process.
+    await Promise.all([stopChild(ownedServer), stopChild(ownedBuild), stopBrowser(), browser?.close().catch(() => {})])
   }
 
   beforeAll(async () => {
@@ -113,7 +126,8 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
         if (server.exitCode !== null || Date.now() > deadline) throw new Error(`Appearance fixture server did not start${server.exitCode !== null ? `: ${await serverLog}` : ''}`)
         await Bun.sleep(100)
       }
-      browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
+      browserServer = await chromium.launchServer({ executablePath, headless: true, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
+      browser = await chromium.connect(browserServer.wsEndpoint())
       mkdirSync(proofDirectory, { recursive: true })
       const compiledAssets = resolve(repository, 'node_modules/.vite-zed-appearance/compiled-fixture/assets')
       const compiledCssSha256 = Object.fromEntries(readdirSync(compiledAssets).filter(name => name.endsWith('.css')).map(name => [name, createHash('sha256').update(readFileSync(resolve(compiledAssets, name))).digest('hex')]))

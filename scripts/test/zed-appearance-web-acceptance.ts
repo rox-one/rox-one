@@ -85,6 +85,8 @@ async function snapshot(p: Page) {
           : element.classList.contains('chrome-rail') ? 'rail'
             : element.hasAttribute('data-inspector-panel') ? 'inspector' : element.className.split(' ')[0]
         return { role: element.dataset.panelRole ?? element.dataset.shellRole ?? chromeRole,
+          innerChrome: (element.dataset.panelRole ?? element.dataset.shellRole) === 'chrome' && !element.classList.contains('chrome-topbar')
+            && Boolean(element.parentElement?.closest('.rox-shell-pane[data-panel-role="sidebar"],.rox-shell-pane[data-panel-role="navigator"]')),
           background: computed.backgroundColor, backdrop: computed.backdropFilter, radius: computed.borderRadius,
           font: computed.fontFamily, color: computed.color, width: rect.width, height: rect.height }
       })
@@ -120,7 +122,11 @@ function assertSurface(snapshot_: any, testCase: typeof cases[number], glass = t
   const chrome = snapshot_.elements.filter((value: any) => ['chrome', 'topbar', 'rail', 'inspector', 'sidebar', 'navigator'].includes(value.role))
   for (const element of chrome) {
     assert.equal(element.radius, '0px', 'flush chrome pane corners')
-    if (glass) assert.match(element.backdrop, /blur\(20px\)/, 'web chrome blur fallback')
+    if (element.innerChrome) {
+      assert.equal(element.backdrop, 'none', 'inner chrome does not paint glass twice')
+      assert.equal(element.background, 'rgba(0, 0, 0, 0)', 'inner chrome stays transparent')
+    }
+    else if (glass) assert.match(element.backdrop, /blur\(20px\)/, 'web chrome blur fallback')
     else assert.equal(element.backdrop, 'none', 'opaque/accessibility preference disables blur')
   }
   for (const element of snapshot_.elements.filter((value: any) => value.role === 'content')) {

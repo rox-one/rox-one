@@ -100,7 +100,7 @@ import { rendererLog } from '@/lib/logger'
 import { ActionRegistryProvider } from '@/actions'
 import { OmniboxHost } from '@/platform/OmniboxHost'
 import { toast } from 'sonner'
-import { initializeAuthenticatedWebRenderer, type AuthenticatedWebTransportBootstrap } from '@/lib/authenticated-web-bootstrap'
+import { initializeAuthenticatedWebRenderer, loadAuthenticatedWebWorkspaceMetadata, type AuthenticatedWebTransportBootstrap } from '@/lib/authenticated-web-bootstrap'
 
 type AppState = 'loading' | 'onboarding' | 'reauth' | 'workspace-picker' | 'ready' | 'transport-unavailable'
 
@@ -985,6 +985,18 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   })
 
   // Load workspaces, sessions, model, notifications setting, and drafts when app is ready
+  // Browser transport has no desktop caller authority. Its acknowledged
+  // workspace metadata still drives the existing workspace-theme controls.
+  useEffect(() => {
+    if (appState !== 'ready' || !webTransportBootstrap
+      || windowWorkspaceId !== webTransportBootstrap.workspaceId) return
+    let cancelled = false
+    void loadAuthenticatedWebWorkspaceMetadata(window.electronAPI, webTransportBootstrap)
+      .then(metadata => { if (!cancelled) setWorkspaces(metadata) })
+      .catch(() => { if (!cancelled) setWorkspaces([]) })
+    return () => { cancelled = true }
+  }, [appState, webTransportBootstrap, windowWorkspaceId])
+
   useEffect(() => {
     if (appState !== 'ready' || callerAuthority === null) return
 
