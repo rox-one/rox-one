@@ -6240,10 +6240,15 @@ export class SessionManager implements ISessionManager {
   async querySessionLlm(
     sessionId: string,
     request: SessionLlmQueryRequest,
-    options: { preferFastModel?: boolean } = {},
+    options: { preferFastModel?: boolean; roxExecutionContext?: RoxExecutionContext } = {},
   ): Promise<SessionLlmQueryResult> {
     const managed = this.sessions.get(sessionId)
     if (!managed) throw new Error('Session not found')
+    // RPC helpers own their captured caller, including a fresh unsent draft.
+    // Select and fence it before any backend/auth work; a saved session owner
+    // may belong to another live caller or an earlier account generation.
+    const executionContext = options.roxExecutionContext ?? await this.roxExecutionForSession(managed)
+    if (executionContext) getRoxAccountAuthority().assertCurrent(executionContext)
 
     const workspaceRootPath = managed.workspace.rootPath
     const wsConfig = loadWorkspaceConfig(workspaceRootPath)
@@ -6268,7 +6273,7 @@ export class SessionManager implements ISessionManager {
       context: backendContext,
       hostRuntime: buildBackendHostRuntimeContext(),
       coreConfig: {
-        roxExecutionContext: await this.roxExecutionForSession(managed),
+        roxExecutionContext: executionContext,
         workspace: managed.workspace,
         session: {
           id: `${managed.id}-oneshot-${Date.now().toString(36)}`,
@@ -6309,7 +6314,9 @@ export class SessionManager implements ISessionManager {
         if (typeof queryable.queryLlm !== 'function') {
           throw new Error('This connection does not support one-shot LLM queries')
         }
+        if (executionContext) getRoxAccountAuthority().assertCurrent(executionContext)
         const result = await Promise.race([queryable.queryLlm({ ...request, model }), timeout])
+        if (executionContext) getRoxAccountAuthority().assertCurrent(executionContext)
         return { text: result.text ?? '', model: result.model ?? model, warning: result.warning }
       } finally {
         if (timer) clearTimeout(timer)
@@ -6471,7 +6478,7 @@ export class SessionManager implements ISessionManager {
         systemPrompt,
         prompt: `Draft:\n${trimmed}`,
         temperature: 0.3,
-      })
+      }, roxExecutionContext ? { roxExecutionContext } : {})
       if (roxExecutionContext) getRoxAccountAuthority().assertCurrent(roxExecutionContext)
       const improved = stripImprovedDraft(result.text)
       if (!improved) {
