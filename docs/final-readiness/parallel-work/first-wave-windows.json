@@ -1,0 +1,1335 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "BOUNDED_READ_ONLY_FIRST_WAVE_PREPARATION",
+  "repository": "rox-one/rox-one",
+  "source": {
+    "sha": "387edc1b1cfec361e2de2196a6963c27a98cbc67",
+    "branch": "develop/windows-readiness-2026-10-03",
+    "worktree": "/Users/t/Projects/rox-one-launch-win-20261003",
+    "launchPlanSha256": "78ae17ac91fe72c6e34406b98311c59ddd52e7d3c9d1bd792a63cb2af83551cf"
+  },
+  "scope": {
+    "taskIds": [
+      "WIN-001.1",
+      "WIN-001.2",
+      "WIN-002.1",
+      "WIN-002.2"
+    ],
+    "taskCount": 4,
+    "sourceChanged": false,
+    "commitsCreated": false,
+    "installsOrBuildsPerformed": false,
+    "productStateTouched": false,
+    "fullDoDClosedCount": 0
+  },
+  "summary": {
+    "implemented": "Canonical native desktop packaging, Windows x64 NSIS/resource staging, Turso/native core checks, installer hashes, baseline Bun/uv and existing prerequisite warning are implemented source.",
+    "remaining": "Legacy entrypoint parity; complete installed resource inventory; enabled native dependency closure; shipped runtime probes; Win10/11 clean-client operation evidence."
+  },
+  "tasks": [
+    {
+      "id": "WIN-001.1",
+      "family": "WIN",
+      "parentId": "WIN-001",
+      "title": "[WIN-001.1] Unify Windows main/preload/interceptor build behavior",
+      "backlogDocument": "04-platform-release-backlog.md",
+      "codeReferences": [
+        {
+          "path": "scripts/desktop-release.ts",
+          "lineStart": 17,
+          "lineEnd": 61,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L17-L61"
+        },
+        {
+          "path": "scripts/electron-build-main.ts",
+          "lineStart": 360,
+          "lineEnd": 415,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/electron-build-main.ts#L360-L415"
+        },
+        {
+          "path": "scripts/electron-main-cjs.ts",
+          "lineStart": 1,
+          "lineEnd": 5,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/electron-main-cjs.ts#L1-L5"
+        },
+        {
+          "path": "scripts/electron-build-preload.ts",
+          "lineStart": 18,
+          "lineEnd": 29,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/electron-build-preload.ts#L18-L29"
+        },
+        {
+          "path": "apps/electron/scripts/build-win.ps1",
+          "lineStart": 244,
+          "lineEnd": 340,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/scripts/build-win.ps1#L244-L340"
+        },
+        {
+          "path": "apps/electron/package.json",
+          "lineStart": 18,
+          "lineEnd": 37,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/package.json#L18-L37"
+        },
+        {
+          "path": "apps/electron/scripts/build-win.ps1",
+          "lineStart": 8,
+          "lineEnd": 12,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/scripts/build-win.ps1#L8-L12"
+        },
+        {
+          "path": "scripts/build/common.ts",
+          "lineStart": 34,
+          "lineEnd": 75,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L34-L75"
+        },
+        {
+          "path": "apps/electron/scripts/build-win.ps1",
+          "lineStart": 58,
+          "lineEnd": 98,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/scripts/build-win.ps1#L58-L98"
+        },
+        {
+          "path": ".github/workflows/desktop-release.yml",
+          "lineStart": 30,
+          "lineEnd": 61,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/.github/workflows/desktop-release.yml#L30-L61"
+        },
+        {
+          "path": ".circleci/desktop.yml",
+          "lineStart": 24,
+          "lineEnd": 50,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/.circleci/desktop.yml#L24-L50"
+        }
+      ],
+      "existingProgress": "partially-implemented",
+      "existingFullDoDClosed": false,
+      "dispatchState": "ALLOCATED_NOT_YET_FULLY_EXECUTED",
+      "allocation": {
+        "workPackage": "P-WIN-BUILD",
+        "owner": "windows-build",
+        "writePaths": [
+          "apps/electron/scripts/build-win.ps1"
+        ],
+        "sharedContractIds": [
+          "BUILD-CONFIG",
+          "DEPENDENCIES",
+          "CI"
+        ],
+        "startNow": {
+          "sourceAndHarnessWork": true,
+          "actions": [
+            "Inspect selected integrated source and existing receipts; reconcile already implemented behavior before changing code.",
+            "Implement isolated modules/tests and provision the listed target environment now.",
+            "Request shared-file edits from the nominated file owner; run bounded preliminary checks as soon as the relevant artifact exists."
+          ],
+          "condition": "No dependency on completion of every other product module. Final acceptance waits only for the consumed outputs below."
+        },
+        "environments": [
+          "WIN-BUILD"
+        ],
+        "produces": [
+          "win.main-preload-bundles",
+          "win.generated-helper-manifest",
+          "win.unsigned-installer"
+        ],
+        "hardAcceptanceDependencies": [
+          {
+            "output": "win.native-dependency-manifest",
+            "producer": "P-WIN-NATIVE",
+            "consumingPhase": "installer assembly",
+            "why": "NSIS needs the actual target .node/DLL/native subprocess bytes.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          },
+          {
+            "output": "win.installer-and-data-policy",
+            "producer": "P-WIN-INSTALL",
+            "consumingPhase": "installer assembly",
+            "why": "Installer configuration and launcher paths are inputs, rather than merely documentation.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          }
+        ],
+        "allocationFile": "platform-plan.json"
+      },
+      "Requirements": "Equivalent runtime bundle semantics across documented Windows entrypoints; no unsupported Bun builtins in Electron main.",
+      "DoD": "All release entrypoints build the same required entrypoint set and pass bundle import checks.",
+      "Full functional verification": "Open the app, Browser screen and extension surface; start Pi and Claude sessions and exercise memory persistence.",
+      "Test method": "Clean build for each retained entrypoint and execute generated main/helper modules inside their shipped runtimes.",
+      "baselineCodeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/electron-builder.yml#L1",
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/scripts/build-win.ps1#L1",
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/scripts/build/__tests__/electron-packaging-files.test.ts#L1",
+        "https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/scripts/electron-build-main.ts#L384-L414",
+        "https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/apps/electron/scripts/build-win.ps1#L248-L286"
+      ],
+      "currentSourceProgress": "Canonical release/build source implemented; legacy public Windows entrypoints diverge and installed runtime qualification remains.",
+      "evidenceLevel": "SOURCE_INSPECTION_ONLY",
+      "fullDoDClosed": false,
+      "observations": [
+        {
+          "status": "SOURCE_IMPLEMENTATION_PRESENT",
+          "finding": "desktop-release.ts already calls canonical root electron:build. Canonical main builds Pi/interceptor/WhatsApp/Discord/extension workers with CJS module URL flags and SQLite/native-fetch/AbortController shims; canonical preload builds bootstrap and browser-toolbar. Preserve this existing pipeline.",
+          "codeReferences": [
+            {
+              "path": "scripts/desktop-release.ts",
+              "lineStart": 17,
+              "lineEnd": 61,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L17-L61"
+            },
+            {
+              "path": "scripts/electron-build-main.ts",
+              "lineStart": 360,
+              "lineEnd": 415,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/electron-build-main.ts#L360-L415"
+            },
+            {
+              "path": "scripts/electron-main-cjs.ts",
+              "lineStart": 1,
+              "lineEnd": 5,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/electron-main-cjs.ts#L1-L5"
+            },
+            {
+              "path": "scripts/electron-build-preload.ts",
+              "lineStart": 18,
+              "lineEnd": 29,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/electron-build-preload.ts#L18-L29"
+            }
+          ]
+        },
+        {
+          "status": "OBSERVED_SOURCE_GAP",
+          "finding": "Legacy app dist:win still calls separate build-win.ps1 with its own smaller main flags, missing canonical module URL/SQLite/polyfill shims and manual partial build flow. App build:main:win leaves bun:* external. Legacy Bun1.3.9 differs from canonical1.3.14.",
+          "codeReferences": [
+            {
+              "path": "apps/electron/scripts/build-win.ps1",
+              "lineStart": 244,
+              "lineEnd": 340,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/scripts/build-win.ps1#L244-L340"
+            },
+            {
+              "path": "apps/electron/package.json",
+              "lineStart": 18,
+              "lineEnd": 37,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/package.json#L18-L37"
+            },
+            {
+              "path": "apps/electron/scripts/build-win.ps1",
+              "lineStart": 8,
+              "lineEnd": 12,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/scripts/build-win.ps1#L8-L12"
+            },
+            {
+              "path": "scripts/build/common.ts",
+              "lineStart": 34,
+              "lineEnd": 75,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L34-L75"
+            }
+          ]
+        },
+        {
+          "status": "OBSERVED_SOURCE_RISK",
+          "finding": "Legacy PowerShell kills every node/npm/electron process by name and performs unfrozen install. These operations must not run on a shared worker or user machine.",
+          "codeReferences": [
+            {
+              "path": "apps/electron/scripts/build-win.ps1",
+              "lineStart": 58,
+              "lineEnd": 98,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/scripts/build-win.ps1#L58-L98"
+            }
+          ]
+        },
+        {
+          "status": "SOURCE_IMPLEMENTATION_PRESENT",
+          "finding": "GitHub Windows2025 x64 package and CircleCI WindowsServer2022GUI package jobs already exist. Neither source config is a Windows10/11 installed-client receipt.",
+          "codeReferences": [
+            {
+              "path": ".github/workflows/desktop-release.yml",
+              "lineStart": 30,
+              "lineEnd": 61,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/.github/workflows/desktop-release.yml#L30-L61"
+            },
+            {
+              "path": ".circleci/desktop.yml",
+              "lineStart": 24,
+              "lineEnd": 50,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/.circleci/desktop.yml#L24-L50"
+            }
+          ]
+        }
+      ],
+      "firstPatches": [
+        {
+          "id": "WIN-001.1/P1",
+          "title": "Delegate retained Windows entrypoints to the existing canonical pipeline",
+          "status": "PROPOSED_NOT_IMPLEMENTED",
+          "ownershipPaths": [
+            "apps/electron/scripts/build-win.ps1",
+            "apps/electron/package.json (shared BUILD-CONFIG/DEPENDENCIES owner request)",
+            "package.json (shared owner request if documented root dist:win delegates)"
+          ],
+          "actions": [
+            "Replace manual build/stage/package sections with a thin PowerShell wrapper: locate repository root, require selected build Bun, invoke bun scripts/desktop-release.ts, propagate exit code, restore cwd in finally. Preserve intentional signed/unsigned inputs without logging credentials.",
+            "Delegate app build:main:win to scripts/electron-build-main.ts; route or explicitly deprecate other documented release entrypoints. Remove duplicate compiler flags and old Bun pin.",
+            "Remove process-wide Stop-Process and implicit unfrozen install. Provision dependencies using immutable frozen lockfile in its own isolated environment. Cleanup only this checkout/identified child handles.",
+            "Add new windows-entrypoints.test.ts exercising wrapper target/exit/cwd behavior with fake child invocation; retain existing CJS and packaging suites."
+          ],
+          "Requirements": "All retained documented Windows entrypoints use one canonical builder and identical expected outputs, with no unsupported Bun imports in Electron main or unrelated process termination.",
+          "DoD": "No duplicated main flag list or stale Bun pin; failure propagation preserved; expected entrypoint manifest matches across retained commands and unrelated process remains running.",
+          "Full functional verification": "Clean-build retained entrypoints at identical SHA, run shipped main/helpers, open installed Browser and extension surface, start Pi/Claude sessions, persist/reopen memory.",
+          "Test method": "STATIC-BUILD; proposed scripts/build/__tests__/windows-entrypoints.test.ts (new, absent); CANONICAL-PACKAGE and LEGACY-ENTRY in disposable Windows worker; installed-runtime probe and GUI flows."
+        }
+      ],
+      "acceptanceCommands": [
+        "STATIC-BUILD",
+        "CANONICAL-PACKAGE",
+        "LEGACY-ENTRY",
+        "CANONICAL-VERIFY"
+      ],
+      "consumedOutputs": [
+        {
+          "output": "win.native-dependency-manifest",
+          "producer": "P-WIN-NATIVE",
+          "consumingPhase": "installer assembly",
+          "why": "NSIS needs the actual target .node/DLL/native subprocess bytes.",
+          "taskIds": [],
+          "blocksSourceStart": false
+        },
+        {
+          "output": "win.installer-and-data-policy",
+          "producer": "P-WIN-INSTALL",
+          "consumingPhase": "installer assembly",
+          "why": "Installer configuration and launcher paths are inputs, rather than merely documentation.",
+          "taskIds": [],
+          "blocksSourceStart": false
+        }
+      ],
+      "hardStartDependencies": [],
+      "sourcePreparationMayStartNow": true
+    },
+    {
+      "id": "WIN-001.2",
+      "family": "WIN",
+      "parentId": "WIN-001",
+      "title": "[WIN-001.2] Make helper and executable staging mandatory",
+      "backlogDocument": "04-platform-release-backlog.md",
+      "codeReferences": [
+        {
+          "path": "scripts/desktop-release.ts",
+          "lineStart": 17,
+          "lineEnd": 61,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L17-L61"
+        },
+        {
+          "path": "scripts/build/common.ts",
+          "lineStart": 128,
+          "lineEnd": 172,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L128-L172"
+        },
+        {
+          "path": "scripts/build/common.ts",
+          "lineStart": 197,
+          "lineEnd": 267,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L197-L267"
+        },
+        {
+          "path": "scripts/electron-build-preload.ts",
+          "lineStart": 18,
+          "lineEnd": 29,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/electron-build-preload.ts#L18-L29"
+        },
+        {
+          "path": "scripts/electron-build-main.ts",
+          "lineStart": 360,
+          "lineEnd": 415,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/electron-build-main.ts#L360-L415"
+        },
+        {
+          "path": "apps/electron/electron-builder.yml",
+          "lineStart": 192,
+          "lineEnd": 236,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L192-L236"
+        },
+        {
+          "path": "scripts/build/common.ts",
+          "lineStart": 510,
+          "lineEnd": 562,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L510-L562"
+        },
+        {
+          "path": "scripts/build/common.ts",
+          "lineStart": 568,
+          "lineEnd": 577,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L568-L577"
+        },
+        {
+          "path": "scripts/build/staged-servers.ts",
+          "lineStart": 1,
+          "lineEnd": 20,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/staged-servers.ts#L1-L20"
+        }
+      ],
+      "existingProgress": "partially-implemented",
+      "existingFullDoDClosed": false,
+      "dispatchState": "ALLOCATED_NOT_YET_FULLY_EXECUTED",
+      "allocation": {
+        "workPackage": "P-WIN-BUILD",
+        "owner": "windows-build",
+        "writePaths": [
+          "apps/electron/scripts/build-win.ps1"
+        ],
+        "sharedContractIds": [
+          "BUILD-CONFIG",
+          "DEPENDENCIES",
+          "CI"
+        ],
+        "startNow": {
+          "sourceAndHarnessWork": true,
+          "actions": [
+            "Inspect selected integrated source and existing receipts; reconcile already implemented behavior before changing code.",
+            "Implement isolated modules/tests and provision the listed target environment now.",
+            "Request shared-file edits from the nominated file owner; run bounded preliminary checks as soon as the relevant artifact exists."
+          ],
+          "condition": "No dependency on completion of every other product module. Final acceptance waits only for the consumed outputs below."
+        },
+        "environments": [
+          "WIN-BUILD"
+        ],
+        "produces": [
+          "win.main-preload-bundles",
+          "win.generated-helper-manifest",
+          "win.unsigned-installer"
+        ],
+        "hardAcceptanceDependencies": [
+          {
+            "output": "win.native-dependency-manifest",
+            "producer": "P-WIN-NATIVE",
+            "consumingPhase": "installer assembly",
+            "why": "NSIS needs the actual target .node/DLL/native subprocess bytes.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          },
+          {
+            "output": "win.installer-and-data-policy",
+            "producer": "P-WIN-INSTALL",
+            "consumingPhase": "installer assembly",
+            "why": "Installer configuration and launcher paths are inputs, rather than merely documentation.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          }
+        ],
+        "allocationFile": "platform-plan.json"
+      },
+      "Requirements": "Artifact manifest records required paths, versions, hashes and executable architecture; optional features are explicitly marked.",
+      "DoD": "Removing any required staged file causes a deterministic pre-publication failure.",
+      "Full functional verification": "Launch each subprocess from the installed app with developer `node_modules` and system Bun unavailable.",
+      "Test method": "Package inspection plus negative missing-resource tests and real child-process startup traces.",
+      "baselineCodeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/electron-builder.yml#L1",
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/scripts/build-win.ps1#L1",
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/scripts/build/__tests__/electron-packaging-files.test.ts#L1",
+        "https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/scripts/build/common.ts#L509-L518",
+        "https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/scripts/build/common.ts#L568-L577",
+        "https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/apps/electron/electron-builder.yml#L218-L234"
+      ],
+      "currentSourceProgress": "Core required-path/version checks and installer SHA256 already implemented; full installed-helper/native inventory and negative deletion gate incomplete.",
+      "evidenceLevel": "SOURCE_INSPECTION_ONLY",
+      "fullDoDClosed": false,
+      "observations": [
+        {
+          "status": "SOURCE_IMPLEMENTATION_PRESENT",
+          "finding": "Existing canonical verifier refuses missing main/bootstrap/renderer/Pi/SDK/Claude/Turso package.json, checks syntax and bundled Bun/uv/Claude versions and records installer size/hash/version/commit. Existing download hashes and required SDK/ripgrep staging should be reused.",
+          "codeReferences": [
+            {
+              "path": "scripts/desktop-release.ts",
+              "lineStart": 17,
+              "lineEnd": 61,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L17-L61"
+            },
+            {
+              "path": "scripts/build/common.ts",
+              "lineStart": 128,
+              "lineEnd": 172,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L128-L172"
+            },
+            {
+              "path": "scripts/build/common.ts",
+              "lineStart": 197,
+              "lineEnd": 267,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L197-L267"
+            }
+          ]
+        },
+        {
+          "status": "OBSERVED_SOURCE_GAP",
+          "finding": "Manifest covers final artifact hashes, not installed required helper/package versions/native architecture/hashes. Required-file list omits browser-toolbar, interceptor, extension-host, cloud runner and messaging workers. Builds can succeed while a packaged helper is missing or stale.",
+          "codeReferences": [
+            {
+              "path": "scripts/desktop-release.ts",
+              "lineStart": 17,
+              "lineEnd": 61,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L17-L61"
+            },
+            {
+              "path": "scripts/electron-build-preload.ts",
+              "lineStart": 18,
+              "lineEnd": 29,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/electron-build-preload.ts#L18-L29"
+            },
+            {
+              "path": "scripts/electron-build-main.ts",
+              "lineStart": 360,
+              "lineEnd": 415,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/electron-build-main.ts#L360-L415"
+            },
+            {
+              "path": "apps/electron/electron-builder.yml",
+              "lineStart": 192,
+              "lineEnd": 236,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L192-L236"
+            }
+          ]
+        },
+        {
+          "status": "OBSERVED_SOURCE_GAP",
+          "finding": "Pi/cloud stagers still warn/return if source missing. Current Pi no longer universally requires koffi; when installed but wrong-target native binary is missing it copies all platforms as fallback. Determine requiredness from shipped feature graph. Do not restore intentionally unused legacy session/bridge MCP servers.",
+          "codeReferences": [
+            {
+              "path": "scripts/build/common.ts",
+              "lineStart": 510,
+              "lineEnd": 562,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L510-L562"
+            },
+            {
+              "path": "scripts/build/common.ts",
+              "lineStart": 568,
+              "lineEnd": 577,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L568-L577"
+            },
+            {
+              "path": "scripts/build/staged-servers.ts",
+              "lineStart": 1,
+              "lineEnd": 20,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/staged-servers.ts#L1-L20"
+            }
+          ]
+        },
+        {
+          "status": "OBSERVED_SOURCE_GAP",
+          "finding": "downloadUv skips solely on existing targetPath; incremental stale/corrupt/wrong-version uv lacks revalidation before package.",
+          "codeReferences": [
+            {
+              "path": "scripts/build/common.ts",
+              "lineStart": 197,
+              "lineEnd": 267,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L197-L267"
+            }
+          ]
+        }
+      ],
+      "firstPatches": [
+        {
+          "id": "WIN-001.2/P1",
+          "title": "Extend canonical verification into a target resource manifest with deterministic negative gates",
+          "status": "PROPOSED_NOT_IMPLEMENTED",
+          "ownershipPaths": [
+            "scripts/build/windows-resource-manifest.ts (new; shared BUILD-CONFIG owner)",
+            "scripts/build/__tests__/windows-resource-manifest.test.ts (new)",
+            "scripts/desktop-release.ts (shared CI/BUILD-CONFIG owner)",
+            "scripts/build/common.ts (shared TOOLCHAIN owner)"
+          ],
+          "actions": [
+            "Extract/reuse existing release core checks. Inventory every retained helper/worker/native executable with shipped relative path, consuming runtime, feature owner, required/optional state, package version, SHA256, actual PE architecture where applicable.",
+            "Include both preloads/interceptor/extension/Pi/SDK/Claude/ripgrep/Bun/uv and enabled cloud/WhatsApp/Discord workers. Report disabled optional features honestly; do not demand absent unused MCP/koffi assets.",
+            "Validate inventory both before packaging and from packaged tree before release success. Reject missing/tampered/wrong-target/stale required assets. Validate cached uv version/provenance or reprovision.",
+            "Retain installer manifest/feed checks; add per-resource inventory. Negative fixture removes each required resource separately, corrupts .node/DLL, injects foreign architecture and simulates child startup failure; all refuse deterministic success."
+          ],
+          "Requirements": "Manifest records actual required/optional target bytes and consuming runtime; removing any required resource fails before publication.",
+          "DoD": "Each missing/tamper/architecture/version fixture fails deterministically with relative path; successful existing release checks and installer hashes remain preserved.",
+          "Full functional verification": "Start every required child from installed app with checkout/developer node_modules/system Bun unavailable; record actual path/version/exit/protocol handshake/output and stop/cancellation.",
+          "Test method": "STATIC-BUILD; proposed scripts/build/__tests__/windows-resource-manifest.test.ts (new, absent); CANONICAL-PACKAGE; positive verify then controlled delete/tamper in disposable copied win-unpacked fixture. Never mutate published artifact."
+        }
+      ],
+      "acceptanceCommands": [
+        "STATIC-BUILD",
+        "CANONICAL-PACKAGE",
+        "CANONICAL-VERIFY",
+        "ARTIFACT-HASH"
+      ],
+      "consumedOutputs": [
+        {
+          "output": "win.native-dependency-manifest",
+          "producer": "P-WIN-NATIVE",
+          "consumingPhase": "installer assembly",
+          "why": "NSIS needs the actual target .node/DLL/native subprocess bytes.",
+          "taskIds": [],
+          "blocksSourceStart": false
+        },
+        {
+          "output": "win.installer-and-data-policy",
+          "producer": "P-WIN-INSTALL",
+          "consumingPhase": "installer assembly",
+          "why": "Installer configuration and launcher paths are inputs, rather than merely documentation.",
+          "taskIds": [],
+          "blocksSourceStart": false
+        }
+      ],
+      "hardStartDependencies": [],
+      "sourcePreparationMayStartNow": true
+    },
+    {
+      "id": "WIN-002.1",
+      "family": "WIN",
+      "parentId": "WIN-002",
+      "title": "[WIN-002.1] Add Windows libSQL and image/native runtime closure",
+      "backlogDocument": "04-platform-release-backlog.md",
+      "codeReferences": [
+        {
+          "path": "packages/server-core/src/workgraph/index.ts",
+          "lineStart": 892,
+          "lineEnd": 895,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/workgraph/index.ts#L892-L895"
+        },
+        {
+          "path": "scripts/desktop-release.ts",
+          "lineStart": 17,
+          "lineEnd": 61,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L17-L61"
+        },
+        {
+          "path": "apps/electron/electron-builder.yml",
+          "lineStart": 192,
+          "lineEnd": 236,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L192-L236"
+        },
+        {
+          "path": "packages/shared/src/utils/sqlite-runtime.ts",
+          "lineStart": 27,
+          "lineEnd": 51,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/utils/sqlite-runtime.ts#L27-L51"
+        },
+        {
+          "path": ".github/workflows/desktop-release.yml",
+          "lineStart": 30,
+          "lineEnd": 61,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/.github/workflows/desktop-release.yml#L30-L61"
+        },
+        {
+          "path": "apps/electron/electron-builder.yml",
+          "lineStart": 21,
+          "lineEnd": 65,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L21-L65"
+        },
+        {
+          "path": "scripts/electron-build-main.ts",
+          "lineStart": 360,
+          "lineEnd": 415,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/electron-build-main.ts#L360-L415"
+        },
+        {
+          "path": "packages/server-core/src/memory/episodic-memory.ts",
+          "lineStart": 127,
+          "lineEnd": 149,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/memory/episodic-memory.ts#L127-L149"
+        },
+        {
+          "path": "apps/electron/package.json",
+          "lineStart": 77,
+          "lineEnd": 77,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/package.json#L77"
+        },
+        {
+          "path": "package.json",
+          "lineStart": 229,
+          "lineEnd": 236,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/package.json#L229-L236"
+        },
+        {
+          "path": "apps/electron/src/main/platform.ts",
+          "lineStart": 34,
+          "lineEnd": 65,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/src/main/platform.ts#L34-L65"
+        },
+        {
+          "path": "scripts/build-wa-worker.ts",
+          "lineStart": 95,
+          "lineEnd": 107,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build-wa-worker.ts#L95-L107"
+        }
+      ],
+      "existingProgress": "partially-implemented",
+      "existingFullDoDClosed": false,
+      "dispatchState": "ALLOCATED_NOT_YET_FULLY_EXECUTED",
+      "allocation": {
+        "workPackage": "P-WIN-NATIVE",
+        "owner": "windows-native",
+        "writePaths": [
+          "platform-specific native staging helpers to be added under scripts/build"
+        ],
+        "sharedContractIds": [
+          "BUILD-CONFIG",
+          "DEPENDENCIES",
+          "TOOLCHAIN"
+        ],
+        "startNow": {
+          "sourceAndHarnessWork": true,
+          "actions": [
+            "Inspect selected integrated source and existing receipts; reconcile already implemented behavior before changing code.",
+            "Implement isolated modules/tests and provision the listed target environment now.",
+            "Request shared-file edits from the nominated file owner; run bounded preliminary checks as soon as the relevant artifact exists."
+          ],
+          "condition": "No dependency on completion of every other product module. Final acceptance waits only for the consumed outputs below."
+        },
+        "environments": [
+          "WIN-BUILD",
+          "WIN10-GUI",
+          "WIN11-GUI"
+        ],
+        "produces": [
+          "win.native-dependency-manifest",
+          "win.native-load-receipt"
+        ],
+        "hardAcceptanceDependencies": [
+          {
+            "output": "dependency-and-runtime-selection",
+            "producer": "G-SECURITY",
+            "consumingPhase": "final dependency staging",
+            "why": "Patched Electron/Sharp/native versions must be selected coherently; existing-version load probes can run now.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          },
+          {
+            "output": "win.unsigned-installer",
+            "producer": "P-WIN-BUILD",
+            "consumingPhase": "installed native-load verification",
+            "why": "Artifact native-load results cannot be inferred from a development checkout.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          }
+        ],
+        "allocationFile": "platform-plan.json"
+      },
+      "Requirements": "Target-specific dependency closure is explicit; native features are not advertised when their binary cannot load.",
+      "DoD": "All retained native features load successfully under packaged Electron and their separate worker runtimes.",
+      "Full functional verification": "Execute feature operations in the installed app and inspect resulting persistent records/files.",
+      "Test method": "Import/load probes inside packaged runtimes plus product UI assertions on outputs.",
+      "baselineCodeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/electron-builder.yml#L1",
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/scripts/electron-build-main.ts#L1",
+        "https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/apps/electron/electron-builder.yml#L144-L153"
+      ],
+      "currentSourceProgress": "Windows Turso staging already implemented; enabled native dependency closure and operation proof inside shipped runtimes still incomplete.",
+      "evidenceLevel": "SOURCE_INSPECTION_ONLY",
+      "fullDoDClosed": false,
+      "observations": [
+        {
+          "status": "SOURCE_IMPLEMENTATION_PRESENT",
+          "finding": "Historical libSQL task wording must be reconciled: current WorkGraph resolves @tursodatabase/database. Pipeline stages database/database-common/database-win32-x64-msvc and Windows YAML copies target tree. Other durable stores independently use builtin bun:sqlite/node:sqlite.",
+          "codeReferences": [
+            {
+              "path": "packages/server-core/src/workgraph/index.ts",
+              "lineStart": 892,
+              "lineEnd": 895,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/workgraph/index.ts#L892-L895"
+            },
+            {
+              "path": "scripts/desktop-release.ts",
+              "lineStart": 17,
+              "lineEnd": 61,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L17-L61"
+            },
+            {
+              "path": "apps/electron/electron-builder.yml",
+              "lineStart": 192,
+              "lineEnd": 236,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L192-L236"
+            },
+            {
+              "path": "packages/shared/src/utils/sqlite-runtime.ts",
+              "lineStart": 27,
+              "lineEnd": 51,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/utils/sqlite-runtime.ts#L27-L51"
+            }
+          ]
+        },
+        {
+          "status": "OBSERVED_VERIFICATION_GAP",
+          "finding": "Current packaged SQLite probe runs CI Node24 against packaged files, not shipped Electron39.2.7 Node runtime; in-memory SELECT1 is weaker than persistent feature create/transaction/close/reopen.",
+          "codeReferences": [
+            {
+              "path": "scripts/desktop-release.ts",
+              "lineStart": 17,
+              "lineEnd": 61,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/desktop-release.ts#L17-L61"
+            },
+            {
+              "path": ".github/workflows/desktop-release.yml",
+              "lineStart": 30,
+              "lineEnd": 61,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/.github/workflows/desktop-release.yml#L30-L61"
+            },
+            {
+              "path": "apps/electron/electron-builder.yml",
+              "lineStart": 192,
+              "lineEnd": 236,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L192-L236"
+            }
+          ]
+        },
+        {
+          "status": "OBSERVED_SOURCE_GAP",
+          "finding": "node_modules exclusion and Windows resource list do not stage sharp/Xenova/ONNX closure. Main externalizes them and semantic memory dynamically imports Xenova and returns null on load failure. Required staging must resolve actual lockfile graph; sharp0.35.4 and old direct @img0.34.5 pins coexist.",
+          "codeReferences": [
+            {
+              "path": "apps/electron/electron-builder.yml",
+              "lineStart": 21,
+              "lineEnd": 65,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L21-L65"
+            },
+            {
+              "path": "apps/electron/electron-builder.yml",
+              "lineStart": 192,
+              "lineEnd": 236,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/electron-builder.yml#L192-L236"
+            },
+            {
+              "path": "scripts/electron-build-main.ts",
+              "lineStart": 360,
+              "lineEnd": 415,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/electron-build-main.ts#L360-L415"
+            },
+            {
+              "path": "packages/server-core/src/memory/episodic-memory.ts",
+              "lineStart": 127,
+              "lineEnd": 149,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/memory/episodic-memory.ts#L127-L149"
+            },
+            {
+              "path": "apps/electron/package.json",
+              "lineStart": 77,
+              "lineEnd": 77,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/package.json#L77"
+            },
+            {
+              "path": "package.json",
+              "lineStart": 229,
+              "lineEnd": 236,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/package.json#L229-L236"
+            }
+          ]
+        },
+        {
+          "status": "SOURCE_IMPLEMENTATION_PRESENT",
+          "finding": "Core Electron image metadata/resize/encoding already uses nativeImage. Missing sharp is not absence of every desktop image feature. WhatsApp separately externalizes sharp/@img; prove which retained worker operations consume them.",
+          "codeReferences": [
+            {
+              "path": "apps/electron/src/main/platform.ts",
+              "lineStart": 34,
+              "lineEnd": 65,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/src/main/platform.ts#L34-L65"
+            },
+            {
+              "path": "scripts/build-wa-worker.ts",
+              "lineStart": 95,
+              "lineEnd": 107,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build-wa-worker.ts#L95-L107"
+            }
+          ]
+        }
+      ],
+      "firstPatches": [
+        {
+          "id": "WIN-002.1/P1",
+          "title": "Stage exact Windows dependency graph and qualify retained native consumers in shipped runtimes",
+          "status": "PROPOSED_NOT_IMPLEMENTED",
+          "ownershipPaths": [
+            "scripts/build/stage-windows-native.ts (new)",
+            "scripts/build/__tests__/windows-native-closure.test.ts (new)",
+            "scripts/desktop-release.ts (shared BUILD-CONFIG owner)",
+            "apps/electron/electron-builder.yml (shared BUILD-CONFIG owner)"
+          ],
+          "actions": [
+            "Reuse existing Turso staging; add graph/version/target validation and clean target-only staging. Resolve each consumer package realpath under isolated linking and copy actual JS/metadata/transitive .node/DLL/assets. Refuse cross-platform leftovers.",
+            "Add sharp and Xenova/ONNX closure for retained advertised consumers only; disabled optional features need accurate capability state. Never claim semantic embedding success from lexical/null fallback.",
+            "Discover Pi SDK Windows native VT/helper assets and externals from produced bundle plus package graph; do not invent universal koffi dependency.",
+            "Add bounded packaged-native probe launched by shipped Electron with isolated profile and bundled Bun for Pi/worker consumers: persistent Turso transaction/reopen, builtin SQLite parity, nativeImage output, retained sharp operation and semantic model operation.",
+            "Record executable path/process versions/os/arch/native hashes and operation outputs. Model/network provisioning is a separate controlled gate using public/synthetic fixtures."
+          ],
+          "Requirements": "Every retained enabled native consumer resolves exact target graph inside shipped Electron or its bundled subprocess runtime.",
+          "DoD": "Installed native loads and operations pass without checkout/global packages; target manifest complete, architecture coherent, unavailable semantic/model paths explicitly reported.",
+          "Full functional verification": "On both client OS images, create/modify/reopen WorkGraph and durable records, process an image with nativeImage, run retained sharp operation, generate real embedding with preprovisioned fixture model, verify vector output and persistence after relaunch.",
+          "Test method": "STATIC-RUNTIME and SQLITE-PARITY; proposed scripts/build/__tests__/windows-native-closure.test.ts (new, absent) missing-DLL/wrong-target fixtures; CANONICAL-PACKAGE; proposed tests/platform/windows packaged-native harness inside shipped runtimes on both GUI images."
+        }
+      ],
+      "acceptanceCommands": [
+        "STATIC-BUILD",
+        "STATIC-RUNTIME",
+        "SQLITE-PARITY",
+        "CANONICAL-PACKAGE",
+        "CANONICAL-VERIFY",
+        "ARTIFACT-HASH"
+      ],
+      "consumedOutputs": [
+        {
+          "output": "dependency-and-runtime-selection",
+          "producer": "G-SECURITY",
+          "consumingPhase": "final dependency staging",
+          "why": "Patched Electron/Sharp/native versions must be selected coherently; existing-version load probes can run now.",
+          "taskIds": [],
+          "blocksSourceStart": false
+        },
+        {
+          "output": "win.unsigned-installer",
+          "producer": "P-WIN-BUILD",
+          "consumingPhase": "installed native-load verification",
+          "why": "Artifact native-load results cannot be inferred from a development checkout.",
+          "taskIds": [],
+          "blocksSourceStart": false
+        }
+      ],
+      "hardStartDependencies": [],
+      "sourcePreparationMayStartNow": true
+    },
+    {
+      "id": "WIN-002.2",
+      "family": "WIN",
+      "parentId": "WIN-002",
+      "title": "[WIN-002.2] Resolve clean-machine runtime prerequisites",
+      "backlogDocument": "04-platform-release-backlog.md",
+      "codeReferences": [
+        {
+          "path": "scripts/build/common.ts",
+          "lineStart": 34,
+          "lineEnd": 75,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L34-L75"
+        },
+        {
+          "path": "packages/shared/src/agent/backend/internal/runtime-resolver.ts",
+          "lineStart": 73,
+          "lineEnd": 91,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/agent/backend/internal/runtime-resolver.ts#L73-L91"
+        },
+        {
+          "path": "packages/shared/src/agent/backend/internal/runtime-resolver.ts",
+          "lineStart": 229,
+          "lineEnd": 238,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/agent/backend/internal/runtime-resolver.ts#L229-L238"
+        },
+        {
+          "path": "packages/server-core/src/services/vcredist.ts",
+          "lineStart": 12,
+          "lineEnd": 57,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/services/vcredist.ts#L12-L57"
+        },
+        {
+          "path": "apps/electron/src/main/index.ts",
+          "lineStart": 690,
+          "lineEnd": 704,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/src/main/index.ts#L690-L704"
+        },
+        {
+          "path": "apps/electron/src/preload/bootstrap.ts",
+          "lineStart": 585,
+          "lineEnd": 590,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/src/preload/bootstrap.ts#L585-L590"
+        },
+        {
+          "path": "apps/electron/src/renderer/App.tsx",
+          "lineStart": 986,
+          "lineEnd": 998,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/src/renderer/App.tsx#L986-L998"
+        },
+        {
+          "path": "apps/electron/src/main/index.ts",
+          "lineStart": 674,
+          "lineEnd": 687,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/src/main/index.ts#L674-L687"
+        },
+        {
+          "path": "packages/shared/src/toolchain/resolver.ts",
+          "lineStart": 129,
+          "lineEnd": 174,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/toolchain/resolver.ts#L129-L174"
+        },
+        {
+          "path": "scripts/build/common.ts",
+          "lineStart": 128,
+          "lineEnd": 172,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L128-L172"
+        },
+        {
+          "path": "scripts/build/common.ts",
+          "lineStart": 197,
+          "lineEnd": 267,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L197-L267"
+        },
+        {
+          "path": ".circleci/desktop.yml",
+          "lineStart": 24,
+          "lineEnd": 50,
+          "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/.circleci/desktop.yml#L24-L50"
+        }
+      ],
+      "existingProgress": "partially-implemented",
+      "existingFullDoDClosed": false,
+      "dispatchState": "ALLOCATED_NOT_YET_FULLY_EXECUTED",
+      "allocation": {
+        "workPackage": "P-WIN-NATIVE",
+        "owner": "windows-native",
+        "writePaths": [
+          "platform-specific native staging helpers to be added under scripts/build"
+        ],
+        "sharedContractIds": [
+          "BUILD-CONFIG",
+          "DEPENDENCIES",
+          "TOOLCHAIN"
+        ],
+        "startNow": {
+          "sourceAndHarnessWork": true,
+          "actions": [
+            "Inspect selected integrated source and existing receipts; reconcile already implemented behavior before changing code.",
+            "Implement isolated modules/tests and provision the listed target environment now.",
+            "Request shared-file edits from the nominated file owner; run bounded preliminary checks as soon as the relevant artifact exists."
+          ],
+          "condition": "No dependency on completion of every other product module. Final acceptance waits only for the consumed outputs below."
+        },
+        "environments": [
+          "WIN-BUILD",
+          "WIN10-GUI",
+          "WIN11-GUI"
+        ],
+        "produces": [
+          "win.native-dependency-manifest",
+          "win.native-load-receipt"
+        ],
+        "hardAcceptanceDependencies": [
+          {
+            "output": "dependency-and-runtime-selection",
+            "producer": "G-SECURITY",
+            "consumingPhase": "final dependency staging",
+            "why": "Patched Electron/Sharp/native versions must be selected coherently; existing-version load probes can run now.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          },
+          {
+            "output": "win.unsigned-installer",
+            "producer": "P-WIN-BUILD",
+            "consumingPhase": "installed native-load verification",
+            "why": "Artifact native-load results cannot be inferred from a development checkout.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          }
+        ],
+        "allocationFile": "platform-plan.json"
+      },
+      "Requirements": "Explicit CPU/OS/runtime support contract and actionable missing-prerequisite states.",
+      "DoD": "Standard-user installation works on a clean OS image or explains and safely installs a documented prerequisite.",
+      "Full functional verification": "Test supported CPU baseline, runtime absent/present and non-administrator startup.",
+      "Test method": "Clean snapshot matrix with native executable dependency reports and first-run logs.",
+      "baselineCodeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/electron-builder.yml#L1",
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/scripts/electron-build-main.ts#L1",
+        "https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/packages/shared/src/agent/backend/internal/runtime-resolver.ts#L73-L91"
+      ],
+      "currentSourceProgress": "Baseline Bun/bundled runtime, VC++ warning/download and persisted Git Bash validation implemented; exact clean-client prerequisites and recovery qualification remain.",
+      "evidenceLevel": "SOURCE_INSPECTION_ONLY",
+      "fullDoDClosed": false,
+      "observations": [
+        {
+          "status": "SOURCE_IMPLEMENTATION_PRESENT",
+          "finding": "Windows x64 Bun uses baseline artifact. Packaged backend resolver looks in resources/vendor/bun/bun.exe and refuses developer PATH fallback. Preserve runtime authority.",
+          "codeReferences": [
+            {
+              "path": "scripts/build/common.ts",
+              "lineStart": 34,
+              "lineEnd": 75,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L34-L75"
+            },
+            {
+              "path": "packages/shared/src/agent/backend/internal/runtime-resolver.ts",
+              "lineStart": 73,
+              "lineEnd": 91,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/agent/backend/internal/runtime-resolver.ts#L73-L91"
+            },
+            {
+              "path": "packages/shared/src/agent/backend/internal/runtime-resolver.ts",
+              "lineStart": 229,
+              "lineEnd": 238,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/agent/backend/internal/runtime-resolver.ts#L229-L238"
+            }
+          ]
+        },
+        {
+          "status": "SOURCE_IMPLEMENTATION_PRESENT",
+          "finding": "VC++ checker exists: DLL presence checks, architecture-specific Microsoft URL, main env warning, preload getSystemWarnings, localized warning description and renderer action. Extend current flow rather than replacing it. Saved Git Bash path is validated/cleared before SDK spawn and managed toolchain exists.",
+          "codeReferences": [
+            {
+              "path": "packages/server-core/src/services/vcredist.ts",
+              "lineStart": 12,
+              "lineEnd": 57,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/services/vcredist.ts#L12-L57"
+            },
+            {
+              "path": "apps/electron/src/main/index.ts",
+              "lineStart": 690,
+              "lineEnd": 704,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/src/main/index.ts#L690-L704"
+            },
+            {
+              "path": "apps/electron/src/preload/bootstrap.ts",
+              "lineStart": 585,
+              "lineEnd": 590,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/src/preload/bootstrap.ts#L585-L590"
+            },
+            {
+              "path": "apps/electron/src/renderer/App.tsx",
+              "lineStart": 986,
+              "lineEnd": 998,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/src/renderer/App.tsx#L986-L998"
+            },
+            {
+              "path": "apps/electron/src/main/index.ts",
+              "lineStart": 674,
+              "lineEnd": 687,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/src/main/index.ts#L674-L687"
+            },
+            {
+              "path": "packages/shared/src/toolchain/resolver.ts",
+              "lineStart": 129,
+              "lineEnd": 174,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/toolchain/resolver.ts#L129-L174"
+            }
+          ]
+        },
+        {
+          "status": "OBSERVED_VERIFICATION_GAP",
+          "finding": "vcruntime140.dll presence alone cannot prove complete DLL/architecture/version native load. Need actual operation receipt and absent/present/denied/offline/relaunch matrix; existing toast action label Install is a literal and should be localized via coordinated i18n change.",
+          "codeReferences": [
+            {
+              "path": "packages/server-core/src/services/vcredist.ts",
+              "lineStart": 12,
+              "lineEnd": 57,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/services/vcredist.ts#L12-L57"
+            },
+            {
+              "path": "apps/electron/src/renderer/App.tsx",
+              "lineStart": 986,
+              "lineEnd": 998,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/electron/src/renderer/App.tsx#L986-L998"
+            }
+          ]
+        },
+        {
+          "status": "OBSERVED_BUILD_HOST_PREREQUISITE",
+          "finding": "Canonical Bun extraction uses unzip whereas uv.zip uses PowerShell Expand-Archive; CI may supply Git tools, but packaging has implicit build-host prerequisite. This is distinct from end-user runtime requirements.",
+          "codeReferences": [
+            {
+              "path": "scripts/build/common.ts",
+              "lineStart": 128,
+              "lineEnd": 172,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L128-L172"
+            },
+            {
+              "path": "scripts/build/common.ts",
+              "lineStart": 197,
+              "lineEnd": 267,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L197-L267"
+            },
+            {
+              "path": ".circleci/desktop.yml",
+              "lineStart": 24,
+              "lineEnd": 50,
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/.circleci/desktop.yml#L24-L50"
+            }
+          ]
+        }
+      ],
+      "firstPatches": [
+        {
+          "id": "WIN-002.2/P1",
+          "title": "Qualify existing prerequisite flow and eliminate hidden Windows build/runtime assumptions",
+          "status": "PROPOSED_NOT_IMPLEMENTED",
+          "ownershipPaths": [
+            "scripts/build/windows-native-prerequisites.ts (new probe helper)",
+            "scripts/build/__tests__/windows-prerequisites.test.ts (new)",
+            "packages/server-core/src/services/vcredist.ts and vcredist.test.ts (shared services owner)",
+            "scripts/build/common.ts (shared TOOLCHAIN owner)",
+            "apps/electron/src/renderer/App.tsx + locale keys (shared UI/i18n owners for existing Install action)"
+          ],
+          "actions": [
+            "Publish exact tested win32-x64 OS-build/CPU/instruction/runtime/feature support contract. Do not advertise native Windows ARM64 just because generic downloads mention it; actual YAML release target is x64.",
+            "Keep existing VC++ warning/download path; supplement architecture-aware native-load diagnostic and missing/wrong-DLL, install-declined and recovery tests. Localize existing action through current i18n key or all12 registry locales. No implicit elevation/install.",
+            "Use PowerShell Expand-Archive for Windows Bun downloads too, or document/verify unzip in build worker; do not require end-user Git merely to satisfy build extraction.",
+            "Provision clean standard-user client snapshots with global Bun/Node/checkout absent, restricted PATH and no prewarmed managed caches. Test VC++ absent/present and Git Bash missing/valid/invalid choices; optional unsupported features remain actionable unavailable while startup/data survive.",
+            "Reuse managed toolchain checksums/install completion/resolution. Record actual runtime paths and controlled prerequisites; no developer PATH or cached setup-success claim may satisfy installed gate."
+          ],
+          "Requirements": "Supported OS/CPU/runtime prerequisite contract and actionable missing-prerequisite behavior; standard-user startup preserves identity/data and uses bundled/managed runtime boundaries.",
+          "DoD": "Each clean Win10/11 row produces startup/native-operation/output/relaunch receipt; declined/offline/missing states never fake success and documented recovery clears stale warning after restart.",
+          "Full functional verification": "Install exact installer under standard user on clean Win10/11, test absent/present prerequisites and architecture policy, decline installation, test offline handling, complete explicit official recovery when authorized, relaunch and verify retained native outputs.",
+          "Test method": "STATIC-RUNTIME with Windows conditional branches; proposed windows-prerequisites.test.ts (new, absent) synthetic load failures; new installed-readiness harness with clean snapshots. Existing source tests do not prove full installed matrix."
+        }
+      ],
+      "acceptanceCommands": [
+        "STATIC-RUNTIME",
+        "CANONICAL-PACKAGE",
+        "CANONICAL-VERIFY",
+        "ARTIFACT-HASH"
+      ],
+      "consumedOutputs": [
+        {
+          "output": "dependency-and-runtime-selection",
+          "producer": "G-SECURITY",
+          "consumingPhase": "final dependency staging",
+          "why": "Patched Electron/Sharp/native versions must be selected coherently; existing-version load probes can run now.",
+          "taskIds": [],
+          "blocksSourceStart": false
+        },
+        {
+          "output": "win.unsigned-installer",
+          "producer": "P-WIN-BUILD",
+          "consumingPhase": "installed native-load verification",
+          "why": "Artifact native-load results cannot be inferred from a development checkout.",
+          "taskIds": [],
+          "blocksSourceStart": false
+        }
+      ],
+      "hardStartDependencies": [],
+      "sourcePreparationMayStartNow": true
+    }
+  ],
+  "commandCatalog": [
+    {
+      "id": "STATIC-BUILD",
+      "command": "bun test scripts/electron-main-cjs.test.ts scripts/build/__tests__/electron-packaging-files.test.ts scripts/build/__tests__/stage-servers.test.ts",
+      "environment": "Qualified Bun1.3.14 with scheduled dependencies; source fixture gate only.",
+      "status": "EXISTING_COMMAND_NOT_EXECUTED"
+    },
+    {
+      "id": "STATIC-RUNTIME",
+      "command": "bun test packages/shared/src/agent/backend/__tests__/runtime-resolver.test.ts packages/shared/src/toolchain/__tests__/resolver.test.ts packages/shared/src/toolchain/__tests__/manifest.test.ts packages/server-core/src/services/vcredist.test.ts apps/electron/src/main/__tests__/git-bash.test.ts",
+      "environment": "WIN-BUILD required for Windows-only branches; macOS conditional passes do not qualify Windows.",
+      "status": "EXISTING_COMMAND_NOT_EXECUTED"
+    },
+    {
+      "id": "SQLITE-PARITY",
+      "command": "bun test packages/shared/src/utils/__tests__/sqlite-runtime.test.ts packages/server-core/src/workgraph/index.test.ts",
+      "environment": "WIN-BUILD source regressions; separate installed Electron proof required.",
+      "status": "EXISTING_COMMAND_NOT_EXECUTED"
+    },
+    {
+      "id": "CANONICAL-PACKAGE",
+      "command": "bun scripts/desktop-release.ts; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }",
+      "shell": "PowerShell",
+      "environment": "Exclusive WIN-BUILD x64; clean release-native/resources/dist; performs build/downloads, not executed now.",
+      "status": "EXISTING_COMMAND_NOT_EXECUTED"
+    },
+    {
+      "id": "CANONICAL-VERIFY",
+      "command": "bun scripts/desktop-release.ts --verify-only; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }",
+      "shell": "PowerShell",
+      "environment": "Completed WIN-BUILD x64 unpacked artifact; current probe uses CI Node, not shipped Electron.",
+      "status": "EXISTING_COMMAND_NOT_EXECUTED"
+    },
+    {
+      "id": "LEGACY-ENTRY",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File apps/electron/scripts/build-win.ps1",
+      "shell": "PowerShell",
+      "environment": "Disposable WIN-BUILD only until process-wide kills removed. After wrapper patch, verify retained entrypoint parity.",
+      "status": "EXISTING_COMMAND_NOT_EXECUTED"
+    },
+    {
+      "id": "ARTIFACT-HASH",
+      "command": "Get-FileHash -Algorithm SHA256 -LiteralPath apps/electron/release/Rox-x64.exe",
+      "shell": "PowerShell",
+      "environment": "Compare to manifest-win32-x64.json; transfer these exact bytes to both GUI images.",
+      "status": "EXISTING_COMMAND_NOT_EXECUTED"
+    }
+  ],
+  "resourceGates": [
+    {
+      "id": "WIN-BUILD",
+      "blocksSourceStart": false,
+      "blocksStage": "Windows artifact construction",
+      "requirement": "Exclusive Windows x64 worker with selected build Node24/Bun1.3.14, frozen lockfile install, target optional packages, controlled pinned-download cache/network, measured sufficient RAM/disk for one package job.",
+      "existingImplementation": "GitHub Windows2025/CircleCI WindowsServer2022GUI packaging jobs exist.",
+      "currentEvidence": "No workflow dispatch/build receipt/remote worker inventory checked.",
+      "limits": "No heavy build concurrently with root compiler; CI Node is a build host, not shipped Electron acceptance."
+    },
+    {
+      "id": "WIN10-GUI",
+      "blocksSourceStart": false,
+      "blocksStage": "Windows10 installed-client acceptance",
+      "requirement": "Clean x64 client snapshot, exact OS build/CPU recorded, standard user, visible interactive desktop, synthetic workspace, identical installer hash, no developer/global runtime caches.",
+      "currentEvidence": "No Win10 GUI used in this macOS turn.",
+      "limits": "Windows Server, build pass, import/--version/process/screenshot alone cannot satisfy real product flows."
+    },
+    {
+      "id": "WIN11-GUI",
+      "blocksSourceStart": false,
+      "blocksStage": "Windows11 installed-client acceptance",
+      "requirement": "Independent clean x64 client snapshot, same artifact bytes, standard-user missing/present/declined/offline prerequisite cases and actual persistence/relaunch evidence.",
+      "currentEvidence": "No Win11 GUI used in this macOS turn.",
+      "limits": "Current implemented core flows can be tested as soon as installer exists; do not wait for every other UI/service task."
+    },
+    {
+      "id": "G-SECURITY-RUNTIME-SELECTION",
+      "blocksSourceStart": false,
+      "blocksStage": "Final target-native staging",
+      "requirement": "Coherent selected Electron/sharp/native graph from shared dependency owner; immutable existing-version load probes can begin sooner.",
+      "limits": "No unilateral upgrade or duplicate shared manifest owner. Source lane starts without this final output."
+    },
+    {
+      "id": "INSTALLER-POLICY",
+      "blocksSourceStart": false,
+      "blocksStage": "Final installer assembly",
+      "requirement": "win.installer-and-data-policy output with launcher paths/data preservation decision. Existing NSIS deleteAppDataOnUninstall:true is a policy to reconcile, not silently overwrite.",
+      "limits": "Signing/publication credentials not required for initial unsigned installed testing; signing/upgrades are separate gates."
+    }
+  ],
+  "acceptanceSequence": [
+    {
+      "phase": "Source regression",
+      "consume": "Immutable source + agreed shared contracts",
+      "commands": [
+        "STATIC-BUILD",
+        "STATIC-RUNTIME",
+        "SQLITE-PARITY"
+      ],
+      "evidence": "Fixture receipts; Windows conditional coverage needs real Windows execution."
+    },
+    {
+      "phase": "Canonical artifact construction",
+      "consume": "Windows worker + staged dependency and installer policies",
+      "commands": [
+        "CANONICAL-PACKAGE",
+        "CANONICAL-VERIFY",
+        "ARTIFACT-HASH"
+      ],
+      "evidence": "Immutable installer and complete required resource manifest; extend existing verifier."
+    },
+    {
+      "phase": "Packaged consuming-runtime probe",
+      "consume": "Exact unpacked/installed artifact bytes",
+      "newHarness": "tests/platform/windows/packaged-native-probe (proposed, absent)",
+      "evidence": "Shipped Electron + bundled Bun native load and persistent operation receipt; CI Node result is insufficient."
+    },
+    {
+      "phase": "Clean-client full acceptance",
+      "consume": "Exact artifact + Win10GUI and Win11GUI snapshots",
+      "newHarness": "tests/platform/windows/installed-readiness (proposed, absent)",
+      "evidence": "Product screens/actions, generated files/records, restart and prerequisite absent/present/declined/offline rows."
+    }
+  ],
+  "verification": {
+    "performed": [
+      "Immutable SHA/clean worktree readback",
+      "Four exact launch-plan task records and all ending fields read",
+      "Relevant instructions and actual build/staging/native/prerequisite source inspected",
+      "All current pinned reference line bounds and existing test paths validated"
+    ],
+    "notPerformed": [
+      "No source change, install, build, product launch, Windows GUI use, online TTS, workflow dispatch or commit"
+    ],
+    "artifactValidation": "PASS: four exact IDs; original requirements/DoD/verification/test retained; four fields on each proposed patch; current pinned source references have real line bounds; existing test paths exist."
+  }
+}
