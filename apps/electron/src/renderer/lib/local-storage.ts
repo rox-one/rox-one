@@ -10,6 +10,7 @@ const PREFIX = 'craft-'
  * Centralized here to avoid magic strings and key collisions.
  */
 export const KEYS = {
+  featureProductTourV1: 'feature-product-tour-v1',
   // Chat sidebar
   sidebarVisible: 'sidebar-visible',
   sidebarDismissedGuidance: 'sidebar-dismissed-guidance',
