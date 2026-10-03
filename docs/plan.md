@@ -533,3 +533,16 @@ The [original plan](integration-history/pr1321/plan.md) remains preserved. Curre
 ## Parallel release integration — 2026-10-03
 
 The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 is reconciled with this independent integration. Its original [plan](integration-history/remote-main-3dd1f98b7/plan.md) and release archive preserve all historical scope. Desktop0.11.6, native staging and dedicated GitHub/CircleCI packaging pipelines are retained; their presence does not establish signed installed Windows10/11/macOS or hosted acceptance. The current [445-leaf parallel allocation](final-readiness/parallel-work/launch-plan.json) governs development dispatch.
+
+## Cursor Cloud headless server setup (2026-10-03)
+
+Owner: historical-branch integration worker; integration owner: branch audit lead.
+Dependencies: current server entry point and helper build commands at main
+`76228cc33e44518e5fab5e59f5c754f4051d1e8c`.
+
+1. Adapt `.cursor/environment.json`, install and startup scripts to ROX — complete.
+2. Validate JSON and shell syntax, frozen preparation twice and actual helper builds — complete.
+3. Exercise authenticated RPC ping, graceful stop, restart, token permissions and
+   token rotation, plus failed install/entropy negative controls — complete.
+4. Deliver a separate PR preserving the original branch; main integration remains
+   owned by the lead. Hosted Cursor provisioning remains unverified.
