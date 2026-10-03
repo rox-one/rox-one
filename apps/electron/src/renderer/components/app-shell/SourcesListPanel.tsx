@@ -78,10 +78,10 @@ export function SourcesListPanel({
   const sourcesTarget = useTourTarget('sources.list', tourScope)
   const tour = useTourSignals(tourScope)
   React.useEffect(() => {
-    const caps = connectionCapabilities({ sources, localMcpEnabled })
+    const caps = connectionCapabilities({ sources, localMcpEnabled, workspaceId: activeWorkspaceId ?? undefined })
     const cleanups = [tour.capability('sources.list', caps['sources.list']!), tour.capability('sources.ready', caps['sources.ready']!)]
     return () => cleanups.forEach(cleanup => cleanup())
-  }, [tour, sources, localMcpEnabled])
+  }, [tour, sources, localMcpEnabled, activeWorkspaceId])
 
   // Send to Workspace dialog state
   const [sendDialogOpen, setSendDialogOpen] = React.useState(false)
