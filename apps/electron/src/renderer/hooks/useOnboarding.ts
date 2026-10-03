@@ -681,8 +681,10 @@ export function useOnboarding({
     stopRoxConnectPoll()
     setRoxConnectStatus('starting')
     setRoxConnectError(undefined)
+    setRoxConnectCodes(null)
     try {
       const result = await window.electronAPI.startRoxConnect()
+      if (roxPollGeneration.current !== generation) return
       if (!result?.success || !result.userCode || !result.verificationUri || !result.verificationUriComplete) {
         setRoxConnectStatus('error')
         setRoxConnectError(visibleError(result?.error, t('onboarding.errors.roxConnectFailed')))
@@ -704,15 +706,22 @@ export function useOnboarding({
       const deadline = roxConnectDeadline(result.expiresIn)
       try {
         const st = await window.electronAPI.getRoxCloudState()
+        if (roxPollGeneration.current !== generation) return
         if (st?.authBaseUrl) setRoxAuthBaseUrl(st.authBaseUrl)
       } catch { /* first host hint is optional */ }
+      if (roxPollGeneration.current !== generation) return
       setRoxConnectStatus('waiting')
       if (result.verificationUriComplete) {
-        await window.electronAPI.openUrl(result.verificationUriComplete)
+        try { await window.electronAPI.openUrl(result.verificationUriComplete) }
+        catch { if (roxPollGeneration.current === generation) setRoxConnectError(t('onboarding.roxConnect.browserFallback')) }
       }
+      if (roxPollGeneration.current !== generation) return
 
+      let finished = false
+      let readingState = false
       const finish = (status: 'success' | 'error', error?: string) => {
-        if (roxPollGeneration.current !== generation) return
+        if (roxPollGeneration.current !== generation || finished) return
+        finished = true
         stopRoxConnectPoll()
         if (status === 'success') {
           setRoxConnectStatus('success')
@@ -733,7 +742,8 @@ export function useOnboarding({
       }
 
       const tick = async () => {
-        if (roxPollGeneration.current !== generation) return
+        if (roxPollGeneration.current !== generation || finished || readingState) return
+        readingState = true
         let connected = false
         let connectError: string | undefined
         let stateReadFailed = false
@@ -741,12 +751,14 @@ export function useOnboarding({
         try {
           const st = await window.electronAPI.getRoxCloudState()
           if (st?.authBaseUrl) setRoxAuthBaseUrl(st.authBaseUrl)
+          if (roxPollGeneration.current !== generation || finished) return
           connected = Boolean(st?.connected)
           connectError = st?.connectError ?? undefined
         } catch (err) {
           stateReadFailed = true
           stateReadError = err instanceof Error ? err.message : String(err)
-        }
+        } finally { readingState = false }
+        if (roxPollGeneration.current !== generation || finished) return
         const decision = decideRoxConnectPoll({
           now: Date.now(),
           deadline,
@@ -761,11 +773,12 @@ export function useOnboarding({
       }
 
       await tick()
-      if (roxPollGeneration.current !== generation) return
+      if (roxPollGeneration.current !== generation || finished) return
       roxPollRef.current = setInterval(() => {
         void tick()
       }, ROX_CONNECT_POLL_MS)
     } catch (err) {
+      if (roxPollGeneration.current !== generation) return
       setRoxConnectStatus('error')
       setRoxConnectError(
         visibleError(err instanceof Error ? err.message : undefined, t('onboarding.errors.connectFailed')),
@@ -776,9 +789,15 @@ export function useOnboarding({
   const handleOpenRoxConnectBrowser = useCallback(async () => {
     const uri = roxConnectCodes?.verificationUriComplete
     if (uri) {
-      await window.electronAPI.openUrl(uri)
+      const generation = roxPollGeneration.current
+      try {
+        await window.electronAPI.openUrl(uri)
+        if (roxPollGeneration.current === generation) setRoxConnectError(undefined)
+      } catch {
+        if (roxPollGeneration.current === generation) setRoxConnectError(t('onboarding.roxConnect.browserFallback'))
+      }
     }
-  }, [roxConnectCodes])
+  }, [roxConnectCodes, t])
 
 
   // Start OAuth flow (Claude or ChatGPT depending on selected method)

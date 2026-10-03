@@ -122,6 +122,7 @@ describe('authenticated onboarding profile persistence', () => {
     await persistOnboardingUsername(f.api, '  A\u0301da  Native  ')
     expect(f.updates).toEqual([{ name: '\u00c1da Native' }])
     await expect(persistOnboardingUsername(f.api, 'Ada\nOther')).rejects.toThrow('invalid-username')
+    await expect(persistOnboardingUsername(f.api, 'Ada\u0085Other')).rejects.toThrow('invalid-username')
     expect(f.updates).toHaveLength(1)
   })
 

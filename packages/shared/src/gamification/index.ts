@@ -10,6 +10,8 @@ export {
   type XpEventType,
 } from './levels.ts'
 
+export { getWeeklyXp, recordXpDay, seedXpDays, type XpDay } from './activity.ts'
+
 export {
   QUEST_IDS,
   QUEST_XP_EVENT,
@@ -38,6 +40,7 @@ export {
   awardXpSafe,
   getGamificationProgress,
   applyQuestAction,
+  transitionQuestAction,
   saveSessionRating,
   setAnalyticsConsent,
   type GamificationState,

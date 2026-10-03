@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils'
 import { isMac } from '@/lib/platform'
 import { VoiceCommandController } from '../../../voice/command-controller'
 import { FreeFormInputContextBadge } from './FreeFormInputContextBadge'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import type { VoicePrefs } from '@rox/shared/voice'
 
 interface VoiceDictationControlProps {
@@ -37,6 +39,9 @@ export function VoiceDictationControl({
   const { t } = useTranslation()
   const [prefs, setPrefs] = useState<VoicePrefs | null>(null)
   const [recording, setRecording] = useState(false)
+  const [transcribing, setTranscribing] = useState(false)
+  const [consentOpen, setConsentOpen] = useState(false)
+  const [savingConsent, setSavingConsent] = useState(false)
   const [modelEvidence, setModelEvidence] = useState<string | null>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
@@ -47,6 +52,8 @@ export function VoiceDictationControl({
   const commandRef = useRef<VoiceCommandController | null>(null)
   const disabledRef = useRef(disabled)
   disabledRef.current = disabled
+  const latestInputRef = useRef({ inputValue, onInputChange })
+  latestInputRef.current = { inputValue, onInputChange }
 
   useEffect(() => {
     let cancelled = false
@@ -81,6 +88,7 @@ export function VoiceDictationControl({
     setRecording(false)
     stopTracks()
     if (!recorder) return
+    setTranscribing(true)
     const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' })
     chunksRef.current = []
     try {
@@ -91,30 +99,35 @@ export function VoiceDictationControl({
       const job = await window.electronAPI.stopVoiceCapture?.()
       if (captureId !== captureIdRef.current) return
       hostStartedRef.current = false
-      const result = await window.electronAPI.transcribeVoice({
-        audioBase64,
-        mimeType: blob.type || 'audio/webm',
-      })
-      if (captureId !== captureIdRef.current) return
+      const result = job?.transcript
+      if (!result) {
+        if (job?.job === 'failed') toast.error(job.error || t('common.errorLoadingContent'))
+        return
+      }
       if (result.resolvedModelId && result.requestedModelId) {
         setModelEvidence(t('settings.input.voiceActualModel', {
-          engine: result.engine,
+          engine: prefs?.sttEngine ?? 'cloud-rox',
           requested: result.requestedModelId,
           resolved: result.resolvedModelId,
         }))
       }
       const text = result.text.trim()
-      if (text) onInputChange?.(inputValue ? `${inputValue} ${text}` : text)
+      if (text) {
+        const latest = latestInputRef.current
+        latest.onInputChange?.(latest.inputValue ? `${latest.inputValue} ${text}` : text)
+      }
       else if (result.noSpeech) toast.error(t('settings.input.voiceNoSpeech'))
-      void job
     } catch (error) {
       if (captureId === captureIdRef.current) {
         toast.error(error instanceof Error ? error.message : t('chat.dictate'))
       }
     } finally {
-      if (captureId === captureIdRef.current) activeRequestRef.current = false
+      if (captureId === captureIdRef.current) {
+        activeRequestRef.current = false
+        setTranscribing(false)
+      }
     }
-  }, [inputValue, onInputChange, stopTracks, t])
+  }, [prefs?.sttEngine, stopTracks, t])
 
   const cancelRecording = useCallback(() => {
     captureIdRef.current += 1
@@ -125,6 +138,7 @@ export function VoiceDictationControl({
     recorderRef.current = null
     chunksRef.current = []
     setRecording(false)
+    setTranscribing(false)
     stopTracks()
     if (recorder && recorder.state !== 'inactive') recorder.stop()
     if (hostStarted) void window.electronAPI.cancelVoiceCapture?.()
@@ -133,13 +147,10 @@ export function VoiceDictationControl({
   const cancelRecordingRef = useRef(cancelRecording)
   cancelRecordingRef.current = cancelRecording
 
-  const startRecording = useCallback(async () => {
-    if (!prefs) {
-      toast.error(t('settings.input.voiceOffline'))
-      return
-    }
-    if (prefs?.sttEngine === 'cloud-rox' && !prefs.cloudAsrConsent) {
-      toast.error(t('settings.input.voiceAsrConsentDesc'))
+  const startRecording = useCallback(async (selectedPrefs = prefs) => {
+    if (!selectedPrefs) return
+    if (selectedPrefs.sttEngine === 'cloud-rox' && (!selectedPrefs.cloudAsrConsent || selectedPrefs.privacyMigrationPending)) {
+      setConsentOpen(true)
       return
     }
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -150,39 +161,35 @@ export function VoiceDictationControl({
     activeRequestRef.current = true
     let pendingStream: MediaStream | null = null
     try {
-      const started = await window.electronAPI.startVoiceCapture?.()
-      if (!started?.recordingId) throw new Error(t('settings.input.voiceOffline'))
-      if (captureId !== captureIdRef.current) {
-        await window.electronAPI.cancelVoiceCapture?.()
-        return
-      }
-      hostStartedRef.current = true
       pendingStream = await navigator.mediaDevices.getUserMedia({
-        audio: prefs?.selectedInputDeviceId
-          ? { deviceId: { exact: prefs.selectedInputDeviceId } }
+        audio: selectedPrefs.selectedInputDeviceId
+          ? { deviceId: { exact: selectedPrefs.selectedInputDeviceId } }
           : true,
       })
       const stream = pendingStream
       if (captureId !== captureIdRef.current) {
         stream.getTracks().forEach((track) => track.stop())
         pendingStream = null
-        await window.electronAPI.cancelVoiceCapture?.()
-        hostStartedRef.current = false
         return
       }
-      // Publish the acquired tracks before awaiting the host grant, so release
-      // during that await stops the microphone immediately.
+      // Keep acquired tracks reachable while START and permission are pending,
+      // so releasing push-to-talk closes the microphone immediately.
       streamRef.current = stream
       pendingStream = null
+      const recorder = new MediaRecorder(stream)
+      const started = await window.electronAPI.startVoiceCapture?.({ mimeType: recorder.mimeType || 'audio/webm' })
+      if (!started?.recordingId) throw new Error(t('settings.input.voiceOffline'))
+      if (captureId !== captureIdRef.current) {
+        await window.electronAPI.cancelVoiceCapture?.()
+        return
+      }
+      hostStartedRef.current = true
       await window.electronAPI.grantVoicePermission?.()
       if (captureId !== captureIdRef.current) {
-        stream.getTracks().forEach((track) => track.stop())
-        pendingStream = null
         if (hostStartedRef.current) await window.electronAPI.cancelVoiceCapture?.()
         hostStartedRef.current = false
         return
       }
-      const recorder = new MediaRecorder(stream)
       chunksRef.current = []
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) chunksRef.current.push(event.data)
@@ -206,7 +213,21 @@ export function VoiceDictationControl({
         toast.error(error instanceof Error ? error.message : t('chat.dictate'))
       }
     }
-  }, [finishRecording, prefs, t])
+  }, [finishRecording, prefs, stopTracks, t])
+
+  const enableCloudTranscription = useCallback(async () => {
+    const captureId = captureIdRef.current
+    setSavingConsent(true)
+    try {
+      const next = await window.electronAPI.saveVoicePrefs({ cloudAsrConsent: true, privacyMigrationPending: false, sttEngine: 'cloud-rox' })
+      if (captureId !== captureIdRef.current) return
+      setPrefs(next)
+      setConsentOpen(false)
+      await startRecording(next)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('common.errorLoadingContent'))
+    } finally { if (captureId === captureIdRef.current) setSavingConsent(false) }
+  }, [startRecording, t])
 
   const startRecordingRef = useRef(startRecording)
   startRecordingRef.current = startRecording
@@ -259,8 +280,22 @@ export function VoiceDictationControl({
         showChevron={false}
         onClick={toggle}
         tooltip={modelEvidence ? `${t('chat.dictateTooltip')} · ${modelEvidence}` : t('chat.dictateTooltip')}
-        disabled={disabled}
+        disabled={disabled || !prefs || transcribing}
       />
+      <Dialog open={consentOpen} onOpenChange={(open) => { if (!savingConsent) setConsentOpen(open) }}>
+        <DialogContent showCloseButton={!savingConsent}>
+          <DialogHeader>
+            <DialogTitle>{t('meetings.local.enableDeepgram')}</DialogTitle>
+            <DialogDescription>{t('meetings.local.deepgramConsent')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" disabled={savingConsent} onClick={() => setConsentOpen(false)}>{t('common.cancel')}</Button>
+            <Button disabled={savingConsent} onClick={() => void enableCloudTranscription()}>
+              {t(savingConsent ? 'common.loading' : 'meetings.local.enableDeepgram')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
