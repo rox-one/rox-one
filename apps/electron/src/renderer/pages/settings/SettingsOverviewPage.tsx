@@ -10,6 +10,8 @@ import { SETTINGS_ICONS } from '@/components/icons/SettingsIcons'
 import { navigate, routes } from '@/lib/navigate'
 import { readRecentSettings, recordRecentSetting } from '@/lib/settings-recent'
 import { getSettingsPage, type SettingsSubpage } from '../../../shared/settings-registry'
+import { resolveEffectiveConnectionSlug } from '@config/llm-connections'
+import { useWorkspaceAiSettings } from './useWorkspaceAiSettings'
 
 /** Hub shortcuts — Permissions is Agent-grouped (allowlists); Runtime owns approval mode. */
 const QUICK_ACTIONS: SettingsSubpage[] = [
@@ -28,13 +30,18 @@ export function SettingsOverviewPage() {
   const {
     activeWorkspaceId,
     llmConnections,
-    workspaceDefaultLlmConnection,
   } = useAppShellContext()
 
-  const defaultConnection = useMemo(
-    () => llmConnections.find((connection) => connection.slug === workspaceDefaultLlmConnection),
-    [llmConnections, workspaceDefaultLlmConnection],
-  )
+  const { settings: workspaceAiSettings, isLoading: aiSettingsLoading } = useWorkspaceAiSettings(activeWorkspaceId, llmConnections)
+  const defaultConnection = useMemo(() => {
+    const slug = resolveEffectiveConnectionSlug(undefined, workspaceAiSettings?.defaultLlmConnection, llmConnections)
+    return llmConnections.find((connection) => connection.slug === slug)
+  }, [llmConnections, workspaceAiSettings?.defaultLlmConnection])
+  const defaultModel = defaultConnection
+    ? workspaceAiSettings?.model
+      || defaultConnection.defaultModel
+      || defaultConnection.slug
+    : undefined
   const [recentPages, setRecentPages] = useState<Array<{ id: SettingsSubpage; page: ReturnType<typeof getSettingsPage> }>>([])
   const [pendingEnvironment, setPendingEnvironment] = useState(false)
 
@@ -70,11 +77,11 @@ export function SettingsOverviewPage() {
   }, [activeWorkspaceId])
 
   const missingWorkspace = !activeWorkspace
-  const missingConnections = llmConnections.length === 0
+  const missingConnections = !aiSettingsLoading && !defaultConnection
   const needsAttention = missingWorkspace || missingConnections || pendingEnvironment
 
   return (
-    <div className="h-full flex flex-col" data-testid="settings-overview">
+    <div className="h-full flex flex-col" data-testid="settings-overview" aria-busy={aiSettingsLoading}>
       {/* Detail title is Overview (hub), not Settings — nav already says Settings.
           Use hubTitle/hubSubtitle keys (not present in locales yet) so defaultValue wins and
           avoids dual Settings/Настройки when settings.overview.title still says Settings. */}
@@ -109,8 +116,9 @@ export function SettingsOverviewPage() {
                     />
                   )}
                   <SettingsRow
-                    label={defaultConnection?.name ?? t('settings.overview.noConnection')}
-                    description={defaultConnection?.defaultModel ?? defaultConnection?.slug}
+                    data-testid="settings-overview-ai"
+                    label={aiSettingsLoading ? t('common.loading') : defaultConnection?.name ?? t('settings.overview.noConnection')}
+                    description={aiSettingsLoading ? undefined : defaultModel}
                     action={
                       <Button
                         variant="outline"
