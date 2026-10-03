@@ -4,6 +4,7 @@ import { execFileSync, spawn } from "node:child_process"
 import fs from "node:fs"
 import http from "node:http"
 import path from "node:path"
+import { readContainedFile, ensurePrivateDirectory, writePrivate, openPrivateAppend } from "./safe-files.js"
 import { fileURLToPath } from "node:url"
 
 const scriptPath = fileURLToPath(import.meta.url)
@@ -88,7 +89,7 @@ function parseArgs(argv) {
 
 function ensureDirs(options) {
   fs.mkdirSync(options.screensDir, { recursive: true })
-  fs.mkdirSync(options.stateDir, { recursive: true })
+  ensurePrivateDirectory(options.stateDir)
 }
 
 function jsonOut(value) {
@@ -383,14 +384,18 @@ function annotateScreen(html, origin, page = "/") {
 function annotateDocument(options, origin) {
   const screen = newestScreen(options)
   if (!screen) return wrapAnnotateFragment(WAITING_HTML, annotateBoot(origin))
-  return annotateScreen(fs.readFileSync(screen, "utf8"), origin, pageForScreen(options, screen))
+  const file = readContainedFile(options.screensDir, screen)
+  if (!file) return wrapAnnotateFragment(WAITING_HTML, annotateBoot(origin))
+  return annotateScreen(file.data.toString("utf8"), origin, pageForScreen(options, screen))
 }
 
 function renderPage(options, origin) {
   if (options.annotate) return annotateDocument(options, origin)
   const screen = newestScreen(options)
   if (!screen) return wrapFragment(options, WAITING_HTML)
-  const html = fs.readFileSync(screen, "utf8")
+  const file = readContainedFile(options.screensDir, screen)
+  if (!file) return wrapFragment(options, WAITING_HTML)
+  const html = file.data.toString("utf8")
   return isFullDocument(html) ? injectRefresh(options, html) : wrapFragment(options, html)
 }
 
@@ -549,35 +554,18 @@ function resolveContainedFile(rootDir, req, res) {
     return null
   }
   name = name.replace(/^\/+/, "")
-  // Serve nested paths so a screen can keep the asset layout it was copied
-  // from, but never resolve outside the run's screens directory.
-  const filePath = containedRealPath(rootDir, path.resolve(rootDir, name))
-  if (!filePath) {
-    res.writeHead(404)
-    res.end("Not found")
-    return null
+  // Reject traversal before resolving, including Windows separators and drives.
+  if (name.includes("\\") || name.includes("\0") || name.split("/").some(part => part === "..") || /^[A-Za-z]:/.test(name)) {
+    res.writeHead(404); res.end("Not found"); return null
   }
-  let stat
-  try {
-    stat = fs.statSync(filePath)
-  } catch {
-    res.writeHead(404)
-    res.end("Not found")
-    return null
-  }
-  // `/files/%2e` resolves to the screens directory itself, which passes an
-  // existence check and then throws EISDIR on read — uncaught, killing the server.
-  if (!stat.isFile()) {
-    res.writeHead(404)
-    res.end("Not found")
-    return null
-  }
-  return filePath
+  const file = readContainedFile(rootDir, path.join(rootDir, name))
+  if (!file) { res.writeHead(404); res.end("Not found"); return null }
+  return file
 }
 
-function sendFile(filePath, res, headers = {}) {
-  res.writeHead(200, { "Content-Type": contentType(filePath), ...headers })
-  res.end(fs.readFileSync(filePath))
+function sendFile(file, res, headers = {}) {
+  res.writeHead(200, { "Content-Type": contentType(file.path), ...headers })
+  res.end(file.data)
 }
 
 function safeFileResponse(rootDir, req, res, headers = {}) {
@@ -637,7 +625,7 @@ async function start(options) {
     return
   }
 
-  const logFd = fs.openSync(options.logFile, "a")
+  const logFd = openPrivateAppend(options.logFile)
   const child = spawn(process.execPath, [
     scriptPath,
     "serve",
@@ -764,7 +752,7 @@ async function serve(options) {
     if (publishedInfo && options.infoFile) {
       publishedInfo = { ...publishedInfo, session_ended: true, session_end_reason: reason }
       try {
-        fs.writeFileSync(options.infoFile, `${JSON.stringify(publishedInfo, null, 2)}\n`)
+        writePrivate(options.infoFile, `${JSON.stringify(publishedInfo, null, 2)}\n`)
       } catch {
         // Reuse without this flag would report a live session that cannot wait.
       }
@@ -1109,7 +1097,9 @@ async function serve(options) {
         }
         const screen = newestScreen(options)
         if (screen) {
-          sendFile(screen, res, NO_STORE)
+          const file = readContainedFile(options.screensDir, screen)
+          if (!file) { res.writeHead(404); res.end("Not found"); return }
+          sendFile(file, res, NO_STORE)
           return
         }
         res.writeHead(200, { "Content-Type": CONTENT_TYPES[".html"], ...NO_STORE })
@@ -1125,9 +1115,9 @@ async function serve(options) {
         touch()
         const filePath = resolveContainedFile(options.screensDir, req, res)
         if (!filePath) return
-        if (contentType(filePath) === CONTENT_TYPES[".html"] && isDocumentNavigation(req)) {
+        if (contentType(filePath.path) === CONTENT_TYPES[".html"] && isDocumentNavigation(req)) {
           const renderedKey = screensChangeKey(options)
-          serveAnnotateDocument(req, res, annotateScreen(fs.readFileSync(filePath, "utf8"), requestOrigin(req), urlPath), renderedKey)
+          serveAnnotateDocument(req, res, annotateScreen(filePath.data.toString("utf8"), requestOrigin(req), urlPath), renderedKey)
           return
         }
         // A reload must pick up a revised stylesheet or script whose URL did
@@ -1179,8 +1169,8 @@ async function serve(options) {
       ...(sessionToken ? { token: sessionToken, annotate: true } : {}),
     }
     publishedInfo = info
-    fs.writeFileSync(options.pidFile, `${process.pid}\n`)
-    fs.writeFileSync(options.infoFile, `${JSON.stringify(info, null, 2)}\n`)
+    writePrivate(options.pidFile, `${process.pid}\n`)
+    writePrivate(options.infoFile, `${JSON.stringify(info, null, 2)}\n`)
     console.log(JSON.stringify(info))
   })
 

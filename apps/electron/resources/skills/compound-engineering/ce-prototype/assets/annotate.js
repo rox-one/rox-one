@@ -128,7 +128,13 @@
 
   function persistAndReload() {
     persistState()
-    window.location.replace(`${servedPage}${window.location.search}${window.location.hash}`)
+    // Only a helper-stamped local document path may be a reload target.
+    if (!servedPage.startsWith("/") || servedPage.startsWith("//") || /[\\\u0000-\u0020]/.test(servedPage)) return
+    const destination = new URL(servedPage, window.location.origin)
+    if (destination.origin !== window.location.origin) return
+    destination.search = window.location.search
+    destination.hash = window.location.hash
+    window.location.replace(destination.href)
   }
 
   // A screen change arriving while a comment is being sent waits for that

@@ -10,6 +10,7 @@
 import { randomBytes, randomUUID, timingSafeEqual } from "node:crypto"
 import { execFileSync, spawn } from "node:child_process"
 import fs from "node:fs"
+import { writePrivate, appendPrivate, ensurePrivateDirectory, readContainedFile } from "./safe-files.js"
 import http from "node:http"
 import net from "node:net"
 import path from "node:path"
@@ -388,26 +389,14 @@ function normalizeOrigin(value) {
 }
 
 function ensureDirs(options) {
-  fs.mkdirSync(options.stateDir, { recursive: true, mode: 0o700 })
-  fs.chmodSync(options.stateDir, 0o700)
-  fs.mkdirSync(options.batchesDir, { recursive: true, mode: 0o700 })
-  fs.mkdirSync(options.logDir, { recursive: true, mode: 0o700 })
-  fs.mkdirSync(path.join(options.logDir, "frames"), { recursive: true, mode: 0o700 })
-}
-
-function writePrivate(filePath, contents) {
-  const tmp = `${filePath}.${process.pid}.tmp`
-  fs.writeFileSync(tmp, contents, { mode: 0o600 })
-  fs.chmodSync(tmp, 0o600)
-  fs.renameSync(tmp, filePath)
+  ensurePrivateDirectory(options.stateDir)
+  ensurePrivateDirectory(options.batchesDir)
+  ensurePrivateDirectory(options.logDir)
+  ensurePrivateDirectory(path.join(options.logDir, "frames"))
 }
 
 function writePrivateJson(filePath, value) {
   writePrivate(filePath, `${JSON.stringify(value, null, 2)}\n`)
-}
-
-function appendPrivate(filePath, line) {
-  fs.appendFileSync(filePath, line, { mode: 0o600 })
 }
 
 function jsonOut(value) {
@@ -1224,7 +1213,9 @@ async function replay(options) {
       try {
         const frameFile = frameFileWithin(options.logDir, stored.frame_file)
         if (frameFile === null) throw new Error("frame file outside the selected log")
-        const jpeg = fs.readFileSync(frameFile)
+        const file = readContainedFile(path.join(options.logDir, "frames"), frameFile)
+        if (!file) throw new Error("frame changed or escaped the selected log")
+        const jpeg = file.data
         envelope = { ...envelope, payload: { ...stored.payload, jpeg_base64: jpeg.toString("base64") } }
       } catch {
         skipped += 1
