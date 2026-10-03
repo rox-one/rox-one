@@ -1,0 +1,212 @@
+{
+  "scope": "remaining custody after external selected-details delivery",
+  "source_pr": 1467,
+  "source_freeze": "940eade97a7f8df0f368c09f5721a40fb1e4413d",
+  "source_delivered_head": "9b1bdec72ebeb1f43578add4f4a596017ef99ab6",
+  "source_delivered_merge": "89cb22c07c4c73d403b9e6a8c4793b45724a1c17",
+  "source_delivered_at": "2026-10-03T22:16:12Z",
+  "qualified_base": "439b9d4f1",
+  "reconciled_main": "f058d638e227e57f4aa046e1caedd281ff31ea9c",
+  "owned_paths": [
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/skill-runtime-row.browser.node.mjs",
+      "sha256": "593800568ed566fff44e981892b18904c454f57dbb06b9096c360c8bcd3d244f"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/skill-runtime-row.fixture.mjs",
+      "sha256": "379a1faa51692da1d0e90130f0c6bc7b31a5d1405bfadbbcbb1b5aed5ee5dedf"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/__tests__/skill-info-owner.browser.node.ts",
+      "sha256": "18c5b7f5eb346d844bb21971941281fa9ac6b7140094b9bcfe19b36cd3215147"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/__tests__/skill-info-owner.fixture.mjs",
+      "sha256": "10976ed308b34a00a09eb889011a8c4f527fa6dba682691dc7e247ceefa3e8b9"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/__tests__/skills-selected-native.test.ts",
+      "sha256": "5e3029b3ac6f32dd91b996109879a61fc310e57686c229a6b00bca322beaa810"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/skills.ts",
+      "sha256": "7a859323299904dcf0a7d11c6ceb1f19f8c16f1b9a7d38dd2569e18e2aece097"
+    },
+    {
+      "path": "packages/shared/src/skills/__tests__/selected-details.test.ts",
+      "sha256": "b75e58b7d62149b6eb85c5991568b06c0f6a24c12822c9591fe92f2bd7431acf"
+    },
+    {
+      "path": "packages/shared/src/skills/__tests__/selected-path-boundary.test.ts",
+      "sha256": "fba8c891587f32708cdb287cda261793aa1feba7cad240df4b11f4e10fb3fb01"
+    },
+    {
+      "path": "packages/shared/src/skills/omp-discovery.ts",
+      "sha256": "0b13cbe78c3031bb3bf9d0264195effa8d5de9c3c1446a572f0a8f2a8656a5de"
+    },
+    {
+      "path": "packages/shared/src/skills/read-instructions.ts",
+      "sha256": "a012b15963000d7b7a551769fc7d52a4ec6f3ead14bc313fbfb017bd8572f91b"
+    },
+    {
+      "path": "packages/shared/src/skills/storage.ts",
+      "sha256": "9df5f66633778c8ed17eecccd646b356708b412a51d8f591862f0539045e0721"
+    }
+  ],
+  "ui_unchanged_from_qualified_and_reconciled_main": true,
+  "gates": {
+    "legacy_outside_leaf": {
+      "pass": 0,
+      "fail": 1
+    },
+    "merged_ancestor_replacement": {
+      "pass": 0,
+      "fail": 1,
+      "assertions": 2,
+      "actual_returned_body": "FOREIGN SAME CANONICAL PATH",
+      "attack_entered": true
+    },
+    "current_storage_managed_custody": {
+      "pass": 48,
+      "fail": 0,
+      "assertions": 5648,
+      "bun_timeout_argument": "--timeout=40000"
+    },
+    "actual_native_rpc_and_workspace_denial": {
+      "pass": 4,
+      "fail": 0,
+      "assertions": 13
+    },
+    "current_skillinfo_browser": {
+      "pass": 7,
+      "fail": 0,
+      "skip": 0
+    },
+    "actual_runtime_row_browser": {
+      "pass": 1,
+      "fail": 0,
+      "behavior": "keyboard selection resets craft selection before callback, selected aria-pressed, disabled shadowed row"
+    },
+    "electron_full_strict_current_source": {
+      "exit_code": 0,
+      "config": "docs/integration-history/golden-task-drafts-recovery-20261004/typecheck-config.json"
+    }
+  },
+  "implementation": {
+    "byte_limit": 2097152,
+    "read": "canonical contained leaf; open NOFOLLOW/NONBLOCK; regular bounded BigInt fstat; full current leaf identity; every ancestor dev/ino/canonical identity before bytes and after read; logical identity unchanged; descriptor always closed",
+    "compatibility": [
+      "directory links/junction identities and contained file links",
+      "current craft/managed collision aliases, disabled tiers and selected high-priority error propagation",
+      "metadata-only OMP list remains empty-body; invalid entries do not hide healthy neighbours"
+    ],
+    "authority": "registered native read port checks current read request fence after awaited project canonical validation; actual revoke control opens zero selected files"
+  },
+  "environment": {
+    "bun": "1.3.14",
+    "node": "22.23.3",
+    "chromium": "1243 macOS headless"
+  },
+  "logs": [
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-electron-current-main-types-exit.json.gz",
+      "sha256": "7f313f98da6ee446b87b920c6243edb378589c35da40d99ed759ea42d0abcc90",
+      "uncompressed_sha256": "9df0cb55059cf39ce5451e1eee7476b21442ecc923efab10ece9580a9683d280"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-electron-current-main-types.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-electron-types.log.gz",
+      "sha256": "e2d1aec15c00593cd88dae3e136e62842023c743089f2cbd065dbec9ba93a6dc",
+      "uncompressed_sha256": "cd5419f1b1a8cac4be36ee0c314f6451e90ead239e3d8e8e91e0c97ef5cda48f"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-merged-ancestor-before.log.gz",
+      "sha256": "d006c1fde4ddfaf9e4069ed5e41a4f8fe206577c2905372a32cf320b25a89a1f",
+      "uncompressed_sha256": "5baab8cd552cdfcd89203209b2cf55f5c7b92db64041afe386a959b0a4c5d7ba"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-native-current-main.log.gz",
+      "sha256": "1503384dafd4209af9bb3659d2332856d4e039707d2cb40aedeb99e9132a9e7a",
+      "uncompressed_sha256": "abb5e7d56dd3849ced247ef87c1a9638f5183eab69ea79c90d169d04891373f7"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-native-rpc.log.gz",
+      "sha256": "a7eb370f4df49dfaa9c05fdec4d704b8a17524d44715836e60c43ee6a599b0ed",
+      "uncompressed_sha256": "c13d99c7ee6a5b3dd8f20f352ea29e3443a890f81975a3abbb000ade71a588f8"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-outside-read-before.log.gz",
+      "sha256": "2d2d9c5b18f17e9b90d12543e3ecc69302c1a7ac7d591d4b092d0868bcf91397",
+      "uncompressed_sha256": "5342114fcff8b512c928c1de254df29bb523800d341586de5e9a63ff1138e0f4"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-outside-read-current.log.gz",
+      "sha256": "a59a4bf57d801cb7aedc3c4b5b0ee31541a590a208308549011fdba7da179322",
+      "uncompressed_sha256": "51f59d282a6550a100bd6a9d1ab1b6ab200b76a1bfa533e377f4ac8ffc06c7bd"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-selected-custody-qualified.log.gz",
+      "sha256": "fa8601ae1ac314e82653655604b24d3b2402d8359b86c0aa8c3324b3b6ffd192",
+      "uncompressed_sha256": "d8cc84b479563a0afdaf3c03f404ee32201b8edbd96679b28b318a879122a9c8"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-selected-custody.log.gz",
+      "sha256": "4a43cf699c7cc97dc5972f0871fbf82f1f96ffc8fe7c42d69e0bd1b9edc56af3",
+      "uncompressed_sha256": "2d3feac759a7be65ab3c76b74fcb0563e480c37ac6d2e5b6f6b568d381271c6d"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-skill-owner-browser-qualified.log.gz",
+      "sha256": "ea44dc9bdbfbbacfd511147961e91574ad8237035d6bebe1b6ddb5bdb14dc31e",
+      "uncompressed_sha256": "49fa32f5172f097cb10e4b65bed47d56c424a6c01ebb00a943f19b5e693ec047"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-skill-owner-browser.log.gz",
+      "sha256": "9819f42839288a72900a584f324051cb1c4bd61f34316dca2568b8c8ee495764",
+      "uncompressed_sha256": "4ebab06843ebd6ea8ce67d74abe9900062ae1435afe0c3694f378ca0d844bc2c"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-skill-owner-current-main.log.gz",
+      "sha256": "415d5c9d2427d89dfcd9cfb3894bd97fe6694923828b50a76b05d30a7cc2901b",
+      "uncompressed_sha256": "7b7e5b67f4b4f047a973febeda6db3089915dbb411b87955cc450608972900f4"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-skill-row-browser.log.gz",
+      "sha256": "696b2dc3cf9a14e4e65fa3ef016e64b8edebc28a9cabbf4c60affacf63a03424",
+      "uncompressed_sha256": "2514769e371cf63cf83d61f76f5043ce7a606d010cfdfe49bbbb9de8c4e7c8cc"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-skill-row-current-main.log.gz",
+      "sha256": "696b2dc3cf9a14e4e65fa3ef016e64b8edebc28a9cabbf4c60affacf63a03424",
+      "uncompressed_sha256": "2514769e371cf63cf83d61f76f5043ce7a606d010cfdfe49bbbb9de8c4e7c8cc"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-storage-current-main-qualified.log.gz",
+      "sha256": "e373978d3790b1cb4b19a6bbd26c2b37bb705a92346fb150e6fe2be366bf2c61",
+      "uncompressed_sha256": "4e7639f1e0f48df90b6f2a6e65e7fa21fa19df589f6731dc7fbded062f035a53"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-storage-current-main.log.gz",
+      "sha256": "04d46ef8402a60e9f1fa351b4b04b76caaaa64b8d522deac8c387f349f811072",
+      "uncompressed_sha256": "25dae5cbb91aa8a273b3bf9b99afbd1a1d47f5e55972cd81643de4ab97a492b4"
+    },
+    {
+      "path": "docs/integration-history/selected-skills-custody-recovery-20261004/logs/pr-1467-storage-managed-regression.log.gz",
+      "sha256": "5483c9528b9fa75cff8cd4ae42b1a204d428f4585994866d138ab477cc1debda",
+      "uncompressed_sha256": "2aeff7d4c2a87af763dc63ae2d9c4050be49d5e4793d5df853d21d5d99d7d27d"
+    }
+  ],
+  "retained_failures": [
+    "first ancestor spy used /tmp instead of canonical/private/tmp and did not attack; corrected canonical target and explicit attack assertion",
+    "initial own Finder guard dereferenced null during loading; strict types and browser caught it; current main UI adopted exactly",
+    "joined --timeout40000 did not enforce default override; correct --timeout=40000 qualifies48 without source changes"
+  ],
+  "limits": [
+    "disposable native enrollment/config only; no installed credential or skill mutation",
+    "actual UI components, explicit backend/context/presentation/craft-selection seams",
+    "no installed Windows junction, aggregate scanner or full release acceptance claimed"
+  ]
+}

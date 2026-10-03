@@ -95,6 +95,8 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
         { includeHome: false, includeTmp: false })
     }
     const { loadSkillDetails } = await import('@rox/shared/skills')
+    assertSkillWorkspace(ctx, workspaceId, deps)
+    if (ctx.principal && !server.isRequestContextCurrent?.(ctx, 'read')) throw new Error('Workspace access denied')
     return loadSkillDetails(workspace.rootPath, skillSlug, projectRoot)
   }, { nativeAction: 'read' })
 

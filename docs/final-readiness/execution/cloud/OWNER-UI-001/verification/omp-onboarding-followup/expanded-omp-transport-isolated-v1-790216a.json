@@ -1,0 +1,16 @@
+{
+  "head": "790216a785189279c376f5b144f76dc2da97795b",
+  "command": [
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+    "test",
+    "./packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts"
+  ],
+  "pid": 96298,
+  "observedExitCode": 0,
+  "durationSeconds": 28.06200385093689,
+  "testHashBefore": "f728f558288df3f5dd4c313ee545043ae2a32bf48e126ddb3683cd0b07ec5ba2",
+  "testHashAfter": "f728f558288df3f5dd4c313ee545043ae2a32bf48e126ddb3683cd0b07ec5ba2",
+  "log": "../expanded-omp-transport-isolated-v1-790216a.log",
+  "logSha256": "ac663430f4c08fee211450f8601f238e464a4c97afbcd1321c2be42a0f45b04a",
+  "qualification": "Test-only dirty fixture at committed790216a; actualBun1.3.14 Node24.21.0; no timeout override."
+}
