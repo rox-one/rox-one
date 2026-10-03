@@ -5,6 +5,10 @@ const flag = 'craft-feature-product-tour-v1'
 async function openApp(page: Page, route: string, enabled = false) {
   await page.addInitScript(({ flag, enabled }) => {
     localStorage.setItem('i18nextLng', 'en')
+    const original = indexedDB.open.bind(indexedDB)
+    const opens: string[] = []
+    indexedDB.open = ((name: string, version?: number) => { opens.push(name); return original(name, version) }) as typeof indexedDB.open
+    ;(window as any).__productTourDatabaseOpens = opens
     if (enabled) localStorage.setItem(flag, JSON.stringify(true))
     else localStorage.removeItem(flag)
   }, { flag, enabled })
@@ -26,6 +30,7 @@ test('APP-01/APP-06: an existing profile without the tour flag loads the real Ap
   await expect(page.locator('[data-product-tour-overlay]')).toHaveCount(0)
   await expect(page.locator('[data-product-tour-popover]')).toHaveCount(0)
   expect(await page.evaluate(() => localStorage.getItem('craft-feature-product-tour-v1'))).toBeNull()
+  expect(await page.evaluate(() => (window as any).__productTourDatabaseOpens.includes('rox-product-tour'))).toBe(false)
   const calls = (await evidence(page)).operations as Array<{ method: string }>
   expect(calls.some(call => ['sendMessage', 'respondToPermission', 'startRecording', 'performOAuth', 'runAutomation'].includes(call.method))).toBe(false)
   await attachEvidence(page, info)
