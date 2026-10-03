@@ -924,3 +924,10 @@ Owner: recent_features; dependency: current native Voice capture and Product Lea
 ## Portable resources follow-up (2026-10-03)
 
 Root owns the resource-copy/main-protocol/native-harness subset of #1448; pr_scout owns installer, runner and RPC admission; route UI is separate. Exercise actual registration AST with controlled OS callbacks, real temporary resource trees and pre-spawn executable validation. Preserve original failure history, current Windows source and every source branch; deliver separate PR. Skill/history browser logs are archived here as a documentation follow-up because global ignore rules omitted compressed files from #1451.
+
+## Local source recovery integration graph (2026-10-03)
+
+1. Scout recovers storage/local-state + actual SourceManager/BaseAgent consumers, source credential admission and public MCP builder semantics; preserve current builtin catalog, managed stdio account secrets, live MCP definitions and explicit source ownership. Adapt exact old Windows default migration through bounded same-descriptor file admission, not the original path-check/path-write race.
+2. Exercise actual local variable resolution, repeated agent context, explicit empty/disabled/missing folders, metadata arrival order, stale-type auth and current managed credential guards. Exercise real temporary-file obsolete migration/idempotence/custom prefs/old-path evidence, link/hardlink/FIFO/oversize/content replacement refusal and fresh exclusive default seeding. Keep native Windows migration controls explicitly skipped off Windows.
+3. Run source/current SourceManager and adjacent builder/builtin credential controls, shared/Electron types; freeze source and bounded receipt. Compare actual old consumers to prove the gap, retain failure history, reconcile current main and publish/attach separate PR for lead review/merge.
+4. Continue #1436 host Bash lifetime and collection/knowledge performance actual consumers and function-level ledger; no whole original branch acceptance from this slice.

@@ -160,7 +160,7 @@ export class SourceServerBuilder {
     }
 
     // 3. Auth token (highest priority — OAuth/bearer overrides everything)
-    if (mcp.authType !== 'none') {
+    if (mcp.authType && mcp.authType !== 'none') {
       if (token) {
         mergedHeaders = { ...mergedHeaders, Authorization: `Bearer ${token}` };
       } else if (source.config.isAuthenticated) {
