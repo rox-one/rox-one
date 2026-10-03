@@ -11,6 +11,14 @@ import { Readable } from 'node:stream'
 const read = promisify(readFile)
 export { expect }
 export const test = (name, run, timeout = 30_000) => nodeTest(name, { timeout }, run)
+test.each = rows => (name, run, timeout = 30_000) => {
+  for (const row of rows) {
+    const values = Array.isArray(row) ? row : [row]
+    let index = 0
+    const label = name.replace(/%[sdj]/g, marker => { const value = values[index++]; return marker === '%j' ? JSON.stringify(value) : String(value) })
+    test(label, () => run(...values), timeout)
+  }
+}
 export const it = test
 export const beforeAll = (run, timeout = 30_000) => before(run, { timeout })
 export const afterAll = (run, timeout = 30_000) => after(run, { timeout })
