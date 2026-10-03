@@ -53,7 +53,7 @@ import { getSourceCredentialManager } from '../sources/index.ts';
 import { isMultiHeaderCredential } from '../sources/credential-manager.ts';
 import { getSourceServerBuilder } from '../sources/server-builder.ts';
 import { buildRuntimeBuiltinMcpConfig, getBuiltinMcpReadiness, isManagedBuiltinMcpSource } from '../sources/builtin-mcp.ts';
-import { getToolchain, withToolchainPathPrefix } from '../toolchain-runtime.ts';
+import { createHostBashEnv, getToolchain, withToolchainPathPrefix } from '../toolchain-runtime.ts';
 import {
   inferGoogleServiceFromUrl,
   inferSlackServiceFromUrl,
@@ -285,6 +285,7 @@ export function createClaudeContext(options: ClaudeContextOptions): SessionToolC
   const context: SessionToolContext = {
     sessionId,
     workspacePath,
+    getHostBashEnv: () => createHostBashEnv(),
     get sourcesPath() { return join(workspacePath, 'sources'); },
     get skillsPath() { return join(workspacePath, 'skills'); },
     plansFolderPath: getSessionPlansPath(workspacePath, sessionId),
