@@ -190,13 +190,14 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.evaluate(()=>(window as any).ui001nav.workspace('ws-a','a'));await routeIs('notes/note/note-a')
   })
 
-  browserTest('missing or rejected workspace history targets release suppression and retain current selection',async()=>{
+  browserTest('missing or rejected workspace history targets retain unavailable address until explicit local recovery',async()=>{
     await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
     for (const mode of ['missing','reject']) {
       await page.evaluate(mode=>{(window as any).ui001nav.switchMode(mode);(window as any).ui001nav.pop('?ws=gone&route=notes%2Fnote%2Fforeign')},mode)
-      await page.waitForFunction(()=>new URL(location.href).searchParams.get('ws')==='a')
+      await page.waitForFunction(()=>JSON.parse(document.querySelector('output').textContent).nav.navigator==='unavailable')
+      expect(new URL(page.url()).searchParams.get('ws')).toBe('gone')
       expect((await snapshot()).ws).toBe('ws-a')
-      expect((await snapshot()).nav.details.noteId).toBe('a')
+      expect((await snapshot()).nav.navigator).toBe('unavailable')
       await page.evaluate(()=>(window as any).ui001nav.navigate('home'));await routeIs('home')
       await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
       await page.evaluate(()=>(window as any).ui001nav.navigate('notes/note/a'));await routeIs('notes/note/a')
