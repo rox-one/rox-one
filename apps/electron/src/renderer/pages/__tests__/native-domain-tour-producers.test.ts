@@ -5,6 +5,7 @@ import ts from 'typescript'
 import { PersonalTaskStore } from '@rox/core/tasks/personal'
 import { deriveKnowledgeSignals, matchesNoteReceipt, openCurrentSearchResult } from '../../features/product-tour/adapters/knowledge'
 import { derivePersonalTaskSignals } from '../../features/product-tour/adapters/work/tasks-projects'
+import { taskDelegationErrorKey } from '../tasks/delegation-errors'
 import type { TourObservation } from '../../features/product-tour/runtime/hooks'
 
 // Execute callbacks from the actual current components. Native transports are
@@ -76,15 +77,17 @@ describe('actual native Notes creation/save producer evidence', () => {
 function delegationFixture() {
   const task = new PersonalTaskStore().create({ id: 'task', title: 'Private task', list: 'inbox' })
   const calls: string[] = [], signals: unknown[] = [], errors: unknown[] = []
-  const owner = { current: { workspaceId: 'a' as string | undefined, generation: 1, mounted: true } }
+  const owner = { current: { workspaceId: 'a' as string | undefined, generation: 1, mounted: true, actorGeneration: 1 } }
   const committed = { task: { ...task, links: [{ kind: 'session', id: 'session' }] }, revision: 2 }
   let created = () => Promise.resolve({ id: 'session' })
   let commit = () => Promise.resolve(committed)
   let readback = () => Promise.resolve({ tasks: [committed.task], revisions: { task: 2 } })
   const functions = callbacks('TasksPage.tsx', 'TasksPage', ['delegate'], {
     useCallback: (callback: unknown) => callback,
+    mutate: (fn: (cache: { link: () => void }) => void) => { calls.push('optimistic-link'); fn({ link: () => {} }) },
     workspace: { id: 'a' }, shell: { onCreateSession: async () => { calls.push('create'); return created() } },
     delegationInFlight: { current: false }, delegationOwner: owner, personalTasksNativeAvailable: () => true,
+    capturePersonalTaskScope: () => { const generation = owner.current.actorGeneration; return () => generation === owner.current.actorGeneration }, taskDelegationErrorKey,
     tour: { capture: () => observation, emit: (captured: TourObservation, name: string, level: string, origin: string, eventToken: string) => signals.push({ captured, name, level, origin, eventToken }) },
     setDelegating: () => {}, setDelegateError: (value: unknown) => errors.push(value),
     storeRef: { current: { list: () => [task] } }, subtasksOf: () => [], buildDelegationPrompt: () => 'Private delegated prompt',
@@ -112,7 +115,16 @@ describe('actual task delegation uses durable linkage before work', () => {
   test('rejected native linkage prevents prompt and completion', async () => {
     const f = delegationFixture(); f.commit(async () => { throw new Error('Native CAS refused') }); await f.run()
     expect(f.calls).not.toContain('send'); expect(f.signals).toEqual([])
-    expect(f.errors).toContain('Native CAS refused')
+    expect(f.errors).toContain('tasks.delegate.error.unavailable')
+    expect(f.errors).not.toContain('Native CAS refused')
+  })
+  test('same-workspace actor changes after session creation or native linkage cannot submit work', async () => {
+    const create = delegationFixture(), created = pending<{ id: string }>(); create.created(() => created.promise)
+    const run = create.run(); create.owner.current.actorGeneration++; created.resolve({ id: 'session' }); await run
+    expect(create.calls).toEqual(['create']); expect(create.signals).toEqual([])
+    const linked = delegationFixture(), link = pending<any>(); linked.commit(() => link.promise)
+    const late = linked.run(); await settle(); linked.owner.current.actorGeneration++; link.resolve({ task: linked.task, revision: 2 }); await late
+    expect(linked.calls).not.toContain('send'); expect(linked.signals).toEqual([])
   })
   test('workspace roundtrip/unmount after create or native link prevents late work and signals', async () => {
     const create = delegationFixture(), created = pending<{ id: string }>(); create.created(() => created.promise)

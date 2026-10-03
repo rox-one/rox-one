@@ -6,7 +6,7 @@ import type { VersionedPersonalTask } from '@rox/core/tasks/personal'
 import { PersonalTaskPersistStore } from '../../../../../../../../../../packages/server-core/src/tasks/personal-persist'
 import { deletePersonalTasks, migratePersonalTasks, putPersonalTasks, readPersonalTasks } from '../../../../../../../../../../packages/server-core/src/tasks/personal-tasks-service'
 import type { PersonalTasksApi } from '../../../../../../lib/personal-tasks-sync'
-import { hydratePersonalTasks, loadPersonalTaskStore, persistPersonalTaskStore, subscribePersonalTaskCommits } from '../../../../../../lib/personal-tasks'
+import { hydratePersonalTasks, loadPersonalTaskStore, persistPersonalTaskStore, subscribePersonalTaskCommits, setPersonalTaskScope } from '../../../../../../lib/personal-tasks'
 
 test('T-TASKS-CREATE: cache row emits only after real native write and canonical read-back', async () => {
   const root = mkdtempSync(join(tmpdir(), 'tour-task-creation-observer-'))
@@ -27,6 +27,7 @@ test('T-TASKS-CREATE: cache row emits only after real native write and canonical
   Object.assign(globalThis, { window: nativeWindow, localStorage: storage })
   let off: (() => void) | undefined
   try {
+    setPersonalTaskScope({ authority: 'local', userId: 'isolated-local-test', workspaceId: 'fixture-workspace' })
     await hydratePersonalTasks()
     const records: VersionedPersonalTask[] = []
     let committed!: (record: VersionedPersonalTask) => void
@@ -46,6 +47,7 @@ test('T-TASKS-CREATE: cache row emits only after real native write and canonical
   } finally {
     release()
     off?.()
+    setPersonalTaskScope(null)
     Object.assign(globalThis, { window: oldWindow, localStorage: oldStorage })
     rmSync(root, { recursive: true, force: true })
   }

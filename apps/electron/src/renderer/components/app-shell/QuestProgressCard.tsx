@@ -1,6 +1,3 @@
-import { useProductLearning } from '@/features/product-tour/runtime'
-import { navigate, routes } from '@/lib/navigate'
-import type { TourId } from '@/features/product-tour/contracts'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BookOpen, Link2, CheckSquare, GitBranch, Globe, ShieldCheck, Trophy, Zap, Check, Clock3, Loader2, RefreshCw } from 'lucide-react'
@@ -40,7 +37,6 @@ interface QuestProgressCardProps {
 }
 
 export function QuestProgressCard({ cloudFeaturesEnabled = true, className, scopeKey }: QuestProgressCardProps) {
-  const learning = useProductLearning()
   const { t, i18n } = useTranslation()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [page, setPage] = useState(0)

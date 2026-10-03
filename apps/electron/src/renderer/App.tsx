@@ -15,9 +15,6 @@ import { useEventProcessor } from './event-processor'
 import type { AgentEvent, Effect } from './event-processor'
 import { AppShell } from '@/components/app-shell/AppShell'
 import { SessionSharingHost } from '@/components/app-shell/SessionSharingHost'
-import { ProductTourProvider, ProductTourHost } from '@/features/product-tour/runtime'
-import { publishTourSignal } from '@/features/product-tour/runtime/bridge'
-import { observeChatSessionEvent, bindChatOptimisticMessage, observeChatPermissionResponse, cancelChatUserTurn, observeChatSessionCreated } from '@/features/product-tour/adapters/chat'
 import { collectionBulkOperationRegistry } from '@/components/app-shell/collection/collection-bulk-optimistic'
 import { WorkspaceIconRail } from '@/components/app-shell/WorkspaceIconRail'
 import { getTopBarLeftInset, shouldShowWorkspaceIconRail, WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT } from '@/components/app-shell/workspace-rail'
@@ -1300,7 +1297,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
         // Update atom directly (UI sees update immediately)
         updateSessionDirect(sessionId, () => updatedSession)
-        for (const signal of observeChatSessionEvent(event, currentSession, updatedSession)) publishTourSignal(signal)
 
         // Handle side effects
         handleEffects(effects, sessionId, event.type)
@@ -1389,7 +1385,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
       // Update per-session atom
       updateSessionDirect(sessionId, () => updatedSession)
-      for (const signal of observeChatSessionEvent(event, currentSession, updatedSession)) publishTourSignal(signal)
 
       // Update metadata map
       const metaMap = store.get(sessionMetaMapAtom)
@@ -1515,13 +1510,11 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     // Add to per-session atom and metadata map (no sessionsAtom)
     addSession(session)
     syncSessionOptionsFromSession(session)
-    for (const signal of observeChatSessionCreated(session)) publishTourSignal(signal)
 
     return session
   }, [addSession, syncSessionOptionsFromSession])
 
   const firstSessionAttemptedRef = useRef(false)
-  const [tourWelcome, setTourWelcome] = useState<{ workspaceId: string; sessionId: string } | null>(null)
   const firstSessionMountedRef = useRef(true)
   useEffect(() => {
     firstSessionMountedRef.current = true
@@ -1543,7 +1536,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       onSession: session => {
         addSession(session)
         syncSessionOptionsFromSession(session)
-        setTourWelcome({ workspaceId: windowWorkspaceId, sessionId: session.id })
       },
       onOpen: id => {
         if (window.location.href === initialUrl) navigate(routes.view.allSessions(id))
@@ -1801,7 +1793,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         isPending: true,  // Optimistic - will be confirmed by backend
         isQueued: sendingMidStream,
       }
-      bindChatOptimisticMessage(sessionId, userMessage.id)
 
       // Optimistic UI update - add user message and set processing state
       updateSessionById(sessionId, (s) => ({
@@ -2046,7 +2037,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     options?: import('../shared/types').PermissionResponseOptions,
   ) => {
     const success = await window.electronAPI.respondToPermission(sessionId, requestId, allowed, alwaysAllow, options)
-    for (const signal of observeChatPermissionResponse(sessionId, requestId, success)) publishTourSignal(signal)
 
     if (success) {
       // Remove only the first permission from the queue (the one we just responded to)
@@ -2556,8 +2546,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           remoteWorkspaceId={windowRemoteWorkspaceId}
         >
           {/* Handle window close requests (X button, Cmd+W) - close modal first if open */}
-          <ProductTourProvider workspaceId={windowWorkspaceId} shellReady={appState === 'ready' && sessionsLoaded && !showSplash && !sessionLoadError} welcomeSessionId={tourWelcome?.workspaceId === windowWorkspaceId ? tourWelcome.sessionId : null}>
-          <ProductTourHost />
           <WindowCloseHandler />
 
           {/* W3 Omnibox — unified ⌘K palette (S-04). Renderer hotkey + embedded
@@ -2647,7 +2635,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
               isDark={isDark}
             />
           )}
-          </ProductTourProvider>
         </NavigationProvider>
         </TooltipProvider>
         </ModalProvider>

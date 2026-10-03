@@ -56,7 +56,7 @@ import {
   resolvePersonalTaskConflict,
   subscribePersonalTasks,
   subscribePersonalTaskCommits,
-  personalTasksNativeAvailable,
+  personalTasksNativeAvailable, capturePersonalTaskScope,
   persistPersonalTaskSessionLink,
 } from '@/lib/personal-tasks'
 import { useTourSignals, useTourTarget, type TourObservation } from '@/features/product-tour/runtime/hooks'
@@ -95,6 +95,7 @@ import { MoveDialog, type MoveDestination } from './tasks/MoveDialog'
 import { TaskDetail } from './tasks/TaskDetail'
 import { TaskSidebar } from './tasks/TaskSidebar'
 import { getSessionTitle } from '@/utils/session'
+import { taskDelegationErrorKey, type TaskDelegationErrorKey } from './tasks/delegation-errors'
 
 const SORTS: TaskSortId[] = ['order', 'due', 'priority', 'project', 'title']
 const CHIP_TONE: Record<AgentChip, Tone> = { running: 'success', review: 'warning', todo: 'accent', done: 'muted', linked: 'muted' }
@@ -167,7 +168,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const [sort, setSort] = useState<TaskSortId>('order')
   const [localSelectedId, setLocalSelectedId] = useState<string | null>(null)
   const [delegating, setDelegating] = useState(false)
-  const [delegateError, setDelegateError] = useState<string | null>(null)
+  const [delegateError, setDelegateError] = useState<TaskDelegationErrorKey | null>(null)
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState<string | null>(null)
   const [pendingDone, setPendingDone] = useState<ReadonlySet<string>>(new Set())
@@ -209,7 +210,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
       if (signals.length) pending.delete(record.task.id)
     })
     return () => { off(); pending.clear() }
-  }, [])
+  }, [workspace?.id])
 
   useEffect(() => subscribePersonalTasks(() => setStore(loadPersonalTaskStore())), [])
   useEffect(() => {
@@ -265,8 +266,9 @@ export default function TasksPage(props: TasksPageProps = {}) {
   // ── Actions ──────────────────────────────────────────────────────────────
   const delegate = useCallback(async (task: PersonalTask) => {
     if (!workspace?.id || !shell || delegationInFlight.current || task.trashedAt != null || !personalTasksNativeAvailable()) return
+    const scopeCurrent = capturePersonalTaskScope()
     const ownerGeneration = delegationOwner.current.generation
-    const isCurrent = () => delegationOwner.current.mounted && delegationOwner.current.workspaceId === workspace.id && delegationOwner.current.generation === ownerGeneration
+    const isCurrent = () => scopeCurrent() && delegationOwner.current.mounted && delegationOwner.current.workspaceId === workspace.id && delegationOwner.current.generation === ownerGeneration
     if (!isCurrent()) return
     const observation = tour.capture()
     delegationInFlight.current = true
@@ -299,7 +301,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
         tour.emit(observation, signal.name, signal.level, signal.origin, signal.eventToken)
       }
     } catch (error) {
-      if (isCurrent()) setDelegateError(error instanceof Error ? error.message : String(error))
+      if (isCurrent()) setDelegateError(taskDelegationErrorKey(error))
     } finally {
       delegationInFlight.current = false
       if (isCurrent()) setDelegating(false)
@@ -1304,7 +1306,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
       sessionMap={sessionMap}
       agentChip={selectedChip}
       delegating={delegating}
-      delegateError={delegateError}
+      delegateError={delegateError ? t(delegateError) : null}
       canDelegate={Boolean(workspace?.id && nativeTasks && delegationApi)}
       onDelegate={() => void delegate(selected)}
       onToggleComplete={() => toggleComplete(selected)}
