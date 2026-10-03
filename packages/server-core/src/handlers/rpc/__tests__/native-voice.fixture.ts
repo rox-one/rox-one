@@ -9,6 +9,7 @@ import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { registerVoiceHandlers } from '../voice'
 import type { HandlerDeps } from '../../handler-deps'
 import type { TranscribeAdapter, TranscribeInput } from '@rox/shared/voice'
+import type { NativeVoiceOverlayHost } from '../../voice-overlay-host'
 import type { RpcServer } from '../../../transport'
 
 const configDir = process.env.CRAFT_CONFIG_DIR!
@@ -36,6 +37,8 @@ const hostPrefs = readFileSync(join(configDir, 'voice.json'), 'utf8')
 const proofs = new Map<string, { workspaceId: string; webContentsId: number }>()
 const clients: WsRpcClient[] = []
 let server!: WsRpcServer
+const overlayInputs: Parameters<NativeVoiceOverlayHost['publish']>[0][] = []
+const overlayRetired: string[] = []
 let nativePlaybackCalls = 0
 let requests: TranscribeInput[] = []
 let behavior: 'resolve' | 'defer' = 'resolve'
@@ -66,7 +69,9 @@ const startServer = async (stopTimeoutMs?: number) => {
       return typeof value === 'function' ? value.bind(target) : value
     },
   }) : server
-  registerVoiceHandlers(registrationServer, { nativeData: { authority } } as HandlerDeps, { configDir, cloudTranscriber: adapter,
+  registerVoiceHandlers(registrationServer, { nativeData: { authority }, voiceOverlay: {
+    publish(input) { input.assertCurrent(); overlayInputs.push(input) }, retire(clientId) { overlayRetired.push(clientId) },
+  } } as HandlerDeps, { configDir, cloudTranscriber: adapter,
     systemSpeaker: { stop: () => false, isSpeaking: () => false, async speak() { nativePlaybackCalls++; return { played: true } } } })
   await server.listen()
 }
@@ -120,6 +125,10 @@ try {
   await deny(() => a.invoke(RPC_CHANNELS.voice.TRANSCRIBE, { audioBase64: '%%%invalid' }))
   await deny(() => a.invoke(RPC_CHANNELS.voice.START, { mimeType: '../../arbitrary' }))
   const recordingId = await capture(a); await tick()
+  const recordingOverlay = overlayInputs.filter(input => input.state.recordingId === recordingId)
+  assert.deepEqual(recordingOverlay.map(input => input.state.phase), ['permission', 'recording', 'recording', 'transcribing', 'ready'])
+  assert(recordingOverlay.every(input => input.context.principal?.subject === first.principal.subject && input.context.webContentsId === null))
+  assert.equal(recordingOverlay[0].position, 'bottom')
   assert.equal(bEvents.length, 0)
   assert.equal((await b.invoke(RPC_CHANNELS.voice.HISTORY_LIST)).page.length, 0)
   assert.equal((await b.invoke(RPC_CHANNELS.voice.HISTORY_GET, { id: recordingId })).recording, null)
@@ -220,6 +229,8 @@ try {
   grant(first, ['read', 'write', 'delete', 'subscribe'])
   assert.equal(revokeRequest.input.signal!.aborted, true)
   assert('error' in await revoked)
+  assert(overlayRetired.includes(recordingOverlay[0].context.clientId))
+  assert.throws(recordingOverlay[0].assertCurrent)
   assert.equal((await a.invoke(RPC_CHANNELS.voice.GET)).cloudAsrConsent, true)
 
   pending = undefined
