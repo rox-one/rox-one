@@ -1,3 +1,4 @@
+import { navigationEntity } from '../../../features/product-tour/runtime/routes'
 import { describe, expect, it } from 'bun:test'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -63,7 +64,7 @@ function dispatch(route: string): React.ReactElement {
     sessionMetaMapAtom, automationsAtom: Symbol(),
     useAtomValue: (atom: symbol) => atom === sessionMetaMapAtom ? new Map() : [], useSetAtom: () => () => {},
     knowledgeHomeViewAtom: Symbol(), knowledgeActiveViewIdAtom: Symbol(),
-    sourceSelection: selection, skillSelection: selection, automationSelection: selection,
+    navigationEntity, TourPanelScope: ({ children }: { children: React.ReactNode }) => children, sourceSelection: selection, skillSelection: selection, automationSelection: selection,
     useSelectedResourceAvailability: () => ({ status: 'ready', retry() {} }),
   }
   const panel = Function(...Object.keys(bindings), javascript)(...Object.values(bindings))

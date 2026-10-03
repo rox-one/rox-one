@@ -230,6 +230,7 @@ export function MainContentPanel({
   // Detail state belongs to its workspace and entity, including project-level skills.
   const routeKey = JSON.stringify([
     activeWorkspaceId,
+    unavailableWorkspaceSlug,
     navState.navigator,
     isSessionsNavigation(navState) ? navState.viewMode : null,
     'details' in navState ? navState.details : null,

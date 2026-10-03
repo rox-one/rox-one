@@ -1,0 +1,139 @@
+{
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "sourceRevision": "b033150d220766f76b7b99be4a835d465a4f88d9",
+  "runtime": {
+    "bun": "1.3.14",
+    "bunRevision": "0d9b296af33f2b851fcbf4df3e9ec89751734ba4",
+    "node": "24.21.0",
+    "pathPrefixes": [
+      "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64",
+      "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/toolchain-node-24/node-v24.21.0-darwin-arm64/bin"
+    ]
+  },
+  "fullLocalValidate": {
+    "command": "bun run --bun validate:ci",
+    "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001",
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "processSessionId": 7722,
+    "observedExitCode": 0,
+    "scope": "All package typechecks/shared/config/connection/doc-tools Python19/i18n",
+    "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-history-final-b033-local-validate.log",
+    "logSha256": "afaaf5ceda3b355aa44b8a693c55b3ed6543dca1fb195c04ef6409b14b00e1cf"
+  },
+  "focused": {
+    "command": "bun test ./apps/electron/src/main/__tests__/rox-readiness-ui-001.second-instance-startup.test.ts ./scripts/electron-main-cjs.test.ts ./apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.history-switch-lease.test.ts ./apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts ./apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts ./apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.note-route-lifecycle.test.ts ./apps/electron/src/renderer/lib/__tests__/rox-readiness-ui-001.panel-url.test.ts",
+    "observedExitCode": 0,
+    "passed": 57,
+    "failed": 0,
+    "assertions": 230,
+    "files": 7,
+    "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-history-final-b033-node24-focused.log",
+    "logSha256": "cd71ce02f40e1e51d616843a0ba2c52f069d34bf41861bdbe8d33faf6ceeed32"
+  },
+  "initialFocusedFailure": {
+    "passed": 55,
+    "failed": 2,
+    "assertions": 222,
+    "causeObserved": "CJS runtime qualification assertions received Node26.8.2; initial invocation omitted PATH pin",
+    "preserved": true,
+    "repair": "Reinvoke same tests with Node24.21 PATH; no assertions changed"
+  },
+  "fullMounted": {
+    "receipt": "UI-001-expanded-history-mounted-green-b033150-20261003T192019Z/result.json",
+    "passed": 35,
+    "failed": 0,
+    "assertions": 106,
+    "sourceInputs": 169,
+    "stableBeforeBuildAfter": true
+  },
+  "localUIUnitDiagnostic": {
+    "passed": 662,
+    "skipped": 131,
+    "failed": 13,
+    "assertions": 2632,
+    "files": 113,
+    "qualifiedAs": "Diagnostic with unprefixed Bun name filters; includes unrelated untracked historical work baseline tests",
+    "failures": {
+      "permissionFixtureMissingHook": 9,
+      "untrackedOldBaselineSashAndRadius": 2,
+      "macHostEsbuildServiceAndEmptyProfileChild": 2
+    }
+  },
+  "actualUIUbuntuCandidate": {
+    "testedRevision": "2b542353cc999f9405d8faffd040f6094616e518",
+    "wholeTreeMatchesB033": true,
+    "passed": 661,
+    "skipped": 131,
+    "failed": 9,
+    "assertions": 2572,
+    "files": 107,
+    "causeObserved": "All nine compact permission fixture functions lacked injected useTourTarget; production hook import remains defined",
+    "strict24SourceManifestAndStability": "pass",
+    "laterUIBrowserStages": "skipped; full job failure retained"
+  },
+  "permissionFixtureRepair": {
+    "changedPath": "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts",
+    "red": {
+      "passed": 9,
+      "failed": 9,
+      "assertions": 33
+    },
+    "green": {
+      "passed": 18,
+      "failed": 0,
+      "assertions": 66,
+      "observedExitCode": 0
+    },
+    "changedAssertionsOrTimeouts": false,
+    "testSha256": "c871ac28316e70416cfb54a95d102345d405e81beecf15d5f0f049730d7724f7"
+  },
+  "workflowPathRepair": "Use explicit ./ test paths to restrict CLI inventory to current checkout, retaining all test directories/files and30s timeout",
+  "logs": [
+    {
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-history-final-b033-focused.log",
+      "repositoryGzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history-switch-followup/expanded-history-final-b033-focused.log.gz",
+      "sha256": "f87fe05312c2fc03bc365c897e40ec9e2b94a85090c6a2acd709886d2554f721",
+      "bytes": 10168
+    },
+    {
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-history-final-b033-node24-focused.log",
+      "repositoryGzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history-switch-followup/expanded-history-final-b033-node24-focused.log.gz",
+      "sha256": "cd71ce02f40e1e51d616843a0ba2c52f069d34bf41861bdbe8d33faf6ceeed32",
+      "bytes": 8549
+    },
+    {
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-history-final-b033-local-validate.log",
+      "repositoryGzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history-switch-followup/expanded-history-final-b033-local-validate.log.gz",
+      "sha256": "afaaf5ceda3b355aa44b8a693c55b3ed6543dca1fb195c04ef6409b14b00e1cf",
+      "bytes": 45042
+    },
+    {
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-history-final-b033-ui-unit.log",
+      "repositoryGzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history-switch-followup/expanded-history-final-b033-ui-unit.log.gz",
+      "sha256": "bd0e4c73fac44aa7a08041cae2a76a971ddb52fd80429e1ec6351a8039b6c661",
+      "bytes": 128010
+    },
+    {
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-history-permission-mode-fixture-red.log",
+      "repositoryGzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history-switch-followup/expanded-history-permission-mode-fixture-red.log.gz",
+      "sha256": "4a05c9915dfd4a06e051c1f5265dc50d8aa5ff23f965dd1db21e0c80e2b85161",
+      "bytes": 8643
+    },
+    {
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-history-permission-mode-fixture-green.log",
+      "repositoryGzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history-switch-followup/expanded-history-permission-mode-fixture-green.log.gz",
+      "sha256": "8c04a681841cb2ee43abcd2956d3a3169479f93ddb871eef241c9f530078fd4a",
+      "bytes": 2489
+    },
+    {
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-history-final-ui-job.log",
+      "repositoryGzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history-switch-followup/expanded-history-final-ui-job.log.gz",
+      "sha256": "0b6056cf80e9559a25be768d5a1c126e27d78815e97d59dfc614278184c6d271",
+      "bytes": 208241
+    }
+  ],
+  "fullDoDClosed": false
+}

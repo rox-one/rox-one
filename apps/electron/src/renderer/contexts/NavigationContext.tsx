@@ -292,20 +292,23 @@ export function NavigationProvider({
     actionEpochRef.current++
   }, [workspaceId])
 
-  const requestWorkspaceSwitch = useCallback((slug: string, onFailed?: (request: number) => void): boolean => {
+  const requestWorkspaceSwitch = useCallback((slug: string): boolean => {
     if (!onSwitchWorkspaceBySlug) return false
     const request = ++workspaceSwitchRequestRef.current
+    const reconcileRevision = ++historyReconcileRevisionRef.current
     const failed = () => {
-      if (request !== workspaceSwitchRequestRef.current || requestedWorkspaceSlugRef.current !== slug) return
-      if (onFailed) { onFailed(request); return }
+      if (!historyMountedRef.current || request !== workspaceSwitchRequestRef.current
+        || reconcileRevision !== historyReconcileRevisionRef.current
+        || requestedWorkspaceSlugRef.current !== slug) return
       isPopstateSwitchRef.current = false
       initialRouteRestoredRef.current = true
+      suppressPushRef.current = false
       pendingNavigationRef.current = null
       toast.error(t('common.unavailable'))
     }
     try {
       const accepted = onSwitchWorkspaceBySlug(slug)
-      if (accepted === false) return false
+      if (accepted === false) { failed(); return false }
       actionEpochRef.current++
       void Promise.resolve(accepted).then(result => { if (result === false) failed() }, failed)
       return true
@@ -320,6 +323,27 @@ export function NavigationProvider({
   const lastSemanticHistoryKeyRef = useRef('')
   const historyReconcileRevisionRef = useRef(0)
   const historyMountedRef = useRef(false)
+
+  // History leases belong to the local workspace, independently of action
+  // ownership, which also rotates on remote changes and panel focus intents.
+  useLayoutEffect(() => {
+    const revision = ++historyReconcileRevisionRef.current
+    // StrictMode replays layout setup after passive cleanup. The initial
+    // restoration remains complete, but its release frame belongs to the
+    // disposed lease. Resume that release without resetting the semantic key,
+    // so navigation arriving before the frame still creates a history entry.
+    if (initialRouteRestoredRef.current && suppressPushRef.current
+      && !historyMountedRef.current && !isPopstateSwitchRef.current
+      && pendingUrlRestoreRef.current === null) {
+      requestAnimationFrame(() => {
+        if (!historyMountedRef.current || revision !== historyReconcileRevisionRef.current
+          || isPopstateSwitchRef.current || pendingUrlRestoreRef.current !== null) return
+        suppressPushRef.current = false
+        maybePushHistoryForSemanticChange()
+      })
+    }
+    return () => { ++historyReconcileRevisionRef.current }
+  }, [workspaceId])
 
   const updateCanGoBackForward = useCallback(() => {
     setCanGoBack(historySeqRef.current > 0)
@@ -351,9 +375,9 @@ export function NavigationProvider({
    * Also persists the URL per-workspace in localStorage for workspace switch restoration.
    */
   const syncUrl = useCallback((push: boolean = false) => {
+    if (!historyMountedRef.current || isPopstateSwitchRef.current) return
     // Do not rewrite a foreign/unknown requested workspace into the current one.
     if (requestedWorkspaceSlugRef.current && requestedWorkspaceSlugRef.current !== workspaceSlug) return
-    if (!historyMountedRef.current || isPopstateSwitchRef.current) return
     if (!isReady || !isSessionsReady || pendingUrlRestoreRef.current !== null) return
     if (previousWorkspaceSlugRef.current !== null && previousWorkspaceSlugRef.current !== workspaceSlug) return
     const panels = store.get(panelStackAtom)
@@ -416,8 +440,8 @@ export function NavigationProvider({
   useEffect(() => { syncUrlRef.current = syncUrl }, [syncUrl])
 
   const maybePushHistoryForSemanticChange = useCallback(() => {
-    if (requestedWorkspaceSlugRef.current && requestedWorkspaceSlugRef.current !== workspaceSlug) return
     if (!historyMountedRef.current || isPopstateSwitchRef.current) return
+    if (requestedWorkspaceSlugRef.current && requestedWorkspaceSlugRef.current !== workspaceSlug) return
     if (!isReady || !isSessionsReady || pendingUrlRestoreRef.current !== null) return
     if (previousWorkspaceSlugRef.current !== null && previousWorkspaceSlugRef.current !== workspaceSlug) return
     const currentSemanticKey = getSemanticHistoryKey()
@@ -615,16 +639,12 @@ export function NavigationProvider({
   useEffect(() => {
     if (isSessionsNavigation(navigationState) && navigationState.details) {
       const meta = store.get(sessionMetaMapAtom).get(navigationState.details.sessionId)
-      const belongsToWorkspace = !!meta && !!workspaceId && (meta.workspaceId === workspaceId || meta.workspaceId === remoteWorkspaceId)
-      if (!isSessionsReady || !belongsToWorkspace) return
+      // The explicit address remains recoverable while ownership is unresolved,
+      // but selection also drives the shell's message loader.
+      if (!isSessionsReady || !meta || !workspaceId || (meta.workspaceId !== workspaceId && meta.workspaceId !== remoteWorkspaceId)) return
       setSession({ selected: navigationState.details.sessionId })
-      if (workspaceId) {
-        // Only persist if the session belongs to this workspace (prevents cross-workspace
-        // pollution during workspace switch, when workspaceId changed but navigationState
-        // still reflects the old workspace's focused panel)
-        if (belongsToWorkspace) {
-          storage.set(storage.KEYS.lastSelectedSessionId, navigationState.details.sessionId, workspaceId)
-        }
+      if (meta.workspaceId === workspaceId) {
+        storage.set(storage.KEYS.lastSelectedSessionId, navigationState.details.sessionId, workspaceId)
       }
     }
   }, [navigationState, setSession, workspaceId, remoteWorkspaceId, isSessionsReady, sessionMetaMap, store])
@@ -1074,6 +1094,11 @@ export function NavigationProvider({
     const handlePopState = (event: PopStateEvent) => {
       // A browser-history request supersedes pending create/prefill/send work.
       navigationOwnerRef.current.revision += 1
+      // Claim the history intent before readiness or workspace branching. A
+      // same-workspace request supersedes any pending foreign switch as well.
+      ++historyReconcileRevisionRef.current
+      isPopstateSwitchRef.current = false
+      suppressPushRef.current = true
       // Update sequence tracking
       const eventSeq = event.state?.seq ?? 0
       historySeqRef.current = eventSeq
@@ -1090,27 +1115,12 @@ export function NavigationProvider({
         // Workspace boundary crossed — trigger workspace switch
         // The workspace switch effect will handle reconciliation
         isPopstateSwitchRef.current = true
-        const revision = ++historyReconcileRevisionRef.current
-        const owner = navigationOwnerRef.current
-        const intent = owner.revision
         suppressPushRef.current = true
-        const releaseFailedSwitch = (request: number) => {
-          if (!historyMountedRef.current || revision !== historyReconcileRevisionRef.current
-            || request !== workspaceSwitchRequestRef.current || requestedWorkspaceSlugRef.current !== wsSlug
-            || !owner.active || navigationOwnerRef.current !== owner || owner.revision !== intent) return
+        if (!requestWorkspaceSwitch(wsSlug)) {
           isPopstateSwitchRef.current = false
-          suppressPushRef.current = false
+          reconcileFromUrlParamsRef.current(params)
           initialRouteRestoredRef.current = true
-          pendingNavigationRef.current = null
-          requestedWorkspaceSlugRef.current = workspaceSlug
-          setRequestedWorkspaceSlug(workspaceSlug)
-          // Only a failed history attempt rolls back to the committed selection.
-          // Initial/reload unknown-workspace addresses remain unavailable/raw.
-          syncUrl(false)
-          lastSemanticHistoryKeyRef.current = getSemanticHistoryKey()
-        }
-        if (!requestWorkspaceSwitch(wsSlug, releaseFailedSwitch)) {
-          releaseFailedSwitch(workspaceSwitchRequestRef.current)
+          finishHistoryReconcile()
         }
         return
       }

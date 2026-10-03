@@ -103,6 +103,50 @@ function pendingEffect(bindings: Record<string, any>) {
 }
 
 describe('UI-001 address preservation through actual navigation callbacks', () => {
+
+  for (const rotation of ['focus', 'remote'] as const) {
+    it(`history-switch lease releases after ${rotation} rotation while retaining the unknown requested address`, async () => {
+      const switched = deferred<boolean>(), errors: string[] = []
+      const owner = { active: true, revision: 0 }, navigationOwnerRef = { current: owner }
+      const historyReconcileRevisionRef = { current: 0 }, requestedWorkspaceSlugRef = { current: 'gone' }
+      const isPopstateSwitchRef = { current: true }, suppressPushRef = { current: true }
+      const request = callback('requestWorkspaceSwitch', {
+        workspaceSwitchRequestRef: { current: 0 }, onSwitchWorkspaceBySlug: () => switched.promise,
+        navigationOwnerRef, historyReconcileRevisionRef, requestedWorkspaceSlugRef,
+        pendingNavigationRef: { current: null }, isPopstateSwitchRef, suppressPushRef,
+        initialRouteRestoredRef: { current: true }, actionEpochRef: { current: 0 },
+        toast: { error: (key: string) => errors.push(key) }, t: (key: string) => key,
+      })
+      expect(request('gone')).toBe(true)
+      if (rotation === 'focus') owner.revision++
+      else { owner.active = false; navigationOwnerRef.current = { active: true, revision: 0 } }
+      switched.resolve(false); await settle()
+      expect(isPopstateSwitchRef.current).toBe(false)
+      expect(suppressPushRef.current).toBe(false)
+      expect(errors).toEqual(['common.unavailable'])
+      expect(requestedWorkspaceSlugRef.current).toBe('gone')
+    })
+  }
+
+  it('a superseded history lease cannot release a new workspace request even across local workspace ABA', async () => {
+    const switched = deferred<boolean>(), errors: string[] = []
+    const historyReconcileRevisionRef = { current: 0 }, isPopstateSwitchRef = { current: true }, suppressPushRef = { current: true }
+    const request = callback('requestWorkspaceSwitch', {
+      workspaceSwitchRequestRef: { current: 0 }, onSwitchWorkspaceBySlug: () => switched.promise,
+      historyReconcileRevisionRef, requestedWorkspaceSlugRef: { current: 'gone' },
+      pendingNavigationRef: { current: null }, isPopstateSwitchRef, suppressPushRef,
+      initialRouteRestoredRef: { current: true }, actionEpochRef: { current: 0 },
+      toast: { error: (key: string) => errors.push(key) }, t: (key: string) => key,
+    })
+    expect(request('gone')).toBe(true)
+    // Local workspace ownership changes fence history independently of action ownership.
+    historyReconcileRevisionRef.current += 2
+    switched.reject(new Error('obsolete workspace reply')); await settle()
+    expect(isPopstateSwitchRef.current).toBe(true)
+    expect(suppressPushRef.current).toBe(true)
+    expect(errors).toEqual([])
+  })
+
   it('catches a rejected workspace switch, discards its pending action and allows an explicit local recovery', async () => {
     const switched = deferred<boolean>(), errors: string[] = []
     const pendingNavigationRef = { current: { route: 'action/new-session', workspaceId: 'a' } }
@@ -383,7 +427,7 @@ describe('UI-001 address preservation through actual navigation callbacks', () =
         storage: { KEYS: { lastSelectedSessionId: 'last' }, set: (...args: unknown[]) => persisted.push(args) },
       })
       expect(selected).toHaveLength(expected)
-      expect(persisted).toHaveLength(expected)
+      expect(persisted).toHaveLength(metaWorkspace === 'a' ? expected : 0)
     }
   })
 

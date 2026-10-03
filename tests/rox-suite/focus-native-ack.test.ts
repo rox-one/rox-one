@@ -15,7 +15,7 @@ import { PersonalTaskPersistStore } from '../../packages/server-core/src/tasks/p
 import { deletePersonalTasks, migratePersonalTasks, putPersonalTasks, readPersonalTasks } from '../../packages/server-core/src/tasks/personal-tasks-service'
 import { PersonalTaskCreationError, putPersonalTaskConfirmed, pushPersonalTaskDiff, type PersonalTasksApi } from '../../apps/electron/src/renderer/lib/personal-tasks-sync'
 import { createPersonalTaskConfirmed } from '../../apps/electron/src/renderer/lib/extra-screens/personal-task-bridge'
-import { hydratePersonalTasks, loadPersonalTaskStore, personalTasksSyncState } from '../../apps/electron/src/renderer/lib/personal-tasks'
+import { setPersonalTaskScope, hydratePersonalTasks, loadPersonalTaskStore, personalTasksSyncState } from '../../apps/electron/src/renderer/lib/personal-tasks'
 
 const directories: string[] = []
 afterAll(() => { for (const directory of directories) rmSync(directory, { recursive: true, force: true }) })
@@ -86,6 +86,7 @@ describe('RS-FOCUS-01 canonical native acknowledgement', () => {
     Object.defineProperty(globalThis, 'window', { configurable: true, value: surface })
     Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: cache() })
     try {
+      setPersonalTaskScope({ authority: 'local', userId: 'fixture-user', workspaceId: 'fixture-ws' })
       await hydratePersonalTasks()
       expect(loadPersonalTaskStore().list()).toEqual([])
       surface.electronAPI = undefined
@@ -162,6 +163,7 @@ describe('RS-FOCUS-01 canonical native acknowledgement', () => {
       expect(retryWrites[1]).toEqual([{ task: next, expectedRevision: null }])
       expect(retryReceipts[1]).toEqual({ accepted: [{ task: next, revision: 1 }], conflicts: [], rejected: [] })
     } finally {
+      setPersonalTaskScope(null)
       if (oldWindow) Object.defineProperty(globalThis, 'window', oldWindow)
       else Reflect.deleteProperty(globalThis, 'window')
       if (oldStorage) Object.defineProperty(globalThis, 'localStorage', oldStorage)

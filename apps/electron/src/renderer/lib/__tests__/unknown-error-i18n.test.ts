@@ -48,7 +48,7 @@ describe('unknown-error toast fallbacks are i18n', () => {
   it('App toast fallbacks use toast.unknownError', () => {
     const source = read('App.tsx')
     expect(source).toContain("t('toast.unknownError')")
-    expect(source.match(/t\('toast\.unknownError'\)/g)?.length).toBe(6)
+    expect(source.match(/t\('toast\.unknownError'\)/g)?.length).toBe(7)
     expect(source).not.toContain("'Unknown error'")
   })
 })
