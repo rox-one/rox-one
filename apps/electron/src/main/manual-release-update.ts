@@ -1,12 +1,14 @@
 import type { UpdateInfo } from '@rox/shared/protocol'
 import { compareSemver } from './auto-update-policy'
 
+export type ReleaseMetadataFetcher = (url: string, options?: RequestInit) => Promise<Response>
+
 const RELEASES_API = 'https://api.github.com/repos/rox-one/rox-one/releases?per_page=100'
 
 /** Public release metadata only. Never downloads or installs executable assets. */
 export async function checkPublishedManualUpdate(
   currentVersion: string,
-  fetcher: typeof fetch = fetch,
+  fetcher: ReleaseMetadataFetcher = fetch,
 ): Promise<UpdateInfo> {
   const response = await fetcher(RELEASES_API, {
     headers: { Accept: 'application/vnd.github+json' },

@@ -1,14 +1,14 @@
 import { expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { checkPublishedManualUpdate } from '../manual-release-update'
+import { checkPublishedManualUpdate, type ReleaseMetadataFetcher } from '../manual-release-update'
 import { shouldOfferManualReleaseCheck } from '../auto-update-policy'
 
 const release = (version: string, date = '2026-10-03T00:00:00Z') => ({
   tag_name: `v${version}`, published_at: date, draft: false,
   assets: [{ name: 'Rox-arm64.zip' }, { name: 'Rox-arm64.dmg' }],
 })
-const fake = (data: unknown) => (async () => new Response(JSON.stringify(data))) as typeof fetch
+const fake = (data: unknown) => (async () => new Response(JSON.stringify(data))) as ReleaseMetadataFetcher
 
 test('only unsigned release installations in /Applications permit explicit metadata checks', () => {
   const base = { homeDir: '/Users/test', execPath: '/Applications/Rox.app/Contents/MacOS/Rox', isAdHocSigned: true }
@@ -30,7 +30,7 @@ test('manual check accepts newest published preview with compatible assets, no d
       { ...release('99.0.0'), draft: true },
       { ...release('99.0.1'), assets: [{ name: 'Rox-99.0.1-x64.exe' }] },
     ]))
-  }) as typeof fetch
+  }) as ReleaseMetadataFetcher
   const info = await checkPublishedManualUpdate('0.11.7', fetcher)
   expect(requests).toEqual(['https://api.github.com/repos/rox-one/rox-one/releases?per_page=100'])
   expect(info.available).toBe(true)
@@ -49,7 +49,7 @@ test('manual metadata cannot suggest downgrade or nonexistent platform release',
   expect((await checkPublishedManualUpdate('0.11.9', fake([release('0.11.8')]))).available).toBe(false)
   await expect(checkPublishedManualUpdate('0.11.8', fake([]))).rejects.toThrow('No published')
   await expect(checkPublishedManualUpdate('0.11.8', fake({}))).rejects.toThrow('invalid release metadata')
-  await expect(checkPublishedManualUpdate('0.11.8', (async () => new Response('', { status: 403 })) as typeof fetch)).rejects.toThrow('HTTP 403')
+  await expect(checkPublishedManualUpdate('0.11.8', (async () => new Response('', { status: 403 })) as ReleaseMetadataFetcher)).rejects.toThrow('HTTP 403')
 })
 
 test('manual check and install boundaries are explicit in production entry points', () => {
