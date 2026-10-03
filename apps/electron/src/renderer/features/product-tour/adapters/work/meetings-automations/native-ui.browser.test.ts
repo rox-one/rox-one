@@ -7,6 +7,8 @@ import { resolve } from 'node:path'
 // Real renderer components and DOM; the native transport is an isolated explicit fixture.
 // This is component evidence, not a macOS microphone or full App acceptance claim.
 const root = resolve(import.meta.dir, '../../../../../../../../..')
+const isolatedCase = process.env.ROX_PRODUCT_TOUR_MEETINGS_CASE
+let registeredIsolatedCase = false
 let server: Server, browser: Browser, base: string
 const stubs: Record<string, string> = {
   'react-i18next': `export const useTranslation=()=>({t:(key,options)=>key,i18n:{language:'en',resolvedLanguage:'en'}});`,
@@ -88,6 +90,7 @@ async function bundle() {
 }
 
 beforeAll(async () => {
+  if (!isolatedCase) return
   const source = await bundle()
   server = createServer((req, res) => {
     res.setHeader('Content-Type', req.url === '/fixture.js' ? 'application/javascript' : 'text/html')
@@ -110,8 +113,33 @@ async function fixture(surface: 'meetings' | 'automation', mode = 'empty') {
 }
 const inspect = (page: Page) => page.evaluate(() => (window as any).fixture.inspect())
 
+// The full suite may mutate Bun module caches before esbuild's plugin callbacks.
+// A fresh process owns each real native component bundle and Chromium lifecycle.
+function browserTest(name: string, operation: () => Promise<void>) {
+  if (isolatedCase && isolatedCase !== name) return
+  if (isolatedCase) registeredIsolatedCase = true
+  it(name, async () => {
+    if (isolatedCase === name) return operation()
+    const child = Bun.spawn([process.execPath, 'test', import.meta.path], {
+      env: { ...process.env, ROX_PRODUCT_TOUR_MEETINGS_CASE: name },
+      stdout: 'pipe', stderr: 'pipe',
+    })
+    const timeout = setTimeout(() => child.kill(), 40_000)
+    try {
+      const [stdout, stderr, exitCode] = await Promise.all([
+        new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited,
+      ])
+      if (exitCode !== 0) throw new Error(`Native Meetings/Automation browser case exited ${exitCode}:\n${stdout}${stderr}`)
+      expect(exitCode).toBe(0)
+    } finally {
+      clearTimeout(timeout)
+      child.kill()
+    }
+  }, isolatedCase ? 30_000 : 45_000)
+}
+
 describe('A11 rendered native surfaces', () => {
-  it('DOMAIN-18/T-MEETINGS-LIST: Start/replay stays read-only; no artifact remains pending', async () => {
+  browserTest('DOMAIN-18/T-MEETINGS-LIST: Start/replay stays read-only; no artifact remains pending', async () => {
     const page = await fixture('meetings')
     for (const token of ['run-a', 'run-b']) await page.evaluate(token => (window as any).fixture.start(token), token)
     const state = await inspect(page)
@@ -124,7 +152,7 @@ describe('A11 rendered native surfaces', () => {
     await page.close()
   })
 
-  it('T-MEETINGS-RESULT: opening loaded native content emits observed evidence only', async () => {
+  browserTest('T-MEETINGS-RESULT: opening loaded native content emits observed evidence only', async () => {
     const page = await fixture('meetings', 'summary')
     expect((await inspect(page)).events).toEqual([])
     await page.evaluate(() => (window as any).fixture.start())
@@ -145,7 +173,7 @@ describe('A11 rendered native surfaces', () => {
     await page.close()
   })
 
-  it('T-MEETINGS-RESULT: a delayed native load cannot finish a replay or another panel', async () => {
+  browserTest('T-MEETINGS-RESULT: a delayed native load cannot finish a replay or another panel', async () => {
     const page = await fixture('meetings', 'transcript')
     await page.evaluate(() => (window as any).fixture.start('run-old'))
     await page.getByRole('tab', { name: 'meetings.local.tab.transcript' }).click()
@@ -160,7 +188,7 @@ describe('A11 rendered native surfaces', () => {
     await page.close()
   })
 
-  it('T-MEETINGS-RESULT: changing the panel rejects a pending artifact load', async () => {
+  browserTest('T-MEETINGS-RESULT: changing the panel rejects a pending artifact load', async () => {
     const page = await fixture('meetings', 'transcript')
     await page.evaluate(() => (window as any).fixture.start())
     await page.getByRole('tab', { name: 'meetings.local.tab.transcript' }).click()
@@ -173,7 +201,7 @@ describe('A11 rendered native surfaces', () => {
     await page.close()
   })
 
-  it('T-MEETINGS-LIST/RESULT: A → B → A cannot publish a stale catalog or artifact capability', async () => {
+  browserTest('T-MEETINGS-LIST/RESULT: A → B → A cannot publish a stale catalog or artifact capability', async () => {
     const page = await fixture('meetings', 'summary')
     await page.evaluate(() => {
       const f = (window as any).fixture
@@ -202,7 +230,7 @@ describe('A11 rendered native surfaces', () => {
     await page.close()
   })
 
-  it('DOMAIN-19/T-AUTOMATION-TRIGGER/ACTION/CONTROL: real section refs and schedule stay read-only', async () => {
+  browserTest('DOMAIN-19/T-AUTOMATION-TRIGGER/ACTION/CONTROL: real section refs and schedule stay read-only', async () => {
     const page = await fixture('automation')
     await page.evaluate(() => (window as any).fixture.start())
     const state = await inspect(page)
@@ -225,7 +253,7 @@ describe('A11 rendered native surfaces', () => {
     await page.close()
   })
 
-  it('flag-off and unmount clean target/capability registrations', async () => {
+  browserTest('flag-off and unmount clean target/capability registrations', async () => {
     const page = await fixture('meetings', 'summary')
     await page.evaluate(() => { (window as any).fixture.enabled = false; (window as any).fixture.render() })
     const state = await inspect(page)
@@ -237,7 +265,7 @@ describe('A11 rendered native surfaces', () => {
     await page.close()
   })
 
-  it('T-AUTOMATION-TRIGGER/ACTION/CONTROL: a foreign selection cannot relabel the native entity', async () => {
+  browserTest('T-AUTOMATION-TRIGGER/ACTION/CONTROL: a foreign selection cannot relabel the native entity', async () => {
     const page = await fixture('automation')
     await page.evaluate(() => { const f = (window as any).fixture; f.selectedId = 'foreign-automation'; f.render() })
     const state = await inspect(page)
@@ -249,4 +277,5 @@ describe('A11 rendered native surfaces', () => {
     expect(state.mutations).toEqual([])
     await page.close()
   })
+  if (isolatedCase && !registeredIsolatedCase) throw new Error(`Unknown native Meetings/Automation isolation case: ${isolatedCase}`)
 })
