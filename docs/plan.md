@@ -968,3 +968,8 @@ Owner root. Depends on existing rail-links/Popover/Select and current product-to
 2. Exercise actual local variable resolution, repeated agent context, explicit empty/disabled/missing folders, metadata arrival order, stale-type auth and current managed credential guards. Exercise real temporary-file obsolete migration/idempotence/custom prefs/old-path evidence, link/hardlink/FIFO/oversize/content replacement refusal and fresh exclusive default seeding. Keep native Windows migration controls explicitly skipped off Windows.
 3. Run source/current SourceManager and adjacent builder/builtin credential controls, shared/Electron types; freeze source and bounded receipt. Compare actual old consumers to prove the gap, retain failure history, reconcile current main and publish/attach separate PR for lead review/merge.
 4. Continue #1436 host Bash lifetime and collection/knowledge performance actual consumers and function-level ledger; no whole original branch acceptance from this slice.
+
+
+### Golden per-task form draft recovery — 2026-10-04
+
+Owner recent_features; depends on current Tasks1456, strict date1470 and Product1454. Preserve old source and modern Things UI. Exercise actual two-task link/kind/tag retention, submitted-field-only clearing, actor/workspace ABA, unmount and stale pre-render button denial, plus all retained task import/responsive cases and current native commit controls. Retain the before-fix lost draft and fixture failure history; qualify current Electron types with own workspace dependency resolution, record exact source/log hashes, reconcile all current docs without deletions, publish separate PR for parent review/merge.
