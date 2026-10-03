@@ -20,9 +20,9 @@
   window.__IMPECCABLE_LIVE_INIT__ = true;
 
   const TOKEN = window.__IMPECCABLE_TOKEN__;
-  const PORT = window.__IMPECCABLE_PORT__;
+  const PORT = Number(window.__IMPECCABLE_PORT__);
   const APP_ROOT = window.__IMPECCABLE_APP_ROOT__ || null;
-  if (!TOKEN || !PORT) {
+  if (!TOKEN || !Number.isInteger(PORT) || PORT < 1 || PORT > 65535) {
     window.__IMPECCABLE_LIVE_INIT__ = false; // reset so the real load can init
     return;
   }
@@ -12204,6 +12204,7 @@ void main() {
   }
 
   function onDetectMessage(e) {
+    if (e.source !== window || e.origin !== window.location.origin) return;
     if (!e.data || typeof e.data.source !== 'string') return;
     // Detection script is loaded and ready
     if (e.data.source === 'impeccable-ready') {

@@ -51,6 +51,10 @@ jobs:
           packages/shared/src/context-docs
           packages/shared/src/skills/__tests__/bundled.test.ts
           packages/shared/src/skills/__tests__/vendor-security.test.ts
+          packages/shared/src/skills/__tests__/browser-helper-security.test.ts
+          packages/shared/src/skills/__tests__/compound-helper-security.test.ts
+          packages/shared/src/skills/__tests__/gstack-security.test.ts
+          scripts/probes/omp-worker-loop.test.ts
           packages/shared/src/toolchain/__tests__/acpx.test.ts
           packages/shared/src/credentials/backends/__tests__/keychain-master-key.test.ts
           packages/shared/src/agent/core/__tests__/rox-config-paths.test.ts

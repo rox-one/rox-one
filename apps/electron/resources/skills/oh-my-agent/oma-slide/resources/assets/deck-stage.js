@@ -499,11 +499,15 @@ document.addEventListener("DOMContentLoaded", () => {
  * the parent frame can post { type: "navigateTo", index: N } to control it.
  */
 window.addEventListener("message", (e) => {
+  if (e.source !== window.parent || e.origin !== window.location.origin) return;
   if (!e.data || typeof e.data !== "object") return;
   if (e.data.type !== "navigateTo") return;
 
+  const index = Number(e.data.index);
+  if (!Number.isSafeInteger(index) || index < 0) return;
+
   const deckEl = document.querySelector("deck-stage");
   if (deckEl && typeof deckEl.goTo === "function") {
-    deckEl.goTo(Number(e.data.index));
+    deckEl.goTo(index);
   }
 });

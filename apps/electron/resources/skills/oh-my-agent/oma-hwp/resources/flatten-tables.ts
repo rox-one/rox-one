@@ -17,8 +17,7 @@
  * (also runs under node >= 22.6 via type stripping)
  */
 
-import { constants } from "node:fs";
-import { access, readFile, writeFile } from "node:fs/promises";
+import { transformFileSafely } from "./safe-file-transform.js";
 import TurndownService from "turndown";
 import { tables } from "turndown-plugin-gfm";
 import { replaceBalancedTables } from "./balanced-tables.js";
@@ -43,49 +42,42 @@ const PUA = /[\uE000-\uF8FF\u{F0000}-\u{FFFFD}\u{100000}-\u{10FFFD}]/gu;
 
 async function main(): Promise<void> {
   for (const path of files) {
-    try {
-      await access(path, constants.F_OK);
-    } catch {
-      console.error(`[flatten-tables] not found: ${path}`);
-      process.exitCode = 1;
-      continue;
-    }
-
-    const src = await readFile(path, "utf8");
-
     let tableCount = 0;
     let keptCount = 0;
-    let out = replaceBalancedTables(src, (match: string) => {
-      const nestedTableCount = (match.match(/<table\b/gi) ?? []).length;
-      if (nestedTableCount > 1) {
-        keptCount += 1;
-        return match;
-      }
-      const converted = td.turndown(match).trim();
-      // turndown-plugin-gfm only converts tables whose first row is <th>
-      // (kordoc always emits one); anything else is kept as HTML — do not
-      // count it as flattened.
-      if (converted.startsWith("<table")) {
-        keptCount += 1;
-        return match;
-      }
-      tableCount += 1;
-      return `\n\n${converted}\n\n`;
-    });
-
     let puaCount = 0;
-    out = out.replace(PUA, () => {
-      puaCount += 1;
-      return "";
+    const changed = await transformFileSafely(path, (src) => {
+      let out = replaceBalancedTables(src, (match: string) => {
+        const nestedTableCount = (match.match(/<table\b/gi) ?? []).length;
+        if (nestedTableCount > 1) {
+          keptCount += 1;
+          return match;
+        }
+        const converted = td.turndown(match).trim();
+        // turndown-plugin-gfm only converts tables whose first row is <th>
+        // (kordoc always emits one); anything else is kept as HTML — do not
+        // count it as flattened.
+        if (converted.startsWith("<table")) {
+          keptCount += 1;
+          return match;
+        }
+        tableCount += 1;
+        return `\n\n${converted}\n\n`;
+      });
+
+      out = out.replace(PUA, () => {
+        puaCount += 1;
+        return "";
+      });
+
+      return out;
     });
 
-    if (tableCount === 0 && puaCount === 0) {
+    if (!changed) {
       const kept = keptCount ? ` (${keptCount} table(s) kept as HTML: no <th> heading row)` : "";
       console.log(`[flatten-tables] ${path}: nothing to change${kept}`);
       continue;
     }
 
-    await writeFile(path, out, "utf8");
     const parts: string[] = [];
     if (tableCount) parts.push(`${tableCount} table(s) flattened`);
     if (keptCount) parts.push(`${keptCount} table(s) kept as HTML (no <th> heading row)`);
