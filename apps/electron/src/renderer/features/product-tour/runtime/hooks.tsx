@@ -53,7 +53,7 @@ export function useTourSignals(overrides: Partial<TourScope> = {}) {
     capture: (): TourObservation | null => runtime?.enabled && scope ? runtime.capture(scope) : null,
     emit: (observation: TourObservation | null, name: SignalName, level: TourSignal['level'], origin: TourSignal['origin'], eventToken = crypto.randomUUID()) => {
       if (!observation || !runtime?.enabled || (level === 'verified' && origin === 'ui-observation')) return
-      runtime.emit({ name, binding: observation.binding, operationToken: observation.operationToken, eventToken, at: Date.now(), level, origin } as TourSignal)
+      runtime.emit({ name, binding: observation.binding, operationToken: observation.operationToken, operationStartedAt: observation.at, eventToken, at: Date.now(), level, origin } as TourSignal)
     },
     capability: (id: CapabilityId, value: TourCapability) => scope && runtime?.enabled ? runtime.setCapability(scope, id, value) : () => {},
   }), [runtime, scope])
