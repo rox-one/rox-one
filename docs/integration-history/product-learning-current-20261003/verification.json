@@ -1,6 +1,6 @@
 {
-  "qualified_production_revision": "0094f2a5382e069bf9267eb4aa9a288e34954909",
-  "integrated_main": "42034d8deb617630f923be8f61b33c72c05ed782",
+  "qualified_production_revision": "a32ace658102e4ab14e3c66b4bc79b29eb79db9b",
+  "integrated_main": "14cf6c561a4c39c47658ab1566e61c200041f649",
   "source_family": [
     {
       "branch": "codex/baseline-release-blockers-20261003",
@@ -148,69 +148,59 @@
       "passed": 14,
       "failed": 0,
       "assertions": null,
-      "log_sha256": "6fe5101c7c527ad692c7691bfbd1abf54d6107db2008b093c527f5f6776ea5fd",
-      "local_log": "product-tour-current-actual-app-ui-qualified.log"
+      "log_sha256": "ff437b2383e0abfecae4f004520f96ad210625f64192d5309347add195cb18f4",
+      "local_log": "product-tour-current-14cf-actual-app-ui.log"
+    },
+    {
+      "name": "actual-current-navigation-provider",
+      "passed": 28,
+      "failed": 0,
+      "assertions": null,
+      "local_log": "product-tour-current-14cf-navigation-browser-qualified.log",
+      "log_sha256": "ea0cc4545138ddf5a9f3d143b823a261ffae5b833a07111d9da289d1d0a49aad",
+      "runner": "unchanged28browserbodies+temporaryNode lifecycle adapter with literal toStartWith equivalent"
     }
   ],
   "typecheck": {
     "electron": {
       "exit": 0,
-      "revision": "0094f2a5382e069bf9267eb4aa9a288e34954909",
-      "log": "product-tour-current-joined-electron-types-qualified.log"
+      "revision": "a32ace658102e4ab14e3c66b4bc79b29eb79db9b",
+      "log": "product-tour-current-14cf-electron-types.log"
     },
-    "webui_and_all_renderer": {
+    "webui_all_renderer": {
       "exit": 0,
-      "revision": "fa0c979ad0edc7431b5f9014d1f7706e938364db",
-      "log": "product-tour-current-joined-webui-types-qualified.log"
+      "revision": "a32ace658102e4ab14e3c66b4bc79b29eb79db9b",
+      "log": "product-tour-current-14cf-webui-types.log"
     }
   },
   "build": {
-    "real_app_and_component_routes": {
+    "actual_app_and_spotlight": {
       "exit": 0,
-      "revision": "0094f2a5382e069bf9267eb4aa9a288e34954909",
-      "fingerprint": "1c7d8c792d44ef8d1a47b92eb9c0b15b698f52d348e45e01e228a99654a78a54",
-      "log": "product-tour-current-app-build-final.log"
+      "revision": "a32ace658102e4ab14e3c66b4bc79b29eb79db9b",
+      "fingerprint": "b56d3b2840184a28e88fcfe763d37161921bbb781229cbd4ddb115078dae760d",
+      "log": "product-tour-current-14cf-app-build.log"
     },
-    "main_and_three_preloads": {
+    "native_main_preloads": {
       "exit": 0,
-      "source_family_revision": "f4d9e0377e45602e3d2af6182426352a1205736d",
-      "local_logs": [
-        "product-native-final-main-build.log",
-        "product-native-final-preload-build.log"
-      ]
+      "revision": "f4d9e0377e45602e3d2af6182426352a1205736d",
+      "scope": "unchanged native Product framework; newer inherited main qualifies independently"
     }
   },
   "original_branches_deleted": false,
-  "deleted_paths_against_main": [
-    "apps/electron/src/main/__tests__/rox-readiness-ui-001.second-instance-startup.test.ts",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/cjs-binding-repair.json",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-final-integration-focused-79fa.log.gz",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-final-integration-isolated-controls-79fa.log.gz",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-main-cjs-c30-complete-bindings.log.gz",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-main-cjs-c30-green.log.gz",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-main-cjs-c30-red.log.gz",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-regression-79fa52743-final.log.gz",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-second-instance-79fa-green.log.gz",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-second-instance-79fa-red-canonical.log.gz",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-second-instance-79fa-red.log.gz",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-startup-c30-durable-ubuntu-failure.log.gz",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/plan.md",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/result.json",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/spec.md"
-  ],
+  "deleted_paths_against_main": [],
   "source_manifest_sha256": {
     ".github/workflows/product-tour-native.yml": "3e46559b64ef5839922dc087653ec45f05abfbb2a2475334b3500ab71b4985fb",
-    ".github/workflows/sqlite-runtime-recovery.yml": "f31d1087b21efb99f49a197203ac7ccb99a00770805573f08c60d155a0c9c7cd",
-    "apps/electron/src/main/index.ts": "0c351afe777a53c694999102e59675a06a009e7fdc6bb0f3966ef9303a96b363",
+    ".github/workflows/sqlite-runtime-recovery.yml": "051449f9943c52bc815c884deb0a8ff49684956deb56a97130d46d71c21140b5",
+    "apps/electron/src/main/index.ts": "8acf5975c74a8a338264a15aa76116504a71c49a1853bdade18987da7c396247",
     "apps/electron/src/preload/native-replica.ts": "ec108be16c35c5f97c466229e9ef9159ce68d64978d6f0a39173d29b5c7c2219",
     "apps/electron/src/renderer/App.tsx": "3e289d656d2b62afcb7fccfd321f5d329d6a6fc4464f04615a337ebeacffdb5a",
     "apps/electron/src/renderer/components/app-shell/AccountMenu.tsx": "36c2e41f8c95c089587108d5603509926aca5567ffd58e600e6ac77f4fcd026e",
     "apps/electron/src/renderer/components/app-shell/ActiveOptionBadges.tsx": "8fbedcd765df6567d5f59b7d3231da27a069ccd913bcbc26cb998d7ba46d4e16",
-    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "6516a65ed7cadf4d06fa67763e6396889055ea2fc8d621686deb13b210453bbd",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "64b5c35cfa8feb03b6e6ba9eb6ee1f6641e3342ef13d3ee6c80a946e5d25f4f4",
     "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx": "165378cec4b2cb7b30a7ad797791160b7cd03d4b4572a01b2b5fd3d14db7bd47",
     "apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu.tsx": "d8155ede4aeca1eb91c2499019b0cf62caab984e26353d8a8114a59bd307f7be",
     "apps/electron/src/renderer/components/app-shell/FabNewChat.tsx": "9a1d7b39e7b68424a3ef65a6f81fa8dbf05d5e582bed56376704bf889a9c9890",
-    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "1f2188fd359a31fa38a64b0be4d207ac69f4021eb412e21b7c5cfda442271eae",
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "7eeb3b03a8079cf51f1481e6e3ea0b989f3b9d3e925b3509e67dadab2a98eb03",
     "apps/electron/src/renderer/components/app-shell/OnboardingDialog.tsx": "44b2bc1b123baea33da41ba20e55180a7d79710fc5aaabe1ac486308426ee41f",
     "apps/electron/src/renderer/components/app-shell/ProjectsListPanel.tsx": "e1ea1f2e1cd5f1a3c2d9887786fc3c7c8ddc732cd769ac06e7051b40623c456d",
     "apps/electron/src/renderer/components/app-shell/QuestProgressCard.tsx": "e6bfd63ad65ff01dbc43fbdb015f2af14e3a924073b14d20ab2db8661699246f",
@@ -353,7 +343,7 @@
     "packages/shared/src/i18n/locales/ru.json": "3bbaed072d49062fcefc8b4c5aaf381de7d40cd4b7e4b1174b6dd955e77ab243",
     "packages/shared/src/i18n/locales/zh-Hans.json": "cc2175b289f1ae94d4ad026d3ebaed998264e99890c1ef16731256b18e29d87e",
     "packages/shared/src/i18n/locales/zh-Hant.json": "ca01a1941952acf100468e00f0705dfa8b17308fa02b0e5eba0ee641c98acd0f",
-    "scripts/electron-main-cjs.test.ts": "42704fb0eedde299fea4f143d9a7787a781975954399aa03fb705e99ecce234e",
+    "scripts/electron-main-cjs.test.ts": "54905a247baff5fb8600e4ccd51fbc22b9138756da99ea6ae3aa0d4408de8294",
     "scripts/product-tour/application-build.ts": "7e0198f30d06c49752e99b2458a439eef9564d64f4798254722f7a5c355c0f9e",
     "scripts/product-tour/browser-node-adapter.mjs": "ee36c4419de2ccb6943391f8ccb21f40b2bd903b48baddca6ff827a15a16da09",
     "scripts/product-tour/bundle-report.ts": "8b56f26fdcb8be043b89abeafbbbb37568c6d002f8ba5cc18a4a1c4f637b254e",
@@ -394,17 +384,14 @@
     "Source native fixture lacked new confirmed-task import; read-only fixture now throws on an unexpected task mutation",
     "Built fixture omitted ui.html, then inherited parent login HTML entry; explicit owned two-entry map repaired",
     "Earlier positive workspace expectation contradicted current restricted WebUI; restored frozen5069 blocked-capability expectation",
-    "Latest dictation whitespace separator gap reproduced old0/1 and recovered25/0 without trimming existing draft/trailing preference"
+    "Latest dictation whitespace separator gap reproduced old0/1 and recovered25/0 without trimming existing draft/trailing preference",
+    "14cf actualNav Node adapter initially omitted Bun toStartWith matcher:27/28; source assertions unchanged, exact literal startsWith matcher supplied in evidence adapter, then28/28."
   ],
-  "reconciled_main": "c00828493d340e8dbdb389daf642b1624039f762",
+  "reconciled_main": "14cf6c561a4c39c47658ab1566e61c200041f649",
   "post_qualification_merge": {
-    "pr_dependencies": [
-      1449,
-      1452
-    ],
-    "own_learning_and_actual_app_source_blobs_changed": false,
-    "resolution": "append-only docs union; preserve inherited startup and portable-resource changes",
-    "actual_app_fingerprint_recheck": "exit0: current source matches qualified1c7d8c792d44ef8d1a47b92eb9c0b15b698f52d348e45e01e228a99654a78a54 build"
+    "main": "14cf6c561a4c39c47658ab1566e61c200041f649",
+    "scope": "External1417 UI route recovery reconciled; TourPanelScope retained outside current workspace/detail/query-keyed StoplightProvider and RouteErrorBoundary; current native/workspace/session guards retained. Full actualApp/UI14 +actualNav28 +bothfulltypes refreshed.",
+    "deleted_paths": []
   },
   "evidence_artifacts": [
     {
@@ -511,6 +498,36 @@
       "path": "logs/product-tour-current-real-idb-replay.log.gz",
       "raw_sha256": "d398119498130f1ba8bacbc7aaf5215663e6a2d3496bbefcd1f957cf43dcf8c0",
       "gzip_sha256": "9bbeed02e2919b06448f96886364a4f1f3ce8a54ddce8c552d45c6cf3051a352"
+    },
+    {
+      "path": "logs/product-tour-current-14cf-actual-app-ui.log.gz",
+      "compressed_sha256": "7cebef090709bbdbee4f8b57aea209921f996e1e99511383e3b695d8e2fe9490",
+      "uncompressed_sha256": "ff437b2383e0abfecae4f004520f96ad210625f64192d5309347add195cb18f4"
+    },
+    {
+      "path": "logs/product-tour-current-14cf-navigation-browser.log.gz",
+      "compressed_sha256": "93c20f7f2a63ef89bc1e9f24d092ba80b30bd7c78235f86fdee8666b6b72ff9e",
+      "uncompressed_sha256": "2ef3813c9b5586fdc40f351cf17740f20fc45905df06312d6bcab036a67d69ce"
+    },
+    {
+      "path": "logs/product-tour-current-14cf-navigation-browser-qualified.log.gz",
+      "compressed_sha256": "63edcb3be6ffc8ee062ed2ad95ce1a7867f291ae1c1d17ea24fd6a25c9b4d10f",
+      "uncompressed_sha256": "ea0cc4545138ddf5a9f3d143b823a261ffae5b833a07111d9da289d1d0a49aad"
+    },
+    {
+      "path": "logs/product-tour-current-14cf-app-build.log.gz",
+      "compressed_sha256": "a12e0fb697747eca1d144877d0a1dc52aea5b125c2224686316446d60d01afa3",
+      "uncompressed_sha256": "72e98479de34d242c9c46f7bfbf5255485bc8b15a22e67900e6cc27589559007"
+    },
+    {
+      "path": "logs/product-tour-current-14cf-electron-types.log.gz",
+      "compressed_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/product-tour-current-14cf-webui-types.log.gz",
+      "compressed_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     }
   ]
 }
