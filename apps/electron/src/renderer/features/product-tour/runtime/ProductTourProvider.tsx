@@ -271,8 +271,8 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
     const offTargets = registry.subscribe(locate)
     const offModals = modal.subscribe(() => setLayerRevision(value => value + 1))
     const offLayers = layers.subscribe(() => setLayerRevision(value => value + 1))
-    const onBlur = () => { setForeground(false); if (stateRef.current.phase !== 'handed-off') pause('focus-lost') }
-    const onFocus = () => setForeground(true)
+    const onBlur = () => { foregroundRef.current = false; setForeground(false); if (stateRef.current.phase !== 'handed-off') pause('focus-lost') }
+    const onFocus = () => { foregroundRef.current = true; setForeground(true) }
     window.addEventListener('blur', onBlur); window.addEventListener('focus', onFocus)
     const onVisibility = () => { if (document.hidden) onBlur(); else onFocus() }
     document.addEventListener('visibilitychange', onVisibility)
