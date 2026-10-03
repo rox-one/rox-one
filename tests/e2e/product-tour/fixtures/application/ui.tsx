@@ -10,7 +10,8 @@ import type { TourBinding, TourStep, TourTargetRegistration } from '../../../../
 import '../../../../../apps/electron/src/renderer/index.css'
 
 await setupI18n([initReactI18next]).changeLanguage('en')
-const registry = createTargetRegistry({ getTargetScope: () => 'bound-panel', getPreferredVariant: () => 'regular' })
+let preferredVariant: 'regular' | 'compact' = 'regular'
+const registry = createTargetRegistry({ getTargetScope: () => 'bound-panel', getPreferredVariant: () => preferredVariant })
 const binding: TourBinding = { clientProfileId: 'profile-a', workspaceId: 'workspace-a', panelId: 'panel-a', runToken: 'run-a' }
 const step: TourStep = {
   id: 'first.compose', version: 1, target: 'composer.input', routeKey: 'current-session', scope: 'bound-panel', copyKey: 'productTour.steps.first.compose',
@@ -28,6 +29,7 @@ function Harness() {
     const cleanups = targets.map(value => registry.register(value))
     ;(window as any).__productTourComponent = {
       marker: 'rox-product-tour-component-test-only', registry,
+      setVariant: (variant: 'regular' | 'compact') => { preferredVariant = variant },
       resolve: (panelId: string) => registry.resolve('composer.input', { ...binding, panelId }),
       hide: () => { setOpen(false) }, show: () => { setTarget(targets[0]); setOpen(true) }, handoff: () => setNative(true),
       move: () => { first.current!.style.transform = 'translate(60px, 25px)'; window.dispatchEvent(new Event('resize')) },
