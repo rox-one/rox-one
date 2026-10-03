@@ -538,3 +538,16 @@ The [original plan](integration-history/pr1321/plan.md) remains preserved. Curre
 ## Parallel release integration — 2026-10-03
 
 The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 is reconciled with this independent integration. Its original [plan](integration-history/remote-main-3dd1f98b7/plan.md) and release archive preserve all historical scope. Desktop0.11.6, native staging and dedicated GitHub/CircleCI packaging pipelines are retained; their presence does not establish signed installed Windows10/11/macOS or hosted acceptance. The current [445-leaf parallel allocation](final-readiness/parallel-work/launch-plan.json) governs development dispatch.
+
+
+## Parallel branch integration — 2026-10-03
+
+| Task | Owner | Input | Dependency | Verification |
+| --- | --- | --- | --- | --- |
+| Exhaustive live branch inventory and ordered integration | Lead | 665 GitHub branch refs; initial main `76228cc33` | None | Current remote refs, exact ancestry/patch/source evidence, final readback |
+| Historical branch equivalence and useful absent configuration | Historical worker | Branches before 2026-09-25 | Frozen inventory | Patch/merge-tree comparison, superseding merged PR ancestry, relevant local checks |
+| Recent feature recovery | Recent worker | Nine Sep29–30 candidate branches | Frozen inventory | Current-source comparison and Compound WP48 domain checks |
+| Session UI and app completion integration | PR worker | PR1391 at `ddf97e3d` | Runtime ordering where shared files overlap | Fixture types, renderer build, focused domain/browser checks |
+| Runtime validation recovery | Lead | PR1392 at `29e86bcc` | None | Three gstack suites, pinned Bun1.3.14 full validation/runtime regressions, remote checks |
+
+Workers use isolated new branches. The lead merges accepted PRs sequentially and refreshes main before each integration. No original branch is deleted or rewritten; the original release checkout contains an unrelated in-progress merge and is preserved. Review/code/CI failures are repaired within scope. External Vercel account blocking is reported separately from source validation.

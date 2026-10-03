@@ -19,7 +19,7 @@ test('design board output rejects planted links and writes private ordinary file
 });
 test('design publish refuses attacker authority strings and never follows redirects',async()=>{
  const saved=globalThis.fetch;let calls=0;
- globalThis.fetch=async(_url,init)=>{calls++;expect(init?.redirect).toBe('manual');return Response.json({id:'fixture',url:'http://127.0.0.1:1234/board',sourceDir:''});};
+ globalThis.fetch=Object.assign(async(_url: string | URL | Request,init?: RequestInit)=>{calls++;expect(init?.redirect).toBe('manual');return Response.json({id:'fixture',url:'http://127.0.0.1:1234/board',sourceDir:''});},{preconnect:saved.preconnect});
  try{
   for(const port of ['1234@evil.test',0,65536,1.5,NaN])await expect(publishBoard({port,html:'/fixture'})).rejects.toThrow('Invalid loopback');
   expect(calls).toBe(0);

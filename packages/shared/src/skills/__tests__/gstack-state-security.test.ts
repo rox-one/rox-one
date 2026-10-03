@@ -1,10 +1,16 @@
-import { expect, test } from 'bun:test';
+import { expect, spyOn, test } from 'bun:test';
 import { mkdtempSync, writeFileSync, readFileSync, statSync, symlinkSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 const root = resolve(import.meta.dir, '../../../../../apps/electron/resources/skills/gstack');
 const sessions = await import(join(root, 'gstack/design/src/session.ts'));
 const states = await import(join(root, 'gstack/design/src/daemon-state.ts'));
+function requiredArgument(args: string[], flag: string): string {
+  const index = args.indexOf(flag);
+  const value = index >= 0 ? args[index + 1] : undefined;
+  if (!value) throw new Error(`Fixture command requires ${flag}`);
+  return value;
+}
 test('design sessions use validated IDs, exclusive publication and private atomic updates', () => {
   expect(sessions.createSessionId()).toMatch(/^[a-f0-9-]{36}$/);
   expect(() => sessions.sessionPath('../victim')).toThrow();
@@ -58,8 +64,8 @@ for (const copy of ['', 'gstack']) {
   test(`bootstrap authority and bearer redirects guarded with injected fixtures ${copy || 'flat'}`, async () => {
     const generated: string[] = [];
     const spawn = (_cmd: string, args: string[]) => {
-      const output = args[args.indexOf('--json-output') + 1];
       if (args.includes('--json-output')) {
+        const output = requiredArgument(args, '--json-output');
         generated.push(output);
         let data: any;
         if (args.includes('list')) data = { result: { devices: [{ identifier: 'fixture', connectionProperties: { pairingState: 'paired', tunnelState: 'connected', transportType: 'wired' }, deviceProperties: { name: 'fixture' }, hardwareProperties: { platform: 'iOS', deviceType: 'iPhone', productType: 'iPhone' } }] } };
@@ -67,7 +73,7 @@ for (const copy of ['', 'gstack']) {
         else data = '/test.app/';
         writeFileSync(output, typeof data === 'string' ? data : JSON.stringify(data));
       }
-      if (args.includes('--destination')) writeFileSync(args[args.indexOf('--destination') + 1], 'fixture-boot-token');
+      if (args.includes('--destination')) writeFileSync(requiredArgument(args, '--destination'), 'fixture-boot-token');
       return { status: 0, stdout: Buffer.alloc(0), stderr: Buffer.alloc(0) } as any;
     };
     let calls = 0;
@@ -83,7 +89,7 @@ for (const copy of ['', 'gstack']) {
     for (const p of generated) { expect(p).not.toMatch(/devicectl-(?:list|details|procs)-\d+-\d+\.json$/); expect(() => statSync(p)).toThrow(); }
     const invalidSpawn = (_cmd: string, args: string[]) => {
       const r = spawn(_cmd, args);
-      if (args.includes('details')) writeFileSync(args[args.indexOf('--json-output') + 1], JSON.stringify({ result: { connectionProperties: { tunnelIPAddress: 'fd00::1]:9999@invalid.test:[' } } }));
+      if (args.includes('details')) writeFileSync(requiredArgument(args, '--json-output'), JSON.stringify({ result: { connectionProperties: { tunnelIPAddress: 'fd00::1]:9999@invalid.test:[' } } }));
       return r;
     };
     expect(await bootstrap.bootstrapTunnel({ bundleId: 'test', spawnImpl: invalidSpawn, fetchImpl: (() => { throw new Error('must not fetch'); }) as any })).toMatchObject({ ok: false, error: 'resolve_failed' });
@@ -96,6 +102,7 @@ test('stable control read preserves full-width file IDs and rejects invalid caps
   const dir = mkdtempSync(join(tmpdir(), 'rox-stable-identity-'));
   const file = join(dir, 'input'); writeFileSync(file, 'data');
   const fstat = fs.default.fstatSync, lstat = fs.default.lstatSync;
+  const lstatMock = spyOn(fs.default, 'lstatSync');
   try {
     const identity = 9007199254740992n; let sawBigint = false;
     fs.default.fstatSync = ((fd: any, opts: any) => {
@@ -103,13 +110,13 @@ test('stable control read preserves full-width file IDs and rejects invalid caps
       const s = (fstat as any)(fd, opts);
       return Object.assign(Object.create(Object.getPrototypeOf(s)), s, { ino: identity });
     }) as any;
-    fs.default.lstatSync = ((p: any, opts: any) => {
+    lstatMock.mockImplementation(((p: any, opts: any) => {
       const s = (lstat as any)(p, opts);
       return Object.assign(Object.create(Object.getPrototypeOf(s)), s, { ino: identity + 1n });
-    }) as any;
+    }) as typeof fs.default.lstatSync);
     expect(Number(identity)).toBe(Number(identity + 1n));
     expect(() => readBoundedStable(file, 32, 'identity')).toThrow(); expect(sawBigint).toBe(true);
-  } finally { fs.default.fstatSync = fstat; fs.default.lstatSync = lstat; rmSync(dir, { recursive: true, force: true }); }
+  } finally { fs.default.fstatSync = fstat; lstatMock.mockRestore(); rmSync(dir, { recursive: true, force: true }); }
   expect(() => readBoundedStable(file, Number.MAX_SAFE_INTEGER + 1, 'bad cap')).toThrow();
   expect(() => readBoundedStable(file, -1, 'bad cap')).toThrow();
 });

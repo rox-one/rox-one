@@ -417,3 +417,12 @@ The [original spec](integration-history/pr1321/spec.md) remains preserved. Curre
 ## Parallel release integration — 2026-10-03
 
 The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 is reconciled with this independent integration. Its original [spec](integration-history/remote-main-3dd1f98b7/spec.md) and release archive preserve all historical scope. Desktop0.11.6, native staging and dedicated GitHub/CircleCI packaging pipelines are retained; their presence does not establish signed installed Windows10/11/macOS or hosted acceptance. The current [445-leaf parallel allocation](final-readiness/parallel-work/launch-plan.json) governs development dispatch.
+
+
+## Branch integration request — 2026-10-03
+
+The authorized outcome is an exhaustive inventory of the live `rox-one/rox-one` branches against main, followed by separate pull requests and integration of substantive additions. All original branches and unrelated working changes must remain intact. The initial authoritative main is `76228cc33e44518e5fab5e59f5c754f4051d1e8c`; GitHub listed 665 live branches. Ahead counts alone are insufficient because the repository uses squash merges.
+
+Classify source changes using exact ancestry, patch equivalence, related merged PR ancestry, and current source semantics. Superseded recovery workflows and obsolete wording tests must not revert current behavior. Each integration candidate requires relevant checks on its exact delivered revision. Existing native/production acceptance boundaries remain in force.
+
+For the runtime lane, preserve the release branch's OMP recovery, mandatory policy, context migration and skill provenance. The exact-head validation failure comprised ten TypeScript errors in three gstack regression fixtures. Correct the mocks and fixture argument validation while retaining every security assertion; exercise the focused suites, full repository validation, runtime regressions and remote CI. Security scan findings require source-based disposition; a passing analyzer job does not prove no findings.
