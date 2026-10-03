@@ -1,4 +1,6 @@
 export type HotkeyCommand = 'toggle' | 'ptt-down' | 'ptt-up' | 'cancel'
+/** Ordinary keyboard intents omit recordingId; native overlay commands retain their owner. */
+export interface VoiceHotkeyPayload { command: HotkeyCommand; recordingId?: string }
 export interface HotkeyCapabilities {
   globalToggle: boolean
   keyUp: boolean
