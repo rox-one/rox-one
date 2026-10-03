@@ -3,6 +3,7 @@ import { chromium, type Browser } from '@playwright/test'
 import { build } from 'esbuild'
 import { fileURLToPath } from 'node:url'
 import type { TourCapability } from '../../contracts'
+import { runNativeBrowserProcess } from '../work/meetings-automations/native-browser-process'
 declare global { interface Window { sourcePickerTest: { stats: { paused: number; captured: number; committed: number; selected: string[]; nativeLayers(): number; readiness: TourCapability | null }; mount(enabled: boolean, localMcpEnabled?: boolean | null, compact?: boolean, preselected?: boolean): void } } }
 const isolatedCase = process.env.ROX_PRODUCT_TOUR_SOURCE_PICKER_CASE
 let registeredIsolatedCase = false
@@ -15,7 +16,7 @@ beforeAll(async () => {
   server = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch(request) { return new URL(request.url).pathname === '/script.js' ? new Response(script, { headers: { 'content-type': 'text/javascript' } }) : new Response('<!doctype html><html><body><div id="root"></div><script type="module" src="/script.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) } })
   browser = await chromium.launch({ executablePath: process.env.LEARNING_CHROMIUM_PATH ?? '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] })
 }, 30_000)
-afterAll(async () => { await browser?.close(); server?.stop(true) })
+afterAll(async () => { await browser?.close(); server?.stop(true) }, 30_000)
 
 // Keep the production bundle, browser lifecycle and native registries independent of
 // other suites' Bun module caches and Playwright cleanup. Each child runs real assertions.
@@ -24,22 +25,13 @@ function browserTest(name: string, operation: () => Promise<void>) {
   if (isolatedCase) registeredIsolatedCase = true
   test(name, async () => {
     if (isolatedCase === name) return operation()
-    const child = Bun.spawn([process.execPath, 'test', fileURLToPath(import.meta.url)], {
-      env: { ...process.env, ROX_PRODUCT_TOUR_SOURCE_PICKER_CASE: name },
-      stdout: 'pipe', stderr: 'pipe',
+    const exitCode = await runNativeBrowserProcess([process.execPath, 'test', fileURLToPath(import.meta.url)], {
+      label: name, env: { ...process.env, ROX_PRODUCT_TOUR_SOURCE_PICKER_CASE: name },
+      // Supervision includes setup, the unchanged case, and owned teardown.
+      deadlineMs: 90_000,
     })
-    const timeout = setTimeout(() => child.kill(), 35_000)
-    try {
-      const [stdout, stderr, exitCode] = await Promise.all([
-        new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited,
-      ])
-      if (exitCode !== 0) throw new Error(`Production source picker case exited ${exitCode}:\n${stdout}${stderr}`)
-      expect(exitCode).toBe(0)
-    } finally {
-      clearTimeout(timeout)
-      child.kill()
-    }
-  }, isolatedCase ? 30_000 : 40_000)
+    expect(exitCode).toBe(0)
+  }, isolatedCase ? 30_000 : 100_000)
 }
 
 browserTest('T-SOURCES-SELECT custom portal owns native handoff so source click captures and commits before any outside pause', async () => {
