@@ -593,4 +593,7 @@ Dependencies: current server entry point and helper build commands at main
    owned by the lead. Hosted Cursor provisioning remains unverified.
 
 
+## Legacy binding replay recovery (2026-10-03)
+
+Binding replay recovery: compare the exact legacy identity alongside the canonical encoded identity; verify raw-key migration followed by repeated imports, and negative controls for wrong kind, unrelated ID and foreign workspace. Run the existing platform-contract tests before separate PR publication.
 The recent worker owns the gstack command redirect prerequisite in an isolated security worktree. Input is the three identical shipped BrowseClient copies at runtime revision `05f1e3741`; dependencies are the existing bearer/port validation and portable provenance catalogs. Verify real HTTP redirects fail before any destination request, direct commands retain authentication, and patch hashes match all parent and portable notices. The lead integrates the committed prerequisite into the runtime PR and retains remote CodeQL closure as a separate pending gate.
