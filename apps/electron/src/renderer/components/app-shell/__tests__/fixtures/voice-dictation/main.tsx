@@ -5,6 +5,8 @@ import { initReactI18next } from 'react-i18next'
 import { Toaster } from 'sonner'
 import { TooltipProvider } from '../../../../../../../../../packages/ui/src/components/tooltip'
 import { VoiceDictationControl } from '../../../input/VoiceDictationControl'
+import { TourPanelScope, TourRuntimeContext, type TourRuntimePort } from '@/features/product-tour/runtime/hooks'
+import type { TourSignal } from '@/features/product-tour/contracts'
 import en from '../../../../../../../../../packages/shared/src/i18n/locales/en.json'
 import '../../../../../index.css'
 
@@ -19,7 +21,7 @@ let resolveStart: ((value: unknown) => void) | undefined
 let resolveGrant: (() => void) | undefined
 let hotkeyListener: ((payload: { command: string }) => void) | undefined
 const syntheticStream = { getTracks: () => [{ stop: () => record('stopTrack') }] }
-const transcript = { text: 'Synthetic first paragraph.\n\nSynthetic second paragraph.', requestedModelId: 'nova-3', resolvedModelId: 'nova-3', noSpeech: false }
+const transcript = { text: query.get('noSpeech') === 'true' ? '' : 'Synthetic first paragraph.\n\nSynthetic second paragraph.', requestedModelId: 'nova-3', resolvedModelId: 'nova-3', noSpeech: query.get('noSpeech') === 'true' }
 const record = (method: string, args?: unknown) => calls.push({ method, args })
 const api = {
   async getVoicePrefs() { return prefs },
@@ -72,7 +74,32 @@ class SyntheticRecorder {
   }
 }
 Object.defineProperty(window, 'MediaRecorder', { configurable: true, value: SyntheticRecorder })
+// This port observes actual component callbacks without calling a native OS
+// microphone or clipboard. The real runtime's stale-attempt fence is modelled
+// explicitly, so a late STOP can never be relabelled as the new attempt.
+const learning = {
+  signals: [] as TourSignal[], accepted: [] as TourSignal[],
+  handoffs: [] as Array<{ open: boolean; runToken: string }>,
+  targets: new Map<string, { variant: string; workspaceId: string; panelId: string }>(),
+  capabilities: new Map<string, unknown>(), runToken: 'voice-original-attempt',
+}
+const runtime: TourRuntimePort = {
+  enabled: true,
+  capture: scope => ({ binding: { ...scope, clientProfileId: 'fixture-profile', runToken: learning.runToken }, operationToken: crypto.randomUUID(), at: Date.now() }),
+  emit: signal => {
+    learning.signals.push(signal)
+    if (signal.binding.runToken === learning.runToken) learning.accepted.push(signal)
+  },
+  handoff: (observation, open) => { learning.handoffs.push({ open, runToken: observation.binding.runToken }) },
+  register: target => {
+    learning.targets.set(target.registrationToken, { variant: target.variant, workspaceId: target.context.workspaceId, panelId: target.context.panelId })
+    return () => { learning.targets.delete(target.registrationToken) }
+  },
+  setCapability: (_scope, id, value) => { learning.capabilities.set(id, value); return () => { if (learning.capabilities.get(id) === value) learning.capabilities.delete(id) } },
+}
 const fixture = {
+  learning,
+  changeAttempt: () => { learning.runToken = 'voice-new-attempt' },
   calls, unmount: () => {},
   hotkey: (command: string) => hotkeyListener?.({ command }),
   resolveStop: () => resolveStop?.({ job: 'ready', transcript }),
@@ -87,7 +114,7 @@ function App() {
   const [value, setValue] = useState('Existing draft')
   const [visible, setVisible] = useState(true)
   fixture.unmount = () => setVisible(false)
-  return <TooltipProvider><main className="p-8"><textarea aria-label="Draft" value={value} onChange={(event) => setValue(event.target.value)} />
-    {visible && <VoiceDictationControl inputValue={value} onInputChange={setValue} />}<Toaster /></main></TooltipProvider>
+  return <TourRuntimeContext.Provider value={query.get('learning') === 'true' ? runtime : null}><TourPanelScope workspaceId="voice-workspace" panelId="voice-panel" sessionId="voice-session"><TooltipProvider><main className="p-8"><textarea aria-label="Draft" value={value} onChange={(event) => setValue(event.target.value)} />
+    {visible && <VoiceDictationControl compactMode={query.get('compact') === 'true'} inputValue={value} onInputChange={setValue} />}<Toaster /></main></TooltipProvider></TourPanelScope></TourRuntimeContext.Provider>
 }
 createRoot(document.getElementById('root')!).render(<App />)

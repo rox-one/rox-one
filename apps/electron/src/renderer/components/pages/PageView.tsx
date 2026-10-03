@@ -116,7 +116,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
         .catch(error => console.warn('[PageView] Render lease release failed:', error))
     }
 
-    if (!pagesAvailable) { setLeaseError(t('common.unavailable')); return }
+    if (!pagesAvailable) { setLeaseError({ contentDigest, message: t('common.unavailable') }); return }
     window.electronAPI
       .createPageLease(activeWorkspaceId, pageSlug)
       .then(result => {
