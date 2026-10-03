@@ -37,7 +37,7 @@ const check = async (name: string, command: string[], cwd = source) => {
 if (!await check('frozen-install', [runtime, 'install', '--frozen-lockfile'])) process.exit(1)
 const manifests = ['apps', 'packages'].flatMap(g => readdirSync(join(source, g)).map(n => `${g}/${n}`).filter(p => Bun.file(join(source, p, 'package.json')).size > 0))
 const queue = [...manifests]
-await Promise.all(Array.from({ length: 3 }, async () => {
+await Promise.all(Array.from({ length: 2 }, async () => {
   while (queue.length) {
     const p = queue.shift()!
     const m = JSON.parse(readFileSync(join(source, p, 'package.json'), 'utf8'))

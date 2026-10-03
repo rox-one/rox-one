@@ -1,0 +1,5 @@
+../electron/src/renderer/lib/__tests__/startup-caller-boundary.test.ts(88,27): error TS7006: Parameter 'call' implicitly has an 'any' type.
+../electron/src/renderer/lib/__tests__/startup-caller-boundary.test.ts(89,27): error TS7006: Parameter 'call' implicitly has an 'any' type.
+../../packages/server-core/src/runtime/platform-headless.ts(56,9): error TS2578: Unused '@ts-expect-error' directive.
+../../packages/server-core/src/runtime/platform-headless.ts(62,9): error TS2578: Unused '@ts-expect-error' directive.
+$ tsc --noEmit

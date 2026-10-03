@@ -1,0 +1,8 @@
+{
+  "phase": "INTERRUPTED_FOR_CONFIRMED_DIAGNOSTICS_AND_TWO_NEW_PR_HEADS",
+  "sourceCommit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+  "rootPid": 15219,
+  "terminatedOwnedDescendantCount": 8,
+  "reason": "New startup fixture implicit-any errors and Sharp upgrade stale ts-expect-error diagnostics require repair. PR1377 and PR1384 appeared before publication. Partial results are retained; no complete qualification is claimed.",
+  "capturedAt": "2026-10-03T02:04:59.590Z"
+}

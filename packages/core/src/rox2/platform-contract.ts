@@ -695,9 +695,9 @@ export function parseRox2TypedRecord(raw: unknown): Rox2TypedParseResult {
   const declaredUnknown = (record.unknownFields ?? {}) as Record<string, unknown>
   const extraFields: Record<string, unknown> = Object.create(null)
   for (const [key, value] of Object.entries(record)) {
-    if (Object.hasOwn(TYPED_RECORD_FIELDS, key)) continue
+    if (Object.prototype.hasOwnProperty.call(TYPED_RECORD_FIELDS, key)) continue
     // Two differently placed versions must not silently overwrite one another.
-    if (Object.hasOwn(declaredUnknown, key)) return { ok: false, code: 'invalid', preserved: raw }
+    if (Object.prototype.hasOwnProperty.call(declaredUnknown, key)) return { ok: false, code: 'invalid', preserved: raw }
     extraFields[key] = value
   }
   const preservedFields = { ...declaredUnknown, ...extraFields }

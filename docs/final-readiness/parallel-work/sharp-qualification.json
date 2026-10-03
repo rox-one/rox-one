@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-10-03T01:57:29.828Z",
+  "sourceCommit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+  "sharpPrHead": "2e444a1e7fb6165f61c09210904b0e6ca912e9e2",
+  "runtime": {
+    "bun": "1.3.14",
+    "platform": "darwin",
+    "arch": "arm64",
+    "executable": "/private/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun"
+  },
+  "manifestAndLockChecks": {
+    "workspaceRecords": 19,
+    "workspaceServicePresent": true,
+    "incomingChangedPackageRecords": 27,
+    "changedRecordsMatchIncoming": true,
+    "mismatch": [],
+    "electronVersion": "0.35.4",
+    "serverVersion": "0.35.4",
+    "workspaceElectronVersion": "0.35.4",
+    "workspaceServerVersion": "0.35.4",
+    "serverDocsExport": "./src/docs/*.ts",
+    "sharedExports": {
+      "./docs": "./src/docs/index.ts",
+      "./docs/doc-links": "./src/docs/doc-links.ts",
+      "./projects/roadmap": "./src/projects/roadmap.ts",
+      "./projects/roadmap-ai": "./src/projects/roadmap-ai.ts",
+      "./protocol/native-replica": "./src/protocol/native-replica.ts",
+      "./account-replica": "./src/account-replica/index.ts",
+      "./workspace-domain/licenses/contracts": "./src/workspace-domain/licenses/contracts.ts"
+    }
+  },
+  "nativeDependencyScopeResults": [
+    {
+      "scope": "apps/electron",
+      "resolved": "/Users/t/Projects/rox-one-recheck-candidate-20261003/node_modules/sharp/dist/index.cjs",
+      "realpath": "/Users/t/Projects/rox-one-recheck-candidate-20261003/node_modules/sharp/dist/index.cjs",
+      "versions": {
+        "aom": "3.15.0",
+        "archive": "3.8.9",
+        "cairo": "1.18.4",
+        "cgif": "0.5.3",
+        "exif": "0.6.26",
+        "expat": "2.8.3",
+        "ffi": "3.8.0",
+        "fontconfig": "2.18.3",
+        "freetype": "2.14.3",
+        "fribidi": "1.0.16",
+        "glib": "2.89.4",
+        "harfbuzz": "14.3.1",
+        "heif": "1.23.2",
+        "highway": "1.4.0",
+        "imagequant": "2.4.1",
+        "lcms": "2.19.1",
+        "mozjpeg": "0826579",
+        "pango": "1.58.2",
+        "pixman": "0.46.4",
+        "png": "1.6.58",
+        "proxy-libintl": "0.5",
+        "rsvg": "2.62.91",
+        "tiff": "4.7.2",
+        "uhdr": "2.0.2",
+        "vips": "8.18.6",
+        "webp": "1.6.0",
+        "xml2": "2.15.3",
+        "zlib-ng": "2.3.3",
+        "sharp": "0.35.4"
+      },
+      "input": {
+        "width": 32,
+        "height": 24,
+        "format": "png",
+        "bytes": 136
+      },
+      "png": {
+        "width": 16,
+        "height": 12,
+        "format": "png",
+        "bytes": 104,
+        "pixelBytes": 768
+      },
+      "jpeg": {
+        "width": 16,
+        "height": 12,
+        "format": "jpeg",
+        "bytes": 268,
+        "pixelBytes": 576
+      },
+      "status": "PASS"
+    },
+    {
+      "scope": "packages/server-core",
+      "resolved": "/Users/t/Projects/rox-one-recheck-candidate-20261003/node_modules/sharp/dist/index.cjs",
+      "realpath": "/Users/t/Projects/rox-one-recheck-candidate-20261003/node_modules/sharp/dist/index.cjs",
+      "versions": {
+        "aom": "3.15.0",
+        "archive": "3.8.9",
+        "cairo": "1.18.4",
+        "cgif": "0.5.3",
+        "exif": "0.6.26",
+        "expat": "2.8.3",
+        "ffi": "3.8.0",
+        "fontconfig": "2.18.3",
+        "freetype": "2.14.3",
+        "fribidi": "1.0.16",
+        "glib": "2.89.4",
+        "harfbuzz": "14.3.1",
+        "heif": "1.23.2",
+        "highway": "1.4.0",
+        "imagequant": "2.4.1",
+        "lcms": "2.19.1",
+        "mozjpeg": "0826579",
+        "pango": "1.58.2",
+        "pixman": "0.46.4",
+        "png": "1.6.58",
+        "proxy-libintl": "0.5",
+        "rsvg": "2.62.91",
+        "tiff": "4.7.2",
+        "uhdr": "2.0.2",
+        "vips": "8.18.6",
+        "webp": "1.6.0",
+        "xml2": "2.15.3",
+        "zlib-ng": "2.3.3",
+        "sharp": "0.35.4"
+      },
+      "input": {
+        "width": 32,
+        "height": 24,
+        "format": "png",
+        "bytes": 136
+      },
+      "png": {
+        "width": 16,
+        "height": 12,
+        "format": "png",
+        "bytes": 104,
+        "pixelBytes": 768
+      },
+      "jpeg": {
+        "width": 16,
+        "height": 12,
+        "format": "jpeg",
+        "bytes": 268,
+        "pixelBytes": 576
+      },
+      "status": "PASS"
+    }
+  ],
+  "realHeadlessFactory": {
+    "inputMetadata": {
+      "width": 32,
+      "height": 24
+    },
+    "results": [
+      {
+        "format": "png",
+        "bytes": 102,
+        "metadata": {
+          "width": 16,
+          "height": 12
+        },
+        "status": "PASS"
+      },
+      {
+        "format": "jpeg",
+        "bytes": 268,
+        "metadata": {
+          "width": 16,
+          "height": 12
+        },
+        "status": "PASS"
+      }
+    ],
+    "status": "PASS"
+  },
+  "status": "PASS",
+  "scope": "Actual installed native Sharp qualification using synthetic image buffers on this macOS arm64 host, Electron and server dependency resolution scopes, and real server headless factory. No packaged Electron launch or Windows/Linux execution.",
+  "remainingVersions": {
+    "@img/sharp-darwin-arm64": "@img/sharp-darwin-arm64@0.34.5",
+    "@img/sharp-darwin-x64": "@img/sharp-darwin-x64@0.34.5",
+    "@img/sharp-libvips-darwin-arm64": "@img/sharp-libvips-darwin-arm64@1.2.4",
+    "@img/sharp-libvips-darwin-x64": "@img/sharp-libvips-darwin-x64@1.2.4",
+    "@img/sharp-libvips-linux-arm64": "@img/sharp-libvips-linux-arm64@1.2.4",
+    "@img/sharp-libvips-linux-x64": "@img/sharp-libvips-linux-x64@1.2.4",
+    "@img/sharp-linux-arm64": "@img/sharp-linux-arm64@0.34.5",
+    "@img/sharp-linux-x64": "@img/sharp-linux-x64@0.34.5",
+    "@xenova/transformers/sharp": "sharp@0.32.6",
+    "miniflare/sharp": "sharp@0.35.2"
+  },
+  "limitations": [
+    "Root optional Sharp0.34.5/libvips1.2.4 pins remain, alongside nested0.35.4/libvips1.3.3 dependencies.",
+    "Xenova Sharp0.32.6 and Miniflare Sharp0.35.2 are not upgraded by PR1087.",
+    "This verifies dependency scopes in Bun1.3.14 on macOS arm64; packaged Electron native Node execution and target Windows/Linux/macOS x64 runtime artifacts remain separate release gates.",
+    "No install, source edits, manifest edits, root logs, network image access or paid provider calls performed."
+  ]
+}

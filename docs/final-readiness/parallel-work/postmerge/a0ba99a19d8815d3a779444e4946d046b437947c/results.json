@@ -1,0 +1,301 @@
+{
+  "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+  "runtime": "1.3.14",
+  "host": {
+    "platform": "darwin",
+    "architecture": "arm64"
+  },
+  "results": [
+    {
+      "name": "frozen-install",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "install",
+        "--frozen-lockfile"
+      ],
+      "cwd": "<integration>",
+      "exitCode": 0,
+      "elapsedMs": 7404,
+      "diagnosticOccurrences": 0,
+      "log": "frozen-install.log"
+    },
+    {
+      "name": "apps/cloud-gateway",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/apps/cloud-gateway",
+      "exitCode": 0,
+      "elapsedMs": 2993,
+      "diagnosticOccurrences": 0,
+      "log": "apps-cloud-gateway.log"
+    },
+    {
+      "name": "apps/viewer",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/apps/viewer",
+      "exitCode": 2,
+      "elapsedMs": 41895,
+      "diagnosticOccurrences": 2,
+      "log": "apps-viewer.log"
+    },
+    {
+      "name": "apps/workspace-service",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/apps/workspace-service",
+      "exitCode": 0,
+      "elapsedMs": 44842,
+      "diagnosticOccurrences": 0,
+      "log": "apps-workspace-service.log"
+    },
+    {
+      "name": "apps/cli",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/apps/cli",
+      "exitCode": 0,
+      "elapsedMs": 48646,
+      "diagnosticOccurrences": 0,
+      "log": "apps-cli.log"
+    },
+    {
+      "name": "packages/ui",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "tsc",
+        "--noEmit"
+      ],
+      "cwd": "<integration>/packages/ui",
+      "exitCode": 0,
+      "elapsedMs": 21897,
+      "diagnosticOccurrences": 0,
+      "log": "packages-ui.log"
+    },
+    {
+      "name": "packages/core",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "tsc",
+        "--noEmit"
+      ],
+      "cwd": "<integration>/packages/core",
+      "exitCode": 0,
+      "elapsedMs": 30608,
+      "diagnosticOccurrences": 0,
+      "log": "packages-core.log"
+    },
+    {
+      "name": "packages/messaging-whatsapp-worker",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/packages/messaging-whatsapp-worker",
+      "exitCode": 0,
+      "elapsedMs": 12505,
+      "diagnosticOccurrences": 0,
+      "log": "packages-messaging-whatsapp-worker.log"
+    },
+    {
+      "name": "packages/cloud-runner",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/packages/cloud-runner",
+      "exitCode": 0,
+      "elapsedMs": 22810,
+      "diagnosticOccurrences": 0,
+      "log": "packages-cloud-runner.log"
+    },
+    {
+      "name": "packages/session-tools-core",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/packages/session-tools-core",
+      "exitCode": 0,
+      "elapsedMs": 24506,
+      "diagnosticOccurrences": 0,
+      "log": "packages-session-tools-core.log"
+    },
+    {
+      "name": "apps/webui",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/apps/webui",
+      "exitCode": 2,
+      "elapsedMs": 395309,
+      "diagnosticOccurrences": 4,
+      "log": "apps-webui.log"
+    },
+    {
+      "name": "packages/server",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/packages/server",
+      "exitCode": 2,
+      "elapsedMs": 305697,
+      "diagnosticOccurrences": 2,
+      "log": "packages-server.log"
+    },
+    {
+      "name": "packages/shared",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "tsc",
+        "--noEmit"
+      ],
+      "cwd": "<integration>/packages/shared",
+      "exitCode": 0,
+      "elapsedMs": 181198,
+      "diagnosticOccurrences": 0,
+      "log": "packages-shared.log"
+    },
+    {
+      "name": "apps/electron",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/apps/electron",
+      "exitCode": 2,
+      "elapsedMs": 613215,
+      "diagnosticOccurrences": 4,
+      "log": "apps-electron.log"
+    },
+    {
+      "name": "packages/messaging-discord-worker",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/packages/messaging-discord-worker",
+      "exitCode": 0,
+      "elapsedMs": 47148,
+      "diagnosticOccurrences": 0,
+      "log": "packages-messaging-discord-worker.log"
+    },
+    {
+      "name": "packages/pi-agent-server",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/packages/pi-agent-server",
+      "exitCode": 0,
+      "elapsedMs": 203300,
+      "diagnosticOccurrences": 0,
+      "log": "packages-pi-agent-server.log"
+    },
+    {
+      "name": "packages/session-mcp-server",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "tsc",
+        "--noEmit"
+      ],
+      "cwd": "<integration>/packages/session-mcp-server",
+      "exitCode": 0,
+      "elapsedMs": 7685,
+      "diagnosticOccurrences": 0,
+      "log": "packages-session-mcp-server.log"
+    },
+    {
+      "name": "packages/messaging-gateway",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/packages/messaging-gateway",
+      "exitCode": 2,
+      "elapsedMs": 99720,
+      "diagnosticOccurrences": 125,
+      "log": "packages-messaging-gateway.log"
+    },
+    {
+      "name": "packages/server-core",
+      "commit": "a0ba99a19d8815d3a779444e4946d046b437947c",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "tsc",
+        "--noEmit"
+      ],
+      "cwd": "<integration>/packages/server-core",
+      "exitCode": 2,
+      "elapsedMs": 133125,
+      "diagnosticOccurrences": 2,
+      "log": "packages-server-core.log"
+    }
+  ],
+  "limits": "Source/frozen-install/compiler/fixture/built local server gates. Does not certify signed native artifacts, provider operations or hosted production."
+}
