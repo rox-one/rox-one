@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { build, type PluginBuild } from 'esbuild'
 import ts from 'typescript'
 import { chromium, type Browser, type BrowserContext, type Page } from '@playwright/test'
+import { launchOwnedFixtureBrowser } from './rox-readiness-ui-001.browser-owner'
 
 // Actual NavigationProvider, URL/history, panel/selection atoms and MainContentPanel
 // callbacks in Chromium. Leaf pages and electronAPI are explicit fixture boundaries.
@@ -11,6 +12,7 @@ const enabled = process.env.ROX_UI001_BROWSER_TEST === '1'
 const root = join(import.meta.dir, '../../../../../../..')
 const evidence = join(root, 'docs/final-readiness/execution/cloud/OWNER-UI-001/main-integration/browser')
 let server: ReturnType<typeof Bun.serve>, browser: Browser, context: BrowserContext, page: Page, base: string
+let closeBrowser: (() => Promise<void>) | undefined
 
 function mainFunctions() {
   const source = readFileSync(join(import.meta.dir, '../MainContentPanel.tsx'), 'utf8')
@@ -215,12 +217,14 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
       },
     })
     base = `http://127.0.0.1:${server.port}`
-    browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE, args: ['--disable-gpu'] })
+    const owned = await launchOwnedFixtureBrowser({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE, args: ['--disable-gpu'] })
+    browser = owned.browser
+    closeBrowser = owned.close
   }, 60000)
   beforeEach(async () => { context = await browser.newContext(); page = await context.newPage() }, 15000)
   afterEach(async () => { await context?.close() }, 15000)
   afterAll(async () => {
-    try { await browser?.close() } finally { await server?.stop(true) }
+    try { await closeBrowser?.() } finally { await server?.stop(true) }
   }, 15000)
 
   it('unknown single link survives reload and never selects its nested session', async () => {
@@ -263,6 +267,26 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
       expect((await snapshot()).panels.map((p: any) => [p.route, p.proportion])).toEqual([[route, 0.6], ['tasks', 0.4]])
     }
   }, 30000)
+
+  for (const panels of ['v2:[]', 'v2:[', '[]', '[', '']) {
+    it(`invalid panel data ${JSON.stringify(panels)} without a route restores the workspace default`, async () => {
+      const search = '?' + new URLSearchParams({ ws: 'ws-a', panels })
+      await page.goto(base + '/' + search)
+      await page.waitForFunction(() => (window as any).ui001?.snapshot().panels[0]?.route === 'allSessions/session/s1', undefined, { timeout: 5000 })
+      expect((await snapshot()).panels.map((p: any) => p.route)).toEqual(['allSessions/session/s1'])
+      await page.evaluate(() => (window as any).ui001.navigate('future/stale-no-route'))
+      await unavailable('future/stale-no-route')
+      await page.evaluate(search => {
+        history.pushState(null, '', search)
+        window.dispatchEvent(new PopStateEvent('popstate'))
+      }, search)
+      await page.waitForFunction(() => (window as any).ui001.snapshot().panels[0]?.route === 'allSessions/session/s1', undefined, { timeout: 5000 })
+      expect((await snapshot()).panels.map((p: any) => p.route)).toEqual(['allSessions/session/s1'])
+      await page.reload()
+      await page.waitForFunction(() => (window as any).ui001?.snapshot().panels[0]?.route === 'allSessions/session/s1')
+      expect(new URLSearchParams((await snapshot()).search).get('route')).toBe('allSessions/session/s1')
+    }, 30000)
+  }
 
   for (const panels of ['[]', ' [] ', ',,', '[', '[1]', '[["tasks"]]', '  ']) {
     it(`empty or invalid panel list ${JSON.stringify(panels)} restores the focused address during history and reload`, async () => {

@@ -431,7 +431,7 @@ export function NavigationProvider({
    */
   const reconcileFromUrlParams = useCallback(
     (params: URLSearchParams) => {
-      const initialRoute = params.get('route')
+      const initialRoute = params.get('route') || (params.has('panels') ? routes.view.allSessions() : null)
       const sidebarParam = params.get('sidebar') || undefined
       const panelsParam = params.get('panels')
       const focusedIndexParam = params.get('fi')
@@ -1088,7 +1088,7 @@ export function NavigationProvider({
     lastSemanticHistoryKeyRef.current = getSemanticHistoryKey()
 
     // If nothing was in the URL, navigate to default
-    if (!params.get('route') && !params.get('panels')) {
+    if (!params.get('route') && !params.has('panels')) {
       navigate(routes.view.allSessions())
     }
 
