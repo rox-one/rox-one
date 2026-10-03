@@ -1022,5 +1022,5 @@ Owner recent_features; depends on current Tasks1456, strict date1470 and Product
 
 - [x] Confirm both actual current spawn paths omit the flag; controlled real child invocation reproduces0pass/2fail after successful RPC/helper completion. Preserve current SSO/one-shot generation/native policy/host Bash ownership.
 - [x] Set two launch option lines; qualify actual RPC/helper launch and literal argv/no side effects, adjacent account/native policy/query/lifecycle controls and package types. Record native Windows limits and source-test portability exclusions.
-- [ ] Publish a separate PR, attach and read back its exact head; root owns merge. Update the original137 source/caller ledger.
+- [x] Publish separate PR #1483 and attach it; read back the exact head and update the original137 source/caller ledger. Root owns merge.
 
