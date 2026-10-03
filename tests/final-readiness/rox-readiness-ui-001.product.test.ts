@@ -88,12 +88,13 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       buildQualifier: qualifiedBuild ? 'frozen source manifest checked before and after main/renderer builds'
         : 'provisional product replay; current source snapshot does not bind the earlier generated build',
       acceptanceLevel: diagnostic ? 'diagnostic continuation with explicitly listed known gaps excluded; no readiness acceptance'
-        : 'actual local macOS Electron with shipped RPC and disposable canonical backend',
+        : 'actual local macOS unpackaged Electron with shipped RPC and disposable canonical backend',
       diagnosticSkippedRoutes: [
         ...(diagnosticSkipKnowledge ? ['knowledge/block/ui001-absent-block'] : []),
         ...(diagnosticSkipExtension ? ['extension/ui001-absent-extension/ui001-absent-view'] : []),
       ],
-      fullDoDClosed: false, platformLimits: ['Windows 10/11 DPI and native acceptance not run', 'Hosted web ingress/transport acceptance not run'],
+      fullDoDClosed: false, platformLimits: ['Windows 10/11 DPI and installed native acceptance not run',
+        'macOS packaged installed-app acceptance not run', 'Hosted web ingress/transport acceptance not run'],
       protocolRegistration: 'explicit test-only guard; OS protocol registration itself not exercised',
       environmentIsolation: { homePreserved: environment.HOME === process.env.HOME, credentialsInherited: false,
         realLoginShellWithoutStartupFiles: true, executableInventory: ['bun', 'node', 'sh', 'env', 'git', 'uname', 'which'],
