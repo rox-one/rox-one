@@ -16,10 +16,11 @@ import {
 } from 'fs';
 import type { Dirent } from 'fs';
 import { homedir } from 'os';
-import { isAbsolute, join, relative, resolve } from 'path';
+import { isAbsolute, join, relative, resolve, sep } from 'path';
 import matter from 'gray-matter';
 import type { LoadedSkill, SkillMetadata, SkillSource } from './types.ts';
-import { listOmpSkills } from './omp-discovery.ts';
+import { readSkillInstructions } from './read-instructions.ts';
+import { listOmpSkills, OMP_GLOBAL_SKILLS_DIR, OMP_SHARED_SKILLS_DIR, OMP_WORKSPACE_SKILLS_DIR } from './omp-discovery.ts';
 import { getWorkspaceSkillsPath } from '../workspaces/storage.ts';
 import { resolveConfigDir } from '../config/paths.ts';
 import { getBundledSkillsDisabled } from '../config/storage.ts';
@@ -124,12 +125,7 @@ function isDirectoryOrSymlinkToDirectory(parentDir: string, entry: Dirent): bool
 // Load Operations
 // ============================================================
 
-/**
- * Load a single skill from a directory
- * @param skillsDir - Absolute path to skills directory
- * @param slug - Skill directory name
- * @param source - Where this skill is loaded from
- */
+/** Load one craft skill through the shared instructions-file boundary. */
 function loadSkillFromDir(skillsDir: string, slug: string, source: SkillSource): LoadedSkill | null {
   // Dot entries (.pending, .versions) are internal state, never skills.
   if (!isSafeSkillName(slug)) return null;
@@ -138,23 +134,8 @@ function loadSkillFromDir(skillsDir: string, slug: string, source: SkillSource):
 }
 
 function loadSkillAtPath(skillDir: string, slug: string, source: SkillSource): LoadedSkill | null {
-  const skillFile = join(skillDir, 'SKILL.md');
-
-  // Check directory exists
-  try { if (!statSync(skillDir).isDirectory()) return null; } catch { return null; }
-
-  // Check SKILL.md exists
-  if (!existsSync(skillFile)) {
-    return null;
-  }
-
-  // Read and parse SKILL.md
-  let content: string;
-  try {
-    content = readFileSync(skillFile, 'utf-8');
-  } catch {
-    return null;
-  }
+  const content = readSkillInstructions(skillDir);
+  if (content === null) return null;
 
   const parsed = parseSkillFile(content);
   if (!parsed) {
@@ -191,26 +172,34 @@ function loadSkillsFromDir(skillsDir: string, source: SkillSource): LoadedSkill[
       // state, never real skills.
       if (entry.name.startsWith('.')) continue;
 
-      const skill = loadSkillFromDir(skillsDir, entry.name, source);
-      if (skill) {
-        skills.push(skill);
-      } else if (skillsDir === APP_MANAGED_SKILLS_DIR) {
-        // Directory-mode marketplace packs keep their pinned repository intact.
-        // Their provenance marker exposes bounded views of nested SKILL.md files.
-        try {
-          const packDir = join(skillsDir, entry.name);
-          const state = JSON.parse(readFileSync(join(packDir, '.craft-marketplace.lock.json'), 'utf8')) as {
-            id?: string; kind?: string; targets?: string[]; skillViews?: Record<string, string>;
-          };
-          if (state.kind !== 'skillpack' || !state.id || !isSafeSkillName(state.id) || !state.targets?.includes(packDir)) continue;
-          for (const [slug, rel] of Object.entries(state.skillViews ?? {}).slice(0, 10_000)) {
-            if (!isSafeSkillName(slug) || typeof rel !== 'string' || isAbsolute(rel)) continue;
-            const path = resolve(packDir, rel);
-            if (!isInsideSkillStore(path, packDir)) continue;
-            const nested = loadSkillAtPath(path, slug, source);
-            if (nested) skills.push(nested);
-          }
-        } catch { /* A malformed marker never makes application startup fail. */ }
+      try {
+        const skill = loadSkillFromDir(skillsDir, entry.name, source);
+        if (skill) {
+          skills.push(skill);
+        } else if (skillsDir === APP_MANAGED_SKILLS_DIR) {
+          // Directory-mode marketplace packs keep their pinned repository intact.
+          // Their provenance marker exposes bounded views of nested SKILL.md files.
+          try {
+            const packDir = join(skillsDir, entry.name);
+            const state = JSON.parse(readFileSync(join(packDir, '.craft-marketplace.lock.json'), 'utf8')) as {
+              id?: string; kind?: string; targets?: string[]; skillViews?: Record<string, string>;
+            };
+            if (state.kind !== 'skillpack' || !state.id || !isSafeSkillName(state.id) || !state.targets?.includes(packDir)) continue;
+            for (const [slug, rel] of Object.entries(state.skillViews ?? {}).slice(0, 10_000)) {
+              if (!isSafeSkillName(slug) || typeof rel !== 'string' || isAbsolute(rel)) continue;
+              const path = resolve(packDir, rel);
+              if (!isInsideSkillStore(path, packDir)) continue;
+              try {
+                const nested = loadSkillAtPath(path, slug, source);
+                if (nested) skills.push(nested);
+              } catch {
+                // A denied view must not hide later healthy views from this pack.
+              }
+            }
+          } catch { /* A malformed marker never makes application startup fail. */ }
+        }
+      } catch {
+        // Isolate this entry; selected-detail reads still propagate real errors.
       }
     }
   } catch {
@@ -393,13 +382,39 @@ export function loadAllSkills(workspaceRoot: string, projectRoot?: string, optio
   return result;
 }
 
+/** Selected detail only. Reuse the existing craft/managed-alias resolution and
+ * inspect one runtime slug; never populate the metadata list with body content. */
+export async function loadSkillDetails(workspaceRoot: string, slug: string, projectRoot?: string): Promise<LoadedSkill | null> {
+  if (typeof slug !== 'string' || !slug || slug.startsWith('.') || /[/\\:\x00-\x1f]/.test(slug)) return null;
+  const craft = loadSkillBySlug(workspaceRoot, slug, projectRoot);
+  if (craft) return craft;
+  for (const root of [join(workspaceRoot, OMP_WORKSPACE_SKILLS_DIR), OMP_SHARED_SKILLS_DIR, OMP_GLOBAL_SKILLS_DIR]) {
+    const skillDir = join(root, slug);
+    // Match current-main discovery's application-tier exclusion (disabled packs too).
+    if (isInsideSkillStore(skillDir, APP_MANAGED_SKILLS_DIR)) continue;
+    const content = readSkillInstructions(skillDir, APP_MANAGED_SKILLS_DIR);
+    if (content === null) continue;
+    try {
+      const parsed = matter(content);
+      return {
+        slug, source: 'omp', path: skillDir, content: parsed.content,
+        metadata: {
+          name: typeof parsed.data.name === 'string' && parsed.data.name ? parsed.data.name : slug,
+          description: typeof parsed.data.description === 'string' ? parsed.data.description : '',
+        },
+      };
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+      throw error;
+    }
+  }
+  return null;
+}
+
 /**
  * Load a single skill by slug from all sources (project > workspace > global).
- * Unlike loadAllSkills(), this only reads the specific slug directory — O(1) not O(N).
- *
- * @param workspaceRoot - Absolute path to workspace root
- * @param slug - Skill slug to load
- * @param projectRoot - Optional project root for project-level skills
+ * Ordinary names read only that directory; current-main collision aliases keep
+ * the existing list-resolution fallback.
  */
 export function loadSkillBySlug(workspaceRoot: string, slug: string, projectRoot?: string): LoadedSkill | null {
   if (!isSafeSkillName(slug)) return null;
