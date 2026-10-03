@@ -1,0 +1,481 @@
+{
+  "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+  "host": {
+    "platform": "darwin",
+    "architecture": "arm64",
+    "bun": "1.4.2"
+  },
+  "results": [
+    {
+      "name": "apps/cloud-gateway",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<candidate>/apps/cloud-gateway",
+      "exitCode": 0,
+      "elapsedMs": 4652,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-apps-cloud-gateway.log"
+    },
+    {
+      "name": "apps/viewer",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<candidate>/apps/viewer",
+      "exitCode": 2,
+      "elapsedMs": 26851,
+      "diagnosticOccurrences": 2,
+      "log": "candidate-apps-viewer.log"
+    },
+    {
+      "name": "apps/workspace-service",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<candidate>/apps/workspace-service",
+      "exitCode": 0,
+      "elapsedMs": 23074,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-apps-workspace-service.log"
+    },
+    {
+      "name": "apps/cli",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<candidate>/apps/cli",
+      "exitCode": 0,
+      "elapsedMs": 30948,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-apps-cli.log"
+    },
+    {
+      "name": "packages/ui",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "tsc",
+        "--noEmit"
+      ],
+      "cwd": "<candidate>/packages/ui",
+      "exitCode": 0,
+      "elapsedMs": 10519,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-packages-ui.log"
+    },
+    {
+      "name": "packages/core",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "tsc",
+        "--noEmit"
+      ],
+      "cwd": "<candidate>/packages/core",
+      "exitCode": 0,
+      "elapsedMs": 6224,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-packages-core.log"
+    },
+    {
+      "name": "packages/messaging-whatsapp-worker",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<candidate>/packages/messaging-whatsapp-worker",
+      "exitCode": 0,
+      "elapsedMs": 2930,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-packages-messaging-whatsapp-worker.log"
+    },
+    {
+      "name": "packages/cloud-runner",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<candidate>/packages/cloud-runner",
+      "exitCode": 0,
+      "elapsedMs": 3262,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-packages-cloud-runner.log"
+    },
+    {
+      "name": "packages/session-tools-core",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<candidate>/packages/session-tools-core",
+      "exitCode": 0,
+      "elapsedMs": 6693,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-packages-session-tools-core.log"
+    },
+    {
+      "name": "packages/server",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<candidate>/packages/server",
+      "exitCode": 0,
+      "elapsedMs": 21328,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-packages-server.log"
+    },
+    {
+      "name": "apps/webui",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<candidate>/apps/webui",
+      "exitCode": 0,
+      "elapsedMs": 75248,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-apps-webui.log"
+    },
+    {
+      "name": "packages/shared",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "tsc",
+        "--noEmit"
+      ],
+      "cwd": "<candidate>/packages/shared",
+      "exitCode": 0,
+      "elapsedMs": 21899,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-packages-shared.log"
+    },
+    {
+      "name": "packages/messaging-discord-worker",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<candidate>/packages/messaging-discord-worker",
+      "exitCode": 0,
+      "elapsedMs": 3113,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-packages-messaging-discord-worker.log"
+    },
+    {
+      "name": "apps/electron",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<candidate>/apps/electron",
+      "exitCode": 0,
+      "elapsedMs": 83415,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-apps-electron.log"
+    },
+    {
+      "name": "packages/pi-agent-server",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<candidate>/packages/pi-agent-server",
+      "exitCode": 0,
+      "elapsedMs": 12067,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-packages-pi-agent-server.log"
+    },
+    {
+      "name": "packages/session-mcp-server",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "tsc",
+        "--noEmit"
+      ],
+      "cwd": "<candidate>/packages/session-mcp-server",
+      "exitCode": 0,
+      "elapsedMs": 3241,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-packages-session-mcp-server.log"
+    },
+    {
+      "name": "packages/server-core",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "tsc",
+        "--noEmit"
+      ],
+      "cwd": "<candidate>/packages/server-core",
+      "exitCode": 0,
+      "elapsedMs": 16045,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-packages-server-core.log"
+    },
+    {
+      "name": "packages/messaging-gateway",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<candidate>/packages/messaging-gateway",
+      "exitCode": 2,
+      "elapsedMs": 15762,
+      "diagnosticOccurrences": 123,
+      "log": "candidate-packages-messaging-gateway.log"
+    },
+    {
+      "name": "root-typecheck",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "typecheck:all"
+      ],
+      "cwd": "<candidate>",
+      "exitCode": 0,
+      "elapsedMs": 154658,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-root-typecheck.log"
+    },
+    {
+      "name": "durability-and-lifecycle-tests",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "test",
+        "packages/server-core/src/authority/__tests__",
+        "packages/server-core/src/collaboration",
+        "packages/server-core/src/transport/__tests__/server-lifecycle.test.ts",
+        "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+        "packages/server-core/src/transport/__tests__/before-response-authority.test.ts",
+        "packages/shared/src/config/__tests__/config-isolation.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/native-workspace-startup.test.ts"
+      ],
+      "cwd": "<candidate>",
+      "exitCode": 0,
+      "elapsedMs": 4112,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-durability-and-lifecycle-tests.log"
+    },
+    {
+      "name": "web-transport-tests",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "test",
+        "packages/server-core/src/webui",
+        "packages/server-core/src/bootstrap"
+      ],
+      "cwd": "<candidate>",
+      "exitCode": 0,
+      "elapsedMs": 6495,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-web-transport-tests.log"
+    },
+    {
+      "name": "web-build",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "webui:build"
+      ],
+      "cwd": "<candidate>",
+      "exitCode": 0,
+      "elapsedMs": 75525,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-web-build.log"
+    },
+    {
+      "name": "pi-subprocess-build",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "run",
+        "server:build:subprocess"
+      ],
+      "cwd": "<candidate>",
+      "exitCode": 0,
+      "elapsedMs": 1172,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-pi-subprocess-build.log"
+    },
+    {
+      "name": "server-build",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "build",
+        "packages/server/src/index.ts",
+        "--target",
+        "bun",
+        "--outdir",
+        "dist-server",
+        "--external",
+        "xlsx"
+      ],
+      "cwd": "<candidate>",
+      "exitCode": 0,
+      "elapsedMs": 1470,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-server-build.log"
+    },
+    {
+      "name": "built-server-lifecycle",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "command": [
+        "bun",
+        "test",
+        "packages/server/src/__tests__/smoke.test.ts"
+      ],
+      "cwd": "<candidate>",
+      "exitCode": 1,
+      "elapsedMs": 2971,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-built-server-lifecycle.log"
+    },
+    {
+      "name": "pi-subprocess-build-bun1314",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "runtimeVersion": "1.3.14",
+      "command": [
+        "/tmp/rox-readiness-bun-1.3.14-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "server:build:subprocess"
+      ],
+      "cwd": "<candidate>",
+      "exitCode": 0,
+      "elapsedMs": 1806,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-pi-subprocess-build-bun1314.log"
+    },
+    {
+      "name": "server-build-bun1314",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "runtimeVersion": "1.3.14",
+      "command": [
+        "/tmp/rox-readiness-bun-1.3.14-20261003/bun-darwin-aarch64/bun",
+        "build",
+        "packages/server/src/index.ts",
+        "--target",
+        "bun",
+        "--outdir",
+        "dist-server-bun1314",
+        "--external",
+        "xlsx"
+      ],
+      "cwd": "<candidate>",
+      "exitCode": 0,
+      "elapsedMs": 2219,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-server-build-bun1314.log"
+    },
+    {
+      "name": "built-server-lifecycle-bun1314",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "runtimeVersion": "1.3.14",
+      "command": [
+        "/tmp/rox-readiness-bun-1.3.14-20261003/bun-darwin-aarch64/bun",
+        "test",
+        "packages/server/src/__tests__/smoke.test.ts"
+      ],
+      "cwd": "<candidate>",
+      "exitCode": 0,
+      "elapsedMs": 15008,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-built-server-lifecycle-bun1314.log"
+    },
+    {
+      "name": "pi-subprocess-build-bun1314",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "runtimeVersion": "1.3.14",
+      "command": [
+        "/tmp/rox-readiness-bun-1.3.14-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "server:build:subprocess"
+      ],
+      "cwd": "<candidate>",
+      "exitCode": 0,
+      "elapsedMs": 1225,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-pi-subprocess-build-bun1314.log"
+    },
+    {
+      "name": "server-build-bun1314",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "runtimeVersion": "1.3.14",
+      "command": [
+        "/tmp/rox-readiness-bun-1.3.14-20261003/bun-darwin-aarch64/bun",
+        "build",
+        "packages/server/src/index.ts",
+        "--target",
+        "bun",
+        "--outdir",
+        "dist-server-bun1314",
+        "--external",
+        "xlsx"
+      ],
+      "cwd": "<candidate>",
+      "exitCode": 0,
+      "elapsedMs": 1465,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-server-build-bun1314.log"
+    },
+    {
+      "name": "built-server-lifecycle-bun1314",
+      "commit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "runtimeVersion": "1.3.14",
+      "command": [
+        "/tmp/rox-readiness-bun-1.3.14-20261003/bun-darwin-aarch64/bun",
+        "test",
+        "packages/server/src/__tests__/smoke.test.ts"
+      ],
+      "cwd": "<candidate>",
+      "exitCode": 0,
+      "elapsedMs": 14708,
+      "diagnosticOccurrences": 0,
+      "log": "candidate-built-server-lifecycle-bun1314.log"
+    }
+  ],
+  "limits": "Independent clean checkout. Source/unit and compiler results do not establish native signed artifacts, provider accounts or hosted deployment acceptance."
+}

@@ -1,0 +1,265 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+  "worktree": "/Users/t/Projects/rox-one-recheck-candidate-20261003",
+  "startedAt": "2026-10-03T03:41:56.002Z",
+  "runtime": {
+    "path": "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+    "version": "1.3.14"
+  },
+  "sourceFrozen": true,
+  "environmentPolicy": {
+    "inheritedEnvironment": "PATH/LANG/TMPDIR only; provider credentials and application secrets omitted",
+    "outerDisposableConfigRoot": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-services-final-e074-t08LjX",
+    "smokeProfiles": "smoke.test.ts creates per-child disposable roots and ephemeral loopback ports; no user workspace seeding",
+    "dotenvFilesPresent": [],
+    "noEnvFile": "top-level build/test invocations disable dotenv; child spawn implementation also reviewed; no root dotenv files exist",
+    "outerDisposableConfigRootRemoved": true,
+    "additionalDotenvDirectoriesInspected": {
+      "apps/webui": [],
+      "apps/webui/src": [],
+      "apps/electron": [],
+      "packages/pi-agent-server": []
+    }
+  },
+  "steps": [
+    {
+      "id": "webui-build",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "--no-env-file",
+        "run",
+        "webui:build"
+      ],
+      "additionalEnvironment": {},
+      "log": "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/services-final/webui-build.log",
+      "startedAt": "2026-10-03T03:41:58.547Z",
+      "timeoutMs": 900000,
+      "status": "FAIL",
+      "pid": 9605,
+      "code": null,
+      "signal": "SIGTERM",
+      "finishedAt": "2026-10-03T03:56:58.976Z",
+      "elapsedSeconds": 900.43,
+      "timedOut": true
+    },
+    {
+      "id": "pi-subprocess-build",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "--no-env-file",
+        "run",
+        "server:build:subprocess"
+      ],
+      "additionalEnvironment": {},
+      "log": "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/services-final/pi-subprocess-build.log",
+      "startedAt": "2026-10-03T03:56:59.002Z",
+      "timeoutMs": 300000,
+      "status": "PASS",
+      "pid": 20958,
+      "code": 0,
+      "signal": null,
+      "finishedAt": "2026-10-03T03:57:39.689Z",
+      "elapsedSeconds": 40.71,
+      "timedOut": false
+    },
+    {
+      "id": "server-bundle-build",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "--no-env-file",
+        "build",
+        "packages/server/src/index.ts",
+        "--target",
+        "bun",
+        "--outdir",
+        "dist-server",
+        "--external",
+        "xlsx"
+      ],
+      "additionalEnvironment": {},
+      "log": "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/services-final/server-bundle-build.log",
+      "startedAt": "2026-10-03T03:57:39.800Z",
+      "timeoutMs": 300000,
+      "status": "PASS",
+      "pid": 21579,
+      "code": 0,
+      "signal": null,
+      "finishedAt": "2026-10-03T03:58:43.145Z",
+      "elapsedSeconds": 63.35,
+      "timedOut": false
+    },
+    {
+      "id": "built-server-smoke",
+      "status": "NOT_RUN",
+      "reason": "NOT_RUN: WebUI timed out before emitting current-source output; existing index/login mtime predates this source check. No stale/static fallback used for the composed hosted gate.",
+      "scope": "BUILT_SERVER_WITH_FRESH_BUILT_WEBUI",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "--no-env-file",
+        "test",
+        "--timeout",
+        "90000",
+        "packages/server/src/__tests__/smoke.test.ts"
+      ],
+      "additionalEnvironment": {
+        "ROX_SERVER_SMOKE_ENTRY": "dist-server/index.js",
+        "ROX_SERVER_SMOKE_WEBUI_DIR": "apps/webui/dist"
+      },
+      "code": null,
+      "log": "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/services-final/built-server-smoke.log"
+    },
+    {
+      "id": "built-server-fixture-smoke",
+      "scope": "BUILT_SERVER_HTTP_AUTH_WS_RESTART_WITH_FIXTURE_HTML",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "--no-env-file",
+        "test",
+        "--timeout",
+        "90000",
+        "packages/server/src/__tests__/smoke.test.ts"
+      ],
+      "additionalEnvironment": {
+        "ROX_SERVER_SMOKE_ENTRY": "dist-server/index.js",
+        "ROX_SERVER_SMOKE_WEBUI_DIR": "INTENTIONALLY_UNSET",
+        "ROX_CONFIG_DIR": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-built-fixture-e074-RPGn4E",
+        "CRAFT_CONFIG_DIR": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-built-fixture-e074-RPGn4E"
+      },
+      "environmentPolicy": "PATH/LANG/TMPDIR only inherited. No provider credentials, user profiles or dotenv. Child fixture owns ephemeral config/ports and newly written HTML.",
+      "startedAt": "2026-10-03T04:02:56.027Z",
+      "timeoutMs": 420000,
+      "status": "FAIL",
+      "log": "docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/services-final/built-server-fixture-smoke.log",
+      "pid": 26678,
+      "code": 1,
+      "signal": null,
+      "timedOut": false,
+      "finishedAt": "2026-10-03T04:04:51.731Z",
+      "elapsedSeconds": 115.7,
+      "outerDisposableConfigRootRemoved": true
+    }
+  ],
+  "limits": [
+    "Local macOS arm64 build and isolated HTTP/WS lifecycle only. No Docker/image/Linux/Windows/signed macOS app or public TLS ingress test.",
+    "Pi subprocess is built but not asked to run a provider conversation.",
+    "No provider credentials, user profile, paid prompts, deployment or full compiler matrix."
+  ],
+  "syntheticFixtureReview": {
+    "path": "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+    "currentContent": "single LF byte",
+    "canonicalMainContent": "zero bytes",
+    "delta": "one added blank line",
+    "history": "tracked fixture predates current integration; existing build-call-llm-request.test.ts lines17-27 creates and removes this synthetic directory and empty file",
+    "finding": "Unneeded generated test-fixture content delta; not a secret or product runtime source. Test self-generates the file, so tracked fixture can be cleaned separately by owner. No edit performed."
+  },
+  "endingCommit": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+  "finishedAt": "2026-10-03T04:04:53.567Z",
+  "status": "BOUNDED_GATES_NOT_ALL_PASS",
+  "artifacts": [
+    {
+      "path": "packages/pi-agent-server/dist/index.js",
+      "exists": true,
+      "bytes": 33013956,
+      "mtime": "2026-10-03T03:57:39.374Z",
+      "sha256": "212a1f4e7e07aacc9ee498f73b3df5c7f0c6e31b3386d9e7ae26eccd138a0a10"
+    },
+    {
+      "path": "dist-server/index.js",
+      "exists": true,
+      "bytes": 37048951,
+      "mtime": "2026-10-03T03:58:43.063Z",
+      "sha256": "73adfc62d2a4a096191945399db9c176356cf017a6ad43f89cd8d69e283ab8ea"
+    },
+    {
+      "path": "apps/webui/dist/index.html",
+      "exists": true,
+      "bytes": 1767,
+      "mtime": "2026-10-02T23:02:29.354Z",
+      "sha256": "31384ce37709af85514c35267f18a8b35009c837d1ad33f30249158e87deba09"
+    },
+    {
+      "path": "apps/webui/dist/login.html",
+      "exists": true,
+      "bytes": 9998,
+      "mtime": "2026-10-02T23:02:29.354Z",
+      "sha256": "e2b5ff3b6797dd07fea6edfe32051d8db3461c78ce6244ed00d42669615c5cfa"
+    }
+  ],
+  "webuiProvenance": {
+    "buildStatus": "TIMED_OUT_NOT_PASSED",
+    "freshEmittedIndex": false,
+    "limitation": "Vite script leaves external dist unemptied; timed-out run remained in transforming phase. Existing dist must not be treated as current source build output or hosted WebUI acceptance."
+  },
+  "workspaceLinkProvenance": {
+    "shared": "/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/shared",
+    "core": "/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/core",
+    "server-core": "/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/server-core",
+    "cloud-runner": "/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/cloud-runner"
+  },
+  "resourceObservations": {
+    "coordinatorReportedHostLoad": "900+ aggregate host load during run; user processes untouched",
+    "ownedWebuiSamples": [
+      {
+        "elapsed": "05:56",
+        "cpuPercent": 5.8,
+        "rssKiB": 511808
+      },
+      {
+        "elapsed": "10:19",
+        "cpuPercent": 5.6,
+        "rssKiB": 578080
+      }
+    ],
+    "diagnosis": "The owned900s timeout is an observed incomplete resource-bounded gate; this receipt does not establish a functional source failure or an OOM diagnosis."
+  },
+  "warnings": [
+    {
+      "step": "webui-build",
+      "type": "SOURCE_WARNING",
+      "detail": "route-parser.ts1904 duplicate case 'page-info' is unreachable; source unchanged; no rerun due warning"
+    },
+    {
+      "step": "webui-build",
+      "type": "OUTPUT_POLICY_WARNING",
+      "detail": "External apps/webui/dist is not emptied by existing build script; no clean-directory acceptance"
+    },
+    {
+      "step": "webui-build",
+      "type": "NODE_DEPRECATION_WARNING",
+      "detail": "module.register() deprecated in executing Node runtime"
+    }
+  ],
+  "runtimeTestSummary": {
+    "scope": "BUILT_SERVER_HTTP_AUTH_WS_RESTART_WITH_FIXTURE_HTML",
+    "requestedTests": 4,
+    "executedTests": 4,
+    "passedTests": 2,
+    "failedTests": 2,
+    "assertions": 6,
+    "status": "FAIL",
+    "composedBuiltWebuiStatus": "NOT_RUN_MISSING_FRESH_WEBUI_INPUT"
+  },
+  "documentationValidatorDirtyPathObserved": "scripts/final-readiness-audit.ts; no apps/packages source dirty; not imported by these build/runtime commands",
+  "runtimeFailureInterpretation": {
+    "observed": [
+      "Health/auth/WS/restart fixture failed after46982ms; captured child output empty; cleanup exit143 after requested SIGTERM.",
+      "Short-token fixture failed after46269ms: Short-token server did not exit; cleanup exit143.",
+      "Already-exited0 and17 fixture tests PASS.",
+      "No exports_tmp ReferenceError was logged."
+    ],
+    "sourceLimits": "Existing fixture STARTUP_TIMEOUT45000; test timeout90000 unchanged. Failed cleanup can mask original startup timeout text, so diagnosis is limited to observed missing completion plus cleanup exit, not an inferred application exception.",
+    "classification": "STARTUP_GATE_FAILED_CAUSE_NOT_ESTABLISHED",
+    "hostContext": "Coordinator reported900+ host load. Resource contention is possible but not sufficient to relabel failures PASS.",
+    "noOptionalRetry": true
+  },
+  "artifactValidation": {
+    "jsonParse": "PASS",
+    "logsExist": true,
+    "exactTestsExecuted": 4,
+    "actualProductSourceDiff": "none in apps/packages at ending git check",
+    "head": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+    "sourceChangesByThisTask": 0,
+    "commitsByThisTask": 0
+  }
+}

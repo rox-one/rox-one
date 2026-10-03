@@ -1,0 +1,11 @@
+sourceCommit=e0740755da02fa31112216b1a32b6d707c3a2cc1
+bun=/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun
+command=["/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun","--no-env-file","/Users/t/Projects/rox-one-recheck-candidate-20261003/docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/affected-build.ts"]
+startedAt=2026-10-03T03:43:01.592Z
+
+{"entry":"scripts/verify-update-metadata.ts","success":true,"outputs":[{"path":"/Users/t/Projects/rox-one-recheck-candidate-20261003/docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/compiled/scripts_verify-update-metadata/verify-update-metadata.js","size":1382}],"scope":"Parse/bundle/module-resolution check only; compiled module not executed"}
+{"entry":"scripts/desktop-release.ts","success":true,"outputs":[{"path":"/Users/t/Projects/rox-one-recheck-candidate-20261003/docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/compiled/scripts_desktop-release/desktop-release.js","size":16599}],"scope":"Parse/bundle/module-resolution check only; compiled module not executed"}
+{"entry":"scripts/publish-desktop-release.ts","success":true,"outputs":[{"path":"/Users/t/Projects/rox-one-recheck-candidate-20261003/docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/compiled/scripts_publish-desktop-release/publish-desktop-release.js","size":5743}],"scope":"Parse/bundle/module-resolution check only; compiled module not executed"}
+{"entry":"apps/electron/src/main/auto-update.ts","success":true,"outputs":[{"path":"/Users/t/Projects/rox-one-recheck-candidate-20261003/docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/compiled/apps_electron_src_main_auto-update/auto-update.js","size":8488565}],"scope":"Parse/bundle/module-resolution check only; compiled module not executed"}
+
+exitCode=0

@@ -11,7 +11,7 @@
 
 | Surface | Current finding | Required migration |
 | --- | --- | --- |
-| Package namespace | `@craft-agent/*` occurred across workspace manifests, imports, mocks, build aliases and workflows (over 1,200 tracked files) | Rename consistently to `@rox/*`, update Bun lock, frozen install and bundled build resolution together; no compatibility alias needed for unpublished internal modules |
+| Package namespace | `@rox/*` occurred across workspace manifests, imports, mocks, build aliases and workflows (over 1,200 tracked files) | Rename consistently to `@rox/*`, update Bun lock, frozen install and bundled build resolution together; no compatibility alias needed for unpublished internal modules |
 | macOS/Windows identity | `electron-builder.yml` appId `com.lukilabs.craft-agent`; identity manifest deliberately retains this alias | Primary appId `one.rox.app`; verify macOS app data, Electron encryption keychain identity and Windows NSIS upgrade handling before removing old registration |
 | Protocols | Identity accepts `rox` and legacy `craftagents`; `main/handlers/workspace.ts:115` still generates legacy URLs | Emit only `rox://`; retain parser alias for existing OAuth/links until their migration |
 | Permissions path | `shared/src/agent/permissions-config.ts:51` reads old env/default directly | Use canonical resolver, preserving existing permissions via import |

@@ -181,7 +181,7 @@ Source refs historical: NotesPage864,native-notes-sync63,SharedProjectProjection
 Final actual a4browser99/0/0 подтверждает scoped repairs; эти старые findings не выдаются за оставшиеся defects.
 A4 typeRED `desktop-settings-session.test.ts:226:78` — отсутствовали continueCursor/isDone, TS2345.
 Local validate exit2 и4hosted typeFAIL; downstream24stepsSKIPPED. Daa typed fixture-only fix16/0/76 и finalvalidate0.
-A4 canonicalRED0/2/4 до health: `cloud-runs.ts:49` импортировал отсутствующий `@rox/cloud-runner`.
+A4 canonicalRED0/2/4 до health: `cloud-runs.ts:49` импортировал отсутствующий `@craft-agent/cloud-runner`.
 Оmission был и на mainf632. Exact010 добавляет dependency source seed `build-server.ts:384` иcopylist:487.
 Это source packaging defect, не network/auth failure; final actual vendor launcher2/0/56 его закрывает.
 Historical RED сохранены неизменно; старый successful bundle smoke не заменял failed canonical runtime.

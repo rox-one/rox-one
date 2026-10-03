@@ -19,8 +19,8 @@ import {
   type RoadmapProposal,
 } from '@rox/shared/projects/roadmap-ai'
 import type { ProjectRoadmap } from '@rox/shared/projects/roadmap'
-import { RoadmapModelResult } from './RoadmapModelResult'
 import { TextButton } from './roadmap-ui'
+import { RoadmapModelResult } from './RoadmapModelResult'
 
 export interface AiStatus {
   available: boolean
@@ -127,7 +127,7 @@ export function ProjectAiPanel({
   roadmap,
   status,
   runAi,
-  result = null,
+  result,
   onAccept,
   improve,
   onImproveDone,
@@ -260,7 +260,7 @@ export function ProjectAiPanel({
         </TextButton>
       </div>
       {available ? <p className="mt-1 px-1 text-[11px] leading-4 text-muted-foreground/80">{t('projectRoadmap.ai.consent', { model: status?.model ?? '—' })}</p> : null}
-      <RoadmapModelResult result={result} t={t} />
+      <RoadmapModelResult result={result ?? null} t={t} />
       {error ? <p className="mt-1 px-1 text-[12px] text-destructive" role="alert">{error}</p> : null}
 
       {briefImprove !== null ? (
@@ -438,7 +438,7 @@ export function ProjectAiPanel({
             decide={decide}
             sectionTitle={sectionTitle}
           />
-          {state.model ? <p className="mt-2 px-1 text-[11px] text-muted-foreground/70">{t('projectRoadmap.ai.generatedBy', { model: state.model })}</p> : null}
+
         </div>
       ) : null}
     </div>

@@ -262,7 +262,7 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     const { loadProjectConfig, loadProjectRoadmap } = await import('@rox/shared/projects')
     if (!loadProjectConfig(workspace.rootPath, projectSlug)) return null
     return loadProjectRoadmap(workspace.rootPath, projectSlug)
-  }, { nativeAction: 'read' })
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 
   server.handle(RPC_CHANNELS.projects.SAVE_ROADMAP, async (ctx, workspaceId: string, projectSlug: string, roadmap: unknown) => {
     const act = rpcProjectsActResult({ source: 'native', action: 'write', nativeId: projectSlug || 'project' })
@@ -274,7 +274,7 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     const revision = roadmap && typeof roadmap === 'object' ? (roadmap as { revision?: unknown }).revision : undefined
     if (!isRoadmapRevision(revision)) throw new Error('PROJECT_ROADMAP_INVALID_REVISION')
     return saveProjectRoadmap(workspace.rootPath, projectSlug, roadmap, { expectedRevision: revision })
-  }, { nativeAction: 'write' })
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'write' })
 
   // Which model the Project screen AI would use (honest disabled state when none).
   server.handle(RPC_CHANNELS.projects.AI_STATUS, async (ctx, workspaceId: string) => {
@@ -282,7 +282,7 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     const describe = deps.sessionManager?.describeWorkspaceLlm
     if (typeof describe !== 'function') return { available: false, reason: 'unsupported' }
     return describe.call(deps.sessionManager, workspaceId)
-  }, { nativeAction: 'read' })
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 
   // Roadmap AI: clarifying questions → spec proposal → improve text. Never writes;
   // the renderer shows a proposal and applies only the items the user accepts.
@@ -352,26 +352,28 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
         temperature: mode === 'improve' ? 0.3 : 0.2,
         maxTokens: mode === 'spec' ? 8000 : 2000,
       })
+      const effectiveModel = result.effectiveModel === undefined ? result.model ?? null : result.effectiveModel
+      const provenance = { requestedModel: result.requestedModel, effectiveModel, model: effectiveModel ?? undefined, warning: result.warning }
       log.info(`PROJECTS_AI_ROADMAP: ${mode} for ${projectSlug} answered by ${result.model ?? 'unknown model'} (${result.text.length} chars)`)
       if (mode === 'clarify') {
         const questions = shared.parseClarifyResponse(result.text)
-        if (!questions.length) return { ok: false, error: 'unparseable', raw: result.text.slice(0, 2000) }
-        return { ok: true, mode, questions, model: result.model, requestedModel: result.requestedModel, effectiveModel: result.effectiveModel ?? null, warning: result.warning, roadmapRevision: roadmap.revision }
+        if (!questions.length) return { ok: false, error: 'unparseable', raw: result.text.slice(0, 2000), ...provenance }
+        return { ok: true, mode, questions, ...provenance, roadmapRevision: roadmap.revision }
       }
       if (mode === 'improve') {
         const improved = shared.stripImprovedText(result.text)
-        if (!improved) return { ok: false, error: 'empty-answer' }
-        return { ok: true, mode, text: improved, model: result.model, requestedModel: result.requestedModel, effectiveModel: result.effectiveModel ?? null, warning: result.warning, roadmapRevision: roadmap.revision }
+        if (!improved) return { ok: false, error: 'empty-answer', ...provenance }
+        return { ok: true, mode, text: improved, ...provenance, roadmapRevision: roadmap.revision }
       }
       const proposal = shared.parseSpecResponse(result.text)
       if (!proposal) return { ok: false, error: 'unparseable', raw: result.text.slice(0, 2000) }
-      return { ok: true, mode: 'spec', proposal, model: result.model, requestedModel: result.requestedModel, effectiveModel: result.effectiveModel ?? null, warning: result.warning, roadmapRevision: roadmap.revision }
+      return { ok: true, mode: 'spec', proposal, ...provenance, roadmapRevision: roadmap.revision }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       log.warn(`PROJECTS_AI_ROADMAP failed for ${projectSlug}: ${message}`)
       return { ok: false, error: message }
     }
-  }, { nativeAction: 'write' })
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'write' })
 
   // Project OKR data has the same workspace boundary as project metadata.
   server.handle(RPC_CHANNELS.projects.GET_OKR, async (ctx, workspaceId: string, projectSlug: string) => {

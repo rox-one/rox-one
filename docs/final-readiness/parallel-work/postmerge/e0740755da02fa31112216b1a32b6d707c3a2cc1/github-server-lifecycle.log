@@ -1,0 +1,901 @@
+lifecycle (lifecycle)	Set up job	﻿2026-10-03T04:03:27.7559560Z Current runner version: '2.337.0'
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7578570Z ##[group]Runner Image Provisioner
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7579350Z Hosted Compute Agent
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7579810Z Version: 20260828.587
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7580240Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7580730Z Build Date: 2026-08-28T16:44:25Z
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7581190Z Worker ID: {20c56893-c7b4-424a-b436-871782113680}
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7581650Z Azure Region: westus
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7582080Z ##[endgroup]
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7583050Z ##[group]Operating System
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7583450Z macOS
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7585150Z 15.7.9
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7585730Z 24G830
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7586120Z ##[endgroup]
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7586590Z ##[group]Runner Image
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7588110Z Image: macos-15-arm64
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7588580Z Version: 20260907.0337.1
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7589390Z Included Software: https://github.com/actions/runner-images/blob/macos-15-arm64/20260907.0337/images/macos/macos-15-arm64-Readme.md
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7590680Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-15-arm64%2F20260907.0337
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7591340Z ##[endgroup]
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7593230Z ##[group]GITHUB_TOKEN Permissions
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7595380Z Contents: read
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7595780Z Metadata: read
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7596150Z ##[endgroup]
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7597740Z Secret source: Actions
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7599770Z Cache mode: write
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7600330Z Prepare workflow directory
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7827100Z Prepare all required actions
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:27.7862870Z Getting action download info
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:28.2195010Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:28.3887130Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:28.4799880Z Download action repository 'oven-sh/setup-bun@v2' (SHA:0c5077e51419868618aeaa5fe8019c62421857d6)
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:28.8432930Z Download action repository 'astral-sh/setup-uv@v5' (SHA:d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86)
+lifecycle (lifecycle)	Set up job	2026-10-03T04:03:29.5978110Z Complete job name: lifecycle (lifecycle)
+lifecycle (lifecycle)	Checkout	﻿2026-10-03T04:03:29.6448770Z ##[group]Run actions/checkout@v4
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.6449400Z with:
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.6449740Z   repository: rox-one/rox-one
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.6452970Z   token: ***
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.6453310Z   ssh-strict: true
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.6453650Z   ssh-user: git
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.6453990Z   persist-credentials: true
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.6454380Z   clean: true
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.6454730Z   sparse-checkout-cone-mode: true
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.6455130Z   fetch-depth: 1
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.6455460Z   fetch-tags: false
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.6455800Z   show-progress: true
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.6456150Z   lfs: false
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.6456470Z   submodules: false
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.6456840Z   set-safe-directory: true
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.6457230Z   allow-unsafe-pr-checkout: false
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.6457770Z ##[endgroup]
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.9859610Z Syncing repository: rox-one/rox-one
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.9861640Z ##[group]Getting Git version info
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.9862250Z Working directory is '/Users/runner/work/rox-one/rox-one'
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:29.9863220Z [command]/opt/homebrew/bin/git version
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0339040Z git version 2.55.0
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0386020Z ##[endgroup]
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0390750Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/59a36032-77ac-4e71-8d19-678adae70488/.gitconfig'
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0391910Z Temporarily overriding HOME='/Users/runner/work/_temp/59a36032-77ac-4e71-8d19-678adae70488' before making global git config changes
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0392950Z Adding repository directory to the temporary git global config as a safe directory
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0393840Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/rox-one/rox-one
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0475320Z Deleting the contents of '/Users/runner/work/rox-one/rox-one'
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0477550Z ##[group]Initializing the repository
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0480670Z [command]/opt/homebrew/bin/git init /Users/runner/work/rox-one/rox-one
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0692390Z hint: Using 'master' as the name for the initial branch. This default branch name
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0693540Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0694290Z hint: to use in all of your new repositories, which will suppress this warning,
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0694860Z hint: call:
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0695180Z hint:
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0695630Z hint: 	git config --global init.defaultBranch <name>
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0696100Z hint:
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0696590Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0697440Z hint: 'development'. The just-created branch can be renamed via this command:
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0698070Z hint:
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0698500Z hint: 	git branch -m <name>
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0698940Z hint:
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0699470Z hint: Disable this message with "git config set advice.defaultBranchName false"
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0701580Z Initialized empty Git repository in /Users/runner/work/rox-one/rox-one/.git/
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0706760Z [command]/opt/homebrew/bin/git remote add origin https://github.com/rox-one/rox-one
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0777670Z ##[endgroup]
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0778600Z ##[group]Disabling automatic garbage collection
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0779640Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0840860Z ##[endgroup]
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0841940Z ##[group]Setting up auth
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0845210Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.0905830Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.2332540Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.2385910Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.3076380Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.3132950Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.3843670Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.3904740Z ##[endgroup]
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.3905490Z ##[group]Fetching the repository
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:30.3910000Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +c8e0df9ce28f4d676ee5bd2eea8d47c311664f07:refs/remotes/pull/1385/merge
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:34.0818060Z From https://github.com/rox-one/rox-one
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:34.0820040Z  * [new ref]         c8e0df9ce28f4d676ee5bd2eea8d47c311664f07 -> pull/1385/merge
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:34.0827220Z ##[endgroup]
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:34.0828090Z ##[group]Determining the checkout info
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:34.0830200Z ##[endgroup]
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:34.0837750Z [command]/opt/homebrew/bin/git sparse-checkout disable
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:34.0943880Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:34.1005370Z ##[group]Checking out the ref
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:34.1007540Z [command]/opt/homebrew/bin/git checkout --progress --force refs/remotes/pull/1385/merge
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:35.1198280Z HEAD is now at c8e0df9 Merge e0740755da02fa31112216b1a32b6d707c3a2cc1 into 7e24a97cc8bef429d95c9f703420805f9153a99b
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:35.1237240Z ##[endgroup]
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:35.1367020Z [command]/opt/homebrew/bin/git log -1 --format=%H
+lifecycle (lifecycle)	Checkout	2026-10-03T04:03:35.1467260Z c8e0df9ce28f4d676ee5bd2eea8d47c311664f07
+lifecycle (lifecycle)	Setup Node	﻿2026-10-03T04:03:35.1845590Z ##[group]Run actions/setup-node@v4
+lifecycle (lifecycle)	Setup Node	2026-10-03T04:03:35.1845840Z with:
+lifecycle (lifecycle)	Setup Node	2026-10-03T04:03:35.1846010Z   node-version: 24
+lifecycle (lifecycle)	Setup Node	2026-10-03T04:03:35.1846230Z   always-auth: false
+lifecycle (lifecycle)	Setup Node	2026-10-03T04:03:35.1846450Z   check-latest: false
+lifecycle (lifecycle)	Setup Node	2026-10-03T04:03:35.1848510Z   token: ***
+lifecycle (lifecycle)	Setup Node	2026-10-03T04:03:35.1848660Z ##[endgroup]
+lifecycle (lifecycle)	Setup Node	2026-10-03T04:03:35.3581040Z (node:1131) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+lifecycle (lifecycle)	Setup Node	2026-10-03T04:03:35.3582790Z (Use `node --trace-deprecation ...` to show where the warning was created)
+lifecycle (lifecycle)	Setup Node	2026-10-03T04:03:35.3583640Z Found in cache @ /Users/runner/hostedtoolcache/node/24.20.0/arm64
+lifecycle (lifecycle)	Setup Node	2026-10-03T04:03:35.3584720Z ##[group]Environment details
+lifecycle (lifecycle)	Setup Node	2026-10-03T04:03:36.0926970Z node: v24.20.0
+lifecycle (lifecycle)	Setup Node	2026-10-03T04:03:36.0940130Z npm: 11.19.0
+lifecycle (lifecycle)	Setup Node	2026-10-03T04:03:36.0944290Z yarn: 1.22.22
+lifecycle (lifecycle)	Setup Node	2026-10-03T04:03:36.0945070Z ##[endgroup]
+lifecycle (lifecycle)	Setup Bun	﻿2026-10-03T04:03:36.1058400Z ##[group]Run oven-sh/setup-bun@v2
+lifecycle (lifecycle)	Setup Bun	2026-10-03T04:03:36.1058670Z with:
+lifecycle (lifecycle)	Setup Bun	2026-10-03T04:03:36.1058870Z   bun-version: 1.3.14
+lifecycle (lifecycle)	Setup Bun	2026-10-03T04:03:36.1059070Z   no-cache: false
+lifecycle (lifecycle)	Setup Bun	2026-10-03T04:03:36.1061120Z   token: ***
+lifecycle (lifecycle)	Setup Bun	2026-10-03T04:03:36.1061340Z ##[endgroup]
+lifecycle (lifecycle)	Setup Bun	2026-10-03T04:03:36.7565440Z Cache hit for: bun-kSmiCOujAb+jFWQqTDn70+CxniQ=
+lifecycle (lifecycle)	Setup Bun	2026-10-03T04:03:38.0378350Z Received 318198 of 21289718 (1.5%), 0.3 MBs/sec
+lifecycle (lifecycle)	Setup Bun	2026-10-03T04:03:38.2353590Z Received 21289718 of 21289718 (100.0%), 16.9 MBs/sec
+lifecycle (lifecycle)	Setup Bun	2026-10-03T04:03:38.2422420Z Cache Size: ~20 MB (21289718 B)
+lifecycle (lifecycle)	Setup Bun	2026-10-03T04:03:38.2440440Z [command]/opt/homebrew/bin/gtar -xf /Users/runner/work/_temp/ae65bf99-4f12-46b7-bb01-41f4bf64850c/cache.tzst -P -C /Users/runner/work/rox-one/rox-one --delay-directory-restore --use-compress-program unzstd
+lifecycle (lifecycle)	Setup Bun	2026-10-03T04:03:38.3261300Z Cache restored successfully
+lifecycle (lifecycle)	Setup Bun	2026-10-03T04:03:38.3278030Z [command]/Users/runner/.bun/bin/bun --revision
+lifecycle (lifecycle)	Setup Bun	2026-10-03T04:03:38.3419090Z 1.3.14+0d9b296af
+lifecycle (lifecycle)	Setup Bun	2026-10-03T04:03:38.3425420Z Using a cached version of Bun: 1.3.14+0d9b296af
+lifecycle (lifecycle)	Install uv	﻿2026-10-03T04:03:38.3542250Z ##[group]Run astral-sh/setup-uv@v5
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:38.3542480Z with:
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:38.3544510Z   github-token: ***
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:38.3544700Z   enable-cache: auto
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:38.3544930Z   cache-dependency-glob: **/uv.lock
+lifecycle (lifecycle)	Install uv	**/requirements*.txt
+lifecycle (lifecycle)	Install uv	
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:38.3545200Z   prune-cache: true
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:38.3545380Z   ignore-nothing-to-cache: false
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:38.3545610Z   ignore-empty-workdir: false
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:38.3545790Z ##[endgroup]
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:38.5250900Z (node:1154) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:38.5252120Z (Use `node --trace-deprecation ...` to show where the warning was created)
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:38.9140810Z Downloading uv from "https://github.com/astral-sh/uv/releases/download/0.12.22/uv-aarch64-apple-darwin.tar.gz" ...
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:39.2400460Z [command]/usr/bin/tar xz -C /Users/runner/work/_temp/8687339a-148b-4573-80a0-7ea6649f9a81 -f /Users/runner/work/_temp/9a16fefd-3df0-4e60-a58e-b6b4fbc1dbb6
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:39.3705290Z Added /Users/runner/.local/bin to the path
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:39.3708670Z Added /Users/runner/hostedtoolcache/uv/0.12.22/aarch64 to the path
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:39.3723360Z Set UV_CACHE_DIR to /Users/runner/work/_temp/setup-uv-cache
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:39.3723780Z Successfully installed uv version 0.12.22
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:39.3724250Z Searching files using cache dependency glob: **/uv.lock,**/requirements*.txt
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:39.7742700Z No matches found for glob
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:39.7759900Z ##[warning]No file matched to [**/uv.lock,**/requirements*.txt]. The cache will never get invalidated. Make sure you have checked out the target repository and configured the cache-dependency-glob input correctly.
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:39.9978550Z Trying to restore uv cache from GitHub Actions cache with key: setup-uv-1-aarch64-apple-darwin-3.14.7-no-dependency-glob
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:40.2360190Z (node:1154) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:40.2375170Z Cache hit for: setup-uv-1-aarch64-apple-darwin-3.14.7-no-dependency-glob
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:40.6131860Z Received 1269 of 1269 (100.0%), 0.0 MBs/sec
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:40.6191530Z Cache Size: ~0 MB (1269 B)
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:40.6212730Z [command]/opt/homebrew/bin/gtar -xf /Users/runner/work/_temp/9ea49f0b-5962-4426-8a90-44f940ea8765/cache.tzst -P -C /Users/runner/work/rox-one/rox-one --delay-directory-restore --use-compress-program unzstd
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:40.6480030Z Cache restored successfully
+lifecycle (lifecycle)	Install uv	2026-10-03T04:03:40.6596890Z uv cache restored from GitHub Actions cache with key: setup-uv-1-aarch64-apple-darwin-3.14.7-no-dependency-glob
+lifecycle (lifecycle)	Install dependencies	﻿2026-10-03T04:03:40.7040780Z ##[group]Run bun install --frozen-lockfile
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:03:40.7041200Z ^[[36;1mbun install --frozen-lockfile^[[0m
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:03:40.7090740Z shell: /bin/bash -e {0}
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:03:40.7091000Z env:
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:03:40.7091200Z   UV_CACHE_DIR: /Users/runner/work/_temp/setup-uv-cache
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:03:40.7093540Z   GITHUB_TOKEN: ***
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:03:40.7093860Z   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:03:40.7094130Z ##[endgroup]
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:03:40.7521210Z bun install v1.3.14 (0d9b296a)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:03:40.7817990Z Resolving dependencies
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:03:41.4066800Z Resolved, downloaded and extracted [198]
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:02.8414140Z 
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:02.8447070Z $ husky
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0747050Z 
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0747940Z + @aws-sdk/client-s3@3.969.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0748580Z + @electron/packager@19.0.1
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0749040Z + @playwright/test@1.49.1
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0750120Z + @sentry/vite-plugin@4.8.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0750710Z + @tailwindcss/vite@4.1.18 (v4.3.3 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0751420Z + @types/bun@1.3.6 (v1.4.2 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0751880Z + @types/js-yaml@4.0.9
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0752620Z + @types/katex@0.16.8
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0753190Z + @types/linkify-it@5.0.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0753590Z + @types/node@25.0.8 (v26.6.4 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0753980Z + @types/react@18.3.27
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0754240Z + @types/react-dom@18.3.7
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0754560Z + @types/semver@7.7.1
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0754860Z + @types/shell-quote@1.7.5
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0755130Z + @types/uuid@11.0.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0755590Z + @typescript-eslint/eslint-plugin@8.53.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0756080Z + @typescript-eslint/parser@8.53.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0756540Z + @vitejs/plugin-react@5.1.2 (v6.1.1 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0756860Z + autoprefixer@10.4.23
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0757300Z + concurrently@9.2.1
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0757680Z + electron@39.2.7
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0758040Z + electron-builder@26.4.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0758350Z + esbuild@0.25.12
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0758570Z + eslint@9.39.2
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0758890Z + eslint-plugin-react@7.37.5
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0759310Z + eslint-plugin-react-hooks@7.0.1
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0759710Z + husky@9.1.7
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0759920Z + openai@6.18.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0760230Z + postcss@8.5.6
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0760650Z + react-devtools-core@6.1.5
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0761010Z + tailwindcss@4.1.18 (v4.3.3 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0761370Z + tar@7.5.2
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0761750Z + typescript@5.9.3 (v7.0.2 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0762170Z + vite@6.4.1 (v8.3.2 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0762510Z + @img/sharp-darwin-arm64@0.34.5
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0762950Z + @img/sharp-libvips-darwin-arm64@1.2.4
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0763420Z + @anthropic-ai/claude-agent-sdk@0.3.258
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0763820Z + @anthropic-ai/sdk@0.100.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0764160Z + @dnd-kit/dom@0.4.0-beta-20260227032529
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0764630Z + @dnd-kit/helpers@0.4.0-beta-20260227032529
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0765710Z + @earendil-works/pi-ai@0.85.1 (v1.0.0 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0766370Z + @earendil-works/pi-coding-agent@0.85.1 (v1.0.0 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0774950Z + @github/copilot-sdk@0.1.23
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0775570Z + @modelcontextprotocol/sdk@1.29.0 (v1.32.0 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0776120Z + @radix-ui/react-avatar@1.1.11
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0776520Z + @radix-ui/react-collapsible@1.1.12
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0777090Z + @radix-ui/react-dropdown-menu@2.1.16 (v2.1.24 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0777590Z + @radix-ui/react-scroll-area@1.2.10
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0778050Z + @radix-ui/react-select@2.2.6
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0778430Z + @radix-ui/react-separator@1.1.8
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0778860Z + @radix-ui/react-slot@1.2.4
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0779280Z + @radix-ui/react-tabs@1.1.13
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0779650Z + @radix-ui/react-tooltip@1.2.8
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0780150Z + @sentry/electron@7.7.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0782260Z + @sentry/react@10.36.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0783790Z + @shikijs/cli@3.21.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0787410Z + @tailwindcss/typography@0.5.19 (v0.5.20 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0789850Z + @tiptap/extension-bubble-menu@3.20.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0794420Z + @tiptap/extension-file-handler@3.20.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0797390Z + @tiptap/extension-image@3.20.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0797940Z + @tiptap/extension-mathematics@3.20.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0810050Z + @tiptap/extension-placeholder@3.20.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0810960Z + @tiptap/extension-task-item@3.20.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0812230Z + @tiptap/extension-task-list@3.20.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0814300Z + @tiptap/markdown@3.20.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0817170Z + @tiptap/react@3.20.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0819210Z + @tiptap/starter-kit@3.20.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0820480Z + @tiptap/suggestion@3.20.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0822730Z + @vscode/ripgrep@1.17.1
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0824360Z + beautiful-mermaid@1.1.3
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0826200Z + class-variance-authority@0.7.1
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0827800Z + clsx@2.1.1
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0828950Z + date-fns@4.1.0 (v4.4.0 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0829580Z + gray-matter@4.0.3
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0832640Z + jotai@2.16.2 (v3.0.1 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0834060Z + js-yaml@4.1.1 (v5.4.2 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0834750Z + katex@0.16.33
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0835980Z + linkify-it@5.0.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0839650Z + lucide-react@0.561.0 (v1.50.0 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0842650Z + marked@17.0.1
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0844530Z + markitdown-js@0.0.14
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0845470Z + open@11.0.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0848690Z + prosemirror-highlight@0.15.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0849940Z + react@18.3.1 (v19.3.0 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0852450Z + react-dom@18.3.1 (v19.3.0 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0855860Z + react-markdown@10.1.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0859240Z + react-resizable-panels@3.0.6
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0862040Z + rehype-katex@7.0.1
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0862740Z + rehype-raw@7.0.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0863200Z + remark-gfm@4.0.1
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0863630Z + remark-math@6.0.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0863890Z + semver@7.7.3
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0866120Z + shiki@3.21.0 (v4.5.0 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0867980Z + tailwind-merge@3.4.0 (v3.7.0 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0869170Z + tiptap-extension-code-block-shiki@1.0.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0869940Z + tiptap-markdown@0.9.0
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0870410Z + zod@4.3.5 (v4.6.5 available)
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0870660Z 
+lifecycle (lifecycle)	Install dependencies	2026-10-03T04:04:03.0870930Z 1817 packages installed [22.32s]
+lifecycle (lifecycle)	Build agent subprocess	﻿2026-10-03T04:04:03.1334280Z ##[group]Run bun run server:build:subprocess
+lifecycle (lifecycle)	Build agent subprocess	2026-10-03T04:04:03.1335220Z ^[[36;1mbun run server:build:subprocess^[[0m
+lifecycle (lifecycle)	Build agent subprocess	2026-10-03T04:04:03.2573320Z shell: /bin/bash -e {0}
+lifecycle (lifecycle)	Build agent subprocess	2026-10-03T04:04:03.2573630Z env:
+lifecycle (lifecycle)	Build agent subprocess	2026-10-03T04:04:03.2573980Z   UV_CACHE_DIR: /Users/runner/work/_temp/setup-uv-cache
+lifecycle (lifecycle)	Build agent subprocess	2026-10-03T04:04:03.2574390Z ##[endgroup]
+lifecycle (lifecycle)	Build agent subprocess	2026-10-03T04:04:03.3667150Z $ cd packages/pi-agent-server && bun run build
+lifecycle (lifecycle)	Build agent subprocess	2026-10-03T04:04:03.3795300Z $ bun build src/index.ts --outdir=dist --target=bun --format=esm --external koffi
+lifecycle (lifecycle)	Build agent subprocess	2026-10-03T04:04:05.0085730Z Bundled 3313 modules in 1612ms
+lifecycle (lifecycle)	Build agent subprocess	2026-10-03T04:04:05.0087360Z 
+lifecycle (lifecycle)	Build agent subprocess	2026-10-03T04:04:05.0088050Z   index.js  33.0 MB  (entry point)
+lifecycle (lifecycle)	Build agent subprocess	2026-10-03T04:04:05.0089310Z 
+lifecycle (lifecycle)	Build WebUI assets	﻿2026-10-03T04:04:05.0246020Z ##[group]Run bun run webui:build
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:05.0246330Z ^[[36;1mbun run webui:build^[[0m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:05.0307470Z shell: /bin/bash -e {0}
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:05.0307710Z env:
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:05.0307940Z   UV_CACHE_DIR: /Users/runner/work/_temp/setup-uv-cache
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:05.0308280Z   NODE_OPTIONS: --max-old-space-size=4096
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:05.0308520Z ##[endgroup]
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:05.1159490Z $ vite build --config apps/webui/vite.config.ts
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:05.6525440Z ^[[36mvite v6.4.1 ^[[32mbuilding for production...^[[36m^[[39m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:05.6550530Z ^[[33m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:05.6551490Z ^[[1m(!)^[[22m outDir ^[[37m^[[2m/Users/runner/work/rox-one/rox-one/apps/webui/dist^[[22m^[[33m is not inside project root and will not be emptied.
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:05.6552080Z Use --emptyOutDir to override.
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:05.6552310Z ^[[39m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:05.7179070Z transforming...
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:09.6562310Z ^[[33m[plugin vite:esbuild] apps/electron/src/shared/route-parser.ts: ^[[33mThis case clause will never be evaluated because it duplicates an earlier case clause^[[33m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:09.6570410Z 1897|          details: null
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:09.6639070Z 1898|        };
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:09.6641060Z 1899|      case 'pages':
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:09.6642330Z    |           ^
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:09.6643900Z 1900|        return {
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:09.6645030Z 1901|          navigator: 'pages',
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:09.6646070Z ^[[39m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:09.6647100Z ^[[33m[plugin vite:esbuild] apps/electron/src/shared/route-parser.ts: ^[[33mThis case clause will never be evaluated because it duplicates an earlier case clause^[[33m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:09.6647830Z 1902|          details: null
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:09.6648140Z 1903|        };
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:09.6648470Z 1904|      case 'page-info':
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:09.6648750Z    |           ^
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:09.6649070Z 1905|        if (parsed.id) {
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:09.6649430Z 1906|          return {
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:09.6649830Z ^[[39m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:39.3299380Z ^[[32m✓^[[39m 8022 modules transformed.
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:40.3737180Z ^[[33mnode_modules/gray-matter/lib/engines.js (43:13): Use of eval in "node_modules/gray-matter/lib/engines.js" is strongly discouraged as it poses security risks and may cause issues with minification.^[[39m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.6511200Z rendering chunks...
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9023150Z ^[[33m[esbuild css minify]
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9156050Z ▲ [WARNING] "file" is not a known CSS property [unsupported-css-property]
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9229370Z 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9339480Z     <stdin>:1273:156499:
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9340900Z       1273 │ ...gion:no-drag}.\[file\:path\]{file:path}.\[file\:src\/a\.ts\]{...
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9341530Z            │                                 ~~~~
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9342010Z            ╵                                 flex
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9342320Z 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9343200Z   Did you mean "flex" instead?
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9343410Z 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9343410Z 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9343900Z ▲ [WARNING] "file" is not a known CSS property [unsupported-css-property]
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9344810Z 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9344980Z     <stdin>:1273:156531:
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9345430Z       1273 │ ...e:path}.\[file\:src\/a\.ts\]{file:src/a.ts}.\[file\:src\/inde...
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9345980Z            │                                 ~~~~
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9346410Z            ╵                                 flex
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9346660Z 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9346860Z   Did you mean "flex" instead?
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9347010Z 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9347130Z 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9347450Z ▲ [WARNING] "file" is not a known CSS property [unsupported-css-property]
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9347780Z 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9347930Z     <stdin>:1273:156571:
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9348500Z       1273 │ ...ts}.\[file\:src\/index\.ts\]{file:src/index.ts}.\[folder\:doc...
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9349060Z            │                                 ~~~~
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9349470Z            ╵                                 flex
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9462720Z 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9463910Z   Did you mean "flex" instead?
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9464180Z 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:44.9464410Z ^[[39m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.1629940Z ^[[33m[plugin vite:reporter] 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.1635210Z (!) /Users/runner/work/rox-one/rox-one/packages/shared/src/credentials/types.ts is dynamically imported by /Users/runner/work/rox-one/rox-one/packages/shared/src/credentials/manager.ts, /Users/runner/work/rox-one/rox-one/packages/shared/src/credentials/manager.ts but also statically imported by /Users/runner/work/rox-one/rox-one/packages/shared/src/credentials/backends/secure-storage.ts, /Users/runner/work/rox-one/rox-one/packages/shared/src/credentials/fabric/importers.ts, /Users/runner/work/rox-one/rox-one/packages/shared/src/credentials/index.ts, dynamic import will not move module into another chunk.
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.1741550Z ^[[39m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.1843730Z ^[[33m[plugin vite:reporter] 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.1947440Z (!) /Users/runner/work/rox-one/rox-one/packages/shared/src/utils/icon.ts is dynamically imported by /Users/runner/work/rox-one/rox-one/packages/shared/src/sources/storage.ts but also statically imported by /Users/runner/work/rox-one/rox-one/packages/shared/src/config/storage.ts, /Users/runner/work/rox-one/rox-one/packages/shared/src/skills/storage.ts, /Users/runner/work/rox-one/rox-one/packages/shared/src/sources/storage.ts, /Users/runner/work/rox-one/rox-one/packages/shared/src/statuses/storage.ts, dynamic import will not move module into another chunk.
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.2045740Z ^[[39m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.2159640Z ^[[33m[plugin vite:reporter] 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.2265780Z (!) /Users/runner/work/rox-one/rox-one/packages/shared/src/config/storage.ts is dynamically imported by /Users/runner/work/rox-one/rox-one/packages/shared/src/credentials/manager.ts but also statically imported by /Users/runner/work/rox-one/rox-one/packages/shared/src/agent/options.ts, /Users/runner/work/rox-one/rox-one/packages/shared/src/agent/session-scoped-tools.ts, /Users/runner/work/rox-one/rox-one/packages/shared/src/automations/validation.ts, /Users/runner/work/rox-one/rox-one/packages/shared/src/config/index.ts, /Users/runner/work/rox-one/rox-one/packages/shared/src/config/preferences.ts, /Users/runner/work/rox-one/rox-one/packages/shared/src/config/proxy-env.ts, /Users/runner/work/rox-one/rox-one/packages/shared/src/config/ssh-hosts.ts, /Users/runner/work/rox-one/rox-one/packages/shared/src/config/validators.ts, /Users/runner/work/rox-one/rox-one/packages/shared/src/config/watcher.ts, /Users/runner/work/rox-one/rox-one/packages/shared/src/skills/storage.ts, /Users/runner/work/rox-one/rox-one/packages/shared/src/workspaces/storage.ts, dynamic import will not move module into another chunk.
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.2361770Z ^[[39m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.2466690Z ^[[33m[plugin vite:reporter] 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.2571200Z (!) /Users/runner/work/rox-one/rox-one/apps/electron/src/renderer/knowledge/KnowledgeProposals.tsx is dynamically imported by /Users/runner/work/rox-one/rox-one/apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx but also statically imported by /Users/runner/work/rox-one/rox-one/apps/electron/src/renderer/knowledge/KnowledgeHome.tsx, dynamic import will not move module into another chunk.
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.2672210Z ^[[39m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.2774530Z ^[[33m[plugin vite:reporter] 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.2878860Z (!) /Users/runner/work/rox-one/rox-one/apps/electron/src/renderer/knowledge/KnowledgeHome.tsx is dynamically imported by /Users/runner/work/rox-one/rox-one/apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx but also statically imported by /Users/runner/work/rox-one/rox-one/apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx, /Users/runner/work/rox-one/rox-one/apps/electron/src/renderer/knowledge/KnowledgeNavigator.tsx, /Users/runner/work/rox-one/rox-one/apps/electron/src/renderer/pages/SearchPage.tsx, /Users/runner/work/rox-one/rox-one/apps/electron/src/renderer/platform/omnibox-bootstrap.ts, dynamic import will not move module into another chunk.
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.2991480Z ^[[39m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.2991840Z ^[[33m[plugin vite:reporter] 
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.2994010Z (!) /Users/runner/work/rox-one/rox-one/apps/electron/src/renderer/pages/BrowserPanelPage.tsx is dynamically imported by /Users/runner/work/rox-one/rox-one/apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx but also statically imported by /Users/runner/work/rox-one/rox-one/apps/electron/src/renderer/components/session-inspector/InspectorBrowserPane.tsx, dynamic import will not move module into another chunk.
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:04:52.2995640Z ^[[39m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:20.3606630Z computing gzip size...
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4226490Z ^[[2m../dist/^[[22m^[[32mindex.html                                       ^[[39m^[[1m^[[2m     1.77 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.87 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4264870Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Size3-Regular-CTq5MqoE.woff         ^[[39m^[[1m^[[2m     4.42 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4272010Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Size4-Regular-Dl5lxZxV.woff2        ^[[39m^[[1m^[[2m     4.93 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4275770Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Size2-Regular-Dy4dx90m.woff2        ^[[39m^[[1m^[[2m     5.21 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4277500Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Size1-Regular-mCD8mA8B.woff2        ^[[39m^[[1m^[[2m     5.47 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4284980Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Size4-Regular-BF-4gkZK.woff         ^[[39m^[[1m^[[2m     5.98 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4286650Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Size2-Regular-oD1tc_U0.woff         ^[[39m^[[1m^[[2m     6.19 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4288200Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Size1-Regular-C195tn64.woff         ^[[39m^[[1m^[[2m     6.50 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4289960Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Caligraphic-Regular-Di6jR-x-.woff2  ^[[39m^[[1m^[[2m     6.91 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4292760Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Caligraphic-Bold-Dq_IR9rO.woff2     ^[[39m^[[1m^[[2m     6.91 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4294960Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mrox-mark-portrait-54-BU2P6uoW.png         ^[[39m^[[1m^[[2m     6.92 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4296300Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Size3-Regular-DgpXs0kz.ttf          ^[[39m^[[1m^[[2m     7.59 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4297660Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Caligraphic-Regular-CTRA-rTL.woff   ^[[39m^[[1m^[[2m     7.66 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4300120Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Caligraphic-Bold-BEiXGLvX.woff      ^[[39m^[[1m^[[2m     7.72 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4328120Z ^[[33m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4329770Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mollama-D1dqFtP2.svg                       ^[[39m^[[1m^[[2m     7.85 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.24 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4339590Z (!) Some chunks are larger than 500 kB after minification. Consider:
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4340990Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Script-Regular-D3wIWfF6.woff2       ^[[39m^[[1m^[[2m     9.64 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4342240Z ^[[2m../dist/^[[22m^[[32mlogin.html                                       ^[[39m^[[1m^[[2m    10.00 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.45 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4343690Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_SansSerif-Regular-DDBCnlJ7.woff2    ^[[39m^[[1m^[[2m    10.34 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4344910Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Size4-Regular-DWFBv043.ttf          ^[[39m^[[1m^[[2m    10.36 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4346810Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Script-Regular-D5yQViql.woff        ^[[39m^[[1m^[[2m    10.59 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4349000Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Fraktur-Regular-CTYiF6lA.woff2      ^[[39m^[[1m^[[2m    11.32 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4529730Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Fraktur-Bold-CL6g_b3V.woff2         ^[[39m^[[1m^[[2m    11.35 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4554070Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Size2-Regular-B7gKUWhC.ttf          ^[[39m^[[1m^[[2m    11.51 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4555180Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_SansSerif-Italic-C3H0VqGB.woff2     ^[[39m^[[1m^[[2m    12.03 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4556280Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_SansSerif-Bold-D1sUS0GD.woff2       ^[[39m^[[1m^[[2m    12.22 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4557260Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Size1-Regular-Dbsnue_I.ttf          ^[[39m^[[1m^[[2m    12.23 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4558500Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_SansSerif-Regular-CS6fqUqJ.woff     ^[[39m^[[1m^[[2m    12.32 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4595370Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Caligraphic-Regular-wX97UBjC.ttf    ^[[39m^[[1m^[[2m    12.34 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4596610Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Caligraphic-Bold-ATXxdsX0.ttf       ^[[39m^[[1m^[[2m    12.37 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4597780Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Fraktur-Regular-Dxdc4cR9.woff       ^[[39m^[[1m^[[2m    13.21 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4598880Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Fraktur-Bold-BsDP51OF.woff          ^[[39m^[[1m^[[2m    13.30 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4599950Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Typewriter-Regular-CO6r4hn1.woff2   ^[[39m^[[1m^[[2m    13.57 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4601470Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_SansSerif-Italic-DN2j7dab.woff      ^[[39m^[[1m^[[2m    14.11 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4602570Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_SansSerif-Bold-DbIhKOiC.woff        ^[[39m^[[1m^[[2m    14.41 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4603820Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Typewriter-Regular-C0xS9mPB.woff    ^[[39m^[[1m^[[2m    16.03 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4604770Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Math-BoldItalic-CZnvNsCZ.woff2      ^[[39m^[[1m^[[2m    16.40 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4606840Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Math-Italic-t53AETM-.woff2          ^[[39m^[[1m^[[2m    16.44 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4610240Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Script-Regular-C5JkGWo-.ttf         ^[[39m^[[1m^[[2m    16.65 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4613380Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Main-BoldItalic-DxDJ3AOS.woff2      ^[[39m^[[1m^[[2m    16.78 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4614880Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Main-Italic-NWA7e6Wa.woff2          ^[[39m^[[1m^[[2m    16.99 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4616540Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mopenrouter-PqWzhx9M.svg                   ^[[39m^[[1m^[[2m    17.51 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    12.15 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4619070Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Math-BoldItalic-iY-2wyZ7.woff       ^[[39m^[[1m^[[2m    18.67 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4621760Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Math-Italic-DA0__PXp.woff           ^[[39m^[[1m^[[2m    18.75 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4623390Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Main-BoldItalic-SpSLRI95.woff       ^[[39m^[[1m^[[2m    19.41 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4660450Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_SansSerif-Regular-BNo7hRIc.ttf      ^[[39m^[[1m^[[2m    19.44 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4662350Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Fraktur-Regular-CB_wures.ttf        ^[[39m^[[1m^[[2m    19.57 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4663420Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Fraktur-Bold-BdnERNNW.ttf           ^[[39m^[[1m^[[2m    19.58 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4664900Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Main-Italic-BMLOBm91.woff           ^[[39m^[[1m^[[2m    19.68 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4667170Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_SansSerif-Italic-YYjJ1zSn.ttf       ^[[39m^[[1m^[[2m    22.36 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4670610Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_SansSerif-Bold-CFMepnvq.ttf         ^[[39m^[[1m^[[2m    24.50 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4672780Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Main-Bold-Cx986IdX.woff2            ^[[39m^[[1m^[[2m    25.32 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4673760Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Main-Regular-B22Nviop.woff2         ^[[39m^[[1m^[[2m    26.27 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4675220Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Typewriter-Regular-D3Ib7_Hf.ttf     ^[[39m^[[1m^[[2m    27.56 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4676490Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_AMS-Regular-BQhdFMY1.woff2          ^[[39m^[[1m^[[2m    28.08 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4677400Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Main-Bold-Jm3AIy58.woff             ^[[39m^[[1m^[[2m    29.91 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4678320Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Main-Regular-Dr94JaBh.woff          ^[[39m^[[1m^[[2m    30.77 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4679610Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Math-BoldItalic-B3XSjfu4.ttf        ^[[39m^[[1m^[[2m    31.20 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4680640Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Math-Italic-flOr_0UB.ttf            ^[[39m^[[1m^[[2m    31.31 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4682400Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Main-BoldItalic-DzxPMmG6.ttf        ^[[39m^[[1m^[[2m    32.97 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4683480Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_AMS-Regular-DMm9YOAa.woff           ^[[39m^[[1m^[[2m    33.52 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4684790Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Main-Italic-3WenGoN9.ttf            ^[[39m^[[1m^[[2m    33.58 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4685850Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Main-Bold-waoOVXN0.ttf              ^[[39m^[[1m^[[2m    51.34 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4686960Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_Main-Regular-ypZvNtVU.ttf           ^[[39m^[[1m^[[2m    53.58 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4688600Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mKaTeX_AMS-Regular-DRggAlZN.ttf            ^[[39m^[[1m^[[2m    63.63 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4691530Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mrox-logo-BVTJ1ay-.svg                     ^[[39m^[[1m^[[2m    80.50 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    60.03 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4692720Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mrox-logo-BxpI4ZuA.png                     ^[[39m^[[1m^[[2m    80.71 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4693830Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mRox-SemiBold-g5nuO0_l.woff2               ^[[39m^[[1m^[[2m    96.30 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4695270Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mRox-Medium-q-g1Kc99.woff2                 ^[[39m^[[1m^[[2m    96.37 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4696490Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mRox-Regular-xAViq_PM.woff2                ^[[39m^[[1m^[[2m    96.54 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4697860Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mRox-Bold-Dfr-xBIe.woff2                   ^[[39m^[[1m^[[2m    96.58 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4699840Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mRox-BoldItalic-BpZZGl-9.woff2             ^[[39m^[[1m^[[2m   106.96 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4706960Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mRox-Italic-D7RgFURy.woff2                 ^[[39m^[[1m^[[2m   107.25 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4708140Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[32mpdf.worker.min-qwK7q_zL.mjs               ^[[39m^[[1m^[[2m 1,046.21 kB^[[22m^[[1m^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4709360Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[35mApp-BxaOEs9n.css                          ^[[39m^[[1m^[[2m    13.64 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.64 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4710630Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[35mSessionWorkflowEditor-BnuhLJ6X.css        ^[[39m^[[1m^[[2m    15.87 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.67 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4712260Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[35mbrowser-main-DjWWvJqg.css                 ^[[39m^[[1m^[[2m   341.32 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    52.49 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4714410Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mopenai-prompt-cache-h_V5PL7P.js           ^[[39m^[[1m^[[2m     0.18 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.17 kB^[[22m^[[2m │ map:      0.82 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4715810Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msanitize-unicode-B62XMGgN.js              ^[[39m^[[1m^[[2m     0.20 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.18 kB^[[22m^[[2m │ map:      1.57 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4717010Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmeetings-local-BVJauF2W.js                ^[[39m^[[1m^[[2m     0.25 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.19 kB^[[22m^[[2m │ map:      8.27 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4718190Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mheaders-z0zMURwp.js                       ^[[39m^[[1m^[[2m     0.27 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.21 kB^[[22m^[[2m │ map:      1.14 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4719440Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mhash-DMDecQcg.js                          ^[[39m^[[1m^[[2m     0.39 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.27 kB^[[22m^[[2m │ map:      1.27 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4722040Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgithub-copilot-headers-CrHPofPv.js        ^[[39m^[[1m^[[2m     0.51 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.31 kB^[[22m^[[2m │ map:      2.01 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4724170Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mprovider-env-DKPB4oH1.js                  ^[[39m^[[1m^[[2m     0.51 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.38 kB^[[22m^[[2m │ map:      2.69 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4725790Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mdeferred-tools-BH-n8mgx.js                ^[[39m^[[1m^[[2m     0.56 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.35 kB^[[22m^[[2m │ map:      2.59 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4727700Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcodeowners-Bp6g37R7.js                    ^[[39m^[[1m^[[2m     0.60 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.35 kB^[[22m^[[2m │ map:      1.08 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4729140Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mshellsession-BADoaaVG.js                  ^[[39m^[[1m^[[2m     0.76 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.46 kB^[[22m^[[2m │ map:      1.31 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4731040Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mtsv-B_m7g4N7.js                           ^[[39m^[[1m^[[2m     0.78 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.38 kB^[[22m^[[2m │ map:      1.36 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4732330Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mnode.browser-CPsRB-CQ.js                  ^[[39m^[[1m^[[2m     0.78 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.50 kB^[[22m^[[2m │ map:      1.47 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4733700Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mnote-ai-HeKobNFr.js                       ^[[39m^[[1m^[[2m     0.89 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.48 kB^[[22m^[[2m │ map:      2.95 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4735210Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mhtml-derivative-BFtXZ54Q.js               ^[[39m^[[1m^[[2m     0.95 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.53 kB^[[22m^[[2m │ map:      1.41 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4736560Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgit-rebase-r7XF79zn.js                    ^[[39m^[[1m^[[2m     1.03 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.47 kB^[[22m^[[2m │ map:      1.66 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4781510Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mqmldir-C8lEn-DE.js                        ^[[39m^[[1m^[[2m     1.05 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.49 kB^[[22m^[[2m │ map:      1.72 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4783390Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mtable-virtualization-w6Be7ntP.js          ^[[39m^[[1m^[[2m     1.09 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.57 kB^[[22m^[[2m │ map:      5.95 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4785160Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcsv-fuZLfV_i.js                           ^[[39m^[[1m^[[2m     1.18 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.41 kB^[[22m^[[2m │ map:      1.98 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4786710Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgit-commit-F4YmCXRG.js                    ^[[39m^[[1m^[[2m     1.28 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.56 kB^[[22m^[[2m │ map:      2.01 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4788100Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mkanban-colors-C7t0moka.js                 ^[[39m^[[1m^[[2m     1.34 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.54 kB^[[22m^[[2m │ map:      4.49 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4843390Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mxsl-CtQFsRM5.js                           ^[[39m^[[1m^[[2m     1.43 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.56 kB^[[22m^[[2m │ map:      2.16 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4844540Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mdotenv-Da5cRb03.js                        ^[[39m^[[1m^[[2m     1.47 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.57 kB^[[22m^[[2m │ map:      2.32 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4845860Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msparql-rVzFXLq3.js                        ^[[39m^[[1m^[[2m     1.52 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.85 kB^[[22m^[[2m │ map:      2.09 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4848310Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36merror-body-xORG9LSo.js                    ^[[39m^[[1m^[[2m     1.54 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.65 kB^[[22m^[[2m │ map:      8.35 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4849610Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mini-BEwlwnbL.js                           ^[[39m^[[1m^[[2m     1.57 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.53 kB^[[22m^[[2m │ map:      2.46 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4850910Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mprovider-retry-D1QnC69n.js                ^[[39m^[[1m^[[2m     1.57 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.79 kB^[[22m^[[2m │ map:      6.70 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4852120Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mdesktop-settings-session-BQdzCqF0.js      ^[[39m^[[1m^[[2m     1.60 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.81 kB^[[22m^[[2m │ map:      7.24 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4853780Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mfortran-fixed-form-CkoXwp7k.js            ^[[39m^[[1m^[[2m     1.72 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.73 kB^[[22m^[[2m │ map:      2.70 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4855100Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mdocker-BcOcwvcX.js                        ^[[39m^[[1m^[[2m     1.79 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.63 kB^[[22m^[[2m │ map:      2.63 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4856330Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mhxml-Bvhsp5Yf.js                          ^[[39m^[[1m^[[2m     1.79 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.92 kB^[[22m^[[2m │ map:      2.45 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4857800Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mTerminalSurfacePage-1j3zFpyw.js           ^[[39m^[[1m^[[2m     1.85 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.77 kB^[[22m^[[2m │ map:      4.29 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4859060Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mdesktop-BmXAJ9_W.js                       ^[[39m^[[1m^[[2m     1.88 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.80 kB^[[22m^[[2m │ map:      2.75 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4860280Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msettings-rox2-surface-AytHWSDV.js         ^[[39m^[[1m^[[2m     1.90 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.86 kB^[[22m^[[2m │ map:     10.29 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4861930Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mwenyan-BV7otONQ.js                        ^[[39m^[[1m^[[2m     2.20 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.13 kB^[[22m^[[2m │ map:      3.17 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4863620Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mnode.browser-oq2o1VMj.js                  ^[[39m^[[1m^[[2m     2.27 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.93 kB^[[22m^[[2m │ map:      6.51 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4864990Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mjssm-C2t-YnRu.js                          ^[[39m^[[1m^[[2m     2.28 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.66 kB^[[22m^[[2m │ map:      3.38 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4866410Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mProjectMultiSelectFilter-Dt35vFA9.js      ^[[39m^[[1m^[[2m     2.34 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.02 kB^[[22m^[[2m │ map:      7.12 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4868130Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mreg-C-SQnVFl.js                           ^[[39m^[[1m^[[2m     2.39 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.73 kB^[[22m^[[2m │ map:      3.50 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4871560Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36medge-BkV0erSs.js                          ^[[39m^[[1m^[[2m     2.41 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.73 kB^[[22m^[[2m │ map:      3.53 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4873060Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mdiff-D97Zzqfu.js                          ^[[39m^[[1m^[[2m     2.61 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.73 kB^[[22m^[[2m │ map:      3.85 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4875260Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgleam-BspZqrRM.js                         ^[[39m^[[1m^[[2m     2.62 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.85 kB^[[22m^[[2m │ map:      3.98 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4878030Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36merb-BOJIQeun.js                           ^[[39m^[[1m^[[2m     2.65 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.87 kB^[[22m^[[2m │ map:      3.27 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4879460Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mShortcutsPage-BYOTG1C1.js                 ^[[39m^[[1m^[[2m     2.68 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.20 kB^[[22m^[[2m │ map:      8.61 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4881320Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mhy-DFXneXwc.js                            ^[[39m^[[1m^[[2m     2.69 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.22 kB^[[22m^[[2m │ map:      3.67 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4883340Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mopenrouter-images-CvxaYdU9.js             ^[[39m^[[1m^[[2m     2.70 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.32 kB^[[22m^[[2m │ map:      9.07 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4885460Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mKnowledgeEntityPage-BKADWkQU.js           ^[[39m^[[1m^[[2m     2.71 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.37 kB^[[22m^[[2m │ map:      9.80 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4886800Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mjson-Cp-IABpG.js                          ^[[39m^[[1m^[[2m     2.87 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.81 kB^[[22m^[[2m │ map:      4.31 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4888240Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mopenscad-C4EeE6gA.js                      ^[[39m^[[1m^[[2m     2.87 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.05 kB^[[22m^[[2m │ map:      4.22 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4892120Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mlog-2UxHyX5q.js                           ^[[39m^[[1m^[[2m     2.89 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.94 kB^[[22m^[[2m │ map:      4.34 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4894060Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mtask-model-Ci3zzN8W.js                    ^[[39m^[[1m^[[2m     2.90 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.31 kB^[[22m^[[2m │ map:     12.62 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4895740Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcairo-KRGpt6FW.js                         ^[[39m^[[1m^[[2m     2.98 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.84 kB^[[22m^[[2m │ map:      4.51 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4898750Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mberry-uYugtg8r.js                         ^[[39m^[[1m^[[2m     3.05 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.85 kB^[[22m^[[2m │ map:      4.83 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4900300Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mjsonl-DcaNXYhu.js                         ^[[39m^[[1m^[[2m     3.05 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.83 kB^[[22m^[[2m │ map:      4.50 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4901880Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mjsonc-Des-eS-w.js                         ^[[39m^[[1m^[[2m     3.15 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.83 kB^[[22m^[[2m │ map:      4.59 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4904360Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mExtensionSurfacePage-C7yfWcbH.js          ^[[39m^[[1m^[[2m     3.15 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.26 kB^[[22m^[[2m │ map:     10.95 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4906210Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mlogo-BtOb2qkB.js                          ^[[39m^[[1m^[[2m     3.17 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.51 kB^[[22m^[[2m │ map:      3.80 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4907560Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mbrowser-CEJ-OIJq.js                       ^[[39m^[[1m^[[2m     3.24 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.10 kB^[[22m^[[2m │ map:     16.43 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4909830Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mpo-BTJTHyun.js                            ^[[39m^[[1m^[[2m     3.28 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.94 kB^[[22m^[[2m │ map:      5.07 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4911290Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mjson5-C9tS-k6U.js                         ^[[39m^[[1m^[[2m     3.30 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.87 kB^[[22m^[[2m │ map:      4.94 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4913030Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmipsasm-CKIfxQSi.js                       ^[[39m^[[1m^[[2m     3.30 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.21 kB^[[22m^[[2m │ map:      4.67 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4916820Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mtasl-QIJgUcNo.js                          ^[[39m^[[1m^[[2m     3.33 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.88 kB^[[22m^[[2m │ map:      5.12 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4920270Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgenie-D0YGMca9.js                         ^[[39m^[[1m^[[2m     3.40 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.24 kB^[[22m^[[2m │ map:      4.86 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4922730Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mrel-C3B-1QV4.js                           ^[[39m^[[1m^[[2m     3.41 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.14 kB^[[22m^[[2m │ map:      4.86 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4924340Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mvala-CsfeWuGM.js                          ^[[39m^[[1m^[[2m     3.41 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.22 kB^[[22m^[[2m │ map:      4.88 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4926320Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msplunk-BtCnVYZw.js                        ^[[39m^[[1m^[[2m     3.48 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.56 kB^[[22m^[[2m │ map:      4.43 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4927890Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mfluent-C4IJs8-o.js                        ^[[39m^[[1m^[[2m     3.65 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.94 kB^[[22m^[[2m │ map:      5.19 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4929330Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mjsonnet-DFQXde-d.js                       ^[[39m^[[1m^[[2m     3.66 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.08 kB^[[22m^[[2m │ map:      5.41 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4930690Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mssh-config-_ykCGR6B.js                    ^[[39m^[[1m^[[2m     3.67 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.64 kB^[[22m^[[2m │ map:      4.48 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4932280Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mkdl-DV7GczEv.js                           ^[[39m^[[1m^[[2m     3.67 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.08 kB^[[22m^[[2m │ map:      5.50 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4934150Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mglsl-DplSGwfg.js                          ^[[39m^[[1m^[[2m     3.68 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.44 kB^[[22m^[[2m │ map:      4.36 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4935390Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mhurl-irOxFIW8.js                          ^[[39m^[[1m^[[2m     3.69 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.19 kB^[[22m^[[2m │ map:      5.40 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4936730Z - Using dynamic import() to code-split the application
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4937740Z - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4938860Z - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.^[[39m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4940230Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mnarrat-DRg8JJMk.js                        ^[[39m^[[1m^[[2m     3.72 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.14 kB^[[22m^[[2m │ map:      5.41 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4941610Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mnative-notes-sync-CmJm4tyw.js             ^[[39m^[[1m^[[2m     3.74 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.51 kB^[[22m^[[2m │ map:     13.28 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4943000Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mturtle-BsS91CYL.js                        ^[[39m^[[1m^[[2m     3.74 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.01 kB^[[22m^[[2m │ map:      5.48 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4944350Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mzenscript-DVFEvuxE.js                     ^[[39m^[[1m^[[2m     3.96 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.32 kB^[[22m^[[2m │ map:      5.74 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4945730Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgn-n2N0HUVH.js                            ^[[39m^[[1m^[[2m     4.04 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.53 kB^[[22m^[[2m │ map:      5.26 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4947100Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mpascal-D93ZcfNL.js                        ^[[39m^[[1m^[[2m     4.19 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.71 kB^[[22m^[[2m │ map:      5.52 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4948490Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mSessionGitOutline-BI1raniU.js             ^[[39m^[[1m^[[2m     4.44 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.57 kB^[[22m^[[2m │ map:     12.45 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4950860Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mnextflow-BrzmwbiE.js                      ^[[39m^[[1m^[[2m     4.47 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.15 kB^[[22m^[[2m │ map:      6.65 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4952240Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mtcl-dwOrl1Do.js                           ^[[39m^[[1m^[[2m     4.47 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.55 kB^[[22m^[[2m │ map:      6.47 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4953520Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mrosmsg-BJDFO7_C.js                        ^[[39m^[[1m^[[2m     4.57 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.09 kB^[[22m^[[2m │ map:      6.74 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4954680Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mhttp-jrhK8wxY.js                          ^[[39m^[[1m^[[2m     4.59 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.15 kB^[[22m^[[2m │ map:      6.67 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4956020Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mPrivacySettingsPage-dps-3HM3.js           ^[[39m^[[1m^[[2m     4.70 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.61 kB^[[22m^[[2m │ map:     13.11 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4957690Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mpolar-C0HS_06l.js                         ^[[39m^[[1m^[[2m     4.71 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.16 kB^[[22m^[[2m │ map:      7.24 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4959400Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msdbl-DVxCFoDh.js                          ^[[39m^[[1m^[[2m     4.74 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.04 kB^[[22m^[[2m │ map:      5.88 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4960860Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mfennel-BYunw83y.js                        ^[[39m^[[1m^[[2m     4.81 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.57 kB^[[22m^[[2m │ map:      6.41 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4962570Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mbibtex-CHM0blh-.js                        ^[[39m^[[1m^[[2m     4.84 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     0.87 kB^[[22m^[[2m │ map:      7.01 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4964540Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mjson-parse-BEi6mSap.js                    ^[[39m^[[1m^[[2m     4.91 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.05 kB^[[22m^[[2m │ map:     22.99 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4966490Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mllvm-BtvRca6l.js                          ^[[39m^[[1m^[[2m     5.08 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.04 kB^[[22m^[[2m │ map:      6.65 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4967970Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mwgsl-Dx-B1_4e.js                          ^[[39m^[[1m^[[2m     5.19 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.42 kB^[[22m^[[2m │ map:      7.49 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4970640Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgdresource-B7Tvp0Sc.js                    ^[[39m^[[1m^[[2m     5.31 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.36 kB^[[22m^[[2m │ map:      7.69 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4972310Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mqml-3beO22l8.js                           ^[[39m^[[1m^[[2m     5.38 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.42 kB^[[22m^[[2m │ map:      8.11 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4973840Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mzig-VOosw3JB.js                           ^[[39m^[[1m^[[2m     5.38 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.59 kB^[[22m^[[2m │ map:      7.86 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4975920Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mdax-CEL-wOlO.js                           ^[[39m^[[1m^[[2m     5.41 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.26 kB^[[22m^[[2m │ map:      6.75 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4977610Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mbicep-Bmn6On1c.js                         ^[[39m^[[1m^[[2m     5.43 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.19 kB^[[22m^[[2m │ map:      7.90 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4979050Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mxml-sdJ4AIDG.js                           ^[[39m^[[1m^[[2m     5.43 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.25 kB^[[22m^[[2m │ map:      7.83 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4980740Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mSearchPage-DMizeMfF.js                    ^[[39m^[[1m^[[2m     5.48 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.71 kB^[[22m^[[2m │ map:     16.90 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4984030Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mawk-DMzUqQB5.js                           ^[[39m^[[1m^[[2m     5.50 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.42 kB^[[22m^[[2m │ map:      7.98 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4988680Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcoq-DkFqJrB1.js                           ^[[39m^[[1m^[[2m     5.57 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.95 kB^[[22m^[[2m │ map:      7.50 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4990610Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mCloudRunSurfacePage-CRXVjMTu.js           ^[[39m^[[1m^[[2m     5.57 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.68 kB^[[22m^[[2m │ map:     13.71 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4992040Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmoonbit-Ba13S78F.js                       ^[[39m^[[1m^[[2m     5.58 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.58 kB^[[22m^[[2m │ map:      8.18 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4994440Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mjinja-4LBKfQ-Z.js                         ^[[39m^[[1m^[[2m     5.73 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.43 kB^[[22m^[[2m │ map:      8.44 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4996300Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mlean-BZvkOJ9d.js                          ^[[39m^[[1m^[[2m     5.83 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.95 kB^[[22m^[[2m │ map:      7.86 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.4999930Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mpowerquery-CEu0bR-o.js                    ^[[39m^[[1m^[[2m     5.95 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.55 kB^[[22m^[[2m │ map:      8.50 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5001900Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mshaderlab-Dg9Lc6iA.js                     ^[[39m^[[1m^[[2m     5.97 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.12 kB^[[22m^[[2m │ map:      7.68 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5005020Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mpi-messages-CS5k-cuY.js                   ^[[39m^[[1m^[[2m     5.97 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.37 kB^[[22m^[[2m │ map:     20.12 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5007750Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mverilog-BQ8w6xss.js                       ^[[39m^[[1m^[[2m     5.98 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.93 kB^[[22m^[[2m │ map:      8.01 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5011190Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcypher-COkxafJQ.js                        ^[[39m^[[1m^[[2m     6.00 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.76 kB^[[22m^[[2m │ map:      8.43 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5013250Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mvb-D17OF-Vu.js                            ^[[39m^[[1m^[[2m     6.13 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.37 kB^[[22m^[[2m │ map:      8.03 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5015540Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mred-bN70gL4F.js                           ^[[39m^[[1m^[[2m     6.30 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.64 kB^[[22m^[[2m │ map:      8.85 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5017470Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmin-dark-CafNBF8u.js                      ^[[39m^[[1m^[[2m     6.34 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.75 kB^[[22m^[[2m │ map:      8.60 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5019570Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgdshader-DkwncUOv.js                      ^[[39m^[[1m^[[2m     6.37 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.76 kB^[[22m^[[2m │ map:      9.18 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5021150Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mprisma-Dd19v3D-.js                        ^[[39m^[[1m^[[2m     6.37 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.42 kB^[[22m^[[2m │ map:      9.26 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5022350Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mara-BRHolxvo.js                           ^[[39m^[[1m^[[2m     6.40 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.85 kB^[[22m^[[2m │ map:      9.24 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5023570Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mclojure-P80f7IUj.js                       ^[[39m^[[1m^[[2m     6.46 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.45 kB^[[22m^[[2m │ map:      9.28 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5024700Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mpostcss-CXtECtnM.js                       ^[[39m^[[1m^[[2m     6.46 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.95 kB^[[22m^[[2m │ map:      9.10 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5026160Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mtoml-vGWfd6FD.js                          ^[[39m^[[1m^[[2m     6.47 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.32 kB^[[22m^[[2m │ map:      9.46 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5028890Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msolarized-light-L9t79GZl.js               ^[[39m^[[1m^[[2m     6.53 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.77 kB^[[22m^[[2m │ map:      9.21 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5030380Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mModeScreen-Dc7YEtU1.js                    ^[[39m^[[1m^[[2m     6.56 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.10 kB^[[22m^[[2m │ map:     16.17 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5032660Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mr-Dspwwk_N.js                             ^[[39m^[[1m^[[2m     6.58 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.82 kB^[[22m^[[2m │ map:     10.12 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5033940Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mproto-C7zT0LnQ.js                         ^[[39m^[[1m^[[2m     6.59 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.45 kB^[[22m^[[2m │ map:      9.89 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5035250Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msmalltalk-BERRCDM3.js                     ^[[39m^[[1m^[[2m     6.63 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.66 kB^[[22m^[[2m │ map:      9.24 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5036610Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mtalonscript-CkByrt1z.js                   ^[[39m^[[1m^[[2m     6.81 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.53 kB^[[22m^[[2m │ map:     10.07 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5038440Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mExtraScreenHost-DzGKIZHF.js               ^[[39m^[[1m^[[2m     6.83 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.25 kB^[[22m^[[2m │ map:     14.57 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5039830Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msolarized-dark-DXbdFlpD.js                ^[[39m^[[1m^[[2m     6.90 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.83 kB^[[22m^[[2m │ map:      9.67 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5041110Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mPermissionsSettingsPage-DKSZylJl.js       ^[[39m^[[1m^[[2m     6.95 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.11 kB^[[22m^[[2m │ map:     24.90 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5042330Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mriscv-BM1_JUlF.js                         ^[[39m^[[1m^[[2m     6.96 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.02 kB^[[22m^[[2m │ map:      9.59 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5045630Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mMessagingPlatformIcon-CbCrk9de.js         ^[[39m^[[1m^[[2m     6.99 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.64 kB^[[22m^[[2m │ map:     10.14 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5046910Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmin-light-CTRr51gU.js                     ^[[39m^[[1m^[[2m     7.02 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.92 kB^[[22m^[[2m │ map:      9.52 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5048040Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msoy-Brmx7dQM.js                           ^[[39m^[[1m^[[2m     7.02 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.69 kB^[[22m^[[2m │ map:     10.69 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5049290Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgoogle-generative-ai-D2lWc8Ev.js          ^[[39m^[[1m^[[2m     7.06 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.53 kB^[[22m^[[2m │ map:     28.13 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5050550Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mopenai-responses-CUVvSh6M.js              ^[[39m^[[1m^[[2m     7.09 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.70 kB^[[22m^[[2m │ map:     21.48 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5051780Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mscheme-C98Dy4si.js                        ^[[39m^[[1m^[[2m     7.21 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.09 kB^[[22m^[[2m │ map:      9.78 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5053010Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mhlsl-D3lLCCz7.js                          ^[[39m^[[1m^[[2m     7.31 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.22 kB^[[22m^[[2m │ map:      9.23 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5055060Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mKnowledgeDiff-BrLO2SSM.js                 ^[[39m^[[1m^[[2m     7.41 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.32 kB^[[22m^[[2m │ map:     23.55 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5056420Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mqss-IeuSbFQv.js                           ^[[39m^[[1m^[[2m     7.51 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.61 kB^[[22m^[[2m │ map:      9.39 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5057640Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mazure-openai-responses-CntR3Kld.js        ^[[39m^[[1m^[[2m     7.79 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.18 kB^[[22m^[[2m │ map:     25.00 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5060150Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mdart-CF10PKvl.js                          ^[[39m^[[1m^[[2m     7.85 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.95 kB^[[22m^[[2m │ map:     11.51 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5061360Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msystemd-4A_iFExJ.js                       ^[[39m^[[1m^[[2m     7.91 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.58 kB^[[22m^[[2m │ map:     10.63 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5062520Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmonokai-D4h5O-jR.js                       ^[[39m^[[1m^[[2m     7.93 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.94 kB^[[22m^[[2m │ map:     11.08 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5064050Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mregexp-CDVJQ6XC.js                        ^[[39m^[[1m^[[2m     8.03 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.45 kB^[[22m^[[2m │ map:     11.18 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5066460Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mKnowledgeSettingsPage-BUf5MJKt.js         ^[[39m^[[1m^[[2m     8.04 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.61 kB^[[22m^[[2m │ map:     24.02 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5067850Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgoogle-vertex-CDIiMuYr.js                 ^[[39m^[[1m^[[2m     8.12 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.02 kB^[[22m^[[2m │ map:     31.72 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5069570Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mServerSettingsPage-C-1EFkKQ.js            ^[[39m^[[1m^[[2m     8.28 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.54 kB^[[22m^[[2m │ map:     25.35 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5072070Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mPagesHome-CK7hiNe8.js                     ^[[39m^[[1m^[[2m     8.29 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.02 kB^[[22m^[[2m │ map:     27.51 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5073370Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mhaml-B8DHNrY2.js                          ^[[39m^[[1m^[[2m     8.31 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.84 kB^[[22m^[[2m │ map:     12.35 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5074530Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mtypst-DHCkPAjA.js                         ^[[39m^[[1m^[[2m     8.43 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.71 kB^[[22m^[[2m │ map:     12.29 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5076080Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mvue-html-AaS7Mt5G.js                      ^[[39m^[[1m^[[2m     8.52 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.71 kB^[[22m^[[2m │ map:     11.97 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5077410Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mplsql-ChMvpjG-.js                         ^[[39m^[[1m^[[2m     8.56 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.04 kB^[[22m^[[2m │ map:     10.88 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5079380Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mSkillInfoPage-D-yzTcU8.js                 ^[[39m^[[1m^[[2m     8.72 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.52 kB^[[22m^[[2m │ map:     26.01 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5092150Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mkotlin-BdnUsdx6.js                        ^[[39m^[[1m^[[2m     8.83 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.16 kB^[[22m^[[2m │ map:     12.77 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5093330Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mKnowledgeSurfacePage-CYUWC_J0.js          ^[[39m^[[1m^[[2m     8.90 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.82 kB^[[22m^[[2m │ map:     33.20 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5094600Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mts-tags-zn1MmPIZ.js                       ^[[39m^[[1m^[[2m     8.99 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.26 kB^[[22m^[[2m │ map:     14.26 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5095760Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmake-CHLpvVh8.js                          ^[[39m^[[1m^[[2m     9.00 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.80 kB^[[22m^[[2m │ map:     12.85 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5097380Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mandromeeda-C-Jbm3Hp.js                    ^[[39m^[[1m^[[2m     9.02 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.38 kB^[[22m^[[2m │ map:     11.88 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5098610Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msas-cz2c8ADy.js                           ^[[39m^[[1m^[[2m     9.10 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.85 kB^[[22m^[[2m │ map:     11.09 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5099870Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mLabelsSettingsPage-DHVQttzy.js            ^[[39m^[[1m^[[2m     9.12 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.31 kB^[[22m^[[2m │ map:     35.51 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5102330Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mdark-plus-C3mMm8J8.js                     ^[[39m^[[1m^[[2m     9.14 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.14 kB^[[22m^[[2m │ map:     12.40 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5103570Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mslack-dark-BthQWCQV.js                    ^[[39m^[[1m^[[2m     9.17 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.00 kB^[[22m^[[2m │ map:     12.50 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5104730Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msass-Cj5Yp3dK.js                          ^[[39m^[[1m^[[2m     9.33 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.53 kB^[[22m^[[2m │ map:     13.40 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5105950Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mplastic-3e1v2bzS.js                       ^[[39m^[[1m^[[2m     9.34 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.01 kB^[[22m^[[2m │ map:     12.47 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5107580Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mslack-ochin-DqwNpetd.js                   ^[[39m^[[1m^[[2m     9.48 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.13 kB^[[22m^[[2m │ map:     13.09 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5108830Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mtex-CvyZ59Mk.js                           ^[[39m^[[1m^[[2m     9.70 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.09 kB^[[22m^[[2m │ map:     12.38 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5110090Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mjison-wvAkD_A8.js                         ^[[39m^[[1m^[[2m     9.73 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.90 kB^[[22m^[[2m │ map:     14.08 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5112080Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mFocusPage-JsIjEoL7.js                     ^[[39m^[[1m^[[2m     9.84 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.19 kB^[[22m^[[2m │ map:     27.93 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5113380Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcmake-D1j8_8rp.js                         ^[[39m^[[1m^[[2m     9.90 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.41 kB^[[22m^[[2m │ map:     11.26 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5114650Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mlight-plus-B7mTdjB0.js                    ^[[39m^[[1m^[[2m     9.99 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.31 kB^[[22m^[[2m │ map:     13.40 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5116320Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mtransform-messages-D3zjeV6T.js            ^[[39m^[[1m^[[2m    10.00 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.64 kB^[[22m^[[2m │ map:     40.91 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5117600Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mhcl-BWvSN4gD.js                           ^[[39m^[[1m^[[2m    10.09 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.97 kB^[[22m^[[2m │ map:     14.78 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5118950Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mpkl-u5AG7uiY.js                           ^[[39m^[[1m^[[2m    10.41 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.42 kB^[[22m^[[2m │ map:     15.46 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5120550Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mbeancount-k_qm7-4y.js                     ^[[39m^[[1m^[[2m    10.42 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.47 kB^[[22m^[[2m │ map:     15.03 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5121840Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mraku-DXvB9xmW.js                          ^[[39m^[[1m^[[2m    10.51 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.98 kB^[[22m^[[2m │ map:     12.90 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5123040Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mdream-maker-BtqSS_iP.js                   ^[[39m^[[1m^[[2m    10.52 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.29 kB^[[22m^[[2m │ map:     15.11 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5124230Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36myaml-Buea-lGh.js                          ^[[39m^[[1m^[[2m    10.55 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.30 kB^[[22m^[[2m │ map:     14.89 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5125880Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mAppSettingsPage-B01Sb-Xb.js               ^[[39m^[[1m^[[2m    10.68 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.15 kB^[[22m^[[2m │ map:     37.92 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5127030Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mrst-B0xPkSld.js                           ^[[39m^[[1m^[[2m    10.71 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.45 kB^[[22m^[[2m │ map:     15.55 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5128240Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mCloudRunsSettingsPage-iN6d4qHc.js         ^[[39m^[[1m^[[2m    10.97 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.78 kB^[[22m^[[2m │ map:     33.41 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5130240Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mAccountSettingsPage-CXDBzpaK.js           ^[[39m^[[1m^[[2m    11.00 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.63 kB^[[22m^[[2m │ map:     33.36 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5131500Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36melm-DbKCFpqz.js                           ^[[39m^[[1m^[[2m    11.01 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.15 kB^[[22m^[[2m │ map:     16.01 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5133340Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgithub-light-DAi9KRSo.js                  ^[[39m^[[1m^[[2m    11.23 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.54 kB^[[22m^[[2m │ map:     15.40 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5134640Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mRadarPage-YrnwD2AP.js                     ^[[39m^[[1m^[[2m    11.32 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.78 kB^[[22m^[[2m │ map:     34.60 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5135840Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcolor-picker-CPlK-r-k.js                  ^[[39m^[[1m^[[2m    11.35 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.61 kB^[[22m^[[2m │ map:     33.23 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5137100Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mprolog-CbFg5uaA.js                        ^[[39m^[[1m^[[2m    11.40 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.87 kB^[[22m^[[2m │ map:     13.29 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5138750Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mSourceInfoPage-CahWr6mu.js                ^[[39m^[[1m^[[2m    11.40 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.50 kB^[[22m^[[2m │ map:     39.33 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5140050Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mterraform-BETggiCN.js                     ^[[39m^[[1m^[[2m    11.44 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.54 kB^[[22m^[[2m │ map:     16.21 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5141350Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgithub-dark-DHJKELXO.js                   ^[[39m^[[1m^[[2m    11.45 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.59 kB^[[22m^[[2m │ map:     15.67 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5142600Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mpuppet-BMWR74SV.js                        ^[[39m^[[1m^[[2m    11.48 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.15 kB^[[22m^[[2m │ map:     16.31 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5144370Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mlaserwave-DUszq2jm.js                     ^[[39m^[[1m^[[2m    11.55 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.61 kB^[[22m^[[2m │ map:     14.68 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5145610Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgherkin-DyxjwDmM.js                       ^[[39m^[[1m^[[2m    11.99 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     5.09 kB^[[22m^[[2m │ map:     13.11 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5146860Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mwasm-MzD3tlZU.js                          ^[[39m^[[1m^[[2m    12.05 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.23 kB^[[22m^[[2m │ map:     16.83 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5148400Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mhjson-D5-asLiD.js                         ^[[39m^[[1m^[[2m    12.10 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.67 kB^[[22m^[[2m │ map:     17.28 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5149660Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mhandlebars-BL8al0AC.js                    ^[[39m^[[1m^[[2m    12.20 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.41 kB^[[22m^[[2m │ map:     17.36 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5150890Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mWorkspaceSettingsPage-u6caH5uS.js         ^[[39m^[[1m^[[2m    12.24 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.81 kB^[[22m^[[2m │ map:     43.48 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5152190Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mapache-Pmp26Uib.js                        ^[[39m^[[1m^[[2m    12.50 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.76 kB^[[22m^[[2m │ map:     15.94 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5153490Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mAgentCenterPage-CrrK3i6P.js               ^[[39m^[[1m^[[2m    12.61 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.94 kB^[[22m^[[2m │ map:     37.63 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5155060Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mvesper-DU1UobuO.js                        ^[[39m^[[1m^[[2m    12.74 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.01 kB^[[22m^[[2m │ map:     16.15 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5156670Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mopenai-responses-shared-DaM6Ya4v.js       ^[[39m^[[1m^[[2m    12.86 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.97 kB^[[22m^[[2m │ map:     48.72 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5158640Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mbat-BkioyH1T.js                           ^[[39m^[[1m^[[2m    12.93 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.26 kB^[[22m^[[2m │ map:     17.38 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5159820Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mfish-BvzEVeQv.js                          ^[[39m^[[1m^[[2m    13.08 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     1.77 kB^[[22m^[[2m │ map:     16.85 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5161010Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mv-BcVCzyr7.js                             ^[[39m^[[1m^[[2m    13.25 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.78 kB^[[22m^[[2m │ map:     19.25 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5162540Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmistral-conversations-C-Mjp9XD.js         ^[[39m^[[1m^[[2m    13.25 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.92 kB^[[22m^[[2m │ map:     49.64 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5163810Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mvitesse-light-CVO1_9PV.js                 ^[[39m^[[1m^[[2m    13.67 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.07 kB^[[22m^[[2m │ map:     18.53 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5164940Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36maurora-x-D-2ljcwZ.js                      ^[[39m^[[1m^[[2m    13.71 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.32 kB^[[22m^[[2m │ map:     17.55 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5166450Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mvitesse-black-Bkuqu6BP.js                 ^[[39m^[[1m^[[2m    13.73 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.09 kB^[[22m^[[2m │ map:     18.62 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5167720Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mvitesse-dark-D0r3Knsf.js                  ^[[39m^[[1m^[[2m    13.81 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.10 kB^[[22m^[[2m │ map:     18.70 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5168890Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mpug-CGlum2m_.js                           ^[[39m^[[1m^[[2m    13.88 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.61 kB^[[22m^[[2m │ map:     20.49 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5170070Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mluau-C-HG3fhB.js                          ^[[39m^[[1m^[[2m    14.01 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.22 kB^[[22m^[[2m │ map:     19.62 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5171200Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msynthwave-84-CbfX1IO0.js                  ^[[39m^[[1m^[[2m    14.09 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.90 kB^[[22m^[[2m │ map:     19.08 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5172780Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mactionscript-3-CfeIJUat.js                ^[[39m^[[1m^[[2m    14.10 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.61 kB^[[22m^[[2m │ map:     19.83 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5182830Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgithub-light-default-D7oLnXFd.js          ^[[39m^[[1m^[[2m    14.21 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.08 kB^[[22m^[[2m │ map:     19.26 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5184260Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mclarity-D53aC0YG.js                       ^[[39m^[[1m^[[2m    14.32 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.50 kB^[[22m^[[2m │ map:     19.94 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5186380Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgithub-light-high-contrast-BfjtVDDH.js    ^[[39m^[[1m^[[2m    14.34 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.06 kB^[[22m^[[2m │ map:     19.44 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5188190Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgithub-dark-dimmed-DH5Ifo-i.js            ^[[39m^[[1m^[[2m    14.49 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.16 kB^[[22m^[[2m │ map:     19.63 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5191510Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgithub-dark-default-Cuk6v7N8.js           ^[[39m^[[1m^[[2m    14.49 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.17 kB^[[22m^[[2m │ map:     19.64 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5193180Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgithub-dark-high-contrast-E3gJ1_iC.js     ^[[39m^[[1m^[[2m    14.66 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.12 kB^[[22m^[[2m │ map:     19.87 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5194950Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgnuplot-DdkO51Og.js                       ^[[39m^[[1m^[[2m    14.83 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.30 kB^[[22m^[[2m │ map:     20.81 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5198160Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mrust-B1yitclQ.js                          ^[[39m^[[1m^[[2m    15.11 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.75 kB^[[22m^[[2m │ map:     21.45 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5199600Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mAccountsSettingsPage-NAN22Ns3.js          ^[[39m^[[1m^[[2m    15.14 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.14 kB^[[22m^[[2m │ map:     50.32 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5201820Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mkusto-DZf3V79B.js                         ^[[39m^[[1m^[[2m    15.22 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.96 kB^[[22m^[[2m │ map:     19.61 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5203150Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mlua-BbnMAYS6.js                           ^[[39m^[[1m^[[2m    15.25 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.13 kB^[[22m^[[2m │ map:     21.62 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5206030Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mnix-CwoSXNpI.js                           ^[[39m^[[1m^[[2m    15.55 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.52 kB^[[22m^[[2m │ map:     22.83 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5208050Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mabap-BdImnpbu.js                          ^[[39m^[[1m^[[2m    15.89 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     5.94 kB^[[22m^[[2m │ map:     18.83 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5209500Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mDecisionsPage-Dw-h7wVD.js                 ^[[39m^[[1m^[[2m    15.94 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.64 kB^[[22m^[[2m │ map:     46.34 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5210630Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msolidity-rGO070M0.js                      ^[[39m^[[1m^[[2m    16.12 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.14 kB^[[22m^[[2m │ map:     23.44 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5211840Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmatlab-D7o27uSR.js                        ^[[39m^[[1m^[[2m    16.13 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.10 kB^[[22m^[[2m │ map:     23.36 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5213280Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcue-D82EKSYY.js                           ^[[39m^[[1m^[[2m    16.25 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.09 kB^[[22m^[[2m │ map:     23.78 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5214490Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36melixir-CDX3lj18.js                        ^[[39m^[[1m^[[2m    16.37 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.83 kB^[[22m^[[2m │ map:     23.12 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5215940Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mkanagawa-wave-DWedfzmr.js                 ^[[39m^[[1m^[[2m    17.17 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.96 kB^[[22m^[[2m │ map:     22.26 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5217560Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mkanagawa-lotus-CfQXZHmo.js                ^[[39m^[[1m^[[2m    17.18 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.97 kB^[[22m^[[2m │ map:     22.26 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5218730Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mkanagawa-dragon-CkXjmgJE.js               ^[[39m^[[1m^[[2m    17.18 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.98 kB^[[22m^[[2m │ map:     22.27 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5220680Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmove-Bu9oaDYs.js                          ^[[39m^[[1m^[[2m    17.37 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.11 kB^[[22m^[[2m │ map:     25.98 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5222490Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mContextSettingsPage-DYTvUMTP.js           ^[[39m^[[1m^[[2m    18.00 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     5.13 kB^[[22m^[[2m │ map:     62.48 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5223880Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgraphql-ChdNCCLP.js                       ^[[39m^[[1m^[[2m    18.05 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.56 kB^[[22m^[[2m │ map:     25.44 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5226370Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msvelte-zxCyuUbr.js                        ^[[39m^[[1m^[[2m    18.09 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.12 kB^[[22m^[[2m │ map:     25.42 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5228540Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mliquid-DYVedYrR.js                        ^[[39m^[[1m^[[2m    18.13 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.19 kB^[[22m^[[2m │ map:     25.21 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5230290Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mInputSettingsPage-dPY0ulp2.js             ^[[39m^[[1m^[[2m    18.39 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.84 kB^[[22m^[[2m │ map:     71.65 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5233670Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mImportSettingsPage-CIyBUo7D.js            ^[[39m^[[1m^[[2m    18.46 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.52 kB^[[22m^[[2m │ map:     54.08 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5235330Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmaterial-theme-D5KoaKCx.js                ^[[39m^[[1m^[[2m    18.67 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.15 kB^[[22m^[[2m │ map:     24.10 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5236830Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmaterial-theme-ocean-CyktbL80.js          ^[[39m^[[1m^[[2m    18.69 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.17 kB^[[22m^[[2m │ map:     24.14 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5238050Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmaterial-theme-darker-BfHTSMKl.js         ^[[39m^[[1m^[[2m    18.69 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.15 kB^[[22m^[[2m │ map:     24.14 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5239330Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmaterial-theme-lighter-B0m2ddpp.js        ^[[39m^[[1m^[[2m    18.69 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.15 kB^[[22m^[[2m │ map:     24.15 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5240780Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmaterial-theme-palenight-Csfq5Kiy.js      ^[[39m^[[1m^[[2m    18.70 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.16 kB^[[22m^[[2m │ map:     24.16 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5242090Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mOrganizationsSettingsPage-O2r3E0n7.js     ^[[39m^[[1m^[[2m    18.93 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.78 kB^[[22m^[[2m │ map:     59.81 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5243310Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgdscript-DTMYz4Jt.js                      ^[[39m^[[1m^[[2m    19.02 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.78 kB^[[22m^[[2m │ map:     26.22 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5244510Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgroovy-gcz8RCvz.js                        ^[[39m^[[1m^[[2m    19.22 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.63 kB^[[22m^[[2m │ map:     27.51 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5246220Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmdc-DUICxH0z.js                           ^[[39m^[[1m^[[2m    19.68 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     6.70 kB^[[22m^[[2m │ map:     23.07 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5247580Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mayu-dark-CmMr59Fi.js                      ^[[39m^[[1m^[[2m    19.88 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.94 kB^[[22m^[[2m │ map:     26.69 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5248940Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mglimmer-js-Rg0-pVw9.js                    ^[[39m^[[1m^[[2m    20.12 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.98 kB^[[22m^[[2m │ map:     28.58 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5250700Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mglimmer-ts-U6CK756n.js                    ^[[39m^[[1m^[[2m    20.12 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.98 kB^[[22m^[[2m │ map:     28.58 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5252110Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mpowershell-Dpen1YoG.js                    ^[[39m^[[1m^[[2m    20.20 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.10 kB^[[22m^[[2m │ map:     26.59 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5253660Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mviml-CJc9bBzg.js                          ^[[39m^[[1m^[[2m    20.41 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     6.76 kB^[[22m^[[2m │ map:     23.49 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5255690Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mnushell-C-sUppwS.js                       ^[[39m^[[1m^[[2m    20.45 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     5.22 kB^[[22m^[[2m │ map:     27.64 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5256890Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msnazzy-light-Bw305WKR.js                  ^[[39m^[[1m^[[2m    20.82 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.87 kB^[[22m^[[2m │ map:     27.99 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5258060Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mdracula-BzJJZx-M.js                       ^[[39m^[[1m^[[2m    21.11 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.04 kB^[[22m^[[2m │ map:     27.47 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5259740Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mdracula-soft-BXkSAIEj.js                  ^[[39m^[[1m^[[2m    21.13 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.07 kB^[[22m^[[2m │ map:     27.50 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5261200Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mRuntimeSettingsPage-BcHDACr7.js           ^[[39m^[[1m^[[2m    21.22 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     6.33 kB^[[22m^[[2m │ map:     70.33 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5277380Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mtwig-CO9l9SDP.js                          ^[[39m^[[1m^[[2m    21.41 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.91 kB^[[22m^[[2m │ map:     29.20 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5278710Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mwit-5i3qLPDT.js                           ^[[39m^[[1m^[[2m    21.51 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.93 kB^[[22m^[[2m │ map:     30.09 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5279930Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mDossierPage-M4gtd3NH.js                   ^[[39m^[[1m^[[2m    21.53 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     7.39 kB^[[22m^[[2m │ map:     68.78 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5281140Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mrose-pine-qdsjHGoJ.js                     ^[[39m^[[1m^[[2m    21.79 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.91 kB^[[22m^[[2m │ map:     28.75 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5282460Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mrose-pine-moon-D4_iv3hh.js                ^[[39m^[[1m^[[2m    21.81 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.93 kB^[[22m^[[2m │ map:     28.77 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5283920Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mrose-pine-dawn-DHQR4-dF.js                ^[[39m^[[1m^[[2m    21.81 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.93 kB^[[22m^[[2m │ map:     28.78 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5285090Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mnim-CVrawwO9.js                           ^[[39m^[[1m^[[2m    22.50 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.19 kB^[[22m^[[2m │ map:     32.73 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5306300Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcommon-lisp-Cg-RD9OK.js                   ^[[39m^[[1m^[[2m    22.63 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     6.10 kB^[[22m^[[2m │ map:     26.67 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5307770Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgruvbox-dark-hard-CFHQjOhq.js             ^[[39m^[[1m^[[2m    22.69 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.21 kB^[[22m^[[2m │ map:     30.55 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5309080Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgruvbox-dark-soft-CVdnzihN.js             ^[[39m^[[1m^[[2m    22.69 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.21 kB^[[22m^[[2m │ map:     30.55 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5310490Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgruvbox-light-hard-CH1njM8p.js            ^[[39m^[[1m^[[2m    22.69 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.22 kB^[[22m^[[2m │ map:     30.56 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5311920Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgruvbox-light-soft-hJgmCMqR.js            ^[[39m^[[1m^[[2m    22.69 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.22 kB^[[22m^[[2m │ map:     30.56 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5313990Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgruvbox-dark-medium-GsRaNv29.js           ^[[39m^[[1m^[[2m    22.69 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.21 kB^[[22m^[[2m │ map:     30.56 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5315480Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgruvbox-light-medium-DRw_LuNl.js          ^[[39m^[[1m^[[2m    22.70 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.22 kB^[[22m^[[2m │ map:     30.57 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5317060Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msql-BLtJtn59.js                           ^[[39m^[[1m^[[2m    23.45 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     7.44 kB^[[22m^[[2m │ map:     27.90 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5319320Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mAppearanceSettingsPage-IG-0VtKB.js        ^[[39m^[[1m^[[2m    23.60 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     6.47 kB^[[22m^[[2m │ map:     90.49 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5320510Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcadence-Bv_4Rxtq.js                       ^[[39m^[[1m^[[2m    23.71 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.70 kB^[[22m^[[2m │ map:     33.57 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5321710Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mastro-CbQHKStN.js                         ^[[39m^[[1m^[[2m    24.05 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     7.58 kB^[[22m^[[2m │ map:     29.12 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5322980Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mtypespec-BGHnOYBU.js                      ^[[39m^[[1m^[[2m    24.07 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     2.62 kB^[[22m^[[2m │ map:     33.44 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5324700Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mapl-dKokRX4l.js                           ^[[39m^[[1m^[[2m    24.08 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.24 kB^[[22m^[[2m │ map:     33.31 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5326120Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mtempl-W15q3VgB.js                         ^[[39m^[[1m^[[2m    24.11 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     5.43 kB^[[22m^[[2m │ map:     30.87 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5327840Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mvhdl-CeAyd5Ju.js                          ^[[39m^[[1m^[[2m    24.31 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.91 kB^[[22m^[[2m │ map:     33.37 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5329140Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mangular-html-CU67Zn6k.js                  ^[[39m^[[1m^[[2m    24.34 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.05 kB^[[22m^[[2m │ map:     35.38 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5330870Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mvue-DN_0RTcg.js                           ^[[39m^[[1m^[[2m    24.53 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.01 kB^[[22m^[[2m │ map:     36.53 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5332110Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mpurescript-CklMAg4u.js                    ^[[39m^[[1m^[[2m    24.73 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.28 kB^[[22m^[[2m │ map:     34.88 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5333760Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mopenai-completions-D9UwgSX-.js            ^[[39m^[[1m^[[2m    24.92 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     7.73 kB^[[22m^[[2m │ map:     97.05 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5335090Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mc3-VCDPK7BO.js                            ^[[39m^[[1m^[[2m    24.93 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.87 kB^[[22m^[[2m │ map:     36.11 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5336400Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mindex-BDBQFsnu.js                         ^[[39m^[[1m^[[2m    25.16 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     8.98 kB^[[22m^[[2m │ map:    104.89 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5338130Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mSecuritySettingsPage-jNjcq0-V.js          ^[[39m^[[1m^[[2m    25.31 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     6.29 kB^[[22m^[[2m │ map:     76.04 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5339640Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mone-light-PoHY5YXO.js                     ^[[39m^[[1m^[[2m    25.35 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.71 kB^[[22m^[[2m │ map:     33.77 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5341610Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mfsharp-CXgrBDvD.js                        ^[[39m^[[1m^[[2m    25.35 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.16 kB^[[22m^[[2m │ map:     35.85 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5342900Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmarko-DZsq8hO1.js                         ^[[39m^[[1m^[[2m    25.53 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.60 kB^[[22m^[[2m │ map:     35.89 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5344280Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mopenai-codex-responses-D_FlRbuG.js        ^[[39m^[[1m^[[2m    25.60 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     9.37 kB^[[22m^[[2m │ map:    101.36 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5346490Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mAiSettingsPage-BQJsOM-y.js                ^[[39m^[[1m^[[2m    26.00 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     7.89 kB^[[22m^[[2m │ map:     96.22 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5348370Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36msystem-verilog-CnnmHF94.js                ^[[39m^[[1m^[[2m    26.26 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.89 kB^[[22m^[[2m │ map:     36.26 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5349550Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mnord-Ddv68eIx.js                          ^[[39m^[[1m^[[2m    26.77 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.43 kB^[[22m^[[2m │ map:     35.32 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5350730Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcodeql-DsOJ9woJ.js                        ^[[39m^[[1m^[[2m    26.93 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.83 kB^[[22m^[[2m │ map:     36.00 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5353230Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mExtensionsSettingsPage-B8SH5W25.js        ^[[39m^[[1m^[[2m    27.19 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     6.62 kB^[[22m^[[2m │ map:     83.29 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5354520Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mscss-OYdSNvt2.js                          ^[[39m^[[1m^[[2m    27.25 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.23 kB^[[22m^[[2m │ map:     38.31 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5355720Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mjava-CylS5w8V.js                          ^[[39m^[[1m^[[2m    27.26 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.30 kB^[[22m^[[2m │ map:     38.62 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5357340Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcoffee-Ch7k5sss.js                        ^[[39m^[[1m^[[2m    27.47 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     6.39 kB^[[22m^[[2m │ map:     36.06 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5359140Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mrazor-C1TweQQi.js                         ^[[39m^[[1m^[[2m    27.55 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.60 kB^[[22m^[[2m │ map:     38.28 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5360480Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mSessionTableHost-DZ0svSzQ.js              ^[[39m^[[1m^[[2m    27.59 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     8.80 kB^[[22m^[[2m │ map:     98.95 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5361780Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mAutomationEditor-U0iZQHB7.js              ^[[39m^[[1m^[[2m    27.82 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     7.65 kB^[[22m^[[2m │ map:     82.49 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5363750Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mpierre-dark-BXuwtOqb.js                   ^[[39m^[[1m^[[2m    27.94 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.55 kB^[[22m^[[2m │ map:     56.53 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5365050Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mpierre-light-dckrK0oj.js                  ^[[39m^[[1m^[[2m    27.95 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.50 kB^[[22m^[[2m │ map:     56.54 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5366680Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mscala-C151Ov-r.js                         ^[[39m^[[1m^[[2m    28.93 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.97 kB^[[22m^[[2m │ map:     40.10 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5367840Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mnight-owl-C39BiMTA.js                     ^[[39m^[[1m^[[2m    28.96 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     5.19 kB^[[22m^[[2m │ map:     39.02 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5369350Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcrystal-tKQVLTB8.js                       ^[[39m^[[1m^[[2m    29.43 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.48 kB^[[22m^[[2m │ map:     41.15 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5371000Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmermaid-mWjccvbQ.js                       ^[[39m^[[1m^[[2m    29.56 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     3.70 kB^[[22m^[[2m │ map:     44.11 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5372370Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mapplescript-Co6uUVPk.js                   ^[[39m^[[1m^[[2m    29.62 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     5.97 kB^[[22m^[[2m │ map:     39.33 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5374510Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmanifest-BTys_qoO.js                      ^[[39m^[[1m^[[2m    31.10 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     6.43 kB^[[22m^[[2m │ map:     68.17 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5376660Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mjulia-CxzCAyBv.js                         ^[[39m^[[1m^[[2m    31.11 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.36 kB^[[22m^[[2m │ map:     40.52 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5378420Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mstylus-BEDo0Tqx.js                        ^[[39m^[[1m^[[2m    31.12 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     8.02 kB^[[22m^[[2m │ map:     38.86 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5381260Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mMarketplaceSettingsPage-BMmQjpNY.js       ^[[39m^[[1m^[[2m    31.27 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     8.96 kB^[[22m^[[2m │ map:    119.79 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5382480Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmain-C4q3UBoF.js                          ^[[39m^[[1m^[[2m    32.95 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    10.62 kB^[[22m^[[2m │ map:    119.56 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5384120Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mpoimandres-CS3Unz2-.js                    ^[[39m^[[1m^[[2m    33.54 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     5.53 kB^[[22m^[[2m │ map:     43.03 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5385320Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mone-dark-pro-DVMEJ2y_.js                  ^[[39m^[[1m^[[2m    33.84 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     5.56 kB^[[22m^[[2m │ map:     44.47 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5386640Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mbsl-BO_Y6i37.js                           ^[[39m^[[1m^[[2m    33.91 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     8.38 kB^[[22m^[[2m │ map:     37.58 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5388830Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mhaxe-CzTSHFRz.js                          ^[[39m^[[1m^[[2m    35.21 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     5.95 kB^[[22m^[[2m │ map:     49.50 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5389970Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mnginx-DknmC5AR.js                         ^[[39m^[[1m^[[2m    35.42 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.47 kB^[[22m^[[2m │ map:     48.45 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5391190Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mhouston-DnULxvSX.js                       ^[[39m^[[1m^[[2m    35.47 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     5.82 kB^[[22m^[[2m │ map:     46.37 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5392440Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mtokyo-night-hegEt444.js                   ^[[39m^[[1m^[[2m    35.71 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     6.27 kB^[[22m^[[2m │ map:     45.32 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5393670Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36merlang-DsQrWhSR.js                        ^[[39m^[[1m^[[2m    37.52 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.44 kB^[[22m^[[2m │ map:     51.53 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5395310Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mConnectionsPage-Cf1aoNOS.js               ^[[39m^[[1m^[[2m    38.27 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     7.86 kB^[[22m^[[2m │ map:    110.93 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5396630Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcobol-nwyudZeR.js                         ^[[39m^[[1m^[[2m    39.19 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    10.90 kB^[[22m^[[2m │ map:     47.35 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5398100Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36masm-D_Q5rh1f.js                           ^[[39m^[[1m^[[2m    40.76 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     8.24 kB^[[22m^[[2m │ map:     52.98 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5399290Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mshellscript-Yzrsuije.js                   ^[[39m^[[1m^[[2m    41.53 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     6.14 kB^[[22m^[[2m │ map:     56.51 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5400380Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mhaskell-Df6bDoY_.js                       ^[[39m^[[1m^[[2m    41.54 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     6.47 kB^[[22m^[[2m │ map:     57.84 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5402880Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mMessagingSettingsPage-BwdRrFCh.js         ^[[39m^[[1m^[[2m    41.93 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     8.75 kB^[[22m^[[2m │ map:    143.59 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5404160Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mperl-C0TMdlhV.js                          ^[[39m^[[1m^[[2m    43.20 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.70 kB^[[22m^[[2m │ map:     60.72 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5405730Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36md-85-TOEBH.js                             ^[[39m^[[1m^[[2m    43.83 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     8.50 kB^[[22m^[[2m │ map:     62.67 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5406890Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mruby-BvKwtOVI.js                          ^[[39m^[[1m^[[2m    45.95 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     5.71 kB^[[22m^[[2m │ map:     65.22 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5408060Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgo-Dn2_MT6a.js                            ^[[39m^[[1m^[[2m    46.82 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     5.22 kB^[[22m^[[2m │ map:     66.53 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5410190Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mapex-D8_7TLub.js                          ^[[39m^[[1m^[[2m    47.03 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     6.80 kB^[[22m^[[2m │ map:     65.70 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5411400Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcatppuccin-mocha-D87Tk5Gz.js              ^[[39m^[[1m^[[2m    47.31 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     8.04 kB^[[22m^[[2m │ map:     62.00 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5412650Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcatppuccin-latte-C9dUb6Cb.js              ^[[39m^[[1m^[[2m    47.31 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     8.04 kB^[[22m^[[2m │ map:     62.00 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5413810Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcatppuccin-frappe-DFWUc33u.js             ^[[39m^[[1m^[[2m    47.31 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     8.05 kB^[[22m^[[2m │ map:     62.00 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5415260Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcatppuccin-macchiato-DQyhUUbL.js          ^[[39m^[[1m^[[2m    47.32 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     8.04 kB^[[22m^[[2m │ map:     62.02 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5416770Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mada-bCR0ucgS.js                           ^[[39m^[[1m^[[2m    48.12 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     6.07 kB^[[22m^[[2m │ map:     70.94 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5417870Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcss-DPfMkruS.js                           ^[[39m^[[1m^[[2m    49.06 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    11.89 kB^[[22m^[[2m │ map:     60.61 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5419730Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mimba-DGztddWO.js                          ^[[39m^[[1m^[[2m    49.97 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     9.49 kB^[[22m^[[2m │ map:     68.07 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5420900Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36meverforest-dark-BgDCqdQA.js               ^[[39m^[[1m^[[2m    53.80 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     8.46 kB^[[22m^[[2m │ map:     68.24 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5422560Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36meverforest-light-C8M2exoo.js              ^[[39m^[[1m^[[2m    53.80 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     8.46 kB^[[22m^[[2m │ map:     68.25 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5425070Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mMeetingsPage-CJM_7V8E.js                  ^[[39m^[[1m^[[2m    55.37 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    15.63 kB^[[22m^[[2m │ map:    156.95 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5427740Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mInboxPage-C7yEEeUO.js                     ^[[39m^[[1m^[[2m    55.73 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    16.12 kB^[[22m^[[2m │ map:    160.03 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5429310Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mwikitext-BhOHFoWU.js                      ^[[39m^[[1m^[[2m    55.93 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     4.80 kB^[[22m^[[2m │ map:     77.63 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5432160Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mstata-BH5u7GGu.js                         ^[[39m^[[1m^[[2m    57.03 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    12.40 kB^[[22m^[[2m │ map:     74.15 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5433300Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mhtml-GMplVEZG.js                          ^[[39m^[[1m^[[2m    57.29 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    11.72 kB^[[22m^[[2m │ map:     72.97 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5434430Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mballerina-BFfxhgS-.js                     ^[[39m^[[1m^[[2m    58.74 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     8.19 kB^[[22m^[[2m │ map:     81.52 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5435640Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmarkdown-Cvjx9yec.js                      ^[[39m^[[1m^[[2m    59.38 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     5.68 kB^[[22m^[[2m │ map:     82.32 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5436720Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mFeedPage-D0c0nmI0.js                      ^[[39m^[[1m^[[2m    62.42 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    17.59 kB^[[22m^[[2m │ map:    186.30 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5439610Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mocaml-C0hk2d4L.js                         ^[[39m^[[1m^[[2m    62.49 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     5.06 kB^[[22m^[[2m │ map:     81.09 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5441380Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mMindMapHost-o8R2CgQD.js                   ^[[39m^[[1m^[[2m    64.28 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    19.76 kB^[[22m^[[2m │ map:    263.61 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5442870Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmojo-B93PlW-d.js                          ^[[39m^[[1m^[[2m    69.34 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     9.22 kB^[[22m^[[2m │ map:     94.21 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5444670Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mpython-B6aJPvgy.js                        ^[[39m^[[1m^[[2m    70.00 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     9.17 kB^[[22m^[[2m │ map:     95.22 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5445920Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mc-BIGW1oBm.js                             ^[[39m^[[1m^[[2m    72.15 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    10.54 kB^[[22m^[[2m │ map:     95.37 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5447110Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mlatex-B4uzh10-.js                         ^[[39m^[[1m^[[2m    72.24 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     6.65 kB^[[22m^[[2m │ map:     99.89 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5448210Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mvyper-CDx5xZoG.js                         ^[[39m^[[1m^[[2m    74.69 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    10.77 kB^[[22m^[[2m │ map:    100.69 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5449360Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mhack-CaT9iCJl.js                          ^[[39m^[[1m^[[2m    80.28 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    26.24 kB^[[22m^[[2m │ map:     97.28 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5450740Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mswift-Dg5xB15N.js                         ^[[39m^[[1m^[[2m    86.65 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    14.74 kB^[[22m^[[2m │ map:    114.39 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5452340Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcsharp-K5feNrxe.js                        ^[[39m^[[1m^[[2m    87.76 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    10.50 kB^[[22m^[[2m │ map:    122.99 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5453590Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mfortran-free-form-BxgE0vQu.js             ^[[39m^[[1m^[[2m    89.02 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    11.31 kB^[[22m^[[2m │ map:    124.05 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5454860Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mKanbanBoardContainer-9T0PJnz2.js          ^[[39m^[[1m^[[2m    90.06 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    24.94 kB^[[22m^[[2m │ map:    339.82 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5457720Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mTasksPage-DhftTEAm.js                     ^[[39m^[[1m^[[2m    92.36 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    25.88 kB^[[22m^[[2m │ map:    278.27 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5459440Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mracket-BqYA7rlc.js                        ^[[39m^[[1m^[[2m    92.43 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    15.05 kB^[[22m^[[2m │ map:    106.17 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5461360Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mless-B1dDrJ26.js                          ^[[39m^[[1m^[[2m    97.68 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    14.74 kB^[[22m^[[2m │ map:    131.84 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5462670Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mblade-D4QpJJKB.js                         ^[[39m^[[1m^[[2m   105.02 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    28.24 kB^[[22m^[[2m │ map:    130.93 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5464510Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mobjective-c-DXmwc3jG.js                   ^[[39m^[[1m^[[2m   105.46 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    23.36 kB^[[22m^[[2m │ map:    129.64 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5474140Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mphp-CDn_0X-4.js                           ^[[39m^[[1m^[[2m   111.04 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    28.55 kB^[[22m^[[2m │ map:    139.26 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5475270Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36masciidoc-Dv7Oe6Be.js                      ^[[39m^[[1m^[[2m   131.56 kB^[[22m^[[1m^[[22m^[[2m │ gzip:     9.37 kB^[[22m^[[2m │ map:    189.08 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5476380Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mclient-cAEYnBoD.js                        ^[[39m^[[1m^[[2m   134.78 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    32.64 kB^[[22m^[[2m │ map:    637.27 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5477470Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mmdx-Cmh6b_Ma.js                           ^[[39m^[[1m^[[2m   136.16 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    23.39 kB^[[22m^[[2m │ map:    176.71 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5478590Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mProjectInfoPage-CLYzoejf.js               ^[[39m^[[1m^[[2m   142.16 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    35.42 kB^[[22m^[[2m │ map:    449.87 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5480450Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mobjective-cpp-CLxacb5B.js                 ^[[39m^[[1m^[[2m   172.02 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    30.66 kB^[[22m^[[2m │ map:    218.52 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5481610Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mjavascript-wDzz0qaB.js                    ^[[39m^[[1m^[[2m   174.88 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    16.56 kB^[[22m^[[2m │ map:    236.05 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5482760Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mtsx-COt5Ahok.js                           ^[[39m^[[1m^[[2m   175.58 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    16.55 kB^[[22m^[[2m │ map:    236.72 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5483890Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mjsx-g9-lgVsj.js                           ^[[39m^[[1m^[[2m   177.83 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    16.64 kB^[[22m^[[2m │ map:    238.97 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5499910Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mtypescript-BPQ3VLAy.js                    ^[[39m^[[1m^[[2m   181.13 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    16.08 kB^[[22m^[[2m │ map:    244.39 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5502430Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mangular-ts-BwZT4LLn.js                    ^[[39m^[[1m^[[2m   183.87 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    16.67 kB^[[22m^[[2m │ map:    249.30 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5503620Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mvue-vine-CQOfvN7w.js                      ^[[39m^[[1m^[[2m   190.10 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    18.02 kB^[[22m^[[2m │ map:    255.13 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5505150Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36manthropic-messages-CeBhpVsD.js            ^[[39m^[[1m^[[2m   203.63 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    55.17 kB^[[22m^[[2m │ map:  1,014.42 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5506360Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mSessionWorkflowEditor-siUnTgtc.js         ^[[39m^[[1m^[[2m   236.50 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    74.47 kB^[[22m^[[2m │ map:  1,000.38 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5507480Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mwolfram-lXgVvXCa.js                       ^[[39m^[[1m^[[2m   262.44 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    77.17 kB^[[22m^[[2m │ map:    279.64 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5508550Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mNotesPage-DbR0fBxq.js                     ^[[39m^[[1m^[[2m   281.42 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    81.53 kB^[[22m^[[2m │ map:  1,047.20 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5509770Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mgoogle-shared-D1yIN-2a.js                 ^[[39m^[[1m^[[2m   293.58 kB^[[22m^[[1m^[[22m^[[2m │ gzip:    58.31 kB^[[22m^[[2m │ map:  1,290.64 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5511370Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mwasm-CG6Dc4jp.js                          ^[[39m^[[1m^[[33m   622.38 kB^[[39m^[[22m^[[2m │ gzip:   230.33 kB^[[22m^[[2m │ map:    622.88 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5514670Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mcpp-CofmeUqb.js                           ^[[39m^[[1m^[[33m   626.12 kB^[[39m^[[22m^[[2m │ gzip:    44.86 kB^[[22m^[[2m │ map:    816.07 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5516250Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36memacs-lisp-C9XAeP06.js                    ^[[39m^[[1m^[[33m   779.90 kB^[[39m^[[22m^[[2m │ gzip:   196.07 kB^[[22m^[[2m │ map:    789.80 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5517350Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mApp-9gI1MA9w.js                           ^[[39m^[[1m^[[33m 4,428.37 kB^[[39m^[[22m^[[2m │ gzip:   951.18 kB^[[22m^[[2m │ map: 12,119.26 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5520900Z ^[[2m../dist/^[[22m^[[2massets/^[[22m^[[36mbrowser-main-I4j0mppp.js                  ^[[39m^[[1m^[[33m10,399.40 kB^[[39m^[[22m^[[2m │ gzip: 2,962.51 kB^[[22m^[[2m │ map: 18,438.69 kB^[[22m
+lifecycle (lifecycle)	Build WebUI assets	2026-10-03T04:05:23.5523470Z ^[[32m✓ built in 1m 18s^[[39m
+lifecycle (lifecycle)	Build server bundle	﻿2026-10-03T04:05:24.3129520Z ##[group]Run bun build packages/server/src/index.ts --target bun --outdir dist-server --external xlsx
+lifecycle (lifecycle)	Build server bundle	2026-10-03T04:05:24.3130710Z ^[[36;1mbun build packages/server/src/index.ts --target bun --outdir dist-server --external xlsx^[[0m
+lifecycle (lifecycle)	Build server bundle	2026-10-03T04:05:24.3900600Z shell: /bin/bash -e {0}
+lifecycle (lifecycle)	Build server bundle	2026-10-03T04:05:24.3900840Z env:
+lifecycle (lifecycle)	Build server bundle	2026-10-03T04:05:24.3901200Z   UV_CACHE_DIR: /Users/runner/work/_temp/setup-uv-cache
+lifecycle (lifecycle)	Build server bundle	2026-10-03T04:05:24.3901450Z ##[endgroup]
+lifecycle (lifecycle)	Build server bundle	2026-10-03T04:05:25.6442310Z Bundled 4602 modules in 1163ms
+lifecycle (lifecycle)	Build server bundle	2026-10-03T04:05:25.6442890Z 
+lifecycle (lifecycle)	Build server bundle	2026-10-03T04:05:25.6443870Z   index.js  37.0 MB  (entry point)
+lifecycle (lifecycle)	Build server bundle	2026-10-03T04:05:25.6444120Z 
+lifecycle (lifecycle)	Start server and run lifecycle smoke	﻿2026-10-03T04:05:25.6604900Z ##[group]Run bun test packages/server/src/__tests__/smoke.test.ts
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:25.6605400Z ^[[36;1mbun test packages/server/src/__tests__/smoke.test.ts^[[0m
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:25.6643680Z shell: /bin/bash -e {0}
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:25.6643890Z env:
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:25.6644090Z   UV_CACHE_DIR: /Users/runner/work/_temp/setup-uv-cache
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:25.6644450Z   ROX_SERVER_SMOKE_ENTRY: dist-server/index.js
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:25.6644820Z   ROX_SERVER_SMOKE_WEBUI_DIR: apps/webui/dist
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:25.6645080Z ##[endgroup]
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:25.7154020Z bun test v1.3.14 (0d9b296a)
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:25.8058570Z 
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:25.8059020Z ##[group]packages/server/src/__tests__/smoke.test.ts:
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:33.4261440Z (pass) headless server lifecycle smoke > serves health/login, enforces HTTP and WebSocket auth, and restarts the same isolated profile [7535.89ms]
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:34.6934910Z (pass) headless server lifecycle smoke > rejects short token at startup [1267.85ms]
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:34.7329310Z (pass) headless server lifecycle smoke > rejects a child already exited with 0 as graceful shutdown [39.48ms]
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:34.7593040Z (pass) headless server lifecycle smoke > rejects a child already exited with 17 as graceful shutdown [26.34ms]
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:34.7594020Z 
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:34.7596350Z ##[endgroup]
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:34.7597410Z 
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:34.7597750Z  4 pass
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:34.7599120Z  0 fail
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:34.7599610Z  37 expect() calls
+lifecycle (lifecycle)	Start server and run lifecycle smoke	2026-10-03T04:05:34.7600110Z Ran 4 tests across 1 file. [9.05s]
+lifecycle (lifecycle)	Post Install uv	﻿2026-10-03T04:05:34.7909720Z Post job cleanup.
+lifecycle (lifecycle)	Post Install uv	2026-10-03T04:05:35.2604630Z Cache hit occurred on key setup-uv-1-aarch64-apple-darwin-3.14.7-no-dependency-glob, not saving cache.
+lifecycle (lifecycle)	Post Install uv	2026-10-03T04:05:35.2606630Z (node:2228) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+lifecycle (lifecycle)	Post Install uv	2026-10-03T04:05:35.2607470Z (Use `node --trace-deprecation ...` to show where the warning was created)
+lifecycle (lifecycle)	Post Setup Bun	﻿2026-10-03T04:05:35.2710620Z Post job cleanup.
+lifecycle (lifecycle)	Post Setup Node	﻿2026-10-03T04:05:35.4661440Z Post job cleanup.
+lifecycle (lifecycle)	Post Setup Node	2026-10-03T04:05:35.5874450Z (node:2236) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+lifecycle (lifecycle)	Post Setup Node	2026-10-03T04:05:35.5875420Z (Use `node --trace-deprecation ...` to show where the warning was created)
+lifecycle (lifecycle)	Post Checkout	﻿2026-10-03T04:05:35.5977080Z Post job cleanup.
+lifecycle (lifecycle)	Post Checkout	2026-10-03T04:05:35.7038210Z [command]/opt/homebrew/bin/git version
+lifecycle (lifecycle)	Post Checkout	2026-10-03T04:05:35.7304100Z git version 2.55.0
+lifecycle (lifecycle)	Post Checkout	2026-10-03T04:05:35.7330070Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/1497dec6-aabd-472b-884f-36ccfff0e8b3/.gitconfig'
+lifecycle (lifecycle)	Post Checkout	2026-10-03T04:05:35.7338450Z Temporarily overriding HOME='/Users/runner/work/_temp/1497dec6-aabd-472b-884f-36ccfff0e8b3' before making global git config changes
+lifecycle (lifecycle)	Post Checkout	2026-10-03T04:05:35.7339310Z Adding repository directory to the temporary git global config as a safe directory
+lifecycle (lifecycle)	Post Checkout	2026-10-03T04:05:35.7343380Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/rox-one/rox-one
+lifecycle (lifecycle)	Post Checkout	2026-10-03T04:05:35.7463900Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+lifecycle (lifecycle)	Post Checkout	2026-10-03T04:05:35.7536970Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+lifecycle (lifecycle)	Post Checkout	2026-10-03T04:05:35.8934710Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+lifecycle (lifecycle)	Post Checkout	2026-10-03T04:05:35.8993750Z http.https://github.com/.extraheader
+lifecycle (lifecycle)	Post Checkout	2026-10-03T04:05:35.9000210Z [command]/opt/homebrew/bin/git config --local --unset-all http.https://github.com/.extraheader
+lifecycle (lifecycle)	Post Checkout	2026-10-03T04:05:35.9068790Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+lifecycle (lifecycle)	Post Checkout	2026-10-03T04:05:36.0325670Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+lifecycle (lifecycle)	Post Checkout	2026-10-03T04:05:36.0326990Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+lifecycle (lifecycle)	Complete job	﻿2026-10-03T04:05:36.1499620Z Cleaning up orphan processes
+lifecycle (lifecycle)	Complete job	2026-10-03T04:05:37.2778890Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, astral-sh/setup-uv@v5. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

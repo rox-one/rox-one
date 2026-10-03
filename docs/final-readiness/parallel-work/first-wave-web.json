@@ -1,0 +1,1387 @@
+{
+  "schemaVersion": 1,
+  "sourceBaseline": {
+    "repository": "rox-one/rox-one",
+    "commit": "387edc1b1cfec361e2de2196a6963c27a98cbc67",
+    "worktree": "/Users/t/Projects/rox-one-launch-web-20261003",
+    "branch": "develop/hosted-web-readiness-2026-10-03",
+    "sourceState": "FROZEN_INTEGRATED_SOURCE",
+    "githubReferenceMeaning": "Links pin the actual local integrated commit. Publication/readback of this commit is owned by the coordinator; no remote-publication claim is made here."
+  },
+  "scope": {
+    "taskIds": [
+      "WEB-001.1",
+      "WEB-001.2",
+      "WEB-002.1",
+      "WEB-002.2",
+      "WEB-003.1",
+      "WEB-003.2"
+    ],
+    "leafWorkUnits": 6,
+    "parentWorkUnits": 0,
+    "evidenceLevel": "CURRENT_SOURCE_INSPECTED_ONLY",
+    "artifactStatus": "PREPARATION_COMPLETE_IMPLEMENTATION_AND_RUNTIME_ACCEPTANCE_OPEN",
+    "productSourceEdits": 0,
+    "buildsOrTestsExecuted": 0,
+    "providerCalls": 0,
+    "deployments": 0
+  },
+  "protections": [
+    "Keep current authenticated browser bootstrap: same-origin cookie config reads, default-workspace match, real WS acknowledgement, post-ack runtime validation, cancellation and disposal.",
+    "Keep nativeAuthority grants, registered-workspace refusal of legacy bearer/cookie access, request and response permission fences, scoped push/subscription fences and reconnect identity checks.",
+    "Keep separate workspace-service trusted issuer / persisted membership revalidation; shared-password webui JWT sub=webui is instance admission, not a per-user membership principal.",
+    "Keep roadmap CAS/model provenance, selected connection identity, OMP transport v2/v1 fallback and bounded malformed-frame teardown. Hosted preparation does not require modifying these implementations.",
+    "Use isolated fixture config, filesystem roots, containers, ports and credentials. No user profiles, live provider calls, secret output, deployment or registry publication during this preparation."
+  ],
+  "ownership": {
+    "lane": "hosted-web",
+    "dispatchMeaning": "Three logical work packages can prepare independently; they are not three additional agent slots. Global concurrency is coordinator plus three workers.",
+    "packages": [
+      "P-WEB-BUILD",
+      "P-WEB-IDENTITY",
+      "P-WEB-OPS"
+    ],
+    "sharedFileRule": "Proposed patches are reviewable requests, not permission to mutate shared source. Follow launch-plan.json named file/contract owners before implementation.",
+    "sharedContracts": [
+      "SERVER-BUILD",
+      "DEPENDENCIES",
+      "BUILD-CONFIG",
+      "HTTP-SERVER",
+      "WEB-ADAPTER",
+      "CONFIG-IDENTITY"
+    ],
+    "firstArtifactsCanStartIndependently": [
+      "source-container manifest closure fixture and canonical helper patch",
+      "auth lifecycle contract and replay fixture",
+      "local ingress/volume manifests and adversarial HTTP/WS fixture"
+    ],
+    "unavoidableSequences": [
+      {
+        "producer": "G-CI / G-SECURITY",
+        "output": "supported-bun-build-runtime-policy / dependency-and-runtime-selection",
+        "consumer": "final image and standalone artifact construction",
+        "why": "These selected runtime versions and native artifacts are build inputs; source preparation can start before their receipt."
+      },
+      {
+        "producer": "FEATURE-CONTRACT / SERVICE-AUTH",
+        "output": "hosted-identity-scope / authorized-workspace-service-contract if advertised",
+        "consumer": "final identity and membership implementation/acceptance",
+        "why": "Instance-only access and a multi-user tenant authority have different principal sources. Existing service authority cannot be replaced with the shared password cookie."
+      },
+      {
+        "producer": "P-WEB-BUILD",
+        "output": "web.deployable-image-and-runtime-manifest",
+        "consumer": "real TLS ingress/redeploy/restore drills",
+        "why": "Actual runtime drills consume the image; proxy and test harness source need not wait."
+      },
+      {
+        "producer": "P-WEB-IDENTITY",
+        "output": "web.principal-and-workspace-contract",
+        "consumer": "public cookie/WS lifecycle and authorization acceptance",
+        "why": "Replay and live-connection revocation must exercise the chosen authoritative identity implementation."
+      },
+      {
+        "producer": "EXTERNAL",
+        "output": "hosted-domain-certificates-storage-access",
+        "consumer": "actual public HTTPS/WSS and clean-host restore acceptance",
+        "why": "Local loopback fixtures cannot establish public DNS, trusted certificate or durable hosted storage behavior."
+      }
+    ]
+  },
+  "resourceGates": [
+    {
+      "id": "RG-RUNTIME",
+      "availability": "NOT_PROBED_THIS_TURN",
+      "neededFor": [
+        "all runtime commands"
+      ],
+      "requirements": "Qualified Bun 1.3.14 with its directory first on PATH; installed locked dependencies in this worktree. Local Bun 1.4.2 bounded bundle failure remains separate prior evidence. Exact source version and command exit status accompany every receipt."
+    },
+    {
+      "id": "RG-CONTAINER",
+      "availability": "NOT_PROBED_THIS_TURN",
+      "neededFor": [
+        "WEB-001.1",
+        "WEB-001.2",
+        "WEB-003.2"
+      ],
+      "requirements": "Docker daemon/buildx, clean disposable build context, enough disk/memory for dependency install and Vite. NODE_OPTIONS 4 GiB heap is a cap, not proof a 4 GiB host has sufficient total RAM; measure peak RSS, disk and cgroup events. One heavy build at a time on this host unless capacity is measured."
+    },
+    {
+      "id": "RG-NATIVE-ARCH",
+      "availability": "NOT_PROVISIONED_OR_VERIFIED_BY_THIS_PREPARATION",
+      "neededFor": [
+        "WEB-001.2"
+      ],
+      "requirements": "Native Linux amd64 host for initially advertised tools. Linux arm64 is conditional: build-server accepts it but current toolchain manifest lacks linux-arm64 entries. A cross-built artifact or emulated startup does not close native arm64 workloads."
+    },
+    {
+      "id": "RG-IDENTITY",
+      "availability": "CONTRACT_DECISION_REQUIRED",
+      "neededFor": [
+        "WEB-002.1",
+        "WEB-002.2"
+      ],
+      "requirements": "Explicit declared private single-instance scope or multi-user scope; dedicated synthetic identities/workspaces. Multi-user claims additionally require trusted issuer test keys, isolated PostgreSQL and real workspace-service membership/session lifecycle; no production identity read/write."
+    },
+    {
+      "id": "RG-INGRESS",
+      "availability": "NOT_PROVISIONED_OR_VERIFIED_BY_THIS_PREPARATION",
+      "neededFor": [
+        "WEB-003.1"
+      ],
+      "requirements": "Local proxy/certificate fixture may prepare now. Public acceptance needs the authorized host/domain, trusted TLS chain, ingress WS upgrades/timeouts, private upstream reachability, browser runtime and direct upstream negative-access test."
+    },
+    {
+      "id": "RG-DURABILITY",
+      "availability": "NOT_PROVISIONED_OR_VERIFIED_BY_THIS_PREPARATION",
+      "neededFor": [
+        "WEB-003.2"
+      ],
+      "requirements": "Disposable volume and second clean restore target with declared UID/GID, snapshot/encryption/custody policy, known backup artifacts including credential key and workspace roots. Do not mount or copy real user data."
+    },
+    {
+      "id": "RG-REAL-PROVIDERS",
+      "availability": "NOT_USED_OR_PROBED",
+      "neededFor": [
+        "WEB-001.1",
+        "WEB-001.2",
+        "WEB-003.2 full external workflow DoD"
+      ],
+      "requirements": "Explicit authorized dedicated provider accounts/credentials and bounded test budgets for real Pi/default-provider/OMP/Claude, messaging and restored credential usability. Local fake transcripts establish only protocol subsets; paid prompts and messaging side effects are not authorized by this preparation."
+    }
+  ],
+  "tasks": {
+    "WEB-001.1": {
+      "id": "WEB-001.1",
+      "title": "[WEB-001.1] Fix Docker workspace manifests and helper build formats",
+      "existingFullDoDClosed": false,
+      "allocation": {
+        "package": "P-WEB-BUILD",
+        "owner": "web-build",
+        "produces": [
+          "web.deployable-image-and-runtime-manifest",
+          "web.standalone-delivery-manifest"
+        ],
+        "hardAcceptanceDependencies": [
+          {
+            "output": "supported-bun-build-runtime-policy",
+            "producer": "G-CI",
+            "consumingPhase": "final server bundling",
+            "why": "Observed Bun1.3.14 PASS/Bun1.4.2 FAIL requires an enforced qualified version before accepting final bundle.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          },
+          {
+            "output": "dependency-and-runtime-selection",
+            "producer": "G-SECURITY",
+            "consumingPhase": "final image/native staging",
+            "why": "Patched image native dependency versions are actual build inputs.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          }
+        ]
+      },
+      "currentImplementation": [
+        "Source Docker builds WebUI and WhatsApp/Discord worker.cjs and starts source packages/server/src/index.ts as craftagents. Existing Discord Docker test checks worker wiring, not complete clean image execution.",
+        "Canonical Pi builder is Bun-target ESM with external native koffi; build/common.ts also builds cloud-runner stub. Standalone dependency closure already includes cloud-runner; preserve this progress.",
+        "CI builds a separate server bundle with xlsx external and supplies separately built WebUI to an isolated lifecycle smoke. This is not a tested source Docker or generated distribution image."
+      ],
+      "sourceFindings": [
+        {
+          "kind": "OBSERVED_SOURCE_BLOCKER",
+          "finding": "Docker COPY apps/docs-site/package.json refers to a missing workspace path in this source. Existing workspace manifests cloud-runner, cloud-gateway and workspace-service are absent from the pre-install COPY closure.",
+          "references": [
+            {
+              "path": "Dockerfile.server",
+              "lines": "55-76",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/Dockerfile.server#L55-L76",
+              "reason": "Manifest cache and source COPY ordering"
+            },
+            {
+              "path": "package.json",
+              "lines": "18-23",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/package.json#L18-L23",
+              "reason": "Workspace glob membership"
+            },
+            {
+              "path": "packages/cloud-runner/package.json",
+              "lines": "1-13",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/cloud-runner/package.json#L1-L13",
+              "reason": "Existing runner workspace"
+            },
+            {
+              "path": "apps/workspace-service/package.json",
+              "lines": "1-14",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/workspace-service/package.json#L1-L14",
+              "reason": "Existing service workspace"
+            },
+            {
+              "path": "apps/cloud-gateway/package.json",
+              "lines": "1-18",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/cloud-gateway/package.json#L1-L18",
+              "reason": "Existing gateway workspace"
+            }
+          ]
+        },
+        {
+          "kind": "OBSERVED_SOURCE_FORMAT_MISMATCH",
+          "finding": "Docker directly builds Pi with --target node --format cjs, conflicting with current package and canonical ESM-only SDK format requirements.",
+          "references": [
+            {
+              "path": "Dockerfile.server",
+              "lines": "78-91",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/Dockerfile.server#L78-L91",
+              "reason": "Old inline helper builds"
+            },
+            {
+              "path": "packages/pi-agent-server/package.json",
+              "lines": "11-25",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/pi-agent-server/package.json#L11-L25",
+              "reason": "Canonical Bun ESM build and SDK dependencies"
+            },
+            {
+              "path": "scripts/build/common.ts",
+              "lines": "581-626",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L581-L626",
+              "reason": "Shared Pi/cloud runner builders"
+            }
+          ]
+        },
+        {
+          "kind": "OBSERVED_BUILD_CONTEXT_POLICY_GAP",
+          "finding": ".dockerignore has no .env/.env.* exclusion; an ignored local environment file inside the build context is not protected by .gitignore. No actual secret-file content was inspected or disclosure observed.",
+          "references": [
+            {
+              "path": ".dockerignore",
+              "lines": "1-60",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/.dockerignore#L1-L60",
+              "reason": "Current complete context exclusion policy"
+            }
+          ]
+        },
+        {
+          "kind": "DISTINCT_DELIVERY_GAP",
+          "finding": "Standalone generated Docker omits WebUI build/copy/env and Node installation and has no non-root user. Its source server launcher and source Docker are different routes, requiring independent runtime receipts.",
+          "references": [
+            {
+              "path": "scripts/build-server.ts",
+              "lines": "472-488",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build-server.ts#L472-L488",
+              "reason": "Workspace copy list"
+            },
+            {
+              "path": "scripts/build-server.ts",
+              "lines": "595-617",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build-server.ts#L595-L617",
+              "reason": "Source entry wrapper"
+            },
+            {
+              "path": "scripts/build-server.ts",
+              "lines": "735-785",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build-server.ts#L735-L785",
+              "reason": "Generated image and compose"
+            },
+            {
+              "path": ".github/workflows/validate-server.yml",
+              "lines": "63-81",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/.github/workflows/validate-server.yml#L63-L81",
+              "reason": "CI bundle plus external WebUI lifecycle gate"
+            }
+          ]
+        }
+      ],
+      "firstPatches": [
+        {
+          "id": "WEB-001.1-P1",
+          "title": "Repair source container manifest closure and helper formats",
+          "state": "PROPOSED_NOT_IMPLEMENTED",
+          "paths": [
+            "Dockerfile.server",
+            ".dockerignore",
+            "packages/server/src/__tests__/dockerfile-discord-worker.test.ts",
+            "new web-only build-context/image verification fixture"
+          ],
+          "changes": [
+            "Remove nonexistent docs-site COPY and stale ignore exception; include the actual workspace manifest closure before frozen install, with an explicit audited manifest list or generated allowlist. Do not accidentally copy host node_modules.",
+            "Invoke existing Pi package Bun ESM builder and existing cloud-runner build contract; retain canonical WhatsApp/Discord CJS Node worker builders and correct runtime worker entry env.",
+            "Exclude local environment, credentials and private fixture state from context while allowing documented non-secret env example templates; inspect context file inventory, not secret contents.",
+            "Extend verification beyond regex/source tests: clean frozen dependency install, artifact format/load, helper startup and browser-backed authenticated transcript."
+          ],
+          "acceptance": "Clean Linux image builds from this SHA, runtime resolves correct Pi/runner/worker artifacts, no local env sent in build context; full provider workflows remain separately gated.",
+          "sharedFileRequests": [
+            "SERVER-BUILD owner: scripts/build/common.ts if shared builder invocation requires an exported command",
+            "BUILD-CONFIG owner: root manifests/lockfile must not be changed independently"
+          ],
+          "Requirements": "Apply the bounded source changes under the named shared-file owners; preserve the current authority and runtime protections listed in this artifact.",
+          "DoD": "Clean Linux image builds from this SHA, runtime resolves correct Pi/runner/worker artifacts, no local env sent in build context; full provider workflows remain separately gated.",
+          "Full functional verification": "Start repaired image with disposable state and loopback-only exposed port plus TLS fixture; wait for actual authenticated readiness, not a log line. From hosted browser login and create a session; run dedicated real Pi and selected default provider conversation, preserving request/response transcript and scope evidence. Exercise configured OMP/Claude and WhatsApp/Discord worker startup without sending to real contacts; every advertised external integration needs dedicated authorized fixtures. Repeat advertised generated image route independently; retain exact failed commands and capacity failures.",
+          "Test method": "Run the listed preliminary commands plus the required new actual-runtime harness for this patch; retain exact source/digest/environment/exit-status evidence. No current preparation command closes the functional DoD."
+        },
+        {
+          "id": "WEB-001.1-P2",
+          "title": "Make generated distribution a declared hosted delivery route",
+          "state": "PROPOSED_NOT_IMPLEMENTED",
+          "paths": [
+            "new web-only packaging overlay/manifest",
+            "scripts/build-server.ts via SERVER-BUILD owner"
+          ],
+          "changes": [
+            "Choose and document source Docker as the first hosted route; generated distribution may be separately advertised only after it ships WebUI plus Node-dependent workers and non-root execution.",
+            "If generated route is retained, add scoped WebUI/resource/runtime assembly through SERVER-BUILD owner and use the same ingress/state contracts. Keep cloud-runner package/dependency copies already present."
+          ],
+          "acceptance": "Each advertised route has its own artifact digest, runtime manifest, clean install/startup and authenticated UI proof; do not inherit CI bundle smoke as generated-image acceptance.",
+          "sharedFileRequests": [
+            "SERVER-BUILD owner: generated image and distribution assembly"
+          ],
+          "Requirements": "Apply the bounded source changes under the named shared-file owners; preserve the current authority and runtime protections listed in this artifact.",
+          "DoD": "Each advertised route has its own artifact digest, runtime manifest, clean install/startup and authenticated UI proof; do not inherit CI bundle smoke as generated-image acceptance.",
+          "Full functional verification": "Start repaired image with disposable state and loopback-only exposed port plus TLS fixture; wait for actual authenticated readiness, not a log line. From hosted browser login and create a session; run dedicated real Pi and selected default provider conversation, preserving request/response transcript and scope evidence. Exercise configured OMP/Claude and WhatsApp/Discord worker startup without sending to real contacts; every advertised external integration needs dedicated authorized fixtures. Repeat advertised generated image route independently; retain exact failed commands and capacity failures.",
+          "Test method": "Run the listed preliminary commands plus the required new actual-runtime harness for this patch; retain exact source/digest/environment/exit-status evidence. No current preparation command closes the functional DoD."
+        }
+      ],
+      "verificationCommands": [
+        {
+          "id": "WEB-BUILD-STATIC",
+          "command": "bun test packages/server/src/__tests__/dockerfile-discord-worker.test.ts scripts/build/__tests__/stage-servers.test.ts",
+          "phase": "preliminary existing checks",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "qualified isolated fixture runtime",
+          "requiredAssertions": [
+            "Retained worker paths and helper staging assertions pass; these checks alone cannot close image DoD."
+          ]
+        },
+        {
+          "id": "WEB-SOURCE-IMAGE",
+          "command": "docker buildx build --platform linux/amd64 --no-cache --load -f Dockerfile.server -t rox-one-web:first-wave .",
+          "phase": "post-patch clean image construction",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "RG-CONTAINER + G-CI/G-SECURITY selected versions",
+          "requiredAssertions": [
+            "No missing COPY inputs or frozen lock mismatch; correct Pi format; record image digest and installed runtime versions."
+          ]
+        },
+        {
+          "id": "WEB-CI-HELPER",
+          "command": "bun run server:build:subprocess",
+          "phase": "existing CI-route helper build",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "RG-RUNTIME; one build slot",
+          "requiredAssertions": [
+            "Pi Bun ESM bundle loads without external require failure."
+          ]
+        },
+        {
+          "id": "WEB-CI-ASSETS",
+          "command": "NODE_OPTIONS=--max-old-space-size=4096 bun run webui:build",
+          "phase": "existing CI-route WebUI build",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "RG-RUNTIME + measured build memory/disk",
+          "requiredAssertions": [
+            "Fresh worktree source/assets compiled; no stale symlinked source substitution."
+          ]
+        },
+        {
+          "id": "WEB-CI-BUNDLE",
+          "command": "bun build packages/server/src/index.ts --target bun --outdir dist-server --external xlsx",
+          "phase": "existing CI-route bundle construction",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "RG-RUNTIME; one build slot",
+          "requiredAssertions": [
+            "Bundle builds with supported Bun; xlsx runtime closure available."
+          ]
+        },
+        {
+          "id": "WEB-CI-LIFECYCLE",
+          "command": "ROX_SERVER_SMOKE_ENTRY=dist-server/index.js ROX_SERVER_SMOKE_WEBUI_DIR=apps/webui/dist bun test --timeout 30000 packages/server/src/__tests__/smoke.test.ts",
+          "phase": "existing CI-route isolated lifecycle",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "qualified isolated fixture runtime",
+          "requiredAssertions": [
+            "Real child auth/HTTP/WS/restart/SIGTERM checks pass; no provider conversation or container proof implied."
+          ]
+        },
+        {
+          "id": "WEB-STANDALONE-ASSEMBLY",
+          "command": "bun run scripts/build-server.ts --platform=linux --arch=x64 --output=dist/web-first-wave-linux-x64 --compress",
+          "phase": "conditional generated delivery assembly",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "RG-RUNTIME + Linux artifact capacity + artifact downloads allowed later",
+          "requiredAssertions": [
+            "Package closure/runtime assets complete; test generated image separately."
+          ]
+        }
+      ],
+      "fullFunctionalRunbook": {
+        "runner": "New isolated image/hosted browser harness must be implemented; no complete existing container/browser/provider harness was identified.",
+        "steps": [
+          "Start repaired image with disposable state and loopback-only exposed port plus TLS fixture; wait for actual authenticated readiness, not a log line.",
+          "From hosted browser login and create a session; run dedicated real Pi and selected default provider conversation, preserving request/response transcript and scope evidence.",
+          "Exercise configured OMP/Claude and WhatsApp/Discord worker startup without sending to real contacts; every advertised external integration needs dedicated authorized fixtures.",
+          "Repeat advertised generated image route independently; retain exact failed commands and capacity failures."
+        ],
+        "resources": [
+          "RG-CONTAINER",
+          "RG-RUNTIME",
+          "RG-REAL-PROVIDERS"
+        ]
+      },
+      "Requirements": "Build context is source-complete; generated formats match the runtime that starts each helper.",
+      "DoD": "Build passes on a clean runner and Pi/OMP/Claude plus configured messaging workers start in the image.",
+      "Full functional verification": "Run a real Pi conversation, default-provider conversation and helper health checks from the hosted UI.",
+      "Test method": "Clean image build, runtime import/startup probes and server/browser transcript assertions."
+    },
+    "WEB-001.2": {
+      "id": "WEB-001.2",
+      "title": "[WEB-001.2] Pin image/runtime architecture and dependency provisioning",
+      "existingFullDoDClosed": false,
+      "allocation": {
+        "package": "P-WEB-BUILD",
+        "owner": "web-build",
+        "produces": [
+          "web.deployable-image-and-runtime-manifest",
+          "web.standalone-delivery-manifest"
+        ],
+        "hardAcceptanceDependencies": [
+          {
+            "output": "supported-bun-build-runtime-policy",
+            "producer": "G-CI",
+            "consumingPhase": "final server bundling",
+            "why": "Observed Bun1.3.14 PASS/Bun1.4.2 FAIL requires an enforced qualified version before accepting final bundle.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          },
+          {
+            "output": "dependency-and-runtime-selection",
+            "producer": "G-SECURITY",
+            "consumingPhase": "final image/native staging",
+            "why": "Patched image native dependency versions are actual build inputs.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          }
+        ]
+      },
+      "currentImplementation": [
+        "Common standalone downloader pins Bun bun-v1.3.14 and verifies published checksums. Source/generated Docker bases still float oven/bun:1.3-slim. Source Docker uses NodeSource Node major20.",
+        "Browser backend defaults agent-browser and creates a profile; image apt list has git/ripgrep/Node but does not itself provision agent-browser/Chromium or the complete document/media toolchain. Runtime toolchain bootstrap may provision tools; the readiness/capacity receipt must establish it actually completed.",
+        "Standalone CLI accepts Linux arm64, but current mandatory tool matrix is Linux x64 only; lack of arm64 support is an advertised capability boundary, not a request to silently add guessed artifacts."
+      ],
+      "sourceFindings": [
+        {
+          "kind": "VERSION_QUALIFICATION_GAP",
+          "finding": "Floating Docker Bun and major-only Node installation differ from shared pinned Bun/toolchain policy. Prior Bun1.3.14 PASS/Bun1.4.2 FAIL is evidence of a concrete qualification requirement, not current container execution evidence.",
+          "references": [
+            {
+              "path": "Dockerfile.server",
+              "lines": "26-40",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/Dockerfile.server#L26-L40",
+              "reason": "Floating Bun/Node major"
+            },
+            {
+              "path": "scripts/build/common.ts",
+              "lines": "33-40",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build/common.ts#L33-L40",
+              "reason": "Pinned build versions"
+            },
+            {
+              "path": "packages/shared/src/toolchain/manifest-data.ts",
+              "lines": "171-204",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/toolchain/manifest-data.ts#L171-L204",
+              "reason": "Pinned Node toolchain artifacts"
+            }
+          ]
+        },
+        {
+          "kind": "ARCHITECTURE_CAPABILITY_GAP",
+          "finding": "Linux arm64 assembly flags exist but Linux arm64 entries are missing in mandatory tool matrix, including Bun/Node/OMP/browser/media. Native runtime acceptance is required before advertising it.",
+          "references": [
+            {
+              "path": "scripts/build-server.ts",
+              "lines": "9-18",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build-server.ts#L9-L18",
+              "reason": "Supported assembly flags"
+            },
+            {
+              "path": "packages/shared/src/toolchain/manifest-data.ts",
+              "lines": "33-68",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/toolchain/manifest-data.ts#L33-L68",
+              "reason": "Actual mandatory and optional platform matrix"
+            }
+          ]
+        },
+        {
+          "kind": "BROWSER_PROVISIONING_REQUIREMENT",
+          "finding": "agent-browser executable/profile/Chrome lifecycle is used by server; installing package manifests or serving WebUI does not prove browser operation.",
+          "references": [
+            {
+              "path": "packages/server/src/vps-browser-pane-manager.ts",
+              "lines": "81-109",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server/src/vps-browser-pane-manager.ts#L81-L109",
+              "reason": "Executable and persistent profile/session args"
+            },
+            {
+              "path": "Dockerfile.server",
+              "lines": "32-40",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/Dockerfile.server#L32-L40",
+              "reason": "Installed system packages"
+            },
+            {
+              "path": "packages/server-core/src/bootstrap/headless-start.ts",
+              "lines": "372-386",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/bootstrap/headless-start.ts#L372-L386",
+              "reason": "Asynchronous runtime toolchain initialization"
+            }
+          ]
+        }
+      ],
+      "firstPatches": [
+        {
+          "id": "WEB-001.2-P1",
+          "title": "Pin and disclose first hosted runtime matrix",
+          "state": "PROPOSED_NOT_IMPLEMENTED",
+          "paths": [
+            "Dockerfile.server",
+            "web-only runtime/architecture manifest and executable probe"
+          ],
+          "changes": [
+            "Use G-CI qualified exact Bun version plus image digest; coordinate Node/system package policy with DEPENDENCIES owner rather than independently editing global toolchain manifest.",
+            "Declare Linux amd64 initial supported hosted image; arm64 remains unadvertised/conditional until all mandatory binaries, native SQLite/helper/browser workloads and tool conversions have native receipts.",
+            "Make each advertised tool executable/version/architecture and provisioning completion explicit. Missing optional tools produce bounded unavailable capabilities, not falsely healthy tool readiness.",
+            "Provision Chromium/profile/runtime dependencies intentionally and keep user/profile state outside immutable image."
+          ],
+          "acceptance": "Image manifest and native runtime receipt cover every advertised mandatory executable, helper and browser/document/media operation.",
+          "sharedFileRequests": [
+            "DEPENDENCIES owner: selected Node/Bun/native packages",
+            "BUILD-CONFIG owner: CI native architecture runners"
+          ],
+          "Requirements": "Apply the bounded source changes under the named shared-file owners; preserve the current authority and runtime protections listed in this artifact.",
+          "DoD": "Image manifest and native runtime receipt cover every advertised mandatory executable, helper and browser/document/media operation.",
+          "Full functional verification": "On each advertised native host inspect image/delivery executable architectures and exact versions; start every mandatory helper. Use browser navigation to a deterministic fixture site, interaction, screenshot and profile restart; preserve correct workspace/session ownership. Clone and modify a local fixture repository, perform document/media conversion and verify produced artifacts. Capture provisioning completion, peak RSS/disk/time and cgroup OOM events; mark unsupported architecture explicitly rather than treating UI HTTP200 as support.",
+          "Test method": "Run the listed preliminary commands plus the required new actual-runtime harness for this patch; retain exact source/digest/environment/exit-status evidence. No current preparation command closes the functional DoD."
+        }
+      ],
+      "verificationCommands": [
+        {
+          "id": "WEB-AMD64-IMAGE",
+          "command": "docker buildx build --platform linux/amd64 --load -f Dockerfile.server -t rox-one-web:qualified-amd64 .",
+          "phase": "qualified image construction",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "RG-CONTAINER native amd64 runner",
+          "requiredAssertions": [
+            "Digest, Bun/Node versions and arch captured; full tools need actual workload checks."
+          ]
+        },
+        {
+          "id": "WEB-ARM64-CONDITIONAL",
+          "command": "docker buildx build --platform linux/arm64 --load -f Dockerfile.server -t rox-one-web:qualified-arm64 .",
+          "phase": "conditional architecture construction",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "RG-NATIVE-ARCH + selected mandatory arm64 artifacts",
+          "requiredAssertions": [
+            "A successful cross-build does not close native workload DoD; do not publish architecture support until native test receipt."
+          ]
+        },
+        {
+          "id": "WEB-DOC-FIXTURES",
+          "command": "bun run test:doc-tools",
+          "phase": "existing document converter fixture gate on isolated target",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "Native target with provisioned Python/uv/document binaries and disposable output",
+          "requiredAssertions": [
+            "Actual converter outputs and metadata correct; enabled tools provisioned; this is separate from browser/provider workflows."
+          ]
+        }
+      ],
+      "fullFunctionalRunbook": {
+        "runner": "New executable/runtime manifest and browser/repository/media harness required; no complete current multiarchitecture hosted harness identified.",
+        "steps": [
+          "On each advertised native host inspect image/delivery executable architectures and exact versions; start every mandatory helper.",
+          "Use browser navigation to a deterministic fixture site, interaction, screenshot and profile restart; preserve correct workspace/session ownership.",
+          "Clone and modify a local fixture repository, perform document/media conversion and verify produced artifacts.",
+          "Capture provisioning completion, peak RSS/disk/time and cgroup OOM events; mark unsupported architecture explicitly rather than treating UI HTTP200 as support."
+        ],
+        "resources": [
+          "RG-NATIVE-ARCH",
+          "RG-CONTAINER",
+          "RG-REAL-PROVIDERS only external workloads"
+        ]
+      },
+      "Requirements": "Declare supported hosted CPU/OS targets and provide all mandatory binaries for each; browser backend needs an actual executable/profile/runtime.",
+      "DoD": "Each supported image architecture runs advertised tools/browser operations and unsupported architectures fail clearly.",
+      "Full functional verification": "Start each published image on its native host; use browser navigation, repository tasks and document/media conversion.",
+      "Test method": "Multi-architecture native runtime matrix, executable architecture checks and actual workload results."
+    },
+    "WEB-002.1": {
+      "id": "WEB-002.1",
+      "title": "[WEB-002.1] Complete hosted authentication, logout and revocation policy",
+      "existingFullDoDClosed": false,
+      "allocation": {
+        "package": "P-WEB-IDENTITY",
+        "owner": "web-identity",
+        "produces": [
+          "web.principal-and-workspace-contract",
+          "web.auth-revocation-receipt"
+        ],
+        "hardAcceptanceDependencies": [
+          {
+            "output": "hosted-identity-scope",
+            "producer": "FEATURE-CONTRACT",
+            "consumingPhase": "auth model implementation scope",
+            "why": "Private single-instance versus multi-user product scope determines principal/tenant policy; no requirement to build SaaS for a declared private deployment.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          },
+          {
+            "output": "authorized-workspace-service-contract",
+            "producer": "SERVICE-AUTH",
+            "consumingPhase": "workspace-service integration if advertised",
+            "why": "If multi-user collaboration is advertised, identity/membership enforcement must be joined to the actual workspace service.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          }
+        ]
+      },
+      "currentImplementation": [
+        "Password Argon2id, signed HS256 JWT with24-hour expiry, HttpOnly/SameSite=Strict cookie, HTTP/config validation, WS cookie admission and per-IP plus global login rate limit already exist.",
+        "JWT subject is fixed webui and logout only expires the browser cookie. Keep this declared shared-instance model distinct from workspace-service per-user membership."
+      ],
+      "sourceFindings": [
+        {
+          "kind": "LIVE_SESSION_LIFECYCLE_GAP",
+          "finding": "Cookie expiry is validated for HTTP and WS admission; legacy cookie WS clients are not bound to a session identifier/expiry/revocation record for continued RPC/push. Logout clears browser cookie without invalidating copied cookie or already open socket. Signing-secret rotation via restart disconnects sockets but is not selective session revocation.",
+          "references": [
+            {
+              "path": "packages/server-core/src/webui/auth.ts",
+              "lines": "16-49",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/webui/auth.ts#L16-L49",
+              "reason": "Expiry and fixed subject"
+            },
+            {
+              "path": "packages/server-core/src/webui/http-server.ts",
+              "lines": "296-315",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/webui/http-server.ts#L296-L315",
+              "reason": "Cookie issuance and logout"
+            },
+            {
+              "path": "packages/server-core/src/transport/server.ts",
+              "lines": "744-757",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/transport/server.ts#L744-L757",
+              "reason": "Boolean cookie handshake validation"
+            },
+            {
+              "path": "packages/server-core/src/transport/server.ts",
+              "lines": "1050-1128",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/transport/server.ts#L1050-L1128",
+              "reason": "Existing request/current authority fences"
+            }
+          ]
+        },
+        {
+          "kind": "SERVER_ENV_GLUE_GAP",
+          "finding": "Bootstrap uses ROX-aware getEnv SERVER_TOKEN but entry WebUI handler takes process.env.CRAFT_SERVER_TOKEN and CRAFT-only WebUI/TLS configuration. ROX-only token can start core server without enabling the expected WebUI handler; existing smoke supplies both aliases and cannot prove ROX-only deployment.",
+          "references": [
+            {
+              "path": "packages/server-core/src/bootstrap/headless-start.ts",
+              "lines": "409-417",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/bootstrap/headless-start.ts#L409-L417",
+              "reason": "ROX-aware token resolution"
+            },
+            {
+              "path": "packages/server/src/index.ts",
+              "lines": "103-156",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server/src/index.ts#L103-L156",
+              "reason": "CRAFT-only WebUI/TLS/token selection"
+            },
+            {
+              "path": "packages/server/src/__tests__/smoke.test.ts",
+              "lines": "98-113",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server/src/__tests__/smoke.test.ts#L98-L113",
+              "reason": "Both token/config aliases in fixture"
+            },
+            {
+              "path": "packages/shared/src/config/env.ts",
+              "lines": "33-49",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/config/env.ts#L33-L49",
+              "reason": "Canonical preferred ROX/fallback CRAFT resolver"
+            }
+          ]
+        }
+      ],
+      "firstPatches": [
+        {
+          "id": "WEB-002.1-P1",
+          "title": "Specify and implement shared-instance revocation lifecycle",
+          "state": "PROPOSED_NOT_IMPLEMENTED",
+          "paths": [
+            "packages/server-core/src/webui/auth.ts",
+            "new hosted identity lifecycle/replay fixture"
+          ],
+          "changes": [
+            "Write the private-instance session contract first: expiry, session identifier/version, logout copied-cookie rejection, signing/password rotation and bounded live WS revocation semantics. If product scope is multi-user, consume SERVICE-AUTH actor contract instead of turning fixed sub=webui into user identity.",
+            "Add minimally scoped cookie session metadata/revocation validation behind compatible canonical auth helpers; persist selected revocation/version state with declared durability if replay prevention must survive restart.",
+            "Ask HTTP-SERVER/transport owners to bind cookie-auth sockets to the authoritative expiry/revocation state and enforce it on subsequent request/response/push/reconnect. Preserve native tokens and workspace-authority flows; do not weaken their fences.",
+            "Keep Argon2id, token entropy, HttpOnly/SameSite/global rate limit. Document recovery without logging actual secrets."
+          ],
+          "acceptance": "HTTP old-cookie replay and live WS actions/events cease after selected expiry/logout/revocation/rotation; independent authorized current sessions remain functional.",
+          "sharedFileRequests": [
+            "HTTP-SERVER owner: http-server.ts logout hook and server entry validator",
+            "Transport owner: cookie-session binding/lifecycle hooks in server.ts"
+          ],
+          "Requirements": "Apply the bounded source changes under the named shared-file owners; preserve the current authority and runtime protections listed in this artifact.",
+          "DoD": "HTTP old-cookie replay and live WS actions/events cease after selected expiry/logout/revocation/rotation; independent authorized current sessions remain functional.",
+          "Full functional verification": "Create two synthetic browser sessions, log in, hold live sockets and capture cookie identifiers privately. Expire/revoke/logout sessionA and replay its original cookie on HTTP and WS reconnect; attempt RPC and push on previously openA socket. Ensure selected invalidation policy denies A without granting workspace access or leaking events; B remains authorized unless policy intentionally revokes all instance sessions. Rotate selected secrets/password through declared process, restart if required, verify old cookie rejection and authorized recovery. Test restart-persistent revocation if promised.",
+          "Test method": "Run the listed preliminary commands plus the required new actual-runtime harness for this patch; retain exact source/digest/environment/exit-status evidence. No current preparation command closes the functional DoD."
+        },
+        {
+          "id": "WEB-002.1-P2",
+          "title": "Use one canonical environment resolver for server/WebUI entry",
+          "state": "PROPOSED_NOT_IMPLEMENTED",
+          "paths": [
+            "packages/server/src/index.ts via HTTP-SERVER owner",
+            "new ROX-only/CRAFT-fallback deployment fixture"
+          ],
+          "changes": [
+            "Resolve shared token/WebUI/TLS/env options through canonical preferred ROX aliases; preserve existing CRAFT fallback compatibility and explicit secure-cookie/WSS validation.",
+            "Add real child-start fixtures for ROX-only, CRAFT-only and both-alias precedence, including authenticated WebUI and shutdown."
+          ],
+          "acceptance": "ROX-only launch exposes the same correctly authenticated WebUI as CRAFT fallback; conflicting aliases follow documented ROX precedence.",
+          "sharedFileRequests": [
+            "HTTP-SERVER owner: server entry",
+            "CONFIG-IDENTITY owner: alias contract"
+          ],
+          "Requirements": "Apply the bounded source changes under the named shared-file owners; preserve the current authority and runtime protections listed in this artifact.",
+          "DoD": "ROX-only launch exposes the same correctly authenticated WebUI as CRAFT fallback; conflicting aliases follow documented ROX precedence.",
+          "Full functional verification": "Create two synthetic browser sessions, log in, hold live sockets and capture cookie identifiers privately. Expire/revoke/logout sessionA and replay its original cookie on HTTP and WS reconnect; attempt RPC and push on previously openA socket. Ensure selected invalidation policy denies A without granting workspace access or leaking events; B remains authorized unless policy intentionally revokes all instance sessions. Rotate selected secrets/password through declared process, restart if required, verify old cookie rejection and authorized recovery. Test restart-persistent revocation if promised.",
+          "Test method": "Run the listed preliminary commands plus the required new actual-runtime harness for this patch; retain exact source/digest/environment/exit-status evidence. No current preparation command closes the functional DoD."
+        }
+      ],
+      "verificationCommands": [
+        {
+          "id": "WEB-AUTH-BASELINE",
+          "command": "bun test --timeout 30000 packages/server-core/src/webui/__tests__/http-server.test.ts packages/server-core/src/webui/__tests__/oauth-callback.test.ts packages/shared/src/config/__tests__/env.test.ts",
+          "phase": "existing authentication/env regression",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "qualified isolated fixture runtime",
+          "requiredAssertions": [
+            "Retain auth/expiry/secure-cookie/proxy/path containment/OAuth-state behavior; new replay coverage is additionally required."
+          ]
+        },
+        {
+          "id": "WEB-AUTH-CHILD",
+          "command": "bun test --timeout 30000 packages/server/src/__tests__/smoke.test.ts",
+          "phase": "existing real isolated source lifecycle",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "qualified isolated fixture runtime",
+          "requiredAssertions": [
+            "Authenticated HTTP/WS/restart/SIGTERM and entropy checks; extend with aliases/revocation, do not count current checks as full logout closure."
+          ]
+        }
+      ],
+      "fullFunctionalRunbook": {
+        "runner": "New actual HTTP/WS/browser session lifecycle fixture is a required patch output, not an existing passing command.",
+        "steps": [
+          "Create two synthetic browser sessions, log in, hold live sockets and capture cookie identifiers privately.",
+          "Expire/revoke/logout sessionA and replay its original cookie on HTTP and WS reconnect; attempt RPC and push on previously openA socket.",
+          "Ensure selected invalidation policy denies A without granting workspace access or leaking events; B remains authorized unless policy intentionally revokes all instance sessions.",
+          "Rotate selected secrets/password through declared process, restart if required, verify old cookie rejection and authorized recovery. Test restart-persistent revocation if promised."
+        ],
+        "resources": [
+          "RG-IDENTITY",
+          "RG-RUNTIME",
+          "RG-INGRESS for final browser-hosted receipt"
+        ]
+      },
+      "Requirements": "Documented session expiry/revocation and login recovery; no false claim of per-user identity in a shared-password instance.",
+      "DoD": "Authentication lifecycle behaves consistently for HTTP and live WebSocket sessions.",
+      "Full functional verification": "Log in, expire/revoke/rotate credentials, log out, reconnect and attempt replay of old cookies/connections.",
+      "Test method": "Real protocol replay/expiry tests plus browser authentication lifecycle assertions."
+    },
+    "WEB-002.2": {
+      "id": "WEB-002.2",
+      "title": "[WEB-002.2] Bind all workspace operations to the authorized principal/instance",
+      "existingFullDoDClosed": false,
+      "allocation": {
+        "package": "P-WEB-IDENTITY",
+        "owner": "web-identity",
+        "produces": [
+          "web.principal-and-workspace-contract",
+          "web.auth-revocation-receipt"
+        ],
+        "hardAcceptanceDependencies": [
+          {
+            "output": "hosted-identity-scope",
+            "producer": "FEATURE-CONTRACT",
+            "consumingPhase": "auth model implementation scope",
+            "why": "Private single-instance versus multi-user product scope determines principal/tenant policy; no requirement to build SaaS for a declared private deployment.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          },
+          {
+            "output": "authorized-workspace-service-contract",
+            "producer": "SERVICE-AUTH",
+            "consumingPhase": "workspace-service integration if advertised",
+            "why": "If multi-user collaboration is advertised, identity/membership enforcement must be joined to the actual workspace service.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          }
+        ]
+      },
+      "currentImplementation": [
+        "Native server already refuses legacy bearer/cookie access to registered workspaces and applies read/action/subscription/request-response fences for native principals. Separate workspace-authority mode authenticates/revalidates trusted session membership.",
+        "WebUI gets global active default workspace and rejects requested workspace mismatch before its real ACK/runtime bootstrap; it does not establish a multi-user directory or create a user authority.",
+        "Workspace-service already has trusted/local issuer, PostgreSQL membership and authenticatedWorkspace RPC handlers; it is a distinct service and is not wired into the standalone shared-password WebUI as a tenant principal."
+      ],
+      "sourceFindings": [
+        {
+          "kind": "SCOPE_CONTRACT_REQUIRED",
+          "finding": "Choose declared private-instance workspace allowlist or consume trusted user/membership authority if multi-user is advertised. Do not bypass existing registered-workspace refusal to make hosted UI appear functional; initial approved workspace provisioning itself needs an authoritative path.",
+          "references": [
+            {
+              "path": "packages/server-core/src/transport/server.ts",
+              "lines": "338-397",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/transport/server.ts#L338-L397",
+              "reason": "Current permission/event fences"
+            },
+            {
+              "path": "packages/server-core/src/transport/server.ts",
+              "lines": "697-767",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/transport/server.ts#L697-L767",
+              "reason": "Separate authority modes and registered-workspace refusal"
+            },
+            {
+              "path": "packages/server-core/src/webui/http-server.ts",
+              "lines": "378-399",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/webui/http-server.ts#L378-L399",
+              "reason": "Global default config endpoint"
+            },
+            {
+              "path": "apps/workspace-service/src/server.ts",
+              "lines": "69-87",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/workspace-service/src/server.ts#L69-L87",
+              "reason": "Actor-bound shared project operations"
+            },
+            {
+              "path": "apps/workspace-service/src/server.ts",
+              "lines": "115-177",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/workspace-service/src/server.ts#L115-L177",
+              "reason": "Distinct membership-backed workspace server"
+            }
+          ]
+        },
+        {
+          "kind": "EXISTING_BOUNDARY_TO_PRESERVE",
+          "finding": "Browser authenticated bootstrap already enforces default-workspace match, actual acknowledged workspace, cancellation and post-ACK runtime validation; its tests should be extended with real source contracts rather than replaced.",
+          "references": [
+            {
+              "path": "apps/webui/src/adapter/transport-bootstrap.ts",
+              "lines": "17-26",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/webui/src/adapter/transport-bootstrap.ts#L17-L26",
+              "reason": "Configured workspace selection"
+            },
+            {
+              "path": "apps/webui/src/adapter/transport-bootstrap.ts",
+              "lines": "29-96",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/apps/webui/src/adapter/transport-bootstrap.ts#L29-L96",
+              "reason": "Handshake ACK, validation and cancellation"
+            }
+          ]
+        }
+      ],
+      "firstPatches": [
+        {
+          "id": "WEB-002.2-P1",
+          "title": "Add deployed-instance authorization matrix and authority integration seam",
+          "state": "PROPOSED_NOT_IMPLEMENTED",
+          "paths": [
+            "new hosted authorization protocol/browser fixtures",
+            "web-only declared instance scope manifest"
+          ],
+          "changes": [
+            "Enumerate actual registered RPC access classes and state/push/tool surfaces for hosted instance scope; seed allowed, foreign, revoked, deleted and switched workspaces with synthetic data.",
+            "Keep registered-workspace legacy refusal intact. Publish a clear provisioning/access contract for hosted workspace operations; where native authority is required, consume its existing credential/grant API through authorized service owners.",
+            "For advertised multi-user collaboration, join WebUI admission/config selection to workspace-service trusted actor and persisted membership, without accepting client workspace/principal claims as authority. Do not route privileged provisioning through public RPC.",
+            "Test revocation during awaited request, queued push/replay and switch/reconnect; preserve existing CAS/grant/response fences."
+          ],
+          "acceptance": "Every advertised hosted read/write/tool/push operation is either authorized by the chosen current instance/principal scope or explicitly unavailable; foreign/revoked workspace IDs cannot reveal data or execute commands.",
+          "sharedFileRequests": [
+            "CONFIG-IDENTITY/FEATURE-CONTRACT owner: hosted identity scope",
+            "SERVICE-AUTH owner: workspace service trusted actor integration if advertised",
+            "WEB-ADAPTER owner: config endpoint and browser transport seam; no auth-bootstrap rewrite"
+          ],
+          "Requirements": "Apply the bounded source changes under the named shared-file owners; preserve the current authority and runtime protections listed in this artifact.",
+          "DoD": "Every advertised hosted read/write/tool/push operation is either authorized by the chosen current instance/principal scope or explicitly unavailable; foreign/revoked workspace IDs cannot reveal data or execute commands.",
+          "Full functional verification": "Two synthetic principals/instances each receive distinct workspaces; tamper URL/config selection/RPC workspace IDs/tool paths/subscriptions and reconnect IDs. Assert unauthorized reads/writes/commands/pushes denied with no sensitive payload; inspect durable state and fixture execution journal for absence of forbidden side effects. Perform legitimate workspace switch/create via approved authority; verify ACK and only correct scoped events, then revoke membership/grant while operations are in flight. Verify no legacy cookie/public capability bypass grants native/privileged workspace access; preserve awaited response/push fencing after revoke.",
+          "Test method": "Run the listed preliminary commands plus the required new actual-runtime harness for this patch; retain exact source/digest/environment/exit-status evidence. No current preparation command closes the functional DoD."
+        }
+      ],
+      "verificationCommands": [
+        {
+          "id": "WEB-SCOPE-TRANSPORT",
+          "command": "bun test --timeout 30000 packages/server-core/src/transport/__tests__/native-authorization.test.ts packages/server-core/src/transport/__tests__/peer-trust.test.ts packages/server-core/src/transport/__tests__/before-response-authority.test.ts packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts packages/server-core/src/security/workspace-scope.test.ts",
+          "phase": "existing authority regression",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "qualified isolated fixture runtime",
+          "requiredAssertions": [
+            "Native bearer/cookie spoofing, post-await response fence, current workspace ack and push boundaries retained."
+          ]
+        },
+        {
+          "id": "WEB-ADAPTER-BASELINE",
+          "command": "bun test --timeout 30000 apps/webui/src/__tests__/rox2-034-webui.test.ts apps/webui/src/adapter/web-api.test.ts",
+          "phase": "existing real adapter/bootstrap regression",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "qualified isolated fixture runtime",
+          "requiredAssertions": [
+            "Actual web config/ACK/cancellation initialization preserved; new deployed scope matrix still required."
+          ]
+        }
+      ],
+      "fullFunctionalRunbook": {
+        "runner": "New seeded actual WS/browser access matrix. If multi-user advertised, run actual workspace-service with isolated PostgreSQL/trusted issuer; existing transport unit tests are not full-service hosted proof.",
+        "steps": [
+          "Two synthetic principals/instances each receive distinct workspaces; tamper URL/config selection/RPC workspace IDs/tool paths/subscriptions and reconnect IDs.",
+          "Assert unauthorized reads/writes/commands/pushes denied with no sensitive payload; inspect durable state and fixture execution journal for absence of forbidden side effects.",
+          "Perform legitimate workspace switch/create via approved authority; verify ACK and only correct scoped events, then revoke membership/grant while operations are in flight.",
+          "Verify no legacy cookie/public capability bypass grants native/privileged workspace access; preserve awaited response/push fencing after revoke."
+        ],
+        "resources": [
+          "RG-IDENTITY",
+          "RG-RUNTIME",
+          "RG-INGRESS"
+        ]
+      },
+      "Requirements": "Server enforces the chosen isolation boundary for every read/write/tool action and push event.",
+      "DoD": "Unauthorized workspace IDs cannot reveal data or run commands; approved workspace switches receive only their own events.",
+      "Full functional verification": "Tamper with URLs, RPC payloads and workspace subscriptions, then perform legitimate switching and creation.",
+      "Test method": "Seeded principal/workspace access matrix over real WebSocket connections and browser tabs."
+    },
+    "WEB-003.1": {
+      "id": "WEB-003.1",
+      "title": "[WEB-003.1] Configure public WSS URL, trusted forwarding and browser security headers",
+      "existingFullDoDClosed": false,
+      "allocation": {
+        "package": "P-WEB-OPS",
+        "owner": "web-operations",
+        "produces": [
+          "web.running-https-wss-deployment",
+          "web.durable-volume-contract"
+        ],
+        "hardAcceptanceDependencies": [
+          {
+            "output": "web.deployable-image-and-runtime-manifest",
+            "producer": "P-WEB-BUILD",
+            "consumingPhase": "real deploy/redeploy verification",
+            "why": "Deployment consumes a launchable image/bundle, not just renderer static assets.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          },
+          {
+            "output": "web.principal-and-workspace-contract",
+            "producer": "P-WEB-IDENTITY",
+            "consumingPhase": "public authenticated ingress verification",
+            "why": "Trusted forwarding and cookie/WS security must use actual auth assumptions.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          },
+          {
+            "output": "hosted-domain-certificates-storage-access",
+            "producer": "EXTERNAL",
+            "consumingPhase": "real hosted acceptance",
+            "why": "Domain/TLS, runtime access and persistence are concrete resources; local reverse proxy tests can start now.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          }
+        ]
+      },
+      "currentImplementation": [
+        "Explicit public WS URL and Secure-cookie override already exist; embedded WebUI shares HTTP/WS port and supports TLS certificate/key pair. Login rate-limit forwarded IP trust exists when direct socket IP matches trustedProxies.",
+        "Existing WebUI proto/host inference reads forwarded headers independently of proxy-IP trust. Node adapter does not preserve a direct socket-IP resolver for createWebuiHandler; standalone entry supplies neither trustedProxies nor resolveClientIp.",
+        "WS listener currently attaches WebSocketServer directly to HTTP/HTTPS without explicit allowed-Origin verification. Native auth still rejects unproved actions; origin policy is an additional browser ingress boundary."
+      ],
+      "sourceFindings": [
+        {
+          "kind": "FORWARDING_TRUST_GAP",
+          "finding": "shouldUseSecureCookies and fallback WS URL trust spoofable forwarded proto/host. Rate-limit proxy gate is separate and Node embedded handler has no direct-IP wiring, yielding shared direct key. Explicit Secure=true/publicWSS mitigate deployment URL behavior but do not prove trusted header rejection.",
+          "references": [
+            {
+              "path": "packages/server-core/src/webui/http-server.ts",
+              "lines": "74-128",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/webui/http-server.ts#L74-L128",
+              "reason": "Proto/host inference"
+            },
+            {
+              "path": "packages/server-core/src/webui/http-server.ts",
+              "lines": "164-173",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/webui/http-server.ts#L164-L173",
+              "reason": "Socket/proxy options"
+            },
+            {
+              "path": "packages/server-core/src/webui/http-server.ts",
+              "lines": "219-228",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/webui/http-server.ts#L219-L228",
+              "reason": "Existing IP trust gate"
+            },
+            {
+              "path": "packages/server-core/src/webui/node-adapter.ts",
+              "lines": "33-65",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/webui/node-adapter.ts#L33-L65",
+              "reason": "Request conversion omits socket identity"
+            },
+            {
+              "path": "packages/server/src/index.ts",
+              "lines": "141-158",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server/src/index.ts#L141-L158",
+              "reason": "Embedded factory lacks proxy/IP wiring"
+            }
+          ]
+        },
+        {
+          "kind": "ORIGIN_SECURITY_HEADER_GAP",
+          "finding": "Current WS upgrades have no allowed-Origin policy; current WebUI auth/config/SPA responses have no centralized browser security/header/cache policy. Keep existing path containment and cookie attributes.",
+          "references": [
+            {
+              "path": "packages/server-core/src/transport/server.ts",
+              "lines": "521-589",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/transport/server.ts#L521-L589",
+              "reason": "Current listeners/upgrade path"
+            },
+            {
+              "path": "packages/server-core/src/webui/http-server.ts",
+              "lines": "378-435",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/webui/http-server.ts#L378-L435",
+              "reason": "Authenticated config and SPA responses"
+            }
+          ]
+        },
+        {
+          "kind": "STARTUP_BOUNDARY_ORDERING_GAP",
+          "finding": "Network plain-WS refusal runs after bootstrap/listen and printed ready URL; source Docker defaults non-localhost plain WS and therefore needs direct TLS or explicit private-upstream override. Current smoke treats log URL as readiness and can fall back to port-open success.",
+          "references": [
+            {
+              "path": "packages/server/src/index.ts",
+              "lines": "330-359",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server/src/index.ts#L330-L359",
+              "reason": "Ready output before insecure bind refusal"
+            },
+            {
+              "path": "Dockerfile.server",
+              "lines": "105-119",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/Dockerfile.server#L105-L119",
+              "reason": "Network defaults"
+            },
+            {
+              "path": "scripts/docker-smoke-test.sh",
+              "lines": "40-65",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/docker-smoke-test.sh#L40-L65",
+              "reason": "Launch and log-only readiness"
+            },
+            {
+              "path": "scripts/docker-smoke-test.sh",
+              "lines": "92-115",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/docker-smoke-test.sh#L92-L115",
+              "reason": "Socket-open/port-open fallback claimed pass"
+            }
+          ]
+        }
+      ],
+      "firstPatches": [
+        {
+          "id": "WEB-003.1-P1",
+          "title": "Create explicit TLS ingress and origin/trust contract",
+          "state": "PROPOSED_NOT_IMPLEMENTED",
+          "paths": [
+            "new hosted proxy/deployment fixture manifest",
+            "new adversarial HTTP/WS ingress fixture"
+          ],
+          "changes": [
+            "Configure authorized public HTTPS/WSS URL, Secure cookie, proxy Upgrade/Connection headers, streaming timeouts, TLS chain and private upstream network. Avoid exposing9100 publicly when TLS terminates upstream.",
+            "Trust forwarded proto/host/IP only through declared proxy network/socket identity; proxy strips client forwarded headers then supplies its own. Prefer fixed configured public WSS origin, never arbitrary Host reflection.",
+            "Have HTTP-SERVER owner wire direct socket IP through Node adapter and apply one trusted-forwarding policy; retain global login limit and default distrust.",
+            "Have transport owner add explicit hosted allowed browser Origin policy while preserving separately authenticated non-browser native/CLI clients and current authority checks.",
+            "Define tested browser headers including no-store for auth/config and an actual compatible CSP/frame/nosniff/referrer policy; test existing assets/OAuth/browser/media flows, not a guessed CSP that breaks them."
+          ],
+          "acceptance": "Behind actual chosen ingress, browser receives public same-deployment WSS and Secure cookie; forged direct/proxy headers and unauthorized browser Origin cannot obtain config/session transport access.",
+          "sharedFileRequests": [
+            "HTTP-SERVER owner: http-server.ts/node-adapter.ts/server entry shared policy",
+            "Transport owner: server.ts Origin admission hook",
+            "WEB-ADAPTER owner: public config compatibility"
+          ],
+          "Requirements": "Apply the bounded source changes under the named shared-file owners; preserve the current authority and runtime protections listed in this artifact.",
+          "DoD": "Behind actual chosen ingress, browser receives public same-deployment WSS and Secure cookie; forged direct/proxy headers and unauthorized browser Origin cannot obtain config/session transport access.",
+          "Full functional verification": "Through trusted certificate ingress authenticate, read config and confirm publicWSS URL, HttpOnly/Secure/SameSite cookie and security/cache headers. Stream actual session responses across WS idle/reconnect; verify no internal host/port/mixed-content leak. Inject Forwarded/X-Forwarded-Proto/Host/For from direct untrusted and through trusted proxy client input; inspect actual configured origin and rate-limit identity. Attempt unauthorized cross-origin cookie WS upgrades, Origin:null/missing policies and forged native capability claims; authenticated native/CLI routes retain their separately declared access semantics. Probe unauthorized direct upstream reachability and disallowed startup before any listener/readiness publication.",
+          "Test method": "Run the listed preliminary commands plus the required new actual-runtime harness for this patch; retain exact source/digest/environment/exit-status evidence. No current preparation command closes the functional DoD."
+        },
+        {
+          "id": "WEB-003.1-P2",
+          "title": "Enforce bind policy before listener and replace false-positive smoke",
+          "state": "PROPOSED_NOT_IMPLEMENTED",
+          "paths": [
+            "packages/server/src/index.ts via HTTP-SERVER owner",
+            "scripts/docker-smoke-test.sh via build/test owner",
+            "new hosted readiness fixture"
+          ],
+          "changes": [
+            "Validate non-localhost bind/TLS/private-upstream explicit override before bootstrap starts socket or emits ready output. Keep direct TLS enforcement; never infer reverse-proxy trust solely from a request header.",
+            "Use loopback-only disposable published port, verified TLS fixture or explicit isolated private-upstream option in smoke; avoid fixed port9100 collision.",
+            "Require actual /health readiness plus authenticated HTTP and protocol handshake with assertions; remove fallback pass on socket-open/port-open/container-running and preserve exact failure logs."
+          ],
+          "acceptance": "Disallowed network startup never briefly listens or prints successful readiness; smoke fails on auth/handshake/early exit and has no connectivity-only success fallback.",
+          "sharedFileRequests": [
+            "HTTP-SERVER owner: pre-listen validation",
+            "SERVER-BUILD/test owner: smoke script"
+          ],
+          "Requirements": "Apply the bounded source changes under the named shared-file owners; preserve the current authority and runtime protections listed in this artifact.",
+          "DoD": "Disallowed network startup never briefly listens or prints successful readiness; smoke fails on auth/handshake/early exit and has no connectivity-only success fallback.",
+          "Full functional verification": "Through trusted certificate ingress authenticate, read config and confirm publicWSS URL, HttpOnly/Secure/SameSite cookie and security/cache headers. Stream actual session responses across WS idle/reconnect; verify no internal host/port/mixed-content leak. Inject Forwarded/X-Forwarded-Proto/Host/For from direct untrusted and through trusted proxy client input; inspect actual configured origin and rate-limit identity. Attempt unauthorized cross-origin cookie WS upgrades, Origin:null/missing policies and forged native capability claims; authenticated native/CLI routes retain their separately declared access semantics. Probe unauthorized direct upstream reachability and disallowed startup before any listener/readiness publication.",
+          "Test method": "Run the listed preliminary commands plus the required new actual-runtime harness for this patch; retain exact source/digest/environment/exit-status evidence. No current preparation command closes the functional DoD."
+        }
+      ],
+      "verificationCommands": [
+        {
+          "id": "WEB-INGRESS-UNIT",
+          "command": "bun test --timeout 30000 packages/server-core/src/webui/__tests__/http-server.test.ts packages/server-core/src/webui/__tests__/oauth-callback.test.ts packages/server-core/src/transport/__tests__/peer-trust.test.ts",
+          "phase": "existing HTTP/WS boundary regression",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "qualified isolated fixture runtime",
+          "requiredAssertions": [
+            "Existing explicit WSS/Secure/path containment/rate limits/OAuth/native trust retained; new real proxy/Origin tests required."
+          ]
+        },
+        {
+          "id": "WEB-LOCAL-HEALTH",
+          "command": "curl --fail --silent --show-error \"$ROX_WEB_FIXTURE_ORIGIN/health\"",
+          "phase": "actual local/public HTTPS fixture readiness",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "RG-INGRESS disposable configured origin",
+          "requiredAssertions": [
+            "Trusted certificate required; no -k. Health200 is only readiness subset, not full functional closure."
+          ]
+        },
+        {
+          "id": "WEB-FIXED-SMOKE",
+          "command": "bash scripts/docker-smoke-test.sh rox-one-web:first-wave",
+          "phase": "only after smoke script correction",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "RG-CONTAINER + corrected fixture-only smoke + authorized external provider gate if enabled",
+          "requiredAssertions": [
+            "Actual authentication and protocol acceptance; no fallback port-open pass or unintended paid CLI validation."
+          ]
+        }
+      ],
+      "fullFunctionalRunbook": {
+        "runner": "New isolated proxy/direct-upstream adversarial harness and real browser network assertions required.",
+        "steps": [
+          "Through trusted certificate ingress authenticate, read config and confirm publicWSS URL, HttpOnly/Secure/SameSite cookie and security/cache headers.",
+          "Stream actual session responses across WS idle/reconnect; verify no internal host/port/mixed-content leak.",
+          "Inject Forwarded/X-Forwarded-Proto/Host/For from direct untrusted and through trusted proxy client input; inspect actual configured origin and rate-limit identity.",
+          "Attempt unauthorized cross-origin cookie WS upgrades, Origin:null/missing policies and forged native capability claims; authenticated native/CLI routes retain their separately declared access semantics.",
+          "Probe unauthorized direct upstream reachability and disallowed startup before any listener/readiness publication."
+        ],
+        "resources": [
+          "RG-INGRESS",
+          "RG-IDENTITY",
+          "RG-CONTAINER",
+          "RG-REAL-PROVIDERS only actual conversation streaming"
+        ]
+      },
+      "Requirements": "Browser receives a same-deployment WSS URL and secure cookie; ingress/header trust is explicit and externally verifiable.",
+      "DoD": "No mixed-content error, exposed internal port/host or accepted unauthorized cross-origin connection in the chosen deployment.",
+      "Full functional verification": "Authenticate and stream behind TLS ingress; attempt forged forwarded headers and cross-origin HTTP/WS requests.",
+      "Test method": "Browser network assertions and direct HTTP/WS ingress boundary tests with negative origins/headers."
+    },
+    "WEB-003.2": {
+      "id": "WEB-003.2",
+      "title": "[WEB-003.2] Persist data, credentials, profiles, models and job state",
+      "existingFullDoDClosed": false,
+      "allocation": {
+        "package": "P-WEB-OPS",
+        "owner": "web-operations",
+        "produces": [
+          "web.running-https-wss-deployment",
+          "web.durable-volume-contract"
+        ],
+        "hardAcceptanceDependencies": [
+          {
+            "output": "web.deployable-image-and-runtime-manifest",
+            "producer": "P-WEB-BUILD",
+            "consumingPhase": "real deploy/redeploy verification",
+            "why": "Deployment consumes a launchable image/bundle, not just renderer static assets.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          },
+          {
+            "output": "web.principal-and-workspace-contract",
+            "producer": "P-WEB-IDENTITY",
+            "consumingPhase": "public authenticated ingress verification",
+            "why": "Trusted forwarding and cookie/WS security must use actual auth assumptions.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          },
+          {
+            "output": "hosted-domain-certificates-storage-access",
+            "producer": "EXTERNAL",
+            "consumingPhase": "real hosted acceptance",
+            "why": "Domain/TLS, runtime access and persistence are concrete resources; local reverse proxy tests can start now.",
+            "taskIds": [],
+            "blocksSourceStart": false
+          }
+        ]
+      },
+      "currentImplementation": [
+        "Config directory resolution supports explicit ROX_CONFIG_DIR, then CRAFT fallback, clean ~/.rox, legacy ~/.craft-agent. Source Docker precreates legacy tree and therefore tends to keep legacy default; explicit mount/env avoids ambiguity.",
+        "Native authority/journal state defaults inside canonical resolved config/native-data and requires owner/privacy; credentials v3 already preserves master-key custody with keychain or0600 file fallback and recovery/quarantine checks.",
+        "Browser manager default profile is hardcoded HOME/.craft-agent/browser-profile, separate from explicit ROX_CONFIG_DIR unless CRAFT_BROWSER_PROFILE is set. Workspace roots stored in config can also be outside mounted config."
+      ],
+      "sourceFindings": [
+        {
+          "kind": "DEPLOYMENT_STORAGE_OWNERSHIP_GAP",
+          "finding": "Source image recursively chmod777s home; named/mapped volumes and arbitrary --user need declared UID/GID rather than world-write access. Generated compose mounts /root/.craft-agent but generated clean home may resolve /root/.rox; unlike source Docker it does not precreate legacy tree.",
+          "references": [
+            {
+              "path": "Dockerfile.server",
+              "lines": "93-103",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/Dockerfile.server#L93-L103",
+              "reason": "Home permissions/non-root user"
+            },
+            {
+              "path": "scripts/build-server.ts",
+              "lines": "735-785",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/scripts/build-server.ts#L735-L785",
+              "reason": "Generated root runtime and legacy volume"
+            },
+            {
+              "path": "packages/shared/src/config/env.ts",
+              "lines": "52-70",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/config/env.ts#L52-L70",
+              "reason": "Actual config resolution"
+            }
+          ]
+        },
+        {
+          "kind": "STATE_CLOSURE_REQUIREMENT",
+          "finding": "Restore must include canonical native authority/journal DB+staging, credentials ciphertext/master key, workspace/session/job state and explicitly selected browser/tool/model paths. Copying config.json or persistent mount existence does not establish clean-host credential usability or journal-safe recovery.",
+          "references": [
+            {
+              "path": "packages/server-core/src/bootstrap/headless-start.ts",
+              "lines": "445-463",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/bootstrap/headless-start.ts#L445-L463",
+              "reason": "Native state directory default"
+            },
+            {
+              "path": "packages/server-core/src/authority/native-journal.ts",
+              "lines": "152-175",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/authority/native-journal.ts#L152-L175",
+              "reason": "Private canonical directory, staging and SQLite"
+            },
+            {
+              "path": "packages/server-core/src/authority/native-authority.ts",
+              "lines": "105-119",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server-core/src/authority/native-authority.ts#L105-L119",
+              "reason": "Owner/authority database"
+            },
+            {
+              "path": "packages/shared/src/credentials/backends/secure-storage.ts",
+              "lines": "204-245",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/shared/src/credentials/backends/secure-storage.ts#L204-L245",
+              "reason": "Master-key custody fallback and fail-closed persistence"
+            },
+            {
+              "path": "packages/server/src/vps-browser-pane-manager.ts",
+              "lines": "81-89",
+              "url": "https://github.com/rox-one/rox-one/blob/387edc1b1cfec361e2de2196a6963c27a98cbc67/packages/server/src/vps-browser-pane-manager.ts#L81-L89",
+              "reason": "Profile outside config override by default"
+            }
+          ]
+        }
+      ],
+      "firstPatches": [
+        {
+          "id": "WEB-003.2-P1",
+          "title": "Declare private mounted-state closure and restore lifecycle",
+          "state": "PROPOSED_NOT_IMPLEMENTED",
+          "paths": [
+            "new hosted volume/backup manifest",
+            "new disposable volume replacement/clean restore fixture"
+          ],
+          "changes": [
+            "Set explicit ROX_CONFIG_DIR=/data/rox plus CRAFT compatibility where entry still requires it; set CRAFT_NATIVE_STATE_DIR=/data/rox/native-data and CRAFT_BROWSER_PROFILE=/data/browser-profile. Declare every external workspace root, selected tool/model cache and job artifact directory; use fixture readback inventory instead of assuming all paths are under config.",
+            "Run non-root with declared UID/GID; create only intended data directories with owner mode0700/credential0600, remove777 home contract via SERVER-BUILD owner, and keep application/code/certificates read-only where compatible.",
+            "Back up credential master key separately under declared custody/encryption policy alongside ciphertext, migrations and quarantine receipts. Do not regenerate a missing key and label restored connections healthy.",
+            "Use graceful stop/consistent snapshot or database-supported checkpoint/backup for authority/journal/WAL/staging and scheduled jobs; restore receipt must prove authorization/current revision and resumable workflow, not only byte hashes.",
+            "Implement independent container replacement and clean-host restore drills using synthetic data, checking that scheduled jobs/messaging do not replay unsafe side effects or duplicate committed operations."
+          ],
+          "acceptance": "Replacement and clean restore preserve usable workspaces/sessions/current grants/credentials/browser profile/job state with correct owner/modes and no manual permission repair.",
+          "sharedFileRequests": [
+            "SERVER-BUILD owner: source/generated Docker permissions and default volumes",
+            "CONFIG-IDENTITY owner: default config/browser profile path contract",
+            "Service persistence owners: backup consistency and job replay/custody contract"
+          ],
+          "Requirements": "Apply the bounded source changes under the named shared-file owners; preserve the current authority and runtime protections listed in this artifact.",
+          "DoD": "Replacement and clean restore preserve usable workspaces/sessions/current grants/credentials/browser profile/job state with correct owner/modes and no manual permission repair.",
+          "Full functional verification": "Create synthetic workspace/session/project/notes/knowledge/automation and pending job; register required grants, fixture credentials and browser profile content. Save authoritative state/paths/permissions inventory. Stop gracefully and snapshot declared state closure with database consistency; replace container on same volume and read actual content/grants/job status/credential decryptability through authorized APIs. Restore backup plus protected master-key custody on a second clean host with declared UID/GID; verify data hashes and successful authorized real fixture credential use only where dedicated provider gate exists. Resume jobs/workflows once, inspect duplicate side effects/replay/current CAS revisions and native journal recovery; corrupted/incomplete key/state fails closed. Record startup/restore time, RPO/RTO chosen by operations contract and storage capacity without inventing an SLA.",
+          "Test method": "Run the listed preliminary commands plus the required new actual-runtime harness for this patch; retain exact source/digest/environment/exit-status evidence. No current preparation command closes the functional DoD."
+        }
+      ],
+      "verificationCommands": [
+        {
+          "id": "WEB-CUSTODY-REGRESSION",
+          "command": "bun test --timeout 30000 packages/shared/src/credentials/__tests__/secure-storage-master-key.test.ts packages/shared/src/credentials/__tests__/secure-storage-recovery.test.ts packages/shared/src/credentials/__tests__/secure-storage-migration.test.ts",
+          "phase": "existing fixture custody regression",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "qualified isolated fixture runtime",
+          "requiredAssertions": [
+            "Master-key recovery, unreadable credential quarantine and explicit migration behavior retained."
+          ]
+        },
+        {
+          "id": "WEB-NATIVE-DURABILITY",
+          "command": "bun test --timeout 30000 packages/server-core/src/authority/__tests__/native-authority.test.ts packages/server-core/src/authority/__tests__/native-journal.test.ts packages/shared/src/workspaces/__tests__/storage-permission-mode-normalization.test.ts",
+          "phase": "existing authority/journal/private ownership regression",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "qualified isolated fixture runtime",
+          "requiredAssertions": [
+            "Current grant fencing/journal/privacy preserved; not full container or clean-host restore proof."
+          ]
+        },
+        {
+          "id": "WEB-VOLUME-RESTART-BASELINE",
+          "command": "bun test --timeout 30000 packages/server/src/__tests__/smoke.test.ts",
+          "phase": "existing isolated same-profile restart baseline",
+          "executionStatus": "NOT_EXECUTED_IN_THIS_PREPARATION",
+          "gate": "qualified isolated fixture runtime",
+          "requiredAssertions": [
+            "Config restart and child shutdown correct; does not cover backup/master-key/browser/workspace/job replacement closure."
+          ]
+        }
+      ],
+      "fullFunctionalRunbook": {
+        "runner": "New two-container/two-host disposable state inventory/restore harness required; no current complete backup/restore command was identified.",
+        "steps": [
+          "Create synthetic workspace/session/project/notes/knowledge/automation and pending job; register required grants, fixture credentials and browser profile content. Save authoritative state/paths/permissions inventory.",
+          "Stop gracefully and snapshot declared state closure with database consistency; replace container on same volume and read actual content/grants/job status/credential decryptability through authorized APIs.",
+          "Restore backup plus protected master-key custody on a second clean host with declared UID/GID; verify data hashes and successful authorized real fixture credential use only where dedicated provider gate exists.",
+          "Resume jobs/workflows once, inspect duplicate side effects/replay/current CAS revisions and native journal recovery; corrupted/incomplete key/state fails closed.",
+          "Record startup/restore time, RPO/RTO chosen by operations contract and storage capacity without inventing an SLA."
+        ],
+        "resources": [
+          "RG-DURABILITY",
+          "RG-CONTAINER",
+          "RG-IDENTITY",
+          "RG-REAL-PROVIDERS for restored real external credential usability"
+        ]
+      },
+      "Requirements": "Persist all selected product data categories with correct ownership and a working restore procedure.",
+      "DoD": "Container recreation and backup restoration retain usable workspace/session/credential state without permission repair by hand.",
+      "Full functional verification": "Create content/connections/jobs, replace the container, restore on a clean host and resume workflows.",
+      "Test method": "Real volume replacement and restore drill with data hashes, credential usability and job-state readback."
+    }
+  },
+  "validation": {
+    "taskCount": 6,
+    "allSixExactLeafIds": true,
+    "sourceReferences": "Pinned current SHA; line existence validated by artifact-only check, no source tests/builds executed.",
+    "acceptance": "Original four fields copied verbatim from backlog for each leaf. Source preparation does not close any DoD.",
+    "commands": "Existing commands resolve to current scripts/tests. New full runtime/browser/restore harnesses are explicitly marked required patch outputs, not falsely claimed existing checks.",
+    "reviewState": "READY_FOR_COORDINATOR_REVIEW_NO_PRODUCT_WRITES"
+  }
+}

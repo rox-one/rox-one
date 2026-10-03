@@ -6,7 +6,7 @@
 
 **Architecture:** jsonl stays read-only. `projectSessionScenes` remains the model. Renderer maps scenes to XYFlow nodes/edges. Layout/camera/viewport persist in localStorage (`rox.sessionMap.layout.<sessionId>`). Fork, rewrite, fan-out, and connect-as-fork call existing `onCreateSession` / `branchFromMessageId`. Click stays on the map; double-click opens Standard chat.
 
-**Tech Stack:** `@xyflow/react` in `apps/electron` only, `@rox/core/mindmap`, React, bun tests, existing `SessionFanOutSheet`.
+**Tech Stack:** `@xyflow/react` in `apps/electron` only, `@craft-agent/core/mindmap`, React, bun tests, existing `SessionFanOutSheet`.
 
 **Spec:** `docs/superpowers/specs/2026-08-20-session-map-workflow-design.md`
 
@@ -17,7 +17,7 @@
 - Do not touch Outline, `SessionGitOutline`, memo/inspector rails, or `SessionWorkbench`.
 - Do not rewrite, rebase, delete, or reorder parent jsonl.
 - Do not keep two Map renderers. After ChatPage mounts the editor, delete `SessionFlowCanvas.tsx`.
-- Import mindmap symbols from `@rox/core/mindmap`.
+- Import mindmap symbols from `@craft-agent/core/mindmap`.
 - New UI copy via i18n, RU + EN, keys alphabetically in locale JSON.
 - Fan-out caps remain `FANOUT_PARALLEL=8` / `FANOUT_MAX=32`.
 - Do not commit unrelated files (`collection-menu-row`, sidebar, etc.).
@@ -82,7 +82,7 @@ Do not commit.
 **Interfaces:**
 
 ```ts
-import type { SessionScene, SessionSceneGraph, SessionMapCamera, SessionMapPin } from '@rox/core/mindmap'
+import type { SessionScene, SessionSceneGraph, SessionMapCamera, SessionMapPin } from '@craft-agent/core/mindmap'
 
 export type SceneNodeData = { scene: SessionScene }
 

@@ -29,7 +29,7 @@ pl, ru, zh-Hans, zh-Hant; ru is the default UI language,
   `bun test packages/shared/src/i18n`, `bun run lint:i18n:parity`,
   `bun run lint:i18n:sorted`, `bun run lint:i18n:coverage`.
 - **Do not rename in this wave:** `~/.craft-agent`, `CRAFT_*` env vars,
-  `@rox/*` npm scope, `craftagents://` deep link, electron-builder
+  `@craft-agent/*` npm scope, `craftagents://` deep link, electron-builder
   `appId`/`productName`.
 - TDD for behavior changes: failing test first, watch it fail, minimal code,
   watch it pass.
@@ -100,7 +100,7 @@ plan below) / **KEEP_INTERNAL** (not user-visible; leave) /
 
 | # | Identifier | Location | Action |
 |---|-----------|----------|--------|
-| N1 | `@rox/*` workspace scope (`shared`, `core`, `ui`, `server`, `server-core`, `electron`, `cli`, `viewer`, `pi-agent-server`, `session-mcp-server`, `messaging-*`, …) | every `package.json` + every import | **MIGRATE** — see "npm scope strategy" below. Workspace-private today, so no consumer breakage, but it is a repo-wide codemod and out of this branch's safe scope. |
+| N1 | `@craft-agent/*` workspace scope (`shared`, `core`, `ui`, `server`, `server-core`, `electron`, `cli`, `viewer`, `pi-agent-server`, `session-mcp-server`, `messaging-*`, …) | every `package.json` + every import | **MIGRATE** — see "npm scope strategy" below. Workspace-private today, so no consumer breakage, but it is a repo-wide codemod and out of this branch's safe scope. |
 | N2 | Internal symbol names `CraftAgentsSymbol`, `CraftAgentsLogo`, `CraftAgentLogo`, `CraftAppIcon` | electron renderer/viewer | **KEEP_INTERNAL** this wave (component renames are churn; schedule with N1 codemod). |
 
 ### DEEPLINK
@@ -189,14 +189,14 @@ plan below) / **KEEP_INTERNAL** (not user-visible; leave) /
    the parser keeps accepting it and shows "update your links" notice rather
    than failing hard. User scripts never 404 silently.
 
-### M4. npm scope (`@rox/*` → `@rox/*`)
+### M4. npm scope (`@craft-agent/*` → `@rox/*`)
 
 - Packages are `private`/workspace — no external consumers to strand.
 - Strategy: one codemod PR (rename + import rewrite) per package group, or a
   single big-bang with full typecheck/test gate. Keep git history via
   `git mv`. No dual-publish needed because nothing is published to a registry
   today; if publishing starts, publish both scopes for one cycle with
-  `@rox/*` marked deprecated.
+  `@craft-agent/*` marked deprecated.
 
 ### M5. appId / productName / auto-update (`com.lukilabs.craft-agent`)
 

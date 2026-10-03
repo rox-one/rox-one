@@ -1,0 +1,36 @@
+bun test v1.4.2 (43848b5a7)
+
+packages/server/src/__tests__/smoke.test.ts:
+152 |     ]), STARTUP_TIMEOUT, 'Server startup timed out')
+153 |     expect(url).toBe(server.url)
+154 |     return server
+155 |   } catch (error) {
+156 |     await server.stop('cleanup')
+157 |     throw new Error(`${error instanceof Error ? error.message : error}\n${server.logs()}`)
+                    ^
+error: Server exited before readiness (1)
+715757 |   return IS_WIN32 ? error.code === code : error.code === code && error.errno === errno;
+715758 | }
+715759 | function _getTmpDirSync(options2) {
+715760 |   return fs35.realpathSync(options2 && options2.tmpdir || os7.tmpdir());
+715761 | }
+715762 | Object.defineProperty(exports_tmp, "tmpdir", {
+                                          ^
+ReferenceError: exports_tmp is not defined
+      at /Users/t/Projects/rox-one-recheck-candidate-20261003/dist-server/index.js:715762:34
+note: missing sourcemaps for /Users/t/Projects/rox-one-recheck-candidate-20261003/dist-server/index.js
+note: consider bundling with '--sourcemap' to get unminified traces
+
+Bun v1.4.2 (macOS arm64)
+
+      at spawnTestServer (/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/server/src/__tests__/smoke.test.ts:157:15)
+      at async <anonymous> (/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/server/src/__tests__/smoke.test.ts:196:26)
+(fail) headless server lifecycle smoke > serves health/login, enforces HTTP and WebSocket auth, and restarts the same isolated profile [1303.39ms]
+(pass) headless server lifecycle smoke > rejects short token at startup [1452.88ms]
+(pass) headless server lifecycle smoke > rejects a child already exited with 0 as graceful shutdown [51.08ms]
+(pass) headless server lifecycle smoke > rejects a child already exited with 17 as graceful shutdown [24.65ms]
+
+ 3 pass
+ 1 fail
+ 7 expect() calls
+Ran 4 tests across 1 file. [2.96s]

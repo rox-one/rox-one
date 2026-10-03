@@ -1,0 +1,8 @@
+sourceCommit=e0740755da02fa31112216b1a32b6d707c3a2cc1
+bun=/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun
+command=["/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun","--no-env-file","scripts/check-version.ts"]
+startedAt=2026-10-03T03:42:58.257Z
+
+OK: product packages version=0.11.7 (15 files)
+
+exitCode=0

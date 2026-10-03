@@ -45,7 +45,7 @@ Actual research verification: source file/commit/license inspection; live UI thr
 
 Rebuild central derived manifests: `bun tools/lark-suite-reference.mjs --build`. Validate after all owned files exist: `bun tools/lark-suite-reference.mjs --validate`. Raw private capture manifest is local, referenced only by opaque IDs/hash; rebuilding does not upload it.
 
-The baseline already includes `@rox/shared/code-intelligence`, local regex/provenance helpers, optional Syft runner and a simple RepoArchitectureExplainer. This packet extends them with bounded on-demand providers; the current capability inventory placeholders are reconciled explicitly before enable. Source hash validation caught and fixed the erroneous classification of existing `types.ts` as a proposed new path.
+The baseline already includes `@craft-agent/shared/code-intelligence`, local regex/provenance helpers, optional Syft runner and a simple RepoArchitectureExplainer. This packet extends them with bounded on-demand providers; the current capability inventory placeholders are reconciled explicitly before enable. Source hash validation caught and fixed the erroneous classification of existing `types.ts` as a proposed new path.
 
 ## Prior delivered work retained
 

@@ -1,0 +1,350 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+  "sourceVersion": "0.11.7",
+  "historicalMacSourceCommit": "387edc1b1cfec361e2de2196a6963c27a98cbc67",
+  "capturedAt": "2026-10-03T03:46:05.539Z",
+  "checks": {
+    "sourceCommit": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+    "startedAt": "2026-10-03T03:42:19.344Z",
+    "completedAt": "2026-10-03T03:43:16.394Z",
+    "runtime": "Bun1.3.14 macOS arm64",
+    "checks": [
+      {
+        "name": "updater-packaging-tests.log",
+        "command": [
+          "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+          "--no-env-file",
+          "test",
+          "apps/electron/src/main/__tests__/auto-update-suppress.test.ts",
+          "scripts/build/__tests__/electron-packaging-files.test.ts",
+          "scripts/build/__tests__/stage-servers.test.ts"
+        ],
+        "exitCode": 0,
+        "pass": 23,
+        "fail": 0,
+        "assertions": 104
+      },
+      {
+        "name": "update-metadata-fixtures.log",
+        "command": [
+          "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+          "--no-env-file",
+          "test",
+          "/Users/t/Projects/rox-one-recheck-candidate-20261003/docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/update-metadata-fixtures.test.ts"
+        ],
+        "exitCode": 0,
+        "pass": 19,
+        "fail": 0,
+        "assertions": 19
+      },
+      {
+        "name": "product-version-check.log",
+        "command": [
+          "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+          "--no-env-file",
+          "scripts/check-version.ts"
+        ],
+        "exitCode": 0,
+        "pass": 0,
+        "fail": 0,
+        "assertions": 0
+      },
+      {
+        "name": "affected-module-build.log",
+        "command": [
+          "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+          "--no-env-file",
+          "/Users/t/Projects/rox-one-recheck-candidate-20261003/docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/affected-build.ts"
+        ],
+        "exitCode": 0,
+        "pass": 0,
+        "fail": 0,
+        "assertions": 0
+      }
+    ],
+    "allChecksPassed": true,
+    "isolatedProfileRemoved": true,
+    "noExternalCalls": true,
+    "compiledModulesExecuted": false,
+    "fullFunctionalVerified": false
+  },
+  "summary": {
+    "testPasses": 42,
+    "testFailures": 0,
+    "assertions": 123,
+    "affectedModulesBuilt": 4,
+    "productVersionManifests": 15,
+    "fullFunctionalVerified": false
+  },
+  "executedScope": [
+    "Existing pure updater suppression/version policy tests",
+    "Existing app-builder-lib file matcher fixtures and subprocess staging fixtures",
+    "Actual newly added metadata verifier with synthetic local installer files: positive MacARM64/Winx64, altered bytes, incorrect sizes/version/legacy fields, missing file/manifest, traversal/unexpected/duplicate artifacts",
+    "Explicit valid Intel Mac metadata rejection confirms current ARM64-only contract",
+    "Bun1.3.14 parse/bundle/module-resolution for metadata verifier, desktop packager, release publisher and Electron updater; compiled outputs never executed",
+    "Version checker for15 product manifests; unchanged voice source byte comparison"
+  ],
+  "notExecuted": [
+    "No install/frozen-lock mutation",
+    "No full compiler gate",
+    "No actual Electron app packaging or installed GUI/update interaction",
+    "No Windows/native Intel runner",
+    "No signing/notary/staple/Gatekeeper",
+    "No actual GitHub release publishing, workflow dispatch, draft edits, remote artifact reads or paid/provider calls",
+    "No repeated voice suite because final tested source paths are byte-identical; prior45-pass voice evidence remains bounded to its prior runtime/source"
+  ],
+  "voiceQualification": {
+    "previousTestedSource": "d93bd3c3aedac0ce3360c5f460170b2da1a16a94",
+    "actualCurrentSource": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+    "comparisonLog": "voice-byte-comparison.log",
+    "result": "UNCHANGED",
+    "rerun": false,
+    "why": "No affected voice source/RPC/test paths changed; repeat provider/fixture execution would not resolve a concrete new voice risk."
+  },
+  "deltaFindings": [
+    {
+      "finding": "Canonical updater feed corrected",
+      "status": "source-implemented; runtime unresolved",
+      "details": "GitHub provider rox-one/rox-one replaces legacy Craft generic URL. allowPrerelease=true and allowDowngrade=false are configured; suppression/cache/version policy fixtures pass. No actual download/install/update was executed.",
+      "references": [
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/apps/electron/electron-builder.yml#L83-L88",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/apps/electron/src/main/auto-update.ts#L282-L307"
+      ]
+    },
+    {
+      "finding": "Updater metadata integrity gate now present",
+      "status": "source+synthetic functional fixture PASS",
+      "details": "Canonical packager checks generated manifest version/file set/size/SHA512 and embedded GitHub owner/repo/provider. Publisher also checks metadata and records its final asset digest before publication. Local fixtures prove actual verifier success/failure behavior, not real generated artifacts or remote publication.",
+      "references": [
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/scripts/verify-update-metadata.ts#L5-L19",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/scripts/desktop-release.ts#L65-L69",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/scripts/publish-desktop-release.ts#L27-L51"
+      ]
+    },
+    {
+      "finding": "Optional signing/notary environment and update metadata upload added",
+      "status": "source-configured; unexecuted",
+      "details": "GitHub maps platform certificate/password secrets and Apple notary credentials; empty credential values are removed before builder invocation. latest*.yml is included in artifact upload. No credentials/signature/notary result was inspected; missing secrets still permit unsigned preview publication.",
+      "references": [
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/.github/workflows/desktop-release.yml#L49-L68",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/scripts/desktop-release.ts#L8-L12",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/docs/desktop-auto-update.md#L30-L36"
+      ]
+    },
+    {
+      "finding": "New Mac verifier/public publisher remain ARM64-only",
+      "status": "confirmed limitation",
+      "details": "verifyUpdateMetadata expects exactly Rox-arm64.dmg/zip and hardcodes the primary ZIP; publisher likewise downloads only the ARM64 Mac artifact. A valid Intel Rox-x64 DMG/ZIP fixture is rejected. Source API must accept/validate target architecture before native Intel release work is promoted.",
+      "references": [
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/scripts/verify-update-metadata.ts#L9-L18",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/scripts/publish-desktop-release.ts#L21-L29",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/.github/workflows/desktop-release.yml#L34-L37"
+      ]
+    },
+    {
+      "finding": "Signing/publication closure remains open by design",
+      "status": "not a final-quality macOS release gate",
+      "details": "Manifest signed remains Boolean(CSC_LINK); publisher checks manifest identity/hashes but no actual signing/notary evidence. Documentation explicitly distinguishes unsigned preview delivery and future Developer ID signed Mac update installation. Keep public preview publication separate from signed installed target DoD.",
+      "references": [
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/scripts/desktop-release.ts#L68-L69",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/scripts/publish-desktop-release.ts#L26-L32",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/docs/desktop-auto-update.md#L24-L47"
+      ]
+    },
+    {
+      "finding": "Existing installation migration requires manual transition",
+      "status": "documented source contract; no install proof",
+      "details": "0.11.6 and earlier retain old baked feed; documentation instructs one manual0.11.7 install or an explicit feed override. This does not prove automatic legacy migration, unchanged keychain/TCC/data behavior or update installation.",
+      "references": [
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/docs/desktop-auto-update.md#L38-L44"
+      ]
+    }
+  ],
+  "historicalTaskReconciliation": [
+    {
+      "id": "MAC-001.1",
+      "resolvedSinceHistorical387": [
+        "Craft updater provider mismatch is corrected in new builds. Update YAML upload and local metadata integrity gate are implemented. Earlier native-runner Rox bundle/artifact fixes remain."
+      ],
+      "remainingWork": [
+        "Legacy Craft-Agents/Craft Agents.app helpers and bootstrap expectations remain. Validate bundle identity/version/source receipt, stale outputs and quarantine-preserving install/update.0.11.6-or-earlier migration is documented manual rather than proven automatic. Actual installed signed ARM64/x64 update acceptance remains open."
+      ],
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/apps/electron/electron-builder.yml#L83-L88",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/scripts/verify-update-metadata.ts#L5-L19",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/scripts/build/darwin.ts#L71-L84",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/scripts/install-app.sh#L142-L148"
+      ],
+      "sourceAndUnitEvidenceOnly": true,
+      "fullDoDClosed": false,
+      "fullFunctionalVerified": false,
+      "Requirements": "Artifact discovery is target/version-specific and never accepts an unrelated stale file.",
+      "DoD": "Fresh build, direct installer and update mechanism all agree on Rox names and paths.",
+      "Full functional verification": "Install through DMG and the supported bootstrap route and launch the resulting app.",
+      "Test method": "Empty-release-directory build tests plus post-install executable/plist/version checks."
+    },
+    {
+      "id": "MAC-001.2",
+      "resolvedSinceHistorical387": [],
+      "remainingWork": [
+        "Current context-derived hook fix remains; Assets.car source-provenance file is still absent, so catalog remains skipped. Regenerate approved catalog/provenance, test missing-source/copy-error fallback, and verify installed Finder/Dock/app-switcher appearance."
+      ],
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/apps/electron/scripts/afterPack.cjs#L25-L72"
+      ],
+      "sourceAndUnitEvidenceOnly": true,
+      "fullDoDClosed": false,
+      "fullFunctionalVerified": false,
+      "Requirements": "Current approved icon appears in the actual Rox bundle and fallback behavior remains deterministic.",
+      "DoD": "Correct Assets.car is copied when present/current; invalid provenance triggers an intentional verified fallback.",
+      "Full functional verification": "Inspect Finder, Dock and app switcher on macOS 26 and an older supported version.",
+      "Test method": "Hook path/provenance tests and installed-app screenshot/bundle inspection."
+    },
+    {
+      "id": "MAC-002.1",
+      "resolvedSinceHistorical387": [],
+      "remainingWork": [
+        "Target libSQL staging remains implemented but reused staging can retain stale variants. Sharp/transformers/ONNX native dependency closure is still missing from canonical Mac resources. Installed Electron native workload probes and Intel closure remain open."
+      ],
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/scripts/desktop-release.ts#L29-L35",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/apps/electron/electron-builder.yml#L129-L166",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/scripts/electron-build-main.ts#L399-L405"
+      ],
+      "sourceAndUnitEvidenceOnly": true,
+      "fullDoDClosed": false,
+      "fullFunctionalVerified": false,
+      "Requirements": "All enabled native modules have target-complete dependency closure outside inaccessible bundle locations.",
+      "DoD": "WorkGraph, semantic retrieval and image conversion load the correct modules on both architectures.",
+      "Full functional verification": "Create/reopen graph data, retrieve known semantic fixtures and process images in the installed app.",
+      "Test method": "Packaged native import probes and output assertions on Intel and Apple Silicon."
+    },
+    {
+      "id": "MAC-002.2",
+      "resolvedSinceHistorical387": [],
+      "remainingWork": [
+        "No recursive Mach-O/hash/minOS validation or native Intel gate added. New metadata verifier and publisher hardcode MacARM64 and reject valid Intel manifests; introduce explicit arch-aware manifest contract before Intel promotion."
+      ],
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/scripts/verify-update-metadata.ts#L5-L18",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/.github/workflows/desktop-release.yml#L34-L37"
+      ],
+      "sourceAndUnitEvidenceOnly": true,
+      "fullDoDClosed": false,
+      "fullFunctionalVerified": false,
+      "Requirements": "Target architecture, executable mode, version, hash and minimum deployment version are validated.",
+      "DoD": "A wrong-architecture binary fails the release gate before the app is signed/published.",
+      "Full functional verification": "Execute every packaged executable and a representative workload on its native machine.",
+      "Test method": "`file`/`lipo`/`otool` inspection, deliberate wrong-binary fixtures and actual subprocess launches."
+    },
+    {
+      "id": "MAC-003.1",
+      "resolvedSinceHistorical387": [
+        "CI signing/notary secret mappings and unset-value sanitation are configured. Updater documentation describes the Mac signing prerequisite and unsigned-preview limitation."
+      ],
+      "remainingWork": [
+        "Fail-closed signed public-release mode remains absent. signed is inferred from env presence, not certificate verification. Require actual nested signatures/team/notary Accepted/staples/Gatekeeper receipts and clean-machine install/update. No signing/notary credentials or remote workflow run was qualified here."
+      ],
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/.github/workflows/desktop-release.yml#L49-L56",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/scripts/desktop-release.ts#L8-L12",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/scripts/desktop-release.ts#L68-L69",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/docs/desktop-auto-update.md#L22-L36"
+      ],
+      "sourceAndUnitEvidenceOnly": true,
+      "fullDoDClosed": false,
+      "fullFunctionalVerified": false,
+      "Requirements": "Missing credentials, rejected notarization or invalid final signature stop public artifact publication.",
+      "DoD": "Release evidence includes actual certificate identity, notarization result and final stapled artifact validation.",
+      "Full functional verification": "Install the released file on a Mac that did not build it and has never approved an unsigned Rox app.",
+      "Test method": "Negative credential/rejection cases and positive end-to-end signed distribution gate."
+    },
+    {
+      "id": "MAC-003.2",
+      "resolvedSinceHistorical387": [],
+      "remainingWork": [
+        "No minimumSystemVersion or entitlement/disclosure contract changes since387. Earlier read-only pinned ARM64 Bun minos13.0 evidence still implies >=13 provisional minimum; final floor awaits all mandatory/Intel metadata. Full oldest/current nativeOS/TCC/audio/network/JIT/native workloads remain open."
+      ],
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/apps/electron/electron-builder.yml#L102-L128",
+        "https://github.com/rox-one/rox-one/blob/e0740755da02fa31112216b1a32b6d707c3a2cc1/apps/electron/build/entitlements.mac.plist#L5-L16"
+      ],
+      "sourceAndUnitEvidenceOnly": true,
+      "fullDoDClosed": false,
+      "fullFunctionalVerified": false,
+      "Requirements": "Declared minimum OS is compatible with every mandatory binary and encoded in install/update metadata.",
+      "DoD": "Oldest and newest supported systems run the full supported feature set with approved entitlements.",
+      "Full functional verification": "Launch and run JIT/native/audio/network workloads on the oldest supported Mac image and current macOS.",
+      "Test method": "OS-version matrix, plist/Mach-O deployment-target inspection and hardened-runtime feature tests."
+    }
+  ],
+  "newRequiredWork": {
+    "taskFamily": "MAC-002.2 / MAC-001.1 / REL updater-contract extension",
+    "description": "Make metadata verification/publication architecture-aware without weakening exact file-set/hash checks; merge/discover target channel artifacts coherently when both Mac architectures are released.",
+    "Requirements": "Verifier accepts an explicit supported target and validates the exact corresponding DMG/ZIP/primary artifact set; reject unsupported targets, mixed artifacts and missing native resource/signing evidence at their required release phase.",
+    "DoD": "NativeARM64 and Intel channel fixtures both pass and swapped/mixed sets fail; actual generated target metadata and publisher inputs are retained with exact source/target/byte provenance. Full signed installed Mac acceptance remains a separate required gate.",
+    "Full functional verification": "Build each native target with frozen dependencies, verify actual generated update metadata and embedded provider, publish only via the authorized qualified release route and test signed update installation on separate target Macs.",
+    "Test method": "Extend the current isolated verifier fixtures with ARM64/x64 positive pairs and mixed-target/wrong-primary/tampered hash failures, then perform target-native generated artifact and installed updater qualification."
+  },
+  "artifacts": [
+    "executed-checks.json",
+    "updater-packaging-tests.log",
+    "update-metadata-fixtures.log",
+    "product-version-check.log",
+    "affected-module-build.log",
+    "voice-byte-comparison.log",
+    "update-metadata-fixtures.test.ts",
+    "affected-build.ts",
+    "run-platform-checks.ts"
+  ],
+  "fullDoDClosed": false,
+  "fullFunctionalVerified": false,
+  "affectedBuildArtifacts": [
+    {
+      "entry": "scripts/verify-update-metadata.ts",
+      "outputs": [
+        {
+          "size": 1382,
+          "sha256": "1d23b4b38963224e05a7cce6c1cf2080230bb426d0c09b6f3fdfceab0bc512ee",
+          "generatedPath": "/Users/t/Projects/rox-one-recheck-candidate-20261003/docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/compiled/scripts_verify-update-metadata/verify-update-metadata.js",
+          "retained": false
+        }
+      ]
+    },
+    {
+      "entry": "scripts/desktop-release.ts",
+      "outputs": [
+        {
+          "size": 16599,
+          "sha256": "bd356eff8fc13eebaef65eefde46d716e170395d597ca0ea29c997a2abaa028d",
+          "generatedPath": "/Users/t/Projects/rox-one-recheck-candidate-20261003/docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/compiled/scripts_desktop-release/desktop-release.js",
+          "retained": false
+        }
+      ]
+    },
+    {
+      "entry": "scripts/publish-desktop-release.ts",
+      "outputs": [
+        {
+          "size": 5743,
+          "sha256": "fbf0c5975a2644ae5135de91877d25e38167c3efe6166280313e7f4c675ff89d",
+          "generatedPath": "/Users/t/Projects/rox-one-recheck-candidate-20261003/docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/compiled/scripts_publish-desktop-release/publish-desktop-release.js",
+          "retained": false
+        }
+      ]
+    },
+    {
+      "entry": "apps/electron/src/main/auto-update.ts",
+      "outputs": [
+        {
+          "size": 8488565,
+          "sha256": "0825449dce4a6cfcc5fffd3052dd8a2feeec255a6b698828952853806d5610d7",
+          "generatedPath": "/Users/t/Projects/rox-one-recheck-candidate-20261003/docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/compiled/apps_electron_src_main_auto-update/auto-update.js",
+          "retained": false
+        }
+      ]
+    }
+  ],
+  "transientBuildCleanup": "Removed only this gate-owned compiled directory after recording output size/SHA256. Logs and reproducible build harness retained; no product build outputs touched."
+}

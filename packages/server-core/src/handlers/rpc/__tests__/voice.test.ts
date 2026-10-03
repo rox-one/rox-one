@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { registerVoiceHandlers, HANDLED_CHANNELS } from '../voice'
 import type { RpcServer } from '@rox/server-core/transport'
-import { getDefaultVoicePrefs } from '@rox/shared/voice'
+import { EdgeTtsError, getDefaultVoicePrefs } from '@rox/shared/voice'
 
 type Handler = (ctx: unknown, ...args: unknown[]) => unknown | Promise<unknown>
 
@@ -35,7 +35,7 @@ describe('voice RPC', () => {
       systemSpeaker: { stop: () => false, isSpeaking: () => false, async speak() { nativeCalls++; return { played: true } } },
     })
     expect(await handlers.get(RPC_CHANNELS.voice.SPEAK)!({}, { text: 'Привет' })).toMatchObject({
-      engine: 'edge', playback: 'audio', audioBase64: 'bXAz', mimeType: 'audio/mpeg', textSent: true,
+      engine: 'edge', playback: 'audio', audioBase64: 'bXAz', mimeType: 'audio/mpeg', textSent: true, textTransmission: 'sent',
     })
     expect(nativeCalls).toBe(0)
   })
@@ -46,14 +46,16 @@ describe('voice RPC', () => {
       edgeSpeaker: { engine: 'edge', async speak() { throw new Error('offline') } },
       systemSpeaker: { stop: () => false, isSpeaking: () => true, async speak() { return { played: true } } },
     })
-    expect(await handlers.get(RPC_CHANNELS.voice.SPEAK)!({}, { text: 'hello' })).toMatchObject({ playback: 'native', engine: 'system' })
+    const fallback = await handlers.get(RPC_CHANNELS.voice.SPEAK)!({}, { text: 'hello' })
+    expect(fallback).toMatchObject({ playback: 'native', engine: 'system', textTransmission: 'possible' })
+    expect(fallback).not.toHaveProperty('textSent')
     expect(await handlers.get(RPC_CHANNELS.voice.SPEAK)!({}, { status: true })).toMatchObject({ speaking: true })
   })
 
   it('stop cancels pending synthesis without starting fallback speech', async () => {
     let nativeCalls = 0
     const handlers = createHarness({
-      loadPrefs: getDefaultVoicePrefs,
+      loadPrefs: () => ({ ...getDefaultVoicePrefs(), ttsEngine: 'edge' }),
       edgeSpeaker: { engine: 'edge', speak(input) {
         return new Promise((_, reject) => input.signal!.addEventListener('abort', () => reject(new Error('cancelled')), { once: true }))
       } },
@@ -61,9 +63,65 @@ describe('voice RPC', () => {
     })
     const speak = handlers.get(RPC_CHANNELS.voice.SPEAK)!
     const pending = speak({}, { text: 'hello' })
-    expect(await speak({}, { stop: true })).toMatchObject({ stopped: true })
-    expect(await pending).toMatchObject({ playback: 'none' })
+    expect(await speak({}, { stop: true })).toMatchObject({ stopped: true, textTransmission: 'possible' })
+    expect(await pending).toMatchObject({ playback: 'none', textTransmission: 'possible' })
     expect(nativeCalls).toBe(0)
+  })
+
+  it('system default and legacy Edge prefs never invoke online synthesis', async () => {
+    for (const prefs of [getDefaultVoicePrefs(), { ...getDefaultVoicePrefs(), version: 2 as never, ttsEngine: 'edge' as const }]) {
+      let edgeCalls = 0
+      const handlers = createHarness({ loadPrefs: () => prefs,
+        edgeSpeaker: { engine: 'edge', async speak() { edgeCalls++; throw new Error('must not call') } },
+        systemSpeaker: { stop: () => false, isSpeaking: () => false, async speak() { return { played: true, voice: 'Yuri' } } },
+      })
+      expect(await handlers.get(RPC_CHANNELS.voice.SPEAK)!({}, { text: 'Привет' })).toMatchObject({
+        playback: 'native', engine: 'system', voice: 'Yuri', textTransmission: 'not-sent', textSent: false,
+      })
+      expect(edgeCalls).toBe(0)
+    }
+  })
+
+  it('local unavailability does not silently request browser speech', async () => {
+    const handlers = createHarness({ loadPrefs: getDefaultVoicePrefs,
+      systemSpeaker: { stop: () => false, isSpeaking: () => false, async speak() { return { played: false } } },
+    })
+    expect(await handlers.get(RPC_CHANNELS.voice.SPEAK)!({}, { text: 'Привет' })).toMatchObject({
+      playback: 'none', reason: 'russian-system-voice-unavailable', textTransmission: 'not-sent', textSent: false,
+    })
+  })
+
+  it('preflight Edge failure retains known not-sent evidence through native fallback', async () => {
+    const handlers = createHarness({ loadPrefs: () => ({ ...getDefaultVoicePrefs(), ttsEngine: 'edge' }),
+      edgeSpeaker: { engine: 'edge', async speak() { throw new EdgeTtsError('missing CLI', 'not-sent') } },
+      systemSpeaker: { stop: () => false, isSpeaking: () => false, async speak() { return { played: true } } },
+    })
+    expect(await handlers.get(RPC_CHANNELS.voice.SPEAK)!({}, { text: 'hello' })).toMatchObject({
+      playback: 'native', textTransmission: 'not-sent', textSent: false,
+    })
+  })
+
+  it('replacing synthesis ignores late audio from the cancelled request', async () => {
+    let finishFirst!: (result: { engine: 'edge'; uploaded: false; textSent: true; audioBase64: string }) => void
+    let calls = 0
+    let nativeCalls = 0
+    const handlers = createHarness({ loadPrefs: () => ({ ...getDefaultVoicePrefs(), ttsEngine: 'edge' }),
+      edgeSpeaker: { engine: 'edge', speak() {
+        calls++
+        if (calls === 1) return new Promise(resolve => { finishFirst = resolve })
+        return Promise.resolve({ engine: 'edge' as const, uploaded: false as const, textSent: true, audioBase64: 'bmV3', mimeType: 'audio/mpeg' as const })
+      } },
+      systemSpeaker: { stop: () => false, isSpeaking: () => false, async speak() { nativeCalls++; return { played: true } } },
+    })
+    const speak = handlers.get(RPC_CHANNELS.voice.SPEAK)!
+    const first = speak({}, { text: 'first' })
+    const second = await speak({}, { text: 'second' })
+    finishFirst({ engine: 'edge', uploaded: false, textSent: true, audioBase64: 'b2xk' })
+    expect(second).toMatchObject({ playback: 'audio', audioBase64: 'bmV3', textTransmission: 'sent' })
+    expect(await first).toMatchObject({ playback: 'none', textTransmission: 'sent' })
+    expect(await first).not.toHaveProperty('audioBase64')
+    expect(nativeCalls).toBe(0)
+    expect(await speak({}, { stop: true })).toMatchObject({ textTransmission: 'sent', textSent: true })
   })
 
   it('registers the v2 host, history and capabilities channels', () => {

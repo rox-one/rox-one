@@ -2,7 +2,7 @@
  * OmpAgent — craft-agents backend driving the OMP CLI (`omp --mode rpc`).
  *
  * Transport: NDJSON over stdio (one JSON object per line, both directions).
- * Protocol: see docs/omp-rpc-notes.md (verified against omp v17.2.9).
+ * Protocol: see docs/omp-rpc-notes.md (Rox CLI / OMP 18.4.12).
  *
  * Key behaviors:
  * - Lazy spawn on first chat() — binary resolved via OMP_CLI_PATH env →

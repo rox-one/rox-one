@@ -1,0 +1,12 @@
+import {join} from 'node:path';import {mkdtempSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';
+const root='/Users/t/Projects/rox-one-recheck-candidate-20261003';const expected='e0740755da02fa31112216b1a32b6d707c3a2cc1';const dir=join(root,'docs/final-readiness/parallel-work/postmerge',expected,'platforms-final');const bun='/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun';const startedAt=new Date().toISOString();
+async function head(){const p=Bun.spawn(['git','rev-parse','HEAD'],{cwd:root,stdout:'pipe',stderr:'pipe'});const h=(await new Response(p.stdout).text()).trim();if(await p.exited||h!==expected)throw Error('Frozen HEAD mismatch '+h);return h}await head();
+const profile=mkdtempSync(join(tmpdir(),'rox-platform-final-fixture-'));const env={...process.env,ROX_CONFIG_DIR:profile,CRAFT_CONFIG_DIR:profile,CRAFT_VOICE_GATEWAY_FIXTURE:'1'};const results:any[]=[];
+const checks=[
+ ['updater-packaging-tests.log',['--no-env-file','test','apps/electron/src/main/__tests__/auto-update-suppress.test.ts','scripts/build/__tests__/electron-packaging-files.test.ts','scripts/build/__tests__/stage-servers.test.ts']],
+ ['update-metadata-fixtures.log',['--no-env-file','test',join(dir,'update-metadata-fixtures.test.ts')]],
+ ['product-version-check.log',['--no-env-file','scripts/check-version.ts']],
+ ['affected-module-build.log',['--no-env-file',join(dir,'affected-build.ts')]]
+] as const;
+try{for(const[name,args]of checks){const at=new Date().toISOString(),p=Bun.spawn([bun,...args],{cwd:root,env,stdout:'pipe',stderr:'pipe'});const[out,err,code]=await Promise.all([new Response(p.stdout).text(),new Response(p.stderr).text(),p.exited]);await Bun.write(join(dir,name),`sourceCommit=${expected}\nbun=${bun}\ncommand=${JSON.stringify([bun,...args])}\nstartedAt=${at}\n\n${out}${err}\nexitCode=${code}\n`);results.push({name,command:[bun,...args],exitCode:code,pass:Number((out+err).match(/(\d+) pass/)?.[1]??0),fail:Number((out+err).match(/(\d+) fail/)?.[1]??0),assertions:Number((out+err).match(/(\d+) expect\(\) calls/)?.[1]??0)});console.log(JSON.stringify(results.at(-1)))}await head()}finally{rmSync(profile,{recursive:true,force:true})}
+await Bun.write(join(dir,'executed-checks.json'),JSON.stringify({sourceCommit:expected,startedAt,completedAt:new Date().toISOString(),runtime:'Bun1.3.14 macOS arm64',checks:results,allChecksPassed:results.every(x=>x.exitCode===0),isolatedProfileRemoved:true,noExternalCalls:true,compiledModulesExecuted:false,fullFunctionalVerified:false},null,2)+'\n');if(results.some(x=>x.exitCode!==0))process.exit(1);

@@ -418,7 +418,7 @@ Default `ROX_CLIENT_ID` = `craft-agents-desktop` — контракт с website
 
 #### Задача 15. Identity leftovers — не этот релиз (handoff list)
 
-Записать, не исполняя: M4 `@rox/*` → `@rox/*`; A3 iOS bundle ids; P6 `CRAFT_LOGO`; L3 legal files; L5 system prompt / `agents-noreply@craft.do`; U12 dead ReauthScreen + `onboarding.reauth.*` (`handleReauthLogin` unused — **нет live trigger**, исключён из visual gate); U13/U14 KEEP_INTERNAL.
+Записать, не исполняя: M4 `@craft-agent/*` → `@rox/*`; A3 iOS bundle ids; P6 `CRAFT_LOGO`; L3 legal files; L5 system prompt / `agents-noreply@craft.do`; U12 dead ReauthScreen + `onboarding.reauth.*` (`handleReauthLogin` unused — **нет live trigger**, исключён из visual gate); U13/U14 KEEP_INTERNAL.
 
 - [ ] **Шаг 1.** Чеклист blocker каждого пункта (codemod / App Store / design / legal / product / dead-code).
 - [ ] **Шаг 2.** Нет silent rename. Не блокер PR #5.
@@ -567,7 +567,7 @@ Default `ROX_CLIENT_ID` = `craft-agents-desktop` — контракт с website
 
 **Prerequisite:** Живой `electron:dev` с Vite origin. Не ждать auto-restart.
 
-- [ ] **Шаг 1. Hot-reload без Electron restart / без `electron:build`:** `apps/electron/src/renderer/**`; HTML entries `index.html`, `playground.html`, `browser-toolbar.html`, `browser-empty-state.html` (HTML обычно full-page reload, не Electron restart); renderer-consumed `@rox/ui` (`optimizeDeps.exclude`); jotai atoms через `plugin-react-refresh` + `plugin-debug-label`.
+- [ ] **Шаг 1. Hot-reload без Electron restart / без `electron:build`:** `apps/electron/src/renderer/**`; HTML entries `index.html`, `playground.html`, `browser-toolbar.html`, `browser-empty-state.html` (HTML обычно full-page reload, не Electron restart); renderer-consumed `@craft-agent/ui` (`optimizeDeps.exclude`); jotai atoms через `plugin-react-refresh` + `plugin-debug-label`.
 - [ ] **Шаг 2. Требуют quit окна / Ctrl+C и новый `bun run electron:dev` (esbuild уже переписал dist, процесс загрузил `dist/main.cjs` и preloads at start):** `apps/electron/src/main/**` → `dist/main.cjs`; `apps/electron/src/preload/bootstrap.ts` → `dist/bootstrap-preload.cjs` (новый window недостаточен для main; preload нужен новый webContents); `apps/electron/src/preload/browser-toolbar.ts` → `dist/browser-toolbar-preload.cjs`; `apps/electron/src/main/extension-host/worker.ts` → `dist/extension-host-worker.cjs`.
 - [ ] **Шаг 3. One-shot, не watched — полный restart `electron:dev`:** Pi agent server; WhatsApp worker (`scripts/build-wa-worker.ts`); Discord worker (`scripts/build-discord-worker.ts`); copy `apps/electron/resources` → `apps/electron/dist/resources`; bundled uv bootstrap `apps/electron/resources/bin/<platform>-<arch>/`.
 
@@ -614,7 +614,7 @@ Default `ROX_CLIENT_ID` = `craft-agents-desktop` — контракт с website
 
 ## 8. Functional verification (явные bun-пути, не `validate:dev`)
 
-Изоляция **перед любой** OMP/config storage прогонкой: `bunfig.toml` `[test].preload` = `./scripts/test-config-isolation.ts`. Подтверждение: `bun run test:config-isolation` (`CONFIG_DIR` ≠ `join(homedir(), '.craft-agent')` и не child этого пути). Текущий default home — `~/.craft-agent`; assertion **не** покрывает `~/.rox`, пока human-blocked M1 не сменит default — тогда расширить preload на оба real home **до** suite. `@rox/electron` **не имеет** test script — только root `bun test` или явные пути. Никакой in-scope bun test не запускает Electron/BrowserWindow.
+Изоляция **перед любой** OMP/config storage прогонкой: `bunfig.toml` `[test].preload` = `./scripts/test-config-isolation.ts`. Подтверждение: `bun run test:config-isolation` (`CONFIG_DIR` ≠ `join(homedir(), '.craft-agent')` и не child этого пути). Текущий default home — `~/.craft-agent`; assertion **не** покрывает `~/.rox`, пока human-blocked M1 не сменит default — тогда расширить preload на оба real home **до** suite. `@craft-agent/electron` **не имеет** test script — только root `bun test` или явные пути. Никакой in-scope bun test не запускает Electron/BrowserWindow.
 
 ### Задача 23. OMP lifecycle (fake CLI, без live credentials)
 

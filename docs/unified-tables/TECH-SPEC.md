@@ -52,7 +52,7 @@ Existing `PageKind=static/interactive/live` сохраняет своё знач
 
 ## 4. Реализуемый сейчас контракт UTB-01
 
-Путь: `packages/core/src/bases/`; public export `@rox/core/bases`.
+Путь: `packages/core/src/bases/`; public export `@craft-agent/core/bases`.
 
 ```json
 {

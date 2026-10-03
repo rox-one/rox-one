@@ -16,6 +16,7 @@ export {
   type SpeakAdapter,
   type SpeakInput,
   type SpeakResult,
+  type TextTransmission,
   type AudioRetention,
   type LocalArchivePolicy,
   type ModelHealthStatus,
@@ -80,7 +81,7 @@ export {
 
 export { VoiceIdentityClient, memoryIdentityStore, VoiceIdentityError } from './identity.ts'
 export { RoxTranscriptionAdapter, RoxTranscriptionError } from './adapters/rox-transcription.ts'
-export { createEdgeSpeakAdapter } from './adapters/edge-tts.ts'
+export { createEdgeSpeakAdapter, EdgeTtsError } from './adapters/edge-tts.ts'
 export { normalizeVerboseJson, validateAudioLimits, AudioValidationError, type NormalizedTranscript } from './adapters/audio-result.ts'
 export { VoiceHost, type VoiceHostEvent } from './host.ts'
 export { createVoiceJob, applyJobEvent, advanceJob, type VoiceJob } from './job-machine.ts'

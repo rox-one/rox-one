@@ -30,6 +30,7 @@ jobs:
           packages/shared/src/agent/__tests__/omp-history-recovery.test.ts
           packages/shared/src/agent/__tests__/omp-query-llm.test.ts
           packages/shared/src/agent/__tests__/omp-model-selection.test.ts
+          packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts
           packages/shared/src/agent/__tests__/omp-first-run.test.ts
           packages/shared/src/agent/__tests__/omp-startup-lifecycle.test.ts
           packages/shared/src/agent/__tests__/omp-lifecycle-hardening.test.ts

@@ -1,0 +1,414 @@
+{
+  "incomingMain": "3dd1f98b77b1428bb03fea4c324d87bace2ea6c6",
+  "languages": [
+    {
+      "language": "ar",
+      "incomingOnly": [],
+      "conflicts": [
+        {
+          "key": "extraScreens.agents.title",
+          "kept": "مركز الوكلاء",
+          "incoming": "Agent center"
+        },
+        {
+          "key": "extraScreens.decisions.title",
+          "kept": "القرارات",
+          "incoming": "Decisions"
+        },
+        {
+          "key": "extraScreens.focus.title",
+          "kept": "التركيز",
+          "incoming": "Focus"
+        },
+        {
+          "key": "extraScreens.more",
+          "kept": "المزيد",
+          "incoming": "More"
+        },
+        {
+          "key": "extraScreens.radar.title",
+          "kept": "الرادار",
+          "incoming": "Radar"
+        },
+        {
+          "key": "onboarding.environment.ttsEdge",
+          "kept": "Free computer voice",
+          "incoming": "صوت Microsoft Edge مجاني"
+        },
+        {
+          "key": "settings.input.ttsEdgeDesc",
+          "kept": "Free playback fallback. No user audio is uploaded.",
+          "incoming": "تحويل النص إلى كلام عبر Microsoft Edge مجانًا. يتطلب الإنترنت؛ يُرسل النص إلى Microsoft ولا تُرفع تسجيلات الميكروفون."
+        },
+        {
+          "key": "sidebar.pages",
+          "kept": "الصفحات",
+          "incoming": "Pages"
+        }
+      ],
+      "policy": "Add incoming-only keys; preserve current stronger translated values and onboarding choice semantics."
+    },
+    {
+      "language": "de",
+      "incomingOnly": [],
+      "conflicts": [
+        {
+          "key": "onboarding.environment.ttsEdge",
+          "kept": "Free computer voice",
+          "incoming": "Kostenlose Microsoft-Edge-Stimme"
+        },
+        {
+          "key": "settings.input.ttsEdgeDesc",
+          "kept": "Kostenlose Wiedergabe. Es wird kein Nutzer-Audio hochgeladen.",
+          "incoming": "Kostenlose Microsoft-Edge-Sprachausgabe. Internet erforderlich; der Text wird an Microsoft gesendet, Mikrofonaufnahmen werden nicht hochgeladen."
+        }
+      ],
+      "policy": "Add incoming-only keys; preserve current stronger translated values and onboarding choice semantics."
+    },
+    {
+      "language": "en",
+      "incomingOnly": [],
+      "conflicts": [
+        {
+          "key": "onboarding.environment.ttsEdge",
+          "kept": "Free computer voice",
+          "incoming": "Free Microsoft Edge voice"
+        },
+        {
+          "key": "settings.input.ttsEdgeDesc",
+          "kept": "Free playback fallback. No user audio is uploaded.",
+          "incoming": "Free Microsoft Edge speech synthesis. Requires internet; text is sent to Microsoft, microphone recordings are not uploaded."
+        }
+      ],
+      "policy": "Add incoming-only keys; preserve current stronger translated values and onboarding choice semantics."
+    },
+    {
+      "language": "es",
+      "incomingOnly": [],
+      "conflicts": [
+        {
+          "key": "extraScreens.agents.title",
+          "kept": "Centro de agentes",
+          "incoming": "Agent center"
+        },
+        {
+          "key": "extraScreens.decisions.title",
+          "kept": "Decisiones",
+          "incoming": "Decisions"
+        },
+        {
+          "key": "extraScreens.focus.title",
+          "kept": "Enfoque",
+          "incoming": "Focus"
+        },
+        {
+          "key": "extraScreens.more",
+          "kept": "Más",
+          "incoming": "More"
+        },
+        {
+          "key": "onboarding.environment.ttsEdge",
+          "kept": "Free computer voice",
+          "incoming": "Voz gratuita de Microsoft Edge"
+        },
+        {
+          "key": "settings.input.ttsEdgeDesc",
+          "kept": "Free playback fallback. No user audio is uploaded.",
+          "incoming": "Síntesis de voz gratuita de Microsoft Edge. Requiere internet; el texto se envía a Microsoft, sin subir grabaciones del micrófono."
+        },
+        {
+          "key": "sidebar.connections",
+          "kept": "Conexiones",
+          "incoming": "Connections"
+        },
+        {
+          "key": "sidebar.skills",
+          "kept": "Habilidades",
+          "incoming": "Skills"
+        }
+      ],
+      "policy": "Add incoming-only keys; preserve current stronger translated values and onboarding choice semantics."
+    },
+    {
+      "language": "fr",
+      "incomingOnly": [],
+      "conflicts": [
+        {
+          "key": "onboarding.environment.ttsEdge",
+          "kept": "Free computer voice",
+          "incoming": "Voix gratuite Microsoft Edge"
+        },
+        {
+          "key": "settings.input.ttsEdgeDesc",
+          "kept": "Free playback fallback. No user audio is uploaded.",
+          "incoming": "Synthèse vocale gratuite Microsoft Edge. Internet requis ; le texte est envoyé à Microsoft, sans téléverser les enregistrements du microphone."
+        }
+      ],
+      "policy": "Add incoming-only keys; preserve current stronger translated values and onboarding choice semantics."
+    },
+    {
+      "language": "hu",
+      "incomingOnly": [],
+      "conflicts": [
+        {
+          "key": "extraScreens.agents.title",
+          "kept": "Ügynökközpont",
+          "incoming": "Agent center"
+        },
+        {
+          "key": "extraScreens.decisions.title",
+          "kept": "Döntések",
+          "incoming": "Decisions"
+        },
+        {
+          "key": "extraScreens.focus.title",
+          "kept": "Fókusz",
+          "incoming": "Focus"
+        },
+        {
+          "key": "extraScreens.more",
+          "kept": "Továbbiak",
+          "incoming": "More"
+        },
+        {
+          "key": "onboarding.environment.ttsEdge",
+          "kept": "Free computer voice",
+          "incoming": "Ingyenes Microsoft Edge hang"
+        },
+        {
+          "key": "settings.input.ttsEdgeDesc",
+          "kept": "Free playback fallback. No user audio is uploaded.",
+          "incoming": "Ingyenes Microsoft Edge beszédszintézis. Internet szükséges; a szöveg a Microsofthoz kerül, a mikrofonfelvételek nem lesznek feltöltve."
+        },
+        {
+          "key": "sidebar.connections",
+          "kept": "Kapcsolatok",
+          "incoming": "Connections"
+        }
+      ],
+      "policy": "Add incoming-only keys; preserve current stronger translated values and onboarding choice semantics."
+    },
+    {
+      "language": "ja",
+      "incomingOnly": [],
+      "conflicts": [
+        {
+          "key": "extraScreens.agents.title",
+          "kept": "エージェントセンター",
+          "incoming": "Agent center"
+        },
+        {
+          "key": "extraScreens.decisions.title",
+          "kept": "決定事項",
+          "incoming": "Decisions"
+        },
+        {
+          "key": "extraScreens.focus.title",
+          "kept": "集中",
+          "incoming": "Focus"
+        },
+        {
+          "key": "extraScreens.more",
+          "kept": "その他",
+          "incoming": "More"
+        },
+        {
+          "key": "extraScreens.radar.title",
+          "kept": "レーダー",
+          "incoming": "Radar"
+        },
+        {
+          "key": "onboarding.environment.ttsEdge",
+          "kept": "Free computer voice",
+          "incoming": "無料のMicrosoft Edge音声"
+        },
+        {
+          "key": "settings.input.ttsEdgeDesc",
+          "kept": "Free playback fallback. No user audio is uploaded.",
+          "incoming": "無料のMicrosoft Edge音声合成。インターネット接続が必要です。テキストはMicrosoftに送信されますが、マイクの録音はアップロードされません。"
+        },
+        {
+          "key": "sidebar.connections",
+          "kept": "接続",
+          "incoming": "Connections"
+        }
+      ],
+      "policy": "Add incoming-only keys; preserve current stronger translated values and onboarding choice semantics."
+    },
+    {
+      "language": "ko",
+      "incomingOnly": [],
+      "conflicts": [
+        {
+          "key": "extraScreens.agents.title",
+          "kept": "에이전트 센터",
+          "incoming": "Agent center"
+        },
+        {
+          "key": "extraScreens.decisions.title",
+          "kept": "결정",
+          "incoming": "Decisions"
+        },
+        {
+          "key": "extraScreens.focus.title",
+          "kept": "집중",
+          "incoming": "Focus"
+        },
+        {
+          "key": "extraScreens.more",
+          "kept": "더 보기",
+          "incoming": "More"
+        },
+        {
+          "key": "extraScreens.radar.title",
+          "kept": "레이더",
+          "incoming": "Radar"
+        },
+        {
+          "key": "onboarding.environment.ttsEdge",
+          "kept": "Free computer voice",
+          "incoming": "무료 Microsoft Edge 음성"
+        },
+        {
+          "key": "settings.input.ttsEdgeDesc",
+          "kept": "Free playback fallback. No user audio is uploaded.",
+          "incoming": "무료 Microsoft Edge 음성 합성. 인터넷 연결이 필요하며 텍스트는 Microsoft로 전송되지만 마이크 녹음은 업로드되지 않습니다."
+        },
+        {
+          "key": "sidebar.pages",
+          "kept": "페이지",
+          "incoming": "Pages"
+        }
+      ],
+      "policy": "Add incoming-only keys; preserve current stronger translated values and onboarding choice semantics."
+    },
+    {
+      "language": "pl",
+      "incomingOnly": [],
+      "conflicts": [
+        {
+          "key": "onboarding.environment.ttsEdge",
+          "kept": "Free computer voice",
+          "incoming": "Bezpłatny głos Microsoft Edge"
+        },
+        {
+          "key": "settings.input.ttsEdgeDesc",
+          "kept": "Free playback fallback. No user audio is uploaded.",
+          "incoming": "Bezpłatna synteza mowy Microsoft Edge. Wymaga internetu; tekst jest wysyłany do Microsoft, nagrania mikrofonu nie są przesyłane."
+        }
+      ],
+      "policy": "Add incoming-only keys; preserve current stronger translated values and onboarding choice semantics."
+    },
+    {
+      "language": "ru",
+      "incomingOnly": [],
+      "conflicts": [
+        {
+          "key": "onboarding.environment.ttsEdge",
+          "kept": "Бесплатный компьютерный голос",
+          "incoming": "Бесплатный голос Microsoft Edge"
+        },
+        {
+          "key": "settings.input.ttsEdgeDesc",
+          "kept": "Бесплатное озвучивание. Аудио пользователя не отправляется.",
+          "incoming": "Бесплатный синтез речи Microsoft Edge. Нужен интернет; текст отправляется в Microsoft, записи микрофона не загружаются."
+        }
+      ],
+      "policy": "Add incoming-only keys; preserve current stronger translated values and onboarding choice semantics."
+    },
+    {
+      "language": "zh-Hans",
+      "incomingOnly": [],
+      "conflicts": [
+        {
+          "key": "extraScreens.agents.title",
+          "kept": "智能体中心",
+          "incoming": "Agent center"
+        },
+        {
+          "key": "extraScreens.decisions.title",
+          "kept": "决策",
+          "incoming": "Decisions"
+        },
+        {
+          "key": "extraScreens.focus.title",
+          "kept": "专注",
+          "incoming": "Focus"
+        },
+        {
+          "key": "extraScreens.more",
+          "kept": "更多",
+          "incoming": "More"
+        },
+        {
+          "key": "extraScreens.radar.title",
+          "kept": "雷达",
+          "incoming": "Radar"
+        },
+        {
+          "key": "onboarding.environment.ttsEdge",
+          "kept": "Free computer voice",
+          "incoming": "免费 Microsoft Edge 语音"
+        },
+        {
+          "key": "settings.input.ttsEdgeDesc",
+          "kept": "Free playback fallback. No user audio is uploaded.",
+          "incoming": "免费 Microsoft Edge 语音合成。需要联网；文本会发送给 Microsoft，麦克风录音不会上传。"
+        },
+        {
+          "key": "sidebar.connections",
+          "kept": "连接",
+          "incoming": "Connections"
+        }
+      ],
+      "policy": "Add incoming-only keys; preserve current stronger translated values and onboarding choice semantics."
+    },
+    {
+      "language": "zh-Hant",
+      "incomingOnly": [],
+      "conflicts": [
+        {
+          "key": "extraScreens.agents.title",
+          "kept": "智能體中心",
+          "incoming": "Agent center"
+        },
+        {
+          "key": "extraScreens.decisions.title",
+          "kept": "決策",
+          "incoming": "Decisions"
+        },
+        {
+          "key": "extraScreens.focus.title",
+          "kept": "專注",
+          "incoming": "Focus"
+        },
+        {
+          "key": "extraScreens.more",
+          "kept": "更多",
+          "incoming": "More"
+        },
+        {
+          "key": "extraScreens.radar.title",
+          "kept": "雷達",
+          "incoming": "Radar"
+        },
+        {
+          "key": "onboarding.environment.ttsEdge",
+          "kept": "Free computer voice",
+          "incoming": "免費 Microsoft Edge 語音"
+        },
+        {
+          "key": "settings.input.ttsEdgeDesc",
+          "kept": "Free playback fallback. No user audio is uploaded.",
+          "incoming": "免費 Microsoft Edge 語音合成。需要連網；文字會傳送給 Microsoft，麥克風錄音不會上傳。"
+        },
+        {
+          "key": "sidebar.connections",
+          "kept": "連線",
+          "incoming": "Connections"
+        }
+      ],
+      "policy": "Add incoming-only keys; preserve current stronger translated values and onboarding choice semantics."
+    }
+  ]
+}

@@ -50,11 +50,11 @@
 - [ ] **Step 1: Write failing test for new host kinds and flag default false**
 ```ts
 it('handoff flag default false', async () => {
-  const { WORKBENCH_FLAG, isWorkbenchFlagEnabled } = await import('@rox/core/platform')
+  const { WORKBENCH_FLAG, isWorkbenchFlagEnabled } = await import('@craft-agent/core/platform')
   expect(isWorkbenchFlagEnabled('execution.handoff.v1' as any, new Set())).toBe(false)
 })
 it('ExecutionHost ssh/relay', async () => {
-  const { ExecutionHost } = await import('@rox/shared/execution/terminal-protocol')
+  const { ExecutionHost } = await import('@craft-agent/shared/execution/terminal-protocol')
   const h: ExecutionHost = { kind: 'ssh', host: 'm4697', user: 'root' }
   expect(h.kind).toBe('ssh')
 })

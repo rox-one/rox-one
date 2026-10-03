@@ -1,0 +1,6 @@
+$ cd packages/pi-agent-server && bun run build
+$ bun build src/index.ts --outdir=dist --target=bun --format=esm --external koffi
+Bundled 3313 modules in 38326ms
+
+  index.js  33.0 MB  (entry point)
+

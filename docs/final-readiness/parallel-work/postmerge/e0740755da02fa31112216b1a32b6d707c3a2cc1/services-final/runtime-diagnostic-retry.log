@@ -1,0 +1,54 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server/src/__tests__/smoke.test.ts:
+57 |     }
+58 |     proc.kill('SIGTERM')
+59 |     try {
+60 |       const code = await within(proc.exited, 10_000, 'Server did not stop on SIGTERM')
+61 |       await drains
+62 |       if (code !== 0) throw new Error(`Server exited ${code} after SIGTERM\n${logs()}`)
+                                     ^
+error: Server exited 143 after SIGTERM
+
+      at <anonymous> (/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/server/src/__tests__/smoke.test.ts:62:33)
+      at async spawnTestServer (/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/server/src/__tests__/smoke.test.ts:156:18)
+57 |     }
+58 |     proc.kill('SIGTERM')
+59 |     try {
+60 |       const code = await within(proc.exited, 10_000, 'Server did not stop on SIGTERM')
+61 |       await drains
+62 |       if (code !== 0) throw new Error(`Server exited ${code} after SIGTERM\n${logs()}`)
+                                     ^
+error: Server exited 143 after SIGTERM
+
+      at <anonymous> (/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/server/src/__tests__/smoke.test.ts:62:33)
+      at async <anonymous> (/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/server/src/__tests__/smoke.test.ts:184:35)
+(fail) headless server lifecycle smoke > serves health/login, enforces HTTP and WebSocket auth, and restarts the same isolated profile [46545.37ms]
+34 | async function within<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+35 |   let timer: ReturnType<typeof setTimeout> | undefined
+36 |   try {
+37 |     return await Promise.race([
+38 |       promise,
+39 |       new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error(message)), ms) }),
+                                                                                   ^
+error: Short-token server did not exit
+      at <anonymous> (/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/server/src/__tests__/smoke.test.ts:39:79)
+57 |     }
+58 |     proc.kill('SIGTERM')
+59 |     try {
+60 |       const code = await within(proc.exited, 10_000, 'Server did not stop on SIGTERM')
+61 |       await drains
+62 |       if (code !== 0) throw new Error(`Server exited ${code} after SIGTERM\n${logs()}`)
+                                     ^
+error: Server exited 143 after SIGTERM
+
+      at <anonymous> (/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/server/src/__tests__/smoke.test.ts:62:33)
+      at async <anonymous> (/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/server/src/__tests__/smoke.test.ts:184:35)
+(fail) headless server lifecycle smoke > rejects short token at startup [45729.22ms]
+(pass) headless server lifecycle smoke > rejects a child already exited with 0 as graceful shutdown [5204.63ms]
+(pass) headless server lifecycle smoke > rejects a child already exited with 17 as graceful shutdown [3764.86ms]
+
+ 2 pass
+ 2 fail
+ 6 expect() calls
+Ran 4 tests across 1 file. [119.45s]

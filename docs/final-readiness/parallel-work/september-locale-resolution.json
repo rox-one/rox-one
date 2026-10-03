@@ -1,0 +1,65 @@
+{
+  "strategy": "retain union of active cloud+September keys; choose later September native-language Roadmap translations over English fallback; shared existing non-Roadmap values identical",
+  "locales": [
+    {
+      "locale": "ar",
+      "retainedKeys": 7459,
+      "localizedRoadmapKeys": 151
+    },
+    {
+      "locale": "de",
+      "retainedKeys": 7455,
+      "localizedRoadmapKeys": 148
+    },
+    {
+      "locale": "en",
+      "retainedKeys": 7455,
+      "localizedRoadmapKeys": 0
+    },
+    {
+      "locale": "es",
+      "retainedKeys": 7455,
+      "localizedRoadmapKeys": 151
+    },
+    {
+      "locale": "fr",
+      "retainedKeys": 7455,
+      "localizedRoadmapKeys": 141
+    },
+    {
+      "locale": "hu",
+      "retainedKeys": 7455,
+      "localizedRoadmapKeys": 151
+    },
+    {
+      "locale": "ja",
+      "retainedKeys": 7455,
+      "localizedRoadmapKeys": 151
+    },
+    {
+      "locale": "ko",
+      "retainedKeys": 7455,
+      "localizedRoadmapKeys": 151
+    },
+    {
+      "locale": "pl",
+      "retainedKeys": 7461,
+      "localizedRoadmapKeys": 148
+    },
+    {
+      "locale": "ru",
+      "retainedKeys": 7489,
+      "localizedRoadmapKeys": 0
+    },
+    {
+      "locale": "zh-Hans",
+      "retainedKeys": 7455,
+      "localizedRoadmapKeys": 151
+    },
+    {
+      "locale": "zh-Hant",
+      "retainedKeys": 7455,
+      "localizedRoadmapKeys": 151
+    }
+  ]
+}

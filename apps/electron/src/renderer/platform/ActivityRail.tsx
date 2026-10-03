@@ -9,9 +9,8 @@
  * Knowledge navigates since W2 (flag-off state lives in the surface).
  *
  * Two states, persisted via `activityRailCollapsedAtom`
- * (KEYS.activityRailCollapsedV2):
- * - expanded (default): icon + text label on every row, «Ещё» group header
- *   visible — flat 28px rows on the 4px grid, no borders.
+ * (KEYS.activityRailCollapsed):
+ * - expanded (default): icon + text label on every row, accessible «Ещё» group — flat 28px rows on the 4px grid, no borders.
  * - collapsed: icons only, each row keeps a right-side tooltip.
  * The toggle («/») sits at the bottom in both states.
  * Mounted by `WorkspaceSurfaceHost` (platform/index.tsx) — rendered only when

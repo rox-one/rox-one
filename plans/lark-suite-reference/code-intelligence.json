@@ -31,7 +31,7 @@
   },
   "decision": {
     "defaultSearch": "CI-A-LOCAL",
-    "existingSubsystem": "@rox/shared/code-intelligence; extend existing contracts/exports, no parallel Code Intelligence system",
+    "existingSubsystem": "@craft-agent/shared/code-intelligence; extend existing contracts/exports, no parallel Code Intelligence system",
     "selectionRevision": "CI-DEC-EXTEND-EXISTING-01",
     "repoWikiReference": "CI-P-OW",
     "diagramReference": "CI-P-GD",
@@ -42,7 +42,7 @@
   "existingImplementationAudit": {
     "classification": "SOURCE_VERIFIED_ROX",
     "baseline": "e953786ba7e30fb5da5dca7e88e20e324d5aebab",
-    "canonicalModule": "@rox/shared/code-intelligence",
+    "canonicalModule": "@craft-agent/shared/code-intelligence",
     "implemented": {
       "adapters": [
         "local-fs-symbols",
@@ -914,7 +914,7 @@
       "baseline": "e953786ba7e30fb5da5dca7e88e20e324d5aebab",
       "sha256": "1bd18cc4c23d1c87c7f01ee93e22d5b20686aa2c095ce3e05fd26e42de66ff26",
       "current": "Existing public module exports local adapter, provenance helpers, Syft wrapper and canonical types.",
-      "proposed": "Preserve @rox/shared/code-intelligence entry; add exports through the same subsystem.",
+      "proposed": "Preserve @craft-agent/shared/code-intelligence entry; add exports through the same subsystem.",
       "status": "PROPOSED_CHANGE_ONLY"
     },
     {

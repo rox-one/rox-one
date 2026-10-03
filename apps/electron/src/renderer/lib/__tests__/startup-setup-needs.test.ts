@@ -5,94 +5,87 @@ import type { SetupNeeds } from '../../../shared/types'
 const configured = { isFullyConfigured: true, needsBillingConfig: false, needsCredentials: false } as SetupNeeds
 const notConfigured = { isFullyConfigured: false, needsBillingConfig: true, needsCredentials: true } as SetupNeeds
 const noSleep = async () => {}
+const identityProbe = { ok: true, value: { authority: 'native', name: 'Verified name' }, attempts: 1 } as const
+const workspaceProbe = { ok: true, value: 'ws', attempts: 1 } as const
 
-describe('startup setup-needs gate', () => {
-  it('retries transient RPC failures instead of falling into onboarding', async () => {
+describe('bounded startup readback', () => {
+  it('retries transient RPC failures within one probe budget', async () => {
     let calls = 0
     const probe = await probeSetupNeeds(async () => {
-      calls++
-      if (calls < 3) throw new Error('Not connected (channel: onboarding:getAuthState)')
+      if (++calls < 3) throw new Error('Not connected')
       return configured
     }, { sleep: noSleep })
-    expect(probe.ok).toBe(true)
-    expect(probe.attempts).toBe(3)
-    if (probe.ok) expect(probe.value).toBe(configured)
-    expect(decideStartupAppState({ probe, usernameConfirmed: true, workspaceId: 'ws' })).toBe('ready')
+    expect(probe).toMatchObject({ ok: true, value: configured, attempts: 3 })
   })
 
-  it('a set-up user whose RPC keeps failing goes to the app, not onboarding', async () => {
-    const probe = await probeSetupNeeds(async () => { throw new Error('Request timeout') }, { sleep: noSleep, delaysMs: [1, 1] })
-    expect(probe.ok).toBe(false)
-    expect(probe.attempts).toBe(3)
-    expect(decideStartupAppState({ probe, usernameConfirmed: true, workspaceId: 'ws' })).toBe('ready')
-    expect(decideStartupAppState({ probe, usernameConfirmed: true, workspaceId: null })).toBe('workspace-picker')
-  })
-
-  it('a new user still gets onboarding on failure', async () => {
-    const probe = await probeSetupNeeds(async () => { throw new Error('x') }, { sleep: noSleep, delaysMs: [] })
-    expect(decideStartupAppState({ probe, usernameConfirmed: false, workspaceId: 'ws' })).toBe('onboarding')
-  })
-
-  it('a missing provider/account keeps a name-confirmed user in the app', async () => {
-    const probe = await probeSetupNeeds(async () => notConfigured, { sleep: noSleep })
-    expect(decideStartupAppState({ probe, usernameConfirmed: true, workspaceId: 'ws' })).toBe('ready')
-  })
-  it('a hung request cannot stretch startup past the overall deadline', async () => {
+  it('a hung request cannot extend a probe past its deadline', async () => {
     const started = Date.now()
-    const probe = await probeWithRetry(() => new Promise<never>(() => {}), { deadlineMs: 50, delaysMs: [10, 10, 10] })
-    expect(probe.ok).toBe(false)
-    expect(probe.attempts).toBe(1)
+    const probe = await probeWithRetry(() => new Promise<never>(() => {}), { deadlineMs: 50, delaysMs: [10, 10] })
+    expect(probe).toMatchObject({ ok: false, attempts: 1 })
     expect(Date.now() - started).toBeLessThan(1000)
   })
 
-  it('stops retrying once the deadline is spent', async () => {
-    let t = 0
+  it('stops retrying when its overall budget is spent', async () => {
+    let now = 0
     let calls = 0
-    const probe = await probeWithRetry(async () => { calls++; t += 400; throw new Error('boom') }, {
-      deadlineMs: 1000, delaysMs: [300, 300, 300, 300], sleep: async (ms) => { t += ms }, now: () => t,
+    const probe = await probeWithRetry(async () => { calls++; now += 400; throw new Error('offline') }, {
+      deadlineMs: 1000, delaysMs: [300, 300, 300], sleep: async ms => { now += ms }, now: () => now,
     })
     expect(probe.ok).toBe(false)
     expect(calls).toBeLessThanOrEqual(2)
   })
-  it('denied startup transport retains name-only routing without claiming provider readiness', async () => {
-    const probe = await probeSetupNeeds(async () => { throw new Error('AUTH_FAILED') }, { delaysMs: [] })
+
+  it.each(['AUTH_FAILED', 'FORBIDDEN', 'UNAUTHENTICATED', 'UNAUTHORIZED'])('terminal %s denial is never retried', async code => {
+    let calls = 0
+    const probe = await probeWithRetry(async () => { calls++; throw Object.assign(new Error('denied'), { code }) }, { sleep: noSleep })
     expect(probe.ok).toBe(false)
-    expect(decideStartupAppState({ probe, usernameConfirmed: true, workspaceId: 'ws' })).toBe('ready')
-    expect(decideStartupAppState({ probe, usernameConfirmed: false, workspaceId: 'ws' })).toBe('onboarding')
-  })
-  it('name-confirmed missing workspace uses picker even with a successful unconfigured readback', async () => {
-    const probe = await probeSetupNeeds(async () => notConfigured, { delaysMs: [] })
-    expect(probe.ok).toBe(true)
-    expect(decideStartupAppState({ probe, usernameConfirmed: true, workspaceId: null })).toBe('workspace-picker')
+    expect(calls).toBe(1)
+    expect(decideStartupAppState({ identityProbe: probe, workspaceProbe })).toBe('transport-unavailable')
   })
 
+  it('requires a fresh identity and authoritative workspace rather than cached completion', () => {
+    const failed = { ok: false, error: new Error('AUTH_FAILED'), attempts: 1 } as const
+    expect(decideStartupAppState({ identityProbe: failed, workspaceProbe })).toBe('transport-unavailable')
+    expect(decideStartupAppState({ identityProbe: { ok: true, value: null, attempts: 1 }, workspaceProbe })).toBe('transport-unavailable')
+    expect(decideStartupAppState({ identityProbe, workspaceProbe: failed })).toBe('transport-unavailable')
+    expect(decideStartupAppState({ identityProbe, workspaceProbe })).toBe('ready')
+  })
+
+  it('requires the actual persisted display name and keeps provider readiness separate', async () => {
+    expect((await probeSetupNeeds(async () => notConfigured, { sleep: noSleep })).ok).toBe(true)
+    expect(decideStartupAppState({ identityProbe, workspaceProbe })).toBe('ready')
+    expect(decideStartupAppState({ identityProbe: { ...identityProbe, value: { authority: 'local', name: ' ' } }, workspaceProbe })).toBe('onboarding')
+  })
+
+  it('a successful missing workspace is a real picker result', () => {
+    expect(decideStartupAppState({ identityProbe, workspaceProbe: { ...workspaceProbe, value: null } })).toBe('workspace-picker')
+  })
 })
 
-describe('workspace readback after startup transport recovery', () => {
-  it('re-reads a failed workspace probe after successful setup and routes existing user to ready', async () => {
+describe('workspace readback after transport recovery', () => {
+  it('re-reads a failed workspace and requires the resulting current readback', async () => {
     let calls = 0
-    const readWorkspace = async () => { calls++; if (calls === 1) throw new Error('offline'); return 'saved-workspace' }
-    const first = await probeWithRetry(readWorkspace, { delaysMs: [] })
-    expect(first.ok).toBe(false)
+    const read = async () => { if (++calls === 1) throw new Error('offline'); return 'saved-workspace' }
+    const first = await probeWithRetry(read, { delaysMs: [] })
     const setup = await probeSetupNeeds(async () => notConfigured, { delaysMs: [] })
-    const recovered = await recoverStartupWorkspace(first, setup, readWorkspace, { delaysMs: [] })
+    const recovered = await recoverStartupWorkspace(first, setup, read, { delaysMs: [] })
     expect(calls).toBe(2)
     expect(recovered).toMatchObject({ ok: true, value: 'saved-workspace' })
-    expect(decideStartupAppState({ probe: setup, usernameConfirmed: true, workspaceId: recovered.ok ? recovered.value : null })).toBe('ready')
+    expect(decideStartupAppState({ identityProbe, workspaceProbe: recovered })).toBe('ready')
   })
-  it('keeps authoritative missing workspace and does not invent or overwrite its picker decision', async () => {
+
+  it('does not turn authoritative null into a synthetic recovered workspace', async () => {
     let calls = 0
     const existing = { ok: true, value: null, attempts: 1 } as const
     const setup = await probeSetupNeeds(async () => configured, { delaysMs: [] })
-    const result = await recoverStartupWorkspace(existing, setup, async () => { calls++; return 'unexpected' })
-    expect(result).toBe(existing)
+    expect(await recoverStartupWorkspace(existing, setup, async () => { calls++; return 'unexpected' })).toBe(existing)
     expect(calls).toBe(0)
-    expect(decideStartupAppState({ probe: setup, usernameConfirmed: true, workspaceId: result.ok ? result.value : null })).toBe('workspace-picker')
   })
-  it('does not claim recovery when both transport probes remain failed', async () => {
-    const failed = { ok: false, error: new Error('offline'), attempts: 1 } as const
+
+  it('does not claim recovery when both probes remain failed', async () => {
     let calls = 0
-    expect(await recoverStartupWorkspace(failed, failed, async () => { calls++; return 'workspace' })).toBe(failed)
+    const failed = { ok: false, error: new Error('offline'), attempts: 1 } as const
+    expect(await recoverStartupWorkspace(failed, failed, async () => { calls++; return 'unexpected' })).toBe(failed)
     expect(calls).toBe(0)
   })
 })

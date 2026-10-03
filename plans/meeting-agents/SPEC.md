@@ -5,7 +5,7 @@
 
 ## 1. Архитектурное решение
 
-Расширяем существующие `@rox/core`, `@rox/shared`, `server-core` и Electron. Не добавляем второй агентный runtime, самостоятельную Conation-оболочку, вторые Notes/Tasks/Calendar или независимый универсальный граф.
+Расширяем существующие `@craft-agent/core`, `@craft-agent/shared`, `server-core` и Electron. Не добавляем второй агентный runtime, самостоятельную Conation-оболочку, вторые Notes/Tasks/Calendar или независимый универсальный граф.
 
 ```
 Device capture → ASR adapter → versioned segments

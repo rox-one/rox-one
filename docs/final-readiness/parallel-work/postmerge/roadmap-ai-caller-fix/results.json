@@ -1,0 +1,176 @@
+{
+  "status": "CALLER_FIX_QUALIFIED; PRODUCT_BYTES_UNCHANGED; EXISTING_RUNTIME_TIMEOUT_RECEIPTS_RETAINED",
+  "sourceBaseCommit": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+  "runtime": {
+    "version": "1.3.14",
+    "executable": "/private/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+    "platform": "darwin",
+    "architecture": "arm64"
+  },
+  "defect": {
+    "reportedRemoteFailure": "GitHub sqlite-runtime-recovery Linux/macOS: three actual Roadmap caller extraction cases fail Actual callback runAi missing/acceptProposal missing.",
+    "remoteEvidenceSource": "Parent observed remote CI; exact local reproduction retained before.log.",
+    "localReproduction": {
+      "passed": 0,
+      "failed": 3,
+      "exitCode": 1,
+      "log": "before.log",
+      "matchedRunAiMissing": true,
+      "matchedAcceptProposalMissing": true
+    },
+    "rootCause": "Source-extraction target remained ProjectInfoPage after Roadmap callbacks moved to separately routed ProjectRoadmapPage. Current production callbacks exist and contain stronger save/acknowledged-revision/scope/writer/provenance fences; missing callbacks were a test path mismatch, not absent runtime functionality."
+  },
+  "patch": {
+    "changedPaths": [
+      "packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts"
+    ],
+    "productSourceChanged": false,
+    "gitCommitCreated": false,
+    "diffSha256": "da5ad546e4dd17e2233a3380b44a7a5f674401f82d5e77128c1806b1aac3a550",
+    "fileSha256": "768fc033ae36fd2d6346994a19bebaddac765f11e5252f545c9c4f24d9444cb0",
+    "exactDiff": "diff --git a/packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts b/packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts\nindex 4bf39684b..52fdc8131 100644\n--- a/packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts\n+++ b/packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts\n@@ -2,33 +2,46 @@ import { describe, expect, test } from 'bun:test'\n import { readFileSync } from 'node:fs'\n import { resolve } from 'node:path'\n import ts from 'typescript'\n-import { normalizeRoadmap } from '../roadmap.ts'\n+import { isRoadmapRevision, normalizeRoadmap } from '../roadmap.ts'\n+import { applyProposalItem } from '../roadmap-ai.ts'\n \n /** Execute the actual renderer callback, including its persistence gate. */\n function callback(name: string, environment: Record<string, unknown>): Function {\n-  const path = resolve(import.meta.dir, '../../../../../apps/electron/src/renderer/pages/ProjectInfoPage.tsx')\n+  // ProjectInfoPage owns the tabbed metadata surface; AI persistence belongs\n+  // to the separately routed Roadmap page and must be exercised there.\n+  const path = resolve(import.meta.dir, '../../../../../apps/electron/src/renderer/pages/ProjectRoadmapPage.tsx')\n   const source = ts.createSourceFile(path, readFileSync(path, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)\n   let expression: ts.Expression | undefined\n+  let matches = 0\n   const visit = (node: ts.Node) => {\n-    if (ts.isVariableDeclaration(node) && node.name.getText(source) === name && node.initializer && ts.isCallExpression(node.initializer)) {\n+    if (ts.isVariableDeclaration(node) && node.name.getText(source) === name && node.initializer && ts.isCallExpression(node.initializer)\n+      && node.initializer.expression.getText(source) === 'useCallback') {\n       expression = node.initializer.arguments[0]\n+      matches++\n     }\n     ts.forEachChild(node, visit)\n   }\n   visit(source)\n-  if (!expression) throw new Error(`Actual callback ${name} missing`)\n+  if (!expression || matches !== 1) throw new Error(`Expected one actual Roadmap callback ${name}; found ${matches}`)\n   const code = ts.transpileModule(`const actual = ${expression.getText(source)};`, { compilerOptions: { target: ts.ScriptTarget.ESNext } }).outputText\n   return new Function(...Object.keys(environment), `${code}; return actual;`)(...Object.values(environment))\n }\n \n-const base = { workspaceId: 'workspace', projectSlug: 'project', today: '2026-09-30', baseLang: 'en', roadmapSaverRef: { current: {} }, roadmapRef: { current: normalizeRoadmap({ revision: 'a'.repeat(64) }) }, LANGUAGE_NAMES: { en: 'English' } }\n+function base() {\n+  return {\n+    workspaceId: 'workspace', projectSlug: 'project', today: '2026-09-30', baseLang: 'en',\n+    roadmapSaverRef: { current: {} }, roadmapRef: { current: normalizeRoadmap({ revision: 'a'.repeat(64) }) },\n+    aiScopeRef: { current: JSON.stringify(['workspace', 'project']) }, LANGUAGE_NAMES: { en: 'English' },\n+    t: (key: string) => key, setAiResult: (_result: unknown) => {},\n+  }\n+}\n \n describe('integrated project roadmap AI persistence gate', () => {\n   test('a refused native save stops AI before any provider request', async () => {\n     let calls = 0\n     const run = callback('runAi', {\n-      ...base, saveTimer: { current: {} }, flushRef: { current: async () => false },\n-      window: { electronAPI: { runProjectRoadmapAi: async () => { calls++; return { ok: true, mode: 'improve', text: 'stale' } } } },\n+      ...base(), saveTimer: { current: {} }, flushRef: { current: async () => false },\n+      window: { electronAPI: { runProjectRoadmapAi: async () => { calls++; return { ok: true, mode: 'improve', text: 'stale', effectiveModel: null } } } },\n     })\n     expect(await run({ mode: 'improve', text: 'draft' })).toMatchObject({ ok: false })\n     expect(calls).toBe(0)\n@@ -36,25 +49,36 @@ describe('integrated project roadmap AI persistence gate', () => {\n \n   test('AI waits for the current queued native receipt even when debounce has already fired', async () => {\n     let release!: (saved: boolean) => void\n-    let calls = 0\n+    const calls: unknown[][] = []\n+    const published: unknown[] = []\n+    const environment = base()\n+    const response = { ok: true, mode: 'improve', text: 'current', requestedModel: 'requested', effectiveModel: null, warning: 'effective model not reported', roadmapRevision: 'b'.repeat(64) }\n     const receipt = new Promise<boolean>(resolve => { release = resolve })\n     const run = callback('runAi', {\n-      ...base, saveTimer: { current: null }, flushRef: { current: () => receipt },\n-      window: { electronAPI: { runProjectRoadmapAi: async () => { calls++; return { ok: true, mode: 'improve', text: 'current' } } } },\n+      ...environment, saveTimer: { current: null }, flushRef: { current: async () => {\n+        const saved = await receipt\n+        if (saved) environment.roadmapRef.current.revision = 'b'.repeat(64)\n+        return saved\n+      } },\n+      setAiResult: (result: unknown) => { published.push(result) },\n+      window: { electronAPI: { runProjectRoadmapAi: async (...args: unknown[]) => { calls.push(args); return response } } },\n     })\n     const pending = run({ mode: 'improve', text: 'draft' })\n     await Promise.resolve()\n-    expect(calls).toBe(0)\n+    expect(calls).toEqual([])\n+    expect(published).toEqual([])\n     release(true)\n-    expect(await pending).toMatchObject({ ok: true, text: 'current' })\n-    expect(calls).toBe(1)\n+    expect(await pending).toEqual(response)\n+    expect(calls).toEqual([['workspace', 'project', { mode: 'improve', text: 'draft', roadmapRevision: 'b'.repeat(64), today: '2026-09-30', language: 'English' }]])\n+    expect(published).toEqual([response])\n+    expect(response.effectiveModel).toBeNull()\n   })\n \n   test('accepting a proposal remains pending until its native receipt and fails after refusal', async () => {\n     let release!: (saved: boolean) => void\n     const receipt = new Promise<boolean>(resolve => { release = resolve })\n     const accept = callback('acceptProposal', {\n-      today: '2026-09-30', isRoadmapRevision: () => true, roadmapRef: { current: { revision: 'a'.repeat(64) } }, updateRoadmap: () => {},\n+      today: '2026-09-30', isRoadmapRevision, roadmapRef: { current: { revision: 'a'.repeat(64) } }, updateRoadmap: () => {},\n       applyProposalItem: (roadmap: unknown) => roadmap,\n       flushRef: { current: () => receipt },\n     })\n@@ -64,5 +88,89 @@ describe('integrated project roadmap AI persistence gate', () => {\n     expect(finished).toBe(false)\n     release(false)\n     await expect(pending).rejects.toThrow('PROJECT_ROADMAP_SAVE_REQUIRED')\n+    expect(finished).toBe(false)\n+  })\n+\n+  test('missing current save queue refuses AI without a flush or provider call', async () => {\n+    let flushes = 0, calls = 0\n+    const run = callback('runAi', {\n+      ...base(), roadmapSaverRef: { current: null }, flushRef: { current: async () => { flushes++; return true } },\n+      window: { electronAPI: { runProjectRoadmapAi: async () => { calls++ } } },\n+    })\n+    expect(await run({ mode: 'spec', text: 'draft' })).toEqual({ ok: false, error: 'PROJECT_ROADMAP_SAVE_REQUIRED' })\n+    expect({ flushes, calls }).toEqual({ flushes: 0, calls: 0 })\n+  })\n+\n+  for (const change of ['workspace', 'writer'] as const) {\n+    test(`${change} change while native save is pending prevents a provider request`, async () => {\n+      const environment = base()\n+      const { promise, resolve: release } = Promise.withResolvers<boolean>()\n+      let calls = 0\n+      const run = callback('runAi', {\n+        ...environment, flushRef: { current: () => promise },\n+        window: { electronAPI: { runProjectRoadmapAi: async () => { calls++ } } },\n+      })\n+      const pending = run({ mode: 'spec', text: 'draft' })\n+      await Promise.resolve()\n+      if (change === 'workspace') environment.aiScopeRef.current = JSON.stringify(['other-workspace', 'project'])\n+      else environment.roadmapSaverRef.current = {}\n+      release(true)\n+      expect(await pending).toEqual({ ok: false, error: change === 'writer' ? 'PROJECT_ROADMAP_SCOPE_CHANGED' : 'projectRoadmap.ai.scopeChanged' })\n+      expect(calls).toBe(0)\n+    })\n+\n+    test(`a late AI response after ${change} change cannot publish into the current project`, async () => {\n+      const environment = base()\n+      const { promise, resolve: release } = Promise.withResolvers<unknown>()\n+      const { promise: started, resolve: markStarted } = Promise.withResolvers<void>()\n+      const published: unknown[] = []\n+      const run = callback('runAi', {\n+        ...environment, flushRef: { current: async () => true }, setAiResult: (result: unknown) => { published.push(result) },\n+        window: { electronAPI: { runProjectRoadmapAi: () => { markStarted(); return promise } } },\n+      })\n+      const pending = run({ mode: 'improve', text: 'draft' })\n+      await started\n+      if (change === 'workspace') environment.aiScopeRef.current = JSON.stringify(['other-workspace', 'project'])\n+      else environment.roadmapSaverRef.current = {}\n+      release({ ok: true, mode: 'improve', text: 'obsolete', effectiveModel: 'old-provider' })\n+      expect(await pending).toEqual({ ok: false, error: 'projectRoadmap.ai.scopeChanged' })\n+      expect(published).toEqual([])\n+    })\n+  }\n+\n+  test('accepting against a missing or stale revision refuses before editing or saving', async () => {\n+    for (const revision of [undefined, 'not-a-revision', 'b'.repeat(64)]) {\n+      let edits = 0, flushes = 0\n+      const accept = callback('acceptProposal', {\n+        ...base(), isRoadmapRevision, updateRoadmap: () => { edits++ }, applyProposalItem,\n+        flushRef: { current: async () => { flushes++; return true } },\n+      })\n+      await expect(accept({ goal: 'proposal' }, [{ section: 'goal' }], revision)).rejects.toThrow('PROJECT_ROADMAP_CONFLICT')\n+      expect({ edits, flushes }).toEqual({ edits: 0, flushes: 0 })\n+    }\n+  })\n+\n+  test('accepting a current proposal returns only the acknowledged native revision', async () => {\n+    const environment = base()\n+    const { promise, resolve: release } = Promise.withResolvers<boolean>()\n+    let finished = false\n+    const accept = callback('acceptProposal', {\n+      ...environment, isRoadmapRevision, applyProposalItem,\n+      updateRoadmap: (update: (roadmap: ReturnType<typeof normalizeRoadmap>) => ReturnType<typeof normalizeRoadmap>) => {\n+        environment.roadmapRef.current = update(environment.roadmapRef.current)\n+      },\n+      flushRef: { current: async () => {\n+        const saved = await promise\n+        if (saved) environment.roadmapRef.current.revision = 'c'.repeat(64)\n+        return saved\n+      } },\n+    })\n+    const pending = accept({ goal: 'accepted proposal' }, [{ section: 'goal' }], 'a'.repeat(64)).then((revision: string) => { finished = true; return revision })\n+    await Promise.resolve()\n+    expect(environment.roadmapRef.current.goal).toBe('accepted proposal')\n+    expect(finished).toBe(false)\n+    release(true)\n+    expect(await pending).toBe('c'.repeat(64))\n+    expect(finished).toBe(true)\n   })\n })\n",
+    "changes": [
+      "Extract actual ProjectRoadmapPage useCallback body and require exactly one matching declaration.",
+      "Fresh per-case fixture supplies current workspace/project scope, saved revision, translation and AI publication callback.",
+      "Retain all three existing refused-save/queued-receipt/failed-acceptance cases.",
+      "Strengthen positive AI case with exact acknowledged revision and request args, published result and effectiveModel:null/requestedModel/warning separation.",
+      "Add missing save queue, workspace/writer changes before dispatch and after response, stale/malformed revision refusal before mutation, and successful acceptance waiting for native acknowledged revision."
+    ],
+    "skippedOrRemovedTests": 0,
+    "weakeningAssertions": false
+  },
+  "qualification": {
+    "combined": {
+      "command": [
+        "/private/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "test",
+        "--timeout",
+        "20000",
+        "packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts",
+        "packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts",
+        "packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts",
+        "packages/shared/src/projects/__tests__/roadmap.test.ts",
+        "packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/roadmap-boundary-runtime.test.ts"
+      ],
+      "passed": 43,
+      "failed": 1,
+      "assertions": 183,
+      "files": 6,
+      "exitCode": 1,
+      "log": "after.log",
+      "callerPasses": 10,
+      "failure": "Existing roadmap-boundary-runtime explicit15000ms timeout; zero assertion failure, dangling child killed."
+    },
+    "runtimeBoundaryRerun": {
+      "command": [
+        "/private/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "test",
+        "packages/server-core/src/handlers/rpc/__tests__/roadmap-boundary-runtime.test.ts"
+      ],
+      "passed": 0,
+      "failed": 1,
+      "exitCode": 1,
+      "log": "boundary-rerun.log",
+      "failure": "Same explicit15000ms deadline; child killed; no timeout configuration or source changed.",
+      "requiresDecision": "Two unchanged explicit15s local timeouts retained. Root accepts scoped test correction proof and will recheck dedicated remote CI; no further local boundary reruns."
+    },
+    "ui137Rerun": "Not performed: only caller test changed, no affected product UI source. Existing e074 qualification137/0/791/14 retained separately.",
+    "productionCallbacksPresent": {
+      "runAi": true,
+      "acceptProposal": true,
+      "savedRevision": true,
+      "writerFence": true,
+      "proposalRevisionFence": true,
+      "nativeExportAck": true
+    },
+    "callerOnly": {
+      "command": [
+        "/private/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "test",
+        "--timeout",
+        "20000",
+        "packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts"
+      ],
+      "passed": 10,
+      "failed": 0,
+      "assertions": 31,
+      "files": 1,
+      "exitCode": 0,
+      "runtime": "1.3.14",
+      "elapsedSeconds": 27.84,
+      "log": "caller-only.log",
+      "verifiedReceipt": true
+    },
+    "diffCheck": {
+      "status": "PASS",
+      "command": "git diff --check -- packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts"
+    },
+    "remoteStatusObservedByParent": {
+      "validateCI": "SUCCESS",
+      "validateServer": "SUCCESS; fresh WebUI/Pi/server + four smoke37assertions on Node24/Bun1.3.14",
+      "sqliteCI": "Concrete original three extraction cases failed; root will rerun corrected tests on dedicated CI runner after commit/push.",
+      "independentRemoteReadPerformedByThisWorker": false
+    }
+  },
+  "artifactFiles": [
+    "before.log",
+    "after.log",
+    "boundary-rerun.log",
+    "caller-only.log",
+    "results.json"
+  ],
+  "limits": [
+    "All fixture provider responses synthetic; no real model request/native app/GUI/server deployment performed.",
+    "Working-tree test patch recorded by hash/diff; base source SHA remains committed e074 until root promotion.",
+    "This fixes a concrete CI caller extraction defect; full release/remote CI success not claimed."
+  ],
+  "productionByteProof": {
+    "baseSourceCommit": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+    "appsPackagesDiffPaths": [
+      "packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts"
+    ],
+    "unexpectedProductionChanges": [],
+    "selectedProductionFiles": [
+      {
+        "path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "baselineSha256": "648209da0df91ab8ddbe0c079b4f96317b1274519d2825d62a2c49b906c73cb9",
+        "currentSha256": "648209da0df91ab8ddbe0c079b4f96317b1274519d2825d62a2c49b906c73cb9",
+        "byteIdentical": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/ProjectRoadmapPage.tsx",
+        "baselineSha256": "5946c49677887cc4b03f0d950739b9b7fc49ce4836fd2d9e63f8d15877c9eeaa",
+        "currentSha256": "5946c49677887cc4b03f0d950739b9b7fc49ce4836fd2d9e63f8d15877c9eeaa",
+        "byteIdentical": true
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/project/ProjectAiPanel.tsx",
+        "baselineSha256": "5e4063f67e59c98f547517eed216915f30991ebec0cbfe13555c47df8d5fc803",
+        "currentSha256": "5e4063f67e59c98f547517eed216915f30991ebec0cbfe13555c47df8d5fc803",
+        "byteIdentical": true
+      },
+      {
+        "path": "packages/shared/src/projects/roadmap.ts",
+        "baselineSha256": "5f5600df01c60d4198b77fb755cd19942e1521dec71f7d2bfe9215caaf25e59a",
+        "currentSha256": "5f5600df01c60d4198b77fb755cd19942e1521dec71f7d2bfe9215caaf25e59a",
+        "byteIdentical": true
+      },
+      {
+        "path": "packages/shared/src/projects/roadmap-ai.ts",
+        "baselineSha256": "c798c49d65323bb4edd4dc3e5d38db652fed7374ad1bdf455b4a0c2ce4674113",
+        "currentSha256": "c798c49d65323bb4edd4dc3e5d38db652fed7374ad1bdf455b4a0c2ce4674113",
+        "byteIdentical": true
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/projects.ts",
+        "baselineSha256": "612a821f63af44385665f8212dc37512a82261aa6b9be3173ff5e0426ec28d8e",
+        "currentSha256": "612a821f63af44385665f8212dc37512a82261aa6b9be3173ff5e0426ec28d8e",
+        "byteIdentical": true
+      }
+    ],
+    "allSelectedByteIdentical": true,
+    "wholeTrackedAppsPackagesProof": "git diff --name-only e074... -- apps packages returns only owned testPath; no production file difference.",
+    "status": "PASS"
+  }
+}

@@ -6,7 +6,7 @@
 
 **Architecture:** `ExecutionPolicy` is a first-class type (no allow-all); `ExecutionCoordinator` validates `policyId` before admitting; `CredentialBroker.acquireLease` is the only secret-adjacent call (metadata only); `ResourceControlLease` fences terminal control with monotonic epoch; `GRANT` API rejects any `token`/`secret` field before persistence; flag `execution.policy.v1` default false.
 
-**Tech Stack:** TypeScript, Bun test, `@rox/core/platform/workbench/flags.ts`, `@rox/server-core/src/execution/`, `fabric*` RPCs (not `workgraph.*`), no Turso.
+**Tech Stack:** TypeScript, Bun test, `@craft-agent/core/platform/workbench/flags.ts`, `@craft-agent/server-core/src/execution/`, `fabric*` RPCs (not `workgraph.*`), no Turso.
 
 ## Global Constraints
 
@@ -150,7 +150,7 @@ it('start without policyId denied when flag on', async () => {
   expect(c.start({} as any)).toEqual(expect.objectContaining({ code:'POLICY_REQUIRED' }))
 })
 it('flag default false denies', async () => {
-  const { isWorkbenchFlagEnabled, WORKBENCH_FLAG } = await import('@rox/core/platform')
+  const { isWorkbenchFlagEnabled, WORKBENCH_FLAG } = await import('@craft-agent/core/platform')
   expect(isWorkbenchFlagEnabled(WORKBENCH_FLAG['execution.policy.v1' as any], new Set())).toBe(false)
 })
 ```

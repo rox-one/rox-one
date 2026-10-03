@@ -1,0 +1,12 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server/src/__tests__/smoke.test.ts:
+(pass) headless server lifecycle smoke > serves health/login, enforces HTTP and WebSocket auth, and restarts the same isolated profile [11266.96ms]
+(pass) headless server lifecycle smoke > rejects short token at startup [2823.43ms]
+(pass) headless server lifecycle smoke > rejects a child already exited with 0 as graceful shutdown [96.58ms]
+(pass) headless server lifecycle smoke > rejects a child already exited with 17 as graceful shutdown [110.65ms]
+
+ 4 pass
+ 0 fail
+ 37 expect() calls
+Ran 4 tests across 1 file. [14.70s]

@@ -1708,6 +1708,7 @@ export interface ElectronAPI {
     audioBase64?: string
     mimeType?: 'audio/mpeg'
     textSent?: boolean
+    textTransmission?: 'not-sent' | 'possible' | 'sent'
     stopped?: boolean
     speaking?: boolean
     voice?: string

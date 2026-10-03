@@ -1,0 +1,101 @@
+{
+  "commit": "387edc1b1cfec361e2de2196a6963c27a98cbc67",
+  "runtime": "1.3.14",
+  "host": {
+    "platform": "darwin",
+    "architecture": "arm64"
+  },
+  "results": [
+    {
+      "name": "frozen-install",
+      "commit": "387edc1b1cfec361e2de2196a6963c27a98cbc67",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "install",
+        "--frozen-lockfile"
+      ],
+      "cwd": "<integration>",
+      "exitCode": 0,
+      "elapsedMs": 21282,
+      "diagnosticOccurrences": 0,
+      "log": "frozen-install.log"
+    },
+    {
+      "name": "apps/cloud-gateway",
+      "commit": "387edc1b1cfec361e2de2196a6963c27a98cbc67",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/apps/cloud-gateway",
+      "exitCode": 0,
+      "elapsedMs": 5083,
+      "diagnosticOccurrences": 0,
+      "log": "apps-cloud-gateway.log"
+    },
+    {
+      "name": "apps/cli",
+      "commit": "387edc1b1cfec361e2de2196a6963c27a98cbc67",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/apps/cli",
+      "exitCode": 0,
+      "elapsedMs": 166836,
+      "diagnosticOccurrences": 0,
+      "log": "apps-cli.log"
+    },
+    {
+      "name": "apps/viewer",
+      "commit": "387edc1b1cfec361e2de2196a6963c27a98cbc67",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/apps/viewer",
+      "exitCode": 0,
+      "elapsedMs": 121840,
+      "diagnosticOccurrences": 0,
+      "log": "apps-viewer.log"
+    },
+    {
+      "name": "apps/workspace-service",
+      "commit": "387edc1b1cfec361e2de2196a6963c27a98cbc67",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/apps/workspace-service",
+      "exitCode": 0,
+      "elapsedMs": 122456,
+      "diagnosticOccurrences": 0,
+      "log": "apps-workspace-service.log"
+    },
+    {
+      "name": "apps/webui",
+      "commit": "387edc1b1cfec361e2de2196a6963c27a98cbc67",
+      "runtime": "1.3.14",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "<integration>/apps/webui",
+      "exitCode": 0,
+      "elapsedMs": 835140,
+      "diagnosticOccurrences": 0,
+      "log": "apps-webui.log"
+    }
+  ],
+  "limits": "Source/frozen-install/compiler/fixture/built local server gates. Does not certify signed native artifacts, provider operations or hosted production."
+}

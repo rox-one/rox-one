@@ -27,7 +27,7 @@ Telegram-tier experience (in-chat approvals via buttons).
 
 Mirrors the WhatsApp isolation model (Baileys → subprocess). Two units:
 
-### New package: `@rox/messaging-discord-worker`
+### New package: `@craft-agent/messaging-discord-worker`
 
 - `src/protocol.ts` — NDJSON stdio protocol (`WorkerCommand` / `WorkerEvent`),
   reusing the same `encodeMessage` / `parseFrames` design as the WhatsApp worker.

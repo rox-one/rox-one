@@ -6,7 +6,7 @@
 
 **Architecture:** Reuse suite S hosts (`ActivityRail`, `SurfaceTabs`, `InspectorHost`). Granular `workbench.*` flags (default OFF) independently gate new chrome. URL / `panelStackAtom` remain focused-surface truth. Core already has `ModeRegistry` and `WorkbenchLayout` v2 reducers.
 
-**Tech Stack:** Bun, TypeScript, React, Jotai, react-i18next, `@rox/core/platform`.
+**Tech Stack:** Bun, TypeScript, React, Jotai, react-i18next, `@craft-agent/core/platform`.
 
 ## Global Constraints
 

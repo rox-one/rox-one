@@ -3,7 +3,7 @@
 > **For agentic workers:** Execute task-by-task. Checkboxes track progress. Spec: `docs/superpowers/specs/2026-08-08-entity-mindmap-views-design.md`.  
 > Do **not** run full monorepo test/typecheck mid-flight across parallel agents — verify per-task scoped commands only; one final gate at the end.
 
-**Goal:** Auto mind maps for session / note / knowledge via `EntityViewTabs` (Standard | Map | Outline + legacy SiYuan Graph/Mind map), outline-first derive in `@rox/core/mindmap`, Craft SVG engine, live+pin without writeback.
+**Goal:** Auto mind maps for session / note / knowledge via `EntityViewTabs` (Standard | Map | Outline + legacy SiYuan Graph/Mind map), outline-first derive in `@craft-agent/core/mindmap`, Craft SVG engine, live+pin without writeback.
 
 **Architecture:** Pure derive in `packages/core/src/mindmap` → renderer `MindMapHost` + pluggable `MindMapEngine` → wire three surfaces. Legacy SiYuan tabs stay; new Craft tab id = `map`.
 

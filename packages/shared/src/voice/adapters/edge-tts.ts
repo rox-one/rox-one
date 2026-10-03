@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { resolveConfigDir } from '../../config/paths.ts'
 import { createResolver, toolchainPaths } from '../../toolchain/index.ts'
-import type { SpeakAdapter, SpeakInput } from '../types.ts'
+import type { SpeakAdapter, SpeakInput, TextTransmission } from '../types.ts'
 
 export const EDGE_TTS_VERSION = '7.2.8'
 const MAX_TEXT_LENGTH = 20_000
@@ -13,6 +13,14 @@ const MAX_AUDIO_BYTES = 16 * 1024 * 1024
 
 export type EdgeTtsCommand = { executable: string; args: string[] }
 export type EdgeTtsRunner = (command: EdgeTtsCommand, text: string, signal: AbortSignal) => Promise<void>
+
+/** Sanitized failure with conservative text-transmission evidence. */
+export class EdgeTtsError extends Error {
+  constructor(message: string, readonly textTransmission: TextTransmission) {
+    super(message)
+    this.name = 'EdgeTtsError'
+  }
+}
 
 export async function resolveEdgeTtsCommand(): Promise<EdgeTtsCommand> {
   const override = process.env.CRAFT_EDGE_TTS?.trim()
@@ -26,6 +34,19 @@ export async function resolveEdgeTtsCommand(): Promise<EdgeTtsCommand> {
   return { executable: uv, args: ['tool', 'run', '--from', `edge-tts==${EDGE_TTS_VERSION}`, 'edge-tts'] }
 }
 
+async function resolveCommandWithAbort(resolveCommand: () => Promise<EdgeTtsCommand>, signal: AbortSignal): Promise<EdgeTtsCommand> {
+  let abort!: () => void
+  const cancelled = new Promise<never>((_, reject) => {
+    abort = () => reject(new Error('cancelled'))
+    signal.addEventListener('abort', abort, { once: true })
+  })
+  try {
+    return await Promise.race([resolveCommand(), cancelled])
+  } finally {
+    signal.removeEventListener('abort', abort)
+  }
+}
+
 const runEdgeTts: EdgeTtsRunner = (command, text, signal) => new Promise((resolve, reject) => {
   const child = spawn(command.executable, command.args, {
     shell: false,
@@ -35,9 +56,18 @@ const runEdgeTts: EdgeTtsRunner = (command, text, signal) => new Promise((resolv
   })
   // Do not include stderr in errors: providers may echo submitted text.
   let processError: Error | null = null
+  let killTimer: ReturnType<typeof setTimeout> | undefined
+  const forceStop = () => {
+    killTimer ??= setTimeout(() => child.kill('SIGKILL'), 250)
+    killTimer.unref()
+  }
+  signal.addEventListener('abort', forceStop, { once: true })
+  if (signal.aborted) forceStop()
   child.once('error', (error) => { processError = error })
   // Wait for close even on abort so the writer exits before removing its directory.
   child.once('close', (code) => {
+    if (killTimer) clearTimeout(killTimer)
+    signal.removeEventListener('abort', forceStop)
     if (processError) reject(processError)
     else if (code === 0) resolve()
     else reject(new Error(`Edge TTS exited with code ${code}`))
@@ -60,29 +90,49 @@ export function createEdgeSpeakAdapter(options: {
     engine: 'edge',
     async speak(input) {
       const text = input.text.trim()
-      if (!text) throw new Error('Edge TTS text is empty')
-      if (text.length > MAX_TEXT_LENGTH) throw new Error('Edge TTS text is too long')
-      const signal = input.signal
-        ? AbortSignal.any([input.signal, AbortSignal.timeout(options.timeoutMs ?? 20_000)])
-        : AbortSignal.timeout(options.timeoutMs ?? 20_000)
-      signal.throwIfAborted()
-      const command = await (options.resolveCommand ?? resolveEdgeTtsCommand)()
-      signal.throwIfAborted()
-      const dir = await mkdtemp(join(tmpdir(), 'rox-edge-tts-'))
+      input.onTextTransmission?.('not-sent')
+      if (!text) throw new EdgeTtsError('Edge TTS text is empty', 'not-sent')
+      if (text.length > MAX_TEXT_LENGTH) throw new EdgeTtsError('Edge TTS text is too long', 'not-sent')
+      const controller = new AbortController()
+      const externalAbort = () => controller.abort(input.signal?.reason)
+      input.signal?.addEventListener('abort', externalAbort, { once: true })
+      if (input.signal?.aborted) externalAbort()
+      // A referenced timer remains live while command resolution/subprocess IO
+      // is pending, including on the qualified Bun 1.3.14 runtime.
+      const deadline = setTimeout(() => controller.abort(new Error('timeout')), options.timeoutMs ?? 20_000)
+      const signal = controller.signal
+      let transmission: TextTransmission = 'not-sent'
+      let dir: string | undefined
       try {
+        signal.throwIfAborted()
+        const command = await resolveCommandWithAbort(options.resolveCommand ?? resolveEdgeTtsCommand, signal)
+        signal.throwIfAborted()
+        dir = await mkdtemp(join(tmpdir(), 'rox-edge-tts-'))
+        signal.throwIfAborted()
         const output = join(dir, 'speech.mp3')
+        // Invocation may transmit text even if cancellation or failure follows.
+        transmission = 'possible'
+        input.onTextTransmission?.(transmission)
         await (options.run ?? runEdgeTts)({
           executable: command.executable,
           args: [...command.args, '--file', '-', '--voice', edgeTtsVoice(input), '--write-media', output],
         }, text, signal)
         signal.throwIfAborted()
         const info = await stat(output)
-        if (!info.size || info.size > MAX_AUDIO_BYTES) throw new Error('Edge TTS returned invalid audio size')
+        if (!info.size || info.size > MAX_AUDIO_BYTES) throw new EdgeTtsError('Edge TTS returned invalid audio size', transmission)
         const audio = await readFile(output)
         signal.throwIfAborted()
-        return { engine: 'edge', uploaded: false, textSent: true, audioBase64: audio.toString('base64'), mimeType: 'audio/mpeg' }
+        transmission = 'sent'
+        input.onTextTransmission?.(transmission)
+        return { engine: 'edge', uploaded: false, textSent: true, textTransmission: transmission, audioBase64: audio.toString('base64'), mimeType: 'audio/mpeg' }
+      } catch (error) {
+        if (error instanceof EdgeTtsError) throw error
+        // Never expose arbitrary CLI/runner messages which may contain text.
+        throw new EdgeTtsError(signal.aborted ? 'Edge TTS synthesis cancelled' : 'Edge TTS synthesis failed', transmission)
       } finally {
-        await rm(dir, { recursive: true, force: true })
+        clearTimeout(deadline)
+        input.signal?.removeEventListener('abort', externalAbort)
+        if (dir) await rm(dir, { recursive: true, force: true })
       }
     },
   }

@@ -228,6 +228,10 @@ function rpcLoop() {
         respond({ toolNames: (msg.tools || []).map((t) => t.name) });
         break;
       case 'get_available_models':
+        if (scenario === 'transport-frame-error') {
+          send({ type: 'rpc_frame_error', error: 'Controlled transport overflow' });
+          break;
+        }
         if (scenario === 'transport-unterminated') {
           process.stdout.write('x'.repeat(1048576 + 1));
           break;
@@ -235,7 +239,7 @@ function rpcLoop() {
         if (scenario.startsWith('transport-') && !['transport-v1', 'transport-bad-ack', 'transport-large-command'].includes(scenario)) {
           respond({ models: [...availableModels, ...Array.from({ length: 858 }, (_, i) =>
             ({ provider: 'fixture', id: 'catalog-' + i, name: 'x'.repeat(1700) }))] });
-        } else respond(readScenario() === 'large-catalog' ? availableModels.map(m => m.id === 'kimi-k2' ? {...m, name:'Model'.repeat(250000)} : m) : availableModels);
+        } else respond(readScenario() === 'large-catalog' ? availableModels.map(m => m.id === 'kimi-k2' ? { ...m, name: 'Model'.repeat(250000) } : m) : availableModels);
         break;
       case 'set_model': {
         const target = availableModels.find(m => m.provider === msg.provider && m.id === msg.modelId);

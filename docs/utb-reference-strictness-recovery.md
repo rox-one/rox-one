@@ -21,7 +21,7 @@ Pinned local environment: macOS arm64, Bun **1.3.14**, Node **22.23.2**, TypeScr
 | All three actual test files after repair | Bun **72 pass, 0 fail**; Node22 **72 pass, 0 fail, 0 skipped** |
 | Mutation in a separate temporary copy: restore old direct object return and `Object.keys` checking | **58 pass, 14 fail**, exit1; new codec assertions reject the mutation |
 | Narrow TypeScript closure: four real modules and all three real test files, using canonical core options and real imported repository types | Exit0 |
-| Additional typed consumer of `@rox/core/bases` | 0 diagnostics; real `rox2/platform-contract.ts` included, no repository type stub |
+| Additional typed consumer of `@craft-agent/core/bases` | 0 diagnostics; real `rox2/platform-contract.ts` included, no repository type stub |
 | Actual Bun package export and round trip | Resolves to this checkout's `src/bases/index.ts`; valid round trip |
 | Package metadata compatibility | 25 previous export targets unchanged; sole original feature addition `./bases`; other metadata and lockfile unchanged |
 | Full core compiler after repair vs original main f632 baseline | Both exit2 with **13 identical diagnostics**, byte-identical logs |

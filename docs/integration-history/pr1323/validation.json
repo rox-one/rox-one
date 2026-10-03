@@ -1,0 +1,74 @@
+{
+  "observedAtUtc": "2026-09-30T18:08:17.712928+00:00",
+  "scope": "useProjects workspace/load generation correction only",
+  "baseCommit": "4413e4ae352a6844b498b31f239ffc6c3676d7a7",
+  "beforeSourceSha256": "13543daf34873c044fb089504e6d6146878cdb327b6e94d6a43f776ecd243d31",
+  "afterSourceSha256": "2b87d14b619e470a531e82f5e10f94af0fd916dee1e8abcbfdfb64590f0186ac",
+  "sourcePath": "apps/electron/src/renderer/hooks/useProjects.ts",
+  "testPath": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+  "testSha256": "5326e535cec4867d7b01bd305ee8252c1bc95a62554ac3283e9f69416fd92187",
+  "actualProjectCatalogAtomPath": "apps/electron/src/renderer/atoms/projects.ts",
+  "actualProjectCatalogAtomSha256": "ba95a7423af6dcfc02cd4a946eca4e545a57eb07f03fcf8f0b7a5fea36dc86dd",
+  "actualAtomUnchanged": true,
+  "runtime": "Bun 1.3.14 (0d9b296a)",
+  "harness": "Actual source callbacks via TypeScript transpile; real Jotai atom/store; controlled render/commit/effect scheduling and deferred IPC boundary",
+  "beforeAfterSameTest": true,
+  "red": {
+    "pass": 2,
+    "fail": 12,
+    "assertions": 22,
+    "exitCode": 1,
+    "actualBaselineSource": true
+  },
+  "green": {
+    "pass": 14,
+    "fail": 0,
+    "assertions": 31,
+    "exitCode": 0,
+    "actualCorrectedSource": true
+  },
+  "independentRootReview": {
+    "sourceAccepted": true,
+    "sourceSha256": "2b87d14b619e470a531e82f5e10f94af0fd916dee1e8abcbfdfb64590f0186ac",
+    "originalTargetedCases": 13,
+    "pass": 13,
+    "fail": 0,
+    "assertions": 29,
+    "exitCode": 0,
+    "logSha256": "479e213861fea87762ca2bd73b6886340317c1dae72746dd9adfb13e7f8ab78a"
+  },
+  "sourceUnchangedAfterGates": true,
+  "scopedConsumedContractTypes": {
+    "exitCode": 0,
+    "nodeVersion": "v26.8.2",
+    "typescriptVersion": "5.9.3",
+    "scope": "Isolated actual copied LoadedProject/atom and two exact consumed IPC signatures from9c; before union delivery; full renderer typecheck not run"
+  },
+  "diffCheckExitCode": 0,
+  "wholeRepositorySuiteRun": false,
+  "domNativeBrowserGateRun": false,
+  "fullR15OrProgramAccepted": false,
+  "artifacts": [
+    {
+      "path": "apps/electron/src/renderer/hooks/useProjects.ts",
+      "sha256": "2b87d14b619e470a531e82f5e10f94af0fd916dee1e8abcbfdfb64590f0186ac"
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "sha256": "5326e535cec4867d7b01bd305ee8252c1bc95a62554ac3283e9f69416fd92187"
+    },
+    {
+      "path": "docs/use-projects-scope-repair/evidence/union-red.log",
+      "sha256": "d174b3fdb3f3e83e92af200ccbebf60e86920322daa7f9a9fd316b678da9ed94"
+    },
+    {
+      "path": "docs/use-projects-scope-repair/evidence/union-green.log",
+      "sha256": "852ae84d8be7e8782be92fcd643c592d155c4e4c5dfe5e9a8969b7f33c80e084"
+    },
+    {
+      "path": "docs/use-projects-scope-repair/evidence/independent-root-green.log",
+      "sha256": "479e213861fea87762ca2bd73b6886340317c1dae72746dd9adfb13e7f8ab78a"
+    }
+  ],
+  "publicLogNormalization": "Personal filesystem prefixes replaced with fixture/; trailing source-excerpt whitespace normalized. Raw producer logs retained separately."
+}

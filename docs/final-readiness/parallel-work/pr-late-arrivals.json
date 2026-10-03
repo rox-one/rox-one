@@ -1,0 +1,38 @@
+{
+  "capturedAt": "2026-10-03T02:07:23.933Z",
+  "initialCapturedPRCount": 17,
+  "lateArrivals": [
+    {
+      "baseRefName": "main",
+      "createdAt": "2026-10-03T01:06:02Z",
+      "headRefName": "feat/rox-cli-runtime-18.4.12",
+      "headRefOid": "005eadcf8a7611e3376d628773247ad24158219e",
+      "headRepositoryOwner": {
+        "id": "O_kgDOEeMqFw",
+        "login": "rox-one"
+      },
+      "isDraft": false,
+      "number": 1377,
+      "title": "feat(runtime): upgrade Rox CLI to 18.4.12 with RPC v2",
+      "url": "https://github.com/rox-one/rox-one/pull/1377"
+    },
+    {
+      "baseRefName": "main",
+      "createdAt": "2026-10-03T01:30:42Z",
+      "headRefName": "feat/edge-tts-playback",
+      "headRefOid": "a9611300a87223d65bb343a00ef8e1c3e0111df6",
+      "headRepositoryOwner": {
+        "id": "U_kgDOBzyf2A",
+        "name": "agisota",
+        "login": "agisota"
+      },
+      "isDraft": false,
+      "number": 1384,
+      "title": "feat(voice): add edge-tts synthesis and client audio playback",
+      "url": "https://github.com/rox-one/rox-one/pull/1384"
+    }
+  ],
+  "currentRequestedPRCount": 19,
+  "countedBacklogLeavesRemain": 445,
+  "reason": "Published during integration; included before default-branch promotion."
+}

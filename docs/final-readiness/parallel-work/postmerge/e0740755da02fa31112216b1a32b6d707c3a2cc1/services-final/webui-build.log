@@ -1,0 +1,26 @@
+$ vite build --config apps/webui/vite.config.ts
+vite v6.4.1 building for production...
+
+(!) outDir /Users/t/Projects/rox-one-recheck-candidate-20261003/apps/webui/dist is not inside project root and will not be emptied.
+Use --emptyOutDir to override.
+
+(node:9620) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+transforming...
+[plugin vite:esbuild] apps/electron/src/shared/route-parser.ts: This case clause will never be evaluated because it duplicates an earlier case clause
+1897|          details: null
+1898|        };
+1899|      case 'pages':
+   |           ^
+1900|        return {
+1901|          navigator: 'pages',
+
+[plugin vite:esbuild] apps/electron/src/shared/route-parser.ts: This case clause will never be evaluated because it duplicates an earlier case clause
+1902|          details: null
+1903|        };
+1904|      case 'page-info':
+   |           ^
+1905|        if (parsed.id) {
+1906|          return {
+
+error: script "webui:build" was terminated by signal SIGTERM (Polite quit request)

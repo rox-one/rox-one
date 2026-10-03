@@ -1,10 +1,9 @@
 import { describe, expect, it, test } from 'bun:test'
-import { MeetingBudgetLedger, createBudget, remaining, reserve, settle } from '../observability.ts'
-import type { BudgetResult } from '../observability.ts'
+import { MeetingBudgetLedger, createBudget, remaining, reserve, settle, type BudgetResult } from '../observability.ts'
 
-function failureReason(result: BudgetResult) {
+function failureReason(result: BudgetResult): string {
   expect(result.ok).toBe(false)
-  if (result.ok) throw new Error('expected a rejected budget operation')
+  if (result.ok) throw new Error('Expected a refused budget operation')
   return result.reason
 }
 

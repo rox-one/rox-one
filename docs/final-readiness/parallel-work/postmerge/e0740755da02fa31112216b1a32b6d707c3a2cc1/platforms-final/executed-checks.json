@@ -1,0 +1,65 @@
+{
+  "sourceCommit": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+  "startedAt": "2026-10-03T03:42:19.344Z",
+  "completedAt": "2026-10-03T03:43:16.394Z",
+  "runtime": "Bun1.3.14 macOS arm64",
+  "checks": [
+    {
+      "name": "updater-packaging-tests.log",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "--no-env-file",
+        "test",
+        "apps/electron/src/main/__tests__/auto-update-suppress.test.ts",
+        "scripts/build/__tests__/electron-packaging-files.test.ts",
+        "scripts/build/__tests__/stage-servers.test.ts"
+      ],
+      "exitCode": 0,
+      "pass": 23,
+      "fail": 0,
+      "assertions": 104
+    },
+    {
+      "name": "update-metadata-fixtures.log",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "--no-env-file",
+        "test",
+        "/Users/t/Projects/rox-one-recheck-candidate-20261003/docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/update-metadata-fixtures.test.ts"
+      ],
+      "exitCode": 0,
+      "pass": 19,
+      "fail": 0,
+      "assertions": 19
+    },
+    {
+      "name": "product-version-check.log",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "--no-env-file",
+        "scripts/check-version.ts"
+      ],
+      "exitCode": 0,
+      "pass": 0,
+      "fail": 0,
+      "assertions": 0
+    },
+    {
+      "name": "affected-module-build.log",
+      "command": [
+        "/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun",
+        "--no-env-file",
+        "/Users/t/Projects/rox-one-recheck-candidate-20261003/docs/final-readiness/parallel-work/postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/platforms-final/affected-build.ts"
+      ],
+      "exitCode": 0,
+      "pass": 0,
+      "fail": 0,
+      "assertions": 0
+    }
+  ],
+  "allChecksPassed": true,
+  "isolatedProfileRemoved": true,
+  "noExternalCalls": true,
+  "compiledModulesExecuted": false,
+  "fullFunctionalVerified": false
+}
