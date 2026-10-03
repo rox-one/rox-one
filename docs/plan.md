@@ -1068,3 +1068,6 @@ Zed final bounded qualification on current991c8b80b: 122 focused +323 Home/token
 ### Selected skill instructions custody recovery — 2026-10-04
 
 Owner recent_features; parent reviews and merges. Preserve merged1467 UI/API exactly, retain merged-source ancestor failure0/1 and legacy outside-link failure. Qualify48 storage/managed/custody cases,4 registered native RPC/workspace cases including zero body opens after revoke,7 actual SkillInfo owner/draft/OMP cases and runtime row keyboard/reset control plus full strict Electron types. Retain original fixture/default-timeout failures and exact hashes; reconcile docs additively, preserve all source branches. Installed platform/full release acceptance stays separate.
+
+
+Runtime renderer bounded qualification complete: actual19 browser cases and39 mounted navigation bodies, focused29/0 and locale/helper282/0, native parser/routing34/0, full Electron/WebUI types and current renderer build0. Source node pointer interception is repaired with normal clicks. Publish separate renderer PR on current main; root owns merge. Real producer dependency remains independently qualified. Evidence: integration-history/runtime-map-context-navigation-20261004.
