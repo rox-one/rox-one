@@ -357,11 +357,11 @@ export class OmpAgent extends BaseAgent {
   private pendingHostToolCalls = new Map<string, { cancelled: boolean }>();
   private pendingHostToolPermissions = new Map<string, (allowed: boolean) => void>();
   /**
-   * Fingerprint (name list) of the host tool set last acknowledged by
+   * Fingerprint of complete host tool definitions last acknowledged by
    * set_host_tools; null before the first successful registration. Used to
    * skip redundant set_host_tools re-sends between turns.
    */
-  private registeredHostToolNames: string | null = null;
+  private registeredHostToolFingerprint: string | null = null;
 
   /** Pool reference for convenience (from this.config.mcpPool, same as PiAgent). */
   private get mcpPool(): McpClientPool | undefined {
@@ -962,7 +962,7 @@ export class OmpAgent extends BaseAgent {
     // Bridge craft session tools (spawn_session, call_llm, browser_tool, …)
     // into OMP via set_host_tools; best effort — the session still works
     // without them, tools just won't be visible to the OMP model.
-    this.registerHostTools()
+    await this.registerHostTools()
       .catch((err) => this.debug(`set_host_tools failed: ${err instanceof Error ? err.message : err}`));
   }
 
@@ -1089,7 +1089,7 @@ export class OmpAgent extends BaseAgent {
     this.subprocessReadyResolve = null;
     this.subprocessReadyReject = null;
     this.readyAccepted = false;
-    this.registeredHostToolNames = null;
+    this.registeredHostToolFingerprint = null;
     // The child's exit event arrives later and is ignored as stale (it is no
     // longer the current child), so pending state must be failed HERE,
     // deterministically.
@@ -1155,7 +1155,7 @@ export class OmpAgent extends BaseAgent {
       this.subprocessReadyResolve = null;
       this.subprocessReadyReject = null;
     }
-    this.registeredHostToolNames = null;
+    this.registeredHostToolFingerprint = null;
 
     // Mid-turn crash after a successful startup: surface it. Exits after a
     // FAILED startup (timeout kill, abort kill, spawn error) are already
@@ -1513,7 +1513,7 @@ export class OmpAgent extends BaseAgent {
     const data = (await this.sendCommand('set_host_tools', { tools })) as
       | { toolNames?: string[] }
       | null;
-    this.registeredHostToolNames = unique.map((d) => d.name).join('');
+    this.registeredHostToolFingerprint = JSON.stringify(unique);
     this.debug(`Registered OMP host tools: ${(data?.toolNames ?? []).join(', ') || `(sent ${tools.length})`}`);
   }
 
@@ -1523,16 +1523,15 @@ export class OmpAgent extends BaseAgent {
    * setSourceServers / chat entry while `!this._isProcessing`.
    */
   private async refreshHostToolsFromPool(): Promise<void> {
-    if (!this.subprocess || this._isProcessing) return;
-    // First registration happens in spawnSubprocess; only refresh afterwards.
-    if (this.registeredHostToolNames === null) return;
+    if (!this.subprocess || !this.readyAccepted || this._isProcessing) return;
     const current = buildSessionToolDefs({
       mcpPool: this.mcpPool,
       includePoolProxyDefs: true,
       includeHostBashAlias: true,
       miniModel: this.config.miniModel,
+      mcpLens: false,
     });
-    if (current.map((d) => d.name).join('') === this.registeredHostToolNames) return;
+    if (JSON.stringify(current) === this.registeredHostToolFingerprint) return;
     try {
       await this.registerHostTools();
     } catch (err) {

@@ -127,11 +127,11 @@ export function isManagedLocalQdrantConfig(config: McpClientConfig): boolean {
   return !!localPath && !localPath.includes('${') && !config.env?.QDRANT_URL?.trim() && !config.env?.QDRANT_API_KEY?.trim();
 }
 
-function abortable<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
+function abortable<T>(work: Promise<T>, signal: AbortSignal, reason: () => unknown = () => new Error('MCP client is closed')): Promise<T> {
   return new Promise<T>((resolvePromise, reject) => {
     const abort = () => {
       signal.removeEventListener('abort', abort);
-      reject(new Error('MCP client is closed'));
+      reject(reason());
     };
     signal.addEventListener('abort', abort, { once: true });
     if (signal.aborted) abort();
@@ -461,7 +461,10 @@ export class CraftMcpClient {
 
   async listTools(): Promise<Tool[]> {
     await this.connect();
-    return this.connection.listTools();
+    if (this.controller.signal.aborted) throw new Error('MCP client is closed');
+    // A shared database connection may outlive this lease. Closing a chat or
+    // startup probe must still settle its own discovery wait immediately.
+    return abortable(this.connection.listTools(), this.controller.signal);
   }
 
   getServerInfo(): { name: string; version: string } | undefined {
@@ -473,8 +476,15 @@ export class CraftMcpClient {
   }
 
   async callTool(name: string, args: Record<string, unknown>, options?: PoolCallToolOptions): Promise<unknown> {
-    await this.connect();
-    return this.connection.callTool(name, args, options);
+    const signal = options?.signal
+      ? AbortSignal.any([this.controller.signal, options.signal])
+      : this.controller.signal;
+    signal.throwIfAborted();
+    await abortable(this.connect(), signal, () => signal.reason);
+    signal.throwIfAborted();
+    // Cancel this lease's request through MCP without closing the connection
+    // used by other leases. A caller's explicit cancellation has the same scope.
+    return abortable(this.connection.callTool(name, args, { ...options, signal }), signal, () => signal.reason);
   }
 
   async close(): Promise<void> {
