@@ -1,0 +1,22 @@
+{
+  "sourceCommit": "aa80de1b44d12a3fbbf425ce5aca8709617972ca",
+  "sourceDesktopHead": "2d93d2fcca9e0504668e2bc4c757decbe26b06eb",
+  "arch": "arm64",
+  "freeBytes": 152056868864,
+  "toolchain": {
+    "bun": {
+      "path": "/Users/t/Projects/rox-release-20261003/apps/electron/vendor/bun/bun",
+      "sha256": "e0c90ec15d33363e6b70713d56bc3b2c7585c17f40a0fe0f8fd9305901d4e233",
+      "version": "1.3.14"
+    },
+    "node": {
+      "path": "/opt/homebrew/opt/node@22/bin/node",
+      "sha256": "b6b6b6b6e02bd01534233cfa2a185b900d65ab214804e737691b5cca9873eae5",
+      "version": "v22.23.3"
+    }
+  },
+  "signing": false,
+  "publishing": false,
+  "foregroundUIAllowed": false,
+  "scope": "Local native arm64 unsigned package + isolated headless Pocket store probe; no production or provider sends"
+}
