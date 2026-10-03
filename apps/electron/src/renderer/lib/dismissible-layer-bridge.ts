@@ -17,6 +17,9 @@ export interface DismissibleLayerSnapshot {
 }
 
 export interface DismissibleLayerBridge {
+  /** Reactive snapshots are cached until a registration changes. */
+  getSnapshot?: () => readonly DismissibleLayerSnapshot[]
+  subscribe?: (listener: () => void) => () => void
   registerLayer: (layer: DismissibleLayerRegistration) => () => void
   hasOpenLayers: () => boolean
   getTopLayer: () => DismissibleLayerSnapshot | null
