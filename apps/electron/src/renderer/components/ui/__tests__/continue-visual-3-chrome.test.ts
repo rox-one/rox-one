@@ -8,6 +8,7 @@ const read = (path: string) => readFileSync(join(renderer, path), 'utf8')
 describe('continue-visual-3 leftover chrome', () => {
   it('routes notes empty, save, toolbar, and menu chrome through t()', () => {
     const notes = read('pages/NotesPage.tsx')
+    const notesNavigation = read('pages/notes/NotesNavigationSidebar.tsx')
     expect(notes).toContain("t('notes.empty.selectWorkspace')")
     expect(notes).toContain("t('notes.empty.noNote')")
     expect(notes).toContain("t('notes.empty.noNoteHint')")
@@ -17,8 +18,8 @@ describe('continue-visual-3 leftover chrome', () => {
     expect(notes).toContain("t('notes.toolbar.attachAsset')")
     expect(notes).toContain("t('notes.toolbar.exportPdf')")
     expect(notes).toContain("t('notes.save.autosaveHint')")
-    expect(notes).toContain("t('notes.menu.newInFolder')")
-    expect(notes).toContain("t('notes.menu.reveal')")
+    expect(notesNavigation).toContain("t('notes.menu.newInFolder')")
+    expect(notesNavigation).toContain("t('notes.menu.reveal')")
     expect(notes).not.toContain('Select a workspace to use notes.')
     expect(notes).not.toContain('No note selected')
     expect(notes).not.toContain('Reveal in Finder')

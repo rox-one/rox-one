@@ -1,0 +1,62 @@
+{
+  "source_pr": 1457,
+  "frozen_source": "b033150d220766f76b7b99be4a835d465a4f88d9",
+  "latest_source": "df46bf3ec03a4a88a63da4f29a5f8efad132d45a",
+  "later_source_production_change": false,
+  "root_ui_base": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+  "root_owns_integration": true,
+  "staged_paths": [
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts",
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-recovery.test.ts"
+  ],
+  "source_branch_preserved": true,
+  "disposition": "genuine_history_lease_gap_recovered_current_owner_pending_root_delivery",
+  "source_vs_current": "Original source late failed switches were fenced by action owner that changes on focus/remote rotation; local history requires independent workspace/history lease. Adapt current request sequence and requested slug/current unknown-workspace URL retention, rather than old source URL rewrite. Popbegin claims history before any readiness branch; local workspace change/ABA invalidates all old history leases.",
+  "negative": {
+    "mounted_current_before": {
+      "pass": 30,
+      "fail": 5,
+      "log": "/tmp/rox-branch-integration-20261003/pr1457-current-before-browser.log"
+    },
+    "actual_callbacks_before": {
+      "pass": 35,
+      "fail": 2,
+      "log": "/tmp/rox-branch-integration-20261003/pr1457-current-before-callbacks.log"
+    }
+  },
+  "qualified": {
+    "mounted_actual_provider": {
+      "pass": 35,
+      "fail": 0,
+      "log": "/tmp/rox-branch-integration-20261003/pr1457-current-after-browser.log",
+      "runner": "Node22 lifecycle adapter; original real React/Jotai/NavigationProvider imports and case assertions retained, controlled data/IPC ports only; unknown-workspace expectation adapted to intentional current unavailable URL retention"
+    },
+    "actual_callbacks": {
+      "pass": 37,
+      "fail": 0,
+      "assertions": 208,
+      "log": "/tmp/rox-branch-integration-20261003/pr1457-current-after-callbacks.log"
+    }
+  },
+  "types": {
+    "status": "passed",
+    "log": "/tmp/rox-branch-integration-20261003/pr1457-current-electron-types.log",
+    "exit_code": 0
+  },
+  "files": {
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": {
+      "sha256": "ce1bf1782f521168b7a022853ae05fb054b1cb0748ff09c099ef232014e25bf6",
+      "git_blob": "cc3511fb3414f8dc7401d89dbcfc21767d253888"
+    },
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": {
+      "sha256": "52e80029deefa79c59cc81974dfce39eb0f64af3eb6e4c545d9fcb0fd8b30dd2",
+      "git_blob": "3d75d4a5b5ef53a877017573e4a880ada2e1fa19"
+    },
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-recovery.test.ts": {
+      "sha256": "32b6c13a559417a1c96fd4e22c81dac46e2e8f177eb7254370f82948e2b4946d",
+      "git_blob": "06e4fe1d492fc5d2f48dc96fe28e0db37948bb50"
+    }
+  },
+  "limits": "Controlled Chromium application provider and extracted current callback tests; no installed/native/Windows/provider acceptance claim. Root commits and merges separately."
+}

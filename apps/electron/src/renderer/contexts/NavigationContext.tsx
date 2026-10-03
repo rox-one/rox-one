@@ -295,13 +295,10 @@ export function NavigationProvider({
   const requestWorkspaceSwitch = useCallback((slug: string): boolean => {
     if (!onSwitchWorkspaceBySlug) return false
     const request = ++workspaceSwitchRequestRef.current
-    const owner = navigationOwnerRef.current
-    const intent = owner.revision
     const reconcileRevision = ++historyReconcileRevisionRef.current
     const failed = () => {
       if (!historyMountedRef.current || request !== workspaceSwitchRequestRef.current
         || reconcileRevision !== historyReconcileRevisionRef.current
-        || !owner.active || navigationOwnerRef.current !== owner || owner.revision !== intent
         || requestedWorkspaceSlugRef.current !== slug) return
       isPopstateSwitchRef.current = false
       initialRouteRestoredRef.current = true
@@ -326,6 +323,13 @@ export function NavigationProvider({
   const lastSemanticHistoryKeyRef = useRef('')
   const historyReconcileRevisionRef = useRef(0)
   const historyMountedRef = useRef(false)
+
+  // History belongs to the local workspace. Remote ownership and panel focus
+  // rotate action custody, but cannot strand a pending history switch.
+  useLayoutEffect(() => {
+    ++historyReconcileRevisionRef.current
+    return () => { ++historyReconcileRevisionRef.current }
+  }, [workspaceId])
 
   const updateCanGoBackForward = useCallback(() => {
     setCanGoBack(historySeqRef.current > 0)
@@ -1076,6 +1080,11 @@ export function NavigationProvider({
     const handlePopState = (event: PopStateEvent) => {
       // A browser-history request supersedes pending create/prefill/send work.
       navigationOwnerRef.current.revision += 1
+      // Claim the history intent before readiness or workspace branching. A
+      // same-workspace request supersedes any pending foreign switch as well.
+      ++historyReconcileRevisionRef.current
+      isPopstateSwitchRef.current = false
+      suppressPushRef.current = true
       // Update sequence tracking
       const eventSeq = event.state?.seq ?? 0
       historySeqRef.current = eventSeq

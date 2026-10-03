@@ -27,7 +27,7 @@ function fixture(panels: PanelStackEntry[], focused: string, compact = false) {
  const calls: ViewRoute[] = []
  const draftAtom = atom(new Map([['chat-a', 'unsent text']]))
  const args = { useCallback: (fn: unknown) => fn, focusServicePanel: (id: AppNavDestinationId) => store.set(focusServicePanelAtom, id),
-  APP_NAV_DESTINATIONS_BY_ID, routes, isAutoCompact: compact, navigate: (route: ViewRoute) => calls.push(route) }
+  APP_NAV_DESTINATIONS_BY_ID, routes, isAutoCompact: compact, navState: { navigator: 'sessions' }, navigate: (route: ViewRoute) => calls.push(route) }
  const callbacks = new Function(...Object.keys(args), program)(...Object.values(args)) as Record<string, (...args: any[]) => void>
  return { store, callbacks, calls, draftAtom }
 }

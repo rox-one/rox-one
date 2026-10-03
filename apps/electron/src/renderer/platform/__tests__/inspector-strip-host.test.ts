@@ -9,7 +9,8 @@ const inspector = readFileSync(join(platformDir, 'InspectorHost.tsx'), 'utf8')
 describe('ship-rox-inspector-strip-host', () => {
   it('keeps InspectorHost mounted when R-collapsed even if visible/chrome flags are off', () => {
     expect(host).toContain('inspectorChromeCollapsedAtom')
-    expect(host).toContain('(chrome.showInspector || inspectorVisible || chromeCollapsed) && <InspectorHost />')
+    expect(host).toContain('<RetainedSurface visible={!inspectorSuppressed && (chrome.showInspector || inspectorVisible || chromeCollapsed)}>')
+    expect(host).toContain('<InspectorHost />')
     expect(host).not.toContain('(chrome.showInspector || inspectorVisible) && <InspectorHost />')
   })
 
