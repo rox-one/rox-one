@@ -93,5 +93,16 @@
       "current Skills OMP selection/reset controls retained with4px theme tokens",
       "current Runtime collector, Notes parent classification and native launch fixes integrated"
     ]
+  },
+  "external_route_1412_union": {
+    "qualified_revision": "8bd8334d43ef927e394478de48651b669ecd5849",
+    "main": "f058d638e227e57f4aa046e1caedd281ff31ea9c",
+    "route_and_sash_tests": {
+      "pass": 502,
+      "fail": 0,
+      "assertions": 2380
+    },
+    "full_strict_electron_exit": 0,
+    "initial_500_pass_2_fail_retained": "frozen IPC channel list missed the externally merged skills:getDetails; add exact declared channel, retain sorted-equality/count/duplicate assertions"
   }
 }

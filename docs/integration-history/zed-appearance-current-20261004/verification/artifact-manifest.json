@@ -143,5 +143,20 @@
     "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-final-merged-electron-types.log.gz",
     "original_bytes": 0,
     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-after-external-route-merge-controls.log.gz",
+    "original_bytes": 55209,
+    "sha256": "efc857b4893a5b9e9ff01f9dd0dc08f675785e8b9f2e10c12e702151e13cd44c"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-after-external-route-merge-controls-qualified.log.gz",
+    "original_bytes": 53769,
+    "sha256": "e38f01114ed23683b30b07695c730bb93cbe4a92b76a11d16ccfbbdeba056dcf"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-after-external-route-merge-types.log.gz",
+    "original_bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   }
 ]
