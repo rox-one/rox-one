@@ -2,10 +2,17 @@ import { readFileSync } from 'node:fs'
 
 import {
   AwsSharedProfileImporter,
+  createAwsCredentialProcessRun,
+  createDockerCredentialGet,
+  createKeychainGet,
+  createKeychainList,
+  createSshAgentList,
   DockerCredentialHelperImporter,
   GoogleAdcImporter,
   KeychainImporter,
   SshAgentImporter,
+  type AwsCredentialProcessRun,
+  type DockerCredentialHelperGet,
   type InProcessCredentialBroker,
   type KeychainGet,
   type KeychainList,
@@ -15,6 +22,7 @@ import {
 import type { CredentialRefId } from '@rox/core/platform'
 
 import type { ConnectionRecord, WorkGraphKernel } from './index'
+import type { HostImportRunners } from './host-import-runners'
 
 export interface LocalImportPreview {
   readonly candidateId: string
@@ -58,6 +66,7 @@ async function commitConnection(input: {
 export async function previewDockerHelperImport(input: {
   readonly configPath: string
   readonly provider: LocalFileSecretProvider
+  readonly runners?: HostImportRunners
 }): Promise<readonly LocalImportPreview[]> {
   const importer = new DockerCredentialHelperImporter({
     configText: readText(input.configPath),
@@ -68,8 +77,10 @@ export async function previewDockerHelperImport(input: {
 
 export async function commitDockerHelperImport(input: {
   readonly configPath: string
+  readonly get?: DockerCredentialHelperGet
   readonly candidateId: string
   readonly provider: LocalFileSecretProvider
+  readonly runners?: HostImportRunners
   readonly kernel: Pick<WorkGraphKernel, 'createConnection'>
   readonly workspaceId: string
   readonly requestedBy: string
@@ -78,6 +89,7 @@ export async function commitDockerHelperImport(input: {
   const importer = new DockerCredentialHelperImporter({
     configText: readText(input.configPath),
     provider: input.provider,
+    get: input.get ?? createDockerCredentialGet(input.runners?.docker),
   })
   await importer.discover()
   const committed = await importer.commit({
@@ -101,6 +113,7 @@ export async function previewAwsProfileImport(input: {
   readonly credentialsPath: string
   readonly configPath: string
   readonly provider: LocalFileSecretProvider
+  readonly runners?: HostImportRunners
 }): Promise<readonly LocalImportPreview[]> {
   const importer = new AwsSharedProfileImporter({
     credentialsText: input.credentialsPath ? readText(input.credentialsPath) : '',
@@ -112,9 +125,11 @@ export async function previewAwsProfileImport(input: {
 
 export async function commitAwsProfileImport(input: {
   readonly credentialsPath: string
+  readonly run?: AwsCredentialProcessRun
   readonly configPath: string
   readonly candidateId: string
   readonly provider: LocalFileSecretProvider
+  readonly runners?: HostImportRunners
   readonly kernel: Pick<WorkGraphKernel, 'createConnection'>
   readonly workspaceId: string
   readonly requestedBy: string
@@ -123,6 +138,7 @@ export async function commitAwsProfileImport(input: {
     credentialsText: input.credentialsPath ? readText(input.credentialsPath) : '',
     configText: input.configPath ? readText(input.configPath) : '',
     provider: input.provider,
+    run: input.run ?? createAwsCredentialProcessRun(input.runners?.aws),
   })
   await importer.discover()
   const committed = await importer.commit({
@@ -185,13 +201,14 @@ export async function commitAdcImport(input: {
 
 export async function previewKeychainImport(input: {
   readonly provider: LocalFileSecretProvider
+  readonly runners?: HostImportRunners
   readonly list?: KeychainList
   readonly get?: KeychainGet
 }): Promise<readonly LocalImportPreview[]> {
   const importer = new KeychainImporter({
     provider: input.provider,
-    list: input.list ?? (() => []),
-    get: input.get ?? (() => ({})),
+    list: input.list ?? createKeychainList(input.runners?.keychainList),
+    get: () => ({}),
   })
   return previewsFrom(() => importer.discover(), (id) => importer.preview({ candidateId: id }))
 }
@@ -199,6 +216,7 @@ export async function previewKeychainImport(input: {
 export async function commitKeychainImport(input: {
   readonly candidateId: string
   readonly provider: LocalFileSecretProvider
+  readonly runners?: HostImportRunners
   readonly kernel: Pick<WorkGraphKernel, 'createConnection'>
   readonly workspaceId: string
   readonly requestedBy: string
@@ -207,8 +225,8 @@ export async function commitKeychainImport(input: {
 }): Promise<ConnectionRecord> {
   const importer = new KeychainImporter({
     provider: input.provider,
-    list: input.list ?? (() => []),
-    get: input.get ?? (() => ({})),
+    list: input.list ?? createKeychainList(input.runners?.keychainList),
+    get: input.get ?? createKeychainGet(input.runners?.keychainGet),
   })
   await importer.discover()
   const committed = await importer.commit({
@@ -230,11 +248,12 @@ export async function commitKeychainImport(input: {
 
 export async function previewSshAgentImport(input: {
   readonly provider: LocalFileSecretProvider
+  readonly runners?: HostImportRunners
   readonly list?: SshAgentList
 }): Promise<readonly LocalImportPreview[]> {
   const importer = new SshAgentImporter({
     provider: input.provider,
-    list: input.list ?? (() => []),
+    list: input.list ?? createSshAgentList(input.runners?.sshAgentList),
   })
   return previewsFrom(() => importer.discover(), (id) => importer.preview({ candidateId: id }))
 }
@@ -242,6 +261,7 @@ export async function previewSshAgentImport(input: {
 export async function commitSshAgentImport(input: {
   readonly candidateId: string
   readonly provider: LocalFileSecretProvider
+  readonly runners?: HostImportRunners
   readonly kernel: Pick<WorkGraphKernel, 'createConnection'>
   readonly workspaceId: string
   readonly requestedBy: string
@@ -249,7 +269,7 @@ export async function commitSshAgentImport(input: {
 }): Promise<ConnectionRecord> {
   const importer = new SshAgentImporter({
     provider: input.provider,
-    list: input.list ?? (() => []),
+    list: input.list ?? createSshAgentList(input.runners?.sshAgentList),
   })
   await importer.discover()
   const committed = await importer.commit({
