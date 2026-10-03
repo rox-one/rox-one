@@ -11,6 +11,7 @@ import { createDescriptorResolver, FileDescriptorStore, type ContentOwner, type 
 import { MarkdownCommitStore, MarkdownChangedDeliveryError, markdownRevision, type MarkdownChangedEvent, type NativeMarkdownChange } from '../../docs/markdown-commit.ts'
 import { createNativeBlockTreeService } from '../../docs/block-tree-service.ts'
 import { decodeMarkdownCommitCommand, MarkdownCommitError } from '@rox/core/docs'
+import { readNoteTarget } from './note-read-error.ts'
 
 export interface NativeContentPorts {
   /** Native authority owns document bytes; the legacy Markdown writer is never used. */
@@ -88,22 +89,25 @@ export function registerContentHandlers(server: RpcServer, ports: NativeContentP
       async authorize({ context: trusted, ref, action }) {
         if (trusted.actorPrincipalId !== actorPrincipalId || ref.workspaceId !== workspaceId || ref.accountNamespace
           || ports.notesRoot(workspaceId) !== configuredRoot || !ports.ownsWindow(context)) return { allowed: false, policyRevision: 'native-v1' }
-        try {
-          const { id } = parseRox2EntityId(ref.entityId)
-          if (id.includes('\\') || id.includes('\0') || id.split('/').some(part => !part || part === '.' || part === '..') || isImportProvenancedRelativePath(id) || id.startsWith('.rox-docs/')) return { allowed: false, policyRevision: 'native-v1' }
-          const root = await realpath(notesRoot)
-          const candidate = resolve(root, `${id}.md`)
-          if (!candidate.startsWith(root + sep) || await realpath(candidate) !== candidate) return { allowed: false, policyRevision: 'native-v1' }
-          await access(candidate, constants.R_OK)
-          const canWrite = await access(candidate, constants.W_OK).then(() => true, () => false)
-          return { allowed: action === 'read' || canWrite, canWrite, policyRevision: 'native-v1' }
-        } catch { return { allowed: false, policyRevision: 'native-v1' } }
+        const { id } = parseRox2EntityId(ref.entityId)
+        if (id.includes('\\') || id.includes('\0') || id.split('/').some(part => !part || part === '.' || part === '..') || isImportProvenancedRelativePath(id) || id.startsWith('.rox-docs/')) return { allowed: false, policyRevision: 'native-v1' }
+        const root = await realpath(notesRoot)
+        const candidate = resolve(root, `${id}.md`)
+        if (!candidate.startsWith(root + sep) || await readNoteTarget(root, candidate, () => realpath(candidate)) !== candidate) return { allowed: false, policyRevision: 'native-v1' }
+        await readNoteTarget(root, candidate, () => access(candidate, constants.R_OK))
+        const canWrite = await readNoteTarget(root, candidate, () => access(candidate, constants.W_OK)).then(() => true, error => {
+          // A write-capability failure must not prevent an authorized read.
+          // Structured absence and authority failures remain strict.
+          if (error instanceof CodedError) throw error
+          return false
+        })
+        return { allowed: action === 'read' || canWrite, canWrite, policyRevision: 'native-v1' }
       },
     }
     const safeRead = async (noteId: string): Promise<NoteDocument> => {
       await assertSource()
       const ref = { workspaceId, entityId: `note:${noteId}` }
-      const allowed = await policy.authorize({ context: { actorPrincipalId }, ref, action: 'read' })
+      const allowed = await Promise.resolve(policy.authorize({ context: { actorPrincipalId }, ref, action: 'read' })).finally(assertSource)
       if (!allowed.allowed) throw new CodedError('AUTH_FAILED', 'Document access denied')
       const note = await ports.readNote(workspaceId, noteId, notesRoot)
       await assertSource()
