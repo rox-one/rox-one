@@ -11,7 +11,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import type { FolderSourceConfig } from './types.ts';
 import { toPortablePath } from '../utils/paths.ts';
-import { ensureLocalNotesSource } from './builtin-sources.ts';
+import { BUILTIN_SOURCE_SLUGS, ensureLocalNotesSource } from './builtin-sources.ts';
 
 export const DEFAULT_ENABLED_LOCAL_SOURCE_SLUGS = [
   'notes',
@@ -29,6 +29,7 @@ export const DEFAULT_ENABLED_MCP_SOURCE_SLUGS = ['craft-agents-docs'] as const;
 export const DEFAULT_ENABLED_SOURCE_SLUGS = [
   ...DEFAULT_ENABLED_LOCAL_SOURCE_SLUGS,
   ...DEFAULT_ENABLED_MCP_SOURCE_SLUGS,
+  ...BUILTIN_SOURCE_SLUGS,
 ] as const;
 
 export function collectDefaultEnabledSourceSlugs(): string[] {

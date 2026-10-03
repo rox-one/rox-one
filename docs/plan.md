@@ -1,3 +1,19 @@
+## Golden Gate device diagnostics recovery plan — 2026-10-03
+
+1. Historical scout identified exact source revision and runtime files absent from main; integration worker audited the diagnostic dependency closure and recorded source hashes.
+2. Recover the 13 source modules/tests, localized keys and minimal TopBar/main/preload wiring, preserving current shell behavior.
+3. Cover arbitrary command/path/sender denial, native cancellation/replacement, bounded/redacted logs including links/FIFOs, browser closed cost and open/tab/close behavior.
+4. Run targeted tests, complete package types and WebUI/Electron main/preload/renderer builds; publish a separate PR after main/release reconciliation. Lead owns independent review and serial main merge; all original branches remain.
+5. Recover remaining panel/native/request/task clusters in coherent subsequent slices with actual callers and behavior evidence.
+
+Integration with current main `d8c92f96363f47e0b72e7296a36aa23a9227a691` preserves its OMP 18.4.12 private native fork and stored-prefix recovery, MCP runtime, Compound additions and UI-001 detail/storage validation. The UI user-message anchor feeds the runtime inclusive native fork. Module imports and fixture aliases use the renamed `@rox` workspace packages; protocol identifiers and legacy migration strings remain unchanged.
+## Session UX branch integration plan — 2026-10-03
+
+1. PR scout owns exhaustive fresh open PR/check/head inventory, retained in `/tmp/rox-branch-integration-20261003/pr-scout.json`; complete.
+2. UI worker reproduces exact #1391 fixture typing and renderer import failures; original logs retained under that task directory; complete.
+3. UI worker applies only runtime-checked fixture narrowing, valid attachment type and direct pure public catalog imports; root separately owns release runtime/security repairs.
+4. UI worker repairs the reproduced credential/ASR check/read races and 22 missing locale keys, covers malicious links/replacements/growth and caller upload/publication refusal, then runs complete package type checks, validate:ci, targeted native behavior tests and browser builds; publishes an isolated candidate commit and reports exact receipt.
+5. Root owns serial release/session reconciliation, security disposition and authorized main integration; no branch deletion. Product/provider/hardware acceptance retains its existing pending state.
 ## Golden Gate native surface ownership recovery plan — 2026-10-03
 
 1. Audit actual missing source closure and current callers. Preserve current deliberate SiYuan removal and cookie consent behavior; exclude historical shell replacements.

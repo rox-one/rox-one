@@ -93,7 +93,8 @@ export function normalizeVoicePrefs(raw: unknown, now: number = Date.now()): Voi
     localArchivePolicy: isLocalArchivePolicy(obj.localArchivePolicy)
       ? obj.localArchivePolicy
       : (explicitLocal ? 'none' : base.localArchivePolicy),
-    asrModelId: typeof obj.asrModelId === 'string' ? obj.asrModelId : (explicitLocal ? 'whisper-large-v3-turbo' : base.asrModelId),
+    asrModelId: typeof obj.asrModelId === 'string' && !(sttEngine === 'cloud-rox' && obj.asrModelId === 'rocks-t1')
+      ? obj.asrModelId : (explicitLocal ? 'whisper-large-v3-turbo' : base.asrModelId),
     recognitionLanguage: asLanguage(obj.recognitionLanguage),
     timestamps: obj.timestamps === 'word' || obj.timestamps === 'none' || obj.timestamps === 'segment' ? obj.timestamps : 'segment',
     cloudAsrConsent: version >= 3 && obj.cloudAsrConsent === true,

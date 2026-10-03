@@ -263,7 +263,7 @@ export class SourceManager {
       if (status === 'untested' || status === 'local_disabled') {
         output += `\n\nThis source is awaiting setup or a supported local runtime. Its tools are unavailable until the requirement above is resolved.`;
         output += `\nTo fix: Read the source guide and complete the stated setup. Respect disabled local MCP settings.`;
-      } else if (authTool) {
+      } else if (status === 'needs_auth' && authTool) {
         output += `\n\nThis source requires re-authentication. The user may have revoked access or the token expired.`;
         output += `\nTo fix: Re-authenticate using ${authTool}.`;
       } else if (s.config.mcp?.transport === 'stdio') {

@@ -250,6 +250,8 @@ export interface StoredAttachment {
  * Runtime message type (includes transient fields like isStreaming)
  */
 export interface Message {
+  /** Server identity for optimistic messages; id remains stable for mounted UI. */
+  backendMessageId?: string;
   id: string;
   role: MessageRole;
   content: string;

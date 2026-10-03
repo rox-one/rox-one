@@ -37,12 +37,17 @@ export function RoxConnectStep({
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    if (codes?.userCode) {
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | undefined
+    setCopied(false)
+    if (codes?.userCode && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
       void navigator.clipboard.writeText(codes.userCode).then(() => {
+        if (cancelled) return
         setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-      })
+        timer = setTimeout(() => setCopied(false), 2000)
+      }).catch(() => { if (!cancelled) setCopied(false) })
     }
+    return () => { cancelled = true; if (timer) clearTimeout(timer) }
   }, [codes?.userCode])
 
   return (
@@ -97,6 +102,9 @@ export function RoxConnectStep({
                 <ExternalLink className="mr-2 size-4" />
                 {t('onboarding.roxConnect.openBrowser')}
               </Button>
+              <p className="select-all break-all rounded-lg border bg-background/70 p-3 text-center text-xs text-muted-foreground">
+                {codes.verificationUriComplete}
+              </p>
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <Spinner className="size-4" />
                 {t('onboarding.roxConnect.waiting')}
