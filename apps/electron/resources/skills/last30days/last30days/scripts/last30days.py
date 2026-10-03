@@ -322,6 +322,29 @@ def _ensure_output_directory(path: Path, *, private: bool) -> None:
         directory.chmod(0o700)
 
 
+def device_auth_public_summary(results: dict[str, object]) -> dict[str, object]:
+    """Project only public device-flow state; never log returned credentials/profile."""
+    status = results.get("status")
+    if status == "success":
+        public_status = "success"
+    elif status == "already_registered":
+        public_status = "already_registered"
+    elif status == "awaiting_authorization":
+        public_status = "awaiting_authorization"
+    elif status == "timeout":
+        public_status = "timeout"
+    else:
+        public_status = "error"
+    summary = {"status": public_status, "persisted": results.get("persisted") is True}
+    # User-facing device code/URL are needed to finish the browser grant. The
+    # private device_code, API key, token, profile and backend error details are omitted.
+    if public_status == "awaiting_authorization":
+        summary["user_code"] = results.get("user_code")
+        summary["verification_uri"] = results.get("verification_uri")
+        summary["clipboard_ok"] = results.get("clipboard_ok") is True
+    return summary
+
+
 def save_output(
     report: schema.Report,
     emit: str,
@@ -373,7 +396,7 @@ def save_output(
             fd = os.open(
                 candidate,
                 os.O_CREAT | os.O_EXCL | os.O_WRONLY,
-                0o600 if private_corpus else 0o644,
+                0o600,
             )
         except FileExistsError:
             continue
@@ -429,8 +452,12 @@ def save_rendered_output(
     fd = os.open(
         out_path,
         os.O_CREAT | os.O_TRUNC | os.O_WRONLY,
-        0o600 if private else 0o644,
+        0o600,
     )
+    if hasattr(os, "fchmod"):
+        os.fchmod(fd, 0o600)
+    else:  # Windows retains its native ACL and chmod behavior.
+        out_path.chmod(0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as handle:
         handle.write(rendered_content)
     if private:
@@ -1683,7 +1710,7 @@ def _save_discovery_output(
     encoded = rendered.encode("utf-8")
     for candidate in candidates:
         try:
-            fd = os.open(candidate, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+            fd = os.open(candidate, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         except FileExistsError:
             continue
         with os.fdopen(fd, "wb") as output:
@@ -3302,8 +3329,7 @@ def _main(
             else:
                 results = setup_wizard.run_full_device_auth()
             # Persist the returned key so the paid sources activate on the next
-            # run, and mask it in stdout so the secret never lands in the host
-            # model's captured Bash output.
+            # run. Project only public status into captured stdout.
             api_key = results.get("api_key")
             status = results.get("status")
             if api_key:
@@ -3313,12 +3339,9 @@ def _main(
                     results["persisted"] = True  # key was already saved
                 else:
                     results.setdefault("persisted", False)
-                # Mask for EVERY status that carries a key, not just success, so
-                # the raw secret never reaches the host model's captured stdout.
-                results["api_key"] = setup_wizard.mask_api_key(api_key)
             else:
                 results["persisted"] = False
-            print(json.dumps(results))
+            print(json.dumps(device_auth_public_summary(results)))
             return 0
         sys.stderr.write("Running auto-setup...\n")
         results = setup_wizard.run_auto_setup(

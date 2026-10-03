@@ -8,7 +8,7 @@ Flow:
     1. Starts device code request
     2. Shows user code + opens GitHub auth URL in browser
     3. Polls for token until you complete auth
-    4. Fetches your profile and prints your API key
+    4. Fetches your profile and saves the API key privately
 """
 
 import json
@@ -52,7 +52,7 @@ def main():
     expires_in = code_resp.get("expires_in", 900)
 
     if not device_code or not user_code:
-        print(f"Unexpected response: {json.dumps(code_resp, indent=2)}")
+        print("Device service returned an incomplete authorization response.")
         sys.exit(1)
 
     print(f"Your code:  {user_code}")
@@ -101,27 +101,27 @@ def main():
         print("\n\nTimed out waiting for authorization.")
         sys.exit(1)
 
-    print(f"\n\nAuthorized! Access token: {access_token[:12]}...\n")
+    print("\n\nAuthorized. Fetching protected profile.\n")
 
     # Step 3: Fetch profile
     print("Fetching profile...")
     try:
         profile = _get(f"{BASE}/profile", access_token)
     except (HTTPError, URLError) as e:
-        print(f"Failed to fetch profile: {e}")
-        print(f"(access_token was: {access_token})")
+        print("Failed to fetch protected profile; retry the authorization flow.")
         sys.exit(1)
 
-    print(f"\nProfile response:\n{json.dumps(profile, indent=2)}\n")
 
     api_key = profile.get("api_key")
     if api_key:
-        print("=" * 50)
-        print(f"Your ScrapeCreators API key: {api_key}")
-        print("=" * 50)
-        print(f"\nTo use it: echo 'SCRAPECREATORS_API_KEY={api_key}' >> ~/.config/last30days/.env")
+        from lib import env, setup_wizard
+        if setup_wizard.write_api_key(env.CONFIG_FILE, api_key):
+            print("API key saved in the private last30days configuration; credentials are not printed.")
+        else:
+            print("Could not save the API key; use the last30days setup command.")
     else:
-        print("No api_key in profile response. Full response printed above.")
+        print("Protected profile did not contain an API key.")
+
 
 
 if __name__ == "__main__":

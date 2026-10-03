@@ -1,0 +1,17 @@
+{
+  "author": "ROX",
+  "upstream": "https://github.com/garrytan/gstack",
+  "upstreamCommit": "f30b7b788a210d217ea3125bf3001b29cbc2a463",
+  "upstreamLicense": "MIT",
+  "securityPatches": [
+    {
+      "pack": "gstack",
+      "path": "gstack/gstack/bin/gstack-detach",
+      "alerts": [
+        551
+      ],
+      "change": "Create detached worker logs with 0600 and tighten existing logs through the opened descriptor.",
+      "sha256": "430659a0217599de0c8cc4f75ca56eec947f5b542924958551e0bf109a382116"
+    }
+  ]
+}

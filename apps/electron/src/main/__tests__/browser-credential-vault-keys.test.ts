@@ -138,5 +138,5 @@ test('never decrypts a valid wrapped key reached through a substituted symlink',
   f.safeStorage.decryptString = value => { decryptions++; return decrypt(value) }
   expect(f.store.readKey(reference)).toBeNull()
   expect(decryptions).toBe(0)
-  expect(readFileSync(outside)).toEqual(wrapped)
+  expect(readFileSync(outside).equals(wrapped)).toBe(true)
 })

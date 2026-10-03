@@ -222,7 +222,7 @@ def _save_output(topic: str, content: str, emit: str, save_dir: str, suffix: str
     encoded = content.encode("utf-8")
     for candidate in candidates:
         try:
-            fd = os.open(candidate, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+            fd = os.open(candidate, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         except FileExistsError:
             continue
         with os.fdopen(fd, "wb") as f:

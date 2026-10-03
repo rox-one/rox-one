@@ -58,6 +58,16 @@ def run_scoped_log(label):
     return os.path.join(base, f"{label}-{slug}-{branch}-{stamp}-{os.getpid()}.log")
 
 
+def open_private_log(path):
+    fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+    try:
+        os.fchmod(fd, 0o600)
+        return fd
+    except BaseException:
+        os.close(fd)
+        raise
+
+
 def log_line(path, msg):
     with open(path, "ab", buffering=0) as f:
         f.write((msg + "\n").encode("utf-8", "replace"))
@@ -155,7 +165,7 @@ def main():
 
     log = args.log or run_scoped_log(args.label)
     os.makedirs(os.path.dirname(log) or ".", exist_ok=True)
-    open(log, "ab").close()
+    os.close(open_private_log(log))
 
     # Detach: fork so the launching shell returns immediately, then setsid in the
     # child to escape the harness's process group / controlling terminal.
@@ -167,7 +177,7 @@ def main():
     os.setsid()
     devnull = os.open(os.devnull, os.O_RDWR)
     os.dup2(devnull, 0)
-    lf = os.open(log, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+    lf = open_private_log(log)
     os.dup2(lf, 1)
     os.dup2(lf, 2)
     try:
