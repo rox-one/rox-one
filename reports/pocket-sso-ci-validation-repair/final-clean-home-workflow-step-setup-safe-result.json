@@ -1,0 +1,34 @@
+{
+  "exitCode": 0,
+  "command": [
+    "/Users/t/Projects/rox-release-20261003/apps/electron/vendor/bun/bun",
+    "test",
+    "--timeout",
+    "180000",
+    "packages/shared/src/auth/__tests__/rox-account-authority.test.ts",
+    "packages/shared/src/auth/__tests__/rox-pocket-client.test.ts",
+    "apps/electron/src/main/__tests__/pocket-account-store.test.ts",
+    "apps/electron/src/main/__tests__/pocket-account-store-durable-write.test.ts",
+    "scripts/probes/pocket-vault-diagnostics.test.ts",
+    "packages/server-core/src/handlers/rpc/__tests__/pocket-core-registry.test.ts",
+    "packages/server-core/src/sessions/pocket-helper-owner.test.ts",
+    "packages/server-core/src/sessions/pocket-session-resource-owner.test.ts",
+    "packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts",
+    "packages/shared/src/agent/__tests__/omp-public-runtime.test.ts"
+  ],
+  "exactWorkflowStep": true,
+  "files": 10,
+  "ownedRoot": "/tmp/rox-pocket-ci-owned-am9o4ccc",
+  "home": "/tmp/rox-pocket-ci-owned-am9o4ccc/home",
+  "config": "/tmp/rox-pocket-ci-owned-am9o4ccc/config",
+  "ambientHomeModelsPresentAfter": false,
+  "keychainSeam": {
+    "command": "security",
+    "exitCode": 1,
+    "sha256": "84526eedf87c3c67e22a959f06f21fb23bc746ecdb7d25d49bd7b7678d4aae09",
+    "actualEncryptedFileBackend": true
+  },
+  "startedAt": "2026-10-03T23:14:39.648589+00:00",
+  "completedAt": "2026-10-03T23:14:49.659662+00:00",
+  "bunSha256": "e0c90ec15d33363e6b70713d56bc3b2c7585c17f40a0fe0f8fd9305901d4e233"
+}

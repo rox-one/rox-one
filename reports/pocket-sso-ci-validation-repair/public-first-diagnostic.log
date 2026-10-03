@@ -1,0 +1,65 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/agent/__tests__/omp-public-runtime.test.ts:
+[public-first-debug] [omp] [extractSkillPaths] Available skills: 
+[public-first-debug] [omp] [extractSkillPaths] Parsed skills: []
+[public-first-debug] [omp] [extractSkillPaths] Clean message: "default-model fixture turn...", skills: 0
+[public-first-debug] [omp] Spawning OMP subprocess: /var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/omp-fake-G3Y1qq/fake-omp --mode rpc --allow-home --session-dir /var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/omp-fake-G3Y1qq/workspace/sessions/session-test/omp --append-system-prompt You are running inside the ROX desktop app as an embedded agent backend.
+Public model IDs are rox/r1-max, rox/explore, rox/standard, rox/max, rox/vision, rox/fast.
+Do not request raw provider or internal model names.
+In addition to your built-in tools, ROX exposes host tools (mcp__session__*):
+- mcp__session__spawn_session — create independent child sessions that run in parallel,
+  optionally with their own model, connection, sources and an initial prompt.
+  Use it to delegate subtasks instead of doing everything yourself.
+  If you omit model on a ROX parent, the child uses rox/fast (the cheap public
+  subagent endpoint). Pass model explicitly to keep another public endpoint.
+- mcp__session__call_llm — one-shot call to a fast auxiliary LLM (a default mini
+  model is preconfigured; omit the model parameter to use it).
+- mcp__session__browser_tool — control browser panes of the desktop app
+  (open windows, navigate, click, evaluate, screenshots).
+Session state (tags, statuses, user preferences) is managed by ROX — use the
+mcp__session__* session tools for it instead of editing files directly.
+Your transcript is mirrored by both ROX and OMP (OMP writes its session file
+inside the ROX session folder); never edit or delete session files.
+When ROX is in "Выполнение" (Execute / allow-all) mode, tools run without
+prompts; otherwise the user confirms sensitive calls via a dialog and a denial
+is final for that call.
+Safe http/https links belong in the host browser pane via mcp__session__browser_tool.
+Do not force every URL open. Auth callbacks, deep links, file: URLs and unsafe
+schemes stay outside that pane (OS handler or blocked).
+## Use the available integrations
+
+Use connected MCP sources whenever their capabilities are relevant to the user's task. Check the current source state and live tool definitions, read the source's guide before its first tool call, and call the exact available tool with its declared schema. A configured source is not proof that its tools are working. Never invent tool names or claim that disabled, unauthenticated, unsupported or failed sources are available. If a relevant integration needs setup, explain the missing requirement and use an available alternative when possible.
+
+Choose the integration that fits the task:
+- Firecrawl: web search, crawling, page extraction and structured web data.
+- DeepWiki: understanding public repositories, their architecture and repository documentation.
+- Context7: current library and framework documentation, version-specific API examples and implementation guidance. Consult it when external API details matter to a coding task.
+- CodeGraph: repository structure, symbol relationships, dependencies and the impact of code changes. Use the connected project's graph and verify important findings against the actual files.
+- QMD: keyword and semantic search over indexed local Markdown documents. Use the relevant configured collections to retrieve project notes, documentation and other local knowledge before answering questions about them.
+- Weaviate: retrieve knowledge from existing connected collections and store information when the task calls for it. Use the collection schema and scope exposed by the actual tools.
+- Qdrant: retrieve relevant records from connected vector collections and store records when requested or required by the configured workflow. Use the available collection, payload and embedding configuration rather than assuming a schema.
+- Mem0: retrieve relevant long-term memories, such as prior preferences and decisions, and retain durable information when the user requests it or an authorized memory workflow calls for it. Respect explicit preferences about what to remember, what not to retain and what to delete.
+- Playwright: browser interaction, screenshots and verification of web application behavior.
+- Telegram: relevant chat history and messaging workflows. Send messages only when the user has authorized sending them; permission to read is not permission to send.
+- everything-mcp: fast Windows filename/path search and file metadata through Voidtools Everything. It needs a supported Windows host with Everything running; inspect the live tools for exact search options.
+- windows-commander-mcp: Windows file, process and system tasks covered by its tools.
+- Windows-MCP: Windows desktop interaction and UI automation covered by its tools. Use Windows integrations only on a supported, connected Windows host.
+
+Choose knowledge and memory stores from the actual connected sources, the task and the user's preferred destination. Search the relevant store when prior knowledge or memory can improve the answer; a missing index or collection is not evidence that retrieval succeeded. Keep records in the configured user/project scope. Do not copy the same information into QMD, Weaviate, Qdrant and Mem0 by default: use the appropriate existing destination, and write to multiple stores only when the user requests it or the configured workflow requires it. If the user asks not to retain information or names a preferred memory store, follow that preference.
+
+Superpowers and Understand Anything are skills/plugins, not MCP servers. When their installed skills fit the task, read their SKILL.md and apply them: Superpowers for development planning, debugging and verification; Understand Anything for codebase understanding and its knowledge graph. Discover them in the actual skill list and do not invent MCP tools for them. User instructions and existing authorization take precedence over skill defaults. (cwd=/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/omp-fake-G3Y1qq/workspace)
+[public-first-debug] [omp] OMP ready (protocol v1)
+[public-first-debug] [omp] Registered OMP host tools: mcp__session__SubmitPlan, mcp__session__config_validate, mcp__session__skill_validate, mcp__session__mermaid_validate, mcp__session__source_test, mcp__session__source_oauth_trigger, mcp__session__source_google_oauth_trigger, mcp__session__source_slack_oauth_trigger, mcp__session__source_microsoft_oauth_trigger, mcp__session__source_credential_prompt, mcp__session__update_user_preferences, mcp__session__transform_data, mcp__session__script_sandbox, mcp__session__bash, mcp__session__render_template, mcp__session__call_llm, mcp__session__spawn_session, mcp__session__github_user, mcp__session__browser_tool, mcp__session__set_session_labels, mcp__session__set_session_status, mcp__session__archive_session, mcp__session__create_task, mcp__session__list_pages, mcp__session__get_page, mcp__session__create_page, mcp__session__update_page, mcp__session__write_page_data, mcp__session__delete_page, mcp__session__get_session_info, mcp__session__list_sessions, mcp__session__list_background_tasks, mcp__session__send_agent_message, mcp__session__agent_teams, mcp__session__list_messaging_channels, mcp__session__unbind_messaging_channel, mcp__session__knowledge_search, mcp__session__knowledge_read, mcp__session__knowledge_get_backlinks, mcp__session__knowledge_propose, bash
+[public-first-debug] [omp] OMP model verified as rox/rox/r1-max
+[public-first-events] [{"type":"thinking_delta","text":"let me think","turnId":"omp-t-1"},{"type":"thinking_complete","text":"let me think","turnId":"omp-t-1"},{"type":"text_delta","text":"Hello","turnId":"omp-m-2"},{"type":"text_delta","text":" world","turnId":"omp-m-2"},{"type":"text_complete","text":"Hello world","isIntermediate":false,"turnId":"omp-m-2"},{"type":"omp_turn_anchor","turnId":"omp-m-2","entryId":"bbbb2222"},{"type":"complete","usage":{"inputTokens":10,"outputTokens":5,"cacheReadTokens":0,"cacheCreationTokens":0,"costUsd":0.001}}]
+[public-first-debug] [omp] OmpAgent destroyed
+[public-first-debug] [omp] Post-turn get_state failed: OmpAgent destroyed
+[public-first-debug] [omp] Ignoring exit from stale OMP subprocess (code=null, signal=SIGTERM)
+(pass) actual OmpAgent private public catalog lifecycle > confirms the R1 Max provider/model before executing a new default-model turn [55765.45ms]
+
+ 1 pass
+ 8 filtered out
+ 0 fail
+ 3 expect() calls
+Ran 1 test across 1 file. [56.61s]

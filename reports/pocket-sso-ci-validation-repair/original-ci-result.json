@@ -1,0 +1,28 @@
+{
+  "repository": "rox-one/rox-one",
+  "runId": 37150994181,
+  "jobId": 111284688231,
+  "url": "https://github.com/rox-one/rox-one/actions/runs/37150994181/job/111284688231",
+  "sourceRevision": "aa80de1b44d12a3fbbf425ce5aca8709617972ca",
+  "runner": "macos-15",
+  "bun": "1.3.14",
+  "node": "24",
+  "failedStep": "Pocket account and execution ownership regressions",
+  "rawLog": {
+    "path": "/tmp/rox-pocket-ci-validate-111284688231.log",
+    "bytes": 43929,
+    "sha256": "d17b7d9d1391d39a18756a9206cf3724d16e6b35fcddc56423ab85fe81ff2fc8"
+  },
+  "excerptSourceLines": [
+    425,
+    524
+  ],
+  "result": {
+    "passed": 45,
+    "failed": 2,
+    "assertions": 244,
+    "files": 10,
+    "tests": 47
+  },
+  "publicRuntimePassed": 9
+}

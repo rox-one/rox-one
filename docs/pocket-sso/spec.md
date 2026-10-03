@@ -46,3 +46,5 @@ Namespace-aware disabled-feature website release precedes schema/email index cut
 Operational audit events correlate account/org/key/request IDs, source/outcome/time without secrets; separate from marketing consent.
 Done only after published Mac/Windows builds and live services pass the full flow with exact revision/image/artifact evidence. Partial proof remains partial.
 
+## Portable desktop regression fixtures
+Private/public OMP account-domain regressions must own their private provider catalog and temporary home/profile; an existing developer `~/.omp` is not a test prerequisite. Keep all credential, subprocess restart and stale-response assertions. Restore HOME/USERPROFILE and fake CLI environment on setup failure, and await children before normal cleanup. Local clean-home validation may explicitly model an unavailable OS keychain while exercising the actual encrypted-file backend; that receipt does not establish actual Keychain/DPAPI acceptance. Product/native proofs remain bound to aa80de1b44d12a3fbbf425ce5aca8709617972ca when only tests/docs change; a fresh release CI result is a separate gate.
