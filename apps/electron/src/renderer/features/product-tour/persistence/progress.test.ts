@@ -223,17 +223,94 @@ describe('real IndexedDB learning transactions', () => {
       const profile = window.learningTest.createLearningProfileRepository()
       const before = await profile.updatePreferences({ invitationsEnabled: true })
       localStorage.setItem('memory-onboarding', 'native-marker')
-      await repository.apply('a', tour, { kind: 'skip', stepId: 'first.send', stepVersion: 1, at: 1 })
-      await repository.apply('b', tour, { kind: 'skip', stepId: 'first.send', stepVersion: 1, at: 1 })
-      const reset = await repository.resetScope('a')
-      return { before, after: await profile.read(), reset, a: await repository.read('a', tour.id),
-        b: await repository.read('b', tour.id), marker: localStorage.getItem('memory-onboarding') }
+      if (before.status === 'failed') throw new Error('Expected durable profile')
+      const a = window.learningTest.createLearningScopeKey(before.value.clientProfileId, 'a')
+      const b = window.learningTest.createLearningScopeKey(before.value.clientProfileId, 'b')
+      const lease = await window.learningTest.createLeaseRepository().acquire(before.value.clientProfileId, 'reset-owner', Date.now())
+      if (!lease) throw new Error('Expected reset ownership')
+      const guard = { profileId: before.value.clientProfileId, lease }
+      await repository.apply(a, tour, { kind: 'skip', stepId: 'first.send', stepVersion: 1, at: 1 }, guard)
+      await repository.apply(b, tour, { kind: 'skip', stepId: 'first.send', stepVersion: 1, at: 1 }, guard)
+      const reset = await repository.resetScope(a, guard)
+      return { before, after: await profile.read(), reset, a: await repository.read(a, tour.id),
+        b: await repository.read(b, tour.id), marker: localStorage.getItem('memory-onboarding') }
     }, tour))
     expect(result.reset.status).toBe('saved')
     expect(result.a).toEqual({ status: 'saved', value: null })
     expect(result.b.status === 'saved' && result.b.value?.steps['first.send']?.skippedAt).toBe(1)
     expect(result.after).toEqual(result.before)
     expect(result.marker).toBe('native-marker')
+  })
+
+  test('scoped reset rejects a missing guard and another window owner without deleting milestones', async () => {
+    const result = await inLearningWindows(async (first, second) => {
+      const lease = await first.evaluate(async () => window.learningTest.createLeaseRepository().acquire('profile', 'active-window', 100))
+      if (!lease) throw new Error('Expected active owner')
+      await first.evaluate(async ({ tour, lease }) => window.learningTest.createProgressRepository({ now: () => 101 }).apply(
+        window.learningTest.createLearningScopeKey('profile', 'workspace'), tour,
+        { kind: 'evidence', stepId: 'first.send', stepVersion: 1, level: 'verified', at: 101 }, { profileId: 'profile', lease }), { tour, lease })
+      return second.evaluate(async ({ tour, lease }) => {
+        const repository = window.learningTest.createProgressRepository({ now: () => 102 })
+        const scope = window.learningTest.createLearningScopeKey('profile', 'workspace')
+        const rejected: boolean[] = []
+        for (const guard of [undefined, { profileId: 'profile', lease: { ...lease, ownerWindowId: 'other-window' } }]) {
+          try { await repository.resetScope(scope, guard); rejected.push(false) }
+          catch (error) { rejected.push(error instanceof window.learningTest.LearningLeaseLostError) }
+        }
+        return { rejected, progress: await repository.read(scope, tour.id), acquisition: await window.learningTest.createLeaseRepository().acquire('profile', 'other-window', 102) }
+      }, { tour, lease })
+    })
+    expect(result.rejected).toEqual([true, true])
+    expect(result.acquisition).toBeNull()
+    expect(result.progress.status === 'saved' && result.progress.value?.steps['first.send']?.verifiedAt).toBe(101)
+  })
+
+  test('reset checks the persisted fence atomically even when a stale window extends its local expiry', async () => {
+    const result = await inLearningWindows(async (first, second) => {
+      const old = await first.evaluate(async () => window.learningTest.createLeaseRepository().acquire('profile', 'old-owner', 100))
+      if (!old) throw new Error('Expected old owner')
+      const next = await second.evaluate(async expiresAt => window.learningTest.createLeaseRepository().acquire('profile', 'new-owner', expiresAt), old.expiresAt)
+      if (!next) throw new Error('Expected replacement owner')
+      await second.evaluate(async ({ tour, lease, now }) => window.learningTest.createProgressRepository({ now: () => now }).apply(
+        window.learningTest.createLearningScopeKey('profile', 'workspace'), tour,
+        { kind: 'evidence', stepId: 'first.result', stepVersion: 1, level: 'verified', at: now }, { profileId: 'profile', lease }),
+      { tour, lease: next, now: old.expiresAt + 1 })
+      return first.evaluate(async ({ tour, lease, now }) => {
+        const repository = window.learningTest.createProgressRepository({ now: () => now })
+        const scope = window.learningTest.createLearningScopeKey('profile', 'workspace')
+        let rejected = false
+        try { await repository.resetScope(scope, { profileId: 'profile', lease }) }
+        catch (error) { rejected = error instanceof window.learningTest.LearningLeaseLostError }
+        return { rejected, progress: await repository.read(scope, tour.id) }
+      }, { tour, lease: { ...old, expiresAt: next.expiresAt }, now: old.expiresAt + 2 })
+    })
+    expect(result.rejected).toBeTrue()
+    expect(result.progress.status).toBe('saved')
+    expect(result.progress.status === 'saved' && result.progress.value?.steps['first.result']?.verifiedAt).toBe(15_101)
+  })
+
+  test('memory-only reset never deletes a durable milestone and still requires a live realm lease', async () => {
+    const result = await inLearningBrowser(page => page.evaluate(async tour => {
+      const scope = window.learningTest.createLearningScopeKey('profile', 'workspace')
+      const durable = window.learningTest.createProgressRepository()
+      await durable.apply(scope, tour, { kind: 'evidence', stepId: 'first.send', stepVersion: 1, level: 'verified', at: 1 })
+      const leases = window.learningTest.createLeaseRepository({ indexedDB: null, allowMemoryOnlyLease: true })
+      const lease = await leases.acquire('profile', 'memory-owner', 100)
+      if (!lease) throw new Error('Expected explicit memory owner')
+      const repository = window.learningTest.createProgressRepository({ now: () => 101 })
+      const guard = { profileId: 'profile', lease, memoryOnly: true }
+      await repository.apply(scope, tour, { kind: 'skip', stepId: 'first.result', stepVersion: 1, at: 101 }, guard)
+      const reset = await repository.resetScope(scope, guard)
+      await leases.release('profile', lease)
+      let rejected = false
+      try { await repository.resetScope(scope, guard) }
+      catch (error) { rejected = error instanceof window.learningTest.LearningLeaseLostError }
+      return { reset, rejected, memory: await repository.read(scope, tour.id), durable: await durable.read(scope, tour.id) }
+    }, tour))
+    expect(result.reset.status).toBe('memory-only')
+    expect(result.rejected).toBeTrue()
+    expect(result.memory.status === 'memory-only' && result.memory.value).toBeNull()
+    expect(result.durable.status === 'saved' && result.durable.value?.steps['first.send']?.verifiedAt).toBe(1)
   })
 
   test('DATA-06 copy revision preserves evidence; semantic revision resets only changed step', async () => {
