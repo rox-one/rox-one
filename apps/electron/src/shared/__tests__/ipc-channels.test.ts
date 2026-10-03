@@ -329,6 +329,7 @@ const EXPECTED_CHANNELS: string[] = [
   'meetings:mailThreads',
   'meetings:openTarget',
   'meetings:pauseCapture',
+  'meetings:planActions',
   'meetings:rejectProposal',
   'meetings:roomJoin',
   'meetings:search',

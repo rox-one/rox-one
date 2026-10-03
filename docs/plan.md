@@ -646,6 +646,16 @@ Owner: historical integration; parent retains merge. Dependency: existing useWor
 3. Execute delivered component/hook with actual atoms: initial list, state update, interaction, removal/reconciliation, disabled transfer, unmount and late-event/list controls. Run existing browser/chrome checks and renderer validation.
 4. Publish a separate PR with exact source/head and bounded evidence; original branches remain untouched.
 
+## Bounded historical recovery: Meeting profiles, slash and followup planning (2026-10-03)
+
+Owner: historical integration; parent merges. Dependency: current packaged roles/recipes, safe analysis session port, local Meeting store, NativeAuthority read fences and canonical MeetingJournal. Preserve concurrent voice/PTT producer/consumer work, native Notes authority and current glass/navigation.
+
+1. Map richer historical recipe/followup intent to actual routed consumers; reject synthetic receipts, writable-file grants and invented host principal.
+2. Bind profile/slash to current durable claim/attach/finish analysis and persist profile through existing local store; retain CAS, no-source-tool sessions, source-revision result validation and manual-edit supersession.
+3. Publish context-bound read-only plan RPC with canonical revision and policy projection; refuse unsafe/background execution, independent scheduling writes and corrupt-tail repair.
+4. Verify actual safe analysis callback, store restart, real authenticated WebSocket planning, foreign/missing/forged/revoked identities, asynchronous revocation, unknown/unpermitted slash and no journal/outbox/schedule mutation. Check routing, all locale catalogs, changed package/renderer types and relevant builds. Reconcile current built-in MCP provisioning and prove real SessionManager empty per-session source selection survives nonempty workspace defaults and persisted headers.
+5. Deliver separate PR with exact source/head and explicitly bounded receipts. The missing real authenticated backend/scheduler delegation ports remain named acceptance limits.
+
 ## Voice command transport recovery — 2026-10-03
 
 Owner: recent feature worker; main integration owner: branch audit lead. Dependencies: current HOTKEY wire channel, native window/client binding and composer consent/permission/generation guards at main 3d04470f9be127945dd15c582775ed1e0401ed50.
