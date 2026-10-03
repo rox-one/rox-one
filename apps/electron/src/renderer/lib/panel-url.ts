@@ -40,22 +40,15 @@ export function decodePanelEntries(value: string): PanelUrlEntry[] {
         return entries.map(([route, weight]) => ({ route, proportion:
           typeof weight === 'number' && Number.isFinite(weight) && weight > 0 && weight <= 1 ? weight : 0 }))
       }
-      // Valid JSON can also be a literal legacy address such as ["future"].
-      // Only the tuple structure identifies the published tuple transport.
+      // String-array spelling can itself be a literal legacy address such as
+      // ["future"]. Other non-tuple arrays are damaged structured transports.
+      if (!Array.isArray(entries) || !entries.every(entry => typeof entry === 'string')) return []
     } catch {
       // A legacy unknown address can itself start with a bracket. Reserve
       // truncated tuple JSON only when its first route has the tuple string
       // syntax; plain bracket-prefixed addresses still use the CSV transport.
       const prefix = value.trimStart()
-      if (prefix === '[') return []
-      if (/^\[\s*\[\s*"/.test(prefix)) {
-        // A balanced non-tuple JSON address may have legacy siblings/weights.
-        // A genuinely truncated tuple prefix remains a damaged transport.
-        const firstLegacyRoute = prefix.split(',')[0].replace(/:(?:\d+(?:\.\d*)?|\.\d+)$/, '')
-        try {
-          if (isTupleEntries(JSON.parse(firstLegacyRoute))) return []
-        } catch { return [] }
-      }
+      if (prefix === '[' || /^\[\s*\[\s*"/.test(prefix)) return []
     }
   }
 

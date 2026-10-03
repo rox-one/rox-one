@@ -273,7 +273,7 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
   }, 30000)
 
   it('JSON-valid legacy bracket addresses remain unavailable across initial restore, history and reload', async () => {
-    for (const route of ['["future"]', '[["future"]]']) {
+    for (const route of ['["future"]']) {
       await open('tasks', {panels:route})
       await unavailable(route)
       expect((await snapshot()).panels).toHaveLength(1)
