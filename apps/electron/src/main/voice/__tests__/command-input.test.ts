@@ -99,3 +99,24 @@ describe('native voice command routing', () => {
     expect(actions).toEqual(['permission/start', 'stop']); binding.dispose()
   })
 })
+
+it('current foreground owner honors Right Control and disabled presets without suppressing the wrong modifier', () => {
+  const input = keyboard(), commands: HotkeyCommand[] = []
+  let pttModifier: 'ControlRight' | 'none' = 'ControlRight'
+  const binding = attachVoiceCommandInput(input.port, { prefs: () => ({ hotkeyMode: 'ptt', cancelAccelerator: 'Escape', pttModifier }), isFocused: () => true,
+    send: command => { commands.push(command); return true } })
+  input.emit({ type: 'keyDown', code: 'AltRight' }); input.emit({ type: 'keyUp', code: 'AltRight' })
+  input.emit({ type: 'keyDown', code: 'ControlLeft' }); input.emit({ type: 'keyDown', code: 'ControlRight' }); input.emit({ type: 'keyUp', code: 'ControlRight' })
+  expect(commands).toEqual(['ptt-down', 'ptt-up']); expect(input.suppressed()).toBe(2)
+  pttModifier = 'none'; input.emit({ type: 'keyDown', code: 'ControlRight' }); input.emit({ type: 'keyDown', code: 'AltRight' })
+  expect(commands).toEqual(['ptt-down', 'ptt-up']); expect(input.suppressed()).toBe(2)
+  binding.dispose()
+})
+it('changing a held modifier preference cancels the current capture once instead of leaving it open', () => {
+  const input = keyboard(), commands: HotkeyCommand[] = []
+  let pttModifier: 'AltRight' | 'ControlRight' = 'AltRight'
+  const binding = attachVoiceCommandInput(input.port, { prefs: () => ({ hotkeyMode: 'ptt', cancelAccelerator: 'Escape', pttModifier }), isFocused: () => true,
+    send: command => { commands.push(command); return true } })
+  input.emit({ type: 'keyDown', code: 'AltRight' }); pttModifier = 'ControlRight'; input.emit({ type: 'keyUp', code: 'AltRight' }); binding.dispose()
+  expect(commands).toEqual(['ptt-down', 'cancel'])
+})
