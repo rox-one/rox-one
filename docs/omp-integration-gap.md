@@ -1,7 +1,7 @@
 # OMP ⇄ Craft Agents — gap analysis (v1 shipped → full integration)
 
 Статус на 2026-08-06, форк `agisota/craft-agents-oss`. **Обновлено 2026-08-12: v2 (G1–G4) смержен в `main` — см. «Закрыто в v2»; список «Остаток до „полного"» ниже закрыт пунктами 1–4 и оставлен как историческая запись.**
-OMP runtime: локальный CLI `omp` v17.2.9 (`@oh-my-pi/pi-coding-agent`; toolchain ставит 17.2.10 — контракт идентичен, см. [omp-rpc-notes.md](omp-rpc-notes.md)), транспорт `--mode rpc` (NDJSON/stdio), контракт: [omp-rpc-notes.md](omp-rpc-notes.md).
+OMP runtime: **Rox CLI 18.4.12** (`@oh-my-pi/pi-coding-agent@18.4.12`, обновлено 2026-10-03), лончер `rox` с совместимым алиасом `omp`, транспорт `--mode rpc` (NDJSON/stdio). Craft автоматически согласует протокол v2 для крупных кадров, включая каталог моделей. Текущие проверки контракта и границы live-проверки: [omp-rpc-notes.md](omp-rpc-notes.md).
 
 ## Матрица возможностей
 

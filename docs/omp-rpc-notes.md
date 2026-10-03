@@ -2,6 +2,8 @@
 
 Verified empirically against `omp` v17.2.9 (2026-08-06) with probe scripts. Transport: NDJSON over stdio — one JSON object per line, both directions.
 
+> **Current runtime (2026-10-03): Rox CLI / OMP 18.4.12.** The toolchain pins `@oh-my-pi/pi-coding-agent@18.4.12` and its integrity-locked npm dependency graph. Launchers are `rox` / `rox.cmd`, with `omp` / `omp.cmd` compatibility aliases. CLI help/version use the Rox name; `OMP_APP_NAME=rox` sets upstream usage attribution. Configuration/auth remain under `~/.omp`. Live checks verified `ready`, protocol-v2 negotiation, `get_state`, the 758-model catalog (8 chunk frames), `set_model`, `set_host_tools`, and `extension_ui_response`. The real OmpAgent also switched a model using that chunked catalog. These upgrade probes did not send a paid model prompt; historical turn/branch evidence below remains dated.
+
 > **Version note (2026-08-12):** the toolchain manifest installs **17.2.10** (`packages/shared/src/toolchain/manifest-data.ts`). The 17.2.10 binary was probe-verified against this document during the 2026-08-12 integration audit: identical ready frame (`{protocolVersion:1, supportedProtocolVersions:[1,2], maxFrameBytes:1048576, maxReassembledFrameBytes:67108864}`), `extension_ui_request` flow, `get_state` / `get_available_models` / `set_host_tools` shapes all unchanged. This doc remains accurate for 17.2.10.
 
 ## Lifecycle
@@ -9,7 +11,8 @@ Verified empirically against `omp` v17.2.9 (2026-08-06) with probe scripts. Tran
 1. Spawn: `omp --mode rpc` (optional flags: `--approval-mode <mode>`, `--auto-approve` yolo, `--model`, `--session <dir>`…). cwd = workspace root; OMP session files live in its own session dir (under `~/.omp`), keyed by cwd.
 2. Server immediately sends `{"type":"ready","protocolVersion":1,"supportedProtocolVersions":[1,2],"maxFrameBytes":1048576,"maxReassembledFrameBytes":67108864}` followed by `extension_ui_request` (e.g. `setWidget`) and `available_commands_update`.
 3. **CRITICAL (the turn-stall blocker): the host MUST answer every `extension_ui_request`.** An unanswered request blocks extension init / the prompt pipeline: after `{"type":"prompt"}` you get `success` + `agent_start` and then nothing (no `message_start`, >170 s stall). Respond with `{"id":<request id>,"type":"extension_ui_response","approved":true,"value":true}` (id as string). Once answered, the full event stream flows.
-4. Protocol v2 is optional: `{"id":N,"type":"negotiate_protocol","protocolVersion":2}` — only needed for >1 MiB frames (chunking). v1 (default) is fine for us.
+4. Craft automatically negotiates protocol v2 when `ready.supportedProtocolVersions` includes `2`: `{"id":N,"type":"negotiate_protocol","protocolVersion":2}`. Wait for success before querying state/models or prompting. The current full model catalog exceeds v1's 1 MiB transport limit; v1 remains a fallback for legacy peers.
+5. In v2, a large logical JSON object arrives as consecutive `rpc_chunk` frames: `{chunkId,index,count,byteLength,data}`; `data` is base64, each decoded chunk is at most 256 KiB, the full object at most 64 MiB. Reassemble UTF-8 bytes before JSON parsing and normal event/response dispatch. Reject invalid metadata/base64, interrupted/out-of-order sequences, length mismatches and overflow. Reset partial state at process restart/teardown. Small frames retain their v1 shape. Implementation: `packages/shared/src/agent/omp-rpc-frames.ts`.
 
 ## Commands (stdin)
 

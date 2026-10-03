@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { extractArtifact, installTool, npmInstallDeps } from '../installer';
+import { extractArtifact, generateNpmWrappers, installTool, npmInstallDeps } from '../installer';
 import { toolchainPaths } from '../manifest';
 import type { ToolchainPaths } from '../types';
 
@@ -26,6 +26,42 @@ function assertExecBits(file: string): void {
 }
 
 describe('installer', () => {
+  it('Rox CLI wrappers preserve argv and upstream config paths with the supported name override', async () => {
+    const toolDir = path.join(tmpDir, 'rox-wrapper');
+    const pkgDir = path.join(toolDir, 'package');
+    fs.mkdirSync(path.join(pkgDir, 'dist'), { recursive: true });
+    fs.writeFileSync(path.join(pkgDir, 'package.json'), JSON.stringify({
+      name: '@oh-my-pi/pi-coding-agent',
+      bin: { omp: 'dist/cli.js' },
+    }));
+    fs.writeFileSync(path.join(pkgDir, 'dist/cli.js'),
+      'if (process.argv.includes("--help")) process.stdout.write("omp v1.0.0\\n  $ omp [COMMAND]\\n~/.omp/agent\\n");\n' +
+      'else console.log(JSON.stringify({ name: process.env.OMP_APP_NAME, args: process.argv.slice(2), config: process.env.PI_CODING_AGENT_DIR }))\n');
+
+    expect(await generateNpmWrappers(toolDir)).toEqual(['bin/omp', 'bin/omp.cmd', 'bin/rox', 'bin/rox.cmd']);
+    for (const name of ['rox', 'omp']) {
+      const command = fs.readFileSync(path.join(toolDir, 'bin', `${name}.cmd`), 'utf8');
+      expect(command).toContain('set "OMP_APP_NAME=rox"\r\n');
+      expect(command).not.toContain('set "PI_CODING_AGENT_DIR=');
+      if (isWindows) continue;
+      const proc = Bun.spawn([path.join(toolDir, 'bin', name), '--mode', 'rpc', 'argument with spaces'], {
+        env: { ...process.env, CRAFT_BUN_PATH: process.execPath, PI_CODING_AGENT_DIR: '/existing/config' },
+        stdout: 'pipe',
+        stderr: 'pipe',
+      });
+      const output = JSON.parse(await new Response(proc.stdout).text());
+      expect(await proc.exited).toBe(0);
+      expect(output).toEqual({ name: 'rox', args: ['--mode', 'rpc', 'argument with spaces'], config: '/existing/config' });
+    }
+    if (!isWindows) {
+      const proc = Bun.spawn([path.join(toolDir, 'bin/rox'), '--help'], {
+        env: { ...process.env, CRAFT_BUN_PATH: process.execPath }, stdout: 'pipe', stderr: 'pipe',
+      });
+      expect(await new Response(proc.stdout).text()).toBe('rox v1.0.0\n  $ rox [COMMAND]\n~/.omp/agent\n');
+      expect(await proc.exited).toBe(0);
+    }
+  });
+
   it('extract tar.gz: раскладывает дерево', async () => {
     const dest = path.join(tmpDir, 'tgz');
     await extractArtifact(path.join(FIXTURES, 'demo-1.0.0.tar.gz'), 'tar.gz', dest);

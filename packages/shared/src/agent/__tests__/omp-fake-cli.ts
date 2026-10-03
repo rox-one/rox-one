@@ -59,8 +59,19 @@ function logRpc(obj) {
   try { fs.appendFileSync(RPC_LOG, JSON.stringify(obj) + '\n'); } catch {}
 }
 
+let protocolVersion = 1;
 function send(obj) {
-  process.stdout.write(JSON.stringify(obj) + '\n');
+  const json = JSON.stringify(obj);
+  const bytes = Buffer.from(json);
+  if (protocolVersion === 2 && bytes.length > 1048576) {
+    const count = Math.ceil(bytes.length / 262144);
+    for (let index = 0; index < count; index++) {
+      process.stdout.write(JSON.stringify({type:'rpc_chunk',chunkId:'fake-large',index,count,byteLength:bytes.length,
+        data:bytes.subarray(index*262144,(index+1)*262144).toString('base64')}) + '\n');
+    }
+    return;
+  }
+  process.stdout.write(json + '\n');
 }
 
 const READY_FRAME = {
@@ -178,8 +189,12 @@ function rpcLoop() {
       case 'get_available_models':
         respond([
           { provider: 'rox', id: 'kimi-k3', name: 'Kimi K3' },
-          { provider: 'rox', id: 'kimi-k2', name: 'Kimi K2' },
+          { provider: 'rox', id: 'kimi-k2', name: readScenario() === 'large-catalog' ? 'Model'.repeat(250000) : 'Kimi K2' },
         ]);
+        break;
+      case 'negotiate_protocol':
+        respond({ protocolVersion: 2 });
+        protocolVersion = 2;
         break;
       case 'switch_session':
         respond({ cancelled: false });

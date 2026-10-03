@@ -2,7 +2,7 @@
  * OmpAgent — craft-agents backend driving the OMP CLI (`omp --mode rpc`).
  *
  * Transport: NDJSON over stdio (one JSON object per line, both directions).
- * Protocol: see docs/omp-rpc-notes.md (verified against omp v17.2.9).
+ * Protocol: see docs/omp-rpc-notes.md (Rox CLI / OMP 18.4.12).
  *
  * Key behaviors:
  * - Lazy spawn on first chat() — binary resolved via OMP_CLI_PATH env →
@@ -61,6 +61,7 @@ import type { AgentEvent, AgentEventUsage } from '@craft-agent/core/types';
 import type { FileAttachment } from '../utils/files.ts';
 import { getProxyEnvVars } from '../config/proxy-env.ts';
 import { resolveOmpExecutableOrExplain, withToolchainPathPrefix } from '../toolchain-runtime.ts';
+import { OmpRpcFrameDecoder } from './omp-rpc-frames.ts';
 
 import { AbortReason } from './backend/types.ts';
 import type {
@@ -343,6 +344,8 @@ export class OmpAgent extends BaseAgent {
 
   // RPC bookkeeping
   private rpcIdCounter = 0;
+  private readonly rpcFrameDecoder = new OmpRpcFrameDecoder();
+  private rpcSupportsV2 = false;
   private pendingRequests = new Map<string, PendingRequest>();
   private pendingPermissions = new Map<string, PendingPermission>();
 
@@ -740,6 +743,8 @@ export class OmpAgent extends BaseAgent {
     });
     this.subprocessReady = readyPromise;
     this.startupInFlight = true;
+    this.rpcFrameDecoder.reset();
+    this.rpcSupportsV2 = false;
     this.readyAccepted = false;
     this.recentStderr = '';
     this.startupGeneration += 1;
@@ -888,6 +893,24 @@ export class OmpAgent extends BaseAgent {
       }),
     ]);
 
+    // Newer model catalogs exceed v1's 1 MiB frame limit. Negotiate v2 before
+    // querying state/models or sending a prompt; legacy peers retain v1.
+    if (this.rpcSupportsV2) {
+      try {
+        await this.sendCommand('negotiate_protocol', { protocolVersion: 2 });
+      } catch (cause) {
+        this.killSubprocessSync();
+        if (this.abortReason !== undefined || cause instanceof OmpStartupAbortedError) {
+          throw new OmpStartupAbortedError('OMP startup interrupted during RPC negotiation');
+        }
+        throw new OmpStartupError({
+          code: 'OMP_PROTOCOL_ERROR',
+          message: 'OMP RPC v2 negotiation failed.',
+          cause: cause instanceof Error ? cause : new Error(String(cause)),
+        });
+      }
+    }
+
     // Capture the OMP session id / transcript path before the first prompt
     // so turn anchors can resolve (G3). Fire-and-forget raced set_host_tools
     // and dropped get_state under isolated tests.
@@ -1006,6 +1029,7 @@ export class OmpAgent extends BaseAgent {
   }
 
   private killSubprocessSync(): void {
+    this.rpcFrameDecoder.reset();
     const child = this.subprocess;
     // Unblock any startup waiter — a killed subprocess never completes the
     // ready handshake. No-op once the handshake has settled.
@@ -1047,6 +1071,7 @@ export class OmpAgent extends BaseAgent {
     latchedStartupError: () => OmpStartupError | null,
   ): void {
     this.debug(`OMP subprocess exited: code=${code}, signal=${signal}`);
+    this.rpcFrameDecoder.reset();
 
     const wasStartupPending = this.startupInFlight;
     const wasReady = this.readyAccepted;
@@ -1182,6 +1207,28 @@ export class OmpAgent extends BaseAgent {
       return;
     }
 
+    if (!msg || typeof msg !== 'object' || Array.isArray(msg)) return;
+    try {
+      const decoded = this.rpcFrameDecoder.push(msg);
+      if (!decoded) return;
+      msg = decoded;
+    } catch (cause) {
+      const error = new OmpStartupError({
+        code: 'OMP_PROTOCOL_ERROR',
+        message: `Invalid OMP RPC frame: ${cause instanceof Error ? cause.message : String(cause)}`,
+      });
+      this.failPendingRequests(error);
+      if (this.startupInFlight) {
+        this.settleReady(error);
+      } else if (this._isProcessing && !this.eventQueue.isComplete) {
+        this.eventQueue.enqueue({ type: 'typed_error', error: ompStartupErrorToAgentError(error) });
+        this.eventQueue.enqueue({ type: 'complete' });
+        this.eventQueue.complete();
+      }
+      this.killSubprocessSync();
+      return;
+    }
+
     const type = msg.type as string;
 
     // Response framing (id-matched)
@@ -1223,6 +1270,7 @@ export class OmpAgent extends BaseAgent {
           break;
         }
         this.debug(`OMP ready (protocol v${msg.protocolVersion ?? '?'})`);
+        this.rpcSupportsV2 = Array.isArray(supported) && supported.includes(2);
         this.settleReady();
         break;
       }

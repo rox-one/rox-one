@@ -41,7 +41,7 @@ const statuses = await manager.status();
 console.log(`== ensureAll done in ${((Date.now() - t0) / 1000).toFixed(1)}s ==`);
 
 const EXPECTED: Record<string, string | null> = {
-  omp: '17.2.10',
+  omp: '18.4.12',
   bun: '1.3.14',
   uv: '0.12.2',
   node: '22.23.2',
@@ -84,9 +84,9 @@ if (!omp || !omp.includes(paths.toolchainDir)) {
   console.error(`FAIL: omp must resolve from toolchain, got: ${omp}`);
   failed++;
 } else {
-  const out = execFileSync(omp, ['--help'], { encoding: 'utf8', timeout: 60_000 });
-  if (!out.includes('omp v')) {
-    console.error('FAIL: launcher ran but no version in output');
+  const out = execFileSync(omp, ['--version'], { encoding: 'utf8', timeout: 60_000 }).trim();
+  if (out !== `rox/${EXPECTED.omp}`) {
+    console.error(`FAIL: unexpected Rox CLI version: ${out}`);
     failed++;
   } else {
     console.log('launcher OK:', out.split('\n')[0]);
