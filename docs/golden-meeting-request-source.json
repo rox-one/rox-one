@@ -31,5 +31,6 @@
     "recording singleton lifetime",
     "IPC, native write authority and user consent",
     "current route and selected detail projection"
-  ]
+  ],
+  "integration_main": "b1526a85f6db5a6cdf668438e484f62ce15e6f29"
 }
