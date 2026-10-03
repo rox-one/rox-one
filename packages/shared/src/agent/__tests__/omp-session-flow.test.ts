@@ -163,6 +163,16 @@ describe('OmpAgent host tool bridge', () => {
 });
 
 describe('OmpAgent model switching', () => {
+  it('negotiates v2 before querying state and switches models using a chunked catalog', async () => {
+    const { agent, fake } = setup('large-catalog');
+    await chatEvents(agent, 'hi', 8_000);
+    const commands = fake.readRpcLog().map(frame => frame.type);
+    expect(commands.indexOf('negotiate_protocol')).toBeLessThan(commands.indexOf('get_state'));
+    agent.setModel('kimi-K2');
+    const frame = await waitForRpcFrame(fake, f => f.type === 'set_model' && f.modelId === 'kimi-k2');
+    expect(frame).toMatchObject({ provider: 'rox', modelId: 'kimi-k2' });
+  });
+
   it('setModel fuzzy-resolves via get_available_models and sends set_model {provider, modelId}', async () => {
     const { agent, fake } = setup('healthy');
 

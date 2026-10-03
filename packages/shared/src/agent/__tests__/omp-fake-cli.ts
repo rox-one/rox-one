@@ -121,7 +121,7 @@ let selectedModel = scenario.startsWith('model-') || scenario.startsWith('transp
   : { provider: 'rox', id: 'kimi-k3' };
 const availableModels = [
   { provider: 'rox', id: 'kimi-k3', name: 'Kimi K3' },
-  { provider: 'rox', id: 'kimi-k2', name: 'Kimi K2' },
+  { provider: 'rox', id: 'kimi-k2', name: scenario === 'large-catalog' ? 'Model'.repeat(250000) : 'Kimi K2' },
   ...((scenario.startsWith('model-') || scenario.startsWith('transport-')) && scenario !== 'model-legacy-catalog'
     ? [{ provider: 'rox', id: scenario === 'model-public-qualified' ? 'rox/standard' : 'standard', name: 'ROX R1' }]
     : []),
@@ -226,6 +226,10 @@ function rpcLoop() {
         respond({ toolNames: (msg.tools || []).map((t) => t.name) });
         break;
       case 'get_available_models':
+        if (scenario === 'transport-frame-error') {
+          send({ type: 'rpc_frame_error', error: 'Controlled transport overflow' });
+          break;
+        }
         if (scenario === 'transport-unterminated') {
           process.stdout.write('x'.repeat(1048576 + 1));
           break;
