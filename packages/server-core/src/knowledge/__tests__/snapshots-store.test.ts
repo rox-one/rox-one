@@ -8,7 +8,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import type { KnowledgeRef } from '@craft-agent/core/knowledge'
+import type { KnowledgeRef } from '@rox/core/knowledge'
 import {
   KnowledgeContextSnapshotsStore,
   SNAPSHOT_LIMITS,

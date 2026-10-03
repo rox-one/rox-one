@@ -203,7 +203,7 @@ The script must live **inside the workspace** and runs under **Bun** with a mini
 
 ```ts
 // scripts/refresh-build-health.ts  (Bun)
-import { openPageDataStore } from '@craft-agent/shared/pages/data-store';
+import { openPageDataStore } from '@rox/shared/pages/data-store';
 
 const store = openPageDataStore(process.env.CRAFT_WORKSPACE_PATH!, process.env.CRAFT_PAGE_SLUG!);
 const res = await fetch('https://ci.example.com/api/summary');   // scripts CAN use the network
@@ -214,7 +214,7 @@ store.exportSnapshot();
 store.close();
 ```
 
-If `@craft-agent/shared` is not resolvable from the workspace (e.g. packaged installs), write a self-contained script with `bun:sqlite` against `$CRAFT_PAGE_DATA_DIR/store.sqlite` using this exact schema, and write the snapshot atomically (temp file + rename) to `$CRAFT_PAGE_DATA_DIR/snapshot.json`:
+If `@rox/shared` is not resolvable from the workspace (e.g. packaged installs), write a self-contained script with `bun:sqlite` against `$CRAFT_PAGE_DATA_DIR/store.sqlite` using this exact schema, and write the snapshot atomically (temp file + rename) to `$CRAFT_PAGE_DATA_DIR/snapshot.json`:
 
 ```sql
 CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL);

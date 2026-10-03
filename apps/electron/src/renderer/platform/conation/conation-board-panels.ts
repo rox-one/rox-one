@@ -1,4 +1,4 @@
-import type { PanelContribution, PanelRegistry, PanelRenderer } from '@craft-agent/core/platform'
+import type { PanelContribution, PanelRegistry, PanelRenderer } from '@rox/core/platform'
 
 /** Keep id aligned with workbench.conation.board (Board deep-link pane). */
 export const CONATION_BOARD_PANEL_ID = 'conation.board' as const

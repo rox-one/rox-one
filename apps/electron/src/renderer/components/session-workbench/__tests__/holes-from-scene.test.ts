@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import type { SessionScene } from '@craft-agent/core/mindmap'
+import type { SessionScene } from '@rox/core/mindmap'
 import { holesFromScene } from '../holes-from-scene'
 
 function scene(partial: Partial<SessionScene> = {}): SessionScene {

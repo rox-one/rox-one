@@ -4,9 +4,9 @@ import { open, readFile } from 'node:fs/promises'
 import { cpus, freemem, networkInterfaces, totalmem } from 'node:os'
 import { basename } from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
-import { sanitizeSecurityText } from '@craft-agent/shared/openclaw/audit'
-import { redactRegisteredSecrets } from '@craft-agent/shared/secrets/redact'
-import { redactSensitiveValues } from '@craft-agent/shared/utils/redaction'
+import { sanitizeSecurityText } from '@rox/shared/openclaw/audit'
+import { redactRegisteredSecrets } from '@rox/shared/secrets/redact'
+import { redactSensitiveValues } from '@rox/shared/utils/redaction'
 import type {
   DeviceDiagnosticLogSource,
   DeviceDiagnosticRequest,

@@ -5,7 +5,7 @@ import {
   type GitCredentialHelperFill,
   type InProcessCredentialBroker,
   type LocalFileSecretProvider,
-} from '@craft-agent/shared/credentials'
+} from '@rox/shared/credentials'
 
 import type { ConnectionRecord, WorkGraphKernel } from './index'
 

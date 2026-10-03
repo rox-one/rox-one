@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { BulkUpdateSessionsInput, BulkUpdateSessionsResult } from '@craft-agent/shared/protocol/dto'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { BulkUpdateSessionsInput, BulkUpdateSessionsResult } from '@rox/shared/protocol/dto'
 import type { HandlerDeps } from '../handler-deps'
 import { registerSessionsHandlers } from './sessions'
 import type { HandlerFn, RequestContext, RpcServer } from '../../transport'

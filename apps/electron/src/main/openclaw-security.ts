@@ -1,19 +1,19 @@
 import { join } from 'node:path'
 
-import { getCredentialManager } from '@craft-agent/shared/credentials'
-import { CONFIG_DIR, getServerConfig, getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
-import { getToolchain } from '@craft-agent/shared/toolchain-runtime'
+import { getCredentialManager } from '@rox/shared/credentials'
+import { CONFIG_DIR, getServerConfig, getWorkspaceByNameOrId } from '@rox/shared/config'
+import { loadWorkspaceConfig } from '@rox/shared/workspaces'
+import { getToolchain } from '@rox/shared/toolchain-runtime'
 import {
   CraftSecurityCollector,
   OpenClawOperationError,
   OpenClawRuntimeManager,
   OpenClawSecurityAuditService,
   OpenClawSecurityCollector,
-} from '@craft-agent/server-core/openclaw'
-import type { OpenClawSecurityService } from '@craft-agent/server-core/handlers'
-import type { AcceptSecurityRiskRequest, OpenClawRuntimeStatus } from '@craft-agent/shared/openclaw'
-import type { ManagedOpenClawLauncher, ToolStatus } from '@craft-agent/shared/toolchain'
+} from '@rox/server-core/openclaw'
+import type { OpenClawSecurityService } from '@rox/server-core/handlers'
+import type { AcceptSecurityRiskRequest, OpenClawRuntimeStatus } from '@rox/shared/openclaw'
+import type { ManagedOpenClawLauncher, ToolStatus } from '@rox/shared/toolchain'
 
 export interface OpenClawSecurityComposition {
   readonly runtimeManager: OpenClawRuntimeManager

@@ -12,7 +12,7 @@
 import { mkdtempSync, writeFileSync, readFileSync, existsSync, rmSync, chmodSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { AgentEvent } from '@craft-agent/core/types';
+import type { AgentEvent } from '@rox/core/types';
 import type { BackendConfig } from '../backend/types.ts';
 
 export interface FakeOmp {
@@ -43,7 +43,8 @@ const readline = require('node:readline');
 const SCENARIO_FILE = process.env.FAKE_OMP_SCENARIO_FILE || '';
 const RPC_LOG = process.env.FAKE_OMP_RPC_LOG || '';
 const ARGV_LOG = process.env.FAKE_OMP_ARGV_LOG || '';
-const TRANSCRIPT_FILE = process.env.FAKE_OMP_TRANSCRIPT_FILE || '';
+let TRANSCRIPT_FILE = process.env.FAKE_OMP_TRANSCRIPT_FILE || '';
+let sessionIdentity = 'fake-omp-session-id';
 
 if (ARGV_LOG) {
   fs.appendFileSync(ARGV_LOG, JSON.stringify(process.argv.slice(2)) + '\n');
@@ -134,6 +135,7 @@ function hang() {
 function writeTranscript() {
   if (!TRANSCRIPT_FILE) return;
   const entries = [
+    { type: 'session', id: sessionIdentity, version: 3 },
     { type: 'message', id: 'aaaa1111', parentId: null, message: { role: 'user' } },
     { type: 'message', id: 'bbbb2222', parentId: 'aaaa1111', message: { role: 'assistant' } },
   ];
@@ -217,7 +219,7 @@ function rpcLoop() {
         break;
       case 'get_state':
         respond({
-          sessionId: 'fake-omp-session-id',
+          sessionId: sessionIdentity,
           sessionFile: TRANSCRIPT_FILE || undefined,
           model: scenario === 'model-missing-readback' ? undefined : selectedModel,
         });
@@ -251,8 +253,15 @@ function rpcLoop() {
         break;
       }
       case 'switch_session':
+        if (scenario === 'restore-reject') {send({id,type:'response',command:msg.type,success:false,error:'fixture restore rejected'});break;}
+        TRANSCRIPT_FILE = msg.sessionPath;
+        try { sessionIdentity = JSON.parse(fs.readFileSync(TRANSCRIPT_FILE,'utf8').split('\n')[0]).id || sessionIdentity; } catch {}
         if (scenario === 'model-branch') selectedModel = { provider: 'cursor', id: 'claude-4.6-opus-high' };
         respond({ cancelled: false });
+        break;
+      case 'fork':
+        if (scenario === 'fork-reject') send({id,type:'response',command:msg.type,success:false,error:'fixture fork authentication rejected'});
+        else respond({cancelled:false});
         break;
       case 'branch':
         respond({ text: 'branch source text', cancelled: false });
@@ -318,7 +327,10 @@ export function createFakeOmp(scenario = 'healthy'): FakeOmp {
   writeFileSync(scenarioFile, scenario);
   const rpcLog = join(dir, 'rpc.log');
   const argvLog = join(dir, 'argv.log');
-  const transcriptFile = join(dir, 'fake-transcript.jsonl');
+  const nativeDir = join(workspaceRoot,'sessions','session-test','omp');
+  mkdirSync(nativeDir,{recursive:true});
+  const transcriptFile = join(nativeDir, 'fake-transcript.jsonl');
+  writeFileSync(transcriptFile, JSON.stringify({type:'session',version:3,id:'fake-omp-session-id',cwd:workspaceRoot})+'\n');
 
   return {
     dir,
@@ -411,6 +423,7 @@ export async function drainWithTimeout(
   timeoutMs = 10_000,
 ): Promise<AgentEvent[]> {
   const events: AgentEvent[] = [];
+  timeoutMs = Math.max(timeoutMs, Number(process.env.ROX_OMP_TEST_TIMEOUT_MS) || 0);
   const deadline = Date.now() + timeoutMs;
   for (;;) {
     const remaining = deadline - Date.now();

@@ -6,7 +6,7 @@ import {
   serializeSessionMapPin,
   sessionMapPinStorageKey,
   type SessionMapPin,
-} from '@craft-agent/core/mindmap'
+} from '@rox/core/mindmap'
 import { autoScenePosition, toFlowElements } from '../to-flow-elements'
 
 const oneSceneGraph = () =>

@@ -41,7 +41,7 @@ import {
   type TaskMoveTarget,
   type TaskSortId,
   type TaskWhen,
-} from '@craft-agent/core/tasks/personal'
+} from '@rox/core/tasks/personal'
 import { CalendarStatusStrip } from '@/components/calendar/CalendarStatusStrip'
 import { useActiveWorkspace, useOptionalAppShellContext } from '@/context/AppShellContext'
 import { useProjects } from '@/hooks/useProjects'
@@ -64,9 +64,6 @@ import {
   EmptyState,
   ListHeader,
   ModeScreenLayout,
-  NavItem,
-  NavSection,
-  NavTitle,
   type Tone,
 } from '@/components/mode-screen/ModeScreen'
 import { tasksViewAtom } from './tasks/atoms'
@@ -86,18 +83,15 @@ import {
   visibleNotes,
   type AgentChip,
   type AgentSessionLike,
-  type AgentViewId,
 } from './tasks/task-model'
 import { ConfirmDialog, Glyph, ProgressPie, TaskCheckbox, prefersReducedMotion } from './tasks/parts'
 import { QuickEntry, type QuickEntryResult } from './tasks/QuickEntry'
 import { MoveDialog, type MoveDestination } from './tasks/MoveDialog'
 import { TaskDetail } from './tasks/TaskDetail'
+import { TaskSidebar } from './tasks/TaskSidebar'
 import { getSessionTitle } from '@/utils/session'
 
-const MAIN_LISTS: TaskFilterId[] = ['today', 'upcoming', 'anytime', 'someday']
-const AGENT_VIEWS: AgentViewId[] = ['board', 'running', 'review', 'conductor']
 const SORTS: TaskSortId[] = ['order', 'due', 'priority', 'project', 'title']
-const AGENT_DOTS: Record<AgentViewId, Tone> = { board: 'accent', running: 'success', review: 'warning', conductor: 'muted' }
 const CHIP_TONE: Record<AgentChip, Tone> = { running: 'success', review: 'warning', todo: 'accent', done: 'muted', linked: 'muted' }
 const COMPLETE_DELAY_MS = 650
 const DAY = 24 * 60 * 60 * 1000
@@ -612,6 +606,9 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const onKeyDown = (event: React.KeyboardEvent) => {
     if (quickEntry || moveFor || confirm) return
     const target = event.target as HTMLElement
+    // Portalled navigation still bubbles through this page's React tree.
+    // Sidebar buttons and disclosures retain their native Space/Enter behavior.
+    if (target.closest('[data-task-sidebar]')) return
     const typing = Boolean(target.closest('input, textarea, [contenteditable="true"]'))
     const mod = event.metaKey || event.ctrlKey
     if (mod && event.key === 'Enter' && selected) {
@@ -762,7 +759,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
       const sourceId = draggedId(event)
       if (sourceId) applyDestination(sourceId, dest)
     },
-    className: cn('rounded-[6px]', dropHint === `nav:${dest}` && 'bg-accent/20 shadow-[inset_0_0_0_1.5px_var(--accent)]'),
+    className: cn('rounded-[6px]', dropHint === `nav:${dest}` && 'bg-accent/20 ring-[1.5px] ring-inset ring-accent'),
   })
 
   // ── Navigator ────────────────────────────────────────────────────────────
@@ -782,109 +779,46 @@ export default function TasksPage(props: TasksPageProps = {}) {
     setNavCreate(null)
     setNavDraft('')
   }
-  const projectNav = (id: string, name: string, indent: boolean) => {
-    const progress = projectProgress(topLevel, id)
-    const { className, ...drop } = navDropProps(`project:${id}`)
-    return (
-      <div key={id} {...drop} className={cn(className, 'flex items-center', indent && 'pl-3')}>
-        <span className="pl-2"><ProgressPie done={progress.done} total={progress.total} size={12} label={t('tasks.project.progress', { done: progress.done, total: progress.total })} /></span>
-        <div className="min-w-0 flex-1">
-          <NavItem label={name} count={progress.open} active={view.kind === 'project' && view.id === id} onClick={() => setView({ kind: 'project', id })} testId={`tasks-nav-project-${id}`} />
-        </div>
-      </div>
-    )
-  }
-
   const navigator = (
-    <>
-      <NavTitle>{t('workbench.mode.tasks')}</NavTitle>
-      <div {...navDropProps('list:inbox')}>
-        <NavItem label={t('tasks.projection.inbox')} count={listCount('inbox')} active={view.kind === 'list' && view.id === 'inbox'} onClick={() => setView({ kind: 'list', id: 'inbox' })} testId="tasks-nav-inbox" />
-      </div>
-      <div className="h-2" />
-      {MAIN_LISTS.map((id) => (
-        <div key={id} {...navDropProps(`when:${id}`)}>
-          <NavItem
-            label={(
-              <span className="inline-flex items-center gap-1.5">
-                {id === 'today' ? <span className="text-[var(--warning,#d9a13b)]">{Glyph.star}</span> : null}
-                {t(filterLabelKey(id))}
-                {id === 'today' && overdueCount ? <span className="text-[11px] font-semibold text-destructive">{t('tasks.nav.overdue', { count: overdueCount })}</span> : null}
-              </span>
-            )}
-            count={id === 'today' || id === 'upcoming' ? listCount(id) : null}
-            active={view.kind === 'list' && view.id === id}
-            onClick={() => setView({ kind: 'list', id })}
-            testId={`tasks-nav-${id}`}
-          />
-        </div>
-      ))}
-      <div className="h-2" />
-      <div {...navDropProps('logbook')}>
-        <NavItem label={t('tasks.projection.logbook')} active={view.kind === 'list' && view.id === 'logbook'} onClick={() => setView({ kind: 'list', id: 'logbook' })} testId="tasks-nav-logbook" />
-      </div>
-      <div {...navDropProps('trash')}>
-        <NavItem label={t('tasks.projection.trash')} count={trashCount || null} active={view.kind === 'list' && view.id === 'trash'} onClick={() => setView({ kind: 'list', id: 'trash' })} testId="tasks-nav-trash" />
-      </div>
-
-      {areas.length || personalProjects.length ? (
-        <NavSection title={t('tasks.nav.areas')}>
-          {personalProjects.filter((p) => !p.areaId).map((p) => projectNav(p.id, p.name, false))}
-          {areas.map((area) => (
-            <div key={area.id} className="mt-1">
-              <div {...navDropProps(`area:${area.id}`)}>
-                <NavItem label={<span className="font-semibold">{area.name}</span>} active={view.kind === 'area' && view.id === area.id} onClick={() => setView({ kind: 'area', id: area.id })} testId={`tasks-nav-area-${area.id}`} />
-              </div>
-              {personalProjects.filter((p) => p.areaId === area.id).map((p) => projectNav(p.id, p.name, true))}
+    <TaskSidebar
+      view={view}
+      onSelect={setView}
+      listCount={listCount}
+      overdueCount={overdueCount}
+      trashCount={trashCount}
+      tasks={topLevel}
+      areas={areas}
+      personalProjects={personalProjects}
+      workspaceProjects={projects.map(project => ({ id: project.config.id, name: project.config.name }))}
+      tags={tags}
+      agents={agents}
+      dropProps={navDropProps}
+      onToggleArea={area => mutate(current => current.updateArea(area.id, { collapsed: !area.collapsed }))}
+      footer={(
+        <div className="mt-auto pt-3">
+          {navCreate ? (
+            <form onSubmit={createNav} className="px-1">
+              <input
+                autoFocus
+                value={navDraft}
+                onChange={(event) => setNavDraft(event.target.value)}
+                onBlur={() => { if (!navDraft.trim()) setNavCreate(null) }}
+                onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); setNavCreate(null) } }}
+                placeholder={navCreate === 'area' ? t('tasks.nav.newAreaPlaceholder') : t('tasks.nav.newProjectPlaceholder')}
+                aria-label={navCreate === 'area' ? t('tasks.nav.newArea') : t('tasks.nav.newProject')}
+                data-testid="tasks-nav-create-input"
+                className="h-7 w-full rounded-[6px] bg-foreground/[0.06] px-2 text-[12px] outline-none placeholder:text-text-muted"
+              />
+            </form>
+          ) : (
+            <div className="flex gap-1 px-1">
+              <button type="button" data-testid="tasks-new-project" onClick={() => setNavCreate('project')} className="h-7 min-w-0 flex-1 truncate rounded-[6px] px-2 text-left text-[12px] text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground">+ {t('tasks.nav.newProject')}</button>
+              <button type="button" data-testid="tasks-new-area" onClick={() => setNavCreate('area')} className="h-7 shrink-0 rounded-[6px] px-2 text-[12px] text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground">+ {t('tasks.nav.newArea')}</button>
             </div>
-          ))}
-        </NavSection>
-      ) : null}
-
-      <NavSection title={t('tasks.nav.workspaceProjects')}>
-        <span className="sr-only">{t('tasks.filterProject')}</span>
-        {projects.length === 0 ? (
-          <div className="px-2 text-[12px] text-text-muted">{t('tasks.nav.noProjects')}</div>
-        ) : projects.map((project) => projectNav(project.config.id, project.config.name, false))}
-      </NavSection>
-
-      {tags.length ? (
-        <NavSection title={t('tasks.tags')}>
-          {tags.slice(0, 12).map(({ tag, count }) => (
-            <NavItem key={tag} label={`#${tag}`} count={count} active={view.kind === 'tag' && view.id === tag} onClick={() => setView({ kind: 'tag', id: tag })} testId={`tasks-nav-tag-${tag}`} />
-          ))}
-        </NavSection>
-      ) : null}
-
-      <NavSection title={t('tasks.nav.agents')}>
-        {AGENT_VIEWS.map((id) => (
-          <NavItem key={id} dot={AGENT_DOTS[id]} label={t(`tasks.agents.${id}`)} count={agents[id]} active={view.kind === 'agents' && view.id === id} onClick={() => setView({ kind: 'agents', id })} testId={`tasks-nav-agents-${id}`} />
-        ))}
-      </NavSection>
-
-      <div className="mt-auto pt-3">
-        {navCreate ? (
-          <form onSubmit={createNav} className="px-1">
-            <input
-              autoFocus
-              value={navDraft}
-              onChange={(event) => setNavDraft(event.target.value)}
-              onBlur={() => { if (!navDraft.trim()) setNavCreate(null) }}
-              onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); setNavCreate(null) } }}
-              placeholder={navCreate === 'area' ? t('tasks.nav.newAreaPlaceholder') : t('tasks.nav.newProjectPlaceholder')}
-              aria-label={navCreate === 'area' ? t('tasks.nav.newArea') : t('tasks.nav.newProject')}
-              data-testid="tasks-nav-create-input"
-              className="h-7 w-full rounded-[6px] bg-foreground/[0.06] px-2 text-[12px] outline-none placeholder:text-text-muted"
-            />
-          </form>
-        ) : (
-          <div className="flex gap-1 px-1">
-            <button type="button" data-testid="tasks-new-project" onClick={() => setNavCreate('project')} className="h-7 min-w-0 flex-1 truncate rounded-[6px] px-2 text-left text-[12px] text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground">+ {t('tasks.nav.newProject')}</button>
-            <button type="button" data-testid="tasks-new-area" onClick={() => setNavCreate('area')} className="h-7 shrink-0 rounded-[6px] px-2 text-[12px] text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground">+ {t('tasks.nav.newArea')}</button>
-          </div>
-        )}
-      </div>
-    </>
+          )}
+        </div>
+      )}
+    />
   )
 
   // ── List rows ────────────────────────────────────────────────────────────
@@ -978,7 +912,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
           onDoubleClick={() => { selectTask(task.id); window.setTimeout(() => titleRef.current?.focus(), 0) }}
           className={cn(
             'mx-1.5 flex cursor-default items-start gap-2 rounded-[6px] px-2 py-[5px] outline-none',
-            selectedRow ? 'bg-accent/15 shadow-[inset_2px_0_0_var(--accent)]' : 'hover:bg-foreground/[0.04]',
+            selectedRow ? 'relative bg-accent/15 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:rounded-l-[6px] before:bg-accent' : 'hover:bg-foreground/[0.04]',
           )}
         >
           <TaskCheckbox checked={done} pending={pending} cancelled={Boolean(task.cancelledAt)} onToggle={() => toggleComplete(task)} label={t('tasks.complete')} testId={`task-check-${task.id}`} />
@@ -1246,7 +1180,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
           title={t('tasks.magicPlusHint')}
           aria-label={t('tasks.magicPlus')}
           data-testid="tasks-magic-plus"
-          className="absolute bottom-4 right-4 flex size-9 items-center justify-center rounded-full bg-accent text-[20px] leading-none text-accent-foreground shadow-md transition-transform hover:scale-105 active:scale-95"
+          className="absolute bottom-4 right-4 flex size-9 items-center justify-center rounded-full bg-accent text-[20px] leading-none text-accent-foreground shadow-middle transition-transform hover:scale-105 active:scale-95"
         >
           +
         </button>

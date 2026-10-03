@@ -1,0 +1,71 @@
+name: Local MCP
+
+on:
+  pull_request:
+    paths:
+      - ".agents/**"
+      - ".claude-plugin/**"
+      - "plugins/**"
+      - ".github/workflows/local-mcp.yml"
+      - "package.json"
+      - "package-lock.json"
+      - "README.md"
+      - "docs/**"
+      - "scripts/**"
+      - "skills/**"
+      - "src/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".agents/**"
+      - ".claude-plugin/**"
+      - "plugins/**"
+      - ".github/workflows/local-mcp.yml"
+      - "package.json"
+      - "package-lock.json"
+      - "README.md"
+      - "docs/**"
+      - "scripts/**"
+      - "skills/**"
+      - "src/**"
+
+jobs:
+  verify-local-mcp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 23]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Validate skills
+        run: npm run validate:skills
+
+      - name: Validate Claude plugin
+        run: |
+          npx -y @anthropic-ai/claude-code@2.1.220 plugin validate plugins/chiho-telegram --strict
+          npx -y @anthropic-ai/claude-code@2.1.220 plugin validate plugins/unofficial-telegram-mcp --strict
+          npx -y @anthropic-ai/claude-code@2.1.220 plugin validate . --strict
+
+      - name: Check local install surface
+        run: npm run check:local-install
+
+      - name: Check generated contracts are committed
+        run: git diff --exit-code -- docs/tool-contracts.json docs/public-mcp-tool-contracts.json

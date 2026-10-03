@@ -20,7 +20,7 @@ import {
   type RequirementKind,
   type RoadmapMilestone,
   type RoadmapRequirement,
-} from '@craft-agent/shared/projects/roadmap'
+} from '@rox/shared/projects/roadmap'
 import { AddRow, IconButton, InlineInput } from './roadmap-ui'
 
 function MilestonePicker({

@@ -1,14 +1,14 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { resolveLabelDisplayName } from "@/config/session-status-config"
-import { parseLabelEntry, formatLabelEntry, formatDisplayValue } from "@craft-agent/shared/labels"
-import { resolveEntityColor } from "@craft-agent/shared/colors"
+import { parseLabelEntry, formatLabelEntry, formatDisplayValue } from "@rox/shared/labels"
+import { resolveEntityColor } from "@rox/shared/colors"
 import { useTheme } from "@/context/ThemeContext"
 import { cn } from "@/lib/utils"
 import { openLabelLink } from "@/lib/open-label-link"
 import { LabelValuePopover } from "./label-value-popover"
 import { LabelValueTypeIcon } from "./label-icon"
-import type { LabelConfig } from "@craft-agent/shared/labels"
+import type { LabelConfig } from "@rox/shared/labels"
 
 interface EntityListLabelBadgeProps {
   label: LabelConfig

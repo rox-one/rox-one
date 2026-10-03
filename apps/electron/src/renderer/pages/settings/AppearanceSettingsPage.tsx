@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LANGUAGES, type LanguageCode } from '@craft-agent/shared/i18n'
+import { LANGUAGES, type LanguageCode } from '@rox/shared/i18n'
 import type { ColumnDef } from '@tanstack/react-table'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -38,7 +38,7 @@ import { workspaceAvatarColorsAtom } from '@/atoms/workspace-avatar-colors'
 import { kanbanColumnColorsAtom, kanbanColumnStatusAtom, kanbanLivePulseAtom } from '@/atoms/kanban'
 import { showBackgroundFinishedChipAtom } from '@/atoms/background-finished'
 import { KANBAN_COLUMNS } from '@/components/app-shell/kanban/status-column'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
 
 function appearancePrefLive(): boolean {
@@ -52,7 +52,7 @@ import {
   getDefaultKanbanBoardConfig,
   patchKanbanColumn,
   type KanbanBoardConfig,
-} from '@craft-agent/shared/kanban/browser'
+} from '@rox/shared/kanban/browser'
 import { setProjectColorTreatment, useProjectColorTreatment } from '@/hooks/useProjectColorTreatment'
 import { PROJECT_COLOR_PALETTE, type ProjectColorTreatment } from '@/utils/project-colors'
 import { Info_DataTable, SortableHeader } from '@/components/info/Info_DataTable'

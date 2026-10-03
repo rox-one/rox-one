@@ -20,7 +20,7 @@
 
 import { RPC_CHANNELS, type ExtensionSurfaceState } from '../../shared/types'
 import type { EmbeddedBoundsRect } from '../browser-pane-manager'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
 
 export const HANDLED_CHANNELS = [

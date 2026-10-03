@@ -7,7 +7,7 @@ import { createClaudeContext } from '../claude-context.ts';
 import { ensureBuiltinMcpSources } from '../../sources/builtin-mcp.ts';
 import { getSourceCredentialManager } from '../../sources/credential-manager.ts';
 import { getToolchain } from '../../toolchain-runtime.ts';
-import type { SourceConfig } from '@craft-agent/session-tools-core';
+import type { SourceConfig } from '@rox/session-tools-core';
 import { handleSourceTest } from '../../../../session-tools-core/src/handlers/source-test.ts';
 
 describe('session MCP runtime resolution', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { join } from 'node:path'
-import type { SessionEvent } from '@craft-agent/shared/protocol'
+import type { SessionEvent } from '@rox/shared/protocol'
 import { emitTurnComplete } from './turn-complete.ts'
 
 const tokenUsage = {

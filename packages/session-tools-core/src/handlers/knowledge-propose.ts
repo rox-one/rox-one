@@ -5,7 +5,7 @@
  * (spec 05 §3.6). Explore/Safe mode blocks this tool via SESSION_TOOL_DEFS.safeMode.
  */
 
-import type { MutationInput, MutationOp, MutationProposal } from '@craft-agent/core/knowledge';
+import type { MutationInput, MutationOp, MutationProposal } from '@rox/core/knowledge';
 import type { SessionToolContext } from '../context.ts';
 import type { ToolResult } from '../types.ts';
 import { errorResponse, successResponse } from '../response.ts';

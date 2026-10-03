@@ -6,7 +6,7 @@ import {
 import { parseRox2EntityId, type Rox2EntityRef } from '../../../core/src/rox2/platform-contract.ts'
 import type { ContentFailure, ContentResolution } from './descriptor-resolver.ts'
 import type { MarkdownCommitReceipt } from './markdown-commit.ts'
-import type { NoteDocument } from '@craft-agent/shared/protocol'
+import type { NoteDocument } from '@rox/shared/protocol'
 
 export interface GetBlockTreeRequest {
   ref: Rox2EntityRef

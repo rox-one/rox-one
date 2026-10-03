@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'bun:test'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   addChild,
   createEmptyGraph,
   finalizeGraph,
   type MindMapGraph,
-} from '@craft-agent/core/mindmap'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/core/mindmap'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
 import type { RequestContext } from '../../../transport/types'
 import { registerMindmapHandlers } from '../mindmap'

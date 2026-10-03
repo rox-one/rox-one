@@ -91,7 +91,7 @@ const WRAPPED_RU: Record<string, string> = {
   "editPopover.example.workspacePermissions": "Разреши запуск 'make build' в режиме Обзор",
   "editor.failedToReadFileAsDataUrl": "Не удалось прочитать файл как data-URL",
   "entityView.flowLive": "Живой",
-  "entityView.mapEmptyHint": "Напишите в Стандарт, чтобы появилась сцена.",
+  "entityView.mapEmptyHint": "Напишите в чат, чтобы появилась сцена.",
   "entityView.outlineCheckout": "Перейти",
   "entityView.workbenchForkHint": "Ветка создаёт дочернюю сессию (ветка), не переписывает историю. Рассылка: до 8 параллельно / 32 за запуск.",
   "extensions.card.installTarget": "Установить в",

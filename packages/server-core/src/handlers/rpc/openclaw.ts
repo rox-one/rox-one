@@ -1,4 +1,4 @@
-import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   sanitizeSecurityText,
   type AcceptSecurityRiskRequest,
@@ -10,13 +10,13 @@ import {
   type SecurityAuditSnapshot,
   type SecurityDomain,
   type SecurityFinding,
-} from '@craft-agent/shared/openclaw'
+} from '@rox/shared/openclaw'
 import {
   isClaimableLive,
   rpcOpenclawActResult,
   rpcOpenclawListResult,
   rpcOpenclawReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import type { RpcServer, RequestContext } from '../../transport/types'
 import type {
   HandlerDeps,

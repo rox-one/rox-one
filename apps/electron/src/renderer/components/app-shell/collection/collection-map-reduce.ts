@@ -7,7 +7,7 @@ import {
   snapshotSelection,
   type MapSource,
   type ReduceResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export function mapSourcesFromSessionMeta(
   ids: readonly string[],

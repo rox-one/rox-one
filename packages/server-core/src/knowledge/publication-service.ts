@@ -29,7 +29,7 @@ import {
   type PublishDraft,
   type PublishPrepareResult,
   type SelectionProof,
-} from '@craft-agent/core/knowledge'
+} from '@rox/core/knowledge'
 import type { KnowledgeBridgeService } from './bridge-service'
 import { KnowledgePublishDraftsStore } from './drafts-store'
 import { KnowledgeLinksStore } from './links-store'
@@ -376,7 +376,7 @@ export class KnowledgePublicationService {
         if (!baseHash) {
           try {
             const node = await args.provider.get(matched.ref)
-            const { hashKnowledgeContent } = await import('@craft-agent/core/knowledge')
+            const { hashKnowledgeContent } = await import('@rox/core/knowledge')
             baseHash = await hashKnowledgeContent(node.markdown ?? '')
           } catch {
             baseHash = ''

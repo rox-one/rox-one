@@ -6,8 +6,8 @@
  */
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { PremiumMenuSelect } from '@craft-agent/ui'
-import { parseTaskEntry, type ParsedTaskEntry, type TaskArea, type TaskProject } from '@craft-agent/core/tasks/personal'
+import { PremiumMenuSelect } from '@rox/ui'
+import { parseTaskEntry, type ParsedTaskEntry, type TaskArea, type TaskProject } from '@rox/core/tasks/personal'
 import { Overlay } from './parts'
 
 export interface QuickEntryResult {

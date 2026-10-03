@@ -11,7 +11,7 @@ import {
   inspectRemoteTlsPeer,
   peerTrustOptionsForRemote,
 } from '../remote-tls-enrollment.ts'
-import type { RemoteServerConfig } from '@craft-agent/core/types'
+import type { RemoteServerConfig } from '@rox/core/types'
 
 const PIN_A = Buffer.alloc(32, 7).toString('base64')
 const PIN_B = Buffer.alloc(32, 9).toString('base64')

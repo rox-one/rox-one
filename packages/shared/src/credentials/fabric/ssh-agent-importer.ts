@@ -1,4 +1,4 @@
-import type { CredentialKind, CredentialRefId, StorageMode } from '@craft-agent/core/platform';
+import type { CredentialKind, CredentialRefId, StorageMode } from '@rox/core/platform';
 import type { LocalFileSecretProvider } from './local-file-provider.ts';
 import type {
   CredentialImporter,

@@ -1,4 +1,4 @@
-import { getEnabledBuiltinMcpSourceSlugs } from '@craft-agent/shared/sources/builtin-mcp'
+import { getEnabledBuiltinMcpSourceSlugs } from '@rox/shared/sources/builtin-mcp'
 
 /** Select pending defaults too, so completing setup activates them in this chat. */
 export function resolveDefaultSessionSources(

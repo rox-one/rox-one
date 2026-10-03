@@ -1,4 +1,4 @@
-import type { CollectionFilters } from '@craft-agent/shared/sessions/collection'
+import type { CollectionFilters } from '@rox/shared/sessions/collection'
 import * as storage from '@/lib/local-storage'
 
 export type CollectionSliceId = 'unread' | 'flagged' | 'overdue' | 'today'

@@ -16,7 +16,7 @@ import {
   type TtsEngine,
   type VoiceHealth,
   type VoicePrefs,
-} from '@craft-agent/shared/voice'
+} from '@rox/shared/voice'
 import { createDesktopSettingsSession, readVoiceSettingsSnapshot, readVoiceSettingsHistory, type VoiceSettingsSnapshot, type VoiceSettingsHistory } from './desktop-settings-session'
 
 export function VoiceSettingsSection() {
@@ -111,8 +111,8 @@ export function VoiceSettingsSection() {
             onValueChange={(value) => void save({ recognitionLanguage: value as VoicePrefs['recognitionLanguage'] })}
             options={[
               { value: 'auto', label: t('settings.input.voiceLanguageAuto') },
-              { value: 'en', label: 'English' },
-              { value: 'ru', label: 'Русский' },
+              { value: 'en', label: t('settings.input.voiceLanguageEn') },
+              { value: 'ru', label: t('settings.input.voiceLanguageRu') },
             ]}
           />
           <SettingsMenuSelectRow

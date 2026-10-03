@@ -8,6 +8,8 @@
  */
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
+import { Archive, Bell, CalendarDays, CheckCheck, ChevronRight, Clock3, Folder, Inbox, ListFilter, Mail, MessageCircle, Newspaper, Radio, ShieldCheck, Sparkles, Tag, Users, type LucideIcon } from 'lucide-react'
 
 export function ModeScreenLayout({
   navigator,
@@ -28,9 +30,9 @@ export function ModeScreenLayout({
   return (
     <div className="flex h-full min-h-0 flex-col bg-background font-sans text-[13px] text-foreground" data-testid={testId}>
       <div className="flex min-h-0 flex-1">
-        <nav className="flex w-[220px] shrink-0 flex-col gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3">
+        <ShellSidebarPortal className="w-[220px] shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3">
           {navigator}
-        </nav>
+        </ShellSidebarPortal>
         {wideList ? (
           <>
             <section className="flex min-w-[280px] flex-1 flex-col bg-foreground/[0.025]">{list}</section>
@@ -59,10 +61,12 @@ export function NavTitle({ children }: { children: React.ReactNode }) {
 
 export function NavSection({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="mt-3 flex flex-col gap-0.5">
-      <div className="px-2 pb-1 text-[11px] uppercase tracking-wide text-text-muted">{title}</div>
-      {children}
-    </div>
+    <details open className="group mt-3">
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-medium uppercase tracking-wide text-text-muted outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+        <ChevronRight className="size-3 shrink-0 transition-transform group-open:rotate-90 motion-reduce:transition-none" aria-hidden />{title}
+      </summary>
+      <div className="ml-2 flex flex-col gap-0.5 border-l border-foreground/10 pl-2 py-1">{children}</div>
+    </details>
   )
 }
 
@@ -77,6 +81,15 @@ const DOT: Record<Tone, string> = {
   muted: 'bg-text-muted',
 }
 
+const NAV_ICONS: Record<string, LucideIcon> = {
+  all: Inbox, decisions: ShieldCheck, messages: MessageCircle, snoozed: Clock3, done: CheckCheck,
+  permission: ShieldCheck, credential: ShieldCheck, plan: ListFilter, memory: Sparkles,
+  skill: Sparkles, sender: Users, reply: MessageCircle, error: Bell, mail: Mail,
+  news: Newspaper, subscriptions: Radio, team: Users, agents: Sparkles, sources: Folder,
+  today: CalendarDays, upcoming: CalendarDays, past: Archive, live: Radio,
+  needsAction: Bell, logbook: CheckCheck, trash: Archive, inbox: Inbox,
+}
+
 export function NavItem({
   label,
   count,
@@ -85,6 +98,7 @@ export function NavItem({
   onClick,
   testId,
   disabled,
+  icon,
 }: {
   label: React.ReactNode
   count?: number | null
@@ -93,7 +107,11 @@ export function NavItem({
   onClick?: () => void
   testId?: string
   disabled?: boolean
+  icon?: LucideIcon
 }) {
+  const key = testId?.replace(/^(inbox|feed|tasks|meetings)-nav-/, '') ?? ''
+  const Icon = icon ?? (testId?.startsWith('mail-folder-') ? Mail : NAV_ICONS[key]) ?? (typeof label === 'string' && label.startsWith('#') ? Tag : ListFilter)
+  const iconTone = dot ?? (key.includes('mail') ? 'info' : key.includes('today') ? 'warning' : 'accent')
   return (
     <button
       type="button"
@@ -102,14 +120,21 @@ export function NavItem({
       aria-current={active ? 'page' : undefined}
       data-testid={testId}
       className={cn(
-        'flex h-7 w-full items-center gap-2 rounded-[6px] px-2 text-left text-[13px] outline-none',
+        'flex min-h-8 w-full items-center gap-2 rounded-lg border-l-2 border-transparent px-2 text-left text-[13px] outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring',
         active
-          ? 'bg-accent/15 font-semibold text-foreground shadow-[inset_2px_0_0_var(--accent)]'
+          ? 'border-l-accent bg-accent/15 font-semibold text-foreground'
           : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground',
         disabled && 'opacity-50',
       )}
     >
-      {dot ? <span aria-hidden className={cn('size-1.5 shrink-0 rounded-full', DOT[dot])} /> : null}
+      <span className={cn('relative grid size-5 shrink-0 place-items-center rounded-md bg-foreground/[0.05]', {
+        'text-accent': iconTone === 'accent', 'text-info': iconTone === 'info',
+        'text-success': iconTone === 'success', 'text-destructive': iconTone === 'danger',
+        'text-[var(--warning,#d9a13b)]': iconTone === 'warning', 'text-text-muted': iconTone === 'muted',
+      })}>
+        <Icon className="size-3.5" strokeWidth={1.75} aria-hidden />
+        {dot ? <span aria-hidden className={cn('absolute -right-0.5 -top-0.5 size-1.5 rounded-full', DOT[dot])} /> : null}
+      </span>
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {count != null && count > 0 ? (
         <span className={cn('shrink-0 tabular-nums text-[11px]', active ? 'text-accent' : 'text-text-muted')}>{count}</span>
@@ -164,9 +189,9 @@ export function ListRow({
       onClick={onClick}
       onKeyDown={onKeyDown}
       className={cn(
-        'mx-1.5 flex cursor-default items-start gap-2 rounded-[6px] px-2 py-1.5 outline-none',
+        'mx-1.5 flex cursor-default items-start gap-2 rounded-[6px] border-l-2 border-transparent px-2 py-1.5 outline-none',
         selected ? 'bg-foreground/[0.08]' : 'hover:bg-foreground/[0.04]',
-        (selected || unread) && 'shadow-[inset_2px_0_0_var(--accent)]',
+        (selected || unread) && 'border-l-accent',
       )}
     >
       {children}
@@ -213,29 +238,41 @@ export function Tabs<T extends string>({
   onChange,
   label,
 }: {
-  tabs: ReadonlyArray<{ id: T; label: React.ReactNode; count?: number }>
+  tabs: ReadonlyArray<{ id: T; label: React.ReactNode; count?: number; icon?: LucideIcon }>
   value: T
   onChange: (id: T) => void
   label: string
 }) {
   return (
     <div role="tablist" aria-label={label} className="flex items-center gap-1">
-      {tabs.map((tab) => (
+      {tabs.map((tab, index) => {
+        const Icon = tab.icon ?? NAV_ICONS[tab.id] ?? ListFilter
+        return (
         <button
           key={tab.id}
           type="button"
           role="tab"
+          tabIndex={value === tab.id ? 0 : -1}
           aria-selected={value === tab.id}
+          onKeyDown={event => {
+            const next = event.key === 'ArrowRight' ? (index + 1) % tabs.length : event.key === 'ArrowLeft' ? (index - 1 + tabs.length) % tabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : null
+            if (next === null) return
+            event.preventDefault()
+            onChange(tabs[next]!.id)
+            event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus()
+          }}
           onClick={() => onChange(tab.id)}
           className={cn(
             'inline-flex h-7 items-center gap-1 rounded-[6px] px-2.5 text-[12px] outline-none',
             value === tab.id ? 'bg-accent/15 font-semibold text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05]',
           )}
         >
+          <Icon className={cn('size-3.5', value === tab.id ? 'text-accent' : 'text-text-muted')} aria-hidden />
           {tab.label}
           {tab.count ? <span className="tabular-nums text-text-muted">{tab.count}</span> : null}
         </button>
-      ))}
+        )
+      })}
     </div>
   )
 }

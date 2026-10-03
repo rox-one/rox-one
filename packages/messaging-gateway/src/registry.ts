@@ -14,15 +14,15 @@
 
 import { existsSync, readdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { PushTarget } from '@craft-agent/shared/protocol'
-import type { CredentialManager } from '@craft-agent/shared/credentials'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { PushTarget } from '@rox/shared/protocol'
+import type { CredentialManager } from '@rox/shared/credentials'
 import type {
   ISessionManager,
   IMessagingGatewayRegistry,
   MessagingBindingInfo,
   MessagingConfigInfo,
-} from '@craft-agent/server-core/handlers'
+} from '@rox/server-core/handlers'
 
 import { MessagingGateway } from './gateway'
 import { ConfigStore } from './config-store'
@@ -79,7 +79,7 @@ export interface MessagingGatewayRegistryOptions {
   publishEvent?: (channel: string, target: PushTarget, ...args: unknown[]) => void
   /** Optional WhatsApp worker config — required to enable the WhatsApp adapter. */
   whatsapp?: {
-    /** Absolute path to the worker entry (packaged/unpacked from @craft-agent/messaging-whatsapp-worker). */
+    /** Absolute path to the worker entry (packaged/unpacked from @rox/messaging-whatsapp-worker). */
     workerEntry: string
     /** Node binary override (defaults to process.execPath with ELECTRON_RUN_AS_NODE). */
     nodeBin?: string
@@ -88,7 +88,7 @@ export interface MessagingGatewayRegistryOptions {
   }
   /** Optional Discord worker config — required to enable the Discord adapter. */
   discord?: {
-    /** Absolute path to the worker entry (packaged/unpacked from @craft-agent/messaging-discord-worker). */
+    /** Absolute path to the worker entry (packaged/unpacked from @rox/messaging-discord-worker). */
     workerEntry: string
     /** Node binary override (defaults to process.execPath with ELECTRON_RUN_AS_NODE). */
     nodeBin?: string

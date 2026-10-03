@@ -40,6 +40,7 @@ export const BROWSER_IMPORT_CATEGORIES = [
   'bookmarks',
   'history',
   'cookies',
+  'credentials',
   'extensions',
 ] as const
 export type BrowserImportCategory = (typeof BROWSER_IMPORT_CATEGORIES)[number]
@@ -87,7 +88,8 @@ export function getDefaultEnvironmentPrefs(now: number = Date.now()): Environmen
     sttEngine: unanswered(),
     ttsEngine: unanswered(),
     wakeWord: unanswered(),
-    browserImport: unanswered(),
+    // Selection preferences only: cookie and OS credential grants are separate.
+    browserImport: { status: 'unanswered', value: [...BROWSER_IMPORT_CATEGORIES] },
     syncPurposes: unanswered(),
     notifications: unanswered(),
     agentRules: [],

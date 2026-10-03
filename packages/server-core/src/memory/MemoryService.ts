@@ -22,15 +22,15 @@
  * Results are broadcast as 'memory:changed' / 'skillsPending:changed' via
  * the injected emitter (SessionManager eventSink).
  */
-import { readSessionMessages } from '@craft-agent/shared/sessions/jsonl'
-import { getSessionFilePath } from '@craft-agent/shared/sessions/storage'
-import { getMemoryConfig, getSkillsAutoCreateFromSessions } from '@craft-agent/shared/config/storage'
+import { readSessionMessages } from '@rox/shared/sessions/jsonl'
+import { getSessionFilePath } from '@rox/shared/sessions/storage'
+import { getMemoryConfig, getSkillsAutoCreateFromSessions } from '@rox/shared/config/storage'
 import {
   formatLessonsForPrompt,
   formatWorkspaceMemoryForPrompt,
-} from '@craft-agent/shared/prompts/system'
-import { buildTransferredSessionContext } from '@craft-agent/shared/agent/conversation-summary'
-import type { StoredMessage, SessionMemoryMode } from '@craft-agent/core/types'
+} from '@rox/shared/prompts/system'
+import { buildTransferredSessionContext } from '@rox/shared/agent/conversation-summary'
+import type { StoredMessage, SessionMemoryMode } from '@rox/core/types'
 import type {
   DistillResult,
   Lesson,
@@ -41,7 +41,7 @@ import type {
   MemoryPromptBlocks,
   SkillCandidate,
   WorkspaceMemory,
-} from '@craft-agent/shared/memory/types'
+} from '@rox/shared/memory/types'
 import { dirname } from 'path'
 import { LessonStore, lessonKey } from './LessonStore'
 import { MemoryFileStore } from './MemoryFileStore'

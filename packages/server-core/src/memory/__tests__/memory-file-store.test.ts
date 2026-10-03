@@ -11,9 +11,9 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import type { WorkspaceMemory } from '@craft-agent/shared/memory/types'
+import type { WorkspaceMemory } from '@rox/shared/memory/types'
 import { MemoryFileStore, RECENT_HISTORY_DAYS } from '../MemoryFileStore'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { resolveConfigDir } from "@rox/shared/config/paths"
 
 let configDir: string
 let workspaceRoot: string

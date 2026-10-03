@@ -1,4 +1,4 @@
-import type { PanelContribution, PanelRegistry, PanelRenderer } from '@craft-agent/core/platform'
+import type { PanelContribution, PanelRegistry, PanelRenderer } from '@rox/core/platform'
 
 /** Keep id aligned with workbench.conation.mail (blocked Mail/Channels pane). */
 export const CONATION_MAIL_PANEL_ID = 'conation.mail' as const

@@ -8,14 +8,14 @@
  * and intentionally out of scope here.
  */
 
-import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
+import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import {
   isClaimableLive,
   rpcNotesImportActResult,
   rpcNotesImportListResult,
   rpcNotesImportReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import type { RpcServer } from '../../transport/types'
 import { scanSourceFolder, materializeImport, NotesImportError } from '../../knowledge/notes-import'
 import { join } from 'node:path'

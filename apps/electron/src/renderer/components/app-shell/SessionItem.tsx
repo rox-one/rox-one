@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import { useActionLabel } from "@/actions"
 import { cn } from "@/lib/utils"
 import { rendererPerf } from "@/lib/perf"
-import { Spinner } from "@craft-agent/ui"
+import { Spinner } from "@rox/ui"
 import { EntityRow } from "@/components/ui/entity-row"
 import { EntityListBadge } from "@/components/ui/entity-list-badge"
 import { SessionMenu } from "./SessionMenu"
@@ -24,8 +24,8 @@ import type { SessionMeta } from "@/atoms/sessions"
 import { messagingBindingsBySessionAtom } from "@/atoms/messaging"
 import { collectionDisplayAtom } from "@/atoms/collection-display"
 import { useAtomValue } from "jotai"
-import { extractLabelId } from "@craft-agent/shared/labels"
-import { getAppLocale } from '@craft-agent/shared/i18n'
+import { extractLabelId } from "@rox/shared/labels"
+import { getAppLocale } from '@rox/shared/i18n'
 
 function formatSessionDue(item: SessionMeta): string | undefined {
   const dueValue = item.dueDate ?? (item as SessionMeta & { due?: number | null }).due

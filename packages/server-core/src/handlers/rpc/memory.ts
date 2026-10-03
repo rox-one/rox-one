@@ -1,21 +1,21 @@
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { PushTarget } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId, getWorkspaces } from '@craft-agent/shared/config'
-import { getMemoryConfig } from '@craft-agent/shared/config/storage'
-import type { Lesson, LessonCategory, LessonOwner, LessonScope, ProjectMemoryDto, WorkspaceMemory } from '@craft-agent/shared/memory/types'
-import { pushTyped, type RequestContext, type RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { PushTarget } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId, getWorkspaces } from '@rox/shared/config'
+import { getMemoryConfig } from '@rox/shared/config/storage'
+import type { Lesson, LessonCategory, LessonOwner, LessonScope, ProjectMemoryDto, WorkspaceMemory } from '@rox/shared/memory/types'
+import { pushTyped, type RequestContext, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   isClaimableLive,
   rpcMemoryActResult,
   rpcMemoryListResult,
   rpcMemoryReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import { LessonStore, lessonKey } from '../../memory/LessonStore'
 import { buildConflictPrompt, parseConflicts, promoteLessonToGlobal, scanPromotionCandidates } from '../../memory/lesson-graph'
 import type { LessonConflictVerdict } from '../../memory/lesson-graph'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'
-import { getProjectMemoryPath, loadProject, loadProjectById, loadProjectMemory } from '@craft-agent/shared/projects'
+import { getProjectMemoryPath, loadProject, loadProjectById, loadProjectMemory } from '@rox/shared/projects'
 import { search as ftsSearch } from '../../memory/fts-index'
 
 export const HANDLED_CHANNELS = [

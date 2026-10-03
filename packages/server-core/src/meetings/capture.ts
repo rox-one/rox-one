@@ -2,8 +2,8 @@
  * Native capture intent. Persists sourceBinding + status in the journal.
  * Not a live SFU/Conation room and not OS microphone capture.
  */
-import type { Meeting } from '@craft-agent/core/meetings'
-import { authorizeMeetingAction, type MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import type { Meeting } from '@rox/core/meetings'
+import { authorizeMeetingAction, type MeetingGrant } from '@rox/shared/meeting-agents'
 import { MeetingJournal } from './journal.ts'
 
 export const NATIVE_CAPTURE_PROVIDER = 'native-journal'

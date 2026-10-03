@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { AlertTriangle, LoaderCircle, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import type { PersonalTask } from '@craft-agent/core/tasks/personal'
+import type { PersonalTask } from '@rox/core/tasks/personal'
 import { PersonalTaskCreationError } from '../../lib/personal-tasks-sync'
 import './quick-task-input.css'
 

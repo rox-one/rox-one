@@ -16,7 +16,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Spinner } from '@craft-agent/ui'
+import { Spinner } from '@rox/ui'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import type { WeChatUiEvent } from '../../../shared/types'
 

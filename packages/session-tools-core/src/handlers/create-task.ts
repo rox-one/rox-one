@@ -5,11 +5,11 @@ import { successResponse, errorResponse } from '../response.ts';
 export type CreateTaskArgs = CreateTaskInput;
 
 /**
- * create_task — create a Craft Agents Task (board card + task.yaml +
+ * create_task — create a ROX Task (board card + task.yaml +
  * orchestrator session) WITHOUT running it. All spec building (slug
  * derivation, node synthesis, schema validation) happens behind the injected
  * ctx.createTask callback where the task/schema primitives live — this
- * package must stay dependency-free of @craft-agent/shared.
+ * package must stay dependency-free of @rox/shared.
  */
 export async function handleCreateTask(
   ctx: SessionToolContext,

@@ -6,8 +6,8 @@
 import * as React from 'react'
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
-import type { KnowledgeRef } from '@craft-agent/core/knowledge'
-import { deriveKnowledgeMindMap, type MindMapGraph } from '@craft-agent/core/mindmap'
+import type { KnowledgeRef } from '@rox/core/knowledge'
+import { deriveKnowledgeMindMap, type MindMapGraph } from '@rox/core/mindmap'
 import {
   defaultKnowledgeEntityCapabilities,
   EntityViewTabs,

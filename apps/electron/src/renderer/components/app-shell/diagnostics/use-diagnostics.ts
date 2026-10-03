@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { ServerHealth } from '@craft-agent/core/types'
+import type { ServerHealth } from '@rox/core/types'
 import type { DeviceDiagnosticKind, DeviceDiagnosticLogSource, DeviceDiagnosticSnapshot } from '../../../../shared/device-diagnostics'
 import { createDiagnosticsPoller } from './diagnostics-poller'
 import { diagnosticEndpoint } from './diagnostics-model'

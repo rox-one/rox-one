@@ -1,5 +1,5 @@
-import type { CustomEndpointApi } from '@craft-agent/shared/config'
-export type { CustomEndpointApi } from '@craft-agent/shared/config'
+import type { CustomEndpointApi } from '@rox/shared/config'
+export type { CustomEndpointApi } from '@rox/shared/config'
 
 export type CustomEndpointInput = 'text' | 'image'
 

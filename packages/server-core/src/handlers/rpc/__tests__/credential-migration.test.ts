@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 
 const previewFn = mock(async () => ({
   ready: 1,
@@ -49,7 +49,7 @@ const rollbackFn = mock(async (migrationId: string) => ({
   invalid: 0,
 }))
 
-mock.module('@craft-agent/shared/credentials', () => ({
+mock.module('@rox/shared/credentials', () => ({
   getCredentialManager: () => ({
     checkHealth: async () => ({ healthy: true, issues: [] }),
     list: async () => [],

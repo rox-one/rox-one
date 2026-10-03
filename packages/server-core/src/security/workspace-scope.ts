@@ -9,7 +9,7 @@
 
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { CodedError } from '@craft-agent/shared/protocol'
+import { CodedError } from '@rox/shared/protocol'
 import type { RequestContext } from '../transport/types.ts'
 
 const WORKSPACE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,191}$/

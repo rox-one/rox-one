@@ -5,7 +5,7 @@
  * Derives control state from BrowserInstanceInfo.
  */
 
-import { BrowserControls } from '@craft-agent/ui'
+import { BrowserControls } from '@rox/ui'
 import type { BrowserInstanceInfo } from '../../../shared/types'
 import { ElementInspectConfirm, type InspectDestructiveKind } from './ElementInspectConfirm'
 

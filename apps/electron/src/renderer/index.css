@@ -1,5 +1,5 @@
 /* Tailwind v4 does not inherit @source across @import boundaries. The shared
-   @craft-agent/ui/styles import brings theme tokens, but utility generation
+   @rox/ui/styles import brings theme tokens, but utility generation
    must start in this file — same pattern as apps/webui/src/index.css. */
 @import "tailwindcss" source(none);
 @plugin "@tailwindcss/typography";
@@ -11,10 +11,10 @@
 @source "../../../../packages/ui/src/components/**/*.{ts,tsx,jsx}";
 @source "../../../../packages/ui/src/lib/**/*.{ts,tsx,jsx}";
 
-@import "@craft-agent/ui/styles";
+@import "@rox/ui/styles";
 
 /* Renderer-only tokens. Core color, font, elevation, and status tokens come
-   from @craft-agent/ui/styles so Electron and shared surfaces cannot diverge. */
+   from @rox/ui/styles so Electron and shared surfaces cannot diverge. */
 :root {
   --foreground-1\.5: color-mix(in oklch, var(--foreground) 1.5%, var(--background));
   --shadow-dragging:
@@ -43,21 +43,18 @@ html[data-theme-override]::before {
   pointer-events: none;
 }
 
-/* Named solid palettes: body is otherwise transparent over macOS vibrancy, so
-   skipping the overlay alone still lets wallpaper tint Primer/Ghostty hex. */
-html[data-theme]:not([data-scenic]):not([data-theme-override]),
-html[data-theme]:not([data-scenic]):not([data-theme-override]) body,
-html[data-theme]:not([data-scenic]):not([data-theme-override]) #root {
+/* Opaque fallback for named palettes. Native glass leaves the window clear;
+   individual document panels still use the selected palette's solid canvas. */
+html[data-theme]:not([data-scenic]):not([data-theme-override]):not([data-shell-material="vibrancy"]):not([data-shell-material="mica"]),
+html[data-theme]:not([data-scenic]):not([data-theme-override]):not([data-shell-material="vibrancy"]):not([data-shell-material="mica"]) body,
+html[data-theme]:not([data-scenic]):not([data-theme-override]):not([data-shell-material="vibrancy"]):not([data-shell-material="mica"]) #root {
   background: var(--background);
 }
 
-html[data-theme]:not([data-scenic]):not([data-theme-override]) .chrome-rail {
-  background: var(--surface-rail);
-}
-
-html[data-theme]:not([data-scenic]):not([data-theme-override]) .chrome-strip,
-html[data-theme]:not([data-scenic]):not([data-theme-override]) .chrome-topbar {
-  background: var(--surface-elevated);
+html[data-shell-material="vibrancy"]:not([data-scenic]),
+html[data-shell-material="mica"]:not([data-scenic]),
+html:is([data-shell-material="vibrancy"], [data-shell-material="mica"]):not([data-scenic]) :is(body, #root) {
+  background: transparent;
 }
 
 /* Theme Mismatch - Solid background when theme doesn't support current mode
@@ -191,16 +188,6 @@ html[data-shell-style="zen"][data-scenic] [data-shell-role="content"] {
   -webkit-backdrop-filter: none;
 }
 
-html[data-shell-style="zen"] .chrome-topbar,
-html[data-shell-style="zen"] .chrome-rail,
-html[data-shell-style="zen"] .chrome-strip,
-html[data-shell-style="zen"][data-scenic] .chrome-topbar,
-html[data-shell-style="zen"][data-scenic] .chrome-rail,
-html[data-shell-style="zen"][data-scenic] .chrome-strip {
-  background: var(--shell-backdrop-tint);
-  border-color: var(--shell-border);
-}
-
 /* Renderer-specific Tailwind utilities layered on top of the shared theme. */
 @theme inline {
   --color-foreground-1\.5: var(--foreground-1\.5);
@@ -243,7 +230,7 @@ html[data-shell-style="zen"][data-scenic] .chrome-strip {
 }
 
 /* Renderer-only utilities. Shared shadow and popover classes come from
-   @craft-agent/ui/styles. */
+   @rox/ui/styles. */
 @layer utilities {
   /* Bare `rounded` compiles to a literal .25rem (3.75px at the 15px root);
      pin it to the xs token so it sits on the 4/6/8/10/12 radius scale. */
@@ -1117,20 +1104,126 @@ html[data-shell-style="zen"] .shell-sash-active {
   }
 }
 
-html[data-scenic] .chrome-topbar,
-html[data-scenic] .chrome-rail,
-html[data-scenic] .chrome-strip {
-  background: color-mix(in oklch, var(--surface-elevated) 70%, transparent);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+/* Shared outer glass: titlebar, primary navigation and right inspector follow
+   the same theme, with opaque reading surfaces inside the workbench. */
+html {
+  --shell-glass-blur: 20px;
+  --shell-glass-topbar: color-mix(in srgb, var(--surface-elevated) 84%, transparent);
+  --shell-glass-rail: color-mix(in srgb, var(--surface-rail) 82%, transparent);
+  --shell-glass-strip: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
+  --shell-glass-highlight: color-mix(in srgb, white 18%, transparent);
+  --shell-window-radius: 12px;
 }
 
-.chrome-rail {
-  background: color-mix(in oklch, var(--surface-rail) 92%, transparent);
+html.dark {
+  --shell-glass-highlight: color-mix(in srgb, white 7%, transparent);
 }
 
-.chrome-strip {
-  background: color-mix(in oklch, var(--surface-elevated) 90%, transparent);
+html[data-shell-style="zen"]:not([data-scenic]) {
+  --shell-content: var(--canvas);
+}
+
+html :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]),
+html[data-shell-style="zen"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]) {
+  background: var(--shell-glass-surface, var(--shell-glass-strip));
+  border-color: var(--shell-border, var(--border-subtle));
+  backdrop-filter: blur(var(--shell-glass-blur)) saturate(1.15);
+  -webkit-backdrop-filter: blur(var(--shell-glass-blur)) saturate(1.15);
+}
+
+html .chrome-topbar {
+  --shell-glass-surface: var(--shell-glass-topbar);
+  border-radius: var(--shell-window-radius) var(--shell-window-radius) 0 0;
+  box-shadow: inset 0 1px 0 var(--shell-glass-highlight);
+}
+
+/* Keep glass panes clear all the way to the native compositor. */
+html .rox-shell-pane:is([data-panel-role="sidebar"], [data-panel-role="navigator"]) {
+  background: transparent;
+}
+
+html .chrome-rail {
+  --shell-glass-surface: var(--shell-glass-rail);
+}
+
+html [data-shell-role="chrome"].chrome-rail:not([data-compact-profile]) {
+  border-radius: 0 0 0 var(--shell-window-radius);
+}
+
+html [data-inspector-panel] {
+  border-radius: var(--rox-radius-panel) 0 var(--shell-window-radius) var(--rox-radius-panel);
+}
+
+/* Explicit opaque mode and native capability/accessibility fallbacks win over
+   scenic/blurred themes. Filters affect only chrome, never its text opacity. */
+html[data-shell-material="solid"],
+html[data-contrast="high"] {
+  --shell-glass-topbar: var(--surface-elevated);
+  --shell-glass-rail: var(--surface-rail);
+  --shell-glass-strip: var(--surface-elevated);
+  /* Scenic surface tokens carry alpha. Dropping backdrop-filter alone does
+     not make them opaque, so explicitly restore full alpha in this fallback. */
+  --shell-glass-topbar: rgb(from var(--surface-elevated) r g b / 1);
+  --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1);
+  --shell-glass-strip: rgb(from var(--surface-elevated) r g b / 1);
+}
+
+html[data-shell-material="solid"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]),
+html[data-contrast="high"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]) {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  html {
+    --shell-glass-topbar: var(--surface-elevated);
+    --shell-glass-rail: var(--surface-rail);
+    --shell-glass-strip: var(--surface-elevated);
+    --shell-glass-topbar: rgb(from var(--surface-elevated) r g b / 1);
+    --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1);
+    --shell-glass-strip: rgb(from var(--surface-elevated) r g b / 1);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html {
+    --shell-glass-topbar: var(--surface-elevated);
+    --shell-glass-rail: var(--surface-rail);
+    --shell-glass-strip: var(--surface-elevated);
+    --shell-glass-topbar: rgb(from var(--surface-elevated) r g b / 1);
+    --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1);
+    --shell-glass-strip: rgb(from var(--surface-elevated) r g b / 1);
+  }
+
+  html :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]),
+  html[data-shell-style="zen"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]) {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (forced-colors: active) {
+  html,
+  html[data-shell-style="zen"] {
+    --shell-glass-topbar: Canvas;
+    --shell-glass-rail: Canvas;
+    --shell-glass-strip: Canvas;
+  }
+
+  html :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]),
+  html[data-shell-style="zen"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (display-mode: fullscreen) {
+  html {
+    --shell-window-radius: 0px;
+  }
 }
 
 /* TurnCard action buttons (Copy, Markdown) — outside @container/shell,

@@ -24,6 +24,16 @@ export function clampMindMapZoom(zoom: number): number {
   return Math.min(MAX_MIND_MAP_ZOOM, Math.max(MIN_MIND_MAP_ZOOM, zoom))
 }
 
+/** Layout edits and container resizes keep the user's viewport; a new entity fits once. */
+export function shouldAutoFitMindMap(
+  fittedEntity: string | null,
+  entity: string,
+  size: MindMapViewportSize,
+  visibleNodeCount: number,
+): boolean {
+  return fittedEntity !== entity && size.width > 0 && size.height > 0 && visibleNodeCount > 0
+}
+
 /**
  * Centers every laid-out node inside the available viewport. `null` means the
  * map is not mounted or has not received a measurable size yet.

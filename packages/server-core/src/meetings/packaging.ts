@@ -7,7 +7,7 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { BUILTIN_MEETING_AGENT_IDS, BUILTIN_MEETING_AGENTS } from '@craft-agent/shared/meeting-agents'
+import { BUILTIN_MEETING_AGENT_IDS, BUILTIN_MEETING_AGENTS } from '@rox/shared/meeting-agents'
 import { blocked, type EvidenceLevel, type GateStatus, type MeetingOpResult } from './types.ts'
 
 export const MEETING_AGENT_ROLES = [

@@ -1,6 +1,7 @@
 import { createCipheriv, randomBytes, randomUUID } from 'node:crypto'
 
 import { basename, isAbsolute, relative, resolve, sep } from 'node:path'
+import type { NativeBrowserData } from './profile-native-data.ts'
 
 
 /**
@@ -35,6 +36,9 @@ export interface DiscoveredProfile {
 
 export interface ImportConsent {
   historyBookmarks: boolean
+  /** Optional individual preferences; older callers keep both enabled. */
+  history?: boolean
+  bookmarks?: boolean
   cookies: boolean
   credentials: boolean
   osCredentialsApproved: boolean
@@ -49,6 +53,18 @@ export interface ProtectedCookieImport {
   deleteKey?(reference: string): boolean
 }
 
+/** Produced by the host after a native grant; contains ciphertext only. */
+export interface ProtectedCredentialImport {
+  /** Fixed before custody creation so recovery can precede publication. */
+  keyReference: string
+  sealedBlob: string | null
+  count: number
+  skipped: number
+  unsupported: number
+  storeKey(): string | null
+  deleteKey(reference: string): boolean
+}
+
 export interface ImportSummary {
   dryRun: boolean
   profileId: string
@@ -56,6 +72,19 @@ export interface ImportSummary {
   accessedStores: ImportCategory[]
   rollbackToken: string | null
   deletionReceipt: { deletedAt: number; categories: ImportCategory[]; itemCount: number } | null
+  /** Safe native outcomes; never contains a helper error or a password. */
+  credentialAccess?: 'granted' | 'denied' | 'cancelled' | 'unavailable' | 'unsupported'
+  unsupportedCredentials?: number
+}
+
+export interface BrowserDataAutoStatus {
+  workspaceId: string | null
+  enabled: boolean
+  profileId: string | null
+  state: 'off' | 'idle' | 'done' | 'error'
+  imported: { history: number; bookmarks: number }
+  lastRunAt: number | null
+  error?: string
 }
 
 export interface IndexedItem {
@@ -216,10 +245,15 @@ export function importProfile(input: {
   consent: ImportConsent
   authorizedScopes: { cookies: boolean; credentials: boolean }
   protectedCookies?: ProtectedCookieImport
+  protectedCredentials?: ProtectedCredentialImport
+  nativeData?: (profile: DiscoveredProfile, categories: { history: boolean; bookmarks: boolean }) => NativeBrowserData
   fs: ProfileFs
   indexPath: string
   vaultPath: string
+  credentialVaultPath?: string
   dryRun: boolean
+  /** Repeated non-secret sync can replace its index without retaining duplicate snapshots. */
+  retainRollback?: boolean
   now?: number
 }): ImportSummary {
   if (input.profile.state === 'unsupported' || input.profile.state === 'locked') {
@@ -233,10 +267,15 @@ export function importProfile(input: {
   let cookieKeyRef: string | null = null
   let sealedCookies: string | null = null
   let credentialCount = 0
+  let credentialKeyRef: string | null = null
   let skipped = 0
 
   if (input.consent.historyBookmarks) {
     accessed.push('history_bookmarks')
+    const native = input.nativeData?.(input.profile, {
+      history: input.consent.history !== false,
+      bookmarks: input.consent.bookmarks !== false,
+    }) ?? {}
     const bookmarkFile = firstExisting(input.fs, [
       `${input.profile.path}/Bookmarks`,
       `${input.profile.path}/bookmarks.html`,
@@ -246,8 +285,8 @@ export function importProfile(input: {
       `${input.profile.path}/history.json`,
       `${input.profile.path}/History.json`,
     ])
-    if (bookmarkFile) bookmarks = parseBookmarks(input.fs.readText(bookmarkFile) ?? '')
-    if (historyFile) history = parseHistory(input.fs.readText(historyFile) ?? '')
+    if (input.consent.bookmarks !== false) bookmarks = native.bookmarks ?? (bookmarkFile ? parseBookmarks(input.fs.readText(bookmarkFile) ?? '') : [])
+    if (input.consent.history !== false) history = native.history ?? (historyFile ? parseHistory(input.fs.readText(historyFile) ?? '') : [])
     if (input.profile.state === 'corrupt' && bookmarks.length === 0 && history.length === 0) {
       skipped += 1
     }
@@ -282,28 +321,24 @@ export function importProfile(input: {
   }
 
   if (input.consent.credentials) {
-    if (!input.authorizedScopes.credentials || !canAccessCredentials(input.consent)) {
+    if (!input.authorizedScopes.credentials || !canAccessCredentials(input.consent) || !input.protectedCredentials || !input.credentialVaultPath) {
       skipped += 1
     } else {
       accessed.push('credentials')
-      const loginFile = firstExisting(
-        input.fs,
-        CREDENTIAL_STORE_BASENAMES.map((name) => `${input.profile.path}/${name}`),
-      )
-      if (loginFile) {
-        credentialCount = countCredentialRecords(input.fs.readText(loginFile) ?? '')
-      } else {
-        skipped += 1
-      }
+      credentialCount = input.protectedCredentials.count
+      skipped += input.protectedCredentials.skipped
     }
   }
 
-  const rollbackToken = input.dryRun ? null : `rb-${randomUUID()}`
+  const hasChanges = input.consent.historyBookmarks || cookieKeyRef !== null ||
+    (credentialCount > 0 && Boolean(input.protectedCredentials?.sealedBlob))
+  const rollbackToken = input.dryRun || !hasChanges || (input.retainRollback === false && !input.consent.cookies && !input.consent.credentials) ? null : `rb-${randomUUID()}`
   try {
-    if (!input.dryRun && (input.consent.historyBookmarks || cookieKeyRef !== null)) {
+    const credentialRequested = credentialCount > 0 && Boolean(input.protectedCredentials?.sealedBlob)
+    if (!input.dryRun && hasChanges) {
       const previous = input.fs.readText(input.indexPath) ?? JSON.stringify({ bookmarks: [], history: [] })
       if (rollbackToken) input.fs.writeText(`${input.indexPath}.${rollbackToken}`, previous)
-      let existing: { bookmarks?: IndexedItem[]; history?: IndexedItem[]; cookieKeyRef?: string } = {}
+      let existing: { bookmarks?: IndexedItem[]; history?: IndexedItem[]; cookieKeyRef?: string; credentialKeyRef?: string; credentialCount?: number } = {}
       try {
         existing = JSON.parse(previous) as typeof existing
       } catch {
@@ -318,12 +353,29 @@ export function importProfile(input: {
         }))
         input.fs.writeText(input.vaultPath, sealedCookies!)
       }
+      if (credentialRequested && rollbackToken) {
+        const reference = input.protectedCredentials!.keyReference
+        if (!/^[a-zA-Z0-9_-]{16,160}$/.test(reference) || existing.credentialKeyRef === reference) throw new Error('protected-credential-key-reference-must-be-unique')
+        // Persist the key reference before custody creation. Even an OS-store
+        // failure or an interrupted publication retains a retryable recovery.
+        input.fs.writeText(`${input.indexPath}.${rollbackToken}.credentials`, JSON.stringify({
+          vaultPath: input.credentialVaultPath, previousVault: input.fs.readText(input.credentialVaultPath!),
+          currentKeyRef: reference, keyDeleted: false,
+        }))
+        const storedReference = input.protectedCredentials!.storeKey()
+        if (!storedReference) throw new Error('protected-credential-key-unavailable')
+        credentialKeyRef = storedReference
+        if (storedReference !== reference) throw new Error('protected-credential-key-reference-mismatch')
+        input.fs.writeText(input.credentialVaultPath!, input.protectedCredentials!.sealedBlob!)
+      }
       input.fs.writeText(
         input.indexPath,
         JSON.stringify({
-          bookmarks: input.consent.historyBookmarks ? bookmarks : existing.bookmarks ?? [],
-          history: input.consent.historyBookmarks ? history : existing.history ?? [],
+          bookmarks: input.consent.historyBookmarks && input.consent.bookmarks !== false ? bookmarks : existing.bookmarks ?? [],
+          history: input.consent.historyBookmarks && input.consent.history !== false ? history : existing.history ?? [],
           cookieKeyRef: cookieKeyRef ?? existing.cookieKeyRef,
+          credentialKeyRef: credentialKeyRef ?? existing.credentialKeyRef,
+          credentialCount: credentialKeyRef ? credentialCount : existing.credentialCount,
         }),
       )
     }
@@ -335,6 +387,12 @@ export function importProfile(input: {
       const previous = input.fs.readText(input.indexPath)
       if (previous === null || JSON.parse(previous).cookieKeyRef !== cookieKeyRef) {
         if (!input.protectedCookies?.deleteKey?.(cookieKeyRef)) throw new Error('protected-cookie-key-cleanup-failed')
+      }
+    }
+    if (credentialKeyRef && rollbackToken && !input.fs.exists(`${input.indexPath}.${rollbackToken}.credentials`)) {
+      const previous = input.fs.readText(input.indexPath)
+      if (previous === null || JSON.parse(previous).credentialKeyRef !== credentialKeyRef) {
+        if (!input.protectedCredentials?.deleteKey(credentialKeyRef)) throw new Error('protected-credential-key-cleanup-failed')
       }
     }
     throw error
@@ -353,11 +411,13 @@ export function importProfile(input: {
     accessedStores: accessed,
     rollbackToken,
     deletionReceipt: null,
+    ...(input.protectedCredentials ? { unsupportedCredentials: input.protectedCredentials.unsupported } : {}),
   })
 }
 
 export function rollbackImport(fs: ProfileFs, indexPath: string, token: string,
-  cookies?: { vaultPath: string; deleteKey(reference: string): boolean }): boolean {
+  cookies?: { vaultPath: string; deleteKey(reference: string): boolean },
+  credentials?: { vaultPath: string; deleteKey(reference: string): boolean }): boolean {
   if (!/^rb-[a-zA-Z0-9-]+$/.test(token)) throw new Error('invalid-rollback-token')
   const backup = `${indexPath}.${token}`
   const snapshot = fs.readText(backup)
@@ -381,9 +441,29 @@ export function rollbackImport(fs: ProfileFs, indexPath: string, token: string,
     else fs.writeText(cookies.vaultPath, recovery.previousVault)
     if (fs.readText(cookies.vaultPath) !== recovery.previousVault) throw new Error('cookie-rollback-readback-failed')
   }
+  const credentialBackup = `${backup}.credentials`
+  const rawCredentials = fs.readText(credentialBackup)
+  if (rawCredentials !== null) {
+    const recovery = JSON.parse(rawCredentials) as { vaultPath: string; previousVault: string | null; currentKeyRef: string; keyDeleted: boolean }
+    if (!credentials || recovery.vaultPath !== credentials.vaultPath || typeof recovery.currentKeyRef !== 'string' ||
+      (recovery.previousVault !== null && typeof recovery.previousVault !== 'string')) throw new Error('credential-rollback-custody-required')
+    const currentIndex = fs.readText(indexPath)
+    if (currentIndex !== snapshot && JSON.parse(currentIndex ?? '{}').credentialKeyRef !== recovery.currentKeyRef) {
+      throw new Error('credential-rollback-source-changed')
+    }
+    if (!recovery.keyDeleted) {
+      if (!credentials.deleteKey(recovery.currentKeyRef)) throw new Error('protected-credential-key-delete-failed')
+      recovery.keyDeleted = true
+      fs.writeText(credentialBackup, JSON.stringify(recovery))
+    }
+    if (recovery.previousVault === null) fs.remove(credentials.vaultPath)
+    else fs.writeText(credentials.vaultPath, recovery.previousVault)
+    if (fs.readText(credentials.vaultPath) !== recovery.previousVault) throw new Error('credential-rollback-readback-failed')
+  }
   fs.writeText(indexPath, snapshot)
   if (fs.readText(indexPath) !== snapshot) throw new Error('import-rollback-readback-failed')
   fs.remove(cookieBackup)
+  fs.remove(credentialBackup)
   fs.remove(backup)
   return true
 }
@@ -393,25 +473,30 @@ export function deleteImportedProfile(input: {
   indexPath: string
   vaultPath: string
   protectedCookies?: ProtectedCookieImport
+  credentialVaultPath?: string
+  credentialCustody?: { deleteKey(reference: string): boolean }
   now?: number
 }): { deletionReceipt: { deletedAt: number; categories: ImportCategory[]; itemCount: number } } {
   const raw = input.fs.readText(input.indexPath)
   let itemCount = 0
   let cookieKeyRef: string | undefined
+  let credentialKeyRef: string | undefined
   const categories: ImportCategory[] = []
   if (raw) {
     try {
-      const parsed = JSON.parse(raw) as { bookmarks?: unknown[]; history?: unknown[]; cookieKeyRef?: string }
+      const parsed = JSON.parse(raw) as { bookmarks?: unknown[]; history?: unknown[]; cookieKeyRef?: string; credentialKeyRef?: string; credentialCount?: number }
       itemCount = (parsed.bookmarks?.length ?? 0) + (parsed.history?.length ?? 0)
       cookieKeyRef = parsed.cookieKeyRef
+      credentialKeyRef = parsed.credentialKeyRef
       if (itemCount > 0) categories.push('history_bookmarks')
+      itemCount += parsed.credentialCount ?? 0
     } catch {
       itemCount = 0
     }
   }
   const backupPrefix = `${input.indexPath}.rb-`
   const backups = input.fs.listPaths(backupPrefix).filter(path =>
-    path.startsWith(backupPrefix) && /^[a-zA-Z0-9-]+(?:\.cookies)?$/.test(path.slice(backupPrefix.length)))
+    path.startsWith(backupPrefix) && /^[a-zA-Z0-9-]+(?:\.(?:cookies|credentials))?$/.test(path.slice(backupPrefix.length)))
   const ownedKeys = new Set<string>(cookieKeyRef ? [cookieKeyRef] : [])
   for (const path of backups.filter(path => path.endsWith('.cookies'))) {
     const recovery = JSON.parse(input.fs.readText(path) ?? 'null') as { currentKeyRef?: string; vaultPath?: string; keyDeleted?: boolean } | null
@@ -429,6 +514,22 @@ export function deleteImportedProfile(input: {
     pending.shift()
     input.fs.writeText(deletionJournal, JSON.stringify(pending))
   }
+  const credentialKeys = new Set<string>(credentialKeyRef ? [credentialKeyRef] : [])
+  for (const path of backups.filter(path => path.endsWith('.credentials'))) {
+    const recovery = JSON.parse(input.fs.readText(path) ?? 'null') as { currentKeyRef?: string; vaultPath?: string; keyDeleted?: boolean } | null
+    if (!recovery || recovery.vaultPath !== input.credentialVaultPath || !recovery.currentKeyRef) throw new Error('credential-deletion-recovery-invalid')
+    if (!recovery.keyDeleted) credentialKeys.add(recovery.currentKeyRef)
+  }
+  const credentialJournal = `${input.indexPath}.delete-credential-custody`
+  const savedCredentials = input.fs.readText(credentialJournal)
+  const pendingCredentials: string[] = savedCredentials === null ? [...credentialKeys] : JSON.parse(savedCredentials)
+  if (!Array.isArray(pendingCredentials) || pendingCredentials.some(reference => typeof reference !== 'string')) throw new Error('credential-deletion-recovery-invalid')
+  input.fs.writeText(credentialJournal, JSON.stringify(pendingCredentials))
+  while (pendingCredentials.length) {
+    if (!input.credentialCustody?.deleteKey(pendingCredentials[0]!)) throw new Error('protected-credential-key-delete-failed')
+    pendingCredentials.shift()
+    input.fs.writeText(credentialJournal, JSON.stringify(pendingCredentials))
+  }
   // Only exact owned rollback filenames are removed; other profile/history files stay intact.
   for (const path of backups) input.fs.remove(path)
   if (input.fs.exists(input.vaultPath)) {
@@ -437,7 +538,12 @@ export function deleteImportedProfile(input: {
     input.fs.remove(`${input.vaultPath}.key`)
   }
   if (raw) input.fs.remove(input.indexPath)
+  if (input.credentialVaultPath && input.fs.exists(input.credentialVaultPath)) {
+    categories.push('credentials')
+    input.fs.remove(input.credentialVaultPath)
+  }
   input.fs.remove(deletionJournal)
+  input.fs.remove(credentialJournal)
   return {
     deletionReceipt: {
       deletedAt: input.now ?? Date.now(),
@@ -720,16 +826,6 @@ function countCookieRecords(raw: string): number {
     /* The encrypted cookie payload format may be provider-specific. */
   }
   return raw.split('\n').filter((line) => line.includes('=') || line.includes('\t')).length || 1
-}
-
-function countCredentialRecords(raw: string): number {
-  try {
-    const parsed = JSON.parse(raw) as { logins?: unknown[] }
-    if (Array.isArray(parsed.logins)) return parsed.logins.length
-  } catch {
-    /* sqlite/binary stores: presence counts as one sealed record, never the secret */
-  }
-  return raw ? 1 : 0
 }
 
 function sealCookieBlob(plaintext: string, key: Buffer): string {

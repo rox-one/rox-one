@@ -9,7 +9,7 @@ import {
   serializePinnedMap,
   type MindMapEntityRef,
   type PinnedMap,
-} from '@craft-agent/core/mindmap'
+} from '@rox/core/mindmap'
 
 export function pinStorageKey(entity: MindMapEntityRef): string {
   return `craft-mindmap-pin:${entityPinKey(entity)}`

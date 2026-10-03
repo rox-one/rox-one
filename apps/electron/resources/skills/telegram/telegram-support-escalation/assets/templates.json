@@ -1,0 +1,8 @@
+[
+  {
+    "id": "support-severity",
+    "title": "Support severity rubric",
+    "levels": ["low", "med", "high", "critical"],
+    "fields": ["issue", "customer", "impact", "urgency", "next owner"]
+  }
+]

@@ -1,13 +1,12 @@
 import log from 'electron-log/main'
 import { appendFileSync, existsSync, mkdirSync, renameSync, rmSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { resolveConfigDir } from '@craft-agent/shared/config/paths'
-import { homedir } from 'node:os'
+import { resolveConfigDir } from '@rox/shared/config/paths'
 import type {
   MessagingLogContext,
   MessagingLogMeta,
   MessagingLogger,
-} from '@craft-agent/messaging-gateway'
+} from '@rox/messaging-gateway'
 
 /**
  * Resolve debug mode deterministically across runtimes.
@@ -211,7 +210,7 @@ export const messagingGatewayLog: MessagingLogger = new StructuredMessagingGatew
  * dedicated, always-on rotating log records the update lifecycle at a stable
  * path regardless of debug mode, mirroring the messaging-gateway log above.
  */
-export const autoUpdateLogPath = join(homedir(), '.craft-agent', 'logs', 'auto-update.log')
+export const autoUpdateLogPath = join(resolveConfigDir(), 'logs', 'auto-update.log')
 const autoUpdateBackupPath = `${autoUpdateLogPath}.1`
 const AUTO_UPDATE_LOG_MAX_BYTES = 2 * 1024 * 1024 // 2MB
 

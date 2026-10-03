@@ -14,10 +14,10 @@ const {mkdirSync,writeFileSync,readFileSync}=await import('node:fs');const {join
 const root=process.env.ROX_CONFIG_DIR,workspaceRoot=join(root,'workspace');mkdirSync(workspaceRoot);
 writeFileSync(join(root,'config-defaults.json'),JSON.stringify({version:'test',workspaceDefaults:{localMcpServers:{enabled:true}}}));
 let clients=[],closed=0,fail=false;
-const credentialExports=await import('@craft-agent/shared/credentials');
-mock.module('@craft-agent/shared/credentials',()=>({...credentialExports,getCredentialManager:()=>({get:async id=>id.sourceId==='firecrawl-mcp'?{value:'vault-secret'}:null})}));
-const mcpExports=await import('@craft-agent/shared/mcp');
-mock.module('@craft-agent/shared/mcp',()=>({...mcpExports,CraftMcpClient:class{constructor(config){clients.push(config)}async listTools(){if(fail)throw Error('401 unauthorized');return [{name:'probe_tool',description:'fixture'}]}async close(){closed++}}}));
+const credentialExports=await import('@rox/shared/credentials');
+mock.module('@rox/shared/credentials',()=>({...credentialExports,getCredentialManager:()=>({get:async id=>id.sourceId==='firecrawl-mcp'?{value:'vault-secret'}:null})}));
+const mcpExports=await import('@rox/shared/mcp');
+mock.module('@rox/shared/mcp',()=>({...mcpExports,CraftMcpClient:class{constructor(config){clients.push(config)}async listTools(){if(fail)throw Error('401 unauthorized');return [{name:'probe_tool',description:'fixture'}]}async close(){closed++}}}));
 const {saveConfig}=await import('./packages/shared/src/config/storage.ts');saveConfig({workspaces:[{id:'ws',name:'Test',rootPath:workspaceRoot,createdAt:1}],activeWorkspaceId:'ws',activeSessionId:null});
 const {ensureBuiltinMcpSources,loadSourceConfig,saveSourceConfig}=await import('./packages/shared/src/sources/index.ts');ensureBuiltinMcpSources(workspaceRoot);
 const {registerSourcesHandlers}=await import('./packages/server-core/src/handlers/rpc/sources.ts');const {RPC_CHANNELS}=await import('./packages/shared/src/protocol/index.ts');

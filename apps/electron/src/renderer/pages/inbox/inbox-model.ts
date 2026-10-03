@@ -5,7 +5,7 @@
  * new messenger senders, unread agent replies). No I/O here.
  */
 
-import type { TeamInboxItem } from '@craft-agent/shared/team'
+import type { TeamInboxItem } from '@rox/shared/team'
 
 export type InboxKind = 'permission' | 'credential' | 'plan' | 'memory' | 'skill' | 'sender' | 'reply' | 'error' | 'mail' | 'team-recipient'
 export type InboxGroup = 'decision' | 'message'

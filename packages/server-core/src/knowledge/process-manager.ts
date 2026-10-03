@@ -4,11 +4,11 @@
 import { randomBytes } from 'node:crypto'
 import { mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import type { OemKernelPin } from '@craft-agent/shared/knowledge/oem-pin'
+import type { OemKernelPin } from '@rox/shared/knowledge/oem-pin'
 import {
   evaluateKnowledgeProviderGate,
   type ProviderGateEvidence,
-} from '@craft-agent/shared/knowledge/provider-gate'
+} from '@rox/shared/knowledge/provider-gate'
 
 export type ManagedKernelError =
   | 'G2_BLOCKED'

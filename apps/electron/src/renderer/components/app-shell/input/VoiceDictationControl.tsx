@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { isMac } from '@/lib/platform'
 import { FreeFormInputContextBadge } from './FreeFormInputContextBadge'
-import type { VoicePrefs } from '@craft-agent/shared/voice'
+import type { VoicePrefs } from '@rox/shared/voice'
 
 interface VoiceDictationControlProps {
   disabled?: boolean

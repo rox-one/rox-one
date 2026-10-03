@@ -5,7 +5,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Cake, Check } from 'lucide-react'
-import { FullscreenOverlayBase } from '@craft-agent/ui'
+import { FullscreenOverlayBase } from '@rox/ui'
 import { Markdown } from '@/components/markdown'
 import { cn } from '@/lib/utils'
 import * as storage from '@/lib/local-storage'

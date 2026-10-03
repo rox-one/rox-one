@@ -2,19 +2,19 @@
 import { lstat, mkdir, readdir, realpath } from 'node:fs/promises'
 import { randomUUID } from 'node:crypto'
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { loadProjectById, saveProjectConfig } from '@craft-agent/shared/projects'
-import type { LoadedProject, ProjectConfig } from '@craft-agent/shared/projects/types'
-import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import { loadProjectById, saveProjectConfig } from '@rox/shared/projects'
+import type { LoadedProject, ProjectConfig } from '@rox/shared/projects/types'
+import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   RepositoryContractError, assessSnapshotFreshness, bindRepository, captureRepositorySnapshot,
   loadRepositoryBinding, loadRepositorySnapshot, readFileSpan, repositoryPolicyFingerprint,
   resolveRepositoryGitRoot, saveRepositoryBinding, saveRepositorySnapshot, summarizeRepositorySnapshot, assertRepositoryCurrentReadPolicy,
   defaultRepositoryConfiguration, parseRepositoryConfiguration, repositoryConnectionFingerprint, repositoryCurrentBranch, repositoryPreviewFingerprint,
-} from '@craft-agent/shared/code-intelligence'
+} from '@rox/shared/code-intelligence'
 import type {
   RepositoryBinding, RepositoryConnection, RepositoryConnectionInspection, RepositoryConnectionConfiguration, RepositoryPreview, RepositoryProjectInput, RepositoryScope, RepositorySnapshotSummary,
-} from '@craft-agent/shared/code-intelligence'
+} from '@rox/shared/code-intelligence'
 import type { HandlerDeps } from '../handler-deps'
 import type { RequestContext, RpcServer } from '../../transport/types'
 

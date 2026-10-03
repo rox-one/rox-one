@@ -12,13 +12,13 @@ import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, unlinkSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import type { Database } from 'bun:sqlite'
-import { isImportProvenancedRelativePath } from '@craft-agent/shared/config'
+import { isImportProvenancedRelativePath } from '@rox/shared/config'
 import {
   buildVaultInsights,
   extractNamedEntities,
   type VaultCatalogEntry,
   type VaultInsights,
-} from '@craft-agent/shared/knowledge/vault-insights'
+} from '@rox/shared/knowledge/vault-insights'
 import {
   noteIdFromRelativePath,
   parseVaultMarkdown,

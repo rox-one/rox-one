@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import type { BroPresenceMemberDto } from '@craft-agent/shared/protocol'
+import type { BroPresenceMemberDto } from '@rox/shared/protocol'
 
 export interface SessionPresenceAvatarsProps {
   sessionId: string

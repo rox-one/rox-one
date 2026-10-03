@@ -1,4 +1,4 @@
-import type { SessionScene } from '@craft-agent/core/mindmap'
+import type { SessionScene } from '@rox/core/mindmap'
 
 export type SceneToolGroup = {
   name: string

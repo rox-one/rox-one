@@ -28,8 +28,8 @@ export interface KnowledgeAgentPanelProps {
 }
 
 /**
- * '@siyuan/document/<id>' — mirrors formatKnowledgeDisplay from @craft-agent/core/knowledge,
- * inlined here because apps/electron does not take a runtime dependency on @craft-agent/core
+ * '@siyuan/document/<id>' — mirrors formatKnowledgeDisplay from @rox/core/knowledge,
+ * inlined here because apps/electron does not take a runtime dependency on @rox/core
  * (shared/types.ts documents this boundary).
  */
 function formatKnowledgeDisplay(ref: KnowledgeRef): string {

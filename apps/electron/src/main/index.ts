@@ -1,3 +1,5 @@
+import { validateConfigurationCliEntries } from './configuration-cli-compat'
+import { resolveNumberedUserDataDir } from './numbered-user-data'
 // Load user's shell environment first (before other imports that may use env)
 // This ensures tools like Homebrew, nvm, etc. are available to the agent
 import { loadShellEnv } from './shell-env'
@@ -5,11 +7,11 @@ loadShellEnv()
 
 import './brand-config-boot'
 
-import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, nativeTheme, session, shell, type BrowserWindowConstructorOptions } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, nativeTheme, safeStorage, session, shell, type BrowserWindowConstructorOptions } from 'electron'
 import { createHash, randomUUID } from 'crypto'
 import { hostname, homedir } from 'os'
 import * as Sentry from '@sentry/electron/main'
-import { redactSensitiveHeadersInPlace, redactSensitiveKeysInPlace } from '@craft-agent/shared/utils'
+import { redactSensitiveHeadersInPlace, redactSensitiveKeysInPlace } from '@rox/shared/utils'
 
 // Initialize Sentry error tracking as early as possible after app import.
 // Only enabled in production (packaged) builds to avoid noise during development.
@@ -29,7 +31,7 @@ Sentry.init({
   enabled: !!process.env.SENTRY_ELECTRON_INGEST_URL,
 
   // Scrub sensitive data before sending to Sentry.
-  // Shared logic in @craft-agent/shared/utils redaction.ts (also used by the
+  // Shared logic in @rox/shared/utils redaction.ts (also used by the
   // renderer hook and the Pages action audit log) — keep semantics there.
   beforeSend(event) {
     // Scrub request headers (authorization, cookies)
@@ -59,8 +61,8 @@ Sentry.init({
 // renderer would restore its language from localStorage on every restart while
 // the main process silently stayed at English — breaking session title language,
 // the system prompt's "Preferred language" line, and the native menu.
-import { setupI18n, i18n, SUPPORTED_LANGUAGE_CODES, type LanguageCode } from '@craft-agent/shared/i18n'
-import { getPersistedUiLanguage, setPersistedUiLanguage } from '@craft-agent/shared/config'
+import { setupI18n, i18n, SUPPORTED_LANGUAGE_CODES, type LanguageCode } from '@rox/shared/i18n'
+import { getPersistedUiLanguage, setPersistedUiLanguage } from '@rox/shared/config'
 setupI18n()
 const persistedUiLanguage = getPersistedUiLanguage()
 if (persistedUiLanguage) {
@@ -76,8 +78,8 @@ Sentry.setUser({ id: machineId })
 import { join, delimiter } from 'path'
 import { refreshLegacySeededWorkspaceIcons } from './brand-icon-migration'
 import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync } from 'fs'
-import { resolveOemManagedLayout } from '@craft-agent/shared/knowledge/oem-pin'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { resolveOemManagedLayout } from '@rox/shared/knowledge/oem-pin'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 
 {
   const oemRoot = app.isPackaged ? process.resourcesPath : process.cwd()
@@ -89,50 +91,52 @@ import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
   }
 }
 
-import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@craft-agent/server-core/sessions'
+import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@rox/server-core/sessions'
 import { PageThumbnailer } from './page-thumbnailer'
 import { registerAllRpcHandlers } from './handlers/index'
-import { registerCoreRpcHandlers, cleanupCoreClientResources } from '@craft-agent/server-core/handlers/rpc'
-import { createWorkGraphKernel, type WorkGraphKernel } from '@craft-agent/server-core/workgraph'
+import { registerCoreRpcHandlers, cleanupCoreClientResources } from '@rox/server-core/handlers/rpc'
+import { createWorkGraphKernel, type WorkGraphKernel } from '@rox/server-core/workgraph'
 import type { PlatformServices } from '../runtime/platform'
 import { createElectronPlatform } from './platform'
 import type { HandlerDeps } from './handlers/handler-deps'
 import { resolveNativeTransportCredential } from './native-transport-credential'
-import { bootstrapServer, releaseServerLock, maskTokenForDisplay } from '@craft-agent/server-core/bootstrap'
+import { createBrowserCredentialPermissionAdapter } from './browser-credential-permissions'
+import { createBrowserCredentialVaultKeyStore } from './browser-credential-vault-keys'
+import { bootstrapServer, releaseServerLock, maskTokenForDisplay } from '@rox/server-core/bootstrap'
 import { isAllowedServerEndpoint } from './server-endpoint-policy'
-import { createMessagingBootstrap, type MessagingBootstrapHandle } from '@craft-agent/messaging-gateway'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
-import { initModelRefreshService, getModelRefreshService, setFetcherPlatform } from '@craft-agent/server-core/model-fetchers'
-import { setSearchPlatform, setImageProcessor } from '@craft-agent/server-core/services'
+import { createMessagingBootstrap, type MessagingBootstrapHandle } from '@rox/messaging-gateway'
+import { getCredentialManager } from '@rox/shared/credentials'
+import { initModelRefreshService, getModelRefreshService, setFetcherPlatform } from '@rox/server-core/model-fetchers'
+import { setSearchPlatform, setImageProcessor } from '@rox/server-core/services'
 import { createApplicationMenu } from './menu'
 import { WindowManager } from './window-manager'
 import { stopAllExtensionHosts } from './extension-host-manager'
 import { loadWindowState, saveWindowState } from './window-state'
-import { getWorkspaces, getWorkspaceByNameOrId, loadStoredConfig, addWorkspace, saveConfig, CONFIG_DIR } from '@craft-agent/shared/config'
-import { getDefaultWorkspacesDir } from '@craft-agent/shared/workspaces'
-import { resolveWorkspaceMachineName } from '@craft-agent/shared/os/user-display-name'
-import { ensureDemoPage } from '@craft-agent/shared/pages'
-import { initializeDocs } from '@craft-agent/shared/docs'
-import { ensureBundledSkills } from '@craft-agent/shared/skills'
-import { initializeReleaseNotes } from '@craft-agent/shared/release-notes'
-import { ensureDefaultPermissions } from '@craft-agent/shared/agent/permissions-config'
-import { ensureToolIcons, ensurePresetThemes } from '@craft-agent/shared/config'
-import { setBundledAssetsRoot } from '@craft-agent/shared/utils'
-import { initializeBackendHostRuntime } from '@craft-agent/shared/agent/backend'
-import { setPowerShellValidatorRoot } from '@craft-agent/shared/agent'
+import { getWorkspaces, getWorkspaceByNameOrId, loadStoredConfig, addWorkspace, saveConfig, CONFIG_DIR } from '@rox/shared/config'
+import { getDefaultWorkspacesDir } from '@rox/shared/workspaces'
+import { resolveWorkspaceMachineName } from '@rox/shared/os/user-display-name'
+import { ensureDemoPage } from '@rox/shared/pages'
+import { initializeDocs } from '@rox/shared/docs'
+import { ensureBundledSkills } from '@rox/shared/skills'
+import { initializeReleaseNotes } from '@rox/shared/release-notes'
+import { ensureDefaultPermissions } from '@rox/shared/agent/permissions-config'
+import { ensureToolIcons, ensurePresetThemes } from '@rox/shared/config'
+import { setBundledAssetsRoot } from '@rox/shared/utils'
+import { initializeBackendHostRuntime } from '@rox/shared/agent/backend'
+import { setPowerShellValidatorRoot } from '@rox/shared/agent'
 import { handleDeepLink } from './deep-link'
 import { BrowserPaneManager } from './browser-pane-manager'
-import { OAuthFlowStore } from '@craft-agent/shared/auth'
+import { OAuthFlowStore } from '@rox/shared/auth'
 import { registerThumbnailScheme, registerThumbnailHandler } from './thumbnail-protocol'
 import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, getAutoUpdateLogFilePath, messagingGatewayLog, autoUpdateLog } from './logger'
 import { registerDeviceDiagnosticsIpc } from './device-diagnostics-ipc'
-import { setPerfEnabled, enableDebug } from '@craft-agent/shared/utils'
-import { registerPiModelResolver } from '@craft-agent/shared/config'
-import { getPiModelsForAuthProvider, getAllPiModels } from '@craft-agent/shared/config'
+import { setPerfEnabled, enableDebug } from '@rox/shared/utils'
+import { registerPiModelResolver } from '@rox/shared/config'
+import { getPiModelsForAuthProvider, getAllPiModels } from '@rox/shared/config'
 import { initNotificationService, initBadgeIcon, initInstanceBadge, updateBadgeCount } from './notifications'
 import { checkForUpdatesOnLaunch, setAutoUpdateEventSink, isUpdating, setBeforeUpdateQuitHook, setBeforeUpdateInstallHook, setInstallQuitFailedHook } from './auto-update'
-import type { EventSink } from '@craft-agent/server-core/transport'
-import { validateGitBashPath, checkVCRedistInstalled } from '@craft-agent/server-core/services'
+import type { EventSink } from '@rox/server-core/transport'
+import { validateGitBashPath, checkVCRedistInstalled } from '@rox/server-core/services'
 import { createOpenClawSecurityComposition } from './openclaw-security'
 import { createOpenClawHostControlConfirmation, registerOpenClawHostControlIpc } from './openclaw-host-control'
 import { createLocalClientBindingRegistry } from './local-client-binding'
@@ -140,7 +144,7 @@ import { registerMeetingCaptureIpc } from './meetings/ipc'
 import { registerLocalMeetingsIpc } from './meetings/local-ipc'
 import { registerMailIpc } from './mail/local-ipc'
 import { registerNativeReplicaIpc } from './native-replica'
-import type { OpenClawRuntimeManager, OpenClawSecurityAuditService } from '@craft-agent/server-core/openclaw'
+import type { OpenClawRuntimeManager, OpenClawSecurityAuditService } from '@rox/server-core/openclaw'
 
 // Initialize electron-log for renderer process support
 log.initialize()
@@ -191,12 +195,9 @@ if (isDebugMode) {
   }
 
   process.env.CRAFT_SCRIPTS = scriptsDir
-  process.env.CRAFT_COMMANDS_ENTRY = app.isPackaged
-    ? join(app.getAppPath(), 'packages', 'craft-agents-commands', 'src', 'main.ts')
-    : join(process.cwd(), 'packages', 'craft-agents-commands', 'src', 'main.ts')
-  process.env.CRAFT_CLI_ENTRY = app.isPackaged
-    ? join(app.getAppPath(), 'packages', 'craft-cli', 'src', 'cli.ts')
-    : join(process.cwd(), 'packages', 'craft-cli', 'src', 'cli.ts')
+  // Configuration CLI packages are not included in this app. Preserve only
+  // explicitly supplied working entries for the legacy compatibility wrapper.
+  validateConfigurationCliEntries(process.env)
   process.env.CRAFT_COMMANDS_DOC_PATH = app.isPackaged
     ? join(resourcesBase, 'resources', 'docs', 'craft-cli.md')
     : join(process.cwd(), 'apps', 'electron', 'resources', 'docs', 'craft-cli.md')
@@ -257,12 +258,13 @@ let pendingDeepLink: string | null = null
 app.setName(process.env.ROX_APP_NAME || process.env.CRAFT_APP_NAME || 'Rox')
 
 // Isolate Chromium profile so a second dev instance does not share cookies/locks.
+const numberedInstance = (process.env.ROX_INSTANCE_NUMBER || process.env.CRAFT_INSTANCE_NUMBER)?.trim()
 const userDataOverride = (process.env.ROX_USER_DATA_DIR || process.env.CRAFT_USER_DATA_DIR)?.trim()
 if (userDataOverride) {
   mkdirSync(userDataOverride, { recursive: true })
   app.setPath('userData', userDataOverride)
-} else if (process.env.CRAFT_INSTANCE_NUMBER) {
-  app.setPath('userData', join(app.getPath('appData'), `craft-agent-${process.env.CRAFT_INSTANCE_NUMBER}`))
+} else if (numberedInstance) {
+  app.setPath('userData', resolveNumberedUserDataDir(app.getPath('appData'), numberedInstance))
 }
 
 function registerDeeplinkScheme(scheme: string): void {
@@ -306,12 +308,12 @@ app.on('open-url', (event, url) => {
 // Handle deeplink on Windows/Linux (single instance check).
 // macOS keys this lock to the bundle id, so a second `electron:dev` from another
 // tree/port would otherwise quit immediately. Numbered instances skip it.
-const allowMultiInstance = Boolean(process.env.CRAFT_INSTANCE_NUMBER)
+const allowMultiInstance = Boolean(numberedInstance)
 const gotTheLock = allowMultiInstance || app.requestSingleInstanceLock()
 if (!gotTheLock) {
   mainLog.warn('Single-instance lock not acquired; quitting', {
     userData: app.getPath('userData'),
-    instance: process.env.CRAFT_INSTANCE_NUMBER ?? null,
+    instance: numberedInstance ?? null,
   })
   app.quit()
 } else if (!allowMultiInstance) {
@@ -500,7 +502,7 @@ app.whenReady().then(async () => {
 
     // Multi-instance dev: show instance number badge on dock icon
     // CRAFT_INSTANCE_NUMBER is set by detect-instance.sh for numbered folders
-    const instanceNum = process.env.CRAFT_INSTANCE_NUMBER
+    const instanceNum = numberedInstance
     if (instanceNum) {
       const num = parseInt(instanceNum, 10)
       if (!isNaN(num) && num > 0) {
@@ -686,7 +688,7 @@ app.whenReady().then(async () => {
       })
       // Restore persisted Git Bash path on Windows (must happen before any SDK subprocess spawn)
       if (process.platform === 'win32') {
-        const { getGitBashPath, clearGitBashPath } = await import('@craft-agent/shared/config')
+        const { getGitBashPath, clearGitBashPath } = await import('@rox/shared/config')
         const gitBashPath = getGitBashPath()
         if (gitBashPath) {
           const validation = await validateGitBashPath(gitBashPath)
@@ -762,7 +764,7 @@ app.whenReady().then(async () => {
       }
 
       // Read embedded server config (Server settings page)
-      const { getServerConfig } = await import('@craft-agent/shared/config')
+      const { getServerConfig } = await import('@rox/shared/config')
       const embeddedServerConfig = getServerConfig()
       const serverModeEnabled = embeddedServerConfig.enabled && !isClientOnly
 
@@ -777,7 +779,7 @@ app.whenReady().then(async () => {
         : (serverModeEnabled ? embeddedServerConfig.port : 0)
 
       // Load TLS certificates if configured
-      let tls: import('@craft-agent/server-core/transport').WsRpcTlsOptions | undefined
+      let tls: import('@rox/server-core/transport').WsRpcTlsOptions | undefined
       if (serverModeEnabled && embeddedServerConfig.tlsCertPath && embeddedServerConfig.tlsKeyPath) {
         try {
           tls = {
@@ -842,6 +844,42 @@ app.whenReady().then(async () => {
         bindRpcServer: (sm, server) => sm.setRpcServer(server),
         createHandlerDeps: ({ sessionManager: sm, platform: p, oauthFlowStore: ofs, nativeAuthority, nativeJournal, collaborationSync }) => {
           localNativeAuthority = nativeAuthority
+          const browserCredentialPermissions = createBrowserCredentialPermissionAdapter({
+            async confirm(request) {
+              const owner = request.webContentsId == null ? null : windowManager?.getWindowByWebContentsId(request.webContentsId)
+              if (!owner || owner.isDestroyed() || windowManager?.getWorkspaceForWindow(owner.webContents.id) !== request.workspaceId) return 'cancel'
+              const answer = await dialog.showMessageBox(owner, {
+                type: 'question',
+                title: i18n.t('settings.browserImport.credentials.nativeTitle'),
+                message: i18n.t('settings.browserImport.credentials.nativeMessage', { profile: request.profile.name }),
+                detail: i18n.t('settings.browserImport.credentials.nativeDetail'),
+                buttons: [i18n.t('common.cancel'), i18n.t('settings.browserImport.credentials.nativeAllow')],
+                defaultId: 0, cancelId: 0, noLink: true,
+              })
+              if (owner.isDestroyed() || windowManager?.getWorkspaceForWindow(owner.webContents.id) !== request.workspaceId) return 'cancel'
+              return answer.response === 1 ? 'allow' : 'cancel'
+            },
+          })
+          const browserCredentialVaultKeys = createBrowserCredentialVaultKeyStore({
+            directory: join(app.getPath('userData'), 'browser-credential-keys'), safeStorage,
+          })
+          const browserCredentials = {
+            capabilities: browserCredentialPermissions.capabilities,
+            async requestAccess(request: Parameters<typeof browserCredentialPermissions.requestAccess>[0]) {
+              const currentOwner = () => {
+                const owner = request.webContentsId == null ? null : windowManager?.getWindowByWebContentsId(request.webContentsId)
+                return owner && !owner.isDestroyed() && windowManager?.getWorkspaceForWindow(owner.webContents.id) === request.workspaceId
+              }
+              if (!currentOwner()) return { status: 'cancelled' as const, reason: 'browser-credential-access-cancelled' }
+              const grant = await browserCredentialPermissions.requestAccess(request)
+              if (grant.status === 'granted' && !currentOwner()) {
+                grant.release()
+                return { status: 'cancelled' as const, reason: 'browser-credential-access-cancelled' }
+              }
+              return grant
+            },
+            vaultKeys: browserCredentialVaultKeys,
+          }
           // The messaging handle is built here because it needs sessionManager.
           // The WS publisher is attached after bootstrapServer resolves (via
           // handle.setPublisher) because wsServer isn't available yet.
@@ -884,6 +922,7 @@ app.whenReady().then(async () => {
             browserPaneManager: browserPaneManager ?? undefined,
             oauthFlowStore: ofs,
             messagingRegistry: messagingHandle.registry,
+            ...(!isHeadless ? { browserCredentials } : {}),
             ...(openClawSecurity ? { openClawSecurity: openClawSecurity.service } : {}),
             nativeData: { authority: nativeAuthority, journal: nativeJournal, sync: collaborationSync },
           }
@@ -901,7 +940,7 @@ app.whenReady().then(async () => {
         setSessionEventSink: (sm, sink) => sm.setEventSink(sink),
         initializeSessionManager: (sm) => sm.initialize(),
         initModelRefreshService: () => initModelRefreshService(async (slug: string) => {
-          const { getCredentialManager } = await import('@craft-agent/shared/credentials')
+          const { getCredentialManager } = await import('@rox/shared/credentials')
           const manager = getCredentialManager()
           const [apiKey, oauth] = await Promise.all([
             manager.getLlmApiKey(slug).catch(() => null),
@@ -975,7 +1014,7 @@ app.whenReady().then(async () => {
 
       // Remove workspace from config (cleanup stale entries)
       ipcMain.handle('workspace:remove', async (_event, workspaceId: string) => {
-        const { removeWorkspace: remove } = await import('@craft-agent/shared/config')
+        const { removeWorkspace: remove } = await import('@rox/shared/config')
         return remove(workspaceId)
       })
 
@@ -1008,7 +1047,7 @@ app.whenReady().then(async () => {
       ipcMain.handle('session:transferToWorkspace', async (_event, sessionId: string, targetWorkspaceId: string, sessionIndex?: number, sessionCount?: number) => {
         const idx = sessionIndex ?? 0
         const count = sessionCount ?? 1
-        const { getWorkspaceByNameOrId } = await import('@craft-agent/shared/config')
+        const { getWorkspaceByNameOrId } = await import('@rox/shared/config')
         const { connectToRemote } = await import('./handlers/workspace')
         const { CHUNKED_TRANSFER_THRESHOLD, getChunkCount, invokeChunked, prepareChunkedPayload } = await import('./chunked-rpc')
 
@@ -1279,7 +1318,7 @@ app.whenReady().then(async () => {
         workspaceId?: string
       }) => {
         const { applyEnrollmentDecision } = await import('./remote-tls-enrollment')
-        const { updateWorkspaceRemoteServer } = await import('@craft-agent/shared/config')
+        const { updateWorkspaceRemoteServer } = await import('@rox/shared/config')
         const ws = payload.workspaceId ? getWorkspaceByNameOrId(payload.workspaceId) : null
         const stored = ws?.remoteServer?.tlsTrust
         const storedPin = stored?.mode === 'spki-pin'
@@ -1306,13 +1345,13 @@ app.whenReady().then(async () => {
       }
 
       instance.wsServer.handle(RPC_CHANNELS.settings.GET_SERVER_CONFIG, async () => {
-        const { getServerConfig: getConfig } = await import('@craft-agent/shared/config')
+        const { getServerConfig: getConfig } = await import('@rox/shared/config')
         return getConfig()
       })
 
       instance.wsServer.handle(RPC_CHANNELS.settings.SET_SERVER_CONFIG, async (_ctx: unknown, config: unknown) => {
-        const { setServerConfig: setConfig } = await import('@craft-agent/shared/config')
-        const cfg = config as import('@craft-agent/shared/config/server-config').ServerConfig
+        const { setServerConfig: setConfig } = await import('@rox/shared/config')
+        const cfg = config as import('@rox/shared/config/server-config').ServerConfig
         // Validate port range
         if (cfg.port < 1024 || cfg.port > 65535) {
           throw new Error(`Port must be between 1024 and 65535, got ${cfg.port}`)
@@ -1328,7 +1367,7 @@ app.whenReady().then(async () => {
       })
 
       instance.wsServer.handle(RPC_CHANNELS.settings.GET_SERVER_STATUS, async () => {
-        const { getServerConfig: getConfig } = await import('@craft-agent/shared/config')
+        const { getServerConfig: getConfig } = await import('@rox/shared/config')
         const saved = getConfig()
         const protocol = runningServerState.tls ? 'wss' : 'ws'
 
@@ -1411,7 +1450,7 @@ app.whenReady().then(async () => {
     // Skip in thin-client mode — credentials are managed by the remote server.
     if (!isClientOnly) {
       try {
-        const { getCredentialManager } = await import('@craft-agent/shared/credentials')
+        const { getCredentialManager } = await import('@rox/shared/credentials')
         const credentialManager = getCredentialManager()
         const health = await credentialManager.checkHealth()
         if (!health.healthy) {
@@ -1436,7 +1475,7 @@ app.whenReady().then(async () => {
     // Runs after init so config and auth state are available.
     // Derives values from the default LLM connection instead of legacy config fields.
     try {
-      const { getLlmConnection, getDefaultLlmConnection } = await import('@craft-agent/shared/config')
+      const { getLlmConnection, getDefaultLlmConnection } = await import('@rox/shared/config')
       const workspaces = getWorkspaces()
       const defaultConnSlug = getDefaultLlmConnection()
       const defaultConn = defaultConnSlug ? getLlmConnection(defaultConnSlug) : null

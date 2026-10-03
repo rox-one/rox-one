@@ -1,5 +1,5 @@
 /**
- * @craft-agent/core/knowledge — KnowledgeProvider contract (K-03).
+ * @rox/core/knowledge — KnowledgeProvider contract (K-03).
  * Canonical refs/types live here; the SiYuan provider lives under ./providers/siyuan/ (KP1Siyuan).
  */
 

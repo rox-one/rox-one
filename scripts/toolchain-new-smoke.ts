@@ -1,4 +1,4 @@
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { resolveConfigDir } from "@rox/shared/config/paths"
 /**
  * Runtime-smoke новых компонентов toolchain (M1): реальная установка в чистый
  * CRAFT_CONFIG_DIR и запуск установленных бинарей.

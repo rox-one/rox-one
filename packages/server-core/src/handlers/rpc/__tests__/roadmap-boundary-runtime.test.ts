@@ -10,7 +10,7 @@ test('roadmap RPCs fence workspace/local callers and preserve unknown effective 
  try {
   const protocol = join(root, 'packages/shared/src/protocol/index.ts')
   const config = join(fixture, 'tsconfig.json')
-  writeFileSync(config, JSON.stringify({compilerOptions:{baseUrl:fixture,paths:{'@craft-agent/shared/protocol':[protocol],'@craft-agent/shared/*':[join(root,'packages/shared/src/*')],'@craft-agent/core/*':[join(transport,'packages/core/src/*')],'@craft-agent/server-core/*':[join(transport,'packages/server-core/src/*')]}}}))
+  writeFileSync(config, JSON.stringify({compilerOptions:{baseUrl:fixture,paths:{'@rox/shared/protocol':[protocol],'@rox/shared/*':[join(root,'packages/shared/src/*')],'@rox/core/*':[join(transport,'packages/core/src/*')],'@rox/server-core/*':[join(transport,'packages/server-core/src/*')]}}}))
   const child = Bun.spawn([process.execPath, '--tsconfig-override', config, '-e', `
 const {mkdirSync,readFileSync}=await import('node:fs');const {join}=await import('node:path');const root=process.env.ROX_CONFIG_DIR;
 const {saveConfig}=await import(${JSON.stringify(join(root,'packages/shared/src/config/storage.ts'))});

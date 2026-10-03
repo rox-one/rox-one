@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import { existsSync, mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import type { MeetingGrant } from '@rox/shared/meeting-agents'
 import { listNativeMeetings, searchNativeMeetings, startNativeMeeting } from '../catalog.ts'
 
 const grant: MeetingGrant = {

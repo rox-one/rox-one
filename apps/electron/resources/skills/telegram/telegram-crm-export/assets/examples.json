@@ -1,0 +1,6 @@
+[
+  {
+    "prompt": "Export all Lead chats with summaries and open follow-up tasks.",
+    "tools": ["search_messages", "tags_get", "tasks_today", "summary_show"]
+  }
+]

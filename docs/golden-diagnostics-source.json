@@ -12,7 +12,7 @@
     {
       "path": "apps/electron/src/main/device-diagnostics-collector.ts",
       "source_sha256": "93b15e0ef7c540173f100dbf3803116b7d0a7328b02a37cdfe06c3136e694c97",
-      "integrated_sha256": "74e7e11aca4d9978cddc0c3c68dab66d135869d833a726a8149bbd676dd42d9a",
+      "integrated_sha256": "91beb6f8583a729e7d37dd8c12e375e81d3e48d7a26f7f2ab18ddff43e61fe59",
       "adapted": true
     },
     {
@@ -72,8 +72,8 @@
     {
       "path": "apps/electron/src/renderer/components/app-shell/diagnostics/use-diagnostics.ts",
       "source_sha256": "d99e174b399a988025f613d53e30e8987f38faed34e05d01b21be2002412a128",
-      "integrated_sha256": "d99e174b399a988025f613d53e30e8987f38faed34e05d01b21be2002412a128",
-      "adapted": false
+      "integrated_sha256": "1921d93cb63d7d9935200849ee7198aea7868560d4a8d67602280a3646ef6182",
+      "adapted": true
     },
     {
       "path": "apps/electron/src/shared/device-diagnostics.ts",
@@ -180,5 +180,6 @@
     "Reject non-string enum coercion in native requests",
     "Use O_NONBLOCK before rejecting FIFOs so opening a nonregular log cannot hang",
     "Add FIFO/link, competing-request, preload projection and production chip lifecycle regression tests"
-  ]
+  ],
+  "integration_main": "1cd651a921b5f7f8f6f27c4e1bb30502ef8081c3"
 }

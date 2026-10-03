@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { registerEnvironmentHandlers } from '../environment'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import type { RpcServer } from '@rox/server-core/transport'
 
 type Handler = (ctx: unknown, ...args: unknown[]) => unknown | Promise<unknown>
 

@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { RPC_CHANNELS } from '../../shared/types'
-import type { PendingCommand } from '@craft-agent/server-core/command-gateway'
+import type { PendingCommand } from '@rox/server-core/command-gateway'
 
 const POLL_MS = 10_000
 

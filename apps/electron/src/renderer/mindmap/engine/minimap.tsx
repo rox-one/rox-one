@@ -5,7 +5,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
-import type { MindMapLayout, MindMapNodeId } from '@craft-agent/core/mindmap'
+import type { MindMapLayout, MindMapNodeId } from '@rox/core/mindmap'
 import {
   MIND_MAP_MINIMAP_THRESHOLD,
   MIND_MAP_NODE_HEIGHT,

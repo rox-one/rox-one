@@ -5,7 +5,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { NativeNote } from '@craft-agent/core/rox2'
+import type { NativeNote } from '@rox/core/rox2'
 
 const NOTE_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/
 

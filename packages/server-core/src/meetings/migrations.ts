@@ -6,7 +6,7 @@
 import { createHash } from 'node:crypto'
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { MEETING_SCHEMA_VERSION, parseMeeting } from '@craft-agent/core/meetings'
+import { MEETING_SCHEMA_VERSION, parseMeeting } from '@rox/core/meetings'
 import { MeetingJournal } from './journal.ts'
 
 export type MigrationReport = {

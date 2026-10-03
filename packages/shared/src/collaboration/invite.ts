@@ -1,3 +1,5 @@
+import type { RemoteSessionProjection } from './session-publication.ts'
+
 /**
  * Collaborator invites for “Позвать Бро”.
  *
@@ -19,6 +21,7 @@ export interface RoxAccount {
 
 export interface BroInvite {
   sessionId: string
+  workspaceId?: string
   ownerAccountId: string
   ownerUsername: string
   joinKey: string
@@ -39,10 +42,10 @@ export interface BroInviteCard {
   contactShareText: string
 }
 
-export type JoinDenial = 'expired' | 'revoked' | 'reused' | 'membership_required' | 'invalid'
+export type JoinDenial = 'expired' | 'revoked' | 'reused' | 'membership_required' | 'invalid' | 'forbidden' | 'remote_unavailable'
 
 export type JoinResult =
-  | { ok: true; sessionId: string; role: Exclude<CollaboratorRole, 'owner'>; accountId: string }
+  | { ok: true; sessionId: string; role: Exclude<CollaboratorRole, 'owner'>; accountId: string; workspaceId?: string; remoteSession?: RemoteSessionProjection }
   | { ok: false; error: JoinDenial }
 
 const JOIN_KEY_RE = /^[a-f0-9]{32}$/

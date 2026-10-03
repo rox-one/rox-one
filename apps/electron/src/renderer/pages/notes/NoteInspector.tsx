@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import type { FrontmatterProjection, PropertyBinding, PropertyValue } from '@craft-agent/core/docs'
+import type { FrontmatterProjection, PropertyBinding, PropertyValue } from '@rox/core/docs'
 import { Check, CheckSquare2, ChevronLeft, ChevronRight, FileText, Link2, ListChecks, Paperclip, Plus, Tag, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { NoteAsset, NoteDocument, NoteEntityMerge, NoteFootnoteChrome, NoteIndexHealth, NoteInsights, NoteLinkSuggestion, NoteSummary } from '../../../shared/types'

@@ -9,7 +9,7 @@
 
 import { useTranslation } from "react-i18next"
 import * as Icons from "lucide-react"
-import { Tooltip, TooltipTrigger, TooltipContent } from "@craft-agent/ui"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@rox/ui"
 import { PanelLeftRounded } from "../icons/PanelLeftRounded"
 import { SquarePenRounded } from "../icons/SquarePenRounded"
 import { TopBarButton } from "../ui/TopBarButton"
@@ -31,7 +31,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai"
 import { BrowserTabStrip } from "../browser/BrowserTabStrip"
 import type { Workspace } from "../../../shared/types"
 import { AccountMenu } from "./AccountMenu"
-import { getDocUrl } from "@craft-agent/shared/docs/doc-links"
+import { getDocUrl } from "@rox/shared/docs/doc-links"
 import { AppMenu } from "../AppMenu"
 import { HeaderStatusLane } from "./HeaderStatusLane"
 import { MeetingRecordingIndicator } from "../meetings/MeetingRecordingIndicator"
@@ -52,10 +52,10 @@ import {
   topBarSurfaceTabsSlotAtom,
 } from "@/atoms/unified-shell"
 import { ModeBar, type ModeBarMetrics } from "@/platform/ModeBar"
-import { resolveModePillLayout } from "./mode-pill-layout"
+import { resolveModePillLayout, type ModePillLayout } from "./mode-pill-layout"
 import { resolveWorkbenchChrome } from "@/platform/workbench-chrome"
 import { resolveBottomTerminalToggle } from "@/platform/inspector-model"
-import { WORKBENCH_FLAG } from "@craft-agent/core/platform"
+import { WORKBENCH_FLAG } from "@rox/core/platform"
 
 const RIGHT_SLOT_FULL_BADGES_THRESHOLD = 420
 const RIGHT_SLOT_TWO_BADGES_THRESHOLD = 300
@@ -152,11 +152,12 @@ export function TopBar({
     statusBar: false,
   })
 
-  const showModePill = chrome.showModeBar && !isCompact
+  // Primary application surfaces remain available independently of experimental Workbench chrome.
+  const showModePill = !isCompact
   const topbarRef = useRef<HTMLDivElement | null>(null)
   const leftFixedRef = useRef<HTMLDivElement | null>(null)
   const [modePillMetrics, setModePillMetrics] = useState<ModeBarMetrics | null>(null)
-  const [modePillLayout, setModePillLayout] = useState<{ collapsed: boolean; leftMax: number } | null>(null)
+  const [modePillLayout, setModePillLayout] = useState<ModePillLayout | null>(null)
   const handleModePillMeasure = useCallback((metrics: ModeBarMetrics) => {
     setModePillMetrics((prev) => (prev && prev.full === metrics.full && prev.compact === metrics.compact ? prev : metrics))
   }, [])
@@ -179,7 +180,7 @@ export function TopBar({
         rightWidth: rightSlotRef.current?.getBoundingClientRect().width ?? 0,
         metrics: modePillMetrics,
       })
-      setModePillLayout((prev) => (prev && prev.collapsed === next.collapsed && prev.leftMax === next.leftMax ? prev : next))
+      setModePillLayout((prev) => (prev && prev.collapsed === next.collapsed && prev.leftMax === next.leftMax && prev.rightMax === next.rightMax ? prev : next))
     }
     const schedule = () => {
       if (frame) cancelAnimationFrame(frame)
@@ -411,10 +412,10 @@ export function TopBar({
 
       {/* === RIGHT: Browser strip + add + help === */}
       {!isCompact && (
-      <div ref={rightSlotRef} className="flex min-w-0 shrink-0 items-center justify-end gap-0.5" style={{ paddingRight: 8 }}>
+      <div ref={rightSlotRef} className="rox-topbar-right-actions flex min-w-0 shrink-0 items-center justify-end gap-0.5" style={{ paddingRight: 8, maxWidth: showModePill ? modePillLayout?.rightMax : undefined }}>
         <DeviceStatusChip />
         {!chrome.hideBrowserTabStrip && (
-        <div className="min-w-0">
+        <div className="rox-topbar-browser-strip min-w-0 shrink overflow-hidden">
           <BrowserTabStrip activeSessionId={activeSessionId} maxVisibleBadges={maxVisibleBrowserBadges} />
         </div>
         )}

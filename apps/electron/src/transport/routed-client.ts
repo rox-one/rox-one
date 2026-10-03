@@ -11,9 +11,9 @@
  */
 
 import type { WsRpcClient, TransportConnectionState } from './client'
-import type { RpcClient } from '@craft-agent/server-core/transport'
-import type { RemoteServerConfig } from '@craft-agent/core/types'
-import { isLocalOnly, RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import type { RpcClient } from '@rox/server-core/transport'
+import type { RemoteServerConfig } from '@rox/core/types'
+import { isLocalOnly, RPC_CHANNELS } from '@rox/shared/protocol'
 import { ProjectAuthorityConnection, isProjectAuthorityChannel } from './project-authority-connection'
 import { ProjectAuthorityError } from '../shared/project-authority'
 

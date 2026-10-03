@@ -3,7 +3,7 @@ import { useAtomValue } from 'jotai'
 import { ShieldAlert, Check, X, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { reviewPermissionShadow } from '@craft-agent/shared/agent/permission-shadow-review'
+import { reviewPermissionShadow } from '@rox/shared/agent/permission-shadow-review'
 import { featureWorkbenchHarnessAgentIntelV1Atom } from '@/atoms/unified-shell'
 import type { PermissionRequest as PermissionRequestType } from '../../../../../shared/types'
 import type { PermissionResponse } from './types'
@@ -62,7 +62,7 @@ export function PermissionRequest({ request, onResponse, unstyled = false }: Per
             <span>{t('chat.permissionRequired')}</span>
           </div>
           <div className="text-xs leading-[18px] text-muted-foreground">
-            <span className="font-medium text-foreground">Tool:</span> {request.toolName}
+            <span className="font-medium text-foreground">{t('chat.permission.tool')}</span> {request.toolName}
             <br />
             {request.description}
           </div>

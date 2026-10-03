@@ -1,5 +1,5 @@
-import type { Rox2Context } from '@craft-agent/core/rox2'
-import { sameContextSnapshot, visibleContextEntityRefs } from '@craft-agent/core/rox2'
+import type { Rox2Context } from '@rox/core/rox2'
+import { sameContextSnapshot, visibleContextEntityRefs } from '@rox/core/rox2'
 import { authorizeMeetingAction, type MeetingGrant } from './policies.ts'
 
 export type AssistAnswer =

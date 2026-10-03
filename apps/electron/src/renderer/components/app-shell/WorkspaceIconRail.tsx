@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { fullscreenOverlayOpenAtom } from "@/atoms/overlay";
 import { CrossfadeAvatar } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipTrigger, PremiumMenuSelect } from "@craft-agent/ui";
+import { Tooltip, TooltipContent, TooltipTrigger, PremiumMenuSelect } from "@rox/ui";
 import { WorkspaceCreationScreen, type WorkspaceCreationSuccess } from "@/components/workspace";
 import { waitForTransportConnected } from "@/lib/transport-wait";
 import { useTransportConnectionState } from "@/hooks/useTransportConnectionState";

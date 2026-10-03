@@ -39,7 +39,7 @@ describe('blocked-subprocess-env', () => {
 
     expect(client).not.toMatch(/const BLOCKED_ENV_VARS\s*=/)
     expect(sandbox).not.toMatch(/export const BLOCKED_ENV_VARS\s*=\s*\[/)
-    expect(client).toMatch(/@craft-agent\/core\/env/)
-    expect(sandbox).toMatch(/@craft-agent\/core\/env/)
+    expect(client).toMatch(/@rox\/core\/env/)
+    expect(sandbox).toMatch(/@rox\/core\/env/)
   })
 })

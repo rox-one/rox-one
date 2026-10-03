@@ -3,7 +3,7 @@
  * Store (proposals.json) stays the source of proposal rows; this keeps the
  * journal event stream consistent. Does not invent a meeting snapshot.
  */
-import type { MeetingProposal } from '@craft-agent/core/meetings'
+import type { MeetingProposal } from '@rox/core/meetings'
 import {
   appendMeetingJournalEvents,
   type AppendJournalEventsResult,
