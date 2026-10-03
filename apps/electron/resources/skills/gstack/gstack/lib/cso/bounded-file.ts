@@ -1,4 +1,4 @@
-import * as fs from 'node:fs';
+import fs from 'node:fs';
 import { CsoError } from './contracts';
 
 /** Read one caller-supplied control file without following or blocking on a raced special file. */
