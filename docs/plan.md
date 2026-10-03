@@ -1011,3 +1011,16 @@ Owner recent_features; depends on current Tasks1456, strict date1470 and Product
 
 
 Zed addendum owner root: freeze final344-path source7379efcd; preserve current Home widget appearance when adopting content-sized rows, retain current settings option roles, and repeat production-optimized browser checks. Record the first28/1 stale-selector result and the subsequent cold-build hook timeout; extend only startup build budget from300 to900seconds under concurrent host load, keeping all29 case assertions and deadlines unchanged. Final combined qualification remains pending.
+
+### Knowledge availability recovery — 2026-10-03
+
+- [x] Freeze original #1436 and current consumers; reject its global singleton cache because actual A→B/connection and invalidation probes expose wrong reuse. Coordinate collection/AppShell ownership with historical worker.
+- [x] Restore scoped bounded availability through both current consumers, shared native-event invalidation, local-store retention, render scope ownership, and obsolete kernel-call fences.
+- [x] Verify actual mounted components: offline zero kernel reads, shared status/remount fast path, native-event recovery, workspace/event late-response negatives, missing channel and current Notes navigation. Qualify adjacent Knowledge logic, current consumers through Vite and Electron types; retain the whole renderer build as incomplete due to host load, plus failed fixture and real race history.
+- [x] Prepare separate qualified PR and update the exhaustive 137-path source/caller ledger. Root owns remote merge; source branches remain intact.
+
+### 2026-10-04 — Интеграция платформенных подсказок PR #1466
+
+- [x] Перенести только форматирование и локализованные параметры подсказок; сохранить текущие native/Task draft/Product Learning потребители.
+- [x] Подтвердить исходный дефект Windows/Linux и положительный macOS контроль настоящими кнопками Tasks.
+- [x] Квалифицировать свежий совмещенный source: 25 actual Chromium controls, 300 SSR/i18n tests и full strict Electron types без ошибок; сохранить точные хеши и журналы, подготовить отдельный integration PR без удаления исходной ветки.

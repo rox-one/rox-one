@@ -1,0 +1,3 @@
+CI source binding for UI-001.1/UI-001.2
+
+Parallel accepted base merges can legitimately change renderer sources after a branch manifest was committed. Preserve matchesCommittedCandidate and every mismatched path as literal evidence; enforce that actual tested files equal their immutable Git HEAD blobs, then remain byte-identical through all full functional stages. This does not promote a prior candidate/native result to a different checkout. All workflow stages, timeouts, permissions and original task Requirements/DoD/Full functional verification/Test method remain unchanged; fullDoDClosed:false.

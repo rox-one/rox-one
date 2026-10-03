@@ -10,6 +10,7 @@ import { PremiumMenuSelect } from '@rox/ui'
 import { parseTaskEntry, type ParsedTaskEntry, type TaskArea, type TaskProject } from '@rox/core/tasks/personal'
 import { Overlay } from './parts'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { formatHotkeyDisplay } from '@/lib/platform'
 
 export interface QuickEntryResult {
   parsed: ParsedTaskEntry
@@ -169,7 +170,7 @@ export function QuickEntry({
         </div>
         <div className="mt-2 flex items-center gap-2 text-[11px] text-text-muted">
           <span className="min-w-0 flex-1 truncate">{t('tasks.quickEntry.destination', { name: destinationLabel })}</span>
-          <span className="shrink-0">{t('tasks.quickEntry.keys')}</span>
+          <span className="shrink-0">{t('tasks.quickEntry.keys', { saveAndOpen: formatHotkeyDisplay('mod+enter') })}</span>
           <button
             type="submit"
             disabled={!parsed.title.trim()}
