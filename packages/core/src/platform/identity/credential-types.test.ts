@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'bun:test';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   CredentialRefRegistry,
   createCredentialRefId,
   isCredentialRefId,
+  type ProviderLocator,
 } from './credential-types.ts';
 
 const REF_ID = 'cred_123e4567-e89b-12d3-a456-426614174000';
@@ -12,6 +16,42 @@ const HEX_B = 'b'.repeat(64);
 function createRegistry(): CredentialRefRegistry {
   return new CredentialRefRegistry(() => REF_ID);
 }
+
+function withPrototypeField<T>(field: string, descriptor: PropertyDescriptor, run: () => T): T {
+  const previous = Object.getOwnPropertyDescriptor(Object.prototype, field);
+  try {
+    Object.defineProperty(Object.prototype, field, Object.assign(Object.create(null), {
+      enumerable: true,
+      configurable: true,
+    }, descriptor));
+    return run();
+  } finally {
+    Reflect.deleteProperty(Object.prototype, field);
+    if (previous) Object.defineProperty(Object.prototype, field, previous);
+  }
+}
+
+function errorFrom(run: () => unknown): unknown {
+  try {
+    run();
+  } catch (error) {
+    return error;
+  }
+  return undefined;
+}
+
+const locatorFixtures: readonly ProviderLocator[] = [
+  { type: 'local', key: 'github/default' },
+  { type: 'keychain', service: 'rox', account: 'default' },
+  { type: 'dotenv', path: '/workspace/.env', key: 'API_KEY' },
+  { type: 'git_helper', host: 'github.com' },
+  { type: 'docker_helper', registry: 'registry.example.com' },
+  { type: 'aws_profile', profile: 'default' },
+  { type: 'gcp_adc', source: 'application_default' },
+  { type: 'ssh_agent', fingerprint: 'SHA256:example' },
+  { type: 'infisical', projectId: 'project', environment: 'dev', secretPath: '/github', secretKey: 'token' },
+  { type: 'opaque', provider: 'example', locator: 'account/default' },
+];
 
 describe('CredentialRefRegistry', () => {
   it('creates opaque stable refs and stores metadata only', () => {
@@ -170,6 +210,114 @@ describe('CredentialRefRegistry', () => {
       expect(() => registry.register({ kind: 'api_key', providerId: 'local', locator: locator as never })).toThrow();
       expect(reads).toBe(0);
       expect(registry.list()).toEqual([]);
+    });
+  }
+
+  for (const fixture of locatorFixtures) {
+    for (const field of Object.keys(fixture)) {
+      for (const inheritedKind of ['data', 'getter'] as const) {
+        it(`rejects inherited ${fixture.type}.${field} ${inheritedKind} fields without reading them`, () => {
+          const registry = createRegistry();
+          const existing = registry.register({ kind: 'api_key', providerId: 'local', locator: { type: 'local', key: 'original' }, now: 100 });
+          const emptyRegistry = createRegistry();
+          const incomplete = { ...fixture } as Record<string, unknown>;
+          delete incomplete[field];
+          const inheritedValue = Reflect.get(fixture, field);
+          let reads = 0;
+          const descriptor = inheritedKind === 'data'
+            ? { value: inheritedValue }
+            : { get: () => { reads += 1; return inheritedValue; } };
+
+          const result = withPrototypeField(field, descriptor, () => ({
+            registrationError: errorFrom(() => emptyRegistry.register({ kind: 'api_key', providerId: 'other', locator: incomplete as never, now: 200 })),
+            replacementError: errorFrom(() => registry.updateProvider(existing.id, 'other', incomplete as never, 200)),
+            ownFields: createRegistry().register({ kind: 'api_key', providerId: 'other', locator: Object.freeze({ ...fixture }), now: 200 }),
+          }));
+
+          expect(result.registrationError).toBeInstanceOf(Error);
+          expect(result.replacementError).toBeInstanceOf(Error);
+          expect(reads).toBe(0);
+          expect(emptyRegistry.list()).toEqual([]);
+          expect(registry.get(existing.id)).toEqual(existing);
+          expect(result.ownFields.locator).toEqual(fixture);
+        });
+      }
+    }
+  }
+
+  for (const field of ['type', 'key'] as const) {
+    for (const inheritedKind of ['data', 'getter'] as const) {
+      it(`rejects own ${field} accessors when descriptor value is an inherited ${inheritedKind}`, () => {
+        const registry = createRegistry();
+        const existing = registry.register({ kind: 'api_key', providerId: 'local', locator: { type: 'local', key: 'original' }, now: 100 });
+        const emptyRegistry = createRegistry();
+        let locatorReads = 0;
+        let descriptorReads = 0;
+        const locator = { type: 'local', key: 'github/default' };
+        Object.defineProperty(locator, field, {
+          enumerable: true,
+          get: () => { locatorReads += 1; return field === 'type' ? 'local' : 'github/default'; },
+        });
+        const descriptor = inheritedKind === 'data'
+          ? { value: 'inherited-descriptor-value' }
+          : { get: () => { descriptorReads += 1; return 'inherited-descriptor-value'; } };
+
+        const result = withPrototypeField('value', descriptor, () => ({
+          registrationError: errorFrom(() => emptyRegistry.register({ kind: 'api_key', providerId: 'other', locator: locator as never, now: 200 })),
+          replacementError: errorFrom(() => registry.updateProvider(existing.id, 'other', locator as never, 200)),
+        }));
+
+        expect(result.registrationError).toBeInstanceOf(Error);
+        expect(result.replacementError).toBeInstanceOf(Error);
+        expect(locatorReads).toBe(0);
+        expect(descriptorReads).toBe(0);
+        expect(emptyRegistry.list()).toEqual([]);
+        expect(registry.get(existing.id)).toEqual(existing);
+      });
+    }
+  }
+
+  it('does not persist rejected inherited locator fields', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'rox-locator-rejection-'));
+    try {
+      const registry = new CredentialRefRegistry({ directory, idFactory: () => REF_ID });
+      const original = registry.register({ kind: 'api_key', providerId: 'local', locator: { type: 'local', key: 'original' }, now: 100 });
+      const refsPath = join(directory, 'credential-refs.json');
+      const before = readFileSync(refsPath, 'utf8');
+      let reads = 0;
+      const result = withPrototypeField('key', { get: () => { reads += 1; return 'inherited'; } }, () => ({
+        registrationError: errorFrom(() => registry.register({ id: 'cred_223e4567-e89b-12d3-a456-426614174000', kind: 'api_key', providerId: 'other', locator: { type: 'local' } as never, now: 200 })),
+        replacementError: errorFrom(() => registry.updateProvider(original.id, 'other', { type: 'local' } as never, 200)),
+      }));
+      expect(result.registrationError).toBeInstanceOf(Error);
+      expect(result.replacementError).toBeInstanceOf(Error);
+      expect(reads).toBe(0);
+      expect(readFileSync(refsPath, 'utf8')).toBe(before);
+      expect(new CredentialRefRegistry({ directory }).list()).toEqual([original]);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  for (const field of ['type', 'key'] as const) {
+    it(`skips persisted locators missing their own ${field} without invoking an inherited getter`, () => {
+      const directory = mkdtempSync(join(tmpdir(), 'rox-locator-reload-'));
+      try {
+        const registry = new CredentialRefRegistry({ directory, idFactory: () => REF_ID });
+        const original = registry.register({ kind: 'api_key', providerId: 'local', locator: { type: 'local', key: 'original' }, now: 100 });
+        const incomplete: Record<string, unknown> = { type: 'local', key: 'incomplete' };
+        delete incomplete[field];
+        const refsPath = join(directory, 'credential-refs.json');
+        writeFileSync(refsPath, JSON.stringify([original, { ...original, id: 'cred_223e4567-e89b-12d3-a456-426614174000', locator: incomplete }]));
+        const before = readFileSync(refsPath, 'utf8');
+        let reads = 0;
+        const loaded = withPrototypeField(field, { get: () => { reads += 1; return field === 'type' ? 'local' : 'inherited'; } }, () => new CredentialRefRegistry({ directory }));
+        expect(reads).toBe(0);
+        expect(loaded.list()).toEqual([original]);
+        expect(readFileSync(refsPath, 'utf8')).toBe(before);
+      } finally {
+        rmSync(directory, { recursive: true, force: true });
+      }
     });
   }
 

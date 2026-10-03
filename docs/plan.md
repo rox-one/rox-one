@@ -636,3 +636,12 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 2. Wire Notes folding preferences and replace placeholder slash insertions with real nodes. Supply legacy parser/serializer adapters required by the current default engine; preserve existing column aliases and literal code fences.
 3. Verify actual installed legacy parser/ProseMirror/serializer parse-edit-export-reopen, official-engine roundtrips, fold state normalization, malformed markers, bounded resizing, read-only refusal and locale parity; run consumed Electron types and renderer build.
 4. Publish a separate PR on the isolated codex branch and read back its exact head. Lead owns ordered main merge. Original source branch remains intact. The historical worker separately owns an authenticated read-only KnowledgeProvider adapter; this editor PR introduces no filesystem provider or new native permissions.
+
+## Credential locator own-data repair — 2026-10-03
+
+Implementation unit U1. Owner: core repair lead; independent review owner: locator reviewer. Dependency: the existing `CredentialRefRegistry` boundary and its ten locator variants. Use an isolated branch from current `main`; preserve unrelated work and the frozen lockfile.
+
+1. Replace property reads from the original locator with a null-prototype snapshot of validated own enumerable data descriptors. Require an own descriptor `value`; preserve readonly/frozen values and existing field normalization.
+2. Add required-field inherited data/getter cases across every variant, accessor descriptor inheritance controls, rejected persistent writes, malformed reload cases and frozen positive controls. Restore prototype mutations and temporary data in `finally` blocks.
+3. Independently review the exact candidate and run Bun 1.3.14 focused/full core tests, core TypeScript and unchanged `validate:ci`. Retain the earlier red runs and negative controls as revision-bound history; capture new failures and diagnostics without weakening assertions or timeouts.
+4. Publish the reviewed commit in a dedicated PR, resolve actionable feedback and required checks, merge into `main`, then read back and validate the merged revision. Record the PR, source hashes, commands, exits, skips and cleanup receipt in the delivery report.
