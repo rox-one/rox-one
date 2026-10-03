@@ -728,6 +728,13 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 - Delivery: isolated `codex/recover-calendar-sync-fence-20261003` and separate PR; original branches preserved, lead owns merge.
 
 
+## Validated personal task import recovery — 2026-10-03
+
+1. Historical worker maps Golden's consumed import guard to actual current TasksPage onImport and cache tryFromJson consumers. Root owns other Golden UI; this recovery changes core validation and tests only.
+2. Add a pure current-model row validator at tryFromJson before store construction. Preserve old empty/missing-collection/version compatibility and richer modern optional fields and link kinds. Use existing quarantine reason/raw preservation.
+3. Verify modern rich export roundtrip, malformed/duplicate/nested rows, nonfinite JSON overflow, cache original/staging separation, and executed current file callback refusing writes for invalid input and preserving existing tasks for valid input. Restore exact old store for negative controls, then restore candidate.
+4. Run relevant personal task/cache/import tests and consumed core/Electron types. Publish a separate PR with exact source/revision/proof; root merges. Retain original Golden branch and do not imply other Golden UI or installed/native acceptance.
+
 ## Scoped Notes comment draft recovery — 2026-10-03
 
 1. Historical worker verifies Golden source comment helper is consumed in old NotesPage and finds the same genuine unscoped quote/body state in actual current NativeNotesPage. Parent owns other Golden/layout/focus work; no shared UI layout files are edited here.
