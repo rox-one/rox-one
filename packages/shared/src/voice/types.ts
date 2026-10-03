@@ -106,11 +106,17 @@ export interface TranscribeResult {
 
 export interface SpeakInput {
   text: string
+  language?: RecognitionLanguage
+  signal?: AbortSignal
 }
 
 export interface SpeakResult {
   engine: TtsEngine
+  /** No microphone audio is uploaded. Online TTS may send text. */
   uploaded: false
+  textSent?: boolean
+  audioBase64?: string
+  mimeType?: 'audio/mpeg'
 }
 
 export interface TranscribeAdapter {

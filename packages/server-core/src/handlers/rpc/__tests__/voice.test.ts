@@ -2,10 +2,11 @@ import { describe, expect, it } from 'bun:test'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { registerVoiceHandlers, HANDLED_CHANNELS } from '../voice'
 import type { RpcServer } from '@craft-agent/server-core/transport'
+import { getDefaultVoicePrefs } from '@craft-agent/shared/voice'
 
 type Handler = (ctx: unknown, ...args: unknown[]) => unknown | Promise<unknown>
 
-function createHarness() {
+function createHarness(options: Parameters<typeof registerVoiceHandlers>[2] = {}) {
   const handlers = new Map<string, Handler>()
   const server = {
     handle(channel: string, handler: Handler) {
@@ -18,11 +19,53 @@ function createHarness() {
   }
   registerVoiceHandlers(server as unknown as RpcServer, {
     platform: { logger: console },
-  } as never)
+  } as never, options)
   return handlers
 }
 
 describe('voice RPC', () => {
+  it('returns synthesized MP3 for client playback without starting system speech', async () => {
+    let nativeCalls = 0
+    const handlers = createHarness({
+      loadPrefs: () => ({ ...getDefaultVoicePrefs(), recognitionLanguage: 'ru' }),
+      edgeSpeaker: { engine: 'edge', async speak(input) {
+        expect(input.language).toBe('ru')
+        return { engine: 'edge', uploaded: false, textSent: true, audioBase64: 'bXAz', mimeType: 'audio/mpeg' }
+      } },
+      systemSpeaker: { stop: () => false, isSpeaking: () => false, async speak() { nativeCalls++; return { played: true } } },
+    })
+    expect(await handlers.get(RPC_CHANNELS.voice.SPEAK)!({}, { text: 'Привет' })).toMatchObject({
+      engine: 'edge', playback: 'audio', audioBase64: 'bXAz', mimeType: 'audio/mpeg', textSent: true,
+    })
+    expect(nativeCalls).toBe(0)
+  })
+
+  it('falls back to system playback when edge synthesis fails', async () => {
+    const handlers = createHarness({
+      loadPrefs: getDefaultVoicePrefs,
+      edgeSpeaker: { engine: 'edge', async speak() { throw new Error('offline') } },
+      systemSpeaker: { stop: () => false, isSpeaking: () => true, async speak() { return { played: true } } },
+    })
+    expect(await handlers.get(RPC_CHANNELS.voice.SPEAK)!({}, { text: 'hello' })).toMatchObject({ playback: 'native', engine: 'macos-say' })
+    expect(await handlers.get(RPC_CHANNELS.voice.SPEAK)!({}, { status: true })).toMatchObject({ speaking: true })
+  })
+
+  it('stop cancels pending synthesis without starting fallback speech', async () => {
+    let nativeCalls = 0
+    const handlers = createHarness({
+      loadPrefs: getDefaultVoicePrefs,
+      edgeSpeaker: { engine: 'edge', speak(input) {
+        return new Promise((_, reject) => input.signal!.addEventListener('abort', () => reject(new Error('cancelled')), { once: true }))
+      } },
+      systemSpeaker: { stop: () => false, isSpeaking: () => false, async speak() { nativeCalls++; return { played: true } } },
+    })
+    const speak = handlers.get(RPC_CHANNELS.voice.SPEAK)!
+    const pending = speak({}, { text: 'hello' })
+    expect(await speak({}, { stop: true })).toMatchObject({ stopped: true })
+    expect(await pending).toMatchObject({ playback: 'none' })
+    expect(nativeCalls).toBe(0)
+  })
+
   it('registers the v2 host, history and capabilities channels', () => {
     const handlers = createHarness()
     for (const channel of HANDLED_CHANNELS) {

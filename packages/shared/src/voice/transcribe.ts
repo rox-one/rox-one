@@ -67,7 +67,7 @@ export async function speakWithPolicy(
 ): Promise<SpeakResult> {
   const adapter = prefs.ttsEngine === 'fish-speech' ? adapters.fish : adapters.edge
   const result = await adapter.speak(input)
-  return { engine: prefs.ttsEngine, uploaded: false }
+  return { ...result, engine: prefs.ttsEngine, uploaded: false }
 }
 
 export function assertEditableTranscript(text: string): string {

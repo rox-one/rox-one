@@ -1,8 +1,7 @@
 /**
  * System text-to-speech fallback for the message «Слушать» action.
  *
- * The configured TTS engines (edge / fish-speech) are placeholders that never
- * produce audio, so «Слушать» used to do nothing audible. On macOS we speak
+ * Used when online synthesis is unavailable. On macOS we speak
  * through the built-in `say` binary (text is piped via stdin, never passed as
  * argv). Elsewhere the caller reports `playback: 'renderer'` and the renderer
  * falls back to the Web Speech API.
