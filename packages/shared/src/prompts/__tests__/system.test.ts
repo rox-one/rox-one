@@ -25,6 +25,16 @@ const GIT_CONVENTIONS_HEADING = '## Git Conventions'
 const CO_AUTHOR_TRAILER = 'Co-Authored-By: Agent Rox#001 <agents-noreply@craft.do>'
 
 describe('system prompt guidance', () => {
+  it('uses available configuration tools rather than a nonexistent bundled CLI', () => {
+    const prompt = getSystemPrompt(undefined, undefined, '/tmp/workspace', '/tmp/workspace')
+    expect(prompt).toContain('The desktop app does not bundle a configuration management CLI')
+    expect(prompt).toContain('config_validate')
+    expect(prompt).toContain('skill_validate')
+    expect(prompt).toContain('source_test')
+    expect(prompt).not.toContain('craft-agent label --help')
+    expect(prompt).not.toContain('Prefer `craft-agent`')
+  })
+
   it('uses backend-neutral debug log querying guidance (rg/grep via Bash)', () => {
     const prompt = getSystemPrompt(
       undefined,

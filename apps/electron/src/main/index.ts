@@ -191,12 +191,15 @@ if (isDebugMode) {
   }
 
   process.env.CRAFT_SCRIPTS = scriptsDir
-  process.env.CRAFT_COMMANDS_ENTRY = app.isPackaged
-    ? join(app.getAppPath(), 'packages', 'craft-agents-commands', 'src', 'main.ts')
-    : join(process.cwd(), 'packages', 'craft-agents-commands', 'src', 'main.ts')
-  process.env.CRAFT_CLI_ENTRY = app.isPackaged
-    ? join(app.getAppPath(), 'packages', 'craft-cli', 'src', 'cli.ts')
-    : join(process.cwd(), 'packages', 'craft-cli', 'src', 'cli.ts')
+  // Configuration CLI packages are not included in this app. Preserve only
+  // explicitly supplied working entries for the legacy compatibility wrapper.
+  for (const variable of ['CRAFT_COMMANDS_ENTRY', 'CRAFT_CLI_ENTRY'] as const) {
+    const entry = process.env[variable]
+    if (entry && !existsSync(entry)) delete process.env[variable]
+  }
+  if (!process.env.CRAFT_COMMANDS_ENTRY && !process.env.CRAFT_CLI_ENTRY) {
+    process.env.CRAFT_FEATURE_CRAFT_AGENTS_CLI = '0'
+  }
   process.env.CRAFT_COMMANDS_DOC_PATH = app.isPackaged
     ? join(resourcesBase, 'resources', 'docs', 'craft-cli.md')
     : join(process.cwd(), 'apps', 'electron', 'resources', 'docs', 'craft-cli.md')

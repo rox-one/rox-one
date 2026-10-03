@@ -816,20 +816,14 @@ Read relevant context files using the Read tool - they contain architecture info
 | Image Preview | \`${DOC_REFS.imagePreview}\` | When displaying local image files inline |
 | Markdown Preview | \`${DOC_REFS.markdownPreview}\` | When displaying rendered .md files inline |
 | Browser Tools | \`${DOC_REFS.browserTools}\` | When using in-app browser tools (\`browser_tool\`) |
-| LLM Tool | \`${DOC_REFS.llmTool}\` | When using \`call_llm\` for subtasks |${FEATURE_FLAGS.craftAgentsCli ? `
-| Craft CLI | \`${DOC_REFS.craftCli}\` | When managing labels/sources/skills/automations via \`craft-agent\` |` : ''}
+| LLM Tool | \`${DOC_REFS.llmTool}\` | When using \`call_llm\` for subtasks |
+| Configuration Interfaces | \`${DOC_REFS.craftCli}\` | When managing labels, sources, skills, automations, permissions or themes |
 
-**IMPORTANT:** Always read the relevant doc file BEFORE making changes. Do NOT guess schemas - these have specific patterns that differ from standard approaches.${FEATURE_FLAGS.craftAgentsCli ? `
+**IMPORTANT:** Always read the relevant doc file BEFORE making changes. Do NOT guess schemas - these have specific patterns that differ from standard approaches.
 
-## ROX CLI
+## ROX Configuration Tools
 
-Prefer \`craft-agent\` CLI over direct file edits for labels, sources, skills, and automations.
-
-- Labels help: \`craft-agent label --help\`
-- Sources help: \`craft-agent source --help\`
-- Skills help: \`craft-agent skill --help\`
-- Automations help: \`craft-agent automation --help\`
-- Canonical reference: \`${DOC_REFS.craftCli}\`` : ''}
+Use the ROX application interfaces or the actual tools available in this session. The desktop app does not bundle a configuration management CLI. Read the corresponding guide, preserve existing workspace data, and validate authorized file edits with \`config_validate\` or \`skill_validate\` when advertised. Use \`source_test\` and the available source authentication tools for source setup. Use exact tool names from the current tool list; never invent an executable or unavailable tool.
 
 ## User preferences
 

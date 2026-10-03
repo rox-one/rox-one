@@ -2,9 +2,8 @@
 
 This guide explains how to configure automations in ROX to automate workflows based on events.
 
-> **CLI-first workflow (recommended):** Use `craft-agent automation ...` commands instead of editing JSON directly.
-> - `craft-agent automation --help`
-> - Canonical command reference: [craft-cli.md](./craft-cli.md)
+> **Supported workflow:** Use the ROX Automations interface to inspect and manage automations. For authorized agent edits, follow the `automations.json` schema below and validate with the available `config_validate` tool.
+> - Interface and tooling reference: [ROX configuration interfaces](./craft-cli.md)
 
 ## What Are Automations?
 
@@ -22,22 +21,9 @@ Automations are configured in `automations.json` at the root of your workspace:
 ~/.rox/workspaces/{workspaceId}/automations.json
 ```
 
-## Recommended CLI Commands
+## Editing Automations
 
-```bash
-craft-agent automation list
-craft-agent automation get <id>
-craft-agent automation create --event UserPromptSubmit --prompt "..."
-craft-agent automation update <id> --json '{...}'
-craft-agent automation enable <id>
-craft-agent automation disable <id>
-craft-agent automation duplicate <id>
-craft-agent automation history [<id>] --limit 20
-craft-agent automation last-executed <id>
-craft-agent automation test <id> --match "..."
-craft-agent automation lint
-craft-agent automation validate
-```
+Use the ROX Automations interface, or edit the workspace `automations.json` according to the schema below. Preserve existing entries and validate before enabling an automation. The desktop app does not include a configuration management command-line executable.
 
 ## Basic Structure
 
