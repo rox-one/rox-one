@@ -118,3 +118,23 @@ test('T-NOTES-CREATE/T-NOTES-SAVE: the real Notes tour verifies canonical creati
   await expect(popup).toHaveCount(0)
   await attachEvidence(page, info)
 })
+
+test('T-WORKSPACE-SCOPE: the real App resolves a shell target for the voluntary workspace explanation', async ({ page }, info) => {
+  await openApp(page, 'settings/learning', true)
+  await page.getByTestId('learning-start-OBT-02').click()
+  const popup = page.locator('[data-product-tour-popover]')
+  await expect(popup).toHaveAttribute('data-product-tour-step', 'workspace.scope')
+  await popup.getByRole('button', { name: /^(Next|Finish)$/i }).click()
+  await expect(popup).toHaveCount(0)
+  await attachEvidence(page, info)
+})
+
+test('APP-03: ordinary navigation away from an active Learning step pauses its real App presentation', async ({ page }, info) => {
+  await openApp(page, 'settings/learning', true)
+  await page.getByTestId('learning-start-OBT-25').click()
+  await expect(page.locator('[data-product-tour-popover]')).toHaveAttribute('data-product-tour-step', 'learning.library')
+  await page.locator('[data-tutorial="sources-nav"]').first().click()
+  await expect(page.locator('[data-product-tour-popover]')).toHaveCount(0)
+  await expect(page.getByTestId('product-tour-status')).toContainText(/changed|paused/i)
+  await attachEvidence(page, info)
+})
