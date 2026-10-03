@@ -40,6 +40,7 @@ jobs:
           packages/server-core/src/sessions/resume-history.test.ts
           packages/server-core/src/sessions/permission-mode.test.ts
           packages/server-core/src/handlers/rpc/__tests__/browser-credential-import.test.ts
+          packages/server-core/src/handlers/rpc/__tests__/browser-profile-import.test.ts
           packages/server-core/src/handlers/rpc/__tests__/browser-data-auto-import.test.ts
           packages/shared/src/browser/__tests__/profile-native-credentials.test.ts
           packages/shared/src/collaboration/__tests__/durable-store.test.ts
@@ -49,6 +50,7 @@ jobs:
           packages/shared/src/config/__tests__/legacy-config-import.test.ts
           packages/shared/src/context-docs
           packages/shared/src/skills/__tests__/bundled.test.ts
+          packages/shared/src/skills/__tests__/vendor-security.test.ts
           packages/shared/src/toolchain/__tests__/acpx.test.ts
           packages/shared/src/credentials/backends/__tests__/keychain-master-key.test.ts
           packages/shared/src/agent/core/__tests__/rox-config-paths.test.ts
