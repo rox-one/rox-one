@@ -201,7 +201,7 @@ win:
     - target: nsis
       arch:
         - x64
-  # Use predictable naming: Craft-Agents-x64.exe
+  # Use predictable naming: Rox-x64.exe
   artifactName: "Rox-${arch}.${ext}"
   files:
     # Exclude binaries for other platforms
