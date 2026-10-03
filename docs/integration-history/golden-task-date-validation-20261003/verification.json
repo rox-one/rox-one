@@ -1,0 +1,174 @@
+{
+  "scope": "Golden Tasks exact local ISO date validation in current schedule form and canonical native task persistence",
+  "source_branch": "codex/golden-gate-workspace",
+  "source_revision": "5def9ffd36dc160fdc7c908784e0ef97ba6a732e",
+  "source_behavior": "presentation.ts taskDateFromInput rejects a date when local Date year/month/day does not round-trip",
+  "current_base": "c9f149554f22b89cb3db1b65a3b9cb6b882f8dbb",
+  "qualified_source_revision": "3c788d4bf866129438eb05432c374f44c2a5e294",
+  "before": [
+    {
+      "scope": "core things.test",
+      "pass": 19,
+      "fail": 1,
+      "reason": "impossible ISO dates normalize to a different date"
+    },
+    {
+      "scope": "actual current TasksPage/TaskDetail browser",
+      "pass": 1,
+      "fail": 1,
+      "reason": "invalid date closes form; positive leap control passes"
+    }
+  ],
+  "after": [
+    {
+      "scope": "entire core personal task tests",
+      "pass": 67,
+      "fail": 0,
+      "assertions": 161
+    },
+    {
+      "scope": "actual current TasksPage/TaskDetail browser rebuilt on current base",
+      "pass": 2,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "scope": "targeted local calendar controls America/Los_Angeles",
+      "pass": 2,
+      "fail": 0,
+      "assertions": 11
+    },
+    {
+      "scope": "targeted local calendar controls Asia/Tokyo",
+      "pass": 2,
+      "fail": 0,
+      "assertions": 11
+    },
+    {
+      "scope": "full current core TypeScript",
+      "exit": 0
+    }
+  ],
+  "environment": {
+    "bun": "1.3.14",
+    "node": "22.23.3",
+    "chromium": "headless_shell-1243",
+    "timezone_controls": [
+      "America/Los_Angeles",
+      "Asia/Tokyo"
+    ]
+  },
+  "source_fingerprints": [
+    {
+      "path": "packages/core/src/tasks/personal/quick-entry.ts",
+      "sha256": "8defab08850f61046bc170514b8c50863ed6014b437038bccccbfeb172ef9a55"
+    },
+    {
+      "path": "packages/core/src/tasks/personal/things.test.ts",
+      "sha256": "dccf4af2d4f16878749129e23bd200112b80f5075487d9df4c6345be5517abf7"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+      "sha256": "1d0f10bfa89a4c5c602d0db82e30f4d52228e33a8510df4c1aa45afe2461ecc2"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/TasksPage.tsx",
+      "sha256": "352d4f621bce1480f494c0e379b985ebb7852d4e62795c4319ef93b6e47c318c"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/personal-tasks.ts",
+      "sha256": "a82e0a37d48275fcfd0a4edcbdef0b1b1335411b815197397b3c474fd45c9b5f"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/__tests__/tasks-import-responsive.fixture.tsx",
+      "sha256": "9b409931900f52a4ad915e350db6f15782e06fa1b4342cc953d4b329b04a0517"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/__tests__/tasks-import-responsive.fixture.mjs",
+      "sha256": "5e9c7b90ef5f85b51bde760d7bac7c462a91d71b4c51dc469693f694545a2072"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/__tests__/tasks-import-responsive.browser.node.ts",
+      "sha256": "58c3918bc17dc0dfd7609f168a2cd608b137f8b14edc6f110190d003f57b4678"
+    },
+    {
+      "path": "apps/electron/src/renderer/index.css",
+      "sha256": "2d7d864694e7ef21dd740c32f9438f12928427379c677e3343d1d1873ba3bacd"
+    }
+  ],
+  "logs": [
+    {
+      "path": "logs/golden-task-date-unit-before.log.gz",
+      "original_sha256": "ceea51f6b944efcefb29f3d7f5ec1cb2c9d8ad124ea1f86da010126fcef58972",
+      "gzip_sha256": "9d9336834727de02a773151f9649360af7101d6c32431d385c012eda64edfd01"
+    },
+    {
+      "path": "logs/golden-task-date-browser-before.log.gz",
+      "original_sha256": "048bf67d719e008654145de5aeed04c87dce48dfae3aba88501504b36897a991",
+      "gzip_sha256": "ab23b004fa2ff78f8b7203dec6b4678c295fc060fb2fcf6337018f00c4c67e13"
+    },
+    {
+      "path": "logs/golden-task-date-core-after.log.gz",
+      "original_sha256": "7be968527e0c9ac6e543b681e9a251e761f82bad93c2dde5028c801f3ef83375",
+      "gzip_sha256": "cd8ba699b420b149990782fbd91d0d0e206b7252a8faac647d9378b12f0dbfe2"
+    },
+    {
+      "path": "logs/golden-task-date-browser-after.log.gz",
+      "original_sha256": "d9ae3ecf6e4e04c934864ee88cce5e11cedaf344bf4e6be56fe4d76b845fccba",
+      "gzip_sha256": "7c996f9e07833381e970df1378de848111ea9a16aaeb296b317d3d7727b3f3bc"
+    },
+    {
+      "path": "logs/golden-task-date-local-negative-offset.log.gz",
+      "original_sha256": "ccbdc74ead80d944d72fbd1b99be3528d532ee467f4075e68e4dba89e2154f04",
+      "gzip_sha256": "b003a59547a78430bcf41197ca9b88915375c9859af77367e98aa2b7dcf5c179"
+    },
+    {
+      "path": "logs/golden-task-date-local-positive-offset.log.gz",
+      "original_sha256": "1b740296dd8703abccce9deb715426e71840a06e280fbed9078ad95c3c969a5f",
+      "gzip_sha256": "9c0a186caac18314d8af69e8e8a5370f10abd2d96a96d7d6de084544ef5a4706"
+    },
+    {
+      "path": "logs/golden-task-date-core-types.log.gz",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "path": "logs/golden-task-date-current-core-types.log.gz",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "path": "logs/golden-task-date-browser-current-build.log.gz",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "path": "logs/golden-task-date-browser-current.log.gz",
+      "original_sha256": "89ccf7adaf5bd24fb385b59603d391a2377f364f245293c8f8602274d5d55e84",
+      "gzip_sha256": "939d0b19695f867754d7273edd3daeb3f44c7cf5b143a7f82ecca45b4f638bc7"
+    }
+  ],
+  "limits": [
+    "Browser fixture mounts actual TasksPage and TaskDetail with current canonical personal-tasks frontend, a synthetic scoped native CAS server, real production Tailwind CSS, and explicitly substituted unrelated application leaves.",
+    "This proves the exact changed date/parser/form/persistence seam. It is not full application, OS, account/provider, or all Golden program acceptance.",
+    "No new user-facing labels; existing translation keys and all locale files remain unchanged.",
+    "Original branches are preserved."
+  ],
+  "reconciliation": {
+    "main_revision": "57871f492d1b21177ab767454d90395d72496b4e",
+    "merge_revision": "8e41e7d1a9d2b2ba881d1ce970b8cc6d51442eb5",
+    "all_nine_qualified_source_fingerprints_unchanged": true,
+    "docs_against_current_main": {
+      "spec": {
+        "added": 5,
+        "deleted": 0
+      },
+      "plan": {
+        "added": 5,
+        "deleted": 0
+      }
+    },
+    "note": "Normal current-main merge preserves all current UI-001 route sections; date-owned docs append only. No requalification claimed for unrelated current-main source paths."
+  }
+}

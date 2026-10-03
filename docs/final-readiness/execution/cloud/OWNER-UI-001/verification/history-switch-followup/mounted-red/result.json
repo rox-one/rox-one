@@ -1,0 +1,155 @@
+{
+  "phase": "red",
+  "startedAt": "2026-10-03T19:07:34.168042+00:00",
+  "status": "failed",
+  "inputRevision": "42034d8deb617630f923be8f61b33c72c05ed782",
+  "fullDoDClosed": false,
+  "acceptanceLevel": "Actual production NavigationProvider mounted with React/Jotai/history; explicit backend/IPC fixtures; headless Chromium; no native/hosted or Bun-test pass claim",
+  "testFilter": null,
+  "caseTimeoutMs": 30000,
+  "outerTimeoutSeconds": 600,
+  "output": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-history-red-42034d8-20261003T190734Z",
+  "commands": [
+    [
+      "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/toolchain-node-24/node-v24.21.0-darwin-arm64/bin/node",
+      "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-history-red-42034d8-20261003T190734Z/rox-readiness-ui-001.bundle-fixture.ts",
+      "navigation",
+      "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-history-red-42034d8-20261003T190734Z/discovery-fixture.js"
+    ],
+    [
+      "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/toolchain-node-24/node-v24.21.0-darwin-arm64/bin/node",
+      "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-history-red-42034d8-20261003T190734Z/rox-readiness-ui-001.bundle-fixture.ts",
+      "navigation",
+      "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-history-red-42034d8-20261003T190734Z/immutable-fixture.js"
+    ],
+    [
+      "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/toolchain-node-24/node-v24.21.0-darwin-arm64/bin/node",
+      "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-history-red-42034d8-20261003T190734Z/rox-readiness-ui-001.build-node-tests.ts",
+      "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts",
+      "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-history-red-42034d8-20261003T190734Z/actual-source-callbacks.mjs"
+    ],
+    [
+      "/Users/t/Library/Caches/ms-playwright/chromium-1243/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--disable-background-timer-throttling",
+      "--disable-renderer-backgrounding",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-default-apps",
+      "--disable-component-update",
+      "--no-first-run",
+      "--remote-debugging-port=0",
+      "--user-data-dir=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-history-red-42034d8-20261003T190734Z/chrome-profile",
+      "about:blank"
+    ],
+    [
+      "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/toolchain-node-24/node-v24.21.0-darwin-arm64/bin/node",
+      "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-history-red-42034d8-20261003T190734Z/actual-source-callbacks.mjs"
+    ]
+  ],
+  "builds": [
+    {
+      "pid": 40631,
+      "log": "discovery-build.log",
+      "exitCode": 0
+    },
+    {
+      "pid": 40677,
+      "log": "immutable-build.log",
+      "exitCode": 0
+    },
+    {
+      "pid": 40769,
+      "log": "callback-build.log",
+      "exitCode": 0
+    }
+  ],
+  "failures": [],
+  "ownedBrowserExited": true,
+  "ownedDriverExited": true,
+  "nodeRuntime": "v24.21.0",
+  "nodeBinarySha256": "e4b5a3af0e05c75de2eae013904145f40fe7fc2a6e6f17510128bf45cca4e79b",
+  "sourceCaseCount": 35,
+  "originalCaseCount": 28,
+  "newCaseNames": [
+    "history-switch regression: false reply after focus-only change releases suppression",
+    "history-switch regression: rejected reply after focus-only change releases suppression",
+    "history-switch regression: older failure cannot release a newer workspace switch",
+    "history-switch regression: same-workspace popstate supersedes a pending foreign switch",
+    "history-switch regression: metadata-blocked same-workspace history retains its newer target",
+    "history-switch regression: remote-only owner rotation still releases a failed workspace switch",
+    "history-switch regression: workspace ABA cannot revive a failed switch over blocked current history"
+  ],
+  "canonicalBuilderSha256": {
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/expanded/harness/rox-readiness-ui-001.bundle-fixture.ts": "6b630e52f5d6bd85adaa123e7f3df2621237abc91eda7cdb00b5c8624026a816",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/expanded/harness/rox-readiness-ui-001.build-node-tests.ts": "0c605b785a1f34cd6ef0a364cf442b2cd56a783ef21b234d48b1b712291a99d8"
+  },
+  "adaptedBuilderSha256": {
+    "rox-readiness-ui-001.bundle-fixture.ts": "62947d04137784040379d6edf75de1b99458711c315948fe5f3be52eb9ad0a5f",
+    "rox-readiness-ui-001.build-node-tests.ts": "6f5f7f5928973a6cd0b5bf2653f0b32969fa43fc9c8e1460f8c2aef121e4b9f0"
+  },
+  "nodeAdapterSha256": "fa424f0fa48bef51ed13b3d043291d9f8c3d937ff50a28fda40f76809eb9f7e5",
+  "trackedDifferencesAtStart": [
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts"
+  ],
+  "allowedDirtyBundleInputs": [
+    "apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts"
+  ],
+  "inputCount": 169,
+  "discoveryAndImmutableBundleBytesMatch": true,
+  "fixtureBundleSha256": "fa892cd0dd8fcf987936a07ed076bcf378a8f0fa6d0212843714b60cb97b1989",
+  "compiledCallbacksSha256": "a5afbec817f8adf9af23920eaca40483398fd8abffca233193e4257135c8a119",
+  "browserPid": 40794,
+  "profile": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-history-red-42034d8-20261003T190734Z/chrome-profile",
+  "replayStartedAt": "2026-10-03T19:07:36.498052+00:00",
+  "driverPid": 40897,
+  "driverExitCode": 1,
+  "summary": {
+    "runtime": "Node actual source callbacks adapter",
+    "pass": 29,
+    "fail": 6,
+    "assertions": 94,
+    "cases": 35,
+    "registeredCases": 35,
+    "elapsedMs": 32248
+  },
+  "allOriginalCasesPassed": true,
+  "newCaseFailures": [
+    "history-switch regression: false reply after focus-only change releases suppression",
+    "history-switch regression: rejected reply after focus-only change releases suppression",
+    "history-switch regression: same-workspace popstate supersedes a pending foreign switch",
+    "history-switch regression: metadata-blocked same-workspace history retains its newer target",
+    "history-switch regression: remote-only owner rotation still releases a failed workspace switch",
+    "history-switch regression: workspace ABA cannot revive a failed switch over blocked current history"
+  ],
+  "newCasePasses": [
+    "history-switch regression: older failure cannot release a newer workspace switch"
+  ],
+  "negativeControlConfirmed": true,
+  "browserExitCode": -9,
+  "browserCleanup": [
+    "SIGTERM owned process group",
+    "SIGKILL owned process group after 10 seconds"
+  ],
+  "remainingOwnedProfileProcesses": [],
+  "allInputHashesUnchanged": true,
+  "sourceRevisionUnchanged": true,
+  "finishedAt": "2026-10-03T19:08:19.711645+00:00",
+  "artifactSha256": {
+    "actual-source-callbacks.mjs": "a5afbec817f8adf9af23920eaca40483398fd8abffca233193e4257135c8a119",
+    "callback-build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "chromium.log": "2f5fee2e80caf7ba6f705cc90299ac2bd75d59b764a12197046dec8848087598",
+    "discovery-build.log": "e18cd9bbf2f58052532a899bce6514f7ccce4296c791dc243e7b136a8435cd2a",
+    "discovery-fixture.js": "fa892cd0dd8fcf987936a07ed076bcf378a8f0fa6d0212843714b60cb97b1989",
+    "discovery-fixture.js.manifest.json": "ac319050a55a9d315f1ca96d1c21ceb12b26dc929c2f8049810b3e6201d3e97e",
+    "immutable-build.log": "e52f1760f1cbe1e534b74353887d64d50a307142b3333094d86bb4d1139b01a5",
+    "immutable-fixture.js": "fa892cd0dd8fcf987936a07ed076bcf378a8f0fa6d0212843714b60cb97b1989",
+    "immutable-fixture.js.manifest.json": "e4192bd0dc907073c2be2078e674d927bb5384b74972ba31420eb0a531355b35",
+    "input-manifest-after.json": "0db8f60782cc1d9b5936ebe300417a660bdd581a5a3306cf4ec83cb55ca061da",
+    "input-manifest-before.json": "9bd86c9f15091056504bbdd93d500917079ca5ae5d328eda6c557ca313a7d10d",
+    "mounted-navigation.log": "da92114bb3b5d8b780fddb6bc36256726db48d0f8bd0d7e1eb33e6d1ece9848f",
+    "rox-readiness-ui-001.build-node-tests.ts": "6f5f7f5928973a6cd0b5bf2653f0b32969fa43fc9c8e1460f8c2aef121e4b9f0",
+    "rox-readiness-ui-001.bundle-fixture.ts": "62947d04137784040379d6edf75de1b99458711c315948fe5f3be52eb9ad0a5f"
+  }
+}

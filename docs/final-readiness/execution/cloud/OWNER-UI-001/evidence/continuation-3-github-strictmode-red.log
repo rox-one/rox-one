@@ -1,0 +1,60 @@
+component-recovery	Mounted NavigationProvider and browser history	﻿2026-10-03T15:00:06.0078236Z ##[group]Run bun docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.navigation-browser.ts
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:06.0079366Z ^[[36;1mbun docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.navigation-browser.ts^[[0m
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:06.0146085Z shell: /usr/bin/bash -e {0}
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:06.0146411Z ##[endgroup]
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7834900Z {
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7837042Z   "environment": "Actual mounted NavigationProvider, PanelSlot, MainContentPanel, session-selection hooks and panel/session atoms under the production StrictMode wrapper in isolated Chromium; leaf presentation and IPC boundary fixtures; no hosted/native service acceptance",
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7838873Z   "browserVersion": "131.0.6778.33",
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7839173Z   "results": [
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7839380Z     {
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7839860Z       "name": "The mounted NavigationProvider restores a source deep link, back/forward and reload",
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7840348Z       "pass": false,
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7842648Z       "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n3 !== 1\n; url=http://127.0.0.1:42415/?ws=workspace-a&route=sources%2Fsource%2Ftwo&sidebar=files%2Fsrc%2Fmain.ts; state={\"navigator\":\"sources\",\"details\":{\"type\":\"source\",\"sourceSlug\":\"two\"},\"rightSidebar\":{\"type\":\"files\",\"path\":\"src/main.ts\"}}; actions=[]"
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7845214Z     },
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7845582Z     {
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7846311Z       "name": "A deleted selected source retains its URL and specific missing surface",
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7847056Z       "pass": true
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7847416Z     },
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7847725Z     {
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7848506Z       "name": "Missing and deleted explicit sessions stay selected instead of choosing another chat",
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7849312Z       "pass": true
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7849669Z     },
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7849977Z     {
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7850722Z       "name": "A foreign workspace session is unavailable and the remote alias remains valid",
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7851516Z       "pass": true
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7851867Z     },
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7852188Z     {
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7853014Z       "name": "Restoring a foreign session address checks the actual PanelSlot override through reload",
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7853831Z       "pass": true
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7854225Z     },
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7855332Z     {
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7856150Z       "name": "An unfocused foreign-session panel stays unavailable beside a valid local panel",
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7856996Z       "pass": true
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7857221Z     },
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7857595Z     {
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7858348Z       "name": "Legacy zero/one panel proportions recover without becoming part of an entity address",
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7858948Z       "pass": true
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7859231Z     },
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7859542Z     {
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7860309Z       "name": "Unknown and malformed incoming deep links retain an unavailable surface through reload",
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7861135Z       "pass": true
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7861369Z     },
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7861547Z     {
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7862146Z       "name": "A queued address keeps its complete entity and new-panel option until readiness",
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7862985Z       "pass": true
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7863379Z     },
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7863607Z     {
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7864053Z       "name": "A queued deep-link action retains query parameters and executes once after readiness",
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7865069Z       "pass": true
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7865286Z     },
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7865497Z     {
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7866090Z       "name": "Browser workspace history restores the workspace and its selected address together",
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7866928Z       "pass": true
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7867276Z     },
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7867586Z     {
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7868110Z       "name": "Unmount removes the actual deep-link subscription",
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7868656Z       "pass": true
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7869393Z     }
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7869715Z   ]
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.7869989Z }
+component-recovery	Mounted NavigationProvider and browser history	2026-10-03T15:00:08.8379924Z ##[error]Process completed with exit code 1.

@@ -10,6 +10,30 @@ import * as path from 'node:path';
 
 const isWindows = process.platform === 'win32';
 
+/** Windows environment keys are case-insensitive; avoid competing Path/PATH values. */
+export function pathEnvKey(env: NodeJS.ProcessEnv, win = isWindows): string {
+  return win ? Object.keys(env).find((key) => key.toUpperCase() === 'PATH') ?? 'PATH' : 'PATH';
+}
+
+export function prependPath<T extends NodeJS.ProcessEnv>(env: T, prefix: string, win = isWindows): T {
+  if (!prefix) return env;
+  const key = pathEnvKey(env, win);
+  const existing = env[key] ?? '';
+  const next = { ...env };
+  if (win) {
+    for (const name of Object.keys(next)) {
+      if (name !== key && name.toUpperCase() === 'PATH') delete next[name];
+    }
+  }
+  return { ...next, [key]: existing ? `${prefix}${win ? ';' : ':'}${existing}` : prefix };
+}
+
+export function executableCandidates(name: string, win = isWindows): string[] {
+  if (!win) return [name];
+  if (/\.(exe|com|cmd|bat)$/i.test(name)) return [name];
+  return [`${name}.exe`, `${name}.com`, `${name}.cmd`, `${name}.bat`, name];
+}
+
 /**
  * Спавн команды; reject с stderr при ненулевом exit-code / ошибке спавна.
  * Без shell — аргументы идут как есть (инъекция через argv невозможна).
@@ -40,31 +64,26 @@ export async function runCommand(
 }
 
 /** Файл существует и исполняем (на win32 — просто существует). */
-async function isExecutable(file: string): Promise<boolean> {
+export async function isExecutable(file: string, win = isWindows): Promise<boolean> {
   try {
     const stat = await fs.promises.stat(file);
     if (!stat.isFile()) return false;
-    if (!isWindows) await fs.promises.access(file, fs.constants.X_OK);
+    if (!win) await fs.promises.access(file, fs.constants.X_OK);
     return true;
   } catch {
     return false;
   }
 }
 
-/** Имена-кандидаты: на Windows исполняемый файл имеет расширение. */
-function candidates(name: string): string[] {
-  if (!isWindows) return [name];
-  if (/\.(exe|cmd|bat)$/i.test(name)) return [name];
-  return [`${name}.exe`, `${name}.cmd`, name];
-}
-
 /** Кросс-платформенный «which» без Bun.which (Electron main = plain Node). */
-export async function whichTool(name: string, pathEnv?: string): Promise<string | null> {
-  const dirs = (pathEnv ?? process.env.PATH ?? '').split(path.delimiter).filter(Boolean);
+export async function whichTool(name: string, pathEnv?: string, win = isWindows): Promise<string | null> {
+  const dirs = (pathEnv ?? process.env[pathEnvKey(process.env, win)] ?? '')
+    .split(win ? ';' : ':').filter(Boolean);
   for (const dir of dirs) {
-    for (const candidate of candidates(name)) {
-      const full = path.join(dir, candidate);
-      if (await isExecutable(full)) return full;
+    const unquoted = win ? dir.replace(/^"(.*)"$/, '$1') : dir;
+    for (const candidate of executableCandidates(name, win)) {
+      const full = path.join(unquoted, candidate);
+      if (await isExecutable(full, win)) return full;
     }
   }
   return null;

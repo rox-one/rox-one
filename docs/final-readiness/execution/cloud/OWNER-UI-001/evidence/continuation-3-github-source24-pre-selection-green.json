@@ -1,0 +1,791 @@
+{
+  "observedAt": "2026-10-03T18:20:24.646064+00:00",
+  "headSha": "4eac674d8be32aa2451765a8dd9095840d8d77d5",
+  "sourceRecoveryRun": {
+    "id": 37142964890,
+    "name": "UI-001 Recovery",
+    "head_sha": "4eac674d8be32aa2451765a8dd9095840d8d77d5",
+    "event": "pull_request",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/rox-one/rox-one/actions/runs/37142964890",
+    "created_at": "2026-10-03T18:06:23Z",
+    "updated_at": "2026-10-03T18:14:12Z"
+  },
+  "testedRevision": "e281eb039bb55982e4416a5b460708a1bf60f6bf",
+  "sourceSnapshot": {
+    "testedRevision": "e281eb039bb55982e4416a5b460708a1bf60f6bf",
+    "bun": "1.3.14",
+    "node": "v24.21.0",
+    "actualSourceSha256": {
+      "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "587281b0676cd7135e842a7440c0820bd475b93ed96b6a5b99c7303d34100231",
+      "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "a29699db1fdeda3205113d7256c174e7ebf29e3a1d7e96e3cdac15bb53ab8959",
+      "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+      "apps/electron/src/renderer/contexts/NavigationContext.tsx": "814b705341388ce18911f1009aeccf188b1186c6827fe56434b0f88b1c377f01",
+      "apps/electron/src/shared/route-parser.ts": "613068e6cc643848b45f9ee3a4fb8a991cbb80873bd31bbf1f40d48f2bfe8ad5",
+      "apps/electron/src/shared/types.ts": "899852aae94cdd8d729ff616021bc7605158bc59c5db058ad78bd8a3cbf86c40",
+      "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+      "apps/electron/src/renderer/lib/nav-helpers.ts": "7b94fc00f694ee2c83a682725ca9460d88a138b4a421fa452d1a77d034df5e2f",
+      "apps/electron/src/renderer/atoms/panel-stack.ts": "b669a999d338e69c5d6975e322aaab1170638141351696d05d219d786239259c",
+      "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff",
+      "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "92b4d399c1bdfdd095c6e1fe83011a6fe2378e9b075552fdeed4ad8b62d3365c",
+      "apps/electron/src/renderer/App.tsx": "d94f61493a507398c98d342f124be6f57bc4e4c49401b0e8d9872a92d14f60ee",
+      "apps/electron/src/renderer/contexts/navigation-history.ts": "da8884b5cd39fa877d2d06793af008c84e123f9d4dd9137ea555c751585df159",
+      "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": "a4edf3356beecf2a4b273c18b28263f45b7c2d83d15d709aa8bfba422036ebbd",
+      "apps/electron/src/renderer/hooks/usePanelResize.ts": "ac50c51b98b9e1a782cb964e2dfe6ae7ff976777733c0cac0467acf1a4eb02dd",
+      "apps/electron/src/renderer/components/app-shell/panel-constants.ts": "6166298674f6ea0d50c69223d366aba54f443f4d1262a0483a4b3331c3902fc9",
+      "apps/electron/src/renderer/lib/panel-workspace-layout.ts": "865a6d20ea9ed91c45238015afd948c7d09a5d671c255b31343786b3133545a5",
+      "apps/electron/src/renderer/atoms/sessions.ts": "98138d1255f09fe6a44e507f3087e21ffbe9076b12baab7adab3a2560b9ebb81",
+      "apps/electron/src/renderer/lib/local-storage.ts": "2867f04095afa1f97b467a902b2b8f32b55624b0af0cfc09c1d5f772635ce49d",
+      "apps/electron/src/renderer/components/app-shell/service-navigation.ts": "c70de20413482f2873923d92a7582336b6ff29bb7e77038b6b37eff5867decfd",
+      "apps/electron/src/renderer/components/app-shell/nav-destinations.ts": "bb6617b42816f5302c90601290ab440cbc7efed22cdd7df168b5bc7f4f4ea6a2",
+      "apps/electron/src/renderer/lib/panel-url.ts": "739481afb14184d51e6f8922601a52184bd7d7ec53013b3112e61048a41bfea3",
+      "apps/electron/src/renderer/lib/route-recovery.tsx": "532d3690f2bda1321cb4d95cf29e6bbe4821f041678feb1758e00aa0019ab5d7",
+      "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "f5f04a4484d2d596cc3b450fedf0a05026e69203236e96e8305e2d35bc9ce011"
+    },
+    "matchesCommittedCandidate": true,
+    "sourceAfterSha256": {
+      "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "587281b0676cd7135e842a7440c0820bd475b93ed96b6a5b99c7303d34100231",
+      "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "a29699db1fdeda3205113d7256c174e7ebf29e3a1d7e96e3cdac15bb53ab8959",
+      "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+      "apps/electron/src/renderer/contexts/NavigationContext.tsx": "814b705341388ce18911f1009aeccf188b1186c6827fe56434b0f88b1c377f01",
+      "apps/electron/src/shared/route-parser.ts": "613068e6cc643848b45f9ee3a4fb8a991cbb80873bd31bbf1f40d48f2bfe8ad5",
+      "apps/electron/src/shared/types.ts": "899852aae94cdd8d729ff616021bc7605158bc59c5db058ad78bd8a3cbf86c40",
+      "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+      "apps/electron/src/renderer/lib/nav-helpers.ts": "7b94fc00f694ee2c83a682725ca9460d88a138b4a421fa452d1a77d034df5e2f",
+      "apps/electron/src/renderer/atoms/panel-stack.ts": "b669a999d338e69c5d6975e322aaab1170638141351696d05d219d786239259c",
+      "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff",
+      "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "92b4d399c1bdfdd095c6e1fe83011a6fe2378e9b075552fdeed4ad8b62d3365c",
+      "apps/electron/src/renderer/App.tsx": "d94f61493a507398c98d342f124be6f57bc4e4c49401b0e8d9872a92d14f60ee",
+      "apps/electron/src/renderer/contexts/navigation-history.ts": "da8884b5cd39fa877d2d06793af008c84e123f9d4dd9137ea555c751585df159",
+      "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": "a4edf3356beecf2a4b273c18b28263f45b7c2d83d15d709aa8bfba422036ebbd",
+      "apps/electron/src/renderer/hooks/usePanelResize.ts": "ac50c51b98b9e1a782cb964e2dfe6ae7ff976777733c0cac0467acf1a4eb02dd",
+      "apps/electron/src/renderer/components/app-shell/panel-constants.ts": "6166298674f6ea0d50c69223d366aba54f443f4d1262a0483a4b3331c3902fc9",
+      "apps/electron/src/renderer/lib/panel-workspace-layout.ts": "865a6d20ea9ed91c45238015afd948c7d09a5d671c255b31343786b3133545a5",
+      "apps/electron/src/renderer/atoms/sessions.ts": "98138d1255f09fe6a44e507f3087e21ffbe9076b12baab7adab3a2560b9ebb81",
+      "apps/electron/src/renderer/lib/local-storage.ts": "2867f04095afa1f97b467a902b2b8f32b55624b0af0cfc09c1d5f772635ce49d",
+      "apps/electron/src/renderer/components/app-shell/service-navigation.ts": "c70de20413482f2873923d92a7582336b6ff29bb7e77038b6b37eff5867decfd",
+      "apps/electron/src/renderer/components/app-shell/nav-destinations.ts": "bb6617b42816f5302c90601290ab440cbc7efed22cdd7df168b5bc7f4f4ea6a2",
+      "apps/electron/src/renderer/lib/panel-url.ts": "739481afb14184d51e6f8922601a52184bd7d7ec53013b3112e61048a41bfea3",
+      "apps/electron/src/renderer/lib/route-recovery.tsx": "532d3690f2bda1321cb4d95cf29e6bbe4821f041678feb1758e00aa0019ab5d7",
+      "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "f5f04a4484d2d596cc3b450fedf0a05026e69203236e96e8305e2d35bc9ce011"
+    },
+    "sourcesStable": true
+  },
+  "sourceJobs": [
+    {
+      "id": 111261018602,
+      "name": "component-recovery",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/rox-one/rox-one/actions/runs/37142964890/job/111261018602",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-03T18:06:28Z",
+          "completed_at": "2026-10-03T18:06:30Z"
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-03T18:06:30Z",
+          "completed_at": "2026-10-03T18:06:47Z"
+        },
+        {
+          "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-03T18:06:47Z",
+          "completed_at": "2026-10-03T18:06:47Z"
+        },
+        {
+          "name": "Run oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-03T18:06:47Z",
+          "completed_at": "2026-10-03T18:06:48Z"
+        },
+        {
+          "name": "Run astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-03T18:06:48Z",
+          "completed_at": "2026-10-03T18:06:52Z"
+        },
+        {
+          "name": "Install pinned dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-03T18:06:52Z",
+          "completed_at": "2026-10-03T18:07:02Z"
+        },
+        {
+          "name": "Record the tested merge revision and source hashes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-03T18:07:02Z",
+          "completed_at": "2026-10-03T18:07:02Z"
+        },
+        {
+          "name": "Shell, parser, persistence and navigation regression",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-03T18:07:02Z",
+          "completed_at": "2026-10-03T18:07:07Z"
+        },
+        {
+          "name": "Project validation and types",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-03T18:07:07Z",
+          "completed_at": "2026-10-03T18:10:05Z"
+        },
+        {
+          "name": "MCP provisioning and onboarding protocol fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-03T18:10:05Z",
+          "completed_at": "2026-10-03T18:10:53Z"
+        },
+        {
+          "name": "Build the renderer",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-10-03T18:10:53Z",
+          "completed_at": "2026-10-03T18:12:03Z"
+        },
+        {
+          "name": "Install isolated Chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-10-03T18:12:03Z",
+          "completed_at": "2026-10-03T18:12:23Z"
+        },
+        {
+          "name": "Mounted NavigationProvider and browser history",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-10-03T18:12:23Z",
+          "completed_at": "2026-10-03T18:12:26Z"
+        },
+        {
+          "name": "Mounted owner, readiness and deferred action recovery",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-10-03T18:12:26Z",
+          "completed_at": "2026-10-03T18:12:38Z"
+        },
+        {
+          "name": "Resource, editor and cross-window persistence recovery",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-03T18:12:38Z",
+          "completed_at": "2026-10-03T18:12:41Z"
+        },
+        {
+          "name": "Retry, lazy loading and resize callbacks",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-03T18:12:41Z",
+          "completed_at": "2026-10-03T18:12:47Z"
+        },
+        {
+          "name": "Native surface renderer ownership and suppression",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-03T18:12:47Z",
+          "completed_at": "2026-10-03T18:12:52Z"
+        },
+        {
+          "name": "Other shell browser fixtures in separate processes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-10-03T18:12:52Z",
+          "completed_at": "2026-10-03T18:14:08Z"
+        },
+        {
+          "name": "Confirm the tested source hashes stayed unchanged",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-10-03T18:14:08Z",
+          "completed_at": "2026-10-03T18:14:08Z"
+        },
+        {
+          "name": "Preserve component fixture evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-10-03T18:14:08Z",
+          "completed_at": "2026-10-03T18:14:08Z"
+        },
+        {
+          "name": "Post Run astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 37,
+          "started_at": "2026-10-03T18:14:08Z",
+          "completed_at": "2026-10-03T18:14:09Z"
+        },
+        {
+          "name": "Post Run oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 38,
+          "started_at": "2026-10-03T18:14:09Z",
+          "completed_at": "2026-10-03T18:14:09Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 39,
+          "started_at": "2026-10-03T18:14:09Z",
+          "completed_at": "2026-10-03T18:14:09Z"
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 40,
+          "started_at": "2026-10-03T18:14:09Z",
+          "completed_at": "2026-10-03T18:14:09Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 41,
+          "started_at": "2026-10-03T18:14:09Z",
+          "completed_at": "2026-10-03T18:14:09Z"
+        }
+      ]
+    }
+  ],
+  "qualifiedChecks": {
+    "regression": {
+      "pass": 662,
+      "fail": 0,
+      "skip": 118
+    },
+    "validation": {
+      "pass": 391,
+      "fail": 0
+    },
+    "mcp": {
+      "pass": 490,
+      "fail": 0
+    },
+    "navigation": {
+      "pass": 15,
+      "fail": 0,
+      "environment": "Actual mounted NavigationProvider, PanelSlot, MainContentPanel, session-selection hooks and panel/session atoms under the production StrictMode wrapper in isolated Chromium; leaf presentation and IPC boundary fixtures; no hosted/native service acceptance",
+      "browserVersion": "131.0.6778.33"
+    },
+    "ownerNavigation": {
+      "pass": 26,
+      "fail": 0
+    },
+    "resources": {
+      "pass": 22,
+      "fail": 0,
+      "environment": "isolated local headless Chromium; actual MainContentPanel, SourceInfoPage, SkillInfoPage, route parser and Jotai atoms; presentation and IPC fixtures; history adapter is a fixture, not NavigationProvider; no installed/native/hosted/backend acceptance",
+      "browserVersion": "131.0.6778.33"
+    },
+    "behavior": {
+      "pass": 11,
+      "fail": 0
+    },
+    "rendererOwnership": {
+      "pass": 5,
+      "fail": 0
+    },
+    "otherBrowserFixtures": {
+      "pass": 49,
+      "fail": 0
+    },
+    "build": {
+      "conclusion": "success",
+      "step": "Build the renderer"
+    },
+    "sourceGate": {
+      "sourceHashCount": 24,
+      "candidateMatches": true,
+      "prePostUnchanged": true
+    }
+  },
+  "testSummaryByStep": {
+    "Shell, parser, persistence and navigation regression": {
+      "pass": 662,
+      "fail": 0,
+      "skip": 118
+    },
+    "Project validation and types": {
+      "pass": 391,
+      "fail": 0
+    },
+    "MCP provisioning and onboarding protocol fixtures": {
+      "pass": 490,
+      "fail": 0
+    },
+    "Mounted NavigationProvider and browser history": {
+      "pass": 15,
+      "fail": 0,
+      "environment": "Actual mounted NavigationProvider, PanelSlot, MainContentPanel, session-selection hooks and panel/session atoms under the production StrictMode wrapper in isolated Chromium; leaf presentation and IPC boundary fixtures; no hosted/native service acceptance",
+      "browserVersion": "131.0.6778.33"
+    },
+    "Mounted owner, readiness and deferred action recovery": {
+      "pass": 26,
+      "fail": 0
+    },
+    "Resource, editor and cross-window persistence recovery": {
+      "pass": 22,
+      "fail": 0,
+      "environment": "isolated local headless Chromium; actual MainContentPanel, SourceInfoPage, SkillInfoPage, route parser and Jotai atoms; presentation and IPC fixtures; history adapter is a fixture, not NavigationProvider; no installed/native/hosted/backend acceptance",
+      "browserVersion": "131.0.6778.33"
+    },
+    "Retry, lazy loading and resize callbacks": {
+      "pass": 11,
+      "fail": 0
+    },
+    "Native surface renderer ownership and suppression": {
+      "pass": 5,
+      "fail": 0
+    },
+    "Other shell browser fixtures in separate processes": {
+      "pass": 49,
+      "fail": 0
+    }
+  },
+  "logSha256": "fe85ae2b6dba8db769a996f36458fbebd3d46faac38fa362069d40f286729ae9",
+  "artifactDirectory": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui001-ci-artifacts-37142964890",
+  "pullRequest": {
+    "baseRefOid": "79fa5274315941f66ea26975551c66580e6036cd",
+    "headRefOid": "4eac674d8be32aa2451765a8dd9095840d8d77d5",
+    "mergeStateStatus": "UNSTABLE",
+    "mergeable": "MERGEABLE",
+    "number": 1417,
+    "reviewDecision": "",
+    "reviews": [
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQe6MDw",
+        "author": {
+          "login": "github-advanced-security"
+        },
+        "authorAssociation": "NONE",
+        "body": "",
+        "submittedAt": "2026-10-03T13:57:53Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "6190965f724fd8c9b2296e394e2c7dfe82275a11"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQe7Gcg",
+        "author": {
+          "login": "chatgpt-codex-connector"
+        },
+        "authorAssociation": "NONE",
+        "body": "\n### 💡 Codex Review\n\nHere are some automated review suggestions for this pull request.\n\n**Reviewed commit:** `6190965f72`\n    \n\n<details> <summary>ℹ️ About Codex in GitHub</summary>\n<br/>\n\n[Your team has set up Codex to review pull requests in this repo](https://chatgpt.com/codex/cloud/settings/general). Reviews are triggered when you\n- Open a pull request for review\n- Mark a draft as ready\n- Comment \"@codex review\".\n\nIf Codex has suggestions, it will comment; otherwise it will react with 👍.\n\n\n\n\nCodex can also answer questions or update the PR. Try commenting \"@codex address that feedback\".\n            \n</details>",
+        "submittedAt": "2026-10-03T14:02:11Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "6190965f724fd8c9b2296e394e2c7dfe82275a11"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQe8tNw",
+        "author": {
+          "login": "vercel"
+        },
+        "authorAssociation": "NONE",
+        "body": "**Additional Suggestion:**\n\nThe workspace\\-mismatch guard added in `NavigationContext` never reaches the panel content render path\\, so a panel route pointing to a session in a different workspace still renders that foreign session\\'s `ChatPage` instead of the route\\-unavailable surface\\.\n\n<!-- VADE-CATEGORY: security -->\n<!-- VADE-GITHUB-SUGGESTION-ID:855b34d134a7713e13f5f679d586460afbbd79a3ec8b8a8164d24ca9a39bf098 -->\n\n<!-- VADE-RECOMMENDATION: FIX -->\n\n<a href=\"https://vercel.com/0xdx/~/agent/tasks/364a5fae-963b-4c42-9df7-87db846a67a9\" rel=\"noreferrer\"><picture>\n    <source media=\"(prefers-color-scheme: dark)\" srcset=\"https://vercel.com/vercel-agent-view-suggestion-dark\">\n    <source media=\"(prefers-color-scheme: light)\" srcset=\"https://vercel.com/vercel-agent-view-suggestion-light\">\n    <img src=\"https://vercel.com/vercel-agent-view-suggestion-light\" alt=\"Fix on Vercel\" width=\"127\" height=\"28\" />\n  </picture></a>\n<!-- VADE-GITHUB-REVIEW-BOT-ACTIVE -->\n<!-- VADE-GITHUB-REVIEW-BOT-SHA:1ce30492f8d186dccb74afce98cfdabf90d35743 -->\n<!-- VADE-GITHUB-REVIEW-BOT-BASE-SHA:b1526a85f6db5a6cdf668438e484f62ce15e6f29 -->\n<!-- VADE-GITHUB-REVIEW-BOT-REVIEW-ID:e7576c0b42ec022bf95e303bec07c520 -->\n<!-- VADE-GITHUB-REVIEW-BOT-TASK-ID:364a5fae-963b-4c42-9df7-87db846a67a9 -->\n<!-- VADE-GITHUB-REVIEW-BOT-VERSION:v2 -->",
+        "submittedAt": "2026-10-03T14:09:28Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "1ce30492f8d186dccb74afce98cfdabf90d35743"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfDI5w",
+        "author": {
+          "login": "chatgpt-codex-connector"
+        },
+        "authorAssociation": "NONE",
+        "body": "\n### 💡 Codex Review\n\nHere are some automated review suggestions for this pull request.\n\n**Reviewed commit:** `2795e46f46`\n    \n\n<details> <summary>ℹ️ About Codex in GitHub</summary>\n<br/>\n\n[Your team has set up Codex to review pull requests in this repo](https://chatgpt.com/codex/cloud/settings/general). Reviews are triggered when you\n- Open a pull request for review\n- Mark a draft as ready\n- Comment \"@codex review\".\n\nIf Codex has suggestions, it will comment; otherwise it will react with 👍.\n\n\n\n\nCodex can also answer questions or update the PR. Try commenting \"@codex address that feedback\".\n            \n</details>",
+        "submittedAt": "2026-10-03T14:40:40Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "2795e46f46f74eae7c98d4d2554f2f3339c5cc20"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfJG2w",
+        "author": {
+          "login": "vercel"
+        },
+        "authorAssociation": "NONE",
+        "body": "",
+        "submittedAt": "2026-10-03T15:07:07Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "69f6c4d2101a3f82c1885efddcb35d4b58c0dd83"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfR_PQ",
+        "author": {
+          "login": "agisota"
+        },
+        "authorAssociation": "MEMBER",
+        "body": "",
+        "submittedAt": "2026-10-03T15:48:34Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "414493cc30cc25264e71b26ef3682d3d661c22fc"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfR_xA",
+        "author": {
+          "login": "agisota"
+        },
+        "authorAssociation": "MEMBER",
+        "body": "",
+        "submittedAt": "2026-10-03T15:48:37Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "414493cc30cc25264e71b26ef3682d3d661c22fc"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfSAaQ",
+        "author": {
+          "login": "agisota"
+        },
+        "authorAssociation": "MEMBER",
+        "body": "",
+        "submittedAt": "2026-10-03T15:48:40Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "414493cc30cc25264e71b26ef3682d3d661c22fc"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfSnGw",
+        "author": {
+          "login": "vercel"
+        },
+        "authorAssociation": "NONE",
+        "body": "",
+        "submittedAt": "2026-10-03T15:51:00Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "414493cc30cc25264e71b26ef3682d3d661c22fc"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfSn5A",
+        "author": {
+          "login": "vercel"
+        },
+        "authorAssociation": "NONE",
+        "body": "",
+        "submittedAt": "2026-10-03T15:51:03Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "414493cc30cc25264e71b26ef3682d3d661c22fc"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfT2Yw",
+        "author": {
+          "login": "chatgpt-codex-connector"
+        },
+        "authorAssociation": "NONE",
+        "body": "\n### 💡 Codex Review\n\nHere are some automated review suggestions for this pull request.\n\n**Reviewed commit:** `414493cc30`\n    \n\n<details> <summary>ℹ️ About Codex in GitHub</summary>\n<br/>\n\n[Your team has set up Codex to review pull requests in this repo](https://chatgpt.com/codex/cloud/settings/general). Reviews are triggered when you\n- Open a pull request for review\n- Mark a draft as ready\n- Comment \"@codex review\".\n\nIf Codex has suggestions, it will comment; otherwise it will react with 👍.\n\n\n\n\nCodex can also answer questions or update the PR. Try commenting \"@codex address that feedback\".\n            \n</details>",
+        "submittedAt": "2026-10-03T15:54:46Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "414493cc30cc25264e71b26ef3682d3d661c22fc"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfXHgA",
+        "author": {
+          "login": "vercel"
+        },
+        "authorAssociation": "NONE",
+        "body": "**Additional Suggestion:**\n\nMulti\\-panel `?panels=` URL serialization uses unescaped `,`\\/`:` delimiters\\, so a verbatim `unavailable` route containing a comma fragments into bogus panels on reload\\/Back\\-Forward\\.\n\n<!-- VADE-CATEGORY: logic -->\n<!-- VADE-GITHUB-SUGGESTION-ID:66f28197285537164f0fda90140b8c85133314dc7b3c11e439737af42b997491 -->\n\n<!-- VADE-RECOMMENDATION: FIX -->\n\n<a href=\"https://vercel.com/0xdx/~/agent/tasks/364a5fae-963b-4c42-9df7-87db846a67a9\" rel=\"noreferrer\"><picture>\n    <source media=\"(prefers-color-scheme: dark)\" srcset=\"https://vercel.com/vercel-agent-view-suggestion-dark\">\n    <source media=\"(prefers-color-scheme: light)\" srcset=\"https://vercel.com/vercel-agent-view-suggestion-light\">\n    <img src=\"https://vercel.com/vercel-agent-view-suggestion-light\" alt=\"Fix on Vercel\" width=\"127\" height=\"28\" />\n  </picture></a>\n<!-- VADE-GITHUB-REVIEW-BOT-ACTIVE -->\n<!-- VADE-GITHUB-REVIEW-BOT-SHA:136c6c70fb93d80409a19ac8a14c64f63de2ceec -->\n<!-- VADE-GITHUB-REVIEW-BOT-BASE-SHA:ae19683e69f079893cd09065487cfa7653d01154 -->\n<!-- VADE-GITHUB-REVIEW-BOT-REVIEW-ID:e7576c0b42ec022bf95e303bec07c520 -->\n<!-- VADE-GITHUB-REVIEW-BOT-TASK-ID:364a5fae-963b-4c42-9df7-87db846a67a9 -->\n<!-- VADE-GITHUB-REVIEW-BOT-VERSION:v2 -->",
+        "submittedAt": "2026-10-03T16:11:22Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "136c6c70fb93d80409a19ac8a14c64f63de2ceec"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfdn9A",
+        "author": {
+          "login": "agisota"
+        },
+        "authorAssociation": "MEMBER",
+        "body": "",
+        "submittedAt": "2026-10-03T16:42:19Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "20842365c55889d8dec7b3a164ad7d20df24238b"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfgzpw",
+        "author": {
+          "login": "agisota"
+        },
+        "authorAssociation": "MEMBER",
+        "body": "",
+        "submittedAt": "2026-10-03T16:56:03Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "76f6ab26fec76f5f1f880dd7531c75b69439dd2f"
+        }
+      },
+      {
+        "id": "PRR_kwDOTx7GeM8AAAABQfz3vg",
+        "author": {
+          "login": "chatgpt-codex-connector"
+        },
+        "authorAssociation": "NONE",
+        "body": "\n### 💡 Codex Review\n\nHere are some automated review suggestions for this pull request.\n\n**Reviewed commit:** `4eac674d8b`\n    \n\n<details> <summary>ℹ️ About Codex in GitHub</summary>\n<br/>\n\n[Your team has set up Codex to review pull requests in this repo](https://chatgpt.com/codex/cloud/settings/general). Reviews are triggered when you\n- Open a pull request for review\n- Mark a draft as ready\n- Comment \"@codex review\".\n\nIf Codex has suggestions, it will comment; otherwise it will react with 👍.\n\n\n\n\nCodex can also answer questions or update the PR. Try commenting \"@codex address that feedback\".\n            \n</details>",
+        "submittedAt": "2026-10-03T18:14:36Z",
+        "includesCreatedEdit": false,
+        "reactionGroups": [],
+        "state": "COMMENTED",
+        "commit": {
+          "oid": "4eac674d8be32aa2451765a8dd9095840d8d77d5"
+        }
+      }
+    ],
+    "state": "OPEN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "0001-01-01T00:00:00Z",
+        "conclusion": "",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37142962409/job/111261014760",
+        "name": "native (self-hosted, linux-toolchain)",
+        "startedAt": "2026-10-03T18:06:23Z",
+        "status": "QUEUED",
+        "workflowName": "Native substrate"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "0001-01-01T00:00:00Z",
+        "conclusion": "",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37142962362/job/111262605563",
+        "name": "lifecycle (lifecycle)",
+        "startedAt": "2026-10-03T18:15:15Z",
+        "status": "QUEUED",
+        "workflowName": "Validate Server (Integration)"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T18:10:51Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37142964881/job/111261018448",
+        "name": "validate (ubuntu-24.04)",
+        "startedAt": "2026-10-03T18:06:26Z",
+        "status": "COMPLETED",
+        "workflowName": "CI Validate Alias"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T18:10:50Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37142962189/job/111261013198",
+        "name": "Analyze (javascript-typescript)",
+        "startedAt": "2026-10-03T18:06:25Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL - Code Quality"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T18:07:29Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37142962343/job/111261013197",
+        "name": "Analyze (actions)",
+        "startedAt": "2026-10-03T18:06:25Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T18:14:11Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37142964890/job/111261018602",
+        "name": "component-recovery",
+        "startedAt": "2026-10-03T18:06:28Z",
+        "status": "COMPLETED",
+        "workflowName": "UI-001 Recovery"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "0001-01-01T00:00:00Z",
+        "conclusion": "",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37142964881/job/111261018286",
+        "name": "validate (macos-15)",
+        "startedAt": "2026-10-03T18:06:24Z",
+        "status": "QUEUED",
+        "workflowName": "CI Validate Alias"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "0001-01-01T00:00:00Z",
+        "conclusion": "",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37142962409/job/111261014680",
+        "name": "native (self-hosted, macos-toolchain)",
+        "startedAt": "2026-10-03T18:06:23Z",
+        "status": "QUEUED",
+        "workflowName": "Native substrate"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T18:08:18Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37142962189/job/111261013302",
+        "name": "Analyze (python)",
+        "startedAt": "2026-10-03T18:06:25Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL - Code Quality"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T18:16:06Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37142962343/job/111261013241",
+        "name": "Analyze (javascript-typescript)",
+        "startedAt": "2026-10-03T18:06:25Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T18:08:43Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37142962343/job/111261013194",
+        "name": "Analyze (python)",
+        "startedAt": "2026-10-03T18:06:37Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T18:10:08Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37142962343/job/111261013266",
+        "name": "Analyze (rust)",
+        "startedAt": "2026-10-03T18:06:26Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "0001-01-01T00:00:00Z",
+        "conclusion": "",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37142962343/job/111261013124",
+        "name": "Analyze (swift)",
+        "startedAt": "2026-10-03T18:06:22Z",
+        "status": "QUEUED",
+        "workflowName": "CodeQL"
+      },
+      {
+        "__typename": "StatusContext",
+        "context": "Vercel",
+        "startedAt": "2026-10-03T18:06:22Z",
+        "state": "FAILURE",
+        "targetUrl": "https://vercel.com/knowledge/why-is-my-account-deployment-blocked"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T18:07:23Z",
+        "conclusion": "NEUTRAL",
+        "detailsUrl": "https://github.com/rox-one/rox-one/runs/111261184144",
+        "name": "CodeQL",
+        "startedAt": "2026-10-03T18:07:20Z",
+        "status": "COMPLETED",
+        "workflowName": ""
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T18:11:26Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "external signed URL omitted",
+        "name": "[code]smith",
+        "startedAt": "2026-10-03T18:11:26Z",
+        "status": "COMPLETED",
+        "workflowName": ""
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T18:11:44Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://vercel.com/github",
+        "name": "Vercel Agent Review",
+        "startedAt": "2026-10-03T18:06:36Z",
+        "status": "COMPLETED",
+        "workflowName": ""
+      }
+    ],
+    "url": "https://github.com/rox-one/rox-one/pull/1417"
+  },
+  "fullDoDClosed": false,
+  "qualificationBoundary": "Exact PR source candidate; all 24 source inputs match the committed manifest before and after checks; renderer and IPC fixtures do not establish installed/native/hosted full acceptance."
+}

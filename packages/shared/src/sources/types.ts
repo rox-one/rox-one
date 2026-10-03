@@ -518,6 +518,12 @@ export interface FolderSourceConfig {
 
   // Status tracking
   isAuthenticated?: boolean;
+  /** Runtime-only backend-key projection. Storage restores this user-owned state. */
+  builtinCredentialProjection?: {
+    isAuthenticated?: boolean;
+    connectionStatus?: SourceConnectionStatus;
+    connectionError?: string;
+  };
   connectionStatus?: SourceConnectionStatus;
   connectionError?: string; // Error message if status is 'failed'
   lastTestedAt?: number;

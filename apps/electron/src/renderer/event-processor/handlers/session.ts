@@ -142,6 +142,7 @@ export function handleError(
     id: generateMessageId(),
     role: 'error',
     content: event.error,
+    errorCode: event.errorCode,
     timestamp: event.timestamp ?? Date.now(),
   }
 

@@ -7,6 +7,7 @@
  */
 
 import { CraftMcpClient, formatMcpUrlForLog, isManagedLocalQdrantConfig } from './client.js';
+import { isBlockedEnvVar } from '@rox/core/env';
 import { debug } from '../utils/debug.ts';
 import { normalizeMcpUrl } from '../sources/server-builder.ts';
 import type { McpTransport } from '../sources/types.ts';
@@ -401,7 +402,7 @@ export async function validateStdioMcpConnection(
   // Filter out undefined entries from process.env before merging.
   const processEnv: Record<string, string> = {};
   for (const [key, value] of Object.entries(process.env)) {
-    if (value !== undefined) {
+    if (value !== undefined && !isBlockedEnvVar(key)) {
       processEnv[key] = value;
     }
   }

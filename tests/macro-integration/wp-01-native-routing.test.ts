@@ -4,6 +4,7 @@ import { SQL } from 'bun'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { mkdtemp, mkdir, readFile, rm, stat } from 'node:fs/promises'
 import { createServer } from 'node:http'
+import { createConnection } from 'node:net'
 import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createWorkspaceServer, loadWorkspaceBootstrapMigrations } from '../../apps/workspace-service/src/server'
@@ -243,10 +244,26 @@ describe('WP-01 actual native project authority routing', () => {
     let failure: Record<string, unknown> | null = null
     try { await authenticateProjectAuthority({ ...loginInput(), serviceUrl: 'http://127.0.0.1:' + address.port }); accepted = true }
     catch (error) { failure = object(error) }
-    finally { await new Promise<void>((resolve, reject) => {
-      unresponsive.close(error => error ? reject(error) : resolve())
+    finally {
       unresponsive.closeAllConnections()
-    }) }
+      await new Promise<void>((resolve, reject) => unresponsive.close(error => {
+        if (error && (!('code' in error) || error.code !== 'ERR_SERVER_NOT_RUNNING' || unresponsive.listening)) reject(error)
+        else resolve()
+      }))
+      expect(unresponsive.listening).toBe(false)
+      await new Promise<void>((resolve, reject) => {
+        const socket = createConnection({ host: '127.0.0.1', port: address.port })
+        const timer = setTimeout(() => { socket.destroy(); reject(new Error('Issuer fixture shutdown readback timed out')) }, 5000)
+        socket.once('connect', () => {
+          clearTimeout(timer); socket.destroy(); reject(new Error('Owned issuer fixture listener still accepts connections'))
+        })
+        socket.once('error', error => {
+          clearTimeout(timer); socket.destroy()
+          if ('code' in error && error.code === 'ECONNREFUSED') resolve()
+          else reject(error)
+        })
+      })
+    }
     expect(accepted).toBe(false)
     expect(failure?.code).toBe('REQUEST_TIMEOUT')
     expect(failure?.status).toBe(504)

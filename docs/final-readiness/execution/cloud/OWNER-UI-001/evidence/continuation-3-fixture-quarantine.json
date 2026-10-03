@@ -1,0 +1,10 @@
+[
+  {
+    "source": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001-temp-kQwahD",
+    "quarantined": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/quarantined-ui001-fixtures/rox-readiness-ui-001-temp-kQwahD",
+    "sha256": {
+      "rox-readiness-ui-001.entry.tsx": "bb556ddaea7dfb5ec658b333c4b1c6d07841e35af94861b58495d22e293e8103"
+    },
+    "reason": "aborted beforeAll left generated TypeScript beneath the production include; fixture now generates under node_modules"
+  }
+]

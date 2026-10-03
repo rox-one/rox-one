@@ -30,7 +30,6 @@ import {
 import type { RpcServer } from '@rox/server-core/transport'
 import { pushTyped } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { resolveConfigDir } from "@rox/shared/config/paths"
 import type { RequestContext } from '../../transport/types'
 import { NativeGamificationStore } from './native-gamification'
 import {
@@ -91,10 +90,11 @@ function broadcast(server: RpcServer, state: GamificationState): void {
 }
 
 const nativeStores = new WeakMap<RpcServer, NativeGamificationStore>()
-function nativeStoreFor(server: RpcServer): NativeGamificationStore {
+function nativeStoreFor(server: RpcServer, deps: HandlerDeps): NativeGamificationStore {
   let store = nativeStores.get(server)
   if (!store) {
-    store = new NativeGamificationStore(resolveConfigDir())
+    if (!deps.nativeData) throw new Error('Native XP custody unavailable')
+    store = new NativeGamificationStore(deps.nativeData.authority.stateDirectory)
     nativeStores.set(server, store)
     server.onShutdown?.(() => { store?.close(); nativeStores.delete(server) })
   }
@@ -109,7 +109,7 @@ export function awardNativeXpAndBroadcast(
     if (!ctx.principal || !ctx.workspaceId || !deps.nativeData) return null
     if (!deps.nativeData.authority.authorize(ctx.principal, ctx.workspaceId, 'write')) return null
     if (server.isRequestContextCurrent?.(ctx, 'write') !== true) return null
-    const result = nativeStoreFor(server).award(ctx.principal, event, receiptId)
+    const result = nativeStoreFor(server, deps).award(ctx.principal, event, receiptId)
     if (result.awarded) pushTyped(server, RPC_CHANNELS.gamification.CHANGED, { to: 'client', clientId: ctx.clientId }, toDto(result.state))
     return result
   } catch { return null }
@@ -136,7 +136,7 @@ export function registerGamificationHandlers(server: RpcServer, deps: HandlerDep
     // as with the caller's display name; canonical workspace data is untouched.
     if (!deps.nativeData.authority.authorize(ctx.principal, ctx.workspaceId, 'read')) throw new Error('Native XP profile denied')
     if (server.isRequestContextCurrent?.(ctx, 'read') !== true) throw new Error('Native XP request scope changed')
-    return nativeStoreFor(server)
+    return nativeStoreFor(server, deps)
   }
   setGamificationAwardListener((result) => {
     broadcast(server, result.state)

@@ -1,0 +1,155 @@
+{
+  "schema": 1,
+  "time_utc": "2026-10-03T19:06:57.837603+00:00",
+  "source_pr": 1448,
+  "source_head": "1eb2c8289b68e9103880c3f2aee2c57e70c3409a",
+  "qualified_implementation": "30824044862932411ddb9d938255b598d2e96903",
+  "integrated_source": "b64e9f3fdca128ec2019fb1103abd0147684fe32",
+  "current_base_main": "14cf6c561a4c39c47658ab1566e61c200041f649",
+  "implementation_base": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+  "owner": "pr_scout; integration and remote merge: root",
+  "source_blobs_unchanged_after_main_merge": true,
+  "scope": [
+    "retained frozen git-npm source and dependencies, private global manifest/cwd/bin; managed Git and Windows PATH preserved",
+    "bounded regular no-follow receipt/head identity checks, exact pin/contained source/lock/launcher/current readiness; pre-flip refusal and same-version repair",
+    "ordinary RPC async guard followed by fresh identity; actual License consumer uses final joint session/membership/Resource guard before serialization",
+    "serial test entry owns separate subprocess/profile for each source suite and retains hashes/runtime/execution/failure evidence",
+    "extension-host worker respects selected custom main output directory"
+  ],
+  "gates": [
+    {
+      "name": "full current toolchain",
+      "pass": 129,
+      "skip": 3,
+      "fail": 0,
+      "assertions": 2234,
+      "seconds": 4.38
+    },
+    {
+      "name": "all current transport WebSocket/native authorization controls",
+      "pass": 67,
+      "fail": 0,
+      "assertions": 333,
+      "seconds": 4.64
+    },
+    {
+      "name": "integrated runner controls plus current Electron executable and CJS flag controls",
+      "pass": 18,
+      "fail": 0,
+      "assertions": 110,
+      "seconds": 3.77
+    },
+    {
+      "name": "actual integrated package test entry serially executes three git-npm source files",
+      "source_files": 3,
+      "passed": 3,
+      "failed": 0,
+      "blocked": 0
+    },
+    {
+      "name": "integrated Shared/server-core/workspace-service TypeScript",
+      "exit_codes": {
+        "shared": 0,
+        "server-core": 0,
+        "workspace-service": 0
+      }
+    },
+    {
+      "name": "standalone strict runner and runner fixture TypeScript",
+      "exit_code": 0
+    },
+    {
+      "name": "default and custom full main/worker build and output verification on qualified implementation",
+      "exit_codes": {
+        "default": 0,
+        "custom": 0
+      }
+    },
+    {
+      "name": "preload build and output verification on qualified implementation",
+      "exit_code": 0
+    }
+  ],
+  "before_source_negative_controls": {
+    "baseline_main": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+    "toolchain": {
+      "pass": 3,
+      "fail": 14
+    },
+    "RPC": {
+      "pass": 2,
+      "fail": 9
+    },
+    "exact_candidate_restored": true
+  },
+  "environment": {
+    "bun": "1.3.14",
+    "node": "22.23.3",
+    "platform": "darwin-arm64",
+    "workspace_modules": "owned node_modules @rox and @craft-agent aliases bind this exact checkout; immutable third-party dependency cache reused"
+  },
+  "evidence": [
+    {
+      "path": "logs/infra1448-before-toolchain.log.gz",
+      "uncompressed_sha256": "7cba78bc638a7999cbfd74de768429ea398bd3542bb2706950120ede69adbb40"
+    },
+    {
+      "path": "logs/infra1448-before-rpc.log.gz",
+      "uncompressed_sha256": "2f887fd4acb0b97b0755b7da130797f91df932c1ddb66e2952c0ed2e83123ecb"
+    },
+    {
+      "path": "logs/infra1448-owned-toolchain-final.log.gz",
+      "uncompressed_sha256": "6e0c9b1328a3aff3f8443c495ac85d096261a92af3987f24ac173a48b1294b18"
+    },
+    {
+      "path": "logs/infra1448-owned-rpc-final.log.gz",
+      "uncompressed_sha256": "b5173cc9a431f1481e81554176a5e40937a25a403b46fd01f0a2a918777376cf"
+    },
+    {
+      "path": "logs/infra1448-current-runner-controls.log.gz",
+      "uncompressed_sha256": "2dde946338ddb0a05837a7f889713a660689440970d2080a05808023c31ab283"
+    },
+    {
+      "path": "logs/infra1448-current-runner-gitnpm.log.gz",
+      "uncompressed_sha256": "ab889bf0f8d57bfa0198f9ddb6562a765e461716d098254a3227854a35843b94"
+    },
+    {
+      "path": "logs/infra1448-owned-main-default-build.log.gz",
+      "uncompressed_sha256": "2b14b41e417c71b8b550b99c04aed1011d9e740ddcf7905c82ce4786e83f0f68"
+    },
+    {
+      "path": "logs/infra1448-owned-main-custom-build.log.gz",
+      "uncompressed_sha256": "c476a42d2c6720e8d1e34c569286c79f3ac83de1b93ac6a33c7c68e44cb82099"
+    },
+    {
+      "path": "logs/infra1448-owned-preload-build.log.gz",
+      "uncompressed_sha256": "4bdb84b3daf9154149caa03c9dd1be3206aa605c81d1be60108c7ae6becdfb31"
+    },
+    {
+      "path": "logs/infra1448-current-shared-types.log.gz",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/infra1448-current-server-core-types.log.gz",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/infra1448-current-workspace-service-types.log.gz",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "limits": [
+    "Three actual Windows child/installer tests skipped on macOS; injected platform launcher controls do not establish native Windows acceptance.",
+    "Actual Bun local-only CLI and WebSocket fixtures exercise production consumers, with controlled repository/auth inputs; not persisted PostgreSQL/native installed acceptance.",
+    "Full main/preload builds qualify implementation308240448 on a019 main. Integration14cf modifies unrelated main/startup/resource/UI source without changing these implementation blobs; combined full current-tree build remains with lead QA, no repeated heavy build here.",
+    "No Navigation or root-owned resource/native executable replacement; new root-native executable consumer is merged and its adjacent control passes.",
+    "No whole1448 or complete all-branches acceptance; original source branches preserved."
+  ],
+  "retained_failures": [
+    "Raw server-core check resolved stale ui-worktree workspace types, yielding4 cross-tree errors; owned dependency binding fixes the environment, final normal package check passes0.",
+    "Generated platform fixtures initially supplied only a launcher; four assertions failed under stronger readiness. Fixtures now retain the actual pin/lock/source/current while preserving original launcher tests and add missing-source/pointer controls.",
+    "Before-source negative failures retained; production candidate was restored byte-exactly."
+  ],
+  "reconciled_current_main": "89c12aec9524d6a7f5f98a07aa9d537ef134825c",
+  "reconciliation": "Incoming Product1454 retained by normal merge; conflicts onlydocs union. Package adds Product scripts while retaining test=serial runner; owned implementation code unchanged. No repeated heavy build at lead request."
+}

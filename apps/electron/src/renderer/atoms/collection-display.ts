@@ -25,6 +25,10 @@ export const collectionDisplayAtom = atom<CollectionDisplay>(cloneDisplay())
 /** True while a workspace display load is in flight. */
 export const collectionDisplayLoadingAtom = atom(false)
 
+// A store-local lease prevents a former load from replacing later input or live data.
+const collectionDisplayLoadRevisionAtom = atom(0)
+const collectionDisplayWorkspaceIdAtom = atom<string | null | undefined>(undefined)
+
 const collectionDisplayUpdateChains = new Map<string, Promise<void>>()
 const collectionDisplayUpdateVersions = new Map<string, number>()
 
@@ -34,7 +38,10 @@ const collectionDisplayUpdateVersions = new Map<string, number>()
  */
 export const replaceCollectionDisplayAtom = atom(
   null,
-  (_get, set, display: CollectionDisplay) => {
+  (get, set, display: CollectionDisplay) => {
+    set(collectionDisplayLoadRevisionAtom, get(collectionDisplayLoadRevisionAtom) + 1)
+    set(collectionDisplayLoadingAtom, false)
+    set(collectionDisplayWorkspaceIdAtom, get(windowWorkspaceIdAtom))
     set(collectionDisplayAtom, cloneDisplay(display))
   },
 )
@@ -65,6 +72,9 @@ export const setCollectionDisplayAtom = atom(
         ? ((input as SetCollectionDisplayInput).workspaceId ?? get(windowWorkspaceIdAtom))
         : get(windowWorkspaceIdAtom)
 
+    const revision = get(collectionDisplayLoadRevisionAtom) + 1
+    set(collectionDisplayLoadRevisionAtom, revision)
+    set(collectionDisplayLoadingAtom, false)
     const prev = get(collectionDisplayAtom)
     const next: CollectionDisplay = {
       ...prev,
@@ -89,6 +99,7 @@ export const setCollectionDisplayAtom = atom(
         const activeWorkspaceId = get(windowWorkspaceIdAtom)
         if (
           collectionDisplayUpdateVersions.get(workspaceId) === version &&
+          get(collectionDisplayLoadRevisionAtom) === revision &&
           (activeWorkspaceId == null || activeWorkspaceId === workspaceId)
         ) {
           set(collectionDisplayAtom, cloneDisplay(saved))
@@ -100,7 +111,11 @@ export const setCollectionDisplayAtom = atom(
         return next
       }
     })
-    collectionDisplayUpdateChains.set(workspaceId, update.then(() => undefined))
+    const chain = update.then(() => undefined)
+    collectionDisplayUpdateChains.set(workspaceId, chain)
+    void chain.then(() => {
+      if (collectionDisplayUpdateChains.get(workspaceId) === chain) collectionDisplayUpdateChains.delete(workspaceId)
+    })
     return update
   },
 )
@@ -113,6 +128,14 @@ export const loadCollectionDisplayAtom = atom(
   null,
   async (get, set, workspaceId?: string | null): Promise<CollectionDisplay> => {
     const id = workspaceId === undefined ? get(windowWorkspaceIdAtom) : workspaceId
+    const revision = get(collectionDisplayLoadRevisionAtom) + 1
+    set(collectionDisplayLoadRevisionAtom, revision)
+    if (get(collectionDisplayWorkspaceIdAtom) !== id) {
+      set(collectionDisplayWorkspaceIdAtom, id)
+      set(collectionDisplayAtom, cloneDisplay())
+    }
+    const ownsLoad = () => get(collectionDisplayLoadRevisionAtom) === revision
+      && (get(windowWorkspaceIdAtom) == null || get(windowWorkspaceIdAtom) === id)
     if (!id || typeof window === 'undefined' || !window.electronAPI?.getCollectionDisplay) {
       const fallback = cloneDisplay()
       set(collectionDisplayAtom, fallback)
@@ -122,10 +145,13 @@ export const loadCollectionDisplayAtom = atom(
 
     set(collectionDisplayLoadingAtom, true)
     try {
+      // A reload follows already dispatched native writes for this workspace.
+      const pendingWrite = collectionDisplayUpdateChains.get(id)
+      if (pendingWrite) await pendingWrite.catch(() => undefined)
+      if (!ownsLoad()) return get(collectionDisplayAtom)
       const loaded = await window.electronAPI.getCollectionDisplay(id)
       // Drop stale responses after a workspace switch.
-      const active = get(windowWorkspaceIdAtom)
-      if (active != null && active !== id) {
+      if (!ownsLoad()) {
         return get(collectionDisplayAtom)
       }
       const next = cloneDisplay(loaded)
@@ -133,16 +159,14 @@ export const loadCollectionDisplayAtom = atom(
       return next
     } catch (err) {
       console.warn('[collection-display] getCollectionDisplay failed', err)
-      const active = get(windowWorkspaceIdAtom)
-      if (active != null && active !== id) {
+      if (!ownsLoad()) {
         return get(collectionDisplayAtom)
       }
       const fallback = cloneDisplay()
       set(collectionDisplayAtom, fallback)
       return fallback
     } finally {
-      const active = get(windowWorkspaceIdAtom)
-      if (active == null || active === id) {
+      if (ownsLoad()) {
         set(collectionDisplayLoadingAtom, false)
       }
     }

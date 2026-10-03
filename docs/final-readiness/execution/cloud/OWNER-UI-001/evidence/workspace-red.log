@@ -1,0 +1,117 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:
+22 |       cleanup?.()
+23 |       const cleanupCurrent = appShellEffect(`electronAPI.get${kind}(`, bindings('current'))
+24 |       current.resolve(['current-entity']); await settle()
+25 |       expect(data).toEqual(['current-entity'])
+26 |       old.resolve(['old-entity']); await settle()
+27 |       expect(data).toEqual(['current-entity'])
+                        ^
+error: expect(received).toEqual(expected)
+
+  [
+-   "current-entity",
++   "old-entity",
+  ]
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:27:20)
+(fail) ROX UI-001 actual AppShell workspace callbacks > ignores late sources responses after workspace/directory change [281.21ms]
+46 |       const offEvent = event ? undefined : appShellEffect(`electronAPI.on${kind}Changed(`, bindings)
+47 |       event('other-workspace', ['wrong-entity'])
+48 |       expect(data).toEqual([])
+49 |       event('current', [])
+50 |       initial.resolve(['deleted-entity']); await settle()
+51 |       expect(data).toEqual([])
+                        ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   "deleted-entity",
++ ]
+
+- Expected  - 1
++ Received  + 3
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:51:20)
+(fail) ROX UI-001 actual AppShell workspace callbacks > keeps a live sources deletion ahead of a pending initial snapshot [219.50ms]
+22 |       cleanup?.()
+23 |       const cleanupCurrent = appShellEffect(`electronAPI.get${kind}(`, bindings('current'))
+24 |       current.resolve(['current-entity']); await settle()
+25 |       expect(data).toEqual(['current-entity'])
+26 |       old.resolve(['old-entity']); await settle()
+27 |       expect(data).toEqual(['current-entity'])
+                        ^
+error: expect(received).toEqual(expected)
+
+  [
+-   "current-entity",
++   "old-entity",
+  ]
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:27:20)
+(fail) ROX UI-001 actual AppShell workspace callbacks > ignores late skills responses after workspace/directory change [55.44ms]
+46 |       const offEvent = event ? undefined : appShellEffect(`electronAPI.on${kind}Changed(`, bindings)
+47 |       event('other-workspace', ['wrong-entity'])
+48 |       expect(data).toEqual([])
+49 |       event('current', [])
+50 |       initial.resolve(['deleted-entity']); await settle()
+51 |       expect(data).toEqual([])
+                        ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   "deleted-entity",
++ ]
+
+- Expected  - 1
++ Received  + 3
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:51:20)
+(fail) ROX UI-001 actual AppShell workspace callbacks > keeps a live skills deletion ahead of a pending initial snapshot [90.14ms]
+64 |       window: { electronAPI: { getSources: () => request.promise, onSourcesChanged: () => () => {} } },
+65 |       activeWorkspaceId: 'current', setSources: (next: string[]) => { data = next },
+66 |       clearSourceIconCaches: () => {}, console: { error: () => { errors++ } },
+67 |     })
+68 |     request.reject(new Error('transport offline')); await settle()
+69 |     expect(data).toEqual([])
+                      ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   "previous-workspace",
++ ]
+
+- Expected  - 1
++ Received  + 3
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:69:18)
+(fail) ROX UI-001 actual AppShell workspace callbacks > recovers from request rejection and unmount without installing stale data [27.46ms]
+92 |       setSessionListWidth: (value: number) => { navigator = value; order.push('load-navigator') },
+93 |       setCollectionFilters: () => {}, DEFAULT_COLLECTION_FILTERS: {}, setSearchActive: () => {},
+94 |       setSearchQuery: () => {}, setFocusedSidebarItemId: () => {}, setViewFiltersMap: () => {},
+95 |       setExpandedFolders: () => {}, setCollapsedItems: () => {}, storage: { KEYS: realStorage.KEYS, get: store.get },
+96 |     })
+97 |     expect(sidebar).toBe(210)
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: 210
+Received: 320
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:97:21)
+(fail) ROX UI-001 actual AppShell workspace callbacks > restores workspace geometry before an old pending keyboard resize can commit [33.56ms]
+
+ 0 pass
+ 6 fail
+ 10 expect() calls
+Ran 6 tests across 1 file. [1407.00ms]

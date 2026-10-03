@@ -6,10 +6,11 @@
  */
 
 import { spawn, type ChildProcess } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { accessSync, constants, existsSync, statSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { dirname, isAbsolute, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createFixtureGateway, type FixtureGateway } from './gateway.ts'
 
@@ -17,7 +18,7 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = join(HERE, '../../..')
 const FIXTURE_ENTRYPOINT = join(HERE, 'fixture-entrypoint.cjs')
 const APPS_ELECTRON_MAIN = join(REPO_ROOT, 'apps/electron/dist/main.cjs')
-const ELECTRON_BIN = join(REPO_ROOT, 'node_modules/electron/dist/electron')
+const requireFromHarness = createRequire(import.meta.url)
 const HOST_HOME = process.env.HOME ?? ''
 const HOST_DISPLAY = process.env.DISPLAY || ':1'
 const HOST_XAUTHORITY =
@@ -130,6 +131,18 @@ export class BootMeetingAppError extends Error {
   ) {
     super(message)
     this.name = 'BootMeetingAppError'
+  }
+}
+
+/** Resolve the installed package's native platform path before starting a profile. */
+export function resolveMeetingElectronExecutable(environment: NodeJS.ProcessEnv = process.env): string {
+  try {
+    const executable: unknown = environment.ROX_MEETING_ELECTRON_EXECUTABLE || requireFromHarness('electron')
+    if (typeof executable !== 'string' || !isAbsolute(executable) || !statSync(executable).isFile()) throw new Error('Invalid Electron executable')
+    accessSync(executable, process.platform === 'win32' ? constants.F_OK : constants.X_OK)
+    return executable
+  } catch {
+    throw new BootMeetingAppError('electron-binary-missing', 'A qualified native Electron executable is unavailable; install the local electron package payload or set ROX_MEETING_ELECTRON_EXECUTABLE to its absolute path')
   }
 }
 
@@ -290,12 +303,7 @@ async function spawnElectron(input: {
   readyFile: string
   userDataDir: string
 }): Promise<ElectronSession> {
-  if (!existsSync(ELECTRON_BIN)) {
-    throw new BootMeetingAppError(
-      'electron-binary-missing',
-      `electron binary not found at ${ELECTRON_BIN}`,
-    )
-  }
+  const electronExecutable = resolveMeetingElectronExecutable()
   if (!existsSync(input.entry.path)) {
     throw new BootMeetingAppError(
       'electron-entrypoint-missing',
@@ -306,7 +314,7 @@ async function spawnElectron(input: {
   const cdpPort = await pickPort()
   const stderrChunks: string[] = []
   const child = spawn(
-    ELECTRON_BIN,
+    electronExecutable,
     [
       input.entry.path,
       '--no-sandbox',

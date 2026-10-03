@@ -16,6 +16,7 @@ export function RoxRuntimeCard({ workspaceId, remote }: { workspaceId?: string; 
   const [updating, setUpdating] = React.useState(false)
   const [updateFailed, setUpdateFailed] = React.useState(false)
   const loader = React.useMemo(() => createSecurityResource(setResource), [])
+  const mounted = React.useRef(false)
   const scope = React.useRef({ workspaceId, generation: 0 })
   if (scope.current.workspaceId !== workspaceId) scope.current = { workspaceId, generation: scope.current.generation + 1 }
   const refresh = React.useCallback(() => {
@@ -26,12 +27,14 @@ export function RoxRuntimeCard({ workspaceId, remote }: { workspaceId?: string; 
   }, [loader, workspaceId])
 
   React.useEffect(() => {
+    mounted.current = true
+    const subscriptionScope = scope.current
     setUpdating(false); setUpdateFailed(false)
     void refresh()
     const unsubscribe = window.electronAPI?.onToolchainStatusChanged?.(tool => {
-      if (scope.current.workspaceId === workspaceId && workspaceId && tool.name === 'omp') loader.replace(workspaceId, tool)
+      if (mounted.current && scope.current === subscriptionScope && workspaceId && tool.name === 'omp') loader.replace(workspaceId, tool)
     })
-    return () => { loader.cancel(); unsubscribe?.() }
+    return () => { mounted.current = false; loader.cancel(); unsubscribe?.() }
   }, [loader, refresh, workspaceId])
 
   const current = resource.scope === (workspaceId ?? null) ? resource : { phase: 'loading' as const, data: null }
@@ -44,9 +47,9 @@ export function RoxRuntimeCard({ workspaceId, remote }: { workspaceId?: string; 
     setUpdating(true); setUpdateFailed(false)
     try {
       const result = await window.electronAPI.updateToolchainTool('omp')
-      if (scope.current === operationScope) loader.replace(workspaceId, result)
-    } catch { if (scope.current === operationScope) setUpdateFailed(true) }
-    finally { if (scope.current === operationScope) setUpdating(false) }
+      if (mounted.current && scope.current === operationScope) loader.replace(workspaceId, result)
+    } catch { if (mounted.current && scope.current === operationScope) setUpdateFailed(true) }
+    finally { if (mounted.current && scope.current === operationScope) setUpdating(false) }
   }
   const actionable = tool && ['missing', 'error', 'outdated', 'offline'].includes(tool.phase)
   const status = current.phase === 'loading' ? t('security.loading')

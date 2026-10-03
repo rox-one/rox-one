@@ -1,0 +1,56 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:
+(pass) ROX UI-001 actual AppShell workspace callbacks > ignores late sources responses after workspace/directory change [139.60ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > keeps a live sources deletion ahead of a pending initial snapshot [33.01ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > ignores late skills responses after workspace/directory change [44.13ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > keeps a live skills deletion ahead of a pending initial snapshot [12.66ms]
+74 |       activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
+75 |       setSkills: (next: string[]) => { data = next }, console,
+76 |     })
+77 |     initial.resolve(['workspace-skill', 'project-skill', 'omp-skill']); await settle()
+78 |     event('current', ['workspace-skill'])
+79 |     expect(data).toEqual(['workspace-skill', 'project-skill', 'omp-skill'])
+                      ^
+error: expect(received).toEqual(expected)
+
+  [
+    "workspace-skill",
+-   "project-skill",
+-   "omp-skill",
+  ]
+
+- Expected  - 2
++ Received  + 0
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:79:18)
+(fail) ROX UI-001 actual AppShell workspace callbacks > keeps project and OMP skills when a workspace-only event invalidates the full catalog [25.11ms]
+ 99 |     responses[0]!.resolve(['initial']); await settle()
+100 |     event('foreign', ['wrong']); expect(reads).toBe(1)
+101 |     event('current', ['partial-older']); event('current', ['partial-newer'])
+102 |     responses[2]!.resolve(['full-newer', 'omp']); await settle()
+103 |     responses[1]!.resolve(['full-older']); await settle()
+104 |     expect(data).toEqual(['full-newer', 'omp'])
+                       ^
+error: expect(received).toEqual(expected)
+
+  [
+-   "full-newer",
+-   "omp",
++   "partial-newer",
+  ]
+
+- Expected  - 2
++ Received  + 1
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:104:18)
+(fail) ROX UI-001 actual AppShell workspace callbacks > accepts only the newest scoped skill refresh after consecutive workspace events [23.98ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > recovers from request rejection and unmount without installing stale data [12.91ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > restores workspace geometry before an old pending keyboard resize can commit [18.66ms]
+(pass) ROX UI-001 workspace persistence isolation > does not save old viewFilters over the next workspace during restoration [13.52ms]
+(pass) ROX UI-001 workspace persistence isolation > does not save old collapsedSidebarItems over the next workspace during restoration [25.66ms]
+
+ 8 pass
+ 2 fail
+ 25 expect() calls
+Ran 10 tests across 1 file. [562.00ms]

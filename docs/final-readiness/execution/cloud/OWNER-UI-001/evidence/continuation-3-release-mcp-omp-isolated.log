@@ -1,0 +1,26 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/agent/__tests__/omp-session-flow.test.ts:
+(pass) OmpAgent session flow — healthy turn > re-registers a same-name MCP tool when its schema or description changes [986.73ms]
+(pass) OmpAgent session flow — healthy turn > briefs OMP about integrations and refreshes source availability on every prompt [277.71ms]
+(pass) OmpAgent session flow — healthy turn > streams a full turn: text deltas, text_complete, usage-bearing complete [272.60ms]
+(pass) OmpAgent session flow — healthy turn > maps OMP thinking stream to thinking_delta / thinking_complete events [275.78ms]
+(pass) OmpAgent session flow — healthy turn > emits an omp_turn_anchor resolved from the OMP transcript [302.49ms]
+(pass) OmpAgent host tool bridge > registers session tools via set_host_tools with essential loadMode [338.94ms]
+(pass) OmpAgent host tool bridge > dispatches host_tool_call → host_tool_result for registry and unknown tools [411.67ms]
+(pass) OmpAgent host tool bridge > executes unprefixed bash as a craft host tool [304.51ms]
+(pass) OmpAgent model switching > negotiates v2 before querying state and switches models using a chunked catalog [371.61ms]
+(pass) OmpAgent model switching > setModel fuzzy-resolves via get_available_models and sends set_model {provider, modelId} [325.01ms]
+(pass) OmpAgent model switching > rejects the next prompt when the requested model has no catalog match [676.91ms]
+(pass) OmpAgent branch handshake > mid-history branch: switch to a private parent copy and fork the assistant anchor [374.51ms]
+(pass) OmpAgent branch handshake > tail branch: copies the parent transcript and switch_session to the copy [280.93ms]
+(pass) OmpAgent branch handshake > fails loudly when the anchor is missing from the parent transcript [280.15ms]
+(pass) OmpAgent branch handshake > own-message branch forks a private transcript at the selected user without editing the parent [300.39ms]
+(pass) OmpAgent transcript parsing (pure) > parseOmpTranscript tolerantly skips malformed lines [2.43ms]
+(pass) OmpAgent transcript parsing (pure) > resolveOmpTranscriptFile prefers a sessionId match, else the newest by name [2.51ms]
+(pass) OmpAgent transcript parsing (pure) > readLastAssistantEntryId returns the last assistant entry id [2.24ms]
+
+ 18 pass
+ 0 fail
+ 84 expect() calls
+Ran 18 tests across 1 file. [6.55s]
