@@ -477,7 +477,7 @@
         "priorState": "allow-current-state",
         "requireAcknowledgementAfterEvidence": true
       },
-      "handoff": false,
+      "handoff": true,
       "optional": false,
       "onUnavailable": "block"
     },

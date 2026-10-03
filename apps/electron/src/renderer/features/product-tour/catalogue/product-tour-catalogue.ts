@@ -1206,7 +1206,7 @@ const definitions = [
   {
     "id": "OBT-13",
     "slug": "session-workflow",
-    "version": 1,
+    "version": 2,
     "title": "Организация сессий",
     "goal": "Использовать статусы, метки и представления.",
     "why": "Не превращать список рабочих диалогов в свалку.",
@@ -1289,7 +1289,7 @@ const definitions = [
       },
       {
         "id": "workflow.board",
-        "version": 1,
+        "version": 2,
         "target": "sessions.view-switcher",
         "routeKey": "keep",
         "copy": {
@@ -1309,7 +1309,7 @@ const definitions = [
           "priorState": "allow-current-state",
           "requireAcknowledgementAfterEvidence": true
         },
-        "handoff": false,
+        "handoff": true,
         "optional": false,
         "notes": "",
         "scope": "bound-panel",

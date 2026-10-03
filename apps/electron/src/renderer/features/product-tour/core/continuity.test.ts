@@ -85,6 +85,22 @@ test('the voice permission-handoff amendment invalidates v1/v2 review evidence a
   }
 })
 
+test('the collection menu amendment invalidates old view evidence while retaining committed status and label milestones', () => {
+  const workflow = productTourCatalogue.find(tour => tour.id === 'OBT-13')!
+  expect(workflow.version).toBe(2)
+  expect(workflow.steps.find(step => step.id === 'workflow.board')?.handoff).toBe(true)
+  const historical: TourProgress = { schemaVersion: 1, scopeKey: JSON.stringify(['profile', 'workspace']), tourId: workflow.id, tourVersion: 1, revision: 1, status: 'completed-learning', steps: {
+    'workflow.status': { stepId: 'workflow.status', stepVersion: 1, observedAt: 20 },
+    'workflow.label': { stepId: 'workflow.label', stepVersion: 1, observedAt: 25 },
+    'workflow.board': { stepId: 'workflow.board', stepVersion: 1, observedAt: 30, acknowledgedAt: 35 },
+  } }
+  const reconciled = reconcileProgressVersion(historical, workflow)
+  expect(reconciled.steps['workflow.status']?.observedAt).toBe(20)
+  expect(reconciled.steps['workflow.label']?.observedAt).toBe(25)
+  expect(reconciled.steps['workflow.board']).toEqual({ stepId: 'workflow.board', stepVersion: 2 })
+  expect(reconciled.status).not.toBe('completed-learning')
+})
+
 test('one native source details observation satisfies sequential production status/details policies without reopening or trusting old progress', () => {
   const source: LoadedSource = { workspaceId: binding.workspaceId, workspaceRootPath: '/fixture', folderPath: '/fixture/source', guide: null, config: { id: 'source', slug: 'source', name: 'Private fixture source', type: 'local', provider: 'local', enabled: true, local: { path: '/fixture/source' } } }
   let state = show(start(sources))
