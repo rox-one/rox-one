@@ -1,3 +1,4 @@
+import { readBoundedStable } from './bounded-file';
 import * as fs from 'node:fs';
 import { basename, dirname, isAbsolute, join, resolve, parse, relative, sep } from 'node:path';
 import { randomBytes } from 'node:crypto';
@@ -350,7 +351,7 @@ function recoveryJson(
         'UNSAFE_PATH',
         `${options.label} interrupted publication is not one private regular file`,
       );
-    fd = fs.openSync(path, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0));
+    fd = fs.openSync(path, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0) | (fs.constants.O_NONBLOCK ?? 0));
     const opened = exactFstat(fd);
     if (!sameRecoveryIdentity(recoveryIdentity(before), recoveryIdentity(opened))) {
       if (publicationLinkTransition(before, opened, links, options))
@@ -827,7 +828,7 @@ function readPrivateJson(path: string): unknown {
       (process.platform !== 'win32' && (before.mode & 0o077) !== 0)
     )
       throw new CsoError('UNSAFE_PATH', 'Invalid private state file');
-    fd = fs.openSync(path, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0));
+    fd = fs.openSync(path, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0) | (fs.constants.O_NONBLOCK ?? 0));
     const opened = exactFstat(fd);
     if (!sameRecoveryIdentity(recoveryIdentity(before), recoveryIdentity(opened)))
       throw new CsoError('SNAPSHOT_RACE', 'Private state file changed while it was opened');
@@ -1105,7 +1106,7 @@ function readOwner(
       (process.platform !== 'win32' && (before.mode & 0o077) !== 0)
     )
       throw new CsoError('UNSAFE_PATH', 'Run mutation lease is invalid');
-    fd = fs.openSync(path, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0));
+    fd = fs.openSync(path, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0) | (fs.constants.O_NONBLOCK ?? 0));
     const opened = exactFstat(fd);
     if (ownerLinkTransition(before, opened))
       throw new CsoError('INSUFFICIENT_CAPACITY', 'Run mutation lease changed phase while it was read');
@@ -1265,7 +1266,7 @@ function readLegacyOwner(path: string): {
       (process.getuid && before.uid !== process.getuid())
     )
       throw new CsoError('UNSAFE_PATH', 'Legacy run mutation lock owner is invalid');
-    fd = fs.openSync(path, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0));
+    fd = fs.openSync(path, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0) | (fs.constants.O_NONBLOCK ?? 0));
     const opened = exactFstat(fd);
     if (opened.dev !== before.dev || opened.ino !== before.ino || opened.nlink !== 1)
       throw new CsoError('UNSAFE_PATH', 'Legacy run mutation lock owner changed while it was read');
@@ -2098,7 +2099,7 @@ function boundedMarker(path: string, admit: () => void = () => {}): string {
   try {
     const stat = fs.lstatSync(path);
     if (stat.isSymbolicLink() || !stat.isFile() || stat.size > 8192) return '';
-    return fs.readFileSync(path, 'utf8');
+    return readBoundedStable(path, 8192, 'Run event').toString('utf8');
   } catch {
     return '';
   }
@@ -2443,7 +2444,7 @@ export function retention(now = Date.now(), options: RetentionOptions = {}): Ret
       )
         return;
       admit();
-      const report = JSON.parse(fs.readFileSync(file, 'utf8'));
+      const report = JSON.parse(readBoundedStable(file, MAX_STATE_FILE, 'Run report').toString('utf8'));
       if (
         report?.schemaVersion !== 3 ||
         report.runId !== run ||

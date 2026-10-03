@@ -336,7 +336,7 @@ export { ExitCode };
 
 /** Refuse symlink outputs and harden the opened inode before writing. */
 function writePrivateOutput(filePath: string, data: string | Uint8Array): void {
-  const fd = fs.openSync(filePath, fs.constants.O_WRONLY | fs.constants.O_CREAT | (fs.constants.O_NOFOLLOW || 0), 0o600);
+  const fd = fs.openSync(filePath, fs.constants.O_WRONLY | fs.constants.O_CREAT | (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0), 0o600);
   try {
     const stat = fs.fstatSync(fd);
     if (!stat.isFile()) throw new Error("Refusing non-regular output file");

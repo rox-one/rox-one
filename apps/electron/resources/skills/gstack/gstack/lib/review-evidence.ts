@@ -120,7 +120,7 @@ export function sharedLibsSnapshotCoverage(repo: string, wtree: string, paths: u
       const match = /^(100644|100755) blob ([0-9a-f]+)\t([^\0]+)\0$/.exec(entry);
       if (!match || match[3] !== path) return false;
       if (process.platform !== 'win32' && (Boolean(before.mode & 0o111) !== (match[1] === '100755'))) return false;
-      fd = openSync(absolute, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+      fd = openSync(absolute, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0));
       const bytes = readFileSync(fd);
       const after = fstatSync(fd);
       if ((['dev', 'ino', 'mode', 'size', 'mtimeMs', 'ctimeMs'] as const).some(key => before[key] !== after[key])) return false;

@@ -107,7 +107,16 @@ function readPolicy(path: string): Policy {
     die('invalid preparation policy file');
   let value: any;
   try {
-    value = JSON.parse(fs.readFileSync(path, 'utf8'));
+    const fd = fs.openSync(path, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0) | (fs.constants.O_NONBLOCK ?? 0));
+    try {
+      const opened = fs.fstatSync(fd);
+      if (!opened.isFile() || opened.size > MAX_POLICY || opened.dev !== stat.dev || opened.ino !== stat.ino) throw new Error('preparation policy changed');
+      const bytes = Buffer.alloc(MAX_POLICY + 1);
+      let count = 0, read = 0;
+      while (count < bytes.length && (read = fs.readSync(fd, bytes, count, bytes.length - count, null)) > 0) count += read;
+      if (count > MAX_POLICY) throw new Error('preparation policy exceeds limit');
+      value = JSON.parse(bytes.subarray(0, count).toString('utf8'));
+    } finally { fs.closeSync(fd); }
   } catch {
     die('invalid preparation policy JSON');
   }

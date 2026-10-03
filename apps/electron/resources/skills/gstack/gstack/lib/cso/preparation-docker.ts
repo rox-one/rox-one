@@ -1,3 +1,4 @@
+import { readBoundedStable } from './bounded-file';
 /** Concrete constrained-Docker adapter for PreparationExecutor. */
 import * as fs from 'node:fs';
 import * as net from 'node:net';
@@ -294,7 +295,7 @@ export function materializePreparedExport(
     fail('UNSAFE_PATH', 'Prepared export manifest is not one bounded owned file');
   let manifest: PreparedExportManifest;
   try {
-    manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    manifest = JSON.parse(readBoundedStable(manifestPath, MAX_MANIFEST, 'Prepared export manifest').toString('utf8'));
   } catch {
     fail('TOOL_FAILED', 'Prepared export manifest is invalid JSON');
   }

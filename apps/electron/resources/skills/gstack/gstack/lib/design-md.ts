@@ -500,7 +500,7 @@ export function convertLegacy(doc: DesignMdDoc, opts: { name?: string } = {}): D
   const spacing: Record<string, string> = {};
   if (spacingBody) {
     const scale = spacingBody.match(/\*\*Scale:\*\*\s*(.+)$/m)?.[1];
-    if (scale) for (const m of scale.matchAll(/([0-9a-z]+)\(([^)]+)\)/g)) spacing[m[1]] = /px|rem|em$/.test(m[2]) ? m[2] : `${m[2]}px`;
+    if (scale) for (const m of scale.matchAll(/([0-9a-z]+)\(([^)]+)\)/g)) spacing[m[1]] = /(?:px|rem|em)$/.test(m[2]) ? m[2] : `${m[2]}px`;
   }
   if (Object.keys(spacing).length) fm.spacing = spacing;
 

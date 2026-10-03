@@ -530,7 +530,7 @@ function stagedFileHashes(
   const noFollow = (fs.constants as any).O_NOFOLLOW ?? 0;
   let fd: number;
   try {
-    fd = fs.openSync(path, fs.constants.O_RDONLY | noFollow);
+    fd = fs.openSync(path, fs.constants.O_RDONLY | noFollow | (fs.constants.O_NONBLOCK ?? 0));
   } catch {
     fail('UNSAFE_PATH', 'Staged archive could not be opened without following links');
   }
@@ -844,7 +844,7 @@ function treeManifest(
       const noFollow = (fs.constants as any).O_NOFOLLOW ?? 0;
       let fd: number;
       try {
-        fd = fs.openSync(path, fs.constants.O_RDONLY | noFollow);
+        fd = fs.openSync(path, fs.constants.O_RDONLY | noFollow | (fs.constants.O_NONBLOCK ?? 0));
       } catch {
         fail('UNSAFE_PATH', 'Preparation file could not be opened without following links');
       }

@@ -127,7 +127,7 @@ export function restrictFilePermissions(filePath: string): void {
   }
   let fd: number | undefined;
   try {
-    fd = fs.openSync(filePath, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
+    fd = fs.openSync(filePath, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0));
     const stat = fs.fstatSync(fd);
     const uid = process.geteuid?.() ?? process.getuid?.();
     if (!stat.isFile() || (uid !== undefined && stat.uid !== uid)) return;
@@ -361,7 +361,7 @@ export function __resetWarnedForTests(): void {
 /** Open once, reject symlink/nonregular/foreign objects, harden that inode
  * before writing. Windows keeps upstream icacls restriction for every write. */
 function writePrivateDescriptor(filePath: string, data: string | NodeJS.ArrayBufferView, append: boolean): void {
-  const flags = fs.constants.O_WRONLY | fs.constants.O_CREAT | (append ? fs.constants.O_APPEND : 0) | (fs.constants.O_NOFOLLOW || 0);
+  const flags = fs.constants.O_WRONLY | fs.constants.O_CREAT | (append ? fs.constants.O_APPEND : 0) | (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0);
   const fd = fs.openSync(filePath, flags, 0o600);
   try {
     const stat = fs.fstatSync(fd);

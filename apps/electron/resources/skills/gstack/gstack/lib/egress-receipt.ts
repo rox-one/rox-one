@@ -1,3 +1,4 @@
+import { appendSecureFile } from "../browse/src/file-permissions";
 /**
  * egress-receipt — hash-chained, content-free receipts for every
  * gstack-initiated off-machine send (`~/.gstack/security/egress.jsonl`, 0600).
@@ -270,9 +271,7 @@ function appendChained(
     return withLedgerLock(ledger, () => {
       const previous = lastRawLine(ledger);
       const line = JSON.stringify({ ...record, prev: previous == null ? '' : sha256Hex(previous) });
-      const existed = fs.existsSync(ledger);
-      fs.appendFileSync(ledger, `${line}\n`, { mode: 0o600 });
-      if (!existed) fs.chmodSync(ledger, 0o600); // umask must not weaken the ledger
+      appendSecureFile(ledger, `${line}\n`);
       return { id: sha256Hex(line), path: ledger };
     }, budgetMs);
   } catch (error) {

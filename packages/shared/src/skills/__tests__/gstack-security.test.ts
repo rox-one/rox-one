@@ -70,3 +70,33 @@ for (const copy of ['', 'gstack']) {
     });
   });
 }
+
+describe('gstack shared file boundaries', () => {
+  test('bounded stable reads refuse links and oversized files', async () => {
+    const { readBoundedStable } = await import(join(resources, 'gstack/lib/cso/bounded-file.ts'));
+    const dir = mkdtempSync(join(tmpdir(), 'rox-gstack-bounded-'));
+    try {
+      const file = join(dir, 'input');
+      writeFileSync(file, 'small');
+      expect(readBoundedStable(file, 10, 'input').toString()).toBe('small');
+      expect(() => readBoundedStable(file, 2, 'input')).toThrow();
+      const link = join(dir, 'link');
+      symlinkSync(file, link);
+      expect(() => readBoundedStable(link, 10, 'input')).toThrow();
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+  test('atomic writes privately replace the link itself and leave its target intact', async () => {
+    const { atomicWriteSync } = await import(join(resources, 'gstack/lib/fs-atomic.ts'));
+    const dir = mkdtempSync(join(tmpdir(), 'rox-gstack-atomic-'));
+    try {
+      const target = join(dir, 'target');
+      const output = join(dir, 'output');
+      writeFileSync(target, 'preserved');
+      symlinkSync(target, output);
+      atomicWriteSync(output, 'replacement');
+      expect(readFileSync(target, 'utf8')).toBe('preserved');
+      expect(readFileSync(output, 'utf8')).toBe('replacement');
+      if (process.platform !== 'win32') expect(statSync(output).mode & 0o777).toBe(0o600);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});

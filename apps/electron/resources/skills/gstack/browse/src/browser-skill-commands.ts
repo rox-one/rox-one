@@ -293,7 +293,7 @@ interface CappedRead { text: string; truncated: boolean; }
 
 /** Read at most `capBytes` from a file, reporting whether anything was dropped. */
 function readCappedFile(p: string, capBytes: number): CappedRead {
-  const fd = fs.openSync(p, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
+  const fd = fs.openSync(p, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0));
   try {
     const stat = fs.fstatSync(fd);
     if (!stat.isFile()) throw new Error('Refusing non-regular captured output');

@@ -933,7 +933,7 @@ function recoveryEvents(dir: string): string[] {
       if (!['attempt.event', 'watchdog.event'].includes(entry.name) || !stat.isFile() || stat.size > 8192)
         continue;
       try {
-        const message = redact(fs.readFileSync(path, 'utf8').trim());
+        const message = redact(readBoundedStable(path, 8192, 'Run event').toString('utf8').trim());
         if (message && !out.includes(message)) out.push(message);
       } catch {}
     }

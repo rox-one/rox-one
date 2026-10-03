@@ -1,3 +1,5 @@
+import { atomicWriteSync } from '../fs-atomic';
+import { readBoundedStable } from './bounded-file';
 import * as fs from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { spawn } from 'node:child_process';
@@ -166,7 +168,7 @@ export function treeHash(root: string, predicate: (path: string) => boolean = ()
             before = fs.lstatSync(file);
           if (!before.isFile() || before.isSymbolicLink() || before.nlink !== 1)
             throw new CsoError('UNSAFE_PATH', 'Execution copy contains a special or hard-linked file');
-          const body = fs.readFileSync(file),
+          const body = readBoundedStable(file, 64 * 1024 * 1024, 'Execution copy'),
             after = fs.lstatSync(file);
           if (
             before.ino !== after.ino ||
@@ -307,7 +309,7 @@ export function verificationHarnessHash(request: VerificationRequest, sourceRoot
     const stat = fs.lstatSync(file);
     if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1)
       throw new CsoError('UNSAFE_PATH', `Immutable existing-test input is unsafe: ${path}`);
-    return [path, sha256(fs.readFileSync(file)), stat.mode & 0o777];
+    return [path, sha256(readBoundedStable(file, 64 * 1024 * 1024, 'Canonical input')), stat.mode & 0o777];
   });
   return sha256(
     canonical({
@@ -981,7 +983,7 @@ export function canonicalStartPlan(sourceRoot: string, stack: CsoStack, port: nu
       stat = fs.lstatSync(file);
     if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1)
       throw new CsoError('UNSAFE_PATH', `Canonical startup input is unsafe: ${path}`);
-    return { path, sha256: sha256(fs.readFileSync(file)), mode: stat.mode & 0o777 };
+    return { path, sha256: sha256(readBoundedStable(file, 64 * 1024 * 1024, 'Canonical input')), mode: stat.mode & 0o777 };
   });
   return {
     command,
@@ -1017,7 +1019,7 @@ export function preparePatchedSource(snapshot: string, target: string, request: 
       exists = fs.existsSync(file);
     if (change.beforeSha256 === null && exists)
       throw new CsoError('INCOMPATIBLE_INPUT', `Expected new patch path already exists: ${path}`);
-    if (change.beforeSha256 !== null && (!exists || sha256(fs.readFileSync(file)) !== change.beforeSha256))
+    if (change.beforeSha256 !== null && (!exists || sha256(readBoundedStable(file, 64 * 1024 * 1024, 'Canonical input')) !== change.beforeSha256))
       throw new CsoError('INCOMPATIBLE_INPUT', `Patch preimage does not match: ${path}`);
     const derived = fileEffect(path);
     if (change.effect !== derived)
@@ -1034,7 +1036,7 @@ export function preparePatchedSource(snapshot: string, target: string, request: 
       );
     const mode = exists ? fs.statSync(file).mode & 0o777 : 0o600;
     secureDirectory(dirname(file));
-    fs.writeFileSync(file, change.after, { mode });
+    atomicWriteSync(file, change.after, { mode });
   }
 }
 export function certify(params: {

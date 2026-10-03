@@ -628,27 +628,26 @@ export async function inlineLocalImages(html: string, opts: PrepassImageOptions)
     // Bound the read BEFORE reading: a markdown image pointing at a special
     // file (fifo, device) would hang readFileSync, and a multi-GB file would
     // exhaust memory before any policy ran.
-    let stat: fs.Stats;
+    let fd: number | undefined;
+    let buf: Buffer;
     try {
-      stat = fs.statSync(filePath);
-    } catch {
-      opts.warn(`image unreadable: ${src}`);
+      fd = fs.openSync(filePath, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0));
+      const stat = fs.fstatSync(fd);
+      if (!stat.isFile()) throw new Error(`image is not a regular file: ${src}`);
+      if (stat.size > MAX_IMAGE_BYTES) throw new Error(`image exceeds size cap: ${src}`);
+      const data = Buffer.alloc(Math.min(stat.size + 1, MAX_IMAGE_BYTES + 1));
+      let count = 0;
+      let read = 0;
+      while (count < data.length && (read = fs.readSync(fd, data, count, data.length - count, null)) > 0) count += read;
+      if (count > stat.size || count > MAX_IMAGE_BYTES) throw new Error(`image changed or exceeds size cap: ${src}`);
+      buf = data.subarray(0, count);
+    } catch (error: any) {
+      const message = error.message || `image unreadable: ${src}`;
+      if (opts.strict) throw new StrictModeError(message);
+      opts.warn(message);
       return buildMissingImagePlaceholder(src);
-    }
-    if (!stat.isFile()) {
-      const msg = `image is not a regular file: ${src}`;
-      if (opts.strict) throw new StrictModeError(msg);
-      opts.warn(msg);
-      return buildMissingImagePlaceholder(src);
-    }
-    if (stat.size > MAX_IMAGE_BYTES) {
-      const msg = `image exceeds ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)}MB cap: ${src} (${Math.round(stat.size / 1024 / 1024)}MB)`;
-      if (opts.strict) throw new StrictModeError(msg);
-      opts.warn(msg);
-      return buildMissingImagePlaceholder(src);
-    }
+    } finally { if (fd !== undefined) fs.closeSync(fd); }
 
-    const buf = fs.readFileSync(filePath);
     const dims = imageDims(buf);
     const mime = dims?.mime ?? mimeFromExtension(filePath);
 

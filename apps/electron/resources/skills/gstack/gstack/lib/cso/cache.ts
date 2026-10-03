@@ -1,3 +1,4 @@
+import { readBoundedStable } from './bounded-file';
 import * as fs from 'node:fs';
 import { createHash, randomBytes } from 'node:crypto';
 import { join, resolve, sep } from 'node:path';
@@ -1004,7 +1005,7 @@ export class PublicArchiveCache {
       if ((stat.mode & 0o077) !== 0) fail('UNSAFE_PATH', 'Cache lock protocol permissions are not private');
       let protocol: unknown;
       try {
-        protocol = JSON.parse(fs.readFileSync(this.lockDir, 'utf8')).protocol;
+        protocol = JSON.parse(readBoundedStable(this.lockDir, METADATA_LIMIT, 'Cache lock protocol').toString('utf8')).protocol;
       } catch {}
       if (protocol !== CACHE_LOCK_PROTOCOL)
         fail('INCOMPATIBLE_INPUT', 'Archive-cache lock protocol is invalid');

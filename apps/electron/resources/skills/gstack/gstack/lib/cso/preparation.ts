@@ -1,3 +1,4 @@
+import { readBoundedStable } from './bounded-file';
 /** Inert dependency inspection. Nothing in this module invokes a package manager.
  * Commands are descriptions for the constrained runner, never host commands.
  */
@@ -118,7 +119,7 @@ function read(root: string, path: string, optional = false): string | undefined 
     fail('UNSAFE_METADATA', 'Dependency metadata must be a regular file without symlink ancestors.', path);
   if (stat!.size > MAX_METADATA)
     fail('METADATA_LIMIT', 'Dependency metadata exceeds the 8 MiB inspection limit.', path);
-  return readFileSync(full, 'utf8');
+  return readBoundedStable(full, MAX_METADATA, 'Dependency metadata').toString('utf8');
 }
 function json(root: string, path: string, jsonc = false): Record<string, any> {
   try {
