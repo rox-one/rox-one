@@ -76,7 +76,7 @@ const server = Bun.serve({ hostname: '127.0.0.1', port: 4177, idleTimeout: 0, as
       await service.capture('fixture-session', rootSnapshot)
       const observation = (sourceSeq: number, agentId: string, kind: RuntimeAgentObservation['kind'], payload: unknown): RuntimeAgentObservation => ({
         sourceId: 'explicit-context-fixture', sourceSeq, sourceEventId: `context-fixture:${sourceSeq}`,
-        agentId, parentAgentId: 'root', occurredAt: known(Date.now(), 'explicit-context-fixture'), origin: 'observed',
+        agentId, parentAgentId: 'root', occurredAt: known(Date.now(), 'explicit-context-fixture'), clockDomain: 'explicit-context-fixture', origin: 'observed',
         kind, payload,
       } as RuntimeAgentObservation)
       await service.observe('fixture-session', observation(1, contextFixtureAgentIds.child, 'agent.assigned', { assignment: {
