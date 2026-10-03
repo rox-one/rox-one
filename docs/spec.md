@@ -866,3 +866,7 @@ Owner historical_sweep; dependency merged collector1485 and current read-only Ru
 ### Selected skill instructions custody recovery — 2026-10-04
 
 Owner recent_features; dependency: externally merged selected-detail1467 at89cb22c and current native request authority. Craft/OMP selected bodies and discovery metadata use one bounded opened-descriptor reader. File links stay inside the selected canonical directory; directory links retain their supported identity. Compare BigInt descriptor/leaf identity and every canonical ancestor before bytes and return. Refuse invalid selected reads and late revoked requests; preserve current SkillInfo ownership/read-only controls, managed tiers and metadata-only OMP lists.
+
+## Opaque route identity follow-up — 2026-10-04
+
+Owner root; depends on external1412/f058 runtime route recovery. Normalize published empty namespace aliases without folding repeated/trailing separators inside opaque Knowledge/run/terminal/diff/extension IDs. Keep the existing Notes filesystem alias, decode percent escapes once, preserve full panel query transport and view-only action denial. Current navigation/account/native authority stays intact; this is a focused identity repair to the newly merged shared boundary.

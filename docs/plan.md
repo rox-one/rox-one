@@ -1077,3 +1077,9 @@ Owner recent_features; parent reviews and merges. Preserve merged1467 UI/API exa
 
 
 Runtime renderer bounded qualification complete: actual19 browser cases and39 mounted navigation bodies, focused29/0 and locale/helper282/0, native parser/routing34/0, full Electron/WebUI types and current renderer build0. Source node pointer interception is repaired with normal clicks. Publish separate renderer PR on current main; root owns merge. Real producer dependency remains independently qualified. Evidence: integration-history/runtime-map-context-navigation-20261004.
+
+## Opaque route identity follow-up — 2026-10-04
+
+1. Retain actual unchanged boundary1pass/8fail for opaque repeated/trailing slashes and encoded-percent identifiers, plus panel restore/query controls.
+2. Normalize only namespace grammar; preserve each remaining opaque ID byte, current Notes alias and unavailable/action policy.
+3. Qualify517 route/parser/panel/navigation cases0fail and current strict Electron, archive raw logs/hashes and publish separate PR after current-main union; retain branches.
