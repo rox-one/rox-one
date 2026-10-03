@@ -1,4 +1,5 @@
-import type { Message, Session, SessionEvent } from '@rox/shared/protocol'
+import type { Message } from '@rox/core'
+import type { Session, SessionEvent } from '@rox/shared/protocol'
 import type { CapabilitySnapshot, SignalName, TargetId, TourSignal } from '../../contracts'
 import type { TourObservation } from '../../runtime/hooks'
 
@@ -113,8 +114,10 @@ export function deriveChatSignals(correlation: ChatTurnCorrelation, event: Sessi
 }
 
 const turns = new Map<string, ChatTurnCorrelation>()
-const operations = new Map<string, TourObservation>()
+const operations = new Map<string, { observation: TourObservation; expected: string | readonly string[] | null; ambiguous: boolean }>()
 const permissions = new Map<string, TourObservation>()
+const creations = new Map<string, TourObservation>()
+const reopens = new Map<string, TourObservation>()
 
 export function beginChatUserTurn(observation: TourObservation | null, session: Session): () => void {
   const correlation = correlateUserTurn(observation, session)
@@ -130,11 +133,34 @@ export function bindChatOptimisticMessage(sessionId: string, optimisticMessageId
   if (turn && !turn.optimisticMessageId) turn.optimisticMessageId = optimisticMessageId
 }
 export function cancelChatUserTurn(sessionId: string): void { turns.delete(sessionId) }
-export function clearChatObservations(): void { turns.clear(); operations.clear(); permissions.clear() }
+export function clearChatObservations(): void { turns.clear(); operations.clear(); permissions.clear(); creations.clear(); reopens.clear() }
+
+export function beginChatSessionCreation(observation: TourObservation | null): void {
+  if (observation) creations.set(observation.binding.workspaceId, observation)
+}
+export function observeChatSessionCreated(session: Session): readonly TourSignal[] {
+  const observation = creations.get(session.workspaceId)
+  if (!observation || session.hidden) return []
+  creations.delete(session.workspaceId)
+  return [signal(observation, 'session.created', 'observed', session.id, 'native-commit')]
+}
+export function beginChatSessionReopen(observation: TourObservation | null, sessionId: string): void {
+  if (observation) reopens.set(sessionId, observation)
+}
+/** Emits only once the selected native session has actually rendered. */
+export function observeChatSessionReopened(session: Session): readonly TourSignal[] {
+  const observation = reopens.get(session.id)
+  if (!observation || session.hidden || observation.binding.workspaceId !== session.workspaceId) return []
+  reopens.delete(session.id)
+  return [signal(observation, 'session.reopened', 'observed', session.id, 'ui-observation')]
+}
 
 export type ChatCommitSignal = 'session.status-committed' | 'session.labels-committed' | 'session.project-committed' | 'session.sources-committed'
-export function beginChatCommit(observation: TourObservation | null, name: ChatCommitSignal): void {
-  if (observation?.binding.sessionId) operations.set(`${observation.binding.sessionId}:${name}`, observation)
+export function beginChatCommit(observation: TourObservation | null, name: ChatCommitSignal, expected: string | readonly string[] | null): void {
+  if (observation?.binding.sessionId) {
+    const key = `${observation.binding.sessionId}:${name}`
+    operations.set(key, { observation, expected: Array.isArray(expected) ? [...expected] : expected, ambiguous: operations.has(key) })
+  }
 }
 export function beginChatPermissionResponse(observation: TourObservation | null, sessionId: string, requestId: string): void {
   if (observation && observation.binding.sessionId === sessionId) permissions.set(`${sessionId}:${requestId}`, observation)
@@ -152,16 +178,17 @@ export function observeChatSessionEvent(event: SessionEvent, previous: Session |
   if (event.type === 'complete' || event.type === 'interrupted' || event.type === 'session_deleted' || event.type === 'messages_replaced') turns.delete(event.sessionId)
   let name: ChatCommitSignal | undefined
   let matches = false
-  if (event.type === 'session_status_changed') { name = 'session.status-committed'; matches = committed.sessionStatus === event.sessionStatus }
-  if (event.type === 'labels_changed') { name = 'session.labels-committed'; matches = JSON.stringify(committed.labels ?? []) === JSON.stringify(event.labels) }
-  if (event.type === 'project_id_changed') { name = 'session.project-committed'; matches = (committed.projectId ?? null) === event.projectId }
-  if (event.type === 'sources_changed') { name = 'session.sources-committed'; matches = JSON.stringify(committed.enabledSourceSlugs ?? []) === JSON.stringify(event.enabledSourceSlugs) }
+  let actual: string | readonly string[] | null = null
+  if (event.type === 'session_status_changed') { name = 'session.status-committed'; actual = event.sessionStatus; matches = committed.sessionStatus === event.sessionStatus }
+  if (event.type === 'labels_changed') { name = 'session.labels-committed'; actual = event.labels; matches = JSON.stringify(committed.labels ?? []) === JSON.stringify(event.labels) }
+  if (event.type === 'project_id_changed') { name = 'session.project-committed'; actual = event.projectId; matches = (committed.projectId ?? null) === event.projectId }
+  if (event.type === 'sources_changed') { name = 'session.sources-committed'; actual = event.enabledSourceSlugs; matches = JSON.stringify(committed.enabledSourceSlugs ?? []) === JSON.stringify(event.enabledSourceSlugs) }
   if (name) {
     const key = `${event.sessionId}:${name}`
-    const observation = operations.get(key)
-    if (matches && observation && observation.binding.workspaceId === committed.workspaceId) {
+    const operation = operations.get(key)
+    if (matches && operation && JSON.stringify(operation.expected) === JSON.stringify(actual) && operation.observation.binding.workspaceId === committed.workspaceId) {
       operations.delete(key)
-      signals.push(signal(observation, name, 'observed', event.type, 'native-commit'))
+      if (!operation.ambiguous) signals.push(signal(operation.observation, name, 'observed', event.type, 'native-commit'))
     }
   }
   return signals
