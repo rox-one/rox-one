@@ -30,16 +30,11 @@ if (!process.argv.includes('--verify-only')) {
   await downloadBun(config);
   await downloadUv(config);
   await run(['bun', 'run', 'scripts/build/stage-servers.ts', platform, arch]);
-  // Explicit target architectures override the multi-arch defaults in the base YAML.
-  const builderConfig = join(staging, 'builder.json');
-  await Bun.write(builderConfig, JSON.stringify({
-    extends: './electron-builder.yml',
-    ...(platform === 'darwin'
-      ? { mac: { target: ['dmg', 'zip'].map(target => ({ target, arch: [arch] })) } }
-      : { win: { target: [{ target: 'nsis', arch: [arch] }] } }),
-  }));
-  // Never implicitly publish to the upstream Craft update host.
-  await run(['bun', 'x', '--no-install', 'electron-builder', '--config', builderConfig, platform === 'darwin' ? '--mac' : '--win', `--${arch}`, '--publish', 'never'], electronDir, { CSC_IDENTITY_AUTO_DISCOVERY: process.env.CSC_LINK ? 'true' : 'false' });
+  // Explicit target names keep the base YAML from adding other architectures.
+  const targets = platform === 'darwin'
+    ? ['--mac', `dmg:${arch}`, `zip:${arch}`]
+    : ['--win', `nsis:${arch}`];
+  await run(['bun', 'x', '--no-install', 'electron-builder', ...targets, '--publish', 'never'], electronDir, { CSC_IDENTITY_AUTO_DISCOVERY: process.env.CSC_LINK ? 'true' : 'false' });
 }
 const releaseDir = join(electronDir, 'release');
 const resources = platform === 'darwin'
