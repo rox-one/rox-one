@@ -15,7 +15,7 @@ export async function bootNativeProduct(): Promise<{ app: ElectronApplication; p
   const require = createRequire(import.meta.url)
   const executablePath: string = require('electron')
   const profile = await mkdtemp(join(tmpdir(), 'rox-product-tour-native-'))
-  for (const child of ['home', 'config', 'userData', 'tmp']) await mkdir(join(profile, child))
+  for (const child of ['home', 'config', 'userData', 'tmp', 'appData', 'localAppData']) await mkdir(join(profile, child))
   const env: Record<string, string> = {}
   for (const name of ['PATH', 'SystemRoot', 'WINDIR', 'DISPLAY', 'WAYLAND_DISPLAY', 'XDG_RUNTIME_DIR']) {
     if (process.env[name]) env[name] = process.env[name]!
@@ -24,7 +24,9 @@ export async function bootNativeProduct(): Promise<{ app: ElectronApplication; p
     HOME: join(profile, 'home'), USERPROFILE: join(profile, 'home'),
     ROX_CONFIG_DIR: join(profile, 'config'), CRAFT_CONFIG_DIR: join(profile, 'config'),
     ROX_USER_DATA_DIR: join(profile, 'userData'), CRAFT_USER_DATA_DIR: join(profile, 'userData'),
-    TMPDIR: join(profile, 'tmp'), CRAFT_INSTANCE_NUMBER: `product-tour-native-${process.pid}`,
+    TMPDIR: join(profile, 'tmp'), TMP: join(profile, 'tmp'), TEMP: join(profile, 'tmp'),
+    APPDATA: join(profile, 'appData'), LOCALAPPDATA: join(profile, 'localAppData'),
+    CRAFT_INSTANCE_NUMBER: `product-tour-native-${process.pid}`,
   })
   let app: ElectronApplication
   try { app = await _electron.launch({ executablePath, args: [main], cwd: repository, env }) }

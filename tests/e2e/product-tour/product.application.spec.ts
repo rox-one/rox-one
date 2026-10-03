@@ -8,8 +8,9 @@ async function openApp(page: Page, route: string, enabled = false) {
     if (enabled) localStorage.setItem(flag, JSON.stringify(true))
     else localStorage.removeItem(flag)
   }, { flag, enabled })
-  await page.goto(`/?mode=web&route=${encodeURIComponent(route)}`)
-  await expect(page.locator('#root')).not.toBeEmpty({ timeout: 60_000 })
+  await page.goto(`/?mode=web&route=${encodeURIComponent(route)}`, { waitUntil: 'domcontentloaded' })
+  await page.waitForFunction(() => document.getElementById('root')?.childElementCount || (window as any).__productTourApplicationImportError, { timeout: 60_000 })
+  expect(await page.evaluate(() => (window as any).__productTourApplicationImportError ?? null)).toBeNull()
   await expect.poll(() => page.evaluate(() => (window as any).__productTourApplication?.marker)).toBe(marker)
 }
 async function evidence(page: Page) {
