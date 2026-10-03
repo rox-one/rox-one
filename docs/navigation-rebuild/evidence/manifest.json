@@ -34,11 +34,6 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
-      "path": "renderer-lint.log",
-      "sha256": "af94a0deff391bd6194673a44e8f66c6393e2c1d4d900c7080ddfe6235052229",
-      "original_path": "/tmp/rox-navigation-final-renderer-lint.log"
-    },
-    {
       "path": "backend17.log",
       "sha256": "26df506496b1e476d97e5539e461a9957c4870480df50707984b83031abfcd06",
       "original_path": "/tmp/rox-nav-context-checks.cp3QSs/refresh-backend17.log",
@@ -111,6 +106,12 @@
     {
       "path": "native-data-readback.json",
       "sha256": "df59ba7bc7ec79feb6c2846d80cba1704a90a92bea3a00a3bad7b2ba11d3a947"
+    },
+    {
+      "path": "renderer-lint.log",
+      "sha256": "b6f832d75eeb6b1fff12a5883b9a96401c2e2698363ebc57e8bf6e4ce3a5762c",
+      "original_path": "/tmp/rox-navigation-refresh-renderer-lint.log",
+      "renderer_files": 67
     }
   ],
   "previous_integration_revision": "f5daf80dc23492c5f988902274ace0a18fd9ef91"
