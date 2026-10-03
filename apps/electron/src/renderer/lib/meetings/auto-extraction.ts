@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { planMeetingActions } from '@rox/shared/meeting-agents'
+import { planMeetingActions } from '@rox/shared/meeting-agents/browser'
 import i18n from 'i18next'
 import type { LocalMeeting, MeetingsLocalApi } from '../../../shared/meetings-local'
 import { meetingsApi } from './recorder'

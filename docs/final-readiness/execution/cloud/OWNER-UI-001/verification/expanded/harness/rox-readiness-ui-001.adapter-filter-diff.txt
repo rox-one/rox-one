@@ -1,0 +1,21 @@
+--- 
++++ 
+@@ -78,7 +78,8 @@
+     failed++;
+     console.error("[HARNESS FAIL]", error.stack || error);
+   }
+-  if (!failed) for (const entry of cases) {
++  const selected = process.env.ROX_UI001_TEST_FILTER ? cases.filter((entry) => new RegExp(process.env.ROX_UI001_TEST_FILTER).test(entry.name)) : cases;
++  if (!failed) for (const entry of selected) {
+     let error;
+     const caseStart = Date.now();
+     try {
+@@ -106,7 +107,7 @@
+     failed++;
+     console.error("[CLEANUP FAIL]", error.stack || error);
+   }
+-  console.log(JSON.stringify({ runtime: "Node actual source callbacks adapter", pass: passed, fail: failed, assertions, cases: cases.length, elapsedMs: Date.now() - start }));
++  console.log(JSON.stringify({ runtime: "Node actual source callbacks adapter", pass: passed, fail: failed, assertions, cases: selected.length, registeredCases: cases.length, elapsedMs: Date.now() - start }));
+   if (failed) process.exitCode = 1;
+ };
+ 

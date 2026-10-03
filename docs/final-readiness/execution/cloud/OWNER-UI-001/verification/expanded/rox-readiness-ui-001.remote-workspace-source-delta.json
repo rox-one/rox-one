@@ -1,0 +1,13 @@
+{
+  "previousVerifiedSourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+  "frozenSourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+  "manifestFiles": 2776,
+  "shippedSourceDifferences": {
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": {
+      "previousSha256": "f9849afff8791539720582497d0fbf9c9b62bad33598a864ff28970b03d98829",
+      "currentSha256": "807106e633dd513c1d76623ff938deca99069301c9ddb00f81e041a1136b1d98"
+    }
+  },
+  "readbackAtUtc": "2026-10-03T16:14:54.404116+00:00",
+  "claim": "Only the reviewed NavigationContext effect dependency differs; other product proofs require final source readback or explicit identical-input binding."
+}

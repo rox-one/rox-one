@@ -6,6 +6,7 @@ import ts from 'typescript'
 import * as shared from '@rox/shared/projects'
 import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import { createWorkspaceAtPath as createWorkspace } from '@rox/shared/workspaces'
+import * as nativeSidebarMetadata from './native-sidebar-metadata'
 
 const cleanups: Array<() => void> = []
 afterEach(() => { for (const cleanup of cleanups.splice(0).reverse()) cleanup() })
@@ -44,6 +45,7 @@ function fixture() {
     '@rox/shared/config': { getWorkspaceByNameOrId: registryLookup },
     '@rox/server-core/transport': { pushTyped: (_server: unknown, ...args: unknown[]) => pushes.push(args) },
     '@rox/shared/projects': shared,
+    './native-sidebar-metadata': nativeSidebarMetadata,
     '@rox/core/rox2': {
       isClaimableLive: () => true,
       rpcProjectsListResult: () => ({ result: {} }),
@@ -87,9 +89,10 @@ test('actual GET and GET_ONE return canonical registry IDs for a custom workspac
   expect(rows[0]).toMatchObject({ workspaceId: f.workspace.id, workspaceRootPath: f.rootPath, config: { name: 'Current project' } })
   expect(await f.invoke(RPC_CHANNELS.projects.GET_ONE, f.local.slug)).toMatchObject({ workspaceId: f.workspace.id })
   expect(await f.invoke(RPC_CHANNELS.projects.GET_ONE, 'absent')).toBeNull()
-  // This projection repair does not add a native action or make the legacy
-  // handler available to NativePrincipal contexts.
-  expect(f.options.get(RPC_CHANNELS.projects.GET)).toBeUndefined()
+  // Native listing now uses its independently authorized, read-only metadata
+  // path. The legacy single-project handler keeps its original registration.
+  expect(f.options.get(RPC_CHANNELS.projects.GET)).toEqual({ nativeAction: 'read' })
+  expect(f.options.get(RPC_CHANNELS.projects.GET_ONE)).toBeUndefined()
 })
 
 test('actual project changed broadcast uses canonical ID and retains current records', async () => {

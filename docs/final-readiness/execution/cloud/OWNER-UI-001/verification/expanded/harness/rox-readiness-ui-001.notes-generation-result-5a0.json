@@ -1,0 +1,58 @@
+{
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "sourceRevision": "5a0b769b894aed2ed09ba8bcbe01a41cf8149d76",
+  "recordedAtUtc": "2026-10-03T15:10:17.846447+00:00",
+  "runtime": {
+    "bun": "1.3.14",
+    "bunRevision": "0d9b296a",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "sourceSha256": {
+    "apps/electron/src/renderer/pages/NotesPage.tsx": "5224f6f8d196b1e8a955a73250928fd922c1a306469f4f58821f775c6a612365",
+    "apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.note-route-lifecycle.test.ts": "8beeec819402b8d1234b87c2982a9a9121bc3cc22719431177695613c2cec951",
+    "apps/electron/src/renderer/lib/scoped-capability-read.ts": "9fccbd0405966eec11c3af1ab3ad34f51d4d544e28e4f25adac10da2738fcb7c"
+  },
+  "command": "qualified Bun 1.3.14 test apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.note-route-lifecycle.test.ts",
+  "result": {
+    "exitCode": 0,
+    "passed": 12,
+    "failed": 0,
+    "assertions": 50
+  },
+  "behavior": [
+    "actual source committed workspace effects and subscription effect executed together",
+    "retained listener after unsubscribe cannot alter current draft",
+    "workspace A-to-B-to-A generation rejects retained A listener before its unsubscribe; new listener remains functional",
+    "same-note reopen invalidates late descriptor rejection",
+    "new workspace owner rejects late descriptor success and refusal",
+    "current owned descriptor failure remains denied and requires reload",
+    "existing missing/refused read retry and pending-body deletion/dirty preservation cases retained"
+  ],
+  "negativeControl": {
+    "source": "external task-local mutated copy, production untouched",
+    "patch": "rox-readiness-ui-001.notes-generation-negative-control.patch",
+    "removedGuards": [
+      "subscription active flag",
+      "captured committed workspace generation",
+      "descriptor rejection captured opening generation"
+    ],
+    "passed": 8,
+    "expectedFailed": 4,
+    "assertionsReached": 39,
+    "log": "rox-readiness-ui-001.notes-generation-negative-control.log"
+  },
+  "log": "rox-readiness-ui-001.notes-generation-final-5a0.log",
+  "limits": [
+    "Actual source effects with explicit backend/native fixtures; independent native replay remains a lead-owned receipt."
+  ],
+  "fullDoDClosed": false,
+  "sourceBinding": {
+    "apps/electron/src/renderer/pages/NotesPage.tsx": true,
+    "apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.note-route-lifecycle.test.ts": true,
+    "apps/electron/src/renderer/lib/scoped-capability-read.ts": true
+  }
+}

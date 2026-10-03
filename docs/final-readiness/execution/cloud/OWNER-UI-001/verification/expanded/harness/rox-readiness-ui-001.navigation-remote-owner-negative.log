@@ -1,0 +1,14 @@
+Actual test callbacks via task-local Node adapter; Node v26.8.2; external Chromium; no Bun pass claim
+[FAIL] remote-only ownership rotation installs a current deep-link listener with stable callbacks
+page.waitForFunction: Timeout 3000ms exceeded.
+    at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-remote.mjs:636:16
+    at async bounded (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-remote.mjs:62:5)
+    at async globalThis.__ui001NodeRun (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-remote.mjs:88:7)
+    at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/async file:/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-remote.mjs:683:1
+[FAIL] retained remote-owner listeners cannot navigate create or send after remote-only ABA
+page.waitForFunction: Timeout 3000ms exceeded.
+    at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-remote.mjs:665:16
+    at async bounded (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-remote.mjs:62:5)
+    at async globalThis.__ui001NodeRun (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-remote.mjs:88:7)
+    at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/async file:/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-remote.mjs:683:1
+{"runtime":"Node actual source callbacks adapter","pass":0,"fail":2,"assertions":0,"cases":2,"registeredCases":26,"elapsedMs":25584}

@@ -3,11 +3,12 @@
  */
 
 import { RPC_CHANNELS } from '@rox/shared/protocol'
-import type { RpcServer } from '../../transport/types'
+import type { RequestContext, RpcServer } from '../../transport/types'
 import type { HandlerDeps } from '../handler-deps'
 import type {
   MessagingBindingAccessMode,
   MessagingPendingRejectReason,
+  MessagingPendingSenderInfo,
   MessagingPlatformAccessMode,
   MessagingPlatformOwnerInfo,
 } from '../messaging-registry-interface'
@@ -17,6 +18,12 @@ import {
   rpcMessagingListResult,
   rpcMessagingReadResult,
 } from '@rox/core/rox2'
+import { assertNativeInboxPath, assertNativeInboxWorkspace, isInboxOwner, nativeInboxOwner } from './native-inbox-scope'
+import { assertNativeSession } from './native-session-scope'
+import { readNativeWorkspaceRegistry } from './native-workspace-registry'
+import { CodedError } from '@rox/shared/protocol'
+import { MemoryFileStore } from '../../memory/MemoryFileStore'
+import { dirname } from 'node:path'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.messaging.GET_CONFIG,
@@ -56,6 +63,30 @@ export const HANDLED_CHANNELS = [
 export function registerMessagingHandlers(server: RpcServer, deps: HandlerDeps): void {
   const registry = deps.messagingRegistry
   if (!registry) return
+  registry.setNativeBindingContextResolver?.(binding => {
+    const workspace = readNativeWorkspaceRegistry(binding.workspaceId)
+    const authority = deps.nativeData?.authority
+    if (!workspace || !authority) return
+    const owner = authority.authorizeMessagingBinding(binding, workspace.rootPath)
+    if (!owner) return
+    return { owner, assertAuthorized: () => {
+      const current = readNativeWorkspaceRegistry(binding.workspaceId)
+      if (!current || current.rootPath !== workspace.rootPath || !authority.authorizeMessagingBinding(binding, current.rootPath)
+        || !deps.sessionManager.getSessions(binding.workspaceId).some(session => session.id === binding.sessionId && session.workspaceId === binding.workspaceId)) throw new CodedError('FORBIDDEN', 'Native binding access denied')
+      assertNativeInboxPath(current.rootPath, ['messaging'], true)
+      assertNativeInboxPath(current.rootPath, ['memory'], true)
+      assertNativeInboxPath(current.rootPath, ['skills', '.pending'], true)
+      assertNativeInboxPath(dirname(new MemoryFileStore('global').memoryDir), ['memory'], true)
+    } }
+  })
+
+  const ownsPendingBinding = (ctx: RequestContext, root: string | undefined, sender: MessagingPendingSenderInfo): boolean => {
+    if (!ctx.principal) return true
+    if (!root || !isInboxOwner(sender.nativeOwner, ctx) || sender.reason !== 'not-on-binding-allowlist' || !sender.bindingId) return false
+    const binding = registry.getBindings(ctx.workspaceId!).find(item => item.id === sender.bindingId && item.platform === sender.platform && item.workspaceId === ctx.workspaceId)
+    return !!binding && isInboxOwner(binding.nativeOwner, ctx)
+      && isInboxOwner(deps.nativeData?.authority.authorizeMessagingBinding(binding, root) ?? undefined, ctx)
+  }
 
   server.handle(RPC_CHANNELS.messaging.GET_CONFIG, async (ctx) => {
     const listed = rpcMessagingListResult({ source: 'native' })
@@ -142,13 +173,41 @@ export function registerMessagingHandlers(server: RpcServer, deps: HandlerDeps):
     if (!ctx.workspaceId) throw new Error('Missing workspaceId')
     const read = rpcMessagingReadResult({ source: 'native', nativeId: ctx.workspaceId })
     if (!isClaimableLive(read.result)) return []
-    return registry.getBindings(ctx.workspaceId)
-  })
+    const root = assertNativeInboxWorkspace(ctx, deps, server, ctx.workspaceId)
+    return registry.getBindings(ctx.workspaceId).filter(binding => binding.workspaceId === ctx.workspaceId && isInboxOwner(binding.nativeOwner, ctx)
+      && (!ctx.principal || !!deps.nativeData?.authority.authorizeMessagingBinding(binding, root!)))
+  }, { nativeAction: 'read' })
 
   server.handle(RPC_CHANNELS.messaging.GENERATE_CODE, async (ctx, sessionId: string, platform: string) => {
     if (!ctx.workspaceId) throw new Error('Missing workspaceId')
-    return registry.generatePairingCode(ctx.workspaceId, sessionId, platform)
-  })
+    const root = assertNativeInboxWorkspace(ctx, deps, server, ctx.workspaceId, 'write')
+    if (!ctx.principal) return registry.generatePairingCode(ctx.workspaceId, sessionId, platform)
+    assertNativeSession(ctx, deps, server, sessionId)
+    const principal = ctx.principal, workspaceId = ctx.workspaceId, owner = nativeInboxOwner(ctx)!
+    const fence = deps.nativeData!.authority.permissionFence(principal, workspaceId, 'write')
+    // The one-time code delegates this session only. It never delegates bot
+    // configuration, host credentials, or the workspace bot's owners list.
+    return registry.generatePairingCode(workspaceId, sessionId, platform, { owner, assertAuthorized: () => {
+      const workspace = readNativeWorkspaceRegistry(workspaceId)
+      if (!workspace || workspace.rootPath !== root || !fence || deps.nativeData?.authority.permissionFence(principal, workspaceId, 'write') !== fence
+        || !deps.nativeData.authority.authorize(principal, workspaceId, 'write', root)
+        || !deps.sessionManager.getSessions(workspaceId).some(session => session.id === sessionId && session.workspaceId === workspaceId)) {
+        throw new CodedError('FORBIDDEN', 'Native pairing access denied')
+      }
+      assertNativeInboxPath(root!, ['messaging'], true)
+      assertNativeInboxPath(root!, ['memory'], true)
+      assertNativeInboxPath(root!, ['skills', '.pending'], true)
+      assertNativeInboxPath(dirname(new MemoryFileStore('global').memoryDir), ['memory'], true)
+    }, registerBinding: binding => {
+      if (binding.workspaceId !== workspaceId || binding.sessionId !== sessionId) throw new CodedError('FORBIDDEN', 'Native binding mismatch')
+      deps.nativeData!.authority.registerMessagingBinding(principal, binding, root!)
+    }, canReplaceBinding: binding => {
+      if (binding.workspaceId !== workspaceId || !fence || deps.nativeData!.authority.permissionFence(principal, workspaceId, 'write') !== fence
+        || !deps.nativeData!.authority.authorize(principal, workspaceId, 'write', root)) return false
+      const previousOwner = deps.nativeData!.authority.getMessagingBindingOwner(binding, root!)
+      return previousOwner?.issuer === owner.issuer && previousOwner.subject === owner.subject
+    } })
+  }, { nativeAction: 'write' })
 
   server.handle(RPC_CHANNELS.messaging.UNBIND, async (ctx, sessionId: string, platform?: string) => {
     if (!ctx.workspaceId) throw new Error('Missing workspaceId')
@@ -243,16 +302,30 @@ export function registerMessagingHandlers(server: RpcServer, deps: HandlerDeps):
     RPC_CHANNELS.messaging.GET_PENDING_SENDERS,
     async (ctx, platform?: string) => {
       if (!ctx.workspaceId) throw new Error('Missing workspaceId')
-      return registry.getPendingSenders(ctx.workspaceId, platform)
+      const root = assertNativeInboxWorkspace(ctx, deps, server, ctx.workspaceId)
+      if (root) assertNativeInboxPath(root, ['messaging'], true)
+      return registry.getPendingSenders(ctx.workspaceId, platform).filter(sender => ownsPendingBinding(ctx, root, sender))
     },
+    { nativeAction: 'read' },
   )
 
   server.handle(
     RPC_CHANNELS.messaging.DISMISS_PENDING_SENDER,
-    async (ctx, platform: string, userId: string) => {
+    async (ctx, platform: string, userId: string, entryKey?: { reason?: MessagingPendingRejectReason; bindingId?: string }) => {
       if (!ctx.workspaceId) throw new Error('Missing workspaceId')
-      return { success: registry.dismissPendingSender(ctx.workspaceId, platform, userId) }
+      const root = assertNativeInboxWorkspace(ctx, deps, server, ctx.workspaceId, 'write')
+      if (root) assertNativeInboxPath(root, ['messaging'], true)
+      let authorizedKey = entryKey
+      if (ctx.principal) {
+        const entries = registry.getPendingSenders(ctx.workspaceId, platform).filter(sender => sender.userId === userId)
+        const selected = entries.find(sender => ownsPendingBinding(ctx, root, sender)
+          && (!entryKey?.reason || (sender.reason ?? 'not-owner') === entryKey.reason) && (!entryKey?.bindingId || sender.bindingId === entryKey.bindingId))
+        if (!selected) throw new Error('Pending sender access denied')
+        authorizedKey = { reason: selected.reason ?? 'not-owner', bindingId: selected.bindingId }
+      }
+      return { success: registry.dismissPendingSender(ctx.workspaceId, platform, userId, authorizedKey) }
     },
+    { nativeAction: 'write' },
   )
 
   server.handle(
@@ -264,8 +337,23 @@ export function registerMessagingHandlers(server: RpcServer, deps: HandlerDeps):
       entryKey?: { reason?: MessagingPendingRejectReason; bindingId?: string },
     ) => {
       if (!ctx.workspaceId) throw new Error('Missing workspaceId')
-      return registry.allowPendingSender(ctx.workspaceId, platform, userId, entryKey)
+      const root = assertNativeInboxWorkspace(ctx, deps, server, ctx.workspaceId, 'write')
+      if (root) assertNativeInboxPath(root, ['messaging'], true)
+      let authorizedKey = entryKey
+      if (ctx.principal) {
+        const entries = registry.getPendingSenders(ctx.workspaceId, platform).filter(sender => sender.userId === userId)
+        const selected = entries.find(sender => ownsPendingBinding(ctx, root, sender) && (!entryKey?.reason || sender.reason === entryKey.reason) && (!entryKey?.bindingId || sender.bindingId === entryKey.bindingId))
+        const binding = selected?.bindingId && registry.getBindings(ctx.workspaceId).find(binding => binding.id === selected.bindingId)
+        // A pending sender cannot grant control over the machine's shared bot.
+        if (!selected || selected.reason !== 'not-on-binding-allowlist'
+          || !binding || !isInboxOwner(binding.nativeOwner, ctx)
+          || !root || !isInboxOwner(deps.nativeData?.authority.authorizeMessagingBinding(binding, root) ?? undefined, ctx)) throw new Error('Pending sender access denied')
+        authorizedKey = { reason: selected.reason, bindingId: selected.bindingId }
+      }
+      const result = registry.allowPendingSender(ctx.workspaceId, platform, userId, authorizedKey)
+      return ctx.principal ? { owners: [], ...(result.bindingId ? { bindingId: result.bindingId } : {}) } : result
     },
+    { nativeAction: 'write' },
   )
 
   server.handle(
