@@ -234,7 +234,7 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
                 aria-current={link.variant === 'default' ? 'page' : undefined}
                 data-sidebar-link-id={link.id}
                 onClick={() => { if (onExpand) onExpand(link); else link.onClick?.() }}
-                className={cn('group mx-auto grid size-9 place-items-center rounded-xl outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring', link.variant === 'default' ? 'bg-foreground/[0.09]' : 'hover:bg-foreground/[0.06]')}>
+                className={cn('group mx-auto grid size-9 place-items-center rounded-[var(--radius-control)] outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring', link.variant === 'default' ? 'bg-[var(--shell-selected,var(--element-selected,var(--foreground-5)))]' : 'hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]')}>
                 <span className="flex size-5 items-center justify-center [&>svg]:size-5">{renderIcon(link)}</span>
               </button>
             )
@@ -609,9 +609,9 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
           link.compact ? "py-[3px]" : "py-[5px]",
           "px-2",
           link.variant === "default"
-            ? "bg-foreground/[0.07]"
+            ? "bg-[var(--shell-selected,var(--element-selected,var(--foreground-5)))]"
             // Highlight on hover, context menu open (data-state), or EditPopover active (data-edit-active)
-            : "hover:bg-sidebar-hover data-[state=open]:bg-sidebar-hover data-[edit-active=true]:bg-sidebar-hover",
+            : "hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] data-[state=open]:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] data-[edit-active=true]:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]",
           extraClassName,
         )}
       >
@@ -642,7 +642,7 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
         )}
         {/* Label Badge: count/status always visible (muted) */}
         {link.label && (
-          <span data-touch-reveal="true" className={cn(link.afterTitle || link.hasUnseen ? 'ml-0' : 'ml-auto', 'text-xs text-foreground/30 opacity-100')}>
+          <span data-touch-reveal="true" className={cn(link.afterTitle || link.hasUnseen ? 'ml-0' : 'ml-auto', 'text-xs text-text-secondary opacity-100')}>
             {link.label}
           </span>
         )}
@@ -666,8 +666,8 @@ const SIDEBAR_ICON_COLORS: Record<string, string> = {
 function renderIcon(link: LinkItem) {
   const isComponent = typeof link.icon === 'function' ||
     (typeof link.icon === 'object' && link.icon !== null && 'render' in link.icon)
-  // Default color for items without explicit iconColor (foreground at 60% opacity)
-  const defaultColor = 'color-mix(in oklch, var(--foreground) 60%, transparent)'
+  // Keep uncolored navigation icons readable on each theme's chrome.
+  const defaultColor = 'var(--text-secondary, var(--foreground))'
 
   // Lucide components are always colorable; ReactNode icons check iconColorable
   // Default to true for backwards compatibility (most icons are colorable)

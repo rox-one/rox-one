@@ -1,0 +1,5 @@
+# Preserve opaque entity identity after route recovery
+
+External #1412 merged in mainf058 adds published rest-of-path aliases, but normalizing every empty separator silently changes an opaque document/run/terminal/diff/extension ID containing `//`. Actual unchanged current boundary:1 passing control/8 failing identity cases. This focused follow-up normalizes only namespace separators; every separator after the first opaque ID byte remains data. Notes keeps its established filesystem alias. Percent escapes decode once; unknown/action addresses stay unavailable and restore never acquires execution authority.
+
+Qualification uses the actual public runtime boundary and actual v2 panel transport: repeated/trailing slashes, encoded literal percent, namespace alias and full query survive restore and canonical builder round-trip. Full shared route/parser/URL/navigation cohort517/0/2423 assertions across30files; strict Electron current follow-up is recorded in verification. No account, Collections, immediate-history callback or native authority code changes. Original failure and exact inputs are retained; branches remain intact.

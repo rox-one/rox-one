@@ -302,7 +302,7 @@ export function SessionHeatmapHost() {
         <div className="mb-3 flex items-center gap-2">
           <button
             type="button"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
             aria-label={t('collection.heatmap.prevYear')}
             onClick={() => setYear((value) => value - 1)}
           >
@@ -313,7 +313,7 @@ export function SessionHeatmapHost() {
           </h2>
           <button
             type="button"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
             aria-label={t('collection.heatmap.nextYear')}
             onClick={() => setYear((value) => value + 1)}
           >
@@ -383,7 +383,7 @@ export function SessionHeatmapHost() {
                 <div key={weekIndex} className="flex flex-col gap-px">
                   {week.map((cell, row) => {
                     if (!cell.inYear || !cell.key) {
-                      return <span key={`${weekIndex}-${row}`} className="h-3 w-3 rounded-[4px]" />
+                      return <span key={`${weekIndex}-${row}`} className="h-3 w-3 rounded-[var(--radius-control)]" />
                     }
                     const focused = cell.key === focusedKey
                     const isToday = cell.key === heatmap.todayKey
@@ -400,7 +400,7 @@ export function SessionHeatmapHost() {
                         })}
                         title={t('collection.heatmap.cell', { date: cell.key, count: cell.count })}
                         className={cn(
-                          'h-3 w-3 rounded-[4px] outline-none',
+                          'h-3 w-3 rounded-[var(--radius-control)] outline-none',
                           levelClass(cell.level),
                           focused && 'ring-1 ring-foreground ring-offset-1 ring-offset-background',
                           isToday && !focused && 'ring-1 ring-foreground/40',

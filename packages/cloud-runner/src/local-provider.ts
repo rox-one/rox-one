@@ -120,8 +120,25 @@ function killProcessTree(pid: number, signal: NodeJS.Signals): void {
 }
 
 /** 3 call sites need lockstep liveness semantics: cancel, reconcile, watchdog. */
-function pidAlive(pid: number): boolean {
-  try { process.kill(pid, 0); return true; } catch { return false; }
+async function pidAlive(pid: number): Promise<boolean> {
+  try { process.kill(pid, 0); }
+  catch (error) {
+    // An inaccessible process still exists; permission denial is not a crash.
+    return (error as NodeJS.ErrnoException).code === 'EPERM';
+  }
+  if (process.platform !== 'linux') return true;
+  try {
+    // kill(pid, 0) also succeeds for an exited child awaiting reaping. Such a
+    // runner cannot publish its first heartbeat or finish a queued run. The
+    // final ')' handles process names containing spaces or parentheses.
+    const status = await readFile(`/proc/${pid}/stat`, 'utf8');
+    const state = status.slice(status.lastIndexOf(')') + 2, status.lastIndexOf(')') + 3);
+    return state !== 'Z' && state !== 'X';
+  } catch (error) {
+    // It may have been reaped between the existence probe and the stat read.
+    // Other read failures do not establish that the process has exited.
+    return (error as NodeJS.ErrnoException).code !== 'ENOENT';
+  }
 }
 
 export class LocalSubprocessProvider implements CloudRunProvider {
@@ -181,9 +198,13 @@ export class LocalSubprocessProvider implements CloudRunProvider {
     if (!state) throw new CloudRunnerError(`run not found: ${id}`, 'not_found');
     if (state.state === 'running' || state.state === 'queued') {
       const pid = await this.readPid(dir);
-      if (pid === null || !pidAlive(pid)) {
+      if (pid === null || !await pidAlive(pid)) {
+        // Cancellation or the watchdog may have committed a terminal outcome
+        // while the process probe was pending. Keep that canonical outcome.
+        const current = await readJson<StateFile>(join(dir, 'state.json'));
+        if (current && current.state !== 'running' && current.state !== 'queued') return current;
         const dead: StateFile = {
-          ...state, state: 'failed', failureReason: 'runner_error', finishedAt: Date.now(),
+          ...(current ?? state), state: 'failed', failureReason: 'runner_error', finishedAt: Date.now(),
         };
         await writeFile(join(dir, 'state.json'), JSON.stringify(dead, null, 2));
         // Emit the transition so subscribeEvents consumers (UI chip, popover)
@@ -202,7 +223,7 @@ export class LocalSubprocessProvider implements CloudRunProvider {
     if (!state) throw new CloudRunnerError(`run not found: ${id}`, 'not_found');
     if (state.state === 'done' || state.state === 'failed' || state.state === 'cancelled') return;
     const pid = await this.readPid(dir);
-    if (pid !== null && pidAlive(pid)) {
+    if (pid !== null && await pidAlive(pid)) {
       try { killProcessTree(pid, 'SIGTERM'); } catch { /* already dead */ }
       setTimeout(() => { try { killProcessTree(pid, 'SIGKILL'); } catch { /* noop */ } }, 3000).unref();
     }
@@ -302,7 +323,7 @@ export class LocalSubprocessProvider implements CloudRunProvider {
     };
     await writeFile(join(dir, 'state.json'), JSON.stringify(failed, null, 2));
     await appendFile(join(dir, 'events.jsonl'), JSON.stringify({ type: 'state', status: failed }) + '\n');
-    if (child.pid && pidAlive(child.pid)) {
+    if (child.pid && await pidAlive(child.pid)) {
       try { killProcessTree(child.pid, 'SIGKILL'); } catch { /* noop */ }
     }
   }

@@ -111,7 +111,7 @@ export function CollectionDisplayPopover({
         <button
           type="button"
           className={cn(
-            'header-icon-btn inline-flex h-7 shrink-0 items-center justify-center rounded-[4px] text-muted-foreground transition-colors hover:bg-foreground/3 hover:text-foreground data-[state=open]:bg-foreground/3 data-[state=open]:text-foreground',
+            'header-icon-btn inline-flex h-7 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground transition-colors hover:bg-foreground/3 hover:text-foreground data-[state=open]:bg-foreground/3 data-[state=open]:text-foreground',
             iconOnly ? 'w-7' : 'gap-1.5 px-2 text-xs font-medium',
             className,
           )}
@@ -160,7 +160,7 @@ export function CollectionDisplayPopover({
               onClick={() => patch({ orderBy: value })}
             />
           ))}
-          <div className="mx-2 mt-1 flex rounded-[6px] bg-foreground/[0.04] p-0.5">
+          <div className="mx-2 mt-1 flex rounded-[var(--radius-overlay)] bg-foreground/[0.04] p-0.5">
             {(['asc', 'desc'] as CollectionOrderDir[]).map((dir) => {
               const active = display.orderDir === dir
               return (
@@ -169,7 +169,7 @@ export function CollectionDisplayPopover({
                   type="button"
                   onClick={() => patch({ orderDir: dir })}
                   className={cn(
-                    'h-6 flex-1 rounded-[4px] text-[11px] font-medium transition-colors',
+                    'h-6 flex-1 rounded-[var(--radius-control)] text-[11px] font-medium transition-colors',
                     active
                       ? 'bg-background text-foreground shadow-thin'
                       : 'text-foreground/55 hover:text-foreground',
@@ -248,7 +248,7 @@ function ToggleRow({
     <label
       data-collection-dialog-item
       tabIndex={0}
-      className="flex cursor-pointer items-center justify-between gap-3 rounded-[4px] px-2 py-1.5 text-[12.5px] text-foreground/90 transition-colors hover:bg-foreground/[0.04] hover:text-foreground focus-visible:bg-foreground/[0.07] focus-visible:text-foreground focus-visible:ring-1 focus-visible:ring-ring/70 outline-none motion-reduce:transition-none"
+      className="flex cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-control)] px-2 py-1.5 text-[12.5px] text-foreground/90 transition-colors hover:bg-foreground/[0.04] hover:text-foreground focus-visible:bg-foreground/[0.07] focus-visible:text-foreground focus-visible:ring-1 focus-visible:ring-ring/70 outline-none motion-reduce:transition-none"
     >
       <span>{label}</span>
       <Switch checked={checked} onCheckedChange={onCheckedChange} />

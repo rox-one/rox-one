@@ -204,7 +204,7 @@ export function AddWorkspaceStep_Ssh({ onBack, onCreate }: AddWorkspaceStep_SshP
           })}
         </div>
         {bootstrapping.detail && (
-          <pre className="mt-4 max-h-40 w-full overflow-auto whitespace-pre-wrap rounded-[10px] bg-foreground/5 p-3 text-[11px] opacity-70">
+          <pre className="mt-4 max-h-40 w-full overflow-auto whitespace-pre-wrap rounded-[var(--radius-card)] bg-foreground/5 p-3 text-[11px] opacity-70">
             {bootstrapping.detail}
           </pre>
         )}
@@ -277,14 +277,14 @@ export function AddWorkspaceStep_Ssh({ onBack, onCreate }: AddWorkspaceStep_SshP
       </p>
 
       {error && (
-        <div className="mt-4 w-full rounded-[10px] bg-red-500/10 p-3 text-xs text-red-500">
+        <div className="mt-4 w-full rounded-[var(--radius-card)] bg-red-500/10 p-3 text-xs text-red-500">
           {error}
         </div>
       )}
 
       <div className="mt-6 w-full space-y-2">
         {hosts.length === 0 && (
-          <div className="rounded-[10px] bg-foreground/5 p-4 text-center text-xs opacity-70">
+          <div className="rounded-[var(--radius-card)] bg-foreground/5 p-4 text-center text-xs opacity-70">
             {t("ssh.empty")}
           </div>
         )}
@@ -292,7 +292,7 @@ export function AddWorkspaceStep_Ssh({ onBack, onCreate }: AddWorkspaceStep_SshP
           return (
             <div
               key={host.id}
-              className="flex items-center gap-3 rounded-[10px] bg-foreground/5 p-3"
+              className="flex items-center gap-3 rounded-[var(--radius-control)] bg-foreground/5 p-3"
             >
               <Server className="h-4 w-4 shrink-0 opacity-60" />
               <div className="min-w-0 flex-1">
@@ -326,7 +326,7 @@ export function AddWorkspaceStep_Ssh({ onBack, onCreate }: AddWorkspaceStep_SshP
               <button
                 key={`${s.alias}-${s.host}`}
                 onClick={() => addSuggestion(s)}
-                className="flex w-full items-center gap-2 rounded-[10px] bg-foreground/5 p-2 text-left hover:bg-foreground/10"
+                className="flex w-full items-center gap-2 rounded-[var(--radius-control)] bg-foreground/5 p-2 text-left hover:bg-foreground/10"
               >
                 <Plus className="h-3.5 w-3.5 opacity-60" />
                 <span className="text-sm">{s.alias}</span>
@@ -359,7 +359,7 @@ function BackHeader({ onBack, title }: { onBack: () => void; title: string }) {
     <div className="flex w-full items-center">
       <button
         onClick={onBack}
-        className="flex h-8 w-8 items-center justify-center rounded-[10px] hover:bg-foreground/5"
+        className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] hover:bg-foreground/5"
       >
         <ArrowLeft className="h-4 w-4" />
       </button>
@@ -404,7 +404,7 @@ function IconBtn({
       title={title}
       onClick={onClick}
       disabled={disabled}
-      className="flex h-7 w-7 items-center justify-center rounded-[10px] text-foreground/60 hover:bg-foreground/10 hover:text-foreground disabled:opacity-40"
+      className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-control)] text-foreground/60 hover:bg-foreground/10 hover:text-foreground disabled:opacity-40"
     >
       {children}
     </button>

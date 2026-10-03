@@ -1,0 +1,14 @@
+[
+  {
+    "path": "docs/integration-history/opaque-route-identity-20261004/route-identity-before.log.gz",
+    "sha256": "5c58b3d04d6cae8122ff2112701a95da9625df96b38ebe130bcd01d705f42278"
+  },
+  {
+    "path": "docs/integration-history/opaque-route-identity-20261004/route-identity-after.log.gz",
+    "sha256": "803102a1aea75ad1b28367df7312970b3665020abbd145ba2b475b5b8f0c086b"
+  },
+  {
+    "path": "docs/integration-history/opaque-route-identity-20261004/route-identity-electron-types.log.gz",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

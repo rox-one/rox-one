@@ -49,7 +49,7 @@ export type MessageHoverDockProps = {
 }
 
 const iconButton =
-  'inline-flex h-7 w-7 items-center justify-center rounded-[6px] text-muted-foreground hover:bg-foreground/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40 data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground'
+  'inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-foreground/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40 data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground'
 
 /**
  * Compact message action dock with direct listening and branching buttons,
@@ -99,7 +99,7 @@ export function MessageHoverDock({
         title={t('chat.reactHeart')}
         disabled={reactionsDisabled}
         className={cn(
-          'inline-flex h-7 items-center gap-1 rounded-[6px] px-1.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40',
+          'inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] px-1.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40',
           heart?.mine ? 'text-rose-500' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
         )}
         onClick={onToggleHeart}
@@ -193,7 +193,7 @@ export function MessageHoverDock({
           disabled={reactionsDisabled}
           aria-label={item.emoji}
           className={cn(
-            'inline-flex h-7 items-center gap-1 rounded-[6px] px-1.5 text-xs',
+            'inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] px-1.5 text-xs',
             item.mine ? 'bg-foreground/5 text-foreground' : 'text-muted-foreground hover:bg-foreground/5',
           )}
           onClick={() => onToggleEmoji(item.emoji)}

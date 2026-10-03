@@ -2,15 +2,13 @@
  * Conation inspector host — framed chrome until domain panes land.
  */
 import { useTranslation } from 'react-i18next'
-import { RADIUS_INNER } from '@/components/app-shell/panel-constants'
 import { CONATION_INSPECTOR_PLACEHOLDER } from './conation-inspector-model'
 
 export function ConationInspectorPanel() {
   const { t } = useTranslation()
   return (
     <aside
-      className="mt-0.5 mb-0.5 mr-0.5 flex w-[320px] shrink-0 flex-col overflow-hidden border border-border/50 bg-background shadow-middle"
-      style={{ borderRadius: RADIUS_INNER }}
+      className="rox-shell-pane rox-shell-divider-l flex w-[320px] shrink-0 flex-col overflow-hidden bg-background"
       data-testid="conation-inspector-placeholder"
       aria-label="Conation"
     >

@@ -813,10 +813,16 @@ Owner: branch integration historical worker. Dependency: current native collecti
 Recover the strict local calendar-day check from preserved Golden source5def9ffd into the current Tasks schedule form, through its existing parseDateExpression port. ISO dates must round-trip the exact year/month/day; impossible dates return no schedule change or native write. Valid leap days retain local midnight. Current native task actor/workspace custody, CAS/ACK/readback, import/background barriers and Product Learning producers remain canonical. Owner: recent_features; dependency: current Tasks1456 and runtime main; no legacy CatalogPanel or alternate store.
 
 
+## Zed appearance reconciliation —2026-10-04
+
+Recover geometry0/4/6, chrome-only material, opaque reading surfaces and three licensed UI/code/terminal themes from PR1469 on current main. Preserve current navigation, native authority, task conversion, Product Learning refs, keyboard access, resize and workspace source errors. Existing saved themes survive; only a physically missing config seeds Nordfox. Cookie theme grants remain scoped to the authenticated current workspace with post-await withdrawal checks. Historical source native/WebUI receipts are not acceptance of this combined revision.
+
 ### Golden per-task form draft recovery — 2026-10-04
 
 Recover source5def9ffd per-task unsubmitted link/tag input through the existing modern TasksPage → TaskDetail consumer. Drafts remain ephemeral input only; canonical notes/task mutations, native actor/workspace CAS/ACK/readback, background import barriers and Product signals keep their owners. Input belongs to its captured caller generation and panel/workspace lifetime; scope ABA/unmount and obsolete rendered submissions cannot revive or write it. Clear only the submitted field value; keep other task drafts and link kind.
 
+
+Zed source addendum frozen at7379efcda6f5806b66672e236a1cc61bdffb4e00 includes compact fixed-content Home widgets, a flat mode switch and inspector tint matching the side panel. Adapt Home grid sizing while preserving current per-widget appearance and saved S/M/L layout ownership. Source release29e86 and installed/native reports remain historical.
 
 ### Knowledge availability recovery — 2026-10-03
 
@@ -848,9 +854,21 @@ Owner recent_features. Recover source1464 through the current OmpAgent. Startup 
 
 Owner: historical_sweep; root reviews/merges. Preserve frozen #1444 c2e8f07b5cb8a1b1659781e1fe4dd4d0f0207727 and the current scoped read-only journal/own-descriptor privacy contract. Passive tool/provider/native/background observations bind to their captured run origin; reused IDs, late completions, failed begin and idle eviction cannot attribute old output to a successor. Ambiguity drops correlation and reports partial coverage. Persisted rows cannot widen workspace or ancestry scope. Secret redaction covers quoted and serialized environment/header credentials and masks secrets registered after storage during readback. Explicit artifact output refs project evidence without guessing completion from paths/text. Launch/output metadata is passive and grants no execution or credentials. Real SessionManager/gateway/TaskRunner/native producers are a separate pr_scout dependency; preserve current SSO suppliedExecution and captured authority binding. Renderer late additions are a separate historical dependency. This bounded collector qualification is 53 tests/247 assertions plus core/server-core Node22 types; installed/live provider/full runtime acceptance remains separate. Evidence: integration-history/runtime-trace-origin-recovery-20261004.
 
+## Late UI1448 runtime edges — 2026-10-04
+
+Owner root; source e572 frozen. Recover four production paths: own-property RPC serialization/admission, bounded OS credential-provider calls, conservative queued runner liveness and preservation of terminal outcomes during async probes, and static fingerprinted Product Learning CI build. Keep current account/immediateHistory/unavailable-workspace authority. Worker recent_features separately owns manager physical-copy and whole-suite runner custody; full native OS/cloud/CI DoD remains separate. Proof uses private synthetic providers/process probes plus actual local subprocess conformance.
+
+
+### Selected skill instructions custody recovery — 2026-10-04
+
+Owner recent_features; dependency: externally merged selected-detail1467 at89cb22c and current native request authority. Craft/OMP selected bodies and discovery metadata use one bounded opened-descriptor reader. File links stay inside the selected canonical directory; directory links retain their supported identity. Compare BigInt descriptor/leaf identity and every canonical ancestor before bytes and return. Refuse invalid selected reads and late revoked requests; preserve current SkillInfo ownership/read-only controls, managed tiers and metadata-only OMP lists.
+
+## Opaque route identity follow-up — 2026-10-04
+
+Owner root; depends on external1412/f058 runtime route recovery. Normalize published empty namespace aliases without folding repeated/trailing separators inside opaque Knowledge/run/terminal/diff/extension IDs. Keep the existing Notes filesystem alias, decode percent escapes once, preserve full panel query transport and view-only action denial. Current navigation/account/native authority stays intact; this is a focused identity repair to the newly merged shared boundary.
+
 ## Runtime actual producer custody recovery — 2026-10-04
 
 Owner pr_scout; frozen #1444 c2e8 producer paths depend on historical collector537caa. Preserve current account/native authorization and host Bash cancellation, managed18.4.12 policy, hidden child options and one-shot generation fences. SessionManager retains suppliedExecution as its third event argument and carries passive trace origin separately. Captured iterator/child/channel/scheduler provenance cannot be borrowed from a newer active prompt. Durable TaskRunner output/ref/message identity is captured after the authority write and before queued repair. Native read projection admits only observed original root user input; host workflow/header/task/verdict metadata remains private. Exact native lifecycle ids correlate task/eval children to actual parent tool spans; ambiguity refuses attribution. Transport cancellation reports unknown process termination, never a fabricated exit.
 
 Qualification requires actual current SessionManager/gateway/TaskRunner callers, isolated canonical readback, malicious credential and late/ambiguous callback controls, actual native SDK fixture provider context and current account/native/host process guards. No installed app, paid provider, Windows console or global runtime acceptance follows from this bounded recovery.
-

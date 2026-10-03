@@ -1,0 +1,253 @@
+[
+  {
+    "id": "nordfox-opaque",
+    "extensionId": "nvim-nightfox",
+    "installedVersion": "0.10.5",
+    "sourceTheme": "Nordfox - opaque",
+    "repository": "https://github.com/cange/nightfox.zed",
+    "sourcePath": "/Users/t/Library/Application Support/Zed/extensions/installed/nvim-nightfox/themes/nvim-nightfox.json",
+    "sourceFileSha256": "e56540f04052eaba053bc744297aefc42a37ab692df3f691531c2d23759bf284",
+    "selectedThemeSnapshot": "sources/nordfox-opaque.zed.json",
+    "selectedThemeSnapshotSha256": "b4df4d68adad269dd29c0812d2297594e784561179de224e3c9e307a7521a06b",
+    "license": "MIT",
+    "licenseNotice": "licenses/nightfox-MIT.txt",
+    "licenseUrl": "https://raw.githubusercontent.com/cange/nightfox.zed/main/LICENSE",
+    "licenseNoticeSha256": "5bb37d27aeb539cc32fec183c33cbf9f2bd2afc268d78abc5ecbc8df45788266",
+    "uiContrastCorrections": [
+      {
+        "role": "foreground",
+        "source": "#c7cdd9",
+        "adapted": "#d4d9e2",
+        "minimumContrast": 4.520732,
+        "worstBackground": "toolbar glass over 255",
+        "interpolation": 0.23
+      },
+      {
+        "role": "textSecondary",
+        "source": "#cdcecf",
+        "adapted": "#d8d9d9",
+        "minimumContrast": 4.528092,
+        "worstBackground": "toolbar glass over 255",
+        "interpolation": 0.2143
+      },
+      {
+        "role": "textMuted",
+        "source": "#cdcecf",
+        "adapted": "#d8d9d9",
+        "minimumContrast": 4.528092,
+        "worstBackground": "toolbar glass over 255",
+        "interpolation": 0.2143
+      },
+      {
+        "role": "accentText",
+        "source": "#c9826b",
+        "adapted": "#ecd4cb",
+        "minimumContrast": 4.527923,
+        "worstBackground": "toolbar glass over 255",
+        "interpolation": 0.652
+      },
+      {
+        "role": "info",
+        "source": "#ebcb8b",
+        "adapted": "#efd6a2",
+        "minimumContrast": 4.516996,
+        "worstBackground": "toolbar glass over 255",
+        "interpolation": 0.202
+      },
+      {
+        "role": "success",
+        "source": "#a3be8c",
+        "adapted": "#cfddc2",
+        "minimumContrast": 4.506068,
+        "worstBackground": "toolbar glass over 255",
+        "interpolation": 0.4729
+      },
+      {
+        "role": "destructive",
+        "source": "#bf616a",
+        "adapted": "#edd2d4",
+        "minimumContrast": 4.504717,
+        "worstBackground": "toolbar glass over 255",
+        "interpolation": 0.7121
+      }
+    ],
+    "uiContrastModel": {
+      "minimumRatio": 4.5,
+      "colorSpace": "sRGB source-over and WCAG relative luminance",
+      "chromeOpacity": {
+        "titlebar": 0.84,
+        "navigator": 0.82,
+        "toolbar": 0.88
+      },
+      "backingExtremes": [
+        "#000000",
+        "#ffffff"
+      ],
+      "tabLayers": "source alpha: tabBar over titlebar/toolbar, then active/inactive over tabBar",
+      "rowStates": "opaque source elementHover/elementSelected",
+      "correction": "first passing rounded RGB at source-to-white (dark) or source-to-black (light) interpolation steps of 0.0001"
+    }
+  },
+  {
+    "id": "min-dark-blurred",
+    "extensionId": "min-theme",
+    "installedVersion": "0.2.2",
+    "sourceTheme": "Min Dark (Blurred)",
+    "repository": "https://github.com/phibr0/zed-min-theme",
+    "sourcePath": "/Users/t/Library/Application Support/Zed/extensions/installed/min-theme/themes/min-theme.json",
+    "sourceFileSha256": "f9aa7e2a1376db4fd0105ee4b4ca6eea0b14e8c9e34355a51fe90f776e7276fd",
+    "selectedThemeSnapshot": "sources/min-dark-blurred.zed.json",
+    "selectedThemeSnapshotSha256": "0fc8697e995838bcd45a884e4473bea5315922ffe8b7b0d292a8fd04c2a772e1",
+    "license": "MIT",
+    "licenseNotice": "licenses/min-MIT.txt",
+    "licenseUrl": "https://raw.githubusercontent.com/phibr0/zed-min-theme/main/LICENSE",
+    "licenseNoticeSha256": "1cf94ed6f7c901b850c5996692c7334adb16595ac13010995cb8cdb14bc4e6b2",
+    "uiContrastCorrections": [
+      {
+        "role": "foreground",
+        "source": "#999999",
+        "adapted": "#b0b0b0",
+        "minimumContrast": 4.546259,
+        "worstBackground": "navigator glass over 255",
+        "interpolation": 0.2206
+      },
+      {
+        "role": "textSecondary",
+        "source": "#999999",
+        "adapted": "#b0b0b0",
+        "minimumContrast": 4.546259,
+        "worstBackground": "navigator glass over 255",
+        "interpolation": 0.2206
+      },
+      {
+        "role": "textMuted",
+        "source": "#999999",
+        "adapted": "#b0b0b0",
+        "minimumContrast": 4.546259,
+        "worstBackground": "navigator glass over 255",
+        "interpolation": 0.2206
+      },
+      {
+        "role": "success",
+        "source": "#6C9C77",
+        "adapted": "#95b89d",
+        "minimumContrast": 4.517103,
+        "worstBackground": "navigator glass over 255",
+        "interpolation": 0.2778
+      },
+      {
+        "role": "destructive",
+        "source": "#F97583",
+        "adapted": "#fa919c",
+        "minimumContrast": 4.504917,
+        "worstBackground": "navigator glass over 255",
+        "interpolation": 0.1993
+      }
+    ],
+    "uiContrastModel": {
+      "minimumRatio": 4.5,
+      "colorSpace": "sRGB source-over and WCAG relative luminance",
+      "chromeOpacity": {
+        "titlebar": 0.84,
+        "navigator": 0.82,
+        "toolbar": 0.88
+      },
+      "backingExtremes": [
+        "#000000",
+        "#ffffff"
+      ],
+      "tabLayers": "source alpha: tabBar over titlebar/toolbar, then active/inactive over tabBar",
+      "rowStates": "opaque source elementHover/elementSelected",
+      "correction": "first passing rounded RGB at source-to-white (dark) or source-to-black (light) interpolation steps of 0.0001"
+    }
+  },
+  {
+    "id": "siri-light",
+    "extensionId": "siri",
+    "installedVersion": "0.0.12",
+    "sourceTheme": "Siri Light",
+    "repository": "https://github.com/perragnar/zed-theme-siri",
+    "sourcePath": "/Users/t/Library/Application Support/Zed/extensions/installed/siri/themes/siri.json",
+    "sourceFileSha256": "53a7967338d3267cf3444695157e5b8a4ce4d948bfd5f556d516a8b247d6ec3c",
+    "selectedThemeSnapshot": "sources/siri-light.zed.json",
+    "selectedThemeSnapshotSha256": "6f02c3e69ea5feff22e1487382bd1139788d05e3d917e3cf93db8fffe89457bd",
+    "license": "MIT",
+    "licenseNotice": "licenses/siri-MIT.txt",
+    "licenseUrl": "https://raw.githubusercontent.com/perragnar/zed-theme-siri/main/LICENSE",
+    "licenseNoticeSha256": "776d1666895648d4f6aaebd61aec537ce087a82d6834f58e2e25c4e46139f5bb",
+    "uiContrastCorrections": [
+      {
+        "role": "foreground",
+        "source": "#4d4f69",
+        "adapted": "#414258",
+        "minimumContrast": 4.528436,
+        "worstBackground": "titlebar glass over 0",
+        "interpolation": 0.1583
+      },
+      {
+        "role": "textSecondary",
+        "source": "#505050",
+        "adapted": "#444444",
+        "minimumContrast": 4.505032,
+        "worstBackground": "titlebar glass over 0",
+        "interpolation": 0.1438
+      },
+      {
+        "role": "textMuted",
+        "source": "#505050",
+        "adapted": "#444444",
+        "minimumContrast": 4.505032,
+        "worstBackground": "titlebar glass over 0",
+        "interpolation": 0.1438
+      },
+      {
+        "role": "accentText",
+        "source": "#1f6ae2",
+        "adapted": "#13418b",
+        "minimumContrast": 4.503955,
+        "worstBackground": "titlebar glass over 0",
+        "interpolation": 0.3828
+      },
+      {
+        "role": "info",
+        "source": "#C99401",
+        "adapted": "#584000",
+        "minimumContrast": 4.521407,
+        "worstBackground": "titlebar glass over 0",
+        "interpolation": 0.5642
+      },
+      {
+        "role": "success",
+        "source": "#277F2B",
+        "adapted": "#184e1b",
+        "minimumContrast": 4.529588,
+        "worstBackground": "titlebar glass over 0",
+        "interpolation": 0.3819
+      },
+      {
+        "role": "destructive",
+        "source": "#C5060B",
+        "adapted": "#8d0408",
+        "minimumContrast": 4.510663,
+        "worstBackground": "titlebar glass over 0",
+        "interpolation": 0.2818
+      }
+    ],
+    "uiContrastModel": {
+      "minimumRatio": 4.5,
+      "colorSpace": "sRGB source-over and WCAG relative luminance",
+      "chromeOpacity": {
+        "titlebar": 0.84,
+        "navigator": 0.82,
+        "toolbar": 0.88
+      },
+      "backingExtremes": [
+        "#000000",
+        "#ffffff"
+      ],
+      "tabLayers": "source alpha: tabBar over titlebar/toolbar, then active/inactive over tabBar",
+      "rowStates": "opaque source elementHover/elementSelected",
+      "correction": "first passing rounded RGB at source-to-white (dark) or source-to-black (light) interpolation steps of 0.0001"
+    }
+  }
+]

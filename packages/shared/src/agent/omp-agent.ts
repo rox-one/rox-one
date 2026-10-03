@@ -900,11 +900,6 @@ export class OmpAgent extends BaseAgent {
       assertAttempt();
       throw error;
     }
-    try {
-      if (accountDomainGeneration !== this.modelAccountDomainGeneration) throw new OmpStartupAbortedError('OMP model credential domain changed during startup');
-      if (this.config.roxExecutionContext) getRoxAccountAuthority().assertCurrent(this.config.roxExecutionContext);
-    }
-    catch (error) { runtimeConfig.dispose(); nativeInvocation.dispose(); throw error; }
     env.OMP_APP_NAME = 'rox';
     let child: ChildProcess;
     try {

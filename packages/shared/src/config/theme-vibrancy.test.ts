@@ -46,18 +46,15 @@ describe('ThemeProvider wiring', () => {
     expect(source).toContain('shouldSetThemeOverride(effectiveColorTheme, isScenic)')
   })
 
-  it('paints the named palette canvas only outside native glass, and provides an opaque chrome fallback', () => {
+  it('keeps named palette canvases opaque unless native glass was acknowledged', () => {
     const css = readFileSync(
       join(import.meta.dir, '../../../../apps/electron/src/renderer/index.css'),
       'utf8',
     )
-    const opaqueCanvas = 'html[data-theme]:not([data-scenic]):not([data-theme-override]):not([data-shell-material="vibrancy"]):not([data-shell-material="mica"])'
-    expect(css).toContain(`${opaqueCanvas},`)
-    expect(css).toContain(`${opaqueCanvas} body,`)
-    expect(css).toContain(`${opaqueCanvas} #root {\n  background: var(--background);`)
-    expect(css).toContain('html .chrome-rail {\n  --shell-glass-surface: var(--shell-glass-rail);')
-    const opaqueChrome = css.match(/html\[data-shell-material="solid"\],\s*html\[data-contrast="high"\]\s*\{([^}]+)\}/)?.[1]
-    expect(opaqueChrome).toContain('--shell-glass-rail: rgb(from var(--surface-rail) r g b / 1);')
-    expect(css).toContain('html[data-shell-material="solid"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]),')
+    expect(css).toContain('html[data-theme]:not([data-scenic]):not([data-theme-override])')
+    expect(css).toContain(':not([data-shell-material="vibrancy"]):not([data-shell-material="mica"]) body')
+    expect(css).toContain(':not([data-shell-material="vibrancy"]):not([data-shell-material="mica"]) #root')
+    expect(css).toContain('html [data-shell-role="content"]')
+    expect(css).toContain('--shell-content: rgb(from var(--canvas) r g b / 1)')
   })
 })

@@ -289,7 +289,7 @@ export function EntityRow({
             e.stopPropagation()
             setCompactMenuOpen(true)
           }}
-          className="p-1 rounded-[6px] hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer"
+          className="p-1 rounded-[var(--radius-control)] hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer"
           aria-label={t('common.more')}
           aria-haspopup="dialog"
           aria-expanded={compactMenuOpen}
@@ -305,7 +305,7 @@ export function EntityRow({
               aria-label={t('common.more')}
               aria-haspopup="menu"
               aria-expanded={menuOpen}
-              className="p-1 rounded-[6px] hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer"
+              className="p-1 rounded-[var(--radius-control)] hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer"
             >
               <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
@@ -359,7 +359,7 @@ export function EntityRow({
         {...(buttonProps as React.HTMLAttributes<HTMLDivElement>)}
         role="option"
         className={cn(
-          "entity-row-btn flex items-start gap-2 pl-2 pr-4 py-3 text-left text-sm outline-none rounded-[8px] focus-visible:ring-1 focus-visible:ring-ring/60 cursor-pointer",
+          "entity-row-btn flex items-start gap-2 pl-2 pr-4 py-3 text-left text-sm outline-none rounded-[var(--radius-control)] focus-visible:ring-1 focus-visible:ring-ring/60 cursor-pointer",
           leading ? "min-w-0 flex-1" : "w-full",
           "transition-[background-color] duration-75 motion-reduce:transition-none",
           (isSelected || isInMultiSelect)

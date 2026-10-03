@@ -1,0 +1,2778 @@
+{
+  "source_pr": 1469,
+  "source_branch": "codex/rox-zed-appearance-20261003",
+  "source_sha": "7379efcda6f5806b66672e236a1cc61bdffb4e00",
+  "source_merge_base": "29e86bcc515e24039a15a781d5885b272cbad1df",
+  "comparison_base": "991c8b80b1620bf3bb4ea56c62c2d4bfe459824e",
+  "source_path_count": 344,
+  "all_source_paths_accounted_for": true,
+  "source_branch_deleted": false,
+  "full_native_or_installed_platform_acceptance": false,
+  "rows": [
+    {
+      "source_path": "CONTEXT.md",
+      "source_blob": "3e8a4952becdf9daa96a184da4a93177233bc295",
+      "current_path": "docs/integration-history/zed-appearance-current-20261004/source-CONTEXT.md",
+      "current_blob": "3e8a4952becdf9daa96a184da4a93177233bc295",
+      "status": "source_history_preserved_current_spec_plan_retained",
+      "first_comparison_current_blob": "3e8a4952becdf9daa96a184da4a93177233bc295"
+    },
+    {
+      "source_path": "apps/electron/resources/release-notes/next.md",
+      "source_blob": "ec8ad52795c029b14d72529047d6b26f2119c704",
+      "current_path": "apps/electron/resources/release-notes/next.md",
+      "current_blob": "d08c69a2c4fdceb123ace4855b248a0e043f2f07",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "d08c69a2c4fdceb123ace4855b248a0e043f2f07"
+    },
+    {
+      "source_path": "apps/electron/resources/themes/licenses/min-MIT.txt",
+      "source_blob": "87091b7adfdeed15120ae1603a3cac219a6344db",
+      "current_path": "apps/electron/resources/themes/licenses/min-MIT.txt",
+      "current_blob": "87091b7adfdeed15120ae1603a3cac219a6344db",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "87091b7adfdeed15120ae1603a3cac219a6344db"
+    },
+    {
+      "source_path": "apps/electron/resources/themes/licenses/nightfox-MIT.txt",
+      "source_blob": "8491344645328354cf90132ad01833d17ddb944a",
+      "current_path": "apps/electron/resources/themes/licenses/nightfox-MIT.txt",
+      "current_blob": "8491344645328354cf90132ad01833d17ddb944a",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "8491344645328354cf90132ad01833d17ddb944a"
+    },
+    {
+      "source_path": "apps/electron/resources/themes/licenses/siri-MIT.txt",
+      "source_blob": "5955dd514700f70352292f7f08c390b47547dfa5",
+      "current_path": "apps/electron/resources/themes/licenses/siri-MIT.txt",
+      "current_blob": "5955dd514700f70352292f7f08c390b47547dfa5",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "5955dd514700f70352292f7f08c390b47547dfa5"
+    },
+    {
+      "source_path": "apps/electron/resources/themes/min-dark-blurred.json",
+      "source_blob": "2768dac55ca4e955efa472b533f2b0286ee106af",
+      "current_path": "apps/electron/resources/themes/min-dark-blurred.json",
+      "current_blob": "2768dac55ca4e955efa472b533f2b0286ee106af",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "2768dac55ca4e955efa472b533f2b0286ee106af"
+    },
+    {
+      "source_path": "apps/electron/resources/themes/nordfox-opaque.json",
+      "source_blob": "1c85b124661a65457efd0c9e2aa118cb1be53e52",
+      "current_path": "apps/electron/resources/themes/nordfox-opaque.json",
+      "current_blob": "1c85b124661a65457efd0c9e2aa118cb1be53e52",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "1c85b124661a65457efd0c9e2aa118cb1be53e52"
+    },
+    {
+      "source_path": "apps/electron/resources/themes/siri-light.json",
+      "source_blob": "1d1785bfe935477e8bba70131a74368a6b96e039",
+      "current_path": "apps/electron/resources/themes/siri-light.json",
+      "current_blob": "1d1785bfe935477e8bba70131a74368a6b96e039",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "1d1785bfe935477e8bba70131a74368a6b96e039"
+    },
+    {
+      "source_path": "apps/electron/src/main/index.ts",
+      "source_blob": "2ca4eeec37e7aff0bdd861dc4bbc7403432df93e",
+      "current_path": "apps/electron/src/main/index.ts",
+      "current_blob": "ff27203b50b58f897aa42b87d4f028937aed5a72",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "ff27203b50b58f897aa42b87d4f028937aed5a72"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/App.tsx",
+      "source_blob": "d12e456b0a6395c148335eebd954071d008ee658",
+      "current_path": "apps/electron/src/renderer/App.tsx",
+      "current_blob": "3c524f38a69229770acbbe4734ac7ab906d30cde",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "3c524f38a69229770acbbe4734ac7ab906d30cde"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/apisetup/ApiKeyInput.tsx",
+      "source_blob": "58c68164eb166a98572216495012cbd8644bdf49",
+      "current_path": "apps/electron/src/renderer/components/apisetup/ApiKeyInput.tsx",
+      "current_blob": "58c68164eb166a98572216495012cbd8644bdf49",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "58c68164eb166a98572216495012cbd8644bdf49"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-menu/MobileAppMenu.tsx",
+      "source_blob": "cb01c675bd92e38523940db2ebf0fc41c368bb9b",
+      "current_path": "apps/electron/src/renderer/components/app-menu/MobileAppMenu.tsx",
+      "current_blob": "cb819a0b82a81fb23c7ba683d326ab8c0f2f13fc",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "cb819a0b82a81fb23c7ba683d326ab8c0f2f13fc"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/AccountMenu.tsx",
+      "source_blob": "6e2d5626bdda1932bbff2edefdf4b1b432cea749",
+      "current_path": "apps/electron/src/renderer/components/app-shell/AccountMenu.tsx",
+      "current_blob": "f0533c76094509b950845c3a51dd80914734e15b",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "f0533c76094509b950845c3a51dd80914734e15b"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/ActiveOptionBadges.tsx",
+      "source_blob": "374ccbd85366a38b46441ee821d4c6250a9513e7",
+      "current_path": "apps/electron/src/renderer/components/app-shell/ActiveOptionBadges.tsx",
+      "current_blob": "42d7a49298f60b3c9895401ceb35d4be472cd85a",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "42d7a49298f60b3c9895401ceb35d4be472cd85a"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+      "source_blob": "814b4183faf36c10d0a442d5b0b4c87ba986ef6a",
+      "current_path": "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+      "current_blob": "9f29ade330ab41a98582ece64f3ac3a43c9549d3",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "9f29ade330ab41a98582ece64f3ac3a43c9549d3"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/AttachmentPreview.tsx",
+      "source_blob": "b217f44e94a1ba459f1238c96ab847e747b7d4e7",
+      "current_path": "apps/electron/src/renderer/components/app-shell/AttachmentPreview.tsx",
+      "current_blob": "b217f44e94a1ba459f1238c96ab847e747b7d4e7",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "b217f44e94a1ba459f1238c96ab847e747b7d4e7"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx",
+      "source_blob": "f59c79b4f7968f969e5e493a4b9e2bc70914f2ca",
+      "current_path": "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx",
+      "current_blob": "a1433d7acf549e767ea47025284f6c0e12e63674",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "a1433d7acf549e767ea47025284f6c0e12e63674"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/CompactSessionListFilter.tsx",
+      "source_blob": "45ea408e18609be479166cb6981fbfe48ce609d2",
+      "current_path": "apps/electron/src/renderer/components/app-shell/CompactSessionListFilter.tsx",
+      "current_blob": "45ea408e18609be479166cb6981fbfe48ce609d2",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "45ea408e18609be479166cb6981fbfe48ce609d2"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/CompactSessionMenu.tsx",
+      "source_blob": "9a9b98cbc00f03e2ad5f28a27d12c9b71b2c3a94",
+      "current_path": "apps/electron/src/renderer/components/app-shell/CompactSessionMenu.tsx",
+      "current_blob": "9a9b98cbc00f03e2ad5f28a27d12c9b71b2c3a94",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "9a9b98cbc00f03e2ad5f28a27d12c9b71b2c3a94"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/EntityViewTabs.tsx",
+      "source_blob": "8c7691a94f1691ff7232b36e634ee89e2be719f4",
+      "current_path": "apps/electron/src/renderer/components/app-shell/EntityViewTabs.tsx",
+      "current_blob": "8c7691a94f1691ff7232b36e634ee89e2be719f4",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "8c7691a94f1691ff7232b36e634ee89e2be719f4"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/LeftSidebar.tsx",
+      "source_blob": "e12bb8cacdeb77ba44bf9e7533d9b961579c6795",
+      "current_path": "apps/electron/src/renderer/components/app-shell/LeftSidebar.tsx",
+      "current_blob": "e12bb8cacdeb77ba44bf9e7533d9b961579c6795",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "e12bb8cacdeb77ba44bf9e7533d9b961579c6795"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/MemoryListPanel.tsx",
+      "source_blob": "772008809e310e91f2bcd9d563ab9afc0ea2bb96",
+      "current_path": "apps/electron/src/renderer/components/app-shell/MemoryListPanel.tsx",
+      "current_blob": "772008809e310e91f2bcd9d563ab9afc0ea2bb96",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "772008809e310e91f2bcd9d563ab9afc0ea2bb96"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/MiniSessionSurface.tsx",
+      "source_blob": "92e125bf05270538e99b6995d40798e8fa69a998",
+      "current_path": "apps/electron/src/renderer/components/app-shell/MiniSessionSurface.tsx",
+      "current_blob": "92e125bf05270538e99b6995d40798e8fa69a998",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "92e125bf05270538e99b6995d40798e8fa69a998"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/PanelResizeSash.tsx",
+      "source_blob": "28b62c874137e74bd30fd681aab624a41a5933d2",
+      "current_path": "apps/electron/src/renderer/components/app-shell/PanelResizeSash.tsx",
+      "current_blob": "28b62c874137e74bd30fd681aab624a41a5933d2",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "28b62c874137e74bd30fd681aab624a41a5933d2"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx",
+      "source_blob": "f91a4f225e576faec464f717f95e17ccdf033031",
+      "current_path": "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx",
+      "current_blob": "61c3f1a00bf9b135067532d11526b5625c0a20f6",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "61c3f1a00bf9b135067532d11526b5625c0a20f6"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/ProfileStrip.tsx",
+      "source_blob": "bd92c34b2c6691832da26d4b4d7851f12196bfae",
+      "current_path": "apps/electron/src/renderer/components/app-shell/ProfileStrip.tsx",
+      "current_blob": "bd92c34b2c6691832da26d4b4d7851f12196bfae",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "bd92c34b2c6691832da26d4b4d7851f12196bfae"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx",
+      "source_blob": "b9819818a59f0ac7409eafac8e242d6758f60eaa",
+      "current_path": "apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx",
+      "current_blob": "b9819818a59f0ac7409eafac8e242d6758f60eaa",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "b9819818a59f0ac7409eafac8e242d6758f60eaa"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/ProjectsListPanel.tsx",
+      "source_blob": "86af3df4c918f194a8cc3a5869e3c53cf11621a6",
+      "current_path": "apps/electron/src/renderer/components/app-shell/ProjectsListPanel.tsx",
+      "current_blob": "cb28668997466df3ac092307c542dc3f82dc20c6",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "cb28668997466df3ac092307c542dc3f82dc20c6"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/ResizeHandle.tsx",
+      "source_blob": "16846bbce402cb9c77cc036dcc1f496bcfb0a93b",
+      "current_path": "apps/electron/src/renderer/components/app-shell/ResizeHandle.tsx",
+      "current_blob": "69e81bab7b1f841aaf6a16a52098cf84d7f94305",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "69e81bab7b1f841aaf6a16a52098cf84d7f94305"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/SessionInfoPopover.tsx",
+      "source_blob": "380bc11360b2d4ca39d2e9a916cf58274f9e79a3",
+      "current_path": "apps/electron/src/renderer/components/app-shell/SessionInfoPopover.tsx",
+      "current_blob": "380bc11360b2d4ca39d2e9a916cf58274f9e79a3",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "380bc11360b2d4ca39d2e9a916cf58274f9e79a3"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/SessionItem.tsx",
+      "source_blob": "3d2f2778cd40b3f6231cb2d7d190bbb9b2aca86f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/SessionItem.tsx",
+      "current_blob": "3d2f2778cd40b3f6231cb2d7d190bbb9b2aca86f",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "3d2f2778cd40b3f6231cb2d7d190bbb9b2aca86f"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/SessionList.tsx",
+      "source_blob": "1bed1dd189f3612f51b0addb807cd2198036fb98",
+      "current_path": "apps/electron/src/renderer/components/app-shell/SessionList.tsx",
+      "current_blob": "21fa346a4ecd9d3acab310753ae9298f8ad3a6fa",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "21fa346a4ecd9d3acab310753ae9298f8ad3a6fa"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/SessionSearchHeader.tsx",
+      "source_blob": "1b163b62463e146611447c3efe247a606f29f0d6",
+      "current_path": "apps/electron/src/renderer/components/app-shell/SessionSearchHeader.tsx",
+      "current_blob": "1b163b62463e146611447c3efe247a606f29f0d6",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "1b163b62463e146611447c3efe247a606f29f0d6"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/SessionSharingHost.tsx",
+      "source_blob": "e667b50a754336729b360d5e0d5d3f2b4dde004e",
+      "current_path": "apps/electron/src/renderer/components/app-shell/SessionSharingHost.tsx",
+      "current_blob": "e667b50a754336729b360d5e0d5d3f2b4dde004e",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "e667b50a754336729b360d5e0d5d3f2b4dde004e"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/SetupAuthBanner.tsx",
+      "source_blob": "ce1fdca0b2a7f9e20177d61c28e7c827ea1331e4",
+      "current_path": "apps/electron/src/renderer/components/app-shell/SetupAuthBanner.tsx",
+      "current_blob": "ce1fdca0b2a7f9e20177d61c28e7c827ea1331e4",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "ce1fdca0b2a7f9e20177d61c28e7c827ea1331e4"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/SidebarDisclosure.tsx",
+      "source_blob": "e8c1d12a7d43745c2e0d4507753974b011d0eddf",
+      "current_path": "apps/electron/src/renderer/components/app-shell/SidebarDisclosure.tsx",
+      "current_blob": "e8c1d12a7d43745c2e0d4507753974b011d0eddf",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "e8c1d12a7d43745c2e0d4507753974b011d0eddf"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx",
+      "source_blob": "613f7321e53caaf52277f4c2c7baa8c510c7691b",
+      "current_path": "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx",
+      "current_blob": "32c3f93a41bc4bf9b18214463274dade8edfd128",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "8646239438e1e310ff0c6621dea4034e8b09b8a2"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/SourcesListPanel.tsx",
+      "source_blob": "2ebc558a18045cd829f37a6faade31a405834792",
+      "current_path": "apps/electron/src/renderer/components/app-shell/SourcesListPanel.tsx",
+      "current_blob": "847e97e4f32bc402fff902dd62d3f0706418dcdb",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "847e97e4f32bc402fff902dd62d3f0706418dcdb"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/TaskActionMenu.tsx",
+      "source_blob": "25b58e71edaf64a46d2b998776a7a372edf4eda6",
+      "current_path": "apps/electron/src/renderer/components/app-shell/TaskActionMenu.tsx",
+      "current_blob": "25b58e71edaf64a46d2b998776a7a372edf4eda6",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "25b58e71edaf64a46d2b998776a7a372edf4eda6"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/TopBar.tsx",
+      "source_blob": "0397810027e71382e478d56156cfea4ac7c59cd0",
+      "current_path": "apps/electron/src/renderer/components/app-shell/TopBar.tsx",
+      "current_blob": "7660f23e06956fa8b79dd7d0f803042af7988610",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "7660f23e06956fa8b79dd7d0f803042af7988610"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/WhatsNewTimeline.tsx",
+      "source_blob": "0d250db290a77d5168dce90d1276941d029dd704",
+      "current_path": "apps/electron/src/renderer/components/app-shell/WhatsNewTimeline.tsx",
+      "current_blob": "0d250db290a77d5168dce90d1276941d029dd704",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "0d250db290a77d5168dce90d1276941d029dd704"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/WorkspaceIconRail.tsx",
+      "source_blob": "e48e66c6982b95d448a6d3bc62080c0ce509c7c4",
+      "current_path": "apps/electron/src/renderer/components/app-shell/WorkspaceIconRail.tsx",
+      "current_blob": "62e8d5661ac45cf660d22b27bced939e9dea93e9",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "62e8d5661ac45cf660d22b27bced939e9dea93e9"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts",
+      "source_blob": "eb54bbf76bef1e1e201dd46a05eca4a8ca61f997",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts",
+      "current_blob": "04330a8bf6872632e262eed6c4917d0751946185",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "04330a8bf6872632e262eed6c4917d0751946185"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/__tests__/radius-everywhere.test.ts",
+      "source_blob": "9eff2f4dcf1a90f207a248be9c8e74d7b6682940",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/radius-everywhere.test.ts",
+      "current_blob": "5d002c638d7d450a06e86387c2a3f3ef9fe47797",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "5d002c638d7d450a06e86387c2a3f3ef9fe47797"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/__tests__/resize-math.test.ts",
+      "source_blob": "01f427e46b2e246ff87c87e13284c1ba30d21add",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/resize-math.test.ts",
+      "current_blob": "01f427e46b2e246ff87c87e13284c1ba30d21add",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "01f427e46b2e246ff87c87e13284c1ba30d21add"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/__tests__/sash-terminal-clearance.test.ts",
+      "source_blob": "9017c36cf69307c3f449301dc18eeddf7c5921f6",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/sash-terminal-clearance.test.ts",
+      "current_blob": "bd3bcea16c4fbf760c9969d645a0d319c019543f",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "bd3bcea16c4fbf760c9969d645a0d319c019543f"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/__tests__/zed-appearance/appearance.browser.test.ts",
+      "source_blob": "890ed43311da1a979b4a8af827be17b73a02ec4f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/zed-appearance/appearance.browser.test.ts",
+      "current_blob": "a351518427f5d3a295c7e7741fe7d4309b8d324e",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "a351518427f5d3a295c7e7741fe7d4309b8d324e"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/__tests__/zed-appearance/bootstrap.ts",
+      "source_blob": "44ce3506097ffcaeb242b6a65e3ac78cd4fc77f8",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/zed-appearance/bootstrap.ts",
+      "current_blob": "44ce3506097ffcaeb242b6a65e3ac78cd4fc77f8",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "44ce3506097ffcaeb242b6a65e3ac78cd4fc77f8"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/__tests__/zed-appearance/index.html",
+      "source_blob": "c772d3ca9fb6ef2235ea46ebada065a243472a92",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/zed-appearance/index.html",
+      "current_blob": "c772d3ca9fb6ef2235ea46ebada065a243472a92",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "c772d3ca9fb6ef2235ea46ebada065a243472a92"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/__tests__/zed-appearance/main.tsx",
+      "source_blob": "61f567254114d59195fb98a1a2700bb1a952f1a3",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/zed-appearance/main.tsx",
+      "current_blob": "61f567254114d59195fb98a1a2700bb1a952f1a3",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "61f567254114d59195fb98a1a2700bb1a952f1a3"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/__tests__/zed-appearance/vite.config.ts",
+      "source_blob": "08fb9a5047e77913cfb87c2f4dcf7499eaaf6b81",
+      "current_path": "apps/electron/src/renderer/components/app-shell/__tests__/zed-appearance/vite.config.ts",
+      "current_blob": "08fb9a5047e77913cfb87c2f4dcf7499eaaf6b81",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "08fb9a5047e77913cfb87c2f4dcf7499eaaf6b81"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/collection/CollectionBulkBar.tsx",
+      "source_blob": "bff96dc089a12642da63482c3da6fc7983e994ca",
+      "current_path": "apps/electron/src/renderer/components/app-shell/collection/CollectionBulkBar.tsx",
+      "current_blob": "bff96dc089a12642da63482c3da6fc7983e994ca",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "bff96dc089a12642da63482c3da6fc7983e994ca"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/collection/CollectionDisplayPopover.tsx",
+      "source_blob": "e0b266e369c2975c86ee6552fd331a3e897837ac",
+      "current_path": "apps/electron/src/renderer/components/app-shell/collection/CollectionDisplayPopover.tsx",
+      "current_blob": "e0b266e369c2975c86ee6552fd331a3e897837ac",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "e0b266e369c2975c86ee6552fd331a3e897837ac"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/collection/CollectionFilterChips.tsx",
+      "source_blob": "ef7c0fb98242451aaac6032d8272e9dcb1020219",
+      "current_path": "apps/electron/src/renderer/components/app-shell/collection/CollectionFilterChips.tsx",
+      "current_blob": "ef7c0fb98242451aaac6032d8272e9dcb1020219",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "ef7c0fb98242451aaac6032d8272e9dcb1020219"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/collection/CollectionFilterMenu.tsx",
+      "source_blob": "a82e1d472c881ae3b163aa4cd4f5fcf47db94754",
+      "current_path": "apps/electron/src/renderer/components/app-shell/collection/CollectionFilterMenu.tsx",
+      "current_blob": "a82e1d472c881ae3b163aa4cd4f5fcf47db94754",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "a82e1d472c881ae3b163aa4cd4f5fcf47db94754"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/collection/CollectionGroupByMenu.tsx",
+      "source_blob": "bc9f2189c52fc2adb33bd8067ad49d0abf5df0c5",
+      "current_path": "apps/electron/src/renderer/components/app-shell/collection/CollectionGroupByMenu.tsx",
+      "current_blob": "bc9f2189c52fc2adb33bd8067ad49d0abf5df0c5",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "bc9f2189c52fc2adb33bd8067ad49d0abf5df0c5"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/collection/CollectionViewCycleButton.tsx",
+      "source_blob": "fbe2035d9adc429053c41e45d300120bd7a252b8",
+      "current_path": "apps/electron/src/renderer/components/app-shell/collection/CollectionViewCycleButton.tsx",
+      "current_blob": "e81d4335f20065767f289b36eeb3ee4f7f39c54c",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "e81d4335f20065767f289b36eeb3ee4f7f39c54c"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/collection/collection-menu-row.tsx",
+      "source_blob": "8877c1b928093a614b2d9238daaddb35e6d7b6a6",
+      "current_path": "apps/electron/src/renderer/components/app-shell/collection/collection-menu-row.tsx",
+      "current_blob": "8877c1b928093a614b2d9238daaddb35e6d7b6a6",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "8877c1b928093a614b2d9238daaddb35e6d7b6a6"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/input/CompactModelSelector.tsx",
+      "source_blob": "2eafe7837f33676937977dfa088ccb6e5ced947e",
+      "current_path": "apps/electron/src/renderer/components/app-shell/input/CompactModelSelector.tsx",
+      "current_blob": "6cab11e3a79dc23a1133eca29971f34a0d9b2b8d",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "6cab11e3a79dc23a1133eca29971f34a0d9b2b8d"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/input/CompactPermissionModeSelector.tsx",
+      "source_blob": "76fa7f1ff5f6e1fccbf7962504323da0ac77ceaa",
+      "current_path": "apps/electron/src/renderer/components/app-shell/input/CompactPermissionModeSelector.tsx",
+      "current_blob": "b706b1978fc9cde2e0272c92d8f24768ed533961",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "b706b1978fc9cde2e0272c92d8f24768ed533961"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx",
+      "source_blob": "0b74ab767014d7cebc0731d033abbf63d8c6174b",
+      "current_path": "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx",
+      "current_blob": "d00b7aa048d07374f61e6acba35b36a22c92a827",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "d00b7aa048d07374f61e6acba35b36a22c92a827"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/input/FreeFormInputContextBadge.tsx",
+      "source_blob": "2f19e82d55e865f91e8716b523ca8e2c0e4bbf79",
+      "current_path": "apps/electron/src/renderer/components/app-shell/input/FreeFormInputContextBadge.tsx",
+      "current_blob": "2f19e82d55e865f91e8716b523ca8e2c0e4bbf79",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "2f19e82d55e865f91e8716b523ca8e2c0e4bbf79"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/input/InputContainer.tsx",
+      "source_blob": "8cf7775b437c663cfbaa03eebede599420fabbb4",
+      "current_path": "apps/electron/src/renderer/components/app-shell/input/InputContainer.tsx",
+      "current_blob": "925c3e6968222e0c5d3958a47bccf8a388f08066",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "925c3e6968222e0c5d3958a47bccf8a388f08066"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/input/InputErrorBoundary.tsx",
+      "source_blob": "90c1d652a04d9483458f8800679eb1b2e9cb48b8",
+      "current_path": "apps/electron/src/renderer/components/app-shell/input/InputErrorBoundary.tsx",
+      "current_blob": "90c1d652a04d9483458f8800679eb1b2e9cb48b8",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "90c1d652a04d9483458f8800679eb1b2e9cb48b8"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/input/ToolbarStatusSlot.tsx",
+      "source_blob": "8f9321ee4c74e775a5c393bb06731c6ffa324985",
+      "current_path": "apps/electron/src/renderer/components/app-shell/input/ToolbarStatusSlot.tsx",
+      "current_blob": "8f9321ee4c74e775a5c393bb06731c6ffa324985",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "8f9321ee4c74e775a5c393bb06731c6ffa324985"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/input/WorkingDirectorySelector.tsx",
+      "source_blob": "95cadcd89f3bfb131b4b0b9d65fdcfd5077eb5aa",
+      "current_path": "apps/electron/src/renderer/components/app-shell/input/WorkingDirectorySelector.tsx",
+      "current_blob": "31d64021d5b997bf1fdea20fec37afeda85a46b6",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "31d64021d5b997bf1fdea20fec37afeda85a46b6"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/input/structured/AdminApprovalRequest.tsx",
+      "source_blob": "13238602104bf13da0ee7dc5c786bd8dcfd330c7",
+      "current_path": "apps/electron/src/renderer/components/app-shell/input/structured/AdminApprovalRequest.tsx",
+      "current_blob": "13238602104bf13da0ee7dc5c786bd8dcfd330c7",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "13238602104bf13da0ee7dc5c786bd8dcfd330c7"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/input/structured/CredentialRequest.tsx",
+      "source_blob": "5fa21b788e6451defceb5cda6769d8131d84acd2",
+      "current_path": "apps/electron/src/renderer/components/app-shell/input/structured/CredentialRequest.tsx",
+      "current_blob": "5fa21b788e6451defceb5cda6769d8131d84acd2",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "5fa21b788e6451defceb5cda6769d8131d84acd2"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx",
+      "source_blob": "8dc5cc865231e5b6162e85685c5694fd27220a35",
+      "current_path": "apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx",
+      "current_blob": "a33b76d6c024d3cd6577051765e4565f721b9d71",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "a33b76d6c024d3cd6577051765e4565f721b9d71"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/kanban/KanbanBoardContainer.tsx",
+      "source_blob": "e91f808a70b1a09cf9bf90d04e89606787031250",
+      "current_path": "apps/electron/src/renderer/components/app-shell/kanban/KanbanBoardContainer.tsx",
+      "current_blob": "e91f808a70b1a09cf9bf90d04e89606787031250",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "e91f808a70b1a09cf9bf90d04e89606787031250"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/kanban/KanbanColumn.tsx",
+      "source_blob": "99e6a04397b0f2d594c282f37498c5505964d1b7",
+      "current_path": "apps/electron/src/renderer/components/app-shell/kanban/KanbanColumn.tsx",
+      "current_blob": "99e6a04397b0f2d594c282f37498c5505964d1b7",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "99e6a04397b0f2d594c282f37498c5505964d1b7"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/kanban/TaskChatPreview.tsx",
+      "source_blob": "ce2b2bd7edc6034ae2fce680b2ddaa7947b4db87",
+      "current_path": "apps/electron/src/renderer/components/app-shell/kanban/TaskChatPreview.tsx",
+      "current_blob": "ce2b2bd7edc6034ae2fce680b2ddaa7947b4db87",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "ce2b2bd7edc6034ae2fce680b2ddaa7947b4db87"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/kanban/TaskEditor.tsx",
+      "source_blob": "5bccaa5237e6017fd1579847a68410779995d5ab",
+      "current_path": "apps/electron/src/renderer/components/app-shell/kanban/TaskEditor.tsx",
+      "current_blob": "5bccaa5237e6017fd1579847a68410779995d5ab",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "5bccaa5237e6017fd1579847a68410779995d5ab"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/panel-constants.ts",
+      "source_blob": "0a71bf1e61e563a259f0a28423e8bf67ca94a60f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/panel-constants.ts",
+      "current_blob": "dd7da3fc7193d2498eb536359904f4f1955f933f",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "dd7da3fc7193d2498eb536359904f4f1955f933f"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/session-heatmap/SessionHeatmapHost.tsx",
+      "source_blob": "d26263eff9aa82957932d28c0b65ae2092504237",
+      "current_path": "apps/electron/src/renderer/components/app-shell/session-heatmap/SessionHeatmapHost.tsx",
+      "current_blob": "d26263eff9aa82957932d28c0b65ae2092504237",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "d26263eff9aa82957932d28c0b65ae2092504237"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/session-table/SessionTableGroupHeader.tsx",
+      "source_blob": "fe5a57b9eedbd08eb6ba8a6a304d92fdab4be68f",
+      "current_path": "apps/electron/src/renderer/components/app-shell/session-table/SessionTableGroupHeader.tsx",
+      "current_blob": "fe5a57b9eedbd08eb6ba8a6a304d92fdab4be68f",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "fe5a57b9eedbd08eb6ba8a6a304d92fdab4be68f"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/session-table/SessionTableRow.tsx",
+      "source_blob": "1200f4c94b8026fdc2a9ccb586274cb1e05111b5",
+      "current_path": "apps/electron/src/renderer/components/app-shell/session-table/SessionTableRow.tsx",
+      "current_blob": "1200f4c94b8026fdc2a9ccb586274cb1e05111b5",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "1200f4c94b8026fdc2a9ccb586274cb1e05111b5"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/app-shell/titlebar-mode-pill.css",
+      "source_blob": "1ff3197871b2c97698c947617e1d27a8226883ef",
+      "current_path": "apps/electron/src/renderer/components/app-shell/titlebar-mode-pill.css",
+      "current_blob": "1ff3197871b2c97698c947617e1d27a8226883ef",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "1ff3197871b2c97698c947617e1d27a8226883ef"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/automations/AutomationAvatar.tsx",
+      "source_blob": "5e2a340db83decdc5ed52eae1c730647b65d5045",
+      "current_path": "apps/electron/src/renderer/components/automations/AutomationAvatar.tsx",
+      "current_blob": "5e2a340db83decdc5ed52eae1c730647b65d5045",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "5e2a340db83decdc5ed52eae1c730647b65d5045"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/automations/AutomationCard.tsx",
+      "source_blob": "044e63993dbfc2cc10ec8bdeb0deba2ae3fd387f",
+      "current_path": "apps/electron/src/renderer/components/automations/AutomationCard.tsx",
+      "current_blob": "044e63993dbfc2cc10ec8bdeb0deba2ae3fd387f",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "044e63993dbfc2cc10ec8bdeb0deba2ae3fd387f"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx",
+      "source_blob": "0ee639d7af93637cefda3915150ae6c971e8c903",
+      "current_path": "apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx",
+      "current_blob": "0ee639d7af93637cefda3915150ae6c971e8c903",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "0ee639d7af93637cefda3915150ae6c971e8c903"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/automations/AutomationInfoPage.tsx",
+      "source_blob": "d096266eb2c6599fca0d5462c9e23155b87a2de3",
+      "current_path": "apps/electron/src/renderer/components/automations/AutomationInfoPage.tsx",
+      "current_blob": "d096266eb2c6599fca0d5462c9e23155b87a2de3",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "d096266eb2c6599fca0d5462c9e23155b87a2de3"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/automations/CronBuilder.tsx",
+      "source_blob": "79979ed2418fdb0f47d9d7036193949695dea68d",
+      "current_path": "apps/electron/src/renderer/components/automations/CronBuilder.tsx",
+      "current_blob": "79979ed2418fdb0f47d9d7036193949695dea68d",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "79979ed2418fdb0f47d9d7036193949695dea68d"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/automations/automations.css",
+      "source_blob": "3fa88511b51eaf9fb2001bbe0579b50685b6c263",
+      "current_path": "apps/electron/src/renderer/components/automations/automations.css",
+      "current_blob": "3fa88511b51eaf9fb2001bbe0579b50685b6c263",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "3fa88511b51eaf9fb2001bbe0579b50685b6c263"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/browser/BrowserTabBadge.tsx",
+      "source_blob": "a39f4e4c72079da06a48f2b5e5a0075c27f999b6",
+      "current_path": "apps/electron/src/renderer/components/browser/BrowserTabBadge.tsx",
+      "current_blob": "a39f4e4c72079da06a48f2b5e5a0075c27f999b6",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "a39f4e4c72079da06a48f2b5e5a0075c27f999b6"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/browser/BrowserToolbar.tsx",
+      "source_blob": "5e2dcac835f2cbdecd99ef3e67dd8df96c2b9942",
+      "current_path": "apps/electron/src/renderer/components/browser/BrowserToolbar.tsx",
+      "current_blob": "5e2dcac835f2cbdecd99ef3e67dd8df96c2b9942",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "5e2dcac835f2cbdecd99ef3e67dd8df96c2b9942"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/browser/ElementInspectConfirm.tsx",
+      "source_blob": "877c132635e87374986a7b9ce7458b4fb5b897d2",
+      "current_path": "apps/electron/src/renderer/components/browser/ElementInspectConfirm.tsx",
+      "current_blob": "877c132635e87374986a7b9ce7458b4fb5b897d2",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "877c132635e87374986a7b9ce7458b4fb5b897d2"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/browser/WebBrowserPanel.tsx",
+      "source_blob": "044404caffe64658bfc0132dbd8c2b2a66ad6036",
+      "current_path": "apps/electron/src/renderer/components/browser/WebBrowserPanel.tsx",
+      "current_blob": "649b4e23823d52feadb49668ba43d28ed5a52d4b",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "649b4e23823d52feadb49668ba43d28ed5a52d4b"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/calendar/CalendarStatusStrip.tsx",
+      "source_blob": "f6347698706f4f8b6275b2e66d5bdf8934bfddc5",
+      "current_path": "apps/electron/src/renderer/components/calendar/CalendarStatusStrip.tsx",
+      "current_blob": "f6347698706f4f8b6275b2e66d5bdf8934bfddc5",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "f6347698706f4f8b6275b2e66d5bdf8934bfddc5"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/chat/AuthRequestCard.tsx",
+      "source_blob": "27541e8673c7a8d9063ad8b7b26be9d231511a4c",
+      "current_path": "apps/electron/src/renderer/components/chat/AuthRequestCard.tsx",
+      "current_blob": "27541e8673c7a8d9063ad8b7b26be9d231511a4c",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "27541e8673c7a8d9063ad8b7b26be9d231511a4c"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/chat/EmptyStateHint.tsx",
+      "source_blob": "6add4fe508b566ef83a31aad49215a4f012d3c5d",
+      "current_path": "apps/electron/src/renderer/components/chat/EmptyStateHint.tsx",
+      "current_blob": "6add4fe508b566ef83a31aad49215a4f012d3c5d",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "6add4fe508b566ef83a31aad49215a4f012d3c5d"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/cloud-runs/CloudRunsChip.tsx",
+      "source_blob": "b129548f714d3f893d700c651b99d775c9e9bb41",
+      "current_path": "apps/electron/src/renderer/components/cloud-runs/CloudRunsChip.tsx",
+      "current_blob": "b129548f714d3f893d700c651b99d775c9e9bb41",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "b129548f714d3f893d700c651b99d775c9e9bb41"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/code-intelligence/RepositorySnapshotPanel.tsx",
+      "source_blob": "95473e02336eec3d8017f018c8e897d015bb1bd3",
+      "current_path": "apps/electron/src/renderer/components/code-intelligence/RepositorySnapshotPanel.tsx",
+      "current_blob": "95473e02336eec3d8017f018c8e897d015bb1bd3",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "95473e02336eec3d8017f018c8e897d015bb1bd3"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/files/FileViewer.tsx",
+      "source_blob": "2b41ce5ce4e18d3be5f46163bbab74ada247b045",
+      "current_path": "apps/electron/src/renderer/components/files/FileViewer.tsx",
+      "current_blob": "2b41ce5ce4e18d3be5f46163bbab74ada247b045",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "2b41ce5ce4e18d3be5f46163bbab74ada247b045"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/icons/ConnectionIcon.tsx",
+      "source_blob": "462213e89a57a7aeb0270c2e19b52e81fe93fac3",
+      "current_path": "apps/electron/src/renderer/components/icons/ConnectionIcon.tsx",
+      "current_blob": "462213e89a57a7aeb0270c2e19b52e81fe93fac3",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "462213e89a57a7aeb0270c2e19b52e81fe93fac3"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/info/AutoRulesDataTable.tsx",
+      "source_blob": "c5ad0eb0a1c72c163a23787929cb46f469e40cb1",
+      "current_path": "apps/electron/src/renderer/components/info/AutoRulesDataTable.tsx",
+      "current_blob": "c5ad0eb0a1c72c163a23787929cb46f469e40cb1",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "c5ad0eb0a1c72c163a23787929cb46f469e40cb1"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/info/Info_Alert.tsx",
+      "source_blob": "99ccfe0b50a03ccbd7401458cbf023940bc6f41f",
+      "current_path": "apps/electron/src/renderer/components/info/Info_Alert.tsx",
+      "current_blob": "99ccfe0b50a03ccbd7401458cbf023940bc6f41f",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "99ccfe0b50a03ccbd7401458cbf023940bc6f41f"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/info/Info_Badge.tsx",
+      "source_blob": "a6ed6486081265fb6cd4c7cf7cd646bfbd44e405",
+      "current_path": "apps/electron/src/renderer/components/info/Info_Badge.tsx",
+      "current_blob": "a6ed6486081265fb6cd4c7cf7cd646bfbd44e405",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "a6ed6486081265fb6cd4c7cf7cd646bfbd44e405"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/info/Info_Markdown.tsx",
+      "source_blob": "ace75c320ea3eb597c77fd67bee016545c20967c",
+      "current_path": "apps/electron/src/renderer/components/info/Info_Markdown.tsx",
+      "current_blob": "ace75c320ea3eb597c77fd67bee016545c20967c",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "ace75c320ea3eb597c77fd67bee016545c20967c"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/info/Info_Page.tsx",
+      "source_blob": "30ea34e3edb1da2c44c2bac97c3b5d90823eed02",
+      "current_path": "apps/electron/src/renderer/components/info/Info_Page.tsx",
+      "current_blob": "30ea34e3edb1da2c44c2bac97c3b5d90823eed02",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "30ea34e3edb1da2c44c2bac97c3b5d90823eed02"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/info/Info_Section.tsx",
+      "source_blob": "ed385d4890c259d0f1108b0e383c2779a968c350",
+      "current_path": "apps/electron/src/renderer/components/info/Info_Section.tsx",
+      "current_blob": "ed385d4890c259d0f1108b0e383c2779a968c350",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "ed385d4890c259d0f1108b0e383c2779a968c350"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/info/LabelsDataTable.tsx",
+      "source_blob": "5a187c39b116a35ee0c8b8d1bc906d5452168c3c",
+      "current_path": "apps/electron/src/renderer/components/info/LabelsDataTable.tsx",
+      "current_blob": "5a187c39b116a35ee0c8b8d1bc906d5452168c3c",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "5a187c39b116a35ee0c8b8d1bc906d5452168c3c"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/info/PermissionsDataTable.tsx",
+      "source_blob": "758a6cad6c55960e19bd8bf07d386095a30332ac",
+      "current_path": "apps/electron/src/renderer/components/info/PermissionsDataTable.tsx",
+      "current_blob": "758a6cad6c55960e19bd8bf07d386095a30332ac",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "758a6cad6c55960e19bd8bf07d386095a30332ac"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/meetings/MeetingRecordingIndicator.tsx",
+      "source_blob": "e66e7c22547afe38c5d1eb9dd46e27f52e8b1a22",
+      "current_path": "apps/electron/src/renderer/components/meetings/MeetingRecordingIndicator.tsx",
+      "current_blob": "e66e7c22547afe38c5d1eb9dd46e27f52e8b1a22",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "e66e7c22547afe38c5d1eb9dd46e27f52e8b1a22"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/memory/MemoryScreen.tsx",
+      "source_blob": "74d47c9e3a17a2a2dba85e5569395bb616ac60b6",
+      "current_path": "apps/electron/src/renderer/components/memory/MemoryScreen.tsx",
+      "current_blob": "ac30fb1c234513878d71b07291a8a2f961d5eec4",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "99eff62fe34c82fb2ef770089e74b693c564e077"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/messaging/MessagingPlatformIcon.tsx",
+      "source_blob": "39f45ba310ed0de43078ed47dca49baef25cae28",
+      "current_path": "apps/electron/src/renderer/components/messaging/MessagingPlatformIcon.tsx",
+      "current_blob": "39f45ba310ed0de43078ed47dca49baef25cae28",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "39f45ba310ed0de43078ed47dca49baef25cae28"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/mode-screen/ModeScreen.tsx",
+      "source_blob": "d007b48218fa6e8849b6156c865899b517dcd670",
+      "current_path": "apps/electron/src/renderer/components/mode-screen/ModeScreen.tsx",
+      "current_blob": "f3edaa5e17a09d137a26ba57761d6dd23efe3746",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "f3edaa5e17a09d137a26ba57761d6dd23efe3746"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/onboarding/APISetupStep.tsx",
+      "source_blob": "2cae3a591c33e1362e288a7eaa04bf708b11f06c",
+      "current_path": "apps/electron/src/renderer/components/onboarding/APISetupStep.tsx",
+      "current_blob": "2cae3a591c33e1362e288a7eaa04bf708b11f06c",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "2cae3a591c33e1362e288a7eaa04bf708b11f06c"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/onboarding/BrowserImportPreferences.tsx",
+      "source_blob": "409fbe755e6de25dcb90fb6c65fdd9fa304be453",
+      "current_path": "apps/electron/src/renderer/components/onboarding/BrowserImportPreferences.tsx",
+      "current_blob": "409fbe755e6de25dcb90fb6c65fdd9fa304be453",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "409fbe755e6de25dcb90fb6c65fdd9fa304be453"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/onboarding/CredentialsStep.tsx",
+      "source_blob": "e51d92bcbaed7136924de256ad786705134eb684",
+      "current_path": "apps/electron/src/renderer/components/onboarding/CredentialsStep.tsx",
+      "current_blob": "e51d92bcbaed7136924de256ad786705134eb684",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "e51d92bcbaed7136924de256ad786705134eb684"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/onboarding/ProviderSelectStep.tsx",
+      "source_blob": "c3deb9342ff60b1de6afda733a8f1159dd6bc6fa",
+      "current_path": "apps/electron/src/renderer/components/onboarding/ProviderSelectStep.tsx",
+      "current_blob": "c3deb9342ff60b1de6afda733a8f1159dd6bc6fa",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "c3deb9342ff60b1de6afda733a8f1159dd6bc6fa"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/onboarding/WelcomeBrowserImportPreferences.tsx",
+      "source_blob": "f4c9332a2bb72cfe29e33ad0b330c3de19930a6f",
+      "current_path": "apps/electron/src/renderer/components/onboarding/WelcomeBrowserImportPreferences.tsx",
+      "current_blob": "f4c9332a2bb72cfe29e33ad0b330c3de19930a6f",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "f4c9332a2bb72cfe29e33ad0b330c3de19930a6f"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/pages/PageTile.tsx",
+      "source_blob": "8070cea22f68649ae0790f60e5d61858f96c6cbe",
+      "current_path": "apps/electron/src/renderer/components/pages/PageTile.tsx",
+      "current_blob": "8070cea22f68649ae0790f60e5d61858f96c6cbe",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "8070cea22f68649ae0790f60e5d61858f96c6cbe"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/pages/PageView.tsx",
+      "source_blob": "beed7f81d2d72846192b05b01384ca2585a5641e",
+      "current_path": "apps/electron/src/renderer/components/pages/PageView.tsx",
+      "current_blob": "71ad1f1a0a639327edcbd5e89486857771a46fb8",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "71ad1f1a0a639327edcbd5e89486857771a46fb8"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/pages/PagesHome.tsx",
+      "source_blob": "548d08ccc1230958e0e3e880f8fa522acd7b759d",
+      "current_path": "apps/electron/src/renderer/components/pages/PagesHome.tsx",
+      "current_blob": "f006b165756bf3b1e29d6d73b124cb4adf2e4dee",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "f006b165756bf3b1e29d6d73b124cb4adf2e4dee"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/projects/ProjectAuthorityConnectionPanel.tsx",
+      "source_blob": "2b04dfe55f0f038be81d5eacd77bba74ea45c815",
+      "current_path": "apps/electron/src/renderer/components/projects/ProjectAuthorityConnectionPanel.tsx",
+      "current_blob": "2b04dfe55f0f038be81d5eacd77bba74ea45c815",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "2b04dfe55f0f038be81d5eacd77bba74ea45c815"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/right-sidebar/SessionFilesSection.tsx",
+      "source_blob": "6a3a3035ad858810fc9b6dc9a88a8f3322039ead",
+      "current_path": "apps/electron/src/renderer/components/right-sidebar/SessionFilesSection.tsx",
+      "current_blob": "b9b49cae8aac12d7bc6c910e54b12d77460b341a",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "b9b49cae8aac12d7bc6c910e54b12d77460b341a"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/session-inspector/BottomTerminalDock.tsx",
+      "source_blob": "5da5c2c1fc4af4cadbd4c21e752cf866e7460ad6",
+      "current_path": "apps/electron/src/renderer/components/session-inspector/BottomTerminalDock.tsx",
+      "current_blob": "5da5c2c1fc4af4cadbd4c21e752cf866e7460ad6",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "5da5c2c1fc4af4cadbd4c21e752cf866e7460ad6"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/session-inspector/InspectorTerminal.tsx",
+      "source_blob": "fcae00a95111ea9228a53139df5b44f904d04ea2",
+      "current_path": "apps/electron/src/renderer/components/session-inspector/InspectorTerminal.tsx",
+      "current_blob": "fcae00a95111ea9228a53139df5b44f904d04ea2",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "fcae00a95111ea9228a53139df5b44f904d04ea2"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/session-workbench/RightSessionShell.tsx",
+      "source_blob": "df51e4c11a838006394dec8ca40d645c426c9a2c",
+      "current_path": "apps/electron/src/renderer/components/session-workbench/RightSessionShell.tsx",
+      "current_blob": "df51e4c11a838006394dec8ca40d645c426c9a2c",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "df51e4c11a838006394dec8ca40d645c426c9a2c"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/session-workbench/SessionWorkflowEditor.tsx",
+      "source_blob": "87c2099e5331ade291fab675abe59d7911b32810",
+      "current_path": "apps/electron/src/renderer/components/session-workbench/SessionWorkflowEditor.tsx",
+      "current_blob": "87c2099e5331ade291fab675abe59d7911b32810",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "87c2099e5331ade291fab675abe59d7911b32810"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/settings/SettingsCard.tsx",
+      "source_blob": "986eed93f9ec08caf23c6ff285f7aced3fcc27b7",
+      "current_path": "apps/electron/src/renderer/components/settings/SettingsCard.tsx",
+      "current_blob": "986eed93f9ec08caf23c6ff285f7aced3fcc27b7",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "986eed93f9ec08caf23c6ff285f7aced3fcc27b7"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/settings/SettingsEditRow.tsx",
+      "source_blob": "fdad452ab988e5195d0d106648595c5c9bb06196",
+      "current_path": "apps/electron/src/renderer/components/settings/SettingsEditRow.tsx",
+      "current_blob": "fdad452ab988e5195d0d106648595c5c9bb06196",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "fdad452ab988e5195d0d106648595c5c9bb06196"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/settings/SettingsMenuSelect.tsx",
+      "source_blob": "e5896cdf0a1a1f2d84847cf630bce52a997397d6",
+      "current_path": "apps/electron/src/renderer/components/settings/SettingsMenuSelect.tsx",
+      "current_blob": "0de2fa0c5b0fb2098ce3d5541e047ea67cdee2cc",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "0de2fa0c5b0fb2098ce3d5541e047ea67cdee2cc"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/settings/SettingsRadioGroup.tsx",
+      "source_blob": "8344e3298019fdd940088b118d9b46030bd51bed",
+      "current_path": "apps/electron/src/renderer/components/settings/SettingsRadioGroup.tsx",
+      "current_blob": "8344e3298019fdd940088b118d9b46030bd51bed",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "8344e3298019fdd940088b118d9b46030bd51bed"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/settings/SettingsSegmentedControl.tsx",
+      "source_blob": "9c73df58108f4abd2184c9c86e7ba7d7a25bcc18",
+      "current_path": "apps/electron/src/renderer/components/settings/SettingsSegmentedControl.tsx",
+      "current_blob": "9c73df58108f4abd2184c9c86e7ba7d7a25bcc18",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "9c73df58108f4abd2184c9c86e7ba7d7a25bcc18"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/shiki/ShikiCodeEditor.tsx",
+      "source_blob": "3e7baa102762bdcbc3ee0d40ce0e54ff618d4925",
+      "current_path": "apps/electron/src/renderer/components/shiki/ShikiCodeEditor.tsx",
+      "current_blob": "3e7baa102762bdcbc3ee0d40ce0e54ff618d4925",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "3e7baa102762bdcbc3ee0d40ce0e54ff618d4925"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/CompactSourceSelector.tsx",
+      "source_blob": "657cb66f63cccd2c62b9cb8a3fa1f424527399f5",
+      "current_path": "apps/electron/src/renderer/components/ui/CompactSourceSelector.tsx",
+      "current_blob": "077cab661b51550e362f0dc012375cc8fed3c061",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "077cab661b51550e362f0dc012375cc8fed3c061"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/CompactWorkingDirectorySelector.tsx",
+      "source_blob": "c40760bc706717968d9bf70fe9640184fd122d05",
+      "current_path": "apps/electron/src/renderer/components/ui/CompactWorkingDirectorySelector.tsx",
+      "current_blob": "c40760bc706717968d9bf70fe9640184fd122d05",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "c40760bc706717968d9bf70fe9640184fd122d05"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/EditPopover.tsx",
+      "source_blob": "e997f799b1b173c99f42fa293044e11107681174",
+      "current_path": "apps/electron/src/renderer/components/ui/EditPopover.tsx",
+      "current_blob": "e997f799b1b173c99f42fa293044e11107681174",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "e997f799b1b173c99f42fa293044e11107681174"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/HeaderIconButton.tsx",
+      "source_blob": "d46aa0c6aa9e231d5afe046c59b2e87425f3dd28",
+      "current_path": "apps/electron/src/renderer/components/ui/HeaderIconButton.tsx",
+      "current_blob": "d46aa0c6aa9e231d5afe046c59b2e87425f3dd28",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "d46aa0c6aa9e231d5afe046c59b2e87425f3dd28"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/PanelHeaderCenterButton.tsx",
+      "source_blob": "3ab06d4d3c096aea97440f4edfd1658025beadfc",
+      "current_path": "apps/electron/src/renderer/components/ui/PanelHeaderCenterButton.tsx",
+      "current_blob": "3ab06d4d3c096aea97440f4edfd1658025beadfc",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "3ab06d4d3c096aea97440f4edfd1658025beadfc"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/SkillSelectorPopover.tsx",
+      "source_blob": "ec3f9fe7c59ffb8d3cb9f346773854d0d908f920",
+      "current_path": "apps/electron/src/renderer/components/ui/SkillSelectorPopover.tsx",
+      "current_blob": "ec3f9fe7c59ffb8d3cb9f346773854d0d908f920",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "ec3f9fe7c59ffb8d3cb9f346773854d0d908f920"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/SourceSelectorPopover.tsx",
+      "source_blob": "efc2ab00de019bfdc376692fe6ab22b16b563229",
+      "current_path": "apps/electron/src/renderer/components/ui/SourceSelectorPopover.tsx",
+      "current_blob": "496218a5ff900b4bd68a7760639c51c91ea0a89f",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "496218a5ff900b4bd68a7760639c51c91ea0a89f"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/TopBarButton.tsx",
+      "source_blob": "0c85fe98fc5ff40c51eb042bc5e01bfd71f5c6f0",
+      "current_path": "apps/electron/src/renderer/components/ui/TopBarButton.tsx",
+      "current_blob": "0c85fe98fc5ff40c51eb042bc5e01bfd71f5c6f0",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "0c85fe98fc5ff40c51eb042bc5e01bfd71f5c6f0"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/calendar.tsx",
+      "source_blob": "ceb5b4f70b48659db3cb576b419c0904543f1e47",
+      "current_path": "apps/electron/src/renderer/components/ui/calendar.tsx",
+      "current_blob": "ceb5b4f70b48659db3cb576b419c0904543f1e47",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "ceb5b4f70b48659db3cb576b419c0904543f1e47"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/entity-icon.tsx",
+      "source_blob": "b8567d4044578e6e5f5570b61cefadda315ca219",
+      "current_path": "apps/electron/src/renderer/components/ui/entity-icon.tsx",
+      "current_blob": "b8567d4044578e6e5f5570b61cefadda315ca219",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "b8567d4044578e6e5f5570b61cefadda315ca219"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/entity-list-empty.tsx",
+      "source_blob": "6c04fa891e62a44457bc1008a264337a575f7694",
+      "current_path": "apps/electron/src/renderer/components/ui/entity-list-empty.tsx",
+      "current_blob": "6c04fa891e62a44457bc1008a264337a575f7694",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "6c04fa891e62a44457bc1008a264337a575f7694"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/entity-list.tsx",
+      "source_blob": "072e0ddbd660d9988f2b8397e1e3c4ca844e28fa",
+      "current_path": "apps/electron/src/renderer/components/ui/entity-list.tsx",
+      "current_blob": "072e0ddbd660d9988f2b8397e1e3c4ca844e28fa",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "072e0ddbd660d9988f2b8397e1e3c4ca844e28fa"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/entity-row.tsx",
+      "source_blob": "49280ab0b33d3bf5111fecc192023daa37ab84c2",
+      "current_path": "apps/electron/src/renderer/components/ui/entity-row.tsx",
+      "current_blob": "49280ab0b33d3bf5111fecc192023daa37ab84c2",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "49280ab0b33d3bf5111fecc192023daa37ab84c2"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/label-menu.tsx",
+      "source_blob": "7d92674617d62e26afa3017290516f2295207b75",
+      "current_path": "apps/electron/src/renderer/components/ui/label-menu.tsx",
+      "current_blob": "7d92674617d62e26afa3017290516f2295207b75",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "7d92674617d62e26afa3017290516f2295207b75"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/label-value-popover.tsx",
+      "source_blob": "e2a3b7b60371c90871b71ec205b2ea48423e411b",
+      "current_path": "apps/electron/src/renderer/components/ui/label-value-popover.tsx",
+      "current_blob": "e2a3b7b60371c90871b71ec205b2ea48423e411b",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "e2a3b7b60371c90871b71ec205b2ea48423e411b"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/mention-badge.tsx",
+      "source_blob": "5c6df31e88ff72f9f209c6f4fb50c9a6e3633e97",
+      "current_path": "apps/electron/src/renderer/components/ui/mention-badge.tsx",
+      "current_blob": "5c6df31e88ff72f9f209c6f4fb50c9a6e3633e97",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "5c6df31e88ff72f9f209c6f4fb50c9a6e3633e97"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/mention-menu.tsx",
+      "source_blob": "bac51acc483d00d80553f1c9be0388a299479af9",
+      "current_path": "apps/electron/src/renderer/components/ui/mention-menu.tsx",
+      "current_blob": "bac51acc483d00d80553f1c9be0388a299479af9",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "bac51acc483d00d80553f1c9be0388a299479af9"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/metadata-badge.tsx",
+      "source_blob": "574209a2721737449129303eac1d80b9a896eff2",
+      "current_path": "apps/electron/src/renderer/components/ui/metadata-badge.tsx",
+      "current_blob": "574209a2721737449129303eac1d80b9a896eff2",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "574209a2721737449129303eac1d80b9a896eff2"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/rich-text-input.tsx",
+      "source_blob": "123eabcbffbb6bbe89e3e242e04cb310f23ab758",
+      "current_path": "apps/electron/src/renderer/components/ui/rich-text-input.tsx",
+      "current_blob": "123eabcbffbb6bbe89e3e242e04cb310f23ab758",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "123eabcbffbb6bbe89e3e242e04cb310f23ab758"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/session-status-menu.tsx",
+      "source_blob": "63edb22e1f186da56ebb7b614e11c126c23dc715",
+      "current_path": "apps/electron/src/renderer/components/ui/session-status-menu.tsx",
+      "current_blob": "63edb22e1f186da56ebb7b614e11c126c23dc715",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "63edb22e1f186da56ebb7b614e11c126c23dc715"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/skill-mention-menu.tsx",
+      "source_blob": "f9ebaa9106019c94dadeb32a14ee9d13e402cb40",
+      "current_path": "apps/electron/src/renderer/components/ui/skill-mention-menu.tsx",
+      "current_blob": "f9ebaa9106019c94dadeb32a14ee9d13e402cb40",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "f9ebaa9106019c94dadeb32a14ee9d13e402cb40"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/slash-command-menu.tsx",
+      "source_blob": "1692e113145638fdc0a8b63e3d6e91cd2ca74c56",
+      "current_path": "apps/electron/src/renderer/components/ui/slash-command-menu.tsx",
+      "current_blob": "1692e113145638fdc0a8b63e3d6e91cd2ca74c56",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "1692e113145638fdc0a8b63e3d6e91cd2ca74c56"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/sonner.tsx",
+      "source_blob": "66484c9bd606fa771b26f7bcd8ce43b844c00485",
+      "current_path": "apps/electron/src/renderer/components/ui/sonner.tsx",
+      "current_blob": "66484c9bd606fa771b26f7bcd8ce43b844c00485",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "66484c9bd606fa771b26f7bcd8ce43b844c00485"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/sortable-list.tsx",
+      "source_blob": "7c62ceb972a2ef3bb2a0b7e5b0f6a406c3db30a5",
+      "current_path": "apps/electron/src/renderer/components/ui/sortable-list.tsx",
+      "current_blob": "7c62ceb972a2ef3bb2a0b7e5b0f6a406c3db30a5",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "7c62ceb972a2ef3bb2a0b7e5b0f6a406c3db30a5"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/ui/styled-context-menu.tsx",
+      "source_blob": "4c741c4652b902335da55446635df21b0d216d2d",
+      "current_path": "apps/electron/src/renderer/components/ui/styled-context-menu.tsx",
+      "current_blob": "4c741c4652b902335da55446635df21b0d216d2d",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "4c741c4652b902335da55446635df21b0d216d2d"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/workspace/AddWorkspaceStep_OpenFolder.tsx",
+      "source_blob": "990224791c4c6dac396ae64b93fb4e390fa53694",
+      "current_path": "apps/electron/src/renderer/components/workspace/AddWorkspaceStep_OpenFolder.tsx",
+      "current_blob": "990224791c4c6dac396ae64b93fb4e390fa53694",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "990224791c4c6dac396ae64b93fb4e390fa53694"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/workspace/AddWorkspaceStep_Ssh.tsx",
+      "source_blob": "ff5efa59aa8ee7d8640dc5b8bb69578cb05a4b46",
+      "current_path": "apps/electron/src/renderer/components/workspace/AddWorkspaceStep_Ssh.tsx",
+      "current_blob": "ff5efa59aa8ee7d8640dc5b8bb69578cb05a4b46",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "ff5efa59aa8ee7d8640dc5b8bb69578cb05a4b46"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/workspace/WorkspaceCreationScreen.tsx",
+      "source_blob": "f1e8e451d7d18d2e2a6142e4bcebb708a2c866e1",
+      "current_path": "apps/electron/src/renderer/components/workspace/WorkspaceCreationScreen.tsx",
+      "current_blob": "f1e8e451d7d18d2e2a6142e4bcebb708a2c866e1",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "f1e8e451d7d18d2e2a6142e4bcebb708a2c866e1"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/components/workspace/primitives.tsx",
+      "source_blob": "4802109ca041e48265d70f04ac437d11588f19f0",
+      "current_path": "apps/electron/src/renderer/components/workspace/primitives.tsx",
+      "current_blob": "4802109ca041e48265d70f04ac437d11588f19f0",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "4802109ca041e48265d70f04ac437d11588f19f0"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/context/ThemeContext.tsx",
+      "source_blob": "62c75daa07f67149daa502d3b68557b1302c7f02",
+      "current_path": "apps/electron/src/renderer/context/ThemeContext.tsx",
+      "current_blob": "65bc0ef10c31bbf55f073e3fdcb229cf05b21b60",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "65bc0ef10c31bbf55f073e3fdcb229cf05b21b60"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/context/theme-resolution.test.ts",
+      "source_blob": "9cf2ef83e542d48f9e56c762e408483567d01609",
+      "current_path": "apps/electron/src/renderer/context/theme-resolution.test.ts",
+      "current_blob": "9cf2ef83e542d48f9e56c762e408483567d01609",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "9cf2ef83e542d48f9e56c762e408483567d01609"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/context/theme-resolution.ts",
+      "source_blob": "317bea2295ad9cfacfaa9633419a47970693b1a7",
+      "current_path": "apps/electron/src/renderer/context/theme-resolution.ts",
+      "current_blob": "317bea2295ad9cfacfaa9633419a47970693b1a7",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "317bea2295ad9cfacfaa9633419a47970693b1a7"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/hooks/useShellAppearance.ts",
+      "source_blob": "28a87c07d58231aeda07f04871178a788647f9bc",
+      "current_path": "apps/electron/src/renderer/hooks/useShellAppearance.ts",
+      "current_blob": "28a87c07d58231aeda07f04871178a788647f9bc",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "28a87c07d58231aeda07f04871178a788647f9bc"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/hooks/useTheme.ts",
+      "source_blob": "bf53ebf6ac355532b2c10ca3e1f461dd47198906",
+      "current_path": "apps/electron/src/renderer/hooks/useTheme.ts",
+      "current_blob": "bf53ebf6ac355532b2c10ca3e1f461dd47198906",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "bf53ebf6ac355532b2c10ca3e1f461dd47198906"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/index.css",
+      "source_blob": "5a9adc915a6a0b0919753a30a2f5b7f04a089263",
+      "current_path": "apps/electron/src/renderer/index.css",
+      "current_blob": "5f111e9386ce239d982eae5379a34d09323c5fcf",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "5f111e9386ce239d982eae5379a34d09323c5fcf"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/lib/__tests__/authenticated-web-workspace-metadata.test.ts",
+      "source_blob": "3efa133809a57da539b036236bff93256015737f",
+      "current_path": "apps/electron/src/renderer/lib/__tests__/authenticated-web-workspace-metadata.test.ts",
+      "current_blob": "3efa133809a57da539b036236bff93256015737f",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "3efa133809a57da539b036236bff93256015737f"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/lib/__tests__/web-chrome-preference.test.ts",
+      "source_blob": "03a3410941a1709a128bd9c8e58bd8661c226948",
+      "current_path": "apps/electron/src/renderer/lib/__tests__/web-chrome-preference.test.ts",
+      "current_blob": "03a3410941a1709a128bd9c8e58bd8661c226948",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "03a3410941a1709a128bd9c8e58bd8661c226948"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/lib/animations.ts",
+      "source_blob": "a83f0e3d1daeec7158f43ecfee31aaa6855ce21d",
+      "current_path": "apps/electron/src/renderer/lib/animations.ts",
+      "current_blob": "a83f0e3d1daeec7158f43ecfee31aaa6855ce21d",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "a83f0e3d1daeec7158f43ecfee31aaa6855ce21d"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/lib/authenticated-web-bootstrap.ts",
+      "source_blob": "6f14f3600c8b209ad4a2dbe9dfd9c578ded7f40b",
+      "current_path": "apps/electron/src/renderer/lib/authenticated-web-bootstrap.ts",
+      "current_blob": "6f14f3600c8b209ad4a2dbe9dfd9c578ded7f40b",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "6f14f3600c8b209ad4a2dbe9dfd9c578ded7f40b"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/lib/web-chrome-preference.ts",
+      "source_blob": "6b3686f75bdec1dc59ca062f850b206090549a89",
+      "current_path": "apps/electron/src/renderer/lib/web-chrome-preference.ts",
+      "current_blob": "6b3686f75bdec1dc59ca062f850b206090549a89",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "6b3686f75bdec1dc59ca062f850b206090549a89"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/mindmap/MindMapHost.tsx",
+      "source_blob": "5c71c6c91ce7ae372d466c814d1e78afe4d2a76e",
+      "current_path": "apps/electron/src/renderer/mindmap/MindMapHost.tsx",
+      "current_blob": "5c71c6c91ce7ae372d466c814d1e78afe4d2a76e",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "5c71c6c91ce7ae372d466c814d1e78afe4d2a76e"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/mindmap/MindMapOutline.tsx",
+      "source_blob": "a8c3986dff90684dc76802fe799b7cf104b842b5",
+      "current_path": "apps/electron/src/renderer/mindmap/MindMapOutline.tsx",
+      "current_blob": "a8c3986dff90684dc76802fe799b7cf104b842b5",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "a8c3986dff90684dc76802fe799b7cf104b842b5"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/ConnectionsPage.tsx",
+      "source_blob": "8ec17bc9b828c5f8943f35e060bb8c691cb85019",
+      "current_path": "apps/electron/src/renderer/pages/ConnectionsPage.tsx",
+      "current_blob": "0fdeafde18817c567436759dee918a738fb0bce5",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "0fdeafde18817c567436759dee918a738fb0bce5"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/FeedPage.tsx",
+      "source_blob": "4cd1e73452410cbbad6f2a8bf3c7721671fa136c",
+      "current_path": "apps/electron/src/renderer/pages/FeedPage.tsx",
+      "current_blob": "54efcf16a211234d0072de270db93b2f1822d532",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "54efcf16a211234d0072de270db93b2f1822d532"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/InboxPage.tsx",
+      "source_blob": "d1a06ad1fbd04f002590c0921497a4f615536af5",
+      "current_path": "apps/electron/src/renderer/pages/InboxPage.tsx",
+      "current_blob": "1e9bf454e8a6c1dbb1f9a15943d08eec4381c132",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "1e9bf454e8a6c1dbb1f9a15943d08eec4381c132"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+      "source_blob": "171099b21968083022fa31200df67d02859cc084",
+      "current_path": "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+      "current_blob": "cc04d2e534637486492aa2deeec298bd4d5fbd4d",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "c78d0294c1add17d87e1a6517a563b1ccb96051c"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "source_blob": "0673ea340b4f9a589b09ddfa2b081742c4637515",
+      "current_path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "current_blob": "30af89f1ede6a37b0ad51dd96ab57639ccbbfe27",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "867dacee94d513663a622b27b03d0a1f71aedf7a"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "source_blob": "e3f3617a66e4bac9f212907a10159aff95355f3e",
+      "current_path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "current_blob": "043b6afc2c7081914d1f28bbcd197e1fcaa1680a",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "043b6afc2c7081914d1f28bbcd197e1fcaa1680a"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/SkillInfoPage.tsx",
+      "source_blob": "793390f0e638f37fef16add84387513301cb5986",
+      "current_path": "apps/electron/src/renderer/pages/SkillInfoPage.tsx",
+      "current_blob": "d5fd14517d0b5b7c6a7b693fe8ffbf381af5f614",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "83bc6dbd25d2acddc5872e5bd32816a316c2a880"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/SourceInfoPage.tsx",
+      "source_blob": "4ac80acdac52aa7e410bfd8649381845d6ad8aad",
+      "current_path": "apps/electron/src/renderer/pages/SourceInfoPage.tsx",
+      "current_blob": "c353bd348596fd85892422d40b23e99bd61d0f38",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "c353bd348596fd85892422d40b23e99bd61d0f38"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/TasksPage.tsx",
+      "source_blob": "6c97c8946814047377e86d095060b839e312e3ca",
+      "current_path": "apps/electron/src/renderer/pages/TasksPage.tsx",
+      "current_blob": "5018346d7b53ca9f5d8c1ab510f1602d7e314491",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "d7e12c3f16da8ce8653482d51b52c2ff06def15d"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/connections-overview.tsx",
+      "source_blob": "854be69a625a41e772e3ccbe1954ea101460690f",
+      "current_path": "apps/electron/src/renderer/pages/connections-overview.tsx",
+      "current_blob": "854be69a625a41e772e3ccbe1954ea101460690f",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "854be69a625a41e772e3ccbe1954ea101460690f"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/extra-screens/agents/AgentCenterPage.tsx",
+      "source_blob": "ddee4a04524073f4bed8621cf11b3ac9f2e34c1e",
+      "current_path": "apps/electron/src/renderer/pages/extra-screens/agents/AgentCenterPage.tsx",
+      "current_blob": "23dcf9657f503cf5fce8417def668ad20aefb52f",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "23dcf9657f503cf5fce8417def668ad20aefb52f"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/extra-screens/decisions/DecisionsPage.tsx",
+      "source_blob": "177a585f23b37fa1a0a322ab9218b4bb88cfea86",
+      "current_path": "apps/electron/src/renderer/pages/extra-screens/decisions/DecisionsPage.tsx",
+      "current_blob": "52bcea415664be57fa91dcd4791f8eebf3f11325",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "52bcea415664be57fa91dcd4791f8eebf3f11325"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+      "source_blob": "c001970c7fd75e9d019b8d4de66516e5a833e1ac",
+      "current_path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+      "current_blob": "56c8a21b20774ad1892c6197dd9806de6cb09553",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "56c8a21b20774ad1892c6197dd9806de6cb09553"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/extra-screens/focus/FocusPage.tsx",
+      "source_blob": "0abcc282d16647ddafa67f0c7201ea53228c7b91",
+      "current_path": "apps/electron/src/renderer/pages/extra-screens/focus/FocusPage.tsx",
+      "current_blob": "0abcc282d16647ddafa67f0c7201ea53228c7b91",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "0abcc282d16647ddafa67f0c7201ea53228c7b91"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/extra-screens/ui.tsx",
+      "source_blob": "cd7a11dc3510e259d498d8f697f22f9599d48339",
+      "current_path": "apps/electron/src/renderer/pages/extra-screens/ui.tsx",
+      "current_blob": "cd7a11dc3510e259d498d8f697f22f9599d48339",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "cd7a11dc3510e259d498d8f697f22f9599d48339"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/feed/FeedParts.tsx",
+      "source_blob": "3b5d30029dff7491b4c5c727533e9281c2985a71",
+      "current_path": "apps/electron/src/renderer/pages/feed/FeedParts.tsx",
+      "current_blob": "3b5d30029dff7491b4c5c727533e9281c2985a71",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "3b5d30029dff7491b4c5c727533e9281c2985a71"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/feed/FeedSources.tsx",
+      "source_blob": "492dcf7b6b409119a988a1004d6e71d44db07466",
+      "current_path": "apps/electron/src/renderer/pages/feed/FeedSources.tsx",
+      "current_blob": "18d354b48e3d4bd527fc1084a5b947fccdb8bfe2",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "18d354b48e3d4bd527fc1084a5b947fccdb8bfe2"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx",
+      "source_blob": "4fa94412d3d1a1ce163add0d0d2a6df898870632",
+      "current_path": "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx",
+      "current_blob": "a4714450e139282687deaea68b6d9b98fd29cb7c",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "a4714450e139282687deaea68b6d9b98fd29cb7c"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/meetings/LocalMeetingDetail.tsx",
+      "source_blob": "4f43f05313debd783b18f975283bc8cc2a0bf8c1",
+      "current_path": "apps/electron/src/renderer/pages/meetings/LocalMeetingDetail.tsx",
+      "current_blob": "dbe72afaa933c23956f404b890794714ffd4c688",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "dbe72afaa933c23956f404b890794714ffd4c688"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/meetings/ProposalInbox.tsx",
+      "source_blob": "6eb85a5a601f534afd6b51785c599155fba023a5",
+      "current_path": "apps/electron/src/renderer/pages/meetings/ProposalInbox.tsx",
+      "current_blob": "6eb85a5a601f534afd6b51785c599155fba023a5",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "6eb85a5a601f534afd6b51785c599155fba023a5"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/notes/NoteInspector.tsx",
+      "source_blob": "823c3c82e3dab0596106c3fbba734aca8410add6",
+      "current_path": "apps/electron/src/renderer/pages/notes/NoteInspector.tsx",
+      "current_blob": "cea188338927f2a9289d71bff506c686b20ca6f8",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "cea188338927f2a9289d71bff506c686b20ca6f8"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/notes/NotesAIMenu.tsx",
+      "source_blob": "3cb2139a7af1bcd3f1849ba5a9fbb7100888d606",
+      "current_path": "apps/electron/src/renderer/pages/notes/NotesAIMenu.tsx",
+      "current_blob": "3cb2139a7af1bcd3f1849ba5a9fbb7100888d606",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "3cb2139a7af1bcd3f1849ba5a9fbb7100888d606"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/notes/NotesDialogs.tsx",
+      "source_blob": "02db2cff516530c621049c8ba3bab03e0fcf1822",
+      "current_path": "apps/electron/src/renderer/pages/notes/NotesDialogs.tsx",
+      "current_blob": "ce8bc3e99526a297787a2e4fba95624928d75ccb",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "ce8bc3e99526a297787a2e4fba95624928d75ccb"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/notes/NotesDocumentChrome.tsx",
+      "source_blob": "d996305a34e85b2cbed45d38a916323950707a86",
+      "current_path": "apps/electron/src/renderer/pages/notes/NotesDocumentChrome.tsx",
+      "current_blob": "d508288ef9ee888b95956975dab060846bf1bfab",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "d508288ef9ee888b95956975dab060846bf1bfab"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/notes/NotesNavigationSidebar.tsx",
+      "source_blob": "5a92e46980c1bd9d0dd03885a69840f5ebce0bbb",
+      "current_path": "apps/electron/src/renderer/pages/notes/NotesNavigationSidebar.tsx",
+      "current_blob": "5a92e46980c1bd9d0dd03885a69840f5ebce0bbb",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "5a92e46980c1bd9d0dd03885a69840f5ebce0bbb"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx",
+      "source_blob": "a8f0ea095c078c9f25e5d074a01724d71ff10556",
+      "current_path": "apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx",
+      "current_blob": "a8f0ea095c078c9f25e5d074a01724d71ff10556",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "a8f0ea095c078c9f25e5d074a01724d71ff10556"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "source_blob": "84f74a7b03fc1f661e682442b950885a19209789",
+      "current_path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "current_blob": "84f74a7b03fc1f661e682442b950885a19209789",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "84f74a7b03fc1f661e682442b950885a19209789"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/notes/VaultIndexHealthPanel.tsx",
+      "source_blob": "fb72164a05992d8d26fb9876a3e81fc710d8aeeb",
+      "current_path": "apps/electron/src/renderer/pages/notes/VaultIndexHealthPanel.tsx",
+      "current_blob": "fb72164a05992d8d26fb9876a3e81fc710d8aeeb",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "fb72164a05992d8d26fb9876a3e81fc710d8aeeb"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/notes/VaultInsightsPanel.tsx",
+      "source_blob": "c71fdf08d6a0adfbf1cc6bf380e71be3d40c2e12",
+      "current_path": "apps/electron/src/renderer/pages/notes/VaultInsightsPanel.tsx",
+      "current_blob": "c71fdf08d6a0adfbf1cc6bf380e71be3d40c2e12",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "c71fdf08d6a0adfbf1cc6bf380e71be3d40c2e12"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx",
+      "source_blob": "4a94e7aae045ba8f2dea7eab7e677123933606d6",
+      "current_path": "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx",
+      "current_blob": "a2856469d835215c8efe9b1432fe2a454660d58c",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "a2856469d835215c8efe9b1432fe2a454660d58c"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.css",
+      "source_blob": "3cc4647d22e34db4b3a5df0d89dbe704ef807cd9",
+      "current_path": "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.css",
+      "current_blob": "3cc4647d22e34db4b3a5df0d89dbe704ef807cd9",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "3cc4647d22e34db4b3a5df0d89dbe704ef807cd9"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx",
+      "source_blob": "c8fe96b19ac7cfa9179597c0a8a7c4368214a528",
+      "current_path": "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx",
+      "current_blob": "c8fe96b19ac7cfa9179597c0a8a7c4368214a528",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "c8fe96b19ac7cfa9179597c0a8a7c4368214a528"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/settings/BrowserProfileImportPanel.tsx",
+      "source_blob": "be0674abf4fd6f23030c76e9f874e405f0edf9dd",
+      "current_path": "apps/electron/src/renderer/pages/settings/BrowserProfileImportPanel.tsx",
+      "current_blob": "227850b2d3c03bba925f9fc263b3d1264de8ee49",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "227850b2d3c03bba925f9fc263b3d1264de8ee49"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/settings/ImportSettingsPage.tsx",
+      "source_blob": "0898ab429653c5f00b5d8089885f8984c335fb1d",
+      "current_path": "apps/electron/src/renderer/pages/settings/ImportSettingsPage.tsx",
+      "current_blob": "0898ab429653c5f00b5d8089885f8984c335fb1d",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "0898ab429653c5f00b5d8089885f8984c335fb1d"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/settings/KnowledgeSettingsPage.tsx",
+      "source_blob": "fa35a8c3738ee8a8fafb1b8637a9da416df04d41",
+      "current_path": "apps/electron/src/renderer/pages/settings/KnowledgeSettingsPage.tsx",
+      "current_blob": "fa35a8c3738ee8a8fafb1b8637a9da416df04d41",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "fa35a8c3738ee8a8fafb1b8637a9da416df04d41"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/settings/LabelsSettingsPage.tsx",
+      "source_blob": "61102910629942e621133eb9044f5ba9a40cf53b",
+      "current_path": "apps/electron/src/renderer/pages/settings/LabelsSettingsPage.tsx",
+      "current_blob": "61102910629942e621133eb9044f5ba9a40cf53b",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "61102910629942e621133eb9044f5ba9a40cf53b"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/settings/RuntimeSettingsPage.tsx",
+      "source_blob": "60d6943b0f9a550c683c46baf0f8a66278aad5bc",
+      "current_path": "apps/electron/src/renderer/pages/settings/RuntimeSettingsPage.tsx",
+      "current_blob": "12bf55d6ce7362e26e92e9f5a49d0c5962b875c5",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "12bf55d6ce7362e26e92e9f5a49d0c5962b875c5"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/settings/SettingsNavigator.tsx",
+      "source_blob": "f1aeeb17c07427219a9b001f877f403259ff0c33",
+      "current_path": "apps/electron/src/renderer/pages/settings/SettingsNavigator.tsx",
+      "current_blob": "f1aeeb17c07427219a9b001f877f403259ff0c33",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "f1aeeb17c07427219a9b001f877f403259ff0c33"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/settings/ZenShellSettings.tsx",
+      "source_blob": "785bbd6e5a6a3e7fa5957c24468874ab5a9f6d27",
+      "current_path": "apps/electron/src/renderer/pages/settings/ZenShellSettings.tsx",
+      "current_blob": "785bbd6e5a6a3e7fa5957c24468874ab5a9f6d27",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "785bbd6e5a6a3e7fa5957c24468874ab5a9f6d27"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/tasks/MoveDialog.tsx",
+      "source_blob": "c27eb7db506bb981063f833579646dedef93c43c",
+      "current_path": "apps/electron/src/renderer/pages/tasks/MoveDialog.tsx",
+      "current_blob": "c27eb7db506bb981063f833579646dedef93c43c",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "c27eb7db506bb981063f833579646dedef93c43c"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx",
+      "source_blob": "5659ac49ff8cf333e44e9b72371ec4f534b82207",
+      "current_path": "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx",
+      "current_blob": "b8590ffe1a41372fe3f96f381dac1565bdf78f98",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "2944a88ec6619f9a5b3d73fe29ff5ac0b151cd15"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+      "source_blob": "7bf7887ad309ee40cbe267b70ec3bee3b594b5c2",
+      "current_path": "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+      "current_blob": "eee19cfa55b6d05e72d9cb06c0a60284b2f60be4",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "fd0813bfeab1c32253479f1bfb93bbb35842bc77"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/pages/tasks/parts.tsx",
+      "source_blob": "04481a3254ba2b18acb936e3ebe492b8db473409",
+      "current_path": "apps/electron/src/renderer/pages/tasks/parts.tsx",
+      "current_blob": "04481a3254ba2b18acb936e3ebe492b8db473409",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "04481a3254ba2b18acb936e3ebe492b8db473409"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/platform/HomeFrontPage.tsx",
+      "source_blob": "a1057b0ef83a18f71351dea3da428d92d18cd6da",
+      "current_path": "apps/electron/src/renderer/platform/HomeFrontPage.tsx",
+      "current_blob": "b7be1260a8fd3c7760789d7639aac1d86fef75d2",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "b7be1260a8fd3c7760789d7639aac1d86fef75d2"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/platform/InspectorHost.tsx",
+      "source_blob": "d804d88d68dbba7611c9bb9dc0c1413da18f806d",
+      "current_path": "apps/electron/src/renderer/platform/InspectorHost.tsx",
+      "current_blob": "87da23fd2ca914a53df8fcbcea60ec494b2ca144",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "87da23fd2ca914a53df8fcbcea60ec494b2ca144"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/platform/RailRow.tsx",
+      "source_blob": "bc8912c89a9f32521c76efbdffcc03fb03e900d0",
+      "current_path": "apps/electron/src/renderer/platform/RailRow.tsx",
+      "current_blob": "bc8912c89a9f32521c76efbdffcc03fb03e900d0",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "bc8912c89a9f32521c76efbdffcc03fb03e900d0"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/platform/SurfaceTabs.tsx",
+      "source_blob": "717333fb7565a8a6b6029ffc296fa38749678493",
+      "current_path": "apps/electron/src/renderer/platform/SurfaceTabs.tsx",
+      "current_blob": "b5d50859df16257cefaf22ce40d94196a53b4985",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "b5d50859df16257cefaf22ce40d94196a53b4985"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/platform/__tests__/activity-rail-labels.test.ts",
+      "source_blob": "08aabed000946d613899127f171592f6413fa395",
+      "current_path": "apps/electron/src/renderer/platform/__tests__/activity-rail-labels.test.ts",
+      "current_blob": "08aabed000946d613899127f171592f6413fa395",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "08aabed000946d613899127f171592f6413fa395"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/platform/__tests__/panel-inset-alignment.test.ts",
+      "source_blob": "cb43eefebb28ec898a89660d39b1a75cbc9e1f7b",
+      "current_path": "apps/electron/src/renderer/platform/__tests__/panel-inset-alignment.test.ts",
+      "current_blob": "148983108ad1a0e67046303122aebf895e9e921d",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "148983108ad1a0e67046303122aebf895e9e921d"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/platform/conation/ConationBoardPanel.tsx",
+      "source_blob": "550c95363f0e6c906a32276413548cca1dab0b75",
+      "current_path": "apps/electron/src/renderer/platform/conation/ConationBoardPanel.tsx",
+      "current_blob": "550c95363f0e6c906a32276413548cca1dab0b75",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "550c95363f0e6c906a32276413548cca1dab0b75"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/platform/conation/ConationFundPanel.tsx",
+      "source_blob": "0db9b593b553fdac4b3fe4054685d2bc8e35ba91",
+      "current_path": "apps/electron/src/renderer/platform/conation/ConationFundPanel.tsx",
+      "current_blob": "0db9b593b553fdac4b3fe4054685d2bc8e35ba91",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "0db9b593b553fdac4b3fe4054685d2bc8e35ba91"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/platform/conation/ConationInspectorPanel.tsx",
+      "source_blob": "ba0ab072c4f8ba75935a124c84ece0d66aa31fc9",
+      "current_path": "apps/electron/src/renderer/platform/conation/ConationInspectorPanel.tsx",
+      "current_blob": "ba0ab072c4f8ba75935a124c84ece0d66aa31fc9",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "ba0ab072c4f8ba75935a124c84ece0d66aa31fc9"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/platform/conation/__tests__/conation-chrome-radius.test.ts",
+      "source_blob": "f2bbba4341d2cef57dbfacc2a40aa86f61d79e36",
+      "current_path": "apps/electron/src/renderer/platform/conation/__tests__/conation-chrome-radius.test.ts",
+      "current_blob": "f2bbba4341d2cef57dbfacc2a40aa86f61d79e36",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "f2bbba4341d2cef57dbfacc2a40aa86f61d79e36"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/platform/home/QuickTaskInput.tsx",
+      "source_blob": "3be795a06f1a5228a277ac0c5eef301be2db9c33",
+      "current_path": "apps/electron/src/renderer/platform/home/QuickTaskInput.tsx",
+      "current_blob": "3be795a06f1a5228a277ac0c5eef301be2db9c33",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "3be795a06f1a5228a277ac0c5eef301be2db9c33"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/platform/home/quick-task-input.css",
+      "source_blob": "eb9d0c87ccc8d4c92cccfd8a7a8edc0facf4b989",
+      "current_path": "apps/electron/src/renderer/platform/home/quick-task-input.css",
+      "current_blob": "eb9d0c87ccc8d4c92cccfd8a7a8edc0facf4b989",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "eb9d0c87ccc8d4c92cccfd8a7a8edc0facf4b989"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/platform/home/widget-kit.tsx",
+      "source_blob": "802a7903d5cc0284424976822a26edba5aa8f0b5",
+      "current_path": "apps/electron/src/renderer/platform/home/widget-kit.tsx",
+      "current_blob": "bf153edc54ee194df6911244f95be947e32e81a1",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "bf153edc54ee194df6911244f95be947e32e81a1"
+    },
+    {
+      "source_path": "apps/electron/src/renderer/platform/home/widgets.tsx",
+      "source_blob": "81cd6b2a2431612a8951915b2634e33d463ce2bf",
+      "current_path": "apps/electron/src/renderer/platform/home/widgets.tsx",
+      "current_blob": "a58e07d965cbb7f069fa2a2d31eefd16a7708dce",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "ca668d9d210325659a7c349ac996872fc9c7aa67"
+    },
+    {
+      "source_path": "apps/electron/vite.config.ts",
+      "source_blob": "86163019fd967dc6d3a41e1dc0e834649a8b6f3b",
+      "current_path": "apps/electron/vite.config.ts",
+      "current_blob": "86163019fd967dc6d3a41e1dc0e834649a8b6f3b",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "86163019fd967dc6d3a41e1dc0e834649a8b6f3b"
+    },
+    {
+      "source_path": "apps/webui/src/App.tsx",
+      "source_blob": "d8f6ed13dac0b7da1633dcd42c9c06dd71d2a0c1",
+      "current_path": "apps/webui/src/App.tsx",
+      "current_blob": "d8f6ed13dac0b7da1633dcd42c9c06dd71d2a0c1",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "d8f6ed13dac0b7da1633dcd42c9c06dd71d2a0c1"
+    },
+    {
+      "source_path": "apps/webui/src/adapter/transport-bootstrap.ts",
+      "source_blob": "7f65546e7a6ccd0d9615d3ef69f9a62477c26998",
+      "current_path": "apps/webui/src/adapter/transport-bootstrap.ts",
+      "current_blob": "7f65546e7a6ccd0d9615d3ef69f9a62477c26998",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "7f65546e7a6ccd0d9615d3ef69f9a62477c26998"
+    },
+    {
+      "source_path": "apps/webui/src/adapter/web-api.test.ts",
+      "source_blob": "71446a281e646bd65dc6220489e5c183e1e4cd6d",
+      "current_path": "apps/webui/src/adapter/web-api.test.ts",
+      "current_blob": "71446a281e646bd65dc6220489e5c183e1e4cd6d",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "71446a281e646bd65dc6220489e5c183e1e4cd6d"
+    },
+    {
+      "source_path": "apps/webui/src/adapter/web-api.ts",
+      "source_blob": "97d12c350ec039e947d47ad9c64e3209afc63c1b",
+      "current_path": "apps/webui/src/adapter/web-api.ts",
+      "current_blob": "97d12c350ec039e947d47ad9c64e3209afc63c1b",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "97d12c350ec039e947d47ad9c64e3209afc63c1b"
+    },
+    {
+      "source_path": "apps/webui/src/browser-main.tsx",
+      "source_blob": "e783b929b69c1c58fa79c64ae88c968e4ff6751d",
+      "current_path": "apps/webui/src/browser-main.tsx",
+      "current_blob": "e783b929b69c1c58fa79c64ae88c968e4ff6751d",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "e783b929b69c1c58fa79c64ae88c968e4ff6751d"
+    },
+    {
+      "source_path": "apps/webui/vite.config.ts",
+      "source_blob": "3b018c1a9c390d081277cd68f35891ede8c72a69",
+      "current_path": "apps/webui/vite.config.ts",
+      "current_blob": "3b018c1a9c390d081277cd68f35891ede8c72a69",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "3b018c1a9c390d081277cd68f35891ede8c72a69"
+    },
+    {
+      "source_path": "docs/plan.md",
+      "source_blob": "d923529566165ea647b362c42ebc5b1f451a4926",
+      "current_path": "docs/integration-history/zed-appearance-current-20261004/source-final-plan.md",
+      "current_blob": "d923529566165ea647b362c42ebc5b1f451a4926",
+      "status": "source_history_preserved_current_spec_plan_retained",
+      "first_comparison_current_blob": "d923529566165ea647b362c42ebc5b1f451a4926"
+    },
+    {
+      "source_path": "docs/spec.md",
+      "source_blob": "8bff7fbe72e7d85e3e88969fc49d5fda5b8460b0",
+      "current_path": "docs/integration-history/zed-appearance-current-20261004/source-spec.md",
+      "current_blob": "8bff7fbe72e7d85e3e88969fc49d5fda5b8460b0",
+      "status": "source_history_preserved_current_spec_plan_retained",
+      "first_comparison_current_blob": "8bff7fbe72e7d85e3e88969fc49d5fda5b8460b0"
+    },
+    {
+      "source_path": "docs/themes/appearance-evidence.json",
+      "source_blob": "491553c564145248a66c6db4200f660b928d2f66",
+      "current_path": "docs/themes/appearance-evidence.json",
+      "current_blob": "491553c564145248a66c6db4200f660b928d2f66",
+      "status": "source_historical_evidence_preserved",
+      "first_comparison_current_blob": "491553c564145248a66c6db4200f660b928d2f66"
+    },
+    {
+      "source_path": "docs/themes/appearance-verification.md",
+      "source_blob": "459bf6e70c55af3e69b1d8476bf88d571559c34e",
+      "current_path": "docs/themes/appearance-verification.md",
+      "current_blob": "459bf6e70c55af3e69b1d8476bf88d571559c34e",
+      "status": "source_historical_evidence_preserved",
+      "first_comparison_current_blob": "459bf6e70c55af3e69b1d8476bf88d571559c34e"
+    },
+    {
+      "source_path": "docs/themes/licenses/min-MIT.txt",
+      "source_blob": "87091b7adfdeed15120ae1603a3cac219a6344db",
+      "current_path": "docs/themes/licenses/min-MIT.txt",
+      "current_blob": "87091b7adfdeed15120ae1603a3cac219a6344db",
+      "status": "source_historical_evidence_preserved",
+      "first_comparison_current_blob": "87091b7adfdeed15120ae1603a3cac219a6344db"
+    },
+    {
+      "source_path": "docs/themes/licenses/nightfox-MIT.txt",
+      "source_blob": "8491344645328354cf90132ad01833d17ddb944a",
+      "current_path": "docs/themes/licenses/nightfox-MIT.txt",
+      "current_blob": "8491344645328354cf90132ad01833d17ddb944a",
+      "status": "source_historical_evidence_preserved",
+      "first_comparison_current_blob": "8491344645328354cf90132ad01833d17ddb944a"
+    },
+    {
+      "source_path": "docs/themes/licenses/siri-MIT.txt",
+      "source_blob": "5955dd514700f70352292f7f08c390b47547dfa5",
+      "current_path": "docs/themes/licenses/siri-MIT.txt",
+      "current_blob": "5955dd514700f70352292f7f08c390b47547dfa5",
+      "status": "source_historical_evidence_preserved",
+      "first_comparison_current_blob": "5955dd514700f70352292f7f08c390b47547dfa5"
+    },
+    {
+      "source_path": "docs/themes/sources/min-dark-blurred.zed.json",
+      "source_blob": "a4454617c88d09fae7326e1a940f4269afa253a5",
+      "current_path": "docs/themes/sources/min-dark-blurred.zed.json",
+      "current_blob": "a4454617c88d09fae7326e1a940f4269afa253a5",
+      "status": "source_historical_evidence_preserved",
+      "first_comparison_current_blob": "a4454617c88d09fae7326e1a940f4269afa253a5"
+    },
+    {
+      "source_path": "docs/themes/sources/nordfox-opaque.zed.json",
+      "source_blob": "8ace4aa0d38fb1ef2af4283b0e5cd0ca8d8bf498",
+      "current_path": "docs/themes/sources/nordfox-opaque.zed.json",
+      "current_blob": "8ace4aa0d38fb1ef2af4283b0e5cd0ca8d8bf498",
+      "status": "source_historical_evidence_preserved",
+      "first_comparison_current_blob": "8ace4aa0d38fb1ef2af4283b0e5cd0ca8d8bf498"
+    },
+    {
+      "source_path": "docs/themes/sources/siri-light.zed.json",
+      "source_blob": "db499ab6697738adb2be9ca910d79a578fcecae6",
+      "current_path": "docs/themes/sources/siri-light.zed.json",
+      "current_blob": "db499ab6697738adb2be9ca910d79a578fcecae6",
+      "status": "source_historical_evidence_preserved",
+      "first_comparison_current_blob": "db499ab6697738adb2be9ca910d79a578fcecae6"
+    },
+    {
+      "source_path": "docs/themes/zed-import.md",
+      "source_blob": "d404b37c2249415ea0614da7eaa83a5f65af6168",
+      "current_path": "docs/themes/zed-import.md",
+      "current_blob": "d404b37c2249415ea0614da7eaa83a5f65af6168",
+      "status": "source_historical_evidence_preserved",
+      "first_comparison_current_blob": "d404b37c2249415ea0614da7eaa83a5f65af6168"
+    },
+    {
+      "source_path": "docs/themes/zed-provenance.json",
+      "source_blob": "da0c2c9be393332b7b6dfc358316f75ce34ba1e2",
+      "current_path": "docs/themes/zed-provenance.json",
+      "current_blob": "da0c2c9be393332b7b6dfc358316f75ce34ba1e2",
+      "status": "source_historical_evidence_preserved",
+      "first_comparison_current_blob": "da0c2c9be393332b7b6dfc358316f75ce34ba1e2"
+    },
+    {
+      "source_path": "docs/themes/zed-syntax.md",
+      "source_blob": "7e0c7057d4238858ede19329b1cceae2d1723274",
+      "current_path": "docs/themes/zed-syntax.md",
+      "current_blob": "7e0c7057d4238858ede19329b1cceae2d1723274",
+      "status": "source_historical_evidence_preserved",
+      "first_comparison_current_blob": "7e0c7057d4238858ede19329b1cceae2d1723274"
+    },
+    {
+      "source_path": "docs/themes/zed-web-appearance.md",
+      "source_blob": "87db816eb92fc7b286581fbfb570681da5251765",
+      "current_path": "docs/themes/zed-web-appearance.md",
+      "current_blob": "87db816eb92fc7b286581fbfb570681da5251765",
+      "status": "source_historical_evidence_preserved",
+      "first_comparison_current_blob": "87db816eb92fc7b286581fbfb570681da5251765"
+    },
+    {
+      "source_path": "packages/server-core/src/bootstrap/headless-start.ts",
+      "source_blob": "dc4f9d99d7fdd5e234bb1db9625e2ce9ee08bf1b",
+      "current_path": "packages/server-core/src/bootstrap/headless-start.ts",
+      "current_blob": "9863f75484450445c4364777a50e26075e4ed93e",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "9863f75484450445c4364777a50e26075e4ed93e"
+    },
+    {
+      "source_path": "packages/server-core/src/handlers/rpc/workspace.ts",
+      "source_blob": "bec48427cc07ed62c5a11e52e34bb2a22234dc7e",
+      "current_path": "packages/server-core/src/handlers/rpc/workspace.ts",
+      "current_blob": "12c0f97e9bfa1d5908eaa3e0b823541ef2c15793",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "12c0f97e9bfa1d5908eaa3e0b823541ef2c15793"
+    },
+    {
+      "source_path": "packages/server-core/src/transport/server.ts",
+      "source_blob": "ca7f9e2efede4437891879d087f32ed8437d308c",
+      "current_path": "packages/server-core/src/transport/server.ts",
+      "current_blob": "680aad3ca1d43fac8c13c41d501ba3ca2a50cc44",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "680aad3ca1d43fac8c13c41d501ba3ca2a50cc44"
+    },
+    {
+      "source_path": "packages/server-core/src/transport/types.ts",
+      "source_blob": "1e7dedadcbc82939a2a13527c37e55adc20c3a03",
+      "current_path": "packages/server-core/src/transport/types.ts",
+      "current_blob": "9d478146558a3172ba950fb15b0a9815c3d9b48c",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "9d478146558a3172ba950fb15b0a9815c3d9b48c"
+    },
+    {
+      "source_path": "packages/server-core/src/webui/__tests__/appearance-rpc.test.ts",
+      "source_blob": "1f6cf4bfd34afe5df13f0786f6aafa3fe39740f2",
+      "current_path": "packages/server-core/src/webui/__tests__/appearance-rpc.test.ts",
+      "current_blob": "1f6cf4bfd34afe5df13f0786f6aafa3fe39740f2",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "1f6cf4bfd34afe5df13f0786f6aafa3fe39740f2"
+    },
+    {
+      "source_path": "packages/server-core/src/webui/appearance-rpc.ts",
+      "source_blob": "4aa7ba103d1e2cdf946c99b6dc4d4e52065a256a",
+      "current_path": "packages/server-core/src/webui/appearance-rpc.ts",
+      "current_blob": "4aa7ba103d1e2cdf946c99b6dc4d4e52065a256a",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "4aa7ba103d1e2cdf946c99b6dc4d4e52065a256a"
+    },
+    {
+      "source_path": "packages/server-core/src/webui/http-server.ts",
+      "source_blob": "c06bad911a6602d37c8e6902d32ed9f4b66c4590",
+      "current_path": "packages/server-core/src/webui/http-server.ts",
+      "current_blob": "c06bad911a6602d37c8e6902d32ed9f4b66c4590",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "c06bad911a6602d37c8e6902d32ed9f4b66c4590"
+    },
+    {
+      "source_path": "packages/server-core/src/webui/index.ts",
+      "source_blob": "87ccb590325a1e9215bd24c2526db116d8cf9e1d",
+      "current_path": "packages/server-core/src/webui/index.ts",
+      "current_blob": "87ccb590325a1e9215bd24c2526db116d8cf9e1d",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "87ccb590325a1e9215bd24c2526db116d8cf9e1d"
+    },
+    {
+      "source_path": "packages/server-core/src/webui/theme-storage.ts",
+      "source_blob": "032395cd4ccbd5c0d9dd50d15e9cfdd510a9b9d3",
+      "current_path": "packages/server-core/src/webui/theme-storage.ts",
+      "current_blob": "032395cd4ccbd5c0d9dd50d15e9cfdd510a9b9d3",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "032395cd4ccbd5c0d9dd50d15e9cfdd510a9b9d3"
+    },
+    {
+      "source_path": "packages/server/src/index.ts",
+      "source_blob": "b59f707fd08dc4f1bac45b6433650e94500689b6",
+      "current_path": "packages/server/src/index.ts",
+      "current_blob": "b59f707fd08dc4f1bac45b6433650e94500689b6",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "b59f707fd08dc4f1bac45b6433650e94500689b6"
+    },
+    {
+      "source_path": "packages/shared/package.json",
+      "source_blob": "86cf499692af7098c20c9136ce6e77d45ddc65b1",
+      "current_path": "packages/shared/package.json",
+      "current_blob": "c34a454c348cbf745c372d3321e3d73a1d9c1607",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "c34a454c348cbf745c372d3321e3d73a1d9c1607"
+    },
+    {
+      "source_path": "packages/shared/src/config/__tests__/storage-initial-theme.test.ts",
+      "source_blob": "9c9111b4f3db82c812e7be29d2dd727b277d7643",
+      "current_path": "packages/shared/src/config/__tests__/storage-initial-theme.test.ts",
+      "current_blob": "9c9111b4f3db82c812e7be29d2dd727b277d7643",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "9c9111b4f3db82c812e7be29d2dd727b277d7643"
+    },
+    {
+      "source_path": "packages/shared/src/config/__tests__/zed-theme.test.ts",
+      "source_blob": "17935a4f16665cfebfb5e80a30c58c57b44ba9ce",
+      "current_path": "packages/shared/src/config/__tests__/zed-theme.test.ts",
+      "current_blob": "17935a4f16665cfebfb5e80a30c58c57b44ba9ce",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "17935a4f16665cfebfb5e80a30c58c57b44ba9ce"
+    },
+    {
+      "source_path": "packages/shared/src/config/storage.ts",
+      "source_blob": "dd92146e4b6637f52d65bf3bb515d09a2d3f0934",
+      "current_path": "packages/shared/src/config/storage.ts",
+      "current_blob": "127d788200105032d33bb4fd4c7ec752988b70aa",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "127d788200105032d33bb4fd4c7ec752988b70aa"
+    },
+    {
+      "source_path": "packages/shared/src/config/theme-id.ts",
+      "source_blob": "f077f56e4ee35d62a9ac4b405e0647b4680692e0",
+      "current_path": "packages/shared/src/config/theme-id.ts",
+      "current_blob": "f077f56e4ee35d62a9ac4b405e0647b4680692e0",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "f077f56e4ee35d62a9ac4b405e0647b4680692e0"
+    },
+    {
+      "source_path": "packages/shared/src/config/theme-vibrancy.test.ts",
+      "source_blob": "df9c1b11dd6287162b333c93bc20ae4279aa1ced",
+      "current_path": "packages/shared/src/config/theme-vibrancy.test.ts",
+      "current_blob": "df9c1b11dd6287162b333c93bc20ae4279aa1ced",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "df9c1b11dd6287162b333c93bc20ae4279aa1ced"
+    },
+    {
+      "source_path": "packages/shared/src/config/theme.ts",
+      "source_blob": "f92c1e731745705788a50801ee72ab9ca7a71615",
+      "current_path": "packages/shared/src/config/theme.ts",
+      "current_blob": "f92c1e731745705788a50801ee72ab9ca7a71615",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "f92c1e731745705788a50801ee72ab9ca7a71615"
+    },
+    {
+      "source_path": "packages/shared/src/config/validators.ts",
+      "source_blob": "53f702654e4159f657925a8d18cf6754751b24be",
+      "current_path": "packages/shared/src/config/validators.ts",
+      "current_blob": "1c9f31c00e5b3cca032ea1f267cb9149880dd1d2",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "1c9f31c00e5b3cca032ea1f267cb9149880dd1d2"
+    },
+    {
+      "source_path": "packages/shared/src/i18n/locales/ar.json",
+      "source_blob": "3c8814dfa6463d2f0c02a9e1c65af8b798312f51",
+      "current_path": "packages/shared/src/i18n/locales/ar.json",
+      "current_blob": "5eed915caf3446793805f150d92b549b61e6fa12",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "71bfb9a7b24a5e3a4aca1a3f82b029f0fca7ff25"
+    },
+    {
+      "source_path": "packages/shared/src/i18n/locales/de.json",
+      "source_blob": "1d1a2b8d5aad336f9768de65525e62b86b1c2340",
+      "current_path": "packages/shared/src/i18n/locales/de.json",
+      "current_blob": "97b6be1987f9defa2da303f947d21fdd813a7304",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "97246a3f497b006b14948373d87edc2dd1c20772"
+    },
+    {
+      "source_path": "packages/shared/src/i18n/locales/en.json",
+      "source_blob": "49312c21327f2fe7853cbded6d6595b662877532",
+      "current_path": "packages/shared/src/i18n/locales/en.json",
+      "current_blob": "ce37556f939dda673016b876a86aad9f7aa8a552",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "48441bebac394d42eff848869b2deff86640af02"
+    },
+    {
+      "source_path": "packages/shared/src/i18n/locales/es.json",
+      "source_blob": "cb91c740a57d1360b49b3dd9d66e8b7460a9074f",
+      "current_path": "packages/shared/src/i18n/locales/es.json",
+      "current_blob": "babcf9eb72bbcbae06532866324caba718ad5101",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "9b4c1f95a66ecb54d2e1d04bde3d51fce134fefe"
+    },
+    {
+      "source_path": "packages/shared/src/i18n/locales/fr.json",
+      "source_blob": "1b34d23542c298fca6a3400c2f5a13b88f84a826",
+      "current_path": "packages/shared/src/i18n/locales/fr.json",
+      "current_blob": "e9057c4b4c9bbbe80f58307730d376cfb2d2fcee",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "c6ef4fe79c8cf22d7c447320c07735afc13244ce"
+    },
+    {
+      "source_path": "packages/shared/src/i18n/locales/hu.json",
+      "source_blob": "38c1a12663fa03af315fc3cc942d395f1fe339b0",
+      "current_path": "packages/shared/src/i18n/locales/hu.json",
+      "current_blob": "e06fd001b97501a3739cce1a72574c5f0e9adc2a",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "e0cec6adc86464519ed2fb61ad3b821ec8476a79"
+    },
+    {
+      "source_path": "packages/shared/src/i18n/locales/ja.json",
+      "source_blob": "7b558687429587cf9afb6c4a878d55075d0dfef6",
+      "current_path": "packages/shared/src/i18n/locales/ja.json",
+      "current_blob": "2b5996ac7e66ef7e69ac16e7fba8958a69b97a36",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "f0b57e28c5eb1b469a46d5acc8d9be8c8e4c8107"
+    },
+    {
+      "source_path": "packages/shared/src/i18n/locales/ko.json",
+      "source_blob": "2137e318f8b65f58716def1e96b838ed34ecacd8",
+      "current_path": "packages/shared/src/i18n/locales/ko.json",
+      "current_blob": "5010ea756b02a03aade1734a4de6c6d58ddf9e4a",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "878490b5ab2781f2a7702add4da4731eaaf3e599"
+    },
+    {
+      "source_path": "packages/shared/src/i18n/locales/pl.json",
+      "source_blob": "5a5b8ee3008015b86427ebd56529bd81843bf1f2",
+      "current_path": "packages/shared/src/i18n/locales/pl.json",
+      "current_blob": "4b67c4e442296c5e0b1d8003ffe4bd209df9fb67",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "a6f48e1a2943c00341a47926fcec3fc2166b28f5"
+    },
+    {
+      "source_path": "packages/shared/src/i18n/locales/ru.json",
+      "source_blob": "b99735d34b66cdc0a4d055e7a8134778b3468355",
+      "current_path": "packages/shared/src/i18n/locales/ru.json",
+      "current_blob": "d19185a83fe31bb3d3b0459005f00f2063c08885",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "f5fef39f185891f42072ec9e5c9dbd6eb3403786"
+    },
+    {
+      "source_path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "source_blob": "cb325323c429c27754f1f591b210e0354d492f43",
+      "current_path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "current_blob": "66883c163793097cd1da356e7c2783f977b71c5d",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "b9f09645ad0ec7111d267ac0acf67b14a3391619"
+    },
+    {
+      "source_path": "packages/shared/src/i18n/locales/zh-Hant.json",
+      "source_blob": "1bb27f3a485af32323a0f6988d35af28f341491d",
+      "current_path": "packages/shared/src/i18n/locales/zh-Hant.json",
+      "current_blob": "6a5e43a89fc60147734096ccd0f77d4ddad2ad65",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "f2fca5990b8ca34d1486d263995321d27ebc0bdb"
+    },
+    {
+      "source_path": "packages/shared/src/workspaces/storage.ts",
+      "source_blob": "a548b4a7d161f198e746d88859468562356ae71f",
+      "current_path": "packages/shared/src/workspaces/storage.ts",
+      "current_blob": "ad618d05702b2540c81e217572cd2f22f3fc44cb",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "ad618d05702b2540c81e217572cd2f22f3fc44cb"
+    },
+    {
+      "source_path": "packages/ui/src/components/annotations/AnnotationIslandMenu.tsx",
+      "source_blob": "717025dd33249a284e9b1621386e94db6ba946f0",
+      "current_path": "packages/ui/src/components/annotations/AnnotationIslandMenu.tsx",
+      "current_blob": "717025dd33249a284e9b1621386e94db6ba946f0",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "717025dd33249a284e9b1621386e94db6ba946f0"
+    },
+    {
+      "source_path": "packages/ui/src/components/chat/AcceptPlanDropdown.tsx",
+      "source_blob": "cad826488697d88c041e863770182580074507d2",
+      "current_path": "packages/ui/src/components/chat/AcceptPlanDropdown.tsx",
+      "current_blob": "cad826488697d88c041e863770182580074507d2",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "cad826488697d88c041e863770182580074507d2"
+    },
+    {
+      "source_path": "packages/ui/src/components/chat/CompactAcceptPlanDrawer.tsx",
+      "source_blob": "491158fc5a21dda0fe4fce6c588a0c84cb590294",
+      "current_path": "packages/ui/src/components/chat/CompactAcceptPlanDrawer.tsx",
+      "current_blob": "491158fc5a21dda0fe4fce6c588a0c84cb590294",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "491158fc5a21dda0fe4fce6c588a0c84cb590294"
+    },
+    {
+      "source_path": "packages/ui/src/components/chat/MessageHoverDock.tsx",
+      "source_blob": "0def5efaedf04c9dce93e02883d814ae560ac4ab",
+      "current_path": "packages/ui/src/components/chat/MessageHoverDock.tsx",
+      "current_blob": "d4f6316c0f5df2ae7e432ad484ec994fdb037e34",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "d4f6316c0f5df2ae7e432ad484ec994fdb037e34"
+    },
+    {
+      "source_path": "packages/ui/src/components/chat/TurnCard.tsx",
+      "source_blob": "9337408cdd31f5d8ce6b47ff57215d456dabdf76",
+      "current_path": "packages/ui/src/components/chat/TurnCard.tsx",
+      "current_blob": "126a8beabf36167e1a6ca168db3bb720c15d9308",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "126a8beabf36167e1a6ca168db3bb720c15d9308"
+    },
+    {
+      "source_path": "packages/ui/src/components/chat/TurnCardActionsMenu.tsx",
+      "source_blob": "06603d2adbbd0928d5841d198b3da2e297d51ae4",
+      "current_path": "packages/ui/src/components/chat/TurnCardActionsMenu.tsx",
+      "current_blob": "06603d2adbbd0928d5841d198b3da2e297d51ae4",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "06603d2adbbd0928d5841d198b3da2e297d51ae4"
+    },
+    {
+      "source_path": "packages/ui/src/components/chat/UserMessageBubble.tsx",
+      "source_blob": "adc7524108a31034237225c26381272be7ff9adf",
+      "current_path": "packages/ui/src/components/chat/UserMessageBubble.tsx",
+      "current_blob": "383d87fffc69cc6c16038a79713198f98d5c1f24",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "383d87fffc69cc6c16038a79713198f98d5c1f24"
+    },
+    {
+      "source_path": "packages/ui/src/components/code-viewer/DiffViewerControls.tsx",
+      "source_blob": "bdebbcba5edd1105994bc70fc0810288b8e910e5",
+      "current_path": "packages/ui/src/components/code-viewer/DiffViewerControls.tsx",
+      "current_blob": "bdebbcba5edd1105994bc70fc0810288b8e910e5",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "bdebbcba5edd1105994bc70fc0810288b8e910e5"
+    },
+    {
+      "source_path": "packages/ui/src/components/code-viewer/ShikiCodeViewer.tsx",
+      "source_blob": "489947b2ebe39365dad3f0d7b7167708bb8274d3",
+      "current_path": "packages/ui/src/components/code-viewer/ShikiCodeViewer.tsx",
+      "current_blob": "489947b2ebe39365dad3f0d7b7167708bb8274d3",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "489947b2ebe39365dad3f0d7b7167708bb8274d3"
+    },
+    {
+      "source_path": "packages/ui/src/components/code-viewer/ShikiDiffViewer.tsx",
+      "source_blob": "9034b585b40c168cd53250ef94cf54658752965a",
+      "current_path": "packages/ui/src/components/code-viewer/ShikiDiffViewer.tsx",
+      "current_blob": "9034b585b40c168cd53250ef94cf54658752965a",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "9034b585b40c168cd53250ef94cf54658752965a"
+    },
+    {
+      "source_path": "packages/ui/src/components/code-viewer/UnifiedDiffViewer.tsx",
+      "source_blob": "e527045db89066452ce545e4d176f47adf47cd2c",
+      "current_path": "packages/ui/src/components/code-viewer/UnifiedDiffViewer.tsx",
+      "current_blob": "e527045db89066452ce545e4d176f47adf47cd2c",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "e527045db89066452ce545e4d176f47adf47cd2c"
+    },
+    {
+      "source_path": "packages/ui/src/components/code-viewer/__tests__/zed-shiki-themes.test.ts",
+      "source_blob": "93d615f95de1c9523aafe8ca7a2d0c259b318140",
+      "current_path": "packages/ui/src/components/code-viewer/__tests__/zed-shiki-themes.test.ts",
+      "current_blob": "93d615f95de1c9523aafe8ca7a2d0c259b318140",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "93d615f95de1c9523aafe8ca7a2d0c259b318140"
+    },
+    {
+      "source_path": "packages/ui/src/components/code-viewer/index.ts",
+      "source_blob": "39d83f0cf4cec7ac7b6f4a353515a32dda7f01ac",
+      "current_path": "packages/ui/src/components/code-viewer/index.ts",
+      "current_blob": "39d83f0cf4cec7ac7b6f4a353515a32dda7f01ac",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "39d83f0cf4cec7ac7b6f4a353515a32dda7f01ac"
+    },
+    {
+      "source_path": "packages/ui/src/components/code-viewer/registerShikiThemes.ts",
+      "source_blob": "33c09930d732cfbeb934fae3377e25192946793e",
+      "current_path": "packages/ui/src/components/code-viewer/registerShikiThemes.ts",
+      "current_blob": "33c09930d732cfbeb934fae3377e25192946793e",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "33c09930d732cfbeb934fae3377e25192946793e"
+    },
+    {
+      "source_path": "packages/ui/src/components/code-viewer/themes/rox-min-dark-blurred.json",
+      "source_blob": "87f04531fe98cf4e7ea805103738f1e7296088ae",
+      "current_path": "packages/ui/src/components/code-viewer/themes/rox-min-dark-blurred.json",
+      "current_blob": "87f04531fe98cf4e7ea805103738f1e7296088ae",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "87f04531fe98cf4e7ea805103738f1e7296088ae"
+    },
+    {
+      "source_path": "packages/ui/src/components/code-viewer/themes/rox-nordfox-opaque.json",
+      "source_blob": "37fed2b28f30811c80f6fcf362c3142564f0b4bf",
+      "current_path": "packages/ui/src/components/code-viewer/themes/rox-nordfox-opaque.json",
+      "current_blob": "37fed2b28f30811c80f6fcf362c3142564f0b4bf",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "37fed2b28f30811c80f6fcf362c3142564f0b4bf"
+    },
+    {
+      "source_path": "packages/ui/src/components/code-viewer/themes/rox-siri-light.json",
+      "source_blob": "b19532271de7cffa02dee524c482b679276d7cca",
+      "current_path": "packages/ui/src/components/code-viewer/themes/rox-siri-light.json",
+      "current_blob": "b19532271de7cffa02dee524c482b679276d7cca",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "b19532271de7cffa02dee524c482b679276d7cca"
+    },
+    {
+      "source_path": "packages/ui/src/components/code-viewer/zedShikiThemes.ts",
+      "source_blob": "f45bf0c3d9e9d7ed415f860b1f689ea573e74d99",
+      "current_path": "packages/ui/src/components/code-viewer/zedShikiThemes.ts",
+      "current_blob": "f45bf0c3d9e9d7ed415f860b1f689ea573e74d99",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "f45bf0c3d9e9d7ed415f860b1f689ea573e74d99"
+    },
+    {
+      "source_path": "packages/ui/src/components/markdown/CodeBlock.tsx",
+      "source_blob": "feaa6053665605bea048d6b5d387189ee9b13c49",
+      "current_path": "packages/ui/src/components/markdown/CodeBlock.tsx",
+      "current_blob": "feaa6053665605bea048d6b5d387189ee9b13c49",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "feaa6053665605bea048d6b5d387189ee9b13c49"
+    },
+    {
+      "source_path": "packages/ui/src/components/markdown/ImageCardStack.tsx",
+      "source_blob": "6ff6a92f46d6d06772e390c9df4e9b86e5c465b7",
+      "current_path": "packages/ui/src/components/markdown/ImageCardStack.tsx",
+      "current_blob": "6ff6a92f46d6d06772e390c9df4e9b86e5c465b7",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "6ff6a92f46d6d06772e390c9df4e9b86e5c465b7"
+    },
+    {
+      "source_path": "packages/ui/src/components/markdown/MarkdownDatatableBlock.tsx",
+      "source_blob": "54a6017ea1be332bf63a1442291d6b949b93ef53",
+      "current_path": "packages/ui/src/components/markdown/MarkdownDatatableBlock.tsx",
+      "current_blob": "54a6017ea1be332bf63a1442291d6b949b93ef53",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "54a6017ea1be332bf63a1442291d6b949b93ef53"
+    },
+    {
+      "source_path": "packages/ui/src/components/markdown/MarkdownDiffBlock.tsx",
+      "source_blob": "1bd350c59c71ec6ca392267e40ad32e6104256e8",
+      "current_path": "packages/ui/src/components/markdown/MarkdownDiffBlock.tsx",
+      "current_blob": "1bd350c59c71ec6ca392267e40ad32e6104256e8",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "1bd350c59c71ec6ca392267e40ad32e6104256e8"
+    },
+    {
+      "source_path": "packages/ui/src/components/markdown/MarkdownDocBlock.tsx",
+      "source_blob": "367cc118896182f65db64bb53891f2baeba5d047",
+      "current_path": "packages/ui/src/components/markdown/MarkdownDocBlock.tsx",
+      "current_blob": "367cc118896182f65db64bb53891f2baeba5d047",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "367cc118896182f65db64bb53891f2baeba5d047"
+    },
+    {
+      "source_path": "packages/ui/src/components/markdown/MarkdownHtmlBlock.tsx",
+      "source_blob": "bfc1922640f185126f8d9e242e698ecb33d0eab0",
+      "current_path": "packages/ui/src/components/markdown/MarkdownHtmlBlock.tsx",
+      "current_blob": "bfc1922640f185126f8d9e242e698ecb33d0eab0",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "bfc1922640f185126f8d9e242e698ecb33d0eab0"
+    },
+    {
+      "source_path": "packages/ui/src/components/markdown/MarkdownImageBlock.tsx",
+      "source_blob": "7a6d3dee0b164650987dabef1700875a8ee002e9",
+      "current_path": "packages/ui/src/components/markdown/MarkdownImageBlock.tsx",
+      "current_blob": "7a6d3dee0b164650987dabef1700875a8ee002e9",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "7a6d3dee0b164650987dabef1700875a8ee002e9"
+    },
+    {
+      "source_path": "packages/ui/src/components/markdown/MarkdownJsonBlock.tsx",
+      "source_blob": "845c5728347a2e75fb89bdd3bc3498570b520053",
+      "current_path": "packages/ui/src/components/markdown/MarkdownJsonBlock.tsx",
+      "current_blob": "845c5728347a2e75fb89bdd3bc3498570b520053",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "845c5728347a2e75fb89bdd3bc3498570b520053"
+    },
+    {
+      "source_path": "packages/ui/src/components/markdown/MarkdownMermaidBlock.tsx",
+      "source_blob": "b5dd8c09bae48069cd22c86cd6544be5bc626180",
+      "current_path": "packages/ui/src/components/markdown/MarkdownMermaidBlock.tsx",
+      "current_blob": "b5dd8c09bae48069cd22c86cd6544be5bc626180",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "b5dd8c09bae48069cd22c86cd6544be5bc626180"
+    },
+    {
+      "source_path": "packages/ui/src/components/markdown/MarkdownPdfBlock.tsx",
+      "source_blob": "c7b514e32842667a735fb6d1d1bc3cc1be8a9203",
+      "current_path": "packages/ui/src/components/markdown/MarkdownPdfBlock.tsx",
+      "current_blob": "c7b514e32842667a735fb6d1d1bc3cc1be8a9203",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "c7b514e32842667a735fb6d1d1bc3cc1be8a9203"
+    },
+    {
+      "source_path": "packages/ui/src/components/markdown/MarkdownSpreadsheetBlock.tsx",
+      "source_blob": "7d384e9f31eacd8d987b4306389ce1f920862101",
+      "current_path": "packages/ui/src/components/markdown/MarkdownSpreadsheetBlock.tsx",
+      "current_blob": "7d384e9f31eacd8d987b4306389ce1f920862101",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "7d384e9f31eacd8d987b4306389ce1f920862101"
+    },
+    {
+      "source_path": "packages/ui/src/components/markdown/TableExportDropdown.tsx",
+      "source_blob": "354ca710a7cb625de95b0e4a1226907e30b86d51",
+      "current_path": "packages/ui/src/components/markdown/TableExportDropdown.tsx",
+      "current_blob": "354ca710a7cb625de95b0e4a1226907e30b86d51",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "354ca710a7cb625de95b0e4a1226907e30b86d51"
+    },
+    {
+      "source_path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+      "source_blob": "7089c771718e3e1f14542331522763791cf9e803",
+      "current_path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+      "current_blob": "88194902bac4dce38fa19b909e1a5662ad478204",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "88194902bac4dce38fa19b909e1a5662ad478204"
+    },
+    {
+      "source_path": "packages/ui/src/components/markdown/__tests__/tiptap-theme-state.test.ts",
+      "source_blob": "2ec03e1de49b94d95449858c50043189381a25cb",
+      "current_path": "packages/ui/src/components/markdown/__tests__/tiptap-theme-state.test.ts",
+      "current_blob": "2ec03e1de49b94d95449858c50043189381a25cb",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "2ec03e1de49b94d95449858c50043189381a25cb"
+    },
+    {
+      "source_path": "packages/ui/src/components/markdown/tiptap-editor.css",
+      "source_blob": "6a5385307ffeab7be178fd708cbfd97c08647f61",
+      "current_path": "packages/ui/src/components/markdown/tiptap-editor.css",
+      "current_blob": "e359d8e3c8526ee14b6c4d371f8a1dff671178a1",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "e359d8e3c8526ee14b6c4d371f8a1dff671178a1"
+    },
+    {
+      "source_path": "packages/ui/src/components/markdown/tiptap-shiki-theme.ts",
+      "source_blob": "f89dc21d5dcfa50fc041288fa1674c53e9384325",
+      "current_path": "packages/ui/src/components/markdown/tiptap-shiki-theme.ts",
+      "current_blob": "f89dc21d5dcfa50fc041288fa1674c53e9384325",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "f89dc21d5dcfa50fc041288fa1674c53e9384325"
+    },
+    {
+      "source_path": "packages/ui/src/components/overlay/ActivityCardsOverlay.tsx",
+      "source_blob": "399cfd4c850ca5e96736028d9246522e4aa845e8",
+      "current_path": "packages/ui/src/components/overlay/ActivityCardsOverlay.tsx",
+      "current_blob": "399cfd4c850ca5e96736028d9246522e4aa845e8",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "399cfd4c850ca5e96736028d9246522e4aa845e8"
+    },
+    {
+      "source_path": "packages/ui/src/components/overlay/CodePreviewOverlay.tsx",
+      "source_blob": "68db5db9739cfadf641a682a2a6bc05f56bb7724",
+      "current_path": "packages/ui/src/components/overlay/CodePreviewOverlay.tsx",
+      "current_blob": "68db5db9739cfadf641a682a2a6bc05f56bb7724",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "68db5db9739cfadf641a682a2a6bc05f56bb7724"
+    },
+    {
+      "source_path": "packages/ui/src/components/overlay/ContentFrame.tsx",
+      "source_blob": "d40c896d6110322804855b89f32052d91bc33d6a",
+      "current_path": "packages/ui/src/components/overlay/ContentFrame.tsx",
+      "current_blob": "d40c896d6110322804855b89f32052d91bc33d6a",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "d40c896d6110322804855b89f32052d91bc33d6a"
+    },
+    {
+      "source_path": "packages/ui/src/components/overlay/CopyButton.tsx",
+      "source_blob": "776d1d8be2e0c8c7f818f4ca9fd6eeac09ae1c4e",
+      "current_path": "packages/ui/src/components/overlay/CopyButton.tsx",
+      "current_blob": "776d1d8be2e0c8c7f818f4ca9fd6eeac09ae1c4e",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "776d1d8be2e0c8c7f818f4ca9fd6eeac09ae1c4e"
+    },
+    {
+      "source_path": "packages/ui/src/components/overlay/DocumentFormattedMarkdownOverlay.tsx",
+      "source_blob": "76cdcda569ad76f13700846e82d98f98d82e5ed8",
+      "current_path": "packages/ui/src/components/overlay/DocumentFormattedMarkdownOverlay.tsx",
+      "current_blob": "76cdcda569ad76f13700846e82d98f98d82e5ed8",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "76cdcda569ad76f13700846e82d98f98d82e5ed8"
+    },
+    {
+      "source_path": "packages/ui/src/components/overlay/FullscreenOverlayBaseHeader.tsx",
+      "source_blob": "b049055af96d7003fd35fe7b9e1ca11f8ea72673",
+      "current_path": "packages/ui/src/components/overlay/FullscreenOverlayBaseHeader.tsx",
+      "current_blob": "b049055af96d7003fd35fe7b9e1ca11f8ea72673",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "b049055af96d7003fd35fe7b9e1ca11f8ea72673"
+    },
+    {
+      "source_path": "packages/ui/src/components/overlay/HTMLPreviewOverlay.tsx",
+      "source_blob": "a20ec6aaf8c6fc1038efd248c2532ec368506ae7",
+      "current_path": "packages/ui/src/components/overlay/HTMLPreviewOverlay.tsx",
+      "current_blob": "a20ec6aaf8c6fc1038efd248c2532ec368506ae7",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "a20ec6aaf8c6fc1038efd248c2532ec368506ae7"
+    },
+    {
+      "source_path": "packages/ui/src/components/overlay/ItemNavigator.tsx",
+      "source_blob": "48dea3239ff724709fef88087c0485f9b975603a",
+      "current_path": "packages/ui/src/components/overlay/ItemNavigator.tsx",
+      "current_blob": "48dea3239ff724709fef88087c0485f9b975603a",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "48dea3239ff724709fef88087c0485f9b975603a"
+    },
+    {
+      "source_path": "packages/ui/src/components/overlay/MultiDiffPreviewOverlay.tsx",
+      "source_blob": "b1511866ddee0cd8fca8505762cbc4ce20503664",
+      "current_path": "packages/ui/src/components/overlay/MultiDiffPreviewOverlay.tsx",
+      "current_blob": "b1511866ddee0cd8fca8505762cbc4ce20503664",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "b1511866ddee0cd8fca8505762cbc4ce20503664"
+    },
+    {
+      "source_path": "packages/ui/src/components/overlay/OverlayErrorBanner.tsx",
+      "source_blob": "087a5e38a7c9709b2afb96da78fae392c8ac33c4",
+      "current_path": "packages/ui/src/components/overlay/OverlayErrorBanner.tsx",
+      "current_blob": "087a5e38a7c9709b2afb96da78fae392c8ac33c4",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "087a5e38a7c9709b2afb96da78fae392c8ac33c4"
+    },
+    {
+      "source_path": "packages/ui/src/components/overlay/PreviewOverlay.tsx",
+      "source_blob": "63921fa5a64ffbe4fd0d6e273ffc7f9a96b4259e",
+      "current_path": "packages/ui/src/components/overlay/PreviewOverlay.tsx",
+      "current_blob": "63921fa5a64ffbe4fd0d6e273ffc7f9a96b4259e",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "63921fa5a64ffbe4fd0d6e273ffc7f9a96b4259e"
+    },
+    {
+      "source_path": "packages/ui/src/components/overlay/ZoomControls.tsx",
+      "source_blob": "16b2ec3aeece7c62c3cdbf9844f17833478ba189",
+      "current_path": "packages/ui/src/components/overlay/ZoomControls.tsx",
+      "current_blob": "16b2ec3aeece7c62c3cdbf9844f17833478ba189",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "16b2ec3aeece7c62c3cdbf9844f17833478ba189"
+    },
+    {
+      "source_path": "packages/ui/src/components/terminal/TerminalOutput.tsx",
+      "source_blob": "9729e4b0a4488b1902d13082c6da208be525a2f6",
+      "current_path": "packages/ui/src/components/terminal/TerminalOutput.tsx",
+      "current_blob": "9729e4b0a4488b1902d13082c6da208be525a2f6",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "9729e4b0a4488b1902d13082c6da208be525a2f6"
+    },
+    {
+      "source_path": "packages/ui/src/components/terminal/__tests__/ansi-theme.test.ts",
+      "source_blob": "1e959744c76036fe97ac3acebe268e1156d6119d",
+      "current_path": "packages/ui/src/components/terminal/__tests__/ansi-theme.test.ts",
+      "current_blob": "1e959744c76036fe97ac3acebe268e1156d6119d",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "1e959744c76036fe97ac3acebe268e1156d6119d"
+    },
+    {
+      "source_path": "packages/ui/src/components/terminal/ansi-parser.ts",
+      "source_blob": "9e9be713b4362c6d879bd6b8ba3eb893978f9ee1",
+      "current_path": "packages/ui/src/components/terminal/ansi-parser.ts",
+      "current_blob": "9e9be713b4362c6d879bd6b8ba3eb893978f9ee1",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "9e9be713b4362c6d879bd6b8ba3eb893978f9ee1"
+    },
+    {
+      "source_path": "packages/ui/src/components/terminal/index.ts",
+      "source_blob": "dd24e67c02f7c1853c3c194bb6945dd9ddade902",
+      "current_path": "packages/ui/src/components/terminal/index.ts",
+      "current_blob": "dd24e67c02f7c1853c3c194bb6945dd9ddade902",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "dd24e67c02f7c1853c3c194bb6945dd9ddade902"
+    },
+    {
+      "source_path": "packages/ui/src/components/tooltip.tsx",
+      "source_blob": "19af6cf58cadb4ea9b779423a82072380b413bf0",
+      "current_path": "packages/ui/src/components/tooltip.tsx",
+      "current_blob": "19af6cf58cadb4ea9b779423a82072380b413bf0",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "19af6cf58cadb4ea9b779423a82072380b413bf0"
+    },
+    {
+      "source_path": "packages/ui/src/components/ui/BrowserControls.tsx",
+      "source_blob": "d429b36cb4379ce4006b640fdc479c423a1a5c89",
+      "current_path": "packages/ui/src/components/ui/BrowserControls.tsx",
+      "current_blob": "d429b36cb4379ce4006b640fdc479c423a1a5c89",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "d429b36cb4379ce4006b640fdc479c423a1a5c89"
+    },
+    {
+      "source_path": "packages/ui/src/components/ui/BrowserEmptyStateCard.tsx",
+      "source_blob": "58ff57773265ba87c69a3c211c4ebc5a6a547e07",
+      "current_path": "packages/ui/src/components/ui/BrowserEmptyStateCard.tsx",
+      "current_blob": "58ff57773265ba87c69a3c211c4ebc5a6a547e07",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "58ff57773265ba87c69a3c211c4ebc5a6a547e07"
+    },
+    {
+      "source_path": "packages/ui/src/components/ui/BrowserShader.tsx",
+      "source_blob": "257d7b492bd782edd4ccff6b76c0c259ca581f8e",
+      "current_path": "packages/ui/src/components/ui/BrowserShader.tsx",
+      "current_blob": "257d7b492bd782edd4ccff6b76c0c259ca581f8e",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "257d7b492bd782edd4ccff6b76c0c259ca581f8e"
+    },
+    {
+      "source_path": "packages/ui/src/components/ui/FilterableSelectPopover.tsx",
+      "source_blob": "a6211e02ab7356c6f5a3ee44edcf2fdda19b6af8",
+      "current_path": "packages/ui/src/components/ui/FilterableSelectPopover.tsx",
+      "current_blob": "a6211e02ab7356c6f5a3ee44edcf2fdda19b6af8",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "a6211e02ab7356c6f5a3ee44edcf2fdda19b6af8"
+    },
+    {
+      "source_path": "packages/ui/src/components/ui/Island.tsx",
+      "source_blob": "806aece1c42bd0769d7f27abf5f9b21e627d8d7d",
+      "current_path": "packages/ui/src/components/ui/Island.tsx",
+      "current_blob": "806aece1c42bd0769d7f27abf5f9b21e627d8d7d",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "806aece1c42bd0769d7f27abf5f9b21e627d8d7d"
+    },
+    {
+      "source_path": "packages/ui/src/components/ui/IslandFollowUpContentView.tsx",
+      "source_blob": "d24b1f71a4f52016fc37d49328acb0a6e1eff12c",
+      "current_path": "packages/ui/src/components/ui/IslandFollowUpContentView.tsx",
+      "current_blob": "d24b1f71a4f52016fc37d49328acb0a6e1eff12c",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "d24b1f71a4f52016fc37d49328acb0a6e1eff12c"
+    },
+    {
+      "source_path": "packages/ui/src/components/ui/PreviewHeader.tsx",
+      "source_blob": "21e6c8a0ce28ff5516def51e62f6035e578203b8",
+      "current_path": "packages/ui/src/components/ui/PreviewHeader.tsx",
+      "current_blob": "21e6c8a0ce28ff5516def51e62f6035e578203b8",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "21e6c8a0ce28ff5516def51e62f6035e578203b8"
+    },
+    {
+      "source_path": "packages/ui/src/components/ui/SimpleDropdown.tsx",
+      "source_blob": "9287796583ffb1411080e52cac93b0ba2a595585",
+      "current_path": "packages/ui/src/components/ui/SimpleDropdown.tsx",
+      "current_blob": "9287796583ffb1411080e52cac93b0ba2a595585",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "9287796583ffb1411080e52cac93b0ba2a595585"
+    },
+    {
+      "source_path": "packages/ui/src/components/ui/StyledDropdown.tsx",
+      "source_blob": "2cd207476b283b6b1d23abd9845981f42367678b",
+      "current_path": "packages/ui/src/components/ui/StyledDropdown.tsx",
+      "current_blob": "2cd207476b283b6b1d23abd9845981f42367678b",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "2cd207476b283b6b1d23abd9845981f42367678b"
+    },
+    {
+      "source_path": "packages/ui/src/components/ui/premium-menu-model.ts",
+      "source_blob": "aaa22c4892f2a762b3fd980fe18a1d27a72cad2b",
+      "current_path": "packages/ui/src/components/ui/premium-menu-model.ts",
+      "current_blob": "aaa22c4892f2a762b3fd980fe18a1d27a72cad2b",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "aaa22c4892f2a762b3fd980fe18a1d27a72cad2b"
+    },
+    {
+      "source_path": "packages/ui/src/index.ts",
+      "source_blob": "44b706e369e2a35ce68c6a0c3a9d0fe5745d9f06",
+      "current_path": "packages/ui/src/index.ts",
+      "current_blob": "7e3e1bdf3e803ea91a6b57eba7e0296d123f3f64",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "7e3e1bdf3e803ea91a6b57eba7e0296d123f3f64"
+    },
+    {
+      "source_path": "packages/ui/src/styles/__tests__/zen-shell-tokens.test.ts",
+      "source_blob": "849862e0a2eea41892c54d8752eb15ef027d5858",
+      "current_path": "packages/ui/src/styles/__tests__/zen-shell-tokens.test.ts",
+      "current_blob": "849862e0a2eea41892c54d8752eb15ef027d5858",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "849862e0a2eea41892c54d8752eb15ef027d5858"
+    },
+    {
+      "source_path": "packages/ui/src/styles/index.css",
+      "source_blob": "3cbc9726a4b44374aa11540d73cc5eda0798fbb8",
+      "current_path": "packages/ui/src/styles/index.css",
+      "current_blob": "3cbc9726a4b44374aa11540d73cc5eda0798fbb8",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "3cbc9726a4b44374aa11540d73cc5eda0798fbb8"
+    },
+    {
+      "source_path": "scripts/test/zed-appearance-native-observe.ts",
+      "source_blob": "a630ec97cb1d71035f5a8d332c03d18b9ff13a86",
+      "current_path": "scripts/test/zed-appearance-native-observe.ts",
+      "current_blob": "a630ec97cb1d71035f5a8d332c03d18b9ff13a86",
+      "status": "source_blob_integrated",
+      "first_comparison_current_blob": "a630ec97cb1d71035f5a8d332c03d18b9ff13a86"
+    },
+    {
+      "source_path": "scripts/test/zed-appearance-web-acceptance.ts",
+      "source_blob": "0734724bc1f7da3c8a073ffbf723954fa38b9aa6",
+      "current_path": "scripts/test/zed-appearance-web-acceptance.ts",
+      "current_blob": "3d53b1ee0e0fd6cbd3dbf47853e08ef91170748a",
+      "status": "source_delta_adapted_to_current_consumer",
+      "first_comparison_current_blob": "3d53b1ee0e0fd6cbd3dbf47853e08ef91170748a"
+    }
+  ],
+  "counts": {
+    "source_history_preserved_current_spec_plan_retained": 3,
+    "source_delta_adapted_to_current_consumer": 95,
+    "source_blob_integrated": 234,
+    "source_historical_evidence_preserved": 12
+  },
+  "first_comparison_base": "f1a2bb3c5a3a787c3961b1a19006fd9768dd36de",
+  "status_counts": {
+    "source_history_preserved_current_spec_plan_retained": 3,
+    "source_delta_adapted_to_current_consumer": 95,
+    "source_blob_integrated": 234,
+    "source_historical_evidence_preserved": 12
+  }
+}

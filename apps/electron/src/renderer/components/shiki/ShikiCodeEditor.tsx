@@ -17,6 +17,7 @@ import Editor from 'react-simple-code-editor'
 import { codeToHtml, bundledLanguages, type BundledLanguage, type ThemeRegistrationRaw } from 'shiki'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/hooks/useTheme'
+import { resolveShikiTheme } from '@rox/ui'
 
 export interface ShikiCodeEditorProps {
   /** The code/markdown content */
@@ -52,11 +53,6 @@ const highlightCache = new Map<string, string>()
 const CACHE_MAX_SIZE = 50
 
 function getCacheKey(code: string, lang: string, theme: string): string {
-  // Use hash for large content
-  if (code.length > 500) {
-    const hash = code.length.toString() + code.substring(0, 100) + code.substring(code.length - 100)
-    return `${theme}:${lang}:${hash}`
-  }
   return `${theme}:${lang}:${code}`
 }
 
@@ -80,6 +76,8 @@ export function ShikiCodeEditor({
   // Build a Shiki theme from Rox semantic tokens so syntax and editor surfaces
   // change together; themes without a preset retain the bundled Shiki theme.
   const theme = useMemo<string | ThemeRegistrationRaw>(() => {
+    const registeredTheme = resolveShikiTheme(shikiTheme)
+    if (typeof registeredTheme !== 'string') return registeredTheme
     if (!presetTheme) return shikiTheme
     const colors = isDark && presetTheme.dark
       ? { ...presetTheme, ...presetTheme.dark }

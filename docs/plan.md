@@ -1001,6 +1001,11 @@ Owner root. Depends on existing rail-links/Popover/Select and current product-to
 
 Owner recent_features: restore exact ISO calendar-day validation in the current parser; verify impossible-date refusal and valid leap-day persistence through the actual TaskDetail form. Keep before-fix unit/browser failures, full personal-task regression checks and both timezone offsets; qualify current core types and production component/CSS bundle. Parent owns ordered PR merge; source branches stay preserved. Broader Golden/native release acceptance remains separate.
 
+
+## Zed appearance reconciliation —2026-10-04
+
+Owner: root; dependency: current main recoveries. Apply only the source delta from release29e86 to PR1469c11ed and preserve current behavior through every overlap. Verify current theme/storage/cookie/geometry tests, unchanged browser assertion bodies through supported Node lifecycle, full types and production clients. Keep source history, fingerprints, failure attempts and remaining native Mac/Windows gates. Publish a separate PR to main with original branches retained.
+
 Collection recovery qualification completed on current bb047:33/0/80 native-storage/current callbacks,5/0 mounted Chromium and full Electron Node22 types0. Prior test-type diagnostics were corrected by precise literal fixture types; all source failures remain in the archived evidence.
 
 
@@ -1008,6 +1013,8 @@ Collection recovery qualification completed on current bb047:33/0/80 native-stor
 
 Owner recent_features; depends on current Tasks1456, strict date1470 and Product1454. Preserve old source and modern Things UI. Exercise actual two-task link/kind/tag retention, submitted-field-only clearing, actor/workspace ABA, unmount and stale pre-render button denial, plus all retained task import/responsive cases and current native commit controls. Retain the before-fix lost draft and fixture failure history; qualify current Electron types with own workspace dependency resolution, record exact source/log hashes, reconcile all current docs without deletions, publish separate PR for parent review/merge.
 
+
+Zed addendum owner root: freeze final344-path source7379efcd; preserve current Home widget appearance when adopting content-sized rows, retain current settings option roles, and repeat production-optimized browser checks. Record the first28/1 stale-selector result and the subsequent cold-build hook timeout; extend only startup build budget from300 to900seconds under concurrent host load, keeping all29 case assertions and deadlines unchanged. Final combined qualification remains pending.
 
 ### Knowledge availability recovery — 2026-10-03
 
@@ -1048,10 +1055,28 @@ Owner recent_features; parent owns ordered integration. Retain held-prepare dest
 3. Publish a separate collector PR with qualified hashes and pending producer/UI boundaries. pr_scout preserves current third suppliedExecution argument and spawn authority bind while implementing tagged actual producers in its separate PR. Root owns sequential merge.
 4. Historical worker recovers current renderer context/export/link/retry behavior from the same finite source head; end-to-end producer/UI acceptance needs its own actual consumers and refreshed scoped proof.
 
+## Late UI1448 runtime edges — 2026-10-04
+
+1. Freeze source52/9 and reject stale account/navigation regressions; isolate four root-owned production files from worker manager/runner ownership.
+2. Retain codec baseline0/3; qualify12/0 transport,10 actual provider controls with private hanging OS-provider executable/controlled Linux proc and4 real macOS subprocess conformance. Credential regressions use an unavailable synthetic provider; no real user Keychain/Secret Service access.
+3. Qualify full strict Shared/server-core/cloud-runner Node22 types0, preserve first adapter failure and per-file hashes, merge current main with documentation union, publish separate PR. Root integrates qualified worker2-path PR independently; source branches stay intact.
+
+Zed final bounded qualification on current991c8b80b: 122 focused +323 Home/token/12-locale tests;29 browser bodies via28 whole-run passes plus unchanged-bundle1-case rerun (whole aggregate retains one cancellation);7 actual App/native-journal and7 production-component cases. All failure histories archived, no assertions or case deadlines weakened. Current main collector/Skills/native launch/Notes changes merged normally; Skills OMP selection/reset buttons retain current semantics with appearance tokens. Full final Electron follow-up and source344 ledger bind their own receipt before publication. Installed OS/cloud/release DoD stays separate.
+
+
+### Selected skill instructions custody recovery — 2026-10-04
+
+Owner recent_features; parent reviews and merges. Preserve merged1467 UI/API exactly, retain merged-source ancestor failure0/1 and legacy outside-link failure. Qualify48 storage/managed/custody cases,4 registered native RPC/workspace cases including zero body opens after revoke,7 actual SkillInfo owner/draft/OMP cases and runtime row keyboard/reset control plus full strict Electron types. Retain original fixture/default-timeout failures and exact hashes; reconcile docs additively, preserve all source branches. Installed platform/full release acceptance stays separate.
+
+## Opaque route identity follow-up — 2026-10-04
+
+1. Retain actual unchanged boundary1pass/8fail for opaque repeated/trailing slashes and encoded-percent identifiers, plus panel restore/query controls.
+2. Normalize only namespace grammar; preserve each remaining opaque ID byte, current Notes alias and unavailable/action policy.
+3. Qualify517 route/parser/panel/navigation cases0fail and current strict Electron, archive raw logs/hashes and publish separate PR after current-main union; retain branches.
+
 ## Runtime actual producer custody recovery — 2026-10-04
 
 - [x] Freeze c2e8 source and current producer caller/blob audit; agree historical collector seven-file dependency and producer fourteen-file partition. Preserve SSO suppliedExecution and spawn authority bind.
 - [x] Reproduce current TaskRunner and native observer negatives in an isolated unchanged baseline; retain fixture/timeout failures separately.
 - [ ] Recover only actual producer origin/output/private projection/native lifecycle intent; qualify current account/native/host process negative controls, native mock-provider loop and package types.
 - [ ] Publish separate qualified PR with exact source and current-main additive docs union; root reviews/merges.
-

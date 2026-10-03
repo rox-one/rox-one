@@ -24,7 +24,7 @@
   /* Onboarding layout tokens remain renderer-specific. */
   --step-icon-size: 4rem;
   --step-icon-inner-size: 2rem;
-  --step-icon-radius: 1rem;
+  --step-icon-radius: var(--radius-card);
   --step-title-size: 1.5rem;
   --step-description-max-width: 24rem;
   --step-actions-gap: 0.75rem;
@@ -122,67 +122,12 @@ html[data-scenic][data-theme-override]::before {
   background-repeat: no-repeat;
 }
 
-/* Scenic mode: Make background color semi-transparent for glass effect
-   Panels with bg-background will become translucent glass */
-html[data-scenic] {
-  /* Raise panel opacity so wallpaper bleed does not wash out text */
-  --background: oklch(0.2 0.005 270 / 0.88);
-}
-
-/* Snazzy Blurred: blur only supported surfaces; keep a solid color fallback. */
-@supports (backdrop-filter: blur(1px)) {
-  html[data-blurred] .chrome-topbar,
-  html[data-blurred] .chrome-strip,
-  html[data-blurred] .rox-shell-pane,
-  html[data-blurred] .shadow-middle,
-  html[data-blurred] .shadow-strong {
-    background-color: color-mix(in srgb, var(--paper) 90%, transparent);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  }
-
-  html[data-blurred] .chrome-rail {
-    background-color: color-mix(in srgb, var(--navigator) 92%, transparent);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  }
-}
-
-@supports not (backdrop-filter: blur(1px)) {
-  html[data-blurred] .chrome-topbar,
-  html[data-blurred] .chrome-strip,
-  html[data-blurred] .rox-shell-pane,
-  html[data-blurred] .shadow-middle,
-  html[data-blurred] .shadow-strong {
-    background-color: var(--paper);
-  }
-
-  html[data-blurred] .chrome-rail {
-    background-color: var(--navigator);
-  }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  html[data-blurred] .chrome-topbar,
-  html[data-blurred] .chrome-strip,
-  html[data-blurred] .rox-shell-pane,
-  html[data-blurred] .shadow-middle,
-  html[data-blurred] .shadow-strong {
-    background-color: var(--paper);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-
-  html[data-blurred] .chrome-rail {
-    background-color: var(--navigator);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-}
-
-/* Zen Shell: scenic wallpaper stays on ::before. Documents stay opaque. */
+/* Blurred palettes describe chrome intent. Reading regions remain solid,
+   independent of palette mode or the optional Zen layout setting. */
+html [data-shell-role="content"],
 html[data-shell-style="zen"][data-scenic] [data-shell-role="content"] {
-  --background: var(--shell-content);
+  --background: rgb(from var(--canvas) r g b / 1);
+  --shell-content: rgb(from var(--canvas) r g b / 1);
   background: var(--shell-content);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -323,97 +268,22 @@ html[data-contrast="high"] .map-toolbar-btn[aria-pressed="true"] {
   app-region: no-drag;
 }
 
-/* =============================================================================
-   SCENIC MODE - GLASS PANEL EFFECTS
-
-   In scenic mode, panels become translucent with backdrop blur (glassmorphism).
-   The glass effect provides visual depth while showing the background image through.
-   Target panels by their shadow classes (shadow-middle, shadow-strong).
-============================================================================= */
-
-  html[data-scenic] .shadow-middle,
-  html[data-scenic] .shadow-strong {
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-  position: relative;
-  /* Ensure panels are above the titlebar drag region (z-titlebar: 40) so header buttons are clickable.
-     Without this, the position:relative creates a stacking context at z-index:auto which is below the fixed titlebar. */
-  z-index: var(--z-panel);
-}
-
-/* One-surface shell (scenic): panes are flush glass on one shared background.
-   Same stacking as the old .shadow-middle panels (above the titlebar drag
-   region) but no gradient border ring, no radius, no gap. */
+/* Scenic wallpaper stays behind the shell; the same chrome-only material
+   policy applies to scenic and ordinary palettes. Reading surfaces stay solid. */
 html[data-scenic] .rox-shell-pane {
   position: relative;
   z-index: var(--z-panel);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
 }
-
-/* Scenic mode: Input field gets more transparency to show background through
-   Uses a much lighter overlay to let the blurred background image show through */
-html[data-scenic] .input-container {
-  background: rgba(0, 0, 0, 0.28);
+html .input-container {
+  background: rgb(from var(--input-surface, var(--paper)) r g b / 1);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
-
-/* Scenic mode: Gradient border effect for glass panels
-   Uses a pseudo-element with a faint white linear gradient (8% at top, 0% at bottom).
-   Kept barely-there so nested glass panels don't stack into wireframe outlines.
-   The mask-composite technique creates a border-only effect from a filled gradient. */
-html[data-scenic] .shadow-middle::before,
-html[data-scenic] .shadow-strong::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.08),
-    rgba(255, 255, 255, 0)
-  );
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  z-index: 1;
-  mix-blend-mode: soft-light;
-}
-
-/* Scenic mode: Ensure panel content is above the gradient border pseudo-element.
-   Without this, interactive elements (buttons, dropdowns) in the header area
-   can be visually obscured or have click issues due to stacking context with backdrop-filter.
-   Creates explicit stacking for direct children so they sit above ::before (z-index: 1). */
-html[data-scenic] .shadow-middle > *,
-html[data-scenic] .shadow-strong > * {
-  position: relative;
-  z-index: 2;
-}
-
-
-/* Scenic mode: Popovers get glass effect too */
-html[data-scenic] .popover-styled {
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-}
-
-/* Scenic mode: Fullscreen overlay background gets glass effect
-   Applied to the AI response fullscreen view background so it blends
-   with the scenic background image when viewing expanded content. */
-html[data-scenic] .fullscreen-overlay-background {
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-}
-
-html[data-scenic]:not(.dark) .fullscreen-overlay-background {
-  background: color-mix(in srgb, var(--foreground-3) 70%, transparent);
-}
-
-html.dark[data-scenic] .fullscreen-overlay-background {
-  background: color-mix(in srgb, var(--foreground-3) 60%, transparent);
+html .fullscreen-overlay-background,
+html .popover-styled {
+  background: rgb(from var(--paper) r g b / 1);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* =============================================================================
@@ -956,7 +826,7 @@ html.dark[data-scenic] .fullscreen-overlay-background {
      narrowed by the right inspector must not get 44px mobile boxes. */
   [data-shell-density="compact"] .panel-header-btn {
     padding: 10px;
-    border-radius: 10px;
+    border-radius: var(--radius-card);
     min-width: 44px;
     min-height: 44px;
   }
@@ -1048,7 +918,7 @@ html.dark[data-scenic] .fullscreen-overlay-background {
   .header-icon-btn {
     width: 36px;
     height: 36px;
-    border-radius: 8px;
+    border-radius: var(--radius-control);
   }
 
   [data-workspace-switcher="topbar"] [data-slot="chevron"] {
@@ -1104,125 +974,91 @@ html[data-shell-style="zen"] .shell-sash-active {
   }
 }
 
-/* Shared outer glass: titlebar, primary navigation and right inspector follow
-   the same theme, with opaque reading surfaces inside the workbench. */
+/* Outer material is independent of palette appearance. Native capability is
+   main-owned; browser CSS capability never impersonates a native snapshot. */
 html {
   --shell-glass-blur: 20px;
-  --shell-glass-topbar: color-mix(in srgb, var(--surface-elevated) 84%, transparent);
-  --shell-glass-rail: color-mix(in srgb, var(--surface-rail) 82%, transparent);
-  --shell-glass-strip: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
-  --shell-glass-highlight: color-mix(in srgb, white 18%, transparent);
-  --shell-window-radius: 12px;
-}
-
-html.dark {
-  --shell-glass-highlight: color-mix(in srgb, white 7%, transparent);
-}
-
-html[data-shell-style="zen"]:not([data-scenic]) {
-  --shell-content: var(--canvas);
-}
-
-html :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]),
-html[data-shell-style="zen"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]) {
-  background: var(--shell-glass-surface, var(--shell-glass-strip));
-  border-color: var(--shell-border, var(--border-subtle));
-  backdrop-filter: blur(var(--shell-glass-blur)) saturate(1.15);
-  -webkit-backdrop-filter: blur(var(--shell-glass-blur)) saturate(1.15);
-}
-
-html .chrome-topbar {
-  --shell-glass-surface: var(--shell-glass-topbar);
-  border-radius: var(--shell-window-radius) var(--shell-window-radius) 0 0;
-  box-shadow: inset 0 1px 0 var(--shell-glass-highlight);
-}
-
-/* Keep glass panes clear all the way to the native compositor. */
-html .rox-shell-pane:is([data-panel-role="sidebar"], [data-panel-role="navigator"]) {
-  background: transparent;
-}
-
-html .chrome-rail {
-  --shell-glass-surface: var(--shell-glass-rail);
-}
-
-html [data-shell-role="chrome"].chrome-rail:not([data-compact-profile]) {
-  border-radius: 0 0 0 var(--shell-window-radius);
-}
-
-html [data-inspector-panel] {
-  border-radius: var(--rox-radius-panel) 0 var(--shell-window-radius) var(--rox-radius-panel);
-}
-
-/* Explicit opaque mode and native capability/accessibility fallbacks win over
-   scenic/blurred themes. Filters affect only chrome, never its text opacity. */
-html[data-shell-material="solid"],
-html[data-contrast="high"] {
-  --shell-glass-topbar: var(--surface-elevated);
-  --shell-glass-rail: var(--surface-rail);
-  --shell-glass-strip: var(--surface-elevated);
-  /* Scenic surface tokens carry alpha. Dropping backdrop-filter alone does
-     not make them opaque, so explicitly restore full alpha in this fallback. */
-  --shell-glass-topbar: rgb(from var(--surface-elevated) r g b / 1);
+  --shell-glass-topbar: rgb(from var(--surface-titlebar, var(--surface-elevated)) r g b / 1);
   --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1);
-  --shell-glass-strip: rgb(from var(--surface-elevated) r g b / 1);
+  --shell-glass-strip: rgb(from var(--surface-toolbar, var(--surface-elevated)) r g b / 1);
+  --shell-glass-inspector: rgb(from var(--surface-rail) r g b / 1);
+  --shell-window-radius: 0px;
 }
 
-html[data-shell-material="solid"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]),
-html[data-contrast="high"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]) {
+html :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
+  background: var(--shell-glass-surface, var(--shell-glass-strip));
+  border-color: var(--border-subtle);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+  border-radius: 0;
 }
+html .chrome-topbar { --shell-glass-surface: var(--shell-glass-topbar); }
+html :is(.chrome-rail, .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
+  --shell-glass-surface: var(--shell-glass-rail);
+}
+html[data-shell-style="zen"]:not([data-scenic]) { --shell-content: var(--canvas); }
+html .chrome-strip { background: var(--shell-glass-strip); }
+/* Inspector is a side panel. A toolbar tint across its entire height turns
+   it into an unintended raised surface beside the work area. */
+html [data-inspector-panel] { --shell-glass-surface: var(--shell-glass-inspector); }
 
-@supports not (backdrop-filter: blur(1px)) {
-  html {
-    --shell-glass-topbar: var(--surface-elevated);
-    --shell-glass-rail: var(--surface-rail);
-    --shell-glass-strip: var(--surface-elevated);
-    --shell-glass-topbar: rgb(from var(--surface-elevated) r g b / 1);
-    --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1);
-    --shell-glass-strip: rgb(from var(--surface-elevated) r g b / 1);
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html[data-shell-runtime="web"]:not([data-shell-css-material="solid"]),
+  html[data-shell-runtime="electron"]:is([data-shell-material="vibrancy"], [data-shell-material="mica"]) {
+    --shell-glass-topbar: color-mix(in srgb, rgb(from var(--surface-titlebar, var(--surface-elevated)) r g b / 1) 84%, transparent);
+    --shell-glass-rail: color-mix(in srgb, rgb(from var(--surface-rail) r g b / 1) 82%, transparent);
+    --shell-glass-strip: color-mix(in srgb, rgb(from var(--surface-toolbar, var(--surface-elevated)) r g b / 1) 88%, transparent);
+    --shell-glass-inspector: color-mix(in srgb, rgb(from var(--surface-rail) r g b / 1) 88%, transparent);
+  }
+  html[data-shell-runtime="web"]:not([data-shell-css-material="solid"]) :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]),
+  html[data-shell-runtime="electron"]:is([data-shell-material="vibrancy"], [data-shell-material="mica"]) :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
+    backdrop-filter: blur(var(--shell-glass-blur)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--shell-glass-blur)) saturate(1.15);
   }
 }
 
-@media (prefers-reduced-transparency: reduce) {
-  html {
-    --shell-glass-topbar: var(--surface-elevated);
-    --shell-glass-rail: var(--surface-rail);
-    --shell-glass-strip: var(--surface-elevated);
-    --shell-glass-topbar: rgb(from var(--surface-elevated) r g b / 1);
-    --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1);
-    --shell-glass-strip: rgb(from var(--surface-elevated) r g b / 1);
-  }
+/* Browser page canvas stays opaque; only native compositor windows clear it. */
+html[data-shell-runtime="web"], html[data-shell-runtime="web"] :is(body, #root) {
+  background: rgb(from var(--canvas) r g b / 1);
+}
+html[data-theme-override]:not([data-scenic])::before { background: transparent; }
 
-  html :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]),
-  html[data-shell-style="zen"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]) {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
+html[data-contrast="high"] {
+  --shell-glass-topbar: rgb(from var(--surface-titlebar, var(--surface-elevated)) r g b / 1) !important;
+  --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1) !important;
+  --shell-glass-strip: rgb(from var(--surface-toolbar, var(--surface-elevated)) r g b / 1) !important;
+  --shell-glass-inspector: rgb(from var(--surface-rail) r g b / 1) !important;
+}
+html[data-contrast="high"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  html[data-shell-runtime] {
+    --shell-glass-topbar: rgb(from var(--surface-titlebar, var(--surface-elevated)) r g b / 1) !important;
+    --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1) !important;
+    --shell-glass-strip: rgb(from var(--surface-toolbar, var(--surface-elevated)) r g b / 1) !important;
+    --shell-glass-inspector: rgb(from var(--surface-rail) r g b / 1) !important;
+  }
+  html[data-shell-runtime] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
 @media (forced-colors: active) {
-  html,
-  html[data-shell-style="zen"] {
-    --shell-glass-topbar: Canvas;
-    --shell-glass-rail: Canvas;
-    --shell-glass-strip: Canvas;
+  html[data-shell-runtime] {
+    --shell-glass-topbar: Canvas !important;
+    --shell-glass-rail: Canvas !important;
+    --shell-glass-strip: Canvas !important;
+    --shell-glass-inspector: Canvas !important;
   }
-
-  html :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]),
-  html[data-shell-style="zen"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]) {
+  html[data-shell-runtime] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
     background: Canvas;
     color: CanvasText;
     border-color: CanvasText;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-}
-
-@media (display-mode: fullscreen) {
-  html {
-    --shell-window-radius: 0px;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 }
 
@@ -1455,4 +1291,55 @@ html[data-contrast="high"] .rox-home-toggle[aria-checked="false"] {
 .rox-inspector-terminal ::selection {
   background-color: var(--terminal-selection, var(--accent));
   color: var(--terminal-foreground, var(--foreground));
+}
+
+/* Text accents keep their own contrast-corrected foreground; filled controls
+   and focus indicators retain the exact palette accent. */
+.text-accent { color: var(--accent-text, var(--accent)); }
+
+/* The outer shell pane owns the navigation material; its layout wrapper
+   must not composite a second tint or blur above the same pixels. */
+html[data-shell-runtime] .rox-shell-pane[data-panel-role="sidebar"] > div > .chrome-rail,
+html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > .chrome-strip,
+html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .chrome-strip {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Backdrop support alone does not imply support for source-alpha
+   normalization. Older browsers use resolver-generated solid RGB throughout
+   the shell, including native windows, rather than an invalid transparent fill. */
+@supports not (color: rgb(from white r g b / 1)) {
+  html[data-shell-runtime] {
+    --canvas: var(--canvas-opaque);
+    --paper: var(--paper-opaque);
+    --navigator: var(--navigator-opaque);
+    --input-surface: var(--input-surface-opaque);
+    --shell-content: var(--canvas-opaque);
+    --shell-glass-topbar: var(--surface-titlebar-opaque) !important;
+    --shell-glass-rail: var(--navigator-opaque) !important;
+    --shell-glass-strip: var(--surface-toolbar-opaque) !important;
+    --shell-glass-inspector: var(--navigator-opaque) !important;
+    background: var(--canvas-opaque);
+  }
+  html[data-shell-runtime] :is(body, #root, [data-shell-role="content"]) {
+    background: var(--canvas-opaque);
+  }
+  html[data-shell-runtime] .input-container { background: var(--input-surface-opaque); }
+  html[data-shell-runtime] :is(.fullscreen-overlay-background, .popover-styled) { background: var(--paper-opaque); }
+  html[data-shell-runtime] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+@media (forced-colors: active) {
+  html[data-shell-runtime] {
+    --canvas-opaque: Canvas !important;
+    --paper-opaque: Canvas !important;
+    --navigator-opaque: Canvas !important;
+    --input-surface-opaque: Canvas !important;
+    --surface-titlebar-opaque: Canvas !important;
+    --surface-toolbar-opaque: Canvas !important;
+  }
 }
