@@ -123,6 +123,7 @@ import { ensureDefaultPermissions } from '@rox/shared/agent/permissions-config'
 import { ensureToolIcons, ensurePresetThemes } from '@rox/shared/config'
 import { setBundledAssetsRoot } from '@rox/shared/utils'
 import { initializeBackendHostRuntime } from '@rox/shared/agent/backend'
+import { prependPath, pathEnvKey } from '@rox/shared/toolchain'
 import { setPowerShellValidatorRoot } from '@rox/shared/agent'
 import { handleDeepLink } from './deep-link'
 import { BrowserPaneManager } from './browser-pane-manager'
@@ -189,7 +190,8 @@ if (isDebugMode) {
   process.env.CRAFT_UV = bundledUvExists ? uvBinary : (fallbackUv ?? uvBinary)
 
   // Bun runtime (packaged builds should prefer bundled runtime over PATH)
-  const bunBinary = join(resourcesBase, 'vendor', 'bun', process.platform === 'win32' ? 'bun.exe' : 'bun')
+  const bunBase = app.isPackaged && process.platform === 'win32' ? process.resourcesPath : resourcesBase
+  const bunBinary = join(bunBase, 'vendor', 'bun', process.platform === 'win32' ? 'bun.exe' : 'bun')
   if (existsSync(bunBinary)) {
     process.env.CRAFT_BUN = bunBinary
   }
@@ -206,7 +208,16 @@ if (isDebugMode) {
   // Prepend both generic wrappers dir and platform uv dir:
   // - binDir exposes wrapper commands (pdf-tool, docx-tool, ...)
   // - uvPlatformDir exposes raw `uv` for direct shell usage / debugging
-  process.env.PATH = `${binDir}${delimiter}${uvPlatformDir}${delimiter}${process.env.PATH}`
+  const rgDir = join(resourcesBase, 'node_modules', '@vscode', 'ripgrep', 'bin')
+  const rgBinary = join(rgDir, process.platform === 'win32' ? 'rg.exe' : 'rg')
+  const prefix = [binDir, uvPlatformDir,
+    ...(existsSync(bunBinary) ? [join(bunBase, 'vendor', 'bun')] : []),
+    ...(existsSync(rgBinary) ? [rgDir] : []),
+  ].join(delimiter)
+  const next = prependPath(process.env, prefix)
+  const pathKey = pathEnvKey(process.env)
+  for (const key of Object.keys(process.env)) if (key !== pathKey && key.toUpperCase() === 'PATH') delete process.env[key]
+  process.env[pathKey] = next[pathKey]
 
   if (!bundledUvExists) {
     mainLog.warn('Bundled uv binary missing, CLI document tools may fail unless uv is available on PATH.', {
@@ -443,6 +454,20 @@ app.whenReady().then(async () => {
   // Register bundled assets root so all seeding functions can find their files
   // (docs, permissions, themes, tool-icons resolve via getBundledAssetsDir)
   setBundledAssetsRoot(__dirname)
+
+  if (process.platform === 'win32' && !process.env.CRAFT_SERVER_URL) {
+    const { initializeWindowsBootstrap } = await import('./windows-bootstrap')
+    const { getToolchainDependencyMode, getGitBashPath } = await import('@rox/shared/config')
+    const result = await initializeWindowsBootstrap({
+      isPackaged: app.isPackaged,
+      resourcesPath: process.resourcesPath,
+      managedRoot: join(CONFIG_DIR, 'toolchain'),
+      preference: getToolchainDependencyMode(),
+      gitBashPreference: getGitBashPath(),
+    })
+    if (result?.missingTools.length || result?.recoveryCode) mainLog.warn('[windows-bootstrap]', result)
+    else if (result) mainLog.info('[windows-bootstrap]', result)
+  }
 
   // Initialize backend runtime bootstrapping (Codex vendor root, Claude SDK runtime paths).
   initializeBackendHostRuntime({
@@ -718,16 +743,14 @@ app.whenReady().then(async () => {
       })
       // Restore persisted Git Bash path on Windows (must happen before any SDK subprocess spawn)
       if (process.platform === 'win32') {
-        const { getGitBashPath, clearGitBashPath } = await import('@rox/shared/config')
+        const { getGitBashPath } = await import('@rox/shared/config')
         const gitBashPath = getGitBashPath()
         if (gitBashPath) {
           const validation = await validateGitBashPath(gitBashPath)
           if (validation.valid) {
-            process.env.CLAUDE_CODE_GIT_BASH_PATH = validation.path
+            process.env.CLAUDE_CODE_GIT_BASH_PATH ??= validation.path
           } else {
-            clearGitBashPath()
-            delete process.env.CLAUDE_CODE_GIT_BASH_PATH
-            mainLog.warn(`Cleared invalid persisted Git Bash path: ${gitBashPath}`)
+            mainLog.warn('Persisted Git Bash path is unusable; preference retained for repair')
           }
         }
       }
