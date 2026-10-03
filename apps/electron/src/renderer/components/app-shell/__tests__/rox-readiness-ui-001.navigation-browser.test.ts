@@ -272,6 +272,23 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
     }
   }, 30000)
 
+  it('JSON-valid legacy bracket addresses remain unavailable across initial restore, history and reload', async () => {
+    for (const route of ['["future"]', '[["future"]]']) {
+      await open('tasks', {panels:route})
+      await unavailable(route)
+      expect((await snapshot()).panels).toHaveLength(1)
+      await page.reload(); await unavailable(route)
+      await page.evaluate(() => (window as any).ui001.navigate('home'))
+      await page.evaluate(() => history.back())
+      await unavailable(route)
+      await open('tasks', {panels:`${route},tasks`,fi:'0'})
+      await unavailable(route)
+      expect((await snapshot()).panels.map((panel: {route: string; proportion: number}) => [panel.route,panel.proportion])).toEqual([[route,0.5],['tasks',0.5]])
+      await page.reload(); await unavailable(route)
+      expect(await page.locator('[data-leaf="tasks"]').count()).toBe(1)
+    }
+  },30000)
+
   it('legacy bracket-prefixed unknown panels keep their sibling and proportions after reload', async () => {
     for (const route of ['[future]', '[[future]]']) {
       await open(route, { panels: `${route}:0.6000,tasks:0.4000`, fi: '0' })

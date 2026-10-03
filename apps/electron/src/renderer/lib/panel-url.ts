@@ -8,6 +8,11 @@ export function encodePanelEntries(entries: readonly PanelUrlEntry[]): string {
   return `v2:${JSON.stringify(entries.map(({ route, proportion }) => ({ route, proportion })))}`
 }
 
+function isTupleEntries(entries: unknown): entries is Array<[string, unknown]> {
+  return Array.isArray(entries) && entries.every(entry => Array.isArray(entry) && entry.length === 2
+    && typeof entry[0] === 'string' && entry[0].trim().length > 0)
+}
+
 export function decodePanelEntries(value: string): PanelUrlEntry[] {
   if (value.startsWith('v2:') || value.startsWith('json:')) {
     try {
@@ -31,16 +36,26 @@ export function decodePanelEntries(value: string): PanelUrlEntry[] {
   if (value.trimStart().startsWith('[')) {
     try {
       const entries: unknown = JSON.parse(value)
-      if (!Array.isArray(entries) || !entries.every(entry => Array.isArray(entry) && entry.length === 2
-        && typeof entry[0] === 'string' && entry[0].trim().length > 0)) return []
-      return entries.map(([route, weight]) => ({ route, proportion:
-        typeof weight === 'number' && Number.isFinite(weight) && weight > 0 && weight <= 1 ? weight : 0 }))
+      if (isTupleEntries(entries)) {
+        return entries.map(([route, weight]) => ({ route, proportion:
+          typeof weight === 'number' && Number.isFinite(weight) && weight > 0 && weight <= 1 ? weight : 0 }))
+      }
+      // Valid JSON can also be a literal legacy address such as ["future"].
+      // Only the tuple structure identifies the published tuple transport.
     } catch {
       // A legacy unknown address can itself start with a bracket. Reserve
       // truncated tuple JSON only when its first route has the tuple string
       // syntax; plain bracket-prefixed addresses still use the CSV transport.
       const prefix = value.trimStart()
-      if (prefix === '[' || /^\[\s*\[\s*"/.test(prefix)) return []
+      if (prefix === '[') return []
+      if (/^\[\s*\[\s*"/.test(prefix)) {
+        // A balanced non-tuple JSON address may have legacy siblings/weights.
+        // A genuinely truncated tuple prefix remains a damaged transport.
+        const firstLegacyRoute = prefix.split(',')[0].replace(/:(?:\d+(?:\.\d*)?|\.\d+)$/, '')
+        try {
+          if (isTupleEntries(JSON.parse(firstLegacyRoute))) return []
+        } catch { return [] }
+      }
     }
   }
 
