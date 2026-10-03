@@ -1,4 +1,4 @@
-import type { LoadedSource, LoadedSkill } from '../../../../shared/types'
+import type { LoadedSource, LoadedSkill } from '../../../../../shared/types'
 import type { CapabilitySnapshot, TourCapability, TourScope, TourSignal } from '../../contracts'
 import type { TourObservation } from '../../runtime/hooks'
 import { LLM_TOOL_NAME_PATTERN, proxyToolNamePrefix } from '../../../../../../../../packages/shared/src/mcp/proxy-tool-name'

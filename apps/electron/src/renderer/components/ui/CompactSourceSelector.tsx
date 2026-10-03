@@ -1,4 +1,7 @@
 import * as React from 'react'
+import { useTourSignals } from '@/features/product-tour/runtime/hooks'
+import { beginChatCommit } from '@/features/product-tour/adapters/chat'
+import { connectionCapabilities, toggleSourceSelection } from '@/features/product-tour/adapters/connections'
 import { useTranslation } from 'react-i18next'
 import { Check, DatabaseZap, Search } from 'lucide-react'
 
@@ -18,6 +21,8 @@ export interface CompactSourceSelectorProps {
   sources: LoadedSource[]
   selectedSlugs: string[]
   onToggleSlug: (slug: string) => void
+  /** Only chat selections commit native session sources; task configuration does not. */
+  tourSessionSelection?: boolean
 }
 
 /**
@@ -34,8 +39,20 @@ export function CompactSourceSelector({
   sources,
   selectedSlugs,
   onToggleSlug,
+  tourSessionSelection = false,
 }: CompactSourceSelectorProps) {
   const { t } = useTranslation()
+  const tour = useTourSignals()
+  React.useEffect(() => {
+    if (!tourSessionSelection) return
+    const caps = connectionCapabilities({ sources, selectedSlugs })
+    const cleanups = [tour.capability('sources.list', caps['sources.list']!), tour.capability('sources.ready', caps['sources.ready']!)]
+    return () => cleanups.forEach(cleanup => cleanup())
+  }, [tour, tourSessionSelection, sources, selectedSlugs])
+  const toggleSlug = (slug: string) => {
+    if (tourSessionSelection) beginChatCommit(tour.capture(), 'session.sources-committed', toggleSourceSelection(selectedSlugs, slug))
+    onToggleSlug(slug)
+  }
   const [filter, setFilter] = React.useState('')
 
   // Reset filter whenever the drawer closes so the next open starts fresh.
@@ -87,7 +104,7 @@ export function CompactSourceSelector({
                 <button
                   key={source.config.slug}
                   type="button"
-                  onClick={() => onToggleSlug(source.config.slug)}
+                  onClick={() => toggleSlug(source.config.slug)}
                   className={cn(
                     'flex items-center gap-3 px-3 py-3 rounded-[10px] text-left transition-colors',
                     isSelected ? 'bg-foreground/5' : 'hover:bg-foreground/5',
