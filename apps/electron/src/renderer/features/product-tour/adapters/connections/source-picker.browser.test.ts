@@ -1,19 +1,48 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { chromium, type Browser } from '@playwright/test'
+import { build } from 'esbuild'
+import { fileURLToPath } from 'node:url'
 import type { TourCapability } from '../../contracts'
 declare global { interface Window { sourcePickerTest: { stats: { paused: number; captured: number; committed: number; selected: string[]; nativeLayers(): number; readiness: TourCapability | null }; mount(enabled: boolean, localMcpEnabled?: boolean | null, compact?: boolean, preselected?: boolean): void } } }
+const isolatedCase = process.env.ROX_PRODUCT_TOUR_SOURCE_PICKER_CASE
+let registeredIsolatedCase = false
 let browser: Browser
 let server: ReturnType<typeof Bun.serve>
 beforeAll(async () => {
-  const built = await Bun.build({ entrypoints: [new URL('./source-picker.browser.tsx', import.meta.url).pathname], target: 'browser', plugins: [{ name: 'unused-vite-url-assets', setup(build) { build.onResolve({ filter: /\?url$/ }, args => ({ path: args.path, namespace: 'unused-url-asset' })); build.onLoad({ filter: /.*/, namespace: 'unused-url-asset' }, () => ({ contents: "export default 'about:blank'", loader: 'js' })) } }], tsconfig: new URL('../../../../../../tsconfig.json', import.meta.url).pathname })
-  if (!built.success) throw new Error(built.logs.map(log => log.message).join('\n'))
-  const script = await built.outputs[0]!.text()
+  if (!isolatedCase) return
+  const built = await build({ entryPoints: [fileURLToPath(new URL('./source-picker.browser.tsx', import.meta.url))], bundle: true, platform: 'browser', format: 'esm', write: false, outdir: 'source-picker-browser', loader: { '.woff2': 'dataurl', '.woff': 'dataurl', '.ttf': 'dataurl' }, plugins: [{ name: 'unused-vite-url-assets', setup(build) { build.onResolve({ filter: /\?url$/ }, args => ({ path: args.path, namespace: 'unused-url-asset' })); build.onLoad({ filter: /.*/, namespace: 'unused-url-asset' }, () => ({ contents: "export default 'about:blank'", loader: 'js' })) } }], tsconfig: fileURLToPath(new URL('../../../../../../tsconfig.json', import.meta.url)) })
+  const script = built.outputFiles.find(file => file.path.endsWith('.js'))!.text
   server = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch(request) { return new URL(request.url).pathname === '/script.js' ? new Response(script, { headers: { 'content-type': 'text/javascript' } }) : new Response('<!doctype html><html><body><div id="root"></div><script type="module" src="/script.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) } })
   browser = await chromium.launch({ executablePath: process.env.LEARNING_CHROMIUM_PATH ?? '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] })
-})
+}, 30_000)
 afterAll(async () => { await browser?.close(); server?.stop(true) })
 
-test('T-SOURCES-SELECT custom portal owns native handoff so source click captures and commits before any outside pause', async () => {
+// Keep the production bundle, browser lifecycle and native registries independent of
+// other suites' Bun module caches and Playwright cleanup. Each child runs real assertions.
+function browserTest(name: string, operation: () => Promise<void>) {
+  if (isolatedCase && isolatedCase !== name) return
+  if (isolatedCase) registeredIsolatedCase = true
+  test(name, async () => {
+    if (isolatedCase === name) return operation()
+    const child = Bun.spawn([process.execPath, 'test', fileURLToPath(import.meta.url)], {
+      env: { ...process.env, ROX_PRODUCT_TOUR_SOURCE_PICKER_CASE: name },
+      stdout: 'pipe', stderr: 'pipe',
+    })
+    const timeout = setTimeout(() => child.kill(), 35_000)
+    try {
+      const [stdout, stderr, exitCode] = await Promise.all([
+        new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited,
+      ])
+      if (exitCode !== 0) throw new Error(`Production source picker case exited ${exitCode}:\n${stdout}${stderr}`)
+      expect(exitCode).toBe(0)
+    } finally {
+      clearTimeout(timeout)
+      child.kill()
+    }
+  }, isolatedCase ? 30_000 : 40_000)
+}
+
+browserTest('T-SOURCES-SELECT custom portal owns native handoff so source click captures and commits before any outside pause', async () => {
   const page = await browser.newPage()
   page.on('pageerror', error => console.error('Source-picker browser error:', error.message))
   try {
@@ -28,9 +57,9 @@ test('T-SOURCES-SELECT custom portal owns native handoff so source click capture
     await page.keyboard.press('Escape')
     await page.waitForFunction(() => window.sourcePickerTest.stats.nativeLayers() === 0)
   } finally { await page.close() }
-}, 30_000)
+})
 
-test('APP-06 disabled learning preserves source selection and adds no native layer registrations or captures', async () => {
+browserTest('APP-06 disabled learning preserves source selection and adds no native layer registrations or captures', async () => {
   const page = await browser.newPage()
   page.on('pageerror', error => console.error('Source-picker browser error:', error.message))
   try {
@@ -41,10 +70,10 @@ test('APP-06 disabled learning preserves source selection and adds no native lay
     await page.getByText('Native source A', { exact: true }).click()
     expect(await page.evaluate(() => { const s = window.sourcePickerTest.stats; return { layers: s.nativeLayers(), paused: s.paused, captured: s.captured, committed: s.committed, selected: s.selected } })).toEqual({ layers: 0, paused: 0, captured: 0, committed: 0, selected: ['a'] })
   } finally { await page.close() }
-}, 30_000)
+})
 
 for (const compact of [false, true]) {
-  test(`DOMAIN-06 ${compact ? 'compact' : 'regular'} picker respects disabled and unknown native local-MCP policy`, async () => {
+  browserTest(`DOMAIN-06 ${compact ? 'compact' : 'regular'} picker respects disabled and unknown native local-MCP policy`, async () => {
     const page = await browser.newPage()
     try {
       await page.goto(server.url.href)
@@ -59,5 +88,6 @@ for (const compact of [false, true]) {
       await page.waitForFunction(() => window.sourcePickerTest.stats.readiness?.state === 'ready')
       expect(await page.evaluate(() => window.sourcePickerTest.stats.readiness)).toEqual({ state: 'ready' })
     } finally { await page.close() }
-  }, 30_000)
+  })
 }
+if (isolatedCase && !registeredIsolatedCase) throw new Error(`Unknown source picker isolation case: ${isolatedCase}`)
