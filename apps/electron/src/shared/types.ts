@@ -530,6 +530,10 @@ export interface WorkGraphConnectionRecord {
 }
 
 export interface ElectronAPI {
+  getRuntimeTraceSnapshot(query: import('@rox/core/runtime-trace').RuntimeTraceQuery): Promise<import('@rox/core/runtime-trace').RuntimeTraceSnapshot>
+  readRuntimeTraceEvents(query: import('@rox/core/runtime-trace').RuntimeEventsQuery): Promise<import('@rox/core/runtime-trace').RuntimeEventsPage>
+  readRuntimeTracePayload(query: import('@rox/core/runtime-trace').RuntimePayloadQuery): Promise<import('@rox/core/runtime-trace').RuntimePayloadPage>
+
   // Cloud Runs (PRD docs/cloud-runs-prd.md)
   getCloudRunsConfig(): Promise<{
     enabled: boolean

@@ -20,6 +20,7 @@
  */
 import type { CreateSessionOptions } from '@rox/shared/protocol';
 import type { SessionCompletionEvent } from '../sessions/SessionManager';
+import type { TaskRuntimeObservation } from '../sessions/runtime-trace/conductor';
 import {
   type TaskSpec,
   type TaskNode,
@@ -44,6 +45,9 @@ import {
 // ---------------------------------------------------------------------------
 
 export interface ConductorSessionHost {
+  /** Passive observer of the existing durable task journal, not an execution/acceptance authority. */
+  observeTaskRun?(observation: TaskRuntimeObservation): Promise<void>;
+  assignTaskRuntimeChild?(parentSessionId: string, childSessionId: string, prompt: string, node: TaskNode, taskRunId: string): Promise<void>;
   /** Creates the child session AND announces it to the renderer (createSession emits
    *  session_created by default), so the subtask appears on the board with its real title. */
   createSession(workspaceId: string, options: CreateSessionOptions): Promise<{ id: string }>;
@@ -166,6 +170,7 @@ class ActiveRun {
   /** Inverted edges: node id → set of nodes that (directly) depend on it. Built lazily for the frontier. */
   private dependents?: Map<string, Set<string>>;
   private settled = false;
+  private observationQueue: Promise<void> = Promise.resolve();
   private settleResolvers: ((s: RunSnapshot) => void)[] = [];
 
   constructor(
@@ -387,6 +392,10 @@ class ActiveRun {
       this.sessionToNode.set(child.id, node.id);
       this.log({ kind: 'node-spawned', nodeId: node.id, sessionId: child.id });
       await this.deps.host.setKanbanColumn(child.id, 'in-progress');
+      await this.observationQueue;
+      if (this.opts.orchestratorSessionId) {
+        try { await this.deps.host.assignTaskRuntimeChild?.(this.opts.orchestratorSessionId, child.id, prompt, node, this.runId); } catch { /* A passive observer never changes task dispatch. */ }
+      }
       await this.deps.host.sendMessage(child.id, prompt);
     } catch (err) {
       this.failNode(node.id, `dispatch failed: ${(err as Error).message}`);
@@ -760,7 +769,12 @@ class ActiveRun {
 
   private log(entry: RunLogEntryInput): void {
     const t = this.deps.now ? this.deps.now() : new Date().toISOString();
-    appendRunLog(this.deps.workspaceRoot, this.slug, this.runId, { ...entry, t } as RunLogEntry);
+    const durable = { ...entry, t } as RunLogEntry;
+    appendRunLog(this.deps.workspaceRoot, this.slug, this.runId, durable);
+    // Consume the canonical verdict/state only after the authority stored it. Observer failures never change the task.
+    this.observationQueue = this.observationQueue.then(async () => {
+      try { await this.deps.host.observeTaskRun?.({ spec: this.spec, slug: this.slug, taskRunId: this.runId, orchestratorSessionId: this.opts.orchestratorSessionId, entry: durable }); } catch { /* Passive observation. */ }
+    });
   }
 }
 

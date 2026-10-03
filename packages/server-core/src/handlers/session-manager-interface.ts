@@ -37,6 +37,10 @@ export interface NativeMemoryContext {
 }
 
 export interface ISessionManager {
+  getRuntimeTraceSnapshot?(query: import('@rox/core/runtime-trace').RuntimeTraceQuery): Promise<import('@rox/core/runtime-trace').RuntimeTraceSnapshot>
+  readRuntimeTraceEvents?(query: import('@rox/core/runtime-trace').RuntimeEventsQuery): Promise<import('@rox/core/runtime-trace').RuntimeEventsPage>
+  readRuntimeTracePayload?(query: import('@rox/core/runtime-trace').RuntimePayloadQuery): Promise<import('@rox/core/runtime-trace').RuntimePayloadPage>
+
   // ---------------------------------------------------------------------------
   // Lifecycle
   // ---------------------------------------------------------------------------
@@ -146,7 +150,7 @@ export interface ISessionManager {
     existingMessageId?: string,
     _isAuthRetry?: boolean,
     onAck?: (messageId: string) => void,
-    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext },
+    rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext; runtimeLaunch?: import('@rox/core/runtime-trace').RuntimeLaunch },
     _internalRetryKind?: 'auth' | 'failover',
   ): Promise<void>
   cancelProcessing(sessionId: string, silent?: boolean): Promise<void>
@@ -359,6 +363,7 @@ export interface ISessionManager {
  * overrides) can be added without churn at every call site.
  */
 export interface ExecutePromptAutomationInput {
+  runtimeLaunch?: import('@rox/core/runtime-trace').RuntimeLaunch
   workspaceId: string
   workspaceRootPath: string
   prompt: string

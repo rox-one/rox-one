@@ -13,7 +13,7 @@ import { useMessageReactionActor } from './message-reaction-actor'
  */
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Clock, GitBranch, Volume2 } from 'lucide-react'
+import { Clock, GitBranch, Volume2, Network } from 'lucide-react'
 import type { AnnotationV1, StoredAttachment, ContentBadge } from '@rox/core'
 import { normalizePath } from '@rox/core/utils'
 import { cn } from '../../lib/utils'
@@ -343,6 +343,7 @@ export interface UserMessageBubbleProps {
   onListen?: (text: string) => void
   isListening?: boolean
   onBranch?: (messageId: string) => void
+  onShowRuntimeMap?: (messageId: string) => void
 }
 
 /** Minimum visible duration of the "Queued" chip. Both backends ack
@@ -371,6 +372,7 @@ export function UserMessageBubble({
   onListen,
   isListening = false,
   onBranch,
+  onShowRuntimeMap,
 }: UserMessageBubbleProps) {
   const { t } = useTranslation()
   const reactionActor = useMessageReactionActor()
@@ -582,6 +584,7 @@ export function UserMessageBubble({
           onLearn={onLearnFromMessage ? () => onLearnFromMessage(displayContent) : undefined}
           onPickSideThread={onPickSideThread && messageId ? (action) => onPickSideThread(action, displayContent, messageId) : undefined}
           extraActions={[
+            ...(onShowRuntimeMap && messageId ? [{ id: 'runtime-map', label: t('runtimeMap.showOnMap'), icon: <Network />, onSelect: () => onShowRuntimeMap(messageId) }] : []),
             ...(onListen ? [{ id: 'listen', label: t(isListening ? 'chat.listenStop' : 'chat.listen'), icon: <Volume2 />, onSelect: () => onListen(displayContent) }] : []),
             ...(onBranch && messageId ? [{ id: 'branch', label: t('chat.branchFromThisMessage'), icon: <GitBranch />, onSelect: () => onBranch(messageId) }] : []),
           ]}

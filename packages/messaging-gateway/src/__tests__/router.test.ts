@@ -134,6 +134,11 @@ describe('Router', () => {
     expect(args[0]).toBe('sess-A') // sessionId
     expect(args[1]).toBe('hi there') // message
     expect(args[2]).toBeUndefined() // fileAttachments
+    const launch = (args[8] as { runtimeLaunch: { kind: string; triggerId: string; channel: { kind: string; id: string } } }).runtimeLaunch
+    expect(launch.kind).toBe('channel')
+    expect(launch.triggerId).toBe('1')
+    expect(launch.channel.kind).toBe('channel-identity')
+    expect(launch.channel.id).toBeDefined()
   })
 
   it('materializes a localPath attachment into FileAttachment[] and StoredAttachment[]', async () => {

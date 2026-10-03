@@ -918,3 +918,7 @@ Owner: recent_features; dependency: current native Voice capture and Product Lea
 ## Portable resources follow-up (2026-10-03)
 
 Root owns the resource-copy/main-protocol/native-harness subset of #1448; pr_scout owns installer, runner and RPC admission; route UI is separate. Exercise actual registration AST with controlled OS callbacks, real temporary resource trees and pre-spawn executable validation. Preserve original failure history, current Windows source and every source branch; deliver separate PR. Skill/history browser logs are archived here as a documentation follow-up because global ignore rules omitted compressed files from #1451.
+
+## Runtime-map branch recovery (2026-10-03)
+
+historical_sweep owns complete127-path source audit and isolated current-main adaptation; root retains final merge. Preserve every source branch and current native/renderer guard. Repair demonstrated accessor/prototype leaks and wrong delayed-child run attribution with exact-source negative controls; retain invalid-before-write ordering. Exercise actual host executor/journal and native two-level task/eval SDK with no network/paid requests, current protocol inventories/types/12-locale parity, production browser stream/pending-permission/draft/welcome and10k-event performance, and current App integration regression. Bind receipts to production hashes; retain failed source/local runs and distinguish bounded qualification from installed/live-provider acceptance. Publish a separate recover-runtime-map-current PR, attach it, and hand exact head to root.
