@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import type { Message, Session, SessionEvent } from '../../../../../shared/types'
 import type { TourObservation } from '../../runtime/hooks'
-import { bindChatOptimisticMessage, beginChatUserTurn, clearChatObservations, correlateUserTurn, deriveChatSignals, observeChatSessionEvent, beginChatPermissionResponse, observeChatPermissionResponse } from './index'
+import { bindChatOptimisticMessage, beginChatUserTurn, clearChatObservations, correlateUserTurn, deriveChatSignals, observeChatSessionEvent, beginChatPermissionResponse, observeChatPermissionResponse, beginChatCommit, beginChatSessionCreation, observeChatSessionCreated, beginChatSessionReopen, observeChatSessionReopened } from './index'
 
 const observation: TourObservation = { binding: { workspaceId: 'w', panelId: 'p', sessionId: 's', clientProfileId: 'profile', runToken: 'run-1' }, operationToken: 'op-1', at: 10 }
 const message = (id: string, role: Message['role'], extra: Partial<Message> = {}): Message => ({ id, role, content: 'content', timestamp: 11, ...extra })
@@ -96,5 +96,43 @@ describe('native chat evidence', () => {
     beginChatPermissionResponse(observation, 's', 'expired')
     expect(observeChatPermissionResponse('s', 'expired', false)).toEqual([])
     expect(observeChatPermissionResponse('s', 'expired', true)).toEqual([])
+  })
+  test('status labels and project evidence require the exact native committed value', () => {
+    clearChatObservations()
+    beginChatCommit(observation, 'session.labels-committed', ['label'])
+    const event: SessionEvent = { type: 'labels_changed', sessionId: 's', labels: ['label'] }
+    expect(observeChatSessionEvent(event, session(), { ...session(), labels: ['optimistic'] })).toEqual([])
+    expect(observeChatSessionEvent({ ...event, labels: ['other-operation'] }, session(), { ...session(), labels: ['other-operation'] })).toEqual([])
+    expect(observeChatSessionEvent(event, session(), { ...session(), labels: ['label'] }).map(s => s.name)).toEqual(['session.labels-committed'])
+    expect(observeChatSessionEvent(event, session(), { ...session(), labels: ['label'] })).toEqual([])
+    beginChatCommit(observation, 'session.project-committed', null)
+    expect(observeChatSessionEvent({ type: 'project_id_changed', sessionId: 's', projectId: null }, session(), session()).map(s => s.name)).toEqual(['session.project-committed'])
+  })
+  test('overlapping metadata operations remain ambiguous instead of verifying an old completion', () => {
+    clearChatObservations()
+    beginChatCommit(observation, 'session.status-committed', 'done')
+    beginChatCommit({ ...observation, operationToken: 'next-op', binding: { ...observation.binding, runToken: 'next-run' } }, 'session.status-committed', 'done')
+    expect(observeChatSessionEvent({ type: 'session_status_changed', sessionId: 's', sessionStatus: 'done' }, session(), { ...session(), sessionStatus: 'done' })).toEqual([])
+  })
+  test('native creation and rendered reopen preserve the original scope and consume once', () => {
+    clearChatObservations()
+    beginChatSessionCreation(observation)
+    const created = { ...session(), id: 'created' }
+    expect(observeChatSessionCreated(created)[0]?.binding.sessionId).toBe('s')
+    expect(observeChatSessionCreated(created)).toEqual([])
+    beginChatSessionReopen(observation, 'created')
+    expect(observeChatSessionReopened({ ...created, workspaceId: 'other' })).toEqual([])
+    expect(observeChatSessionReopened(created)[0]?.binding.panelId).toBe('p')
+    expect(observeChatSessionReopened(created)).toEqual([])
+  })
+  test('midstream queued send can be accepted but cannot inherit the earlier final answer', () => {
+    const correlation = correlateUserTurn(observation, session([], true))!
+    correlation.optimisticMessageId = 'optimistic'
+    const user = message('optimistic', 'user')
+    const next = session([user], true)
+    deriveChatSignals(correlation, { type: 'user_message', sessionId: 's', optimisticMessageId: 'optimistic', status: 'queued', message: user }, session(), next)
+    const final = session([user, message('late', 'assistant', { turnId: 'old-turn' })], true)
+    deriveChatSignals(correlation, { type: 'text_complete', sessionId: 's', messageId: 'late', turnId: 'old-turn', text: 'late' }, next, final)
+    expect(deriveChatSignals(correlation, { type: 'complete', sessionId: 's', reason: 'complete', didReceiveNewFinalMessage: true }, final, { ...final, isProcessing: false })).toEqual([])
   })
 })
