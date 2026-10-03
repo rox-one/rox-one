@@ -48,6 +48,7 @@ export function VoiceDictationControl({
   onInputChange,
 }: VoiceDictationControlProps) {
   const { t } = useTranslation()
+  const [prefs, setPrefs] = useState<VoicePrefs | null>(null)
   const voiceTarget = useTourTarget('composer.voice', { variant: compactMode ? 'compact' : 'regular' })
   const tourSignals = useTourSignals()
   const modals = useOptionalModalRegistry()
@@ -60,8 +61,13 @@ export function VoiceDictationControl({
     prompt.close()
   }, [])
   const dictationObservationRef = useRef<TourObservation | null>(null)
-  useEffect(() => tourSignals.capability('voice.available', typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof window.electronAPI?.startVoiceCapture === 'function' ? { state: 'ready' } : { state: 'unavailable', reason: 'api-unavailable' }), [tourSignals])
-  const [prefs, setPrefs] = useState<VoicePrefs | null>(null)
+  useEffect(() => {
+    const capturePorts = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
+      && typeof MediaRecorder !== 'undefined' && ['startVoiceCapture', 'grantVoicePermission', 'sendVoiceChunk', 'stopVoiceCapture', 'cancelVoiceCapture']
+        .every(port => typeof window.electronAPI?.[port as keyof Window['electronAPI']] === 'function')
+    return tourSignals.capability('voice.available', !capturePorts ? { state: 'unavailable', reason: 'api-unavailable' }
+      : !prefs ? { state: 'pending', reason: 'installing' } : { state: 'ready' })
+  }, [tourSignals, prefs])
   const [recording, setRecording] = useState(false)
   const [starting, setStarting] = useState(false)
   const startingRef = useRef(false)
@@ -171,7 +177,7 @@ export function VoiceDictationControl({
           await window.electronAPI.copyVoiceText({ text: deliveredText })
           if (captureId !== captureIdRef.current) return
         } else if (latest.onInputChange) {
-          latest.onInputChange(latest.inputValue ? `${latest.inputValue} ${deliveredText}` : deliveredText)
+          latest.onInputChange(latest.inputValue ? `${latest.inputValue}${/\s$/.test(latest.inputValue) ? '' : ' '}${deliveredText}` : deliveredText)
           tourSignals.emit(dictationObservation, 'dictation.inserted', 'observed', 'native-event')
         }
       }

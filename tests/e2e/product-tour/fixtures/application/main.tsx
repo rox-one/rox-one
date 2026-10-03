@@ -13,6 +13,7 @@ import { ThemeProvider } from '../../../../../apps/electron/src/renderer/context
 import { Toaster } from '../../../../../apps/electron/src/renderer/components/ui/sonner'
 import '../../../../../apps/electron/src/renderer/index.css'
 
+async function initializeOwnedApplication() {
 const setup = await fetch('/__fixture/bootstrap').then(response => response.json())
 if (setup.marker !== 'rox-product-tour-application-test-only') throw new Error('Wrong application harness on loopback port')
 setupI18n([initReactI18next]).changeLanguage('en')
@@ -54,3 +55,9 @@ function HarnessRoot() {
   return <Provider><ThemeProvider activeWorkspaceId={setup.workspaceId}><App {...(restricted ? { webTransportBootstrap: { kind: 'authenticated-web-transport' as const, workspaceId: setup.workspaceId } } : {})} /><Toaster /></ThemeProvider></Provider>
 }
 createRoot(document.getElementById('root')!).render(<React.StrictMode><HarnessRoot /></React.StrictMode>)
+
+}
+void initializeOwnedApplication().catch(error => {
+  ;(window as any).__productTourApplicationImportError = String(error)
+  console.error('Owned application acceptance bootstrap failed:', error)
+})

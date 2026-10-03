@@ -42,6 +42,9 @@ import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/h
 import { meetingsAutomationCapabilities } from '@/features/product-tour/adapters/work/meetings-automations'
 import { useMeetingArtifactTour } from '@/features/product-tour/adapters/work/meetings-automations/useMeetingArtifactTour'
 import { MeetingRequestTracker } from './meetings/request-state'
+import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { meetingsAutomationCapabilities } from '@/features/product-tour/adapters/work/meetings-automations'
+import { useMeetingArtifactTour } from '@/features/product-tour/adapters/work/meetings-automations/useMeetingArtifactTour'
 
 const ERROR_KEYS: Record<string, string> = {
   'mic-denied': 'meetings.local.err.micDenied',

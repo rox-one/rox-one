@@ -56,7 +56,7 @@ import {
   resolvePersonalTaskConflict,
   subscribePersonalTasks,
   subscribePersonalTaskCommits,
-  personalTasksNativeAvailable,
+  personalTasksNativeAvailable, capturePersonalTaskScope,
   persistPersonalTaskSessionLink,
 } from '@/lib/personal-tasks'
 import { useTourSignals, useTourTarget, type TourObservation } from '@/features/product-tour/runtime/hooks'
@@ -155,6 +155,12 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const quickEntryTarget = useTourTarget('tasks.quick-entry', { workspaceId: workspace?.id })
   const pendingCreates = useRef(new Map<string, { observation: TourObservation; task: PersonalTask }>())
   const delegationInFlight = useRef(false)
+  const delegationOwner = useRef<{ workspaceId: string | undefined; generation: number; mounted: boolean }>({ workspaceId: undefined, generation: 0, mounted: false })
+  React.useLayoutEffect(() => {
+    delegationOwner.current = { workspaceId: workspace?.id, generation: delegationOwner.current.generation + 1, mounted: true }
+    setDelegating(false); setDelegateError(null)
+    return () => { delegationOwner.current = { ...delegationOwner.current, generation: delegationOwner.current.generation + 1, mounted: false } }
+  }, [workspace?.id])
   const { projects } = useProjects(workspace?.id)
   const sessionMap = useAtomValue(sessionMetaMapAtom) as ReadonlyMap<string, AgentSessionLike>
   const [store, setStore] = useState(loadPersonalTaskStore)
@@ -204,7 +210,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
       if (signals.length) pending.delete(record.task.id)
     })
     return () => { off(); pending.clear() }
-  }, [])
+  }, [workspace?.id])
 
   useEffect(() => subscribePersonalTasks(() => setStore(loadPersonalTaskStore())), [])
   useEffect(() => {
@@ -260,6 +266,10 @@ export default function TasksPage(props: TasksPageProps = {}) {
   // ── Actions ──────────────────────────────────────────────────────────────
   const delegate = useCallback(async (task: PersonalTask) => {
     if (!workspace?.id || !shell || delegationInFlight.current || task.trashedAt != null || !personalTasksNativeAvailable()) return
+    const scopeCurrent = capturePersonalTaskScope()
+    const ownerGeneration = delegationOwner.current.generation
+    const isCurrent = () => scopeCurrent() && delegationOwner.current.mounted && delegationOwner.current.workspaceId === workspace.id && delegationOwner.current.generation === ownerGeneration
+    if (!isCurrent()) return
     const observation = tour.capture()
     delegationInFlight.current = true
     setDelegating(true)
@@ -272,13 +282,18 @@ export default function TasksPage(props: TasksPageProps = {}) {
         sessionStatus: 'todo',
         ...(task.projectId && projects.some((p) => p.config.id === task.projectId) ? { projectId: task.projectId } : {}),
       })
+      if (!isCurrent()) return
       await window.electronAPI.sessionCommand(session.id, { type: 'rename', name: task.title })
+      if (!isCurrent()) return
       await window.electronAPI.sessionCommand(session.id, { type: 'setSessionStatus', state: 'todo' })
+      if (!isCurrent()) return
       const committed = await persistPersonalTaskSessionLink(task.id, session.id)
+      if (!isCurrent()) return
       await window.electronAPI.sendMessage(session.id, fullPrompt)
       const [nativeSession, nativeTasksSnapshot] = await Promise.all([
         window.electronAPI.getSessionMessages(session.id), window.electronAPI.personalTasksList(),
       ])
+      if (!isCurrent()) return
       const savedTask = nativeTasksSnapshot.tasks.find(entry => entry.id === task.id)
       const persisted = savedTask ? { task: savedTask, revision: nativeTasksSnapshot.revisions[task.id] ?? 0 } : null
       const promptAccepted = Boolean(nativeSession?.messages.some(message => message.role === 'user' && message.content === fullPrompt))
@@ -286,10 +301,10 @@ export default function TasksPage(props: TasksPageProps = {}) {
         tour.emit(observation, signal.name, signal.level, signal.origin, signal.eventToken)
       }
     } catch (error) {
-      setDelegateError(taskDelegationErrorKey(error))
+      if (isCurrent()) setDelegateError(taskDelegationErrorKey(error))
     } finally {
       delegationInFlight.current = false
-      setDelegating(false)
+      if (isCurrent()) setDelegating(false)
     }
   }, [workspace?.id, shell, t, projects, tour])
 

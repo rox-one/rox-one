@@ -91,3 +91,6 @@ bench-results/
 # Product Learning local verification artifacts
 /test-results/
 /playwright-report/
+
+# Serial test runner manifests and retained suite output
+work/test-all/

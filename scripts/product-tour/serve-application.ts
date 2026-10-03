@@ -1,7 +1,7 @@
 /** TEST ONLY: authenticated WebUI App + native Notes stores, not desktop startup or OS custody.
  * Shell presentation is synthetic; read-only session storage and Electron window/credential custody are explicit DI.
  */
-import { mkdtempSync, mkdirSync, copyFileSync, writeFileSync, rmSync, readFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, copyFileSync, writeFileSync, rmSync, readFileSync, realpathSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve, join } from 'node:path'
 import { EventEmitter } from 'node:events'
@@ -10,7 +10,7 @@ import type { BrowserWindow, IpcMain } from 'electron'
 import type { Session } from '../../packages/shared/src/protocol'
 
 const repository = resolve(import.meta.dirname, '../..')
-const profile = mkdtempSync(join(tmpdir(), 'rox-product-tour-app-'))
+const profile = realpathSync(mkdtempSync(join(tmpdir(), 'rox-product-tour-app-')))
 const config = join(profile, 'config')
 mkdirSync(config)
 process.env.ROX_CONFIG_DIR = config

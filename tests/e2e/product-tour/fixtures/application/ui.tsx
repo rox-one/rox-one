@@ -9,7 +9,6 @@ import { createTargetRegistry, SpotlightOverlay } from '../../../../../apps/elec
 import type { TourBinding, TourStep, TourTargetRegistration } from '../../../../../apps/electron/src/renderer/features/product-tour/contracts'
 import '../../../../../apps/electron/src/renderer/index.css'
 
-await setupI18n([initReactI18next]).changeLanguage('en')
 let preferredVariant: 'regular' | 'compact' = 'regular'
 const registry = createTargetRegistry({ getTargetScope: () => 'bound-panel', getPreferredVariant: () => preferredVariant })
 const binding: TourBinding = { clientProfileId: 'profile-a', workspaceId: 'workspace-a', panelId: 'panel-a', runToken: 'run-a' }
@@ -61,4 +60,8 @@ function Harness() {
     {open && target && <SpotlightOverlay target={target} step={step} binding={binding} onPause={reason => { setPaused(reason); setOpen(false) }} onNext={() => setOpen(false)} canNext={false} />}
   </main>
 }
-createRoot(document.getElementById('root')!).render(<React.StrictMode><ModalProvider><DismissibleLayerProvider><Harness /></DismissibleLayerProvider></ModalProvider></React.StrictMode>)
+async function initializeOwnedComponents() {
+  await setupI18n([initReactI18next]).changeLanguage('en')
+  createRoot(document.getElementById('root')!).render(<React.StrictMode><ModalProvider><DismissibleLayerProvider><Harness /></DismissibleLayerProvider></ModalProvider></React.StrictMode>)
+}
+void initializeOwnedComponents()

@@ -63,11 +63,18 @@ export function subscribePersonalTaskCommits(listener: (record: VersionedPersona
 }
 
 function notifyNativeCommit(record: VersionedPersonalTask): void {
-  for (const listener of nativeCommitListeners) listener(structuredClone(record))
+  for (const listener of nativeCommitListeners) {
+    try { listener(structuredClone(record)) } catch { /* Observers cannot turn a durable commit into a write failure. */ }
+  }
 }
 
 export function personalTasksNativeAvailable(): boolean { return callerScope !== null && api() !== null }
 
+/** Read-only lifetime fence; no identity or grant is exposed to consumers. */
+export function capturePersonalTaskScope(): () => boolean {
+  const generation = scopeGeneration
+  return () => callerScope !== null && generation === scopeGeneration
+}
 export interface PersonalTaskCallerScope {
   authority: 'native' | 'local'
   userId: string
@@ -308,7 +315,7 @@ export async function persistPersonalTaskConfirmed(task: PersonalTask): Promise<
   if (!remote || !callerScope) throw new PersonalTaskCreationError(task, new Error('Native personal task storage unavailable'))
   syncState = 'syncing'
   try {
-    const accepted = await putPersonalTaskConfirmed(remote, task)
+    const accepted = await putPersonalTaskConfirmed(scopedApi(remote, generation), task)
     if (generation !== scopeGeneration) throw new PersonalTaskCreationError(task, new Error('Personal task caller changed'))
     // A server push or another screen may have updated the shared store while
     // this write was in flight. Acknowledge only this ID and preserve other edits.
@@ -323,6 +330,17 @@ export async function persistPersonalTaskConfirmed(task: PersonalTask): Promise<
     syncState = syncConflicts.length > 0 ? 'error'
       : synced && isEmptyDiff(diffPersonalTaskBundles(synced, next)) ? 'synced' : 'syncing'
     emit()
+    // A native ACK owns the cache update; only exact canonical read-back owns
+    // learning evidence. Denied/stale reads do not turn a committed create into
+    // a retryable write failure or publish into a successor actor/workspace.
+    try {
+      const snapshot = await scopedApi(remote, generation).personalTasksList()
+      if (generation !== scopeGeneration) return
+      const saved = snapshot.tasks.find(entry => entry.id === accepted.task.id)
+      if (saved && snapshot.revisions[saved.id] === accepted.revision && samePersonalTask(saved, accepted.task)) {
+        notifyNativeCommit({ task: saved, revision: accepted.revision })
+      }
+    } catch { /* The create is committed, but teaching evidence remains absent. */ }
   } catch (cause) {
     if (generation !== scopeGeneration) throw cause instanceof PersonalTaskCreationError ? cause : new PersonalTaskCreationError(task, cause)
     syncState = 'error'

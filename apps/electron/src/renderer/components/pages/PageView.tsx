@@ -138,7 +138,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
   }, [activeWorkspaceId, pageSlug, contentDigest, hasContent, pageLoaded, leaseRetry, pagesAvailable, t])
 
   const currentLease = leaseState?.workspaceId === activeWorkspaceId
-    && pageLeaseMatches(leaseState.lease, pageSlug, contentDigest)
+    && leaseState?.lease.pageSlug === pageSlug && leaseState?.lease.contentDigest === contentDigest
     ? leaseState : null
   const currentLeaseError = leaseError?.contentDigest === contentDigest ? leaseError?.message : null
 
@@ -165,7 +165,8 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
   const [renderedLeaseId, setRenderedLeaseId] = React.useState<string | null>(null)
   React.useEffect(() => knowledgeSignals.capability('pages.entity-present', pageLoaded ? { state: 'ready' } : { state: 'pending', reason: 'missing-entity' }), [knowledgeSignals, pageLoaded])
   React.useEffect(() => {
-    if (!activeWorkspaceId || !currentLease || !contentDigest || !snapshotReady || renderedLeaseId !== currentLease.lease.leaseId) return
+    if (!activeWorkspaceId || !currentLease || !contentDigest || !snapshotReady || renderedLeaseId !== currentLease.lease.leaseId
+      || !pageLeaseMatches(currentLease.lease, pageSlug, contentDigest)) return
     // Current-state policy observes the trusted mounted host. No iframe document is inspected.
     knowledgeSignals.publish(knowledgeSignals.capture(), { kind: 'page-host-rendered', workspaceId: activeWorkspaceId, pageSlug, contentDigest, lease: currentLease.lease })
   }, [knowledgeSignals, currentLease, contentDigest, snapshotReady, renderedLeaseId, activeWorkspaceId, pageSlug])
@@ -463,7 +464,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
             <LoadingIndicator label={t('common.loading')} />
           </div>
         ) : (
-          <div ref={pageHostTarget} onLoadCapture={() => setRenderedLeaseId(currentLease.lease.leaseId)} className="h-full w-full overflow-hidden rounded-lg border border-border/60 shadow-minimal">
+          <div ref={pageHostTarget} className="h-full w-full overflow-hidden rounded-lg border border-border/60 shadow-minimal">
             <PageFrame
               key={currentLease.lease.leaseId}
               workspaceId={activeWorkspaceId}
@@ -471,6 +472,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
               lease={currentLease.lease}
               content={currentLease.content}
               snapshot={snapshotState?.data ?? null}
+              onHostLoad={() => setRenderedLeaseId(currentLease.lease.leaseId)}
             />
           </div>
         )}

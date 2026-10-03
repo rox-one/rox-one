@@ -1,0 +1,21 @@
+{
+  "integrationBase": "a019fadfbe48c1d560e1301f4fc0825f82d0f404",
+  "productCommit": "b257b84256548b60ac60e4b8d53bb75b84bc049e",
+  "preservedIncomingPullRequests": [
+    1450,
+    1451
+  ],
+  "incomingSourceHashes": {
+    "apps/electron/src/renderer/App.tsx": "d94f61493a507398c98d342f124be6f57bc4e4c49401b0e8d9872a92d14f60ee",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "0a806e1ba30e45cf17c6ba1db55b37c59750fce097383a65f58402f2e52c4684",
+    "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "b0a9fa69f2edd9b94871cb7df0b00e4e4fdfb2d84b47cdf2f56f99f794188ffd"
+  },
+  "integrationDecisions": [
+    "Retain original StrictMode-safe historyMounted cleanup; actual unmount is still fenced by mounted=false",
+    "Adopt newer pending-workspace switch intent/owner fences",
+    "Retain fresh selection and independent AppShell message-loader ownership guard",
+    "Adopt complete newer SkillInfoPage scope/save/delete owner fencing and all six original browser cases",
+    "Preserve incoming MCP deadline/privacy sources and tests without rewriting them"
+  ],
+  "fullDoDClosed": false
+}

@@ -1,0 +1,10 @@
+{
+  "id": 4174281500,
+  "body": "**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  Block unresolved sessions before synchronizing selection**\n\nDuring a workspace switch, `handleSelectWorkspace` clears `sessionMetaMapAtom` while the previous chat route can remain focused, so `meta` is temporarily undefined and this condition leaves the route as a normal sessions state. The selection effect at lines 564-578 then writes the old session ID back after `App` cleared it, and `AppShell.tsx:1706-1711` independently calls `ensureSessionMessagesLoaded(session.selected)`, issuing `getSessionMessages` for the foreign session and potentially repopulating its atom even though `MainContentPanel` no longer mounts `ChatPage`. Fresh evidence beyond the earlier review thread is this separate AppShell loader; unresolved session details need to remain pending/unavailable until ownership is verified, or selection synchronization must require verified ownership.\n\nUseful? React with \ud83d\udc4d\u00a0/ \ud83d\udc4e.",
+  "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+  "line": 228,
+  "html_url": "https://github.com/rox-one/rox-one/pull/1417#discussion_r4174281500",
+  "commit_id": "4eac674d8be32aa2451765a8dd9095840d8d77d5",
+  "created_at": "2026-10-03T18:14:36Z",
+  "updated_at": "2026-10-03T18:14:36Z"
+}

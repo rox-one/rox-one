@@ -1,0 +1,9 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts:
+error: Cannot find package 'rox-ui001-bindings' from '/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001-temp-ArZCjA/rox-readiness-ui-001.entry.tsx'
+(fail) (unnamed) [59.26ms]
+
+ 0 pass
+ 1 fail
+Ran 1 test across 1 file. [162.00ms]

@@ -5,6 +5,8 @@ import * as path from 'node:path';
 import { createManager } from '../manager';
 import { createResolver } from '../resolver';
 import { toolchainPaths } from '../manifest';
+import { getGitLock } from '../git-locks';
+import { TOOLCHAIN_INSTALL_COMPLETE_MARKER } from '../types';
 import type { ToolEntry } from '../types';
 
 let root: string;
@@ -23,6 +25,17 @@ const cli: ToolEntry = {
 function put(file: string): void {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, 'fixture', { mode: 0o755 });
+}
+
+function frozenSource(versionDir: string): void {
+  const lock = getGitLock(gbrain.name, gbrain.version)!;
+  const source = path.join(versionDir, 'source');
+  fs.mkdirSync(path.join(source, '.git'), { recursive: true });
+  fs.writeFileSync(path.join(source, '.git', 'HEAD'), `${lock.commit}\n`);
+  fs.writeFileSync(path.join(source, 'bun.lock'), 'retained frozen upstream fixture\n');
+  fs.writeFileSync(path.join(versionDir, TOOLCHAIN_INSTALL_COMPLETE_MARKER), JSON.stringify({
+    format: 'git-npm-local-source-v1', repo: lock.repo, commit: lock.commit,
+  }));
 }
 
 function seed(entry: ToolEntry) {
@@ -58,6 +71,12 @@ for (const platform of ['linux-x64', 'win32-x64'] as const) {
       put(path.join(version, 'bin', `gbrain${suffix}`));
       expect((await manager.status())[0]?.phase).toBe('missing');
       put(path.join(current, 'bin', `gbrain${suffix}`));
+      // Two matching launchers still do not prove the retained frozen source
+      // or that the current pointer selects this actual version.
+      expect((await manager.status())[0]?.phase).toBe('missing');
+      frozenSource(version);
+      fs.rmSync(current, { recursive: true });
+      fs.symlinkSync(version, current, process.platform === 'win32' ? 'junction' : 'dir');
       expect((await manager.status())[0]?.phase).toBe('ready');
       fs.rmSync(path.join(version, 'bin', `gbrain${suffix}`));
       fs.mkdirSync(path.join(version, 'bin', `gbrain${suffix}`));
@@ -89,6 +108,7 @@ for (const platform of ['linux-x64', 'win32-x64'] as const) {
         gitNpmInstallImpl: async ({ versionDir }) => {
           installs++;
           put(path.join(versionDir, 'bin', `gbrain${suffix}`));
+          frozenSource(versionDir);
         },
       });
       expect((await manager.ensureAll({ background: false }))[0]?.phase).toBe('ready');
@@ -116,6 +136,9 @@ it.skipIf(process.platform === 'win32')('POSIX generated launcher needs executab
     put(file);
     fs.chmodSync(file, 0o644);
   }
+  frozenSource(version);
+  fs.rmSync(current, { recursive: true });
+  fs.symlinkSync(version, current, 'dir');
   const manager = createManager(paths, { manifest: [gbrain], platform: 'linux-x64', pathEnv: '', windowsBootstrap: null });
   expect((await manager.status())[0]?.phase).toBe('missing');
 });

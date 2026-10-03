@@ -31,14 +31,14 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
 
     it(`keeps a live ${kind.toLowerCase()} deletion ahead of a pending initial snapshot`, async () => {
       const initial = deferred<string[]>()
-      const canonicalAfterEvent = deferred<string[]>()
-      let loads = 0
+      const refreshed = deferred<string[]>()
+      let reads = 0
       let event: ((workspace: string, data: string[]) => void) | undefined
       let data: string[] = []
       let unsubscribed = false
       const api = {
-        [`get${kind}`]: () => kind === 'Skills' && loads++ > 0 ? canonicalAfterEvent.promise : initial.promise,
-        [`on${kind}Changed`]: (callback: typeof event) => { event = callback; return () => { unsubscribed = true } },
+        [`get${kind}`]: () => ++reads === 1 ? initial.promise : refreshed.promise,
+        [`on${kind}Changed`]: (callback: NonNullable<typeof event>) => { event = callback; return () => { unsubscribed = true } },
       }
       const bindings = {
         window: { electronAPI: api }, activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/current',
@@ -49,7 +49,7 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
       event!('other-workspace', ['wrong-entity'])
       expect(data).toEqual([])
       event!('current', [])
-      canonicalAfterEvent.resolve([]); await settle()
+      refreshed.resolve([])
       initial.resolve(['deleted-entity']); await settle()
       expect(data).toEqual([])
       offLoad?.(); offEvent?.()
@@ -59,31 +59,78 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
     })
   }
 
-  it('refreshes project skills in the original directory and discards older event reloads', async () => {
+  it('keeps project and OMP skills when a workspace-only event invalidates the full catalog', async () => {
     const initial = deferred<string[]>()
-    const earlierEvent = deferred<string[]>()
-    const latestEvent = deferred<string[]>()
-    const responses = [initial, earlierEvent, latestEvent]
+    const refreshed = deferred<string[]>()
+    let reads = 0
+    let event!: (workspace: string, data: string[]) => void
+    let data: string[] = []
     const requests: unknown[][] = []
+    const cleanup = appShellEffect('electronAPI.getSkills(', {
+      window: { electronAPI: {
+        getSkills: (...args: unknown[]) => { requests.push(args); return ++reads === 1 ? initial.promise : refreshed.promise },
+        onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
+      } },
+      activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
+      setSkills: (next: string[]) => { data = next }, console,
+    })
+    initial.resolve(['workspace-skill', 'project-skill', 'omp-skill']); await settle()
+    event('current', ['workspace-skill'])
+    expect(data).toEqual(['workspace-skill', 'project-skill', 'omp-skill'])
+    refreshed.resolve(['workspace-updated', 'project-skill', 'omp-skill']); await settle()
+    expect(data).toEqual(['workspace-updated', 'project-skill', 'omp-skill'])
+    expect(requests).toEqual([['current', '/work/project'], ['current', '/work/project']])
+    cleanup?.()
+  })
+
+  it('accepts only the newest scoped skill refresh after consecutive workspace events', async () => {
+    const responses = [deferred<string[]>(), deferred<string[]>(), deferred<string[]>()]
+    let reads = 0
     let event!: (workspace: string, data: string[]) => void
     let data: string[] = []
     const cleanup = appShellEffect('electronAPI.getSkills(', {
       window: { electronAPI: {
-        getSkills: (...args: unknown[]) => { requests.push(args); return responses.shift()!.promise },
+        getSkills: () => responses[reads++]!.promise,
         onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
       } },
-      activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/project/current',
+      activeWorkspaceId: 'current', activeSessionWorkingDirectory: undefined,
       setSkills: (next: string[]) => { data = next }, console,
     })
-    initial.resolve(['workspace-skill', 'project-skill']); await settle()
-    event('current', ['workspace-skill'])
-    event('current', [])
-    latestEvent.resolve(['project-skill']); await settle()
-    expect(data).toEqual(['project-skill'])
-    earlierEvent.resolve(['workspace-skill', 'deleted-project-skill']); await settle()
-    expect(data).toEqual(['project-skill'])
-    expect(requests).toEqual(Array(3).fill(['current', '/project/current']))
+    responses[0]!.resolve(['initial']); await settle()
+    event('foreign', ['wrong']); expect(reads).toBe(1)
+    event('current', ['partial-older']); event('current', ['partial-newer'])
+    responses[2]!.resolve(['full-newer', 'omp']); await settle()
+    responses[1]!.resolve(['full-older']); await settle()
+    expect(data).toEqual(['full-newer', 'omp'])
     cleanup?.()
+    event('current', ['after-cleanup'])
+    expect(reads).toBe(3)
+  })
+
+  it('retains the complete skill catalog through a failed refresh and accepts a later recovery', async () => {
+    const responses = [deferred<string[]>(), deferred<string[]>(), deferred<string[]>()]
+    let reads = 0, errors = 0
+    let event!: (workspace: string, data: string[]) => void
+    let data: string[] = []
+    const cleanup = appShellEffect('electronAPI.getSkills(', {
+      window: { electronAPI: {
+        getSkills: () => responses[reads++]!.promise,
+        onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
+      } },
+      activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
+      setSkills: (next: string[]) => { data = next }, console: { error: () => { errors++ } },
+    })
+    responses[0]!.resolve(['workspace', 'project', 'omp']); await settle()
+    event('current', [])
+    responses[1]!.reject(new Error('transport offline')); await settle()
+    expect(data).toEqual(['workspace', 'project', 'omp'])
+    expect(errors).toBe(1)
+    event('current', [])
+    responses[2]!.resolve(['recovered', 'project', 'omp']); await settle()
+    expect(data).toEqual(['recovered', 'project', 'omp'])
+    cleanup?.()
+    event('current', [])
+    expect(reads).toBe(3)
   })
 
   it('recovers from request rejection and unmount without installing stale data', async () => {
@@ -118,12 +165,12 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
       sidebarResize: { handleKeyCancel: () => { order.push('cancel-sidebar') } },
       navigatorResize: { handleKeyCancel: () => { order.push('cancel-navigator') } },
       loadShellLayout: (workspace: string) => realLoadShellLayout(workspace, store),
-      setWorkspaceUiStateId: () => {},
       setSidebarWidth: (value: number) => { sidebar = value; order.push('load-sidebar') },
       setSessionListWidth: (value: number) => { navigator = value; order.push('load-navigator') },
       setCollectionFilters: () => {}, DEFAULT_COLLECTION_FILTERS: {}, setSearchActive: () => {},
       setSearchQuery: () => {}, setFocusedSidebarItemId: () => {}, setViewFiltersMap: () => {},
       setExpandedFolders: () => {}, setCollapsedItems: () => {}, storage: { KEYS: realStorage.KEYS, get: store.get },
+      setWorkspaceUiStateId: () => {},
     })
     expect(sidebar).toBe(210)
     expect(navigator).toBe(410)
@@ -132,22 +179,18 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
   })
 })
 
-
-describe('UI-001 workspace hydration protects persistence', () => {
-  for (const key of ['expandedFolders', 'viewFilters', 'collapsedSectionIds']) {
-    it(`does not save previous workspace ${key} into the new workspace`, () => {
-      const writes: unknown[] = []
-      const bindings = {
-        activeWorkspaceId: 'next', workspaceUiStateId: 'old', expandedFolders: new Set(['previous']),
-        viewFiltersMap: { previous: true }, collapsedItems: new Set(['previous']),
-        storage: { KEYS: realStorage.KEYS, set: (...args: unknown[]) => writes.push(args) },
-        commitShellLayout: (...args: unknown[]) => writes.push(args),
-      }
-      const needle = key === 'collapsedSectionIds' ? 'commitShellLayout({ workspaceId: activeWorkspaceId' : `storage.set(storage.KEYS.${key},`
-      appShellEffect(needle, bindings)
+// Effects are evaluated independently to reproduce the first render of a workspace switch.
+describe('ROX UI-001 workspace persistence isolation', () => {
+  for (const key of ['viewFilters', 'collapsedSidebarItems'] as const) {
+    it(`does not save old ${key} over the next workspace during restoration`, () => {
+      const writes: unknown[][] = []
+      appShellEffect(`storage.set(storage.KEYS.${key},`, {
+        activeWorkspaceId: 'next', workspaceUiStateId: 'old',
+        viewFiltersMap: { oldFilter: {} }, collapsedItems: new Set(['old-section']),
+        storage: { KEYS: realStorage.KEYS, set: (...args: unknown[]) => { writes.push(args) } },
+        commitShellLayout: (...args: unknown[]) => { writes.push(args) },
+      })
       expect(writes).toEqual([])
-      appShellEffect(needle, { ...bindings, workspaceUiStateId: 'next' })
-      expect(writes).toHaveLength(key === 'collapsedSectionIds' ? 2 : 1)
     })
   }
 })

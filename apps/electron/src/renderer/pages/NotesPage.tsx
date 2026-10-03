@@ -1,10 +1,10 @@
 import * as React from 'react'
-import { useTourTarget } from '@/features/product-tour/runtime/hooks'
-import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/hooks'
-import { matchesNoteReceipt, notesReadCapability } from '@/features/product-tour/adapters/knowledge'
 import { NotesInspectorToggle, NotesRailTools, NotesResponsiveRail, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
 import { notesAuxiliaryFits } from './notes/notes-layout'
 import { EMPTY_COMMENT_DRAFT, noteCommentDraftKey, updateCommentDraft, type NoteCommentDraft } from './notes/comment-drafts'
+import { useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/hooks'
+import { matchesNoteReceipt, notesReadCapability } from '@/features/product-tour/adapters/knowledge'
 import { capabilityErrorCode, readScopedCapability } from '@/lib/scoped-capability-read'
 import { hasNativeNotesTransport } from '@/lib/notes-capability'
 import { CalendarDays, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, Paperclip, Pencil, Plus, Search, SquarePen, Tags, Trash2 } from 'lucide-react'
@@ -983,7 +983,12 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
               authorityEpoch: contentResolution.origin.authorityEpoch, operationId: crypto.randomUUID() }
             pendingCommitsRef.current.set(revisionKey, command)
             const result = await window.electronAPI.commitMarkdown(command)
-            if (result.receipt.revision && result.note.id === noteId) knowledgeSignals.emit(observation, 'note.persisted', 'verified', 'native-commit', command.operationId)
+            if (result.receipt.operationId === command.operationId && result.receipt.workspaceId === command.workspaceId
+              && result.receipt.noteId === command.noteId && result.receipt.previousRevision === command.expectedRevision
+              && result.receipt.authorityEpoch === command.authorityEpoch && result.receipt.sourceStoreId === command.sourceStoreId
+              && result.receipt.revision && result.note.id === noteId && result.note.content === currentContent) {
+              knowledgeSignals.emit(observation, 'note.persisted', 'verified', 'native-commit', command.operationId)
+            }
             pendingCommitsRef.current.delete(revisionKey)
             return { ...result.note, content: currentContent, revision: result.receipt.revision }
           },
@@ -2294,8 +2299,9 @@ h1,h2,h3{margin-top:1.5em}
               </button>
             </div>
           )}
-          <button ref={noteCreateTarget} type="button" className="h-7 w-7 shrink-0 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><FilePlus2 className="h-4 w-4 text-sky-500" aria-hidden="true" /></button>
           <NotesInspectorToggle inline={inlineAuxiliary} open={inspectorSheetOpen} onToggle={toggleInspector} />
+          <button ref={noteCreateTarget} type="button" className="h-7 w-7 shrink-0 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><FilePlus2 className="h-4 w-4 text-sky-500" aria-hidden="true" /></button>
+          {assetsUnavailable && <span role="status" data-testid="notes-assets-unavailable" data-error-code={assetsUnavailable.code} className="text-xs text-muted-foreground">{t('notes.toolbar.attachAsset')}: {t('common.unavailable')}</span>}
           <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} />
           <button
             className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40"
