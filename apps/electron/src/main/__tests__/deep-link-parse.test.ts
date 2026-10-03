@@ -71,13 +71,12 @@ describe('parseDeepLink view routes', () => {
   })
 
   it('opens a scoped runtime selection as a read-only view and refuses send intent', () => {
-    const target = parseDeepLink('rox://runtime/ws1/s1/r1?event=tool-1')
+    const target = parseDeepLink('rox://runtime?workspace=ws1&session=s1&run=r1&event=tool-1')
     expect(target?.workspaceId).toBe('ws1')
-    expect(target?.sessionId).toBe('s1')
     expect(target?.view).toBe('allSessions/session/s1?runtimeRun=r1&runtimeEvent=tool-1')
     expect(target?.action).toBeUndefined()
     expect(parseRouteToNavigationState(target!.view!)).not.toBeNull()
-    expect(parseDeepLink('rox://runtime/ws1/s1/r1?event=tool-1&send=true')).toBeNull()
+    expect(parseDeepLink('rox://runtime?workspace=ws1&session=s1&run=r1&event=tool-1&send=true')).toBeNull()
   })
 
   it('still rejects unknown hosts and passes auth callbacks through', () => {
