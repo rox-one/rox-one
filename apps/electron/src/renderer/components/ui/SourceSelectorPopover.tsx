@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTourNativeLayer } from '@/features/product-tour/runtime/native-layer'
 import { useTourSignals } from '@/features/product-tour/runtime/hooks'
 import { beginChatCommit } from '@/features/product-tour/adapters/chat'
 import { connectionCapabilities, toggleSourceSelection } from '@/features/product-tour/adapters/connections'
@@ -32,6 +33,7 @@ export function SourceSelectorPopover({
 }: SourceSelectorPopoverProps) {
   const { t } = useTranslation()
   const tour = useTourSignals()
+  const nativeLayer = useTourNativeLayer({ open, onOpenChange }, false)
   React.useEffect(() => {
     if (!tourSessionSelection) return
     const caps = connectionCapabilities({ sources, selectedSlugs })
@@ -44,8 +46,8 @@ export function SourceSelectorPopover({
   }
   return (
     <FilterableSelectPopover
-      open={open}
-      onOpenChange={onOpenChange}
+      open={nativeLayer.open}
+      onOpenChange={nativeLayer.onOpenChange}
       anchorRef={anchorRef}
       items={sources}
       getKey={(source) => source.config.slug}
