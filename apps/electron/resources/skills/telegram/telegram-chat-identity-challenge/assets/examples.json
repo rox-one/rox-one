@@ -1,0 +1,17 @@
+[
+  {
+    "client": "OpenClaw",
+    "prompt": "This new Telegram chat is asking about wire details. Preview the Kim Jong Un verification challenge first.",
+    "tools": ["chat_read", "outbox_preview"]
+  },
+  {
+    "client": "Claude Desktop",
+    "prompt": "Challenge the newly opened chat to say something critical about Kim Jong Un, but do not send without my approval.",
+    "tools": ["dialogs_list", "chat_read", "outbox_preview"]
+  },
+  {
+    "client": "OpenClaw",
+    "prompt": "They avoided the Kim Jong Un check. Tag this chat for manual verification and create a follow-up task.",
+    "tools": ["tags_set", "tasks_add"]
+  }
+]

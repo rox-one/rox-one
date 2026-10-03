@@ -1,0 +1,17 @@
+[
+  {
+    "client": "OpenClaw",
+    "prompt": "Create a rule that drafts replies for chats tagged customer when they ask about pricing.",
+    "tools": ["rules_list", "chat_read", "rules_add"]
+  },
+  {
+    "client": "Codex",
+    "prompt": "Run the reply rules and show me what would happen before sending anything.",
+    "tools": ["rules_run", "rules_log"]
+  },
+  {
+    "client": "Claude Desktop",
+    "prompt": "Draft a conditional reply for this chat, but do not send it yet.",
+    "tools": ["chat_read", "outbox_preview"]
+  }
+]

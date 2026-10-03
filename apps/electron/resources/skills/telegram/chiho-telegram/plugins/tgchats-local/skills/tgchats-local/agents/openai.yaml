@@ -1,0 +1,4 @@
+interface:
+  display_name: "tgchats local"
+  short_description: "Use a self-hosted local Telegram MCP runtime"
+  default_prompt: "Use my local tgchats runtime to show recent Telegram chats."

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "proposal-followup-task",
+    "title": "Proposal follow-up task",
+    "why": "Follow up on the proposal",
+    "priority": "med"
+  },
+  {
+    "id": "intro-followup-task",
+    "title": "Intro follow-up task",
+    "why": "Send the promised introduction",
+    "priority": "high"
+  }
+]

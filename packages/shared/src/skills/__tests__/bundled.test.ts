@@ -78,7 +78,7 @@ beforeEach(() => {
 
 afterEach(() => {
   rmSync(tempDir, { recursive: true, force: true });
-});
+}, 180_000);
 
 // ============================================================
 // Seed

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Chiho Telegram"
+  short_description: "Use Chiho's hosted Telegram MCP through OAuth"
+  default_prompt: "Connect Chiho Telegram and show my follow-up queue."

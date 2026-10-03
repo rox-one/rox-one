@@ -1,0 +1,6 @@
+[
+  {
+    "prompt": "Show my VIP Telegram inbox and explain who needs attention today.",
+    "tools": ["dialogs_list", "tasks_today", "chat_read", "summary_show"]
+  }
+]

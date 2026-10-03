@@ -1,0 +1,17 @@
+[
+  {
+    "id": "number-plus-word",
+    "title": "Number plus word",
+    "text": "Quick verification: please reply with only the number you get from {{left}} + {{right}}, followed by the word check"
+  },
+  {
+    "id": "two-step-instruction",
+    "title": "Two-step instruction",
+    "text": "Quick verification: please reply with the word {{word}} and the result of {{left}} + {{right}}, separated by one space."
+  },
+  {
+    "id": "reverse-token",
+    "title": "Reverse token",
+    "text": "Quick verification: please reverse this short code and send only the reversed code: {{token}}"
+  }
+]

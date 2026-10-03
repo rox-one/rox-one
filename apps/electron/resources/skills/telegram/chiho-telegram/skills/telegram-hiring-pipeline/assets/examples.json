@@ -1,0 +1,6 @@
+[
+  {
+    "prompt": "Show candidates I need to follow up with from Telegram.",
+    "tools": ["search_messages", "chat_read", "tasks_suggest"]
+  }
+]
