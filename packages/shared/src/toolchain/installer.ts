@@ -143,10 +143,12 @@ export async function generateNpmWrappers(toolDir: string): Promise<string[]> {
   const pkgFile = path.join(toolDir, 'package', 'package.json');
   let pkgBin: Record<string, string> | undefined;
   let isRoxCli = false;
+  let isAcpx = false;
   try {
     const pkg = JSON.parse(await fs.promises.readFile(pkgFile, 'utf8'));
     pkgBin = typeof pkg.bin === 'string' ? { [pkg.name ?? 'bin']: pkg.bin } : pkg.bin;
     isRoxCli = pkg.name === '@oh-my-pi/pi-coding-agent';
+    isAcpx = pkg.name === 'acpx';
   } catch {
     return [];
   }
@@ -193,6 +195,28 @@ export async function generateNpmWrappers(toolDir: string): Promise<string[]> {
       const cmdNative = '@echo off\r\n' + `"%~dp0..\\package\\${native.replace(/\//g, '\\')}" %*\r\n`;
       await fs.promises.writeFile(path.join(binDir, `${name}.cmd`), cmdNative);
       created.push(path.join('bin', `${name}.cmd`));
+      continue;
+    }
+    // acpx targets Node >=22.13; select its supported runtime explicitly.
+    if (isAcpx) {
+      const sh = '#!/bin/sh\n' +
+        'DIR="$(cd "$(dirname "$0")" && pwd)"\n' +
+        'NODE="$ROX_NODE_PATH"\n' +
+        'if [ -z "$NODE" ]; then\n' +
+        '  for c in "$DIR"/../../../node/current/*/bin/node "$DIR"/../../../node/current/*/node "$DIR"/../../../node/current/bin/node "$DIR"/../../../node/current/node; do\n' +
+        '    if [ -x "$c" ]; then NODE="$c"; break; fi\n' +
+        '  done\n' +
+        'fi\n' +
+        '[ -z "$NODE" ] && NODE="node"\n' +
+        `exec "$NODE" "$DIR/../package/${rel}" "$@"\n`;
+      const cmd = '@echo off\r\nsetlocal\r\n' +
+        'set "NODE=%ROX_NODE_PATH%"\r\n' +
+        'if "%NODE%"=="" for /D %%D in ("%~dp0..\\..\\..\\node\\current\\*") do if exist "%%~D\\node.exe" set "NODE=%%~D\\node.exe"\r\n' +
+        'if "%NODE%"=="" set "NODE=node"\r\n' +
+        `"%NODE%" "%~dp0..\\package\\${rel.replace(/\//g, '\\')}" %*\r\n`;
+      await fs.promises.writeFile(path.join(binDir, name), sh, { mode: 0o755 });
+      await fs.promises.writeFile(path.join(binDir, `${name}.cmd`), cmd);
+      created.push(path.join('bin', name), path.join('bin', `${name}.cmd`));
       continue;
     }
     // unix wrapper: ../package/<rel> относительно bin/

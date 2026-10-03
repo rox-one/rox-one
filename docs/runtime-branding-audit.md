@@ -46,3 +46,11 @@ The migration intentionally does not continue importing edits made later in lega
 Electron `app.setName()` already defaults to Rox, so default `userData` uses the Rox product directory. Numbered development instances still have a legacy hardcoded userData override in `main/index.ts`; migrate that separately without dropping cookies, browser state or local storage. Changing the appId can affect macOS Keychain access ACLs, OS permission records and Windows NSIS uninstall/upgrade registration. The shared credential backend itself uses the explicit service above, rather than deriving it from appId. Preserve its access and verify master-key recovery before replacing app identifiers. No live keychain values were queried or printed during this audit.
 
 Credential service migration is now implemented: the canonical service is `rox.credentials`; read fallback validates the legacy master key and copies exactly that key to the new entry without deleting its source. If the new write is denied, the preserved legacy key still works. Existing encrypted file headers and store bytes are unchanged. Four mocked keychain regressions cover precedence, identical-key copying, denied-write fallback and invalid-key rejection without touching host secrets.
+
+## Managed acpx CLI
+
+- Upstream: https://github.com/openclaw/acpx, MIT, version 0.19.4 (matching bundled upstream skill).
+- npm tarball: `https://registry.npmjs.org/acpx/-/acpx-0.19.4.tgz`, 658040 bytes, SHA256 `ccb1e4ad1cb1468493769af3a2ba0df6aeffb4e1e176541f1f231f3ec5782311`; bytes also verified against registry SHA512 integrity before embedding metadata.
+- Exact production dependency lock: 73 entries, HTTPS npm registry URLs and SHA512 integrity for every transitive package; installation uses npm ci with lifecycle scripts disabled. The package is default-on in managed toolchain for all four supported platforms and depends on managed Node (upstream Node >=22.13 requirement).
+- POSIX and Windows launchers use the managed Node runtime, with optional ROX_NODE_PATH override. Tests execute a declared CLI through the launcher and verify Node rather than Bun.
+- Upstream ACP agent adapters and authentication are independent first-use requirements. Installing acpx does not replace the OMP runtime used for ROX conversations and does not claim those external agents are preinstalled or authenticated.
