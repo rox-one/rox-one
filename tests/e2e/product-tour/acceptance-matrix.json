@@ -8,7 +8,7 @@
       "owner": "A1",
       "releaseBlocking": true,
       "evidenceStatus": "UNIT_PASS",
-      "verification": "Root full feature gate at7e0:302 feature +5 layer tests PASS; A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
+      "verification": "Root full feature gate at f4c090ca: 328 feature +8 input/browser +5 layer +4 process tests PASS (345 total/14,888 assertions). A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
     },
     {
       "id": "CORE-02",
@@ -16,7 +16,7 @@
       "owner": "A1",
       "releaseBlocking": true,
       "evidenceStatus": "UNIT_PASS",
-      "verification": "Root full feature gate at7e0:302 feature +5 layer tests PASS; A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
+      "verification": "Root full feature gate at f4c090ca: 328 feature +8 input/browser +5 layer +4 process tests PASS (345 total/14,888 assertions). A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
     },
     {
       "id": "CORE-03",
@@ -24,7 +24,7 @@
       "owner": "A1",
       "releaseBlocking": true,
       "evidenceStatus": "UNIT_PASS",
-      "verification": "Root full feature gate at7e0:302 feature +5 layer tests PASS; A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
+      "verification": "Root full feature gate at f4c090ca: 328 feature +8 input/browser +5 layer +4 process tests PASS (345 total/14,888 assertions). A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
     },
     {
       "id": "CORE-04",
@@ -32,7 +32,7 @@
       "owner": "A1",
       "releaseBlocking": true,
       "evidenceStatus": "UNIT_PASS",
-      "verification": "Root full feature gate at7e0:302 feature +5 layer tests PASS; A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
+      "verification": "Root full feature gate at f4c090ca: 328 feature +8 input/browser +5 layer +4 process tests PASS (345 total/14,888 assertions). A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
     },
     {
       "id": "CORE-05",
@@ -40,7 +40,7 @@
       "owner": "A1",
       "releaseBlocking": true,
       "evidenceStatus": "UNIT_PASS",
-      "verification": "Root full feature gate at7e0:302 feature +5 layer tests PASS; A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
+      "verification": "Root full feature gate at f4c090ca: 328 feature +8 input/browser +5 layer +4 process tests PASS (345 total/14,888 assertions). A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
     },
     {
       "id": "CORE-06",
@@ -48,7 +48,7 @@
       "owner": "A1",
       "releaseBlocking": true,
       "evidenceStatus": "UNIT_PASS",
-      "verification": "Root full feature gate at7e0:302 feature +5 layer tests PASS; A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
+      "verification": "Root full feature gate at f4c090ca: 328 feature +8 input/browser +5 layer +4 process tests PASS (345 total/14,888 assertions). A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
     },
     {
       "id": "CORE-07",
@@ -56,7 +56,7 @@
       "owner": "A1",
       "releaseBlocking": true,
       "evidenceStatus": "UNIT_PASS",
-      "verification": "Root full feature gate at7e0:302 feature +5 layer tests PASS; A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
+      "verification": "Root full feature gate at f4c090ca: 328 feature +8 input/browser +5 layer +4 process tests PASS (345 total/14,888 assertions). A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
     },
     {
       "id": "CORE-08",
@@ -64,7 +64,7 @@
       "owner": "A1",
       "releaseBlocking": true,
       "evidenceStatus": "UNIT_PASS",
-      "verification": "Root full feature gate at7e0:302 feature +5 layer tests PASS; A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
+      "verification": "Root full feature gate at f4c090ca: 328 feature +8 input/browser +5 layer +4 process tests PASS (345 total/14,888 assertions). A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
     },
     {
       "id": "CORE-09",
@@ -72,7 +72,7 @@
       "owner": "A1",
       "releaseBlocking": true,
       "evidenceStatus": "UNIT_PASS",
-      "verification": "Root full feature gate at7e0:302 feature +5 layer tests PASS; A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
+      "verification": "Root full feature gate at f4c090ca: 328 feature +8 input/browser +5 layer +4 process tests PASS (345 total/14,888 assertions). A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
     },
     {
       "id": "CORE-10",
@@ -80,7 +80,7 @@
       "owner": "A1",
       "releaseBlocking": true,
       "evidenceStatus": "UNIT_PASS",
-      "verification": "Root full feature gate at7e0:302 feature +5 layer tests PASS; A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
+      "verification": "Root full feature gate at f4c090ca: 328 feature +8 input/browser +5 layer +4 process tests PASS (345 total/14,888 assertions). A9 independent125 tests/1181 assertions historically execute all56 positive/foreign/premature policy cases. Production reducer CORE cases pass; supplied domain signals are synthetic."
     },
     {
       "id": "UI-01",
@@ -120,7 +120,7 @@
       "owner": "A2",
       "releaseBlocking": true,
       "evidenceStatus": "PARTIAL_APPLICATION_EVIDENCE",
-      "verification": "Real Notes App stable target/mask offset<=2 CSS px after production Focus action PASS at final c8d83576. Prior112.4375px position-only layout regression reproduced and fixed at a0ff359a; six component cases also PASS. Full App90/100/125%zoom and nested-scroll matrix remain NOT_RUN."
+      "verification": "Real Notes App stable target/mask offset<=2 CSS px after production Focus action PASS at final f4c090ca. Prior112.4375px position-only layout regression reproduced and fixed at a0ff359a; six component cases also PASS. Full App90/100/125%zoom and nested-scroll matrix remain NOT_RUN."
     },
     {
       "id": "UI-06",
@@ -176,7 +176,7 @@
       "owner": "A3",
       "releaseBlocking": true,
       "evidenceStatus": "STORAGE_PRIVACY_PASS",
-      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs/Settings/service-focus merges."
+      "verification": "Root f4c090ca feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist, including final reset/dismissal review fixes. DATA08 disabled local log tested; full App/network analytics acceptance remains open."
     },
     {
       "id": "DATA-02",
@@ -184,7 +184,7 @@
       "owner": "A3",
       "releaseBlocking": true,
       "evidenceStatus": "STORAGE_PRIVACY_PASS",
-      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs/Settings/service-focus merges."
+      "verification": "Root f4c090ca feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist, including final reset/dismissal review fixes. DATA08 disabled local log tested; full App/network analytics acceptance remains open."
     },
     {
       "id": "DATA-03",
@@ -192,7 +192,7 @@
       "owner": "A3",
       "releaseBlocking": true,
       "evidenceStatus": "STORAGE_PRIVACY_PASS",
-      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs/Settings/service-focus merges."
+      "verification": "Root f4c090ca feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist, including final reset/dismissal review fixes. DATA08 disabled local log tested; full App/network analytics acceptance remains open."
     },
     {
       "id": "DATA-04",
@@ -200,7 +200,7 @@
       "owner": "A3",
       "releaseBlocking": true,
       "evidenceStatus": "STORAGE_PRIVACY_PASS",
-      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs/Settings/service-focus merges."
+      "verification": "Root f4c090ca feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist, including final reset/dismissal review fixes. DATA08 disabled local log tested; full App/network analytics acceptance remains open."
     },
     {
       "id": "DATA-05",
@@ -208,7 +208,7 @@
       "owner": "A3",
       "releaseBlocking": true,
       "evidenceStatus": "STORAGE_PRIVACY_PASS",
-      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs/Settings/service-focus merges."
+      "verification": "Root f4c090ca feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist, including final reset/dismissal review fixes. DATA08 disabled local log tested; full App/network analytics acceptance remains open."
     },
     {
       "id": "DATA-06",
@@ -216,7 +216,7 @@
       "owner": "A3",
       "releaseBlocking": true,
       "evidenceStatus": "STORAGE_PRIVACY_PASS",
-      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs/Settings/service-focus merges."
+      "verification": "Root f4c090ca feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist, including final reset/dismissal review fixes. DATA08 disabled local log tested; full App/network analytics acceptance remains open."
     },
     {
       "id": "DATA-07",
@@ -224,7 +224,7 @@
       "owner": "A3",
       "releaseBlocking": true,
       "evidenceStatus": "STORAGE_PRIVACY_PASS",
-      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs/Settings/service-focus merges."
+      "verification": "Root f4c090ca feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist, including final reset/dismissal review fixes. DATA08 disabled local log tested; full App/network analytics acceptance remains open."
     },
     {
       "id": "DATA-08",
@@ -232,7 +232,7 @@
       "owner": "A3",
       "releaseBlocking": true,
       "evidenceStatus": "PARTIAL_STORAGE_EVIDENCE",
-      "verification": "Root7e0 feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA08 disabled local log tested; full App/network analytics acceptance remains open. Feature source unchanged in later mainline Surface Tabs/Settings/service-focus merges."
+      "verification": "Root f4c090ca feature gate PASS executes real Chromium IndexedDB concurrency/fence/TTL, storage failures, future schema, scoped reset, semantic revision and diagnostics allowlist, including final reset/dismissal review fixes. DATA08 disabled local log tested; full App/network analytics acceptance remains open."
     },
     {
       "id": "DOMAIN-01",
@@ -448,7 +448,7 @@
       "owner": "A9",
       "releaseBlocking": true,
       "evidenceStatus": "NOT_RUN",
-      "verification": "Fresh Linux native runner at c8d83576 exit2, releaseBlocking true, native test exit null. macOS/Windows/system microphone cases NOT_RUN. Automated real Electron fresh-setup/no-auto-tour CI is implemented but not executed here; no native focus proof is claimed."
+      "verification": "Fresh Linux canonical native runner at f4c090ca exit2, releaseBlocking true, native test exit null. Full macOS/Windows/system microphone cases remain NOT_RUN. First CI37134335545 Windows built Electron but smoke stalled14m25 before cancellation with RUNNING/null exit; macOS cancelled while queued. Repaired Node CLI/180s parent deadline and visible fresh Welcome assertions await actual new OS CI proof. No native focus proof is claimed."
     },
     {
       "id": "NATIVE-02",
@@ -456,7 +456,7 @@
       "owner": "A9",
       "releaseBlocking": true,
       "evidenceStatus": "NOT_RUN",
-      "verification": "Fresh Linux native runner at c8d83576 exit2, releaseBlocking true, native test exit null. macOS/Windows/system microphone cases NOT_RUN. Automated real Electron fresh-setup/no-auto-tour CI is implemented but not executed here; no native focus proof is claimed."
+      "verification": "Fresh Linux canonical native runner at f4c090ca exit2, releaseBlocking true, native test exit null. Full macOS/Windows/system microphone cases remain NOT_RUN. First CI37134335545 Windows built Electron but smoke stalled14m25 before cancellation with RUNNING/null exit; macOS cancelled while queued. Repaired Node CLI/180s parent deadline and visible fresh Welcome assertions await actual new OS CI proof. No native focus proof is claimed."
     },
     {
       "id": "NATIVE-03",
@@ -464,7 +464,7 @@
       "owner": "A9",
       "releaseBlocking": true,
       "evidenceStatus": "NOT_RUN",
-      "verification": "Fresh Linux native runner at c8d83576 exit2, releaseBlocking true, native test exit null. macOS/Windows/system microphone cases NOT_RUN. Automated real Electron fresh-setup/no-auto-tour CI is implemented but not executed here; no native focus proof is claimed."
+      "verification": "Fresh Linux canonical native runner at f4c090ca exit2, releaseBlocking true, native test exit null. Full macOS/Windows/system microphone cases remain NOT_RUN. First CI37134335545 Windows built Electron but smoke stalled14m25 before cancellation with RUNNING/null exit; macOS cancelled while queued. Repaired Node CLI/180s parent deadline and visible fresh Welcome assertions await actual new OS CI proof. No native focus proof is claimed."
     },
     {
       "id": "BUILD-01",
@@ -472,7 +472,7 @@
       "owner": "A9",
       "releaseBlocking": true,
       "evidenceStatus": "BUILD_PASS",
-      "verification": "Renderer builds exit0 at c9b73303 baseline and clean c8d83576 candidate. Consistent Bun-gzip JS delta +154807 bytes (2.36%), raw +601563; CSS gzip -222/raw -3131. Six fixture markers absent. Candidate artifact SHA256 eab4c0db06554d355315d8bfb0890a4e2373539bdd231ecca9291485fbac5c2f. Mainline changes are included in this measured delta."
+      "verification": "Renderer builds exit0 at c9b73303 baseline and clean616f3af1 candidate; production code unchanged through f4c090ca. Consistent Bun-gzip JS delta +165544 bytes (2.53%), raw +638270; CSS gzip -140/raw -2513. Six fixture markers absent. Candidate artifact SHA256 bedd614f055b051368d3e24d80183b4dfdc8d331ee7a8854821cf95667239444. Mainline changes are included in this measured delta."
     },
     {
       "id": "DELTA-01",
@@ -499,15 +499,17 @@
       "verification": "Required integrated application/native evidence has not yet been collected."
     }
   ],
-  "evidenceSnapshot": "Immutable integrated c8d83576cd56f90c5b6478aff25c2702de47b707, 2026-10-03. Exact E2E and production renderer PASS. Root feature gate at7e0 remains historical with unchanged feature source; affected Surface Tabs/Settings/service-focus checks and final App E2E repeated after main synchronization.",
+  "evidenceSnapshot": "Immutable integrated f4c090ca9f09a05a38d653326f247eedc62cef46, 2026-10-03. Exact full E2E13 and feature345 PASS. Renderer616f3af1 PASS; subsequent source changes through the snapshot are test harnesses only. Broad live App/platform rollout gates remain open.",
   "applicationEvidence": {
     "command": "bun run test:product-tour:e2e",
-    "sourceSha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+    "sourceSha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
     "exitCode": 0,
     "passed": 13,
     "failed": 0,
-    "durationSeconds": 105.72621400000001,
-    "logPath": "/workspace/product-tour-a9-final-c8d83576-e2e.log",
+    "skipped": 0,
+    "flaky": 0,
+    "durationSeconds": 95.61613,
+    "logPath": "/workspace/product-tour-a9-final-f4c090ca-e2e.log",
     "environment": "Linux Chromium151, EN,1280x900,reduced motion; production App with isolated native-store and custody/IPC adapters"
   },
   "earlierStartupTimeout": {
@@ -517,5 +519,38 @@
     "failed": 1,
     "reason": "Cold App mount exceeded unchanged60s budget during simultaneous heavy builders; trace has no import exception. Same-source unchanged full rerun passes13 in102.280619s; finala49 full suite also passes.",
     "tracePath": "/workspace/product-tour-a9-first-7e0f6061-flag-off-timeout.zip"
+  },
+  "featureEvidence": {
+    "command": "bun run test:product-tour",
+    "sourceSha": "f4c090ca9f09a05a38d653326f247eedc62cef46",
+    "exitCode": 0,
+    "totalPassed": 345,
+    "assertions": 14888,
+    "groups": {
+      "feature": 328,
+      "inputBrowser": 8,
+      "layer": 5,
+      "nativeProcessSupervision": 4
+    },
+    "logPath": "/workspace/product-tour-gates/feature.log"
+  },
+  "rendererEvidence": {
+    "sourceSha": "616f3af10b7db097d9816b0fe96e9bda20ed807a",
+    "productionUnchangedThrough": "f4c090ca9f09a05a38d653326f247eedc62cef46",
+    "exitCode": 0,
+    "durationSeconds": 70.349773,
+    "artifactSha256": "bedd614f055b051368d3e24d80183b4dfdc8d331ee7a8854821cf95667239444",
+    "logPath": "/workspace/product-tour-a9-final-616f3af1-renderer.log",
+    "bundleLogPath": "/workspace/product-tour-a9-final-616f3af1-bundle.log"
+  },
+  "firstProductCI": {
+    "runId": 37134335545,
+    "headSha": "dd9faa706b1a46b7190333c8a76233c055f40058",
+    "browserAndDomain": "FAIL:303 passed/1 pending-transcript fixture timeout; synchronization repaired before fresh local gate",
+    "windowsAutomatedSmoke": "CANCELLED after14m25 with no test startup output; readiness RUNNING/exitCode null",
+    "macOSAutomatedSmoke": "CANCELLED while queued; NOT_RUN",
+    "acceptedNativeTestResult": false,
+    "evidenceDirectory": "/workspace/product-tour-ci/",
+    "newRunner": "Node Playwright CLI;180s parent deadline;owned-process cleanup;visible fresh Welcome assertions"
   }
 }
