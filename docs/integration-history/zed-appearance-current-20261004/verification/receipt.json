@@ -83,8 +83,9 @@
       "assertions": 6524
     },
     "native_policy": {
-      "pass": 13,
-      "fail": 0
+      "pass": 1,
+      "fail": 0,
+      "assertions": 3
     },
     "full_strict_electron_exit": 0,
     "source344_blobs_refreshed": true,
