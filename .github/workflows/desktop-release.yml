@@ -44,6 +44,8 @@ jobs:
           packages/shared/src/toolchain/__tests__/acpx.test.ts
           packages/shared/src/credentials/backends/__tests__/keychain-master-key.test.ts
           packages/shared/src/agent/core/__tests__/rox-config-paths.test.ts
+          scripts/configuration-guide.test.ts
+          scripts/electron-build-resources.test.ts
         env:
           ROX_OMP_TEST_TIMEOUT_MS: '30000'
       - run: bun run validate:ci
