@@ -975,3 +975,7 @@ Owner root. Depends on existing rail-links/Popover/Select and current product-to
 1. Historical worker: reproduce reset and grouping failures on the exact current AppShell consumer with real native JSON storage (original 0/9).
 2. Restore current preference loads and sole canonical grouping; add per-store load/edit/event/ABA ownership and dispatched-write ordering, including previous-workspace projection isolation.
 3. Qualify native persistence and current related callbacks (33/0/80), mounted exact AppShell callbacks in Chromium, and current Electron types after main reconciliation. Preserve original failure history and all source branches; lead reviews and merges the separate PR. Installed/native platform acceptance remains separate.
+
+### Golden task date validation recovery — 2026-10-03
+
+Owner recent_features: restore exact ISO calendar-day validation in the current parser; verify impossible-date refusal and valid leap-day persistence through the actual TaskDetail form. Keep before-fix unit/browser failures, full personal-task regression checks and both timezone offsets; qualify current core types and production component/CSS bundle. Parent owns ordered PR merge; source branches stay preserved. Broader Golden/native release acceptance remains separate.

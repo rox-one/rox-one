@@ -789,3 +789,7 @@ Native default paths use OS-specific locations without creating app-data folders
 ## Collection workspace preference recovery — 2026-10-03
 
 Owner: branch integration historical worker. Dependency: current native collection preference RPC and AppShell workspace lifecycle. Switching or initially opening a workspace loads its saved per-key filters and CollectionDisplay without writing defaults. Canonical groupBy preserves project grouping; local old-workspace preferences cannot be written into a new workspace while its read is pending. New input, live events and the latest workspace generation own state; a stale snapshot or ACK cannot replace them. No native authority changes. Source PR1436/384843bfc selectively adapted; evidence in integration-history/collection-workspace-recovery-20261003.
+
+### Golden task date validation recovery — 2026-10-03
+
+Recover the strict local calendar-day check from preserved Golden source5def9ffd into the current Tasks schedule form, through its existing parseDateExpression port. ISO dates must round-trip the exact year/month/day; impossible dates return no schedule change or native write. Valid leap days retain local midnight. Current native task actor/workspace custody, CAS/ACK/readback, import/background barriers and Product Learning producers remain canonical. Owner: recent_features; dependency: current Tasks1456 and runtime main; no legacy CatalogPanel or alternate store.
