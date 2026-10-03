@@ -1,5 +1,7 @@
 import { useAtom } from 'jotai'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useTourTarget, useTourSignals, type TourObservation } from '@/features/product-tour/runtime/hooks'
+import { connectionCapabilities } from '@/features/product-tour/adapters/connections'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { RefreshCw } from 'lucide-react'
@@ -70,9 +72,19 @@ function ImportPanel({
 export default function ConnectionsPage() {
   const { t } = useTranslation()
   const workspace = useActiveWorkspace()
+  const servicesTarget = useTourTarget('connections.services', { workspaceId: workspace?.id })
+  const auditTarget = useTourTarget('connections.audit', { workspaceId: workspace?.id })
+  const tour = useTourSignals({ workspaceId: workspace?.id })
+  const captureTour = useRef(tour.capture)
+  captureTour.current = tour.capture
+  const auditObservation = useRef<TourObservation | null>(null)
+  const auditViewReady = useRef(false)
+  const [auditSurface, setAuditSurface] = useState<SurfaceState | 'loading'>('loading')
   const [tab, setTab] = useState<ConnectionsTab>('services')
   const [selected, setSelected] = useAtom(selectedConnectionAtom)
   const [rows, setRows] = useState<ConnectionListRow[] | null>(null)
+  const [rowsWorkspaceId, setRowsWorkspaceId] = useState<string | null>(null)
+  const [auditWorkspaceId, setAuditWorkspaceId] = useState<string | null>(null)
   const [surface, setSurface] = useState<SurfaceState>('ready')
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [rotatingId, setRotatingId] = useState<string | null>(null)
@@ -123,6 +135,7 @@ export default function ConnectionsPage() {
       .then((raw) => {
         if (stale || currentWorkspace.current !== workspaceId || request !== listGeneration.current) return
         setRows(sanitizeConnectionRows(raw).filter(row => row.workspaceId === workspaceId))
+        setRowsWorkspaceId(workspaceId)
         setSurface('ready')
       })
       .catch((error) => {
@@ -142,19 +155,27 @@ export default function ConnectionsPage() {
 
   useEffect(() => {
     if (tab !== 'audit') return
+    setAuditSurface('loading')
     const workspaceId = workspace?.id
     const listConnectionAudit = window.electronAPI?.workgraph?.listConnectionAudit
     if (!workspaceId || typeof listConnectionAudit !== 'function') {
       setAuditRows([])
+      setAuditSurface('unavailable')
       return
     }
     let stale = false
+    auditObservation.current = captureTour.current()
     listConnectionAudit({ workspaceId })
       .then((raw) => {
-        if (!stale) setAuditRows(sanitizeConnectionAuditRows(raw))
+        if (stale) return
+        setAuditRows(sanitizeConnectionAuditRows(raw))
+        setAuditSurface('ready')
+        setAuditWorkspaceId(workspaceId)
       })
       .catch(() => {
-        if (!stale) setAuditRows([])
+        if (stale) return
+        setAuditRows([])
+        setAuditSurface('unavailable')
       })
     return () => {
       stale = true
@@ -182,6 +203,24 @@ export default function ConnectionsPage() {
     }
   }, [tab, workspace?.id])
 
+  useEffect(() => {
+    const fabric = surface !== 'ready' ? surface : rowsWorkspaceId !== workspace?.id || rows === null ? 'loading' : tab === 'audit' ? auditSurface : 'ready'
+    return tour.capability('connection-fabric.available', connectionCapabilities({ fabric })['connection-fabric.available']!)
+  }, [tour, surface, rows, tab, auditSurface, rowsWorkspaceId, workspace?.id])
+
+  auditViewReady.current = tab === 'audit' && surface === 'ready' && rows !== null && auditSurface === 'ready' && rowsWorkspaceId === workspace?.id && auditWorkspaceId === workspace?.id
+  useEffect(() => {
+    if (!auditViewReady.current) return
+    // The native read keeps the attempt captured before it began. A late
+    // completion must never be stamped with a replacement tour's binding.
+    tour.emit(auditObservation.current, 'connections.audit-visible', 'observed', 'ui-observation')
+  }, [tour, tab, surface, rows, auditSurface, rowsWorkspaceId, auditWorkspaceId, workspace?.id])
+  useEffect(() => {
+    // Starting a tour on an already loaded Audit view is a new visibility
+    // observation; a read that is still pending cannot enter this branch.
+    if (auditViewReady.current) tour.emit(tour.capture(), 'connections.audit-visible', 'observed', 'ui-observation')
+  }, [tour])
+
   const refreshRows = async (workspaceId: string) => {
     if (currentWorkspace.current !== workspaceId) return
     const request = ++listGeneration.current
@@ -194,6 +233,7 @@ export default function ConnectionsPage() {
       const next = sanitizeConnectionRows(await listConnections(workspaceId)).filter(row => row.workspaceId === workspaceId)
       if (currentWorkspace.current !== workspaceId || request !== listGeneration.current) return
       setRows(next)
+      setRowsWorkspaceId(workspaceId)
       setSurface('ready')
     } catch (error) {
       if (currentWorkspace.current !== workspaceId || request !== listGeneration.current) return
@@ -492,6 +532,8 @@ export default function ConnectionsPage() {
         {TABS.map((id) => (
           <button
             key={id}
+            ref={id === 'audit' ? auditTarget : undefined}
+            data-product-tour-target={id === 'audit' ? 'connections.audit' : undefined}
             type="button"
             role="tab"
             aria-selected={tab === id}
@@ -711,7 +753,7 @@ export default function ConnectionsPage() {
             </ul>
           </div>
         ) : tab === 'services' ? (
-          <div className="space-y-6 text-sm text-foreground">
+          <div ref={servicesTarget} className="space-y-6 text-sm text-foreground" data-product-tour-target="connections.services">
             {workspace?.id ? <ConnectionsOverview workspaceId={workspace.id} reloadKey={reloadKey} /> : null}
             <OverviewGroup
               title={t('connections.overview.credentials')}

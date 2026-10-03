@@ -19,6 +19,7 @@ import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import type { SettingsSubpage } from '../../../shared/settings-registry'
 
 const AccountSettingsPage = lazy(() => import('./AccountSettingsPage'))
+const LearningSettingsPage = lazy(() => import('./LearningSettingsPage'))
 const PrivacySettingsPage = lazy(() => import('./PrivacySettingsPage'))
 const RuntimeSettingsPage = lazy(() => import('./RuntimeSettingsPage'))
 const ContextSettingsPage = lazy(() => import('./ContextSettingsPage'))
@@ -49,6 +50,7 @@ export const SETTINGS_PAGE_COMPONENTS: Record<
   SettingsSubpage,
   LazyExoticComponent<ComponentType>
 > = {
+  learning: LearningSettingsPage,
   account: AccountSettingsPage,
   privacy: PrivacySettingsPage,
   runtime: RuntimeSettingsPage,

@@ -78,9 +78,8 @@ test('overlapping workspace starts keep the last requested workspace and close o
   const a = controller.start('workspace-a')
   const b = controller.start('workspace-b')
   const c = controller.start('workspace-c')
-  await c
   first.resolve('handle-workspace-a')
-  await Promise.all([a, b])
+  await Promise.all([a, b, c])
   await controller.stop()
   expect(calls.closed).toEqual(['handle-workspace-a', 'handle-workspace-c'])
 })

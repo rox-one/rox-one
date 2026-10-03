@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+
 import { useTranslation } from 'react-i18next'
 import {
   AlertCircle,
@@ -84,6 +86,8 @@ export function CompactModelSelector({
   contextStatus,
 }: CompactModelSelectorProps) {
   const { t } = useTranslation()
+  const modelTarget = useTourTarget('composer.model', { variant: 'compact' })
+  const tourSignals = useTourSignals()
   const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
   const [open, setOpen] = React.useState(false)
   const [expandedConnection, setExpandedConnection] = React.useState<string | null>(null)
@@ -179,9 +183,10 @@ export function CompactModelSelector({
   )
 
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
+    <Drawer open={open} onOpenChange={next => { const captured = next ? tourSignals.capture() : null; setOpen(next); if (next) tourSignals.emit(captured, 'model-picker.opened', 'observed', 'ui-observation') }}>
       <DrawerTrigger asChild>
         <button
+          ref={modelTarget}
           type="button"
           aria-label={connectionUnavailable
             ? t('common.unavailable')

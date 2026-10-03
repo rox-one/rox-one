@@ -70,6 +70,7 @@ function uiHarness(kind: 'desktop' | 'compact') {
     },
   }
   const bindings = {
+    useTourTarget: () => () => {},
     React: react, useTranslation: () => ({ t: (key: string) => key }), cn: (...args: unknown[]) => args.filter(Boolean).join(' '),
     PERMISSION_MODE_CONFIG, PERMISSION_MODE_ORDER, isWebUI: false,
     Popover: 'popover', PopoverContent: 'popover-content', PopoverTrigger: 'popover-trigger',

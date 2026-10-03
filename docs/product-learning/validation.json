@@ -1,0 +1,241 @@
+{
+  "recorded_at": "2026-10-03T15:35:35.017240+00:00",
+  "production_snapshot_sha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+  "baseline_sha": "c9b7330357fb55a5e88a223783029d2768849828",
+  "synchronized_main_sha": "ae19683e69f079893cd09065487cfa7653d01154",
+  "scope": {
+    "tours": 25,
+    "atomic_steps": 56,
+    "referenced_targets": 54,
+    "locales": 12
+  },
+  "receipts": {
+    "feature": {
+      "command": "bun run test:product-tour",
+      "exit_code": 0,
+      "source_sha": "7e0f6061e86a90c3a86949d35841c31d97895371",
+      "dirty_diff_sha256": null,
+      "seconds": 82.39,
+      "log": "/workspace/product-tour-gates/feature.log"
+    },
+    "e2e": {
+      "command": "bun run test:product-tour:e2e",
+      "environment": {
+        "CHROMIUM_EXECUTABLE": "/usr/bin/chromium",
+        "platform": "linux",
+        "viewport": "1280x900",
+        "locale": "en-US",
+        "reducedMotion": "reduce"
+      },
+      "sourceSha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+      "trackedWorktreeDirty": false,
+      "exitCode": 0,
+      "passed": 13,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 105.72621400000001,
+      "logPath": "/workspace/product-tour-a9-final-c8d83576-e2e.log",
+      "scope": "Real App/native-store adapters7 plus production components6. Guided Notes verifies actual UI/bridge/journal/file readback/durable progress and stable mask offset<=2 CSS px.",
+      "nativeMacOSWindowsMicrophone": "NOT_RUN",
+      "status": "PASS",
+      "previousSnapshotStartupTimeout": {
+        "sourceSha": "7e0f6061e86a90c3a86949d35841c31d97895371",
+        "exitCode": 1,
+        "passed": 12,
+        "failed": 1,
+        "durationSeconds": 217.050714,
+        "logPath": "/workspace/product-tour-a9-final-7e0f6061-e2e.log",
+        "tracePath": "/workspace/product-tour-a9-first-7e0f6061-flag-off-timeout.zip",
+        "reason": "First App mount exceeded unchanged60s budget during concurrent cold transforms and multiple builders. No import exception. Same-source rerun after builders finished passed13 in102.280619s; final synchronized a49 also passes unchanged test."
+      },
+      "resolvedGeometryRegression": {
+        "previousSourceSha": "bf82a328",
+        "previousActualOffsetCSSPixels": 112.4375,
+        "maximumCSSPixels": 2,
+        "fixSourceSha": "a0ff359a219902158c12543a2437fb7fe6ffa68f",
+        "freshFinalAppPass": true
+      }
+    },
+    "native": {
+      "command": "bun run test:product-tour:native",
+      "exit_code": 2,
+      "source_sha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+      "dirty_diff_sha256": null,
+      "seconds": 0.2,
+      "log": "/workspace/product-tour-gates/native.log"
+    },
+    "electron-types": {
+      "command": "bun run typecheck:electron",
+      "exit_code": 0,
+      "source_sha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+      "dirty_diff_sha256": null,
+      "seconds": 66.19,
+      "log": "/workspace/product-tour-gates/electron-types.log"
+    },
+    "all-types": {
+      "command": "bun run typecheck:all",
+      "exit_code": 0,
+      "source_sha": "7e0f6061e86a90c3a86949d35841c31d97895371",
+      "dirty_diff_sha256": null,
+      "seconds": 149.26,
+      "log": "/workspace/product-tour-gates/all-types.log"
+    },
+    "webui-types": {
+      "command": "bun run webui:typecheck",
+      "exit_code": 0,
+      "source_sha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+      "dirty_diff_sha256": null,
+      "seconds": 58.36,
+      "log": "/workspace/product-tour-gates/webui-types.log"
+    },
+    "lint": {
+      "command": "bun run lint:electron",
+      "exit_code": 0,
+      "source_sha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+      "dirty_diff_sha256": null,
+      "seconds": 23.55,
+      "log": "/workspace/product-tour-gates/lint.log"
+    },
+    "locales-parity": {
+      "command": "bun run lint:i18n:parity",
+      "exit_code": 0,
+      "source_sha": "7e0f6061e86a90c3a86949d35841c31d97895371",
+      "dirty_diff_sha256": null,
+      "seconds": 0.14,
+      "log": "/workspace/product-tour-gates/locales-parity.log"
+    },
+    "locales-sorted": {
+      "command": "bun run lint:i18n:sorted",
+      "exit_code": 0,
+      "source_sha": "7e0f6061e86a90c3a86949d35841c31d97895371",
+      "dirty_diff_sha256": null,
+      "seconds": 0.25,
+      "log": "/workspace/product-tour-gates/locales-sorted.log"
+    },
+    "locales-coverage": {
+      "command": "bun run lint:i18n:coverage",
+      "exit_code": 0,
+      "source_sha": "7e0f6061e86a90c3a86949d35841c31d97895371",
+      "dirty_diff_sha256": null,
+      "seconds": 5.24,
+      "log": "/workspace/product-tour-gates/locales-coverage.log"
+    },
+    "webui-build": {
+      "command": "bun run webui:build",
+      "exit_code": 0,
+      "source_sha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+      "dirty_diff_sha256": null,
+      "seconds": 77.86,
+      "log": "/workspace/product-tour-gates/webui-build.log"
+    },
+    "rx": {
+      "command": "bun run rx:validate",
+      "exit_code": 0,
+      "source_sha": "7e0f6061e86a90c3a86949d35841c31d97895371",
+      "dirty_diff_sha256": null,
+      "seconds": 0.05,
+      "log": "/workspace/product-tour-gates/rx.log"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "source_sha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+      "dirty_diff_sha256": null,
+      "seconds": 0.05,
+      "log": "/workspace/product-tour-gates/diff.log"
+    },
+    "build": {
+      "command": "bun scripts/electron-build-renderer.ts",
+      "sourceSha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+      "trackedWorktreeDirty": false,
+      "exitCode": 0,
+      "durationSeconds": 83,
+      "logPath": "/workspace/product-tour-a9-final-c8d83576-renderer.log",
+      "bundleCommand": "bun scripts/product-tour/bundle-report.ts /workspace/rox-workers/A9-baseline/apps/electron/dist/renderer",
+      "bundleExitCode": 0,
+      "bundleLogPath": "/workspace/product-tour-a9-final-c8d83576-bundle.log",
+      "baselineSha": "c9b7330357fb55a5e88a223783029d2768849828",
+      "bundle": {
+        "caseId": "BUILD-01",
+        "commitSha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+        "trackedWorktreeDirty": false,
+        "baseline": {
+          "directory": "/workspace/rox-workers/A9-baseline/apps/electron/dist/renderer",
+          "artifactSha256": "aca02b2ad7f8ac9ef8e54fa2c7734087d74e58d7f1a535ade54c6cfa153a956f",
+          "js": {
+            "files": 386,
+            "rawBytes": 26537285,
+            "gzipBytes": 6555262
+          },
+          "css": {
+            "files": 6,
+            "rawBytes": 395895,
+            "gzipBytes": 60636
+          },
+          "leakedMarkers": []
+        },
+        "candidate": {
+          "directory": "/workspace/rox-product-learning/apps/electron/dist/renderer",
+          "artifactSha256": "eab4c0db06554d355315d8bfb0890a4e2373539bdd231ecca9291485fbac5c2f",
+          "js": {
+            "files": 389,
+            "rawBytes": 27138848,
+            "gzipBytes": 6710069
+          },
+          "css": {
+            "files": 6,
+            "rawBytes": 392764,
+            "gzipBytes": 60414
+          },
+          "leakedMarkers": []
+        },
+        "delta": {
+          "jsRawBytes": 601563,
+          "jsGzipBytes": 154807,
+          "cssRawBytes": -3131,
+          "cssGzipBytes": -222
+        },
+        "status": "PASS",
+        "method": "Sum raw file bytes and gzip level 9 bytes independently per JS/CSS file; source maps excluded. Builds must be produced separately at recorded SHAs."
+      },
+      "status": "PASS",
+      "notes": "Renderer-only production build. Native platform acceptance remains NOT_RUN. Mainline changes between baseline and candidate are included in this actual delta."
+    },
+    "upstream-critical": {
+      "command": "CHROMIUM_EXECUTABLE=/usr/bin/chromium bun test packages/core/src/tasks/personal/import-validation.test.ts apps/electron/src/renderer/pages/__tests__/task-import-validation.test.ts apps/electron/src/renderer/features/product-tour/adapters/work/tasks-projects apps/electron/src/renderer/pages/__tests__/connection-inspect-own-fields.test.ts apps/electron/src/renderer/pages/__tests__/connections-lifecycle.browser.test.ts apps/electron/src/renderer/pages/__tests__/connections-list.test.ts apps/electron/src/renderer/pages/__tests__/connections-page.test.ts apps/electron/src/renderer/platform/__tests__/inspector-host-connections.test.ts packages/core/src/platform/identity/credential-types.test.ts packages/core/src/platform/identity/attach-credential-ref.test.ts",
+      "exit_code": 0,
+      "source_sha": "7e0f6061e86a90c3a86949d35841c31d97895371",
+      "passed": 238,
+      "failed": 0,
+      "skipped": 0,
+      "test_seconds": 31.53,
+      "log": "/workspace/product-tour-final-upstream-critical.log"
+    },
+    "surface-tabs": {
+      "command": "CHROMIUM_EXECUTABLE=/usr/lib/chromium/chromium bun test apps/electron/src/renderer/platform/__tests__/knowledge-tab-titles.test.ts apps/electron/src/renderer/platform/__tests__/surface-tab-navigation.test.ts apps/electron/src/renderer/platform/__tests__/surface-tabs.browser.test.ts",
+      "source_sha": "a49ef4812e456939bbe1bfe715d5a3d0c71b2856",
+      "exit_code": 0,
+      "passed": 13,
+      "failed": 0,
+      "skipped": 0,
+      "test_seconds": 29.12,
+      "log": "/workspace/product-tour-final-surface-tabs-binary.log",
+      "environment_correction": "The upstream harness verifies its owned Chrome PID by executable path. /usr/bin/chromium is a shell wrapper here; use actual /usr/lib/chromium/chromium ELF. Initial wrapper invocation failed PID identity before browser assertions; no production/test code change."
+    },
+    "settings-service": {
+      "command": "CHROMIUM_EXECUTABLE=/usr/lib/chromium/chromium bun test apps/electron/src/renderer/components/settings/__tests__/settings-menu-navigation.test.ts apps/electron/src/renderer/components/settings/__tests__/settings-menu.browser.test.ts apps/electron/src/renderer/components/app-shell/__tests__/service-panel-navigation.test.ts apps/electron/src/renderer/components/app-shell/__tests__/sidebar-guidance.test.ts",
+      "source_sha": "c8d83576cd56f90c5b6478aff25c2702de47b707",
+      "exit_code": 0,
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "test_seconds": 11.69,
+      "log": "/workspace/product-tour-final-settings-service.log"
+    }
+  },
+  "limits": [
+    "Earlier-source checks are recorded with their actual SHAs; affected Electron/WebUI/App checks were repeated after main sync.",
+    "Linux native exit2 is NOT_RUN, not PASS. macOS/Windows/microphone manual acceptance and live model/OAuth application cases remain NOT_RUN.",
+    "Remote CI and main delivery evidence will be recorded in the final delivery report; this immutable snapshot precedes publication."
+  ]
+}

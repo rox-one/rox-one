@@ -1,4 +1,6 @@
 import { useTranslation } from 'react-i18next'
+import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+
 import { useAtomValue } from 'jotai'
 import { ShieldAlert, Check, X, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -27,6 +29,8 @@ interface PermissionRequestProps {
  */
 export function PermissionRequest({ request, onResponse, unstyled = false }: PermissionRequestProps) {
   const { t } = useTranslation()
+  const requestTarget = useTourTarget('permission.request', { sessionId: request.sessionId })
+  const actionsTarget = useTourTarget('permission.actions', { sessionId: request.sessionId })
   const agentIntel = useAtomValue(featureWorkbenchHarnessAgentIntelV1Atom)
   const shadow = agentIntel
     ? reviewPermissionShadow({ toolName: request.toolName, command: request.command })
@@ -46,6 +50,7 @@ export function PermissionRequest({ request, onResponse, unstyled = false }: Per
 
   return (
     <div
+      ref={requestTarget}
       className={cn(
         'overflow-hidden h-full flex flex-col bg-info/5',
         unstyled
@@ -85,7 +90,7 @@ export function PermissionRequest({ request, onResponse, unstyled = false }: Per
       </div>
 
       {/* Action buttons */}
-      <div className="shrink-0 flex flex-wrap items-center gap-2 px-3 py-2 border-t border-border/50">
+      <div ref={actionsTarget} className="shrink-0 flex flex-wrap items-center gap-2 px-3 py-2 border-t border-border/50">
         <Button
           size="sm"
           variant="default"

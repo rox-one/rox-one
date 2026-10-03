@@ -1,3 +1,4 @@
+import { useTourSignals, useTourTarget, type TourObservation } from '@/features/product-tour/runtime/hooks'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Mic, Square } from 'lucide-react'
@@ -37,6 +38,10 @@ export function VoiceDictationControl({
   onInputChange,
 }: VoiceDictationControlProps) {
   const { t } = useTranslation()
+  const voiceTarget = useTourTarget('composer.voice', { variant: compactMode ? 'compact' : 'regular' })
+  const tourSignals = useTourSignals()
+  const dictationObservationRef = useRef<TourObservation | null>(null)
+  useEffect(() => tourSignals.capability('voice.available', typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof window.electronAPI?.startVoiceCapture === 'function' ? { state: 'ready' } : { state: 'unavailable', reason: 'api-unavailable' }), [tourSignals])
   const [prefs, setPrefs] = useState<VoicePrefs | null>(null)
   const [recording, setRecording] = useState(false)
   const [transcribing, setTranscribing] = useState(false)
@@ -85,6 +90,7 @@ export function VoiceDictationControl({
     const recorder = recorderRef.current
     recorderRef.current = null
     const captureId = captureIdRef.current
+    const dictationObservation = dictationObservationRef.current
     setRecording(false)
     stopTracks()
     if (!recorder) return
@@ -114,7 +120,10 @@ export function VoiceDictationControl({
       const text = result.text.trim()
       if (text) {
         const latest = latestInputRef.current
-        latest.onInputChange?.(latest.inputValue ? `${latest.inputValue} ${text}` : text)
+        if (latest.onInputChange) {
+          latest.onInputChange(latest.inputValue ? `${latest.inputValue} ${text}` : text)
+          tourSignals.emit(dictationObservation, 'dictation.inserted', 'observed', 'native-event')
+        }
       }
       else if (result.noSpeech) toast.error(t('settings.input.voiceNoSpeech'))
     } catch (error) {
@@ -127,9 +136,10 @@ export function VoiceDictationControl({
         setTranscribing(false)
       }
     }
-  }, [prefs?.sttEngine, stopTracks, t])
+  }, [prefs?.sttEngine, stopTracks, t, tourSignals])
 
   const cancelRecording = useCallback(() => {
+    dictationObservationRef.current = null
     captureIdRef.current += 1
     activeRequestRef.current = false
     const hostStarted = hostStartedRef.current
@@ -158,6 +168,7 @@ export function VoiceDictationControl({
       return
     }
     const captureId = ++captureIdRef.current
+    dictationObservationRef.current = tourSignals.capture()
     activeRequestRef.current = true
     let pendingStream: MediaStream | null = null
     try {
@@ -213,7 +224,7 @@ export function VoiceDictationControl({
         toast.error(error instanceof Error ? error.message : t('chat.dictate'))
       }
     }
-  }, [finishRecording, prefs, stopTracks, t])
+  }, [finishRecording, prefs, stopTracks, t, tourSignals])
 
   const enableCloudTranscription = useCallback(async () => {
     const captureId = captureIdRef.current
@@ -271,7 +282,7 @@ export function VoiceDictationControl({
   const label = recording ? t('chat.dictateStop') : t('chat.dictate')
 
   return (
-    <div className={cn('flex items-center', compactMode && 'shrink-0')}>
+    <div ref={voiceTarget} className={cn('flex items-center', compactMode && 'shrink-0')}>
       <FreeFormInputContextBadge
         icon={recording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
         label={label}

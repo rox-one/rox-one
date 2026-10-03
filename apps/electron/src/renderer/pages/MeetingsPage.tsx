@@ -38,6 +38,9 @@ import {
   type LocalGroup,
 } from './meetings/local-meetings-model'
 import { getAppLocale } from '@rox/shared/i18n'
+import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { meetingsAutomationCapabilities } from '@/features/product-tour/adapters/work/meetings-automations'
+import { useMeetingArtifactTour } from '@/features/product-tour/adapters/work/meetings-automations/useMeetingArtifactTour'
 import { MeetingRequestTracker } from './meetings/request-state'
 
 const ERROR_KEYS: Record<string, string> = {
@@ -63,9 +66,12 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   const workspaceId = props.workspaceId ?? shell?.activeWorkspaceId ?? null
   const api = meetingsApi()
   const rec = useRecorder()
+  const tourSignals = useTourSignals()
+  const listTarget = useTourTarget('meetings.list')
 
   const [meetings, setMeetings] = useState<LocalMeeting[]>([])
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>(api ? 'loading' : 'error')
+  const [loadedWorkspaceId, setLoadedWorkspaceId] = useState<string | null | undefined>(undefined)
   const [engine, setEngine] = useState<LocalAsrEngine | null>(null)
   const [reload, setReload] = useState(0)
   const [localSelectedId, setLocalSelectedId] = useState<string | null>(null)
@@ -102,6 +108,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     catalogUpdatesRef.current = null
     setMeetings([])
     setLoadState(api ? 'loading' : 'error')
+    setLoadedWorkspaceId(undefined)
     setTranscriptText({})
     setLocalSelectedId(null)
     setBanner(null)
@@ -127,6 +134,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     const updates = new Map<string, LocalMeeting | null>()
     catalogUpdatesRef.current = updates
     let cancelled = false
+    setLoadState('loading')
     void api.list(workspaceId).then(
       (list) => {
         if (!cancelled && request.isCurrent()) {
@@ -137,7 +145,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
             if (meeting) merged.set(id, meeting)
             else merged.delete(id)
           }
-          setMeetings([...merged.values()]); setLoadState('ready')
+          setMeetings([...merged.values()]); setLoadedWorkspaceId(workspaceId); setLoadState('ready')
         }
       },
       () => { if (!cancelled && request.isCurrent()) setLoadState('error') },
@@ -216,6 +224,18 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   const ordered = useMemo(() => groups.flatMap((g) => g.items), [groups])
   const selected = useMemo(() => meetings.find((m) => m.id === selectedId) ?? null, [meetings, selectedId])
   const selectedMissing = !!selectedId && !selected && loadState === 'ready'
+  const artifactTour = useMeetingArtifactTour(selected, tab)
+
+  useEffect(() => {
+    const capabilities = meetingsAutomationCapabilities({
+      surface: 'meetings', apiAvailable: !!api, workspaceId, selectedId,
+      meeting: loadedWorkspaceId === workspaceId ? selected : null,
+      loadState: loadState === 'ready' && loadedWorkspaceId !== workspaceId ? 'loading' : loadState,
+    })
+    const cleanupAvailable = tourSignals.capability('meetings.available', capabilities['meetings.available']!)
+    const cleanupArtifact = tourSignals.capability('meeting.artifact-present', capabilities['meeting.artifact-present']!)
+    return () => { cleanupAvailable(); cleanupArtifact() }
+  }, [tourSignals, api, workspaceId, selectedId, selected, loadState, loadedWorkspaceId])
 
   const timeFmt = useMemo(() => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }), [locale])
   const dayFmt = useMemo(() => new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'short' }), [locale])
@@ -407,7 +427,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
         {query ? <button type="button" className="text-[11px] text-text-muted hover:text-foreground" onClick={() => setQuery('')}>{t('meetings.screen.clearSearch')}</button> : <span className="text-[11px] text-text-muted">⌘F</span>}
       </div>
       {bannerNode}
-      <div role="listbox" aria-label={t('meetings.title')} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="meetings-list">
+      <div ref={listTarget} role="listbox" aria-label={t('meetings.title')} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="meetings-list">
         {loadState === 'loading' && meetings.length === 0 ? (
           <EmptyState title={t('common.loading')} />
         ) : loadState === 'error' ? (
@@ -452,17 +472,19 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   )
 
   const detailPanel = selected ? (
+    <div ref={artifactTour.ref} className="min-h-full">
     <LocalMeetingDetail
       key={selected.id}
       meeting={selected}
       workspaceId={workspaceId}
       engine={engine}
       tab={tab}
-      onTab={setTab}
+      onTab={(nextTab) => { artifactTour.open(nextTab); setTab(nextTab) }}
       onChanged={upsert}
       onBanner={setBanner}
       onTrashed={() => { setMeetings((current) => current.filter((x) => x.id !== selected.id)); selectMeeting(null) }}
     />
+    </div>
   ) : selectedMissing ? (
     <EmptyState
       testId="meetings-selection-status"
