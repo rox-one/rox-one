@@ -757,3 +757,13 @@ Owner: root integration. Recover #1448 at `1eb2c8289b68e9103880c3f2aee2c57e70c34
 
 
 Confirmed Tasks import also drains native background work dispatched before the import lifetime. Its registered import barrier invalidates old sync/refresh continuations before a subsequent transport or publication; fresh canonical CAS starts after those existing acknowledgements settle. Two actual native negative controls reproduce the prior overlapping read/write race, and ten isolated native controls pass with the barrier. Current actor/workspace fences and queued local edits remain intact.
+
+## Legacy MCP SSE compatibility recovery (2026-10-03)
+
+Owner: pr_scout; integration lead owns merge. Source: preserved #1436 @384843bfc4cf7d4a1f34c902a66a9a3198043c9f; current baseline #1455 main5211746270f5005d551ddc103970714520b25b67. The actual MCP pool may negotiate legacy SSE only after a typed Streamable HTTP initialize rejection 400/404/405. Authorization/quota/server failures, initialized-server health/discovery failures, and executed tool failures never select a different transport. Keep declared HTTP configuration as canonical source identity, configured headers on both SSE channels, current closed-client/source generation fences, shared Qdrant leases and no replay of executed calls.
+
+Each existing bounded connection attempt shares its 30-second budget across HTTP initialization/health, failed-client cleanup, SSE initialization/health and final discovery. The established one transient retry remains; an attempt receives no extra discovery budget. Cancellation during failed HTTP cleanup or SSE initialization creates no tool mappings and refuses late publication. Diagnostics retain both scrubbed failure contexts without raw SDK causes. This is actual loopback protocol qualification; no external provider or native Windows acceptance is inferred. Remaining #1436 source health/migration, host Bash and collection/knowledge changes are separate unfinished obligations.
+
+
+## Workspace shortcut popover integration —2026-10-03
+Move the existing per-workspace shortcut editor to an accessible bounded Radix portal; preserve native storage, draft cancellation, keyboard submit and current TourTarget. Acceptance: real desktop/narrow320px DOM, all three kinds, reload/workspace isolation, validation, nested Escape and no-write cancellation; full installed native release remains open.
