@@ -3,7 +3,8 @@ import { mkdtempSync, mkdirSync, copyFileSync, writeFileSync, rmSync, readFileSy
 import { tmpdir } from 'node:os'
 import { resolve, join } from 'node:path'
 import { EventEmitter } from 'node:events'
-import { createServer } from 'vite'
+import { build, createServer, preview } from 'vite'
+import { applicationBuildFingerprint, requireApplicationBuildReceipt, writeApplicationBuildReceipt } from './application-build'
 
 const repository = resolve(import.meta.dirname, '../..')
 const profile = realpathSync(mkdtempSync(join(tmpdir(), 'rox-product-tour-app-')))
@@ -133,14 +134,29 @@ const fixtureHttp: import('connect').NextHandleFunction = async (request, respon
   }
   response.statusCode = 404; response.end('{}')
 }
-const vite = await createServer({ configFile: join(repository, 'tests/e2e/product-tour/fixtures/application/vite.config.ts'), plugins: [{ name: 'owned-product-tour-http', configureServer(server) { server.middlewares.use(fixtureHttp) } }], server: { port: 5269, strictPort: true, host: '127.0.0.1' } })
-await vite.listen()
+const configFile = join(repository, 'tests/e2e/product-tour/fixtures/application/vite.config.ts')
+// Optional bounded acceptance route exercises the built real App rather than timing cold dev-module transforms.
+const builtApplication = process.env.PRODUCT_TOUR_APPLICATION_STATIC === '1'
+if (builtApplication) {
+  if (process.env.PRODUCT_TOUR_APPLICATION_PREBUILT === '1') requireApplicationBuildReceipt(repository)
+  else {
+    const fingerprint = applicationBuildFingerprint(repository)
+    await build({ configFile })
+    if (fingerprint !== applicationBuildFingerprint(repository)) throw new Error('Acceptance App source changed during build')
+    writeApplicationBuildReceipt(repository, fingerprint)
+  }
+}
+const fixturePlugin = { name: 'owned-product-tour-http', configureServer(server: import('vite').ViteDevServer) { server.middlewares.use(fixtureHttp) }, configurePreviewServer(server: import('vite').PreviewServer) { server.middlewares.use(fixtureHttp) } }
+const vite = builtApplication
+  ? await preview({ configFile, plugins: [fixturePlugin], preview: { port: 5269, strictPort: true, host: '127.0.0.1' } })
+  : await createServer({ configFile, plugins: [fixturePlugin], server: { port: 5269, strictPort: true, host: '127.0.0.1' } })
+if ('listen' in vite) await vite.listen()
 console.log(JSON.stringify({ marker: fixtureMarker, origin: 'http://127.0.0.1:5269', evidence: 'production App + RPC + native journal, synthetic bootstrap/IPC/custody DI; not native OS' }))
 let disposed = false
 async function dispose() {
   if (disposed) return
   disposed = true
-  sender.emit('destroyed'); disposeReplica(); await vite.close(); rpc.close(); journal.close(); authority.close()
+  sender.emit('destroyed'); disposeReplica(); if ('close' in vite) await vite.close(); else await new Promise<void>((done, fail) => vite.httpServer.close(error => error ? fail(error) : done())); rpc.close(); journal.close(); authority.close()
   rmSync(profile, { recursive: true, force: true })
 }
 for (const signal of ['SIGTERM', 'SIGINT'] as const) process.once(signal, () => { void dispose().then(() => process.exit(0)) })

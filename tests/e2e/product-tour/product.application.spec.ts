@@ -153,6 +153,8 @@ test('APP-03: ordinary navigation away from an active Learning step pauses its r
   await openApp(page, 'settings/learning', true)
   await page.getByTestId('learning-start-OBT-25').click()
   await expect(page.locator('[data-product-tour-popover]')).toHaveAttribute('data-product-tour-step', 'learning.library')
+  const sections = page.locator('[data-application-sections]')
+  if (await sections.count() && await sections.getAttribute('open') === null) await sections.locator('summary').click()
   await page.locator('[data-tutorial="sources-nav"]').first().click()
   await expect(page.locator('[data-product-tour-popover]')).toHaveCount(0)
   await expect(page.getByTestId('product-tour-status')).toContainText(/changed|paused/i)
