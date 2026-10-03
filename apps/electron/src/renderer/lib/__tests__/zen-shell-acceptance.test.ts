@@ -146,7 +146,8 @@ describe('Zen Shell acceptance gate (ZS-08)', () => {
   it('does not reuse the VPS 390×720 viewport for the native browser host', () => {
     const browserPage = readElectron('renderer/pages/BrowserPanelPage.tsx')
     const vps = readElectron('renderer/components/browser/WebBrowserPanel.tsx')
-    expect(browserPage).toContain('createNativeSurfaceTracker')
+    expect(browserPage).toContain('useNativeSurfaceBounds')
+    expect(readElectron('renderer/hooks/useNativeSurfaceBounds.ts')).toContain('createNativeSurfaceTracker')
     expect(browserPage).not.toContain('390, height: 720')
     expect(vps).toContain('const MOBILE_VIEWPORT = { width: 390, height: 720 }')
   })

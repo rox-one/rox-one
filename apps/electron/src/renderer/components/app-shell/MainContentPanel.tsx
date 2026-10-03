@@ -14,6 +14,7 @@ import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { StoplightProvider } from '@/context/StoplightContext'
 import {
   useNavigationState,
+  useNavigation,
   isSessionsNavigation,
   isSourcesNavigation,
   isSettingsNavigation,
@@ -202,7 +203,8 @@ export function MainContentPanel({
 }: MainContentPanelProps) {
   const { t } = useTranslation()
   const globalNavState = useNavigationState()
-  const requestedNavState = navStateOverride ?? globalNavState
+  const { isSessionsReady = true, unavailableWorkspaceSlug } = useNavigation()
+  const requestedNavState = unavailableWorkspaceSlug ? globalNavState : navStateOverride ?? globalNavState
   const {
     activeWorkspaceId,
     workspaces,
@@ -228,6 +230,7 @@ export function MainContentPanel({
   // Detail state belongs to its workspace and entity, including project-level skills.
   const routeKey = JSON.stringify([
     activeWorkspaceId,
+    unavailableWorkspaceSlug,
     navState.navigator,
     isSessionsNavigation(navState) ? navState.viewMode : null,
     'details' in navState ? navState.details : null,
@@ -719,18 +722,16 @@ export function MainContentPanel({
     )
     if (navState.details) {
       const sessionId = navState.details.sessionId
-      // Metadata is cleared while changing workspaces. Until ownership can be
-      // verified, do not mount ChatPage (which can load the retained session).
-      if (!selectedSession || !activeWorkspaceId) {
+      const meta = sessionMetaMap.get(sessionId)
+      const belongsToWorkspace = !!meta && !!activeWorkspaceId && (
+        meta.workspaceId === activeWorkspaceId || meta.workspaceId === remoteWorkspaceId
+      )
+      if (!isSessionsReady || !belongsToWorkspace) {
         return wrapWithStoplight(
           <Panel variant="grow" className={className}>
-            <div
-              role="status"
-              className="flex items-center justify-center h-full text-muted-foreground"
-              data-testid="route-session-unavailable"
-              data-session-id={navState.details.sessionId}
-            >
-              <p className="text-sm">{t('common.unavailable')}</p>
+            <div role="status" aria-live="polite" data-testid={isSessionsReady ? 'route-session-missing' : 'route-session-loading'} data-route-entity={sessionId}
+              className="flex h-full items-center justify-center p-4 text-muted-foreground">
+              <p className="text-sm">{t(isSessionsReady ? 'chat.sessionNoLongerExists' : 'common.loading')}</p>
             </div>
             {sessionsBulkBar}
           </Panel>

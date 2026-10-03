@@ -125,6 +125,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     oauth,
     pages,
     projects,
+    codeIntelligence,
     kanban,
     collection,
     gamification,
@@ -176,6 +177,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     import('@rox/server-core/handlers/rpc/oauth'),
     import('@rox/server-core/handlers/rpc/pages'),
     import('@rox/server-core/handlers/rpc/projects'),
+    import('@rox/server-core/handlers/rpc/code-intelligence'),
     import('@rox/server-core/handlers/rpc/kanban'),
     import('@rox/server-core/handlers/rpc/collection'),
     import('@rox/server-core/handlers/rpc/gamification'),
@@ -237,6 +239,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     ...notes.HANDLED_CHANNELS,
     ...oauth.HANDLED_CHANNELS,
     ...projects.HANDLED_CHANNELS,
+    ...codeIntelligence.HANDLED_CHANNELS,
     ...kanban.HANDLED_CHANNELS,
     ...collection.HANDLED_CHANNELS,
     ...gamification.HANDLED_CHANNELS,
@@ -280,6 +283,7 @@ async function getExpectedGuiChannels(): Promise<Set<string>> {
     ...siyuan.HANDLED_CHANNELS,
     ...extensionHost.HANDLED_CHANNELS,
     ...extensionSurface.HANDLED_CHANNELS,
+    'voice:copyText',
   ])
 }
 

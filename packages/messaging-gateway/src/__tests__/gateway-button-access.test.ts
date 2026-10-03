@@ -300,7 +300,25 @@ describe('MessagingGateway button-press access gate', () => {
     const pending = h.gateway.getPendingStore().list('telegram')
     expect(pending).toHaveLength(1)
     expect(pending[0]!.userId).toBe('bob')
-    expect(pending[0]!.reason).toBe('not-owner')
+    expect(pending[0]!.reason).toBe('not-on-binding-allowlist')
     expect(pending[0]!.bindingId).toBe(binding.id)
+    expect(h.sessionManager.respondToPermission).not.toHaveBeenCalled()
+  })
+
+  it('a disabled platform denies existing permission buttons for owners and allowlisted senders', async () => {
+    for (const senderId of ['owner-1', 'alice']) {
+      const h = await makeHarness({
+        workspaceConfig: {
+          enabled: true,
+          platforms: { telegram: { enabled: true, accessMode: 'disabled', owners: [{ userId: 'owner-1', addedAt: 0 }] } },
+        },
+      })
+      h.gateway.getBindingStore().bind('ws-test', 'sess-A', 'telegram', 'chat-1', undefined, {
+        accessMode: 'owner-control', allowedSenderIds: ['alice'],
+      })
+      await h.adapter.fireButton(buildPress({ buttonId: 'perm:allow:request-1', channelId: 'chat-1', senderId }))
+      expect(h.sessionManager.respondToPermission).not.toHaveBeenCalled()
+      expect(h.adapter.sent.some(message => message.includes('disabled'))).toBe(true)
+    }
   })
 })
