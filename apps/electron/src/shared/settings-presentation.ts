@@ -49,7 +49,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroupDefinition[] = [
   {
     id: 'application',
     labelKey: 'settings.navigator.groupApplication',
-    pageIds: ['account', 'privacy', 'app', 'appearance', 'security', 'shortcuts'],
+    pageIds: ['account', 'privacy', 'app', 'appearance', 'security', 'shortcuts', 'learning'],
   },
 ]
 
