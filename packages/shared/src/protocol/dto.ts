@@ -1146,6 +1146,9 @@ export interface GitBashStatus {
 }
 
 export interface UpdateInfo {
+  /** Manual metadata checks never download or install through electron-updater. */
+  updateMode?: 'automatic' | 'manual'
+  releaseUrl?: string
   available: boolean
   currentVersion: string
   latestVersion: string | null

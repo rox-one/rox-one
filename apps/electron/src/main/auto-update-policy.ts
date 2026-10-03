@@ -59,3 +59,14 @@ export function shouldAcceptReadyUpdate(options: {
   }
   return true
 }
+
+
+/** Unsigned /Applications releases can explicitly check public metadata only.
+ * User-local/dev copies keep their existing feed suppression. */
+export function shouldOfferManualReleaseCheck(options: {
+  craftDevRuntime?: string; homeDir: string; execPath: string; isAdHocSigned?: boolean;
+}): boolean {
+  return options.isAdHocSigned === true
+    && options.execPath.startsWith('/Applications/')
+    && !shouldSuppressUpdateFeed({ ...options, isAdHocSigned: false })
+}

@@ -490,6 +490,22 @@ export default function AppSettingsPage() {
                       </Button>
                     </SettingsRow>
                   )}
+                  {isElectron && updateChecker.updateInfo?.updateMode === 'manual' && (
+                    <SettingsRow label={t('settings.about.manualUpdate', { defaultValue: 'Manual updates' })}>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className="text-sm text-muted-foreground">
+                          {t('settings.about.manualUpdateDescription', { defaultValue: 'This build requires manual installation. Automatic installation is disabled.' })}
+                        </span>
+                        {updateChecker.updateInfo.available && updateChecker.updateInfo.releaseUrl && (
+                          <Button variant="outline" size="sm" onClick={() => {
+                            void window.electronAPI.openUrl(updateChecker.updateInfo!.releaseUrl!)
+                          }}>
+                            {t('settings.about.openRelease', { defaultValue: 'Open release downloads' })}
+                          </Button>
+                        )}
+                      </div>
+                    </SettingsRow>
+                  )}
                   {isElectron && updateChecker.isReadyToInstall && updateChecker.updateInfo?.latestVersion && (
                     <SettingsRow label={t("settings.about.updateReady")}>
                       <Button

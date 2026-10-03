@@ -126,7 +126,14 @@ export function useUpdateChecker(): UseUpdateCheckerResult {
       const info = await window.electronAPI.checkForUpdates()
       setUpdateInfo(info)
 
-      if (!info.available) {
+      if (info.error) throw new Error(info.error)
+      if (info.updateMode === 'manual' && info.available && info.releaseUrl) {
+        toast.info(t('settings.about.manualUpdateAvailable', { defaultValue: 'A new ROX release is available', version: info.latestVersion }), {
+          description: t('settings.about.manualUpdateDescription', { defaultValue: 'This build requires manual installation. Automatic installation is disabled.' }),
+          action: { label: t('settings.about.openRelease', { defaultValue: 'Open release downloads' }),
+            onClick: () => { void window.electronAPI.openUrl(info.releaseUrl!) } },
+        })
+      } else if (!info.available) {
         toast.success(t('toast.upToDate'), {
           description: t('toast.versionIsLatest', { version: info.currentVersion }),
           duration: 3000,

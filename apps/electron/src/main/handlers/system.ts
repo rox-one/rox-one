@@ -321,7 +321,7 @@ export function registerSystemGuiHandlers(server: RpcServer, deps: HandlerDeps):
   // Auto-update handlers
   server.handle(RPC_CHANNELS.update.CHECK, async () => {
     const { checkForUpdates } = await import('../auto-update')
-    return checkForUpdates({ autoDownload: true })
+    return checkForUpdates({ autoDownload: true, manual: true })
   })
 
   server.handle(RPC_CHANNELS.update.GET_INFO, async () => {

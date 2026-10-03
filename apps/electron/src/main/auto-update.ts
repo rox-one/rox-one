@@ -31,7 +31,9 @@ import type { EventSink } from '@rox/server-core/transport'
 import {
   shouldSuppressUpdateFeed,
   shouldAcceptReadyUpdate,
+  shouldOfferManualReleaseCheck,
 } from './auto-update-policy'
+import { checkPublishedManualUpdate } from './manual-release-update'
 import { execFileSync, spawnSync } from 'child_process'
 
 // Platform detection
@@ -156,6 +158,10 @@ async function clearStaleDownloadedUpdate(reason: string): Promise<void> {
 }
 
 function markUpdateReady(feedVersion: string, cachedVersion?: string | null): boolean {
+  if (isUpdateFeedSuppressed()) {
+    void clearStaleDownloadedUpdate('suppressed-ready-event')
+    return false
+  }
   if (!shouldAcceptReadyUpdate({
     localVersion: updateInfo.currentVersion,
     feedVersion,
@@ -288,7 +294,7 @@ autoUpdater.allowPrerelease = true
 autoUpdater.allowDowngrade = false
 
 // Install on app quit (if update is downloaded but user hasn't clicked "Restart")
-autoUpdater.autoInstallOnAppQuit = true
+autoUpdater.autoInstallOnAppQuit = !isUpdateFeedSuppressed()
 
 // Release-channel override without rebuilding electron-builder.yml. Production
 // keeps the build-baked rox-one/rox-one GitHub config; for forks/OSS builds
@@ -448,6 +454,8 @@ function checkElectronUpdaterState(): { ready: boolean; version?: string } {
 interface CheckOptions {
   /** If true, automatically start download when update is found (default: true) */
   autoDownload?: boolean
+  /** Explicit user action; unsigned releases may query public metadata only. */
+  manual?: boolean
 }
 
 /**
@@ -513,16 +521,29 @@ export async function checkForUpdates(options: CheckOptions = {}): Promise<Updat
   const { autoDownload = true } = options
 
   if (isUpdateFeedSuppressed()) {
+    autoUpdater.autoDownload = false
+    autoUpdater.autoInstallOnAppQuit = false
     await clearStaleDownloadedUpdate('suppressed-channel')
-    autoUpdateLog.info('Skipping update check (CRAFT_DEV_RUNTIME / ~/Applications / ad-hoc sign)')
-    updateInfo = {
-      ...updateInfo,
-      available: false,
-      latestVersion: null,
-      downloadState: 'idle',
-      downloadProgress: 0,
-      error: undefined,
+    const canCheckMetadata = IS_MAC && process.arch === 'arm64' && shouldOfferManualReleaseCheck({
+      craftDevRuntime: process.env.CRAFT_DEV_RUNTIME,
+      homeDir: app.getPath('home'), execPath: process.execPath,
+      isAdHocSigned: detectMacAdHocSigned(process.execPath),
+    })
+    if (options.manual && canCheckMetadata) {
+      try {
+        updateInfo = await checkPublishedManualUpdate(updateInfo.currentVersion)
+      } catch (error) {
+        updateInfo = { ...updateInfo, available: false, latestVersion: null, updateMode: 'manual',
+          releaseUrl: undefined, downloadState: 'error', downloadProgress: 0,
+          error: error instanceof Error ? error.message : 'Release metadata check failed' }
+      }
+    } else {
+      autoUpdateLog.info('Skipping update feed for suppressed channel')
+      updateInfo = { ...updateInfo, available: false, latestVersion: null,
+        downloadState: 'idle', downloadProgress: 0, releaseUrl: undefined,
+        error: options.manual ? 'Update checks are disabled for this development or user-local installation.' : undefined }
     }
+    broadcastUpdateInfo()
     return getUpdateInfo()
   }
 
@@ -575,6 +596,9 @@ export async function checkForUpdates(options: CheckOptions = {}): Promise<Updat
 }
 
 export async function installUpdate(): Promise<void> {
+  if (isUpdateFeedSuppressed() || updateInfo.updateMode === 'manual') {
+    throw new Error('Automatic installation is disabled for this build. Download the published release and install it manually.')
+  }
   if (updateInfo.downloadState !== 'ready') {
     throw new Error('No update ready to install')
   }
