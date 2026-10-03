@@ -15,11 +15,12 @@ import {
   writeFileSync,
 } from 'fs';
 import type { Dirent } from 'fs';
+import { readFile } from 'fs/promises';
 import { homedir } from 'os';
-import { isAbsolute, join, relative, resolve } from 'path';
+import { isAbsolute, join, relative, resolve, sep } from 'path';
 import matter from 'gray-matter';
 import type { LoadedSkill, SkillMetadata, SkillSource } from './types.ts';
-import { listOmpSkills } from './omp-discovery.ts';
+import { listOmpSkills, OMP_GLOBAL_SKILLS_DIR, OMP_SHARED_SKILLS_DIR, OMP_WORKSPACE_SKILLS_DIR } from './omp-discovery.ts';
 import { getWorkspaceSkillsPath } from '../workspaces/storage.ts';
 import { resolveConfigDir } from '../config/paths.ts';
 import { getBundledSkillsDisabled } from '../config/storage.ts';
@@ -124,25 +125,35 @@ function isDirectoryOrSymlinkToDirectory(parentDir: string, entry: Dirent): bool
 // Load Operations
 // ============================================================
 
-/**
- * Load a single skill from a directory
- * @param skillsDir - Absolute path to skills directory
- * @param slug - Skill directory name
- * @param source - Where this skill is loaded from
- */
+/** A directory link is a supported skill identity. An instructions-file link
+ * must stay inside that selected canonical directory, before any bytes are read. */
+function resolveSkillInstructionsFile(skillDir: string): string | null {
+  try {
+    const directory = realpathSync(skillDir);
+    const file = realpathSync(join(directory, 'SKILL.md'));
+    const rel = relative(directory, file);
+    if (!rel || rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel) || !statSync(file).isFile()) {
+      throw new Error('Skill instructions path denied');
+    }
+    return file;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    throw error;
+  }
+}
+
+/** Load one craft skill through the shared instructions-file boundary. */
 function loadSkillFromDir(skillsDir: string, slug: string, source: SkillSource): LoadedSkill | null {
   // Dot entries (.pending, .versions) are internal state, never skills.
   if (!isSafeSkillName(slug)) return null;
   const skillDir = join(skillsDir, slug);
-  const skillFile = join(skillDir, 'SKILL.md');
 
   // Check directory exists
   try { if (!statSync(skillDir).isDirectory()) return null; } catch { return null; }
 
-  // Check SKILL.md exists
-  if (!existsSync(skillFile)) {
-    return null;
-  }
+  // All craft precedence paths (including managed aliases) share this boundary.
+  const skillFile = resolveSkillInstructionsFile(skillDir);
+  if (!skillFile) return null;
 
   // Read and parse SKILL.md
   let content: string;
@@ -372,13 +383,39 @@ export function loadAllSkills(workspaceRoot: string, projectRoot?: string, optio
   return result;
 }
 
+/** Selected detail only. Reuse the existing craft/managed-alias resolution and
+ * inspect one runtime slug; never populate the metadata list with body content. */
+export async function loadSkillDetails(workspaceRoot: string, slug: string, projectRoot?: string): Promise<LoadedSkill | null> {
+  if (typeof slug !== 'string' || !slug || slug.startsWith('.') || /[/\\:\x00-\x1f]/.test(slug)) return null;
+  const craft = loadSkillBySlug(workspaceRoot, slug, projectRoot);
+  if (craft) return craft;
+  for (const root of [join(workspaceRoot, OMP_WORKSPACE_SKILLS_DIR), OMP_SHARED_SKILLS_DIR, OMP_GLOBAL_SKILLS_DIR]) {
+    const skillDir = join(root, slug);
+    // Match current-main discovery's application-tier exclusion (disabled packs too).
+    if (isInsideSkillStore(skillDir, APP_MANAGED_SKILLS_DIR)) continue;
+    const file = resolveSkillInstructionsFile(skillDir);
+    if (!file) continue;
+    try {
+      const parsed = matter(await readFile(file, 'utf-8'));
+      return {
+        slug, source: 'omp', path: skillDir, content: parsed.content,
+        metadata: {
+          name: typeof parsed.data.name === 'string' && parsed.data.name ? parsed.data.name : slug,
+          description: typeof parsed.data.description === 'string' ? parsed.data.description : '',
+        },
+      };
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+      throw error;
+    }
+  }
+  return null;
+}
+
 /**
  * Load a single skill by slug from all sources (project > workspace > global).
- * Unlike loadAllSkills(), this only reads the specific slug directory — O(1) not O(N).
- *
- * @param workspaceRoot - Absolute path to workspace root
- * @param slug - Skill slug to load
- * @param projectRoot - Optional project root for project-level skills
+ * Ordinary names read only that directory; current-main collision aliases keep
+ * the existing list-resolution fallback.
  */
 export function loadSkillBySlug(workspaceRoot: string, slug: string, projectRoot?: string): LoadedSkill | null {
   if (!isSafeSkillName(slug)) return null;

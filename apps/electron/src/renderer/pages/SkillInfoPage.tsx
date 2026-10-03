@@ -34,9 +34,16 @@ interface SkillInfoPageProps {
 
 export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory }: SkillInfoPageProps) {
   const { t } = useTranslation()
-  const [skill, setSkill] = useState<LoadedSkill | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const requestKey = JSON.stringify([workspaceId, skillSlug, workingDirectory])
+  const [detail, setDetail] = useState<{ key: string; skill: LoadedSkill | null; error: string | null; loading: boolean } | null>(null)
+  const current = detail?.key === requestKey ? detail : null
+  const skill = current?.skill ?? null
+  const loading = current?.loading ?? true
+  const error = current?.error ?? null
+  const [refresh, setRefresh] = useState(0)
+  const setSkill = useCallback((updated: LoadedSkill) => setDetail(value =>
+    value?.key === requestKey ? { ...value, skill: updated, error: null, loading: false } : value,
+  ), [requestKey])
   const activeWorkspace = useActiveWorkspace()
   const canRevealLocally = !activeWorkspace?.remoteServer
 
@@ -48,50 +55,39 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
   // Load skill data
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setError(null)
+    setDetail({ key: requestKey, skill: null, error: null, loading: true })
 
     ;(async () => {
       try {
-        const skills = await window.electronAPI.getSkills(workspaceId, workingDirectory)
+        const found = await window.electronAPI.getSkillDetails(workspaceId, skillSlug, workingDirectory)
         if (cancelled) return
-        const found = skills.find((s) => s.slug === skillSlug) ?? null
         if (!found) {
-          setError(t('skillInfo.notFound'))
-          setSkill(null)
+          setDetail({ key: requestKey, skill: null, error: t('skillInfo.notFound'), loading: false })
           return
         }
-        setSkill(found)
+        setDetail({ key: requestKey, skill: found, error: null, loading: false })
         setEditName(found.metadata.name)
         setEditDescription(found.metadata.description)
         setEditContent(found.content || '')
-      } catch (err) {
+      } catch {
         if (cancelled) return
-        setError(err instanceof Error ? err.message : t('skillInfo.failedToLoad'))
-      } finally {
-        if (!cancelled) setLoading(false)
+        setDetail({ key: requestKey, skill: null, error: t('skillInfo.failedToLoad'), loading: false })
       }
     })()
 
     return () => {
       cancelled = true
     }
-  }, [workspaceId, skillSlug, workingDirectory, t])
+  }, [workspaceId, skillSlug, workingDirectory, requestKey, refresh, t])
 
   // Live updates
   useEffect(() => {
     if (!window.electronAPI?.onSkillsChanged) return
-    return window.electronAPI.onSkillsChanged((changedWorkspaceId, skills) => {
+    return window.electronAPI.onSkillsChanged((changedWorkspaceId) => {
       if (changedWorkspaceId !== workspaceId) return
-      const found = skills.find((s) => s.slug === skillSlug)
-      if (found) {
-        setSkill(found)
-        setEditName(found.metadata.name)
-        setEditDescription(found.metadata.description)
-        setEditContent(found.content || '')
-      }
+      setRefresh(value => value + 1)
     })
-  }, [workspaceId, skillSlug])
+  }, [workspaceId])
 
   const handleOpenInFinder = useCallback(async () => {
     if (!canRevealLocally || !skill) return
@@ -143,7 +139,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
     } finally {
       setSaving(false)
     }
-  }, [skill, editName, editDescription, editContent, workspaceId, skillSlug, t])
+  }, [skill, editName, editDescription, editContent, workspaceId, skillSlug, setSkill, t])
 
   const skillName = skill?.metadata.name || skillSlug
   const canDeleteSkill = skill?.source === 'workspace'
@@ -189,7 +185,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
             skillName={skillName}
             onOpenInNewWindow={handleOpenInNewWindow}
             onShowInFinder={handleOpenInFinder}
-            canShowInFinder={canRevealLocally}
+            canShowInFinder={canRevealLocally && skill?.source !== 'omp'}
             onDelete={canDeleteSkill ? handleDelete : undefined}
             canDelete={canDeleteSkill}
             deleteLabel={canDeleteSkill ? t('skillInfo.deleteSkill') : t('skillInfo.managedByProject')}
@@ -221,14 +217,14 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
                     {saving ? t('common.saving') : t('common.save')}
                   </Button>
                 )}
-                <EditPopover
+                {skill.source !== 'omp' && <EditPopover
                   trigger={askAiTrigger}
                   {...getEditConfig('skill-metadata', skill.path)}
                   secondaryAction={{
                     label: t('common.editFile'),
                     filePath: `${skill.path}/SKILL.md`,
                   }}
-                />
+                />}
               </div>
             }
           >
@@ -294,13 +290,15 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
                   {skill.metadata.description}
                 </Info_Table.Row>
                 <Info_Table.Row label={t('common.source')}>
-                  {skill.source === 'project' ? t('skillInfo.sourceProject') :
+                  {skill.source === 'omp' ? t('skillsList.ompBadge') :
+                   skill.source === 'project' ? t('skillInfo.sourceProject') :
                    skill.source === 'global' ? t('skillInfo.sourceGlobal') :
                    t('skillInfo.sourceWorkspace')}
                 </Info_Table.Row>
                 <Info_Table.Row label={t('common.location')}>
                   <button
                     onClick={handleLocationClick}
+                    disabled={!canRevealLocally || skill.source === 'omp'}
                     className="hover:underline cursor-pointer text-left"
                   >
                     {formatPath(skill.path)}
@@ -368,14 +366,14 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
                     {saving ? t('common.saving') : t('common.save')}
                   </Button>
                 )}
-                <EditPopover
+                {skill.source !== 'omp' && <EditPopover
                   trigger={askAiTrigger}
                   {...getEditConfig('skill-instructions', skill.path)}
                   secondaryAction={{
                     label: t('common.editFile'),
                     filePath: `${skill.path}/SKILL.md`,
                   }}
-                />
+                />}
               </div>
             }
           >
