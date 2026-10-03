@@ -13,7 +13,7 @@ import { ChevronDown, ChevronRight, DownloadCloud, RefreshCw } from 'lucide-reac
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
-import { Spinner, PremiumMenuSelect } from '@craft-agent/ui'
+import { Spinner, PremiumMenuSelect } from '@rox/ui'
 import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/components/settings'
 import { Button } from '@/components/ui/button'
 import { routes } from '@/lib/navigate'
@@ -25,8 +25,8 @@ import {
   type ForeignAutoImportStatus,
   type ForeignIndexEntry,
   type ForeignSessionKind,
-} from '@craft-agent/shared/sessions'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+} from '@rox/shared/sessions'
+import { isClaimableLive } from '@rox/core/rox2'
 import BrowserProfileImportPanel from './BrowserProfileImportPanel'
 import { settingsPageActionResult } from './settings-rox2-surface'
 

@@ -1,7 +1,7 @@
 import { closeSync, constants, fstatSync, lstatSync, openSync, readFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
-import { resolveConfigDir } from '@craft-agent/shared/config'
-import { expandPath } from '@craft-agent/shared/utils/paths'
+import { resolveConfigDir } from '@rox/shared/config'
+import { expandPath } from '@rox/shared/utils/paths'
 
 /** Bounded regular JSON file read without migrations, recovery or symlink traversal. */
 export function readNativeConfigurationFile(path: string): Record<string, unknown> | null {

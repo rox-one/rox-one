@@ -2,14 +2,14 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { RpcServer } from '@rox/server-core/transport'
 import {
   registerMeetingHandlers,
   resetMeetingHandlerStateForTests,
-} from '@craft-agent/server-core/handlers/rpc/meetings'
-import type { Meeting } from '@craft-agent/core/meetings'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
+} from '@rox/server-core/handlers/rpc/meetings'
+import type { Meeting } from '@rox/core/meetings'
+import type { MeetingGrant } from '@rox/shared/meeting-agents/browser'
 import {
   searchNativeMeetingsViaRpc,
   startNativeMeetingViaRpc,

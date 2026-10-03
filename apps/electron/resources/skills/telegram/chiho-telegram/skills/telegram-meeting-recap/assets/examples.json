@@ -1,0 +1,6 @@
+[
+  {
+    "prompt": "Recap my latest planning thread with @alice and create tasks for action items.",
+    "tools": ["chat_read", "summary_refresh", "tasks_suggest", "tasks_add"]
+  }
+]

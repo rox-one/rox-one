@@ -7,11 +7,11 @@ import { NativeJournal } from '../authority/native-journal.ts'
 import { CollaborationSyncService } from '../collaboration/sync-service.ts'
 import { join, basename } from 'node:path'
 import { lockHolderMatchesLock, parseTasklistImageName, type LockIdentity } from './lock-identity.ts'
-import { OAuthFlowStore } from '@craft-agent/shared/auth'
-import { ensureConfigDir, getEnv, loadStoredConfig, saveConfig } from '@craft-agent/shared/config'
-import { ensureContextDocs } from '@craft-agent/shared/context-docs'
-import { ensureBundledSkills } from '@craft-agent/shared/skills'
-import { setBundledAssetsRoot } from '@craft-agent/shared/utils'
+import { OAuthFlowStore } from '@rox/shared/auth'
+import { ensureConfigDir, getEnv, loadStoredConfig, saveConfig } from '@rox/shared/config'
+import { ensureContextDocs } from '@rox/shared/context-docs'
+import { ensureBundledSkills } from '@rox/shared/skills'
+import { setBundledAssetsRoot } from '@rox/shared/utils'
 import {
   WsRpcServer,
   type LocalClientBindingCandidate,
@@ -23,8 +23,8 @@ import { createHeadlessPlatform } from '../runtime/platform-headless'
 import type { PlatformServices } from '../runtime/platform'
 import { startNativeSidecar, stopNativeSidecar } from '../native/supervisor.ts'
 import { stopAllSourceIndexWatches } from '../sources/source-index-watch.ts'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { resolveConfigDir } from "@rox/shared/config/paths"
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { projectNativeRegisteredWorkspaceEvent } from '../handlers/rpc/native-session-scope'
 import { projectNativeNotesChanged } from '../handlers/rpc/native-notes-events'
 import { projectNativeFeedChanged } from '../handlers/rpc/native-feed'
@@ -385,7 +385,7 @@ function bootstrapConfigArtifacts(platform: PlatformServices): void {
   // Toolchain: fire-and-forget background install/update of missing/outdated
   // tools (omp et al.). ensureAll returns a status snapshot immediately and
   // continues downloading in the background; never blocks server startup.
-  void import('@craft-agent/shared/toolchain-runtime')
+  void import('@rox/shared/toolchain-runtime')
     .then(({ getToolchainManager }) => getToolchainManager().ensureAll({ background: true }))
     .then(() => platform.logger.info('[bootstrap] Toolchain ensureAll scheduled'))
     .catch((err) => {

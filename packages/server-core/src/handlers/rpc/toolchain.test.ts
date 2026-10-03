@@ -52,7 +52,7 @@ const SETUP = [
   '  handle: (ch, fn) => handlers.set(ch, fn),',
   '  push: (ch, _target, payload) => pushes.push({ channel: ch, payload }),',
   '};',
-  "const { RPC_CHANNELS } = await import('@craft-agent/shared/protocol');",
+  "const { RPC_CHANNELS } = await import('@rox/shared/protocol');",
   'const { registerToolchainHandlers, HANDLED_CHANNELS } = await import(',
   "  process.env.CRAFT_TEST_ROOT + '/packages/server-core/src/handlers/rpc/toolchain.ts'",
   ');',

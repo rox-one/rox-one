@@ -5,11 +5,11 @@
  * never treated as authorization claims.
  */
 
-import { getCredentialManager, type CredentialManager } from '@craft-agent/shared/credentials'
-import { getConfigDir, getWorkspaceByNameOrId } from '@craft-agent/shared/config'
+import { getCredentialManager, type CredentialManager } from '@rox/shared/credentials'
+import { getConfigDir, getWorkspaceByNameOrId } from '@rox/shared/config'
 import { join } from 'node:path'
-import { SqliteBroInviteStore } from '@craft-agent/shared/collaboration/durable-store'
-import type { Session } from '@craft-agent/shared/protocol'
+import { SqliteBroInviteStore } from '@rox/shared/collaboration/durable-store'
+import type { Session } from '@rox/shared/protocol'
 import {
   slugifyUsername,
   type BroInviteStorage,
@@ -17,7 +17,7 @@ import {
   type JoinResult,
   type PresenceMember,
   type RoxAccount,
-} from '@craft-agent/shared/collaboration'
+} from '@rox/shared/collaboration'
 import { RemoteBroInvitationError, RemoteBroInviteClient, type RemoteBroInviteClientOptions } from './remote-bro-invite-client.ts'
 import { projectSessionForCollaboration } from './session-publication-bridge.ts'
 

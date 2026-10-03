@@ -3,9 +3,9 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { MeetingCloudAsr, type MeetingVoiceClient } from '../cloud-asr'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { emptyLocalMeeting } from '../local-model'
-import type { Workspace } from '@craft-agent/core/types'
+import type { Workspace } from '@rox/core/types'
 
 const noEngine = { ready: false, engine: 'deepgram', model: 'nova-3', binary: null, modelPath: null, ffmpeg: null,
   missing: ['deepgram-not-configured'], cloudAvailable: false }

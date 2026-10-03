@@ -18,8 +18,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execSync } from 'node:child_process';
 import * as childProcess from 'node:child_process';
-import type { AgentEvent } from '@craft-agent/core/types';
-import { OmpAgent } from '../omp-agent.ts';
+import type { AgentEvent } from '@rox/core/types';
+import { OmpAgent, OMP_READY_TIMEOUT_MS } from '../omp-agent.ts';
 import {
   createFakeOmp,
   useFakeOmpEnv,
@@ -97,11 +97,11 @@ function types(events: AgentEvent[]): string[] {
   return events.map((e) => e.type);
 }
 
-/** Shrink ONLY the 20s ready-timeout; auto-restored. */
+/** Shrink ONLY the bounded ready-timeout; auto-restored. */
 function shrinkReadyTimeout(ms: number): void {
   const original = globalThis.setTimeout;
   (globalThis as any).setTimeout = ((fn: (...a: unknown[]) => void, t?: number, ...rest: unknown[]) =>
-    original(fn, t === 20_000 ? ms : t, ...rest)) as typeof setTimeout;
+    original(fn, t === OMP_READY_TIMEOUT_MS ? ms : t, ...rest)) as typeof setTimeout;
   cleanups.push(() => { (globalThis as any).setTimeout = original; });
 }
 
@@ -114,7 +114,7 @@ describe('A1: concurrent chat() during startup shares one spawn', () => {
     cleanups.push(restore, () => fake.cleanup());
     cleanups.push(() => { try { execSync(`pkill -9 -f "${join(fake.dir, 'fake-omp.js')}" 2>/dev/null || true`); } catch {} });
     const agent = track(new OmpAgent(makeOmpConfig(fake)));
-    shrinkReadyTimeout(3_000); // a cross-settled loser timeout would fail the winner at ~3s
+    shrinkReadyTimeout(Math.max(3_000, Number(process.env.ROX_OMP_TEST_TIMEOUT_MS) || 0)); // a cross-settled loser timeout would fail the winner at ~3s
 
     const p1 = chatEvents(agent, 'one', 10_000).then((ev) => ({ ok: true as const, ev })).catch((e) => ({ ok: false as const, err: String(e) }));
     const p2 = chatEvents(agent, 'two', 10_000).then((ev) => ({ ok: true as const, ev })).catch((e) => ({ ok: false as const, err: String(e) }));

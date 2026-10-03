@@ -1,8 +1,8 @@
 {
-  "name": "@craft-agent/viewer",
-  "version": "0.11.7",
+  "name": "@rox/viewer",
+  "version": "0.11.8",
   "license": "Apache-2.0",
-  "description": "Web viewer for Craft Agents sessions - upload and share session transcripts",
+  "description": "Web viewer for ROX sessions - upload and share session transcripts",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,8 +12,8 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.functions.json"
   },
   "dependencies": {
-    "@craft-agent/core": "workspace:*",
-    "@craft-agent/ui": "workspace:*",
+    "@rox/core": "workspace:*",
+    "@rox/ui": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-i18next": "^17.0.2"

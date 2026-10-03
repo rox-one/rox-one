@@ -6,9 +6,9 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync, statSync, utimesSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { LESSON_LIMITS } from '@craft-agent/shared/memory/types'
+import { LESSON_LIMITS } from '@rox/shared/memory/types'
 import { LessonStore, lessonKey, parseLessons } from '../LessonStore'
-import type { Lesson } from '@craft-agent/shared/memory/types'
+import type { Lesson } from '@rox/shared/memory/types'
 
 let dir: string
 let file: string

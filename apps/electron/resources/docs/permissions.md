@@ -2,9 +2,8 @@
 
 This guide explains how to configure custom permission rules for Explore mode.
 
-> **CLI-first workflow (recommended):** Use `craft-agent permission ...` commands instead of editing JSON directly.
-> - `craft-agent permission --help`
-> - Canonical command reference: [craft-cli.md](./craft-cli.md)
+> **Supported workflow:** Use the permission badge to select Explore, Ask, or Execute mode. For custom rules, follow the JSON schema below and validate with the available `config_validate` tool.
+> - Interface and tooling reference: [ROX configuration interfaces](./craft-cli.md)
 
 ## Overview
 
@@ -12,8 +11,8 @@ Explore mode is a read-only mode that blocks potentially destructive operations.
 Custom permission rules let you allow specific operations that would otherwise be blocked.
 
 Permission files are located at:
-- Workspace: `~/.craft-agent/workspaces/{slug}/permissions.json`
-- Source: `~/.craft-agent/workspaces/{slug}/sources/{source}/permissions.json`
+- Workspace: `~/.rox/workspaces/{slug}/permissions.json`
+- Source: `~/.rox/workspaces/{slug}/sources/{source}/permissions.json`
 
 ## Auto-Scoping for Source Permissions
 
@@ -50,7 +49,7 @@ The system converts it to `mcp__<sourceSlug>__.*list` internally. This means:
   ],
   "allowedWritePaths": [
     "/tmp/**",
-    "~/.craft-agent/**"
+    "~/.rox/**"
   ],
   "blockedCommandHints": [
     {
@@ -144,7 +143,7 @@ Glob patterns for directories where writes are allowed.
 {
   "allowedWritePaths": [
     "/tmp/**",
-    "~/.craft-agent/**",
+    "~/.rox/**",
     "/path/to/project/output/**"
   ]
 }

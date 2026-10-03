@@ -19,12 +19,12 @@
     "noUnusedParameters": false,
     "baseUrl": ".",
     "paths": {
-      "@craft-agent/shared": ["../shared/src/index.ts"],
-      "@craft-agent/shared/*": ["../shared/src/*"],
-      "@craft-agent/server-core": ["../server-core/src/index.ts"],
-      "@craft-agent/server-core/*": ["../server-core/src/*"],
-      "@craft-agent/core": ["../core/src/index.ts"],
-      "@craft-agent/core/*": ["../core/src/*"]
+      "@rox/shared": ["../shared/src/index.ts"],
+      "@rox/shared/*": ["../shared/src/*"],
+      "@rox/server-core": ["../server-core/src/index.ts"],
+      "@rox/server-core/*": ["../server-core/src/*"],
+      "@rox/core": ["../core/src/index.ts"],
+      "@rox/core/*": ["../core/src/*"]
     }
   },
   "include": ["src/**/*", "../shared/src/agent/bash-parser.d.ts"],

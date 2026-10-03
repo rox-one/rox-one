@@ -6,8 +6,8 @@ import { useTheme } from '@/hooks/useTheme'
 import type { ThemeOverrides } from '@config/theme'
 import { useSetAtom, useStore, useAtomValue, useAtom } from 'jotai'
 import type { Session, Workspace, SessionEvent, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, SetupNeeds, SessionStatus, NewChatActionParams, ContentBadge, LlmConnectionWithStatus, PermissionModeState } from '../shared/types'
-import type { StartupRuntimeSummary } from '@craft-agent/shared/protocol'
-import type { SessionDraft, DraftAttachmentRef } from '@craft-agent/shared/config'
+import type { StartupRuntimeSummary } from '@rox/shared/protocol'
+import type { SessionDraft, DraftAttachmentRef } from '@rox/shared/config'
 import type { SessionOptions, SessionOptionUpdates } from './hooks/useSessionOptions'
 import { defaultSessionOptions, mergeSessionOptions } from './hooks/useSessionOptions'
 import { generateMessageId } from '../shared/types'
@@ -21,11 +21,12 @@ import { getTopBarLeftInset, shouldShowWorkspaceIconRail, WORKSPACE_SELECTOR_RAI
 import { viewportBand } from '@/platform/viewport-band'
 import type { AppShellContextType } from '@/context/AppShellContext'
 import { OnboardingWizard, ReauthScreen, ensureRoxRuntimeDefault } from '@/components/onboarding'
+import { openFirstSessionWelcome } from '@/components/onboarding/first-session-welcome'
 import { WorkspacePicker } from '@/components/workspace'
 import { ResetConfirmationDialog } from '@/components/ResetConfirmationDialog'
 import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog'
 import { SplashScreen } from '@/components/SplashScreen'
-import { TooltipProvider } from '@craft-agent/ui'
+import { TooltipProvider } from '@rox/ui'
 import { FocusProvider } from '@/context/FocusContext'
 import { ModalProvider } from '@/context/ModalContext'
 import { DismissibleLayerProvider } from '@/context/DismissibleLayerContext'
@@ -45,8 +46,8 @@ import { getSessionsToRefreshAfterStaleReconnect } from './lib/reconnect-recover
 import { formatSessionLoadFailure, shouldTreatSessionLoadFailureAsTransportFallback } from './lib/session-load'
 import { readLocalSessionCapability, loadCallerSessionInventory } from './lib/caller-session-loading'
 import { markSessionsReadyThenReconcile } from '@/lib/splash-sessions-ready'
-import { extractWorkspaceSlugFromPath } from '@craft-agent/shared/utils/workspace-slug'
-import { DEFAULT_THINKING_LEVEL } from '@craft-agent/shared/agent/thinking-levels'
+import { extractWorkspaceSlugFromPath } from '@rox/shared/utils/workspace-slug'
+import { DEFAULT_THINKING_LEVEL } from '@rox/shared/agent/thinking-levels'
 import { initRendererPerf } from './lib/perf'
 import {
   initializeSessionsAtom,
@@ -84,7 +85,7 @@ import {
   CodePreviewOverlay,
   DocumentFormattedMarkdownOverlay,
   JSONPreviewOverlay,
-} from '@craft-agent/ui'
+} from '@rox/ui'
 import { useLinkInterceptor, type FilePreviewState } from '@/hooks/useLinkInterceptor'
 import { queueInternalBrowserUrl } from '@/components/browser/internal-browser-queue'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
@@ -1513,6 +1514,39 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     return session
   }, [addSession, syncSessionOptionsFromSession])
 
+  const firstSessionAttemptedRef = useRef(false)
+  const firstSessionMountedRef = useRef(true)
+  useEffect(() => {
+    firstSessionMountedRef.current = true
+    return () => { firstSessionMountedRef.current = false }
+  }, [])
+  useEffect(() => {
+    if (appState !== 'ready' || !sessionsLoaded || sessionLoadError || callerAuthority !== 'local'
+      || !windowWorkspaceId || initialSessionId || webTransportBootstrap || firstSessionAttemptedRef.current) return
+    const workspace = workspaces.find(item => item.id === windowWorkspaceId)
+    if (!workspace || workspace.remoteServer) return
+    firstSessionAttemptedRef.current = true
+    const initialUrl = window.location.href
+    void openFirstSessionWelcome({
+      workspaceId: windowWorkspaceId,
+      isCurrent: () => firstSessionMountedRef.current && callerAuthorityRef.current === 'local'
+        && store.get(windowWorkspaceIdAtom) === windowWorkspaceId,
+      getWindowWorkspace: () => window.electronAPI.getWindowWorkspace(),
+      ensureWelcome: id => window.electronAPI.ensureFirstSessionWelcome(id),
+      onSession: session => {
+        addSession(session)
+        syncSessionOptionsFromSession(session)
+      },
+      onOpen: id => {
+        if (window.location.href === initialUrl) navigate(routes.view.allSessions(id))
+      },
+    }).catch(error => {
+      // A greeting must never gate opening the app or starting an ordinary chat.
+      console.warn('[App] Could not open the first-session welcome:', error)
+    })
+  }, [appState, sessionsLoaded, sessionLoadError, callerAuthority, windowWorkspaceId, initialSessionId,
+    webTransportBootstrap, workspaces, addSession, syncSessionOptionsFromSession, store])
+
   // Deep link navigation is initialized later after handleInputChange is defined
 
   const handleDeleteSession = useCallback(async (sessionId: string, skipConfirmation = false): Promise<boolean> => {
@@ -2360,7 +2394,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     openNewChat,
   ])
 
-  // Platform actions for @craft-agent/ui components (overlays, etc.)
+  // Platform actions for @rox/ui components (overlays, etc.)
   // Memoized to prevent re-renders when these callbacks don't change
   // NOTE: Must be defined before early returns to maintain consistent hook order
   const platformActions = useMemo(() => ({

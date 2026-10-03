@@ -1,13 +1,14 @@
 import { strict as assert } from 'node:assert'
-import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { createHash } from 'node:crypto'
 import { NativeAuthority } from '../../../authority/native-authority'
 import { WsRpcServer } from '../../../transport/server'
 import { WsRpcClient } from '../../../transport/client'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { registerVoiceHandlers } from '../voice'
 import type { HandlerDeps } from '../../handler-deps'
-import type { TranscribeAdapter, TranscribeInput } from '@craft-agent/shared/voice'
+import type { TranscribeAdapter, TranscribeInput } from '@rox/shared/voice'
 import type { RpcServer } from '../../../transport'
 
 const configDir = process.env.CRAFT_CONFIG_DIR!
@@ -130,6 +131,17 @@ try {
   const rerun = await a.invoke(RPC_CHANNELS.voice.RETRANSCRIBE, { id: recordingId, path: '/etc/passwd' })
   assert.equal(requests.length, before + 1); assert.equal(rerun.transcript.modelRevision, 'fixture-release')
   assert.equal((await a.invoke(RPC_CHANNELS.voice.HISTORY_GET, { id: recordingId })).revisions.length, 2)
+  const actorHash = createHash('sha256').update(JSON.stringify(['rox-private-voice-v1', first.principal.issuer, first.principal.subject])).digest('hex')
+  const original = join(configDir, 'voice-users', actorHash, 'voice', 'recordings', recordingId, 'original.bin')
+  const foreignAudio = join(configDir, 'foreign-sensitive-audio.bin')
+  writeFileSync(foreignAudio, 'foreign-sensitive-fixture')
+  renameSync(original, original + '.saved'); symlinkSync(foreignAudio, original)
+  const beforeLinkedRetry = requests.length
+  await deny(() => a.invoke(RPC_CHANNELS.voice.RETRANSCRIBE, { id: recordingId }))
+  assert.equal(requests.length, beforeLinkedRetry)
+  assert.equal(readFileSync(foreignAudio, 'utf8'), 'foreign-sensitive-fixture')
+  rmSync(original); renameSync(original + '.saved', original)
+
   assert.equal((await a.invoke(RPC_CHANNELS.voice.SPEAK, { text: 'remote user text' })).playback, 'renderer')
   assert.equal(nativePlaybackCalls, 0)
 

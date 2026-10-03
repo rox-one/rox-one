@@ -15,8 +15,8 @@
  * bounded (drainWithTimeout rejects on stalls).
  */
 import { afterEach, describe, expect, it } from 'bun:test';
-import type { AgentEvent } from '@craft-agent/core/types';
-import { OmpAgent } from '../omp-agent.ts';
+import type { AgentEvent } from '@rox/core/types';
+import { OmpAgent, OMP_READY_TIMEOUT_MS } from '../omp-agent.ts';
 import {
   createFakeOmp,
   useFakeOmpEnv,
@@ -140,10 +140,10 @@ describe('OmpAgent startup — spawn / handshake failures', () => {
   it('bounds a silent subprocess with a typed OMP_READY_TIMEOUT', async () => {
     const { agent } = setup('never-ready');
 
-    // Shrink only the 20s ready-timeout timer; leave every other timer alone.
+    // Shrink only the bounded ready-timeout timer; leave every other timer alone.
     const originalSetTimeout = globalThis.setTimeout;
     (globalThis as any).setTimeout = ((fn: (...args: unknown[]) => void, ms?: number, ...rest: unknown[]) => {
-      return originalSetTimeout(fn, ms === 20_000 ? 50 : ms, ...rest);
+      return originalSetTimeout(fn, ms === OMP_READY_TIMEOUT_MS ? 50 : ms, ...rest);
     }) as typeof setTimeout;
 
     try {

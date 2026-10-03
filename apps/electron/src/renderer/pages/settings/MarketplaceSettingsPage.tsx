@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
-import { Spinner, PremiumMenuSelect } from '@craft-agent/ui'
+import { Spinner, PremiumMenuSelect } from '@rox/ui'
 import { SettingsCard, SettingsCardContent } from '@/components/settings'
 import {
   ShoppingBag,
@@ -20,9 +20,10 @@ import {
   ExternalLink,
 } from 'lucide-react'
 
-import { CAPABILITY_PACKS, CAPABILITY_TOOLS, buildOfflineCapabilityReport } from '@craft-agent/shared/capabilities'
+import { CAPABILITY_PACKS, CAPABILITY_TOOLS } from '@rox/shared/capabilities/packs'
+import { buildOfflineCapabilityReport } from '@rox/shared/capabilities/agents-md'
 import { routes } from '@/lib/navigate'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type {
@@ -31,13 +32,13 @@ import type {
   MarketplaceEntryKind,
   MarketplaceEntryStats,
   MarketplaceLockRecord,
-} from '@craft-agent/shared/marketplace'
+} from '@rox/shared/marketplace'
 import {
   isHighRiskMarketplacePermission,
   groupExtensionPermissions,
   permissionsForMarketplaceKind,
-} from '@craft-agent/shared/extensions/browser'
-import { filterMarketplaceEntries } from '@craft-agent/shared/marketplace'
+} from '@rox/shared/extensions/browser'
+import { filterMarketplaceEntries } from '@rox/shared/marketplace/filters'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { ensureRoxRuntimeDefault, type RoxRuntimeDefaultApi } from '../rox-runtime-default'
-import type { StartupRuntimeSummary } from '@craft-agent/shared/protocol'
+import type { StartupRuntimeSummary } from '@rox/shared/protocol'
 
 type Conn = { slug: string; providerType?: string; isDefault?: boolean }
 

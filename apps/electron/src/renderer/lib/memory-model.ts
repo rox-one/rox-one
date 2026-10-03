@@ -3,8 +3,8 @@
  * topics, near-duplicates and the context token budget. Everything here is
  * derived from the lessons on disk — no invented numbers.
  */
-import type { Lesson, LessonScope } from '@craft-agent/shared/memory/types'
-import { LESSONS_HEADER_TOKENS, lessonTokens, selectContextLessons } from '@craft-agent/shared/memory/context-select'
+import type { Lesson, LessonScope } from '@rox/shared/memory/types'
+import { LESSONS_HEADER_TOKENS, lessonTokens, selectContextLessons } from '@rox/shared/memory/context-select'
 import { lessonSimilarity, lessonTokens as stemTokens } from './lesson-dedupe'
 
 export type MemorySort = 'usage' | 'recency' | 'tokens' | 'conflicts'

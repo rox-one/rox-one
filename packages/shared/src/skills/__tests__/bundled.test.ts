@@ -13,10 +13,10 @@
  * Uses real temp directories; no network, no mocks of the filesystem.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readFileSync, readdirSync } from 'fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readFileSync, realpathSync, readdirSync } from 'fs';
 import { tmpdir } from 'os';
 import { join, dirname } from 'path';
-import { ensureBundledSkills, type BundledSkillPackStatus } from '../bundled.ts';
+import { ensureBundledSkills, linkBundledSkillsForOmp, type BundledSkillPackStatus } from '../bundled.ts';
 import { getDisabledBundledSkillSlugsFromDisk, loadAllSkills, invalidateSkillsCache } from '../storage.ts';
 
 // ============================================================
@@ -78,7 +78,7 @@ beforeEach(() => {
 
 afterEach(() => {
   rmSync(tempDir, { recursive: true, force: true });
-});
+}, 180_000);
 
 // ============================================================
 // Seed
@@ -281,14 +281,8 @@ describe('bundled packs end-to-end (real bundle, synthetic HOME)', () => {
     };
 
     // All vendored packs synced with zero errors and no false localModified flags.
-    expect(out.packs.map(p => p.slug).sort()).toEqual([
-      'craft-knowledge',
-      'mattpocock-skills',
-      'rox-harness',
-      'superpowers',
-      'vercel-agent-skills',
-      'vercel-next-skills',
-    ]);
+    const lock = JSON.parse(readFileSync(join(REPO_ROOT, 'apps/electron/resources/skills/SKILLS.lock'), 'utf8'));
+    expect(out.packs.map(p => p.slug).sort()).toEqual(lock.packs.map((p: { slug: string }) => p.slug).sort());
     for (const pack of out.packs) {
       expect(pack.error).toBeUndefined();
       expect(pack.localModified).toBe(false);
@@ -297,14 +291,45 @@ describe('bundled packs end-to-end (real bundle, synthetic HOME)', () => {
 
     // Discovery (the module-level GLOBAL_AGENT_SKILLS_DIR is HOME-bound in the
     // subprocess) finds representative skills from every vendored pack.
-    for (const slug of ['brainstorming', 'test-driven-development', 'tdd', 'next-dev-loop', 'react-best-practices']) {
+    for (const slug of ['brainstorming', 'test-driven-development', 'tdd', 'next-dev-loop', 'react-best-practices', 'understand', 'understand-explain', 'understand-dashboard']) {
       expect(out.slugs).toContain(slug);
     }
-    expect(out.slugs.length).toBeGreaterThanOrEqual(60);
+    for (const pack of lock.packs) {
+      for (const slug of pack.skills) expect(out.slugs).toContain(slug);
+    }
 
     // Discovery ignores the internal state directory.
     expect(out.slugs).not.toContain('.bundled');
     expect(existsSync(join(out.targetRoot, '.bundled', 'superpowers.json'))).toBe(true);
+    expect(existsSync(join(out.targetRoot, 'understand', 'plugin', 'pnpm-lock.yaml'))).toBe(true);
+    expect(existsSync(join(out.targetRoot, 'understand', 'plugin', 'agents', 'file-analyzer.md'))).toBe(true);
+  }, 180_000);
+
+  const pythonRuntime = Bun.which('python3') ?? Bun.which('python');
+  it.skipIf(!pythonRuntime)('runs the installed Understand Anything domain scanner without plugin dependencies', () => {
+    const sourceBundle = join(REPO_ROOT, 'apps/electron/resources/skills');
+    const result = ensureBundledSkills({ bundleRoot: sourceBundle, targetRoot, disabled: [] });
+    const pack = statusFor(result.packs, 'understand-anything');
+    expect(pack.commit).toBe('1d7418b8abfa543744ae029e63a482aee03f9022');
+    expect(pack.installed).toHaveLength(9);
+    expect(pack.error).toBeUndefined();
+    const project = join(tempDir, 'project');
+    mkdirSync(project, { recursive: true });
+    writeFileSync(join(project, 'handler.ts'), 'export function getInvoice(id: string) { return id; }\n');
+    writeFileSync(join(project, 'package.json'), '{"name":"invoice-project"}');
+    const pluginRoot = join(targetRoot, 'understand', 'plugin');
+    const helper = join(pluginRoot, 'skills', 'understand-domain', 'extract-domain-context.py');
+
+    const proc = Bun.spawnSync({ cmd: [pythonRuntime!, helper, project], stdout: 'pipe', stderr: 'pipe' });
+
+    expect(proc.exitCode, proc.stderr.toString()).toBe(0);
+    const context = JSON.parse(readFileSync(join(project, '.ua', 'intermediate', 'domain-context.json'), 'utf8'));
+    expect(context.projectRoot).toBe(realpathSync(project));
+    expect(context.fileCount).toBe(1);
+    expect(context.fileTree).toContain('handler.ts');
+    const state = JSON.parse(readFileSync(join(targetRoot, '.bundled', 'understand-anything.json'), 'utf8'));
+    expect(state.files['understand/plugin/skills/understand-domain/extract-domain-context.py']).toMatch(/^[a-f0-9]{64}$/);
+    expect(existsSync(join(pluginRoot, 'node_modules'))).toBe(false);
   }, 30_000);
 });
 
@@ -316,5 +341,18 @@ describe('disabled packs hidden from discovery', () => {
     const slugs = getDisabledBundledSkillSlugsFromDisk(targetRoot, ['superpowers']);
     expect(slugs.has('alpha')).toBe(true);
     expect(slugs.has('beta')).toBe(false);
+  });
+});
+
+
+describe('legacy disabled pack migration', () => {
+  it('honors craft-knowledge preference for renamed ROX pack and native discovery', () => {
+    writeFile(bundleRoot, 'rox-knowledge/knowledge-distill/SKILL.md', skillMd('knowledge-distill', 'v1'));
+    writeFile(bundleRoot, 'SKILLS.lock', JSON.stringify({ version: 2, packs: [{ slug: 'rox-knowledge', skills: ['knowledge-distill'] }] }));
+    const result = ensureBundledSkills({ bundleRoot, targetRoot, disabled: ['craft-knowledge'] });
+    expect(statusFor(result.packs, 'rox-knowledge').disabled).toBe(true);
+    expect(existsSync(join(targetRoot, 'knowledge-distill'))).toBe(false);
+    const linked = linkBundledSkillsForOmp({ bundleRoot, targetRoot: join(tempDir, 'native'), disabled: ['craft-knowledge'] });
+    expect(linked).toEqual([]);
   });
 });

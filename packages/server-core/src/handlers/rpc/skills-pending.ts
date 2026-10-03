@@ -1,10 +1,10 @@
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import type { PendingSkill, PendingSkillDiff } from '@craft-agent/shared/memory/types'
-import type { RequestContext, RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import type { PendingSkill, PendingSkillDiff } from '@rox/shared/memory/types'
+import type { RequestContext, RpcServer } from '@rox/server-core/transport'
 import { join } from 'node:path'
 import { existsSync, readdirSync } from 'node:fs'
-import { pushTyped } from '@craft-agent/server-core/transport'
+import { pushTyped } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { SkillPendingQueue } from '../../memory/SkillPendingQueue'
 import {
@@ -12,10 +12,10 @@ import {
   rpcSkillsPendingActResult,
   rpcSkillsPendingListResult,
   rpcSkillsPendingReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import { assertNativeInboxPath, assertNativeInboxWorkspace, isInboxOwner } from './native-inbox-scope'
 import { readNativeConfigurationFile } from './native-workspace-registry'
-import type { LessonOwner } from '@craft-agent/shared/memory/types'
+import type { LessonOwner } from '@rox/shared/memory/types'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.skillsPending.LIST,

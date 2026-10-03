@@ -32,7 +32,7 @@ import { useWorkspaceTaskCount } from '@/hooks/useWorkspaceTaskCount'
 import { buildMiniDashboard } from '@/platform/mini-dashboard'
 import { isHomeSessionInWorkspace } from '@/platform/home-model'
 import { navigate, routes } from '@/lib/navigate'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+import { isClaimableLive } from '@rox/core/rox2'
 import {
   PROFILE_PLANS,
   type Profile,
@@ -45,7 +45,7 @@ import { settingsPageActionResult } from './settings-rox2-surface'
  * behind it (audit 2026-09-29: fake control). Hidden until real plans exist.
  */
 const SHOW_PLAN_PICKER = false
-import type { XpEventType } from '@craft-agent/shared/gamification'
+import type { XpEventType } from '@rox/shared/gamification'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',

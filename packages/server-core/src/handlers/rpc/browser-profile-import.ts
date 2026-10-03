@@ -4,15 +4,15 @@
  */
 import { createHash, randomUUID } from 'node:crypto'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { DatabaseSync } from '@craft-agent/shared/utils/sqlite-runtime'
-import { readNativeBrowserData } from '@craft-agent/shared/browser/profile-native-data'
+import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
+import { readNativeBrowserData } from '@rox/shared/browser/profile-native-data'
 import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId, getWorkspaces } from '@craft-agent/shared/config'
-import { loadEnvironmentPrefs, type BrowserImportCategory } from '@craft-agent/shared/environment'
-import { atomicWriteFileSync } from '@craft-agent/shared/utils/files'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId, getWorkspaces } from '@rox/shared/config'
+import { loadEnvironmentPrefs, type BrowserImportCategory } from '@rox/shared/environment'
+import { atomicWriteFileSync } from '@rox/shared/utils/files'
 import {
   deleteImportedProfile,
   discoverBrowserProfileById,
@@ -22,13 +22,13 @@ import {
   type ImportConsent,
   type ProfileFs,
   type ProtectedCookieImport,
-} from '@craft-agent/shared/browser/profile-import'
+} from '@rox/shared/browser/profile-import'
 import {
   loadPrivacyState,
   providerScopeAllowed,
   setProviderAccessConsent,
-} from '@craft-agent/shared/privacy'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/shared/privacy'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { deleteProtectedCookieKey } from './browser-protected-cookie-key'
 import { BrowserDataAutoImporter } from './browser-data-auto-import'
@@ -38,7 +38,7 @@ import {
   rpcBrowserProfileImportActResult,
   rpcBrowserProfileImportListResult,
   rpcBrowserProfileImportReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const BROWSER_PROFILE_CHANNELS = [
   RPC_CHANNELS.browserProfile.DISCOVER,
@@ -233,7 +233,7 @@ export function registerBrowserProfileImportHandlers(server: RpcServer, deps: Ha
     }
     const capability = deps.browserCredentials.capabilities(profile)
     return deps.browserCredentials.vaultKeys.available() ? capability : { ...capability, supported: false, reason: 'browser-credential-vault-unavailable' }
-  })
+  }, { access: 'localElectron' })
 
   server.handle(
     RPC_CHANNELS.browserProfile.IMPORT,
@@ -318,6 +318,7 @@ export function registerBrowserProfileImportHandlers(server: RpcServer, deps: Ha
         }
       }
     },
+    { access: 'localElectron' },
   )
 
   server.handle(RPC_CHANNELS.browserProfile.ROLLBACK, (_ctx, args: { workspaceId: string; token: string }) => {

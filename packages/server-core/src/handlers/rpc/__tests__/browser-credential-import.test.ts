@@ -3,11 +3,12 @@ import { createCipheriv, createDecipheriv } from 'node:crypto'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { DatabaseSync } from '@craft-agent/shared/utils/sqlite-runtime'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { BrowserCredentialHost } from '@craft-agent/shared/browser/browser-credential-host'
-import type { ImportSummary, ProfileFs } from '@craft-agent/shared/browser/profile-import'
-import type { RpcServer, HandlerFn, RequestContext } from '@craft-agent/server-core/transport'
+import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { BrowserCredentialHost } from '@rox/shared/browser/browser-credential-host'
+import type { ImportSummary, ProfileFs } from '@rox/shared/browser/profile-import'
+import type { RpcServer, HandlerFn, RequestContext, RpcHandlerOptions } from '@rox/server-core/transport'
+import { WsRpcServer, WsRpcClient } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
 import { registerBrowserProfileImportHandlers } from '../browser-profile-import'
 
@@ -60,14 +61,15 @@ function fixture(useNativeFs = false) {
     listPaths: prefix => existsSync(dirname(prefix)) ? readdirSync(dirname(prefix)).map(name => join(dirname(prefix), name)).filter(path => path.startsWith(prefix)) : [],
   }
   const handlers = new Map<string, HandlerFn>()
-  registerBrowserProfileImportHandlers({ handle: (channel: string, handler: HandlerFn) => handlers.set(channel, handler) } as unknown as RpcServer,
+  const registrations = new Map<string, RpcHandlerOptions | undefined>()
+  registerBrowserProfileImportHandlers({ handle: (channel: string, handler: HandlerFn, options?: RpcHandlerOptions) => { handlers.set(channel, handler); registrations.set(channel, options) } } as unknown as RpcServer,
     { browserCredentials: host } as HandlerDeps, { home, platform: 'linux', fs: useNativeFs ? undefined : fs, workspaceFor: id => id === 'workspace' ? { id, rootPath: workspace } : null })
   const ctx: RequestContext = { clientId: 'desktop-fixture', workspaceId: 'workspace', webContentsId: 41 }
   const args = { workspaceId: 'workspace', profileId,
     consent: { historyBookmarks: false, cookies: false, credentials: true, osCredentialsApproved: true } }
   const run = (dryRun = false, context = ctx) => Promise.resolve(handlers.get(RPC_CHANNELS.browserProfile.IMPORT)!(context, { ...args, dryRun })) as Promise<ImportSummary>
   const index = join(workspace, 'browser/profile-index.json'), vault = join(workspace, 'browser/credential-vault.json')
-  return { root, run, fs, calls, keys, password, handlers, ctx, args, index, vault,
+  return { registrations, root, run, fs, calls, keys, password, handlers, ctx, args, index, vault,
     decision(value: typeof decision) { decision = value }, scope(value: typeof scope) { scope = value },
     deletionAllowed(value: boolean) { deletionAllowed = value }, custodyAvailable(value: boolean) { custodyAvailable = value } }
 }
@@ -189,5 +191,45 @@ describe('native manual browser credential import', () => {
     expect(capability.supported).toBe(false); expect(f.calls.requests).toBe(0)
     expect((await f.run()).credentialAccess).toBe('unsupported')
     expect(f.calls.requests).toBe(0); expect(f.calls.writes).toBe(0)
+  })
+})
+
+
+describe('browser credential RPC caller identity', () => {
+  it('denies authenticated external callers spoofing a window before native access and accepts a bound renderer', async () => {
+    const f = fixture()
+    expect(f.registrations.get(RPC_CHANNELS.browserProfile.CREDENTIAL_CAPABILITIES)?.access).toBe('localElectron')
+    expect(f.registrations.get(RPC_CHANNELS.browserProfile.IMPORT)?.access).toBe('localElectron')
+    const server = new WsRpcServer({ host: '127.0.0.1', port: 0, requireAuth: true,
+      validateToken: async token => token === 'fixture-token',
+      resolveLocalClientBinding: candidate => candidate.webContentsId === 41 && candidate.workspaceId === 'workspace'
+        && candidate.localClientProof === 'fixture-renderer-proof'
+        ? { webContentsId: 41, workspaceId: 'workspace' } : null,
+    })
+    for (const channel of [RPC_CHANNELS.browserProfile.CREDENTIAL_CAPABILITIES, RPC_CHANNELS.browserProfile.IMPORT]) {
+      server.handle(channel, f.handlers.get(channel)!, f.registrations.get(channel))
+    }
+    const clients: WsRpcClient[] = []
+    const client = (proof: string) => {
+      const c = new WsRpcClient(`ws://127.0.0.1:${server.port}`, {
+        token: 'fixture-token', workspaceId: 'workspace', webContentsId: 41, localClientProof: proof,
+        mode: 'local', autoReconnect: false, connectTimeout: 3000, requestTimeout: 3000,
+      })
+      clients.push(c); c.connect(); return c
+    }
+    try {
+      await server.listen()
+      for (const proof of ['', 'forged-renderer-proof']) {
+        const spoof = client(proof)
+        await expect(spoof.invoke(RPC_CHANNELS.browserProfile.CREDENTIAL_CAPABILITIES, f.args)).rejects.toThrow()
+        await expect(spoof.invoke(RPC_CHANNELS.browserProfile.IMPORT, { ...f.args, dryRun: true })).rejects.toThrow()
+      }
+      expect(f.calls.requests).toBe(0)
+      expect(f.calls.stores).toBe(0)
+      const local = client('fixture-renderer-proof')
+      expect((await local.invoke(RPC_CHANNELS.browserProfile.CREDENTIAL_CAPABILITIES, f.args)).supported).toBe(true)
+      expect((await local.invoke(RPC_CHANNELS.browserProfile.IMPORT, { ...f.args, dryRun: true })).credentialAccess).toBe('granted')
+      expect(f.calls.requests).toBe(1)
+    } finally { for (const c of clients) c.destroy(); server.close() }
   })
 })

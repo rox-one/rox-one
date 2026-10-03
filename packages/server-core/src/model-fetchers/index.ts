@@ -10,15 +10,15 @@
  * 3. MODEL_REGISTRY — hardcoded offline seed data, last resort
  */
 
-import type { ModelFetcherMap, ModelFetcherCredentials, FetchableProvider } from '@craft-agent/shared/config'
-import type { ModelDefinition } from '@craft-agent/shared/config'
+import type { ModelFetcherMap, ModelFetcherCredentials, FetchableProvider } from '@rox/shared/config'
+import type { ModelDefinition } from '@rox/shared/config'
 import {
   getLlmConnections,
   getLlmConnection,
   updateLlmConnection,
   isCompatProvider,
   getModelsForProviderType,
-} from '@craft-agent/shared/config'
+} from '@rox/shared/config'
 import { MODEL_FETCHERS } from './registry'
 import { handlerLog } from './runtime'
 

@@ -17,7 +17,7 @@ import {
   type FeedSource,
   type FeedSourcePatch,
   type XConnectionStatus,
-} from '@craft-agent/shared/feed'
+} from '@rox/shared/feed'
 import { ExternalLink, Pause, Play, Plus, RefreshCw, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge, Button, ListHeader, SectionLabel } from '@/components/mode-screen/ModeScreen'

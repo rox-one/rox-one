@@ -4,12 +4,12 @@ import { closeSync, constants, fstatSync, lstatSync, mkdirSync, openSync, readFi
 import type { Stats } from 'node:fs'
 import { isIP } from 'node:net'
 import { join } from 'node:path'
-import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   buildAutomationRunItems, buildSessionFeedItems, mergeFeedItems,
   type FeedAutomationRunLike, type FeedItem, type FeedListResult, type FeedSessionLike,
   type XConnectionStatus, type FeedSource,
-} from '@craft-agent/shared/feed'
+} from '@rox/shared/feed'
 import type { NativeAuthority, NativePrincipal } from '../../authority/native-authority'
 import { FeedService } from '../../feed/feed-service'
 import type { FetchLike } from '../../feed/fetcher'

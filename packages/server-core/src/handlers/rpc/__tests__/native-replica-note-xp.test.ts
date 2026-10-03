@@ -13,7 +13,7 @@ test('canonical NativeReplica note commits award private first-note XP once with
     const [exit, stdout, stderr] = await Promise.all([proc.exited, new Response(proc.stdout).text(), new Response(proc.stderr).text()])
     expect({ exit, stderr }).toEqual({ exit: 0, stderr: '' })
     const checks: Array<{ name: string; passed: boolean }> = JSON.parse(stdout)
-    expect(checks).toHaveLength(28)
+    expect(checks).toHaveLength(33)
     expect(checks.filter(check => !check.passed)).toEqual([])
     if (process.env.QUEST_PROOF_DIR) {
       mkdirSync(process.env.QUEST_PROOF_DIR, { recursive: true })

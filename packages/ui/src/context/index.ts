@@ -1,5 +1,5 @@
 /**
- * Context exports for @craft-agent/ui
+ * Context exports for @rox/ui
  */
 
 export {

@@ -9,11 +9,11 @@ const playgroundHtml = readFileSync(
 )
 
 describe('electron vite worktree isolation', () => {
-  it('resolves @craft-agent packages from this checkout via package.json exports', () => {
+  it('resolves @rox packages from this checkout via package.json exports', () => {
     expect(config).toContain('function worktreeCraftPackagePlugin')
     expect(config).toContain('worktreeCraftPackagePlugin()')
-    expect(config).toContain("'@craft-agent/shared'")
-    expect(config).toContain("exclude: ['@craft-agent/ui', '@craft-agent/shared', '@craft-agent/core'")
+    expect(config).toContain("'@rox/shared'")
+    expect(config).toContain("exclude: ['@rox/ui', '@rox/shared', '@rox/core'")
   })
 
   it('lets the playground bind on 127.0.0.1 without a missing process global', () => {

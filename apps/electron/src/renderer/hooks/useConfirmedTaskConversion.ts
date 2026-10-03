@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { PersonalTask } from '@craft-agent/core/tasks/personal'
+import type { PersonalTask } from '@rox/core/tasks/personal'
 import { createPersonalTaskConfirmed } from '@/lib/extra-screens/personal-task-bridge'
 import { PersonalTaskCreationError } from '@/lib/personal-tasks-sync'
 

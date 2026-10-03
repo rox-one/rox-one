@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { BroInviteStore, type RoxAccount } from '@craft-agent/shared/collaboration'
+import { BroInviteStore, type RoxAccount } from '@rox/shared/collaboration'
 import { BroInviteService, resolveWorkspaceBroTarget, type WorkspaceBroTargetPorts } from './bro-invite-service.ts'
 
 const owner: RoxAccount = {

@@ -10,11 +10,11 @@ import { registerMessagingHandlers } from '../../messaging'
 import { registerSessionsHandlers } from '../../sessions'
 import { MemoryService, type NativeMemoryContext, type SessionCompletionLike } from '../../../../memory/MemoryService'
 import { projectNativeInboxChanged } from '../../native-inbox-events'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { MemoryProposalStore } from '../../../../memory/MemoryProposalStore'
 import { SkillPendingQueue } from '../../../../memory/SkillPendingQueue'
 import { LessonStore } from '../../../../memory/LessonStore'
-import { extractProposalsFromTranscript } from '@craft-agent/shared/memory/proposals'
+import { extractProposalsFromTranscript } from '@rox/shared/memory/proposals'
 import type { MessagingBindingInfo, MessagingPendingSenderInfo } from '../../../messaging-registry-interface'
 
 const directory = process.env.ROX_CONFIG_DIR!

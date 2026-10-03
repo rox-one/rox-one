@@ -17,7 +17,7 @@ import type {
   ResourceProviderRegistry,
   CommandRegistry,
   ContextKeyService,
-} from '@craft-agent/core/platform'
+} from '@rox/core/platform'
 import {
   Command,
   CommandEmpty,

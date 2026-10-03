@@ -18,8 +18,8 @@ import {
   type PersonalTaskCacheLoad,
   type PersonalTask,
   type PersonalTaskKv,
-} from '@craft-agent/core/tasks/personal'
-import type { PersonalTaskConflict } from '@craft-agent/core/tasks/personal'
+} from '@rox/core/tasks/personal'
+import type { PersonalTaskConflict } from '@rox/core/tasks/personal'
 import {
   bundleFromSnapshot,
   diffPersonalTaskBundles,
@@ -35,7 +35,7 @@ import {
 export {
   PERSONAL_TASKS_QUARANTINE_KEY,
   PERSONAL_TASKS_STORAGE_KEY,
-} from '@craft-agent/core/tasks/personal'
+} from '@rox/core/tasks/personal'
 
 export const PERSONAL_TASKS_CHANGED_EVENT = 'rox.personal-tasks.changed'
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { browserImportConsent, browserImportProfileSelection } from '../browser-import-consent'
-import { BROWSER_IMPORT_CATEGORIES } from '@craft-agent/shared/environment'
+import { BROWSER_IMPORT_CATEGORIES } from '@rox/shared/environment'
 
 describe('per-profile browser import scopes', () => {
   it('imports selected history and bookmarks before any cookie domains have been granted', () => {

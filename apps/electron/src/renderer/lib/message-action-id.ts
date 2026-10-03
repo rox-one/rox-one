@@ -1,4 +1,4 @@
-import type { Message } from '@craft-agent/core'
+import type { Message } from '@rox/core'
 
 /** Mounted optimistic ids are stable UI keys; commands need the server id. */
 export function messageActionId(messages: Message[], messageId: string): string {

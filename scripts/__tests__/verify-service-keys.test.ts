@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, it, spyOn } from 'bun:test'
+import fs from 'node:fs'
 import { chmodSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -65,6 +66,20 @@ describe('service credential validation and private provisioning', () => {
     expect(publishVerifiedServiceKeys(path, { EXA_API_KEY: 'new-fixture', BRAVE_API_KEY: 'brave-fixture' })).toBe(true)
     expect(readFileSync(path, 'utf8').split('\n')).toEqual(['DEEPGRAM_API_KEY=existing-fixture', 'EXA_API_KEY=new-fixture', 'BRAVE_API_KEY=brave-fixture', ''])
     if (process.platform !== 'win32') expect(statSync(path).mode & 0o777).toBe(0o600)
+  })
+  it('rejects a credential file replaced between checking and opening without publishing a new value', () => {
+    const path = join(dir, 'raced.env')
+    writeFileSync(path, 'EXA_API_KEY=previous-fixture\n', { mode: 0o600 })
+    const realOpen = fs.openSync
+    const mock = spyOn(fs, 'openSync').mockImplementation((name, flags, mode) => {
+      if (name === path) { fs.renameSync(path, path + '.old'); writeFileSync(path, 'EXA_API_KEY=replacement-fixture\n', { mode: 0o600 }) }
+      return realOpen(name, flags, mode)
+    })
+    try {
+      expect(() => publishVerifiedServiceKeys(path, { EXA_API_KEY: 'new-fixture' })).toThrow('private backend-owned')
+      expect(readFileSync(path + '.old', 'utf8')).toBe('EXA_API_KEY=previous-fixture\n')
+      expect(readFileSync(path, 'utf8')).toBe('EXA_API_KEY=replacement-fixture\n')
+    } finally { mock.mockRestore() }
   })
   it('rejects key injection, public existing files and symlinks without modifying their target', () => {
     const path = join(dir, 'private.env')

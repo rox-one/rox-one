@@ -9,7 +9,7 @@ import { parseAutomationsConfig } from '@/components/automations/types'
 import { useActiveWorkspace, useAppShellContext } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
 import { loadWorkspaceJson, saveWorkspaceJson, subscribeWorkspaceJson } from '@/lib/extra-screens/storage'
-import type { AgentBudgetSnapshot } from '@craft-agent/shared/agent'
+import type { AgentBudgetSnapshot } from '@rox/shared/agent'
 import { cn } from '@/lib/utils'
 import { Card, CardTitle, Chip, ScreenButton, ScreenDetail, ScreenHeader, ScreenRoot, TextField } from '../ui'
 import {

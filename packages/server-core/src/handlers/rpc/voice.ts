@@ -1,3 +1,4 @@
+import { readBoundedRegularFile } from '@rox/shared/utils/bounded-file'
 /**
  * Voice RPC — private actor preferences, client audio capture and Deepgram ASR.
  *
@@ -5,13 +6,13 @@
  * after explicit actor cloudAsrConsent. Remote clients never invoke server OS playback.
  */
 
-import { getServerServiceKey } from '@craft-agent/shared/config/server-services'
+import { getServerServiceKey } from '@rox/shared/config/server-services'
 import { arch } from 'node:os'
 import { randomUUID } from 'node:crypto'
 import { existsSync, lstatSync, readFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { resolveConfigDir } from '@craft-agent/shared/config/paths'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { resolveConfigDir } from '@rox/shared/config/paths'
 import {
   LAST_KNOWN_GOOD_CAPABILITIES,
   LOCAL_MODEL_FAMILIES,
@@ -48,11 +49,11 @@ import {
   type TranscribeInput,
   type VoicePrefs,
   type NormalizedTranscript,
-} from '@craft-agent/shared/voice'
-import type { HandlerFn, RequestContext, RpcServer, RpcHandlerOptions } from '@craft-agent/server-core/transport'
+} from '@rox/shared/voice'
+import type { HandlerFn, RequestContext, RpcServer, RpcHandlerOptions } from '@rox/server-core/transport'
 import { nativeVoiceDirectory, secureNativeVoiceDirectory, voiceRequestFence } from './native-voice-scope'
-import type { HistoryIndex, VoiceRecording } from '@craft-agent/shared/voice/history'
-import { pushTyped } from '@craft-agent/server-core/transport'
+import type { HistoryIndex, VoiceRecording } from '@rox/shared/voice/history'
+import { pushTyped } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { createSystemSpeaker, type SystemSpeaker } from './system-tts'
 import {
@@ -60,7 +61,7 @@ import {
   rpcVoiceActResult,
   rpcVoiceListResult,
   rpcVoiceReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.voice.GET,
@@ -495,9 +496,8 @@ export function registerVoiceHandlers(server: RpcServer, deps: HandlerDeps, opti
     if (!/^[a-f0-9-]{36}$/.test(recording.id)) throw new Error('Invalid recording identifier')
     const root = directory(context, 'write')
     const path = join(root, 'voice', 'recordings', recording.id, 'original.bin')
-    if (!existsSync(path) || !lstatSync(path).isFile() || lstatSync(path).isSymbolicLink()
-      || lstatSync(path).size > MAX_AUDIO_BYTES) throw new Error('Original recording is unavailable')
-    const result = await transcribe(context, readFileSync(path), audioMime(recording.format))
+    const original = readBoundedRegularFile(path, { maxBytes: MAX_AUDIO_BYTES })
+    const result = await transcribe(context, original, audioMime(recording.format))
     const prefs = readPrefs(context)
     const transcript = normalizedResult(result, prefs)
     const history = index(context)

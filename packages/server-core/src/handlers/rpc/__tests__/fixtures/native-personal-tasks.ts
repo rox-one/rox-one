@@ -6,9 +6,9 @@ import { WsRpcServer } from '../../../../transport/server'
 import { WsRpcClient } from '../../../../transport/client'
 import { personalTasksStore, registerPersonalTasksHandlers } from '../../personal-tasks'
 import { registerGamificationHandlers } from '../../gamification'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type { HandlerDeps } from '../../../handler-deps'
-import type { PersonalTask, PersonalTaskPutResult, PersonalTasksSnapshot } from '@craft-agent/core/tasks/personal'
+import type { PersonalTask, PersonalTaskPutResult, PersonalTasksSnapshot } from '@rox/core/tasks/personal'
 
 const config = realpathSync(process.env.CRAFT_CONFIG_DIR!), state = join(config, 'authority')
 let authority = new NativeAuthority({ stateDir: state })

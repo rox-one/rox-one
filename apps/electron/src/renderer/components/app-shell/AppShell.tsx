@@ -1,6 +1,6 @@
 import * as React from "react"
 import { useTranslation, Trans } from "react-i18next"
-import { isInternalAgentSession } from "@craft-agent/shared/sessions/internal-prompts"
+import { isInternalAgentSession } from "@rox/shared/sessions/internal-prompts"
 import { useRef, useState, useEffect, useCallback, useMemo } from "react"
 import { useAtomValue, useStore } from "jotai"
 import { motion, AnimatePresence } from "motion/react"
@@ -45,7 +45,7 @@ import { HeaderIconButton } from "@/components/ui/HeaderIconButton"
 import { resolveInheritedFilterParams, type FilterMode } from "./inherited-filter-params"
 import { HeaderMenu } from "@/components/ui/HeaderMenu"
 import { Separator } from "@/components/ui/separator"
-import { Tooltip, TooltipTrigger, TooltipContent } from "@craft-agent/ui"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@rox/ui"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -67,7 +67,7 @@ import {
 import { SessionList, type ChatGroupingMode } from "./SessionList"
 import { MainContentPanel } from "./MainContentPanel"
 import { CollectionViewChrome } from "./collection/CollectionViewChrome"
-import { getDefaultViews } from "@craft-agent/shared/views"
+import { getDefaultViews } from "@rox/shared/views"
 import { collectionViewRoute, isCollectionCanvasView, rememberCollectionView, resolveCycleTarget } from "./collection/collection-view-cycle"
 import type { CollectionViewMode } from "./kanban/BoardListToggle"
 import { PanelStackContainer } from "./PanelStackContainer"
@@ -102,6 +102,8 @@ import {
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
 import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { useInspectorSuppressed } from "@/platform/inspector-suppression"
+import { WorkspaceBrowserRegistry } from "../browser/WorkspaceBrowserRegistry"
+import { featureWorkbenchBrowserSurfaceV2Atom } from "@/atoms/unified-shell"
 import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom, bottomTerminalOpenAtom, bottomDockHeightAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
@@ -120,7 +122,7 @@ import { collectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collect
 import { CompactSessionListFilter } from "./CompactSessionListFilter"
 import { collectionFiltersAtom, collectionFilterKeyAtom } from "@/atoms/collection-filters"
 import { chipsAfterRailChange, railViewNavigation, skipRailChipClearOnce, userSliceNavigation } from "./collection/collection-rail-filters"
-import { compareSessions, DEFAULT_COLLECTION_FILTERS, filterSessionMeta } from "@craft-agent/shared/sessions/collection"
+import { compareSessions, DEFAULT_COLLECTION_FILTERS, filterSessionMeta } from "@rox/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
 import { skillsAtom } from "@/atoms/skills"
 import { panelStackAtom, panelCountAtom, focusedPanelIdAtom, focusedSessionIdAtom, focusNextPanelAtom, focusPrevPanelAtom, parseSessionIdFromRoute } from "@/atoms/panel-stack"
@@ -130,9 +132,9 @@ import { useLabels } from "@/hooks/useLabels"
 import { useViews } from "@/hooks/useViews"
 import { useContainerWidth } from "@/hooks/useContainerWidth"
 import { LabelIcon, LabelValueTypeIcon } from "@/components/ui/label-icon"
-import { buildLabelTree, getDescendantIds, getLabelDisplayName, flattenLabels, extractLabelId, findLabelById, sortLabelsForDisplay, matchesLabelFilter } from "@craft-agent/shared/labels"
-import type { LabelConfig, LabelTreeNode } from "@craft-agent/shared/labels"
-import { resolveEntityColor } from "@craft-agent/shared/colors"
+import { buildLabelTree, getDescendantIds, getLabelDisplayName, flattenLabels, extractLabelId, findLabelById, sortLabelsForDisplay, matchesLabelFilter } from "@rox/shared/labels"
+import type { LabelConfig, LabelTreeNode } from "@rox/shared/labels"
+import { resolveEntityColor } from "@rox/shared/colors"
 import * as storage from "@/lib/local-storage"
 import { commitShellLayout, loadShellLayout, NAVIGATOR_WIDTH_DEFAULT, NAVIGATOR_WIDTH_MAX, NAVIGATOR_WIDTH_MIN, SIDEBAR_WIDTH_DEFAULT, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from "@/lib/shell-layout-preferences"
 import { toast } from "sonner"
@@ -240,6 +242,7 @@ export function AppShell(props: AppShellProps) {
     <EscapeInterruptProvider>
       {mini ? (
         <AppShellProvider value={props.contextValue}>
+          <WorkspaceBrowserRegistry />
           <MiniSessionSurface />
         </AppShellProvider>
       ) : (
@@ -300,6 +303,7 @@ function AppShellContent({
     return storage.get(storage.KEYS.sidebarVisible, !defaultCollapsed)
   })
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
+  const browserSurfaceEnabled = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)
   const harnessInspectorEnabled = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
   const inspectorSuppressed = useInspectorSuppressed()
   const statusBarEnabled = useAtomValue(featureWorkbenchStatusBarV1Atom)
@@ -989,7 +993,9 @@ function AppShellContent({
   // Reset UI state when workspace changes
   // This prevents stale search queries, focused items, and filter state from persisting
   const previousWorkspaceRef = React.useRef<string | null>(null)
-  React.useEffect(() => {
+  const [workspaceUiStateId, setWorkspaceUiStateId] = React.useState<string | null>(null)
+  // Cancel gestures synchronously before a queued timer can use new handlers.
+  React.useLayoutEffect(() => {
     if (!activeWorkspaceId) return
 
     const previousWorkspaceId = previousWorkspaceRef.current
@@ -1007,6 +1013,14 @@ function AppShellContent({
     // Load workspace-scoped state on BOTH initial mount AND workspace switch
     // This fixes CMD+R losing filters - previously only ran on workspace switch
     if (previousWorkspaceId !== activeWorkspaceId) {
+      // Cancel pointer/keyboard previews before restoring the next workspace,
+      // so a delayed commit cannot save old dimensions under the new id.
+      sidebarResize.handleKeyCancel()
+      navigatorResize.handleKeyCancel()
+      const layout = loadShellLayout(activeWorkspaceId)
+      setSidebarWidth(layout.sidebarWidth)
+      setSessionListWidth(layout.navigatorWidth)
+
       const newViewFilters = storage.get<ViewFiltersMap>(storage.KEYS.viewFilters, {}, activeWorkspaceId)
       setViewFiltersMap(newViewFilters)
 
@@ -1017,37 +1031,29 @@ function AppShellContent({
       setCollapsedItems(newCollapsedItems !== null ? new Set(newCollapsedItems) : new Set(['nav:labels']))
     }
 
+    setWorkspaceUiStateId(activeWorkspaceId)
     previousWorkspaceRef.current = activeWorkspaceId
   }, [activeWorkspaceId])
 
-  // Load sources from backend on mount
+  // A live update is newer than the initial snapshot; obsolete loads must not
+  // resurrect deleted entities or cross a workspace boundary.
   React.useEffect(() => {
+    let disposed = false
+    let updated = false
+    setSources([])
     if (!activeWorkspaceId) return
-    window.electronAPI.getSources(activeWorkspaceId).then((loaded) => {
-      setSources(loaded || [])
-    }).catch(err => {
-      console.error('[Chat] Failed to load sources:', err)
-    })
-  }, [activeWorkspaceId])
-
-  // Subscribe to live source updates (when sources are added/removed dynamically)
-  React.useEffect(() => {
     const cleanup = window.electronAPI.onSourcesChanged((workspaceId, updatedSources) => {
-      if (workspaceId !== activeWorkspaceId) return
-      // Clear icon cache so updated source icons are re-fetched on render
+      if (disposed || workspaceId !== activeWorkspaceId) return
+      updated = true
       clearSourceIconCaches()
       setSources(updatedSources || [])
     })
-    return cleanup
-  }, [activeWorkspaceId])
-
-  // Subscribe to live skill updates (when skills are added/removed dynamically)
-  React.useEffect(() => {
-    const cleanup = window.electronAPI.onSkillsChanged((workspaceId, updatedSkills) => {
-      if (workspaceId !== activeWorkspaceId) return
-      setSkills(updatedSkills || [])
+    window.electronAPI.getSources(activeWorkspaceId).then((loaded) => {
+      if (!disposed && !updated) setSources(loaded || [])
+    }).catch(err => {
+      if (!disposed && !updated) console.error('[Chat] Failed to load sources:', err)
     })
-    return cleanup
+    return () => { disposed = true; cleanup() }
   }, [activeWorkspaceId])
 
   // Handle session source selection changes
@@ -1425,12 +1431,26 @@ function AppShellContent({
     ? sessionMetaMap.get(session.selected)?.workingDirectory
     : undefined
   React.useEffect(() => {
+    let disposed = false
+    let revision = 0
+    setSkills([])
     if (!activeWorkspaceId) return
-    window.electronAPI.getSkills(activeWorkspaceId, activeSessionWorkingDirectory).then((loaded) => {
-      setSkills(loaded || [])
-    }).catch(err => {
-      console.error('[Chat] Failed to load skills:', err)
+    const load = () => {
+      const request = ++revision
+      window.electronAPI.getSkills(activeWorkspaceId, activeSessionWorkingDirectory).then((loaded) => {
+        if (!disposed && request === revision) setSkills(loaded || [])
+      }).catch(err => {
+        if (!disposed && request === revision) console.error('[Chat] Failed to load skills:', err)
+      })
+    }
+    const cleanup = window.electronAPI.onSkillsChanged((workspaceId) => {
+      if (disposed || workspaceId !== activeWorkspaceId) return
+      // Watcher payloads omit project skills and shadowed OMP variants.
+      // Refresh with the same directory/options as the canonical initial list.
+      load()
     })
+    load()
+    return () => { disposed = true; revision += 1; cleanup() }
   }, [activeWorkspaceId, activeSessionWorkingDirectory])
 
   // Filter session metadata by active workspace
@@ -1736,9 +1756,9 @@ function AppShellContent({
   }), [contextValue, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, projects, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, automationTestResults, getAutomationHistory, handleReplayAutomation])
   // Persist expanded folders to localStorage (workspace-scoped)
   React.useEffect(() => {
-    if (!activeWorkspaceId) return
+    if (!activeWorkspaceId || workspaceUiStateId !== activeWorkspaceId) return
     storage.set(storage.KEYS.expandedFolders, [...expandedFolders], activeWorkspaceId)
-  }, [expandedFolders, activeWorkspaceId])
+  }, [expandedFolders, activeWorkspaceId, workspaceUiStateId])
 
   // Persist sidebar visibility to localStorage
   React.useEffect(() => {
@@ -1780,16 +1800,16 @@ function AppShellContent({
 
   // Persist per-view filter map to localStorage (workspace-scoped)
   React.useEffect(() => {
-    if (!activeWorkspaceId) return
+    if (!activeWorkspaceId || workspaceUiStateId !== activeWorkspaceId) return
     storage.set(storage.KEYS.viewFilters, viewFiltersMap, activeWorkspaceId)
-  }, [viewFiltersMap, activeWorkspaceId])
+  }, [viewFiltersMap, activeWorkspaceId, workspaceUiStateId])
 
   // Persist sidebar section collapsed states (workspace-scoped)
   React.useEffect(() => {
-    if (!activeWorkspaceId) return
+    if (!activeWorkspaceId || workspaceUiStateId !== activeWorkspaceId) return
     storage.set(storage.KEYS.collapsedSidebarItems, [...collapsedItems], activeWorkspaceId)
     commitShellLayout({ workspaceId: activeWorkspaceId, collapsedSectionIds: [...collapsedItems] })
-  }, [collapsedItems, activeWorkspaceId])
+  }, [collapsedItems, activeWorkspaceId, workspaceUiStateId])
 
   const handleAllSessionsClick = useCallback(() => {
     navigate(routes.view.allSessions())
@@ -2691,6 +2711,7 @@ function AppShellContent({
   )
   return (
     <AppShellProvider value={appShellContextValue}>
+      <WorkspaceBrowserRegistry enabled={browserSurfaceEnabled} />
       <ShellSidebarContext.Provider value={isAutoCompact ? null : shellSidebarSlot}>
         {/* === TOP BAR === */}
         <TopBar

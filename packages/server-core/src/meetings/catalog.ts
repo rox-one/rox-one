@@ -3,8 +3,8 @@
  * Fail-closed without grant or persist root. Start stays `planned`.
  */
 import { randomUUID } from 'node:crypto'
-import { emptyMeeting, type Meeting } from '@craft-agent/core/meetings'
-import { authorizeMeetingAction, type MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import { emptyMeeting, type Meeting } from '@rox/core/meetings'
+import { authorizeMeetingAction, type MeetingGrant } from '@rox/shared/meeting-agents'
 import { queryMeetings } from './queries.ts'
 import { MeetingJournal } from './journal.ts'
 

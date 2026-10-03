@@ -5,7 +5,7 @@ import {
   type GithubOAuthHttpClient,
   type InProcessCredentialBroker,
   type LocalFileSecretProvider,
-} from '@craft-agent/shared/credentials'
+} from '@rox/shared/credentials'
 
 import type { ConnectionRecord, WorkGraphKernel } from './index'
 
@@ -113,7 +113,7 @@ export function createGithubDeviceFlow(deps: {
   readonly commit?: typeof commitGithubOAuthImport
   readonly newId?: () => string
 }) {
-  const flows = new Map<string, { deviceCode: string }>()
+  const flows = new Map<string, { deviceCode: string; polling: boolean; committing: boolean }>()
   const start = deps.start ?? startDeviceLogin
   const poll = deps.poll ?? pollDeviceLogin
   const commit = deps.commit ?? commitGithubOAuthImport
@@ -123,7 +123,7 @@ export function createGithubDeviceFlow(deps: {
       if (!deps.clientId) throw new Error('missing_client_id')
       const started = await start(deps.http, { clientId: deps.clientId, scope: 'read:user' })
       const flowId = newId()
-      flows.set(flowId, { deviceCode: started.deviceCode })
+      flows.set(flowId, { deviceCode: started.deviceCode, polling: false, committing: false })
       const view: GithubDeviceStartView = {
         flowId,
         userCode: started.userCode,
@@ -139,18 +139,30 @@ export function createGithubDeviceFlow(deps: {
     async poll(input: { flowId: string; workspaceId: string }): Promise<GithubDevicePollView> {
       const flow = flows.get(input.flowId)
       if (!flow) throw new Error('unknown_flow')
-      const result = await poll(deps.http, { clientId: deps.clientId, deviceCode: flow.deviceCode })
+      if (flow.polling || flow.committing) throw new Error('poll_in_progress')
+      flow.polling = true
+      let result: Awaited<ReturnType<typeof poll>>
+      try {
+        result = await poll(deps.http, { clientId: deps.clientId, deviceCode: flow.deviceCode })
+      } finally {
+        flow.polling = false
+      }
+      if (flows.get(input.flowId) !== flow) throw new Error('unknown_flow')
       if (result.status === 'approved') {
-        flows.delete(input.flowId)
-        const connection = await commit({
-          accessToken: result.accessToken,
-          provider: deps.provider,
-          kernel: deps.kernel,
-          workspaceId: input.workspaceId,
-          requestedBy: deps.requestedBy ?? 'owner',
-          broker: deps.broker,
-        })
-        return { status: 'imported', connectionId: connection.id }
+        flow.committing = true
+        try {
+          const connection = await commit({
+            accessToken: result.accessToken,
+            provider: deps.provider,
+            kernel: deps.kernel,
+            workspaceId: input.workspaceId,
+            requestedBy: deps.requestedBy ?? 'owner',
+            broker: deps.broker,
+          })
+          return { status: 'imported', connectionId: connection.id }
+        } finally {
+          flows.delete(input.flowId)
+        }
       }
       if (result.status === 'denied' || result.status === 'expired') {
         flows.delete(input.flowId)
@@ -162,6 +174,7 @@ export function createGithubDeviceFlow(deps: {
       }
     },
     async cancel(flowId: string): Promise<{ cancelled: true }> {
+      if (flows.get(flowId)?.committing) throw new Error('commit_in_progress')
       flows.delete(flowId)
       const out = { cancelled: true as const }
       if ('deviceCode' in out || 'accessToken' in out) {

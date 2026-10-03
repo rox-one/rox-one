@@ -2,7 +2,7 @@
  * Messaging RPC handlers — UI ↔ Server communication for messaging config and bindings.
  */
 
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type { RequestContext, RpcServer } from '../../transport/types'
 import type { HandlerDeps } from '../handler-deps'
 import type {
@@ -17,11 +17,11 @@ import {
   rpcMessagingActResult,
   rpcMessagingListResult,
   rpcMessagingReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import { assertNativeInboxPath, assertNativeInboxWorkspace, isInboxOwner, nativeInboxOwner } from './native-inbox-scope'
 import { assertNativeSession } from './native-session-scope'
 import { readNativeWorkspaceRegistry } from './native-workspace-registry'
-import { CodedError } from '@craft-agent/shared/protocol'
+import { CodedError } from '@rox/shared/protocol'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'
 import { dirname } from 'node:path'
 

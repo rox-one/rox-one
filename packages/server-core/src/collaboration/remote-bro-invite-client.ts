@@ -6,7 +6,7 @@ import {
   requireRemoteSessionProjection,
   type RemoteSessionProjection,
   type SessionPublicationInput,
-} from '@craft-agent/shared/collaboration'
+} from '@rox/shared/collaboration'
 
 export class RemoteBroInvitationError extends Error {
   constructor(readonly code: 'membership_required' | 'forbidden' | 'invalid' | 'remote_unavailable') {

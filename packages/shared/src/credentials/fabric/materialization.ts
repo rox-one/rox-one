@@ -1,4 +1,4 @@
-import type { CredentialKind, CredentialRefId } from '@craft-agent/core/platform';
+import type { CredentialKind, CredentialRefId } from '@rox/core/platform';
 import type { StoredCredential } from '../types.ts';
 import type { ProviderMaterialization } from './types.ts';
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import { buildInviteUrl } from '@craft-agent/shared/collaboration'
-import { VIEWER_URL } from '@craft-agent/shared/branding'
+import { buildInviteUrl } from '@rox/shared/collaboration'
+import { VIEWER_URL } from '@rox/shared/branding'
 import {
   SessionLinkError, acceptSessionInvite, copySessionLink, createSessionLink, joinAndOpenSession, parseSessionLink,
 } from '../session-sharing'

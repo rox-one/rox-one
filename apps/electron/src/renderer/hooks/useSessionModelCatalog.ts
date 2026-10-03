@@ -1,5 +1,5 @@
 import * as React from 'react'
-import type { SessionModelCatalog, StartupRuntimeSummary } from '@craft-agent/shared/protocol'
+import type { SessionModelCatalog, StartupRuntimeSummary } from '@rox/shared/protocol'
 
 type CatalogState = { status: 'pending' | 'error' | 'ready'; catalog?: SessionModelCatalog | null }
 

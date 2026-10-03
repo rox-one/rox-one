@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import type { Database, Transaction } from '@tursodatabase/database'
-import { atomicWriteFileSync } from '@craft-agent/shared/utils'
+import { atomicWriteFileSync } from '@rox/shared/utils'
 
 const WORKGRAPH_DIRECTORY = 'workgraph'
 const DATABASE_FILENAME = 'workgraph.db'
@@ -647,7 +647,7 @@ export class WorkGraphKernel {
     assertOpaqueId(workspaceId, 'workspace ID')
     if (connectionId) assertOpaqueId(connectionId, 'connection ID')
     const eventTypes = (
-      "'connection-audit', 'connection-revoked', 'connection-rotated', 'connection-repaired', 'connection-converted', 'connection-binding-revoked'"
+      "'connection-audit', 'connection-revoked', 'connection-rotated', 'connection-repaired', 'connection-reconnected', 'connection-moved', 'connection-converted', 'connection-binding-revoked'"
     )
     const sql = connectionId
       ? `SELECT object_id, event_type, occurred_at, actor_id, outcome, payload_digest
@@ -693,7 +693,7 @@ export class WorkGraphKernel {
     action: string
     decision: 'allow' | 'deny'
     versionFingerprint?: string
-    eventType?: 'connection-audit' | 'connection-revoked' | 'connection-rotated' | 'connection-repaired' | 'connection-converted' | 'connection-binding-revoked'
+    eventType?: 'connection-audit' | 'connection-revoked' | 'connection-rotated' | 'connection-repaired' | 'connection-reconnected' | 'connection-moved' | 'connection-converted' | 'connection-binding-revoked'
   }): Promise<void> {
     const database = await this.requireDatabase()
     assertOpaqueId(input.workspaceId, 'workspace ID')
@@ -1111,6 +1111,9 @@ class WorkGraphIntegrityError extends Error {}
 
 export {
   convertCopyToReferenceAndRevalidate,
+  listConnectionLeases,
+  moveConnectionBackendAndRevalidate,
+  reconnectConnectionAndRevalidate,
   repairConnectionAndRevalidate,
   revokeConnectionAndRevalidate,
   revokeConnectionBindingAndRevalidate,
@@ -1118,6 +1121,10 @@ export {
 } from './revalidation.ts'
 export type {
   ConvertConnectionInput,
+  ActiveLeaseView,
+  MoveConnectionInput,
+  ReconnectConnectionInput,
+  RevokedLeaseView,
   RepairConnectionInput,
   RevokeBindingInput,
   RevokeConnectionInput,

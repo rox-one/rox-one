@@ -2,15 +2,15 @@ import { open, realpath, lstat, mkdir, readdir, readFile, rename, rm, stat, unli
 import { existsSync, constants } from 'fs'
 import { createHash } from 'node:crypto'
 import { basename, dirname, extname, join, relative, resolve, sep } from 'path'
-import { getWorkspaceByNameOrId, isImportProvenancedRelativePath } from '@craft-agent/shared/config'
-import { getDefaultWorkspacesDir } from '@craft-agent/shared/workspaces'
-import { loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
+import { getWorkspaceByNameOrId, isImportProvenancedRelativePath } from '@rox/shared/config'
+import { getDefaultWorkspacesDir } from '@rox/shared/workspaces'
+import { loadWorkspaceConfig } from '@rox/shared/workspaces'
 import matter from 'gray-matter'
 import yaml from 'js-yaml'
-import { RPC_CHANNELS, type FileAttachment, type NoteAsset, type NoteAssetRenameResult, type NoteBacklink, type NoteChangedPayload, type NoteDocument, type NoteIndexHealth, type NoteLink, type NoteMutationOptions, type NoteRenameImpact, type NoteSummary } from '@craft-agent/shared/protocol'
-import type { NativeReplicaCreatePlan } from '@craft-agent/shared/protocol/native-replica'
-import { pushTyped, type RpcServer, type RequestContext } from '@craft-agent/server-core/transport'
-import { sanitizeFilename } from '@craft-agent/server-core/handlers'
+import { RPC_CHANNELS, type FileAttachment, type NoteAsset, type NoteAssetRenameResult, type NoteBacklink, type NoteChangedPayload, type NoteDocument, type NoteIndexHealth, type NoteLink, type NoteMutationOptions, type NoteRenameImpact, type NoteSummary } from '@rox/shared/protocol'
+import type { NativeReplicaCreatePlan } from '@rox/shared/protocol/native-replica'
+import { pushTyped, type RpcServer, type RequestContext } from '@rox/server-core/transport'
+import { sanitizeFilename } from '@rox/server-core/handlers'
 import type { HandlerDeps } from '../handler-deps'
 import type { NativePrincipal } from '../../authority/native-authority.ts'
 import type { JournalEntitySnapshot, JournalReceipt } from '../../authority/native-journal.ts'
@@ -19,11 +19,11 @@ import { markdownRevision, type MarkdownChangedEvent, type NativeMarkdownChange,
 
 type NativeNoteWriter = (reason: MarkdownChangedEvent['reason'], changes: NativeMarkdownChange[]) => Promise<unknown>
 type NativeFolderReader = (folder: string) => Promise<NativeFolderSnapshot | null>
-import { CodedError } from '@craft-agent/shared/protocol'
-import { previewPropertyDictionary } from '@craft-agent/core/docs'
-import { parseRox2EntityId } from '@craft-agent/core/rox2'
+import { CodedError } from '@rox/shared/protocol'
+import { previewPropertyDictionary } from '@rox/core/docs'
+import { parseRox2EntityId } from '@rox/core/rox2'
 import { createDescriptorResolver, FileDescriptorStore, type ContentOwner, type ContentPolicy } from '../../docs/descriptor-resolver.ts'
-import { awardXpSafe } from '@craft-agent/shared/gamification'
+import { awardXpSafe } from '@rox/shared/gamification'
 import { awardNativeXpAndBroadcast } from './gamification'
 import {
   contentHash,
@@ -31,7 +31,7 @@ import {
   rpcNotesActResult,
   rpcNotesListResult,
   rpcNotesReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import {
   applyVaultWatchTick,
   ensureVaultIndex,
@@ -1161,6 +1161,25 @@ async function moveNoteInFilesystem(notesRoot: string, noteId: string, targetFol
   await mkdir(dirname(targetPath), { recursive: true })
   await rename(sourcePath, targetPath)
   return readNote(notesRoot, nextId)
+}
+
+/** Read-only Knowledge projection of the same authenticated canonical Notes. */
+export function nativeNotesKnowledgeAccess(deps: HandlerDeps, ctx: RequestContext) {
+  if (!ctx.workspaceId) throw new CodedError('AUTH_FAILED', 'Native Notes workspace is required')
+  const context = nativeNotesContext(deps, ctx, ctx.workspaceId, 'read')
+  return {
+    connectionId: `local-markdown:${context.workspaceId}`,
+    assertRead: () => assertNativeNotesFences(deps, context),
+    async list() {
+      assertNativeNotesFences(deps, context)
+      const entities = await nativeNoteEntities(deps, context)
+      const documents = await Promise.all(entities.flatMap(entity =>
+        entity.files.filter(file => file.path.startsWith(`${NOTES_DIR}/`) && file.path.endsWith('.md'))
+          .map(file => nativeNoteDocument(deps, context, entity, file, entities))))
+      assertNativeNotesFences(deps, context)
+      return documents
+    },
+  }
 }
 
 export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): void {

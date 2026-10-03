@@ -13,7 +13,7 @@ class TestPool extends McpClientPool {
   connectCalls: Array<{ slug: string; config: SdkMcpServerConfig }> = [];
   closedSlugs: string[] = [];
 
-  override async connect(slug: string, config: SdkMcpServerConfig): Promise<void> {
+  protected override async connectSource(slug: string, config: SdkMcpServerConfig): Promise<void> {
     this.connectCalls.push({ slug, config });
     const self = this;
     const fake: PoolClient = {

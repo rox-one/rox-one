@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import {
   MEETING_PROFILE_IDS,
   type MeetingProfileId,
-} from '@craft-agent/shared/meeting-agents'
+} from '@rox/shared/meeting-agents/browser'
 
 const RECIPE_LABEL: Record<MeetingProfileId, string> = {
   standup: 'meetings.recipeStandup',

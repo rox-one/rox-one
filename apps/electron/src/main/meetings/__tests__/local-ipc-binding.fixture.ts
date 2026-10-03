@@ -3,7 +3,7 @@ import { mock } from 'bun:test'
 import { EventEmitter } from 'node:events'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { saveConfig } from '@craft-agent/shared/config/storage'
+import { saveConfig } from '@rox/shared/config/storage'
 import { MEETINGS_LOCAL_IPC as C } from '../../../shared/meetings-local'
 
 const directory = process.env.CRAFT_CONFIG_DIR!

@@ -1,4 +1,4 @@
-import type { Session } from '@craft-agent/shared/protocol'
+import type { Session } from '@rox/shared/protocol'
 import {
   MAX_SESSION_PUBLICATION_BYTES,
   MAX_SESSION_PUBLICATION_MESSAGES,
@@ -6,7 +6,7 @@ import {
   MAX_SESSION_PUBLICATION_WORKSPACE_NAME_LENGTH,
   requireSessionPublicationInput,
   type SessionPublicationInput,
-} from '@craft-agent/shared/collaboration/session-publication'
+} from '@rox/shared/collaboration/session-publication'
 
 /** Display limits use UTF-16 lengths, without publishing half a Unicode scalar. */
 function boundedDisplayName(value: string, maximum: number): string {

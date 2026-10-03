@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { createPanelRegistry, type PanelContribution } from '@craft-agent/core/platform'
+import { createPanelRegistry, type PanelContribution } from '@rox/core/platform'
 import {
   DEFAULT_PANEL_REGISTRY_STATE,
   applyPanelOverrides,

@@ -1,6 +1,6 @@
-import { parseInviteUrl, requireRemoteSessionProjection, type JoinResult, type RemoteSessionProjection } from '@craft-agent/shared/collaboration'
-import { VIEWER_URL } from '@craft-agent/shared/branding'
-import type { SessionCommand } from '@craft-agent/shared/protocol'
+import { parseInviteUrl, requireRemoteSessionProjection, type JoinResult, type RemoteSessionProjection } from '@rox/shared/collaboration'
+import { VIEWER_URL } from '@rox/shared/branding'
+import type { SessionCommand } from '@rox/shared/protocol'
 
 export const JOIN_SESSION_EVENT = 'craft:join-session'
 export const SESSION_LINK_EVENT = 'craft:session-link'

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { isClaimableLive, normalizeRox2Result } from '@craft-agent/core/rox2'
+import { isClaimableLive, normalizeRox2Result } from '@rox/core/rox2'
 import { SETTINGS_PAGES } from '../../../../shared/settings-registry.ts'
 import {
   ROX2_SETTINGS_WAVE2_PAGE_IDS,
@@ -164,6 +164,6 @@ describe('ROX2-044..046 native settings pages', () => {
     expect(mock).not.toContain('conation.dev')
     const context = source(PAGE_FILES.context)
     expect(context).toContain('onContextDocsChanged?.(')
-    expect(context).not.toContain('@craft-agent/shared/config/paths')
+    expect(context).not.toContain('@rox/shared/config/paths')
   })
 })

@@ -20,7 +20,7 @@
 import { existsSync } from 'fs'
 import { join } from 'path'
 import type { Database } from 'bun:sqlite'
-import type { Lesson } from '@craft-agent/shared/memory/types'
+import type { Lesson } from '@rox/shared/memory/types'
 
 /**
  * bun:sqlite доступен ТОЛЬКО под bun-рантаймом: electron-main (node) без lazy-резолва

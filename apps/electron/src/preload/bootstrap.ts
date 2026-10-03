@@ -24,9 +24,9 @@ import { ProjectAuthorityConnection } from '../transport/project-authority-conne
 import { PROJECT_AUTHORITY_IPC, PROJECT_AUTHORITY_CONNECT_IPC, PROJECT_AUTHORITY_DISCONNECT_IPC, PROJECT_AUTHORITY_CONFIGURATION_IPC, type ProjectAuthorityTarget, type ProjectAuthorityConfiguration, type ProjectAuthorityMutationResult } from '../shared/project-authority'
 import { buildClientApi } from '../transport/build-api'
 import { CHANNEL_MAP } from '../transport/channel-map'
-import { createCallbackServer } from '@craft-agent/shared/auth/callback-server'
+import { createCallbackServer } from '@rox/shared/auth/callback-server'
 import { createNativeReplicaBridge } from './native-replica'
-import { CHATGPT_OAUTH_CONFIG } from '@craft-agent/shared/auth/chatgpt-oauth-config'
+import { CHATGPT_OAUTH_CONFIG } from '@rox/shared/auth/chatgpt-oauth-config'
 import {
   isOAuthFlowCancelledError,
   OAuthFlowTimedOutError,
@@ -40,16 +40,17 @@ import {
   CLIENT_OPEN_FILE_DIALOG,
   CLIENT_BROWSER_INVOKE,
   LOCAL_CLIENT_CAPABILITIES,
-} from '@craft-agent/server-core/transport'
-import type { ConfirmDialogSpec, FileDialogSpec, BrowserCapabilityRequest } from '@craft-agent/server-core/transport'
-import type { RpcClient } from '@craft-agent/server-core/transport'
-import type { RemoteServerConfig } from '@craft-agent/core/types'
+} from '@rox/server-core/transport'
+import type { ConfirmDialogSpec, FileDialogSpec, BrowserCapabilityRequest } from '@rox/server-core/transport'
+import type { RpcClient } from '@rox/server-core/transport'
+import type { RemoteServerConfig } from '@rox/core/types'
 import type { ElectronAPI, SshBootstrapProgress, SshConnectionStatus } from '../shared/types'
 import { isSshBacked } from '../shared/ssh'
 import { MEETINGS_LOCAL_IPC, type MeetingsLocalApi } from '../shared/meetings-local'
 import { MAIL_IPC, type MailLocalApi } from '../shared/mail-local'
 import { peerTrustOptionsForRemote } from '../shared/remote-tls-client-options.ts'
 import { createOpenClawHostControlBridge } from './openclaw-host-control'
+import { createDeviceDiagnosticsBridge } from './device-diagnostics'
 
 // ---------------------------------------------------------------------------
 // Client interface — common surface for both RoutedClient and WsRpcClient
@@ -271,6 +272,26 @@ api.retrySharedProjectCreate = async workspaceId => {
 api.cancelSharedProjectCreate = async workspaceId => {
   if (!projectAuthority) return { state: 'blocked', eligible: false, code: 'CAPABILITY_UNAVAILABLE' }
   const result: import('../shared/project-create-intent').ProjectCreateIntentView = await ipcRenderer.invoke('__project-create-intent', workspaceId, 'cancel')
+  return result
+}
+api.getLicenseAuditIntent = async workspaceId => {
+  if (!projectAuthority) return { state: 'none', eligible: false }
+  const result: import('../shared/license-audit-intent').LicenseAuditIntentView = await ipcRenderer.invoke('__license-audit-intent', workspaceId, 'get')
+  return result
+}
+api.queueLicenseAudit = async (workspaceId, body) => {
+  if (!projectAuthority || projectAuthority.getState() === 'unconfigured') return { state: 'blocked', eligible: false, code: 'AUTH_FAILED' }
+  const result: import('../shared/license-audit-intent').LicenseAuditIntentView = await ipcRenderer.invoke('__license-audit-intent', workspaceId, 'queue', body)
+  return result
+}
+api.retryLicenseAudit = async workspaceId => {
+  if (!projectAuthority || projectAuthority.getState() === 'unconfigured') return { state: 'blocked', eligible: false, code: 'AUTH_FAILED' }
+  const result: import('../shared/license-audit-intent').LicenseAuditAttempt = await ipcRenderer.invoke('__license-audit-intent', workspaceId, 'retry')
+  return result
+}
+api.cancelLicenseAudit = async workspaceId => {
+  if (!projectAuthority) return { state: 'blocked', eligible: false, code: 'CAPABILITY_UNAVAILABLE' }
+  const result: import('../shared/license-audit-intent').LicenseAuditIntentView = await ipcRenderer.invoke('__license-audit-intent', workspaceId, 'cancel')
   return result
 }
 api.connectProjectAuthority = async (workspaceId, input) => {
@@ -707,6 +728,12 @@ client.onConnectionStateChanged((state) => {
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)
+// Host diagnostics always describe this device, including for remote workspaces.
+if (process.isMainFrame) {
+  contextBridge.exposeInMainWorld('deviceDiagnostics', createDeviceDiagnosticsBridge(
+    (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+  ))
+}
 if (openClawHostControl) {
   contextBridge.exposeInMainWorld('openClawHostControl', openClawHostControl)
 }

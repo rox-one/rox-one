@@ -8,7 +8,7 @@ import { describe, expect, it, afterEach } from 'bun:test'
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import type { Lesson } from '@craft-agent/shared/memory/types'
+import type { Lesson } from '@rox/shared/memory/types'
 import { closeAll, removeLesson, search, upsertContext, upsertHistory, upsertLesson } from '../fts-index'
 
 function lesson(rule: string, scope: 'global' | 'workspace' = 'workspace', ts = '2026-08-06T00:00:00.000Z'): Lesson {

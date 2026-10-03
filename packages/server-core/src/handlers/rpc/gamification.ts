@@ -5,7 +5,7 @@
  * Balance has no billing API yet → null → UI shows em dash.
  */
 
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   applyQuestAction,
   awardXp,
@@ -26,9 +26,9 @@ import {
   type QuestRecord,
   type SessionRating,
   type XpEventType,
-} from '@craft-agent/shared/gamification'
-import type { RpcServer } from '@craft-agent/server-core/transport'
-import { pushTyped } from '@craft-agent/server-core/transport'
+} from '@rox/shared/gamification'
+import type { RpcServer } from '@rox/server-core/transport'
+import { pushTyped } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import type { RequestContext } from '../../transport/types'
 import { NativeGamificationStore } from './native-gamification'
@@ -37,7 +37,7 @@ import {
   rpcGamificationActResult,
   rpcGamificationListResult,
   rpcGamificationReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.gamification.GET,

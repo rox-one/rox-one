@@ -18,7 +18,7 @@ const {RPC_CHANNELS}=await import('./packages/shared/src/protocol/index.ts');
 const {saveConfig}=await import('./packages/shared/src/config/storage.ts');
 const configDir=realpathSync(process.env.ROX_CONFIG_DIR);
 const ownRoot=join(configDir,'workspace-a'),foreignRoot=join(configDir,'workspace-b');mkdirSync(ownRoot);mkdirSync(foreignRoot);
-const own={id:'workspace-a',name:'Authorized Workspace',rootPath:ownRoot,createdAt:1,kind:'personal',remoteServer:{url:'https://private-own.invalid',token:'own-private-fixture-token',remoteWorkspaceId:'own-remote'}};
+const own={id:'workspace-a',name:'Authorized Workspace',slug:'workspace-a',rootPath:ownRoot,createdAt:1,kind:'personal',orgId:'authorized-org',hostOnlyFixtureSecret:'own-private-metadata-secret',remoteServer:{url:'https://private-own.invalid',token:'own-private-fixture-token',remoteWorkspaceId:'own-remote'}};
 const foreign={id:'workspace-b',name:'PRIVATE FOREIGN ROSTER NAME',rootPath:foreignRoot,createdAt:2,kind:'personal',remoteServer:{url:'https://foreign.invalid',token:'foreign-private-fixture-token',remoteWorkspaceId:'foreign-remote'}};
 saveConfig({workspaces:[own,foreign],activeWorkspaceId:'workspace-b',activeSessionId:null});
 const hostBefore=readFileSync(join(configDir,'config.json'),'utf8');
@@ -49,6 +49,7 @@ try{
  check('own-workspace-only',projection.length===1&&projection[0].id===own.id);
  check('exact-public-metadata-keys',JSON.stringify(Object.keys(projection[0]).sort())===JSON.stringify(['createdAt','id','kind','name','rootPath','slug']));
  check('exact-authorized-metadata',JSON.stringify(projection[0])===JSON.stringify({id:own.id,name:own.name,slug:'workspace-a',rootPath:'',createdAt:1,kind:'personal'}));
+ check('no-native-root-or-host-metadata',projection[0].rootPath===''&&!JSON.stringify(projection).includes(ownRoot)&&!JSON.stringify(projection).includes('own-private-metadata-secret')&&!JSON.stringify(projection).includes('hostOnlyFixtureSecret'));
  check('no-roster-or-connection-secret',!JSON.stringify(projection).includes('PRIVATE FOREIGN')&&!JSON.stringify(projection).includes('private-fixture-token')&&!JSON.stringify(projection).includes('remoteServer'));
  const spoofed=await native.invoke(RPC_CHANNELS.workspaces.GET,foreign.id,{workspaceId:foreign.id,principal:{subject:'forged'}});
  check('argument-spoof-cannot-select-another-workspace',JSON.stringify(spoofed)===JSON.stringify(projection));
@@ -83,7 +84,7 @@ process.exit(0);
     const [exit, stdout, stderr] = await Promise.all([proc.exited, new Response(proc.stdout).text(), new Response(proc.stderr).text()])
     expect({ exit, stderr }).toEqual({ exit: 0, stderr: '' })
     const checks: Array<{ name: string; passed: boolean }> = JSON.parse(stdout)
-    expect(checks).toHaveLength(17)
+    expect(checks).toHaveLength(18)
     expect(checks.filter(check => !check.passed)).toEqual([])
   } finally { rmSync(dir, { recursive: true, force: true }) }
 }, 15000)

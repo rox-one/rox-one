@@ -1,6 +1,6 @@
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { assertNativeMetadataRead, readNativeStatuses } from './native-sidebar-metadata'
 import {
@@ -8,7 +8,7 @@ import {
   rpcStatusesActResult,
   rpcStatusesListResult,
   rpcStatusesReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.statuses.LIST,
@@ -27,7 +27,7 @@ export function registerStatusesHandlers(server: RpcServer, deps: HandlerDeps): 
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
-    const { listStatuses } = await import('@craft-agent/shared/statuses')
+    const { listStatuses } = await import('@rox/shared/statuses')
     assertNativeMetadataRead(ctx, deps, server, workspaceId, workspace.rootPath)
     return listStatuses(workspace.rootPath)
   }, { nativeAction: 'read' })
@@ -40,7 +40,7 @@ export function registerStatusesHandlers(server: RpcServer, deps: HandlerDeps): 
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
-    const { reorderStatuses } = await import('@craft-agent/shared/statuses')
+    const { reorderStatuses } = await import('@rox/shared/statuses')
     reorderStatuses(workspace.rootPath, orderedIds)
   })
 }

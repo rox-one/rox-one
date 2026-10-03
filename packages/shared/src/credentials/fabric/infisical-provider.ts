@@ -3,7 +3,7 @@ import {
   type CredentialKind,
   type CredentialRef,
   type ProviderLocator,
-} from '@craft-agent/core/platform';
+} from '@rox/core/platform';
 import { credentialPayloadFingerprint } from '../envelope.ts';
 import type { StoredCredential } from '../types.ts';
 import { createProviderMaterialization } from './materialization.ts';
@@ -76,7 +76,7 @@ export class InfisicalSecretProvider implements SecretProvider {
     kind: CredentialKind;
     locator: ProviderLocator;
     payload: StoredCredential;
-  }): Promise<{ ref: CredentialRef; version: import('@craft-agent/core/platform').CredentialVersion }> {
+  }): Promise<{ ref: CredentialRef; version: import('@rox/core/platform').CredentialVersion }> {
     const locator = this.requireInfisicalLocator(input.locator);
     const token = await this.login();
     await this.putSecret(token, locator, input.payload.value);

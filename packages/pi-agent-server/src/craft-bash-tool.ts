@@ -1,5 +1,5 @@
 import { createBashToolDefinition, type ToolDefinition } from '@earendil-works/pi-coding-agent';
-import { runHostBash } from '@craft-agent/session-tools-core';
+import { runHostBash } from '@rox/session-tools-core';
 
 /**
  * Pi `bash` tool that executes through craft host-tool Bash (and craft-exec

@@ -12,11 +12,13 @@
 
 /// <reference path="../types/incr-regex-package.d.ts" />
 
+import { resolveConfigDir } from '../config/env.ts';
+
 import { homedir } from 'os';
 import { existsSync, realpathSync } from 'fs';
 import { debug } from '../utils/debug.ts';
 import { dirname, isAbsolute, relative, resolve } from 'path';
-import { getSessionSafeAllowedToolNames } from '@craft-agent/session-tools-core';
+import { getSessionSafeAllowedToolNames } from '@rox/session-tools-core';
 import { FEATURE_FLAGS } from '../feature-flags.ts';
 import { isBrowserToolNameOrAlias } from './browser-tool-names.ts';
 import type { PermissionsContext, MergedPermissionsConfig } from './permissions-config.ts';
@@ -1733,12 +1735,14 @@ export function getPathHint(targetPath: string, plansFolderPath: string, dataFol
   }
 
   // Case: Writing to workspace root instead of session
-  if (normalizedTarget.includes('/.craft-agent/workspaces/') && !normalizedTarget.includes('/sessions/')) {
+  const workspaceRoot = normalizedPlans.split('/sessions/')[0];
+  if (workspaceRoot && (normalizedTarget === workspaceRoot || normalizedTarget.startsWith(workspaceRoot + '/')) && !normalizedTarget.includes('/sessions/')) {
     return 'Hint: Write to the session plans or data folder, not the workspace root.';
   }
 
-  // Case: Writing outside .craft-agent entirely
-  if (!normalizedTarget.includes('/.craft-agent/')) {
+  // Case: Writing outside the selected ROX configuration root.
+  const configRoot = resolveConfigDir().replace(/\\/g, '/').replace(/\/$/, '').toLowerCase();
+  if (normalizedTarget !== configRoot && !normalizedTarget.startsWith(configRoot + '/')) {
     return 'Hint: Files must be written to the session plans or data folder. Use plansFolderPath or dataFolderPath from <session_state>.';
   }
 

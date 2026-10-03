@@ -18,11 +18,13 @@ let resolveGrant: (() => void) | undefined
 let resolveStart: (() => void) | undefined
 let resolveMedia: ((value: unknown) => void) | undefined
 let rejectedMedia = false
+let rejectedGrant = false
 let hotkeyListener: ((payload: { command: 'toggle' | 'ptt-down' | 'ptt-up' | 'cancel' }) => void) | undefined
 const audioBytes = query.get('largeAudio') === 'true' ? 5 * 1024 * 1024 + 123 : 3
 const audioPayload = new Uint8Array(audioBytes)
 for (let index = 0; index < audioPayload.length; index++) audioPayload[index] = index % 251
 const stream = { getTracks: () => [{ stop: () => record('stopTrack') }] }
+let resolveMicrophone: ((value: unknown) => void) | undefined
 const transcript = { text: 'Synthetic first paragraph.\n\nSynthetic second paragraph.', requestedModelId: 'nova-3', resolvedModelId: 'nova-3', noSpeech: false }
 const record = (method: string, args?: unknown) => calls.push({ method, args })
 const api = {
@@ -41,10 +43,15 @@ const api = {
   async startVoiceCapture(args: unknown) {
     record('startVoiceCapture', args)
     if (query.get('deferredStart') === 'true') await new Promise<void>((resolve) => { resolveStart = resolve })
-    return { job: 'queued' }
+    if (query.get('refusedStart') === 'true') throw new Error('Synthetic start refused')
+    return { job: 'queued', recordingId: 'synthetic-recording' }
   },
   async grantVoicePermission() {
     record('grantVoicePermission')
+    if (query.get('rejectGrantOnce') === 'true' && !rejectedGrant) {
+      rejectedGrant = true
+      throw new Error('Synthetic microphone permission denied')
+    }
     if (query.get('deferredGrant') === 'true') await new Promise<void>((resolve) => { resolveGrant = resolve })
   },
   async sendVoiceChunk(args: unknown) { record('sendVoiceChunk', args) },
@@ -69,6 +76,7 @@ Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: {
       throw new DOMException('Synthetic microphone denial', 'NotAllowedError')
     }
     if (query.get('deferredMedia') === 'true') return new Promise((resolve) => { resolveMedia = resolve })
+    if (query.get('deferredMicrophone') === 'true') return new Promise((resolve) => { resolveMicrophone = resolve })
     return stream
   },
 } })
@@ -96,6 +104,8 @@ const fixture = {
   resolveGrant: () => resolveGrant?.(),
   resolveStart: () => resolveStart?.(),
   resolveMedia: () => resolveMedia?.(stream),
+  hotkey: (command: 'toggle' | 'ptt-down' | 'ptt-up' | 'cancel') => hotkeyListener?.({ command }),
+  resolveMicrophone: () => resolveMicrophone?.(stream),
 }
 ;(window as any).__voiceFixture = fixture
 await i18n.use(initReactI18next).init({ lng: 'en', fallbackLng: 'en', resources: { en: { translation: en } }, keySeparator: false, interpolation: { escapeValue: false } })

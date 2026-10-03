@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { ingestMeetingAudio, pauseMeetingCapture, startMeetingCapture, stopMeetingCapture } from '../capture.ts'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import type { MeetingGrant } from '@rox/shared/meeting-agents'
 
 const grant: MeetingGrant = {
   id: 'g',

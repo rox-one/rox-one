@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeEach, expect, test } from 'bun:test'
-import { PersonalTaskStore, PERSONAL_TASKS_STORAGE_KEY, type PersonalTask, type PersonalTasksSnapshot, type PersonalTaskPutResult } from '@craft-agent/core/tasks/personal'
+import { PersonalTaskStore, PERSONAL_TASKS_STORAGE_KEY, type PersonalTask, type PersonalTasksSnapshot, type PersonalTaskPutResult } from '@rox/core/tasks/personal'
 import { hydratePersonalTasks, loadPersonalTaskStore, persistPersonalTaskConfirmed, persistPersonalTaskStore, runPersonalTaskScopeTransition, setPersonalTaskScope } from '../personal-tasks'
 import type { PersonalTasksApi } from '../personal-tasks-sync'
 

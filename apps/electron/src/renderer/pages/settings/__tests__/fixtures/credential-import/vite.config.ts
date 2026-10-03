@@ -15,7 +15,7 @@ export default defineConfig({
       { find: '@/context/AppShellContext', replacement: resolve(root, 'context.tsx') },
       { find: '@/components/settings', replacement: resolve(root, 'settings.ts') },
       { find: /^@craft-agent\/ui$/, replacement: resolve(repository, 'packages/ui/src/components/ui/PremiumMenuSelect.tsx') },
-      { find: '@craft-agent/shared/environment', replacement: resolve(repository, 'packages/shared/src/environment/versioning.ts') },
+      { find: '@rox/shared/environment', replacement: resolve(repository, 'packages/shared/src/environment/versioning.ts') },
       { find: '@', replacement: renderer },
       { find: 'react', replacement: resolve(repository, 'node_modules/react') },
       { find: 'react-dom', replacement: resolve(repository, 'node_modules/react-dom') },

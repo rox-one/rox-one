@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, Globe2, ShieldCheck } from 'lucide-react'
-import { answerChoice, type BrowserImportCategory } from '@craft-agent/shared/environment'
+import { answerChoice, type BrowserImportCategory } from '@rox/shared/environment'
 import { Button } from '@/components/ui/button'
 import { BrowserImportPreferences } from './BrowserImportPreferences'
 

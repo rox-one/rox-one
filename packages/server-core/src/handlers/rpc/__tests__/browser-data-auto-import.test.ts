@@ -3,11 +3,11 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, 
 import { join, dirname } from 'node:path'
 import { tmpdir } from 'node:os'
 import { BrowserDataAutoImporter } from '../browser-data-auto-import'
-import type { BrowserImportCategory } from '@craft-agent/shared/environment'
-import { importProfile, type ProfileFs } from '@craft-agent/shared/browser/profile-import'
-import { readNativeBrowserData } from '@craft-agent/shared/browser/profile-native-data'
-import { DatabaseSync } from '@craft-agent/shared/utils/sqlite-runtime'
-import { WsRpcServer } from '@craft-agent/server-core/transport'
+import type { BrowserImportCategory } from '@rox/shared/environment'
+import { importProfile, type ProfileFs } from '@rox/shared/browser/profile-import'
+import { readNativeBrowserData } from '@rox/shared/browser/profile-native-data'
+import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
+import { WsRpcServer } from '@rox/server-core/transport'
 
 const roots: string[] = []
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }) })

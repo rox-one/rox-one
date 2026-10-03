@@ -5,7 +5,7 @@
  */
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Markdown } from '@craft-agent/ui'
+import { Markdown } from '@rox/ui'
 import {
   parseDateExpression,
   startOfLocalDay,
@@ -16,7 +16,7 @@ import {
   type TaskLinkKind,
   type TaskPriority,
   type TaskWhen,
-} from '@craft-agent/core/tasks/personal'
+} from '@rox/core/tasks/personal'
 import { cn } from '@/lib/utils'
 import { Badge, Button, Card, SectionLabel, Tabs } from '@/components/mode-screen/ModeScreen'
 import { ConfirmDialog, Glyph, MiniCalendar, TaskCheckbox } from './parts'

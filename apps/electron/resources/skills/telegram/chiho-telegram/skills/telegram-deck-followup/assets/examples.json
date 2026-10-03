@@ -1,0 +1,6 @@
+[
+  {
+    "prompt": "Find chats where I sent a deck and no one replied. Create follow-up tasks for next week.",
+    "tools": ["search_messages", "chat_read", "tasks_add"]
+  }
+]

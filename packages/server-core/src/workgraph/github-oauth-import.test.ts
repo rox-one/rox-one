@@ -3,15 +3,15 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
 import { afterEach, describe, expect, it } from 'bun:test'
-import { CredentialRefRegistry } from '@craft-agent/core/platform'
-import type { CredentialBackend } from '@craft-agent/shared/credentials'
-import type { CredentialId, StoredCredential } from '@craft-agent/shared/credentials'
+import { CredentialRefRegistry } from '@rox/core/platform'
+import type { CredentialBackend } from '@rox/shared/credentials'
+import type { CredentialId, StoredCredential } from '@rox/shared/credentials'
 import {
   credentialIdToAccount,
   InProcessCredentialBroker,
   LocalFileSecretProvider,
   maskSecret,
-} from '@craft-agent/shared/credentials'
+} from '@rox/shared/credentials'
 
 import { createWorkGraphKernel } from './index'
 import { commitGithubOAuthImport, createGithubDeviceFlow, previewGithubOAuthImport } from './github-oauth-import.ts'
@@ -256,3 +256,61 @@ describe('CF GitHub OAuth import (workgraph)', () => {
     await expect(flow.poll({ flowId: 'missing', workspaceId: 'workspace_a' })).rejects.toThrow(/unknown_flow/)
   })
 })
+
+
+describe('GitHub device poll cancellation fence', () => {
+  it('discards an approved in-flight poll after cancel and prevents simultaneous polls', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    let reads = 0;
+    let commits = 0;
+    const flow = createGithubDeviceFlow({
+      http: async () => {
+        reads += 1;
+        if (reads === 1) return { status: 200, body: JSON.stringify({ device_code: 'synthetic-code', user_code: 'ABCD-1234', verification_uri: 'https://github.com/login/device', interval: 5 }) };
+        await gate;
+        return { status: 200, body: JSON.stringify({ access_token: ACCESS_TOKEN, token_type: 'bearer', scope: 'read:user' }) };
+      },
+      clientId: 'synthetic-client',
+      provider: new LocalFileSecretProvider(new MemoryBackend(), new CredentialRefRegistry()),
+      kernel: { createConnection: async () => { commits += 1; throw new Error('unexpected commit'); }, bindConsumer: async () => { throw new Error('unexpected binding'); } },
+      newId: () => 'synthetic-flow',
+    });
+    await flow.start();
+    const first = flow.poll({ flowId: 'synthetic-flow', workspaceId: 'workspace_a' });
+    await expect(flow.poll({ flowId: 'synthetic-flow', workspaceId: 'workspace_a' })).rejects.toThrow('poll_in_progress');
+    await flow.cancel('synthetic-flow'); release();
+    await expect(first).rejects.toThrow('unknown_flow');
+    expect(reads).toBe(2); expect(commits).toBe(0);
+  });
+});
+
+
+it('refuses cancellation once an approved commit has started', async () => {
+  let entered!: () => void;
+  const atCommit = new Promise<void>(resolve => { entered = resolve; });
+  let release!: () => void;
+  const wait = new Promise<void>(resolve => { release = resolve; });
+  const provider = new LocalFileSecretProvider(new MemoryBackend(), new CredentialRefRegistry());
+  let calls = 0;
+  const flow = createGithubDeviceFlow({
+    http: async () => {
+      calls += 1;
+      return { status: 200, body: JSON.stringify(calls === 1
+        ? { device_code: 'synthetic-code', user_code: 'ABCD-1234', verification_uri: 'https://github.com/login/device', interval: 5 }
+        : { access_token: ACCESS_TOKEN, token_type: 'bearer', scope: 'read:user' }) };
+    }, clientId: 'fixture', provider,
+    kernel: {
+      createConnection: async (input) => { entered(); await wait; return {
+        id: 'synthetic-connection', workspaceId: input.workspaceId, integrationId: input.integrationId,
+        credentialRefId: input.credentialRefId, storageMode: input.storageMode, scopes: [], createdAt: 1, updatedAt: 1,
+      }; }, bindConsumer: async () => ({ id: 'synthetic-binding' }),
+    }, newId: () => 'synthetic-flow',
+  });
+  await flow.start();
+  const polling = flow.poll({ flowId: 'synthetic-flow', workspaceId: 'workspace_a' });
+  await atCommit;
+  await expect(flow.cancel('synthetic-flow')).rejects.toThrow('commit_in_progress');
+  await expect(flow.poll({ flowId: 'synthetic-flow', workspaceId: 'workspace_a' })).rejects.toThrow('poll_in_progress');
+  release(); await expect(polling).resolves.toEqual({ status: 'imported', connectionId: 'synthetic-connection' });
+});

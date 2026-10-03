@@ -1,5 +1,5 @@
 import type { NativeAuthority, NativePrincipal } from '../../authority/native-authority.ts'
-import type { NoteChangedPayload } from '@craft-agent/shared/protocol'
+import type { NoteChangedPayload } from '@rox/shared/protocol'
 
 const reasons: ReadonlySet<string> = new Set([
   'external', 'save', 'create', 'rename', 'move', 'delete', 'asset', 'properties', 'descriptor',

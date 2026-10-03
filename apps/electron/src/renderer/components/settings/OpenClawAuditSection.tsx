@@ -20,9 +20,9 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
-import type { AuditSeverity, SecurityFinding } from '@craft-agent/shared/openclaw'
+import type { AuditSeverity, SecurityFinding } from '@rox/shared/openclaw'
 import { useOpenClawAudit } from '@/hooks/useOpenClawAudit'
-import { getAppLocale } from '@craft-agent/shared/i18n'
+import { getAppLocale } from '@rox/shared/i18n'
 
 const SEVERITY_ORDER: readonly AuditSeverity[] = ['critical', 'warn', 'info', 'pass']
 

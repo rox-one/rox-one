@@ -1,6 +1,6 @@
 /** Real authority/WS/handlers; the deterministic manager avoids provider calls. */
 import assert from 'node:assert/strict'
-import { lstatSync, mkdirSync, readFileSync, readlinkSync, readdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { lstatSync, mkdirSync, readFileSync, readlinkSync, readdirSync, realpathSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { NativeAuthority } from '../../../../authority/native-authority'
 import { WsRpcServer } from '../../../../transport/server'
@@ -17,18 +17,18 @@ import { registerLlmConnectionsHandlers } from '../../llm-connections'
 import { registerStatusesHandlers } from '../../statuses'
 import { registerLabelsHandlers } from '../../labels'
 import { registerProjectsHandlers } from '../../projects'
-import { getDefaultStatusConfig } from '@craft-agent/shared/statuses'
-import { getToolchainManager } from '@craft-agent/shared/toolchain-runtime'
-import { getDefaultGamificationState, saveGamificationState } from '@craft-agent/shared/gamification'
+import { getDefaultStatusConfig } from '@rox/shared/statuses'
+import { getToolchainManager } from '@rox/shared/toolchain-runtime'
+import { getDefaultGamificationState, saveGamificationState } from '@rox/shared/gamification'
 import { projectNativeRegisteredWorkspaceEvent } from '../../native-session-scope'
-import { RPC_CHANNELS, type Session, type SessionEvent } from '@craft-agent/shared/protocol'
-import type { AnnotationV1 } from '@craft-agent/core/types'
+import { RPC_CHANNELS, type Session, type SessionEvent } from '@rox/shared/protocol'
+import type { AnnotationV1 } from '@rox/core/types'
 import type { RequestContext } from '../../../../transport/types'
 import type { SessionCompletionEvent } from '../../../../sessions/SessionManager'
-import type { ToolStatus } from '@craft-agent/shared/toolchain'
-import type { LoadedSource } from '@craft-agent/shared/sources'
+import type { ToolStatus } from '@rox/shared/toolchain'
+import type { LoadedSource } from '@rox/shared/sources'
 
-const directory = process.env.ROX_CONFIG_DIR!
+const directory = realpathSync(process.env.ROX_CONFIG_DIR!)
 const roots = ['workspace-a', 'workspace-b'].map(id => {
   const rootPath = join(directory, id); mkdirSync(rootPath)
   writeFileSync(join(rootPath, 'config.json'), JSON.stringify({ id, name: id, slug: id, createdAt: Date.now(), defaults: { defaultLlmConnection: 'workspace-rox' } }))

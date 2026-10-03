@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { CalendarRange, ChevronDown, LayoutGrid, List, Table2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { PremiumMenu } from '@craft-agent/ui'
+import { PremiumMenu } from '@rox/ui'
 import { useHotkeyLabel } from '@/actions/useHotkeyLabel'
 import { cn } from '@/lib/utils'
 import type { CollectionViewMode } from '../kanban/BoardListToggle'

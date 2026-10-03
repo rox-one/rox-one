@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
-import { CredentialManager, SecureStorageBackend, type CredentialId, type StoredCredential } from '@craft-agent/shared/credentials'
+import { CredentialManager, SecureStorageBackend, type CredentialId, type StoredCredential } from '@rox/shared/credentials'
 import { credentialPayloadFingerprint, decodeCredentialEnvelope, decodeCredentialEnvelopeOrLegacy } from '../../../../packages/shared/src/credentials/envelope.ts'
-import { loadStoredConfig, saveConfig, type StoredConfig } from '@craft-agent/shared/config'
+import { loadStoredConfig, saveConfig, type StoredConfig } from '@rox/shared/config'
 import { PROJECT_AUTHORITY_CREDENTIAL_NAME, ProjectAuthorityError, requireProjectAuthorityConfiguration,
   type ProjectAuthorityConfiguration } from '../shared/project-authority'
 

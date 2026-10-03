@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import type { Meeting } from '@craft-agent/core/meetings'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import type { Meeting } from '@rox/core/meetings'
+import type { MeetingGrant } from '@rox/shared/meeting-agents/browser'
 import {
   i18nKeyForSearchError,
   i18nKeyForStartError,

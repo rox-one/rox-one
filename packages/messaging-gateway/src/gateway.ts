@@ -5,9 +5,9 @@
  * renderer, and binding store together. One instance per workspace.
  */
 
-import type { ISessionManager } from '@craft-agent/server-core/handlers'
-import type { PushTarget } from '@craft-agent/shared/protocol'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import type { ISessionManager } from '@rox/server-core/handlers'
+import type { PushTarget } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   evaluateBindingAccess,
   evaluatePreBindingAccess,
@@ -19,7 +19,7 @@ import { Commands, parseCommand, type AccessControlDeps, type PairingCodeConsume
 import { Renderer, type SessionEvent } from './renderer'
 import { PendingSendersStore } from './pending-senders'
 import { PlanTokenRegistry } from './plan-tokens'
-import { nativeSessionEvent } from '@craft-agent/server-core/handlers/rpc/native-session-scope'
+import { nativeSessionEvent } from '@rox/server-core/handlers/rpc/native-session-scope'
 import type {
   PlatformAdapter,
   PlatformType,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import type { SessionEvent } from '@craft-agent/shared/protocol'
+import type { SessionEvent } from '@rox/shared/protocol'
 import {
   applyShareGranted,
   applyShareRevoked,

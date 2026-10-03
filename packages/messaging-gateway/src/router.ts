@@ -13,9 +13,9 @@ import { copyFileSync, mkdirSync, unlinkSync } from 'node:fs'
 import { join, basename, extname } from 'node:path'
 import { randomUUID } from 'node:crypto'
 
-import { sanitizeFilename, type ISessionManager } from '@craft-agent/server-core/handlers'
-import { readFileAttachment } from '@craft-agent/shared/utils'
-import type { FileAttachment } from '@craft-agent/shared/protocol'
+import { sanitizeFilename, type ISessionManager } from '@rox/server-core/handlers'
+import { readFileAttachment } from '@rox/shared/utils'
+import type { FileAttachment } from '@rox/shared/protocol'
 import {
   evaluateBindingAccess,
   executeRejection,
@@ -23,7 +23,7 @@ import {
   REJECT_REPLY_COOLDOWN_MS,
   type AccessRejectReason,
 } from './access-control'
-import type { AttachmentType, StoredAttachment } from '@craft-agent/core/types'
+import type { AttachmentType, StoredAttachment } from '@rox/core/types'
 import type { BindingStore } from './binding-store'
 import type { Commands } from './commands'
 import type { PendingSendersStore } from './pending-senders'

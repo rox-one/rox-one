@@ -1,4 +1,31 @@
+## Golden Gate device diagnostics recovery — 2026-10-03
+
+Owner: integration worker in isolated `codex/recover-golden-diagnostics-20261003`. Recover the genuinely absent native diagnostics slice from preserved branch `codex/golden-gate-workspace`, exact revision `5def9ffd36dc160fdc7c908784e0ef97ba6a732e` (closed unmerged PR #584). Source file hashes and the 90 recovered locale keys are recorded in `docs/golden-diagnostics-source.json`.
+
+The current TopBar and glass navigation remain authoritative. Add only the existing source chip, its lazily loaded diagnostics views and direct device-local IPC/preload wiring. Closed diagnostics perform no native reads, timers or diagnostics chunk loading. Opening shows bounded real device snapshots or truthful unavailable states; hidden/minimized/closed windows and closed popovers cancel work. Native collection accepts fixed kinds and log-source enums, never renderer commands, paths or workspace tokens; only the managed app main frame can invoke it. Logs are bounded and redact secrets, links are rejected and FIFOs cannot block a read. All recovered user strings must retain current locale parity.
+
+Acceptance: native authorization/negative-control/cancellation tests, preload field projection, CPU/network/log collector tests, poller lifecycle and endpoint redaction, headless production chip open/tab/close behavior, package types and WebUI/Electron bundles. This does not establish real hardware permission/compositor acceptance. Remaining Golden Gate recovery clusters are persisted panel workspace/resize, native surface ownership/retention, Notes/Meetings request lifecycle and task catalog; no missing module is accepted merely because it was copied.
+## Session UX branch integration — 2026-10-03
+
+Owner: PR scout/integration worker in isolated `codex/integrate-session-ux-20261003`, based on exact #1391 head `ddf97e3d5025288819e0bfdc3b26741f75b6d3b1`. Preserve original branches and all unrelated work. The latest 203-file app completion commit remains substantive; the first four #1391 commits already occur in #1392.
+
+This slice repairs reproducible integration blockers: fixture enrollments must succeed at runtime and narrow their nullable result; native session fixtures must use an actual attachment type; browser model controls must import the pure public model catalog directly so configuration barrels cannot bring filesystem-based managed skill code into the renderer. Acceptance requires relevant native isolation/persistence tests, complete package types and WebUI/Electron renderer builds. Secret credential reads and ASR recording uploads also use one bounded, no-follow opened-descriptor read with before/opened/after/current BigInt file identity checks. Callers must reject links/replacements/growth before publishing keys or uploading foreign bytes. The missing Inbox/Security states require all 22 keys in every current locale catalog. CodeQL findings and real-provider/native hardware acceptance are separate and must not be inferred from build success. `.codegraph/` is absent in this checkout; targeted source/dataflow reads supplied the import evidence.
+
+Integration with current main `d8c92f96363f47e0b72e7296a36aa23a9227a691` preserves its OMP 18.4.12 private native fork and stored-prefix recovery, MCP runtime, Compound additions and UI-001 detail/storage validation. The UI user-message anchor feeds the runtime inclusive native fork. Module imports and fixture aliases use the renamed `@rox` workspace packages; protocol identifiers and legacy migration strings remain unchanged.
+## Golden Gate native surface ownership recovery — 2026-10-03
+
+Owner: isolated `codex/recover-golden-native-surfaces-20261003`. Restore the absent owner arbiter, DOM visibility/clipping invalidator, bounds hook, placeholder and retained-surface primitive from preserved Golden Gate revision `5def9ffd36dc160fdc7c908784e0ef97ba6a732e`. `docs/golden-native-source.json` records original file hashes and current-main decisions.
+
+Browser and extension hosts use one compositor contract: the latest visible owner holds an instance; hiding/releasing another owner cannot erase it; bounds writes serialize/coalesce and a final hide cannot be overtaken by a prior update. A partially clipped, hidden, inert, unfocused or overlay-suppressed surface sends null without destroying its persistent native instance. Responsive inspector suppression retains local React state while its subtree is hidden/inert. Inspector cleanup acts only on its claimed id and safely releases late async attachments; it never enumerates and hides sibling instances. Preserve current imported-cookie consent controls and per-request opt-in. Preserve the current explicit SiYuan removal/redirect to Rox Notes, all current inspector rail/layout contracts and external #1400 route/geometry/storage work.
+
+Acceptance: source owner/invalidator/visibility and backend extension lifetime tests, production BrowserPanel/InspectorBrowser/RetainedSurface in headless browser with synthetic native bridge (duplicates, clipping, overlay suppression, draft retention, late attachment and consent), complete types and WebUI/Electron renderer builds, locale parity/sorting/coverage. These prove renderer/RPC ownership behavior, not native hardware compositor acceptance. Panel workspace persistence/resize and current Notes/Meetings/task request lifecycle remain separate recovery slices.
+
 # Unified Rox / Conation / RMA / Golden Gate behavioral specification
+
+## Desktop runtime 0.11.8 delivery — 2026-10-03
+
+The bounded OMP runtime, transcript/branch recovery, ROX context migration, bundled skills and macOS/Windows release work is tracked in [runtime specification](runtime-0.11.8-spec.md) and [parallel plan](runtime-0.11.8-plan.md). This delivery has its own source, native acceptance and release evidence; the broader program below retains its current acceptance state.
+
 
 ## Current target and execution scope — 2026-10-03
 
@@ -412,3 +439,103 @@ The [original spec](integration-history/pr1321/spec.md) remains preserved. Curre
 ## Parallel release integration — 2026-10-03
 
 The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 is reconciled with this independent integration. Its original [spec](integration-history/remote-main-3dd1f98b7/spec.md) and release archive preserve all historical scope. Desktop0.11.6, native staging and dedicated GitHub/CircleCI packaging pipelines are retained; their presence does not establish signed installed Windows10/11/macOS or hosted acceptance. The current [445-leaf parallel allocation](final-readiness/parallel-work/launch-plan.json) governs development dispatch.
+
+## Remaining browser and helper control translations (2026-10-03)
+
+Recover useful missing runtime localization from P35 branches 65, 70, 78, 80 and
+103. Browser/VPS buttons, accessibility labels, fallback image text, permission
+tool label, recognition language choices and Knowledge omnibox commands must
+resolve through the existing translation runtime. Preserve caller-provided page,
+plugin and custom labels. New keys must be present and ASCII-sorted in all 12
+current locale catalogs; earlier documentation's 10-locale count is stale.
+
+## Branch integration request — 2026-10-03
+
+The authorized outcome is an exhaustive inventory of the live `rox-one/rox-one` branches against main, followed by separate pull requests and integration of substantive additions. All original branches and unrelated working changes must remain intact. The initial authoritative main is `76228cc33e44518e5fab5e59f5c754f4051d1e8c`; GitHub listed 665 live branches. Ahead counts alone are insufficient because the repository uses squash merges.
+
+Classify source changes using exact ancestry, patch equivalence, related merged PR ancestry, and current source semantics. Superseded recovery workflows and obsolete wording tests must not revert current behavior. Each integration candidate requires relevant checks on its exact delivered revision. Existing native/production acceptance boundaries remain in force.
+
+For the runtime lane, preserve the release branch's OMP recovery, mandatory policy, context migration and skill provenance. The exact-head validation failure comprised ten TypeScript errors in three gstack regression fixtures. Correct the mocks and fixture argument validation while retaining every security assertion; exercise the focused suites, full repository validation, runtime regressions and remote CI. Security scan findings require source-based disposition; a passing analyzer job does not prove no findings.
+
+Runtime security follow-up: gbrain sync/dream markers serialize acquisition, stale takeover and release through an exclusive mutation directory. A stale marker owned by a live PID is retained. Only the exact UUID generation acquired by this process can be removed; publication uses exclusive private files. A crashed mutation guard remains conservative rather than being reclaimed automatically.
+
+
+## Recovered Compound native license evidence — 2026-10-03
+
+Branch audit against main `76228cc33e44518e5fab5e59f5c754f4051d1e8c` found the unmerged native slice in `feat/rox-compound-workspace-20260930` commit `d141e962185fd808f177a2d01760b211f47f0832`. The canonical WP48 backend was already present; the Settings consumer, strict native evidence schemas and typed license audit operation in the existing encrypted Project intent slot were absent. This recovery retains those additions and their original source-bound proofs without replacing newer main contracts.
+
+Acceptance for this integration is the existing canonical authority and credential storage, strict workspace/window scope, one discriminated pending intent, explicit retry/cancel, receipt and independent event replay plus live readback before intent deletion, uncertainty after a lost response, rejection of unknown formats and preservation of the Project intent path. Private evidence retracts when authority or workspace changes. All user-facing labels retain locale parity. No installed identity, license, authorization or release configuration is changed by integration.
+
+Original proof artifacts and the Compound handoff remain historical evidence tied to their recorded September revisions. They do not establish current native pixels, legal approval, complete WP48 acceptance or full program DoD. Current verification is recorded in [the recovery receipt](integration-history/compound-d141e962/recovery-verification.json); delivery is tracked separately; actual native Settings product acceptance remains a separate gate.
+
+
+## Cursor Cloud headless server setup (2026-10-03)
+
+Port the useful environment setup from `cursor/cloud-agent-env-setup-2fc0` onto
+current ROX. Preparation must terminate, use Bun 1.3.14 and the frozen lockfile,
+and build the session MCP/server subprocess helpers. The terminal must bind the
+server to loopback, isolate development context by default, persist each new
+bearer token with mode 0600, and never print its value. Installation or entropy
+failure must stop before subsequent work. Hosted Cursor execution and provider
+credentials require their own verification. See `docs/cursor-cloud-server.md`.
+
+
+## Legacy binding replay recovery (2026-10-03)
+
+Recovered binding idempotency: migrating a legacy unencoded four-slot external binding key must preserve entity identity across all identical encoded-key reimports. Foreign workspace, wrong kind and unrelated entity IDs still quarantine. Owner: historical branch recovery. Source: cursor/contract-status-split-93d2 @fa254fe0f2e2504dd399202ee00e2d3b2a8a7b6b.
+The canonical and portable gstack browser clients must send authenticated commands only to their selected literal loopback endpoint. HTTP redirects must fail through the existing non-2xx error contract without forwarding the command body or capability. Real HTTP 307/308 negative controls cover both same-origin and another-port destinations; normal authenticated POST commands retain their arguments and tab scope.
+
+
+## Connections producer recovery — 2026-10-03
+
+Owner: branch integration lead. Source: `checkpoint/session-audit-20260821-craft-agents` at `86154e8c812746261282bb4c517b16ad7becc0ec`. Dependencies: existing WorkGraph canonical SQLite kernel, credential registry/broker, generated Electron preload and trusted local window/workspace transport.
+
+Restore the seven missing Connections controller operations: lease metadata, inspection, backend move, reconnect, GitHub device start/poll/cancel. Preserve current ROX config resolution, credential migration contracts and legacy broker ID-only revoke API. Only metadata may cross renderer transport. Device flows belong to the initiating authenticated local client/workspace; revoked/cancelled or concurrent polls cannot commit a late approval. Existing OAuth client configuration is required; no new client ID, account/device grant or real credential import is performed by this integration.
+
+Backend move must verify destination contents before deleting the source, refuse existing destinations and simultaneous moves, revoke outstanding leases before attempting a move, restore the source and clear the destination on recoverable failure, and return a distinct rollback failure when storage recovery cannot be proven. Real credential/backend availability and OAuth sign-in remain environment-dependent; fixture proof does not certify a real provider or native UI.
+
+The existing Connections UI remains a separate consumer recovery; this PR restores its missing backend and transport dependency. Acceptance: original source branch retained; current strict types and the configured validation assertions; real temporary SQLite audits and workspace isolation; generated channel/access inventory; deterministic memory-backend write/readback/delete/rollback failures; OAuth pending/approved/cancel race and concurrent-poll controls. Record exact delivered revision and test receipt under `docs/integration-history/connections-86154e8c/`.
+
+## Native Notes Knowledge read projection (2026-10-03)
+
+Recover the useful read-only local-Markdown Knowledge API from codex/rox-ui-dev-loop-20260901 @1f56af31d3658ee9880105361ad5312324f36ab8 as a projection of authenticated canonical Native Notes. List connections, capabilities, ranked search with path/attribute/notebook filters, get, context and backlinks must use the current journal-backed Notes reader and captured authorization fence. Local references retain the current wire contract with provider local-markdown and workspace connection ID. No credential/default connection is persisted and no alternate filesystem producer exists. Mutations, automatic provider promotion, watch and external deep links stay unavailable. Agent native reads remain unavailable until the host supplies authenticated session delegation; session/workspace IDs cannot create a NativePrincipal.
+
+## Bounded historical recovery: browser registry ownership (2026-10-03)
+
+Owner: historical branch integration. Source: `rox-workbench-convergence-bb11` at `07a954df1a19a80d9fcd6670916ff2a779f2e850`. The source's browser lifecycle extraction kept OS-window IPC state independent of visible chrome. Current main retains the guarded, workspace-filtered hook but only mounts it through BrowserTabStrip, which the default browser-surface preference hides. Toolbar browser status therefore has no state producer in that configuration.
+
+AppShell must mount one nonvisual registry inside its workspace provider while browser-surface mode hides the strip; otherwise the visible strip retains ownership. Mini mode has no strip and owns the registry directly. This recovers list/state/removal/interaction updates without adding OS-window chips to SurfaceTabs or changing current glass/navigation, embedded browser ownership, authorization, or the explicit disabled SiYuan decision. Flag transfer and unmount must clean subscriptions/timers and discard late IPC results. Acceptance is actual component/hook behavior with real Jotai atoms and substituted scheduling/IPC, existing browser/chrome tests, and renderer types/build; installed native UI acceptance is separate.
+
+## Bounded historical recovery: Meeting profiles, slash and followup planning (2026-10-03)
+
+Owner: historical integration. Retained sources: `cursor/meetings-shared-skills@8a9bdf2fb790f54b817afe28ef7818999732f888` recipes and `cursor/meetings-server-core@e665e88c9c89975f154e047707075933eceec71f` followup. Profiles bind current packaged role perspectives, playbook/output schema and permitted slash intent. Today's routed LocalMeetingDetail consumes these profiles through its existing explicit analysis callback, current durable claim/attach/finish extraction, ordinary `safe` agent session with no source tools, and source-revision checked result parser. Selected profile persists in the current LocalMeetingStore. The explicit empty source selection must override newly provisioned built-in/workspace defaults and remain empty in managed and persisted session state; no model request is needed to verify that source/default boundary. Unknown/unpermitted slash does not create an agent session. Profile metadata grants no new tool rights; output remains transcript-backed proposals through the existing summary JSON/citation contract.
+
+A separate read-only `meetings:planActions` RPC requires a currently verified NativePrincipal and native read fence. It binds planning to an existing canonical MeetingJournal revision, rejects foreign workspace/meeting/path inputs, and revalidates before exposing its projection. A read-only journal reader must not create directories, acquire writers or quarantine/repair corrupt tails. Followup planning projects cron/occurrence, missed-run, retry, budget, cancellation, device availability and fresh-send rules; it writes no independent schedule JSON and emits no external effect or verified execution receipt.
+
+Investigated alternatives: legacy SessionManager followup restored writable JSON grants and invented system/host identity; it is rejected. Current MeetingDispatcher has no composed per-session authenticated MeetingBackendFactory; current scheduler context has no verified principal/executor delegation port. NativeJournal replicated Meeting entities have no current producer, so the existing MeetingJournal remains the planning source rather than invented migration. Consequently background role execution and followup effects explicitly refuse with `meeting-backend-delegation-unavailable` and `followup-principal-executor-unavailable`; this bounded recovery does not accept native background execution, production cron followups or external sends.
+
+## Voice command transport recovery — 2026-10-03
+
+Recover the missing actual keyboard producer from feat/voice-v2-p0 @1dd90c5031087855e72cd3ecfce7dd057a2a6208 and cursor/meetings-electron-overlay @c0ef036e onto current native voice contracts. Toggle/cancel commands must target one managed window with an authenticated native client handshake. A foreground Right Option press/release pair in the existing push-to-talk preference starts/stops current composer capture; blur or cancellation revokes the held request. No global modifier-only key-up claim, raw IPC fallback or broadcast is permitted. Plain Escape remains a foreground key and keeps normal idle UI behavior.
+
+Keep current cloud consent, host permission, request generation and ASR result authority. Release during a pending microphone request cancels before any late prompt/capture can complete, and cancellation during finalization prevents stale transcript insertion. An idle or failed-start composer cannot cancel a different composer's host recording. Current source modules own backend identity, local/cloud engine policy and native meeting journals; the old singleton/duplicate server backend are not imported. Native microphone/global-key/visual acceptance remains a separate gate.
+
+## Selective editor recovery from September source — 2026-10-03
+
+Branch `codex/rox-ui-dev-loop-20260901` at `1f56af31d3658ee9880105361ad5312324f36ab8` contains absent heading/task-list folding, resizable two/three-column document blocks and portable spoiler/details controls. Recover only these editor behaviors onto main `3d04470f9be127945dd15c582775ed1e0401ed50`, with actual Notes/slash-menu consumers. The source's larger UI rewrite and legacy filesystem provider are outside this PR; native authenticated Notes authority and canonical mutation/journal paths remain authoritative.
+
+The default legacy Markdown engine and official engine must preserve content across parse/edit/export/reopen. Recover the source's portable `:::rox-columns`/`:::rox-column` syntax with validated normalized widths, support the previous slash-menu `:::columns 2/3` aliases, and preserve Obsidian `[!spoiler]-`/`[!details]+` markers without escaping away their meaning. Fold preferences are scoped by workspace/document and separate from Markdown. Read-only callout/resize interactions cannot change document content. Preserve newer comments, mixed task-list handling, trailing nodes, controlled echoes and no-save authority flips. Labels exist in all 12 current locales. Source tests/builds establish bounded integration; native visual interaction acceptance remains separately verifiable.
+
+
+## Credential locator inherited-field repair — 2026-10-03
+
+Owner: `fix/credential-locator-own-fields-20261003`, based on main `635fc495d02c3fe1380740444cb90cf4fbdb58d9`. PR #1317 is already merged; this follow-up closes its inherited-field validation gap.
+
+Credential locators must contain their discriminator and every required value as their own enumerable data properties. Capture descriptor values into a null-prototype record before dispatch or normalization; never evaluate an own or inherited getter. Inherited `Object.prototype.value` must not turn an accessor descriptor into a data descriptor. Preserve valid frozen/readonly records, exact field allowlists, registry identity and persistence formats. Failed registration and provider replacement must leave registry state unchanged.
+
+Acceptance: negative data/getter cases for every locator variant and required field, zero getter invocations, unchanged state after rejection, existing valid/frozen positives, complete core suite and TypeScript, unchanged comprehensive CI command, and actual built-server HTTP/WebSocket authentication, shutdown and persistence/restart checks. Bind results to the delivered revision; Linux reproduction and hosted macOS checks are separate evidence.
+
+
+### Calendar synchronization ownership recovery (2026-10-03)
+
+Restore the per-account stale-response fence present in `feat/voice-v2-p0` and the cumulative Meetings branches, adapting it to the current `CalendarStore`. Only the most recently started connected-account sync may commit events, conflict snapshots, cursor and sync timestamps; a later failed request still supersedes an older response. Revocation invalidates outstanding ownership, and different accounts retain independent syncs. Request ownership is process-local and must not be serialized as credential or provider evidence. Current tuple identity, local-draft conflict review and unavailable production adapters remain authoritative. This bounded recovery does not establish live calendar-provider access.

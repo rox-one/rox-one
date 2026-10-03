@@ -25,9 +25,9 @@ import {
   buildBaseScriptEnv,
   type ScriptAction,
   type ScriptActionResult,
-} from '@craft-agent/shared/automations'
-import type { PageScriptRuntime } from '@craft-agent/core'
-import type { Logger } from '@craft-agent/server-core/runtime'
+} from '@rox/shared/automations'
+import type { PageScriptRuntime } from '@rox/core'
+import type { Logger } from '@rox/server-core/runtime'
 
 export interface PagesScriptExecutorDeps {
   workspaceRootPath: string

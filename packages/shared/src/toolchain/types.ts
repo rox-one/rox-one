@@ -36,6 +36,7 @@ export type ToolName =
   | 'oh-my-codex'
   | 'oh-my-claude-sisyphus'
   | 'skills'
+  | 'acpx'
   // npm opt-in (эти 5 vercel tools ставятся из marketplace kind:tool через update)
   | 'eve'
   | 'agent-browser'
@@ -65,6 +66,7 @@ export type ToolName =
 /** Every known ToolName — used to filter persisted toolchain.disabled and UI toggles. */
 export const ALL_TOOL_NAMES = [
   'omp',
+  'acpx',
   'python',
   'node',
   'ffmpeg',

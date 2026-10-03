@@ -10,7 +10,7 @@
  */
 
 import { atom } from 'jotai'
-import { DEFAULT_COLLECTION_FILTERS, type CollectionFilters } from '@craft-agent/shared/sessions/collection'
+import { DEFAULT_COLLECTION_FILTERS, type CollectionFilters } from '@rox/shared/sessions/collection'
 import { windowWorkspaceIdAtom } from './sessions'
 
 const EMPTY_COLLECTION_FILTERS: CollectionFilters = DEFAULT_COLLECTION_FILTERS

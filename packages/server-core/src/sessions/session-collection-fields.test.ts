@@ -9,8 +9,8 @@ import {
   lexorankValidate,
   type StoredSession,
   sessionPersistenceQueue,
-} from '@craft-agent/shared/sessions'
-import type { StoredMessage } from '@craft-agent/core/types'
+} from '@rox/shared/sessions'
+import type { StoredMessage } from '@rox/core/types'
 import { SessionManager, createManagedSession } from './SessionManager.ts'
 
 /**

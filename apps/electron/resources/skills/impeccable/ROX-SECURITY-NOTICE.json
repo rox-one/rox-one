@@ -1,0 +1,40 @@
+{
+  "author": "ROX",
+  "modifiedAt": "2026-10-03",
+  "upstream": "https://github.com/pbakaus/impeccable",
+  "upstreamCommit": "e103efe779e2dd01274dabae83531fef00bf2563",
+  "upstreamLicense": "Apache-2.0",
+  "note": "Upstream license/copyright notices retained. Local modifications are identified by portable paths and SHA256; local validation is separate from remote scanner closure.",
+  "securityPatches": [
+    {
+      "pack": "impeccable",
+      "path": "impeccable/LOCAL-SECURITY.md",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "3507161a8d43123d3021b5255d1a4ee442abe271bdb33b2193c654f02858e7a2"
+    },
+    {
+      "pack": "impeccable",
+      "path": "impeccable/impeccable/scripts/live-browser-dom.js",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "c9faf17fff050bb0c4221cc9079dc07e31f70d9a711416dbc11e75349cd8cdcf"
+    },
+    {
+      "pack": "impeccable",
+      "path": "impeccable/impeccable/scripts/live-browser.js",
+      "alerts": [
+        925,
+        610,
+        609,
+        603,
+        602,
+        601,
+        600
+      ],
+      "change": "Root db1906fd2: cryptographic IDs+origin-checked live browser messages; presenter source/origin check; HWP transforms use descriptor reads/writes with object identity checks.; Impeccable helper script origin is literal localhost and integer port validated; source loading is explicitly requested local live-mode capability, not arbitrary remote script URL.",
+      "sha256": "992126d63b47ff9734c41514b86ad9f2a332d34ed38a3c33f7f16f1ac1045dd8"
+    }
+  ],
+  "removedFiles": []
+}

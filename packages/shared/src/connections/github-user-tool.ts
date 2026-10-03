@@ -7,7 +7,7 @@
 
 import { tool } from '@anthropic-ai/claude-agent-sdk';
 import { z } from 'zod';
-import type { CredentialRefId } from '@craft-agent/core/platform';
+import type { CredentialRefId } from '@rox/core/platform';
 import {
   applyTrustedHttpHeader,
   type InProcessCredentialBroker,

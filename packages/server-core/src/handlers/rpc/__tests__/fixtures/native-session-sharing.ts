@@ -5,8 +5,8 @@ import { NativeAuthority } from '../../../../authority/native-authority'
 import { WsRpcServer } from '../../../../transport/server'
 import { WsRpcClient } from '../../../../transport/client'
 import { registerSessionsHandlers } from '../../sessions'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { RPC_CHANNELS, type Session } from '@craft-agent/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import { RPC_CHANNELS, type Session } from '@rox/shared/protocol'
 
 const directory = process.env.ROX_CONFIG_DIR!
 const roots = ['workspace-a', 'workspace-b'].map(id => {

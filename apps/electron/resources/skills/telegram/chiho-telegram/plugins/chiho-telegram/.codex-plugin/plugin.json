@@ -1,0 +1,32 @@
+{
+  "name": "chiho-telegram",
+  "version": "1.1.0",
+  "description": "Connect Codex to Chiho's hosted Telegram CRM through browser OAuth.",
+  "author": {
+    "name": "Chiho",
+    "url": "https://chiho.ai/"
+  },
+  "homepage": "https://chiho.ai/",
+  "repository": "https://github.com/chihoai/telegram-for-ai-agents",
+  "license": "MIT",
+  "keywords": ["telegram", "crm", "mcp", "oauth", "follow-up"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Chiho Telegram",
+    "shortDescription": "Hosted Telegram CRM through browser OAuth",
+    "longDescription": "Connect Codex to Chiho's hosted Telegram CRM for chats, search, folders, tags, companies, tasks, summaries, automation, and guarded Telegram actions. Authentication stays in the browser; no personal access token is copied into Codex.",
+    "developerName": "Chiho",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "websiteURL": "https://chiho.ai/",
+    "privacyPolicyURL": "https://chiho.ai/privacy",
+    "termsOfServiceURL": "https://chiho.ai/terms",
+    "defaultPrompt": [
+      "Show my Telegram follow-up queue.",
+      "Summarize my recent lead conversations.",
+      "Organize my Telegram chats with tags and tasks."
+    ],
+    "brandColor": "#229ED9"
+  }
+}

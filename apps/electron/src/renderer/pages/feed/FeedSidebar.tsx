@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { FeedSource, FeedSourceKind, FeedTab, XConnectionStatus } from '@craft-agent/shared/feed'
+import type { FeedSource, FeedSourceKind, FeedTab, XConnectionStatus } from '@rox/shared/feed'
 import {
   AtSign, Bot, Cable, ChevronRight, Github, Globe, Hash, Network,
   Newspaper, PlusCircle, Radio, Rss, SlidersHorizontal, Tags, Users, Youtube,

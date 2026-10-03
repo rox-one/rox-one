@@ -10,7 +10,7 @@ import {
   type CommandContribution,
   type CommandRegistry,
   type ContextKeyProvider,
-} from '@craft-agent/core/platform'
+} from '@rox/core/platform'
 import {
   CONATION_FUND_DEEP_LINK,
   shouldRegisterFundPanel,

@@ -1,5 +1,5 @@
-import { overlayShouldStealFocus, overlayVisible, type OverlayPhase, type OverlayState } from '@craft-agent/shared/voice'
-import { answerMeetingQuestion, type AssistAnswer } from '@craft-agent/shared/meeting-agents'
+import { overlayShouldStealFocus, overlayVisible, type OverlayPhase, type OverlayState } from '@rox/shared/voice'
+import { answerMeetingQuestion, type AssistAnswer } from '@rox/shared/meeting-agents'
 
 export type CaptureExclusion = { attempted: boolean; supported: boolean }
 

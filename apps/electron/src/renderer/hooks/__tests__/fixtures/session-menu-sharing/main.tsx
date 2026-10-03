@@ -4,7 +4,7 @@ import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import { Toaster } from 'sonner'
 import { useSessionMenuActions } from '../../../useSessionMenuActions'
-import type { SessionCommand } from '@craft-agent/shared/protocol'
+import type { SessionCommand } from '@rox/shared/protocol'
 import en from '../../../../../../../../packages/shared/src/i18n/locales/en.json'
 import ru from '../../../../../../../../packages/shared/src/i18n/locales/ru.json'
 

@@ -10,10 +10,10 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Session } from '../../shared/types'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { deferIfDeepWork, isFocusRunning, loadFocusState } from '@/lib/focus-session'
 import { useTaskReminders } from '@/lib/task-reminders'
-import type { PersonalTask } from '@craft-agent/core/tasks/personal'
+import type { PersonalTask } from '@rox/core/tasks/personal'
 
 /**
  * Draw a badge onto an icon image using Canvas
@@ -206,7 +206,7 @@ export function useNotifications({
     })
 
     // Now that the Canvas listener is subscribed, request initial badge from main
-    void window.electronAPI.refreshBadge()
+    void window.electronAPI.refreshBadge().catch(() => {})
 
     return cleanup
   }, [hasGuiChannels])
@@ -255,7 +255,7 @@ export function useNotifications({
       body = body.substring(0, 97) + '...'
     }
 
-    window.electronAPI.showNotification(title, body, workspaceId, session.id)
+    void window.electronAPI.showNotification(title, body, workspaceId, session.id).catch(() => {})
   }, [enabled, isWindowFocused, workspaceId, hasGuiChannels, t])
 
   return {

@@ -13,9 +13,9 @@ import { registerNativeDataHandlers } from '../../../../../packages/server-core/
 import { registerNotesHandlers } from '../../../../../packages/server-core/src/handlers/rpc/notes.ts'
 import { projectNativeNotesChanged } from '../../../../../packages/server-core/src/handlers/rpc/native-notes-events.ts'
 import type { HandlerDeps } from '../../../../../packages/server-core/src/handlers/handler-deps.ts'
-import { NATIVE_REPLICA_IPC, type NativeReplicaQueuedMutation } from '@craft-agent/shared/protocol/native-replica'
-import { RPC_CHANNELS, type NoteChangedPayload } from '@craft-agent/shared/protocol'
-import type { CredentialId, StoredCredential } from '@craft-agent/shared/credentials'
+import { NATIVE_REPLICA_IPC, type NativeReplicaQueuedMutation } from '@rox/shared/protocol/native-replica'
+import { RPC_CHANNELS, type NoteChangedPayload } from '@rox/shared/protocol'
+import type { CredentialId, StoredCredential } from '@rox/shared/credentials'
 import type { ElectronAPI } from '../../shared/types'
 
 // A real authenticated authority, journal, Notes handlers and remote WS

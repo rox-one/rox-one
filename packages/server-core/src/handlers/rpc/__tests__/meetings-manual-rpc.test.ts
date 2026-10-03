@@ -3,10 +3,10 @@ import { mkdtempSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { createHash } from 'crypto'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { RpcServer } from '@craft-agent/server-core/transport'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
-import type { Meeting } from '@craft-agent/core/meetings'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { RpcServer } from '@rox/server-core/transport'
+import type { MeetingGrant } from '@rox/shared/meeting-agents'
+import type { Meeting } from '@rox/core/meetings'
 import {
   registerMeetingHandlers,
   resetMeetingHandlerStateForTests,

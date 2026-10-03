@@ -1,6 +1,6 @@
 import type { ChildProcess } from 'child_process'
 import { EventEmitter } from 'events'
-import type { SshHostConfig } from '@craft-agent/shared/config'
+import type { SshHostConfig } from '@rox/shared/config'
 
 export type TunnelStatus = 'disconnected' | 'connecting' | 'connected' | 'error'
 

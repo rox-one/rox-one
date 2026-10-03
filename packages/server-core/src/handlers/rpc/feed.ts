@@ -8,10 +8,10 @@
  */
 import { readFile } from 'fs/promises'
 import { join } from 'path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId, resolveConfigDir } from '@craft-agent/shared/config'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
-import type { CredentialId } from '@craft-agent/shared/credentials'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId, resolveConfigDir } from '@rox/shared/config'
+import { getCredentialManager } from '@rox/shared/credentials'
+import type { CredentialId } from '@rox/shared/credentials'
 import {
   buildAutomationRunItems,
   buildSessionFeedItems,
@@ -24,13 +24,13 @@ import {
   type FeedSourcePatch,
   type FeedSessionLike,
   type XConnectionStatus,
-} from '@craft-agent/shared/feed'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/shared/feed'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { FeedService, type AddSourceResult } from '../../feed/feed-service'
 import { createXApiAdapter, notConnectedXAdapter, type XSubscriptionsAdapter } from '../../feed/x-adapter'
 import { createNativeFeedOperation, type NativeFeedEnvironment } from './native-feed'
-import { CodedError } from '@craft-agent/shared/protocol'
+import { CodedError } from '@rox/shared/protocol'
 import type { RequestContext } from '../../transport/types'
 
 export const FEED_HANDLED_CHANNELS = [

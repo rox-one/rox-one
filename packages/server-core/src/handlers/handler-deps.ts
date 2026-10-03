@@ -8,13 +8,13 @@ import type { IOAuthFlowStore } from './oauth-flow-store-interface'
 import type { IBrowserPaneManager } from './browser-pane-manager-interface'
 import type { IWindowManager } from './window-manager-interface'
 import type { IMessagingGatewayRegistry } from './messaging-registry-interface'
-import type { BrowserCredentialHost } from '@craft-agent/shared/browser/browser-credential-host'
+import type { BrowserCredentialHost } from '@rox/shared/browser/browser-credential-host'
 import type {
   AcceptSecurityRiskRequest,
   AuditMode,
   OpenClawRuntimeStatus,
   SecurityAuditSnapshot,
-} from '@craft-agent/shared/openclaw'
+} from '@rox/shared/openclaw'
 
 export interface OpenClawSecurityWorkspaceInput {
   readonly workspaceId: string

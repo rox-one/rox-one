@@ -70,3 +70,22 @@ describe('CF-6.3 workgraph channel map', () => {
     })
   })
 })
+
+
+describe('Connections controller transport closure', () => {
+  const operations = {
+    listConnectionLeases: RPC_CHANNELS.workgraph.LIST_CONNECTION_LEASES,
+    inspectConnection: RPC_CHANNELS.workgraph.INSPECT_CONNECTION,
+    moveConnection: RPC_CHANNELS.workgraph.MOVE_CONNECTION,
+    startGithubDeviceLogin: RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN,
+    pollGithubDeviceLogin: RPC_CHANNELS.workgraph.POLL_GITHUB_DEVICE_LOGIN,
+    cancelGithubDeviceLogin: RPC_CHANNELS.workgraph.CANCEL_GITHUB_DEVICE_LOGIN,
+    reconnectConnection: RPC_CHANNELS.workgraph.RECONNECT_CONNECTION,
+  } as const
+  for (const method of Object.keys(operations) as (keyof typeof operations)[]) {
+    const channel = operations[method]
+    it(`exposes ${method} through the generated preload API`, () => {
+      expect(CHANNEL_MAP[`workgraph.${method}`]).toEqual({ type: 'invoke', channel });
+    });
+  }
+});

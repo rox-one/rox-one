@@ -3,30 +3,30 @@ import { join } from 'path'
 import { homedir } from 'os'
 import { execFile, execSync } from 'child_process'
 import { promisify } from 'util'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { emptyGitWorkingTreeStatus } from '@craft-agent/shared/git/status'
-import { readGitBranchName, readGitWorkingTreeStatus } from '@craft-agent/shared/git/exec'
-import { getWorkspaceByNameOrId, getGitBashPath, setGitBashPath, clearGitBashPath } from '@craft-agent/shared/config'
-import { classifyExternalUrl, formatBlockedUrlError } from '@craft-agent/shared/utils/url-safety'
-import { isRoxDeeplinkProtocol } from '@craft-agent/shared/identity'
-import { isUsableGitBashPath, validateGitBashPath } from '@craft-agent/server-core/services'
-import { validateFilePath, getWorkspaceAllowedDirs } from '@craft-agent/server-core/handlers'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { emptyGitWorkingTreeStatus } from '@rox/shared/git/status'
+import { readGitBranchName, readGitWorkingTreeStatus } from '@rox/shared/git/exec'
+import { getWorkspaceByNameOrId, getGitBashPath, setGitBashPath, clearGitBashPath } from '@rox/shared/config'
+import { classifyExternalUrl, formatBlockedUrlError } from '@rox/shared/utils/url-safety'
+import { isRoxDeeplinkProtocol } from '@rox/shared/identity'
+import { isUsableGitBashPath, validateGitBashPath } from '@rox/server-core/services'
+import { validateFilePath, getWorkspaceAllowedDirs } from '@rox/server-core/handlers'
 import { isValidWorkingDirectory } from '../../utils/path-validation'
-import { isSensitiveAgentCwd } from '@craft-agent/shared/sessions'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import { isSensitiveAgentCwd } from '@rox/shared/sessions'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   requestClientOpenExternal,
   requestClientOpenPath,
   requestClientShowInFolder,
   requestClientOpenFileDialog,
-} from '@craft-agent/server-core/transport'
+} from '@rox/server-core/transport'
 import {
   isClaimableLive,
   rpcSystemActResult,
   rpcSystemListResult,
   rpcSystemReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.theme.GET_SYSTEM_PREFERENCE,
@@ -186,12 +186,12 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
 
   // Release notes
   server.handle(RPC_CHANNELS.releaseNotes.GET, async () => {
-    const { getCombinedReleaseNotes } = require('@craft-agent/shared/release-notes') as typeof import('@craft-agent/shared/release-notes')
+    const { getCombinedReleaseNotes } = require('@rox/shared/release-notes') as typeof import('@rox/shared/release-notes')
     return getCombinedReleaseNotes()
   })
 
   server.handle(RPC_CHANNELS.releaseNotes.GET_LATEST_VERSION, async () => {
-    const { getLatestReleaseVersion } = require('@craft-agent/shared/release-notes') as typeof import('@craft-agent/shared/release-notes')
+    const { getLatestReleaseVersion } = require('@rox/shared/release-notes') as typeof import('@rox/shared/release-notes')
     return getLatestReleaseVersion()
   })
 

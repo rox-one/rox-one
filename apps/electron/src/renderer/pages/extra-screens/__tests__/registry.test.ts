@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { EXTRA_SCREEN_FEATURE_FLAGS, EXTRA_SCREEN_FLAG, WORKBENCH_FEATURE_FLAGS } from '@craft-agent/core/platform'
+import { EXTRA_SCREEN_FEATURE_FLAGS, EXTRA_SCREEN_FLAG, WORKBENCH_FEATURE_FLAGS } from '@rox/core/platform'
 import { EXTRA_SCREEN_IDS } from '../../../../shared/extra-screens'
 import { EXTRA_SCREENS, visibleExtraScreens } from '../registry'
 

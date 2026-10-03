@@ -16,6 +16,7 @@ import type { FolderSourceConfig, LoadedSource } from './types.ts';
 import { toPortablePath } from '../utils/paths.ts';
 import { getServerServiceKey, SERVER_SERVICE_KEYS, type ServerServiceKey } from '../config/server-services.ts';
 import { estimateTokens } from '../utils/large-response.ts';
+import { BUILTIN_MCP_CATALOG } from './builtin-mcp.ts';
 
 function sourcesDir(workspaceRootPath: string): string {
   return join(workspaceRootPath, 'sources');
@@ -377,7 +378,7 @@ export function getBuiltinSources(workspaceId: string, workspaceRootPath: string
 export function getDocsSource(workspaceId: string, workspaceRootPath: string): LoadedSource {
   const placeholderConfig: FolderSourceConfig = {
     id: 'builtin-craft-agents-docs',
-    name: 'Craft Agents Docs',
+    name: 'ROX Docs',
     slug: 'craft-agents-docs',
     enabled: true,
     provider: 'mintlify',
@@ -387,7 +388,7 @@ export function getDocsSource(workspaceId: string, workspaceRootPath: string): L
       url: 'https://agents.craft.do/docs/mcp',
       authType: 'none',
     },
-    tagline: 'Search Craft Agents documentation and source setup guides',
+    tagline: 'Search ROX documentation and source setup guides',
     icon: '📚',
     isAuthenticated: true,
     connectionStatus: 'connected',
@@ -404,7 +405,9 @@ export function getDocsSource(workspaceId: string, workspaceRootPath: string): L
 }
 
 export function isBuiltinSource(slug: string): boolean {
-  return (BUILTIN_SOURCE_SLUGS as readonly string[]).includes(slug) || slug === 'craft-agents-docs';
+  return (BUILTIN_SOURCE_SLUGS as readonly string[]).includes(slug)
+    || BUILTIN_MCP_CATALOG.some(spec => spec.slug === slug)
+    || slug === 'craft-agents-docs';
 }
 
 /** Rough token estimate for a source guide / attached text (chars/4). */

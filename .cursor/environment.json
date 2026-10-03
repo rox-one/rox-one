@@ -1,0 +1,12 @@
+{
+  "name": "ROX headless server",
+  "install": "bash .cursor/install.sh",
+  "ports": [{ "name": "rox-rpc", "port": 9100 }],
+  "terminals": [
+    {
+      "name": "rox-server",
+      "description": "ROX RPC server at ws://127.0.0.1:9100. Development state is isolated in ~/.rox-cloud/context by default. The bearer token is stored with owner-only permissions in cursor-dev-token inside that directory; use it with apps/cli/src/index.ts for local RPC checks.",
+      "command": "bash .cursor/start-server.sh"
+    }
+  ]
+}

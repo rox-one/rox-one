@@ -127,3 +127,16 @@ describe('OS-protected browser vault key custody', () => {
     expect(readFileSync(outside, 'utf8')).toBe('outside fixture')
   })
 })
+
+test('never decrypts a valid wrapped key reached through a substituted symlink', () => {
+  const f = fixture(); mkdirSync(f.directory)
+  const wrapped = f.safeStorage.encryptString(randomBytes(32).toString('hex'))
+  const outside = join(f.root, 'valid-outside.enc'); writeFileSync(outside, wrapped)
+  symlinkSync(outside, join(f.directory, `${reference}.enc`))
+  let decryptions = 0
+  const decrypt = f.safeStorage.decryptString
+  f.safeStorage.decryptString = value => { decryptions++; return decrypt(value) }
+  expect(f.store.readKey(reference)).toBeNull()
+  expect(decryptions).toBe(0)
+  expect(readFileSync(outside).equals(wrapped)).toBe(true)
+})

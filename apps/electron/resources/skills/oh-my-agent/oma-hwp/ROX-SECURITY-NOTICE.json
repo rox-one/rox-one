@@ -1,0 +1,28 @@
+{
+  "author": "ROX",
+  "modifiedAt": "2026-10-03",
+  "upstream": "https://github.com/first-fluke/oh-my-agent",
+  "upstreamCommit": "8b17162c2fca567999add4733aeae2d8eb81faed",
+  "upstreamLicense": "MIT",
+  "note": "Upstream license/copyright notices retained. Local modifications are identified by portable paths and SHA256; local validation is separate from remote scanner closure.",
+  "securityPatches": [
+    {
+      "pack": "oh-my-agent",
+      "path": "oh-my-agent/oma-hwp/resources/flatten-tables.ts",
+      "alerts": [
+        810,
+        809
+      ],
+      "change": "Root db1906fd2: cryptographic IDs+origin-checked live browser messages; presenter source/origin check; HWP transforms use descriptor reads/writes with object identity checks.",
+      "sha256": "0abd4bf19249a57ba9cd4d510e63d48acf9a559ef1c8f9b28a8bf889164e8982"
+    },
+    {
+      "pack": "oh-my-agent",
+      "path": "oh-my-agent/oma-hwp/resources/safe-file-transform.ts",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "2bbd81a1fbad0e52f3064ae591dcb17099a44c8720520063094ba9f413c47005"
+    }
+  ],
+  "removedFiles": []
+}

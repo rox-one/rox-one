@@ -16,7 +16,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { AgentEvent } from '@craft-agent/core/types';
+import type { AgentEvent } from '@rox/core/types';
 import type { FileAttachment } from '../utils/files.ts';
 import { expandPath } from '../utils/paths.ts';
 import { buildTransferredSessionContext } from './conversation-summary.ts';
@@ -627,7 +627,19 @@ export abstract class BaseAgent implements AgentBackend {
       } catch (err) {
         this.debug(`Failed to sync MCP pool: ${err instanceof Error ? err.message : String(err)}`);
       }
+      this.refreshSourceToolState();
     }
+  }
+
+  /** Refresh actual availability without losing selected sources awaiting setup. */
+  protected refreshSourceToolState(): void {
+    const pool = this.config.mcpPool;
+    if (!pool) return;
+    this.sourceManager.updateActiveState(
+      pool.getConnectedSlugs().filter(slug => pool.getTools(slug).length > 0),
+      [],
+      [...this.sourceManager.getIntendedSlugs()],
+    );
   }
 
   getActiveSourceSlugs(): string[] {
@@ -1022,6 +1034,8 @@ ${formattedMessages}
     attachments?: FileAttachment[],
     options?: ChatOptions
   ): AsyncGenerator<AgentEvent> {
+    // A transport can close after the preceding source synchronization.
+    this.refreshSourceToolState();
     const { skillPaths, cleanMessage, missingSkills } = this.extractSkillPaths(message);
     if (missingSkills.length > 0) {
       yield { type: 'error', message: `Skill(s) not found: ${missingSkills.join(', ')}` };

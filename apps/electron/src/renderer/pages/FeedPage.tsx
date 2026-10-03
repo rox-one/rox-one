@@ -24,7 +24,7 @@ import {
   type FeedListResult,
   type FeedTab,
   type XConnectionStatus,
-} from '@craft-agent/shared/feed'
+} from '@rox/shared/feed'
 import {
   ArrowDownWideNarrow,
   ArrowUpNarrowWide,
@@ -47,7 +47,7 @@ import { useTeamState } from '@/components/team/team-store'
 import { useTeamRoster } from '@/components/team/use-team-roster'
 import { activityText } from '@/components/team/team-labels'
 import { createPersonalTaskConfirmed } from '@/lib/extra-screens/personal-task-bridge'
-import type { PersonalTask } from '@craft-agent/core/tasks/personal'
+import type { PersonalTask } from '@rox/core/tasks/personal'
 import type { NoteDocument } from '../../shared/types'
 import { isNativeNoteDocument } from '@/lib/notes-write-authority'
 import {

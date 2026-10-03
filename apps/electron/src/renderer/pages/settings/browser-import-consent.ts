@@ -1,5 +1,5 @@
-import type { BrowserImportCategory } from '@craft-agent/shared/environment'
-import type { BrowserFamily, ImportConsent } from '@craft-agent/shared/browser/profile-import'
+import type { BrowserImportCategory } from '@rox/shared/environment'
+import type { BrowserFamily, ImportConsent } from '@rox/shared/browser/profile-import'
 
 /** Saved preferences never stand in for a per-profile or OS permission grant. */
 export function browserImportConsent(

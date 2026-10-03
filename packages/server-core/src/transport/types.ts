@@ -2,7 +2,7 @@
  * Transport-layer interfaces for the WS-based RPC.
  */
 
-import type { PushTarget } from '@craft-agent/shared/protocol'
+import type { PushTarget } from '@rox/shared/protocol'
 import type { NativeAuthorityAction, NativePrincipal } from '../authority/native-authority'
 import type { AuthenticatedActor } from '../../../shared/src/workspace-domain/identity/contracts'
 

@@ -1,0 +1,40 @@
+{
+  "author": "ROX",
+  "modifiedAt": "2026-10-03",
+  "upstream": "https://github.com/EveryInc/compound-engineering-plugin",
+  "upstreamCommit": "9af474a70e7f2a844338519ad9e92aafbd92d4fb",
+  "upstreamLicense": "MIT",
+  "note": "Upstream license/copyright notices retained. Local modifications are identified by portable paths and SHA256; local validation is separate from remote scanner closure.",
+  "securityPatches": [
+    {
+      "pack": "compound-engineering",
+      "path": "compound-engineering/ce-prototype/assets/annotate.js",
+      "alerts": [
+        556
+      ],
+      "change": "Descriptor confinement/private output/same-origin reload fix. 7 tests/101 assertions pass; post-check/open races and actual loopback helper/auth tests. Detail: apps/electron/resources/skills/compound-engineering/LOCAL-SECURITY.md",
+      "sha256": "7707bc3a8c51241836125c8f1a6381948fc8288eba0ad1e831c73159e5b3d799"
+    },
+    {
+      "pack": "compound-engineering",
+      "path": "compound-engineering/ce-prototype/scripts/light-webserver.js",
+      "alerts": [
+        814,
+        564,
+        563,
+        562,
+        558
+      ],
+      "change": "Source-proven intended route auth / local authored executable prototype / authenticated configured helper/provider requests. Actual loopback negative controls deny wrong/missing credentials and origins; active authored prototype preserved. Per-alert detail: apps/electron/resources/skills/compound-engineering/LOCAL-SECURITY.md; no suppression or exclusion.; Descriptor confinement/private output/same-origin reload fix. 7 tests/101 assertions pass; post-check/open races and actual loopback helper/auth tests. Detail: apps/electron/resources/skills/compound-engineering/LOCAL-SECURITY.md",
+      "sha256": "d2e6ce752076d6e62f09d5703c883cc1ce92a0f5eb15cb42e77c8e0f6ea3be4a"
+    },
+    {
+      "pack": "compound-engineering",
+      "path": "compound-engineering/ce-prototype/scripts/safe-files.js",
+      "alerts": [],
+      "change": "ROX local integration/security helper modification or supporting regression documentation; inspect source diff against frozen vendor baseline.",
+      "sha256": "09b6cbe9c034cbc4e8cf3ab833ea20dcb8f072f2ae239314728abd78833f2b4e"
+    }
+  ],
+  "removedFiles": []
+}

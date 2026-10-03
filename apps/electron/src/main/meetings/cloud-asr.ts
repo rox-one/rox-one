@@ -4,9 +4,9 @@
  * the upload and the response; remote consent belongs to that credential's actor.
  */
 import { createHash } from 'node:crypto'
-import type { Workspace, RemoteServerConfig } from '@craft-agent/core/types'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { DEEPGRAM_TRANSCRIPTION_MODEL, type NormalizedTranscript, type TranscriptionRequest } from '@craft-agent/shared/voice'
+import type { Workspace, RemoteServerConfig } from '@rox/core/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { DEEPGRAM_TRANSCRIPTION_MODEL, type NormalizedTranscript, type TranscriptionRequest } from '@rox/shared/voice'
 import type { LocalAsrEngine, LocalMeeting } from '../../shared/meetings-local'
 import type { LocalTranscriptionContext } from './local-store'
 

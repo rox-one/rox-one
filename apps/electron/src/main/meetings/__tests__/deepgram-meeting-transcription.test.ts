@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { LocalMeetingStore } from '../local-store'
-import type { NormalizedTranscript } from '@craft-agent/shared/voice'
+import type { NormalizedTranscript } from '@rox/shared/voice'
 
 const directories: string[] = []
 afterEach(() => directories.splice(0).forEach((dir) => rmSync(dir, { recursive: true, force: true })))
@@ -78,6 +78,21 @@ describe('Deepgram Electron meeting queue', () => {
     expect(store.read(id)?.durationMs).toBe(5000)
   })
 
+  it('refuses a linked recording before any retry audio reaches the cloud provider', async () => {
+    let calls = 0
+    const { root, store } = fixture(async () => { calls++; return transcript })
+    const id = await recording(store)
+    await waitUntil(() => store.read(id)?.transcript.status === 'done')
+    const audioPath = join(root, id, store.read(id)!.audio!.file)
+    const target = join(root, 'foreign-audio.wav')
+    writeFileSync(target, 'foreign-sensitive-fixture')
+    rmSync(audioPath); symlinkSync(target, audioPath)
+    expect(store.transcribe(id).ok).toBe(true)
+    await waitUntil(() => store.read(id)?.transcript.status === 'failed')
+    expect(calls).toBe(1)
+    expect(readFileSync(target, 'utf8')).toBe('foreign-sensitive-fixture')
+    expect(store.read(id)?.transcript.error).not.toContain(root)
+  })
   it('marks provider failure for retry instead of silently saving an empty local transcript', async () => {
     const { store } = fixture(async () => { throw new Error('Deepgram transcription failed (429)') })
     const id = await recording(store)

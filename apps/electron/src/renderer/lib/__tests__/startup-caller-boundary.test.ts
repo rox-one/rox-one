@@ -28,6 +28,7 @@ function harness(overrides: Record<string, unknown> = {}, environmentOverrides: 
   const workspaceConfigurations: unknown[] = []
   const setups: unknown[] = []
   const errors: unknown[] = []
+  const taskScopes: unknown[] = []
   const api: Record<string, unknown> = {
     getWindowWorkspace: async () => { calls.push('workspace'); return 'ws-a' },
     getOrgIdentity: async () => { calls.push('identity'); return nativeIdentity },
@@ -44,6 +45,7 @@ function harness(overrides: Record<string, unknown> = {}, environmentOverrides: 
     probeWithRetry: (read: () => Promise<unknown>, options?: object) => probeWithRetry(read, { delaysMs: [0], deadlineMs: 3000, ...options }),
     waitForTransportConnected: async () => { calls.push('transport-wait'); return { status: 'connected' } },
     decideStartupAppState, isStartupAuthorityDenial, ensureRoxRuntimeDefault,
+    setPersonalTaskScope: (value: unknown) => taskScopes.push(value),
     setCallerAuthority: (value: unknown) => authorities.push(value),
     setWindowWorkspaceId: (value: unknown) => workspaces.push(value),
     setSetupNeeds: (value: unknown) => setups.push(value), setLlmConnections: (value: unknown) => configurations.push(value),
@@ -58,7 +60,7 @@ function harness(overrides: Record<string, unknown> = {}, environmentOverrides: 
     ...environmentOverrides,
   }
   const actual = new Function(...Object.keys(environment), 'let cancelled = false; ' + code + '; return { run: actual, cancel: () => { cancelled = true } }')(...Object.values(environment))
-  return { ...actual, calls, states, authorities, workspaces, configurations, runtimeConfigurations, workspaceConfigurations, setups, errors }
+  return { ...actual, calls, states, authorities, workspaces, configurations, runtimeConfigurations, workspaceConfigurations, setups, errors, taskScopes }
 }
 
 describe('actual App startup caller boundary', () => {
@@ -67,6 +69,7 @@ describe('actual App startup caller boundary', () => {
     const h = harness({ getOrgIdentity: async () => { identityCalls++; throw Object.assign(new Error('denied'), { code: 'AUTH_FAILED' }) } })
     await h.run()
     expect(identityCalls).toBe(1)
+    expect(h.taskScopes).toEqual([null])
     expect(h.states).toEqual(['transport-unavailable'])
     expect(h.authorities).toEqual([null])
     expect(h.workspaces).toEqual([])

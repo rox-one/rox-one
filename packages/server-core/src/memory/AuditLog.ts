@@ -17,8 +17,8 @@
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import type { AuditEntry, LessonScope } from '@craft-agent/shared/memory/types'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import type { AuditEntry, LessonScope } from '@rox/shared/memory/types'
+import { resolveConfigDir } from "@rox/shared/config/paths"
 
 /** Rotation thresholds: rotate once past maxLines, keep the tail. */
 export const AUDIT_LIMITS = {

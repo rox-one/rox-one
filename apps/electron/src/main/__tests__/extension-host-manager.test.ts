@@ -3,7 +3,7 @@ import { EventEmitter } from 'node:events'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { credentialIdToAccount } from '@craft-agent/shared/credentials'
+import { credentialIdToAccount } from '@rox/shared/credentials'
 import {
   ExtensionHostManager,
   getExtensionHostManager,

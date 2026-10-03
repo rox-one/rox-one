@@ -1,0 +1,36 @@
+[
+  {
+    "attempt": "original-cloud",
+    "source": "prior-result.json",
+    "result": "Bun1.2.14, dependency/typecheck limits, original broad regression failures retained verbatim"
+  },
+  {
+    "attempt": "callbacks-first",
+    "log": "logs/callbacks-first.log.gz",
+    "result": "14pass1fail; revealed missing hydration guard for collapsedItems; fixed and retested"
+  },
+  {
+    "attempt": "typecheck-command-1",
+    "result": "zsh rejected nonexistent relative log directory before tsc ran; corrected to absolute output path; qualified Bun typecheck passed"
+  },
+  {
+    "attempt": "browser-first",
+    "log": "logs/browser-first.log.gz",
+    "result": "6pass1fail while geometry worker had not yet replaced original720 maximum; source-aligned280..1400 bounds installed; final8pass0fail"
+  },
+  {
+    "attempt": "baseline-regression",
+    "log": "logs/baseline-tests.log.gz",
+    "result": "235pass1fail on clean4f91d8e28 snapshot: PANEL_STACK_TOP_INSET=4 while existing test expects0"
+  },
+  {
+    "attempt": "final-broad-regression",
+    "log": "logs/regression-final.log.gz",
+    "result": "267pass10skip1same preexisting failure; no new regression failure"
+  },
+  {
+    "attempt": "geometry-negative-control",
+    "log": "logs/geometry-negative-control.log.gz",
+    "result": "2pass11expectedfail against unmodified main geometry, demonstrating tests reject original behavior"
+  }
+]

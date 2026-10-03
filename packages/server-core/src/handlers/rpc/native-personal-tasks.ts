@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto'
 import { chmodSync, closeSync, lstatSync, mkdirSync, openSync, realpathSync } from 'node:fs'
 import { join } from 'node:path'
-import type { PersonalTask, PersonalTaskDeleteResult, PersonalTaskMeta, PersonalTaskPutResult, PersonalTasksMigrateInput, PersonalTasksMigrateResult, PersonalTasksSnapshot, VersionedPersonalTask } from '@craft-agent/core/tasks/personal'
-import { CodedError } from '@craft-agent/shared/protocol'
-import { DatabaseSync } from '@craft-agent/shared/utils/sqlite-runtime'
+import type { PersonalTask, PersonalTaskDeleteResult, PersonalTaskMeta, PersonalTaskPutResult, PersonalTasksMigrateInput, PersonalTasksMigrateResult, PersonalTasksSnapshot, VersionedPersonalTask } from '@rox/core/tasks/personal'
+import { CodedError } from '@rox/shared/protocol'
+import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
 import type { NativePrincipal } from '../../authority/native-authority'
 
 export interface NativePersonalTaskScope {

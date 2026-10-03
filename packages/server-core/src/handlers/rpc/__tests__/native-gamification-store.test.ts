@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
-import { DatabaseSync } from '@craft-agent/shared/utils/sqlite-runtime'
+import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
 import { NativeGamificationStore } from '../native-gamification'
 import { awardNativeXpAndBroadcast } from '../gamification'
 import type { NativePrincipal } from '../../../authority/native-authority'

@@ -12,7 +12,7 @@ import { readInstallMarker, readLock, removeInstallMarker } from '../../../../..
 import { BaseAgent } from '../../../../../shared/src/agent/base-agent.ts';
 import { RPC_CHANNELS } from '../../../../../shared/src/protocol/index.ts';
 import { registerSkillsHandlers } from '../skills.ts';
-import type { HandlerFn, RpcServer } from '@craft-agent/server-core/transport';
+import type { HandlerFn, RpcServer } from '@rox/server-core/transport';
 
 const config = dirname(APP_MANAGED_SKILLS_DIR);
 const bundle = join(homedir(), 'bundle');

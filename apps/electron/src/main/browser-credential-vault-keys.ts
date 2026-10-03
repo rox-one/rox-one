@@ -1,5 +1,5 @@
 /** OS-protected custody for imported-password vault keys. No plaintext fallback. */
-import { chmodSync, existsSync, linkSync, lstatSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, closeSync, constants, existsSync, fstatSync, linkSync, lstatSync, mkdirSync, openSync, readSync, rmSync, writeFileSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { join } from 'node:path'
 
@@ -62,15 +62,27 @@ export function createBrowserCredentialVaultKeyStore(options: {
     const file = fileFor(reference)
     if (!file || !available()) return null
     let sealed: Buffer | null = null
+    let descriptor: number | null = null
     try {
       if (lstatSync(options.directory).isSymbolicLink()) return null
-      const info = lstatSync(file)
-      if (!info.isFile() || info.isSymbolicLink() || info.size > 16_384) return null
-      sealed = readFileSync(file)
+      // Validate and read the same opened object. A path can be replaced after
+      // lstat; O_NOFOLLOW rejects a substituted final-component symlink.
+      descriptor = openSync(file, constants.O_RDONLY | constants.O_NOFOLLOW)
+      const info = fstatSync(descriptor)
+      const current = lstatSync(file)
+      if (!info.isFile() || current.isSymbolicLink() || current.dev !== info.dev || current.ino !== info.ino || info.size > 16_384) return null
+      // Bound allocation and detect growth after fstat without reopening a path.
+      sealed = Buffer.alloc(16_385)
+      const length = readSync(descriptor, sealed, 0, sealed.length, 0)
+      if (length > 16_384) return null
+      sealed = sealed.subarray(0, length)
       const value = storage.decryptString(sealed)
       return /^[a-f0-9]{64}$/i.test(value) ? Buffer.from(value, 'hex') : null
     } catch { return null }
-    finally { sealed?.fill(0) }
+    finally {
+      sealed?.fill(0)
+      if (descriptor !== null) closeSync(descriptor)
+    }
   }
 
   /** Does not unlock/decrypt OS storage, and fails closed on ambiguous errors. */

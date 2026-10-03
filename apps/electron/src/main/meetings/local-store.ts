@@ -1,4 +1,5 @@
-import { getServerServiceKey } from '@craft-agent/shared/config/server-services'
+import { readBoundedRegularFile } from '@rox/shared/utils/bounded-file'
+import { getServerServiceKey } from '@rox/shared/config/server-services'
 /**
  * Local meeting store: one folder per meeting under `<root>/<id>/`.
  *   meeting.json      — metadata (title, times, participants, actions, docs…)
@@ -53,7 +54,7 @@ import {
 } from './local-model'
 import { decodeToWav, probeDurationMs, remuxAudio, runWhisper } from './local-asr'
 import { applyExtractionResult, EXTRACTION_START_TIMEOUT_MS, EXTRACTION_RUN_TIMEOUT_MS } from './local-extraction'
-import { DeepgramTranscriptionAdapter, loadVoicePrefs, type NormalizedTranscript, type TranscriptionRequest } from '@craft-agent/shared/voice'
+import { DeepgramTranscriptionAdapter, loadVoicePrefs, type NormalizedTranscript, type TranscriptionRequest } from '@rox/shared/voice'
 
 export const MAX_IMPORT_BYTES = 2 * 1024 * 1024 * 1024
 
@@ -860,9 +861,9 @@ export class LocalMeetingStore {
       let modelRevision: string | undefined
       let diarizationModel: string | undefined
       if (engine.engine === 'deepgram') {
-        if (statSync(audioPath).size > 200 * 1024 * 1024) throw new Error('Audio exceeds the transcription size limit (200 MB)')
+        const audio = readBoundedRegularFile(audioPath, { maxBytes: 200 * 1024 * 1024 })
         const prefs = loadVoicePrefs()
-        const input: TranscriptionRequest = { audio: new Uint8Array(readFileSync(audioPath)), mimeType: meeting.audio!.mimeType,
+        const input: TranscriptionRequest = { audio: new Uint8Array(audio), mimeType: meeting.audio!.mimeType,
           language: prefs.recognitionLanguage === 'auto' ? undefined : prefs.recognitionLanguage, signal }
         const result = this.deps.transcribeCloud
           ? await this.deps.transcribeCloud(input, meeting, job.context)

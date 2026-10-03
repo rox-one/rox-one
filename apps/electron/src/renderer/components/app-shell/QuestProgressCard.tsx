@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BookOpen, Link2, CheckSquare, GitBranch, Globe, ShieldCheck, Trophy, Zap, Check, Clock3, Loader2, RefreshCw } from 'lucide-react'
-import { QUEST_CLOUD_REQUIRED, QUEST_IDS, QUEST_XP_EVENT, XP_EVENT_REWARDS, getWeeklyXp } from '@craft-agent/shared/gamification/client'
-import type { QuestId, QuestRecord } from '@craft-agent/shared/gamification'
+import { QUEST_CLOUD_REQUIRED, QUEST_IDS, QUEST_XP_EVENT, XP_EVENT_REWARDS, getWeeklyXp } from '@rox/shared/gamification/client'
+import type { QuestId, QuestRecord } from '@rox/shared/gamification'
 import { cn } from '@/lib/utils'
 
 const QUEST_ICONS = { first_note: BookOpen, first_link: Link2, first_task: CheckSquare, first_workflow: GitBranch, first_browser: Globe, privacy_review: ShieldCheck }

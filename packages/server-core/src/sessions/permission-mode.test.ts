@@ -2,14 +2,14 @@ import { afterEach, describe, expect, it } from 'bun:test'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { RPC_CHANNELS, type SessionEvent } from '@craft-agent/shared/protocol'
-import { loadSession } from '@craft-agent/shared/sessions'
+import { RPC_CHANNELS, type SessionEvent } from '@rox/shared/protocol'
+import { loadSession } from '@rox/shared/sessions'
 import {
   cleanupModeState,
   getPermissionModeDiagnostics,
   setPermissionMode,
   type PermissionMode,
-} from '@craft-agent/shared/agent/mode-manager'
+} from '@rox/shared/agent/mode-manager'
 import type { HandlerDeps } from '../handlers/handler-deps'
 import { registerSessionsHandlers } from '../handlers/rpc/sessions'
 import type { HandlerFn, RequestContext, RpcServer } from '../transport'

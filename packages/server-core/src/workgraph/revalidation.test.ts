@@ -4,16 +4,19 @@ import { tmpdir } from 'node:os'
 
 import { connect } from '@tursodatabase/database'
 import { afterEach, describe, expect, it } from 'bun:test'
-import { CredentialRefRegistry } from '@craft-agent/core/platform'
-import type { CredentialBackend } from '@craft-agent/shared/credentials'
-import type { CredentialId, StoredCredential } from '@craft-agent/shared/credentials'
-import { credentialIdToAccount } from '@craft-agent/shared/credentials'
-import { LocalFileSecretProvider } from '@craft-agent/shared/credentials'
-import { InProcessCredentialBroker } from '@craft-agent/shared/credentials'
+import { CredentialRefRegistry } from '@rox/core/platform'
+import type { CredentialBackend } from '@rox/shared/credentials'
+import type { CredentialId, StoredCredential } from '@rox/shared/credentials'
+import { credentialIdToAccount } from '@rox/shared/credentials'
+import { LocalFileSecretProvider } from '@rox/shared/credentials'
+import { InProcessCredentialBroker } from '@rox/shared/credentials'
 
 import { createWorkGraphKernel } from './index'
 import {
   convertCopyToReferenceAndRevalidate,
+  moveConnectionBackendAndRevalidate,
+  listConnectionLeases,
+  reconnectConnectionAndRevalidate,
   repairConnectionAndRevalidate,
   revokeConnectionAndRevalidate,
   revokeConnectionBindingAndRevalidate,
@@ -24,7 +27,7 @@ const roots: string[] = []
 const nativeIt = process.platform === 'darwin' && process.arch === 'arm64' ? it : it.skip
 
 class MemoryBackend implements CredentialBackend {
-  readonly name = 'memory'
+  constructor(readonly name = 'memory') {}
   readonly priority = 1
   readonly store = new Map<string, StoredCredential>()
   async isAvailable(): Promise<boolean> { return true }
@@ -312,6 +315,160 @@ describe('CF-6.5 rotate and repair', () => {
     })
     expect(unbound.consumers[0]?.consumerId).toBe('agent-a')
     expect(await kernel.listConnectionBindings('workspace_a', connection.id)).toEqual([])
+    await kernel.close()
+  })
+  nativeIt('moves a copy to another backend, audits, and keeps the Connection id', async () => {
+    const root = createRoot()
+    const registry = new CredentialRefRegistry()
+    const source = new MemoryBackend()
+    const target = new MemoryBackend('local-alt')
+    const provider = new LocalFileSecretProvider(source, registry)
+    const written = await provider.write({
+      kind: 'bearer_token',
+      locator: { type: 'local', key: 'github/default' },
+      payload: { value: 'super-secret' },
+    })
+    const broker = new InProcessCredentialBroker(provider, (id) => registry.get(id))
+    const kernel = createWorkGraphKernel({
+      configDir: root,
+      platform: { platform: 'darwin', arch: 'arm64' },
+    })
+    await kernel.getHealth()
+    const connection = await kernel.createConnection({
+      workspaceId: 'workspace_a',
+      integrationId: 'github',
+      credentialRefId: written.ref.id,
+      storageMode: 'copy',
+    })
+    await kernel.bindConsumer({
+      workspaceId: 'workspace_a',
+      connectionId: connection.id,
+      consumerId: 'agent-a',
+      purpose: 'github.user',
+      allowedActions: ['github.api'],
+      resources: ['github:user'],
+    })
+    broker.grant({
+      workspaceId: 'workspace_a',
+      consumerId: 'agent-a',
+      credentialRefId: written.ref.id,
+      actions: ['github.api'],
+      resources: ['github:user'],
+    })
+    const lease = await broker.acquireLease({
+      credentialRef: written.ref.id,
+      consumer: { kind: 'agent', id: 'agent-a', workspaceId: 'workspace_a' },
+      purpose: 'github.user',
+      action: 'github.api',
+      resources: ['github:user'],
+      audience: 'local-broker',
+      ttl: 5_000,
+    })
+    const moved = await moveConnectionBackendAndRevalidate({
+      kernel,
+      broker,
+      provider,
+      target,
+      workspaceId: 'workspace_a',
+      connectionId: connection.id,
+      reason: 'owner-move',
+    })
+    expect(moved.connectionId).toBe(connection.id)
+    expect(moved.credentialRefId).toBe(written.ref.id)
+    expect(moved.from).toBe('memory')
+    expect(moved.to).toBe('local-alt')
+    expect(moved.leases).toEqual([{ consumerId: 'agent-a', status: 'revoked' }])
+    expect(JSON.stringify(moved)).not.toContain('super-secret')
+    expect(JSON.stringify(moved)).not.toContain(lease.id)
+    expect(moved).not.toHaveProperty('leaseId')
+    expect(moved.leases[0]).not.toHaveProperty('payload')
+    expect(moved.leases[0]).not.toHaveProperty('value')
+    await expect(broker.perform(lease.id, () => 'x')).rejects.toMatchObject({ code: 'lease_revoked' })
+    const after = await kernel.getConnection('workspace_a', connection.id)
+    expect(after?.id).toBe(connection.id)
+    const audit = await kernel.listConnectionAudit('workspace_a', connection.id)
+    expect(audit.some((row) => row.eventType === 'connection-moved')).toBe(true)
+    await kernel.close()
+  })
+
+  nativeIt('reconnects a connection by invalidating leases without leaking the copy', async () => {
+    const root = createRoot()
+    const registry = new CredentialRefRegistry()
+    const provider = new LocalFileSecretProvider(new MemoryBackend(), registry)
+    const written = await provider.write({
+      kind: 'bearer_token',
+      locator: { type: 'local', key: 'github/default' },
+      payload: { value: 'super-secret' },
+      expiresAt: Date.now() + 60_000,
+    })
+    const broker = new InProcessCredentialBroker(provider, (id) => registry.get(id))
+    const kernel = createWorkGraphKernel({
+      configDir: root,
+      platform: { platform: 'darwin', arch: 'arm64' },
+    })
+    await kernel.getHealth()
+    const connection = await kernel.createConnection({
+      workspaceId: 'workspace_a',
+      integrationId: 'github',
+      credentialRefId: written.ref.id,
+      storageMode: 'copy',
+    })
+    await kernel.bindConsumer({
+      workspaceId: 'workspace_a',
+      connectionId: connection.id,
+      consumerId: 'agent-a',
+      purpose: 'github.user',
+      allowedActions: ['github.api'],
+      resources: ['github:user'],
+    })
+    broker.grant({
+      workspaceId: 'workspace_a',
+      consumerId: 'agent-a',
+      credentialRefId: written.ref.id,
+      actions: ['github.api'],
+      resources: ['github:user'],
+    })
+    const lease = await broker.acquireLease({
+      credentialRef: written.ref.id,
+      consumer: { kind: 'agent', id: 'agent-a', workspaceId: 'workspace_a' },
+      purpose: 'github.user',
+      action: 'github.api',
+      resources: ['github:user'],
+      audience: 'local-broker',
+      ttl: 5_000,
+    })
+    const preview = await listConnectionLeases({
+      kernel,
+      broker,
+      workspaceId: 'workspace_a',
+      connectionId: connection.id,
+    })
+    expect(preview).toEqual([{
+      id: lease.id,
+      consumerId: 'agent-a',
+      purpose: 'github.user',
+      action: 'github.api',
+      status: 'active',
+    }])
+    expect(JSON.stringify(preview)).not.toContain('super-secret')
+    expect(preview[0]).not.toHaveProperty('payload')
+    expect(preview[0]).not.toHaveProperty('value')
+    const reconnected = await reconnectConnectionAndRevalidate({
+      kernel,
+      broker,
+      provider,
+      workspaceId: 'workspace_a',
+      connectionId: connection.id,
+      reason: 'owner-reconnect',
+    })
+    expect(reconnected.consumers[0]?.consumerId).toBe('agent-a')
+    expect(reconnected.leases).toEqual([{ consumerId: 'agent-a', status: 'revoked' }])
+    expect(JSON.stringify(reconnected)).not.toContain('super-secret')
+    expect(JSON.stringify(reconnected)).not.toContain(lease.id)
+    expect(reconnected).not.toHaveProperty('leaseId')
+    await expect(broker.perform(lease.id, () => 'x')).rejects.toMatchObject({ code: 'lease_revoked' })
+    const audit = await kernel.listConnectionAudit('workspace_a', connection.id)
+    expect(audit.some((row) => row.eventType === 'connection-reconnected')).toBe(true)
     await kernel.close()
   })
 })

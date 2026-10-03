@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import type { ForeignAutoImportStatus } from '@craft-agent/shared/sessions'
+import type { ForeignAutoImportStatus } from '@rox/shared/sessions'
 
 interface AutoImportFile {
   enabled?: boolean

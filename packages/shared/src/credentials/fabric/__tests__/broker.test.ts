@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { CredentialRefRegistry } from '@craft-agent/core/platform';
+import { CredentialRefRegistry } from '@rox/core/platform';
 import type { CredentialBackend } from '../../backends/types.ts';
 import type { CredentialId, StoredCredential } from '../../types.ts';
 import { credentialIdToAccount } from '../../types.ts';
@@ -121,5 +121,42 @@ describe('InProcessCredentialBroker', () => {
     const allow = broker.listAudit().find((event) => event.decision === 'allow');
     expect(allow?.credentialRefId).toBe(ref.id);
     expect(JSON.stringify(broker.listAudit())).not.toContain('super-secret');
+  });
+  it('lists active leases for a credential ref without leaking the copy', async () => {
+    const { broker, ref, consumer } = await setup();
+    const lease = await broker.acquireLease({
+      credentialRef: ref.id,
+      consumer,
+      purpose: 'x',
+      action: 'github.request',
+      resources: ['repo:demo'],
+      ttl: 1000,
+    });
+    const listed = await broker.listActiveLeasesForRef(ref.id);
+    expect(listed).toEqual([{
+      id: lease.id,
+      consumerId: consumer.id,
+      purpose: 'x',
+      action: 'github.request',
+      status: 'active',
+    }]);
+    expect(JSON.stringify(listed)).not.toContain('super-secret');
+    expect(listed[0]).not.toHaveProperty('payload');
+  });
+
+  it('revokes active leases for a credential ref without leaking the copy', async () => {
+    const { broker, ref, consumer } = await setup();
+    const lease = await broker.acquireLease({
+      credentialRef: ref.id,
+      consumer,
+      purpose: 'x',
+      action: 'github.request',
+      resources: ['repo:demo'],
+      ttl: 1000,
+    });
+    const revoked = await broker.revokeLeaseMetadataForRef(ref.id, 'reconnect');
+    expect(revoked).toEqual([{ id: lease.id, consumerId: consumer.id }]);
+    expect(JSON.stringify(revoked)).not.toContain('super-secret');
+    await expect(broker.perform(lease.id, () => 'x')).rejects.toMatchObject({ code: 'lease_revoked' });
   });
 });

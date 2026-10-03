@@ -11,7 +11,7 @@
  * name screen always leads straight into the app.
  */
 import type { LlmConnectionSetup } from '../../../shared/types'
-import type { StartupRuntimeSummary } from '@craft-agent/shared/protocol'
+import type { StartupRuntimeSummary } from '@rox/shared/protocol'
 
 export const ROX_RUNTIME_PROVIDER = 'omp' as const
 export const ROX_RUNTIME_CONNECTION_NAME = 'Rox'

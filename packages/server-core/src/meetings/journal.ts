@@ -6,9 +6,9 @@
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync, copyFileSync, openSync, closeSync, unlinkSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { assertWritableSchema } from '@craft-agent/core/meetings'
-import type { MeetingCommitCommand, MeetingCommitResult, MeetingJournalEvent, MeetingOutboxEntry } from '@craft-agent/core/meetings'
-import { emptyMeeting, type Meeting } from '@craft-agent/core/meetings'
+import { assertWritableSchema } from '@rox/core/meetings'
+import type { MeetingCommitCommand, MeetingCommitResult, MeetingJournalEvent, MeetingOutboxEntry } from '@rox/core/meetings'
+import { emptyMeeting, type Meeting } from '@rox/core/meetings'
 
 export type JournalSnapshot = {
   schemaVersion: 1
@@ -45,12 +45,13 @@ export class MeetingJournal {
   private lockHeld = false
   lastQuarantine: QuarantineRecord | null = null
 
-  constructor(readonly rootDir: string) {
-    mkdirSync(rootDir, { recursive: true })
+  constructor(readonly rootDir: string, private readonly options: { readOnly?: boolean } = {}) {
+    if (!options.readOnly) mkdirSync(rootDir, { recursive: true })
     this.lockPath = join(rootDir, 'meetings.lock')
   }
 
   acquireWriter(): void {
+    if (this.options.readOnly) throw new Error('meeting journal is read-only')
     if (existsSync(this.lockPath)) {
       throw new Error('meeting journal already has a writer')
     }
@@ -98,6 +99,7 @@ export class MeetingJournal {
         this.applyCommand(snapshot, record, { persist: false })
         good.push(line)
       } catch {
+        if (this.options.readOnly) throw new Error('meeting journal has a corrupt tail')
         mkdirSync(this.quarantineDir(meetingId), { recursive: true })
         const dest = join(this.quarantineDir(meetingId), `tail-${Date.now()}.jsonl`)
         copyFileSync(journalPath, dest)
@@ -110,6 +112,7 @@ export class MeetingJournal {
   }
 
   commit(input: MeetingCommitCommand): MeetingCommitResult {
+    if (this.options.readOnly) throw new Error('meeting journal is read-only')
     if (!this.lockHeld) this.acquireWriter()
     mkdirSync(this.meetingDir(input.meetingId), { recursive: true })
     let snapshot: JournalSnapshot

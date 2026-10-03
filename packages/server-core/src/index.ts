@@ -1,4 +1,4 @@
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { resolveConfigDir } from "@rox/shared/config/paths"
 export * from './transport/index.ts'
 export * from './runtime/index.ts'
 export * from './handlers/index.ts'

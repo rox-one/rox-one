@@ -3,10 +3,10 @@ import {
   isNativeNotesEngine,
   parseRox2EntityId,
   type NativeNotesEngine,
-} from '@craft-agent/core/rox2'
-import { PersonalTaskStore, type PersonalTask } from '@craft-agent/core/tasks/personal'
-import type { MeetingProposal } from '@craft-agent/core/meetings'
-import { authorizeMeetingAction, type MeetingGrant } from '@craft-agent/shared/meeting-agents'
+} from '@rox/core/rox2'
+import { PersonalTaskStore, type PersonalTask } from '@rox/core/tasks/personal'
+import type { MeetingProposal } from '@rox/core/meetings'
+import { authorizeMeetingAction, type MeetingGrant } from '@rox/shared/meeting-agents'
 import { PersonalTaskPersistStore } from '../tasks/personal-persist.ts'
 import { MeetingNotePersistStore } from './note-persist.ts'
 

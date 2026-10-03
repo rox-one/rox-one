@@ -12,7 +12,7 @@
  * (20k files / 256MB). TS is the fallback if the sidecar invoke fails.
  */
 import { join } from 'node:path'
-import { isNativeIndexPrimaryEnabled, isNativeSidecarEnabled } from '@craft-agent/shared/feature-flags'
+import { isNativeIndexPrimaryEnabled, isNativeSidecarEnabled } from '@rox/shared/feature-flags'
 import { getNativeSidecarClient } from '../native/supervisor.ts'
 import {
   closeAllSourceIndexes,

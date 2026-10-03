@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { NativeSessionCollaboration, type NativeSharingScope } from '../native-session-collaboration'
-import type { Session, SessionCommand } from '@craft-agent/shared/protocol'
+import type { Session, SessionCommand } from '@rox/shared/protocol'
 
 const cleanups: Array<() => void> = []
 afterEach(() => { for (const action of cleanups.splice(0).reverse()) action() })

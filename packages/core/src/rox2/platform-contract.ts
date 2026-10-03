@@ -353,6 +353,7 @@ export function registerExternalBinding(
   const key = formatRox2ExternalBindingKey(binding)
   const rawKey = rawFourSlotBindingKey(binding)
   const ref = entityRefFromBinding(workspaceId, kind, binding, revisionId)
+  const legacyEntityId = formatRox2EntityId(kind, rawKey)
   const fromEncoded = index.get(key)
   const fromRaw =
     fromEncoded === undefined &&
@@ -364,7 +365,7 @@ export function registerExternalBinding(
   if (existing && existing.workspaceId !== workspaceId) {
     return { status: 'quarantine', reason: 'workspace-mismatch', existing }
   }
-  if (fromEncoded && fromEncoded.entityId !== ref.entityId) {
+  if (fromEncoded && fromEncoded.entityId !== ref.entityId && fromEncoded.entityId !== legacyEntityId) {
     return { status: 'quarantine', reason: 'binding-collision', existing: fromEncoded }
   }
   if (existing) {

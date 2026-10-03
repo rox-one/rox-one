@@ -8,8 +8,8 @@ import { WsRpcClient } from '../../../../transport/client'
 import { registerGamificationHandlers } from '../../gamification'
 import { registerNotesHandlers } from '../../notes'
 import { registerNativeDataHandlers } from '../../native-data'
-import { RPC_CHANNELS, type NativeDataMutationInput, type NativeDataReceipt, type NativeReplicaCreatePlan } from '@craft-agent/shared/protocol'
-import { awardXp } from '@craft-agent/shared/gamification'
+import { RPC_CHANNELS, type NativeDataMutationInput, type NativeDataReceipt, type NativeReplicaCreatePlan } from '@rox/shared/protocol'
+import { awardXp } from '@rox/shared/gamification'
 import type { HandlerDeps } from '../../../handler-deps'
 
 const checks: Array<{ name: string; passed: boolean }> = []
@@ -28,9 +28,9 @@ const enroll = (label: string) => {
   if (!person) throw Error('Fixture enrollment failed')
   return person
 }
-const alice = enroll('Alice'), bob = enroll('Bob'), recovered = enroll('Recoverable'), revoked = enroll('Revoked')
+const alice = enroll('Alice'), bob = enroll('Bob'), recovered = enroll('Recoverable'), revoked = enroll('Revoked'), unicodeUser = enroll('Unicode author')
 const reader = enroll('Reader'), subscriber = enroll('Subscriber')
-for (const person of [alice, bob, recovered, revoked]) authority.grantWorkspace(admin.credential, person.principal.subject, 'own', ['read', 'write', 'subscribe'])
+for (const person of [alice, bob, recovered, revoked, unicodeUser]) authority.grantWorkspace(admin.credential, person.principal.subject, 'own', ['read', 'write', 'subscribe'])
 authority.grantWorkspace(admin.credential, reader.principal.subject, 'own', ['read', 'subscribe'])
 authority.grantWorkspace(admin.credential, subscriber.principal.subject, 'own', ['subscribe'])
 awardXp('session_completed')
@@ -88,7 +88,9 @@ try {
   let a = connect(alice), b = connect(bob)
   const aEvents: unknown[] = [], bEvents: unknown[] = []
   a.on(RPC_CHANNELS.gamification.CHANGED, event => aEvents.push(event)); b.on(RPC_CHANNELS.gamification.CHANGED, event => bEvents.push(event))
-  const mutation = await prepare(a, 'Actual replica note', 'actual-replica-create')
+  const humanTitle = 'Native acceptance note 1791036938731'
+  const mutation = await prepare(a, humanTitle, 'actual-replica-create')
+  check('actual-ui-human-title-and-spaces-remain-canonical', mutation.nativeId === humanTitle && mutation.changes[0]?.path === `notes/${humanTitle}.md`)
   await prepare(b, 'Cancelled before enqueue', 'never-submitted')
   check('prepare-and-abandoned-create-award-zero', (await get(a)).xp === 0 && (await get(b)).xp === 0)
   const receipt = await mutate(a, mutation)
@@ -127,12 +129,20 @@ try {
   const persistedAfterRevocation = await revokedClient.invoke(RPC_CHANNELS.nativeData.READ_ENTITY, { workspaceId: 'own', kind: 'notes', nativeId: revokedMutation.nativeId }) as { revision: number }
   check('accepted-note-is-preserved-after-postcommit-revocation', persistedAfterRevocation.revision === 1)
   check('other-actors-and-host-remain-unchanged', (await get(b)).xp === 0 && readFileSync(hostPath, 'utf8') === hostBefore)
+  const unicodeTitle = 'Моя заметка 你好', unicodeClient = connect(unicodeUser)
+  const unicodeMutation = await prepare(unicodeClient, unicodeTitle, 'unicode-create')
+  check('unicode-title-and-spaces-remain-canonical', unicodeMutation.nativeId === unicodeTitle && unicodeMutation.changes[0]?.path === `notes/${unicodeTitle}.md`)
+  const unicodeReceipt = await mutate(unicodeClient, unicodeMutation)
+  check('unicode-title-create-awards-15-and-completes-quest', (await get(unicodeClient)).xp === 15 && (await get(unicodeClient)).questRecords.find(quest => quest.id === 'first_note')?.status === 'completed')
+  check('unicode-title-exact-retry-keeps-receipt-and-once-only-xp', same(await mutate(unicodeClient, unicodeMutation), unicodeReceipt) && (await get(unicodeClient)).xp === 15)
   await stop(); authority.close(); authority = new NativeAuthority({ stateDir }); await start()
   a = connect(alice); b = connect(bob); recoveryClient = connect(recovered)
   check('xp-and-quest-persist-across-server-restart', (await get(a)).xp === 15 && (await get(a)).questRecords.find(quest => quest.id === 'first_note')?.status === 'completed')
   check('create-retry-after-later-edit-and-restart-retains-original-receipt', same(await mutate(a, mutation), receipt))
   await mutate(recoveryClient, recoveryMutation)
   check('restart-replay-never-rewards-again-or-changes-other-actor', (await get(a)).xp === 15 && (await get(recoveryClient)).xp === 15 && (await get(b)).xp === 0 && readFileSync(hostPath, 'utf8') === hostBefore)
+  const restartedUnicodeClient = connect(unicodeUser)
+  check('unicode-title-exact-retry-and-xp-survive-restart', same(await mutate(restartedUnicodeClient, unicodeMutation), unicodeReceipt) && (await get(restartedUnicodeClient)).xp === 15)
   console.log(JSON.stringify(checks))
 } finally { await stop(); authority.close() }
 process.exit(0)

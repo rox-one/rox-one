@@ -24,7 +24,7 @@ import type {
   MutationProposal,
   SearchInput,
   SearchPage,
-} from '@craft-agent/core/knowledge';
+} from '@rox/core/knowledge';
 
 /** Context fetch mode for knowledge_read; 'none' returns only the node. */
 export type KnowledgeReadContextMode = 'none' | ContextMode;

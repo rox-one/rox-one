@@ -8,24 +8,20 @@ import App from './App'
 import { ThemeProvider } from './context/ThemeContext'
 import { windowWorkspaceIdAtom } from './atoms/sessions'
 import { Toaster } from '@/components/ui/sonner'
-import { setupI18n } from '@craft-agent/shared/i18n'
-import { redactSensitiveHeadersInPlace, redactSensitiveKeysInPlace } from '@craft-agent/shared/utils/redaction'
+import { setupI18n } from '@rox/shared/i18n'
+import { redactSensitiveHeadersInPlace, redactSensitiveKeysInPlace } from '@rox/shared/utils/redaction'
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import './index.css'
 import './chat-chrome-clarity.css'
 import './components/app-shell/titlebar-mode-pill.css'
 import { installRendererPerfHarness } from './perf/install'
+import { syncMainProcessLanguage } from './lib/main-language-sync'
 
 const rendererPerfHarness = installRendererPerfHarness()
 
 // Initialize i18n before any React rendering
 const i18n = setupI18n([LanguageDetector, initReactI18next])
-const initialLanguageSync = window.electronAPI?.changeLanguage?.(i18n.resolvedLanguage ?? i18n.language)
-void initialLanguageSync?.catch((error) => {
-  console.error('Failed to sync initial language to main process:', error)
-})
-
 // One-shot bootstrap: ensure the main process's i18n + preferences.json learn
 // the language we just restored from localStorage. The main-process IPC handler
 // validates the code and persists idempotently, so this is safe to run on every
@@ -41,14 +37,8 @@ console.info('[i18n] renderer bootstrap push', {
   resolvedLanguage: resolvedLanguage ?? null,
   localStorageI18nextLng: typeof window !== 'undefined' ? window.localStorage?.getItem('i18nextLng') : null,
 })
-if (resolvedLanguage) {
-  void window.electronAPI?.changeLanguage?.(resolvedLanguage)
-}
-
-// Keep the main process i18n in sync on subsequent language changes.
-i18n.on('languageChanged', (lng: string) => {
-  void window.electronAPI?.changeLanguage?.(lng)
-})
+const disposeMainLanguageSync = syncMainProcessLanguage(i18n, window.electronAPI)
+import.meta.hot?.dispose(disposeMainLanguageSync)
 
 // Known-harmless console messages that should NOT be sent to Sentry.
 // These are dev-mode noise or expected warnings that aren't actionable.
@@ -81,7 +71,7 @@ sentryInit(
 
       // Scrub sensitive data (shared logic with the main process hook).
       // The header scrub was previously missing here — renderer drift, fixed
-      // by moving both hooks onto @craft-agent/shared/utils redaction.ts.
+      // by moving both hooks onto @rox/shared/utils redaction.ts.
       if (event.request?.headers) {
         redactSensitiveHeadersInPlace(event.request.headers)
       }

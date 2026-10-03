@@ -1,15 +1,15 @@
 import { randomUUID } from 'node:crypto'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { loadSource, loadWorkspaceSources, getSourceCredentialManager } from '@craft-agent/shared/sources'
-import { createPendingFlow } from '@craft-agent/shared/auth'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import { loadSource, loadWorkspaceSources, getSourceCredentialManager } from '@rox/shared/sources'
+import { createPendingFlow } from '@rox/shared/auth'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import {
   isClaimableLive,
   rpcOauthActResult,
   rpcOauthListResult,
   rpcOauthReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import type { HandlerDeps } from '../handler-deps'
 
 export const HANDLED_CHANNELS = [

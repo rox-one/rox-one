@@ -1,8 +1,8 @@
 import { lstatSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { CodedError } from '@craft-agent/shared/protocol'
-import { applyBuiltinSourceAvailability, getBuiltinSources, type FolderSourceConfig, type LoadedSource } from '@craft-agent/shared/sources'
-import { isEmoji } from '@craft-agent/shared/utils/icon-constants'
+import { CodedError } from '@rox/shared/protocol'
+import { applyBuiltinSourceAvailability, getBuiltinSources, type FolderSourceConfig, type LoadedSource } from '@rox/shared/sources'
+import { isEmoji } from '@rox/shared/utils/icon-constants'
 import { readNativeConfigurationFile } from './native-workspace-registry'
 
 const denied = (): never => { throw new CodedError('FORBIDDEN', 'Source metadata unavailable') }

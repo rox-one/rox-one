@@ -6,7 +6,7 @@
  */
 
 import { describe, test, expect } from 'bun:test'
-import type { LlmConnection } from '@craft-agent/shared/config/llm-connections'
+import type { LlmConnection } from '@rox/shared/config/llm-connections'
 import {
   formatTokenCount,
   groupConnectionsByProvider,
@@ -14,8 +14,8 @@ import {
   getRuntimeModelsForPicker,
   stripPiPrefixForDisplay,
 } from '../model-picker-helpers'
-import { ROX_VISIBLE_TERMS } from '@craft-agent/shared/identity'
-import type { StartupRuntimeSummary } from '@craft-agent/shared/protocol'
+import { ROX_VISIBLE_TERMS } from '@rox/shared/identity'
+import type { StartupRuntimeSummary } from '@rox/shared/protocol'
 
 describe('native workspace model catalog', () => {
   const summary: StartupRuntimeSummary = {

@@ -1,7 +1,7 @@
 /**
  * Session-map WorkflowSpec (Rox tracker issue 10).
  *
- * Distinct from task.yaml `WorkflowSpec` (`@craft-agent/shared/tasks`): this
+ * Distinct from task.yaml `WorkflowSpec` (`@rox/shared/tasks`): this
  * document versions the Map canvas. Runs always point at an immutable version.
  */
 import type { PermissionMode } from '../agent/mode-types.ts'

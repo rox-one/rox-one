@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { meetingCaptureCapability, type MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import { meetingCaptureCapability, type MeetingGrant } from '@rox/shared/meeting-agents/browser'
 import { RPC_CHANNELS } from '../../../shared/types'
 import { isWebUI } from '../../lib/platform'
 import { buildMeetingCaptureGrant } from './capture-rpc'

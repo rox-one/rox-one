@@ -4,7 +4,7 @@ import { mkdtempSync, realpathSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import type { IpcMain, IpcMainInvokeEvent } from 'electron'
-import type { StoredCredential } from '@craft-agent/shared/credentials'
+import type { StoredCredential } from '@rox/shared/credentials'
 import { NATIVE_REPLICA_IPC } from '../native-replica'
 import { registerNativeReplicaForWindows, type NativeReplicaBootstrapDependencies } from '../native-replica-bootstrap'
 

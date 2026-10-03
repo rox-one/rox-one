@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import WebSocket from 'ws'
-import { PROTOCOL_VERSION, type MessageEnvelope } from '@craft-agent/shared/protocol'
+import { PROTOCOL_VERSION, type MessageEnvelope } from '@rox/shared/protocol'
 import { NativeAuthority, type NativeIssuedCredential } from '../../authority/native-authority'
 import { WsRpcServer } from '../server'
 import { WsRpcClient } from '../client'

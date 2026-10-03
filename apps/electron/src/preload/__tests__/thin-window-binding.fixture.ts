@@ -65,10 +65,10 @@ mock.module('electron', () => ({
 }))
 mock.module('../../transport/client', () => ({ WsRpcClient: FakeWsClient }))
 mock.module('../../shared/remote-tls-client-options.ts', () => ({ peerTrustOptionsForRemote: () => ({}) }))
-mock.module('@craft-agent/shared/auth/callback-server', () => ({
+mock.module('@rox/shared/auth/callback-server', () => ({
   async createCallbackServer() { throw new Error('No OAuth callback server expected') },
 }))
-mock.module('@craft-agent/server-core/transport', () => ({
+mock.module('@rox/server-core/transport', () => ({
   CLIENT_OPEN_EXTERNAL: 'test:external',
   CLIENT_OPEN_PATH: 'test:open-path',
   CLIENT_SHOW_IN_FOLDER: 'test:show-in-folder',

@@ -1,4 +1,4 @@
-import type { CredentialRef, CredentialRefId } from '@craft-agent/core/platform';
+import type { CredentialRef, CredentialRefId } from '@rox/core/platform';
 import { selectDeliveryMechanism, type DeliveryMechanism } from './delivery.ts';
 import { MemoryAccessGrantStore, type AccessGrantStore } from './grant-store.ts';
 import type { ProviderMaterialization, SecretProvider } from './types.ts';
@@ -185,6 +185,48 @@ export class InProcessCredentialBroker {
     const current = this.leases.get(leaseId);
     if (!current) throw new BrokerDenial('unknown_lease');
     this.leases.set(leaseId, { ...current, status: 'revoked' });
+  }
+
+  async listActiveLeasesForRef(
+    credentialRefId: CredentialRefId,
+  ): Promise<readonly {
+    readonly id: string
+    readonly consumerId: string
+    readonly purpose: string
+    readonly action: string
+    readonly status: 'active'
+  }[]> {
+    const now = this.now()
+    const listed: Array<{
+      readonly id: string
+      readonly consumerId: string
+      readonly purpose: string
+      readonly action: string
+      readonly status: 'active'
+    }> = []
+    for (const lease of this.leases.values()) {
+      if (lease.credentialRefId !== credentialRefId || lease.status !== 'active' || lease.expiresAt <= now) continue
+      listed.push({
+        id: lease.id,
+        consumerId: lease.consumer.id,
+        purpose: lease.purpose,
+        action: lease.action,
+        status: 'active',
+      })
+    }
+    return listed
+  }
+
+  /** Private broker lease projection: no materialized credential or payload fields. */
+  async revokeLeaseMetadataForRef(
+    credentialRefId: CredentialRefId,
+    reason: string,
+  ): Promise<readonly { readonly id: string; readonly consumerId: string }[]> {
+    const candidates = new Map([...this.leases.values()]
+      .filter(lease => lease.credentialRefId === credentialRefId && lease.status === 'active')
+      .map(lease => [lease.id, lease.consumer.id] as const));
+    const revoked = await this.revokeLeasesForRef(credentialRefId, reason);
+    return revoked.map(id => ({ id, consumerId: candidates.get(id)! }));
   }
 
   async revokeLeasesForRef(credentialRefId: CredentialRefId, _reason: string): Promise<readonly string[]> {

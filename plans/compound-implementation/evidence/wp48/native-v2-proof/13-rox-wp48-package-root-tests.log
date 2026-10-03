@@ -1,0 +1,28 @@
+bun test v1.4.2 (43848b5a7)
+
+tests/macro-integration/wp-48-package.test.ts:
+(pass) actual built bytes produce deterministic exact seven-file archive and machine-readable review-required receipt [126.14ms]
+(pass) missing WP48 migration rejects without replacing the previous archive [20.85ms]
+(pass) symlink source leaf rejects without following or publishing its bytes [25.93ms]
+(pass) symlink source ancestor rejects and retains prior archive [20.38ms]
+(pass) source changes after preparation reject publication and preserve previous bytes [41.03ms]
+(pass) same-byte inode replacement after preparation is detected [44.01ms]
+(pass) source ancestor replaced by a symlink after preparation rejects publication [54.48ms]
+(pass) changed source cannot satisfy an exact expected input binding [27.02ms]
+(pass) output symlink rejects and cannot modify the link target [9.26ms]
+(pass) concurrent output replacement is detected before overwriting another producer [138.71ms]
+(pass) output parent replacement after preparation rejects without following its new link [41.80ms]
+(pass) output traversal spelling and fabricated source revision reject before writing [20.24ms]
+(pass) actual archive corruption and well-formed altered bundle fail the byte inventory gate [38.80ms]
+(pass) final extracted frozen bundle actually executes cold CLI and protected-config rejection without install or checkout fallback [193.85ms]
+
+apps/electron/src/transport/__tests__/channel-map-parity.test.ts:
+(pass) CHANNEL_MAP runtime contract > has valid entry kinds and channels [0.79ms]
+(pass) CHANNEL_MAP runtime contract > contains at least one listener and one invoke entry [0.11ms]
+(pass) CHANNEL_MAP runtime contract > exposes only the remote-safe OpenClaw data channels [0.05ms]
+(pass) CHANNEL_MAP runtime contract > excludes native host-control IPC channels [0.09ms]
+
+ 18 pass
+ 0 fail
+ 3192 expect() calls
+Ran 18 tests across 2 files. [1209.00ms]

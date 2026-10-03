@@ -1,0 +1,42 @@
+{
+  "author": "ROX",
+  "modifiedAt": "2026-10-03",
+  "upstream": "https://github.com/mvanhorn/last30days-skill",
+  "upstreamCommit": "5103ba478b380552207a3754b74c7655d64208cd",
+  "upstreamLicense": "MIT",
+  "note": "Upstream license/copyright notices retained. Local modifications are identified by portable paths and SHA256; local validation is separate from remote scanner closure.",
+  "securityPatches": [
+    {
+      "pack": "last30days",
+      "path": "last30days/last30days/scripts/last30days.py",
+      "alerts": [
+        548,
+        553,
+        554,
+        555
+      ],
+      "change": "Create reports/discovery output with 0600 and tighten explicit overwritten output; project public device-flow state instead of logging credential-bearing result dictionaries.",
+      "sha256": "f389a84a4defa8b7fc02a8b5d98ec9acc2857fd920344fed3f4cc71ba8e59704"
+    },
+    {
+      "pack": "last30days",
+      "path": "last30days/last30days/scripts/lib/hosted.py",
+      "alerts": [
+        552
+      ],
+      "change": "Create hosted report output with 0600.",
+      "sha256": "be04fccf464a93b652026c9a643ceed23a11b8b6d725afc8a9a195aa004cd09e"
+    },
+    {
+      "pack": "last30days",
+      "path": "last30days/last30days/scripts/test_device_auth.py",
+      "alerts": [
+        549,
+        550
+      ],
+      "change": "Privately save credentials through upstream setup helper; remove token, profile and API-key printing.",
+      "sha256": "8fbc514f7bb72ab2af2e98c17d8260ea89164bb3e1c49b0cc1aac3541558bedf"
+    }
+  ],
+  "removedFiles": []
+}

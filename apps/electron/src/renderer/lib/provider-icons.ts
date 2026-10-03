@@ -20,7 +20,7 @@ import openrouterIcon from '@/assets/provider-icons/openrouter.svg'
 import roxIcon from '@/assets/provider-icons/rox.svg'
 import vercelIcon from '@/assets/provider-icons/vercel.svg'
 
-import type { LlmProviderType } from '@craft-agent/shared/config/llm-connections'
+import type { LlmProviderType } from '@rox/shared/config/llm-connections'
 
 /**
  * Icon URLs for each provider

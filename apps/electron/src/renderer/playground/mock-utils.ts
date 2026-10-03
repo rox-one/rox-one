@@ -19,7 +19,7 @@ import type {
   PlatformAccessMode,
   PlatformOwner,
 } from '../components/messaging/access/types'
-import { getDefaultEnvironmentPrefs, pendingQuestionIds } from '@craft-agent/shared/environment'
+import { getDefaultEnvironmentPrefs, pendingQuestionIds } from '@rox/shared/environment'
 
 // ============================================================================
 // Messaging mock state + control handle

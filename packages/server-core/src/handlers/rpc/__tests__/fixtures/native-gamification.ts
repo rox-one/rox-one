@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict'
 import { mkdirSync, readFileSync, realpathSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { NativeAuthority } from '../../../../authority/native-authority'
@@ -7,8 +8,8 @@ import { registerGamificationHandlers } from '../../gamification'
 import { registerNotesHandlers } from '../../notes'
 import { NativeJournal } from '../../../../authority/native-journal'
 import { CollaborationSyncService } from '../../../../collaboration/sync-service'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { awardXp, loadGamificationState } from '@craft-agent/shared/gamification'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { awardXp, loadGamificationState } from '@rox/shared/gamification'
 import type { HandlerDeps } from '../../../handler-deps'
 
 const checks: Array<{ name: string; passed: boolean }> = []
@@ -23,9 +24,9 @@ finally { if (descriptor) Object.defineProperty(process.stdin, 'isTTY', descript
 const ownRoot = join(configDir, 'own'), foreignRoot = join(configDir, 'foreign'); mkdirSync(ownRoot); mkdirSync(foreignRoot)
 authority.registerWorkspace(admin.credential, 'own', ownRoot); authority.registerWorkspace(admin.credential, 'foreign', foreignRoot)
 const enroll = (label: string) => {
-  const enrollment = authority.redeemEnrollment(authority.issueEnrollment(admin.credential, label, Date.now() + 60000), label)
-  if (!enrollment) throw new Error(`Fixture enrollment failed: ${label}`)
-  return enrollment
+  const issued = authority.redeemEnrollment(authority.issueEnrollment(admin.credential, label, Date.now() + 60000), label)
+  assert(issued, 'Fixture enrollment must succeed')
+  return issued
 }
 const alice = enroll('Alice'), bob = enroll('Bob')
 for (const person of [alice, bob]) authority.grantWorkspace(admin.credential, person.principal.subject, 'own', ['read', 'subscribe'])

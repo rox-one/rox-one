@@ -23,7 +23,7 @@ import {
   provisionMailbox,
   type MailboxRecord,
   type MailboxSecretStore,
-} from '@craft-agent/shared/mail'
+} from '@rox/shared/mail'
 import {
   MAIL_DEFAULT_DOMAIN,
   MAIL_DEFAULT_SERVER_URL,

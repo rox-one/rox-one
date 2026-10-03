@@ -13,8 +13,9 @@ function setup() {
   fake = createFakeOmp('healthy')
   restore = useFakeOmpEnv(fake)
   const config = makeOmpConfig(fake)
-  sessionId = `permission-mode-${crypto.randomUUID()}`
-  config.session = { ...config.session!, id: sessionId }
+  // Every fake owns an isolated workspace and transcript directory. Keep its
+  // session identity aligned with the native transcript confinement policy.
+  sessionId = config.session!.id
   agent = new OmpAgent(config)
   return { agent, fake }
 }

@@ -62,6 +62,7 @@ import {
 import { debug } from '../utils/debug.ts';
 import { getBuiltinSourceCredential } from './builtin-sources.ts';
 import { markSourceAuthenticated, loadSourceConfig, saveSourceConfig } from './storage.ts';
+import { getBuiltinMcpReadiness, isManagedBuiltinMcpSource } from './builtin-mcp.ts';
 
 /**
  * Result of authentication attempt
@@ -265,10 +266,21 @@ export class SourceCredentialManager {
       try {
         const parsed = JSON.parse(cred.value);
         debug(`[SourceCredentialManager] Parsed JSON keys: ${Object.keys(parsed).join(', ')}`);
+        // Telegram's account credential can contain a pool or named session
+        // instead of the catalog's singular session field. Launch readiness
+        // validates the real combination with source/environment settings.
+        const telegramAccount = source.config.slug === 'telegram-mcp'
+          && source.config.mcp?.transport === 'stdio' && isManagedBuiltinMcpSource(source.config)
+          && parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+          && Object.values(parsed).every(value => typeof value === 'string')
+          && Object.keys(parsed).some(key => key === 'TELEGRAM_API_ID' || key === 'TELEGRAM_API_HASH'
+            || key === 'TELEGRAM_SESSION_STRINGS' || key === 'TELEGRAM_SESSION_STRING'
+            || key === 'TELEGRAM_SESSION_NAME' || key.startsWith('TELEGRAM_SESSION_STRING_')
+            || key.startsWith('TELEGRAM_SESSION_NAME_'));
         // Validate all required headers are present
         const hasAllHeaders = headerNames.every((h) => h in parsed);
         debug(`[SourceCredentialManager] hasAllHeaders=${hasAllHeaders}`);
-        if (hasAllHeaders) {
+        if (hasAllHeaders || telegramAccount) {
           return parsed as MultiHeaderCredential;
         }
       } catch (e) {
@@ -310,7 +322,16 @@ export class SourceCredentialManager {
     let type: CredentialId['type'];
 
     if (source.config.type === 'mcp') {
-      type = mcp?.authType === 'bearer' ? 'source_bearer' : 'source_oauth';
+      if (isManagedBuiltinMcpSource(source.config)) {
+        // Credential prompts save multi-field secrets in source_apikey, and
+        // ordinary tokens in source_bearer. Transport authType is `none` for
+        // stdio servers because these credentials belong to their upstream API.
+        type = mcp?.transport !== 'stdio' && mcp?.authType === 'oauth'
+          ? 'source_oauth'
+          : mcp?.headerNames?.length ? 'source_apikey' : 'source_bearer';
+      } else {
+        type = mcp?.authType === 'bearer' ? 'source_bearer' : 'source_oauth';
+      }
     } else if (source.config.type === 'api') {
       // Order matters: provider-specific checks first, then generic OAuth fallback
       if (isApiOAuthProvider(source.config.provider)) {
@@ -1335,7 +1356,20 @@ export function sourceNeedsAuthentication(source: LoadedSource): boolean {
 
   // MCP sources with oauth/bearer auth (stdio transport never needs auth)
   if (source.config.type === 'mcp' && mcp) {
+    if (isManagedBuiltinMcpSource(source.config) && source.config.slug === 'mem0'
+      && mcp.url === 'https://mcp.mem0.ai/mcp' && mcp.authType === 'bearer') {
+      return !source.config.isAuthenticated && getBuiltinMcpReadiness(source.config).status === 'needs_auth';
+    }
     if (mcp.transport === 'stdio') {
+      if (isManagedBuiltinMcpSource(source.config)) {
+        // Local transport can still require upstream account credentials.
+        // A successful authentication may have used the encrypted vault;
+        // actual values are checked again by the server builder at launch.
+        return !source.config.isAuthenticated && getBuiltinMcpReadiness(source.config, {
+          workspaceRootPath: source.workspaceRootPath,
+          sourceFolderPath: source.folderPath,
+        }).status === 'needs_auth';
+      }
       // Stdio sources run locally and don't need authentication
       return false;
     }

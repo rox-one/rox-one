@@ -7,8 +7,8 @@ import { NativeJournal } from '../../../authority/native-journal.ts'
 import { CollaborationSyncService } from '../../../collaboration/sync-service.ts'
 import { WsRpcServer } from '../../../transport/server.ts'
 import { WsRpcClient } from '../../../transport/client.ts'
-import { RPC_CHANNELS, type NoteDocument } from '@craft-agent/shared/protocol'
-import { legacyDocumentDescriptor, applyMarkerMapping, retainSource } from '@craft-agent/core/docs'
+import { RPC_CHANNELS, type NoteDocument } from '@rox/shared/protocol'
+import { legacyDocumentDescriptor, applyMarkerMapping, retainSource } from '@rox/core/docs'
 import { FileDescriptorStore, type ContentResolution } from '../../../docs/descriptor-resolver.ts'
 import { markdownRevision } from '../../../docs/markdown-commit.ts'
 import type { NativeMarkerMappingPreview, BlockTreeResult } from '../../../docs/block-tree-service.ts'
@@ -197,6 +197,8 @@ test('native SAVE positional wire rejects source-store string in argument five a
   const f = await fixture()
   const client = f.connect()
   const note = await create(f, client)
+  // Native RPC errors keep the generic privacy envelope. Wrong-position
+  // metadata must still fail before any canonical or legacy mutation.
   const operation = { operationId: 'wrong-position', expectedRevision: note.nativeRevision!, schemaVersion: 1 }
   await expect(client.invoke(RPC_CHANNELS.notes.SAVE, workspaceId, note.id, 'wrong string writer', note.revision, note.sourceStoreId)).rejects.toMatchObject({ code: 'HANDLER_ERROR', message: 'Request failed' })
   await expect(client.invoke(RPC_CHANNELS.notes.SAVE, workspaceId, note.id, 'shifted writer', operation)).rejects.toMatchObject({ code: 'HANDLER_ERROR', message: 'Request failed' })

@@ -18,7 +18,7 @@ import { useAtomValue } from 'jotai'
 import { Check, ExternalLink, RotateCcw, Undo2, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { MutationOp, MutationProposal, MutationProposalStatus } from '@craft-agent/shared/protocol'
+import type { MutationOp, MutationProposal, MutationProposalStatus } from '@rox/shared/protocol'
 import { windowWorkspaceIdAtom } from '@/atoms/sessions'
 import { Button } from '@/components/ui/button'
 import { useNavigation } from '@/contexts/NavigationContext'
@@ -34,7 +34,7 @@ import {
   type KnowledgeMutationsApi,
   type TranslateFn,
 } from './proposal-actions'
-import { getAppLocale } from '@craft-agent/shared/i18n'
+import { getAppLocale } from '@rox/shared/i18n'
 
 /** TTL of an approved proposal server-side (spec 05 §3.7) — UI hint only. */
 const APPROVAL_TTL_MS = 24 * 60 * 60 * 1000

@@ -9,7 +9,7 @@ import { useAtom, useAtomValue } from 'jotai'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { inboxStateForWorkspace } from '@/atoms/inbox'
-import { isInternalAgentSession } from '@craft-agent/shared/sessions/internal-prompts'
+import { isInternalAgentSession } from '@rox/shared/sessions/internal-prompts'
 import {
   buildInboxItems,
   inboxCounts,
@@ -20,7 +20,7 @@ import {
   type PendingSkillLike,
   type SessionLike,
 } from '@/pages/inbox/inbox-model'
-import type { TeamInboxItem } from '@craft-agent/shared/team'
+import type { TeamInboxItem } from '@rox/shared/team'
 import { useInboxActorContext } from './useInboxActorContext'
 
 const EMPTY_MAP = new Map<string, never[]>()

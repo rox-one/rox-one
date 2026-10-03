@@ -1,6 +1,6 @@
 import { unlink } from 'fs/promises'
 import { join } from 'path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type {
   CredentialMigrationApplyDto,
   CredentialMigrationErrorCode,
@@ -8,20 +8,20 @@ import type {
   CredentialMigrationResult,
   CredentialMigrationRollbackDto,
   CredentialMigrationStatusDto,
-} from '@craft-agent/shared/protocol'
+} from '@rox/shared/protocol'
 import {
   applyCredentialMigration,
   getCredentialManager,
   getCredentialMigrationStatus,
   previewCredentialMigration,
   rollbackCredentialMigration,
-} from '@craft-agent/shared/credentials'
-import { getIdentityStore, resetIdentityStoreCache } from '@craft-agent/core/platform/identity/store'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/shared/credentials'
+import { getIdentityStore, resetIdentityStoreCache } from '@rox/core/platform/identity/store'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { requestClientConfirmDialog } from '@craft-agent/server-core/transport'
-import { resolveConfigDir } from '@craft-agent/shared/config/paths'
-import { isClaimableLive, rpcAuthActResult, rpcAuthListResult, rpcAuthReadResult } from '@craft-agent/core/rox2'
+import { requestClientConfirmDialog } from '@rox/server-core/transport'
+import { resolveConfigDir } from '@rox/shared/config/paths'
+import { isClaimableLive, rpcAuthActResult, rpcAuthListResult, rpcAuthReadResult } from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.auth.LOGOUT,

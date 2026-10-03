@@ -2,7 +2,7 @@
  * Node sizes on the session map: defaults, measured boxes for layout
  * helpers, and persistence of user resizes (scene pins + draft graph).
  */
-import type { SessionMapPin } from '@craft-agent/core/mindmap'
+import type { SessionMapPin } from '@rox/core/mindmap'
 import type { SessionDraftNode } from './draft-nodes'
 import type { CanvasBox } from './canvas-layout'
 

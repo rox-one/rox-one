@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'bun:test';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { CredentialRefRegistry } from '@craft-agent/core/platform';
+import { CredentialRefRegistry } from '@rox/core/platform';
 import type { CredentialBackend } from '../../backends/types.ts';
 import type { CredentialId, StoredCredential } from '../../types.ts';
 import { credentialIdToAccount } from '../../types.ts';

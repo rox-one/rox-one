@@ -1,4 +1,4 @@
-import type { RoxDevicePollApproved, RoxDeviceStartResult } from '@craft-agent/shared/auth/rox-cloud'
+import type { RoxDevicePollApproved, RoxDeviceStartResult } from '@rox/shared/auth/rox-cloud'
 
 export interface RoxConnectFlowDependencies {
   start(signal: AbortSignal): Promise<RoxDeviceStartResult>

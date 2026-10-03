@@ -26,3 +26,7 @@ jobs:
         env:
           # The hosted Electron TypeScript graph exceeded Node's default ~2 GiB heap.
           NODE_OPTIONS: --max-old-space-size=4096
+      - name: Verify bundled MCP provisioning and first-session onboarding
+        # Uses local protocol fixtures and injected installers, without cloud keys or upstream downloads.
+        # The script isolates RPC module mocks from the real transport and transcript suites.
+        run: bun run test:mcp-onboarding

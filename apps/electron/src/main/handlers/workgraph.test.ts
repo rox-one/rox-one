@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'bun:test'
 
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { HandlerFn, RequestContext, RpcHandlerOptions, RpcServer } from '@craft-agent/server-core/transport'
-import type { ConnectionRecord, WorkGraphHealth, WorkGraphKernel } from '@craft-agent/server-core/workgraph'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { HandlerFn, RequestContext, RpcHandlerOptions, RpcServer } from '@rox/server-core/transport'
+import type { ConnectionRecord, WorkGraphHealth, WorkGraphKernel } from '@rox/server-core/workgraph'
 
 import { HANDLED_CHANNELS, registerWorkGraphHandlers } from './workgraph'
 
@@ -71,6 +71,31 @@ describe('WorkGraph handler profile', () => {
     expect(registrations.has(RPC_CHANNELS.workgraph.GET_CONNECTION)).toBe(true)
     expect(registrations.has(RPC_CHANNELS.workgraph.CREATE_CONNECTION)).toBe(true)
     expect(registrations.has(RPC_CHANNELS.workgraph.GRANT_CONNECTION)).toBe(true)
+
+    expect(registrations.has(RPC_CHANNELS.workgraph.LIST_CONNECTION_LEASES)).toBe(true)
+    expect(registrations.has(RPC_CHANNELS.workgraph.INSPECT_CONNECTION)).toBe(true)
+    expect(registrations.has(RPC_CHANNELS.workgraph.MOVE_CONNECTION)).toBe(true)
+    expect(registrations.has(RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN)).toBe(true)
+    expect(registrations.has(RPC_CHANNELS.workgraph.POLL_GITHUB_DEVICE_LOGIN)).toBe(true)
+    expect(registrations.has(RPC_CHANNELS.workgraph.CANCEL_GITHUB_DEVICE_LOGIN)).toBe(true)
+    expect(registrations.has(RPC_CHANNELS.workgraph.RECONNECT_CONNECTION)).toBe(true)
+
+    for (const channel of [RPC_CHANNELS.workgraph.LIST_CONNECTION_LEASES, RPC_CHANNELS.workgraph.MOVE_CONNECTION,
+      RPC_CHANNELS.workgraph.POLL_GITHUB_DEVICE_LOGIN, RPC_CHANNELS.workgraph.CANCEL_GITHUB_DEVICE_LOGIN]) {
+      for (const input of [[], Object.create({ workspaceId: 'workspace_a' }),
+        { workspaceId: 'workspace_a', connectionId: created.id, accessToken: 'synthetic' },
+        Object.defineProperty({}, 'workspaceId', { enumerable: true, get() { throw new Error('getter_executed') } })]) {
+        await expect(handlers.get(channel)?.(emptyCtx(), input)).rejects.toThrow(/metadata/i)
+      }
+    }
+    await expect(handlers.get(RPC_CHANNELS.workgraph.LIST_CONNECTION_LEASES)?.(emptyCtx(), {
+      workspaceId: 'workspace_a', connectionId: created.id,
+    })).rejects.toThrow('leases_unavailable')
+    await expect(handlers.get(RPC_CHANNELS.workgraph.RECONNECT_CONNECTION)?.(emptyCtx(), {
+      workspaceId: 'workspace_a', connectionId: created.id,
+    })).rejects.toThrow('reconnect_unavailable')
+    await expect(handlers.get(RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN)?.(emptyCtx()))
+      .rejects.toThrow('github_device_unavailable')
 
     const grant = handlers.get(RPC_CHANNELS.workgraph.GRANT_CONNECTION)
     await expect(grant?.(emptyCtx(), {

@@ -1,5 +1,5 @@
-import type { LabelConfig } from '@craft-agent/shared/labels'
-import { flattenLabelsWithParentPath } from '@craft-agent/shared/labels'
+import type { LabelConfig } from '@rox/shared/labels'
+import { flattenLabelsWithParentPath } from '@rox/shared/labels'
 
 export interface LabelMenuItem {
   id: string

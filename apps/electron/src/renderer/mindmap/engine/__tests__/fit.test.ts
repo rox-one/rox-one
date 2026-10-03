@@ -5,7 +5,7 @@ import {
   createEmptyGraph,
   finalizeGraph,
   layoutBounds,
-} from '@craft-agent/core/mindmap'
+} from '@rox/core/mindmap'
 import {
   fitMindMapViewport,
   MIND_MAP_FIT_PADDING,

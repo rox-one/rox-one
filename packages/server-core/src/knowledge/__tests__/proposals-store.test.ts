@@ -13,8 +13,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { APPROVAL_TTL_MS, DRAFT_TTL_MS } from '@craft-agent/core/knowledge'
-import type { MutationProposalRecord, MutationProposalStatus } from '@craft-agent/shared/protocol'
+import { APPROVAL_TTL_MS, DRAFT_TTL_MS } from '@rox/core/knowledge'
+import type { MutationProposalRecord, MutationProposalStatus } from '@rox/shared/protocol'
 import { KnowledgeMutationProposalsStore, parseProposalFile } from '../proposals-store'
 
 let workspaceRoot: string

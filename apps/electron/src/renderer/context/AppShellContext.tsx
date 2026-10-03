@@ -26,7 +26,7 @@ import type {
   TestAutomationResult,
 } from '../../shared/types'
 import type { SessionStatus as SessionStatusConfig } from '@/config/session-status-config'
-import type { SessionModelCatalog, StartupRuntimeSummary } from '@craft-agent/shared/protocol'
+import type { SessionModelCatalog, StartupRuntimeSummary } from '@rox/shared/protocol'
 import type { SessionOptions, SessionOptionUpdates } from '../hooks/useSessionOptions'
 import { defaultSessionOptions } from '../hooks/useSessionOptions'
 import { sessionAtomFamily } from '../atoms/sessions'
@@ -70,7 +70,7 @@ export interface AppShellContextType {
   /** Get draft input text for a session - reads from ref without triggering re-renders */
   getDraft: (sessionId: string) => string
   /** Get persisted attachment refs (path + name) for a session's draft - no file IO */
-  getDraftAttachmentRefs: (sessionId: string) => import('@craft-agent/shared/config').DraftAttachmentRef[]
+  getDraftAttachmentRefs: (sessionId: string) => import('@rox/shared/config').DraftAttachmentRef[]
   /** Hydrate persisted attachment refs into full FileAttachment objects (async, reads files) */
   hydrateDraftAttachments: (sessionId: string) => Promise<FileAttachment[]>
   /** All enabled sources for this workspace - provided by AppShell component */
@@ -80,13 +80,13 @@ export interface AppShellContextType {
   /** Working directory of the active session — needed for project-level skill resolution */
   activeSessionWorkingDirectory?: string
   /** All label configs (tree) for label menu and badge display */
-  labels?: import('@craft-agent/shared/labels').LabelConfig[]
+  labels?: import('@rox/shared/labels').LabelConfig[]
   /** Callback when session labels change */
   onSessionLabelsChange?: (sessionId: string, labels: string[]) => void
   /** Workspace projects for session project picker */
   projects?: Array<{ id: string; slug: string; name: string; color?: string }>
   /** Native records for project surfaces; picker options omit config and paths. */
-  loadedProjects?: import('@craft-agent/shared/projects/types').LoadedProject[]
+  loadedProjects?: import('@rox/shared/projects/types').LoadedProject[]
   /** Bind/unbind a session to a project (null clears) */
   onSetProjectId?: (sessionId: string, projectId: string | null) => void
   /**
@@ -106,7 +106,7 @@ export interface AppShellContextType {
 
   // Session callbacks
   onCreateSession: (workspaceId: string, options?: import('../../shared/types').CreateSessionOptions) => Promise<Session>
-  onSendMessage: (sessionId: string, message: string, attachments?: FileAttachment[], skillSlugs?: string[], badges?: import('@craft-agent/core').ContentBadge[]) => void
+  onSendMessage: (sessionId: string, message: string, attachments?: FileAttachment[], skillSlugs?: string[], badges?: import('@rox/core').ContentBadge[]) => void
   onRenameSession: (sessionId: string, name: string) => void
   onFlagSession: (sessionId: string) => void
   onUnflagSession: (sessionId: string) => void

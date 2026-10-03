@@ -1,6 +1,6 @@
-import type { RpcClient } from '@craft-agent/server-core/transport'
-import { RPC_CHANNELS, type NativeDataContext, type NativeDataEntitySnapshot, type NativeDataMutationInput, type NativeDataReadEntityInput, type NativeDataReceipt, type NoteCreateOptions, type NoteDocument } from '@craft-agent/shared/protocol'
-import { NATIVE_REPLICA_IPC, isNativeReplicaNetworkLoss, type NativeReplicaCreatePlan, type NativeReplicaQueuedMutation, type NativeReplicaPublicApi } from '@craft-agent/shared/protocol/native-replica'
+import type { RpcClient } from '@rox/server-core/transport'
+import { RPC_CHANNELS, type NativeDataContext, type NativeDataEntitySnapshot, type NativeDataMutationInput, type NativeDataReadEntityInput, type NativeDataReceipt, type NoteCreateOptions, type NoteDocument } from '@rox/shared/protocol'
+import { NATIVE_REPLICA_IPC, isNativeReplicaNetworkLoss, type NativeReplicaCreatePlan, type NativeReplicaQueuedMutation, type NativeReplicaPublicApi } from '@rox/shared/protocol/native-replica'
 import type { TransportConnectionState } from '../transport/client'
 
 export interface NativeReplicaBridgeDependencies {

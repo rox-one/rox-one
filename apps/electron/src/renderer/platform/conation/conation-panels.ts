@@ -2,7 +2,7 @@
  * Register the empty Conation inspector contribution when shell+inspector flags are on.
  * Flags off → no-op (no AppShell / PanelHost contribution).
  */
-import type { PanelContribution, PanelRegistry, PanelRenderer } from '@craft-agent/core/platform'
+import type { PanelContribution, PanelRegistry, PanelRenderer } from '@rox/core/platform'
 import { CONATION_INSPECTOR_PANEL_ID } from './conation-inspector-model'
 import { isConationInspectorEnabled } from '@/atoms/conation-shell'
 

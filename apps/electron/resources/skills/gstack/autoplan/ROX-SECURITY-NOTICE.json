@@ -1,0 +1,20 @@
+{
+  "author": "ROX",
+  "modifiedAt": "2026-10-03",
+  "upstream": "https://github.com/garrytan/gstack",
+  "upstreamCommit": "f30b7b788a210d217ea3125bf3001b29cbc2a463",
+  "upstreamLicense": "MIT",
+  "note": "Upstream license/copyright notices retained. Local modifications are identified by portable paths and SHA256; local validation is separate from remote scanner closure.",
+  "securityPatches": [
+    {
+      "pack": "gstack",
+      "path": "gstack/autoplan/bin/phase-publication-hook.ts",
+      "alerts": [
+        710
+      ],
+      "change": "Opened no-follow/nonblocking descriptor; bounded 32 MiB+1 read; bigint identity, timestamp and mode checks. Actual replacement/growth refusal, initialization rollback, exact amendment, and two-way link regressions pass. See LOCAL-SECURITY-AUTOPLAN.md.",
+      "sha256": "1ab62e5922ed2afe87e098cdb2dee14e2163f795db9c44effc12b58f5361d997"
+    }
+  ],
+  "removedFiles": []
+}

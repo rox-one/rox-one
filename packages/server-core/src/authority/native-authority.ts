@@ -1,8 +1,8 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
 import { chmodSync, closeSync, lstatSync, mkdirSync, openSync, realpathSync, statSync } from 'node:fs'
 import { isAbsolute, join, relative, resolve, sep } from 'node:path'
-import { DatabaseSync } from '@craft-agent/shared/utils/sqlite-runtime'
-import { normalizeProfileAvatar, normalizeProfileEmail, type Profile, type UpdateProfileInput } from '@craft-agent/core/platform/identity/types'
+import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
+import { normalizeProfileAvatar, normalizeProfileEmail, type Profile, type UpdateProfileInput } from '@rox/core/platform/identity/types'
 
 export const NATIVE_AUTHORITY_ACTIONS = ['read', 'write', 'delete', 'subscribe', 'manage'] as const
 export type NativeAuthorityAction = (typeof NATIVE_AUTHORITY_ACTIONS)[number]

@@ -46,7 +46,7 @@ function bindingOpts(binding: ChannelBinding): SendOptions {
   return binding.threadId !== undefined ? { threadId: binding.threadId } : {}
 }
 import type { PlanTokenRegistry } from './plan-tokens'
-import { setupI18n } from '@craft-agent/shared/i18n'
+import { setupI18n } from '@rox/shared/i18n'
 
 /** Session event shape (subset of the full SessionEvent from server-core). */
 export interface SessionEvent {
@@ -55,7 +55,7 @@ export interface SessionEvent {
   [key: string]: unknown
 }
 
-/** PermissionRequest shape from @craft-agent/core. */
+/** PermissionRequest shape from @rox/core. */
 interface PermissionRequest {
   requestId: string
   toolName: string

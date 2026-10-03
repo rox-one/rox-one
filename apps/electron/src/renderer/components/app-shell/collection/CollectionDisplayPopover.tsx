@@ -12,7 +12,7 @@ import {
   type CollectionOrderBy,
   type CollectionOrderDir,
   type CollectionProperty,
-} from '@craft-agent/shared/sessions/collection'
+} from '@rox/shared/sessions/collection'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'

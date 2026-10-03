@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { Meeting } from '@craft-agent/core/meetings'
+import type { Meeting } from '@rox/core/meetings'
 import { buildMeetingImportGrant } from '../import-rpc'
 import {
   finalizeMeetingViaRpc,

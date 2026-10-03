@@ -6,7 +6,7 @@
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'fs'
 import { dirname, join } from 'path'
-import type { PublicationRecord } from '@craft-agent/core/knowledge'
+import type { PublicationRecord } from '@rox/core/knowledge'
 
 export function parsePublicationLine(line: string): PublicationRecord | null {
   const trimmed = line.trim()

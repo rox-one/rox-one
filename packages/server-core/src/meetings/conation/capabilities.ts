@@ -6,7 +6,7 @@
  * does not satisfy a native function.
  */
 
-import type { SoupEntityConcreteType } from '@craft-agent/core/conation/soup'
+import type { SoupEntityConcreteType } from '@rox/core/conation/soup'
 
 export const CONATION_SOURCE_AUDIT_ISSUE = 333 as const
 

@@ -1,18 +1,18 @@
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import {
   loadKanbanBoardConfig,
   saveKanbanBoardConfig,
   type KanbanBoardConfig,
-} from '@craft-agent/shared/kanban'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/shared/kanban'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   isClaimableLive,
   rpcKanbanActResult,
   rpcKanbanListResult,
   rpcKanbanReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.kanban.GET_CONFIG,

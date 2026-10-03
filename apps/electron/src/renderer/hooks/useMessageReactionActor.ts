@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { AnnotationAuthor } from '@craft-agent/core'
+import type { AnnotationAuthor } from '@rox/core'
 
 /** Load the annotation actor from the same authenticated route as the chat. */
 export function useAuthenticatedReactionActor(workspaceId?: string): AnnotationAuthor | null {

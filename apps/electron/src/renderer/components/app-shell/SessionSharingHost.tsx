@@ -4,7 +4,7 @@ import { Check, Copy, ExternalLink, Link2, Loader2, UserPlus } from 'lucide-reac
 import { toast } from 'sonner'
 import { useAtomValue, useSetAtom, useStore } from 'jotai'
 import type { Session } from '../../../shared/types'
-import type { RemoteSessionProjection } from '@craft-agent/shared/collaboration'
+import type { RemoteSessionProjection } from '@rox/shared/collaboration'
 import { addSessionAtom, replaceLoadedSessionAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { useNavigation } from '@/contexts/NavigationContext'
 import {

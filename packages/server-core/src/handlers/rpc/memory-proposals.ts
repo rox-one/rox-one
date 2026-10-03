@@ -4,9 +4,9 @@
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'fs'
 import { dirname, join } from 'path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { getProjectMemoryPath, loadProjectById } from '@craft-agent/shared/projects'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import { getProjectMemoryPath, loadProjectById } from '@rox/shared/projects'
 import {
   approveProposal,
   buildProposalExtractionPrompt,
@@ -24,17 +24,17 @@ import {
   type MemoryProposalScope,
   type MemoryProposalTrigger,
   type TranscriptMessage,
-} from '@craft-agent/shared/memory/proposals'
-import type { RequestContext, RpcServer } from '@craft-agent/server-core/transport'
-import { pushTyped } from '@craft-agent/server-core/transport'
-import type { PushTarget } from '@craft-agent/shared/protocol'
+} from '@rox/shared/memory/proposals'
+import type { RequestContext, RpcServer } from '@rox/server-core/transport'
+import { pushTyped } from '@rox/server-core/transport'
+import type { PushTarget } from '@rox/shared/protocol'
 import type { HandlerDeps } from '../handler-deps'
 import {
   isClaimableLive,
   rpcMemoryProposalsActResult,
   rpcMemoryProposalsListResult,
   rpcMemoryProposalsReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import { LessonStore } from '../../memory/LessonStore'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'
 import { MemoryProposalStore } from '../../memory/MemoryProposalStore'

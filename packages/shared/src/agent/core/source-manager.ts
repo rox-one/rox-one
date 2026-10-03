@@ -170,12 +170,13 @@ export class SourceManager {
       (s) => !this.knownSlugs.has(s.config.slug)
     );
 
-    // Find active sources that need attention (needs_auth or failed status)
+    // Setup requirements remain relevant even before the first handshake.
     const activeSources = this.allSources.filter(
       (s) => this.intendedSlugs.has(s.config.slug)
     );
     const sourcesNeedingAttention = activeSources.filter(
       (s) => s.config.connectionStatus === 'needs_auth' || s.config.connectionStatus === 'failed'
+        || ((s.config.connectionStatus === 'untested' || s.config.connectionStatus === 'local_disabled') && !!s.config.connectionError)
     );
 
     // Check if this is the first message (no sources known yet)
@@ -196,6 +197,10 @@ export class SourceManager {
       parts.push(`Active: ${activeWithStatus.join(', ')}`);
     } else {
       parts.push('Active: none');
+    }
+
+    if (this.allSources.length > 0 || activeSlugs.length > 0) {
+      parts.push('Use connected source tools whenever relevant to the task. Call only tools present in the live tool definitions; sources marked "no tools", disabled or needing authentication are unavailable until restored.');
     }
 
     // Inactive sources with reason
@@ -255,7 +260,10 @@ export class SourceManager {
 
       // Provide context-aware fix instructions
       const authTool = this.getAuthToolName(s);
-      if (authTool) {
+      if (status === 'untested' || status === 'local_disabled') {
+        output += `\n\nThis source is awaiting setup or a supported local runtime. Its tools are unavailable until the requirement above is resolved.`;
+        output += `\nTo fix: Read the source guide and complete the stated setup. Respect disabled local MCP settings.`;
+      } else if (status === 'needs_auth' && authTool) {
         output += `\n\nThis source requires re-authentication. The user may have revoked access or the token expired.`;
         output += `\nTo fix: Re-authenticate using ${authTool}.`;
       } else if (s.config.mcp?.transport === 'stdio') {
@@ -343,6 +351,11 @@ export class SourceManager {
 
     // MCP sources
     if (type === 'mcp') {
+      // Managed local servers may need account credentials even though their
+      // transport itself has no authentication (e.g. Telegram's API/session).
+      if (mcp?.transport === 'stdio' && sourceNeedsAuthentication(source)) {
+        return 'source_credential_prompt';
+      }
       if (mcp?.authType === 'oauth') {
         return 'source_oauth_trigger';
       }
