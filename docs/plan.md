@@ -786,6 +786,16 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 - Delivery: isolated `codex/recover-calendar-sync-fence-20261003` and separate PR; original branches preserved, lead owns merge.
 
 
+### Voice archive recovery ownership and verification (2026-10-03)
+
+- Owner: recent-features worker. Dependencies: current actor-scoped voice HistoryIndex, native authority and request fences, registered RPC/channel-map and actual Settings/composer lifecycle. Lead owns ordered merge; original source branches remain intact.
+- Recover current UI search/detail/revisions/edit/select/delete/export/play plus explicit draft/clipboard completion. Add scoped handlers where current ports are absent; retain expected-selected CAS, foreign-record ownership, bounded text, path-free bounded audio frames, final integrity verification and local-only managed-owner clipboard writes. No legacy global capture, fake receipt/provider or default cloud consent is restored.
+- Verify actual authenticated WS actor/read-only/stale/oversize/symlink/persistence/restart controls; actual local-only clipboard RPC remote/forged/dead/moved-owner rejection; complete audio-byte/frame replacement/digest/dispose controls; actual Chromium current UI search/edit/select/stale/copy/export/play/delete/out-of-order/unmount/web denial and composer delivery. Run relevant shared/server/Electron types, protocol catalog/routing and all locale parity; qualify renderer/main/preload builds on the delivered source.
+- Native OS microphone/provider/installed clipboard acceptance and the full Voice/Meeting program remain separate from synthetic bounded integration evidence.
+
+Current foreground PTT also restores the explicit Right Control and disabled presets alongside the default Right Alt/Option. Stored current-schema preferences are normalized and consumed by the same managed foreground key owner; left/wrong modifiers remain untouched, repeat is paired once, changed held modifiers cancel once, and the existing key-up completion contract survives mode changes. These controls do not claim OS-wide modifier capture.
+
+An explicit current-schema trailing-space preference applies to draft and clipboard completion, while the missing/legacy preference preserves current no-trailing-space behavior. Real Chromium completion controls verify both targets.
 ## Validated personal task import recovery — 2026-10-03
 
 1. Historical worker maps Golden's consumed import guard to actual current TasksPage onImport and cache tryFromJson consumers. Root owns other Golden UI; this recovery changes core validation and tests only.
@@ -800,6 +810,7 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 3. Execute actual component state/setters across A/B/workspace changes, stale edit/clear callbacks, missing identity and delimiter collisions. Restore exact pre-change NotesPage for negative proof, then restore candidate before final checks. Run current native read-lifecycle and comment controls plus consumed Electron types.
 4. Publish a separate codex PR with source/head/test provenance; root owns merge. Preserve original Golden branch and mark this one feature separately in its cumulative source disposition.
 
+Review qualification: each audio frame binds the opened leaf to captured BigInt dev/ino identities for every ancestor before any read and rechecks them after the frame; canonical path equality alone is insufficient. A deterministic real-directory replacement fixture returns a foreign frame on the earlier helper and rejects before any foreign descriptor read after the repair. All19 newly added labels have authored translations in all12 locales. Native WS fixture initialization is sequenced through authenticated read readiness; 500ms transport and 20s test deadlines, concurrent capture and all privacy assertions remain intact.
 
 ## Golden narrow Notes tools and sash — 2026-10-03
 
@@ -814,3 +825,5 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 2. Recover the source's workspace-scoped dismissal key/helper; compose it into today's flat SidebarChrome/PromoSlot using the existing all-locale `common.dismiss` key. Fence focus by captured workspace and connected/visible profile owner. Keep reminders independent.
 3. Execute actual component callbacks with real panel atoms and controlled local storage: mounted-route/draft preservation, preferred match, missing-service fallback, explicit subroutes, compact mode, durable workspace isolation and stale-callback focus. Verify current DOM keyboard/disclosure, panel lanes, promo policy and Electron types. Run before-source negative controls, restore exact files, reconcile live main without replacing later docs, publish a separate PR and retain all source branches.
 4. Acceptance is bounded source and renderer integration; do not claim installed native UI, old sidebar layout recovery, full Golden source-family completion or production acceptance.
+
+Voice archive follow-up: open the leaf with NOFOLLOW/NONBLOCK before validating its regular-file size and current path identity, then verify all ancestor identities before any read and after the frame. This removes reliance on a pre-open leaf path stat while retaining bounded/no-read failure controls.

@@ -65,8 +65,9 @@ export function registerVoiceHotkeys(
   const inputs = new Map<number, ReturnType<typeof attachVoiceCommandInput>>()
   const rebind = () => {
     const prefs = readPrefs()
-    const nextSignature = `${prefs.toggleAccelerator}\n${prefs.cancelAccelerator}`
+    const nextSignature = `${prefs.toggleAccelerator}\n${prefs.cancelAccelerator}\n${prefs.hotkeyMode}\n${prefs.pttModifier ?? 'AltRight'}`
     if (signature === nextSignature) return
+    for (const input of inputs.values()) input.cancelHeld()
     for (const accelerator of registered) globalShortcut.unregister(accelerator)
     registered = []
     signature = nextSignature
