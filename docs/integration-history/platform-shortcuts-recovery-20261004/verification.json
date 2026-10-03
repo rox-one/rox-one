@@ -160,5 +160,8 @@
     "sha256": "2fb5dc125e628739dc715b7bcec11499b47a603c03f894c9e5e8fb6a7bdaaec7",
     "exclusions_added": false,
     "strictness_relaxed": false
-  }
+  },
+  "reconciled_main": "47b5fcd270ff7abff163533b60f4d9fa5d5f8f27",
+  "reconciled_source_revision": "82a14204ac2369503624f3f61d1fce9c74680a9b",
+  "reconciliation": "normal merge latest main; zero owned source/test fingerprint changes; current Notes privacy/read-error additions retained; docs retain all current sections"
 }
