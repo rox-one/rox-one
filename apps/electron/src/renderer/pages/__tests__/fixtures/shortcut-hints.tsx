@@ -8,6 +8,8 @@ import { I18nextProvider } from 'react-i18next'
 import { setupI18n } from '@rox/shared/i18n/setupI18n'
 import { PersonalTaskStore } from '@rox/core/tasks/personal'
 
+// Read-only SSR has no installed native bridge; unavailable capabilities stay unavailable.
+Object.defineProperty(globalThis, 'window', { configurable: true, value: { electronAPI: {} } })
 Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { platform: process.argv[2] ?? 'Win32' } })
 const storage = new Map<string, string>()
 Object.defineProperty(globalThis, 'localStorage', { value: {
@@ -48,7 +50,7 @@ function RegistryHints() {
 
 const surfaces = {
   tasks: render(<ActionRegistryProvider><TasksPage /></ActionRegistryProvider>),
-  detail: render(<TaskDetail task={task} store={store} mutate={noop} now={task.createdAt} subtasks={[]} allTags={[]}
+  detail: render(<TaskDetail draft={undefined} isDraftCurrent={() => true} onDraftChange={noop} onDraftSubmit={noop} task={task} store={store} mutate={noop} now={task.createdAt} subtasks={[]} allTags={[]}
     placeLabel={i18n.t('tasks.projection.inbox')} sessionMap={new Map()} agentChip={null} delegating={false}
     delegateError={null} canDelegate onDelegate={noop} onToggleComplete={noop} onOpenMove={noop}
     onOpenSource={noop} onOpenSession={noop} onOpenBoard={noop} onTrash={noop} onClose={noop}
