@@ -57,7 +57,7 @@ export function shouldApplyOnboardingLaunchGate(
 
 interface UseOnboardingOptions {
   /** Called when onboarding is complete */
-  onComplete: () => void
+  onComplete: () => void | boolean | Promise<void | boolean>
   /** Initial setup needs from auth state check */
   initialSetupNeeds?: SetupNeeds
   /**
@@ -73,7 +73,7 @@ interface UseOnboardingOptions {
   onDismiss?: () => void
   /** Called immediately after config is saved to disk (before wizard closes).
    *  Use this to propagate billing/model changes to the UI without waiting for onComplete. */
-  onConfigSaved?: () => void
+  onConfigSaved?: () => void | Promise<void>
   /** Slug of existing connection being edited (null = creating new) */
   editingSlug?: string | null
   /** Set of slugs already in use (for generating unique slugs when creating new) */
@@ -270,6 +270,7 @@ export function useOnboarding({
     isRecheckingGitBash: false,
     isCheckingGitBash: true, // Start as true until check completes
   })
+  const firstRunFinishInFlight = useRef(false)
 
   // A cloud connection is optional unless the startup caller and server both
   // explicitly request a launch gate.
@@ -387,18 +388,29 @@ export function useOnboarding({
     }
   }, [state.apiSetupMethod, onConfigSaved, editingSlug, existingSlugs, t])
 
-  // First run: make the Rox runtime the default connection, then open the app.
-  // Never blocks — a failure only means the user picks a provider in Settings.
+  // First-run completion is durable only after a Rox default is available or
+  // an existing user default has been preserved. Failures stay retryable.
   const finishFirstRun = useCallback(async () => {
-    setState(s => ({ ...s, isFinishing: true }))
+    if (firstRunFinishInFlight.current) return
+    firstRunFinishInFlight.current = true
+    setState(s => ({ ...s, isFinishing: true, errorMessage: undefined }))
     const result = await ensureRoxRuntimeDefault(window.electronAPI)
     if (result.status === 'failed') {
-      console.warn('[Onboarding] Could not set the Rox runtime as default:', result.error)
-    } else {
-      onConfigSaved?.()
+      firstRunFinishInFlight.current = false
+      setState(s => ({
+        ...s,
+        isFinishing: false,
+        errorMessage: visibleError(result.error, t('onboarding.errors.saveConfigFailed')),
+      }))
+      return
+    }
+    try {
+      await onConfigSaved?.()
+    } catch (error) {
+      console.warn('[Onboarding] Could not refresh runtime settings after setup:', error)
     }
     setState(s => ({ ...s, isFinishing: false, step: 'complete', completionStatus: 'complete' }))
-  }, [onConfigSaved])
+  }, [onConfigSaved, t])
 
   // Continue to next step
   const handleContinue = useCallback(async () => {
@@ -1123,9 +1135,20 @@ export function useOnboarding({
   }, [])
 
   // Finish onboarding
-  const handleFinish = useCallback(() => {
-    onComplete()
-  }, [onComplete])
+  const handleFinish = useCallback(async () => {
+    try {
+      if (await onComplete() === false) throw new Error('workspace-transition-failed')
+    } catch {
+      firstRunFinishInFlight.current = false
+      setState(s => ({
+        ...s,
+        step: 'welcome',
+        isFinishing: false,
+        completionStatus: 'saving',
+        errorMessage: t('onboarding.errors.saveConfigFailed'),
+      }))
+    }
+  }, [onComplete, t])
 
   // Cancel onboarding
   const handleCancel = useCallback(() => {

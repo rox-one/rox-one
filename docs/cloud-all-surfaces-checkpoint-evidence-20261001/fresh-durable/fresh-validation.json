@@ -1,0 +1,439 @@
+{
+  "schemaVersion": 1,
+  "completedAtUtc": "2026-10-01T04:49:12.771245+00:00",
+  "status": "PASS_EXACT_SOURCE_BOUND_FRESH_DURABLE_AND_PROCESS_LOSS",
+  "reasonForRepeat": "Historical r19 durable and September raw logs were absent from retained evidence. This authorized fresh execution closes the raw-log retention gap; earlier static source readback is separate.",
+  "sourceCommit": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "sourceTree": "c21b2fa0acacf489194dc6ca61f3ffc3191eba14",
+  "fetchedPublicDocumentationHead": "c31ba50793db9ef676e220054dc3211693a63f3e",
+  "remoteBranch": "cloud/all-surfaces-20260930",
+  "isolatedCheckout": "/tmp/rox-r15-durable-recheck-20261001/checkout",
+  "isolatedCheckoutBranch": "detached HEAD at tested source010",
+  "frozenInputs": {
+    "main": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "september": "bac082301aed341fe078cb5bd539c4ba074560eb",
+    "compound": "3027028c6c8cb420efe3ea4b255ac725747de9e5",
+    "Runtime1319": "bdd28272856be5fdead6c7a93ca1b45eb13b17ed"
+  },
+  "versions": {
+    "bun": "1.3.14",
+    "node": "v24.19.0"
+  },
+  "invocations": [
+    {
+      "label": "fresh-frozen-install",
+      "historicalCommandLabel": "r19-frozen-install",
+      "command": [
+        "bun",
+        "--no-env-file",
+        "install",
+        "--frozen-lockfile"
+      ],
+      "commandByteArrayMatchesHistorical": true,
+      "cwd": "/tmp/rox-r15-durable-recheck-20261001/checkout",
+      "sourceBefore": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "sourceAfter": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "sourceBeforeManifestSha256": "afafaf9499a8f41869f44a5aa057a16d158120480a8a9bac0ba9d6b58d99c415",
+      "sourceAfterManifestSha256": "afafaf9499a8f41869f44a5aa057a16d158120480a8a9bac0ba9d6b58d99c415",
+      "lockBefore": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+      "lockAfter": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+      "changedTrackedFiles": {},
+      "originalUnchanged": true,
+      "versions": {
+        "bun": "1.3.14",
+        "node": "v24.19.0"
+      },
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true,
+      "sourceAndLockUnchanged": true,
+      "startedAtUtc": "2026-10-01T04:42:15.952717+00:00",
+      "completedAtUtc": "2026-10-01T04:42:32.823326+00:00",
+      "exit": 0,
+      "seconds": 16.637,
+      "logPath": "/workspace/rox-r15-evidence-20260930/checkpoint-20261001/fresh-durable/fresh-frozen-install.log",
+      "logSha256": "203b839bcf039761930831b8fc658260bb3b3c73e6b5cb8fe528d3397dfc0ee5",
+      "logBytes": 3084,
+      "childBunSummaryBlocks": [],
+      "fullDoDAccepted": false
+    },
+    {
+      "label": "fresh-workflow-durable",
+      "historicalCommandLabel": "r19-workflow-durable",
+      "command": [
+        "bun",
+        "--no-env-file",
+        "test",
+        "packages/core",
+        "packages/server-core/src/webui",
+        "packages/shared/src/utils/__tests__/sqlite-runtime.test.ts",
+        "packages/server-core/src/authority/__tests__/native-authority.test.ts",
+        "packages/server-core/src/authority/__tests__/native-journal.test.ts",
+        "packages/shared/src/account-replica/__tests__/account-replica.test.ts",
+        "packages/shared/src/agent/core/__tests__/agent-budget.test.ts",
+        "packages/shared/src/automations/occurrence-ledger.test.ts",
+        "packages/server-core/src/handlers/rpc/native-data.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/native-create.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/native-self-profile.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/native-workspace-startup.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/native-startup-runtime.test.ts",
+        "apps/electron/src/preload/openclaw-host-control.test.ts",
+        "apps/electron/src/transport/__tests__/channel-map-parity.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/browser-protected-cookie-key.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/memory-native-acceptance.test.ts",
+        "packages/shared/src/agent/core/__tests__/budget-process-loss-acceptance.test.ts",
+        "packages/shared/src/browser/__tests__/profile-import-key-custody-recovery.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/caller-session-loading.test.ts"
+      ],
+      "commandByteArrayMatchesHistorical": true,
+      "cwd": "/tmp/rox-r15-durable-recheck-20261001/checkout",
+      "sourceBefore": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "sourceAfter": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "sourceBeforeManifestSha256": "afafaf9499a8f41869f44a5aa057a16d158120480a8a9bac0ba9d6b58d99c415",
+      "sourceAfterManifestSha256": "afafaf9499a8f41869f44a5aa057a16d158120480a8a9bac0ba9d6b58d99c415",
+      "lockBefore": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+      "lockAfter": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+      "changedTrackedFiles": {},
+      "originalUnchanged": true,
+      "versions": {
+        "bun": "1.3.14",
+        "node": "v24.19.0"
+      },
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true,
+      "sourceAndLockUnchanged": true,
+      "startedAtUtc": "2026-10-01T04:43:08.696417+00:00",
+      "completedAtUtc": "2026-10-01T04:43:18.149427+00:00",
+      "exit": 0,
+      "seconds": 9.233,
+      "logPath": "/workspace/rox-r15-evidence-20260930/checkpoint-20261001/fresh-durable/fresh-workflow-durable.log",
+      "logSha256": "49c016f7a8dcb4a1101bd45ac0937e051b052f15464b6f6c6ab960fcd8d9775f",
+      "logBytes": 114279,
+      "childBunSummaryBlocks": [
+        {
+          "pass": 1002,
+          "fail": 0,
+          "expect": 7441,
+          "tests": 1002,
+          "files": 101
+        }
+      ],
+      "fullDoDAccepted": false
+    },
+    {
+      "label": "fresh-workflow-september",
+      "historicalCommandLabel": "r19-workflow-september",
+      "command": [
+        "bun",
+        "--no-env-file",
+        "test",
+        "packages/shared/src/automations/scheduler-process-loss-acceptance.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/source-status-runtime.test.ts",
+        "packages/shared/src/agent/core/__tests__/budget-owner-process-acceptance.test.ts",
+        "packages/server-core/src/transport/__tests__/native-authorization.test.ts"
+      ],
+      "commandByteArrayMatchesHistorical": true,
+      "cwd": "/tmp/rox-r15-durable-recheck-20261001/checkout",
+      "sourceBefore": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "sourceAfter": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "sourceBeforeManifestSha256": "afafaf9499a8f41869f44a5aa057a16d158120480a8a9bac0ba9d6b58d99c415",
+      "sourceAfterManifestSha256": "afafaf9499a8f41869f44a5aa057a16d158120480a8a9bac0ba9d6b58d99c415",
+      "lockBefore": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+      "lockAfter": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+      "changedTrackedFiles": {},
+      "originalUnchanged": true,
+      "versions": {
+        "bun": "1.3.14",
+        "node": "v24.19.0"
+      },
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true,
+      "sourceAndLockUnchanged": true,
+      "startedAtUtc": "2026-10-01T04:43:38.926380+00:00",
+      "completedAtUtc": "2026-10-01T04:43:41.155330+00:00",
+      "exit": 0,
+      "seconds": 2.011,
+      "logPath": "/workspace/rox-r15-evidence-20260930/checkpoint-20261001/fresh-durable/fresh-workflow-september.log",
+      "logSha256": "586c2e794c97e9ae3d221fc38d107f709c9dc45c85a22b97a789994262596c31",
+      "logBytes": 2697,
+      "childBunSummaryBlocks": [
+        {
+          "pass": 24,
+          "fail": 0,
+          "expect": 147,
+          "tests": 24,
+          "files": 4
+        }
+      ],
+      "fullDoDAccepted": false
+    }
+  ],
+  "exactHistoricalCommandByteArraysReused": true,
+  "newActualExecutionRevision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "historicalD1ebRevisionNotRelabeled": true,
+  "sourceAndLockBeforeAfter": {
+    "files": 6180,
+    "manifestSha256": "afafaf9499a8f41869f44a5aa057a16d158120480a8a9bac0ba9d6b58d99c415",
+    "lockSha256": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+    "allSixSnapshotsIdenticalSourceAndLock": true,
+    "allStatusesClean": true,
+    "snapshots": [
+      {
+        "path": "fresh-frozen-install-before-source.json",
+        "sha256": "4e5c80e6fa22f2669e7daf7732d292f7278229317d084f5e7be9365f01c1bf21",
+        "bytes": 830623
+      },
+      {
+        "path": "fresh-frozen-install-after-source.json",
+        "sha256": "3f1edcc21de7d4b167d8749dc2f5f9ce535a571631a4027ccb5073039877678d",
+        "bytes": 830623
+      },
+      {
+        "path": "fresh-workflow-durable-before-source.json",
+        "sha256": "e573339be057ad16af666799936194b20e345b2b5b86dab5d145667c4b9d2ebc",
+        "bytes": 830623
+      },
+      {
+        "path": "fresh-workflow-durable-after-source.json",
+        "sha256": "d1d847a8bc11797b82eea848ed9168699e5b52d6351d454edd0972805bf5dec2",
+        "bytes": 830623
+      },
+      {
+        "path": "fresh-workflow-september-before-source.json",
+        "sha256": "ef7802be9043356b191b162ab2c93c47f7474120d98ae3e546defa4cbb4219f1",
+        "bytes": 830623
+      },
+      {
+        "path": "fresh-workflow-september-after-source.json",
+        "sha256": "583fcdddac6030a564f1541d707682a5d323ddf9fab0afe0c6f61f7755ae6c79",
+        "bytes": 830623
+      }
+    ]
+  },
+  "actualCaseMapping": {
+    "json": "executed-cases.json",
+    "jsonSha256": "d655e8f18fc57ff695ce6f27d4a2b6ff67fbe9c38c41b63b41fdca0fb123638d",
+    "md": "executed-cases.md",
+    "mdSha256": "ff053f012af63b3008c19b89828577f8bb513ebcda5ff29325779ef3e8e4906f",
+    "observedRowCount": 1026,
+    "resolvedDeclarationRows": 1026,
+    "unresolvedRows": 0,
+    "templateOrParameterizedRows": 73,
+    "fallbackRows": 0,
+    "allCaseSourceHashesMatchFrozenManifest": true,
+    "allCaseRawPassLinesIndependentlyMatched": true,
+    "noUniqueCombinedTestTotalClaimed": true
+  },
+  "outcomeClassification": {
+    "sourceDefectsObserved": [],
+    "infrastructureFailuresObserved": [],
+    "sourceFixesMade": false,
+    "newUIOrElectronBuild": false
+  },
+  "originalCheckout": {
+    "path": "/workspace/rox-one",
+    "before": {
+      "head": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "status": "",
+      "lockSha256": "b29cf0eb0eaa357069172fe728123d1bd56ab77ef18d90e426f1f42cf85fb79b"
+    },
+    "unchangedAcrossAllInvocations": true
+  },
+  "cleanup": {
+    "completedAtUtc": "2026-10-01T04:44:54.834995+00:00",
+    "ownedSuiteProcessGroups": [
+      108462,
+      108795,
+      109160
+    ],
+    "ownLiveProcessesRemaining": [],
+    "privateConfigTmpCacheTestDataRemoved": true,
+    "privateTreeLogicalBytesRemoved": 2758012065,
+    "checkoutRetainedForRootPublication": "/tmp/rox-r15-durable-recheck-20261001/checkout",
+    "sourceCheckoutRemoved": false,
+    "configuredEnvironmentSecretsNetworkPermissionsChanged": false,
+    "rawLogsPreservedWithoutParentTmpFiltering": true,
+    "credentialShapeScan": [
+      {
+        "log": "fresh-frozen-install.log",
+        "credentialShapeMatches": 0,
+        "matchingLineNumbers": []
+      },
+      {
+        "log": "fresh-workflow-durable.log",
+        "credentialShapeMatches": 0,
+        "matchingLineNumbers": []
+      },
+      {
+        "log": "fresh-workflow-september.log",
+        "credentialShapeMatches": 0,
+        "matchingLineNumbers": []
+      }
+    ],
+    "credentialShapeScanLimits": "Pattern-only additional check; child environment excluded provider/OAuth/token credentials and used isolated app config. No credential values were read or printed."
+  },
+  "publisher": "Root only; this agent performed no commit/push/PR writes and retains clean010 checkout for root documentation-only publication.",
+  "pendingNotAccepted": [
+    "full109",
+    "full143",
+    "UTB",
+    "DATA_SHARED full",
+    "installed native OS runtime",
+    "native Notes mutation UI",
+    "live provider acceptance",
+    "native iOS",
+    "security triage/full DoD"
+  ],
+  "fullDoDAccepted": false,
+  "artifacts": [
+    {
+      "path": "cleanup.json",
+      "sha256": "66ee45a9c5983a938b1c6cd46acfbb4998c730649e31d738011d6686bb243e8d",
+      "bytes": 1102
+    },
+    {
+      "path": "executed-cases.json",
+      "sha256": "d655e8f18fc57ff695ce6f27d4a2b6ff67fbe9c38c41b63b41fdca0fb123638d",
+      "bytes": 732252
+    },
+    {
+      "path": "executed-cases.md",
+      "sha256": "ff053f012af63b3008c19b89828577f8bb513ebcda5ff29325779ef3e8e4906f",
+      "bytes": 10677
+    },
+    {
+      "path": "fresh-frozen-install-after-source.json",
+      "sha256": "3f1edcc21de7d4b167d8749dc2f5f9ce535a571631a4027ccb5073039877678d",
+      "bytes": 830623
+    },
+    {
+      "path": "fresh-frozen-install-before-source.json",
+      "sha256": "4e5c80e6fa22f2669e7daf7732d292f7278229317d084f5e7be9365f01c1bf21",
+      "bytes": 830623
+    },
+    {
+      "path": "fresh-frozen-install-live.json",
+      "sha256": "f4031fb32ebd9da05166bb7dcea3cf39f399d8e5ba612101b517442c91fe1006",
+      "bytes": 751
+    },
+    {
+      "path": "fresh-frozen-install.json",
+      "sha256": "5c628c520acc7f3dbd0e38d68f13220a20175e5972fde0de67b04ba06cd08c0a",
+      "bytes": 1780
+    },
+    {
+      "path": "fresh-frozen-install.log",
+      "sha256": "203b839bcf039761930831b8fc658260bb3b3c73e6b5cb8fe528d3397dfc0ee5",
+      "bytes": 3084
+    },
+    {
+      "path": "fresh-workflow-durable-after-source.json",
+      "sha256": "d1d847a8bc11797b82eea848ed9168699e5b52d6351d454edd0972805bf5dec2",
+      "bytes": 830623
+    },
+    {
+      "path": "fresh-workflow-durable-before-source.json",
+      "sha256": "e573339be057ad16af666799936194b20e345b2b5b86dab5d145667c4b9d2ebc",
+      "bytes": 830623
+    },
+    {
+      "path": "fresh-workflow-durable-live.json",
+      "sha256": "6564411e2764d2439e2392bbbc3dcce57eaa0d31321e330ea1fde4c6805fd074",
+      "bytes": 2182
+    },
+    {
+      "path": "fresh-workflow-durable.json",
+      "sha256": "619587768964716e510550f78da9d54ac4c8586df54bcf8af4202dde12b10003",
+      "bytes": 3330
+    },
+    {
+      "path": "fresh-workflow-durable.log",
+      "sha256": "49c016f7a8dcb4a1101bd45ac0937e051b052f15464b6f6c6ab960fcd8d9775f",
+      "bytes": 114279
+    },
+    {
+      "path": "fresh-workflow-september-after-source.json",
+      "sha256": "583fcdddac6030a564f1541d707682a5d323ddf9fab0afe0c6f61f7755ae6c79",
+      "bytes": 830623
+    },
+    {
+      "path": "fresh-workflow-september-before-source.json",
+      "sha256": "ef7802be9043356b191b162ab2c93c47f7474120d98ae3e546defa4cbb4219f1",
+      "bytes": 830623
+    },
+    {
+      "path": "fresh-workflow-september-live.json",
+      "sha256": "13182f65975a2866a3e154d26e4368a94894675c9ba2f4d46961dbc67b7ba9ef",
+      "bytes": 1062
+    },
+    {
+      "path": "fresh-workflow-september.json",
+      "sha256": "3b9900295cdf7d20b0a29c2dc8bf5209e8ceae4dfe84b974df1c3d8047bf0884",
+      "bytes": 2205
+    },
+    {
+      "path": "fresh-workflow-september.log",
+      "sha256": "586c2e794c97e9ae3d221fc38d107f709c9dc45c85a22b97a789994262596c31",
+      "bytes": 2697
+    }
+  ]
+}

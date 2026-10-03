@@ -1,0 +1,26 @@
+{
+  "capturedAt": "2026-10-01T04:27:46.431Z",
+  "instrument": "cloud_environment.environment_status",
+  "provider": "cloud",
+  "desiredPhase": "running",
+  "observedPhase": "running",
+  "connectivity": "connected",
+  "observationsCurrent": true,
+  "specRevision": "3",
+  "observedSpecRevision": "3",
+  "failure": null,
+  "networkPolicy": {
+    "mode": "restricted",
+    "state": "unknown",
+    "allowed_hosts": [
+      "api.github.com",
+      "codeload.github.com",
+      "github.com"
+    ],
+    "presets": [
+      "package_managers"
+    ]
+  },
+  "modelEffortAttested": false,
+  "changesPerformed": false
+}

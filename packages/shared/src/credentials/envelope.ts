@@ -47,6 +47,7 @@ const KIND_FIELDS: Record<CredentialKind, readonly string[]> = {
   x509_identity: ['value', 'expiresAt', 'source'],
   opaque_bundle: ['value', 'expiresAt', 'source'],
   browser_session: ['value', 'expiresAt', 'source'],
+  account_replica_key: ['value', 'source'],
 };
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

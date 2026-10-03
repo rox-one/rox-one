@@ -11,6 +11,8 @@ import Image from '@tiptap/extension-image'
 import FileHandler from '@tiptap/extension-file-handler'
 import { Markdown as OfficialMarkdown } from '@tiptap/markdown'
 import { Markdown as LegacyMarkdown } from 'tiptap-markdown'
+import { LegacyMixedTaskLists } from './legacy-mixed-task-lists'
+import { RetainedTrailingNode } from './retained-trailing-node'
 import { tiptapCodeBlock } from './TiptapCodeBlockView'
 import { TiptapBubbleMenus, INLINE_MATH_EDIT_EVENT } from './TiptapBubbleMenus'
 import { TiptapSlashMenu } from './TiptapSlashMenu'
@@ -236,6 +238,7 @@ export function TiptapMarkdownEditor({
 }: TiptapMarkdownEditorProps) {
   const onUpdateRef = React.useRef(onUpdate)
   onUpdateRef.current = onUpdate
+  const lastEmittedMarkdownRef = React.useRef<string | null>(null)
 
   const onWikiLinkClickRef = React.useRef(onWikiLinkClick)
   onWikiLinkClickRef.current = onWikiLinkClick
@@ -253,8 +256,10 @@ export function TiptapMarkdownEditor({
     const base = [
       StarterKit.configure({
         codeBlock: false,
+        trailingNode: false,
         heading: { levels: [1, 2, 3] },
       }),
+      RetainedTrailingNode,
       TaskList,
       TaskItem.configure({
         nested: true,
@@ -325,6 +330,7 @@ export function TiptapMarkdownEditor({
 
     return [
       ...base,
+      LegacyMixedTaskLists,
       MarkdownComment,
       LegacyMarkdown.configure({
         html: false,
@@ -384,6 +390,7 @@ export function TiptapMarkdownEditor({
       const md = useOfficialMarkdown
         ? postprocessMarkdownFromOfficial(getOfficialMarkdown(editor as { getMarkdown?: () => string }))
         : getLegacyMarkdown(editor as { storage: { markdown?: { getMarkdown?: () => string } } })
+      lastEmittedMarkdownRef.current = md
       onUpdateRef.current?.(md)
     },
   }, [useOfficialMarkdown, extensions])
@@ -399,7 +406,8 @@ export function TiptapMarkdownEditor({
   // Sync editable prop
   React.useEffect(() => {
     if (editor && editor.isEditable !== editable) {
-      editor.setEditable(editable)
+      // Changing authority is not a content edit or a request to save.
+      editor.setEditable(editable, false)
     }
   }, [editor, editable])
 
@@ -410,10 +418,12 @@ export function TiptapMarkdownEditor({
     if (editor && content !== prevContentRef.current) {
       prevContentRef.current = content
 
-      // Important: when this editor is currently focused, treat incoming content as
-      // local controlled echo and avoid setContent resets that can collapse transient
-      // block states (e.g. slash-inserted code blocks) and jump selection.
-      if (editor.isFocused) return
+      // Preserve selection for our own controlled echo. Host edits (for example
+      // an Inspector checkbox) still update a focused editor without another save.
+      if (content === lastEmittedMarkdownRef.current) {
+        lastEmittedMarkdownRef.current = null
+        return
+      }
 
       const currentMd = useOfficialMarkdown
         ? postprocessMarkdownFromOfficial(getOfficialMarkdown(editor as { getMarkdown?: () => string }))
@@ -422,9 +432,10 @@ export function TiptapMarkdownEditor({
       if (currentMd !== content) {
         if (useOfficialMarkdown) {
           const normalized = preprocessMarkdownForOfficial(content)
-          editor.commands.setContent(normalized, { contentType: 'markdown' } as never)
+          const options: { contentType: 'markdown'; emitUpdate: false } = { contentType: 'markdown', emitUpdate: false }
+          editor.commands.setContent(normalized, options)
         } else {
-          editor.commands.setContent(content)
+          editor.commands.setContent(content, { emitUpdate: false })
         }
 
         queueMicrotask(() => {

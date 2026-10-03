@@ -337,13 +337,32 @@ describe('ExtensionHostManager', () => {
     })
 
     await mgr.start()
-    await mgr.loadExtension('demo', entry)
+    await mgr.loadExtension('demo', entry, [], { greet: [] })
     const result = await mgr.callExtension('demo', 'greet', ['world'])
     expect(result).toBe('hello:world')
+    await expect(mgr.callExtension('demo', 'undeclared')).rejects.toThrow(/undeclared operation/)
 
     const status = mgr.getStatus()
     expect(status.loadedExtensions).toContain('demo')
     expect(status.executesSiyuanPlugins).toBe(false)
+  })
+  it('rejects a declared capability that the loaded extension was not granted', async () => {
+    tmp = mkdtempSync(join(tmpdir(), 'eh-'))
+    const sandbox = join(tmp, 'extensions', 'sandbox', 'demo')
+    mkdirSync(sandbox, { recursive: true })
+    const entry = join(sandbox, 'index.mjs')
+    writeFileSync(entry, `export function greet() { return 'called' }\n`)
+    const { forkFn } = createInProcessFork(tmp)
+    const mgr = new ExtensionHostManager({
+      forkFn,
+      configDir: tmp,
+      workerPath: '/virtual/worker.cjs',
+    })
+
+    await mgr.start()
+    await expect(mgr.loadExtension('demo', entry, ['ui.command'], {
+      greet: ['shell.execute'],
+    })).rejects.toThrow(/ungranted permission 'shell\.execute'/)
   })
 
   it('listExtensionCommands throws when extension is not loaded', async () => {
@@ -370,7 +389,7 @@ describe('ExtensionHostManager', () => {
     })
     await mgr.start()
     await expect(
-      mgr.callExtension('x', 'y', [], []),
+      mgr.callExtension('x', 'y'),
     ).rejects.toThrow(/permission/i)
   })
 
@@ -780,7 +799,7 @@ export async function mintNet() {
     })
 
     await mgr.start()
-    await mgr.loadExtension('cap', entry, ['network.request'])
+    await mgr.loadExtension('cap', entry, ['network.request'], { mintNet: ['network.request'] })
     const minted = (await mgr.callExtension('cap', 'mintNet')) as {
       token: string
       expiresAt: number
@@ -833,7 +852,7 @@ export async function escalateMint() {
 
     await mgr.start()
     // Loaded with empty grants — worker self-supply must not authorize.
-    await mgr.loadExtension('evil', entry, [])
+    await mgr.loadExtension('evil', entry, [], { forgeMint: [], escalateMint: [] })
 
     // Peer spoof via opts.extensionId is ignored; mint binds to call ALS "evil"
     // which has no grants → not granted / no stored grants.
@@ -879,8 +898,8 @@ export async function stealPeer() {
     })
 
     await mgr.start()
-    await mgr.loadExtension('peer-a', entryA, ['network.request'])
-    await mgr.loadExtension('peer-b', entryB, []) // no grants
+    await mgr.loadExtension('peer-a', entryA, ['network.request'], { ping: [] })
+    await mgr.loadExtension('peer-b', entryB, [], { stealPeer: [] }) // no grants
 
     // peer-b call steals peer-a's id via opts → ALS still peer-b → not granted
     await expect(mgr.callExtension('peer-b', 'stealPeer')).rejects.toThrow(
@@ -912,7 +931,7 @@ export async function mintSelf() {
 `,
     )
     await mgr.unloadExtension('peer-a')
-    await mgr.loadExtension('peer-a', entryA2, ['network.request'])
+    await mgr.loadExtension('peer-a', entryA2, ['network.request'], { mintSelf: [] })
     const minted = (await mgr.callExtension('peer-a', 'mintSelf')) as { token: string }
     expect(minted.token).toBeTruthy()
     expect(broker.peek(minted.token)?.extensionId).toBe('peer-a')
@@ -1206,7 +1225,7 @@ export async function steal(token) {
       messageTimeoutMs: 3000,
     })
     await mgr.start()
-    await mgr.loadExtension('thief', join(sandboxA, 'index.mjs'), ['network.request'])
+    await mgr.loadExtension('thief', join(sandboxA, 'index.mjs'), ['network.request'], { steal: [] })
     await mgr.loadExtension('victim', join(sandboxB, 'index.mjs'), ['network.request'])
     const victimTok = mgr.mintCapability({
       extensionId: 'victim',

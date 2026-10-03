@@ -30,7 +30,10 @@ export interface Recurrence {
   mode?: 'fixed' | 'after'
   /** Stop repeating after this local timestamp. */
   until?: number
+  /** IANA timezone used for calendar arithmetic and the scheduled wall-clock time. */
+  timeZone?: string
 }
+
 
 /** Lightweight checklist line inside a task (Things-style, not a task of its own). */
 export interface ChecklistItem {
@@ -62,14 +65,25 @@ export interface PersonalTask {
   // — Things-style additions (all optional; v1 bundles load unchanged) —
   /** Checklist lines. */
   checklist?: ChecklistItem[]
-  /** Local timestamp of a reminder notification. */
+  /** Epoch timestamp for the reminder occurrence. */
   reminderAt?: number
+  /** IANA timezone in which the reminder's wall-clock time was selected. */
+  reminderTimeZone?: string
+  /** Reminder timestamp acknowledged by the local OS notification surface. */
+  reminderDeliveredFor?: number
+  /** Retry eligibility after a local presentation failure. */
+  reminderRetryAt?: number
+  reminderError?: 'permission-denied' | 'permission-required' | 'presentation-failed'
   /** Set when the task was moved to Корзина (restorable until emptied). */
   trashedAt?: number
   /** Where the task came from (meeting, feed item, mail, session…). Also kept in links. */
   source?: TaskLink
   /** Id of the task this one was spawned from by a repeat rule. */
   repeatOf?: string
+  /** Scheduled timestamp represented by this recurring occurrence. */
+  repeatOccurrenceAt?: number
+  /** Stable idempotency link to the one successor of a completed recurrence. */
+  repeatNextId?: string
   /** Last modification time (for sync/debug; optional). */
   updatedAt?: number
 }

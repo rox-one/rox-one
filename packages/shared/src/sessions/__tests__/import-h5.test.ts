@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { discoverForeignSessions, filterForeignIndexEntries, MAX_SCAN_ENTRIES, MAX_SCAN_PER_KIND } from '../import-discover.ts'
@@ -86,6 +86,19 @@ describe('H5 foreign import', () => {
     expect(existsSync(discovered.cachePath)).toBe(true)
     expect(listImportedSessionFiles(workspace)).toEqual([])
   })
+  it('stops a revoked discovery pass without writing a partial cache', () => {
+    const home = tmp('h5-home-')
+    const workspace = tmp('h5-ws-')
+    writeClaude(home, 'c1', 'hello claude', 'ok')
+    let checks = 0
+    const discovered = discoverForeignSessions({
+      workspaceRoot: workspace,
+      homeDir: home,
+      shouldContinue: () => ++checks < 4,
+    })
+    expect(discovered.aborted).toBe(true)
+    expect(existsSync(discovered.cachePath)).toBe(false)
+  })
 
   it('persists one Claude JSONL and one Grok catalog as two Rox sessions', async () => {
     const home = tmp('h5-home-')
@@ -159,7 +172,8 @@ describe('H5 foreign import', () => {
       mode: 'append',
       homeDir: home,
     })
-    expect(again.action).toBe('appended')
+    expect(again.action).toBe('skipped')
+    expect(again.reason).toBe('source-unchanged')
     expect(again.sessionId).toBe(first.sessionId)
     const dup = readImportedSession(workspace, first.sessionId!)
     expect(dup?.messages).toHaveLength(2)
@@ -187,6 +201,50 @@ describe('H5 foreign import', () => {
     expect(after?.messages).toHaveLength(4)
     expect(after?.messages.filter((m) => m.content.includes('hello once'))).toHaveLength(1)
     expect(after?.messages.some((m) => m.content.includes('second turn'))).toBe(true)
+  })
+  it('updates changed imported turns and records local-source provenance', async () => {
+    const home = tmp('h5-home-')
+    const workspace = tmp('h5-ws-')
+    const grokDir = writeGrok(home, 'g-edit', join(home, 'proj'), 'original question', 'original answer')
+    discoverForeignSessions({ workspaceRoot: workspace, homeDir: home })
+    const first = await persistForeignSession({ workspaceRoot: workspace, sourcePath: grokDir, kind: 'grok', homeDir: home })
+    writeFileSync(
+      join(grokDir, 'chat_history.jsonl'),
+      [
+        JSON.stringify({ type: 'user', content: [{ type: 'text', text: 'edited question' }] }),
+        JSON.stringify({ type: 'assistant', content: 'edited answer' }),
+      ].join('\n') + '\n',
+    )
+    discoverForeignSessions({ workspaceRoot: workspace, homeDir: home })
+    const updated = await persistForeignSession({
+      workspaceRoot: workspace,
+      sourcePath: grokDir,
+      mode: 'append',
+      homeDir: home,
+    })
+    const session = readImportedSession(workspace, first.sessionId!)
+    expect(updated.action).toBe('appended')
+    expect(session?.messages.map((message) => message.content)).toEqual(['edited question', 'edited answer'])
+    expect(loadForeignImportRegistry(workspace)[grokDir]).toMatchObject({
+      sourcePath: grokDir,
+      kind: 'grok',
+      messageCount: 2,
+      contentHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+    })
+  })
+
+  it('rebuilds a missing registry entry from persisted source provenance without duplicating the session', async () => {
+    const home = tmp('h5-home-')
+    const workspace = tmp('h5-ws-')
+    const grokDir = writeGrok(home, 'g-recover', join(home, 'proj'), 'recover me', 'recovered')
+    discoverForeignSessions({ workspaceRoot: workspace, homeDir: home })
+    const first = await persistForeignSession({ workspaceRoot: workspace, sourcePath: grokDir, kind: 'grok', homeDir: home })
+    unlinkSync(join(workspace, '.rox', 'foreign-import-registry.json'))
+    const recovered = await persistForeignSession({ workspaceRoot: workspace, sourcePath: grokDir, kind: 'grok', homeDir: home })
+    expect(recovered.action).toBe('skipped')
+    expect(recovered.sessionId).toBe(first.sessionId)
+    expect(listImportedSessionFiles(workspace)).toHaveLength(1)
+    expect(loadForeignImportRegistry(workspace)[grokDir]?.sessionId).toBe(first.sessionId)
   })
 
   it('attaches $HOME cwd to the current workspace and redacts secrets', async () => {

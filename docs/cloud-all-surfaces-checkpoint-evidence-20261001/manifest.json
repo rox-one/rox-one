@@ -1,0 +1,97 @@
+[
+  {
+    "path": "fresh-durable/cleanup.json",
+    "bytes": 1102,
+    "sha256": "66ee45a9c5983a938b1c6cd46acfbb4998c730649e31d738011d6686bb243e8d"
+  },
+  {
+    "path": "fresh-durable/executed-cases.json",
+    "bytes": 732252,
+    "sha256": "d655e8f18fc57ff695ce6f27d4a2b6ff67fbe9c38c41b63b41fdca0fb123638d"
+  },
+  {
+    "path": "fresh-durable/executed-cases.md",
+    "bytes": 10677,
+    "sha256": "ff053f012af63b3008c19b89828577f8bb513ebcda5ff29325779ef3e8e4906f"
+  },
+  {
+    "path": "fresh-durable/fresh-frozen-install.json",
+    "bytes": 1780,
+    "sha256": "5c628c520acc7f3dbd0e38d68f13220a20175e5972fde0de67b04ba06cd08c0a"
+  },
+  {
+    "path": "fresh-durable/fresh-frozen-install.log",
+    "bytes": 3084,
+    "sha256": "203b839bcf039761930831b8fc658260bb3b3c73e6b5cb8fe528d3397dfc0ee5"
+  },
+  {
+    "path": "fresh-durable/fresh-validation.json",
+    "bytes": 16530,
+    "sha256": "d4aed637e6446ab789b9e21f32d0fdbd98a1a537abc1b2fff07a4e8c1014d3e9"
+  },
+  {
+    "path": "fresh-durable/fresh-validation.md",
+    "bytes": 3464,
+    "sha256": "31fb2c5d0b93b3c9c2b915096ca207f08e5c4735fb80792c771af594aface17d"
+  },
+  {
+    "path": "fresh-durable/fresh-workflow-durable.json",
+    "bytes": 3330,
+    "sha256": "619587768964716e510550f78da9d54ac4c8586df54bcf8af4202dde12b10003"
+  },
+  {
+    "path": "fresh-durable/fresh-workflow-durable.log",
+    "bytes": 114279,
+    "sha256": "49c016f7a8dcb4a1101bd45ac0937e051b052f15464b6f6c6ab960fcd8d9775f"
+  },
+  {
+    "path": "fresh-durable/fresh-workflow-september.json",
+    "bytes": 2205,
+    "sha256": "3b9900295cdf7d20b0a29c2dc8bf5209e8ceae4dfe84b974df1c3d8047bf0884"
+  },
+  {
+    "path": "fresh-durable/fresh-workflow-september.log",
+    "bytes": 2697,
+    "sha256": "586c2e794c97e9ae3d221fc38d107f709c9dc45c85a22b97a789994262596c31"
+  },
+  {
+    "path": "managed-runtime.json",
+    "bytes": 607,
+    "sha256": "97bce29849e0c644d32ac9a10204bf31de5835b5db1a27c349710655373ff209"
+  },
+  {
+    "path": "notes-executed-case-subset.json",
+    "bytes": 13323,
+    "sha256": "c408cb3caeeeb533df678ad9f4a595bccab8e330ae196d58e4feab1aabad0858"
+  },
+  {
+    "path": "notes-review.json",
+    "bytes": 75663,
+    "sha256": "c1f70c6fef326724707f162b21986b760b2c1d49e08d36ffc3761490d8f5b98a"
+  },
+  {
+    "path": "notes-review.md",
+    "bytes": 4736,
+    "sha256": "f480705f58e0f5c5c5537b960b12840ae575fa740b910d9d10eba3a8fecaa0b4"
+  },
+  {
+    "path": "publication-and-original-status.json",
+    "bytes": 989,
+    "sha256": "8644a3d096af685f194466c7e9b94b130cab31678ccfcf96f144ab9907034d9b"
+  },
+  {
+    "path": "receipt-integrity.json",
+    "bytes": 1020,
+    "sha256": "dd415dd662ead5e59030e318da3971d253d68fd63f5077c732ec69b1b69186fb"
+  },
+  {
+    "path": "source-manifest-references.json",
+    "bytes": 1914,
+    "sha256": "94de00f0ad8ae4e99da3cffcc370b2d01d5fe8a48638958967da049a40c6d0b9"
+  },
+  {
+    "path": "tracked-entry-reconciliation.json",
+    "bytes": 502,
+    "sha256": "57bd38bb3e6ce67324c61eebfd36eb699c52696d4f02085d42f1ab07d062472e"
+  }
+]

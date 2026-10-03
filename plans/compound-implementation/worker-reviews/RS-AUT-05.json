@@ -1,0 +1,389 @@
+{
+  "task_id": "RS-AUT-05-preflight",
+  "attempt_id": "497c91f47eb7d989c4ad5fdaa68d9216",
+  "packet_hash": "c92aff089d06de355f31c3bfcf79cfbf90228964b58a9df605d70a4dc4442480",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-AUT-05",
+  "featureComplete": false,
+  "mode": "inspect-only; owned report delivery",
+  "workTier": "bounded-workflow",
+  "dependencies": ["RS-AUT-01", "RS-AUT-02", "RS-AUT-03", "RS-AUT-04"],
+  "dependencyEvidence": "docs/rox-suite/published/RS-AUT-05.md:94-111 and plans/rox-suite/issues.json:323-357. These are implementation dependencies, not the dispatch packet's empty preflight depends_on. No accepted dependency receipts were supplied or observed.",
+  "inspection": {
+    "scope": "RS-AUT-05 published spec and issue record; automation domain/editor files; direct graph RPC, protocol, transport, route consumer, stylesheet, localization and adjacent existing regression seams",
+    "specManifestMatched": true,
+    "issueManifestMatched": true,
+    "revisionStatus": "input_revision is the packet-supplied revision, not a claim that the inspected working tree is pristine or that all file bytes belong to that commit. Git state was not queried or changed.",
+    "evidenceFreshness": "Source was read from the shared working tree; whole-file SHA-256 values were sampled with read-only shasum after inspection. Reads and hashing were not an atomic snapshot. Root-owned wave0 integration can invalidate these references. Re-read and re-hash changed files after the lead's wave0 commit and dependency acceptance before applying any patch.",
+    "discoveryLimitations": [
+      "Codegraph reported that this checkout has no index; no index was initialized.",
+      "One scoped find call failed because its judging service returned HTTP 402. Known-symbol grep, exact paths and read supplied the evidence instead; the failed find is not evidence of absence.",
+      "Common authority, scheduler internals, global index, notification engine and agent adapters were not broadly inspected outside this package and its direct seams. Their precise post-wave0 symbols must come from accepted foundation/dependency receipts. No foundation implementation is asserted absent repository-wide."
+    ],
+    "executed": ["read", "grep", "glob", "read-only shasum -a 256", "write owned report"],
+    "notExecuted": ["product edits", "tests", "builds", "native UI", "network operations", "Git commands", "dispatch verification_argv"],
+    "verificationStatus": "Source inspection only. All runtime verification entries below are required future scenarios, not executed results."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-AUTHORITY",
+      "kind": "hidden cross-cutting foundation requirement, separate from explicit DAG edges",
+      "specEvidence": "published RS-AUT-05:46,50-56,85",
+      "currentEvidence": "registerAutomationsHandlers GET_GRAPH and SAVE_GRAPH use _ctx rather than session-derived publication authority; SAVE_GRAPH directly writes automations.json (196-251). SaveAutomationGraphPayload has only workspaceId, graph, baseRevision (graph.ts:40-45; schemas.ts:356-360).",
+      "requiredReceipt": "Wave0 shared authority registration, trusted session actor/workspace resolution, EntityRef/grants, operationId/expectedRevision typed command/results and publication policy contract must be accepted. AUT-01 must expose Draft/PublishedRevision authority through that contract.",
+      "integrationRule": "Consume the accepted command authority; do not implement local actorId trust, new revision tables or a parallel publish endpoint in AUT-05."
+    },
+    {
+      "id": "FG-INDEX-ACL-REVOKE",
+      "kind": "hidden cross-cutting foundation requirement, separate from explicit DAG edges",
+      "specEvidence": "published RS-AUT-05:56,85",
+      "currentEvidence": "AutomationGraphWorkspaceEditor refreshes by workspace-only CHANGED notifications (47-54); inspected graph handlers do not themselves demonstrate per-entity grants, revoke cache invalidation or common index participation.",
+      "requiredReceipt": "Common EntityRef resolver, read/write/share grants, ACL-filtered links/search/mentions, revoke events with write/subscription cancellation and forbidden-cache eviction. Exact symbols and non-renderer adapters must be identified by root's accepted foundation receipts.",
+      "integrationRule": "Use existing automation identity and common index. This package is not merely UI-only, so the published UI-only N/A exception cannot waive these obligations."
+    },
+    {
+      "id": "FG-OUTBOX-ACTIVITY",
+      "kind": "hidden cross-cutting foundation requirement, separate from explicit DAG edges",
+      "specEvidence": "published RS-AUT-05:50,56,85",
+      "currentEvidence": "SAVE_GRAPH atomically writes one JSON file and pushes CHANGED (240-250); that does not prove a publication transaction plus durable workflow.published outbox event, deduplicated activity or notifications.",
+      "requiredReceipt": "Accepted shared transactional outbox/activity/notification mechanism, workflow.published event schema, dedupe key and reconnect delivery contract from root/AUT-01.",
+      "integrationRule": "Render real publication/activation receipts; do not treat CHANGED or a renderer toast as a durable publication event or introduce a notification engine."
+    },
+    {
+      "id": "FG-AGENT-PREVIEW",
+      "kind": "hidden cross-cutting foundation requirement, separate from explicit DAG edges",
+      "specEvidence": "published RS-AUT-05:39,52,56,85",
+      "currentEvidence": "AutomationEditor.runNow calls save before test (530-544); TEST executes webhooks, scripts and prompt sessions (automations.ts:254-399). It is not an effect-free debug/agent-preview contract.",
+      "requiredReceipt": "Accepted effect-free graph debug/preview and the same command/policy path for IPC/RPC/MCP/provider and agent read/write. Publication remains deliberate and policy-checked.",
+      "integrationRule": "Use AUT-04's accepted preview/debug interface after inspecting its receipt. Never wire new Debug/tutorial controls to the legacy TEST executor merely by renaming the label."
+    },
+    {
+      "id": "FG-TUTORIAL-IDENTITY-WORKSPACE",
+      "kind": "hidden cross-cutting foundation requirement, separate from explicit DAG edges",
+      "specEvidence": "published RS-AUT-05:23-34,40",
+      "currentEvidence": "Existing default scheduler template is enabled and contains a real prompt (default-seed-template.ts:11-27); the editor operates on a normal workspace. Graph node types do not contain DateTimeHelper or Connector (types.ts:316-405).",
+      "requiredReceipt": "Current-user/version-keyed local tutorial preference seam, explicit isolated tutorial workspace identity/creation authority, and accepted DateTimeHelper/CreateTask/Connector node semantics from the dependency owners. A safe synthetic task target must be real and isolated, not a fake connected account.",
+      "integrationRule": "Persist only tutorial metadata in user-local preferences, graph drafts in the existing authority, and synthetic tasks in the explicit tutorial workspace. No implicit production workspace substitution or seed-version bump."
+    },
+    {
+      "id": "FG-PROOF-LANES",
+      "kind": "hidden delivery foundation requirement, separate from explicit DAG edges",
+      "specEvidence": "published RS-AUT-05:86-92",
+      "currentEvidence": "No tests, native UI, Linux lane, provider run or independent review were executed in this preflight. The normative new publish.spec.ts does not exist at inspection.",
+      "requiredReceipt": "Lead's wave0 commit, accepted predecessor receipts, package ownership, Linux domain/renderer lane, real Electron desktop evidence and independent reviewer. External Mail effects require configured authorization plus provider readback; synthetic tutorial effects do not prove a real provider lane.",
+      "integrationRule": "Bind expected/observed receipts and hashes to the integrated revision. The existing 52-WP cloud manifest does not automatically authorize or include this scope."
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/automations/PublishReviewDialog.tsx",
+    "apps/electron/src/renderer/components/automations/AutomationTutorial.tsx",
+    "tests/rox-suite/automations/publish.spec.ts"
+  ],
+  "ownedNewFilesStatus": "Only the three normative new paths in published RS-AUT-05:62-66. Exact-path glob found all three missing. They are proposed future implementation ownership, not authorization to create them in this preflight; this worker wrote only its JSON report.",
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationEditor.tsx",
+      "symbol": "AutomationEditor; save; runNow; Draft; header at 598-630",
+      "change": "Integrate PublishReviewDialog and AutomationTutorial into the existing selected-automation editor, not a second route. Keep editable Russian name and Ctrl/Cmd+S but change save to the accepted saveDraft command with operationId and expectedRevision. Read persisted draft/published versions, last-saved timestamp and semantic diff from authority. Add unpublished badge, Debug, Publish, tutorial entry and overflow rollback/deactivate. Replace new Debug's save-then-TEST flow with accepted effect-free preview of the current draft. Publish only the checksum/revision reviewed by the dialog; cancel/close leave draft unchanged. Preserve duplicate/delete/toggle functions only through the accepted authority cutover, never bypass it.",
+      "reason": "This is the actual routed surface (MainContentPanel:303), with a volatile Draft and immediate runtime writes today. Merely editing AutomationGraphEditor would leave the feature unreachable on the current route.",
+      "owner": "root integration / AUT-05 implementation after predecessor acceptance"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationGraphWorkspaceEditor.tsx",
+      "symbol": "refresh; onAutomationsChanged; handleGraphChange; saveGraph",
+      "change": "Consume the accepted draft/published projection and draft-save result, track baseRevision and publishedRevision separately, retain unsaved edits on CHANGED/reconnect and ignore late loads from an old workspace. Replace regex-stale auto-refresh with typed conflict diagnostics and explicit reload/rebase choice that retains local content. Add retry and denied/revoked state; tear down subscription and clear forbidden projection on revoke. Reuse this controller in the dependency-provided graph surface where appropriate without introducing another store.",
+      "reason": "Current refresh replaces the entire projection, and the stale catch calls refresh before rethrowing. Both can discard local draft edits (35-45,47-80).",
+      "owner": "root integration with AUT-01/AUT-03 owners"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx",
+      "symbol": "AutomationGraphEditorProps; save; selectNode; canvas controls; inspector",
+      "change": "Retain graph selection/layout/drag mechanisms. After AUT-03 node/port controls are accepted, expose stable semantic anchors on normal valid '+' controls, selected nodes and diagnostics for tutorial positioning. Treat Save as draft-only; accept structured validation issues and move focus to the first offending node/diagnostic. Consume dependency-provided DateTime/Connector renderers rather than inventing executable metadata nodes. Fold inspector into drawer below 1100px and one active pane/back navigation below 800px.",
+      "reason": "Existing editor only validates locally then calls onSave; it has no connector '+' controls or node-addressable diagnostics and has a fixed w-56 inspector (96-107,191-249,289-303).",
+      "owner": "shared file owner AUT-03 / root; AUT-05 requests anchor and review integration patch"
+    },
+    {
+      "path": "packages/shared/src/automations/graph.ts",
+      "symbol": "AutomationGraphProjection; SaveAutomationGraphPayload; buildAutomationGraphSave; automationGraphRevision; compileGraph",
+      "change": "AUT-01 owner must replace direct canonical-runtime graph save semantics with the accepted Draft/PublishedRevision authority contract and expose immutable compiled checksum, validation report, revision comparison, publication and activation receipts for UI. AUT-05 consumes that result and requests structured node/edge diagnostics and review diff where absent. AUT-02 compiler must supply DateTimeHelper/Connector compilation; preserve legacy actions without silent dropping. Do not use the current FNV-based optimistic-concurrency token as the reviewed immutable graph checksum.",
+      "reason": "buildAutomationGraphSave currently writes compiled.automations into runtime config; compileGraph accepts executable prompt/webhook chains only; automationGraphRevision explicitly is not a security token (208-214,385-489,538-561). No second lifecycle table/compiler is allowed.",
+      "owner": "AUT-01 authority and AUT-02 compiler owners; request only, not AUT-05 parallel implementation"
+    },
+    {
+      "path": "packages/shared/src/automations/default-seed-template.ts",
+      "symbol": "buildDefaultSchedulerPromptSeed",
+      "change": "Retain existing default morning prompt behavior for normal workspaces. Add a separately named pure tutorial graph/template builder in this existing renderer-safe module, using the accepted Scheduler -> DateTimeHelper -> CreateTask/Connector schema and explicit synthetic tutorial target; default tutorial draft inactive and never mark a provider connected. Expose explanation data through i18n keys. Real Mail template must require deliberately selected configured account/scope and never auto-authorize.",
+      "reason": "The only current builder is an enabled Moscow weekday prompt; relabeling it does not implement the requested executable template and changing it would alter existing user semantics.",
+      "owner": "root integration with template/compiler dependency owner"
+    },
+    {
+      "path": "packages/shared/src/automations/default-seeds.ts",
+      "symbol": "buildDefaultAutomationSeeds; CRAFT_AUTOMATION_SEED_VERSION; ensureDefaultAutomations",
+      "change": "Preserve seed version, existing enabled seeds, existing matcher configurations, invalid-preserved and user-empty-preserved behavior. Use the AUT-01 authority initialization/cutover seam for normal seed creation if required by its contract, not another migration. Never call normal ensureDefaultAutomations to create tutorial workspaces or implicitly add the tutorial sample to users' seed set.",
+      "reason": "GET currently invokes a seed writer; missing/legacy empty config can receive enabled seeds. Adding tutorial via this lifecycle would risk production activation and reseeding (15,48,509-554).",
+      "owner": "AUT-01 seed/cutover owner; only change if accepted authority requires it"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/automations.ts",
+      "symbol": "registerAutomationsHandlers; GET_GRAPH; SAVE_GRAPH; TEST; withAutomationMatcher; UPDATE; SET_ENABLED; REPLAY",
+      "change": "Use session-derived actor/workspace/policy and registered typed authority commands from accepted wave0/AUT-01. Graph reads remain non-seeding; saveDraft never updates active runtime; reviewed publish revalidates expected draft/published revision, compiled checksum, validation and policy in the publication transaction/outbox. Delegate rollback to audited revision activation without replaying actions; do not map it to REPLAY. Route legacy update/create/toggle operations through the same cutover. Add or consume effect-free debug contract without webhook/script/session execution, with no operation silently falling back to legacy TEST.",
+      "reason": "SAVE_GRAPH ignores _ctx and writes canonical config; other mutators share a JSON mutex but not a demonstrated publication authority. TEST and REPLAY deliberately perform effects (196-251,254-399,406-475,528-555).",
+      "owner": "root authority integration / AUT-01 and AUT-04 owners"
+    },
+    {
+      "path": "packages/shared/src/automations/types.ts",
+      "symbol": "AutomationsConfig; AutomationGraph; AutomationGraphNode; AutomationGraphNodeKind",
+      "change": "Consume AUT-01's single draft/published lifecycle and AUT-02 node types. Export review-facing typed validation/diff/activation results through the canonical authority; keep user identity out of renderer mutation payload authority. Do not add a second runtime format or pretend annotation/group/decision nodes execute DateTime/Connector effects.",
+      "reason": "The inspected graph union has seven kinds, only prompt/webhook action nodes, and config contains no revision lifecycle (316-432).",
+      "owner": "shared contracts owner / explicit predecessors"
+    },
+    {
+      "path": "packages/shared/src/automations/schemas.ts",
+      "symbol": "AutomationGraphNodeSchema; SaveAutomationGraphPayloadSchema; AutomationsConfigSchema",
+      "change": "After predecessor schema acceptance, use those validated node/lifecycle types and register operationId/expectedRevision/checksum-based review and publish requests in the common authority. Preserve strict validation and legacy config fields through the one accepted migration. Do not weaken graph schema to allow arbitrary tutorial node kinds or use unchecked renderer validation reports as authorization.",
+      "reason": "Current save payload is strict and accepts no publication fields; config transform exposes only version/seed/automations/automationGraph (312-395).",
+      "owner": "AUT-01/AUT-02 schema owners"
+    },
+    {
+      "path": "packages/shared/src/automations/automation-system.ts",
+      "symbol": "loadConfig; reloadConfig; getMatchersForEvent; startScheduler",
+      "change": "AUT-01 runtime owner must expose active published revision selection and pin each admitted run/queued job to immutable revision plus effect-dedupe receipts. AUT-05 must display and exercise those receipts, not introduce another scheduler. Preserve existing page-refresh and meeting matcher contributions unless the accepted runtime contract explicitly migrates them.",
+      "reason": "Inspected runtime reads current validation.config, replaces it on reload, reads this.config.automations and emits SchedulerTick without revision fields (155,171-194,258-269,383-397). These seams alone do not prove old-run pinning.",
+      "owner": "AUT-01 runtime owner; required dependency acceptance request"
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.automations",
+      "change": "Expose only accepted authority-backed saveDraft/compareRevision/publish/deactivate/rollback/preview operations and publication subscription contract if not already provided by wave0/AUT-01. PROPOSED workflow command names in the spec are target semantics, not existing channel names. Use the canonical registered schema/channel mapping; remove obsolete bypasses during the dependency cutover rather than keeping aliases.",
+      "reason": "The current channel set only has graph save, test, legacy mutation/history/replay and CHANGED (810-824).",
+      "owner": "root protocol owner"
+    },
+    {
+      "path": "packages/shared/src/protocol/dto.ts",
+      "symbol": "TestAutomationPayload; TestAutomationResult; shared automation DTO section",
+      "change": "Consume or expose canonical typed draft/comparison/review validation/publish/activation/rollback/preview receipts, with operationId and expectedRevision on mutations. Keep TestAutomationPayload's live actions distinct from effect-free preview; do not add a misleading preview flag that still calls existing executors. Actor and effective policy come from server context, not DTO-supplied actorId.",
+      "reason": "Existing test DTO describes prompt/webhook/script execution and has no revision/checksum/publication semantics (1119-1142).",
+      "owner": "root protocol/authority owner"
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "ElectronAPI automation methods at 2164-2186",
+      "change": "Expose the accepted canonical typed draft/review/publication/rollback/preview operations and lifecycle/revoke subscriptions to renderer. Replace obsolete graph/runtime-save callsites after cutover; no renderer-only publish state or untyped fake result.",
+      "reason": "Current bridge returns graph revision/save data and legacy test/mutation results, not publication receipts.",
+      "owner": "root Electron bridge owner"
+    },
+    {
+      "path": "apps/electron/src/transport/channel-map.ts",
+      "symbol": "automation invoke/listener mapping at 866-879",
+      "change": "Map the authority-approved Electron API operations and lifecycle/revoke listeners to their registered shared channels. Every UI operation must reach the same real authority; do not leave Publish/Debug buttons on local callbacks or old SAVE_GRAPH/TEST bypasses.",
+      "reason": "Current mapping binds saveAutomationGraph to SAVE_GRAPH and testAutomation to TEST.",
+      "owner": "root Electron transport owner"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "symbol": "isAutomationsNavigation branch; lazy AutomationEditor",
+      "change": "Keep the selected automation route, workspace scope and shared selection mechanism. Ensure dependency-provided graph editor/review/tutorial capability is reachable through AutomationEditor rather than installing another default surface. Only change this caller if the accepted editor needs canonical entity identity or lifecycle props; do not swap it blindly to the dormant workspace-wide graph editor.",
+      "reason": "The actual detail route lazily renders AutomationEditor (77-79,284-319); AutomationGraphWorkspaceEditor has no production consumer in the scoped renderer symbol search.",
+      "owner": "root route integration owner; conditional minimal patch"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/automations.css",
+      "symbol": ".rox-autom-editor; .rox-autom-editor-bar; .rox-autom-btn; inspector/tutorial responsive rules",
+      "change": "Inherit current theme/font tokens for new review/tutorial surfaces; use 120-160ms opacity/transform only and disable animation under reduced motion. Add drawer and one-pane/back-navigation behavior at the specified 1100px/800px boundaries; keep textual status and accessible focus/click help even when Publish is blocked. Adjust affected button transition rules, currently background-color plus opacity, without restyling unrelated components.",
+      "reason": "Current stylesheet says Arial Narrow via --font-sans and animates background-color; computed Electron font must be observed, not asserted from CSS. Current graph inspector is fixed width.",
+      "owner": "shared automation UI owner"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "symbol": "automations.* keys",
+      "change": "Add ASCII-sorted automations.publish.*, automations.review.*, automations.draft.*, automations.rollback.* and automations.tutorial.* keys, including version/time/diff, exact node blockers, policy denial, scopes/effects, retry/conflict and seven tutorial steps. Keep unsaved and unpublished distinct: existing automations.unsaved means unsaved, not unpublished. Mirror every added key to the nine companion locale files; follow locale-specific plurals including Russian one/few/many/other convention.",
+      "companionPaths": ["packages/shared/src/i18n/locales/de.json", "packages/shared/src/i18n/locales/en.json", "packages/shared/src/i18n/locales/es.json", "packages/shared/src/i18n/locales/fr.json", "packages/shared/src/i18n/locales/hu.json", "packages/shared/src/i18n/locales/ja.json", "packages/shared/src/i18n/locales/pl.json", "packages/shared/src/i18n/locales/zh-Hans.json", "packages/shared/src/i18n/locales/zh-Hant.json"],
+      "reason": "Repo rules require t(), Russian default, ten-locale parity; existing saved/unsaved/runNow labels do not express publication lifecycle.",
+      "owner": "root localization owner"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/__tests__/automation-graph-workspace-editor.test.ts",
+      "symbol": "Automation graph workspace presentation describe block",
+      "change": "Remove source-string/wiring assertions, including the incidental default-route assertions; do not repin expected source text after cutover. Cover consumer-visible reload/conflict/focus/revoke behavior through the normative publish spec or existing runtime-capable suites instead.",
+      "reason": "All three tests inspect source strings (11-44), not behavior; they cannot prove publication or tutorial safety.",
+      "owner": "root test integration owner"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/automations-graph.test.ts",
+      "symbol": "automation graph save RPC describe block; missing config projection test",
+      "change": "Preserve meaningful non-seeding and no-clobber consumer invariants. Migrate existing save assertions to accepted draft persistence semantics and add real authority checks for stale reviewed publication, policy revoke, run revision pinning and audited rollback/dedupe. Use deterministic synthetic targets; do not substitute mock-echo checks or a test that only sees CHANGED.",
+      "reason": "Current regression checks direct runtime/config save and stale baseRevision (73-149), not the required draft/published transition.",
+      "owner": "AUT-01 regression owner / root test integration"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "AC1: Editdraft -> reload -> diff -> publish -> event uses new revision; previous run stays old; stale publish rejected (spec:77)",
+      "seam": "graph.ts:getAutomationGraphProjection/buildAutomationGraphSave; AutomationEditor.save; AutomationGraphWorkspaceEditor.saveGraph; automations.ts:SAVE_GRAPH; AutomationSystem.reloadConfig/getMatchersForEvent",
+      "currentEvidence": "Draft UI is volatile, graph save writes canonical matchers/actions, CAS protects config save only. CHANGED carries workspaceId, not workflow.published receipt. Runtime loads latest config; inspected seam does not prove job pinning.",
+      "requiredChange": "Use AUT-01 lifecycle authority to persist draft separately; show canonical draft-vs-published comparison; publish exactly reviewed compiled checksum with expected draft and published revision and operationId; display actual activation receipt. Preserve old job revision and reject stale review without activation.",
+      "verification": "Future normative publish.spec.ts scenario: save changed trigger/action draft, restart/reload, assert same draft and old active revision, verify semantic diff, start old-revision synthetic run, publish, emit next event, assert old run output/revision remains old and new output/revision is new; attempt publish from a second stale client and assert typed conflict plus unchanged active revision/outbox.",
+      "missingPrerequisite": "Accepted AUT-01 lifecycle/runtime/outbox receipts, AUT-02 compiler checksum, AUT-03 editor and AUT-04 preview contracts, then integrated runnable lane.",
+      "state": "BLOCKED_ON_ACCEPTED_DEPENDENCIES; NOT_IMPLEMENTED_OR_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "AC2: Debug/tutorial/closing modal never activates workflow; tutorial quit restores focus and normal controls (spec:78)",
+      "seam": "AutomationEditor.runNow/save; automations.ts:TEST; proposed PublishReviewDialog and AutomationTutorial; AutomationGraphEditor normal controls",
+      "currentEvidence": "runNow saves before live TEST. TEST can send webhooks, execute scripts and create prompt sessions. Review/tutorial components are missing.",
+      "requiredChange": "Debug must use effect-free draft preview, not implicit publish/live TEST. Review cancellation has no activation mutation. Nonmodal tutorial must leave normal controls usable, save only versioned progress, never authenticate/enable/launch implicitly, and restore the originating focus target on Quit.",
+      "verification": "Exercise Debug, open/close review with Escape/cancel, every tutorial step and Quit; assert active revision, scheduler subscription and external-effect counter unchanged, draft preserved and focus returned. Seed a broken control that calls legacy TEST or publish on tutorial completion; assert the scenario rejects it.",
+      "missingPrerequisite": "Accepted AUT-04 safe preview and AUT-03 stable valid '+' controls; isolated tutorial target and local user/version preference seam.",
+      "state": "NOT_IMPLEMENTED_OR_RUNTIME_VERIFIED; UNSAFE_LEGACY_REUSE_IDENTIFIED"
+    },
+    {
+      "criterion": "AC3: Import legacy enabled automation preserves semantics with migration receipt; rollback auditable and does not replay completed external writes (spec:79)",
+      "seam": "ensureDefaultAutomations; buildAutomationGraphSave; AutomationSystem.loadConfig; automations.ts:REPLAY; proposed review/overflow rollback UI",
+      "currentEvidence": "Seed code preserves present matchers and intentional empty files, but these are not migration/rollback receipts. REPLAY actually executes webhook actions and cannot implement rollback.",
+      "requiredChange": "Consume AUT-01 migration and audited prior-revision activation through the same authority. Preserve enabled/default-enabled, cron/timezone/actions/unknown retained fields and original execution meaning. Render revision history/rollback receipt; do not replay effects or generate new runs for completed writes.",
+      "verification": "Import legacy enabled/default-enabled/disabled fixtures, compare compiled semantics and first due event before/after migration, reload twice and assert one migration receipt. Complete a synthetic external write, publish next revision and rollback; assert actor/revision audit receipt, future events use restored revision and completed operation count stays exactly one across reconnect/retry.",
+      "missingPrerequisite": "Accepted AUT-01 cutover/migration/rollback and runtime effect-dedupe receipts; real provider readback only when actual external effects are included.",
+      "state": "BLOCKED_ON_AUT-01; NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "Header, review content and immutable publication inputs/outputs (spec:22,28-33)",
+      "seam": "AutomationEditor header/status at 590-630; AutomationGraphProjection; proposed PublishReviewDialog",
+      "currentEvidence": "Editable name and saved/dirty status exist; no persisted version, last-saved time, unpublished badge, review report or activation receipt. The graph revision is an FNV optimistic-concurrency token, not a reviewed immutable checksum.",
+      "requiredChange": "Render distinct local-unsaved versus saved-unpublished states, authority versions/time, diff, trigger/audience/account/scopes/effects and mandatory validation/policy checks. Bind dialog state to immutable draft revision plus compiled checksum/report; invalidate approval when graph, account, scopes or policy change. Support optional future activation only through the accepted authority if exposed; never invent a renderer timer.",
+      "verification": "Edit title and effect/account/scope, save/reload, inspect header and review; change draft or revoke account while review is open and assert review invalidation/revalidation. Publish and read the real revision/activation receipt, including pending scheduled activation when supported.",
+      "missingPrerequisite": "Typed comparison/validation/publication results and account/scope/effect preview from predecessors; activation scheduling contract if that optional control is offered.",
+      "state": "PARTIAL_EXISTING_NAME_UI_ONLY; TARGET_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "Scheduler -> DateTimeHelper -> CreateTask synthetic tutorial; real Mail requires deliberate configured scope (spec:23-24,34)",
+      "seam": "default-seed-template.ts:buildDefaultSchedulerPromptSeed; graph.ts:isFlowNode/compileGraph; types.ts:AutomationGraphNode; schemas.ts:AutomationGraphNodeSchema",
+      "currentEvidence": "Only the enabled SchedulerTick prompt template exists. Executable graph nodes are trigger/matcher/prompt/webhook; no DateTimeHelper/CreateTask/Connector support in inspected graph contracts.",
+      "requiredChange": "Use dependency-provided executable DateTimeHelper and Connector contracts in a separate pure tutorial template builder; save the sample draft to an explicitly identified isolated tutorial workspace. Explain date/time inputs, timezone and task output, persist only real synthetic data there. Mail template must show missing configuration/scopes until deliberately selected and authorized; no fake connected provider.",
+      "verification": "Build and compile the actual accepted template, save/reload isolated workspace, preview its date/time and task fields; verify normal workspace and existing seed config unchanged. Attempt Mail without account or required scope and assert exact blockers and zero sends; real authorized send, if in scope, requires provider readback.",
+      "missingPrerequisite": "AUT-02 executable node/compiler contracts, dependency-provided Connector/task action and isolated tutorial workspace authority; configured provider for the optional real Mail scenario.",
+      "state": "BLOCKED_ON_COMPILER_AND_TARGET; NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "Publish hover/focus/click blockers and first-diagnostic focus (spec:38-39,42)",
+      "seam": "AutomationGraphEditor.save/saveError; selectNode; .rox-autom-btn:disabled; proposed PublishReviewDialog",
+      "currentEvidence": "Compiler error is a string alert; node IDs appear inside issue text but no typed focus mapping. Disabled CSS uses pointer-events:none, so a disabled native Publish button alone cannot supply click help.",
+      "requiredChange": "Consume structured node/edge diagnostics and provide an accessible enabled help target adjacent to disabled Publish or equivalent non-effecting blocker disclosure. List exact invalid node and permission/scope blockers, support hover/focus/click, and select/focus first diagnostic on failed validation. Explicit Publish rechecks CAS and policy server-side.",
+      "verification": "Create dangling edge/cycle/invalid scope, trigger validation, verify exact offending node and focus location; use keyboard-only and click help while Publish is blocked; change graph while review is open and verify stale review rejection.",
+      "missingPrerequisite": "Typed diagnostics and publication policy result from AUT-01/AUT-02; AUT-03 node anchors.",
+      "state": "NOT_IMPLEMENTED_OR_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "Seven-step nonmodal tutorial, normal-control clicks, resume/reset and focus/resize/reduced motion (spec:23,28,34,40)",
+      "seam": "proposed AutomationTutorial; AutomationGraphEditor canvasRef/ResizeObserver and normal node controls; AutomationEditor existing route",
+      "currentEvidence": "No tutorial component or per-user/version tutorial storage in inspected editor. ResizeObserver only fits the graph; no valid connector '+' tutorial anchor exists in this baseline.",
+      "requiredChange": "Implement anchored step 1/7 through 7/7 with Next/Quit/expand/help always available, observe actual accepted controls rather than auto-clicking or authorizing, reposition on resize/scroll, retain focus and allow normal interactions. Persist progress locally by current user and tutorial version; resume compatible version, explicitly reset after incompatible schema/version change. Completion writes progress only, never a launch flag.",
+      "verification": "Quit at each step, resume after reload and same version, switch user and incompatible tutorial version, resize/navigate panes and remove an anchor; verify graceful fallback, focus restoration, reachable controls and no effects/publication. Inspect animations with reduced motion enabled.",
+      "missingPrerequisite": "Accepted tutorial identity/preference storage seam, AUT-03 connector '+' anchor contract and isolated workspace fixture.",
+      "state": "NOT_IMPLEMENTED_OR_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "Russian/i18n, inherited theme/font, motion and responsive pane contracts (spec:42)",
+      "seam": "useTranslation in both editors; locales/ru.json automations.*; automations.css; AutomationGraphEditor inspector",
+      "currentEvidence": "Current editors already use t(). CSS inherits --font-sans; its comment names Arial Narrow and does not prove computed font. Button transition includes background-color. Inspector uses fixed w-56.",
+      "requiredChange": "Localize all new labels/help/errors into all ten sorted locale files, inherit actual theme/font tokens, maintain textual non-color-only status, implement 120-160ms opacity/transform only with reduced-motion off, inspector drawer below 1100px and one pane/back below 800px.",
+      "verification": "Future i18n parity test plus actual Electron screenshot/ARIA/computed font inspection in active theme, keyboard/hover/focus/click checks and widths 1200/1099/799px; assert reduced-motion removes animations and hidden panes cannot capture focus.",
+      "missingPrerequisite": "Integrated renderer, native Electron lane and theme/font environment; no font claim can be made in preflight.",
+      "state": "EXISTING_I18N_PATTERN_IDENTIFIED; TARGET_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "DoD1: UI/routing/input/output/help/keyboard/state contracts; loading/empty/error/denied/retry (spec:83)",
+      "seam": "MainContentPanel isAutomationsNavigation; AutomationEditor; AutomationGraphWorkspaceEditor refresh/render; PublishReviewDialog and AutomationTutorial",
+      "currentEvidence": "Actual detail route renders AutomationEditor. Graph controller exposes loading and generic error but no retry button or denied state. Proposed new UI files are absent.",
+      "requiredChange": "Integrate lifecycle/review/tutorial into the existing routed editor with accepted input/output contracts, structured errors, explicit retry and denied/revoked states. Retain Ctrl/Cmd+S as saveDraft; keyboard review cancel/focus return and tutorial Quit must not trigger activation.",
+      "verification": "Drive existing route in real renderer, force missing workspace/config, loading, command error, grant denial and reconnect; assert accessible retry and preserved draft. Complete keyboard-only save/review/cancel/tutorial/Publish paths and actual activation readback.",
+      "missingPrerequisite": "All four predecessor receipts, common authority/error contracts and runnable renderer/native lanes.",
+      "state": "NOT_IMPLEMENTED_OR_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "DoD2: Persistence/reload, meaningful negative case, concurrency/reconnect; justified applicability (spec:84)",
+      "seam": "AutomationGraphWorkspaceEditor.refresh/saveGraph; graph.ts:baseRevision; automations.ts:withConfigMutex; AutomationEditor local Draft",
+      "currentEvidence": "Existing config save has no-clobber CAS; local editor drafts do not demonstrate persisted reload. CHANGED refresh and regex-stale reload can replace local edits.",
+      "requiredChange": "Use one persisted draft authority, explicit draft/published concurrency, idempotent operation receipts and reconnect resynchronization without silently clobbering local edits. Scope late responses to active user/workspace and clear forbidden data on revoke. Concurrency and reconnect apply and must not be marked N/A.",
+      "verification": "Restart with saved unpublished draft; use two clients to edit/review/publish concurrently; interrupt after command acceptance before response and retry same operationId; verify exactly one publication/outbox, explicit conflict and preserved losing draft. Inject cross-workspace late response and verify no leakage.",
+      "missingPrerequisite": "Accepted operationId/CAS authority and event/reconnect contract; two-client runtime harness.",
+      "state": "PARTIAL_EXISTING_CONFIG_CAS_ONLY; TARGET_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "DoD3: Common grants, links, search, mentions, activity, notification and agent policy (spec:85)",
+      "seam": "automations.ts:registerAutomationsHandlers with _ctx; RPC_CHANNELS.automations.CHANGED; ElectronAPI lifecycle methods; accepted EntityRef and common authority seams from foundation receipts",
+      "currentEvidence": "Inspected mutation handlers resolve payload.workspaceId and check rox2 claimability, not a demonstrated session-bound publication grant. Per-entity index/notification/agent implementation cannot be concluded from this scoped inspection.",
+      "requiredChange": "Reuse accepted automation EntityRef and common ACL/index, read/write/share grants and links/mentions, authority-backed activity/outbox notifications with dedupe, and same agent/MCP/provider policy. Revoke stops writes/subscriptions and purges forbidden caches. No separate entity table/index/notification engine; no UI-only waiver for this domain package.",
+      "verification": "As authorized and unauthorized principals, query/open link/search/mention, save/publish/share via renderer and non-renderer commands; revoke during open review/subscription and assert denial/no leaked data/cache removal. Retry publication and reconnect; assert single activity/notification and agent preview zero effects.",
+      "missingPrerequisite": "FG-AUTHORITY, FG-INDEX-ACL-REVOKE, FG-OUTBOX-ACTIVITY and FG-AGENT-PREVIEW accepted receipts identifying exact common symbols/adapters.",
+      "state": "FOUNDATION_GATED; NOT_VERIFIED; NOT_NA"
+    },
+    {
+      "criterion": "DoD4: Targeted tests plus seeded broken control rejection; existing route/authority regression (spec:86)",
+      "seam": "normative tests/rox-suite/automations/publish.spec.ts; automations-graph.test.ts; automation-graph-workspace-editor.test.ts",
+      "currentEvidence": "Existing server test proves no-seeding and stale graph save preservation; renderer test only asserts source strings. No new publish spec exists and nothing was run.",
+      "requiredChange": "Add deterministic consumer-behavior lifecycle/tutorial/rollback scenarios in the normative new test file; migrate meaningful server regressions to authority and remove source-string incidental tests. Use explicit broken controls for draft-to-runtime write, implicit Debug publish/live effect, missing CAS and rollback replay, not mocks that echo requested values.",
+      "verification": "After integration, run the package-specific tests and existing route/authority regression once; deliberately enable each broken control and retain its failing assertion/log, then execute the unchanged oracle against fixed code. Report exact argv, revision and expected/observed values. Source-text checks are not acceptance proof.",
+      "missingPrerequisite": "Accepted integrated implementation, test runner convention/fixture harness and root verification authorization; running tests is prohibited in this preflight.",
+      "state": "NOT_EXECUTED; TEST_PLAN_ONLY"
+    },
+    {
+      "criterion": "DoD5: Linux domain/renderer evidence; real Electron screenshots/ARIA/theme/font; provider lane only for real external effects (spec:87)",
+      "seam": "AutomationEditor routed surface; PublishReviewDialog; AutomationTutorial; automations.css; accepted domain/provider authority",
+      "currentEvidence": "Only source was inspected; no Linux, Electron, browser or provider actions were performed. CSS variables do not establish loaded font.",
+      "requiredChange": "Exercise integrated domain/renderer on Linux and actual Electron on a supported desktop, retain screenshot/ARIA/focus/help/motion/font evidence for changed surfaces. Use isolated synthetic task scenario for tutorial; separately use authorized configured provider with readback for any actual Mail/external effect, never fake connected fixtures as provider proof.",
+      "verification": "Linux draft/publish/reload/stale/pin/rollback and renderer state scenarios; native Electron keyboard, hover/focus/click, 1100/800 breakpoints, reduced-motion, theme and computed font. For real Mail effect capture provider object/message ID and readback against operation receipt.",
+      "missingPrerequisite": "Root-provided Linux/native lanes, integrated revision and configured provider authorization when external-effect acceptance is exercised.",
+      "state": "NOT_EXECUTED; ENVIRONMENT_GATED"
+    },
+    {
+      "criterion": "DoD6: Source commit/exact diff/logs/hashes/expected-observed/migration-rollback/independent review (spec:88)",
+      "seam": "lead wave0/dependency acceptance and final integration receipts; sourceReferences in this report",
+      "currentEvidence": "This report records actual sampled whole-file hashes and spec match, but does not contain an implementation commit, exact product diff, runtime log, migration result or independent feature review.",
+      "requiredChange": "After accepted dependencies, bind all implementation and runtime artifacts to the lead's delivered commit and environment, include exact diff and hash manifest, preserved failure/negative-control history, migration/rollback receipts and independent review. Revalidate evidence after material integration changes.",
+      "verification": "Lead/reviewer read revision-bound evidence and compare all AC/DoD expected/observed outcomes, including prior-run pinning and no replay. Reject screenshot-only or stale receipts. Dispatch report verification remains the lead's permitted handoff step, not a feature PASS.",
+      "missingPrerequisite": "Lead's committed wave0 and accepted predecessor receipts, completed implementation/verification and independent review lane.",
+      "state": "PREFLIGHT_SOURCE_EVIDENCE_ONLY; FEATURE_DOD_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-AUT-05.md","symbol":"Published lifecycle, UX, acceptance and DoD contract","lineStart":20,"lineEnd":111,"sha256":"d744861d35de4c46df3de25d7649341414f1d22a5cd111ec19736682bce8aa75"},
+    {"path":"plans/rox-suite/issues.json","symbol":"RS-AUT-05 normative issue record","lineStart":323,"lineEnd":357,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"packages/shared/src/automations/graph.ts","symbol":"SaveAutomationGraphPayload; AutomationGraphProjection; automationGraphRevision","lineStart":40,"lineEnd":214,"sha256":"976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path":"packages/shared/src/automations/graph.ts","symbol":"compileGraph; compileAutomationGraph; getAutomationGraphProjection; buildAutomationGraphSave","lineStart":385,"lineEnd":567,"sha256":"976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path":"packages/shared/src/automations/default-seed-template.ts","symbol":"buildDefaultSchedulerPromptSeed","lineStart":11,"lineEnd":27,"sha256":"fe2aa9d1b911141a0c322d1bc14bc29117f6c1b5a4cb86764b700625aa2858b9"},
+    {"path":"packages/shared/src/automations/default-seeds.ts","symbol":"ensureDefaultAutomations","lineStart":509,"lineEnd":554,"sha256":"74ca648834aba086fa5ef0d4e0d6abc75d1d981e1710492eeed899cb475f0bbb"},
+    {"path":"packages/shared/src/automations/types.ts","symbol":"AutomationGraphNodeKind; AutomationGraphNode; AutomationsConfig","lineStart":314,"lineEnd":432,"sha256":"c338cad64d6b2296ac171b14e0957f66d364e557a5c82aca85ffadfe9f186691"},
+    {"path":"packages/shared/src/automations/schemas.ts","symbol":"AutomationGraphNodeSchema; SaveAutomationGraphPayloadSchema; AutomationsConfigSchema","lineStart":312,"lineEnd":396,"sha256":"232547920900c0fb134ade7e7cdd7bdd793cde4901f230c04048011802511530"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"AutomationSystem.loadConfig/reloadConfig/getMatchersForEvent","lineStart":137,"lineEnd":269,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"AutomationSystem.startScheduler","lineStart":383,"lineEnd":397,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx","symbol":"AutomationGraphEditorProps; save; node controls and inspector","lineStart":9,"lineEnd":306,"sha256":"a4323fc00bd9bb5548f94c88c35900c0755b090dcd2b54790c6ab826e3471d94"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationGraphWorkspaceEditor.tsx","symbol":"refresh; handleGraphChange; saveGraph; loading/error rendering","lineStart":18,"lineEnd":114,"sha256":"f862058a2d6bcb3c1dd6b0dfe76b1ac98f8894a40b45c9243b92eeb2694a94e5"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationEditor.tsx","symbol":"save; runNow; header","lineStart":450,"lineEnd":630,"sha256":"299dda071efd6e066007e6974a816461e0de5fe45da4182bd9ec07ef7e5c6911"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationEditor.tsx","symbol":"Draft; draftFrom","lineStart":49,"lineEnd":80,"sha256":"299dda071efd6e066007e6974a816461e0de5fe45da4182bd9ec07ef7e5c6911"},
+    {"path":"packages/server-core/src/handlers/rpc/automations.ts","symbol":"registerAutomationsHandlers GET_GRAPH/SAVE_GRAPH/TEST","lineStart":193,"lineEnd":404,"sha256":"aba4af4d3a034a4829c255670bf0f6fcfe82c494bcef981c9fd32781a3a23162"},
+    {"path":"packages/server-core/src/handlers/rpc/automations.ts","symbol":"SET_ENABLED; UPDATE; CREATE","lineStart":406,"lineEnd":475,"sha256":"aba4af4d3a034a4829c255670bf0f6fcfe82c494bcef981c9fd32781a3a23162"},
+    {"path":"packages/server-core/src/handlers/rpc/automations.ts","symbol":"REPLAY executes webhook actions","lineStart":528,"lineEnd":555,"sha256":"aba4af4d3a034a4829c255670bf0f6fcfe82c494bcef981c9fd32781a3a23162"},
+    {"path":"apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx","symbol":"isAutomationsNavigation branch rendering AutomationEditor","lineStart":284,"lineEnd":319,"sha256":"22fc3c593f73a9bfce5327ca5c536fef89b42e4d1a270428ee31221bd9ed670a"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.automations","lineStart":810,"lineEnd":824,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"packages/shared/src/protocol/dto.ts","symbol":"TestAutomationAction; TestAutomationPayload; TestAutomationResult","lineStart":1119,"lineEnd":1142,"sha256":"9715263692a742a23936b0068ddc1e56d09a2be27c682371df67ec5de9d7a6ce"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"ElectronAPI automation methods","lineStart":2164,"lineEnd":2186,"sha256":"3c864407da637347a5359d39bbe30f211dd9d43812ce624edfcfb34438b3858c"},
+    {"path":"apps/electron/src/transport/channel-map.ts","symbol":"automation invoke/listener bindings","lineStart":866,"lineEnd":879,"sha256":"d55b0ff6d993fe9a5a10c6c9c1ed0fe0657ef5a2154ddb514525e09e585baaf8"},
+    {"path":"apps/electron/src/renderer/components/automations/automations.css","symbol":".rox-autom-editor font; .rox-autom-btn motion/disabled/focus rules","lineStart":1,"lineEnd":85,"sha256":"1ba980cd5b3d657c596e13c8e3678f60c548eccc206d6f71ad993856589fc783"},
+    {"path":"packages/shared/src/i18n/locales/ru.json","symbol":"automations.saved; automations.unsaved localization keys","lineStart":281,"lineEnd":340,"sha256":"00f1c379fb222ea3cb0c4408c561ab44b2bf2c20e58bd0454f413d63e59dd496"},
+    {"path":"apps/electron/src/renderer/components/automations/__tests__/automation-graph-workspace-editor.test.ts","symbol":"Automation graph workspace presentation source-string tests","lineStart":11,"lineEnd":44,"sha256":"868c4dc0835e18db56547660d32993c25231b72937cacf067989a8afdbd45177"},
+    {"path":"packages/server-core/src/handlers/rpc/automations-graph.test.ts","symbol":"missing config no-seeding and stale graph save invariants","lineStart":73,"lineEnd":149,"sha256":"792dafc5fca1817b8adcdfa6f5f16d41e7bb873c744708d8ebb3e4c3e1b817be"}
+  ],
+  "nextExecutableAction": "Lead may now accept/verify this owned preflight artifact without claiming feature completion. Product implementation must first bind to the lead's wave0 commit and accepted receipts for RS-AUT-01, RS-AUT-02, RS-AUT-03 and RS-AUT-04, in the actual predecessor DAG order without inferring extra edges between them; confirm common authority/index/outbox/preview and tutorial-workspace gates, and re-read/re-hash changed source. Resolve predecessor-owned patch requests before implementing PublishReviewDialog/AutomationTutorial on the existing AutomationEditor route. Do not create a parallel lifecycle, scheduler or surface.",
+  "risks": [
+    "The published baseline says graph save commits runtime; its request for an explicit lifecycle is narrowed by the normative authority section to reuse AUT-01, not permission for AUT-05 to create another migration/store.",
+    "Graph editor is not the actual selected-automation route today. A polished review/tutorial inside only AutomationGraphEditor would be unreachable and fail DoD.",
+    "Debug renamed from runNow would still save and perform live effects; legacy TEST is not preview. Tutorial completion and modal closure must have no activation command.",
+    "Workspace CHANGED and regex-stale reload can erase local draft content; late responses can populate the wrong workspace unless identity and conflict handling are explicit.",
+    "FNV config revision is CAS-only, not the immutable compiled checksum to which user review must be bound. Account/scope/policy changes must invalidate approval.",
+    "Tutorial needs actual DateTimeHelper/CreateTask/Connector semantics; annotation nodes or relabeled prompt seeds are not substitutes. All three normative new files are absent.",
+    "Enabled default seed and GET-time seed writer can activate production automations if reused for tutorial creation. Never bump craftSeedVersion or modify existing defaults for this sample.",
+    "Rollback is revision activation, not REPLAY. Completed external-write dedupe and pinned old runs must be proven by accepted runtime receipts, not inferred from immutable graph UI.",
+    "Common grants/index/notifications/agent adapters are hidden foundation gates with exact post-wave0 symbols still awaiting accepted receipts. They cannot be waived as UI-only N/A.",
+    "Source hashes are sampled working-tree evidence, not an atomic snapshot or proof of input HEAD cleanliness. Root integration may make this report stale.",
+    "Native font/theme/motion, Linux behavior, migration and external-provider receipts remain unobserved; preflight completion is not feature completion or runtime PASS."
+  ]
+}

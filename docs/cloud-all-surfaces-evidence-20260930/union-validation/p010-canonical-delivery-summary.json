@@ -1,0 +1,522 @@
+{
+  "packaging_build_revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "actual_electron_and_webui_build_revision": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+  "canonical_build": {
+    "label": "p010-canonical-server-build",
+    "command": [
+      "bun",
+      "--no-env-file",
+      "run",
+      "server:build",
+      "--output=../../../workspace/rox-union-server-dist-final-20260930"
+    ],
+    "reproduce": "bun --no-env-file run server:build --output=../../../workspace/rox-union-server-dist-final-20260930",
+    "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+    "exit": 0,
+    "seconds": 9.859,
+    "envKeys": [
+      "BUN_INSTALL_CACHE_DIR",
+      "CRAFT_CONFIG_DIR",
+      "ELECTRON_SKIP_BINARY_DOWNLOAD",
+      "HOME",
+      "HTTPS_PROXY",
+      "HTTP_PROXY",
+      "LANG",
+      "LC_ALL",
+      "NODE_EXTRA_CA_CERTS",
+      "NODE_OPTIONS",
+      "NO_PROXY",
+      "PATH",
+      "REQUESTS_CA_BUNDLE",
+      "ROX_CONFIG_DIR",
+      "SSL_CERT_FILE",
+      "TMPDIR",
+      "XDG_CACHE_HOME",
+      "http_proxy",
+      "https_proxy",
+      "no_proxy",
+      "npm_config_cache"
+    ],
+    "dotenvAbsent": true
+  },
+  "canonical_smoke": {
+    "label": "p010-canonical-delivery-smoke",
+    "command": [
+      "bun",
+      "--no-env-file",
+      "test",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/canonical-delivery-smoke.test.ts"
+    ],
+    "reproduce": "bun --no-env-file test /tmp/rox-ui-surface-discovery-20260930/union-validation/canonical-delivery-smoke.test.ts",
+    "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+    "exit": 0,
+    "seconds": 9.793,
+    "envKeys": [
+      "BUN_INSTALL_CACHE_DIR",
+      "CRAFT_CONFIG_DIR",
+      "ELECTRON_SKIP_BINARY_DOWNLOAD",
+      "HOME",
+      "HTTPS_PROXY",
+      "HTTP_PROXY",
+      "LANG",
+      "LC_ALL",
+      "NODE_EXTRA_CA_CERTS",
+      "NODE_OPTIONS",
+      "NO_PROXY",
+      "PATH",
+      "REQUESTS_CA_BUNDLE",
+      "ROX_CONFIG_DIR",
+      "SSL_CERT_FILE",
+      "TMPDIR",
+      "XDG_CACHE_HOME",
+      "http_proxy",
+      "https_proxy",
+      "no_proxy",
+      "npm_config_cache"
+    ],
+    "dotenvAbsent": true
+  },
+  "test_counts": {
+    "pass": 2,
+    "fail": 0,
+    "expect": 56
+  },
+  "phase_assertions": {
+    "compilerTestBun": "1.3.14",
+    "observedShippedBun": "1.3.9",
+    "delivery": "/workspace/rox-union-server-dist-final-20260930",
+    "launcher": "sh bin/craft-server",
+    "assertions": 56,
+    "phases": [
+      {
+        "name": "canonical launcher/runtime/UI artifacts present",
+        "pass": true
+      },
+      {
+        "name": "shipped Bun runtime is source-pinned 1.3.9",
+        "pass": true
+      },
+      {
+        "name": "shipped launcher bound reserved loopback port",
+        "pass": true
+      },
+      {
+        "name": "first start: health 200/status ok",
+        "pass": true
+      },
+      {
+        "name": "first start: exact staged login HTML",
+        "pass": true
+      },
+      {
+        "name": "first start: unauthorized config rejected",
+        "pass": true
+      },
+      {
+        "name": "first start: unauthorized HTML redirects to login",
+        "pass": true
+      },
+      {
+        "name": "first start: bad authentication rejected",
+        "pass": true
+      },
+      {
+        "name": "first start: valid authentication and HttpOnly cookie",
+        "pass": true
+      },
+      {
+        "name": "first start: authenticated config matches live WS URL",
+        "pass": true
+      },
+      {
+        "name": "first start: exact staged application HTML",
+        "pass": true
+      },
+      {
+        "name": "first start: invalid authenticated WebSocket rejected",
+        "pass": true
+      },
+      {
+        "name": "first stop: child live before requested SIGTERM",
+        "pass": true
+      },
+      {
+        "name": "first stop: authenticated WebSocket open before SIGTERM",
+        "pass": true
+      },
+      {
+        "name": "first stop: graceful exit code zero",
+        "pass": true
+      },
+      {
+        "name": "first stop: SIGTERM sent without SIGKILL fallback",
+        "pass": true
+      },
+      {
+        "name": "first stop: authenticated WebSocket closed",
+        "pass": true
+      },
+      {
+        "name": "first stop: stopped /health refused",
+        "pass": true
+      },
+      {
+        "name": "first stop: stopped /login refused",
+        "pass": true
+      },
+      {
+        "name": "first stop: stopped /api/config refused",
+        "pass": true
+      },
+      {
+        "name": "first stop: stopped / refused",
+        "pass": true
+      },
+      {
+        "name": "first stop: stopped raw WebSocket refused",
+        "pass": true
+      },
+      {
+        "name": "server created isolated persisted config",
+        "pass": true
+      },
+      {
+        "name": "shipped launcher bound reserved loopback port",
+        "pass": true
+      },
+      {
+        "name": "restart: health 200/status ok",
+        "pass": true
+      },
+      {
+        "name": "restart: exact staged login HTML",
+        "pass": true
+      },
+      {
+        "name": "restart: unauthorized config rejected",
+        "pass": true
+      },
+      {
+        "name": "restart: unauthorized HTML redirects to login",
+        "pass": true
+      },
+      {
+        "name": "restart: bad authentication rejected",
+        "pass": true
+      },
+      {
+        "name": "restart: valid authentication and HttpOnly cookie",
+        "pass": true
+      },
+      {
+        "name": "restart: authenticated config matches live WS URL",
+        "pass": true
+      },
+      {
+        "name": "restart: exact staged application HTML",
+        "pass": true
+      },
+      {
+        "name": "restart: invalid authenticated WebSocket rejected",
+        "pass": true
+      },
+      {
+        "name": "restart accepts previous cookie for config",
+        "pass": true
+      },
+      {
+        "name": "restart accepts previous cookie for HTML",
+        "pass": true
+      },
+      {
+        "name": "restart retains persisted config values",
+        "pass": true
+      },
+      {
+        "name": "restart stop: child live before requested SIGTERM",
+        "pass": true
+      },
+      {
+        "name": "restart stop: authenticated WebSocket open before SIGTERM",
+        "pass": true
+      },
+      {
+        "name": "restart stop: graceful exit code zero",
+        "pass": true
+      },
+      {
+        "name": "restart stop: SIGTERM sent without SIGKILL fallback",
+        "pass": true
+      },
+      {
+        "name": "restart stop: authenticated WebSocket closed",
+        "pass": true
+      },
+      {
+        "name": "restart stop: stopped /health refused",
+        "pass": true
+      },
+      {
+        "name": "restart stop: stopped /login refused",
+        "pass": true
+      },
+      {
+        "name": "restart stop: stopped /api/config refused",
+        "pass": true
+      },
+      {
+        "name": "restart stop: stopped / refused",
+        "pass": true
+      },
+      {
+        "name": "restart stop: stopped raw WebSocket refused",
+        "pass": true
+      },
+      {
+        "name": "both complete child logs omit test token",
+        "pass": true
+      },
+      {
+        "name": "short-token launch exits exactly one",
+        "pass": true
+      },
+      {
+        "name": "short-token diagnostic is exact",
+        "pass": true
+      },
+      {
+        "name": "short-token launch never signals readiness",
+        "pass": true
+      },
+      {
+        "name": "short-token child log omits test token",
+        "pass": true
+      },
+      {
+        "name": "short token: stopped /health refused",
+        "pass": true
+      },
+      {
+        "name": "short token: stopped /login refused",
+        "pass": true
+      },
+      {
+        "name": "short token: stopped /api/config refused",
+        "pass": true
+      },
+      {
+        "name": "short token: stopped / refused",
+        "pass": true
+      },
+      {
+        "name": "short token: stopped raw WebSocket refused",
+        "pass": true
+      }
+    ],
+    "servers": [
+      {
+        "exit": 0,
+        "sigtermSent": true,
+        "sigkillFallback": false,
+        "tokenWasLogged": false
+      },
+      {
+        "exit": 0,
+        "sigtermSent": true,
+        "sigkillFallback": false,
+        "tokenWasLogged": false
+      },
+      {
+        "exit": 1,
+        "sigtermSent": false,
+        "sigkillFallback": false,
+        "tokenWasLogged": false
+      }
+    ],
+    "profilesRemoved": true,
+    "nativeOrProviderAcceptance": false
+  },
+  "delivery": {
+    "path": "/workspace/rox-union-server-dist-final-20260930",
+    "bytes": 1060657173,
+    "files": 56499,
+    "copied_workspace_source_files": 2059,
+    "copied_workspace_source_exact": true,
+    "staged_webui_files": 855,
+    "staged_webui_exact": true,
+    "all_symlinks_inside_delivery": true,
+    "runtime_and_entry_artifacts": [
+      {
+        "path": "start.sh",
+        "bytes": 130,
+        "sha256": "6a55e9dea67ed586ee1935f67bb647cb81998a71f6d5d3f1ec2ec3df9ebbc529"
+      },
+      {
+        "path": "packages/cloud-runner/src/index.ts",
+        "bytes": 2370,
+        "sha256": "98118ec9e9ab2ef1ae761d30426a7bc6a9b1fdc25e3416e660b635164fff06d9"
+      },
+      {
+        "path": "vendor/bun/bun",
+        "bytes": 101921176,
+        "sha256": "cf498b35746be44efd512a06c884e1c7fd9868de70b9a28dd428c1d232f456c3"
+      },
+      {
+        "path": "resources/bin/uv",
+        "bytes": 55582176,
+        "sha256": "1cec0cda74b129b3e15ed7ff80d0ce303c5e3446cd0dbc47675e908052587419"
+      },
+      {
+        "path": "bin/craft-server",
+        "bytes": 679,
+        "sha256": "79f75df6caac78a1b7166c6caf4ed15d63837aa3e3249cdcc75aa515b6c54d49"
+      }
+    ]
+  },
+  "runtime_artifact_integrity": {
+    "artifact_file_count": 56499,
+    "same_path_and_hash_manifest_before_after_runtime": true,
+    "same_symlinks_before_after_runtime": true
+  },
+  "source_integrity": {
+    "head_before": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "head_after": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "status_after": "?? dist-server/\n",
+    "tracked_files_before_after": 6178,
+    "tracked_hashes_unchanged": true,
+    "dotenv_absent": true,
+    "script_sha256": "d737fe594be9b0f20c1e42f39852ddd52245e9c86ac8481dc837b8ac8005b36a",
+    "owner_adapter_sha256": "8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831"
+  },
+  "a4ca_source_equivalence": {
+    "actual_electron_build_input": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+    "final_packaging_revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "all_tracked_delta": [
+      {
+        "path": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+        "a4ca": "5dfa7b7008b2596eca0307e448ac775549609003ab9627e30509565d71b38c07",
+        "p010": "13759cfe24b4075ec87935ef4d488d27f7b19a8b58a1a57c67fd9435bfff8b49"
+      },
+      {
+        "path": "scripts/build-server.ts",
+        "a4ca": "4af971974a41a509f1a3c4149e6c53f2d7bfd923bbb93266eaca1f5b4d9cd60e",
+        "p010": "d737fe594be9b0f20c1e42f39852ddd52245e9c86ac8481dc837b8ac8005b36a"
+      }
+    ],
+    "all_other_tracked_files_exact": true,
+    "renderer_textual_source_entries_exact": 1192,
+    "all_renderer_textual_source_entries_exact": true,
+    "build_sha_relabelled": false
+  },
+  "original_unchanged": {
+    "head": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "status": "",
+    "locks": {
+      "bun.lock": "b29cf0eb0eaa357069172fe728123d1bd56ab77ef18d90e426f1f42cf85fb79b"
+    }
+  },
+  "cleanup": {
+    "owned_probe_pids": [],
+    "whole_built_main_profiles_removed": 6,
+    "remaining_whole_built_main_profiles": 0,
+    "canonical_test_profiles_removed": true,
+    "delivery_retained_until_root_signal": true
+  },
+  "archived_manifests": [
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/p010-canonical-delivery-before.json",
+      "bytes": 830121,
+      "sha256": "5b8ebc734add39bf2a3cbbc6605ba5cae2771c04c27cc083822d3cc14fd3e497"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/p010-canonical-delivery-after.json",
+      "bytes": 13546631,
+      "sha256": "26c9b6d2d96ac23e772b3a898d235c885f14e0967fff63d8fe6d791824f6e25a"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/p010-canonical-delivery-phases.json",
+      "bytes": 5756,
+      "sha256": "bf4ffb4954cd6ae8c49586b0103e30e3ed1e70621c31c79fa14a9518b72a67ec"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/p010-canonical-delivery-child-redacted.log",
+      "bytes": 2177,
+      "sha256": "9804593a0e4c38ba774e527bc2aa002b625914ea6162d394c2db2677f02805e3"
+    }
+  ],
+  "evidence_artifacts": [
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/canonical-delivery-smoke.test.ts",
+      "bytes": 13448,
+      "sha256": "28c12dba8e84c22c2137683ea80ce3efba6b6b7de31952d5d62a6056fc276fc1"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/canonical-delivery-manifest.py",
+      "bytes": 5325,
+      "sha256": "6984c7c30dd89b0272bbe82304ed80781fe2f4150825dfffdaf2d1f3f829195e"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/p010-canonical-server-build.json",
+      "bytes": 879,
+      "sha256": "68fde075ae4b4d59238b34f20800cb5a686b952fa8328c5670dcb95bf6d3dd4f"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/p010-canonical-server-build.log",
+      "bytes": 2897,
+      "sha256": "b95af6f10bcfe841a69eccb8e176049931bc6493c4fb6e7360ad49ce80946f55"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/p010-canonical-delivery-smoke.json",
+      "bytes": 898,
+      "sha256": "db410e130ece3cafd721e8630ae793a7ae17a8283556c5f522c5e8b792ff1f06"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/p010-canonical-delivery-smoke.log",
+      "bytes": 436,
+      "sha256": "e7d8d0b73c3a80043e275d5ada3ab0a812b122a2e7c5996e62aad2df9b5dfc93"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/p010-canonical-ui-copy.json",
+      "bytes": 274583,
+      "sha256": "2a6b8347cec4a8d3349fdae1a58d3f91a6323e66f08aa22af16c3a376a37a13b"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/a4ca-electron-summary.json",
+      "bytes": 696920,
+      "sha256": "e82132f9ee02579d9e3fc1bd127c0f335a0e6773c1a69ab65cf94e8cf7bf73f0"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/a4ca-canonical-failure-summary.json",
+      "bytes": 3944,
+      "sha256": "0fc48cc772530e70cdcb3b52e5035cf38ad168c7cb2904f075a73d5231db3521"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/a4ca-to-p010-source-equivalence.json",
+      "bytes": 854,
+      "sha256": "9e5468025e41c6108e4eff741b492801832c22dc1cff65993689df083be8141f"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/p010-own-runtime-cleanup.json",
+      "bytes": 205,
+      "sha256": "326337b347c7ec17cd8bd66d52aa35486849022c2ee083949dcb0b6b25922569"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/p010-original-after.json",
+      "bytes": 174,
+      "sha256": "9bacfa6f9e1329fc9698d29bc1109771fc7b5b828fb6f1395b0a0e5b0adbf7cf"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/p010-runtime-artifact-integrity.json",
+      "bytes": 141,
+      "sha256": "589f90b19cae84eaba1d03b3b77709c4ed4814a343af40bb43b299337a7c39bd"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/p010-canonical-before-runtime-manifest.json",
+      "bytes": 13546631,
+      "sha256": "26c9b6d2d96ac23e772b3a898d235c885f14e0967fff63d8fe6d791824f6e25a"
+    }
+  ],
+  "prior_red_retained": "a4ca-canonical-failure-summary.json",
+  "repair_scope": "scripts/build-server.ts:384 and487 add cloud-runner to dependency source seed and workspace copy list; existing canonical packaging defect also present in original f632.",
+  "limits": "Actual Linux shipped standalone server launcher, authentication/config/HTML/WebSocket/lifecycle controls only. Full Electron target compilation and actual Node24 SQLite + whole-main mocked-host require are separate a4ca receipts; no installed Electron, macOS, native IPC, provider calls or full DoD acceptance. No install.sh/service/permissions/env/network-policy/credentials configuration changes."
+}

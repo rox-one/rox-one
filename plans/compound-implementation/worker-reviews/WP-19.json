@@ -1,0 +1,497 @@
+{
+  "task_id": "WP-19-preflight",
+  "attempt_id": "0daf1a21068d6c7afddd1654d25b780e",
+  "packet_hash": "55a7ad574dbb05e15a668d4c45830c3e0290f5fc4668238682eabec5b4dd459f",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-19",
+  "featureComplete": false,
+  "mode": "read-only preflight; only this report is written",
+  "workTier": "bounded-workflow within existing lead dispatch; no nested workers or product execution",
+  "dependencies": ["WP-17", "WP-18", "WP-39"],
+  "dependencyAcceptance": {
+    "requiredForEach": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+    "currentState": "No accepted dependency receipt inspected; published records remain planned. Do not interpret packet depends_on=[] (preflight scheduling) as removal of implementation dependencies.",
+    "startBoundary": "Lead wave0 commit and accepted dependency receipts, followed by rereading any changed source hashes."
+  },
+  "foundationGates": [
+    {
+      "gate": "Authenticated authority, resource policy and revoke fences",
+      "explicitDagEdge": false,
+      "publishedOwners": ["WP-01", "WP-03"],
+      "evidence": "WP-19 permissions at work-packages.json:16116-16119 and transport:16237-16241; local-ipc.ts:104-120 drops invoking event for mutations and broadcasts to every window at 19-22.",
+      "requiredPrerequisite": "Accepted transport-derived principal/workspace binding and account owner/delegated inbox policy, including outbound execution grant and read-time/replay revoke checks. WP-17/WP-39 depend transitively on policy, but account policy must actually be available to this slice."
+    },
+    {
+      "gate": "Canonical registry, aliases and shared migrator",
+      "explicitDagEdge": false,
+      "publishedOwners": ["WP-02", "WP-04"],
+      "evidence": "WP-19 migration entity composite FK, account-scoped alias identity and command receipt constraints at 16640-16679; existing MailSummary.id/threadId at mail-local.ts:58-71 are raw provider IDs.",
+      "requiredPrerequisite": "Accepted entity and alias interfaces, schema/migrator naming and transaction interface; no second mail identity registry. Resolve dual proposed migration names before allocating migrations."
+    },
+    {
+      "gate": "Durable command receipt, transaction outbox and provider intent execution",
+      "explicitDagEdge": false,
+      "publishedOwners": ["WP-04"],
+      "evidence": "WP-04:2589-2636 defines atomic mutation/receipt/event and immutable request hash. WP-19:16654-16670 requires command uniqueness, consumer dedup, provider intent, stable Message-ID and encrypted payload. JmapClient.compose:318-365 has no durable intent boundary.",
+      "requiredPrerequisite": "Common CAS/idempotency gateway, atomic outbox API, durable claimed-versus-processed job state, encrypted payload key adapter and provider intent/receipt ownership. Database idempotency alone cannot prove exactly-once recipient delivery."
+    },
+    {
+      "gate": "Offline projection/replay without a second writer",
+      "explicitDagEdge": false,
+      "publishedOwners": ["WP-05"],
+      "evidence": "WP-18 depends on WP-05 at 15175-15178; WP-05:3497-3502 defines local projection/outbox, SyncSince/ReplayCommand/GetCommandReceipt. MailCompose:427-473 stores current edits in React state and directly autosaves to JMAP.",
+      "requiredPrerequisite": "Accepted client durable draft/projection queue and policy-rejection quarantine behavior. Offline drafts are not server-applied receipts."
+    },
+    {
+      "gate": "Search, mentions, notifications, activity and agent completeness are not optional implementation omissions",
+      "explicitDagEdge": false,
+      "publishedOwners": ["WP-06", "WP-07", "WP-09", "WP-36", "WP-40"],
+      "evidence": "WP-19:16181-16203 lists these completeness dimensions; 22-test-plan.md:197-222 forbids calling missing permissions/search/agent N/A. Published owner titles: WP-06:4383-4385, WP-07:5251-5254, WP-09:7200-7203, WP-36:33169-33172, WP-40:36537-36540.",
+      "requiredPrerequisite": "Accepted extension contracts for authorized mail kind extraction, mention occurrences/target ACL, attention recipient dedup, private activity events, agent/MCP dispatch and canonical navigation. These are integration capabilities, not newly invented explicit DAG dependencies. Account email addresses must not become principal mentions by inference."
+    },
+    {
+      "gate": "Actual isolated provider acceptance and independent read-back",
+      "explicitDagEdge": false,
+      "evidence": "22-test-plan.md:7-9 and WP-19:16206,17080-17114; MailService.send:431-435 blocks external recipients on loopback.",
+      "requiredPrerequisite": "Isolated JMAP/provider account and separate read-only provider client, failure injection/restart harness, authorized UI runner and revision/schema-bound receipt storage. Local loopback or fakeStalwart cannot prove external delivery. No network/UI/test operations performed in this preflight."
+    },
+    {
+      "gate": "Overlapping normative artifacts already allocated to predecessors",
+      "explicitDagEdge": false,
+      "evidence": "WP-17:14128-14140, WP-18:15200-15210 and WP-19:16092-16103 all name mail/contracts.ts, mail/commands.ts and mail/repository.ts.",
+      "requiredPrerequisite": "Root assigns one integration owner for those files; WP-19 extends accepted predecessor interfaces instead of recreating or overwriting them. Glob inspection found none of the requested mail-domain artifact paths at inspection time; that is not evidence of accepted foundations."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/mail/contracts.ts",
+    "apps/workspace-service/src/modules/mail/commands.ts",
+    "apps/workspace-service/src/modules/mail/repository.ts",
+    "tests/macro-integration/wp-19.test.ts",
+    "apps/workspace-service/src/modules/mail/drafts.ts",
+    "apps/workspace-service/src/modules/mail/send.ts",
+    "apps/workspace-service/src/modules/mail/attachments.ts",
+    "packages/shared/src/workspace-domain/mail/send-receipt.ts",
+    "apps/workspace-service/migrations/019_mail_draft_revisions_submissions.sql",
+    "tests/macro-integration/mail-submission-ambiguity.test.ts",
+    "apps/workspace-service/migrations/19-domain-contract.sql"
+  ],
+  "newFileOwnershipNotes": {
+    "meaning": "Exact normative newFiles array, not permission to implement during preflight. Three files overlap WP-17/WP-18 and require shared patches after their accepted delivery.",
+    "migrationConflict": "019_mail_draft_revisions_submissions.sql is in newArtifacts; 19-domain-contract.sql is the proposed identifier in migrations and newFiles. Lead must allocate the selected migrator's actual filename(s) and ensure one nonduplicated schema change, not execute two duplicate table definitions.",
+    "proposedContributions": [
+      {"path": "apps/workspace-service/src/modules/mail/drafts.ts", "change": "Implement SaveDraft/Reply/Forward with common authority and CAS; persist recipients, Bcc, source canonical ref, original message/thread headers, attachment refs and immutable draft revisions before upload/send; retain recoverable body on attachment failure."},
+      {"path": "apps/workspace-service/src/modules/mail/send.ts", "change": "Claim one submission intent per account/idempotency key against immutable draft revision; persist outgoing stable Message-ID, payload fingerprint and encrypted payload before provider I/O. Distinguish queued, submitting, ambiguous/reconciling, rejected and verified provider acceptance. After an in-flight crash or lost response only reconcile provider evidence; never automatically resend unknown effect. Emit mail.message_sent only for verified acceptance, not guaranteed recipient delivery."},
+      {"path": "apps/workspace-service/src/modules/mail/attachments.ts", "change": "Consume WP-39 finalized immutable file objects; validate same workspace/account and authorized source message/draft ownership; verify bytes/checksum/size/MIME and total limits before binding JMAP blobs. Persist upload failure without losing draft; reuse finalized references, not reupload local paths on every autosave."},
+      {"path": "packages/shared/src/workspace-domain/mail/send-receipt.ts", "change": "Define provider submission receipt and ambiguity evidence DTO with command/request identity, canonical submission/draft/account refs, observed revision, provider IDs, verification time and evidence provenance; map domain accepted/pending/ambiguous to Rox2CanonicalResult without equating queued with applied."},
+      {"path": "tests/macro-integration/wp-19.test.ts", "change": "Exercise real domain HTTP/native paths, draft CAS, thread/recipient headers, finalized attachment integrity/ownership, unauthorized actors, persistence and scoped event delivery with fixture seed 20260949."},
+      {"path": "tests/macro-integration/mail-submission-ambiguity.test.ts", "change": "Inject provider acceptance then lost response, worker crash before response and partial JMAP rejection; assert reconcile-only recovery and no duplicate provider submission. Negative control must catch blind retry; independent holdout injects a second failure variant."}
+    ]
+  },
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/mail/jmap-client.ts",
+      "symbol": "JmapClient.compose / call / ComposeInput / resolveSameOrigin / request",
+      "change": "Replace combined destroy-old/create-new/submit flow with revision-aware save and submission of a known persisted provider draft. Extend typed provider input with persisted outgoing messageId. Return typed partial outcomes carrying created emailId and submission rejection instead of throwing away draft identity; classify dispatch uncertainty separately from definite pre-dispatch failure. Add provider submission/email evidence read-back seams through existing call/account client; reconcile stable ID/fingerprint rather than recreating mail. Preserve resolveSameOrigin at every URL boundary; reject credential-bearing candidates and redirect credential leakage using the existing request seam rather than a second HTTP client.",
+      "reason": "318-365 destroys previous draft before confirmed replacement and throws after created draft; 158-174 reduces all fetch failures to network; 429-442 has no stable outgoing Message-ID. 127-132 checks origin, while 162-166 does not specify redirect behavior. Provider evidence support must be confirmed by WP-17, not assumed."
+    },
+    {
+      "path": "apps/electron/src/main/mail/mail-service.ts",
+      "symbol": "MailService.prepare / send / saveDraft / download / errorResult",
+      "change": "Route shared commands through accepted workspace authority; retain explicit standalone adapter behind WP-17's mode boundary. Validate forwarded attachments against authorized source email and account, not caller metadata; preserve selected-file safe loading and 25 MiB per-file ceiling, add normative total/MIME/object checks from WP-39. Save body revision before upload; reuse finalized attachment IDs. Return retained draftRef/revision and typed provider receipt on partial rejection/ambiguity. download must take authenticated account/message relation and resolve attachment metadata from that message. Do not emit sent/answered before verified acceptance.",
+      "reason": "399-424 trusts forwardAttachments, uploads per file on each call and only enforces individual size; 428-451 discards submissionId; 468-470 accepts arbitrary blob metadata; generic errorResult:486-489 cannot carry recoverable identity."
+    },
+    {
+      "path": "apps/electron/src/main/mail/local-ipc.ts",
+      "symbol": "registerMailIpc SEND / SAVE_DRAFT / SAVE_ATTACHMENT / broadcast",
+      "change": "Bind calling event to accepted principal/workspace/authority mode; dispatch shared mutations to domain command gateway with schema validation. Use supplied emailId plus account ref to validate download/forward attachment membership before any fetch/write; obtain trusted name/type/size from message. Scope CHANGED subscribers by policy/account instead of broadcasting every window. Preserve savedPaths reveal restriction and download filename sanitization.",
+      "reason": "119-120 currently invokes direct service with no actor/CAS; SAVE_ATTACHMENT:130 ignores _emailId; broadcast:19-22 reaches all windows. These are shared-file requests, not preflight edits."
+    },
+    {
+      "path": "apps/electron/src/shared/mail-local.ts",
+      "symbol": "MailComposeInput / MailAttachment / MailMessage / MailResult / MailLocalApi",
+      "change": "Extend accepted WP-17 DTOs with accountRef/draftRef/baseRevision, immutable attachment file/object refs and source provenance/thread headers; return typed submission receipt and retained draft/revision for ambiguous/rejected results. Distinguish command status from provider status; use common EntityRef rather than new ID aliases. Retain explicit local mode and update every caller through root integration.",
+      "reason": "74-93 exposes unscoped blobs and headers; 107-141 only raw draftId/sourceId and boolean MailResult. SaveDraft and SendDraft have materially different normative contracts."
+    },
+    {
+      "path": "apps/electron/src/main/mail/mail-model.ts",
+      "symbol": "toMessage / toSummary / threadHeaders",
+      "change": "Preserve canonical account/message/attachment refs supplied by WP-17 adapter; round-trip original headers, Bcc and reply/forward source provenance through saved draft DTOs. Keep threadHeaders deduplication for reply while preserving forward originals as explicit provenance; generate a distinct stable outgoing Message-ID, never reuse the original as new outgoing identity. Derive sent display from verified submission evidence.",
+      "reason": "44-73 retains provider headers but no canonical ownership metadata; 91-94 already provides reply References dedup; do not replace this mechanism."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/inbox/mail/mail-view.ts",
+      "symbol": "ComposeDraft / buildDraft / draftFromMessage",
+      "change": "Carry draft/account revision refs, Bcc, source mode/ref, original headers and finalized attachments in ComposeDraft; reopen those fields from durable draft metadata rather than resetting mode to new. Preserve Reply-To precedence, self exclusion, case-insensitive dedup and explicitly selected forward recipients. Retain originals as provenance and established provider threading semantics; do not silently rethread a forward or overwrite outgoing Message-ID with original.",
+      "reason": "81-98 already selects external recipients; 101-103 drops mode/source/headers/Bcc/attachments when reopening. WP-19 explicitly requires reply/forward retention."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx",
+      "symbol": "MailCompose / MailReader / MailStatusBlock / HtmlBody",
+      "change": "Use controller command methods rather than direct mailLocal send/saveDraft; track immutable draft revisions and one submission intent, render queued/reconciling/ambiguous/rejected/applied_verified states and retained draft identity. Only onClose(true) after verified acceptance. Disable submission while unknown and offer evidence reconciliation, not blind retry. Persist edits before attachment upload; autosave attachment add/remove, restore saved attachments, and preserve edits made while save is pending rather than unconditionally clearing dirty. Keep sanitizeMailHtml, mailSrcdoc and iframe sandbox without allow-scripts/allow-same-origin. Add t()-based state/help labels via root locale owner.",
+      "reason": "427-466 retains draft in React refs, clears dirty unconditionally, and quiet failure is hidden; 468-473 timer does not depend on files/forwardAtt; 477-486 closes on any ok result; 429 initializes attachments only for forward, not reopened draft. HTML has existing layered protection at 250-269."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/inbox/mail/useMail.ts",
+      "symbol": "api / unwrap / useMail / act / refresh",
+      "change": "Extend accepted WP-17 controller with SaveDraft/UploadAttachment/SendDraft/GetReceipt/Reconcile methods using authority-selected bridge; preserve typed error metadata and receipt identity. Subscribe/replay by authorized account and watermark using WP-18/WP-05; purge denied data and distinguish stale/loading/empty/queued/retryable states. Refresh alone must not authorize an ambiguous resend.",
+      "reason": "15-17 drops all error fields except code; 27-73 stores transient list state; 84-96 uses unscoped changed signal; MailCompose bypasses act entirely."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/inbox/mail/__tests__/mail-view.test.ts",
+      "symbol": "builds reply / reply-all / forward drafts / reopens drafts",
+      "change": "Add behavioral round-trip tests for persisted reply/forward source headers, attachments, Bcc and account/draft revision; Reply-To/self/duplicate/external recipient cases. Replace incidental subject/status-string pinning with consumer-visible semantics where touched; do not create forwarding-only tests.",
+      "reason": "19-34 covers recipients superficially and only checks reopened draftId; no header/attachment/reload regression oracle."
+    },
+    {
+      "path": "packages/shared/src/mail/__tests__/mail.test.ts",
+      "symbol": "jmap helpers / fakeStalwart",
+      "change": "Add isolated JmapClient behavior cases for saved draft then rejected submission, acceptance with lost response, provider read-back and hostile upload/download/API URLs or redirects. Use a submission-capable provider fixture with independent effect observation, not existing provisioning mock echoes. Keep fakeStalwart provisioning regressions intact.",
+      "reason": "26-43 exercises URL/address helpers; fakeStalwart:45-91 only supports provisioning x:* methods, not mail/submission/upload."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/mail/contracts.ts",
+      "symbol": "proposed accepted WP-17/WP-18 Mail domain contracts; exact exported names pending receipt",
+      "change": "Extend, do not recreate, predecessor contracts with SaveDraft/Reply/Forward/UploadAttachment and mail.sendDraft validation. Keep outer RoxCommand v2 account/draft/draftRevision schema exact; map baseRevision:number domain DTO to accepted revision encoding. Keep accepted/pending/ambiguous domain status separate from applied/queued/reconciling/ambiguous/pending_fence/rejected/unavailable outer result and expose schema-supported errors.",
+      "reason": "Same normative file belongs to three packages. WP-19 operations and domainApiContracts use different input/status representations; mapping must be explicit and testable. Actual new path not present in glob inspection."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/mail/commands.ts",
+      "symbol": "proposed WP-17/WP-18 command registration; exported names pending receipt",
+      "change": "Register mail.sendDraft at existing common authority dispatcher for both published HTTP and native RPC names, plus draft/upload/reply/forward handlers. Reject body actor, enforce workspace/account/source/file policy and required revision/idempotency; recheck outbound execution grant before side effect. Reuse common command receipt transaction, not parallel IPC authority.",
+      "reason": "Published 16235-16241 transport and 16116-16119 execution policy; collision with predecessor newFiles requires root integration."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/mail/repository.ts",
+      "symbol": "proposed WP-17/WP-18 scoped mail repository; exported names pending receipt",
+      "change": "Extend accepted repository with immutable draft revisions/CAS, finalized same-account attachment FKs, submission uniqueness and payload fingerprints, encrypted pending payload and provider reconciliation receipts. Write revision/command receipt/outbox atomically; preserve alias namespaces and cursor/tombstone fences from WP-18. Return authorized bounded draft/receipt queries.",
+      "reason": "WP-19:16630-16679 schema constraints; repository is explicitly overlapping and must not create another mail store."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-19",
+      "change": "After actual implementation verification, document durable draft/attachment lifecycle, partial rejection recovery, ambiguity reconcile policy, retained payload limits and exact dependency receipts; link revision-bound UI/provider evidence without changing planned to complete prematurely.",
+      "reason": "369-379 defines acceptance; documentation is part of DoD, not permitted preflight mutation."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "JMAP Mail regression gates / Feature completeness checklist / acceptance boundary",
+      "change": "Record exact provider sandbox, independent read-back oracle, submission fault-injection and restart boundaries, caught negative control/holdout, schema/image/source revision and privacy-safe evidence paths after execution.",
+      "reason": "7-9 rejects mock provider as live acceptance; 184,197-222 requires full surface coverage."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "reply references/thread correct",
+      "currentEvidence": "mail-model.ts:91-94 threadHeaders deduplicates original references and Message-ID; MailService.prepare:409-414 applies them only for non-forward replies; JmapClient.compose:335-336 sends headers. No provider/thread observation performed.",
+      "requiredChange": "Persist source provenance/header snapshot in versioned draft; preserve it through reopen and submit; read back provider thread and headers against the original account-scoped message.",
+      "verification": "Reply and reply-all through existing UI, save/reopen/restart, send in isolated provider; independent raw MIME/JMAP read-back checks In-Reply-To/References and correct thread.",
+      "missingPrerequisite": "WP-17 canonical account/thread adapter, accepted draft persistence and isolated provider read-back client.",
+      "state": "partial_existing_unverified"
+    },
+    {
+      "criterion": "attachments integrity",
+      "currentEvidence": "MailService.prepare:417-423 copies caller forward metadata and uploads files; JmapClient.upload:292-298 trusts provider JSON; no checksum/object ownership evidence.",
+      "requiredChange": "Bind WP-39 finalized immutable file refs to same-account draft with checksum/size/MIME and total limits; verify provider blob metadata and downloaded bytes; reuse successful uploads across revisions.",
+      "verification": "Upload known-byte fixtures, save/reload/send and independently download received attachment; compare checksum, size, MIME, name and binding; reject oversize/MIME mismatch/unfinalized/corrupt objects.",
+      "missingPrerequisite": "Accepted WP-39 finalize/object policy API and migration, provider sandbox.",
+      "state": "missing"
+    },
+    {
+      "criterion": "failed upload draft recoverable",
+      "currentEvidence": "prepare:418-423 uploads before saveDraft:454-465; MailCompose:427-437 retains unsaved body only in memory and quiet save suppresses error:457-458.",
+      "requiredChange": "Persist draft revision before upload; record per-attachment failure and successful finalized refs; recover body/source/recipients after restart without forced reupload or duplicate draft.",
+      "verification": "Fail second attachment after first success, kill client/service, reopen exact draft revision, remove/retry failing attachment and send; independent read-back confirms one intended attachment set.",
+      "missingPrerequisite": "WP-05 durable local replay via WP-18, WP-39 file lifecycle and draft migration.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Inject provider success then lost response: submission is ambiguous and reconciles by provider evidence; never blind automatic resend promising exactly-once remote delivery.",
+      "currentEvidence": "JmapClient.request:169-171 collapses network/timeout errors; compose:357 awaits combined effect; MailService.send has no persisted provider intent or reconcile method.",
+      "requiredChange": "Persist stable outgoing Message-ID/fingerprint and encrypted revision payload before I/O; mark possibly dispatched failure ambiguous. Reconcile by provider submission/message evidence and promote only verified acceptance; remain ambiguous when evidence is insufficient. No automatic resend of unknown external effect.",
+      "verification": "Accept submission provider-side then drop response; restart worker, replay same command, assert one intent and no second provider send; reconcile receipt against independent provider evidence. Negative mutation enabling blind resend must fail duplicate/effect assertion.",
+      "missingPrerequisite": "Accepted common intent/job/receipt persistence, WP-17 provider evidence capability, WP-18 sync evidence and isolated provider injector.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Inject JMAP submission rejection after draft creation: preserve/edit draft and show error; no false sent badge.",
+      "currentEvidence": "compose:359-364 obtains created emailId then throws plain JmapError on notCreated submission; send:451 only returns emailId. MailCompose:483-488 displays error but cannot adopt new draft ID.",
+      "requiredChange": "Typed partial rejection carries retained canonical/provider draft ID and revision; do not destroy old durable draft before replacement confirmed. Composer adopts retained draft and remains editable; sent/answered effects require verified acceptance.",
+      "verification": "Provider creates draft then rejects submission; UI error and draft identity persist reload; edit it and intentionally send a new authorized submission without stale destroyed draft references; no sent badge for rejected attempt.",
+      "missingPrerequisite": "WP-17 typed partial provider result and WP-19 durable draft/submission contract.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Pass attachment from other message/account: denied; attacker URL cannot bypass JmapClient.resolveSameOrigin.",
+      "currentEvidence": "local-ipc.ts:130 ignores _emailId; MailService.download:468-470 uses caller blob; prepare:417 trusts forwarded attachments. resolveSameOrigin:127-132 already rejects different origin and is used by upload/download/call.",
+      "requiredChange": "Validate account/workspace and source message/draft/blob membership plus current policy before fetch/write; resolve trusted metadata server-side. Preserve URL origin gate for all provider URLs and fence redirect credential forwarding within existing request transport.",
+      "verification": "Forge another-message blob in same account and another-account/workspace blob for forward/download; deny before I/O. Inject hostile api/upload/download/event URLs and redirects; assert no credential-bearing request to attacker and no saved file.",
+      "missingPrerequisite": "Accepted WP-17 account-scoped aliases/policy and WP-39 ownership/finalization contract; independent adversarial provider fixture.",
+      "state": "partial_origin_guard_ownership_missing"
+    },
+    {
+      "criterion": "Reply/forward retains original Message-ID/References and correct external recipients; sanitized incoming HTML cannot execute.",
+      "currentEvidence": "buildDraft:81-98 uses Reply-To/self exclusion and reply-all dedup; draftFromMessage:101-103 resets mode/source. prepare:412 omits threadHeaders on forward. mail-sanitize.ts:40-95 allowlists HTML/CSP and HtmlBody:262-267 sandboxes iframe without scripts/same-origin. Loopback send:431-435 explicitly blocks external recipients.",
+      "requiredChange": "Persist/reopen original header/source provenance for reply and forward; preserve external recipient selection while retaining loopback restriction. Generate stable new outgoing Message-ID distinct from source. Confirm forward provider header semantics through accepted adapter rather than silently assigning original Message-ID. Reuse sanitizer and sandbox for all incoming preview paths.",
+      "verification": "Save/reload reply/forward with Reply-To and duplicate/self/external addresses; independently inspect outgoing MIME/provenance/References. Hostile scripts/events/javascript links/forms/SVG HTML must not execute before/after user allows images. External send verified only in authorized non-loopback sandbox.",
+      "missingPrerequisite": "WP-17 forward/provenance typed semantics, non-loopback provider sandbox and real Electron HTML execution probe.",
+      "state": "partial_existing_unverified"
+    },
+    {
+      "criterion": "Crash while send queued retries without duplicate recipient delivery",
+      "currentEvidence": "send:428-451 directly invokes provider without durable claim; no queued status in MailLocalApi:136.",
+      "requiredChange": "Replay a provably undispatched queued intent once; an in-flight crash becomes ambiguous and requires reconcile, not retry. Persist submission uniqueness and request hash before dispatch.",
+      "verification": "Crash before dispatch and after dispatch separately; repeated command returns same canonical receipt, one recipient message/provider effect in isolated sandbox. No exactly-once guarantee inferred from DB row count alone.",
+      "missingPrerequisite": "WP-04 command/outbox worker, encrypted payload/intent migration and fault-injection sandbox.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Seed broken mail boundary: unauthorized actor or dropped/duplicated event must fail WP-19 acceptance",
+      "currentEvidence": "IPC mutation handlers:119-120 ignore calling event; broadcast:19-22 and CHANGED listener useMail:87-90 lack scoped durable event IDs.",
+      "requiredChange": "Use common actor/policy and outbox/consumer dedup with monotonic revision/watermark; add oracles for unauthorized body leakage and dropped/duplicate accepted mail events.",
+      "verification": "Baseline passes; separately bypass actor policy, drop event and duplicate delivery. Assertions detect forbidden mutation/leak, stalled projection or duplicate semantic effect. Distinguish harness failure from caught mutant; independent holdout varies fault.",
+      "missingPrerequisite": "Accepted policy/outbox and evaluator mutation harness.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Restart between persisted command and reply: state/receipt/canonical ID remain consistent",
+      "currentEvidence": "MailCompose draftId ref:434 is transient; compose:345-346 destroys/creates provider identities on every save.",
+      "requiredChange": "Canonical draft identity stable across CAS revisions; transaction persists command hash/receipt/event and revision before reply; replay returns same receipt and rejected conflict preserves edits.",
+      "verification": "Kill after DB commit before RPC/HTTP response, restart and replay; compare canonical ID, revision, command receipt, unique keys, outbox event and UI read-back; alter payload under same key must reject.",
+      "missingPrerequisite": "WP-04 persistence transaction, WP-17 registry aliases and selected migrator.",
+      "state": "missing"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "MailCompose:420-575 and MailReader:307-415 are existing Inbox/Mail surface; direct local calls and boolean close are not shared verified-state UI.",
+      "requiredChange": "Extend existing composer/reader with durable revisions, finalized attachments and distinct provider states; no second compose surface.",
+      "verification": "Real Electron compose/reply/forward/upload, keyboard/focus/help, rejection/ambiguity/reload screenshots and ARIA assertions on exact implementation revision.",
+      "missingPrerequisite": "Accepted bridge/controller contracts, UI harness and all three dependency receipts.",
+      "state": "partial_existing_unverified"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "MailReader uses onCompose/onEditDraft; mail-view:23-28 forms raw mail:providerId route identity. Full routing subsystem not inspected outside package scope.",
+      "requiredChange": "Use WP-17 canonical account/thread/draft refs in existing navigation; root requests canonical alias resolution/history integration, not a second route system.",
+      "verification": "Open canonical draft/thread link from existing Inbox, reload/back/reopen, denied/stale account and missing entity states without title leakage.",
+      "missingPrerequisite": "WP-17 route contract and canonical deep-link adapter (WP-40 capability integration).",
+      "state": "missing"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "MailComposeInput:107-121 only sourceId/draftId; MailAttachment:74-79 only blob metadata.",
+      "requiredChange": "Extend accepted canonical mail entities with immutable draft revision, scoped mail_attachment/file reference and submission intent/receipt; retain provider alias identity.",
+      "verification": "Two workspaces/accounts with equal remote IDs remain separate; draft edits retain entity ID; invalid cross-workspace refs rejected.",
+      "missingPrerequisite": "WP-17/WP-02 entity contract and WP-39 file identity.",
+      "state": "missing"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "MailService.saveDraft:454-465 delegates provider draft creation; no CAS/receipt and no durable local offline edits in composer.",
+      "requiredChange": "One shared writer with draft CAS, encrypted pending payload and referenced immutable objects; local standalone remains explicit, projections/outbox not second authority.",
+      "verification": "Restart client and service across body save/upload/intent/receipt boundaries, stale revision rejected and both conflicting edits recoverable; migration forward/rollback protocol preserves accepted writes.",
+      "missingPrerequisite": "Selected migrator/DB transaction, encryption key adapter, WP-05 replay.",
+      "state": "missing"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "registerMailIpc:119-120 dispatches raw local send/saveDraft; no idempotencyKey/expectedRevision fields.",
+      "requiredChange": "Register SaveDraft/Reply/Forward/UploadAttachment/SendDraft in common gateway; validate actor-derived authority, CAS and payload hash; serialize published request and status mapping exactly.",
+      "verification": "Create/edit/send through HTTP/native paths; missing revision, stale revision, forged actor, unknown fields, same key changed payload and wrong workspace return normative typed errors without provider I/O.",
+      "missingPrerequisite": "WP-04/WP-17 command interfaces and accepted resolution of draftRevision string versus numeric baseRevision.",
+      "state": "missing"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "MailService.list/get:347-360 reads current primary JMAP account; useMail.refresh reads limit-bounded local lists but has no draft/submission receipt query.",
+      "requiredChange": "Extend accepted WP-17 query DTOs with authorized draft revision/attachment/receipt state; common scoped cursor pagination/current policy, no hidden titles/totals.",
+      "verification": "Read canonical draft/receipt after reload; authorized bounded cursor and outsider/other-account query denial; stale provider versus current receipt visibly distinguished.",
+      "missingPrerequisite": "WP-17 typed queries and scoped repository interface.",
+      "state": "missing"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "JmapClient.subscribe:373-425 reconnects SSE, MailService.emitSoon:310-315 debounces; these are lossy invalidations, not durable domain delivery.",
+      "requiredChange": "Publish mail.draft_updated and verified mail.message_sent in transaction outbox; consume WP-18 provider evidence with revision/policy/tombstone fences and authorized replay watermark.",
+      "verification": "Disconnect/reconnect and duplicate/out-of-order events, crash between lease/processed and commit; second client converges with one semantic event and no denied content.",
+      "missingPrerequisite": "WP-18 accepted cursor/watch API and WP-04 outbox/inbox replay.",
+      "state": "missing"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "Local MailService.jmap:289-299 protects secrets in main, but local mutation handlers lack resource policy/acting principal checks.",
+      "requiredChange": "Enforce account owner/delegated inbox, source/file refs and workspace policy at command/query/subscribe/replay; explicit outbound execution grant, agent allow-all never bypasses ACL.",
+      "verification": "A owner/B member/C outsider and revoked actor tests, forged body actor/workspace and agent allow-all, revoke before dispatch/readback; no unauthorized provider send/body/title/file.",
+      "missingPrerequisite": "Accepted WP-03 policy/revoke and WP-17 account delegation contracts.",
+      "state": "missing"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "No grant/link fields in current mail-local DTOs; WP-19:16118 explicitly says links never grant email-body access.",
+      "requiredChange": "Reuse account/delegated inbox grants, deny access expansion through file/source/entity relations or public links, expose permitted sharing states through existing surface.",
+      "verification": "B follows shared entity/attachment link to personal mail and is denied without body/title; explicit delegated inbox access succeeds and revoke removes future access.",
+      "missingPrerequisite": "WP-03/WP-17 grant and inheritance contract plus WP-39 signed URL fence.",
+      "state": "missing"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "MailService.list:351 uses provider text filter; this is not common canonical search or ACL-filtered Memory projection.",
+      "requiredChange": "Extend accepted WP-17/WP-06 mail extractor with policy-approved draft/sent revision metadata, upsert/delete/revoke and watermark; no private body leakage in snippets/counts.",
+      "verification": "Authorized distinctive draft/sent fixture phrase returns correct refs/revision after watermark; outsider/revoked actor cannot see title/snippet/count and deletion disappears despite delayed index.",
+      "missingPrerequisite": "Accepted mail search projection extension API and consumer receipt from WP-06 via WP-17.",
+      "state": "missing"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "Current composer has recipient strings but no canonical mention occurrence/source revision; email recipient is not login principal (22-test-plan.md:28).",
+      "requiredChange": "Integrate mail entity mention targets/provenance with common WP-09 target policy and navigation; structured mentions, when entered, use revision-scoped occurrence extraction. Do not infer teammate grants/mentions from arbitrary email text.",
+      "verification": "Authorized mail mention resolves canonical target; edit/removal updates occurrence/backlink; denied target reveals no private body/title and mention grants no access.",
+      "missingPrerequisite": "Root-approved common mention contract and mail supported-source/target semantics; no N/A substitution for missing integration.",
+      "state": "missing"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "useMail unread:34/57 surfaces provider unread rows; it is not durable common recipient attention.",
+      "requiredChange": "Use common WP-07 recipient policy/dedup for eligible mail/draft/send activity; only verified semantic events trigger accepted-send attention, not ambiguous/queued success; preserve per-recipient state and privacy.",
+      "verification": "Duplicate accepted event/replay yields one eligible recipient notification, seen/done persists device/restart, revoked/outsider actor receives no private snippet; ambiguity emits no false sent notification.",
+      "missingPrerequisite": "Accepted notification event/audience contract and root mail notification policy.",
+      "state": "missing"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "MailService.deps.log is plain string/error logging; no draft/send command/revision activity record.",
+      "requiredChange": "Record draft/submission lifecycle via common outbox activity with actor, cause, revision and provider verification status, excluding raw recipients/body/secrets.",
+      "verification": "Read authorized activity after rejection/ambiguity/reconcile, compare command/cause/revision and exactly one verified sent semantic transition; outsider and logs contain no private marker.",
+      "missingPrerequisite": "Common activity consumer/DTO and policy-filtered query integration.",
+      "state": "missing"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "Inspected mail API is window.electronAPI.mailLocal; no agent domain dispatch seam in package source inspected.",
+      "requiredChange": "Register accepted mail draft/upload/send/context capabilities with common WP-36 dispatcher using acting user, current ACL, outbound preview/grant and receipt; use same repository, not host bash/raw JMAP bypass.",
+      "verification": "Native agent saves/reads authorized draft and sends only with explicit outbound grant; denied account despite allow-all, stale revision and private linked source rejected; cited context carries canonical refs/revisions.",
+      "missingPrerequisite": "Accepted agent/MCP domain registry interface and WP-17 context API; outside-package integration owned by root.",
+      "state": "missing"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Published WP-19 operation specifies HTTP POST command and native domain.mail.sendDraft; current inspected local SEND is mail:send, not that authenticated contract.",
+      "requiredChange": "Expose both exact transport names through same typed gateway/domain handler and MCP registration with no body actor; reconcile outer/domain status and error mapping.",
+      "verification": "Equivalent authorized HTTP/native/MCP invocation returns same receipt/canonical state; invalid actor/schema/revision/workspace rejected before provider side effect.",
+      "missingPrerequisite": "Accepted common transport registration, RoxCommand v2 schemas and WP-36 MCP extension.",
+      "state": "missing"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Spec:16165-16175 requires commandId/causationId/correlationId/aggregateRevision/policyEpoch/projectionWatermark/retry-DLQ counters; current service log strings do not carry them.",
+      "requiredChange": "Propagate common structured IDs and counters through draft/upload/intent/reconcile/outbox; log only safe error codes and scoped identifiers, not JMAP descriptions that may include private data.",
+      "verification": "Privacy-safe failure trace with seed 20260949 links command to provider receipt and projection watermark; retries/DLQ visible; scan captured logs for PRIVATE_WP-19/raw body/tokens and require absence.",
+      "missingPrerequisite": "Common telemetry and redaction contract plus provider error normalization.",
+      "state": "missing"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "mail-view.test.ts:19-34 lacks draft round-trip headers/attachments; mail.test.ts fakeStalwart:45-91 implements provisioning only. No tests run under preflight restriction.",
+      "requiredChange": "Implement both normative WP-19 integration tests, extend behavior regressions and provider fault harness; all original acceptance, actor policy, restart and caught mutation plus independent holdout.",
+      "verification": "After implementation: bun test tests/macro-integration/wp-19.test.ts tests/macro-integration/mail-submission-ambiguity.test.ts; relevant existing mail tests; real Electron and isolated provider scenarios. Preserve exact source/schema/image hashes and separate baseline infrastructure failures.",
+      "missingPrerequisite": "Accepted dependencies, actual test/provider/UI harness and implemented slice; prohibited in this preflight.",
+      "state": "not_run_preflight"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md:359-379 and 22-test-plan.md explicitly describe future acceptance, not delivery.",
+      "requiredChange": "Root updates existing normative docs with implemented contracts/status semantics, migration/recovery/runbook, provider capability limits and revision-bound scenario receipts; no false exactly-once remote guarantee.",
+      "verification": "Cross-check documented partial rejection, ambiguity, offline/CAS/attachment recovery against observed UI/API/provider receipts; all missing dimensions remain disclosed.",
+      "missingPrerequisite": "Actual implementation and verification evidence; docs edits not authorized for this worker.",
+      "state": "missing"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "MailCompose:487-491 displays generic error and unlocks send; MailStatusBlock:192-235 handles provisioning/unreachable, not typed submission uncertainty.",
+      "requiredChange": "Expose conflict, invalid recipient, denied/revoke fence, reauth, unavailable upload, definite rejection and unknown effect separately with recoverable draft identity and safe action choices.",
+      "verification": "Inject each boundary through UI/API; retained edits survive reload and no error path displays verified sent or offers blind retry of unknown effect.",
+      "missingPrerequisite": "Accepted typed domain/provider errors and UI localization patches.",
+      "state": "partial_existing_unverified"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "useMail:35/52-71 has list loading; composer busy:431 is send/draft only, no durable upload/reconcile stages.",
+      "requiredChange": "Show upload/save/dispatch/reconcile/projection loading with stale data clearly distinguished; busy actions prevent duplicate submit and pending edits remain recoverable.",
+      "verification": "Delay each stage, inspect real surface and keyboard/focus, no false empty/verified state; edits during save are not cleared by stale completion.",
+      "missingPrerequisite": "Typed lifecycle/receipt controller and accepted UI states.",
+      "state": "partial_existing_unverified"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "MailStatusBlock uses existing EmptyState but provider unavailable/unconfigured is separate from empty draft/inbox only at basic local level.",
+      "requiredChange": "Retain existing genuine empty composition/list affordances and distinguish denied, unavailable, stale projection, unconfigured account and missing retained draft/attachment.",
+      "verification": "Fresh empty account versus denied/unconfigured/offline account; existing surface exposes correct recoverable action without leaking private metadata or calling unavailable data empty.",
+      "missingPrerequisite": "WP-17 query/account state contract and root localization integration.",
+      "state": "partial_existing_unverified"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "JMAP subscribe reconnects; current editor is in-memory with provider autosave and no durable offline receipt/queue.",
+      "requiredChange": "Use WP-05 projection/outbox to persist draft commands and local unsent edits; reconnect rechecks ACL/revision and replays same key. Queued not-dispatched send may run once; ambiguous in-flight intent only reconciles. Revoked/conflicting replay preserves quarantined draft without publication.",
+      "verification": "Edit/upload/save offline, restart client, reconnect both normally and after revoke/conflict; compare revision/receipt/object refs and provider effects; replay unknown submission does not resend.",
+      "missingPrerequisite": "WP-18/WP-05 replay contract, WP-39 durable object upload and common policy fences.",
+      "state": "missing"
+    },
+    {
+      "criterion": "licensePolicy: BEHAVIOR_REIMPLEMENTATION; upstream DEPENDENCY_ONLY after exact license audit",
+      "currentEvidence": "WP-19:16205 fixes license policy and baseline upstream SHA; preflight inspects only local package code/specifications and copies no upstream implementation.",
+      "requiredChange": "Reimplement specified behavior on existing ROX mechanisms; any dependency adoption requires exact license receipt at the referenced revision and lead approval under policy.",
+      "verification": "Review implementation/import provenance and exact dependency license audit before integration; do not treat reference spec baseline as permission to copy source.",
+      "missingPrerequisite": "License receipt for any proposed upstream dependency; none adopted by preflight.",
+      "state": "implementation_gate"
+    },
+    {
+      "criterion": "verificationGate: real changed surface and relevant failure/reload path observed; fixture is not live receipt",
+      "currentEvidence": "No product changes, tests, builds, native UI or network operations performed. Whole-file source hashes provide static evidence only.",
+      "requiredChange": "Lead integrates after dependencies, observes all changed behavior including provider acceptance/reconciliation and failure/reload paths, binds receipts to final delivered revision/schema/environment.",
+      "verification": "Capture UI screenshot/ARIA, typed API read-back, canonical ID/revision, DB unique counts, command/provider receipts, projection watermark and privacy-safe seeded trace; independent provider client proves remote effect.",
+      "missingPrerequisite": "Implemented integrated slice and live isolated test surfaces; preflight must remain featureComplete=false.",
+      "state": "not_verified"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "packages/shared/src/mail/jmap-client.ts", "symbol": "JmapClient.compose / ComposeInput", "lineStart": 318, "lineEnd": 443, "sha256": "31a2c26b3499532894b71b0492dcb9b6b4372009915fffcd50398b236bc83028"},
+    {"path": "packages/shared/src/mail/jmap-client.ts", "symbol": "resolveSameOrigin / JmapClient.request / call / upload / download", "lineStart": 127, "lineEnd": 311, "sha256": "31a2c26b3499532894b71b0492dcb9b6b4372009915fffcd50398b236bc83028"},
+    {"path": "apps/electron/src/main/mail/mail-service.ts", "symbol": "MailService.prepare / send / saveDraft / download / errorResult", "lineStart": 399, "lineEnd": 489, "sha256": "7322905a2f22660bbb04eb9084a2a16677a0c7c2f1ec2530b2c939997e60c36d"},
+    {"path": "apps/electron/src/main/mail/local-ipc.ts", "symbol": "registerMailIpc / SAVE_ATTACHMENT", "lineStart": 91, "lineEnd": 145, "sha256": "e10fcfdf62c0dbd2f4881e70b7ad1310f1d6ba1394d16462c5af852bfe39726c"},
+    {"path": "apps/electron/src/shared/mail-local.ts", "symbol": "MailAttachment / MailMessage / MailComposeInput / MailLocalApi", "lineStart": 74, "lineEnd": 142, "sha256": "65689fe50e18d5c8a9e7bb0032ce6e0db65d5cb6ce42f40d4bea19e04c41c3d2"},
+    {"path": "apps/electron/src/main/mail/mail-model.ts", "symbol": "toMessage / threadHeaders", "lineStart": 44, "lineEnd": 94, "sha256": "75af3dfc936f3a47c7baeec8c67ebac0bee4a263cc0583eaeff56f2ca7a2ab4d"},
+    {"path": "apps/electron/src/renderer/pages/inbox/mail/mail-view.ts", "symbol": "ComposeDraft / buildDraft / draftFromMessage", "lineStart": 45, "lineEnd": 107, "sha256": "7b363494bd97e74a92858f8bd026170185e0a667b2d376bcff0a65ac00b70331"},
+    {"path": "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx", "symbol": "MailCompose", "lineStart": 420, "lineEnd": 560, "sha256": "58489312903d05712ece9e6cdac4b8eb6f771bd0180e1ce77561e26b79511044"},
+    {"path": "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx", "symbol": "HtmlBody", "lineStart": 250, "lineEnd": 272, "sha256": "58489312903d05712ece9e6cdac4b8eb6f771bd0180e1ce77561e26b79511044"},
+    {"path": "apps/electron/src/renderer/pages/inbox/mail/useMail.ts", "symbol": "unwrap / useMail / act", "lineStart": 15, "lineEnd": 147, "sha256": "552929f76ee0f841414061a364914fd08fbba67b8c637ac9ff9d36a21aa7a6a9"},
+    {"path": "apps/electron/src/renderer/pages/inbox/mail/mail-sanitize.ts", "symbol": "sanitizeMailHtml / mailSrcdoc", "lineStart": 40, "lineEnd": 96, "sha256": "9c66fe84678aef2b225e5d4ee8c0d1fc64bf9557770f8beb1ca5e552034352e8"},
+    {"path": "apps/electron/src/renderer/pages/inbox/mail/__tests__/mail-view.test.ts", "symbol": "mail-view reply/reopen cases", "lineStart": 19, "lineEnd": 34, "sha256": "77aa947ee7b8fb839c57d0ed2aca7e5d16c235f6f6c49a45c6e318dc3bb8f425"},
+    {"path": "packages/shared/src/mail/__tests__/mail.test.ts", "symbol": "jmap helpers / fakeStalwart", "lineStart": 26, "lineEnd": 91, "sha256": "dfadbdbb9a242e5d8914364e47e3cf72bf80f264e813476f535f3d7abe43aa6f"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-19 normative work package", "lineStart": 16053, "lineEnd": 16241, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-19 migrations and domain constraints", "lineStart": 16630, "lineEnd": 16679, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-17 overlapping normative mail files and prerequisites", "lineStart": 14089, "lineEnd": 14140, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-18 cursor/replay prerequisites and overlapping mail files", "lineStart": 15169, "lineEnd": 15210, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-39 finalized file and policy contract", "lineStart": 35615, "lineEnd": 35670, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-19", "lineStart": 359, "lineEnd": 379, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/22-test-plan.md", "symbol": "acceptance boundary and feature completeness checklist", "lineStart": 197, "lineEnd": 222, "sha256": "55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "evidenceFreshness": {
+    "basis": "Direct read of actual working-tree files and shasum -a 256 whole-file digests; no claim that uncommitted files equal input HEAD.",
+    "manifest": "Inspected normative work-packages.json digest equals dispatch input manifest digest.",
+    "codegraph": "Tool attempted first; repository has no .codegraph index. Used scoped read/grep/glob fallback, no indexing or upgrade.",
+    "stalePolicy": "Any root integration changing a referenced digest invalidates that source observation; rereread the changed seam and rebase patch requests against accepted interfaces before implementation. Report validator compares current hashes at validation time, not a promise of future freshness."
+  },
+  "nextExecutableAction": "Lead validates this preflight report and settles overlapping mail contract/repository/command ownership plus migration naming. After wave0 commit and accepted WP-17, WP-18 and WP-39 typed-interface/migration/scenario receipts, reread changed source digests and extend those accepted contracts; implement durable versioned drafts and finalized ownership first, then persisted send intent/reconcile lifecycle, then existing Inbox/Mail UI and integration verification. Do not begin feature implementation from this preflight or infer acceptance from planned records.",
+  "risks": [
+    "Combined compose destroys prior provider draft before new create is confirmed; save rejection can lose accessible draft and submission rejection loses newly created ID in errorResult.",
+    "Autosave files are repeatedly uploaded and reopened draft attachments are dropped; attachment-only edits are not dependencies of the autosave effect; pending save clears dirty even if user edited while awaiting it.",
+    "Caller-controlled blob/path metadata is not source-message ownership evidence; stat/readFile supplies per-file size/type but there is no aggregate/MIME/finalized immutable object boundary in current prepare.",
+    "Submission acceptance and recipient delivery differ. SMTP unknown effect and provider read-back capability limits cannot be fixed by unique DB receipts or blind retries.",
+    "Forward originals must be preserved as provenance without reusing source Message-ID as new outgoing ID or silently asserting forward threading semantics unsupported by provider.",
+    "Three shared normative new files collide with WP-17/WP-18; two migration identifiers may describe overlapping schema; root must allocate ownership and selected migrator names.",
+    "Domain SendDraft baseRevision:number/status accepted|pending|ambiguous differs from published operation draftRevision:string and Rox2 canonical status envelope; explicit mapping and schema error precedence are required.",
+    "Published full DoD includes common search, mentions, notifications, activity and agent/MCP seams absent from inspected package surface; predecessor or root integration receipts are needed, not N/A labels.",
+    "Origin equality guard must be preserved; fetch redirects and provider error descriptions require targeted credential/privacy verification rather than assuming current helper tests prove all URL boundaries.",
+    "Whole-file working-tree evidence can become stale during lead integration; preflight validation is static-only and cannot establish feature completion."
+  ]
+}

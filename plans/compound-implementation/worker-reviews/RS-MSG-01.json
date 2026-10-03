@@ -1,0 +1,323 @@
+{
+  "task_id": "RS-MSG-01-preflight",
+  "attempt_id": "dcdab9b0d372231fe8941f7c8f9fe6c6",
+  "packet_hash": "b30b4b5cecd79ff565adf5b56bac8de4f924bb358f88e646d8ecef61fb72fc02",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-MSG-01",
+  "featureComplete": false,
+  "mode": "preflight-only",
+  "workTier": "bounded-workflow",
+  "dependencies": [],
+  "dependencyEvidence": {
+    "normativeRecord": "plans/rox-suite/issues.json:519-540: dependsOn=[], dependencyIssueNumbers=[]; relatedIssues=[562,380] are related regression/adapter obligations, not new DAG edges",
+    "publishedSpec": "docs/rox-suite/published/RS-MSG-01.md:60,76-80",
+    "downstreamBoundary": "plans/rox-suite/issues.json:543-548 declares RS-MSG-02 depends on RS-MSG-01; RS-MSG-01 spec:36 assigns Message writes to RS-MSG-02. Do not invent a reverse explicit dependency. Resolve shared messaging mechanism readiness without a cyclic implementation order."
+  },
+  "inspection": {
+    "inputRevisionProvenance": "Supplied dispatch revision; Git commands were not run. Source references describe inspected working-tree bytes, not a claim that every file is committed at that revision.",
+    "specManifest": "Read-only shasum confirms both published specification and issues.json hashes equal the dispatch manifest.",
+    "scope": "Specified shell/routes/layout/platform files, named messaging paths and their direct imports/consumers. No product implementation, tests, builds, native UI, provider operations or Git mutations performed.",
+    "codegraph": "Unavailable: no .codegraph index for this project. No indexing performed. Built-in read/grep/glob used instead.",
+    "searchLimitation": "Initial descriptive find failed because its judgment provider returned 402; its no-hits text is not absence evidence. Literal searches and structural globs supplied the subsequent evidence.",
+    "missingPaths": "Scoped glob found no components/messenger directory, MessageTimeline/Composer under renderer components, workspace-domain tree, or messenger-navigation.spec.ts; scoped literal searches found no ChannelRef/AgentSessionRef/channel.list/channel.read in packages/core/src, packages/shared/src and electron shared types. This does not prove absence in uninspected future wave0 files.",
+    "freshness": "Whole-file hashes were collected after source inspection. Root wave0 may mutate these shared files; the snapshot is not atomic and future applicability is unverified. Lead must compare hashes against the accepted wave0 revision and re-read changed seams before any implementation.",
+    "verificationPerformed": ["Read published specification and normative dependency record", "Inspected actual source sections and direct imports", "Collected whole-file SHA-256 values using read-only shasum"],
+    "runtimeVerification": "NOT_RUN",
+    "dispatchVerifier": "NOT_RUN: this preflight permits only source inspection, read-only file digests and writing the owned artifact; root should execute the supplied packet verification_argv after accepting this report."
+  },
+  "foundationGates": [
+    {
+      "gate": "Accepted root wave0 revision and serialized central shell ownership",
+      "source": "Dispatch prompt; published spec:3,21,40",
+      "currentEvidence": "APP_NAV_DESTINATIONS has no Messenger entry; AppShell separately hand-builds links and keyboard sidebar items. Root-owned uncommitted work is explicitly outside this worker's write authority.",
+      "requiredReceipt": "Lead's wave0 commit, accepted foundation receipts, current source hashes and shell-owner agreement on Messenger route/state/registry slot before applying shared patches.",
+      "explicitDagEdge": false,
+      "state": "AWAITING_LEAD_RECEIPT"
+    },
+    {
+      "gate": "Canonical ChannelRef versus AgentSessionRef discrimination",
+      "source": "Published spec:3,36,42,51,56,60",
+      "currentEvidence": "Rox2EntityKind includes channel/channel-message/session; Rox2EntityRef carries workspaceId/entityId/revisionId/accountNamespace. It is not itself a discriminated human-channel transport contract. SessionsNavigationState explicitly selects sessionId. parseSessionIdFromRoute scans for a session segment without checking the navigator.",
+      "requiredReceipt": "Accepted common identity contract/export and canonical resolver preserving workspace/account namespace and revision. Compile discrimination before routing; selection must never ensure/create a channel or agent session.",
+      "explicitDagEdge": false,
+      "state": "PRIMITIVE_EXISTS_CONSUMER_CONTRACT_NOT_OBSERVED"
+    },
+    {
+      "gate": "Authenticated human queries, ACL and command authority",
+      "source": "Published spec:27,31,34-36,60,71",
+      "currentEvidence": "registerMessagingHandlers provides messaging config/pairing/bindings; MessagingBindingInfo requires sessionId. handleListMessagingChannels reads session bindings. These are not channel.list/read, entity.resolve, server-authoritative read cursors or human DM/group commands.",
+      "requiredReceipt": "Existing common gateway owner must expose authenticated channel.list/read/entity.resolve, attention/watermark, capabilities and reviewed ensure/create receipts with stable commandId; server obtains actor from transport. Confirm actual wave0 module paths/exports rather than fabricating workspace-domain/messaging or adding a second service.",
+      "explicitDagEdge": false,
+      "state": "HUMAN_GATEWAY_SEAM_NOT_OBSERVED"
+    },
+    {
+      "gate": "Shared MessageTimeline/Composer allocation without a reverse dependency cycle",
+      "source": "Published spec:36,41; issues.json:543-548",
+      "currentEvidence": "ChatPage is an Agent Session surface using useSessionData(sessionId), onSendMessage(session.id), pending permissions and session drafts. Allocated human MessageTimeline/Composer paths were not found in the scoped component glob.",
+      "requiredReceipt": "Lead names accepted shared human timeline/composer exports and readiness stages. RS-MSG-01 consumes the allocated presentation contract; RS-MSG-02 owns durable Message writes. Do not reuse Agent ChatDisplay as a human composer, introduce a fake composer or add RS-MSG-02 as an explicit prerequisite of its own predecessor.",
+      "explicitDagEdge": false,
+      "state": "ALLOCATION_AND_IMPLEMENTATION_RECEIPT_REQUIRED"
+    },
+    {
+      "gate": "Project Channel entry and ACL-aligned search representation",
+      "source": "Published spec:3,36,47,51",
+      "currentEvidence": "ProjectInfoPage.TabKey is sessions/tasks/assets/settings; its Sessions tab uses project sessions and handleStartSession creates an agent session. There is no Channels tab in the inspected page.",
+      "requiredReceipt": "Project owner exposes associated permitted canonical ChannelRefs and Search owner exposes the same gateway-backed refs; accept integration patch so all representations navigate one identity. Scope is the required Channel entry, not a Project redesign.",
+      "explicitDagEdge": false,
+      "state": "PROJECT_ENTRY_NOT_IMPLEMENTED"
+    },
+    {
+      "gate": "Actor/workspace/device preferences, durable read state and revoke invalidation",
+      "source": "Published spec:21,36,52,54,71",
+      "currentEvidence": "NavigationContext persists workspace URL to renderer localStorage and serializes top-level panel proportions into URL. ModeScreenLayout has fixed geometry, no resize/preferences API. Existing mechanisms do not prove actor/device-scoped Messenger pane, thread/filter/scroll recovery or private cache purge.",
+      "requiredReceipt": "Common preference/read-state authority and revoke/invalidation subscription with policy for offline caches; preference revisions and recovery receipts. Local URL/history remain navigation affordances, not a second master for channel membership/read state/preferences.",
+      "explicitDagEdge": false,
+      "state": "COMMON_PREFERENCE_AND_REVOCATION_CONTRACT_REQUIRED"
+    },
+    {
+      "gate": "Separate runtime acceptance environments and sensitivity oracle",
+      "source": "Published spec:55,69-73",
+      "currentEvidence": "This preflight has no runtime evidence by authorization. Published specification is draft and marks runtime NOT_RUN.",
+      "requiredReceipt": "After implementation, revision-bound Linux fixture, live common service, Electron native routing/#562 agent regression and provider read-back gates separately; seeded canonical-copy assertion failure must fail for the expected assertion, not timeout/infra errors.",
+      "explicitDagEdge": false,
+      "state": "NOT_RUN"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/messenger/MessengerSurface.tsx",
+    "apps/electron/src/renderer/components/messenger/ConversationList.tsx",
+    "apps/electron/src/renderer/components/messenger/ConversationTools.tsx",
+    "tests/rox-suite/messenger-navigation.spec.ts"
+  ],
+  "ownedNewFilesNote": "Normative proposed implementation files only (published spec:41,43). They are future contributions, not created in this preflight. The only file this worker writes is the owned report. MessageTimeline/Composer belong to allocated shared messaging work, not additional RS-MSG-01-owned files.",
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+      "symbol": "AppNavDestinationId / APP_NAV_DESTINATIONS / APP_NAV_DESTINATIONS_BY_ID",
+      "change": "Under central navigation owner, add messenger union member and one destination with stable nav:messenger linkId, localized sidebar.messenger label, agreed icon, routes.view.messenger() route and isMessengerNavigation active predicate. Do not alter existing Sessions identity or append a second registry.",
+      "reason": "Published spec:3,40; current registry has no Messenger. Both rail and hand-written AppShell links must agree."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "NavigationState / SessionsNavigationState / getNavigationStateKey / parseNavigationStateKey",
+      "change": "Add MessengerNavigationState and isMessengerNavigation using the accepted canonical ChannelRef contract, optional thread and attention-filter state; keep SessionsNavigationState sessionId-only. Extend key build/parse with the same encoded canonical route grammar as routes.ts/route-parser.ts. Preserve workspace/account namespace during resolution; do not type a channel id as sessionId.",
+      "reason": "Typed navigation discrimination and reload recovery require more than adding a route string. This shared file is a direct import of the published shell/route seams."
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view / ViewRoute",
+      "change": "Add routes.view.messenger builder for messenger and messenger/conversation/{encodeURIComponent(canonicalId)}; agree optional thread/filter representation with foundation owner. Use encoded identity from common resolver, not UI titles or copied ids. Preserve existing Projects and Sessions builders.",
+      "reason": "Published spec:21,40 explicitly requires typed builder and encoded canonical id."
+    },
+    {
+      "path": "apps/electron/src/shared/route-parser.ts",
+      "symbol": "NavigatorType / ParsedCompoundRoute / COMPOUND_ROUTE_PREFIXES / parseCompoundRoute / buildCompoundRoute / convertCompoundToViewRoute / convertCompoundToNavigationState / convertParsedRouteToNavigationState / navigationStateToCompoundRoute / buildRouteFromNavigationState",
+      "change": "Add messenger to the navigator/prefix set and explicit conversion branches for every route entry path, including bare Messenger, canonical conversation, agreed thread/filter encoding and legacy-view conversion if applicable. Validate exact shape and safe decoding; malformed or denied human routes must not degrade to allSessions. parseCompoundRoute currently strips query tails, so any agreed query-based thread/filter state must be parsed and preserved explicitly. Keep canonical ids encoded across build/parse/history.",
+      "reason": "navigate first calls parseRoute before parseRouteToNavigationState; updating only one parser path loses state or fails navigation. COMPOUND_ROUTE_PREFIXES is exported for native deep-link recognition."
+    },
+    {
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "symbol": "navigate / resolveAutoSelection / syncUrl / normalizePanelRouteForReconcile consumer / type-guard re-exports",
+      "change": "Expose the Messenger guard with existing guards and route Messenger through focused panels/newPanel and existing URL/history reconciliation. Keep session validation, lastSelectedSessionId and auto-selection gated to Sessions. Resolve Messenger authorization through common queries before rendering private content; restore permitted canonical selection and preference state without channel creation. Retain current push/replace semantics, and use common actor/workspace/device preference authority for Messenger-specific pane/scroll recovery.",
+      "reason": "Published spec:11,21,40,52; current navigation/history mechanism is reusable, but local workspaceUrl is not proof of authoritative Messenger recovery."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+      "symbol": "shouldHideSessionsSidebar / isModeScreenView / hideModuleMiddleNav / unifiedSidebarItems / hand-written links / navigation title",
+      "change": "Add isMessengerNavigation to full-width host and middle-nav hiding decisions, localized title, keyboard sidebar items and hand-written links using the single registry entry. Add Messenger click handler calling the typed builder. Preserve the global shell and avoid mounting the agent Sessions sidebar or an empty duplicate navigator beside Messenger's own three panes.",
+      "reason": "Direct registry consumer exposes an extra integration gate not listed in the spec's short exact-file list. Existing mode-screen comments record the duplicate empty-column failure."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "symbol": "MainContentPanel / wrapWithStoplight / Sessions branch",
+      "change": "Lazy-load MessengerSurface and add an isMessengerNavigation branch passing current workspace, panel-specific canonical selection/thread and accepted gateway context inside existing Panel/Suspense wrapping. Do not route it through ChatPage or the session.selectConversation fallback; retain current Sessions ChatPage branch unchanged.",
+      "reason": "Published spec:21,40,55; selected ChannelRef must render a real human host and preserve agent transcripts."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/mode-screen/ModeScreen.tsx",
+      "symbol": "ModeScreenLayout",
+      "change": "Extend the existing kit with optional Messenger pane sizing/selection-responsive behavior and resize callbacks consumed by common preferences: navigator 220, list 320-400/min240, conversation flexible/min400, 40 tools rail. Preserve current callers' geometry. Below 960 hide list/nav when detail is active; below 720 use one pane and Back restoration. Header/row/composer sizing remains in Messenger components. Do not fork the kit or change global fonts.",
+      "reason": "Current 440px list, min320 detail and always-visible navigator cannot satisfy 390px/200% zoom or persisted inner pane ratios. Published spec:21,41."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "symbol": "TabKey / ProjectInfoPage / projectSessions / handleStartSession",
+      "change": "Coordinate with Project owner to add the required Channels contextual entry using common project-channel relations and permitted ChannelRefs. Row opens routes.view.messenger(canonicalRef) without ensure/create or onCreateSession. Preserve existing Sessions tab and handleStartSession behavior as agent-only. Project-level canonical navigation/filter recovery must use the shared router, not a second Channel store.",
+      "reason": "DoD Sessions→Messenger→ProjectChannel→Search and the published flow cannot pass with the current four-tab Project page."
+    },
+    {
+      "path": "apps/electron/src/renderer/atoms/panel-stack.ts",
+      "symbol": "parseSessionIdFromRoute / focusedSessionIdAtom / visibleSessionIdsAtom",
+      "change": "Use parsed navigator==='sessions' and typed session details to derive session ids instead of scanning any route for a session segment. Preserve legitimate session routes, including collection/session routes. Keep Messenger a non-session panel through the existing other classification unless the central owner chooses an explicit panel type; do not add a new lane/store.",
+      "reason": "Registry discrimination is a spec gate; raw segment scanning can misclassify non-agent routes. Prove canonical ChannelRef selection never enters agent viewing/read bookkeeping."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef / Rox2EntityKind / formatRox2EntityId / parseRox2EntityId",
+      "change": "Reuse existing canonical identity and channel/session kind distinction. If accepted wave0 does not already supply ChannelRef/AgentSessionRef, identity owner must publish discriminated views over this identity contract in its existing contract location before route types consume them. Preserve workspaceId, accountNamespace and revisionId; no alternative UUID/channel map owned by Messenger. No unconditional change is needed to format/parse helpers if the accepted common contract already satisfies the gate.",
+      "reason": "Published spec:14,36,42,60; primitive identity exists but the requested gateway reference contract was not observed. Exact missing export location must come from accepted foundation, not speculation."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/*.json",
+      "symbol": "sidebar.messenger / messenger.* proposed localized keys",
+      "change": "Add sorted localized keys for all Messenger controls, states, unavailable reasons, help/source/freshness/example text and Project Channels entry across every actual locale file. Use t() in all new components. Repository rule lists ten locales, but the inspected glob also finds ar.json and ko.json: preserve actual parity rather than updating only the ten listed names.",
+      "reason": "Published spec:25-32,69 and loaded AGENTS.md require RU UI/i18n parity; no messenger key was found in the scoped RU/EN literal search."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "DoD 1: Sessions→Messenger→ProjectChannel→Search has one ChannelRef, creates no agent session",
+      "currentEvidence": "platform-contract.ts:218-239 provides canonical helpers/ref; MainContentPanel:337-351 and 497-544 separate Projects from Sessions; ChatPage:89-164 requires sessionId; ProjectInfoPage:49,159-170 has no Channels tab and its creation action creates a session.",
+      "seam": "APP_NAV_DESTINATIONS; routes.view; NavigationState; all route conversions; MainContentPanel; ProjectInfoPage.TabKey; proposed MessengerSurface/ConversationList",
+      "requiredChange": "Implement the shared typed human route and host; list/search/project rows resolve the same permitted ChannelRef. Opening a row only selects/navigates; reviewed new-conversation commands are separate. Human surface does not call session creation, onSendMessage(session.id), agent read bookkeeping or binding generation.",
+      "verification": "After lead integration, start with an existing agent session, record canonical channel identity and agent-session/channel counts, open Messenger, search, use Project Channels and Search result, assert same workspace/entity/account ref and unchanged entity/session counts, then return to identical agent transcript. Record gateway refs/receipts and exact revision.",
+      "missingPrerequisite": "F1 accepted wave0/shell ownership, F2 canonical reference contract, F3 authenticated human gateway, F5 Project/Search entry",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 2: Reload restores conversation/thread/filter/scroll/pane sizes; narrow390 and200% zoom focus usable",
+      "currentEvidence": "NavigationContext:276-331 persists focused route/top-level panel proportions and workspaceUrl; navigation-reconcile.ts:14-28 preserves explicit details; ModeScreenLayout:29-44 has fixed non-responsive columns; parser:133-136 drops query tails.",
+      "seam": "routes.view.messenger proposal; ParsedCompoundRoute; NavigationContext.syncUrl/reconcile; ModeScreenLayout; common preference authority; proposed MessengerSurface",
+      "requiredChange": "Preserve canonical selection plus agreed thread/filter route state across build/parse and popstate. Restore list scroll and inner pane ratios from common actor/workspace/device preferences. Implement active-pane mobile/back behavior, min widths, resize persistence, focus transfer and policy-preserved human draft via allocated Composer. Do not mistake top-level panel proportions for inner panes or add localStorage master.",
+      "verification": "Select a thread, change attention filter and list scroll, resize panes, retain a draft, reload and switch workspace/device identity; assert authorized ref/thread/filter/scroll/ratios/draft. At 390px and 200% zoom, keyboard through all active controls and Back; confirm selected row/scroll restored, no offscreen focus or hidden operable panes. Capture viewport/ARIA/font/screenshots.",
+      "missingPrerequisite": "F1 route integration; F4 human timeline/composer; F6 preference and draft policy contract; native viewport acceptance environment",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 3: Distinct loading/trueempty/filteredempty/serviceerror/denied cached selection",
+      "currentEvidence": "MainContentPanel:172-177 has generic lazy-loading fallback, not query outcome states; messaging RPC GET_BINDINGS:141-145 can return [] for non-live binding reads and cannot establish an authorized empty human index. No Messenger components observed.",
+      "seam": "Proposed MessengerSurface/ConversationList; accepted channel.list/read query outcome and ACL contract",
+      "requiredChange": "Represent query loading, authorized true-empty, filter-empty with reset, service error and denied/stale cached selection explicitly. Preserve source/watermark help without unauthorized totals; reject late results after query/workspace/ref changes. Do not collapse failure/denial to empty or show cached private details while authorization is pending/denied.",
+      "verification": "Drive controlled authorized zero-row and filtered-zero results, delayed success, service failure, forbidden direct selection and cached revoked selection. Assert different accessible messages/actions, filter reset behavior, and no private title/snippet flash or late-response repaint.",
+      "missingPrerequisite": "F3 distinct human query/error contract; F6 cache invalidation policy and revoke event",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 4: Revoke removes channel/snippet/facets, direct route denied",
+      "currentEvidence": "Rox2Entity permissions are a primitive, not observed live revoke/query filtering. Current messaging bindings grant/session access semantics do not prove human channel ACL. Published spec:36,54,71 explicitly requires delivery-time ACL and cached private preview policy.",
+      "seam": "Accepted common gateway ACL/subscription/cache authority; proposed MessengerSurface/ConversationList/ConversationTools; canonical direct-route resolver",
+      "requiredChange": "Apply ACL at channel/search/activity/notification delivery, invalidate visible lists/snippets/facets/drawers on revoke, cancel/refuse stale authorized responses and deny direct route reads. Share canonical gateway/cache handling with Project/Search; distinguish reconnect purge from impossible physical erasure on a disconnected device.",
+      "verification": "With two authenticated actors, read an allowed channel then revoke membership, deliver a stale query response and attempt direct/native deep link, search, drawer peek and reload. Assert no private row/snippet/facet/count remains and server denies reads. Reconnect a previously offline cache and verify policy purge without claiming disconnected physical deletion.",
+      "missingPrerequisite": "F3 transport actor/ACL gates; F6 authoritative revoke/invalidation and offline cache policy; live service two-actor environment",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 5: Native route and #562 agent stream/tool/approval regression verified separately",
+      "currentEvidence": "route-parser.ts:97-106 exports the native compound prefix list; NavigationContext:837-903 uses parseRoute then typed state and focused panel updates; ChatPage:291-303,1327-1355 wires session drafts, send and pending permissions; MainContentPanel:528-533 retains agent host.",
+      "seam": "COMPOUND_ROUTE_PREFIXES and parser conversions; NavigationContext.navigate/newPanel; MainContentPanel.Sessions; ChatPage existing agent surface",
+      "requiredChange": "Keep Messenger a human-only route/host accepted by native deep-link path. Do not repurpose agent ChatPage, permission controls or session drafts. Add separately attributable human native-routing evidence and unchanged agent streaming/tool/approval/IME evidence after shared shell cutover.",
+      "verification": "Electron native open encoded canonical Messenger deep link and explicit newPanel, back/forward/reload. Separately run a real agent stream with tool invocation and ask-mode allow/deny, including IME input, while navigating Messenger and returning Sessions; verify transcript continuity and permission response. Fixture UI success is not native/#562 proof.",
+      "missingPrerequisite": "F1 accepted shell/route revision; F2/F3 reference and ACL contracts; Electron native environment and existing agent auth/run capabilities",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 6: Seed row selection creating Channel copy caught by canonical identity count",
+      "currentEvidence": "formatRox2EntityId/parseRox2EntityId and Rox2EntityRef are reusable identity seams; proposed messenger-navigation.spec.ts is not observed. No behavior or sensitivity test was run.",
+      "seam": "Proposed ConversationList selection handler and tests/rox-suite/messenger-navigation.spec.ts; common canonical entity count/ref query",
+      "requiredChange": "Make row selection read/navigation-only and assert canonical unique identity count before/after the full navigation flow against domain authority. In sensitivity verification, seed a selection path that creates a duplicate Channel and require the oracle to reject it. Distinguish workspace/account namespaces and revision changes from actual duplicate entities.",
+      "verification": "On the fixed implementation assert exactly one canonical Channel and unchanged agent session count. Run a controlled duplicate-channel seed through the same flow and observe the specific count/identity assertion fail, restore fixed bytes and observe pass. Timeout or infrastructure failure does not demonstrate sensitivity.",
+      "missingPrerequisite": "F2 canonical identity contract; F3 authoritative channel count/receipt fixture; F7 integrated executable sensitivity harness",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Control contract: Найти разговор search and Все/Подписанные attention tabs",
+      "currentEvidence": "Published spec:27,29,36 defines query≤2048, scope/cursor/asOf, 250ms debounce/cancel and attention semantics. Existing messaging agent tool:21-50 only lists session-bound provider channels; it is not this search API.",
+      "seam": "Proposed MessengerSurface search/tab controls; ConversationList; accepted channel.list/attention/search gateway",
+      "requiredChange": "Implement scoped authorized search with 2048 limit, 250ms debounce, stale cancellation and error-not-empty behavior. '/' only outside editor, CmdK integrates existing global search. All/Subscribed is a personal attention filter, never membership grant; provide tablist keyboard semantics, reset, source/freshness/example and no hidden totals.",
+      "verification": "Exercise limit boundary, stale out-of-order results, workspace/scope changes, error and filtered-empty reset. Keyboard / and CmdK outside versus inside Composer; arrow/Enter tabs; assert subscription cannot grant an unauthorized channel and counts/snippets remain delivery-ACL filtered.",
+      "missingPrerequisite": "F3 authorized search/attention/cursor contract and global-search integration receipt; F4 Composer editor boundary",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Control contract: Открыть разговор row and Новый разговор reviewed command",
+      "currentEvidence": "Published spec:28,31 requires avatars/unread/snippet/date, keyboard selection, hover-no-read and reviewed ensure/create receipts; ProjectInfoPage.handleStartSession and messaging.generatePairingCode are existing agent actions, not human ensure/create.",
+      "seam": "Proposed ConversationList; MessengerSurface new-conversation action; accepted ChannelRef/PrincipalRef and common command authority",
+      "requiredChange": "Render only permitted index fields and server read cursor/watermark. Arrows/Enter navigate without duplication, hover/focus reveals overflow without layout shift or mark-read. New conversation distinguishes DM/group/channel and reviews Principals/draft/title; use stable commandId and common receipt, never AgentSession creation. Contacts is a contextual PrincipalRef subview, not a new user store.",
+      "verification": "Inspect hover/focus/read-cursor before and after, keyboard selection and reload canonical ref. Review DM/group/channel, invalid title and denied Principal, replay the same stable commandId and verify one canonical creation receipt without a new agent session; N inside an editor must not invoke create.",
+      "missingPrerequisite": "F2 canonical Principal/Channel references; F3 reviewed ensure/create authority and idempotent receipts; F6 server read state",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Control contract: contextual rail and Back, pinned drawer Escape restores trigger",
+      "currentEvidence": "Published spec:30,32,47 specifies Search/Tasks/Pinned/Settings drawers and Escape priority; NavigationContext uses native goBack/history. No ConversationTools component exists in inspected paths.",
+      "seam": "Proposed ConversationTools; MessengerSurface; NavigationContext.goBack; accepted currentChannelRef capabilities",
+      "requiredChange": "Add 40px contextual rail with localized icon/help/unavailable reasons and authorized peeks. Enter opens drawer, Escape closes overlays first and returns focus to trigger. Back uses existing route/filter/scroll/panel history, AltLeft only outside editor, prior labels permission-safe and draft retained per common policy.",
+      "verification": "Open channel, inspect pinned drawer, Escape returns exact trigger focus, then Project entry/Back returns canonical selection and scroll. Deny each unavailable capability, ensure no mutation or private peek occurs. Test overlay Escape priority and AltLeft in versus outside Composer.",
+      "missingPrerequisite": "F3 current-channel capabilities and drawer data queries; F4 draft policy; F6 view restoration",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Quality: geometry, RU i18n, semantic theme/fonts, focus/help/motion and light/dark accessibility",
+      "currentEvidence": "ModeScreenLayout uses font-sans and shared background/foreground tokens. styles/index.css:121-129 defines selected semantic Arial Narrow UI/Rox monospace faces. Specification:69 requires inheriting these, not a new forced global font; actual locale glob includes ar/ko in addition to the ten named by AGENTS.",
+      "seam": "ModeScreenLayout; three proposed Messenger components; packages/shared/src/i18n/locales/*.json; existing semantic CSS tokens",
+      "requiredChange": "Implement 1440×900 target geometry, header48, rows56-64 and composer88/max30%viewport using existing kit and allocated composer. All user-facing strings use t(), keys in every actual locale. Preserve selected fonts/theme/accent; focus-visible, contrast, hitboxes≥32 desktop/44 touch, reduced-motion and hover/focus/click help. Metrics explain definition/source/freshness/example; no hover send/share/read mutations and no copied private reference assets.",
+      "verification": "After integration inspect RU light fixture and dark regression, 1440/390/zoom layouts, actual computed font/ARIA/contrast/hitboxes, hover/focus/click help and reduced-motion. Verify locale key parity with existing i18n checks then demonstrate real surface behavior. Capture sanitized screenshots and runtime evidence bound to inputSha.",
+      "missingPrerequisite": "F1 shared kit shell cutover; F4 allocated timeline/composer; localized keys and post-integration UI verification surface",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Quality: complete model/persistence/query/command/realtime/search/mentions/attention/activity/agent tools/failures/receipts",
+      "currentEvidence": "Published spec:36,71 includes these feature layers; core contract:99-111,158-166 already separates receipt and execution/lifecycle/verification. Existing messaging RPC and agent tool are session-binding mechanisms only.",
+      "seam": "Common platform/gateway foundation; proposed MessengerSurface and ConversationTools; allocated MessageTimeline/Composer; handleListMessagingChannels is a boundary to preserve, not a human-tool substitute",
+      "requiredChange": "Consume accepted canonical messaging model/persistence and authenticated query/command authority; durable unread separate from expiring presence/typing. Render mentions/attention/activity from authorized shared contracts and expose agent channel read/search through the same gateway. Retain distinct local saved/queued/committed/provider-confirmed states with observable receipts; RS-MSG-02 owns Message writes. Do not implement a second SessionStore or relabel agent bindings as human conversation service.",
+      "verification": "Post-integration exercise persistence/reload, two-actor concurrency, presence expiry without unread reset, attention/activity/mentions ACL, same-result human and agent read/search permissions, command failures and receipt lifecycle/read-back. Verify provider-confirmed only after real provider read-back where applicable; no success claim for fixture/queued/unverified states.",
+      "missingPrerequisite": "F2/F3 common contracts and transport authority; F4 human writing allocation; F6 durable read/realtime/cache; accepted external adapter capabilities where used",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Quality: exact revision/domain receipt/hash, reload/concurrency/negative evidence and separate execution gates",
+      "currentEvidence": "Published spec:73 expressly separates Linux fixture/live/Electron/provider evidence. Source digests in this report are static inspection evidence, not runtime acceptance.",
+      "seam": "Proposed tests/rox-suite/messenger-navigation.spec.ts and lead's accepted verification/evidence mechanism",
+      "requiredChange": "Bind each acceptance run to delivered commit/inputSha and actual domain ref/revision/hash/receipt. Keep separate native and provider gates, capture sanitized screenshot/ARIA/font/viewport/locale evidence, and record negative/concurrency assertions plus seeded sensitivity failure. Do not weaken criteria to N/A or convert static source availability into feature completion.",
+      "verification": "Lead executes packet report verifier separately from product acceptance. After implementation run the specified flow and all negative/recovery/concurrency/sensitivity scenarios in their required environments; inspect actual domain receipts and provider read-back rather than worker claims. Material source changes invalidate affected runtime proof.",
+      "missingPrerequisite": "Accepted integrated revision and each required runtime/service/provider environment; all previous foundation readiness receipts",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-MSG-01.md","symbol":"Specification / controls / full DoD / quality gates","lineStart":19,"lineEnd":82,"sha256":"7666cd3ddd561238ba77e6970f86b0f84bbb85a93c15d849cdd95a2667d1c21c"},
+    {"path":"plans/rox-suite/issues.json","symbol":"RS-MSG-01 normative record / downstream RS-MSG-02 dependsOn","lineStart":519,"lineEnd":548,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"apps/electron/src/renderer/components/app-shell/nav-destinations.ts","symbol":"AppNavDestinationId / APP_NAV_DESTINATIONS","lineStart":51,"lineEnd":197,"sha256":"022c1bf1adeb1da16db51c1c3db396b0de6a926a59f74b3015ddeb4433f033e4"},
+    {"path":"apps/electron/src/shared/routes.ts","symbol":"routes.view.allSessions / routes.view.projects / buildNotesRoute encoding pattern","lineStart":33,"lineEnd":223,"sha256":"c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path":"apps/electron/src/shared/route-parser.ts","symbol":"NavigatorType / ParsedCompoundRoute / COMPOUND_ROUTE_PREFIXES / parseCompoundRoute","lineStart":59,"lineEnd":139,"sha256":"1334b7d91ea07d66a32544a31e410201652ae29a7ac512d73fe95769fb9c2b3a"},
+    {"path":"apps/electron/src/shared/route-parser.ts","symbol":"navigationStateToCompoundRoute fallback / buildRouteFromNavigationState / degradeSurfaceNavigationState","lineStart":1607,"lineEnd":1641,"sha256":"1334b7d91ea07d66a32544a31e410201652ae29a7ac512d73fe95769fb9c2b3a"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"NavigationState / isSessionsNavigation","lineStart":2600,"lineEnd":2626,"sha256":"3c864407da637347a5359d39bbe30f211dd9d43812ce624edfcfb34438b3858c"},
+    {"path":"apps/electron/src/renderer/contexts/NavigationContext.tsx","symbol":"navigate","lineStart":837,"lineEnd":903,"sha256":"40e3ad32fd15de9e8357073459aabab2ef96013bcc1ddb0e5827186c878533c2"},
+    {"path":"apps/electron/src/renderer/contexts/NavigationContext.tsx","symbol":"syncUrl","lineStart":276,"lineEnd":331,"sha256":"40e3ad32fd15de9e8357073459aabab2ef96013bcc1ddb0e5827186c878533c2"},
+    {"path":"apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx","symbol":"MainContentPanel Sessions / ChatPage branch","lineStart":497,"lineEnd":553,"sha256":"22fc3c593f73a9bfce5327ca5c536fef89b42e4d1a270428ee31221bd9ed670a"},
+    {"path":"apps/electron/src/renderer/components/app-shell/AppShell.tsx","symbol":"shouldHideSessionsSidebar","lineStart":229,"lineEnd":244,"sha256":"0229ba979d9451eedf0ec7122deeca5093b86d818cc7c293108b3d59cde2ef55"},
+    {"path":"apps/electron/src/renderer/components/app-shell/AppShell.tsx","symbol":"isModeScreenView / hideModuleMiddleNav","lineStart":563,"lineEnd":575,"sha256":"0229ba979d9451eedf0ec7122deeca5093b86d818cc7c293108b3d59cde2ef55"},
+    {"path":"apps/electron/src/renderer/components/mode-screen/ModeScreen.tsx","symbol":"ModeScreenLayout","lineStart":12,"lineEnd":54,"sha256":"9610f99c424dcf1760915eaff638eaf1b4cea9a854399e9eb420e3a5ec3c3905"},
+    {"path":"apps/electron/src/renderer/pages/ChatPage.tsx","symbol":"ChatPageProps / ChatPage / useSessionData","lineStart":89,"lineEnd":175,"sha256":"aaf488f025e7d1ef60b8a7792fdcf8f6d4287d8b9918da58ab81dde13af36788"},
+    {"path":"apps/electron/src/renderer/pages/ProjectInfoPage.tsx","symbol":"TabKey / ProjectInfoPage / handleStartSession","lineStart":45,"lineEnd":170,"sha256":"50eff1ed1db446b4cbc9c766f28ebfc60a28be50f713d97a6a786f246ef36d6c"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"formatRox2EntityId / parseRox2EntityId / Rox2EntityRef","lineStart":218,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/ui/src/styles/index.css","symbol":"semantic font variables","lineStart":121,"lineEnd":129,"sha256":"88b88774da970aad4e1ad4ea1bc91477bf81896c2527fbc3762b755fb0adca5b"},
+    {"path":"packages/session-tools-core/src/handlers/messaging.ts","symbol":"handleListMessagingChannels","lineStart":21,"lineEnd":55,"sha256":"05c8ad55a1fdec51717d1741fdecd9fbd717d280de92bb68dfa2e6836c4041b4"},
+    {"path":"packages/server-core/src/handlers/rpc/messaging.ts","symbol":"registerMessagingHandlers GET_BINDINGS / GENERATE_CODE / UNBIND","lineStart":141,"lineEnd":157,"sha256":"b0712ab983e748f22592df2f70cf1043269d210ea6cabeeaa62e96a283a9964c"},
+    {"path":"packages/server-core/src/handlers/messaging-registry-interface.ts","symbol":"MessagingBindingInfo / IMessagingGatewayRegistry","lineStart":8,"lineEnd":27,"sha256":"df8725fa0329ff5792b39b5e8bd4cf7ac0a43b41635099ad67db3b12d121b85a"},
+    {"path":"apps/electron/src/renderer/atoms/panel-stack.ts","symbol":"parseSessionIdFromRoute / focusedSessionIdAtom / visibleSessionIdsAtom","lineStart":120,"lineEnd":149,"sha256":"9812c273f20af514ee56cc188566215a2781a183c9dd7e2effed254784cdc921"},
+    {"path":"apps/electron/src/renderer/contexts/navigation-reconcile.ts","symbol":"normalizePanelRouteForReconcile","lineStart":14,"lineEnd":29,"sha256":"14d440080b5d780aa27d214d04e30047653347c9a0e7eb76ed80cc3af8df6b22"}
+  ],
+  "nextExecutableAction": {
+    "owner": "lead / serialized shell and foundation owners",
+    "action": "Read and verify this owned preflight report against the dispatch packet. After the lead's wave0 commit and accepted foundation receipts, compare recorded source digests and re-read changed sections. Resolve actual common ChannelRef/query/preferences and allocated timeline/composer exports, then integrate typed identity/routes/registry/AppShell/MainContentPanel patches before rendering the three normative Messenger components and executing the full acceptance flow.",
+    "ordering": ["Accept wave0 revision and common identity/ACL/command authority readiness", "Serialize typed reference/navigation registry and shell integration", "Integrate gateway-backed Messenger components, Project/Search canonical entry and common preference/revoke handling", "Consume allocated human timeline/composer without reversing RS-MSG-02 dependency", "Verify all six DoD items plus controls/quality across required runtime gates and sensitivity seed"],
+    "workerAuthorization": "No implementation by this worker; only plans/compound-implementation/worker-reviews/RS-MSG-01.json may be written.",
+    "pendingVerification": "Lead-supplied launch-worker-pool.py --verify invocation remains separate from feature/runtime verification."
+  },
+  "risks": [
+    "Empty explicit DAG hides mandatory common identity/ACL/command gates; primitives in platform-contract alone do not establish an operational human messaging mechanism.",
+    "RS-MSG-02 depends on RS-MSG-01 but RS-MSG-01 expects allocated human timeline/composer. Shared allocation must be staged by the lead rather than creating a reverse DAG edge or claiming a placeholder feature complete.",
+    "Existing messaging RPC/session tools are agent-channel bindings and pairing. Reusing them as the human Channel service would violate identity, actor authority and no-AgentSession requirements.",
+    "ProjectInfoPage lacks Channels and the specification's short file list omits AppShell and shared/types.ts, although direct consumers require both. Integration cannot stop at nav-destinations/routes/MainContentPanel.",
+    "parseCompoundRoute drops query tails; adding filter/thread query parameters without all conversion/key/history updates will silently lose recovery state.",
+    "NavigationContext URL panel encoding uses colon/comma separators; canonical channel identifiers must remain encodeURIComponent-encoded through route builders and panel serialization, with round-trip cases for delimiters/account namespaces.",
+    "parseSessionIdFromRoute uses raw segment scanning rather than typed navigator discrimination. New human routes must never feed agent viewing/read state.",
+    "ModeScreenLayout's fixed widths do not prove responsive focus at 390px or 200% zoom; shrinking CSS alone is insufficient if hidden panes remain focusable or Back loses scroll.",
+    "Renderer workspace URL/localStorage and top-level panel proportions are not authoritative actor/device Messenger preferences, membership or durable read state.",
+    "Root wave0 may change inspected files. Hashes describe working-tree source snapshots; no claim of a clean checkout, atomic snapshot or unchanged post-integration revision is made.",
+    "Actual locales include ar and ko beyond the ten named in AGENTS; preserve current parity, and preserve selected semantic fonts rather than overriding the entire UI with a new font.",
+    "Revoke must purge stale snippets/facets/drawer results across all representations and defeat in-flight responses, while honestly limiting disconnected-device erasure claims.",
+    "Static source evidence, packet verification and fixture UI are not live/native/provider acceptance. Every feature criterion remains unverified until actual integrated execution and the canonical-copy sensitivity failure are observed."
+  ]
+}

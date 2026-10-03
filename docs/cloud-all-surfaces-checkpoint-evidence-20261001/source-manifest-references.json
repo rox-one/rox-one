@@ -1,0 +1,38 @@
+[
+  {
+    "retainedExternalPath": "/workspace/rox-r15-evidence-20260930/checkpoint-20261001/fresh-durable/fresh-frozen-install-after-source.json",
+    "bytes": 830623,
+    "sha256": "3f1edcc21de7d4b167d8749dc2f5f9ce535a571631a4027ccb5073039877678d",
+    "sourceCommit": "010fa8c040e3a84cd40cd8195473f52d8582f159"
+  },
+  {
+    "retainedExternalPath": "/workspace/rox-r15-evidence-20260930/checkpoint-20261001/fresh-durable/fresh-frozen-install-before-source.json",
+    "bytes": 830623,
+    "sha256": "4e5c80e6fa22f2669e7daf7732d292f7278229317d084f5e7be9365f01c1bf21",
+    "sourceCommit": "010fa8c040e3a84cd40cd8195473f52d8582f159"
+  },
+  {
+    "retainedExternalPath": "/workspace/rox-r15-evidence-20260930/checkpoint-20261001/fresh-durable/fresh-workflow-durable-after-source.json",
+    "bytes": 830623,
+    "sha256": "d1d847a8bc11797b82eea848ed9168699e5b52d6351d454edd0972805bf5dec2",
+    "sourceCommit": "010fa8c040e3a84cd40cd8195473f52d8582f159"
+  },
+  {
+    "retainedExternalPath": "/workspace/rox-r15-evidence-20260930/checkpoint-20261001/fresh-durable/fresh-workflow-durable-before-source.json",
+    "bytes": 830623,
+    "sha256": "e573339be057ad16af666799936194b20e345b2b5b86dab5d145667c4b9d2ebc",
+    "sourceCommit": "010fa8c040e3a84cd40cd8195473f52d8582f159"
+  },
+  {
+    "retainedExternalPath": "/workspace/rox-r15-evidence-20260930/checkpoint-20261001/fresh-durable/fresh-workflow-september-after-source.json",
+    "bytes": 830623,
+    "sha256": "583fcdddac6030a564f1541d707682a5d323ddf9fab0afe0c6f61f7755ae6c79",
+    "sourceCommit": "010fa8c040e3a84cd40cd8195473f52d8582f159"
+  },
+  {
+    "retainedExternalPath": "/workspace/rox-r15-evidence-20260930/checkpoint-20261001/fresh-durable/fresh-workflow-september-before-source.json",
+    "bytes": 830623,
+    "sha256": "ef7802be9043356b191b162ab2c93c47f7474120d98ae3e546defa4cbb4219f1",
+    "sourceCommit": "010fa8c040e3a84cd40cd8195473f52d8582f159"
+  }
+]

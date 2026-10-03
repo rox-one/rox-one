@@ -1,0 +1,258 @@
+{
+  "runtime": "/tmp/rox-core-integration-gate-ultra-20260930/toolchain/package/bin/bun",
+  "runtimeVersion": "1.3.14",
+  "records": [
+    {
+      "fixture": "proposed",
+      "name": "focused-core-acl-receipt",
+      "argv": [
+        "/tmp/rox-core-integration-gate-ultra-20260930/toolchain/package/bin/bun",
+        "test",
+        "packages/core/src/calendar/calendar.test.ts",
+        "packages/core/src/rox2/__tests__/platform-contract.test.ts",
+        "packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts",
+        "packages/core/src/rox2/__tests__/notes-repository.test.ts",
+        "packages/core/src/rox2/__tests__/project-membership.test.ts",
+        "packages/core/src/platform/identity/credential-types.test.ts",
+        "packages/core/src/platform/identity/attach-credential-ref.test.ts",
+        "packages/core/src/tasks/personal/things.test.ts"
+      ],
+      "exitCode": 0,
+      "logPath": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/focused-core-acl-receipt.log",
+      "logSha256": "228b17e965267d0068ed8030c6844f81a844b395ce06b4b48f8ac40108bbd57d"
+    },
+    {
+      "fixture": "proposed",
+      "name": "independent-private-acl-receipt",
+      "argv": [
+        "/tmp/rox-core-integration-gate-ultra-20260930/toolchain/package/bin/bun",
+        "test",
+        "../evidence/canonical-acl-private.test.ts"
+      ],
+      "exitCode": 0,
+      "logPath": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/independent-private-acl-receipt.log",
+      "logSha256": "dbf0b4ee03537f5566ec259c0fe008a5eb03832abf1447a3943e8aa3c162b513"
+    },
+    {
+      "fixture": "baseline",
+      "name": "calendar-id-contamination-original-oracle",
+      "argv": [
+        "/tmp/rox-core-integration-gate-ultra-20260930/toolchain/package/bin/bun",
+        "test",
+        "packages/core/src/calendar/calendar.test.ts",
+        "--test-name-pattern",
+        "merges events with Today/Upcoming without converting them into tasks"
+      ],
+      "exitCode": 0,
+      "logPath": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/calendar-id-contamination-original-oracle.log",
+      "logSha256": "e3bf86747ca85dd3a0688a4c4471b57766e5ebb0fc18471351fdd1a3a32afc5a"
+    },
+    {
+      "name": "calendar-id-contamination-original-oracle",
+      "mutationPath": "packages/core/src/calendar/merge.ts",
+      "originalSha256": "1401f058fe868919d614a65d4a2baf0814932125230632855a8b8457006e4e52",
+      "mutationSha256": "f34db181a4693e1787513b5bf844815f15970b0f6f3a3154168ab52ba38ab286",
+      "restoredSha256": "1401f058fe868919d614a65d4a2baf0814932125230632855a8b8457006e4e52",
+      "expectedExit": "pass"
+    },
+    {
+      "fixture": "proposed",
+      "name": "calendar-id-contamination-strengthened-oracle",
+      "argv": [
+        "/tmp/rox-core-integration-gate-ultra-20260930/toolchain/package/bin/bun",
+        "test",
+        "packages/core/src/calendar/calendar.test.ts",
+        "--test-name-pattern",
+        "merges events with Today/Upcoming without converting them into tasks"
+      ],
+      "exitCode": 1,
+      "logPath": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/calendar-id-contamination-strengthened-oracle.log",
+      "logSha256": "1aafb17c3ed13a9cf27fe69ca9e75bb2f76bcbb17ed6b18a3d0ab290eb370198"
+    },
+    {
+      "name": "calendar-id-contamination-strengthened-oracle",
+      "mutationPath": "packages/core/src/calendar/merge.ts",
+      "originalSha256": "1401f058fe868919d614a65d4a2baf0814932125230632855a8b8457006e4e52",
+      "mutationSha256": "f34db181a4693e1787513b5bf844815f15970b0f6f3a3154168ab52ba38ab286",
+      "restoredSha256": "1401f058fe868919d614a65d4a2baf0814932125230632855a8b8457006e4e52",
+      "expectedExit": "fail"
+    },
+    {
+      "fixture": "proposed",
+      "name": "queued-guard-original-mutant",
+      "argv": [
+        "/tmp/rox-core-integration-gate-ultra-20260930/toolchain/package/bin/bun",
+        "test",
+        "packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts",
+        "--test-name-pattern",
+        "queued shells reject both canonical verified states"
+      ],
+      "exitCode": 1,
+      "logPath": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/queued-guard-original-mutant.log",
+      "logSha256": "6b39b914c5b8539873c4168f5aea7f03e66ab996fe90bbedab1224a46bc6bbd3"
+    },
+    {
+      "name": "queued-guard-original-mutant",
+      "mutationPath": "packages/core/src/rox2/meeting-conation-shell.ts",
+      "originalSha256": "f2d628e81cc06d722efbc044a10d3b99549c6d9d34fb9cac7e84632c913ad815",
+      "mutationSha256": "92d7849447fae6263d8e02ef26e0e18718dd921a8c83ce66b74d9066adb0730d",
+      "restoredSha256": "f2d628e81cc06d722efbc044a10d3b99549c6d9d34fb9cac7e84632c913ad815",
+      "expectedExit": "fail"
+    },
+    {
+      "fixture": "proposed",
+      "name": "legacy-live-promoted-without-receipt-mutant",
+      "argv": [
+        "/tmp/rox-core-integration-gate-ultra-20260930/toolchain/package/bin/bun",
+        "test",
+        "packages/core/src/rox2/__tests__/platform-contract.test.ts",
+        "--test-name-pattern",
+        "legacy overloaded run state still type-checks and maps through the adapter"
+      ],
+      "exitCode": 1,
+      "logPath": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/legacy-live-promoted-without-receipt-mutant.log",
+      "logSha256": "1989f4154524ef5aa75811e0da74ca3120ec8a141faf4a6fa81469c6eccab713"
+    },
+    {
+      "name": "legacy-live-promoted-without-receipt-mutant",
+      "mutationPath": "packages/core/src/rox2/platform-contract.ts",
+      "originalSha256": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+      "mutationSha256": "35f3fc998615ae3e48cafe68307f0b78f41e13e6c9d318fbf3a4cd59cbea6dc3",
+      "restoredSha256": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+      "expectedExit": "fail"
+    },
+    {
+      "fixture": "proposed",
+      "name": "actor-acl-grant-substitution-mutant",
+      "argv": [
+        "/tmp/rox-core-integration-gate-ultra-20260930/toolchain/package/bin/bun",
+        "test",
+        "../evidence/canonical-acl-private.test.ts",
+        "--test-name-pattern",
+        "actor grants never transfer to another actor"
+      ],
+      "exitCode": 1,
+      "logPath": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/actor-acl-grant-substitution-mutant.log",
+      "logSha256": "068573f347ba2545dc5ba0cb83e89475d6a3a55613e6aae8d449ad6e818c40d4"
+    },
+    {
+      "name": "actor-acl-grant-substitution-mutant",
+      "mutationPath": "packages/core/src/rox2/platform-contract.ts",
+      "originalSha256": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+      "mutationSha256": "79dfb20abd5c615bca634edce756c49caae5b4edd3788111ae0c0d0560bf132e",
+      "restoredSha256": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+      "expectedExit": "fail"
+    },
+    {
+      "fixture": "proposed",
+      "name": "private-note-read-revoke-mutant",
+      "argv": [
+        "/tmp/rox-core-integration-gate-ultra-20260930/toolchain/package/bin/bun",
+        "test",
+        "../evidence/canonical-acl-private.test.ts",
+        "--test-name-pattern",
+        "denied cached Notes disclose no title, body or revision"
+      ],
+      "exitCode": 1,
+      "logPath": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/private-note-read-revoke-mutant.log",
+      "logSha256": "27d1fc13d5109a5357d1cbe66f719ea37933a9dd4f3959b460efa0b844fe3edf"
+    },
+    {
+      "name": "private-note-read-revoke-mutant",
+      "mutationPath": "packages/core/src/rox2/notes-repository.ts",
+      "originalSha256": "74384b88dbb255bbc5bad0f87898f6aebc804cd5f6fdaf49131761f49102992c",
+      "mutationSha256": "a8315491b71287e45a1c826be99a43c452e1aa6a7d3211cfead982c6b5e3ccff",
+      "restoredSha256": "74384b88dbb255bbc5bad0f87898f6aebc804cd5f6fdaf49131761f49102992c",
+      "expectedExit": "fail"
+    },
+    {
+      "fixture": "proposed",
+      "name": "locator-prototype-boundary-mutant",
+      "argv": [
+        "/tmp/rox-core-integration-gate-ultra-20260930/toolchain/package/bin/bun",
+        "test",
+        "packages/core/src/platform/identity/credential-types.test.ts",
+        "--test-name-pattern",
+        "rejects locator prototype-derived fields before registration or provider replacement"
+      ],
+      "exitCode": 1,
+      "logPath": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/locator-prototype-boundary-mutant.log",
+      "logSha256": "e09a5f5e6bdfc54b7f1c4219cedd5b095e7838dafc036165f813a6c7008682a9"
+    },
+    {
+      "name": "locator-prototype-boundary-mutant",
+      "mutationPath": "packages/core/src/platform/identity/credential-types.ts",
+      "originalSha256": "2f2e6ccd038e9d01961316650ba30bf533d8d6a84a961252f46f207cbec256cf",
+      "mutationSha256": "a1d0bdbda6398da9c7f11dc7e7c94e482e237fb33e0a67609ff35b1ef46ff7f4",
+      "restoredSha256": "2f2e6ccd038e9d01961316650ba30bf533d8d6a84a961252f46f207cbec256cf",
+      "expectedExit": "fail"
+    },
+    {
+      "fixture": "proposed",
+      "name": "locator-enumerability-boundary-mutant",
+      "argv": [
+        "/tmp/rox-core-integration-gate-ultra-20260930/toolchain/package/bin/bun",
+        "test",
+        "packages/core/src/platform/identity/credential-types.test.ts",
+        "--test-name-pattern",
+        "rejects locator non-enumerable fields before registration or provider replacement"
+      ],
+      "exitCode": 1,
+      "logPath": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/locator-enumerability-boundary-mutant.log",
+      "logSha256": "fdc64b6d51f80191d74766db356a4c742b64106c2373c20077e16ce070072ebb"
+    },
+    {
+      "name": "locator-enumerability-boundary-mutant",
+      "mutationPath": "packages/core/src/platform/identity/credential-types.ts",
+      "originalSha256": "2f2e6ccd038e9d01961316650ba30bf533d8d6a84a961252f46f207cbec256cf",
+      "mutationSha256": "8a4276e0f2d020902a0033ed3100724bb90bb5788c67db5651736d9922cbf4b3",
+      "restoredSha256": "2f2e6ccd038e9d01961316650ba30bf533d8d6a84a961252f46f207cbec256cf",
+      "expectedExit": "fail"
+    },
+    {
+      "fixture": "proposed",
+      "name": "locator-accessor-boundary-mutant",
+      "argv": [
+        "/tmp/rox-core-integration-gate-ultra-20260930/toolchain/package/bin/bun",
+        "test",
+        "packages/core/src/platform/identity/credential-types.test.ts",
+        "--test-name-pattern",
+        "rejects locator (type|key) accessors without executing them"
+      ],
+      "exitCode": 1,
+      "logPath": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/locator-accessor-boundary-mutant.log",
+      "logSha256": "e596cf6c602f5fc0c446ae3ef13bdb822ef22f0b43ba5b2d0e31219724fb0c0d"
+    },
+    {
+      "name": "locator-accessor-boundary-mutant",
+      "mutationPath": "packages/core/src/platform/identity/credential-types.ts",
+      "originalSha256": "2f2e6ccd038e9d01961316650ba30bf533d8d6a84a961252f46f207cbec256cf",
+      "mutationSha256": "3fe734ad584ce2465d09a469a452d8caae7b5feade3ea0eee0e1c5845cd18c60",
+      "restoredSha256": "2f2e6ccd038e9d01961316650ba30bf533d8d6a84a961252f46f207cbec256cf",
+      "expectedExit": "fail"
+    },
+    {
+      "fixture": "proposed",
+      "name": "task-explicit-clock-mutant",
+      "argv": [
+        "/tmp/rox-core-integration-gate-ultra-20260930/toolchain/package/bin/bun",
+        "test",
+        "packages/core/src/tasks/personal/things.test.ts",
+        "--test-name-pattern",
+        "setWhen classifies calendar dates against the supplied clock"
+      ],
+      "exitCode": 1,
+      "logPath": "/tmp/rox-core-integration-gate-ultra-20260930/evidence/task-explicit-clock-mutant.log",
+      "logSha256": "1827eab8a89110117ab4928a91a00ce0b11cfaa9de5b0e907b1acb804205755f"
+    },
+    {
+      "name": "task-explicit-clock-mutant",
+      "mutationPath": "packages/core/src/tasks/personal/store.ts",
+      "originalSha256": "8778151de654ca416591f18f069c760f4b8a4f1bd36d157f91bfcd14f43fb8aa",
+      "mutationSha256": "136c58fbe68ffb08dc89ee2b2775e594bcc345eedbb0d5e62fa27f5637925270",
+      "restoredSha256": "8778151de654ca416591f18f069c760f4b8a4f1bd36d157f91bfcd14f43fb8aa",
+      "expectedExit": "fail"
+    }
+  ],
+  "sourceRestorationVerified": true
+}

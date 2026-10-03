@@ -7,10 +7,10 @@ const MIN = 60000
 function input(patch: Partial<CenterInput> = {}): CenterInput {
   return {
     sessions: [
-      { id: 'run', name: 'Идёт', isProcessing: true, lastMessageAt: now - 2 * MIN, costUsd: 0.4 },
-      { id: 'stuck', name: 'Застрял', isProcessing: true, lastMessageAt: now - 25 * MIN, costUsd: 1.1 },
-      { id: 'wait', name: 'Ждёт', isProcessing: true, lastMessageAt: now - 30 * MIN, costUsd: 0.2 },
-      { id: 'old', name: 'Вчера', lastMessageAt: now - 30 * 3600e3, costUsd: 9 },
+      { id: 'run', name: 'Идёт', isProcessing: true, lastMessageAt: now - 2 * MIN },
+      { id: 'stuck', name: 'Застрял', isProcessing: true, lastMessageAt: now - 25 * MIN },
+      { id: 'wait', name: 'Ждёт', isProcessing: true, lastMessageAt: now - 30 * MIN },
+      { id: 'old', name: 'Вчера', lastMessageAt: now - 30 * 3600e3 },
       { id: 'idle', name: 'Сегодня', lastMessageAt: now - 60 * MIN },
     ],
     pendingPermissions: new Map([['wait', 2]]),
@@ -26,7 +26,7 @@ function input(patch: Partial<CenterInput> = {}): CenterInput {
       { id: 'a2', name: 'Выкл', event: 'LabelAdd', matcherIndex: 0, enabled: false },
     ],
     now,
-    dailyBudgetUsd: 2,
+    budget: { limitUsd: 2, spentUsd: 0.7, reservedUsd: 0.2, unresolvedUsd: 0, remainingUsd: 1.1, exhausted: false },
     ...patch,
   }
 }
@@ -51,13 +51,11 @@ describe('agent center model', () => {
     expect(c.cloudFailed.map((r) => r.id)).toEqual(['c3'])
   })
 
-  test('cost today counts sessions active today; budget flags', () => {
+  test('budget display uses the authoritative ledger, not session cost totals', () => {
     const c = buildAgentCenter(input())
-    expect(c.costToday).toBeCloseTo(1.7)
-    expect(c.topCostToday.map((s) => s.id)).toEqual(['stuck', 'run', 'wait'])
-    expect(c.budget).toMatchObject({ limit: 2, near: true, over: false })
-    expect(buildAgentCenter(input({ dailyBudgetUsd: 1 })).budget?.over).toBe(true)
-    expect(buildAgentCenter(input({ dailyBudgetUsd: null })).budget).toBeNull()
+    expect(c.budget).toMatchObject({ limitUsd: 2, spentUsd: 0.7, reservedUsd: 0.2, remainingUsd: 1.1, exhausted: false })
+    expect(buildAgentCenter(input({ budget: { limitUsd: 1, spentUsd: 1, reservedUsd: 0, unresolvedUsd: 0, remainingUsd: 0, exhausted: true } })).budget?.exhausted).toBe(true)
+    expect(buildAgentCenter(input({ budget: null })).budget).toBeNull()
   })
 
   test('automations split by enabled', () => {

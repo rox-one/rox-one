@@ -44,6 +44,18 @@ function startOfDay(ms: number): number {
   return d.getTime()
 }
 
+function calendarDayNumber(ms: number): number {
+  const d = new Date(ms)
+  return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / DAY
+}
+
+function dayNumber(ms: number, offset: number): number {
+  const d = new Date(ms)
+  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() + offset)
+  return calendarDayNumber(d.getTime())
+}
+
 type T = (key: string, opts?: Record<string, unknown>) => string
 
 /** Team activity → «Команда» items. Text is produced by the caller's labeler. */
@@ -95,9 +107,9 @@ export function matchesChip(item: FeedItem, chip: FeedChip, now: number, sources
     case 'x':
       return item.kind === 'x-post'
     case 'today':
-      return item.at >= startOfDay(now)
+      return item.at >= startOfDay(now) && item.at <= now
     case 'week':
-      return item.at >= now - 7 * DAY
+      return calendarDayNumber(item.at) >= dayNumber(now, -6) && item.at <= now
   }
 }
 
@@ -130,7 +142,8 @@ export interface DayGroup {
 }
 
 export function groupByDay(items: readonly FeedItem[], now: number): DayGroup[] {
-  const today = startOfDay(now)
+  const today = calendarDayNumber(now)
+  const yesterday = today - 1
   const groups = new Map<number, FeedItem[]>()
   for (const it of items) {
     const d = startOfDay(it.at)
@@ -140,12 +153,15 @@ export function groupByDay(items: readonly FeedItem[], now: number): DayGroup[] 
   }
   return [...groups.entries()]
     .sort((a, b) => b[0] - a[0])
-    .map(([day, list]) => ({
-      key: String(day),
-      day,
-      label: day >= today ? ('today' as const) : day >= today - DAY ? ('yesterday' as const) : ('earlier' as const),
-      items: list,
-    }))
+    .map(([day, list]) => {
+      const dayNumber = calendarDayNumber(day)
+      return {
+        key: String(day),
+        day,
+        label: dayNumber === today ? 'today' as const : dayNumber === yesterday ? 'yesterday' as const : 'earlier' as const,
+        items: list,
+      }
+    })
 }
 
 export type SourceTone = 'success' | 'danger' | 'warning' | 'muted'
@@ -255,6 +271,13 @@ export function filterView(items: readonly FeedViewItem[], f: FeedViewFilter, no
   )
 }
 
+export function visibleMarkCounts(items: readonly FeedViewItem[]): { unread: number; starred: number } {
+  return {
+    unread: items.filter((item) => !item.read).length,
+    starred: items.filter((item) => item.starred).length,
+  }
+}
+
 export interface OrderedDayGroup<T extends FeedItem = FeedItem> {
   key: string
   label: 'today' | 'yesterday' | 'earlier'
@@ -265,7 +288,8 @@ export interface OrderedDayGroup<T extends FeedItem = FeedItem> {
 
 /** Days follow the global order; items inside a day follow the per-day override or the global order. */
 export function groupOrdered<T extends FeedItem>(items: readonly T[], now: number, order: FeedOrder, perDay: Readonly<Record<string, FeedOrder>> = {}): OrderedDayGroup<T>[] {
-  const today = startOfDay(now)
+  const today = calendarDayNumber(now)
+  const yesterday = today - 1
   const groups = new Map<number, T[]>()
   for (const it of items) {
     const d = startOfDay(it.at)
@@ -279,11 +303,12 @@ export function groupOrdered<T extends FeedItem>(items: readonly T[], now: numbe
     .map(([day, list]) => {
       const key = String(day)
       const o = perDay[key] ?? order
+      const dayNumber = calendarDayNumber(day)
       return {
         key,
         day,
         order: o,
-        label: day >= today ? ('today' as const) : day >= today - DAY ? ('yesterday' as const) : ('earlier' as const),
+        label: dayNumber === today ? 'today' as const : dayNumber === yesterday ? 'yesterday' as const : 'earlier' as const,
         items: [...list].sort((a, b) => dir(o) * (a.at - b.at) || a.id.localeCompare(b.id)),
       }
     })
@@ -291,12 +316,12 @@ export function groupOrdered<T extends FeedItem>(items: readonly T[], now: numbe
 
 /** Items per day for the last `days` days (oldest first) — source sparkline. */
 export function itemsPerDay(items: readonly FeedItem[], sourceId: string, now: number, days = 14): number[] {
-  const today = startOfDay(now)
+  const today = calendarDayNumber(now)
   const out = new Array<number>(days).fill(0)
   for (const i of items) {
-    if (i.sourceId !== sourceId) continue
-    const idx = days - 1 - Math.round((today - startOfDay(i.at)) / DAY)
-    if (idx >= 0 && idx < days) out[idx]!++
+    if (i.sourceId !== sourceId || i.at > now) continue
+    const age = today - calendarDayNumber(i.at)
+    if (age >= 0 && age < days) out[days - 1 - age]!++
   }
   return out
 }

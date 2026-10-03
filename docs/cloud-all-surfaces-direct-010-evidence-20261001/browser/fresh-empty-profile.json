@@ -1,0 +1,26 @@
+{
+  "url": "http://127.0.0.1:34743/",
+  "title": "Rox",
+  "bodyText": "Connection Failed\n\nServer has no configured default workspace; configure it using the desktop or host tools\n\nRetry\nLog Out",
+  "appRootChildren": 2,
+  "topBar": null,
+  "modePill": null,
+  "rail": null,
+  "mainNavigation": null,
+  "headers": [],
+  "testIds": [],
+  "modeButtons": [],
+  "railButtons": [],
+  "sourceStates": [],
+  "preferences": {
+    "craft-workbench-enabled": null,
+    "craft-feature-unified-shell": null,
+    "craft-feature-workbench-top-chrome-v2": null,
+    "craft-feature-workbench-mode-registry-v1": null,
+    "craft-activity-rail-collapsed": null,
+    "craft-sidebar-width": null,
+    "craft-session-list-width": null
+  },
+  "screenshot": "fresh-empty-profile.png",
+  "html": "fresh-empty-profile.html"
+}

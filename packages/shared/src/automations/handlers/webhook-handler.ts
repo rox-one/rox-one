@@ -6,6 +6,7 @@
  * method, headers, and body format (JSON or raw).
  */
 
+import { createHash } from 'node:crypto';
 import { createLogger } from '../../utils/debug.ts';
 import type { EventBus, BaseEventPayload } from '../event-bus.ts';
 import type { AutomationHandler, AutomationsConfigProvider } from './types.ts';
@@ -14,6 +15,7 @@ import { matcherMatches, buildWebhookEnv, expandEnvVars } from '../utils.ts';
 import { executeWithRetry, redactUrl, isTransientFailure, createWebhookHistoryEntry, expandWebhookAction } from '../webhook-utils.ts';
 import { RetryScheduler } from '../retry-scheduler.ts';
 import { appendAutomationHistoryEntry } from '../history-store.ts';
+import { claimAutomationOccurrence, setAutomationOccurrenceOutcome } from '../occurrence-ledger.ts';
 
 const log = createLogger('webhook-handler');
 
@@ -32,10 +34,15 @@ export interface WebhookHandlerOptions {
   onError?: (event: AutomationEvent, error: Error) => void;
 }
 
-/** A webhook action paired with the matcher that triggered it */
 interface WebhookTask {
   action: WebhookAction;
   matcherId: string;
+  actionIndex: number;
+  matcherRevision: string;
+  scheduledAt?: string;
+  scheduledTimezone?: string;
+  occurrenceKey?: string;
+  runId?: string;
 }
 
 // ============================================================================
@@ -143,28 +150,42 @@ export class WebhookHandler implements AutomationHandler {
 
     // Collect webhook actions from matching matchers, threading matcher IDs for history
     const webhookTasks: WebhookTask[] = [];
+    const env = buildWebhookEnv(event, payload);
 
-    for (const matcher of matchers) {
+    const utcTime = 'utcTime' in payload ? payload.utcTime : undefined;
+    const scheduledAt = event === 'SchedulerTick' && typeof utcTime === 'string' && Number.isFinite(Date.parse(utcTime))
+      ? new Date(utcTime).toISOString()
+      : undefined;
+    for (const [matcherIndex, matcher] of matchers.entries()) {
       if (!matcherMatches(matcher, event, payload as unknown as Record<string, unknown>)) continue;
+      const matcherRevision = createHash('sha256').update(JSON.stringify(matcher)).digest('hex');
+      const matcherId = matcher.id ?? `legacy-${matcherIndex}-${matcherRevision.slice(0, 16)}`;
 
-      for (const action of matcher.actions) {
+      matcher.actions.forEach((action, actionIndex) => {
         if (action.type === 'webhook') {
-          webhookTasks.push({ action, matcherId: matcher.id ?? 'unknown' });
+          webhookTasks.push({
+            action,
+            matcherId,
+            actionIndex,
+            matcherRevision,
+            scheduledAt,
+            scheduledTimezone: scheduledAt ? matcher.timezone : undefined,
+            occurrenceKey: scheduledAt ? `${matcherId}:${scheduledAt}:${actionIndex}` : undefined,
+          });
         }
-      }
+      });
     }
 
     if (webhookTasks.length === 0) return;
 
     log.debug(`[WebhookHandler] Processing ${webhookTasks.length} webhooks for ${event}`);
 
-    // Build environment variables for URL/body expansion (webhook-safe: no process.env leak)
-    const env = buildWebhookEnv(event, payload);
+    const results: WebhookActionResult[] = new Array(webhookTasks.length);
+    const skipped = new Set<number>();
+    const toExecute: Array<{ index: number; task: WebhookTask }> = [];
 
     // Apply per-endpoint rate limiting before execution.
     // Resolve URLs first (expand env vars) so rate limiting works on actual endpoints.
-    const results: WebhookActionResult[] = new Array(webhookTasks.length);
-    const toExecute: Array<{ index: number; task: WebhookTask }> = [];
 
     for (let i = 0; i < webhookTasks.length; i++) {
       const task = webhookTasks[i]!;
@@ -182,13 +203,41 @@ export class WebhookHandler implements AutomationHandler {
           attempts: 0,
         };
       } else {
+        if (task.occurrenceKey && task.scheduledAt) {
+          try {
+            const claim = claimAutomationOccurrence(this.options.workspaceRootPath, task.occurrenceKey, {
+              workspaceId: this.options.workspaceId,
+              matcherId: task.matcherId,
+              matcherRevision: task.matcherRevision,
+              scheduledAt: task.scheduledAt,
+              scheduledTimezone: task.scheduledTimezone,
+              actionIndex: task.actionIndex,
+            });
+            if (!claim.claimed) {
+              skipped.add(i);
+              continue;
+            }
+            task.runId = claim.runId;
+          } catch (error) {
+            results[i] = {
+              type: 'webhook',
+              url: resolvedUrl,
+              statusCode: 0,
+              success: false,
+              error: error instanceof Error ? `Occurrence claim failed: ${error.message}` : 'Occurrence claim failed',
+              durationMs: 0,
+              attempts: 0,
+            };
+            continue;
+          }
+        }
         toExecute.push({ index: i, task });
       }
     }
 
     // Execute allowed webhook requests in parallel with retry for transient failures
     if (toExecute.length > 0) {
-      const webhookOpts = { env, retry: { maxAttempts: 2 } };
+      const webhookOpts = { env, retry: { maxAttempts: scheduledAt ? 1 : 2 } };
       const outcomes = await Promise.allSettled(
         toExecute.map(({ task }) => executeWithRetry(task.action, webhookOpts))
       );
@@ -213,11 +262,22 @@ export class WebhookHandler implements AutomationHandler {
 
     // Log failures and write history entries
     for (let i = 0; i < results.length; i++) {
+      if (skipped.has(i)) continue;
       const result = results[i]!;
       const task = webhookTasks[i]!;
 
       if (!result.success) {
         log.debug(`[WebhookHandler] ${result.url} → ${result.error}`);
+      }
+
+      const externalOutcomeUnknown = result.statusCode === 0 && !!task.runId;
+      const outcome = externalOutcomeUnknown ? 'unknown_external_outcome' : result.success ? 'succeeded' : 'failed';
+      if (task.runId && task.occurrenceKey) {
+        try {
+          setAutomationOccurrenceOutcome(this.options.workspaceRootPath, task.occurrenceKey, task.runId, outcome);
+        } catch (error) {
+          log.debug(`[WebhookHandler] Failed to persist occurrence outcome: ${error}`);
+        }
       }
 
       // Write history entry for each webhook execution.
@@ -232,6 +292,13 @@ export class WebhookHandler implements AutomationHandler {
         attempts: result.attempts,
         error: result.error,
         responseBody: result.responseBody,
+        scheduledAt: task.scheduledAt,
+        scheduledTimezone: task.scheduledTimezone,
+        occurrenceKey: task.occurrenceKey,
+        matcherRevision: task.scheduledAt ? task.matcherRevision : undefined,
+        actionIndex: task.scheduledAt ? task.actionIndex : undefined,
+        runId: task.runId,
+        outcome: externalOutcomeUnknown ? 'unknown_external_outcome' : result.success ? 'success' : 'error',
       });
       try {
         await appendAutomationHistoryEntry(this.options.workspaceRootPath, entry);
@@ -242,19 +309,26 @@ export class WebhookHandler implements AutomationHandler {
       // Enqueue for deferred retry if it's a transient failure (5xx / timeout)
       // and immediate retries were exhausted (attempts > 1 means retries ran).
       // Pre-expand the action so retries don't need the original event env.
-      if (isTransientFailure(result)) {
-        if (result.attempts && result.attempts > 1) {
+      if (result.statusCode !== 0 && isTransientFailure(result)) {
+        if ((task.scheduledAt && result.attempts) || (result.attempts && result.attempts > 1)) {
           const expandedAction = expandWebhookAction(task.action, env);
-          this.retryScheduler.enqueue(task.matcherId, expandedAction, result.url, result.error)
+          this.retryScheduler.enqueue(task.matcherId, expandedAction, result.url, result.error, {
+            scheduledAt: task.scheduledAt,
+            scheduledTimezone: task.scheduledTimezone,
+            occurrenceKey: task.occurrenceKey,
+            matcherRevision: task.scheduledAt ? task.matcherRevision : undefined,
+            actionIndex: task.scheduledAt ? task.actionIndex : undefined,
+            runId: task.runId,
+          })
             .catch(e => log.debug(`[WebhookHandler] Failed to enqueue for deferred retry: ${e}`));
         }
       }
     }
 
-    // Deliver results via callback
-    if (results.length > 0 && this.options.onWebhookResults) {
-      log.debug(`[WebhookHandler] Delivering ${results.length} webhook results`);
-      this.options.onWebhookResults(results);
+    const deliveredResults = results.filter((result): result is WebhookActionResult => result !== undefined);
+    if (deliveredResults.length > 0 && this.options.onWebhookResults) {
+      log.debug(`[WebhookHandler] Delivering ${deliveredResults.length} webhook results`);
+      this.options.onWebhookResults(deliveredResults);
     }
   }
 

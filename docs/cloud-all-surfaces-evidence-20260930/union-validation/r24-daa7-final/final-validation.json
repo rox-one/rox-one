@@ -1,0 +1,546 @@
+{
+  "sourceCheckpoint": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+  "currentHead": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "sourceFiles": 6178,
+  "sourceManifestBefore": "b5d85f9e7350e8643addfda6a49de8e4e7cfe41bf5bbad4897bcbabb0894689c",
+  "sourceManifestAfter": "8765a0423382d9d4c2190c5e1529941eb4ce1763b1932063410ca54912aecf14",
+  "changedTrackedFilesDuringValidation": {
+    "scripts/build-server.ts": {
+      "before": "4af971974a41a509f1a3c4149e6c53f2d7bfd923bbb93266eaca1f5b4d9cd60e",
+      "after": "d737fe594be9b0f20c1e42f39852ddd52245e9c86ac8481dc837b8ac8005b36a"
+    }
+  },
+  "thisAgentSourceWritesDuringFinalGates": false,
+  "rootAuthorizedPackagingOnlyChange": true,
+  "typeInputScope": {
+    "excludedPackagingSource": "scripts/build-server.ts",
+    "basis": "All ten checked package/app tsconfig roots include their src trees. No static import of scripts/build-server.ts exists. The SSH artifact helper refers to it only as an exists/spawn path, so the packaging file is outside TS compilation inputs.",
+    "gatesCarryTo010ViaUnchangedTypeApplicationAndTestBytes": true,
+    "coverageException": "coverage scans scripts; reran exact lint:i18n:coverage on010 because its input changed, PASS0/3.217s."
+  },
+  "gates": [
+    {
+      "label": "r24-final-validate-ci",
+      "command": [
+        "bun",
+        "--no-env-file",
+        "run",
+        "validate:ci"
+      ],
+      "reproduce": "bun --no-env-file run validate:ci",
+      "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+      "exit": 0,
+      "seconds": 157.018,
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HOME",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true,
+      "sourceCheckpoint": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+      "observedHeadBeforeBatch": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+      "observedHeadAfterBatch": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "individualCommandStartEndHeadNotRecorded": true,
+      "applicationAndTestInputBytesUnchangedAcrossBatch": true,
+      "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r24-daa7-final/r24-final-validate-ci.log",
+      "logSha256": "06abd5ecba6bc17bdf43c32b9af29a3ab2fb899718fdde090c26e1ef0782ba37",
+      "overlappingCountsNotAggregated": true,
+      "actualBunSubInvocations": [
+        {
+          "pass": 21,
+          "fail": 0,
+          "expect": 28,
+          "tests": 21,
+          "files": 1
+        },
+        {
+          "pass": 11,
+          "fail": 0,
+          "expect": 22,
+          "tests": 11,
+          "files": 1
+        },
+        {
+          "pass": 103,
+          "fail": 0,
+          "expect": 262,
+          "tests": 103,
+          "files": 4
+        },
+        {
+          "pass": 112,
+          "fail": 0,
+          "expect": 394,
+          "tests": 112,
+          "files": 13
+        },
+        {
+          "pass": 1,
+          "fail": 0,
+          "expect": 2,
+          "tests": 1,
+          "files": 1
+        }
+      ],
+      "actualPythonDocTests": {
+        "tests": 19,
+        "fail": 0,
+        "seconds": 11.772,
+        "individualNamesNotPrinted": true,
+        "staticMethodDeclarationReceipt": "doc-test-declarations.json"
+      }
+    },
+    {
+      "label": "r24-final-webui-typecheck",
+      "command": [
+        "bun",
+        "--no-env-file",
+        "run",
+        "webui:typecheck"
+      ],
+      "reproduce": "bun --no-env-file run webui:typecheck",
+      "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+      "exit": 0,
+      "seconds": 43.174,
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HOME",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true,
+      "sourceCheckpoint": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+      "observedHeadBeforeBatch": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+      "observedHeadAfterBatch": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "individualCommandStartEndHeadNotRecorded": true,
+      "applicationAndTestInputBytesUnchangedAcrossBatch": true,
+      "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r24-daa7-final/r24-final-webui-typecheck.log",
+      "logSha256": "2f81eb99ff92fd33b68966d34e38497fde1c57e3efbc3c0a364442498bc88092",
+      "overlappingCountsNotAggregated": true,
+      "actualBunSubInvocations": []
+    },
+    {
+      "label": "r24-final-integrated-controls",
+      "command": [
+        "bun",
+        "--no-env-file",
+        "test",
+        "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+        "packages/server-core/src/transport/__tests__/before-response-authority.test.ts",
+        "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+        "packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts",
+        "packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts",
+        "scripts/electron-main-cjs.test.ts",
+        "scripts/__tests__/check-i18n-coverage.test.ts",
+        "packages/pi-agent-server/src/custom-endpoint-registration.test.ts",
+        "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+        "apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+        "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+        "packages/shared/src/projects/__tests__",
+        "apps/webui/__tests__"
+      ],
+      "reproduce": "bun --no-env-file test packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts packages/server-core/src/transport/__tests__/before-response-authority.test.ts packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts scripts/electron-main-cjs.test.ts scripts/__tests__/check-i18n-coverage.test.ts packages/pi-agent-server/src/custom-endpoint-registration.test.ts apps/electron/src/main/__tests__/native-notes-runtime.test.ts apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts packages/shared/src/projects/__tests__ apps/webui/__tests__",
+      "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+      "exit": 0,
+      "seconds": 6.695,
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HOME",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true,
+      "sourceCheckpoint": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+      "observedHeadBeforeBatch": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+      "observedHeadAfterBatch": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "individualCommandStartEndHeadNotRecorded": true,
+      "applicationAndTestInputBytesUnchangedAcrossBatch": true,
+      "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r24-daa7-final/r24-final-integrated-controls.log",
+      "logSha256": "46dacbe06d96125b2f23930357d92d807e41f53c493179ca17f9d22b795b813f",
+      "overlappingCountsNotAggregated": true,
+      "actualBunSubInvocations": [
+        {
+          "pass": 198,
+          "fail": 0,
+          "expect": 930,
+          "tests": 198,
+          "files": 26
+        }
+      ]
+    },
+    {
+      "label": "r24-final-built-smoke",
+      "command": [
+        "bun",
+        "--no-env-file",
+        "test",
+        "packages/server/src/__tests__/smoke.test.ts"
+      ],
+      "reproduce": "bun --no-env-file test packages/server/src/__tests__/smoke.test.ts",
+      "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+      "exit": 0,
+      "seconds": 8.799,
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HOME",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "ROX_SERVER_SMOKE_ENTRY",
+        "ROX_SERVER_SMOKE_WEBUI_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true,
+      "sourceCheckpoint": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+      "observedHeadBeforeBatch": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+      "observedHeadAfterBatch": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "individualCommandStartEndHeadNotRecorded": true,
+      "applicationAndTestInputBytesUnchangedAcrossBatch": true,
+      "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r24-daa7-final/r24-final-built-smoke.log",
+      "logSha256": "4e5489639654fa7adc1f8a12c47064f31d1d5d75924b3748a028f074da439846",
+      "overlappingCountsNotAggregated": true,
+      "actualBunSubInvocations": [
+        {
+          "pass": 4,
+          "fail": 0,
+          "expect": 37,
+          "tests": 4,
+          "files": 1
+        }
+      ],
+      "builtEntry": "dist-server/index.js",
+      "builtWebuiDir": "apps/webui/dist",
+      "artifactProducerSource": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e"
+    },
+    {
+      "label": "r24-packaging-head-i18n-coverage",
+      "command": [
+        "bun",
+        "--no-env-file",
+        "run",
+        "lint:i18n:coverage"
+      ],
+      "reproduce": "bun --no-env-file run lint:i18n:coverage",
+      "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+      "exit": 0,
+      "seconds": 3.217,
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HOME",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true,
+      "sourceCheckpoint": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "observedHeadBeforeBatch": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+      "observedHeadAfterBatch": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "individualCommandStartEndHeadNotRecorded": true,
+      "applicationAndTestInputBytesUnchangedAcrossBatch": true,
+      "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r24-daa7-final/r24-packaging-head-i18n-coverage.log",
+      "logSha256": "a63ddb51c803f4654f2e9214bd96724b8e46eb7744899b65ce7ff3bbe20e70fc",
+      "overlappingCountsNotAggregated": true,
+      "actualBunSubInvocations": []
+    }
+  ],
+  "typecheckPackagesPassed": [
+    "core",
+    "shared",
+    "server-core",
+    "server",
+    "session-tools-core",
+    "pi-agent-server",
+    "Electron",
+    "ui",
+    "workspace-service",
+    "WebUI"
+  ],
+  "skippedScopes": [
+    {
+      "scope": "workers/pages",
+      "reason": "Not present inOSSexport",
+      "outcome": "SKIPPED, not typecheck PASS"
+    }
+  ],
+  "i18n": {
+    "parityLocales": 11,
+    "keysEach": 7449,
+    "sorted": true,
+    "coverageLiteralReferences": 7165,
+    "coverageUniqueKeys": 5256,
+    "coverageEnglishKeys": 7449,
+    "missingKeyNegativeIncludedInIntegratedStep": true
+  },
+  "executedCaseReceipt": "executed-cases.json",
+  "allBunCaseNamesSourceFileAndDeclarationLinesResolved": true,
+  "noCrossInvocationUniqueTestTotalClaimed": true,
+  "carriedPriorProof": {
+    "base": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+    "durable": {
+      "pass": 1002,
+      "fail": 0,
+      "expect": 7441,
+      "files": 101
+    },
+    "September": {
+      "pass": 24,
+      "fail": 0,
+      "expect": 147,
+      "files": 4
+    },
+    "receipt": "../r19-frozen-final/final-validation.json",
+    "repeated": false,
+    "coreSharedServerNativeElectronAndRelevantCaseFileBytesUnchanged": true,
+    "diffVsBase": [
+      ".github/workflows/sqlite-runtime-recovery.yml",
+      "apps/electron/src/renderer/components/app-shell/TopBar.tsx",
+      "apps/electron/src/renderer/components/projects/ProjectAuthorityConnectionPanel.tsx",
+      "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+      "apps/electron/src/renderer/hooks/useShellAppearance.ts",
+      "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+      "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+      "apps/electron/src/renderer/lib/desktop-appearance.ts",
+      "apps/electron/src/renderer/lib/notes-capability.ts",
+      "apps/electron/src/renderer/lib/scoped-capability-read.ts",
+      "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts",
+      "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/EnvironmentSettingsSection.tsx",
+      "apps/electron/src/renderer/pages/settings/MessagingSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/VoiceSettingsSection.tsx",
+      "apps/electron/src/renderer/pages/settings/ZenShellSettings.tsx",
+      "apps/electron/src/renderer/pages/settings/__tests__/AppearanceSettingsPage.test.ts",
+      "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "apps/electron/src/renderer/pages/settings/desktop-settings-session.ts"
+    ],
+    "finalPackagingScriptChangeOutsideTheseInputs": true
+  },
+  "artifacts": {
+    "producerSource": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+    "applicationEquivalentFinalHead": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "fileCount": 856,
+    "manifestBefore": "5192c2c4c4d55cbfdbe17d2801f8525da3cec5cb1542836b42f2253a04ba67a5",
+    "manifestAfter": "5192c2c4c4d55cbfdbe17d2801f8525da3cec5cb1542836b42f2253a04ba67a5",
+    "allUnchanged": true,
+    "server": {
+      "sha256": "436a76834cf72a8d666df1bb75057b41617328f064725e23f3b8771f9dfddb2f",
+      "bytes": 36851968
+    },
+    "webui": {
+      "sha256": "6671ed2fb506a7a2477884ba2446b2e8eec0d42d895ea24a3f8570750ec34b96",
+      "bytes": 1767
+    },
+    "fullManifestBefore": "built-artifact-before.json",
+    "fullManifestAfter": "built-artifact-after.json",
+    "rawBuildVersionSourceNotRelabeled": true
+  },
+  "historicalResolvedFailure": {
+    "source": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+    "classification": "Testfixture DTO/source defect",
+    "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+    "line": 226,
+    "column": 78,
+    "localValidateExit": 2,
+    "hostedAll4TypeFailureAndDownstreamSkipped": true,
+    "receipt": "../r23-frozen-final/historical-a4-validation.json",
+    "fixedOnlyFullTypedFixtureResponse": true,
+    "newSourceWholeValidateGreen": true
+  },
+  "externalPrerequisitesPending": [
+    {
+      "scope": "WP01/WP48 protected PostgreSQL macro integration",
+      "outcome": "Downstream NOT_EXECUTED; previous WP48 fixture failed before assertions",
+      "source": "apps/workspace-service/src/auth/postgres-identity.ts:41",
+      "fixture": "tests/macro-integration/wp-48-domain.test.ts:27",
+      "reason": "Protected PostgreSQL configuration unavailable; no provisioning or credential/environment changes."
+    },
+    {
+      "scope": "Actual native Electron host OS and installed UI",
+      "outcome": "Not verified by callback fixtures; self-hosted CI metadata is separate."
+    },
+    {
+      "scope": "Existing CodeQL 96 annotations",
+      "outcome": "Pending review; these are not 96 validated vulnerabilities."
+    },
+    {
+      "scope": "Vercel deployment",
+      "outcome": "Infrastructure: Account is blocked."
+    }
+  ],
+  "hostedMetadataReceipt": "hosted/hosted-receipts-010.json",
+  "hostedPrintedCheckoutShaAndTestCountsUnverified": true,
+  "noLogRedirectRetriesOrNetworkPermissionsChanged": true,
+  "proofLimits": [
+    "Callback fixtures do not attest native IPC or mounted component acceptance.",
+    "Strict Bun 1.3.14 built HTTP/WS smoke differs from the canonical vendor Bun 1.3.9 distribution probe owned by the build agent.",
+    "Full acceptance of all surfaces is not claimed while external prerequisites and native acceptance remain pending."
+  ],
+  "lockSha256": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+  "originalHead": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+  "originalStatus": [],
+  "statusAtFinish": [
+    "?? dist-server/"
+  ],
+  "createdAtUnix": 1790800078.5090427,
+  "cleanup": {
+    "removedOnlyOwnRunnerDirs": [
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r24-daa7-final/config",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r24-daa7-final/tmp",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r24-daa7-final/cache",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r24-daa7-final/npm-cache",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r24-daa7-final/xdg-cache",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r23-frozen-final/config",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r23-frozen-final/tmp",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r23-frozen-final/cache",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r23-frozen-final/npm-cache",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r23-frozen-final/xdg-cache"
+    ],
+    "strictSmokeAssertedChildGracefulStopAndReaped": true,
+    "noSourceOrBuildMutationsByThisAgent": "Finalreadonlygates",
+    "otherAgentProfilesProcessesUntouched": true
+  },
+  "hostedCompletionObservedAt": "2026-09-30T20:32:12Z",
+  "hostedFinalSource": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "hostedAll4SQLiteJobsSucceeded": true,
+  "hostedValidateAliasSucceeded": true,
+  "latestCodeQl": {
+    "checkId": 110078183669,
+    "conclusion": "failure",
+    "annotations": 96,
+    "high": 64,
+    "medium": 32,
+    "validatedVulnerabilities": false,
+    "configurationWarningPresent": false,
+    "earlierConfigurationWarningHistoricalOnly": true
+  },
+  "hostedFinalNormalizedReceiptSha256": "e1b310fc3a8e737c9e04f2354512302ee6a0473a8ddae355c35c1d38a2a08ef1",
+  "hostedNormalizedCounts": {
+    "jobs": 4,
+    "success": 4,
+    "failure": 0,
+    "pending": 0,
+    "steps": 68,
+    "stepsSuccess": 68,
+    "testPass": null,
+    "testFail": null,
+    "testAssertions": null
+  },
+  "hostedFinalNormalizedAt": "2026-09-30T20:34:27.422980+00:00",
+  "hostedSyntheticEquivalence": {
+    "direct": {
+      "capturedAt": "2026-09-30T20:16:43.142202+00:00",
+      "sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "tree": "c21b2fa0acacf489194dc6ca61f3ffc3191eba14",
+      "parents": [
+        "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba"
+      ]
+    },
+    "synthetic": {
+      "capturedAt": "2026-09-30T20:16:43.142202+00:00",
+      "sha": "70b1bf757bfccd7260d96507bf75df91776b943b",
+      "tree": "c21b2fa0acacf489194dc6ca61f3ffc3191eba14",
+      "parents": [
+        "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "010fa8c040e3a84cd40cd8195473f52d8582f159"
+      ]
+    },
+    "treesEqual": true,
+    "qualification": "Only Git source tree equivalence. Printed checkoutSHA remainsUNVERIFIED."
+  },
+  "codeqlPendingReceipt": "hosted/codeql-review-pending-010.json",
+  "codeqlPendingReceiptSha256": "4cfcc16cc5213ebde859a8a265a342c4a39a6297cc0b31a5e52d0e21ec80e4cd",
+  "currentHeadAtReceiptFinalize": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "currentStatusAtReceiptFinalize": [
+    "?? dist-server/"
+  ]
+}

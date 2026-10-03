@@ -1,0 +1,306 @@
+{
+  "task_id": "LSX-WP-039-preflight",
+  "attempt_id": "f25c1e3684fd96f27833b85da8829b95",
+  "packet_hash": "5f65de949e6f5ef48c4f2f552b8a0ad6e32e293c63c8f4ddd051903ba6f1a183",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-039",
+  "featureComplete": false,
+  "state": "PREFLIGHT_ONLY_IMPLEMENTATION_GATED",
+  "scope": {
+    "mode": "inspect-and-write-owned-report",
+    "tier": "bounded-workflow",
+    "ownedReport": "plans/compound-implementation/worker-reviews/LSX-WP-039.json",
+    "productChanges": false,
+    "runtimeChecks": "NOT_RUN: builds, tests, UI and network operations prohibited by dispatch",
+    "inspectionBoundary": "Package specifications, four normative read-only source paths and their directly imported Docs modules; provided artifact verifier inspected only to establish safe validation.",
+    "discoveryLimit": "Codegraph returned no project index. Scoped find calls failed with judge HTTP 402; their no-hits output is not absence evidence. Continued with concrete symbols and read/grep. No indexing or network operation initiated."
+  },
+  "dependencies": ["LSX-WP-028", "LSX-WP-026"],
+  "dependencyOrder": {
+    "required": "Lead wave0 commit, accepted LSX-WP-026 receipt, accepted LSX-WP-028 receipt, then LSX-WP-039 implementation against the approved committed generation.",
+    "evidence": "work-packages.json:9506-9513,10208-10215,14029-14035; LSX-WP-028 itself depends on LSX-WP-026.",
+    "receiptState": "NOT_INSPECTED_OR_ACCEPTED_BY_THIS_WORKER; no dependency completion inferred from files or final text",
+    "dispatchDependsOn": "The preflight packet has depends_on=[]; that is not the implementation dependency array."
+  },
+  "foundationGates": [
+    {
+      "gate": "EG-COLLABORATION",
+      "kind": "EXPLICIT_EXTERNAL_PREREQUISITE_NOT_INTERNAL_DAG_EDGE",
+      "evidence": "work-packages.json:92-97,14033-14035,14273",
+      "required": "Accepted Macro WP-49/WP-51 and RS-DOC-01 readiness receipts proving single-writer adoption, epoch/revoke fencing and actual docWAL transport. Reuse their owner, checkpoint and transport; do not simulate a second authority in reconnect-rebase.ts.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "gate": "Editor/CRDT conformance and durable local WAL adoption",
+      "kind": "HIDDEN_FOUNDATION_IN_REFERENCED_PUBLISHED_SPEC",
+      "evidence": "RS-DOC-01.md:3,26,37,52-58; 07-collaboration-runtime.md:184-194",
+      "required": "One React binding with schema/versioned export, supported dependency license, cursor identity, async WAL durability and negative revocation evidence. Runnable conformance spike required before production shared-document integration; plain full-body save is not CRDT readiness. No literal Macro AGPL implementation copy.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Native atomic writer and shared cutover fencing",
+      "kind": "HIDDEN_FOUNDATION_IN_REFERENCED_PUBLISHED_SPEC",
+      "evidence": "RS-NOTE-01.md:37,41-44,53-57; notes-engine.ts:391-445",
+      "required": "Canonical native atomic CAS plus source/epoch routing, one-writer cutover and rejection of old/raw shared writers. Markdown is a projection after shared adoption; watcher cannot be another master. NativeNotesEngine memory Maps and its synchronous revision comparison alone cannot prove process crash durability or shared multi-writer fencing.",
+      "state": "NOT_VERIFIED; current renderer has wave0 commitMarkdown integration but product behavior was not run"
+    },
+    {
+      "gate": "docWAL lifecycle independent of disposable cache",
+      "kind": "HIDDEN_FOUNDATION_IN_REFERENCED_PUBLISHED_SPEC",
+      "evidence": "RS-NOTE-01.md:57; RS-DOC-01.md:33,53; work-packages.json:14205; 07-collaboration-runtime.md:168-171",
+      "required": "Cache upgrade/reset cannot clear pending WAL; incompatible schema is held, not wiped; quota/corruption/missing causal dependencies retain recovery paths. Preserve exact operation IDs through local checkpoint, server ACK and restart. No appcache or localStorage replacement journal.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Current policy, offline lease and revoke-projection owner",
+      "kind": "FOUNDATION_IN_PUBLISHED_AND_REFERENCED_SPECS",
+      "evidence": "06-rox-docs-design.md:206-220; 07-domain-entity-model.md:167; RS-NOTE-01.md:56; descriptor-resolver.ts:343-424; surface-context.ts:51-55,76-90",
+      "required": "Authenticated current-policy write enforcement and explicit local-owner or bounded offline lease policy. Reconnect invalidates old grants before any snapshot or replay; expiry/revoke purges derived body/tree/search/context/presence projections and quarantines only policy-allowed unsent draft. RebaseLiveContext and filtering ref IDs are not cache/body purge implementations. Do not promise immediate remote revocation or physical erase while disconnected.",
+      "state": "NOT_VERIFIED; draft quarantine/export policy and affected projection owners must be supplied by the lead"
+    },
+    {
+      "gate": "Published Drive/discussion prerequisites and native regression evidence",
+      "kind": "HIDDEN_PUBLISHED_HANDOFF_DEPENDENCIES_NOT_ADDED_TO_INTERNAL_DAG",
+      "evidence": "RS-DOC-01.md:62-66,80-84; RS-NOTE-01.md:63-66,80-83",
+      "required": "RS-DOC-01 requires RS-DRV-01 and RS-MSG-02; RS-NOTE-01 requires RS-DRV-01 and RS-DOC-01. Validate affected identity/grant and common discussion readiness rather than invent stores. Preserve separate #563 Notes IME/focus/zoom and #570 HTML Page artifact regression lanes. Publication is not implementation evidence.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Approved source generation and bounded integration leases",
+      "kind": "IMPLEMENTATION_LAUNCH_GATE",
+      "evidence": "execution-packages.json:3425-3435; work-packages.json:14346-14356; dispatch authorization",
+      "required": "Wait for lead wave0 commit and dependency artifact/readback receipts; resolve reference package revision/digest and spec hashes; lead reconciles normative e953786 baseline with actual approved post-wave0 implementation revision without this worker checkout. Exclusive leases for NotesPage and notes-engine. Additional transport/localization/source-owner edits require a revised reviewed packet, not scope expansion by this worker.",
+      "state": "NOT_READY_FOR_IMPLEMENTATION"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/core/src/docs/structural-intent-journal.ts",
+    "packages/server-core/src/docs/reconnect-rebase.ts",
+    "apps/electron/src/renderer/pages/docs/StructuralConflictReview.tsx",
+    "tests/lark-suite-extension/lsx-wp-039.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-039.spec.ts"
+  ],
+  "ownedNewFileContributions": [
+    {
+      "path": "packages/core/src/docs/structural-intent-journal.ts",
+      "presence": "NOT_FOUND_BY_EXACT_PATH_GLOB",
+      "proposedSymbols": ["OfflineIntent", "RecoveryCheckpoint", "StructuralReconnectRequest", "StructuralReconnectResult", "StructuralConflictResolution", "decodeStructuralReconnectRequest", "decodeStructuralConflictResolution"],
+      "change": "Define versioned decoded schemas for doc.reconnectStructuralIntents and doc.resolveStructuralConflict. Intent records include canonical scoped ref/source, authorityEpoch, single base aggregate revision, stable semantic node/parent/after IDs, operationId/idempotency key and payload digest. RecoveryCheckpoint records ordered pending intents, durable local checkpoint and committed receipt watermark; use the accepted LSX-WP-026/docWAL persistence mechanism, not a second body store. Discriminate pending/rebased committed/conflict/denied and all eight normative errors. Preserve exact pending IDs/digests until durable reconciled receipt; same key/different payload must reject. Invalid/unknown schema remains recoverable and cannot reset the journal.",
+      "prerequisite": "Accepted draft/WAL schema and adapter from LSX-WP-026 and EG-COLLABORATION; accepted semantic intent types from LSX-WP-028. Proposed names are contributions, not current symbols."
+    },
+    {
+      "path": "packages/server-core/src/docs/reconnect-rebase.ts",
+      "presence": "NOT_FOUND_BY_EXACT_PATH_GLOB",
+      "proposedSymbols": ["reconnectStructuralIntents", "resolveStructuralConflict"],
+      "change": "Decode input, bind actor from authenticated transport, reevaluate current source policy before protected reads and again for each mutation under the canonical document commit boundary. Reject stale epoch before rebase; resolve receipt replay without bypassing current ACL. Use LSX-WP-028 rebaseTreeIntent/tree validator and LSX-WP-026 authority writer. Compare aggregate revision covering text/tree/epoch; return explicit rebase receipt or conflict, never independent structure CAS. Missing/deleted IDs or unsafe ancestor edits cannot resurrect nodes. Commit content, dedup receipt and canonical outbox intent atomically via existing authority; return only authorized snapshot/missing ops. Conflict resolution takes reviewed digest/current revision/epoch and rechecks on apply. Denied responses contain no body, snapshot, missing ops or presence.",
+      "prerequisite": "Accepted authority/WAL, structural rebase and authenticated read/write policy ports; approved server dispatch integration outside this file."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/docs/StructuralConflictReview.tsx",
+      "presence": "NOT_FOUND_BY_EXACT_PATH_GLOB",
+      "proposedSymbols": ["StructuralConflictReview"],
+      "change": "Render within existing NotesPage editor/recovery surface, not another editor or route. Show local pending versus authorized current tree/text comparison, explicit conflict/denied/deleted states, retained rejected draft, allowed-only copy and reviewed resolution. Pending local persistence must not display committed. Revoke must not expose cached server comparison. Preserve focus/caret/IME and selection IDs, Escape focus return, keyboard actions, help on hover/focus/click, reduced motion and user theme. Use t() and lead-owned translations for all ten locales; use existing loaded Rox Mono design system.",
+      "prerequisite": "Accepted LSX-WP-026 editor binding; current draft quarantine/copy policy; transport methods and approved locale patches."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-039.test.ts",
+      "presence": "NOT_FOUND_BY_EXACT_PATH_GLOB",
+      "change": "Add deterministic behavior/property scenarios for aggregate CAS/epoch, deleted-node no-resurrection, ancestor move/delete versus acknowledged text, invalid tree, policy changes during a replay batch, actor spoofing, duplicate delivery and response-loss reconciliation. Exercise the real accepted journal/authority with fresh-process restart and interrupted network checkpoints, retaining seeds/input hashes. Add frozen-old-grants and independent-structure-token mutants with named semantic failure assertions; no mock echo/wiring-only tests.",
+      "prerequisite": "Dependency implementations and real local/server authority harness; test command is normative and was not executed in preflight."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-039.spec.ts",
+      "presence": "NOT_FOUND_BY_EXACT_PATH_GLOB",
+      "change": "Exercise actual supported Electron Notes surface: queue move/text offline, restart, reconnect, compare/resolve, revoke while queued, observe pending not committed and no protected body after denial. Capture pointer/keyboard/IME/focus/reduced-motion/200% zoom/light-dark/Russian and locale/font/ARIA evidence against integrated bytes; retain attempt and screenshot hashes. Do not treat a standalone fixture as actual native proof.",
+      "prerequisite": "Discover supported Electron UI runner after implementation readiness; no fabricated runner command or screenshots."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/rox2/notes-engine.ts",
+      "symbol": "NativeNotesEngine / createNativeNotesEngine.save / parseBlocks / contentHash",
+      "lineStart": 366,
+      "lineEnd": 445,
+      "baseSha256": "77f8c14ade5249c5dbaba4e5bb22551a9a4f98954b9dc7244ee5274404cd1480",
+      "change": "At the NativeNotesEngine adapter seam, route this slice's queued semantic replay through accepted canonical authority and durable receipt reconciliation; do not add a journal Map or label writeHead's memory mutation durable. Preserve expectedRevision behavior for standalone notes. Reuse accepted stable block identity and retained-source patches; do not regenerate node IDs via parseUnlabeledBlocks or normalize the whole document with stampBlockMarkers for structural replay. Keep legacy contentHash semantics unchanged for existing consumers; canonical reconnect revision must use accepted SHA-256 aggregate revision, not this length/FNV hash. If accepted dependencies place the native authority outside this interface, request a reviewed scope update rather than altering unrelated engine methods.",
+      "reason": "save currently checks only revision in memory, has no authorityEpoch/idempotency/authenticated context/durable commit port; parseBlocks trims text and derives unmarked IDs from mutable content, while writeHead stamps the whole document. These cannot establish stable structural IDs, lossless edits or restart-safe reconnect.",
+      "owner": "integration-owner",
+      "prerequisite": "Accepted LSX-WP-026/028 authority contract and explicit path lease; precise dependency-owned adapter signature must be bound before patch."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "saveCurrentNote",
+      "lineStart": 1023,
+      "lineEnd": 1099,
+      "baseSha256": "872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba",
+      "change": "Replace pendingCommitsRef as recovery authority with accepted LSX-WP-026 durable draft/journal adapter while retaining the existing serial saveQueueRef and generation guards. Persist exact operationId/base revision/source/epoch and semantic intent before send. Take epoch from the server-issued accepted descriptor/binding, not literal authorityEpoch:1. On reconnect invoke the reviewed structural rebase operation before submitting a new edit; reconcile previously unknown durable receipts without minting new IDs. Clear journal records only after durable receipt/checkpoint, not on autosave start or generic response. Keep rejected draft separately recoverable; preserve current editor mount.",
+      "reason": "Current operation replay works within one renderer lifetime, but both pendingCommitsRef and saveQueueRef are volatile. Hardcoded epoch prevents general authority migration; full-body commitMarkdown is not semantic structural rebase.",
+      "owner": "integration-owner",
+      "prerequisite": "Accepted durable draft adapter, semantic rebase methods and correct native/shared authority binding."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "saveCurrentNote error/recovery integration with onNotesChanged and notes-save-recovery",
+      "lineStart": 961,
+      "lineEnd": 999,
+      "relatedRanges": [[1072,1091],[2288,2314],[2609,2624]],
+      "baseSha256": "872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba",
+      "change": "Mount StructuralConflictReview in the existing recovery area through saveCurrentNote outcome state; distinguish local durable/pending/committed/conflict/denied. Gate copy by current quarantine policy. On denied/revoked source, stop replay/editing, invalidate cached comparison/tree and actor-derived projections using existing owners, and retain only permitted quarantined local draft. Existing descriptor refresh only updates contentResolution and saveNeedsReload; it must not leave protected body visible as a conflict comparison. Existing unconditional clipboard copy cannot be used for denied protected snapshots. Ancillary lifecycle/render edits are a reviewed extension of the named saveCurrentNote seam and need the lead's lease/scope approval before applying.",
+      "reason": "Current save recovery is an alert plus reload/copy controls, not a structural comparison; descriptor denial does not itself clear content or existing task projections. The existing Tiptap instance must remain the sole editor.",
+      "owner": "integration-owner",
+      "prerequisite": "Policy-defined quarantine and projection purge API plus approved bounded ancillary symbol coverage."
+    }
+  ],
+  "integrationRequestsBeyondAllowedSharedPaths": [
+    {
+      "request": "Lead must allocate reviewed authenticated RPC/preload/renderer API dispatch for doc.reconnectStructuralIntents and doc.resolveStructuralConflict, plus access to the accepted durable local WAL adapter. New reconnect-rebase.ts alone cannot become an actual Electron/server boundary.",
+      "evidence": "NotesPage.tsx imports RPC_CHANNELS and calls window.electronAPI.commitMarkdown/getBlockTree; execution-packages.json limits sharedPatchPaths to notes-engine.ts and NotesPage.tsx.",
+      "state": "PACKET_EXPANSION_OR_DEPENDENCY_OWNER_INTEGRATION_REQUIRED; concrete transport implementation files not inspected outside permitted boundary"
+    },
+    {
+      "request": "Lead/localization owner supplies keys and ASCII-sorted changes in packages/shared/src/i18n/locales/*.json for all ten locales, under an updated path lease/packet. Worker cannot create hardcoded UI strings or write those files with this authorization.",
+      "evidence": "Repository AGENTS i18n contract; work-packages.json:14219; NotesPage.tsx uses useTranslation/t().",
+      "state": "REQUIRED_NOT_AUTHORIZED_IN_CURRENT_PACKAGE_WRITES"
+    },
+    {
+      "request": "Lead confirms accepted server policy/commit/outbox and derived search/context/presence revoke owners. If additional patches are necessary, obtain reviewed packet with concrete symbols before implementing; do not write new owners or a parallel EventBus.",
+      "evidence": "07-domain-entity-model.md:171-189; surface-context.ts:51-55,76-90; descriptor-resolver.ts ContentPolicy permits read/adoptDescriptor only; normative event aliases remain proposed.",
+      "state": "REQUIRED_DEPENDENCY_OWNER_CONTRACTS_NOT_VERIFIED"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "single aggregate CAS+epoch through reconnect",
+      "currentEvidence": "NativeNotesEngine.save compares expectedRevision (432-445) but carries no epoch or durable idempotency. Current NotesPage saveCurrentNote passes SHA-256 expectedRevision and operationId but hardcodes authorityEpoch:1 (1041-1057). BlockTreeResult carries sourceHash/revision/epoch and disposable stable projections (block-tree-service.ts:18-26,88-108). 06-rox-docs-design.md:176 explicitly forbids independent structure CAS and stale-epoch rebase.",
+      "requiredChange": "structural-intent-journal.ts schemas plus reconnect-rebase.ts delegate to accepted LSX-WP-028 doc.rebaseTreeIntent and single canonical CAS transaction; reject epoch mismatch before rebase, return explicit rebased receipt or conflict, preserve acknowledged node text or conflict, never resurrect deleted node. NotesPage submits server-issued epoch.",
+      "verification": "Run normative bun test tests/lark-suite-extension/lsx-wp-039.test.ts after implementation; generated move/delete/text races, stale epoch with equal revision, unrelated text revision advance, descendant reparent cycles, missing node and duplicate key. Read actual aggregate ref/revision/hash after successful rebase and compare Doc/Outline/Map after reload.",
+      "missingPrerequisite": "Accepted LSX-WP-026 then LSX-WP-028 commits/readbacks; canonical authority transaction and stable IDs; EG-COLLABORATION.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "intent recovery actual restart and network interruption proof",
+      "currentEvidence": "pendingCommitsRef/saveQueueRef are React refs (NotesPage.tsx:662-668), preserving an unknown-response command only within process lifetime (1043-1048,1080-1081). NativeNotesEngine stores heads/history in memory (391-414); export/import is not automatic crash recovery.",
+      "requiredChange": "Bind RecoveryCheckpoint and ordered semantic pending intents to the accepted per-doc WAL/draft adapter. Persist before send, retain exact IDs/payloads through response loss, checkpoint after durable receipt; do not clear on cache reset/schema upgrade. Recover interrupted commits via canonical authority, never replay a new key for uncertain success.",
+      "verification": "Real fresh-process kill/restart at before local append, after local durability/before send, after server durable commit/before reply and after ACK/before local checkpoint. Interrupt the real connection, edit A and B, restart A and reconnect. Assert acknowledged text survives, each operation effects once, journal terminal/pending states and exact ref/revision/hash readback; include storage failure and incompatible schema hold.",
+      "missingPrerequisite": "Real LSX-WP-026/docWAL persistence, authority restart harness and accepted network transport; no tests/runtime permitted during this preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "decodeMarkdownCommitCommand validates revision/epoch and strips actor claims (command-envelope.ts:22-46) but MarkdownCommitErrorKind has six values (13). ContentFailure has seven without rateLimited (descriptor-resolver.ts:84-85). AuthenticatedContentContext explicitly comes from server adapter (15-16), and current policy is evaluated before metadata/content (343-391). Neither existing contract is the complete structural reconnect schema.",
+      "requiredChange": "Version and decode reconnect/conflict-resolution request, result and journal schemas in structural-intent-journal.ts with validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Use existing ref/origin conventions and authenticated context, ignore/reject payload actor authorization claims. Wire the same compiled schema at server and renderer, not TS-only declarations or parallel error conventions.",
+      "verification": "Compile affected server/core/renderer packages via discovered supported commands after integration. Exercise malformed/unknown schema, spoofed actor/owner/workspace, wrong source binding, all eight outcomes and redacted denied envelopes at actual boundary. Record schema report and exact commit.",
+      "missingPrerequisite": "Accepted dependency schemas plus approved RPC/preload dispatch and broader error mapping integration where required; those paths are outside current shared patch authorization.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "NotesPage updates revision from commitMarkdown receipt (1046-1057); createNativeBlockTreeService.applyMapping commits then obtains authoritative block readback (150-157). This is a reuse seam, not runtime proof. NativeNotesEngine.writeHead is memory-only (395-415).",
+      "requiredChange": "Use canonical authority durable commit/dedup/outbox receipt; reconnect result includes exact canonical ref, revision, epoch and content hash/checkpoint. Pending local state must not emit committed. Reconcile unknown commit response to the original receipt, authorize again before returning any replay/readback content.",
+      "verification": "Observe actual native/server receipt and exact content/tree hash before/after fresh process restart. Cut connection after durable commit, retry same intent and assert original receipt/no extra revision; inject persistence failure and prove no ACK/committed badge. Bind all evidence to integrated commit and whole-file digests.",
+      "missingPrerequisite": "Accepted real authority/readback and atomic receipt/outbox implementation from foundation/dependencies; comment on block-tree commit is not sufficient evidence.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "Normative cases at work-packages.json:14232-14235 specify offline ancestor move versus online delete/text, crash/reconnect once, and revoked access purging derived projections. Existing NotesPage marks save blocked on some errors (1074-1087) but has no structural compare or persistent journal.",
+      "requiredChange": "Tests in lsx-wp-039.test.ts and actual integration lane cover successful nonconflicting replay, explicit conflicts, delete/no-resurrection, concurrent acknowledged text, response loss/replay, policy revoke before and during queue processing, epoch switch, denied missing snapshot and permitted quarantine. Retain failing attempts as well as passing seeds/input digests.",
+      "verification": "Execute package behavior suite and real authority two-actor reconnect lane on integrated bytes. Assert exact node/text/order, stable identity, receipts and authorized projections; denied actor gets no new body/title/URL/missing ops/presence and no queued write. Persist seeds and baseline input SHA256 in authorized evidence artifacts.",
+      "missingPrerequisite": "Accepted dependencies and live collaboration/policy owner; actual transport, restart harness and redacted evidence storage.",
+      "state": "NOT_RUN_IMPLEMENTATION_REQUIRED"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:14248-14256 defines frozen-old-grants or independent structure token mutation and assertions: no write after revoke; late move/delete cannot resurrect node; acknowledged text remains or conflict shown. No control run in preflight.",
+      "requiredChange": "Seed semantic mutants against the same accepted authority/journal implementation, not a mock path: bypass current grant recheck and independently accept structural CAS. Keep exact evaluated artifact hashes, deterministic seed and original command inputs. Add ACK-before-persist crash control as foundation coverage where its real lane is exercised.",
+      "verification": "Green baseline followed by frozen-grant mutant failing no-write-after-revoke and structure-token mutant failing no-resurrection or acknowledged-text-preserved-or-conflict. Record actual assertion output, not timeout/build failure; rerun baseline on same input and implementation bytes.",
+      "missingPrerequisite": "Runnable integrated behavior/recovery lane and scoped mutation mechanism; build/test operations forbidden to this worker.",
+      "state": "NOT_RUN_IMPLEMENTATION_REQUIRED"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "Existing NotesPage uses t(), one Tiptap editor (2609-2624), save status and recovery controls (2288-2314). Copy button currently copies contentRef without quarantine capability (2296-2299); existing dialog offers reload, not compare/resolve. No StructuralConflictReview file exists at inspected path.",
+      "requiredChange": "Mount StructuralConflictReview inside existing recovery/editor surface; display pending not committed, conflict comparison only under current read policy, retained rejected local draft and capability-gated copy. Keep editor mounted, focus/caret/IME and generation guards. Use all ten locales, loaded Rox Mono, user light/dark theme and reduced motion.",
+      "verification": "Discover actual supported Electron runner, then perform pointer/keyboard/IME composition, focus return after conflict, reconnect and revoke, 200% zoom/narrow layout, reduced motion, theme and locale scenarios. Capture screenshots plus ARIA and computed/loaded font including Cyrillic; observe committed/pending states and reload recovery on actual native app. Native #563/#570 regression proofs remain separate.",
+      "missingPrerequisite": "Accepted LSX-WP-026 editor binding, actual server/WAL lane, approved transport/locales scope and discovered Electron runner; UI operations prohibited in preflight.",
+      "state": "NOT_RENDERED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "Required lanes at work-packages.json:14239-14246 are SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI. Source-only changes in wave0 and this report establish none of their runtime outcomes.",
+      "requiredChange": "Lead tracks artifact and readback receipts per lane on integrated committed generation, with schema/test seeds, before/after restart authoritative receipts and native UI evidence. Collaboration lane is required for the actual shared replay path; provider lane only when exercised. Keep featureComplete=false until every applicable normative acceptance is observed; no requirement converted to N/A.",
+      "verification": "Validate lineage and artifact hashes, then independently review all six proof lanes and source/schema/native/UI separation. Retain failure history and freshness; a preflight verifier result proves only report lineage/source hashes, not feature behavior.",
+      "missingPrerequisite": "Implementation, accepted dependency/foundation receipts, integrated commit and all specified runtime proof lanes.",
+      "state": "PREFLIGHT_ONLY_ALL_RUNTIME_LANES_OUTSTANDING"
+    },
+    {
+      "criterion": "Reevaluate every queued mutation; revoked user no missing snapshot/body/presence; policy-defined draft quarantine.",
+      "currentEvidence": "descriptor-resolver.ts rechecks current read policy before and after content read (352-424); ContentPolicy has read/adoptDescriptor only. authorizeRox2Action (platform-contract.ts:601-609) checks a supplied grant list, not fresh distributed policy. onNotesChanged descriptor denial updates resolution but leaves content (NotesPage.tsx:965-977). surface-context.ts filters refs, not persisted body projections.",
+      "requiredChange": "Delegate current write authorization and epoch fencing to accepted authority for each queued operation, including ACL change mid-batch and replay of acknowledged keys. Denied envelope contains no protected snapshot; stop transport/presence and purge existing derived projections through their owners. Separate policy-allowed local quarantine from protected cached snapshots and gate copy/export.",
+      "verification": "Revoke between enqueue/reconnect and between two intents, and after server commit before response. Assert zero post-fence writes, no protected bodies/missing operations/presence in responses or UI/search/context, other actor remains active, only policy-allowed local draft recoverable. Expire lease while disconnected and prove fail closed without claiming immediate remote detection.",
+      "missingPrerequisite": "Current canonical write policy, lease/expiry/quarantine definitions, revoke notification and projection purge owner contracts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "One per-doc authority WAL/snapshot/checkpoint; no disposable appcache reset; old epoch writer fenced.",
+      "currentEvidence": "Normative db ownership work-packages.json:14205; referenced published cache/docWAL gate RS-NOTE-01.md:57. Native engine export/import and memory history do not demonstrate such an authority.",
+      "requiredChange": "Extend accepted docWAL/draft adapter with semantic intent records and checkpoint state; keep one content writer and diagnostic-only structureRevision. Hold incompatible journal versions without wipe; retain unacknowledged intent on quota/persist errors. Fence native legacy/shared old-epoch entry paths via dependency-owned router, not renderer-only disable.",
+      "verification": "Restart across authority migration, schema upgrade, interrupted checkpoint and failed local append. Assert old writer rejected, new acknowledged revision survives, journal not reset by cache upgrade and each replay committed once. Use actual owner recovery, not only a reconstructed memory fixture.",
+      "missingPrerequisite": "EG-COLLABORATION and accepted single-writer/draft implementation; additional source-owner router patches need approved integration scope.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Canonical document.revisionCommitted / command.rejected aliases and full event envelope; authorized current text+tree snapshot only.",
+      "currentEvidence": "Event aliases are explicitly proposed/unverified in work-packages.json:14207-14210. 07-domain-entity-model.md:171-189 requires atomic content/receipt/outbox and idempotent consumers; createNativeBlockTreeService provides disposable authorized projections, not an event publication mechanism.",
+      "requiredChange": "Use accepted authority/outbox event registry for commit/rejection outcomes with eventId/workspaceId/entityRef/entityRevision/actorRef/occurredAt/schemaVersion/correlationId/causationId/sourceCommandId. Structural validation remains server-side even with CRDT text; consumers reauthorize payloads. No new EventBus or durable presence-per-keystroke.",
+      "verification": "Observe actual committed/rejected events at exact revision, replay response-loss and restart without duplicate committed effects; assert denied events/responses cannot leak content. Read back current authorized tree/text and verify consumer revision fences.",
+      "missingPrerequisite": "Accepted canonical outbox/alias registry and collaboration text authority; owner integration is outside current two shared files unless dependencies already supply it.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/core/src/rox2/notes-engine.ts","symbol":"NativeNotesEngine / createNativeNotesEngine.save","lineStart":366,"lineEnd":445,"sha256":"77f8c14ade5249c5dbaba4e5bb22551a9a4f98954b9dc7244ee5274404cd1480"},
+    {"path":"packages/core/src/rox2/notes-engine.ts","symbol":"contentHash / parseBlocks / stampBlockMarkers","lineStart":75,"lineEnd":160,"sha256":"77f8c14ade5249c5dbaba4e5bb22551a9a4f98954b9dc7244ee5274404cd1480"},
+    {"path":"apps/electron/src/renderer/pages/NotesPage.tsx","symbol":"saveCurrentNote","lineStart":1023,"lineEnd":1099,"sha256":"872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"},
+    {"path":"apps/electron/src/renderer/pages/NotesPage.tsx","symbol":"pendingCommitsRef / revisionsRef","lineStart":662,"lineEnd":690,"sha256":"872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"},
+    {"path":"apps/electron/src/renderer/pages/NotesPage.tsx","symbol":"notes-save-recovery / saveRecoveryOpen / TiptapMarkdownEditor","lineStart":2288,"lineEnd":2314,"relatedRanges":[[2609,2624]],"sha256":"872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"},
+    {"path":"packages/core/src/rox2/surface-context.ts","symbol":"visibleContextEntityRefs / rebaseLiveContext","lineStart":51,"lineEnd":90,"sha256":"ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef / authorizeRox2Action","lineStart":233,"lineEnd":239,"relatedRanges":[[592,610]],"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/docs/command-envelope.ts","symbol":"MarkdownCommitCommand / MarkdownCommitErrorKind / decodeMarkdownCommitCommand","lineStart":1,"lineEnd":46,"sha256":"39e55e808796e48fee16ff0ee40c345886af9264bbc776c91657ce1ea2286817"},
+    {"path":"packages/core/src/docs/retained-source.ts","symbol":"retainedSourceHash / retainSource","lineStart":48,"lineEnd":109,"sha256":"eafb42712b3e5d349c370c733484867be2db3d390cd973556ac8b44d2abea4e5"},
+    {"path":"packages/core/src/docs/block-identity.ts","symbol":"RetainedBlock / MarkerMapping / BlockIdentityProjection","lineStart":13,"lineEnd":43,"sha256":"866be41e9d6345dea48a3e02a4a6e90cbf1373d346eccea14c73b1cca97d96a6"},
+    {"path":"packages/server-core/src/docs/descriptor-resolver.ts","symbol":"AuthenticatedContentContext / ContentPolicy / ContentResolution / createDescriptorResolver","lineStart":15,"lineEnd":104,"relatedRanges":[[343,427]],"sha256":"c36d9d6526b22bf7b658dfc0f2375b6ad78aa323703c4e3c28722298aeeea790"},
+    {"path":"packages/server-core/src/docs/block-tree-service.ts","symbol":"NativeBlockTreePorts / createNativeBlockTreeService / applyMapping","lineStart":51,"lineEnd":55,"relatedRanges":[[88,159]],"sha256":"e44598ec9837ae488a3f25439338657de41a33fa1d545dc5b5f3d10c6d3aae1d"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[38] LSX-WP-039 / external_prerequisite_gates EG-COLLABORATION","lineStart":14011,"lineEnd":14358,"relatedRanges":[[92,97]],"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-039 execution record","lineStart":3348,"lineEnd":3437,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/06-rox-docs-design.md","symbol":"Sections 10-12 commands, collaboration and DoD","lineStart":158,"lineEnd":231,"sha256":"a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path":"docs/lark-suite-reference/07-domain-entity-model.md","symbol":"Offline authorization / Events and consistency / Migration rules","lineStart":159,"lineEnd":201,"sha256":"cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path":"docs/rox-suite/published/RS-DOC-01.md","symbol":"Domain storage, DoD and published dependency links","lineStart":35,"lineEnd":87,"sha256":"b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"},
+    {"path":"docs/rox-suite/published/RS-NOTE-01.md","symbol":"Atomic native writer, cutover, docWAL and dependency gates","lineStart":35,"lineEnd":86,"sha256":"48915bdf82194df2ade2c05b2b7db346e4f4f01be854b3aa0756da08fe24c002"},
+    {"path":"docs/macro-integration/07-collaboration-runtime.md","symbol":"Observable acceptance / Editor-CRDT adoption gate / Bro runtime boundary","lineStart":125,"lineEnd":199,"sha256":"30fe966a3513efc58f00cd36ddb90f364f3319d1061205d2d4a0c8d84e372864"}
+  ],
+  "sourceFreshness": {
+    "generation": "Actual working-tree byte snapshots, not a claim of clean input HEAD or committed implementation. No Git mutation or Git inspection performed.",
+    "knownDriftFromPublishedBaseline": "NotesPage SHA256 is 872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba, not normative e953786 baseline 0266d999906c17b5c7d9d69945495f9584b276e46c5ccf76537f40dc801d356b. saveCurrentNote is now at 1023, not baseline 871. New Docs imports are inspected wave0 evidence, not accepted dependencies.",
+    "stableDuringInspection": "NotesPage, descriptor-resolver and block-tree-service whole-file hashes matched across two digest captures during preflight.",
+    "handoffRule": "Verify every sourceReferences whole-file hash when consuming this report. Any root integration drift makes affected evidence historical; re-read changed symbols and rebase exact patch requests after the wave0 commit and dependency receipts. Do not relabel working-tree hashes as committed HEAD blobs."
+  },
+  "nextExecutableAction": {
+    "now": "Lead consumes this owned preflight report; worker may run only the provided read-only report lineage/hash verifier, not product tests.",
+    "implementation": "After lead wave0 commit and accepted LSX-WP-026 then LSX-WP-028 receipts, resolve EG-COLLABORATION and policy/WAL readiness, bind exact post-integration source digests, approve transport/localization/ancillary scope requests and shared path leases. Then implement the five normative new files using the accepted journal and structural authority contracts; integrate serial reviewed patches and execute all required proof lanes.",
+    "firstCodeContribution": "Define and decode OfflineIntent/RecoveryCheckpoint/reconnect/conflict-resolution contracts against accepted LSX-WP-026/028 types in structural-intent-journal.ts, with all eight error discriminants and no second persistence owner.",
+    "noImplementationBeforeGates": true
+  },
+  "risks": [
+    "Root-owned uncommitted wave0 changes may invalidate line ranges and hashes after this inspection; accepted dependency receipts are still required even when related code exists.",
+    "Normative product baseline e953786 differs from dispatch input a21aeab and actual working-tree content; lead must approve the committed implementation generation rather than worker checking out or overwriting root changes.",
+    "Current pending operation memory replay can be mistaken for crash recovery; it does not survive renderer/process exit.",
+    "Native engine FNV/length hash is not canonical SHA-256 revision; derived unmarked block IDs change on edits and whole-document stamping can change frontmatter/CRLF and nonedited bytes.",
+    "Revoke handling that only blocks save or updates capabilities can leave protected content, task projections, comparison or unrestricted copy visible; cached old grants cannot authorize replay.",
+    "A fresh policy check outside the commit lock has a revoke race; replay authorization must share the accepted canonical authority fence.",
+    "Automatic merge of every structural/text race is not guaranteed; explicit conflict is required instead of destructive guessed reparent or node resurrection.",
+    "New files plus two shared patches do not authorize RPC/preload/localization/cache-owner rewrites. Missing integration must be supplied by accepted dependencies or a revised reviewed packet, not hidden incomplete functionality.",
+    "Provider queued receipt, mock persistence, isolated fixture UI, a toast or source/schema validation cannot discharge native restart/network/collaboration/ACL/UI acceptance.",
+    "Offline remote-private access requires explicit bounded lease; immediate revocation of a disconnected device and recall of exported copies cannot be promised."
+  ]
+}

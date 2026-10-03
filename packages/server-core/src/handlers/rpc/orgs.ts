@@ -2,15 +2,23 @@ import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import {
   acceptInvite,
   createOrganization,
+  findInviteByToken,
   getLocalIdentity,
   inviteToOrganization,
   listOrgMembers,
   listOrganizations,
+  recordOrganizationAccessDenial,
+  removeOrganizationMember,
+  revokeOrganizationInvite,
+  updateMemberRole,
 } from '@craft-agent/shared/orgs'
 import type {
   AcceptInviteInput,
   CreateOrganizationInput,
   InviteToOrgInput,
+  OrgActorIdentity,
+  OrgAuditEvent,
+  OrgCallerIdentity,
   OrgRole,
 } from '@craft-agent/shared/orgs'
 import { setWorkspaceOrganization } from '@craft-agent/shared/config'
@@ -34,84 +42,143 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.orgs.INVITE,
   RPC_CHANNELS.orgs.ACCEPT,
   RPC_CHANNELS.orgs.LIST_MEMBERS,
+  RPC_CHANNELS.orgs.UPDATE_MEMBER_ROLE,
+  RPC_CHANNELS.orgs.REMOVE_MEMBER,
+  RPC_CHANNELS.orgs.REVOKE_INVITE,
   RPC_CHANNELS.orgs.GET_IDENTITY,
   RPC_CHANNELS.orgs.UPDATE_IDENTITY,
   RPC_CHANNELS.orgs.SET_WORKSPACE_ORG,
 ] as const
 
-/**
- * Prefer Rox Server URL (env CRAFT_SERVER_URL) server-side invite
- * redemption when present. Local single-device path is the default.
- * Invite RPC creates a local token only — there is no mailer.
- */
-function serverModeEnabled(): boolean {
-  return Boolean(process.env.CRAFT_SERVER_URL && process.env.CRAFT_SERVER_URL.trim())
+function actorFromContext(ctx: { principal?: { subject: string } }): OrgActorIdentity | undefined {
+  const userId = ctx.principal?.subject.trim()
+  return userId ? { userId } : undefined
+}
+
+function auditDeniedOrganizationMutation<T>(
+  ctx: { principal?: { subject: string } },
+  orgId: string,
+  action: OrgAuditEvent['action'],
+  operation: () => T,
+): T {
+  try {
+    return operation()
+  } catch (error) {
+    const actor = ctx.principal?.subject
+    if (actor) recordOrganizationAccessDenial(orgId, actor, action)
+    throw error
+  }
 }
 
 export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void {
-  // Ensure local identity exists early so profile/orgs share the same userId.
   ensureLocalUserIdentity()
 
-  server.handle(RPC_CHANNELS.orgs.LIST, async () => {
+  server.handle(RPC_CHANNELS.orgs.LIST, async (ctx) => {
     const listed = rpcOrgsListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []
-    return listOrganizations()
-  })
+    const principal = ctx.principal
+    const viewerUserId = principal?.subject ?? getLocalIdentity().userId
+    return listOrganizations(viewerUserId).map((org) => ({
+      ...org,
+      viewerAuthority: principal ? 'native' : 'local',
+      ...(principal ? { viewerIssuer: principal.issuer } : {}),
+    }))
+  }, { nativeAction: 'read' })
 
-  server.handle(RPC_CHANNELS.orgs.CREATE, async (_ctx, input: CreateOrganizationInput) => {
+  server.handle(RPC_CHANNELS.orgs.CREATE, async (ctx, input: CreateOrganizationInput) => {
     const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: input?.name || 'org' })
     if (!isClaimableLive(act)) throw new Error('org create is not live')
-    const org = createOrganization(input ?? { name: '' })
-    deps.platform.logger.info?.(`Created organization "${org.name}" (${org.id})`)
+    const org = createOrganization(input ?? { name: '' }, actorFromContext(ctx))
+    deps.platform.logger.info?.(`Created organization ${org.id}`)
     return org
-  })
+  }, { nativeAction: 'write' })
 
-  server.handle(RPC_CHANNELS.orgs.INVITE, async (_ctx, input: InviteToOrgInput) => {
-    // Server mode: still write local invite bookkeeping; remote multi-user
-    // redemption can proxy later. Local-first always persists. Invite is a
-    // local token — not live Mail.
+  server.handle(RPC_CHANNELS.orgs.INVITE, async (ctx, input: InviteToOrgInput) => {
     const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: input?.orgId || 'invite' })
     if (!isClaimableLive(act)) throw new Error('org invite is not live')
-    const invite = inviteToOrganization(input)
-    if (serverModeEnabled()) {
-      deps.platform.logger.info?.(
-        `Invite created for org ${invite.orgId} (server mode active; local token stored)`,
-      )
-    }
-    return invite
-  })
+    return auditDeniedOrganizationMutation(ctx, input?.orgId ?? '', 'invite', () =>
+      inviteToOrganization(input, actorFromContext(ctx)),
+    )
+  }, { nativeAction: 'write' })
 
-  server.handle(RPC_CHANNELS.orgs.ACCEPT, async (_ctx, input: AcceptInviteInput) => {
+  server.handle(RPC_CHANNELS.orgs.ACCEPT, async (ctx, input: AcceptInviteInput) => {
     const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: input?.token || 'invite' })
     if (!isClaimableLive(act)) throw new Error('org accept is not live')
-    // Prefer server path when CRAFT_SERVER_URL is set — currently local accept
-    // is the only implemented redeemer; keep the branch for ops visibility.
-    if (serverModeEnabled()) {
-      deps.platform.logger.info?.('Accepting invite via local store (server redeem not yet remote)')
-    }
-    return acceptInvite(input)
-  })
+    const orgId = findInviteByToken(input.token)?.orgId ?? ''
+    return auditDeniedOrganizationMutation(ctx, orgId, 'accept', () =>
+      acceptInvite(input, actorFromContext(ctx)),
+    )
+  }, { nativeAction: 'write' })
 
-  server.handle(RPC_CHANNELS.orgs.LIST_MEMBERS, async (_ctx, orgId: string) => {
+  server.handle(
+    RPC_CHANNELS.orgs.UPDATE_MEMBER_ROLE,
+    async (ctx, orgId: string, userId: string, role: OrgRole) => {
+      const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: orgId || 'role' })
+      if (!isClaimableLive(act)) throw new Error('org role update is not live')
+      return auditDeniedOrganizationMutation(ctx, orgId, 'role-change', () => {
+        if (!['owner', 'admin', 'member'].includes(role)) throw new Error('Invalid organization role')
+        return updateMemberRole(orgId, userId, role, actorFromContext(ctx))
+      })
+    },
+    { nativeAction: 'write' },
+  )
+
+  server.handle(
+    RPC_CHANNELS.orgs.REMOVE_MEMBER,
+    async (ctx, orgId: string, userId: string) => {
+      const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: orgId || 'remove-member' })
+      if (!isClaimableLive(act)) throw new Error('org member removal is not live')
+      return auditDeniedOrganizationMutation(ctx, orgId, 'member-remove', () =>
+        removeOrganizationMember(orgId, userId, actorFromContext(ctx)),
+      )
+    },
+    { nativeAction: 'write' },
+  )
+
+  server.handle(
+    RPC_CHANNELS.orgs.REVOKE_INVITE,
+    async (ctx, orgId: string, inviteId: string) => {
+      const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: orgId || 'revoke-invite' })
+      if (!isClaimableLive(act)) throw new Error('org invite revocation is not live')
+      return auditDeniedOrganizationMutation(ctx, orgId, 'invite-revoke', () =>
+        revokeOrganizationInvite(orgId, inviteId, actorFromContext(ctx)),
+      )
+    },
+    { nativeAction: 'write' },
+  )
+
+  server.handle(RPC_CHANNELS.orgs.LIST_MEMBERS, async (ctx, orgId: string) => {
     const read = rpcOrgsReadResult({ source: 'native', nativeId: orgId })
     if (!isClaimableLive(read.result)) return []
-    return listOrgMembers(orgId)
-  })
+    const viewerUserId = ctx.principal?.subject ?? getLocalIdentity().userId
+    return listOrgMembers(orgId, viewerUserId)
+  }, { nativeAction: 'read' })
 
-  server.handle(RPC_CHANNELS.orgs.GET_IDENTITY, async () => {
+  server.handle(RPC_CHANNELS.orgs.GET_IDENTITY, async (ctx): Promise<OrgCallerIdentity> => {
     const read = rpcOrgsReadResult({ source: 'native', nativeId: 'local' })
     if (!isClaimableLive(read.result)) throw new Error('org identity is not live')
-    return getLocalIdentity()
-  })
+    const principal = ctx.principal
+    if (principal) {
+      if (!deps.nativeData || !ctx.workspaceId) throw new Error('Native self profile unavailable')
+      return { userId: principal.subject, authority: 'native', issuer: principal.issuer,
+        ...deps.nativeData.authority.getSelfProfile(principal, ctx.workspaceId) }
+    }
+    return { ...getLocalIdentity(), authority: 'local' }
+  }, { nativeAction: 'read' })
 
   server.handle(
     RPC_CHANNELS.orgs.UPDATE_IDENTITY,
     async (
-      _ctx,
+      ctx,
       updates: { username?: string; email?: string; name?: string },
     ) => {
       const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: 'local' })
       if (!isClaimableLive(act)) throw new Error('org identity update is not live')
+      if (ctx.principal) {
+        if (!deps.nativeData || !ctx.workspaceId) throw new Error('Native self profile unavailable')
+        const profile = deps.nativeData.authority.updateSelfProfile(ctx.principal, ctx.workspaceId, { name: updates?.name ?? updates?.username })
+        return { userId: ctx.principal.subject, authority: 'native' as const, issuer: ctx.principal.issuer, ...profile }
+      }
       ensureLocalUserIdentity()
       const patch: { username?: string; email?: string; name?: string } = {}
       if (typeof updates?.username === 'string') {
@@ -127,10 +194,10 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
         if (v) patch.name = v
       }
       if (Object.keys(patch).length > 0) updatePreferences(patch)
-      // Touch load so callers see merged file
       loadPreferences()
       return getLocalIdentity()
     },
+    { access: 'localElectron', nativeAction: 'read' },
   )
 
   server.handle(
@@ -144,13 +211,10 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
       }
       const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: workspaceId.trim() })
       if (!isClaimableLive(act)) throw new Error('org workspace bind is not live')
-
-      // The storage lifecycle resolves the local server identity and requires
-      // durable membership before it writes either folder or registry metadata.
       return setWorkspaceOrganization(workspaceId.trim(), orgId)
     },
+    { access: 'localElectron' },
   )
 }
 
-// Silence unused type import if tree-shaken oddly
 export type { OrgRole }

@@ -107,12 +107,28 @@ export type ErrorCode =
   | 'UNSUPPORTED_OPERATION'
   | 'NOT_FOUND'
   | 'HASH_CONFLICT'
+  // Native journal revision conflicts (Notes/canonical entity mutations).
+  | 'CONFLICT'
   | 'INVALID_REF'
   | 'CAPABILITY_DISABLED'
   | 'TLS_REQUIRED'
   | 'PROVIDER_ERROR'
   | 'LOCAL_ONLY_DENIED'
   | 'SECRET_ENVVAR_DENIED'
+  | 'DOCUMENT_VALIDATION_FAILED'
+  | 'DOCUMENT_AUTHORITY_CHANGED'
+  | 'DOCUMENT_BUSY'
+  | 'DOCUMENT_RESULT_UNAVAILABLE'
+  // Authenticated workspace authority: constant domain errors, never resource details.
+  | 'UNAUTHENTICATED'
+  | 'FORBIDDEN'
+  | 'WORKSPACE_MISMATCH'
+  | 'INVALID_PAYLOAD'
+  | 'REVISION_CONFLICT'
+  | 'IDEMPOTENCY_CONFLICT'
+  | 'SCHEMA_VERSION_UNSUPPORTED'
+  | 'CURSOR_INVALID'
+  | 'PROVIDER_UNAVAILABLE'
 
 const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'HANDLER_ERROR',
@@ -142,12 +158,26 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'UNSUPPORTED_OPERATION',
   'NOT_FOUND',
   'HASH_CONFLICT',
+  'CONFLICT',
   'INVALID_REF',
   'CAPABILITY_DISABLED',
   'TLS_REQUIRED',
   'PROVIDER_ERROR',
   'LOCAL_ONLY_DENIED',
   'SECRET_ENVVAR_DENIED',
+  'DOCUMENT_VALIDATION_FAILED',
+  'DOCUMENT_AUTHORITY_CHANGED',
+  'DOCUMENT_BUSY',
+  'DOCUMENT_RESULT_UNAVAILABLE',
+  'UNAUTHENTICATED',
+  'FORBIDDEN',
+  'WORKSPACE_MISMATCH',
+  'INVALID_PAYLOAD',
+  'REVISION_CONFLICT',
+  'IDEMPOTENCY_CONFLICT',
+  'SCHEMA_VERSION_UNSUPPORTED',
+  'CURSOR_INVALID',
+  'PROVIDER_UNAVAILABLE',
 ])
 
 export function isErrorCode(value: unknown): value is ErrorCode {
@@ -167,6 +197,17 @@ export class CodedError extends Error {
     super(message)
     this.code = code
     this.name = 'CodedError'
+  }
+}
+
+/** Enforce confidentiality before either native client opens a socket or sends a secret. */
+export function assertNativeCredentialTransport(url: string, token?: string): void {
+  if (!token?.startsWith('na_') && !token?.startsWith('ne_')) return
+  const target = new URL(url)
+  const loopback = target.hostname === '127.0.0.1' || target.hostname === '[::1]'
+    || target.hostname === 'localhost'
+  if (target.protocol !== 'wss:' && !(target.protocol === 'ws:' && loopback)) {
+    throw new CodedError('TLS_REQUIRED', 'Native credentials require TLS')
   }
 }
 

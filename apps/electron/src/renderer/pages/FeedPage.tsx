@@ -74,6 +74,7 @@ import {
   suggestTags,
   tabCounts,
   tagsInUse,
+  visibleMarkCounts,
   type FeedChip,
   type FeedMark,
   type FeedOrder,
@@ -107,12 +108,46 @@ const PREFS_KEY = 'rox.feed.view.v1'
 const READABLE_TABS: ReadonlySet<FeedTab> = new Set(['news', 'subscriptions'])
 const STAR = FEED_COLOR_HEX.yellow
 
-function loadPrefs(): { order: FeedOrder; density: Density } {
+interface FeedPagePrefs {
+  view: View
+  chip: FeedChip
+  sourceFilter: string | null
+  query: string
+  colors: FeedColor[]
+  tagFilter: string | null
+  mark: FeedMark
+  order: FeedOrder
+  density: Density
+}
+
+function prefsKey(workspaceId: string | null): string {
+  return `${PREFS_KEY}:${workspaceId ?? 'unscoped'}`
+}
+
+function loadPrefs(workspaceId: string | null): FeedPagePrefs {
+  const defaults: FeedPagePrefs = {
+    view: 'agents', chip: 'all', sourceFilter: null, query: '', colors: [], tagFilter: null,
+    mark: 'all', order: 'newest', density: 'list',
+  }
   try {
-    const raw = JSON.parse(localStorage.getItem(PREFS_KEY) ?? '{}') as { order?: string; density?: string }
-    return { order: raw.order === 'oldest' ? 'oldest' : 'newest', density: raw.density === 'cards' ? 'cards' : 'list' }
+    const raw = localStorage.getItem(prefsKey(workspaceId))
+    const legacy = raw === null && workspaceId ? localStorage.getItem(PREFS_KEY) : null
+    const stored = JSON.parse(raw ?? legacy ?? '{}') as Partial<FeedPagePrefs>
+    const storedView = stored.view
+    const chips = Object.values(TAB_CHIPS).flat()
+    return {
+      view: storedView === 'sources' ? 'sources' : FEED_TABS.includes(storedView as FeedTab) ? storedView as FeedTab : defaults.view,
+      chip: chips.includes(stored.chip as FeedChip) ? stored.chip as FeedChip : defaults.chip,
+      sourceFilter: typeof stored.sourceFilter === 'string' ? stored.sourceFilter : null,
+      query: typeof stored.query === 'string' ? stored.query : '',
+      colors: Array.isArray(stored.colors) ? stored.colors.filter((color): color is FeedColor => color in FEED_COLOR_HEX) : [],
+      tagFilter: typeof stored.tagFilter === 'string' ? stored.tagFilter : null,
+      mark: stored.mark === 'unread' || stored.mark === 'starred' ? stored.mark : defaults.mark,
+      order: stored.order === 'oldest' ? 'oldest' : defaults.order,
+      density: stored.density === 'cards' ? 'cards' : defaults.density,
+    }
   } catch {
-    return { order: 'newest', density: 'list' }
+    return defaults
   }
 }
 
@@ -125,16 +160,20 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
   const api = typeof window !== 'undefined' ? window.electronAPI : undefined
 
   const [data, setData] = useState<FeedListResult>(EMPTY)
-  const [loaded, setLoaded] = useState(false)
+  const [loadedWorkspaceId, setLoadedWorkspaceId] = useState<string | null | undefined>()
+  const [sourceDataWorkspaceId, setSourceDataWorkspaceId] = useState<string | null | undefined>()
+  const loaded = loadedWorkspaceId !== undefined && loadedWorkspaceId === workspaceId
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [view, setView] = useState<View>('agents')
-  const [chip, setChip] = useState<FeedChip>('all')
-  const [sourceFilter, setSourceFilter] = useState<string | null>(null)
-  const [query, setQuery] = useState('')
-  const [colors, setColors] = useState<ReadonlySet<FeedColor>>(new Set())
-  const [tagFilter, setTagFilter] = useState<string | null>(null)
-  const [mark, setMark] = useState<FeedMark>('all')
-  const [prefs, setPrefs] = useState(loadPrefs)
+  const [initialPrefs] = useState(() => loadPrefs(workspaceId))
+  const [view, setView] = useState<View>(initialPrefs.view)
+  const [chip, setChip] = useState<FeedChip>(initialPrefs.chip)
+  const [sourceFilter, setSourceFilter] = useState<string | null>(initialPrefs.sourceFilter)
+  const [query, setQuery] = useState(initialPrefs.query)
+  const [colors, setColors] = useState<ReadonlySet<FeedColor>>(() => new Set(initialPrefs.colors))
+  const [tagFilter, setTagFilter] = useState<string | null>(initialPrefs.tagFilter)
+  const [mark, setMark] = useState<FeedMark>(initialPrefs.mark)
+  const [prefs, setPrefs] = useState(() => ({ order: initialPrefs.order, density: initialPrefs.density }))
+  const [prefsWorkspaceId, setPrefsWorkspaceId] = useState(workspaceId)
   const [perDay, setPerDay] = useState<Record<string, FeedOrder>>({})
   const [localSelected, setLocalSelected] = useState<string | null>(null)
   const [selectedSource, setSelectedSource] = useState<string | null>(null)
@@ -144,8 +183,31 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
-    try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)) } catch { /* private mode */ }
-  }, [prefs])
+    setData(EMPTY)
+    setLoadedWorkspaceId(undefined)
+    setSourceDataWorkspaceId(undefined)
+    setLoadError(null)
+    const stored = loadPrefs(workspaceId)
+    setView(stored.view)
+    setChip(stored.chip)
+    setSourceFilter(stored.sourceFilter)
+    setQuery(stored.query)
+    setColors(new Set(stored.colors))
+    setTagFilter(stored.tagFilter)
+    setMark(stored.mark)
+    setPrefs({ order: stored.order, density: stored.density })
+    setPerDay({})
+    setPrefsWorkspaceId(workspaceId)
+  }, [workspaceId])
+
+  useEffect(() => {
+    if (prefsWorkspaceId !== workspaceId) return
+    try {
+      localStorage.setItem(prefsKey(workspaceId), JSON.stringify({
+        view, chip, sourceFilter, query, colors: [...colors], tagFilter, mark, ...prefs,
+      }))
+    } catch { /* private mode */ }
+  }, [workspaceId, prefsWorkspaceId, view, chip, sourceFilter, query, colors, tagFilter, mark, prefs])
 
   const routeBound = selectedId !== undefined
   const currentId = routeBound ? selectedId ?? null : localSelected
@@ -155,30 +217,43 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
   }, [routeBound])
 
   // ── data ─────────────────────────────────────────────────────────────────
+  const loadGeneration = useRef(0)
   const load = useCallback(async () => {
+    const generation = ++loadGeneration.current
     if (!api?.feedList) {
-      setLoaded(true)
+      setLoadedWorkspaceId(workspaceId)
       setLoadError('unavailable')
       return
     }
     try {
       const res = await api.feedList(workspaceId)
+      if (generation !== loadGeneration.current) return
       setData(res ?? EMPTY)
+      setSourceDataWorkspaceId(workspaceId)
       setLoadError(null)
     } catch (e) {
-      setLoadError(e instanceof Error ? e.message : String(e))
+      if (generation === loadGeneration.current) setLoadError(e instanceof Error ? e.message : String(e))
     } finally {
-      setLoaded(true)
-      setNow(Date.now())
+      if (generation === loadGeneration.current) {
+        setLoadedWorkspaceId(workspaceId)
+        setNow(Date.now())
+      }
     }
   }, [api, workspaceId])
 
-  useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    void load()
+    return () => { loadGeneration.current++ }
+  }, [load])
   useEffect(() => api?.onFeedChanged?.(() => { void load() }), [api, load])
   useEffect(() => {
     const id = setInterval(() => void load(), 60_000)
     return () => clearInterval(id)
   }, [load])
+
+  useEffect(() => {
+    if (loaded && sourceDataWorkspaceId === workspaceId && sourceFilter && !data.sources.some((source) => source.id === sourceFilter)) setSourceFilter(null)
+  }, [loaded, sourceDataWorkspaceId, workspaceId, sourceFilter, data.sources])
   // Session activity changes → debounced re-aggregate.
   const sessionMap = useAtomValue(sessionMetaMapAtom)
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -213,17 +288,18 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
   const attention = useMemo(() => attentionCount(allItems), [allItems])
   const tabItems = useMemo(() => allItems.filter((i) => i.tab === tab), [allItems, tab])
   const tabTags = useMemo(() => tagsInUse(tabItems), [tabItems])
-  const colorCounts = useMemo(() => {
-    const out: Partial<Record<FeedColor, number>> = {}
-    for (const i of tabItems) if (i.color) out[i.color] = (out[i.color] ?? 0) + 1
-    return out
-  }, [tabItems])
-  const unreadCount = useMemo(() => (readable ? tabItems.filter((i) => !i.read).length : 0), [tabItems, readable])
-  const starredCount = useMemo(() => tabItems.filter((i) => i.starred).length, [tabItems])
   const visible = useMemo(
     () => filterView(allItems, { tab, chip, sourceId: tab === 'news' ? sourceFilter : null, query, colors, tag: tagFilter, mark }, now, data.sources),
     [allItems, tab, chip, sourceFilter, query, colors, tagFilter, mark, now, data.sources],
   )
+  const colorCounts = useMemo(() => {
+    const out: Partial<Record<FeedColor, number>> = {}
+    for (const i of visible) if (i.color) out[i.color] = (out[i.color] ?? 0) + 1
+    return out
+  }, [visible])
+  const visibleCounts = useMemo(() => visibleMarkCounts(visible), [visible])
+  const unreadCount = readable ? visibleCounts.unread : 0
+  const starredCount = visibleCounts.starred
   const groups = useMemo(() => groupOrdered(visible, now, prefs.order, perDay), [visible, now, prefs.order, perDay])
   const ordered = useMemo(() => groups.flatMap((g) => g.items), [groups])
   const selected = useMemo(() => allItems.find((i) => i.id === currentId) ?? null, [allItems, currentId])
@@ -338,7 +414,7 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
           key={id}
           testId={`feed-nav-${id}`}
           label={t(`feed.tab.${id}`)}
-          count={counts[id] || null}
+          count={id === tab && view !== 'sources' ? visible.length || null : counts[id] || null}
           dot={id === 'agents' && attention ? 'warning' : id === 'subscriptions' && !xConnected ? 'muted' : undefined}
           active={view === id && !(id === 'news' && sourceFilter)}
           onClick={() => { switchView(id); setSourceFilter(null) }}

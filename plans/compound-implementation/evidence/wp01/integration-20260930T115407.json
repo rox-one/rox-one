@@ -1,0 +1,352 @@
+{
+  "schemaVersion": 1,
+  "packageId": "WP-01",
+  "scope": "Canonical identity/private Project bootstrap integration checkpoint",
+  "observedAt": "2026-09-30T11:54:07.053129+00:00",
+  "parentRevision": "b9b8aa7197f5d25304ec377a049a8f375eccf3e5",
+  "mechanism": "SCOPED_VERIFIED",
+  "interface": "NATIVE_ACCEPTANCE_RUNNING",
+  "fullDoD": "NOT_VERIFIED",
+  "sourceSha256": {
+    "apps/electron/src/main/index.ts": "6a66891cb73cba51793643e3206d2de9c3d229136c18513a35d8f2239c50a7d5",
+    "apps/electron/src/main/project-authority.ts": "eb384c98f2bc6d3692d06621893618a79d746bfc95cdb51735e4f95c5608fe36",
+    "apps/electron/src/preload/bootstrap.ts": "62b2315268218b0f86ba32eeab645e066badefca5930ea844e8d357941de8aad",
+    "apps/electron/src/renderer/atoms/projects.ts": "ba95a7423af6dcfc02cd4a946eca4e545a57eb07f03fcf8f0b7a5fea36dc86dd",
+    "apps/electron/src/renderer/components/app-shell/ProjectsListPanel.tsx": "f325bd0cd983421915b5aeb251e9d90c92ed76e7cf523e85c3c66078bb9e93b1",
+    "apps/electron/src/renderer/components/projects/ProjectAuthorityConnectionPanel.tsx": "28f0a4d336a0e82ee0c02711af143b4dcd9e227201e40d5a14adaceb3c684e0f",
+    "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24",
+    "apps/electron/src/renderer/pages/ConnectionsPage.tsx": "7e14c84fec3e229f88d62506fc8a3503dc320d7a6db5129c67f58544f940d402",
+    "apps/electron/src/renderer/pages/ProjectInfoPage.tsx": "9df69f7d6205d0ca12c7cc35e4a8fce74733a65519f0cb98d26f32863ea76278",
+    "apps/electron/src/shared/project-authority.ts": "251ad5ce056de5200e494577a8d1e90626aef105489ff14fd1019174d368d478",
+    "apps/electron/src/shared/types.ts": "81b3f6f59614deb95705e570335e7f4ecc27dcffe5d6f5ed086b3707ca5ae95a",
+    "apps/electron/src/transport/__tests__/channel-map-parity.test.ts": "c7738ab9944905750cb4b6f8f690893fce21f8dddd823a8a261c0746221ac52f",
+    "apps/electron/src/transport/channel-map.ts": "ffcc506c73a74d3133432a2f9b943edb06f78852edb8b04fa63b84a636ce71f0",
+    "apps/electron/src/transport/project-authority-connection.ts": "daaa05c5c1323ab86f44bd308f70b9a56f47a587b930db5cfd962ed98d57983e",
+    "apps/electron/src/transport/routed-client.ts": "033aece0e542d9f5462fd0258901b23748a34018a2bb005a8a8fd6b05d6641c3",
+    "apps/workspace-service/migrations/01-domain-contract.sql": "1e98bc23bdbf921f8e72e67194544666ffb33911f577b7581fa32ea9deeda900",
+    "apps/workspace-service/migrations/01-local-auth-bootstrap.sql": "2412ea8aa4f763d5bb9680f344276a9ed6bcf89486629a4fe9e3d23282cba9bc",
+    "apps/workspace-service/package.json": "8971f70441a9b4416e55df005ac2e9c238f2ce278b4f9f02a1f783681334bf8a",
+    "apps/workspace-service/src/auth/local-issuer.ts": "d980080e13524136bac06ba211218f1c009c158728d84e3d0888457f91385768",
+    "apps/workspace-service/src/auth/postgres-identity.ts": "8b8124e55e98d9ef29617e06b107db3643cca205e6af48f9c16cae95f9b2d146",
+    "apps/workspace-service/src/auth/verified-actor.ts": "637174c864da1e69732d3f33170f63054619721fd91a87a422f7b19f60f62cf4",
+    "apps/workspace-service/src/configuration.ts": "fc39c9f4404fbf3b485c47f177a6e3b551933331dc940b73c8d70cc5206a181d",
+    "apps/workspace-service/src/database/migrations.ts": "4970d00faab5c59246fb9a3f81a988b547a1ce4739f21574e95a5c6b97632de6",
+    "apps/workspace-service/src/http.ts": "5ec7953dc652bba0cd0119922a38f039ed5554ccb391e795c24e87868cd9cd2c",
+    "apps/workspace-service/src/index.ts": "fb7cb9d48d7a292296fbc1cb0856a379012c8bd356e2e364b6d8c69caaad1a93",
+    "apps/workspace-service/src/modules/identity/commands.ts": "85130f827f70b790300bc444c72c59dbb6bb1125b780545ab346a040694f896a",
+    "apps/workspace-service/src/modules/identity/repository.ts": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0",
+    "apps/workspace-service/src/server.ts": "6b4b004b607687f9ecd712466c2971d8086a362366ab8fe05f38ed6e8d96ada0",
+    "apps/workspace-service/tsconfig.json": "d83e32325e8aeee3cb0fe0828ce450e5a962098d788175ae6f61d452e15ba826",
+    "packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts": "6f05fb9338c94e9b52d99a8cbc3c871d258ef1deb7738104ef4637344a03a2b2",
+    "packages/core/src/rox2/meeting-conation-shell.ts": "f2d628e81cc06d722efbc044a10d3b99549c6d9d34fb9cac7e84632c913ad815",
+    "packages/core/src/rox2/platform-contract.ts": "cd5c85783eabd35ec0b8963cce2e1ec4fcd87d4d3dce1225bca6a502e9d52ca4",
+    "packages/core/src/types/workspace.ts": "d0e1a02d1db706a3469a4428b956c35533a2f3c0333ff554d4e38e3dd9098b6d",
+    "packages/server-core/src/transport/server.ts": "f61389662c1b10024bb8773aaa09b2b6c78c21c3bb136f6b7ed05ffc47e14ea8",
+    "packages/server-core/src/transport/types.ts": "2c9542094dcb2a8fb4664edf6a597a1e3d7e80eed6a9a84be07671e03c5ec99a",
+    "packages/shared/src/i18n/locales/ar.json": "83989a84565b4aba18593f3f3cbd5c68dd7592b8d730e0b924e9bdf100bea81c",
+    "packages/shared/src/i18n/locales/de.json": "c8d2afc5f70102bf58da9fa24ed751fe18b71ce75240b8f86320da939c57e061",
+    "packages/shared/src/i18n/locales/en.json": "fef557e97dc86a9d720b990d92ae7aa16f7e39a95faa4f8fb44c3ae5498fec7d",
+    "packages/shared/src/i18n/locales/es.json": "c34e68c3eaada09599a1f389bc1a5ed97be438c68ac46c20d97fcd04c53aad7c",
+    "packages/shared/src/i18n/locales/fr.json": "0f4b589565fb9e92ae901d5d56bf7834d60a602f476a4b140c6d6b736f846710",
+    "packages/shared/src/i18n/locales/hu.json": "9ca1052cc270b694ea3464b025b95d32d010f80db422802de110fb2a980d65d1",
+    "packages/shared/src/i18n/locales/ja.json": "ce15a32978d955e77905aa2473d3c01ca2ee095800fa4c1cbd3be5c7a926bc5e",
+    "packages/shared/src/i18n/locales/ko.json": "ef8be25f88d3833af0febbab4c9ccf4cac580220f3b51c32f255dd3ba1d7941b",
+    "packages/shared/src/i18n/locales/pl.json": "2de4235db0649c6cdeb6fd6172d3bf55bab2ce8282edd5febcda71239de00974",
+    "packages/shared/src/i18n/locales/ru.json": "78d9c7e93f76646958f916689536bee60fddbcbf10185957db0bd16f2da384ad",
+    "packages/shared/src/i18n/locales/zh-Hans.json": "21c05b7fb8b0118684718520e2022d8ec5889628fc08f08a62b79e7f5072bb32",
+    "packages/shared/src/i18n/locales/zh-Hant.json": "80134d7faebc0ec58b0014bdd423a2b1d890536af8845fad52d45ff863e96e91",
+    "packages/shared/src/protocol/types.ts": "e52e69e77edbbfd483922c9541afa2614f597ddf218dd100f3a744e51b97a5a0",
+    "packages/shared/src/workspace-domain/identity/contracts.ts": "2d562d5c41c9c8fd0b08a22cbae0f9fa4262cab24e83073f339088e7ba58d1bd",
+    "tests/macro-integration/ui/wp-01-electron.test.ts": "0dd843c4a49f052fd9c640429d1fd2a9901f577e0b13e6368cb6e17ae043d81a",
+    "tests/macro-integration/wp-01-auth-postgres.test.ts": "6207cbc95efe27759133160edb8f01e4d001c32a7000da018331aa497a063706",
+    "tests/macro-integration/wp-01-auth.test.ts": "13b383f192e974ec799ce2a9a10f1f853eaa4819b3db8f48858804532eb113b1",
+    "tests/macro-integration/wp-01-http.test.ts": "e5b4154f75813c33dafa9d168f2adc487df8064148919c35f9ab40601e0b5d47",
+    "tests/macro-integration/wp-01-migrations.test.ts": "925917228bc25ab5d1f612dcacd6dec770bcd9bb4a10705571e0cf501395276e",
+    "tests/macro-integration/wp-01-native-routing.test.ts": "ef6859f9629b14d83f287fd227a040622df046cd2c99821e219d705ac78793d9",
+    "tests/macro-integration/wp-01-runtime.test.ts": "9e59b75b819cee43ae421bd67b0e1ec3b68979d3f0566584dce53cc82938647f",
+    "tests/macro-integration/wp-01-server.test.ts": "987ea7808844cf414ada0c3f78ac71eaf14dde2413b53c5cb719b05f6d769519",
+    "tests/macro-integration/wp-01-transport.test.ts": "cf91993e197f24ac4caec2693a7fe243a89e2e1e4c23e4ca871071733b798fcd",
+    "tests/macro-integration/wp-01.test.ts": "14ea28d854f0c916ab74822cc6a5a41ec5bf3cdb2b36cdb3b0bf322555b5ba54"
+  },
+  "tests": [
+    {
+      "command": "bun test seven wp-01 domain/auth/http/migration/transport files and three transport neighbors",
+      "files": 10,
+      "passed": 90,
+      "failed": 0,
+      "assertions": 848,
+      "seconds": 29.23,
+      "log": "/tmp/rox-wp01-final-composed-tests.log"
+    },
+    {
+      "command": "bun test wp-01-native-routing.test.ts routed-client.test.ts channel-map-parity.test.ts",
+      "files": 3,
+      "passed": 31,
+      "failed": 0,
+      "assertions": 3159,
+      "seconds": 12.51,
+      "log": "/tmp/rox-wp01-native-root-routing.log"
+    },
+    {
+      "command": "bun test wp-01-runtime.test.ts",
+      "files": 1,
+      "passed": 10,
+      "failed": 0,
+      "assertions": 239,
+      "seconds": 8.44,
+      "evidence": "/tmp/rox-wp01-runtime-patches/verification-receipt.json",
+      "ownership": "Independent worker executed current integrated production source"
+    },
+    {
+      "command": "bun test meeting-conation-shell.test.ts rox2-platform-contract.test.ts",
+      "files": 2,
+      "passed": 195,
+      "failed": 0,
+      "assertions": 1130,
+      "log": "/tmp/rox-wp01-canonical-status-tests.log"
+    }
+  ],
+  "builds": {
+    "main": {
+      "exitCode": 0,
+      "log": "/tmp/rox-wp01-native-main.log"
+    },
+    "preload": {
+      "exitCode": 0,
+      "log": "/tmp/rox-wp01-native-preload.log"
+    },
+    "renderer": {
+      "exitCode": 0,
+      "log": "/tmp/rox-wp01-native-renderer.log",
+      "seconds": 37.01
+    }
+  },
+  "typecheck": {
+    "electron": {
+      "baselineUnique": 46,
+      "currentUnique": 43,
+      "new": [],
+      "resolved": [
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx: error TS2322: Type '{ id: string; slug: string; name: string; color?: string | undefined; }[] | undefined' is not assignable to type '{ id: string; slug: string; name: string; color?: string | undefined; }[]'.",
+        "apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx: error TS2322: Type '{ id: string; slug: string; name: string; color?: string | undefined; }[]' is not assignable to type 'LoadedProject[]'.",
+        "packages/core/src/rox2/meeting-conation-shell.ts: error TS2367: This comparison appears to be unintentional because the types '\"unverified\" | \"receipt_verified\" | \"readback_verified\"' and '\"verified\"' have no overlap."
+      ],
+      "baselineLog": "/tmp/rox-compound-baseline-typecheck.txt",
+      "currentLog": "/tmp/rox-wp01-native-electron-ts.log"
+    },
+    "server": {
+      "baselineUnique": 25,
+      "currentUnique": 24,
+      "new": [],
+      "resolved": [
+        "packages/core/src/rox2/meeting-conation-shell.ts: error TS2367: This comparison appears to be unintentional because the types '\"unverified\" | \"receipt_verified\" | \"readback_verified\"' and '\"verified\"' have no overlap."
+      ],
+      "baselineLog": "/tmp/rox-baseline-server-ts.log",
+      "currentLog": "/tmp/rox-wp01-native-server-ts-corrected.log"
+    }
+  },
+  "nativeRun": {
+    "sessionId": 93998,
+    "command": "ROX_WP01_PRODUCT_E2E=1 bun test tests/macro-integration/ui/wp-01-electron.test.ts",
+    "result": "RUNNING"
+  },
+  "integration": {
+    "kind": "ROOT_EXACT_INTEGRATION",
+    "timestamp": "2026-09-30T11:45:36.245356+00:00",
+    "head": "b9b8aa7197f5d25304ec377a049a8f375eccf3e5",
+    "patchCount": 25,
+    "files": [
+      {
+        "path": "apps/workspace-service/src/http.ts",
+        "baseSha256": "bf6261519d5e85bb4770935e0118c7f4d18b495aa5fd6d2b4f9562903613a52d",
+        "resultSha256": "5ec7953dc652bba0cd0119922a38f039ed5554ccb391e795c24e87868cd9cd2c",
+        "patch": "/tmp/rox-wp01-runtime-patches/http-lifecycle.patch",
+        "patchSha256": "ffb6434808ddbfbf64e2e00ca17c72f6ed8da55895c0ed6ae4cc2095066b495f"
+      },
+      {
+        "path": "apps/workspace-service/src/server.ts",
+        "baseSha256": "6b310b6c44efe8af63e3da7c1e1595211821451c2eb9c56c073c1843d33bdb52",
+        "resultSha256": "6b4b004b607687f9ecd712466c2971d8086a362366ab8fe05f38ed6e8d96ada0",
+        "patch": "/tmp/rox-wp01-runtime-patches/server-lifecycle.patch",
+        "patchSha256": "b8a40e210da07f4a1c7964de5ee979189856155f3940f3d361c917b7e2d878da"
+      },
+      {
+        "path": "apps/electron/src/transport/routed-client.ts",
+        "baseSha256": "4e76031f1cea042cd21f32bf5c9029543df6aaed7f32fffbe3b401a7f0d1d68c",
+        "proposedSha256": "033aece0e542d9f5462fd0258901b23748a34018a2bb005a8a8fd6b05d6641c3",
+        "patchPath": "/tmp/rox-wp01-native-patches/apps__electron__src__transport__routed-client.ts.patch",
+        "patchSha256": "ee9f0281459c72de8ddab628cd15b84b3f197958c17d1beb60e6aff2efdc49eb"
+      },
+      {
+        "path": "apps/electron/src/preload/bootstrap.ts",
+        "baseSha256": "a5f07c5a1924e6595e791170ffa1b8827e32eaad45eb725e4fdd232faf0ff9d2",
+        "proposedSha256": "62b2315268218b0f86ba32eeab645e066badefca5930ea844e8d357941de8aad",
+        "patchPath": "/tmp/rox-wp01-native-patches/apps__electron__src__preload__bootstrap.ts.patch",
+        "patchSha256": "e88f6bb05f539b3e4caf5ec0e0eeb7a60f36066ebe766a27a05efb163381aff7"
+      },
+      {
+        "path": "apps/electron/src/main/index.ts",
+        "baseSha256": "ebc8e015bf030d66595e0a3b1c6d786fc472c06032a149e9a9c0acf11cf82ba4",
+        "proposedSha256": "6a66891cb73cba51793643e3206d2de9c3d229136c18513a35d8f2239c50a7d5",
+        "patchPath": "/tmp/rox-wp01-native-patches/apps__electron__src__main__index.ts.patch",
+        "patchSha256": "b549194d80e7221d58a39f4a164d3fed884438684ae4050bc6da336ab58bef4a"
+      },
+      {
+        "path": "packages/core/src/types/workspace.ts",
+        "baseSha256": "756826653934f75b7ec4e8be08c387a18b8d486b7e864057659b0e956df3f4af",
+        "proposedSha256": "d0e1a02d1db706a3469a4428b956c35533a2f3c0333ff554d4e38e3dd9098b6d",
+        "patchPath": "/tmp/rox-wp01-native-patches/packages__core__src__types__workspace.ts.patch",
+        "patchSha256": "354430ed2ff65295eaeb4e9463861876a5860712ce07b44d97284683929cbebe"
+      },
+      {
+        "path": "apps/electron/src/shared/types.ts",
+        "baseSha256": "9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a",
+        "proposedSha256": "81b3f6f59614deb95705e570335e7f4ecc27dcffe5d6f5ed086b3707ca5ae95a",
+        "patchPath": "/tmp/rox-wp01-native-patches/apps__electron__src__shared__types.ts.patch",
+        "patchSha256": "414237290c4c71af11cfe21dd99cea1df3e2948e81f74f78a642bdb6a68b6300"
+      },
+      {
+        "path": "apps/electron/src/transport/channel-map.ts",
+        "baseSha256": "724a50a7090c8041de50add0768269340116de88d29c8ac82d965f62f72c2214",
+        "proposedSha256": "ffcc506c73a74d3133432a2f9b943edb06f78852edb8b04fa63b84a636ce71f0",
+        "patchPath": "/tmp/rox-wp01-native-patches/apps__electron__src__transport__channel-map.ts.patch",
+        "patchSha256": "4d170084414dde1766a978d7e5a90e65479f82f31fb60e9dfab258d1a271e93c"
+      },
+      {
+        "path": "apps/electron/src/renderer/atoms/projects.ts",
+        "baseSha256": "b3ba7e579ea30cbf2d9da437b828e7e12401671efb2c7e303030654be2cd9d2e",
+        "proposedSha256": "ba95a7423af6dcfc02cd4a946eca4e545a57eb07f03fcf8f0b7a5fea36dc86dd",
+        "patchPath": "/tmp/rox-wp01-native-patches/apps__electron__src__renderer__atoms__projects.ts.patch",
+        "patchSha256": "59f2dd1137f012cc2fc9b6aef20551909e613eafd7a7a6659df0970df24e579e"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/ProjectsListPanel.tsx",
+        "baseSha256": "25d88481076b826208d8a9043be73ee088ae85f47956acdbe6969028829a0782",
+        "proposedSha256": "f325bd0cd983421915b5aeb251e9d90c92ed76e7cf523e85c3c66078bb9e93b1",
+        "patchPath": "/tmp/rox-wp01-native-patches/apps__electron__src__renderer__components__app-shell__ProjectsListPanel.tsx.patch",
+        "patchSha256": "ad8f4f912db02c0663ed4b129416983b678e7d6379b3a1336790891eac2f8408"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "baseSha256": "50eff1ed1db446b4cbc9c766f28ebfc60a28be50f713d97a6a786f246ef36d6c",
+        "proposedSha256": "9df69f7d6205d0ca12c7cc35e4a8fce74733a65519f0cb98d26f32863ea76278",
+        "patchPath": "/tmp/rox-wp01-native-patches/apps__electron__src__renderer__pages__ProjectInfoPage.tsx.patch",
+        "patchSha256": "5fd0c9e032c5ac5c23ccefa6e4d9282aa3b44270b7f5707aad2b7e98d42e1562"
+      },
+      {
+        "path": "apps/electron/src/transport/__tests__/channel-map-parity.test.ts",
+        "baseSha256": "ad1d97b617b8cf1fda8a436ad8fdc99d77d65a32e2a4e5aa2e8962d3448471c0",
+        "proposedSha256": "c7738ab9944905750cb4b6f8f690893fce21f8dddd823a8a261c0746221ac52f",
+        "patchPath": "/tmp/rox-wp01-native-patches/apps__electron__src__transport____tests____channel-map-parity.test.ts.patch",
+        "patchSha256": "2e50cb4d26c697884941fa92871238df99b3b98ab4cca5eaef0f20bed5305e3c"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/ConnectionsPage.tsx",
+        "baseSha256": "3a11d3f6b27d8ced54fb8312bd2256842997a8594744b1230e2d01a5a39c0591",
+        "proposedSha256": "7e14c84fec3e229f88d62506fc8a3503dc320d7a6db5129c67f58544f940d402",
+        "patchPath": "/tmp/rox-wp01-native-patches/apps__electron__src__renderer__pages__ConnectionsPage.tsx.patch",
+        "patchSha256": "88c2eab0a49249e94e0c4601cd26f5a6aea04367b52add206bb9406e1b86f6fd"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ru.json",
+        "baseSha256": "f3d844c79849812f08a1ec87f80d88c8e0a7b078d86dc6b6d46223a0e0336e9d",
+        "proposedSha256": "78d9c7e93f76646958f916689536bee60fddbcbf10185957db0bd16f2da384ad",
+        "patchPath": "/tmp/rox-wp01-native-patches/packages__shared__src__i18n__locales__ru.json.patch",
+        "patchSha256": "32273117c221554b49251aac17addf77062fd521b0b30d160d777c7f507e764d"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/en.json",
+        "baseSha256": "80c051ec475acc53c9b42aebd15a876441c3304bcfd27567176328a0a7432e23",
+        "proposedSha256": "fef557e97dc86a9d720b990d92ae7aa16f7e39a95faa4f8fb44c3ae5498fec7d",
+        "patchPath": "/tmp/rox-wp01-native-patches/packages__shared__src__i18n__locales__en.json.patch",
+        "patchSha256": "c7cd3f45e809d2f3c02cc9d62caea4e045069f36a10eb5036bac33a81a18e4af"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/de.json",
+        "baseSha256": "33b910417fe22e318e4b5281b9cb1e06b6ba652688d7df275da0764dacb58be6",
+        "proposedSha256": "c8d2afc5f70102bf58da9fa24ed751fe18b71ce75240b8f86320da939c57e061",
+        "patchPath": "/tmp/rox-wp01-native-patches/packages__shared__src__i18n__locales__de.json.patch",
+        "patchSha256": "08534c9d5806c8bc14573f3715977974ddccfc2a635fabb85080d4e9c8d1dc06"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/es.json",
+        "baseSha256": "12d7b4e98d45cc507d2f641dcb2e6cb9c36b79289e7c43e5b128c5e7c6d85c32",
+        "proposedSha256": "c34e68c3eaada09599a1f389bc1a5ed97be438c68ac46c20d97fcd04c53aad7c",
+        "patchPath": "/tmp/rox-wp01-native-patches/packages__shared__src__i18n__locales__es.json.patch",
+        "patchSha256": "eabd9c22a3bd169f4dfeeacd8b1539cc6e8134cc09aeb8b785ec916ecbd0088b"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/fr.json",
+        "baseSha256": "20eb02193971d8aa586377a40ccd1ab00d13f5bfbb38e0d627f4592b840fce84",
+        "proposedSha256": "0f4b589565fb9e92ae901d5d56bf7834d60a602f476a4b140c6d6b736f846710",
+        "patchPath": "/tmp/rox-wp01-native-patches/packages__shared__src__i18n__locales__fr.json.patch",
+        "patchSha256": "f998b2151b8f393c0ec0e6caf519aaaf72798c3b40dd3536be503854719d062b"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/hu.json",
+        "baseSha256": "0731aa49b1ad3b8f579d366e04594fc43a0a3f6fbeff0a484e0687dfdc131929",
+        "proposedSha256": "9ca1052cc270b694ea3464b025b95d32d010f80db422802de110fb2a980d65d1",
+        "patchPath": "/tmp/rox-wp01-native-patches/packages__shared__src__i18n__locales__hu.json.patch",
+        "patchSha256": "435ced756163b7a7a37437eac8704ff78ec5254837a22e63db8f415b658c0b76"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ja.json",
+        "baseSha256": "362fa7aa5b3cb1162f9b59f84042924e8fe3c9ed20c6bdab0026a2e9852516d5",
+        "proposedSha256": "ce15a32978d955e77905aa2473d3c01ca2ee095800fa4c1cbd3be5c7a926bc5e",
+        "patchPath": "/tmp/rox-wp01-native-patches/packages__shared__src__i18n__locales__ja.json.patch",
+        "patchSha256": "3a00fbe12db246f4286d690264585c25af11f286669f91102d19bf3891048886"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/pl.json",
+        "baseSha256": "7cb18afd1261190bb66e0cbdb11bbb157f7fa014bcda3d98bfe9cf37c55ed833",
+        "proposedSha256": "2de4235db0649c6cdeb6fd6172d3bf55bab2ce8282edd5febcda71239de00974",
+        "patchPath": "/tmp/rox-wp01-native-patches/packages__shared__src__i18n__locales__pl.json.patch",
+        "patchSha256": "278d50d6dbb68b996b341607e8b4f1c3cbf489ba5c6c7f4f957cc6b9bc064f4c"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+        "baseSha256": "ed4dbe0c8740c44a26444ac79a4229b27dc32884384bda6c97a5eda7779c8876",
+        "proposedSha256": "21c05b7fb8b0118684718520e2022d8ec5889628fc08f08a62b79e7f5072bb32",
+        "patchPath": "/tmp/rox-wp01-native-patches/packages__shared__src__i18n__locales__zh-Hans.json.patch",
+        "patchSha256": "7223dbc3b5b297f7ea5b179c6c2afab3ba99481a73d30f73c72327411ae496f2"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/zh-Hant.json",
+        "baseSha256": "82e8c6050a3310ef7a98630df0b2fa6277483b1112e0e7914496a32f91e3e31b",
+        "proposedSha256": "80134d7faebc0ec58b0014bdd423a2b1d890536af8845fad52d45ff863e96e91",
+        "patchPath": "/tmp/rox-wp01-native-patches/packages__shared__src__i18n__locales__zh-Hant.json.patch",
+        "patchSha256": "240be99683b6746eb169ce8ba51d88e0c29a1a5095eaad8ea25d86169bd9a5d3"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ar.json",
+        "baseSha256": "52277c759a4a949bccbf272ec107ac9f8b3168ba9f13edc626ca670a22af4489",
+        "proposedSha256": "83989a84565b4aba18593f3f3cbd5c68dd7592b8d730e0b924e9bdf100bea81c",
+        "patchPath": "/tmp/rox-wp01-native-patches/packages__shared__src__i18n__locales__ar.json.patch",
+        "patchSha256": "975831d63f19e611036170f3929b7aa4e3544e0caccb0cb6bafea6474fbe8789"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ko.json",
+        "baseSha256": "cdf4d60f5616bf797183412271d610b0918025d99f5053808e2e000ef8056f84",
+        "proposedSha256": "ef8be25f88d3833af0febbab4c9ccf4cac580220f3b51c32f255dd3ba1d7941b",
+        "patchPath": "/tmp/rox-wp01-native-patches/packages__shared__src__i18n__locales__ko.json.patch",
+        "patchSha256": "962c809f9336cf89eb2c51e11539babdcc93318316fe0eba9b6c12f5b4a36e56"
+      }
+    ],
+    "behavioralVerified": false,
+    "fullDoD": false
+  },
+  "remainingGates": [
+    "Actual two-profile Electron acceptance and viewed screenshots",
+    "Durable encrypted credential/config crash recovery journal",
+    "Workspace lock registration and executable packaging readback",
+    "Normative per-criterion DoD closure and source-bound Git delivery",
+    "Full final 143-package program acceptance"
+  ],
+  "honestLimits": [
+    "This checkpoint is not a completed WP-01 or complete shared workspace",
+    "Generic grants/search/mentions/notifications/agents remain later dependent packages",
+    "No cloud deployment; service tests use actual protected local PostgreSQL",
+    "Existing standalone local folder Projects preserved; shared DTOs contain no fake paths",
+    "General realtime push is unavailable until authorized durable consumer integration"
+  ]
+}

@@ -1,0 +1,266 @@
+{
+  "task_id": "LSX-WP-014-preflight",
+  "attempt_id": "35e177b388aa08c556454f874e0c9868",
+  "packet_hash": "7da36292abfcf91120371aa37fbd90466516d92e7a71033335e82d8633a7dfe5",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-014",
+  "featureComplete": false,
+  "mode": "inspect-only; write owned report only",
+  "workTier": "bounded-workflow",
+  "dependencies": ["LSX-WP-002", "LSX-WP-010", "LSX-WP-011"],
+  "dependencyContract": [
+    {
+      "packageId": "LSX-WP-002",
+      "requiredContribution": "Accepted composite sourceStoreId/ownerPrincipalId/nativeId identity and explicit allowed source binding; reuse its namespaced EntityRef, never nativeId-only lookup.",
+      "normativePaths": ["packages/core/src/bases/source-binding.ts", "packages/server-core/src/bases/personal-source-binding.ts"],
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:1711-1798",
+      "state": "ACCEPTED_IMPLEMENTATION_AND_READBACK_RECEIPTS_NOT_INSPECTED"
+    },
+    {
+      "packageId": "LSX-WP-010",
+      "requiredContribution": "Accepted actor-scoped readable-target query with row/field ACL before computation, source binding, queryRevision, permissionEpoch, cursor invalidation and revoke handling. searchRelationTargets must delegate to it rather than build another index.",
+      "normativePaths": ["packages/server-core/src/bases/query-service.ts", "packages/core/src/bases/query-contract.ts"],
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:4501-4587",
+      "state": "ACCEPTED_IMPLEMENTATION_AND_READBACK_RECEIPTS_NOT_INSPECTED"
+    },
+    {
+      "packageId": "LSX-WP-011",
+      "requiredContribution": "Accepted FieldDefinition/TypedCellValue/FieldCapability for core relation type 13, stable fieldId, target kind/schema, nullable and cardinality config; reuse validated descriptors and renderer/editor capabilities.",
+      "normativePaths": ["packages/core/src/bases/field-registry.ts", "apps/electron/src/renderer/pages/bases/FieldSchemaInspector.tsx"],
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:4813-4900; docs/lark-suite-reference/05-rox-bases-design.md:125",
+      "state": "ACCEPTED_IMPLEMENTATION_AND_READBACK_RECEIPTS_NOT_INSPECTED"
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "EG-EFFECTS",
+      "classification": "EXPLICIT_EXTERNAL_PREREQUISITE_NOT_INTERNAL_DAG_EDGE",
+      "evidence": "plans/lark-suite-reference/work-packages.json:84-89,5701-5703,5828-5835; docs/lark-suite-reference/07-domain-entity-model.md:180-189",
+      "requiredReceipt": "Exact implementation commit and native runtime proof for atomic command/receipt/outbox recovery, or an accepted journal/repair mechanism where a cross-authority transaction is unavailable. Must include crash recovery between forward and inverse writes.",
+      "state": "READINESS_NOT_VERIFIED",
+      "surprise": "execution-packages.json's reduced LSX-WP-014 record omits external_prerequisites, but the full work-package record explicitly requires EG-EFFECTS. The three internal dependency receipts alone do not authorize execution."
+    },
+    {
+      "id": "RS-DRV-01",
+      "classification": "HIDDEN_PUBLISHED_SPEC_DEPENDENCY",
+      "evidence": "docs/rox-suite/published/RS-BASE-01.md:44-56,95-100; docs/rox-suite/published/RS-DRV-01.md:36-38,60-65,73-75",
+      "requiredReceipt": "Lead must resolve the published Base-to-Drive prerequisite against the affected relation scope and provide accepted canonical registry/alias/authority/grant readiness. Publication is not implementation evidence. Do not expand this worker into Drive implementation or count the entire Drive UI as this slice's feature.",
+      "state": "READINESS_NOT_VERIFIED",
+      "surprise": "The published RS-BASE-01 specification says Dependencies: RS-DRV-01 although LSX-WP-014's explicit array only contains LSX-WP-002/010/011."
+    },
+    {
+      "id": "COMMON_IDENTITY_ACL_COMMAND_AUTHORITY",
+      "classification": "HIDDEN_PUBLISHED_FOUNDATION_GATE",
+      "evidence": "docs/rox-suite/published/RS-DRV-01.md:62,73; docs/rox-suite/published/RS-BASE-01.md:50-56,86; docs/lark-suite-reference/07-domain-entity-model.md:143,161-167; packages/core/src/rox2/platform-contract.ts:592-610",
+      "requiredReceipt": "Authenticated transport principal, canonical owner resolution/existence/tombstones, current source write and target read grants, field restrictions, command registration, revoke/subscription/cache invalidation and actor-scoped tool entry points. authorizeRox2Action is only a predicate over supplied grants, not a resolver or transport authenticator.",
+      "state": "READINESS_NOT_VERIFIED",
+      "surprise": "RS-DRV-01 explicitly requires common identity/ACL/command authority even though it declares no new draft dependency among the seven published specifications. Relation creation and import must never imply sharing."
+    },
+    {
+      "id": "NATIVE_RELATION_OWNER_AND_INVERSE_AUTHORITY",
+      "classification": "DESIGN_FOUNDATION_AND_SCOPE_GATE",
+      "evidence": "docs/lark-suite-reference/05-rox-bases-design.md:53,101,146-148,203-205,225-227; docs/lark-suite-reference/07-domain-entity-model.md:143,157,182-189; plans/lark-suite-reference/work-packages.json:5897-5898",
+      "requiredReceipt": "Named canonical relation owner, compatible native relation mapping, server CAS/idempotency and durable inverse journal/readback integration. For inverse endpoints in different authorities expose partial/recovery status rather than invent atomic success; require explicit inverse-side mutation capability. No parallel project membership store or duplicate task database.",
+      "state": "OWNER_AND_EXACT_EFFECTS_INTERFACE_NOT_INSPECTED"
+    },
+    {
+      "id": "APPROVED_BOUNDARY_WIRING_AND_UI_LOCALIZATION",
+      "classification": "IMPLEMENTATION_SCOPE_GATE",
+      "evidence": "plans/lark-suite-reference/work-packages.json:5763-5789,5810-5815,5841-5848,5969; docs/rox-suite/published/RS-BASE-01.md:42,52,84; repository AGENTS.md i18n contract",
+      "requiredReceipt": "Lead supplies reviewed packet additions or accepted prerequisite extension hooks for authenticated base command dispatch, renderer mounting, relation events/projection subscription, and translations in all ten existing locales. Only registry.ts is currently an approved shared patch path; new module files alone cannot expose the feature. Exact host symbols outside the allowed inspection scope remain undiscovered, not invented.",
+      "state": "REVIEWED_HOST_HOOKS_OR_SCOPE_AMENDMENT_REQUIRED"
+    },
+    {
+      "id": "REFERENCE_AND_WAVE0_ACCEPTANCE",
+      "classification": "LAUNCH_AND_EVIDENCE_GATE",
+      "evidence": "plans/lark-suite-reference/work-packages.json:9-11,5959-5969; plans/lark-suite-reference/execution-packages.json:1222-1232; supplied dispatch instruction",
+      "requiredReceipt": "Lead wave0 commit plus accepted dependency artifact/readback receipts, immutable reference delivery revision/digest and verified spec hashes, approved implementation baseline reconciliation, and exclusive registry path lease. Rehash/re-read after integration; do not checkout/reset the root-owned dirty tree.",
+      "state": "AWAIT_LEAD_COMMIT_AND_ACCEPTED_RECEIPTS",
+      "surprise": "Worker input revision a21aeab1da5a67e56788384ff930945b0f487879 differs from the reference package product baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab. No ancestry or cleanliness claim was established by this preflight."
+    },
+    {
+      "id": "PUBLISHED_CONTRACT_RECONCILIATION",
+      "classification": "SPEC_CONFLICT_REQUIRING_LEAD_RESOLUTION",
+      "evidence": "docs/rox-suite/published/RS-BASE-01.md:46,50,62-67; docs/lark-suite-reference/07-domain-entity-model.md:60-62; plans/lark-suite-reference/execution-packages.json:1180-1187",
+      "requiredReceipt": "Use approved identity/storage decisions from accepted prerequisites. Published RS-BASE-01 proposes a new CustomRecord entity kind and a workspace-service/shared-base path layout, whereas the refined model proposes existing page refs with contentKind=record and the executable slice owns server-core/bases paths. Do not introduce a new kind, Postgres store or alternate shared contracts package inside LSX-WP-014 to reconcile these implicitly.",
+      "state": "LEAD_MUST_BIND_RESOLVED_CONTRACT_TO_IMPLEMENTATION_PACKET"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/server-core/src/bases/relation-commands.ts",
+    "apps/electron/src/renderer/pages/bases/RelationPicker.tsx",
+    "tests/lark-suite-extension/lsx-wp-014.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-014.spec.ts"
+  ],
+  "ownedNewFilePlan": [
+    {
+      "path": "packages/server-core/src/bases/relation-commands.ts",
+      "proposedSymbols": ["RelationDefinition", "EntityLink", "RelationMutationReceipt", "createRelationCommands", "searchRelationTargets", "linkRelation", "unlinkRelation"],
+      "change": "Align schema symbols with accepted LSX-WP-011 rather than duplicate field definitions. Export boundary-safe request/result/error schemas and a command factory using existing authenticated context, owner resolver, query, policy and effects interfaces. Request contains source ref/expectedRevision, schema/field revision, fieldId, target refs/preconditions and operationId/idempotency information. Preserve full refs and source origin; reject malformed/cross-workspace, wrong target kind/schema, cardinality, stale source/target/schema and invalid native-domain relations. Reuse isAllowedRox2Relation/wouldCreateRelationCycle only for genuinely compatible relation kinds. Persist link/unlink, inverse journal, command receipt and outbox through accepted effects owner; recover/replay deterministically and perform current-policy readback. Produce denied/unresolved/collision import diagnostics without private titles; retain tombstone refs and raw unresolved mappings. Expose entity.linked/unlinked and base.relationChanged via verified shared aliases and a revision fence, not a separate event bus.",
+      "missingPrerequisite": "Accepted dependency types and exact effects/owner interfaces, transport/command registration hook and approved event aliases; all proposed symbols are design, not existing exports."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/bases/RelationPicker.tsx",
+      "proposedSymbols": ["RelationPicker"],
+      "change": "Render the existing Base relation field editor using the typed authenticated API. Search by ID/source and readable label; label is never identity. Key chips/selections by full namespaced ref, show single/multi cardinality, and keep unresolved import repair separate from committed links. Distinguish loading/empty/denied/error/stale/conflict/offline/pending/partial/recovery/committed states; do not announce inverse success before durable receipt. Avoid client raw owner-store filtering, hidden counts and unchecked ResourceItem.data refs. Cancel superseded searches, revalidate query/policy on apply and clear revoked results. Use t() for all labels/help/errors, actual app font/theme, keyboard/IME/focus-return and reduced-motion behavior.",
+      "missingPrerequisite": "Accepted Base field editor host and renderer API binding, reviewed mounting hook, ten locale key patches and supported real Electron UI runner."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-014.test.ts",
+      "proposedSymbols": ["LSX-WP-014 relation behavior regression/property cases"],
+      "change": "Behavioral tests exercise accepted canonical owners/effects and target search, not mocked forwarding or copied source text. Cover duplicate titles, equal nativeId in different personal stores, cardinality/schema/kind validation, source/target CAS, denied/revoke/cross-workspace, repeat import/link/unlink with the same operationId, tombstones, native self-parent cycle versus allowed ordinary cycles and journal recovery between inverse writes. Retain deterministic reproduction seed, fixture/input hash and exact negative-control mutation assertion.",
+      "missingPrerequisite": "Accepted owner/effects test fixture and dependency implementations; baseline and mutation runs are future work."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-014.spec.ts",
+      "proposedSymbols": ["LSX-WP-014 actual Electron relation picker scenario"],
+      "change": "Use the discovered project-supported actual Electron runner and mounted canonical Base field editor. Assert explicit selection of distinct same-title refs, single/multi limits, unresolved repair, denied title absence, recovery status, persisted reload and authorized forward/inverse readback. Exercise pointer, keyboard, composition/IME, focus, help, reduced motion, 200% zoom, light/dark theme, Russian/default plus locale coverage and computed actual Rox Mono font. Collect screenshots/ARIA/viewport/locale with revision-bound receipts, not an isolated fixture UI.",
+      "missingPrerequisite": "Mounted feature, actual runner discovery by authorized owner and native UI lane authorization after preflight."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/platform/resources/registry.ts",
+      "symbol": "createResourceProviderRegistry",
+      "change": "Proposed exact factory extension: accept an optional injected relationTargetsProvider: ResourceProvider through a factory options argument, instantiate ResourceProviderRegistryImpl once, register that supplied provider via its existing register(provider), then return that same registry. The host supplies a provider backed by authenticated base.searchRelationTargets and validated namespaced refs; core must not import server-core or create a new target index. Preserve existing prefix eligibility, duplicate-provider rejection, AbortSignal, score merge/limit and onDidChange/dispose behavior. Keep typed relation errors on the direct base API used by RelationPicker because generic registry search intentionally catches provider errors and returns empty contribution. Do not rewrite ResourceProviderRegistryImpl.search or use title/ResourceItem.id alone to identify a canonical endpoint.",
+      "reason": "This is the only authorized shared factory seam. It currently returns an empty generic registry and has no principal/ref/schema semantics. Injection reuses its provider mechanism without a second store, while avoiding false empty-success handling for relation commands.",
+      "currentEvidence": "packages/core/src/platform/resources/registry.ts:23-39,50-80,88-90; direct import types.ts:23-58",
+      "missingPrerequisite": "Accepted target query/provider interface and reviewed host wiring extension hook; host caller symbol has not been inspected within this packet. If accepted integration already exposes equivalent registration, reuse it and avoid a redundant factory option.",
+      "owner": "integration-owner",
+      "mode": "REVIEWED_SERIAL_PATCH_ONLY",
+      "requiresExclusivePathLease": true,
+      "applied": false
+    }
+  ],
+  "scopeAmendmentRequests": [
+    {
+      "seam": "Authenticated base command dispatcher and renderer typed API registration",
+      "reason": "The three proposed base operations require an actual transported, schema-validated, authenticated path; neither platform-contract nor the resource registry dispatches commands.",
+      "requiredAction": "Lead identifies exact path/symbol through a separately authorized scope discovery and approves it or provides accepted dependency hooks before implementation. No guessed host path or patch is authorized here."
+    },
+    {
+      "seam": "Canonical Base relation-field editor host, shared event consumer and locale resources",
+      "reason": "A new RelationPicker file does not mount itself; the bounded packet does not list a host surface, projection consumer or locale patches. AGENTS requires every new user-facing key in all ten locales.",
+      "knownLocaleContractPathPattern": "packages/shared/src/i18n/locales/*.json",
+      "requiredAction": "Lead approves exact host/event symbols and ASCII-sorted translations for de/en/es/fr/hu/ja/pl/ru/zh-Hans/zh-Hant through a revised packet or prerequisite-provided hooks. No existing files are written by this preflight."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "stable identity and cardinality maintained",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:5888; docs/lark-suite-reference/05-rox-bases-design.md:47,53,125,146-148,225-227",
+      "currentEvidence": "Rox2EntityRef has workspaceId/entityId/revisionId/accountNamespace (platform-contract.ts:233-239); registerExternalBinding encodes four-part external keys and quarantines workspace/binding conflicts (336-371). ROX2_RELATION_RULES/isAllowedRox2Relation/wouldCreateRelationCycle encode existing semantic kinds (373-429), not arbitrary schema cardinality. linkEntityToProject/unlinkEntityFromProject manipulate member-of edges without deleting source entities (project-membership.ts:93-137). No Base relation API/cardinality or inverse journal appears in these inspected sources; proposed bases directories and WP-014 test files were not found by scoped glob.",
+      "requiredChange": "relation-commands.ts must consume LSX-WP-002 composite origin and LSX-WP-011 stable field/schema/cardinality, retain full refs and distinct same-title/store IDs, enforce source+target+schema preconditions at commit, preserve native parent/project constraints and use explicit custom relation semantics. Reject cardinality rather than truncate. Tombstones/unresolved import mappings survive delete/restart; no matching-title substitution, no repeated-import duplicate edge.",
+      "verification": "Future behavioral/property test and authoritative native readback: two identical labels with distinct refs, two stores with equal nativeId, one/many cardinality violations, target kind/schema mismatch, rename/path move with unchanged identity, self-parent cycle rejection and ordinary cycles, delete target retained unresolved, repeated link/import/unlink idempotence. Compare exact forward/inverse refs, revisions and digest before/after restart.",
+      "missingPrerequisite": "Accepted LSX-WP-002/011 identities/schema descriptors, canonical owner existence/tombstone API and effects CAS/journal receipt.",
+      "state": "SOURCE_SEAMS_ONLY_NOT_IMPLEMENTED_OR_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "no implied grant from relation or imported file",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:5889,5837-5839; docs/lark-suite-reference/07-domain-entity-model.md:143,161-167; docs/lark-suite-reference/05-rox-bases-design.md:146,239",
+      "currentEvidence": "authorizeRox2Action returns false for absent actor and otherwise checks supplied actor/permission grants (platform-contract.ts:597-610); it does not resolve per-entity/field or current grants. visibleProjectsForEntity filters readable nonarchived project IDs (project-membership.ts:139-183) but trusts caller-supplied visibility; it is not authoritative generic target search. ResourceItem.title is returned by registry without policy evaluation (registry.ts:62-68; types.ts:23-33).",
+      "requiredChange": "Derive actor from authenticated transport; search via LSX-WP-010 authorized rows/fields and bound sources. Recheck current source write, target read and any required inverse-side mutation capability at commit/recovery/readback. Reject cross-workspace and guessed nativeId; ignore imported actor/grant claims. Return denied/unresolved/collision reports without hidden labels/counts, and invalidate result/cache/subscription on revoke.",
+      "verification": "Future ACL_NEGATIVE and real API/tool/UI probes with owner/viewer/unauthenticated actor: forged payload actor/workspace, hidden target, private imported file, revoked target between search and commit, viewer mutation and cross-workspace attempt must fail with no writes, no target title/body/count leakage and no grant changes. Reconnect clears revoked results before replay.",
+      "missingPrerequisite": "Accepted authenticated identity/command/policy/revoke foundation plus LSX-WP-002/010 runtime receipts; current inverse-owner permission contract.",
+      "state": "SOURCE_PREDICATES_EXIST_SERVER_ENFORCEMENT_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:5890,5807-5826",
+      "currentEvidence": "Rox2EntityRef/Rox2CanonicalResult are TS types (platform-contract.ts:158-167,233-239). Generic ResourceSearchContext carries query/prefix/keys/signal/limit and ResourceItem.data is Record<string, unknown> (resources/types.ts:23-42), not a typed authenticated Base operation. searchRelationTargets/linkRelation/unlinkRelation and relation receipt types were absent from inspected seams.",
+      "requiredChange": "Define schemas for base.searchRelationTargets, base.linkRelation and base.unlinkRelation in normative relation-commands.ts, aligned with dependency schema/transport conventions; share only boundary-safe types/validators with renderer, no server runtime import. Required error discriminants: validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Mutation envelope validates refs, field/schema, source/target preconditions and operationId; authenticated context is outside untrusted payload. Renderer validates result/ref/receipt and never assumes ResourceItem.data is a canonical ref.",
+      "verification": "Future SOURCE_SCHEMA compilation at actual server+renderer boundaries and runtime schema probes for malformed refs, unknown formats, each error discriminant and spoofed actor. Exercise all three operations through the authenticated supported dispatcher, not direct mocked function forwarding.",
+      "missingPrerequisite": "Accepted dependency schemas and schema library conventions, exact dispatcher/renderer API hooks and reviewed shared boundary wiring scope. No build/typecheck executed during preflight.",
+      "state": "PROPOSED_BOUNDARY_NOT_COMPILED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:5891,5828-5835; docs/lark-suite-reference/05-rox-bases-design.md:146,203-205; docs/lark-suite-reference/07-domain-entity-model.md:180-189",
+      "currentEvidence": "liveResult defaults to unverified; isClaimableLive requires live+succeeded+verified and an entityId (platform-contract.ts:515-552). Rox2Receipt has optional observedRevision but no relation forward/inverse hash or durable journal contract (99-105). Project membership functions return cloned in-memory state; they do not commit or recover (project-membership.ts:78-137).",
+      "requiredChange": "Use EG-EFFECTS native commit to persist command/idempotency receipt and outbox with relation writes, or accepted saga journal for split owners. RelationMutationReceipt includes actual source/target refs and revisions, link/inverse status and authoritative readback digest. Return pending/partial/recovery honestly until both sides are durable; do not mark verified from object construction. Recovery is replay-safe and preserves tombstones; UI success waits for the appropriate receipt.",
+      "verification": "Future NATIVE_DOMAIN_READBACK and RESTART_RECOVERY: run real link/unlink; fetch canonical endpoints and journal at exact receipt ref/revision/hash; terminate after forward commit before inverse, restart actual owner, resume and verify convergent forward/inverse, deduplicated receipt/outbox and correct partial status until repair. Readback uses current authorization.",
+      "missingPrerequisite": "EG-EFFECTS readiness, named durable owner/readback interfaces and supported crash/restart harness. Generic triad helpers alone are insufficient.",
+      "state": "DURABLE_RELATION_RECEIPT_AND_RECOVERY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:5892,5857-5871",
+      "currentEvidence": "Existing inspected helpers provide relation kind/cycle and project visibility behavior only; normative LSX-WP-014 tests were not present in scoped glob. No execution was authorized or performed.",
+      "requiredChange": "Implement normative domain test file with deterministic synthetic actors/sources against accepted canonical owner/effects fixtures, plus actual transported/native scenarios. Cover link/unlink, cardinality, same-title/store collisions, hidden targets, stale source/target/schema and concurrent single-cardinality writes, duplicate operationId/import replay, native cycles and crash/inverse repair/tombstone behavior. Record exact inputs, seed, evaluated bytes/commit and every failed/successful attempt.",
+      "verification": "Future command: bun test tests/lark-suite-extension/lsx-wp-014.test.ts. Separately run transported link/unlink and canonical readback, restart recovery, ACL-negative and real Electron lanes. Assert one winning CAS under concurrency, no lost links or duplicate inverse/outbox side effects and stable refs after repeated import. A green unit suite alone does not satisfy native lanes.",
+      "missingPrerequisite": "Accepted dependencies/effects fixture, actual command wiring and authorized post-preflight runtime environment.",
+      "state": "PLANNED_NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:5873-5881,5893",
+      "currentEvidence": "Specification names mutation: choose first matching title or update inverse without journal/preconditions; must-fail assertions are collision remains unresolved, recovered forward/inverse agree, hidden target title absent. No baseline/mutant execution evidence exists in this preflight.",
+      "requiredChange": "Prepare isolated deterministic fixture and exact mutation variants that select first equal title, bypass journal/preconditions and bypass target-title ACL. Use semantic assertions for each named invariant and retain seed/baseline input SHA256 plus exact baseline/mutant artifact hashes; do not mutate shared product source during this preflight.",
+      "verification": "Future green baseline, then evaluate seeded broken control on same fixture. Ambiguous import must fail unresolved-vs-arbitrary-target assertion; interrupted inverse must fail forward/inverse agreement after restart; hidden title exposure must fail absence assertion. Preserve semantic assertion failures separately from build/startup/network timeout or harness failure.",
+      "missingPrerequisite": "Implemented canonical commands/journal and accepted isolated mutation runner/fixture; no negative-control result is claimed.",
+      "state": "MUTATION_SENSITIVITY_NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:5841-5844,5894; docs/rox-suite/published/RS-BASE-01.md:36-42,84,88",
+      "currentEvidence": "RelationPicker.tsx's proposed bases directory was not found by scoped glob. Resource registry is a pure TS search mechanism, not a rendered picker. AGENTS mandates t() and all ten locale files; no actual changed surface or font/UI proof was inspected.",
+      "requiredChange": "Mount RelationPicker in the canonical relation cell editor/drawer through reviewed host seam. Implement ID/source disambiguation, single/multi selection and import repair, pending/partial/error/denied/conflict/offline states; Enter selects/commits, Esc cancels/restores focus, arrows/Tab navigate; composition must not prematurely commit. Preserve theme and actual Rox Mono, accessible roles/status and hover/focus/click help, reduced motion and zoom-safe layout. Add sorted locale keys through lead-owned approved translation patches.",
+      "verification": "Future actual Electron UI runner after discovery: pointer+keyboard select distinct equal-title targets and read back canonical refs; IME composition, focus return, help, denied results and revocation; screenshot/ARIA/computed font proof in Russian plus i18n coverage, 200% zoom, light/dark, reduced-motion, responsive drawer behavior and persisted reopen/restart. Save exact commit/viewport/locale and artifact hashes. No invented runner command or screenshot.",
+      "missingPrerequisite": "Reviewed mounting/localization hooks, typed renderer transport, accepted query/schema host and actual Electron runner/environment. UI changes are required, not N/A.",
+      "state": "ACTUAL_ELECTRON_UI_NOT_RUN"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:5864-5871,5895,5949-5969; docs/rox-suite/published/RS-BASE-01.md:84-89",
+      "currentEvidence": "This report is source/spec preflight only. Whole-file hashes establish inspected bytes, not compiled/runtime behavior. Reference record remains PLANNED_NOT_EXECUTED and proof receipts were not inspected; no source implementation was written.",
+      "requiredChange": "Lead accepts dependencies by artifact plus readback, resolves reference hashes and approved base, serially integrates registry patch under lease, then records separate SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI receipts on exact integrated implementation. Verify event alias and one revision fence updates detail/graph/Base projections without stale permission cache. Include patch/commit, schemas/errors, tests/seeds/control assertions, canonical before/after restart readbacks, redacted actor outputs and native screenshots/ARIA/font; independently review migration/rollback and existing authority behavior. Provider/collaboration proof is additional when exercised, never simulated or substituted for mandatory native lanes.",
+      "verification": "Future integration acceptance audits every mandatory lane independently and reruns affected behavior on the integrated version; compare authoritative endpoints and projection revisions, ignore duplicate/older events, verify revoke. Confirm no queuedProvider/partial/toast/fixture-only result is labeled full success. Bind artifact hashes and expected/observed values to exact evaluated bytes and delivered commit.",
+      "missingPrerequisite": "Lead wave0/integration commit, accepted dependencies/foundations, delivery manifest, lease, complete runtime evidence and independent review. Source/runtime verification is not authorized in this preflight.",
+      "state": "ALL_RUNTIME_PROOF_LANES_OUTSTANDING_FEATURE_COMPLETE_FALSE"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef","lineStart":233,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"registerExternalBinding","lineStart":336,"lineEnd":371,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"ROX2_RELATION_RULES / isAllowedRox2Relation / wouldCreateRelationCycle","lineStart":373,"lineEnd":429,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"liveResult / isClaimableLive","lineStart":515,"lineEnd":552,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"authorizeRox2Action","lineStart":597,"lineEnd":610,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/project-membership.ts","symbol":"linkEntityToProject / unlinkEntityFromProject","lineStart":93,"lineEnd":137,"sha256":"c732cf3b3754b834c0db37b99544449fdbe85c48c7e357212589b64ba4a4a237"},
+    {"path":"packages/core/src/rox2/project-membership.ts","symbol":"portfolioEntityIds / visibleProjectsForEntity","lineStart":158,"lineEnd":183,"sha256":"c732cf3b3754b834c0db37b99544449fdbe85c48c7e357212589b64ba4a4a237"},
+    {"path":"packages/core/src/platform/resources/registry.ts","symbol":"ResourceProviderRegistryImpl.register / ResourceProviderRegistryImpl.search / createResourceProviderRegistry","lineStart":23,"lineEnd":90,"sha256":"dbbe1bddb349ebb2922e7605d5b300e9973519144b26077596d03f339a054d94"},
+    {"path":"packages/core/src/platform/resources/types.ts","symbol":"ResourceItem / ResourceSearchContext / ResourceProvider / ResourceProviderRegistry","lineStart":23,"lineEnd":58,"sha256":"2e95bc0416269082a13f386045222755fe265cc7b61bca218d9c18ef0841862d"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[13] LSX-WP-014","lineStart":5678,"lineEnd":5970,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-014 executable ownership and launch record","lineStart":1149,"lineEnd":1233,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"6.2 Relation","lineStart":144,"lineEnd":148,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"10. Schema migrations / 11. Import-export portability","lineStart":218,"lineEnd":244,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path":"docs/lark-suite-reference/07-domain-entity-model.md","symbol":"EntityRefV2 mapping / domain receipts","lineStart":35,"lineEnd":62,"sha256":"cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path":"docs/lark-suite-reference/07-domain-entity-model.md","symbol":"7. Permissions / 8. Events and consistency","lineStart":159,"lineEnd":189,"sha256":"cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path":"docs/rox-suite/published/RS-BASE-01.md","symbol":"Commands / permissions / Definition of Done / Dependencies","lineStart":44,"lineEnd":100,"sha256":"78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"},
+    {"path":"docs/rox-suite/published/RS-DRV-01.md","symbol":"Mandatory common identity/ACL/command authority foundation and quality gates","lineStart":60,"lineEnd":75,"sha256":"ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3"}
+  ],
+  "evidenceStatus": {
+    "scope": "Actual LSX-WP-014 specification paths, its three named existing source files and registry direct import resources/types.ts; dependency records and direct published-spec prerequisite read as specifications only.",
+    "codegraph": "Query attempted once; no .codegraph index found by mounted tool. Continued scoped read/grep/glob, no indexing or upgrade.",
+    "filePresence": "Scoped glob returned Path not found for packages/server-core/src/bases/, apps/electron/src/renderer/pages/bases/, tests/lark-suite-extension/lsx-wp-014.test.ts and tests/lark-suite-extension/ui/lsx-wp-014.spec.ts at inspection. Absence is time-bound; no repository-wide absence claim.",
+    "hashing": "Read-only shasum -a 256 measured whole concrete files. The two normative JSON hashes exactly match the packet input_manifest. The three named product source hashes also match their specification baseline blob_sha256.",
+    "freshness": "Snapshot of live working-tree bytes during preflight. Hash matching does not prove HEAD ancestry, accepted dependencies or runtime readiness. Root integration may change these files; evidence is stale for any different hash. Re-read and rehash relevant sources at the lead's committed baseline before implementing; do not pin line numbers against changed bytes.",
+    "git": "No Git operation executed and no Git state changed or verified.",
+    "runtime": "No build, test, native UI, network, provider operation or feature smoke executed. No feature implementation performed. This is not a completion receipt.",
+    "artifactVerificationPlan": "Read back and parse only the owned report JSON; verify required fields, exact dispatch IDs, dependency array, all eight DoD entries and normative owned/shared scope. Packet verifier/runtime lanes remain for lead-controlled execution."
+  },
+  "nextExecutableAction": "Lead can immediately review this report and resolve the RS-DRV-01/common-authority contract, EG-EFFECTS readiness and missing transport/mount/event/i18n hooks through accepted receipts or a revised packet. Implementation may start only after lead wave0 commit, accepted LSX-WP-002/010/011 artifact plus native readback receipts, resolved reference manifest, approved effects/owner interfaces and registry lease. At that point re-read/re-hash the committed seams, align request schemas with dependency exports, then implement relation-commands.ts before connecting RelationPicker and run each required proof lane on the integrated revision.",
+  "risks": [
+    "Resource registry search catches provider errors and returns empty contributions, so using it as the only relation API would conceal denied/offline/missingDependency failures.",
+    "ResourceItem.id/title/data are generic resource presentation, not proof of authorized canonical EntityRef; title collision or nativeId-only joins can link the wrong private entity.",
+    "authorizeRox2Action and ProjectVisibility predicates trust supplied grants/visibility; treating them as authoritative resolvers bypasses authenticated per-entity/field policy and revoke checks.",
+    "registerExternalBinding protects provider/account/type/remoteId namespaces, not the full personal sourceStoreId/ownerPrincipalId/nativeId contract; accepted LSX-WP-002 remains necessary.",
+    "Generic custom relations must not be encoded as blocks/assigned/member-of just to reuse an existing enum; native parent/project semantics and cycle/deletion policies differ.",
+    "Forward/inverse endpoints may live in separate authorities. A cloned in-memory membership result or local queued receipt is not a recoverable durable inverse commit.",
+    "Tombstone refs and unknown/denied/ambiguous import mappings must remain unresolved, not disappear or reconnect by equal title; repeated imports must not duplicate inverse edges.",
+    "Concurrent cardinality/schema/row changes require atomic preconditions and idempotent recovery; blind journal replay can overwrite current writes or bypass revoked grants.",
+    "The only approved shared patch is registry.ts. API dispatch, UI mounting, event consumer and ten locale updates require reviewed scope or existing accepted extension hooks; writing only the four new files cannot meet end-to-end DoD.",
+    "Published Base specification and refined executable model differ on CustomRecord identity/storage/path proposals. Lead must bind a resolved contract instead of silently adding another kind/store/surface.",
+    "Root-owned wave0 changes can make line ranges/hash evidence stale. This preflight neither commits nor freezes source; accepted implementation must re-establish evidence against committed bytes.",
+    "No actual Electron runner, effects recovery or dependency receipt was exercised here; plan validation cannot substitute for any mandatory proof lane."
+  ]
+}

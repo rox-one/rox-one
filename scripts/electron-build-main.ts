@@ -6,6 +6,7 @@
 import { spawn } from "bun";
 import { existsSync, readFileSync, statSync, mkdirSync } from "fs";
 import { join } from "path";
+import { ELECTRON_MAIN_CJS_FLAGS } from "./electron-main-cjs";
 
 const ROOT_DIR = join(import.meta.dir, "..");
 const DIST_DIR = join(ROOT_DIR, "apps/electron/dist");
@@ -387,6 +388,7 @@ async function main(): Promise<void> {
       "--platform=node",
       "--format=cjs",
       "--outfile=apps/electron/dist/main.cjs",
+      ...ELECTRON_MAIN_CJS_FLAGS,
       "--external:electron",
       // Claude Agent SDK is pure ESM (sdk.mjs) and calls `createRequire(import.meta.url)`
       // at module init. esbuild's CJS bundling leaves the synthesized `import_meta.url`

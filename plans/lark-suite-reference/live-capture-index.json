@@ -1,0 +1,387 @@
+{
+  "schemaVersion": 1,
+  "tool": "Codex Computer Use cua_repl",
+  "capturedOn": "2026-09-30",
+  "containsPrivateScreenshots": false,
+  "interpretation": "Capture attempts, not all successfully loaded unique screens. See live-observations.json for validated findings.",
+  "captures": [
+    {
+      "id": "01-messenger-search",
+      "screenshotSha256": "a2fe97d3ad8e6fbd8e15be8fd76017b25f32cf34645bbfba39d49aa10c7bd4a7",
+      "observedAt": "2026-09-30T02:17:44.110Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "02-docs-home",
+      "screenshotSha256": "e61fd78df15ae176413ee4278348a61b6b009ab6db86ae43500780d62ee31590",
+      "observedAt": "2026-09-30T02:18:49.481Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "03-docs-create-menu",
+      "screenshotSha256": "e6536e48dba94a3cd181f6b891f87b2eab10e1f86c22d2a38070fcd7adbaff68",
+      "observedAt": "2026-09-30T02:20:05.786Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "04-docs-new-menu",
+      "observedAt": "2026-09-30T02:24:52.548Z",
+      "screenshotSha256": "a0fd6cbd4c18014a1fbaf29bd13cd1bce18501d2ec9e8b48163bdbdaf589d535",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "05-docs-guide",
+      "screenshotSha256": "9b9651185c6469fcfa06b2a9bd987c247eb148b42a85a7b4a93a453fe1f8524b",
+      "observedAt": "2026-09-30T02:25:54.798Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "06-docs-loaded",
+      "screenshotSha256": "5fa99fcc7cf0d9489d9229a416173c2182d6782b0a9b74edea3473444e36dca4",
+      "observedAt": "2026-09-30T02:26:09.024Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "07-docs-editor",
+      "screenshotSha256": "65dcb9d1d6a9bb8497fa5f8a659505968afb35ddd01dbd0dab465e833c30ce84",
+      "observedAt": "2026-09-30T02:26:14.215Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "08-docs-comments",
+      "screenshotSha256": "115ae19bc5767f34c0dd399a93c00b722ec13ccbe89b0e70731b4758475c70ae",
+      "observedAt": "2026-09-30T02:26:25.388Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "09-docs-share",
+      "screenshotSha256": "7056815afc34ae939ac349a6fb221f84df5a6b310c75aabe03f20c6542a35595",
+      "observedAt": "2026-09-30T02:26:35.098Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "10-base-home",
+      "screenshotSha256": "c19557eb5edd3c26953bce7ef54d959691e35c65ad13e5012ef65bc0eb8590c5",
+      "observedAt": "2026-09-30T02:26:45.494Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "11-base-table-loading",
+      "screenshotSha256": "815b08ec18e0ab8cd83ba4b26cef6927cd362808f8f1399c7a306c447449d4d4",
+      "observedAt": "2026-09-30T02:27:03.146Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "12-base-task-table",
+      "screenshotSha256": "03f7774ddae5a5158280025ed15e7389be6124a4201108ea9d3478148f10bf33",
+      "observedAt": "2026-09-30T02:27:47.889Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "13-base-grid",
+      "screenshotSha256": "f4277c30c595a78f8ba5c695e2e389889c2043cf59517cb82e6339ea690f8235",
+      "observedAt": "2026-09-30T02:27:55.830Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "14-base-grid-ready",
+      "screenshotSha256": "162524688a1385e600a434c8a43843e6fb769c3615186b4515e69974721f4545",
+      "observedAt": "2026-09-30T02:28:02.184Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "15-base-automations",
+      "screenshotSha256": "d5a4d10cd6adff10025b0abb680330acaa6da68b17a4fb5954b9e6211bc2f41a",
+      "observedAt": "2026-09-30T02:28:11.613Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "16-base-automation-permission",
+      "screenshotSha256": "ac2694ff43c33ba03926a54fbf0a8b57ea35073dcb55ba0671ea071229d6e425",
+      "observedAt": "2026-09-30T02:28:22.093Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "17-meetings-home",
+      "screenshotSha256": "23ec0141795bc81bc4dfdab2daaa6aa89f07e5ce092a320da43546e88896baa0",
+      "observedAt": "2026-09-30T02:28:23.849Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "18-calendar",
+      "screenshotSha256": "9fbdcce921fb406b8f1967949b5616f698769c4f992b5b89c7a8f168c6f1aaa6",
+      "observedAt": "2026-09-30T02:28:25.083Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "19-tasks",
+      "screenshotSha256": "b3d521e15f97f7188da56fbc2fae41ab498664316613bf27cbebcd35e726b3e4",
+      "observedAt": "2026-09-30T02:28:26.474Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "20-contacts",
+      "screenshotSha256": "115c1c1d26f135d3abc892190f1efb73c5e8c74ea7d904064ac62a9a16987588",
+      "observedAt": "2026-09-30T02:28:41.772Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "21-wiki",
+      "screenshotSha256": "a344e7ba8d5c1c7fac9194893caa00acdc84fed0af6c749af380d8515dc8251d",
+      "observedAt": "2026-09-30T02:28:42.845Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "22-forms",
+      "screenshotSha256": "bf54abf32ce30925e6ebb124f5fd014368f6bd509b046969c9db4ee8269897bd",
+      "observedAt": "2026-09-30T02:28:43.940Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "23-email",
+      "screenshotSha256": "d3bd5aebda12df51587508b849d84eae01a079d672118a1b3db2d9b0ab2c6a99",
+      "observedAt": "2026-09-30T02:28:45.120Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "24-approval",
+      "screenshotSha256": "99391733a989f6d9c8fc5e95f82cab41814fadd3576fa0613208b113412a8b2d",
+      "observedAt": "2026-09-30T02:28:46.746Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "25-attendance",
+      "screenshotSha256": "541a90f830ae10c9b4d4afa3bea108f4ae8400b0364e5f75f10c033712d6e76c",
+      "observedAt": "2026-09-30T02:29:04.072Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "26-announcement",
+      "screenshotSha256": "4e0cb9fcb3a14571d1e3c1fba778d5c08aff3982bf2f48bb1acee2f9a57b1330",
+      "observedAt": "2026-09-30T02:29:05.297Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "27-meegle",
+      "screenshotSha256": "f2d99fcf600ef6d528bde09a2f68a034c684ab30512e4801b6398884d20dd6a1",
+      "observedAt": "2026-09-30T02:29:06.482Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "28-tanca",
+      "screenshotSha256": "d69cfae32bc40f02340bd09aadd925890f51145c9ff7169499a823f993185a61",
+      "observedAt": "2026-09-30T02:29:07.748Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "29-coze",
+      "screenshotSha256": "c8808a72f0a55f4168eda37126cf4f818c2e7e2524beb932867759291ad93e54",
+      "observedAt": "2026-09-30T02:29:09.267Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "30-seleam-maintenance",
+      "screenshotSha256": "b7f4960ec0a9290e89bac69a4ceb20664849d01e7be4ffaf0e70e319a4e6e673",
+      "observedAt": "2026-09-30T02:29:24.573Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "31-seleam-assets",
+      "screenshotSha256": "47cb2013b9678bf0316e153e75b477f9c026824cb134333046c9f84b7ba69420",
+      "observedAt": "2026-09-30T02:29:25.837Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "32-seleam-requests",
+      "screenshotSha256": "19570cfe5ec299facf37d60dfa7bb995be1016e826c8a12a72b079ca823df8cb",
+      "observedAt": "2026-09-30T02:29:26.792Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "33-helpdesk",
+      "screenshotSha256": "bd0d02ffc7914ee9807226c3ac3c8b7cadfda5098c99add3d40cdd6b63b1f5f9",
+      "observedAt": "2026-09-30T02:29:27.736Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "34-workplace",
+      "screenshotSha256": "76876c8437ce3f6961b12af5818bb6454fa97e6749be695411e784711a6fbdc6",
+      "observedAt": "2026-09-30T02:29:28.844Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "35-workplace-ready",
+      "screenshotSha256": "5e04e437395daeec2073bb73f472739bce483b076235d46df9530d644dd3b98b",
+      "observedAt": "2026-09-30T02:29:34.153Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "36-report-loading",
+      "screenshotSha256": "3edc9bdc909fd0240916ab252ca5cd080cbd2095d23939a0641b29041e1654ce",
+      "observedAt": "2026-09-30T02:29:44.399Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "37-report",
+      "screenshotSha256": "6ca2dbeae991090bb2dc45156a0ad34a7238318ecb5b4837ebaf1194c96520a3",
+      "observedAt": "2026-09-30T02:30:02.097Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "38-workplace-return",
+      "screenshotSha256": "c97216a13306b29adc71e3bc301faa2e742f7ca0cfdafb9d56fb71b3fe318498",
+      "observedAt": "2026-09-30T02:30:18.527Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "39-lingo-loading",
+      "screenshotSha256": "4db13ceed3e5be9ca7dabf97410e9071598da6b16bdbcb62e1a515289f85c2f8",
+      "observedAt": "2026-09-30T02:30:19.600Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "40-lingo",
+      "screenshotSha256": "27209cbc8e7180de133d4425d12b265e1d85cfaad359beb1a8b4d6e8535c1494",
+      "observedAt": "2026-09-30T02:30:27.344Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "41-lingo-current",
+      "screenshotSha256": "9fafd3ec74bf9a44986641c7cf5a0b5a0a01d50adae75fd44f34d0a85a4f3d3e",
+      "observedAt": "2026-09-30T02:30:41.378Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "42-workplace",
+      "screenshotSha256": "1aee35834a0064ea2dea8b28a50fe0064868996c3cd4d48fd136e6e1c30af8d3",
+      "observedAt": "2026-09-30T02:31:20.001Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "43-subscriptions-loading",
+      "screenshotSha256": "7cb581db1c0a435105e42d7348479029fae2569ed794588ba7ebec5e53797e8c",
+      "observedAt": "2026-09-30T02:31:20.824Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "44-subscriptions",
+      "screenshotSha256": "dced1c45282e0cc7d411d2e296b32e38e0274b987d86f564f578d1c3b03ea649",
+      "observedAt": "2026-09-30T02:36:05.070Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "45-forms",
+      "screenshotSha256": "a0b1b1993ceb2e45b70efa7345ce620f00aa97918cb056a7457ee0c1317b4c05",
+      "observedAt": "2026-09-30T02:36:30.887Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "46-form-project",
+      "screenshotSha256": "8863bc9928679af166829f5a0490770e5b2a64d4393be05ce527cf81a93be020",
+      "observedAt": "2026-09-30T02:36:37.758Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "47-email",
+      "screenshotSha256": "22d03590f9a61db37acd9c729a043edb911918dd9984ed4a84b9e0e27a476c7d",
+      "observedAt": "2026-09-30T02:37:24.789Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "48-meetings-ready",
+      "screenshotSha256": "3a0a8072741fa777e389f0f380c713f31d5d2e25ebb55957732c777feed2cb7a",
+      "observedAt": "2026-09-30T02:37:26.218Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "49-meeting-schedule",
+      "screenshotSha256": "9c06651d3960dfe5bd0403ab02ec2f51e81e551e1b582218da805db3bb3fe376",
+      "observedAt": "2026-09-30T02:42:38.832Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "50-schedule-ready",
+      "screenshotSha256": "316fdb01c35cac08966e7c82e14a5157b5ff57ebf42715d001cc18c3e844b847",
+      "observedAt": "2026-09-30T02:46:41.740Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "51-anycross-install-gate",
+      "screenshotSha256": "22f4135e564f1b18e8fd1bcbd87f039deb23eaed786a60364df13ada1f084194",
+      "observedAt": "2026-09-30T02:47:11.925Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "52-helpdesk-admin",
+      "screenshotSha256": "5aa914aaaadea177e50df16a0c5985af9f8f3486000ffce42dfa2a2eec2cf198",
+      "observedAt": "2026-09-30T02:48:33.456Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "53-okr",
+      "screenshotSha256": "a5040bd93023bc2ca7e8aed9a8d0db1bcfc3049225d300818d4b41bfb46a1159",
+      "observedAt": "2026-09-30T02:48:35.131Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "54-suite-admin",
+      "screenshotSha256": "a0f263f3d75532a8804419694dcc76ec33dba84b132ede890f18da49c76087cd",
+      "observedAt": "2026-09-30T02:48:48.551Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "55-favorites",
+      "screenshotSha256": "3620ac2e43d857edbac48460249a677f0c15ff23a185fd9a395d79fb228eeeff",
+      "observedAt": "2026-09-30T02:48:50.861Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "56-calendar-ready",
+      "screenshotSha256": "fe1c665d8c9aa05b7f2ca865ddad83ab21fa47494481e3cdf40c7117f35be2f2",
+      "observedAt": "2026-09-30T02:48:52.266Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "57-calendar-view",
+      "screenshotSha256": "ce08aa68fd2a73b78a316268668e903e4473395ae0f1292f0f3cd7841887c92f",
+      "observedAt": "2026-09-30T02:49:22.164Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "58-favorites-ready",
+      "screenshotSha256": "cb1f65a99187004a3e90365d8093dfc162d6e5df6110158fa5b31a4b0a495bb9",
+      "observedAt": "2026-09-30T02:49:23.079Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "59-workplace",
+      "screenshotSha256": "1e43bca033acba88514821486ff3c2236f8d77fd2c1d20e2b980a692cade1e11",
+      "observedAt": "2026-09-30T02:49:46.476Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "60-subscriptions-open",
+      "screenshotSha256": "0d95fe02f22c8fceb34ddbba86ac6b3e8242b6056b5baa5bbf15550b334ce988",
+      "observedAt": "2026-09-30T02:49:56.160Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "61-subscriptions-ready",
+      "screenshotSha256": "f40f540b55642961fbcf37a7f501a768d57f3b87adc17c736df8de57c1d3ee45",
+      "observedAt": "2026-09-30T02:55:43.059Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "62-workplace-return",
+      "screenshotSha256": "8ffe32349b938c4952678b3698681076e765b8698438c7c5481dbb20ed265f9f",
+      "observedAt": "2026-09-30T02:56:29.104Z",
+      "privateLocalOnly": true
+    },
+    {
+      "id": "63-workplace-all",
+      "screenshotSha256": "a160c73077a6627d2df467f90abba2482dbacd2a364f5cc5d368b16b189b345b",
+      "observedAt": "2026-09-30T02:56:29.978Z",
+      "privateLocalOnly": true
+    }
+  ]
+}

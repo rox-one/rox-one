@@ -1,0 +1,29 @@
+2026-10-01T17:06:10.665Z INFO  [bootstrap] Config artifacts initialized
+2026-10-01T17:06:10.668Z INFO  [bootstrap] Global config found
+2026-10-01T17:06:10.695Z INFO  [session] [browser-pane] setRpcServer called — remote browser bridge is now available
+2026-10-01T17:06:10.735Z INFO  [session] Reinitializing auth for connection: omp (none)
+2026-10-01T17:06:10.735Z INFO  [session] Auth env vars set for connection: omp
+2026-10-01T17:06:10.736Z INFO  [session] Setting up ConfigWatcher for workspace: bec3a5ec-29a8-d365-9bfb-ac6613551f6d (/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/auth-negative/auth-negative-profile-sJFiM2/workspaces/cloud-ui-baseline)
+2026-10-01T17:06:10.758Z INFO  [session] Initialized AutomationSystem for workspace bec3a5ec-29a8-d365-9bfb-ac6613551f6d
+2026-10-01T17:06:10.761Z INFO  [session] Loaded 1 sessions from disk (metadata only)
+2026-10-01T17:06:10.762Z INFO  Rox server listening on ws://127.0.0.1:40953
+[messaging] Disabled via CRAFT_DISABLE_MESSAGING — skipping workspace messaging init
+CRAFT_SERVER_URL=ws://127.0.0.1:40953
+CRAFT_SERVER_TOKEN=[redacted]
+CRAFT_WEBUI_URL=http://0.0.0.0:40953
+2026-10-01T17:06:10.876Z INFO  [bootstrap] Toolchain ensureAll scheduled
+[webui] Failed auth attempt from direct
+[webui] Successful auth from direct
+[SchedulerService] TICK at 17:07 UTC: 2026-10-01T17:07:00.004Z
+[SchedulerService] TICK callback completed
+2026-10-01T17:07:06.801Z INFO  AUTOMATIONS_GET: Loading automations for workspace: bec3a5ec-29a8-d365-9bfb-ac6613551f6d
+2026-10-01T17:07:06.802Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/auth-negative/auth-negative-profile-sJFiM2/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:07:06.809Z INFO  SKILLS_GET: Loading skills for workspace: bec3a5ec-29a8-d365-9bfb-ac6613551f6d
+2026-10-01T17:07:06.812Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/auth-negative/auth-negative-profile-sJFiM2/workspaces/cloud-ui-baseline
+2026-10-01T17:07:06.815Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/auth-negative/auth-negative-profile-sJFiM2/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:07:06.816Z INFO  personalTasks: migrated 0 task(s) from localStorage (skipped 0)
+2026-10-01T17:07:07.925Z INFO  Shutting down...
+2026-10-01T17:07:09.930Z INFO  [session] Cleaning up resources...
+2026-10-01T17:07:09.931Z INFO  [session] Stopped config watcher for /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/auth-negative/auth-negative-profile-sJFiM2/workspaces/cloud-ui-baseline
+2026-10-01T17:07:09.931Z INFO  [session] Disposed AutomationSystem for /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/auth-negative/auth-negative-profile-sJFiM2/workspaces/cloud-ui-baseline
+2026-10-01T17:07:09.932Z INFO  [session] Cleanup complete

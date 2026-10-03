@@ -1,0 +1,243 @@
+{
+  "task_id": "CI-014-preflight",
+  "attempt_id": "3ce9cc8902c16f7163a79ca81aa6e33c",
+  "packet_hash": "b37ffd313dfddc4a363ab1ea72beddedc96b4c078bdf7a56354a16524682587d",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "CI-014",
+  "featureComplete": false,
+  "mode": "inspect-only preflight; no feature implementation",
+  "dependencies": ["CI-003", "CI-008"],
+  "dependencyReceipts": {
+    "state": "NOT_INSPECTED_NOT_ACCEPTED",
+    "requiredBeforeImplementation": "Lead wave0 commit followed by accepted CI-003 and CI-008 artifact plus authoritative readback receipts. Their source presence or worker final text is not acceptance.",
+    "transitiveContext": "CI-003 depends on CI-001 and CI-002. CI-008 depends on CI-003, CI-004, CI-005, CI-006 and CI-007. These are not additional explicit CI-014 dependency edges."
+  },
+  "evidenceSnapshot": {
+    "basis": "Actual working-tree reads, scoped literal searches, and whole-file SHA-256; no Git commands were run. input_revision is the dispatch-provided revision, not a claim that inspected dirty files equal that commit.",
+    "manifestHashesMatchPacket": true,
+    "sourceHashStability": "All eight inspected implementation/test files had identical hashes in two read-only shasum passes after inspection. No subsequent integration stability is claimed.",
+    "staleEvidencePolicy": "Rehash all cited files after the lead wave0 commit and before patching. A changed hash invalidates that file's line/symbol evidence; reread and rebase requests on accepted dependency APIs. Spec baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab differs from the packet input revision and must not be substituted silently.",
+    "observedAbsence": "Scoped glob found no packages/server-core/src/code-intelligence, tools/code-intelligence, or docs/code-intelligence files. Scoped grep found no CodeSearchProvider, SearchQuery, SearchIndex, Zoekt/Repogrep, search.provider.unavailable, or search.fallback.used in the inspected shared intelligence directory and three source-index modules. This is a bounded observation, not a repository-wide absence claim.",
+    "toolLimitations": [
+      "Codegraph reported no project index; no index was created.",
+      "Behavior find failed because its judge backend returned insufficient-credit errors; the no-hits result is not absence evidence. Inspection recovered through specification-named paths, scoped glob and literal grep."
+    ],
+    "runtimeVerification": "NOT_RUN: builds, product tests, native UI, network, providers and benchmarks prohibited by this preflight packet. Proposed verification below is future work, not observed pass evidence."
+  },
+  "foundationGates": [
+    {
+      "gate": "Committed baseline and manifest-bound launch",
+      "classification": "Hidden execution foundation, not an explicit package dependency",
+      "source": "execution-packages.json CI-014 cloudPacket launch_gates and code-intelligence.json CI-014 cloudGate",
+      "missingPrerequisite": "Lead wave0 commit, isolated approved prerequisite baseline, resolved reference_package_revision/reference_package_digest, owner and acceptance receipts. Current dirty shared work is not a launchable implementation baseline.",
+      "requiredAction": "Lead resolves delivery-manifest revision/digests, verifies spec hashes, accepts prerequisites and assigns one writer before implementation."
+    },
+    {
+      "gate": "Current authenticated source authority and offline resolver",
+      "classification": "Transitive CI-001/CI-002 foundation plus EG-IDENTITY external readiness; not a new CI-014 DAG edge",
+      "source": "code-intelligence.json lines 142-156, 2330-2389, 4898-4905; execution-packages.json lines 5312-5316",
+      "currentEvidence": "refs.ts has immutable snapshots and assertRepositoryCurrentReadPolicy/resolveRepositoryRefWithCurrentPolicy, but its own comment explicitly delegates live actor authority to the host. ProviderRegistry.resolve currently checks the supplied receipt binding, not a separately resolved current binding. ProviderPolicy contains no actor lease, credential reference, telemetry or retention contract.",
+      "missingPrerequisite": "Accepted live caller resolver from CI-002, current scope/exclusion policy on every provider/fallback boundary, and actor/workspace readiness receipt. Remote-private offline content must deny by default; stale remote cache cannot be a fallback.",
+      "requiredAction": "Reuse the shared resolver for search, reads and measurements; do not build benchmark-specific ACLs or a second authorization store."
+    },
+    {
+      "gate": "Fallback execution seam exceeds this package's declared write surface",
+      "classification": "Surprising ownership/integration foundation",
+      "source": "execution-packages.json lines 5272-5277; code-intelligence.json lines 2557-2584 and 4874-4876",
+      "currentEvidence": "CI-014 owns only a document, capacity tool and test. sharedPatchPaths is empty. The existing registry describes providers but does not execute search; its adapter is CodeIntelAdapter.index. Source-index facade fallback is native-to-TS, not optional search-provider-to-authorized-local.",
+      "missingPrerequisite": "Accepted CI-003 CodeSearchProvider search/read/status/reindex API and a lead-owned integration route for runtime orchestration, or approved ownership amendment. A test and benchmark tool alone cannot deliver the product fallback requirement.",
+      "requiredAction": "Lead assigns the requests below to dependency/shared-file owners and accepts their runtime receipts; CI-014 must not silently write those paths."
+    },
+    {
+      "gate": "Evidence that a service is needed",
+      "classification": "Conditional capacity foundation, not N/A acceptance",
+      "source": "code-intelligence.json lines 612-636, 4854-4873",
+      "missingPrerequisite": "Representative task-authorized corpus, expected load/concurrency and agreed latency/resource/coverage targets. None were supplied or measured in this preflight.",
+      "requiredAction": "Record local measurements and concrete capacity shortfall first. Only then benchmark an authorized selfhost service. If local satisfies requirements, document that evidence and leave service dependency disabled; do not relabel the comparison criterion PASS without its required evidence."
+    },
+    {
+      "gate": "Documented upstream contract and operational readiness",
+      "classification": "External foundation, not an explicit dependency edge",
+      "source": "code-intelligence.json CI-P-RG, CI-P-ZK, CI-A-EXTERNAL, CI-G-02, CI-G-03, CI-G-05; execution-packages.json lines 5312-5316",
+      "currentEvidence": "Spec identifies Zoekt commit 153817f643cde8b229ee388c1dddbcf07f4798af, Apache-2.0, /api/search with webserver -rpc, but explicitly records no install/index/auth/benchmark proof. Repogrep /api/v1/repogrep/search is INTERNAL_UNDOCUMENTED_DO_NOT_INTEGRATE; version/license/terms/retention remain unknown.",
+      "missingPrerequisite": "Actual pinned supported provider API and binary/version probe, license/notice inventory, resource/lifecycle owner, ACL mapping, retention/telemetry/data-egress policy and credential refs. Native transport readiness receipt only if tools are actually exercised.",
+      "requiredAction": "No endpoint discovery by trial, vendor clone, manifest dependency or private source/token egress. Keep Repogrep automation disabled. Evaluate documented Zoekt only after the load and readiness gates."
+    },
+    {
+      "gate": "Existing pack/registry decision and conditional UI proof",
+      "classification": "Published cloudGate foundation not represented in the two explicit edges",
+      "source": "code-intelligence.json lines 67-100, 4927-4932, 5001-5011",
+      "currentEvidence": "provider.ts decision revision is CI-DEC-EXTEND-EXISTING-01; types.ts selected baseline remains local-fs-symbols/syft-sbom, alwaysOn=false. Existing registry extension is the integration seam, not a new provider catalogue.",
+      "missingPrerequisite": "Lead-recorded selection revision and approved provider decision before any provider activation. If RC-01/RC-07 changes become necessary, their existing surface owner and runtime/UI proof are required; those files are not CI-014-owned.",
+      "requiredAction": "Preserve the existing off-by-default pack. Do not invent a new search surface. Obtain UI screenshots/ARIA/computed-font proof only for a real surface change; no UI pass is claimed here."
+    }
+  ],
+  "ownedNewFiles": [
+    "docs/code-intelligence/search-alternatives.md",
+    "tools/code-intelligence/search-capacity.ts",
+    "packages/server-core/src/code-intelligence/__tests__/search-provider-fallback.test.ts"
+  ],
+  "ownedFileContributions": [
+    {
+      "path": "docs/code-intelligence/search-alternatives.md",
+      "change": "Document local-first decision, corpus/revision/policy hashes, expected load and targets, repeatable measurement commands/seeds, precision and recall truth set, latency distribution, CPU/index disk/resource accounting, truncation and freshness/ACL results. Separate observed results from source-only Zoekt/Repogrep claims; maintain explicit unsupported contract/license/retention gaps, service-need decision and rollback/local fallback decision. Do not invent result values."
+    },
+    {
+      "path": "tools/code-intelligence/search-capacity.ts",
+      "proposedSymbols": ["runSearchCapacity"],
+      "change": "Provide a bounded repeatable capacity runner that consumes the accepted CI-003 search/status/reindex API and CI-008 freshness resolver under the accepted caller policy. Require explicit authorized corpus and expected query-load input; pin seed, input hashes, selected provider/version and runtime. Measure local first; fail closed on missing motivation or unsupported/unready service contract. Compare equivalent query modes against an exact expected path/span/hash truth set, report precision/recall, warm/cold latency, process CPU and index/corpus disk, limits/coverage and stale/rebuild results. Distinguish Bun/native/Node execution rather than treating a Bun result as Electron proof. Use existing records/facade, not a second product DB. Benchmark outputs must not contain credentials, source bodies or denied repo identifiers. The exact command flags are to be finalized against accepted dependency exports, not claimed to exist now."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/__tests__/search-provider-fallback.test.ts",
+      "change": "Follow the inspected bun:test, owned temporary fixture and finally-cleanup convention. Exercise the actual accepted search orchestrator with exact authorized expected spans/hashes; outage and timeout lead to bounded local results, unauthorized/expired/reconnected policies deny, stale remote cache never returns, sensitive sibling repo never leaks, cancellation does not restart fallback, result/deadline/byte bounds remain explicit. A disabled undocumented Repogrep provider is rejected before execution. Use deterministic fixture data and a throwing/failed transport only for the negative path, not a fake positive provider echo. Prove service success with the separately gated real service lane. Do not re-pin current fail-soft empty-result behavior as the new contract."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/code-intelligence/provider.ts",
+      "symbol": "CodeIntelligenceProvider, ProviderRequestContext, CodeIntelligenceProviderRegistry.register/resolve",
+      "change": "Integration owner: extend the existing provider metadata with a verified search contract receipt (documented API/version and upstream revision/digest, license/terms/data-policy evidence references) for any optional search provider; reject Repogrep internal-asset automation and activation without that receipt even when sourceRevision/artifactDigest strings are supplied. Consume a separately host-resolved current binding/authorization decision for search execution, rechecking current egress policy rather than only context.binding.policy. Preserve operation validation, allowedProviderIds, alwaysOn=false, existing symbols/SBOM behavior and CODE_INTELLIGENCE_SELECTION_REVISION recording. Bind the receipt to the chosen provider/version instead of introducing another registry.",
+      "reason": "register currently validates only metadata/hash shape for nonselected providers; resolve accepts remote execution using the supplied binding's dataEgress. Neither establishes a documented contract/retention policy nor fresh caller authority. AC-3/AC-5 and the sensitive/offline negative cases require fail-closed selection before a transport is invoked.",
+      "observedLines": [19, 38, 67, 96],
+      "ownershipGate": "Request only. CI-014 sharedPatchPaths is empty; lead must assign to the existing owner or approve an explicit scope amendment."
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/refs.ts",
+      "symbol": "ProviderPolicy, ProviderPolicyInput, normalizePolicy, repositoryPolicyFingerprint",
+      "change": "CI-001/CI-002 integration owners: reconcile the existing policy DTO with normative CI-E-20 provider credentialRef/telemetry/retention/offlineContentPolicy and optional authorizationLease metadata, preserving deny-by-default dataEgress and existing local roots/includes/excludes/size limits. Normalize and fingerprint any decision-relevant additions so old snapshots cannot imply a newer policy; load actor-scoped credentials/leases only through the host resolver, never embedding secret values or creating a second policy store. Keep legacy local policy behavior compatible. If the accepted CI-002 provider-policy module owns this metadata instead, provide its exact contract/receipt and use it rather than duplicating fields.",
+      "reason": "Current ProviderPolicy has root/exclusion/egress and size limits but none of the retention, credential-reference or offline authorization fields published in CI-E-20. External search must not treat a simple egress allow bit as a verified provider data contract.",
+      "observedLines": [28, 52, 195, 216],
+      "ownershipGate": "Request to foundation owner, not a CI-014 edit. Required before external adapter use, not an excuse to delay reachable local measurement preparation."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/local-search.ts",
+      "symbol": "CI-003 planned CodeSearchProvider.search/read/status/reindex; proposed searchWithLocalFallback integration entrypoint (not an existing symbol)",
+      "change": "After CI-003 is accepted, its owner/lead should supply one product search orchestration entrypoint around the existing local provider and optional contract-approved provider. Resolve current caller/root/exclusion/egress authority before invocation and before returned spans; reuse the same query mode/filters/snapshot/limit and a single finite deadline/AbortSignal/byte budget across provider and fallback. On genuine availability/timeout failure emit authorized typed search.provider.unavailable followed by search.fallback.used and perform the bounded CI-003 local query. Never reinterpret authorization denial, invalid input or cancellation as an availability failure. Never serve a stale remote cached hit. Preserve source-index-facade as the FTS/native seam and use the accepted local rg argv fallback rather than a second index. Return explicit fallback/provider/coverage/truncation status.",
+      "reason": "AC-4 is product behavior. The currently inspected facade only catches native sidecar failure and runs TS; the shared provider registry has no search executor. CI-014's three new files cannot implement a product execution route by themselves.",
+      "observedSeam": "packages/server-core/src/sources/source-index-facade.ts:72-82,114-142; code-intelligence.json:2557-2584",
+      "ownershipGate": "This file is CI-003-owned and currently absent in scoped inspection. No API signature is claimed as current. Lead must accept the dependency's actual interface, assign the integration writer and reconcile the empty CI-014 sharedPatchPaths before applying this request."
+    },
+    {
+      "path": "packages/server-core/src/sources/source-index-facade.ts",
+      "symbol": "searchSourceIndex, SourceIndexStatus, statusWorkspaceSources",
+      "change": "CI-003 owner: ensure the accepted search adapter can enforce authorized source scope before ranking/LIMIT across both native and TS execution and obtain truthful selected-runtime, limits, coverage and unavailable outcomes. If the dependency adapter cannot enforce that using current APIs, request an optional authorized-source filter and explicit outcome/coverage metadata through this existing facade, with equivalent filtering in its TS/native implementation owners. Do not infer true FTS5 support from the TS status field alone or interpret capped hits.length as total match count. Keep existing source consumers compatible and publish the exact accepted adapter contract to CI-014.",
+      "reason": "Current searchSourceIndex takes workspaceRoot/query/limit only; TS SQL searches the whole workspace before LIMIT, SourceSearchResult.total equals returned hit count, SQLite/missing DB/errors collapse to empty results, and statusWorkspaceSources sets TS fts using constructor availability. Post-filtering alone may both expose unauthorized snippets and starve authorized results, distorting ACL/precision/capacity comparisons.",
+      "observedLines": [114, 142, 176, 208],
+      "supportingSeam": "source-index.ts:118-123,440-525; search SQL has no caller/source filter",
+      "ownershipGate": "Conditional dependency request, not an authorized CI-014 patch. Exact TS/native blast radius must be scoped by their owner; native implementation was not inspected in this bounded preflight."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "CI-014-AC-1",
+      "criterion": "Benchmark only when corpus/load motivates service",
+      "currentEvidence": "Spec selects local+rg by default and gates Zoekt on concrete load evidence. TS index bounds are 2000 files, 512KiB/file, 32MiB traversal, 200000 body characters; no authorized representative corpus/load or measurements supplied. search-capacity.ts does not exist in scoped glob.",
+      "actualSeam": "source-index.ts MAX_FILES/MAX_FILE_BYTES/MAX_TOTAL_BYTES/MAX_BODY_CHARS and walkSourceTree; source-index-facade.ts statusWorkspaceSources; CI-003 accepted local provider is a prerequisite, not current code.",
+      "requiredChange": "Add the owned capacity runner/documented decision with explicit corpus/policy/revision and load targets. Measure local baseline first, accounting for per-root limits and real coverage. Permit a service lane only after recorded local shortfall and upstream readiness receipts. No default install, service startup or runtime dependency.",
+      "verification": "Future only: execute the runner on a repeatable authorized query corpus with fixed seed, known-match/absent-match truth set, small and stressed loads. Preserve raw resource/latency/coverage receipts and service-need decision; prove missing inputs or absent motivation do not launch a service. Also run the sensitive-repo, stale/rebuild, unavailable and limit lanes specified for every AC.",
+      "missingPrerequisite": "Committed accepted CI-003/CI-008 APIs, authorized representative corpus, expected load and agreed targets, pinned ready selfhost service only if justified.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-014-AC-2",
+      "criterion": "compare precision, latency, CPU/disk, freshness and ACL",
+      "currentEvidence": "searchSourceIndex FTS mode ORs up to 24 normalized terms, LIKE mode ANDs up to 8; result.total is hits.length and hits lack snapshot/contentHash/span. walkSourceTree slices bodies without marking that slice truncated. Watcher is feature-gated, 250ms-debounced, root-capped and emits no snapshot identity. No actual service/runtime comparison exists.",
+      "actualSeam": "source-index.ts buildMatchQuery/searchSourceIndex/walkSourceTree; source-index-facade.ts searchSourceIndex/statusWorkspaceSources; source-index-watch.ts startSourceIndexWatch; refs.ts assessSnapshotFreshness/readFileSpan.",
+      "requiredChange": "Capacity runner consumes accepted CI-003 normalized search and CI-008 freshness results, not direct SQL or an independent index. Compare equivalent semantics against exact expected spans; record precision plus recall/coverage so caps cannot masquerade as quality, warm/cold latency and load, attributable CPU and corpus/index disk, freshness/rebuild time and caller ACL denial. Document backend/mode differences and all effective bounds, stale/missing/unavailable outcomes.",
+      "verification": "Future only: fixed query truth set with known/absent and punctuation/multi-term cases on local and documented selfhost providers; exact path/span/hash assertions; CPU/disk and latency distributions under stated concurrency; mutate/rename/delete/ignore and rebuild/restart; unauthorized sibling repo and post-index policy revocation return no protected paths/snippets/counts; test limits and report truncation explicitly. Do not substitute inventory/flags for active runtime receipts.",
+      "missingPrerequisite": "Accepted search/freshness schemas and current authorization resolver, agreed corpus/load/resources, motivation and actual supported service version/ACL setup. Bun-only observations cannot prove Node/Electron behavior.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-014-AC-3",
+      "criterion": "Repogrep internal asset endpoint remains disabled",
+      "currentEvidence": "Spec CI-P-RG classifies POST /api/v1/repogrep/search as INTERNAL_UNDOCUMENTED_DO_NOT_INTEGRATE and unknown license/version/retention. Scoped grep found no Repogrep implementation in inspected paths, but register would accept a nonselected search provider with syntactically valid revision/digest; there is no Repogrep contract gate proven by runtime.",
+      "actualSeam": "provider.ts CodeIntelligenceProviderRegistry.register/resolve, CODE_INTELLIGENCE_PROVIDER_DECISION; types.ts existing pack selection. No existing Repogrep transport symbol was found in scope.",
+      "requiredChange": "Keep the bundled endpoint disabled and document manual-external-reference-only status. Lead-owned registry contract gating must reject unsupported Repogrep automation before any request/source/token serialization. Do not whitelist it using a deployment asset hash or create a new catalog. Add behavior assertions through the actual accepted search entrypoint.",
+      "verification": "Future only: request unsupported Repogrep search through the real registry/search path and assert explicit denial and zero transport execution/egress with a sentinel repository/credential. Public asset endpoint shape must never become an API approval. Complete the repeatable corpus/sensitive/stale/unavailable/limit proof lanes without invoking that endpoint.",
+      "missingPrerequisite": "Assigned registry/search owner and accepted runtime route plus lead-recorded selection revision. A real public supported API/terms could inform a future decision, but cannot enable this undocumented endpoint implicitly.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-014-AC-4",
+      "criterion": "provider failure falls back to bounded local search",
+      "currentEvidence": "tryPrimary catches native sidecar failures and searchSourceIndex falls back to TS. This is not the provider contract required by CI-014. TS missing DB/SQLite/error produces empty hits, not a differentiated unavailable result. No scoped server search orchestration file currently exists.",
+      "actualSeam": "source-index-facade.ts tryPrimary/searchSourceIndex; provider.ts CodeIntelligenceProviderRegistry.resolve; CI-003 local-search.ts API is normative/planned only.",
+      "requiredChange": "Lead/dependency owner adds product orchestration using current authority and the accepted bounded local provider. Reuse query semantics/filter/snapshot and remaining budget/AbortSignal, distinguish availability from policy/input/cancellation, emit the two specified events with authorized metadata, surface limits/truncation and local unavailable state. No remote cache, second store or implicit permission widening.",
+      "verification": "Future only: bun test packages/server-core/src/code-intelligence/__tests__/search-provider-fallback.test.ts after prerequisite implementation; use exact local expected spans/hashes under forced outage/timeout, limited hits/bytes/deadline, SQLite unavailable plus rg behavior, cancelled request, invalid regex, denied sensitive root and policy revocation. With a contract-ready actual selfhost provider, stop the service, run the actual product search entrypoint and observe authorized local fallback/events; restart and reconcile index freshness. A transport stub alone is not service runtime proof.",
+      "missingPrerequisite": "Accepted CI-003 bounded local search/read/status/reindex and CI-008 freshness plus CI-002 current authorization resolver; lead ownership amendment/assigned orchestration patch and real provider outage lane when a provider is used.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-014-AC-5",
+      "criterion": "no product clone/vendor dependency without verified contract",
+      "currentEvidence": "Existing CodeIntelligenceProviderRegistry extends an off-by-default canonical pack and requires revision/digest strings for unselected providers, but these strings are not upstream contract or license/retention verification. Zoekt source evidence is pinned but runtime untested; Repogrep lacks a verified public contract/license.",
+      "actualSeam": "provider.ts CodeIntelligenceProviderRegistry.register/resolve and CODE_INTELLIGENCE_SELECTION_REVISION; types.ts CODE_INTEL_PACK/SELECTED_CODE_INTEL/REJECTED_CODE_INTEL_TOOLS.",
+      "requiredChange": "Use the existing registry and document a supported external adapter decision only after verified API/version/license/terms/retention/egress and operational readiness. Keep local-first no-service/no-vendor-dependency path until motivation is proven; no cloned UI, duplicate daemon/index/catalog or new manifest dependency from research alone. Preserve selected/rejected decisions and alwaysOn=false.",
+      "verification": "Future only: runtime denial for unsupported/missing-contract/unready/egress-denied providers before transport, verified contract version matches exercised service, inventory/selection revision readback, dependency/license evidence and integration-owner patch review. Run all five specified proof lanes against the accepted search route. No manifest/license audit or runtime pass was performed here.",
+      "missingPrerequisite": "Primary supported provider contract/data-policy/license evidence, actual runtime/version receipt, actor-approved credential reference and lead-recorded existing pack/registry revision; missing prerequisites must remain explicit gaps.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-014-CONTRACT-POLICY",
+      "criterion": "Corpus limited to task-authorized roots; external adapter requires data policy and credential refs; offline fallback only to currently authorized local source and no stale remote cached bypass",
+      "currentEvidence": "refs.ts distinguishes immutable receipt and current binding read policies; ProviderRegistry.resolve uses receipt context only. Scope/policy DTO does not itself discover actors or leases. Raw workspace FTS query has no caller filter.",
+      "actualSeam": "refs.ts assertRepositoryCurrentReadPolicy/resolveRepositoryRefWithCurrentPolicy; provider.ts resolve; source-index.ts searchSourceIndex.",
+      "requiredChange": "Reuse the accepted host authorization resolver before provider search, fallback and every span read; choose only currently authorized local content, pass credential references not secret values, and deny expired/revoked/reconnected remote authorization. Apply scope before ranking/limit and keep result/event/benchmark metadata redacted.",
+      "verification": "Future only: sensitive sibling repository, foreign scope, root/exclusion changes, revoked egress during a query, expired lease/offline/reconnect and stale remote cache sentinels. Assert protected bytes/paths/counts are absent and allowed local results remain exact, rather than merely asserting an error or empty length.",
+      "missingPrerequisite": "Accepted CI-002 live resolver/EG-IDENTITY readiness and lead-assigned integration writer.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-014-CONTRACT-EVENTS",
+      "criterion": "search.provider.unavailable and search.fallback.used are observable authorized events",
+      "currentEvidence": "No matches for these event names in the scoped source search. Facade currently emits console warnings, not these product event contracts.",
+      "actualSeam": "source-index-facade.ts tryPrimary console warning; CI-003 planned product search orchestration is the appropriate emitting seam, not the low-level native fallback.",
+      "requiredChange": "Integration owner emits the two typed events from the actual optional-provider outage/local-fallback transition, carrying only authorized refs/provider version/outcome and relevant query/index revision; no raw source, tokens or denied repository metadata. Do not emit for ordinary empty results or cancellation.",
+      "verification": "Future only: observe outage event then local fallback event at the actual search route with exact returned spans and bounds, assert no fake transition for empty query/no matches/cancellation/ACL denial and no protected event payload leakage.",
+      "missingPrerequisite": "Accepted search entrypoint and existing event integration interface; no new event bus or surface is authorized by this preflight.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-014-CONTRACT-ARTIFACTS",
+      "criterion": "Benchmark fixtures/results and optional settings use existing workspace records; no service schema assumed before spike; integrated artifact and readback receipts required",
+      "currentEvidence": "Spec CI-014 persistence is a proposed record contract; implementation owns only three new files. refs.ts contains existing snapshot/policy identities and facade owns .craft/source-index.sqlite. No capacity tool/results exist in scoped inspection.",
+      "actualSeam": "refs.ts RepositorySnapshot/FileSpan/repositoryPolicyFingerprint; source-index.ts SOURCE_INDEX_REL; execution-packages.json CI-014 cloudPacket.",
+      "requiredChange": "Tool/doc pin exact corpus inputs, snapshot/provider/policy/version/seed/resource units and redacted measurement artifact hashes through the existing artifact convention accepted by CI-008. Do not add a product benchmark database or pretend a proposed table exists. Lead retains integrated-commit and restart readback delivery.",
+      "verification": "Future only: repeat identical corpus/seed query receipts, stale/rebuild and post-restart current-authority reconciliation; read back integrated revision and artifact SHA256 with command/result seeds and semantic assertions. Actual RC-01/RC-07 UI evidence required if their surface changes, and provider/collaboration lanes only when exercised.",
+      "missingPrerequisite": "Accepted CI-008 artifact convention and resolved launch manifest plus integration/readback owner.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/server-core/src/sources/source-index-facade.ts","symbol":"tryPrimary/searchSourceIndex/statusWorkspaceSources","lineStart":72,"lineEnd":208,"sha256":"0eb4d8dea566a86c97f3a3ea2b610c4ac15b61803ee1a0b1de0ec5a3da37bbc2"},
+    {"path":"packages/server-core/src/sources/source-index.ts","symbol":"MAX_FILES/MAX_FILE_BYTES/MAX_TOTAL_BYTES/MAX_BODY_CHARS/SourceSearchResult","lineStart":82,"lineEnd":123,"sha256":"abc66d7199da6f3e23566de07188dd8c0f99da438dda8c63d192e1cf55f0c288"},
+    {"path":"packages/server-core/src/sources/source-index.ts","symbol":"walkSourceTree","lineStart":230,"lineEnd":298,"sha256":"abc66d7199da6f3e23566de07188dd8c0f99da438dda8c63d192e1cf55f0c288"},
+    {"path":"packages/server-core/src/sources/source-index.ts","symbol":"buildMatchQuery/searchSourceIndex","lineStart":403,"lineEnd":525,"sha256":"abc66d7199da6f3e23566de07188dd8c0f99da438dda8c63d192e1cf55f0c288"},
+    {"path":"packages/server-core/src/sources/source-index-watch.ts","symbol":"startSourceIndexWatch","lineStart":95,"lineEnd":169,"sha256":"9aa0f2e0310618d0568e93899449472d1ac0fe3fbe2f694243196577dc9b886e"},
+    {"path":"packages/shared/src/code-intelligence/provider.ts","symbol":"CodeIntelligenceProvider/CodeIntelligenceProviderRegistry/CODE_INTELLIGENCE_PROVIDER_DECISION","lineStart":16,"lineEnd":98,"sha256":"df76cab98d98e3562f28efe2aed1b86e47ef43f595b7d8ec96a7cc3a42afc404"},
+    {"path":"packages/shared/src/code-intelligence/refs.ts","symbol":"ProviderPolicy/ProviderPolicyInput/RepositoryBinding","lineStart":28,"lineEnd":66,"sha256":"432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path":"packages/shared/src/code-intelligence/refs.ts","symbol":"normalizePolicy/repositoryPolicyFingerprint","lineStart":195,"lineEnd":216,"sha256":"432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path":"packages/shared/src/code-intelligence/refs.ts","symbol":"assertRepositorySnapshotScope/readFileSpan/assessSnapshotFreshness","lineStart":484,"lineEnd":530,"sha256":"432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path":"packages/shared/src/code-intelligence/refs.ts","symbol":"assertRepositoryCurrentReadPolicy/resolveRepositoryRefWithCurrentPolicy","lineStart":570,"lineEnd":596,"sha256":"432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path":"packages/shared/src/code-intelligence/local-adapter.ts","symbol":"isSafeToIngest/indexSourceFiles/localFsSymbolsAdapter","lineStart":3,"lineEnd":84,"sha256":"9d805685a6fc19e2487ed57e28550d4211339326157ef871febe2d7dd1b2fb35"},
+    {"path":"packages/shared/src/code-intelligence/types.ts","symbol":"CodeIntelAdapter/CODE_INTEL_PACK/REJECTED_CODE_INTEL_TOOLS/SELECTED_CODE_INTEL","lineStart":38,"lineEnd":67,"sha256":"48b33cd382fb91825e79964724e102b7167d5f830e5a082432ec59ca3d9ca61e"},
+    {"path":"packages/server-core/src/sources/__tests__/source-index.test.ts","symbol":"source index FTS/LIKE tests and fail-soft characterization","lineStart":28,"lineEnd":112,"sha256":"f167d7af611c3faa5b5cafe431cff7f31080c7e6bd0a300d20cfad3fc87912b6"},
+    {"path":"plans/lark-suite-reference/code-intelligence.json","symbol":"/workPackages/13","lineStart":4844,"lineEnd":5029,"sha256":"a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"CI-014 execution record/cloudPacket","lineStart":5243,"lineEnd":5319,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"}
+  ],
+  "nextExecutableAction": "Lead validates this report, completes wave0 commit and accepts CI-003/CI-008 artifact+readback receipts. Then rehash/reread changed evidence, resolve the manifest baseline, obtain authorized corpus/load/targets and foundation readiness, assign the four integration requests (or accepted equivalent dependency contracts) because CI-014 sharedPatchPaths is empty. CI-014 can then implement only its three normative new files against accepted APIs, perform local-first measurements and the full five-criterion proof matrix, and request integrated runtime/readback verification. Do not launch providers or start implementation from this preflight receipt alone.",
+  "risks": [
+    "Scope cannot by itself deliver AC-4: doc/tool/test files do not wire product fallback. Accepted dependency or lead-owned orchestration is necessary, not an optional follow-up.",
+    "Root wave0 integration can change refs/provider hashes or the future local-search API; input_revision alone does not freeze the dirty working tree.",
+    "Provider metadata revision/digest shape and readiness strings are not public API, license, retention or runtime proof. Repogrep automation must remain disabled.",
+    "Receipt-bound egress allow is not live authorization. Revocation during search and after provider failure can otherwise expose protected source.",
+    "Raw FTS spans/snippets are workspace-wide, not caller-filtered, revision-pinned search evidence; filtering only after LIMIT can distort recall and authorization.",
+    "FTS OR versus LIKE AND term semantics and caps must not be presented as equivalent precision. total currently counts returned rows, not all matches.",
+    "walkSourceTree's body-character slicing does not set truncated, its nominal hidden-file branch contains no continue, and traversal bounds apply per root. This source traversal must not replace the accepted repository exclusion/coverage resolver or be assumed complete.",
+    "isSourceIndexFtsAvailable/status TS fts reports constructor availability rather than a verified FTS5 table; fail-soft empty hits can mask unavailable SQLite under Node/Electron.",
+    "Existing watcher silently caps roots/skips unwatchable roots and carries no snapshot revision; freshness needs accepted CI-008 identity/restart reconciliation, not mtime/event presence.",
+    "No load/motivation, provider contract, real benchmark or runtime acceptance was observed. Every unimplemented criterion remains GAP_BLOCKS_COMPLETION; conditional service choice cannot become a fabricated N/A or PASS.",
+    "Do not add permanent tests of source text, inventory copies or transport mock echoes; outage tests must assert exact consumer-visible search/authority/boundary behavior and the real service lane must be separately exercised when used."
+  ]
+}

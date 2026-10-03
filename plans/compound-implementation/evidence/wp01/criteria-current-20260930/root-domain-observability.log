@@ -1,0 +1,40 @@
+bun test v1.4.2 (43848b5a7)
+
+tests/macro-integration/wp-01-server.test.ts:
+(pass) WP-01 actual composed workspace service, PostgreSQL and cryptographic accounts > WS creates a canonical private project that the same HTTP authority reads; B and outsider receive no title [767.54ms]
+(pass) WP-01 actual composed workspace service, PostgreSQL and cryptographic accounts > outsider/forged handshakes and command actor/workspace injection cannot obtain authority [683.36ms]
+(pass) WP-01 actual composed workspace service, PostgreSQL and cryptographic accounts > cross-transport concurrent retries and full listener/pool restart retain key, project, receipt and replay cursor [818.76ms]
+(pass) WP-01 actual composed workspace service, PostgreSQL and cryptographic accounts > durable session revocation denies an existing WS client and HTTP receipt replay after restart [870.09ms]
+(pass) WP-01 actual composed workspace service, PostgreSQL and cryptographic accounts > revocation that owns the session row first prevents a waiting HTTP command from committing [665.90ms]
+(pass) WP-01 actual composed workspace service, PostgreSQL and cryptographic accounts > revocation that owns the session row first prevents a waiting WS command from committing [694.80ms]
+(pass) WP-01 root review durable data boundaries > persisted receipt JSON cannot substitute scope, canonical identity, title or unknown payload on retry [1174.97ms]
+(pass) WP-01 root review durable data boundaries > event replay never advances beyond an earlier transaction whose event sequence exists but is uncommitted [771.05ms]
+(pass) WP-01 root review event privacy > persisted event payload cannot disclose extra title/body fields through replay [682.55ms]
+(pass) WP-01 root review command identity > a command ID already bound to another receipt cannot be reused with an older idempotency key [691.86ms]
+
+tests/macro-integration/wp-01-observability.test.ts:
+(pass) fixed counters follow actual committed/replayed/conflicting SQL branches; rollback never reports applied [353.59ms]
+(pass) consumer exception rolls back effect/inbox/watermark; retry and exhausted inbox dedup are measured from durable state [338.94ms]
+(pass) actual source CLI emits host-only fixed aggregates after graceful drain and resets process counters on restart [517.38ms]
+
+tests/macro-integration/wp-01.test.ts:
+WP-01 owned test schema: wp01_6048dc4f56e348139205e54c655329f9
+(pass) WP-01 real PostgreSQL private Project bootstrap > owner creates and reads stable canonical identity, receipt and reference-only durable events [654.10ms]
+(pass) WP-01 real PostgreSQL private Project bootstrap > outsider and private-project member receive 403 without title, even with forged cached workspace scope [618.83ms]
+(pass) WP-01 real PostgreSQL private Project bootstrap > members visibility permits read but never grants create; authorized pagination excludes private rows and totals [623.48ms]
+(pass) WP-01 real PostgreSQL private Project bootstrap > transport gateway rejects forged principal, actor, workspace, execution grants and unsupported schema [595.63ms]
+(pass) WP-01 real PostgreSQL private Project bootstrap > strict name, envelope, visibility, revision and pagination bounds reject before persistence [600.82ms]
+(pass) WP-01 real PostgreSQL private Project bootstrap > six concurrent retries commit one project, one event and one original receipt; changed payload conflicts [619.16ms]
+(pass) WP-01 real PostgreSQL private Project bootstrap > new authority connection recovers committed command after simulated lost reply with original ID and receipt [716.99ms]
+(pass) WP-01 real PostgreSQL private Project bootstrap > forced outbox insertion failure rolls back project and receipt, then retry succeeds [659.99ms]
+(pass) WP-01 real PostgreSQL private Project bootstrap > revoked membership invalidates cached actor and receipt; stale policy cursor cannot continue [622.26ms]
+(pass) WP-01 real PostgreSQL private Project bootstrap > issuer and subject, not email/display identity, bind principals; disabled and unknown identities fail [706.94ms]
+(pass) WP-01 real PostgreSQL private Project bootstrap > DB-only consumer commits effect/inbox/watermark together and concurrent deliveries cannot duplicate effects [684.24ms]
+(pass) WP-01 real PostgreSQL private Project bootstrap > seeded body-actor bypass is detected by the same denied acceptance assertion [616.38ms]
+(pass) WP-01 real PostgreSQL private Project bootstrap > database rejects duplicate membership and duplicate event for the same command [597.92ms]
+(pass) WP-01 real PostgreSQL private Project bootstrap > seeded dropped-event negative control trips the atomic acceptance oracle [591.60ms]
+
+ 27 pass
+ 0 fail
+ 465 expect() calls
+Ran 27 tests across 3 files. [18.09s]

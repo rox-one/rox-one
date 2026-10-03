@@ -1,0 +1,285 @@
+{
+  "url": "http://127.0.0.1:42223/?route=automations&ws=e0fbee7a-45ae-f362-0248-d9ceb67a3298",
+  "title": "Rox",
+  "bodyText": "Sessions: Unavailable\nAutomations\nHome\nSessions\nMeetings\nTasks\nNotes\nFeed\nInbox\nMORE\nNew Session\nSessions\n0\nFavorites\n0\nArchive\nLabels\nProjects\n1\nCloud UI Genuine Project\nPages\n0\nMemory\nTasks\nMeetings\nSources\n10\nAPIs\n2\nMCPs\n0\nLocal Folders\n8\nSkills\n0\nNotes\nAutomations\n30\nScheduled\n10\nEvent-based\n10\nAgentic\n10\nSettings\nUser\nStandard · Balance —\nAll Automations\nSCHEDULED\n1/10\nУтренний план дня\non weekdays at 9:00\nnever ran\nInbox zero напоминание\non weekdays at 16:00\nnever ran\nВечерний разбор\non weekdays at 19:00\nnever ran\nЕжедневный standup-summary\non weekdays at 10:00\nnever ran\nЕжемесячный аудит workspace\nmonthly on day 1 at 10:00\nnever ran\nЕженедельный обзор\nweekly (Fri) at 17:00\nnever ran\nНочной дайджест открытого\nevery day at 22:00\nnever ran\nПолуденный check-in\non weekdays at 13:00\nnever ran\nПонедельник: цели недели\nweekly (Mon) at 9:30\nnever ran\nСубботний ретро\nweekly (Sat) at 11:00\nnever ran\nON EVENTS\n2/10\nНа needs-review: чеклист проверки\nwhen a session becomes needs-review\nnever ran\nОблачный ран готов: импорт-подсказка\nwhen a cloud run completes\nnever ran\nCancelled: post-mortem lite\nwhen a session becomes cancelled\nnever ran\nВ избранное: закрепить контекст\nwhen a session is flagged\nnever ran\nМетка research: углубить тему\nwhen label research|рисёрч is added\nnever ran\nМетка urgent: эскалация\nwhen label urgent|срочно is added\nnever ran\nНа done: предложение архива\nwhen a session becomes done\nnever ran\nНа in-progress: фокус-заметка\nwhen a session becomes in-progress\nnever ran\nСмена режима прав: audit log\nwhen the access mode changes\nnever ran\nСнята метка blocked\nwhen label blocked|блок is removed\nnever ran\nAGENTIC\n0/10\nДлинный промпт: структура\nwhen a message is sent\nnever ran\nКонец сессии: handoff note\nwhen a session ends\nnever ran\nПеред compact: pin critical\nbefore context is compacted\nnever ran\nПеред опасным Bash: caution\nbefore tool Bash runs\nnever ran\nПосле Bash: проверить exit hygiene\nafter tool Bash runs\nnever ran\nПосле Edit/Write: self-check diff\nafter tool (Edit|Write|MultiEdit) runs\nnever ran\nСабагент завершён: merge notes\nwhen a sub-agent stops\nnever ran\nСбой инструмента: диагностика\nwhen a tool fails\nnever ran\nСтарт сессии: контекст-бриф\nwhen a session starts\nnever ran\nСтоп агента: summary хода\nwhen the agent stops\nnever ran\n\nPick an automation on the left or create a new one\n\nAutomations run actions when events occur — execute commands on schedules, react to label changes, or trigger prompts automatically.\n\nInfo\nTITLE\nAutomations\nRemote\nSync OK\n0 runs\n0 approvals",
+  "appRootChildren": 3,
+  "topBar": {
+    "visible": true,
+    "tag": "DIV",
+    "text": "Automations\nHome\nSessions\nMeetings\nTasks\nNotes\nFeed\nInbox",
+    "ariaLabel": null,
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1440,
+      "height": 40
+    }
+  },
+  "modePill": {
+    "visible": true,
+    "tag": "NAV",
+    "text": "Home\nSessions\nMeetings\nTasks\nNotes\nFeed\nInbox",
+    "ariaLabel": "Modes",
+    "rect": {
+      "x": 459.0703125,
+      "y": 7,
+      "width": 521.859375,
+      "height": 26
+    }
+  },
+  "rail": {
+    "visible": true,
+    "tag": "NAV",
+    "text": "MORE",
+    "ariaLabel": "Activity rail",
+    "rect": {
+      "x": 0,
+      "y": 74.75,
+      "width": 44,
+      "height": 901.25
+    }
+  },
+  "mainNavigation": {
+    "visible": true,
+    "tag": "NAV",
+    "text": "Sessions\n0\nFavorites\n0\nArchive\nLabels\nProjects\n1\nCloud UI Genuine Project\nPages\n0\nMemory\nTasks\nMeetings\nSources\n10\nAPIs\n2\nMCPs\n0\nLocal Folders\n8\nSkills\n0\nNotes\nAutomations\n30\nScheduled\n10\nEvent-based\n10\nAgentic\n10\nSettings",
+    "ariaLabel": "Main navigation",
+    "rect": {
+      "x": 44,
+      "y": 119.75,
+      "width": 320,
+      "height": 718.75
+    }
+  },
+  "headers": [
+    "All Automations"
+  ],
+  "testIds": [
+    "bottom-terminal-toggle",
+    "titlebar-mode-pill",
+    "rail-extra-screens",
+    "profile-strip-balance",
+    "automations-list",
+    "automation-new",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automation-switch",
+    "automations-empty-editor"
+  ],
+  "modeButtons": [
+    {
+      "mode": "home",
+      "label": "Home",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "chat",
+      "label": "Sessions",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "meetings",
+      "label": "Meetings",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "tasks",
+      "label": "Tasks",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "notes",
+      "label": "Notes",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "feed",
+      "label": "Feed",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "inbox",
+      "label": "Inbox",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    }
+  ],
+  "railButtons": [
+    {
+      "label": "Sessions",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Projects",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Pages",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Memory",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Tasks",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Meetings",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Sources",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Skills",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Notes",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Automations",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Connections",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Settings",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Dossier",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Radar",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Decisions",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Agent center",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Focus",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Collapse activity rail",
+      "disabled": null,
+      "visible": true
+    }
+  ],
+  "sourceStates": [
+    {
+      "tag": "DIV",
+      "testId": null,
+      "authority": null,
+      "source": null,
+      "error": null,
+      "role": "status",
+      "text": "Sessions: Unavailable",
+      "disabled": null,
+      "failed": null
+    },
+    {
+      "tag": "SPAN",
+      "testId": null,
+      "authority": null,
+      "source": null,
+      "error": null,
+      "role": "status",
+      "text": "",
+      "disabled": null,
+      "failed": null
+    },
+    {
+      "tag": "DIV",
+      "testId": null,
+      "authority": null,
+      "source": null,
+      "error": null,
+      "role": "status",
+      "text": "",
+      "disabled": null,
+      "failed": null
+    }
+  ],
+  "preferences": {
+    "craft-workbench-enabled": "true",
+    "craft-feature-unified-shell": null,
+    "craft-feature-workbench-top-chrome-v2": null,
+    "craft-feature-workbench-mode-registry-v1": null,
+    "craft-activity-rail-collapsed": "false",
+    "craft-sidebar-width": "320",
+    "craft-session-list-width": "300"
+  },
+  "screenshot": "route-13-automations.png",
+  "html": "route-13-automations.html"
+}

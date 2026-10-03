@@ -11,7 +11,10 @@ import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 
 const workspaceRoots = new Map<string, string>()
 
+const actualConfigExports = await import('@craft-agent/shared/config')
+
 mock.module('@craft-agent/shared/config', () => ({
+  ...actualConfigExports,
   CONFIG_DIR: '/tmp/craft-ext-host-load-grants-config',
   getWorkspaceByNameOrId: (id: string) => {
     const root = workspaceRoots.get(id)
@@ -210,6 +213,7 @@ describe('extensionHost.LOAD ignores client grantedPermissions', () => {
   let tmp: string
   let root: string
   let handlers: Map<string, HandlerFn>
+  let previousSandboxRoot: string | undefined
 
   beforeEach(async () => {
     tmp = mkdtempSync(join(tmpdir(), 'eh-load-'))
@@ -219,8 +223,14 @@ describe('extensionHost.LOAD ignores client grantedPermissions', () => {
     resetExtensionHostManagers()
 
     const sandbox = join(tmp, 'extensions', 'sandbox', 'load-ext')
+    previousSandboxRoot = process.env.CRAFT_EXTENSION_SANDBOX_ROOT
+    process.env.CRAFT_EXTENSION_SANDBOX_ROOT = join(tmp, 'extensions', 'sandbox')
     mkdirSync(sandbox, { recursive: true })
     writeFileSync(join(sandbox, 'index.mjs'), 'export function ping() { return 1 }\n')
+    writeFileSync(join(sandbox, 'manifest.json'), JSON.stringify({
+      id: 'load-ext', name: 'Load fixture', version: '1', runtime: 'craft-sandbox',
+      permissions: ['network.request'], operations: {}, contributes: {},
+    }))
 
     const broker = new CapabilityBroker()
     const mgr = new ExtensionHostManager({
@@ -241,6 +251,8 @@ describe('extensionHost.LOAD ignores client grantedPermissions', () => {
 
   afterEach(() => {
     resetExtensionHostManagers()
+    if (previousSandboxRoot === undefined) delete process.env.CRAFT_EXTENSION_SANDBOX_ROOT
+    else process.env.CRAFT_EXTENSION_SANDBOX_ROOT = previousSandboxRoot
     workspaceRoots.clear()
     for (const p of [tmp, root]) {
       try {

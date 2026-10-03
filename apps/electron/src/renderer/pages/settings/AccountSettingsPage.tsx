@@ -122,6 +122,7 @@ export default function AccountSettingsPage() {
   const [saving, setSaving] = React.useState(false)
   const [changingAvatar, setChangingAvatar] = React.useState(false)
   const [gamification, setGamification] = React.useState<GamificationSnapshot | null>(null)
+  const [savingAnalyticsConsent, setSavingAnalyticsConsent] = React.useState(false)
 
   const load = React.useCallback(async () => {
     try {
@@ -224,6 +225,18 @@ export default function AccountSettingsPage() {
       await persist({ avatar: '' })
     } catch (error) {
       toast.error(t('settings.accounts.profileSaveFailed', { message: errorMessage(error) }))
+    }
+  }
+  const handleAnalyticsConsentChange = async (checked: boolean) => {
+    if (savingAnalyticsConsent) return
+    setSavingAnalyticsConsent(true)
+    try {
+      const next = await window.electronAPI.setGamificationAnalyticsConsent(checked)
+      setGamification((prev) => prev ? { ...prev, analyticsConsent: next.analyticsConsent } : prev)
+    } catch (error) {
+      toast.error(t('settings.accounts.profileSaveFailed', { message: errorMessage(error) }))
+    } finally {
+      setSavingAnalyticsConsent(false)
     }
   }
 
@@ -342,11 +355,8 @@ export default function AccountSettingsPage() {
               label={t('settings.account.analyticsConsent')}
               description={t('settings.account.analyticsConsentDesc')}
               checked={gamification?.analyticsConsent === true}
-              onCheckedChange={(checked) => {
-                void window.electronAPI.setGamificationAnalyticsConsent(checked).then((next) => {
-                  setGamification((prev) => prev ? { ...prev, analyticsConsent: next.analyticsConsent } : prev)
-                })
-              }}
+              disabled={savingAnalyticsConsent}
+              onCheckedChange={(checked) => void handleAnalyticsConsentChange(checked)}
             />
           </SettingsCard>
         </SettingsSection>

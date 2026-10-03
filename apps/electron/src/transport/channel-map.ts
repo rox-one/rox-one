@@ -42,6 +42,8 @@ export const CHANNEL_MAP = {
   getUnreadSummary: invoke(RPC_CHANNELS.sessions.GET_UNREAD_SUMMARY),
   markAllSessionsRead: invoke(RPC_CHANNELS.sessions.MARK_ALL_READ),
   getSessionMessages: invoke(RPC_CHANNELS.sessions.GET_MESSAGES),
+  getSessionBudget: invoke(RPC_CHANNELS.sessions.GET_BUDGET),
+  setSessionBudget: invoke(RPC_CHANNELS.sessions.SET_BUDGET),
   createSession: invoke(RPC_CHANNELS.sessions.CREATE),
   deleteSession: invoke(RPC_CHANNELS.sessions.DELETE),
   sendMessage: invoke(RPC_CHANNELS.sessions.SEND_MESSAGE),
@@ -341,11 +343,27 @@ export const CHANNEL_MAP = {
   listServerDirectory: invoke(RPC_CHANNELS.fs.LIST_DIRECTORY),
 
   // Notes
+  resolveContent: invoke(RPC_CHANNELS.content.RESOLVE),
+  describeContent: invoke(RPC_CHANNELS.content.DESCRIBE),
+  adoptContentDescriptor: invoke(RPC_CHANNELS.content.ADOPT_DESCRIPTOR),
+  commitMarkdown: invoke(RPC_CHANNELS.content.COMMIT_MARKDOWN),
+  getMarkdownCommitReceipt: invoke(RPC_CHANNELS.content.GET_COMMIT_RECEIPT),
+  getBlockTree: invoke(RPC_CHANNELS.content.GET_BLOCK_TREE),
+  previewMarkerMapping: invoke(RPC_CHANNELS.content.PREVIEW_MARKER_MAPPING),
+  applyMarkerMapping: invoke(RPC_CHANNELS.content.APPLY_MARKER_MAPPING),
+  previewProjectRepository: invoke(RPC_CHANNELS.codeIntelligence.PREVIEW),
+  bindProjectRepository: invoke(RPC_CHANNELS.codeIntelligence.BIND),
+  captureProjectRepository: invoke(RPC_CHANNELS.codeIntelligence.CAPTURE),
+  listProjectRepositorySnapshots: invoke(RPC_CHANNELS.codeIntelligence.LIST),
+  readProjectRepositorySpan: invoke(RPC_CHANNELS.codeIntelligence.READ_SPAN),
+  checkProjectRepositoryFreshness: invoke(RPC_CHANNELS.codeIntelligence.FRESHNESS),
+  cancelProjectRepositoryRequest: invoke(RPC_CHANNELS.codeIntelligence.CANCEL),
   listNotes: invoke(RPC_CHANNELS.notes.LIST),
   readNote: invoke(RPC_CHANNELS.notes.READ),
   saveNote: invoke(RPC_CHANNELS.notes.SAVE),
   createNote: invoke(RPC_CHANNELS.notes.CREATE),
   renameNote: invoke(RPC_CHANNELS.notes.RENAME),
+  moveNote: invoke(RPC_CHANNELS.notes.MOVE),
   deleteNote: invoke(RPC_CHANNELS.notes.DELETE),
   renameFolderNote: invoke(RPC_CHANNELS.notes.RENAME_FOLDER),
   deleteFolderNote: invoke(RPC_CHANNELS.notes.DELETE_FOLDER),
@@ -364,6 +382,9 @@ export const CHANNEL_MAP = {
   watchNotes: invoke(RPC_CHANNELS.notes.WATCH),
   unwatchNotes: invoke(RPC_CHANNELS.notes.UNWATCH),
   onNotesChanged: listener(RPC_CHANNELS.notes.CHANGED),
+  'nativeData.readEntity': invoke(RPC_CHANNELS.nativeData.READ_ENTITY),
+  'nativeData.mutate': invoke(RPC_CHANNELS.nativeData.MUTATE),
+  'nativeData.pullChanges': invoke(RPC_CHANNELS.nativeData.PULL_CHANGES),
 
   // Knowledge — 9 P1 reads (spec 2026-08-07-siyuan-integration/03) plus the
   // 7 P3 write-back proposal channels (spec 05) plus 8 P4 publication channels
@@ -587,6 +608,8 @@ export const CHANNEL_MAP = {
 
   // Memory (self-learning)
   listMemoryLessons: invoke(RPC_CHANNELS.memory.LIST_LESSONS),
+  listMemoryArchive: invoke(RPC_CHANNELS.memory.LIST_ARCHIVE),
+  restoreMemoryArchive: invoke(RPC_CHANNELS.memory.RESTORE_ARCHIVE),
   addMemoryLesson: invoke(RPC_CHANNELS.memory.ADD_LESSON),
   updateMemoryLesson: invoke(RPC_CHANNELS.memory.UPDATE_LESSON),
   deleteMemoryLesson: invoke(RPC_CHANNELS.memory.DELETE_LESSON),
@@ -624,6 +647,9 @@ export const CHANNEL_MAP = {
   inviteToOrganization: invoke(RPC_CHANNELS.orgs.INVITE),
   acceptOrganizationInvite: invoke(RPC_CHANNELS.orgs.ACCEPT),
   listOrganizationMembers: invoke(RPC_CHANNELS.orgs.LIST_MEMBERS),
+  updateOrganizationMemberRole: invoke(RPC_CHANNELS.orgs.UPDATE_MEMBER_ROLE),
+  removeOrganizationMember: invoke(RPC_CHANNELS.orgs.REMOVE_MEMBER),
+  revokeOrganizationInvite: invoke(RPC_CHANNELS.orgs.REVOKE_INVITE),
   getOrgIdentity: invoke(RPC_CHANNELS.orgs.GET_IDENTITY),
   updateOrgIdentity: invoke(RPC_CHANNELS.orgs.UPDATE_IDENTITY),
 
@@ -765,6 +791,7 @@ export const CHANNEL_MAP = {
   // LLM Connections
   listLlmConnections: invoke(RPC_CHANNELS.llmConnections.LIST),
   listLlmConnectionsWithStatus: invoke(RPC_CHANNELS.llmConnections.LIST_WITH_STATUS),
+  getStartupRuntimeSummary: invoke(RPC_CHANNELS.llmConnections.GET_STARTUP_SUMMARY),
   getLlmConnection: invoke(RPC_CHANNELS.llmConnections.GET),
   getLlmConnectionApiKey: invoke(RPC_CHANNELS.llmConnections.GET_API_KEY),
   saveLlmConnection: invoke(RPC_CHANNELS.llmConnections.SAVE),
@@ -774,6 +801,10 @@ export const CHANNEL_MAP = {
   setWorkspaceDefaultLlmConnection: invoke(RPC_CHANNELS.llmConnections.SET_WORKSPACE_DEFAULT),
 
   // Projects
+  getSharedProjects: invoke('domain.project.list'),
+  getSharedProject: invoke('domain.project.get'),
+  createSharedProject: invoke('domain.project.createShared'),
+  getSharedProjectEvents: invoke('domain.project.events'),
   getProjects: invoke(RPC_CHANNELS.projects.GET),
   getProject: invoke(RPC_CHANNELS.projects.GET_ONE),
   createProject: invoke(RPC_CHANNELS.projects.CREATE),
@@ -782,6 +813,12 @@ export const CHANNEL_MAP = {
   listProjectAssets: invoke(RPC_CHANNELS.projects.LIST_ASSETS),
   uploadProjectAsset: invoke(RPC_CHANNELS.projects.UPLOAD_ASSET),
   deleteProjectAsset: invoke(RPC_CHANNELS.projects.DELETE_ASSET),
+  getProjectRoadmap: invoke(RPC_CHANNELS.projects.GET_ROADMAP),
+  saveProjectRoadmap: invoke(RPC_CHANNELS.projects.SAVE_ROADMAP),
+  getProjectAiStatus: invoke(RPC_CHANNELS.projects.AI_STATUS),
+  runProjectRoadmapAi: invoke(RPC_CHANNELS.projects.AI_ROADMAP),
+  getProjectOkr: invoke(RPC_CHANNELS.projects.GET_OKR),
+  saveProjectOkr: invoke(RPC_CHANNELS.projects.SAVE_OKR),
   onProjectsChanged: listener(RPC_CHANNELS.projects.CHANGED),
 
   // Pages

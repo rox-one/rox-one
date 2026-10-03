@@ -1,0 +1,3269 @@
+{
+  "schema_version": 1,
+  "catalog_id": "lark-business-ecosystem",
+  "title": "Lark Suite business ecosystem — documented reference and proposed ROX mapping",
+  "accessed_on": "2026-09-30",
+  "language": "ru",
+  "base_revision": "e953786ba7e30fb5da5dca7e88e20e324d5aebab",
+  "research_scope": "Public official Lark/App Directory/vendor docs and bounded ROX code inspection. No tenant install, scope grant, purchase, send, or private customer screenshot.",
+  "evidence_contract": {
+    "DOCUMENTED": "Official-source product documentation, not live observation or entitlement.",
+    "SOURCE-VERIFIED": "Read code at base revision; not runtime behavior.",
+    "PROPOSED": "ROX design/conceptual model; not Lark/vendor implementation.",
+    "NOT_VERIFIED": "Unknown must remain explicit. No claim that absent evidence means capability absent."
+  },
+  "classifications": [
+    "nativeLarkFeature",
+    "approvalTemplate",
+    "independentApp",
+    "thirdPartyAddon",
+    "unresolved"
+  ],
+  "sources": [
+    {
+      "id": "BS-DIRECTORY",
+      "title": "Lark App Directory — all apps",
+      "url": "https://app.larksuite.com/all",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": "Public directory listing; authenticated installation and per-tenant availability were not inspected."
+    },
+    {
+      "id": "BS-PLANS",
+      "title": "Lark plans and add-ons",
+      "url": "https://www.larksuite.com/en_us/plans",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": "Feature rows without readable checkmarks cannot establish which plan includes the feature. Prices and limits are a dated reference, not a purchase quote."
+    },
+    {
+      "id": "BS-ADMIN-ROLES",
+      "title": "Add administrators and create roles",
+      "url": "https://www.larksuite.com/hc/en-US/articles/360043595213-admin-add-administrators-and-create-administrator-roles",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-APP-CONFIG",
+      "title": "View and configure installed apps",
+      "url": "https://www.larksuite.com/hc/en-US/articles/099411074871",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-APP-APPROVERS",
+      "title": "Set approvers for app-related requests",
+      "url": "https://www.larksuite.com/hc/en-US/articles/360046527434-set-approvers-for-app-related-requests",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-HD-INTRO",
+      "title": "Get started with Help Desk",
+      "url": "https://www.larksuite.com/hc/en-US/articles/898565852185",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": "Extracted public article rich-text data includes revision remnants with conflicting historical plan notices. Current tenant entitlement requires rendered-page/admin verification."
+    },
+    {
+      "id": "BS-HD-TICKETS",
+      "title": "Use Ticket Center",
+      "url": "https://www.larksuite.com/hc/en-US/articles/360048487771-use-ticket-center",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": "Manual ticket creation is described as beta."
+    },
+    {
+      "id": "BS-HD-FAQ",
+      "title": "Manage FAQs in Help Desk Admin",
+      "url": "https://www.larksuite.com/hc/en-US/articles/360048487761-manage-faqs-in-help-desk-admin",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-HD-AGENTS",
+      "title": "Add and manage agents",
+      "url": "https://www.larksuite.com/hc/en-US/articles/360048487762-add-and-manage-agents",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-HD-ROUTING",
+      "title": "Define ticket assignment rules",
+      "url": "https://www.larksuite.com/hc/en-US/articles/854616371754-define-ticket-assignment-rules",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": "Queuing is described as beta; do not infer availability in the current tenant."
+    },
+    {
+      "id": "BS-HD-FIELDS",
+      "title": "Define custom fields for tickets",
+      "url": "https://www.larksuite.com/hc/en-US/articles/360048487770-define-custom-fields-for-help-desk-tickets",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-HD-FORM",
+      "title": "Configure Help Desk pre-inquiry forms",
+      "url": "https://www.larksuite.com/hc/en-US/articles/360048488291",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": "Article includes beta notices; exact current rollout is unverified."
+    },
+    {
+      "id": "BS-ATT-GROUP",
+      "title": "Set up an attendance group",
+      "url": "https://www.larksuite.com/hc/en-US/articles/487269142257-admin-set-up-attendance-group",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-ATT-REPORTS",
+      "title": "Receive automatic attendance reports",
+      "url": "https://www.larksuite.com/hc/en-US/articles/360048488379-admin-receive-automatic-attendance-report-of-attendance-groups",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-LEAVE",
+      "title": "Submit, modify, and withdraw leave requests",
+      "url": "https://www.larksuite.com/hc/en-US/articles/686317295813-submit-modify-and-withdraw-leave-requests",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-APPROVAL-INTRO",
+      "title": "Lark Approval user guide",
+      "url": "https://www.larksuite.com/hc/en-US/articles/374839901090-lark-approval-user-guide",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-APPROVAL-ADMIN",
+      "title": "Get started with managing Approval",
+      "url": "https://www.larksuite.com/hc/en-US/articles/953059117412",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-APPROVAL-CREATE",
+      "title": "Create an approval",
+      "url": "https://www.larksuite.com/hc/en-US/articles/360040243313",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-APPROVAL-FORM",
+      "title": "Design an approval form",
+      "url": "https://www.larksuite.com/hc/en-US/articles/360043705794",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-APPROVAL-REQUESTER",
+      "title": "Get started with requesting approval",
+      "url": "https://www.larksuite.com/hc/en-US/articles/834786153503-get-started-with-requesting-approval",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-APPROVAL-HANDLER",
+      "title": "Get started with handling approvals",
+      "url": "https://www.larksuite.com/hc/en-US/articles/436323747859",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-RECRUIT-SOLUTION",
+      "title": "Smart recruitment integration solution",
+      "url": "https://open.larksuite.com/solutions/detail/hire",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": "This is a solution integrating a recruitment system through Lark APIs, not evidence of an international Lark native ATS."
+    },
+    {
+      "id": "BS-APPROVAL-TEMPLATES",
+      "title": "Lark approval templates for HR and finance",
+      "url": "https://www.larksuite.com/en_us/blog/power-automate-approvals",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": "First-party marketing evidence of example templates only. Product mechanics are taken from Help Center, not broad marketing comparisons."
+    },
+    {
+      "id": "BS-LINGO-ADMIN",
+      "title": "Introducing the Lingo admin console",
+      "url": "https://www.larksuite.com/hc/en-US/articles/898002276094",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-LINGO-MANAGE",
+      "title": "View and manage all Lingo entries",
+      "url": "https://www.larksuite.com/hc/en-US/articles/193515294468-view-and-manage-all-lingo-entries",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-LINGO-IMPORT",
+      "title": "Create and import Lingo entries",
+      "url": "https://www.larksuite.com/hc/en-US/articles/826167966155",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-LINGO-CREATE",
+      "title": "Co-create Lingo entries",
+      "url": "https://www.larksuite.com/hc/en-US/articles/312545949275-co-create-lingo-entries",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-MOMENTS-ACCOUNT",
+      "title": "Use an official account in Moments",
+      "url": "https://www.larksuite.com/hc/en-US/articles/158141930830",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": "English content fetched from the same official article ID discovered through the Vietnamese localized source; no Feishu behavior was substituted."
+    },
+    {
+      "id": "BS-MEEGLE-HOME",
+      "title": "Meegle feature overview",
+      "url": "https://www.meegle.com/",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Meegle / Lark Technologies",
+      "note": ""
+    },
+    {
+      "id": "BS-MEEGLE-WORKFLOW",
+      "title": "Meegle visual workflows",
+      "url": "https://www.meegle.com/en_us/meegle_features/workflow",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Meegle / Lark Technologies",
+      "note": ""
+    },
+    {
+      "id": "BS-MEEGLE-PLANS",
+      "title": "Meegle pricing and feature matrix",
+      "url": "https://www.meegle.com/en_us/pricing",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Meegle / Lark Technologies",
+      "note": ""
+    },
+    {
+      "id": "BS-MEEGLE-CLI",
+      "title": "Official Meegle CLI reference",
+      "url": "https://github.com/larksuite/meegle-cli/blob/main/README.md",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "larksuite official GitHub organization",
+      "note": "Read-only reference. The CLI, skills, login or tokens were not installed or activated. GitHub API commit pinning returned HTTP 403; main branch snapshot accessed on the stated date."
+    },
+    {
+      "id": "BS-COZE-LISTING",
+      "title": "Coze directory listing",
+      "url": "https://app.larksuite.com/app/cli_a55f0abaac38500a",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-COZE-PUBLISH",
+      "title": "Publish a Coze agent to Lark",
+      "url": "https://www.coze.com/open/docs/guides/lark",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Coze",
+      "note": ""
+    },
+    {
+      "id": "BS-COZE-API",
+      "title": "Publish agent API",
+      "url": "https://www.coze.com/open/docs/developer_guides/publish_bot",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Coze",
+      "note": "The API publishes to API/Web SDK/custom channels; this alone does not prove unattended Lark admin release."
+    },
+    {
+      "id": "BS-COZE-WORKFLOW",
+      "title": "Use a Coze workflow",
+      "url": "https://www.coze.com/open/docs/guides/use_workflow",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Coze",
+      "note": ""
+    },
+    {
+      "id": "BS-TANCA",
+      "title": "Tanca enterprise product overview",
+      "url": "https://tanca.io/en/enterprise",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Tanca",
+      "note": "Vendor capability claims are documented marketing, not a verified installed Lark integration."
+    },
+    {
+      "id": "BS-TANCA-TOUR",
+      "title": "Tanca product tour",
+      "url": "https://www.tanca.io/en/product-tour",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Tanca",
+      "note": "Illustrative vendor product tour, not live customer data."
+    },
+    {
+      "id": "BS-SELEAM",
+      "title": "Seleam directory listing",
+      "url": "https://app.larksuite.com/app/cli_a2fe038a7378d00a",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": "Listing title is Seleam, body calls product Yidea EAM. Preserve both; no rename or separate product equivalence assumed."
+    },
+    {
+      "id": "BS-DOCUGENIUS",
+      "title": "DocuGenius directory listing",
+      "url": "https://app.larksuite.com/app/cli_a4d1b87a54f8d00a",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-DOCUGENIUS-GUIDE",
+      "title": "Automatically typeset and print with DocuGenius",
+      "url": "https://www.larksuite.com/hc/en-US/articles/027033038241",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": "Guide says separate payment is required, while directory labels acquisition Free. Treat as separate acquisition and feature entitlement gates."
+    },
+    {
+      "id": "BS-SUBS-INTRO",
+      "title": "Use Subscriptions",
+      "url": "https://www.larksuite.com/hc/en-US/articles/360048487858",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-SUBS-CONTENT",
+      "title": "Create and edit Subscriptions content",
+      "url": "https://www.larksuite.com/hc/en-US/articles/360048488494",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-SUBS-GROUPS",
+      "title": "Send Subscriptions content to groups",
+      "url": "https://www.larksuite.com/hc/en-US/articles/775328088919",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-SUBS-DOCS",
+      "title": "Post a Docs document to Subscriptions",
+      "url": "https://www.larksuite.com/hc/en-US/articles/197625770369",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-SUBS-DATA",
+      "title": "View Subscriptions app statistics",
+      "url": "https://www.larksuite.com/hc/en-US/articles/360048488488",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "Lark",
+      "note": ""
+    },
+    {
+      "id": "BS-OFFICIAL-MCP-API",
+      "title": "Official Lark OpenAPI MCP method reference",
+      "url": "https://github.com/larksuite/lark-openapi-mcp/blob/main/docs/reference/tool-presets/tools-en.md",
+      "accessed_on": "2026-09-30",
+      "evidence_label": "DOCUMENTED",
+      "publisher": "larksuite official GitHub organization",
+      "note": "Generated reference includes Feishu links and shared API families. Method presence proves documented SDK/catalog shape, not international Lark entitlement, tenant scopes, or exhaustive API coverage."
+    }
+  ],
+  "local_capabilities": [
+    {
+      "id": "ROX-LARK-MESSAGING",
+      "label": "SOURCE-VERIFIED",
+      "description": "LarkAdapter has Lark/Feishu domain selection, SDK WebSocket transport, message/card operations and attachment handling. This is code inspection at the base revision, not a runtime test.",
+      "paths": [
+        "packages/messaging-gateway/src/adapters/lark/index.ts",
+        "packages/messaging-gateway/src/adapters/lark/card.ts"
+      ]
+    },
+    {
+      "id": "ROX-WORKFLOW-CANVAS",
+      "label": "SOURCE-VERIFIED",
+      "description": "Versioned SessionWorkflowSpec contains nodes, ports, edges, run artifacts and status. The type explicitly says the in-process canvas runner is simulate-only; live requires a server adapter.",
+      "paths": [
+        "packages/shared/src/workflows/types.ts"
+      ]
+    },
+    {
+      "id": "ROX-SESSION-COLLECTIONS",
+      "label": "SOURCE-VERIFIED",
+      "description": "Session collection display/filter contracts support list, board, table, heatmap, grouping and properties. They are session views, not a business-record database.",
+      "paths": [
+        "packages/shared/src/sessions/collection-types.ts"
+      ]
+    },
+    {
+      "id": "ROX-PERSONAL-TASKS",
+      "label": "SOURCE-VERIFIED",
+      "description": "PersonalTask supports dates, reminders, recurrence, checklist, projects/areas, source links and audit events. This does not demonstrate HR, procurement, accounting or shared approval semantics.",
+      "paths": [
+        "packages/core/src/tasks/personal/types.ts"
+      ]
+    },
+    {
+      "id": "ROX-FEED",
+      "label": "SOURCE-VERIFIED",
+      "description": "FeedPage aggregates agent/team activity, RSS/Atom/page changes and X subscriptions, annotates items, and links to Tasks/Notes. No Lark Subscriptions or Moments backend is proved by this inspection.",
+      "paths": [
+        "apps/electron/src/renderer/pages/FeedPage.tsx"
+      ]
+    },
+    {
+      "id": "ROX-MARKETPLACE",
+      "label": "SOURCE-VERIFIED",
+      "description": "MarketplaceSettingsPage handles skillpacks, tools and context documents. Service is a tag filter over tools. It is not a Lark app-directory installation client.",
+      "paths": [
+        "apps/electron/src/renderer/pages/settings/MarketplaceSettingsPage.tsx"
+      ]
+    },
+    {
+      "id": "ROX-KNOWLEDGE-CONTRACT",
+      "label": "SOURCE-VERIFIED",
+      "description": "Core knowledge package exports provider, refs, capabilities, mutations and publications. Dedicated Lingo review/alias/highlighting behavior is not proved by these contracts.",
+      "paths": [
+        "packages/core/src/knowledge/index.ts"
+      ]
+    }
+  ],
+  "features": [
+    {
+      "id": "LB-HELPDESK",
+      "name": "Help Desk",
+      "classification": "nativeLarkFeature",
+      "identity": {
+        "status": "RESOLVED",
+        "publisher": "Lark",
+        "variant": "Official Lark service; distinct from Help Center and Base ticket templates"
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-HD-INTRO",
+          "BS-HD-TICKETS",
+          "BS-HD-FAQ",
+          "BS-HD-AGENTS",
+          "BS-HD-ROUTING",
+          "BS-HD-FIELDS",
+          "BS-HD-FORM"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "Help Desk app",
+            "subscreens": [],
+            "actions": [
+              "Search; frequently used/all help desks; Create a Help Desk; My Help Desk"
+            ]
+          },
+          {
+            "path": "Help Desk Admin > Settings",
+            "subscreens": [
+              "Status and Review",
+              "Ticket Fields",
+              "Pre-inquiry Form",
+              "Ticket Assignment > Skill-based routing / Assignment setting / Fallback setting"
+            ],
+            "actions": [
+              "Submit Application for organization review; save configuration"
+            ]
+          },
+          {
+            "path": "Help Desk Admin > FAQs",
+            "subscreens": [],
+            "actions": [
+              "Add category/question; batch import/export; edit/delete/restore; view action records"
+            ]
+          },
+          {
+            "path": "Help Desk Admin > Agent",
+            "subscreens": [],
+            "actions": [
+              "Add Agent; Modify; Delete"
+            ]
+          },
+          {
+            "path": "Help Desk Admin > Ticket Center",
+            "subscreens": [
+              "Agent service",
+              "Bot service",
+              "Ticket details > Message",
+              "Ticket Board"
+            ],
+            "actions": [
+              "Create Ticket (beta); Start Chat; filter/export; tag/custom-field edit; End Service"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Help desk registration",
+            "inputs": [
+              "name",
+              "profile photo",
+              "availability scope",
+              "description"
+            ],
+            "outputs": [
+              "review request",
+              "searchable enabled help desk after approval"
+            ]
+          },
+          {
+            "name": "FAQ",
+            "inputs": [
+              "question",
+              "similar questions",
+              "answer with images/links",
+              "effective/expiration times",
+              "category"
+            ],
+            "outputs": [
+              "bot/agent answer source",
+              "export sheet",
+              "trash restoration"
+            ]
+          },
+          {
+            "name": "Agent",
+            "inputs": [
+              "members",
+              "service time zone",
+              "service hours",
+              "skills",
+              "ticket permission"
+            ],
+            "outputs": [
+              "agent roster and routing eligibility"
+            ]
+          },
+          {
+            "name": "Ticket fields / pre-inquiry",
+            "inputs": [
+              "text/dropdown/cascader fields",
+              "required-at-close flag",
+              "form filling guide",
+              "selected custom fields"
+            ],
+            "outputs": [
+              "ticket field values",
+              "routing conditions"
+            ]
+          },
+          {
+            "name": "New ticket (beta)",
+            "inputs": [
+              "requester information configured by desk",
+              "selected skill OR designated agent"
+            ],
+            "outputs": [
+              "ticket",
+              "service chat"
+            ]
+          }
+        ],
+        "objects": [
+          "HelpDesk",
+          "FAQCategory",
+          "FAQ",
+          "Agent",
+          "Skill",
+          "Ticket",
+          "TicketField",
+          "PreInquiryResponse",
+          "ServiceChat"
+        ],
+        "acl": [
+          "Availability scope controls discover/use; organization administrator reviews publication.",
+          "Owner/admin configures; agents receive ticket view/manage scope. Bot service tickets are visible to agents regardless of their configured ticket permission.",
+          "Only online agents start/join service chats; custom fields can be required on closure."
+        ],
+        "workflow_events": [
+          "First bot interaction generates ticket; request for human service triggers optional pre-inquiry form and skill routing.",
+          "Start Chat creates user/agent group; End Service closes ticket and requests satisfaction feedback."
+        ],
+        "automations": [
+          "Skill conditions combine FAQ, bot, user/ticket information and form values; assignment by ticket-receiving time or least tickets; queue and fallback rules."
+        ],
+        "licensing_and_gates": [
+          "App availability, publication review and Help Desk roles are separate gates.",
+          "Article includes plan and beta notices; Help Desk entitlement, manual creation, queues and pre-inquiry rollout require current tenant checks.",
+          "Export max 5,000 latest ticket rows per operation; FAQ max 10,000 entries; category hierarchy max eight levels, bot exposes up to three."
+        ],
+        "unknowns": [
+          "No full international Lark ticket/FAQ API contract or scopes were verified.",
+          "Unsupported ticket message types in docs include video, files, merged forwarded messages and cards.",
+          "No private service schema, SLA engine or AI routing implementation was inferred."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "HelpDesk",
+          "HelpDeskMembership",
+          "FAQEntry",
+          "Ticket",
+          "Assignment",
+          "TicketFieldValue",
+          "ServiceConversation",
+          "TicketEvent"
+        ],
+        "relationships": [
+          "HelpDesk 1:N Ticket/FAQEntry/Membership",
+          "Ticket 1:N Assignment/FieldValue/Event",
+          "Ticket 0..1:1 ServiceConversation"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-LARK-MESSAGING",
+          "ROX-KNOWLEDGE-CONTRACT",
+          "ROX-PERSONAL-TASKS"
+        ],
+        "target_surface": "PROPOSED: Apps > Help Desk; Tickets; Knowledge > FAQ",
+        "gaps": [
+          "shared ticket lifecycle",
+          "requester and agent ACL",
+          "skill routing and queues",
+          "service metrics and audit"
+        ],
+        "approach": "Federate approved desk links/messages first; build a ROX ticket domain with explicit state transitions before bi-directional sync."
+      },
+      "dependencies": [
+        "LB-WORKPLACE",
+        "LB-APPROVAL"
+      ],
+      "api_possible": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-OFFICIAL-MCP-API"
+        ],
+        "candidate_methods": [
+          "helpdesk.v1.notification.create/get/patch/preview/submitApprove/executeSend/cancelSend/cancelApprove"
+        ],
+        "required_scope_strings": [],
+        "scope_status": "NOT_VERIFIED",
+        "tenant_entitlement_status": "NOT_VERIFIED",
+        "boundary": "Notification methods are not proof of ticket/FAQ CRUD. They require their own app authorization; Help Desk desk membership is not replaced by a bot token."
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-ATTENDANCE",
+      "name": "Attendance",
+      "classification": "nativeLarkFeature",
+      "identity": {
+        "status": "RESOLVED",
+        "publisher": "Lark"
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-ATT-GROUP",
+          "BS-ATT-REPORTS"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "Attendance Admin > Attendance Settings > Group Settings",
+            "subscreens": [],
+            "actions": [
+              "New; open group; Confirm"
+            ]
+          },
+          {
+            "path": "Group settings",
+            "subscreens": [
+              "Basic information",
+              "Shift",
+              "Attendance methods",
+              "Attendance settings"
+            ],
+            "actions": [
+              "edit group/rules"
+            ]
+          },
+          {
+            "path": "Mobile > Attendance > Settings > Settings > Group Attendance Report",
+            "subscreens": [],
+            "actions": [
+              "enable daily/weekly/monthly report; set Send at"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Attendance group",
+            "inputs": [
+              "name",
+              "owner/sub-owner",
+              "time zone",
+              "required/optional members",
+              "fixed/scheduled/free shift",
+              "GPS/Wi-Fi methods",
+              "offsite/leave/out-of-office/correction rules"
+            ],
+            "outputs": [
+              "member attendance policy",
+              "clock-in/out expectations",
+              "attendance data/reports"
+            ]
+          }
+        ],
+        "objects": [
+          "AttendanceGroup",
+          "Member",
+          "Shift",
+          "ClockRecord",
+          "AttendanceResult",
+          "Correction",
+          "ApprovalResult",
+          "AttendanceReport"
+        ],
+        "acl": [
+          "Primary/admin with Attendance permission manages settings. Group owner edits rules and exports/schedules; sub-owner exports/schedules.",
+          "Member belongs to one attendance group. Owner/report scope must follow groups, not all organization records."
+        ],
+        "workflow_events": [
+          "Member moved to group is automatically removed from prior group.",
+          "Attendance bot delivers scheduled group reports using documented time-zone rules."
+        ],
+        "automations": [
+          "Relocation synchronization includes qualifying new/transferred members; scheduled group reports; approved absence/overtime influence calculation rules."
+        ],
+        "licensing_and_gates": [
+          "App availability and Attendance permission required.",
+          "Group time zone and shift type cannot be changed after creation.",
+          "Computer clock-in supports Wi-Fi only; GPS/Wi-Fi/photo/face and anti-cheat features must be checked for client/policy availability."
+        ],
+        "unknowns": [
+          "No payroll formula or labor-policy compliance engine is proven.",
+          "Location/biometric processing requires separate domain controls; API import is not proof of physical attendance."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "AttendanceGroup",
+          "MembershipPeriod",
+          "ShiftDefinition",
+          "Schedule",
+          "ClockRecord",
+          "DailyAttendanceResult",
+          "AttendanceAdjustment"
+        ],
+        "relationships": [
+          "Group 1:N Schedule/MembershipPeriod",
+          "Member 1:N ClockRecord/DailyAttendanceResult",
+          "Adjustment references approved request and affected period"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-PERSONAL-TASKS",
+          "ROX-FEED"
+        ],
+        "target_surface": "PROPOSED: People > Attendance; Admin > Attendance policy",
+        "gaps": [
+          "clock record integrity",
+          "shift and time-zone policy",
+          "HR ACL and correction audit"
+        ],
+        "approach": "Read reports through an authorized connector; treat imported clock data as sourced records with provenance."
+      },
+      "dependencies": [
+        "LB-WORKPLACE",
+        "LB-APPROVAL"
+      ],
+      "api_possible": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-OFFICIAL-MCP-API"
+        ],
+        "candidate_methods": [
+          "attendance.v1.group.get/list",
+          "attendance.v1.shift.get/list",
+          "attendance.v1.userDailyShift.query",
+          "attendance.v1.userFlow.query",
+          "attendance.v1.userTask.query",
+          "attendance.v1.userStatsData.query"
+        ],
+        "required_scope_strings": [],
+        "scope_status": "NOT_VERIFIED",
+        "tenant_entitlement_status": "NOT_VERIFIED",
+        "boundary": "Read and write API families are separately documented. Do not grant write/face-information scopes for report ingestion."
+      },
+      "integrates_with": [
+        "LB-LEAVE",
+        "LB-OOO"
+      ],
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-WORKPLACE",
+      "name": "Workplace / app launcher / app administration",
+      "classification": "nativeLarkFeature",
+      "identity": {
+        "status": "RESOLVED",
+        "publisher": "Lark",
+        "variant": "Organization launcher + installed-app administration; workspace in Meegle/Coze is a different object"
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-APP-CONFIG",
+          "BS-APP-APPROVERS",
+          "BS-ADMIN-ROLES",
+          "BS-PLANS"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "Lark Workplace",
+            "subscreens": [],
+            "actions": [
+              "launch available apps; configured organization entry points"
+            ]
+          },
+          {
+            "path": "Lark Admin > Workplace > App Management",
+            "subscreens": [],
+            "actions": [
+              "search by name/ID; filter payment type/developer/availability; Configure; Update"
+            ]
+          },
+          {
+            "path": "App configuration",
+            "subscreens": [
+              "Allowed members",
+              "Blocked members",
+              "Contacts settings"
+            ],
+            "actions": [
+              "Enabled; app availability; capabilities/scopes details; external sharing; update authorization"
+            ]
+          },
+          {
+            "path": "Set Management Rules > Set Approvers",
+            "subscreens": [],
+            "actions": [
+              "Edit; choose default/specified approvers"
+            ]
+          },
+          {
+            "path": "Settings > Administrator Permissions > Administrator Role",
+            "subscreens": [],
+            "actions": [
+              "Create Role; permissions; management scope; Add Administrator"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Installed-app configuration",
+            "inputs": [
+              "enabled state",
+              "allowed/blocked departments, groups, members",
+              "contacts scope",
+              "version authorization"
+            ],
+            "outputs": [
+              "launch visibility",
+              "app usable range",
+              "authorized version"
+            ]
+          },
+          {
+            "name": "App request approver",
+            "inputs": [
+              "default/specified approvers",
+              "administrator management scope"
+            ],
+            "outputs": [
+              "review assignment for get/use/release requests"
+            ]
+          }
+        ],
+        "objects": [
+          "Application",
+          "InstalledVersion",
+          "AvailabilityRule",
+          "ScopeGrant",
+          "AppCapability",
+          "AppRequest",
+          "AdministratorRole"
+        ],
+        "acl": [
+          "Blocked list prevails when member also allowed.",
+          "Administrator roles have application/member/department scope; specified app-request approver must manage all apps and applicant scope, else default fallback applies."
+        ],
+        "workflow_events": [
+          "Get/use/custom-app release requests produce review tasks; new version update requires authorization."
+        ],
+        "automations": [
+          "Matching multiple approvers assigns simultaneously; any matched approval/rejection suffices.",
+          "Custom app Automatic approval can exempt new-version release review if enabled by admin."
+        ],
+        "licensing_and_gates": [
+          "Installation/acquisition, usage range, OAuth scopes, version release and subscription are separate gates.",
+          "Custom Workplace is listed in plan matrix; exact checked entitlement is not established from text-only matrix.",
+          "External sharing is described as beta and unavailable to all users; do not assume it is enabled."
+        ],
+        "unknowns": [
+          "No app installation, permission grant, plan change or custom Workplace publication was performed.",
+          "Launcher arrangement, custom cards and current tenant apps require observed UI evidence."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "AppRegistration",
+          "AppInstallation",
+          "AppVersion",
+          "AvailabilityPolicy",
+          "ScopeGrant",
+          "AppReview",
+          "RoleAssignment"
+        ],
+        "relationships": [
+          "Organization 1:N AppInstallation",
+          "Installation references AppVersion and AvailabilityPolicy",
+          "ScopeGrant records app/version/actor/time"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-MARKETPLACE",
+          "ROX-LARK-MESSAGING"
+        ],
+        "target_surface": "PROPOSED: Workplace; Settings > Integrations > Lark apps",
+        "gaps": [
+          "business-app manifests",
+          "tenant availability and install receipts",
+          "scope review separate from local tool permission"
+        ],
+        "approach": "Keep ROX skill/tool packages and Lark business applications as explicit artifact kinds; show provider, install state, usable range and entitlement."
+      },
+      "dependencies": [],
+      "api_possible": {
+        "evidence_label": "NOT_VERIFIED",
+        "candidate_methods": [],
+        "boundary": "No public Workplace launcher configuration API was confirmed in this slice. Use documented admin/developer consoles; do not reproduce private endpoints."
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-APPROVAL",
+      "name": "Approval",
+      "classification": "nativeLarkFeature",
+      "identity": {
+        "status": "RESOLVED",
+        "publisher": "Lark",
+        "variant": "Shared definition/form/process engine; approval presets are not independent business applications"
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-APPROVAL-ADMIN",
+          "BS-APPROVAL-CREATE",
+          "BS-APPROVAL-FORM",
+          "BS-APPROVAL-REQUESTER",
+          "BS-APPROVAL-HANDLER",
+          "BS-APPROVAL-INTRO"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "Approval > Submit Request",
+            "subscreens": [],
+            "actions": [
+              "choose organization-configured request; fill; Submit"
+            ]
+          },
+          {
+            "path": "Approval > Approval Center",
+            "subscreens": [
+              "To-do",
+              "Done",
+              "Submitted",
+              "CC’d",
+              "request details"
+            ],
+            "actions": [
+              "track/act"
+            ]
+          },
+          {
+            "path": "Approval Admin",
+            "subscreens": [
+              "Basic Info",
+              "Form Design",
+              "Process Design",
+              "More",
+              "Data Management",
+              "Recommended Configuration",
+              "Permissions Management"
+            ],
+            "actions": [
+              "Create Approval; Edit; Publish"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Definition wizard",
+            "inputs": [
+              "name/group/icon/description/submitter scope",
+              "widgets and required/visibility settings",
+              "approver/CC/handler/conditional branch nodes",
+              "modify/recall/delegate/batch/deduplicate/share policies"
+            ],
+            "outputs": [
+              "published definition; available request form"
+            ]
+          },
+          {
+            "name": "Request/action",
+            "inputs": [
+              "definition-specific values",
+              "approval opinion",
+              "transfer/add/remove/send-back reasons",
+              "optional signature"
+            ],
+            "outputs": [
+              "approval instance; node decisions; record; bot notification"
+            ]
+          }
+        ],
+        "objects": [
+          "ApprovalDefinition",
+          "FormControl",
+          "ProcessNode",
+          "ApprovalInstance",
+          "ApprovalTask",
+          "CC",
+          "Comment",
+          "Handler"
+        ],
+        "acl": [
+          "App administrator covers all settings; sub-administrator is configured for whole or restricted settings; process administrator covers a particular approval.",
+          "Requester, approver, handler and CC recipient have different actions. Sharing, transfer, additions, return, batch and recall are admin-configured."
+        ],
+        "workflow_events": [
+          "Submission creates instance; bot alerts assigned approver; completed action leaves To-do and appears Done.",
+          "Conditional branches/handlers/CC are configured in definition, not inferred from request type."
+        ],
+        "automations": [
+          "Deduplication rules can skip repeated approval steps; optional aggregated approval notifications; approval data may be synchronized to Base via Data Management."
+        ],
+        "licensing_and_gates": [
+          "Definition must be published and submitter in allowed range.",
+          "Form supports one attendance-linked widget group; not an unrestricted set of independent attendance effects.",
+          "API credentials/scopes and definition event subscription are separate from UI roles."
+        ],
+        "unknowns": [
+          "Tenant definitions and form-control IDs were not read.",
+          "No statutory e-signature status is inferred from handwritten signatures.",
+          "ROX agent tool permission modes do not confer business approver authority."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "ApprovalDefinitionVersion",
+          "FormSchema",
+          "WorkflowNode",
+          "ApprovalRequest",
+          "ApprovalTask",
+          "Decision",
+          "Comment",
+          "BusinessAuditEvent"
+        ],
+        "relationships": [
+          "DefinitionVersion 1:N Request",
+          "Request 1:N Task/Decision/Comment/Event",
+          "Decision references task, actor, observed version and idempotency key"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-WORKFLOW-CANVAS",
+          "ROX-LARK-MESSAGING",
+          "ROX-PERSONAL-TASKS"
+        ],
+        "target_surface": "PROPOSED: Approvals > Inbox / My requests / Definitions",
+        "gaps": [
+          "durable multi-actor workflow",
+          "business roles/authority",
+          "immutable form versions",
+          "replay protection and audit"
+        ],
+        "approach": "Start with read/preview/request drafting; re-read authoritative task state before a permitted decision. Keep agent-run approval separate from organization business approval."
+      },
+      "dependencies": [
+        "LB-WORKPLACE"
+      ],
+      "api_possible": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-OFFICIAL-MCP-API"
+        ],
+        "candidate_methods": [
+          "approval.v4.approval.get/create/subscribe/unsubscribe",
+          "approval.v4.instance.create/get/query/preview/cancel",
+          "approval.v4.task.query/approve/reject/transfer",
+          "approval.v4.instanceComment.create/list",
+          "approval.v4.externalApproval.create",
+          "approval.v4.externalInstance.create/check"
+        ],
+        "required_scope_strings": [],
+        "scope_status": "NOT_VERIFIED",
+        "tenant_entitlement_status": "NOT_VERIFIED",
+        "boundary": "Native and external approval sync are different ownership models. Read definition/schema first; verify Lark endpoint, token type, scopes, business actor and callback signature before any write."
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-RECRUITMENT",
+      "name": "Recruitment",
+      "classification": "approvalTemplate",
+      "identity": {
+        "status": "PARTIALLY_RESOLVED",
+        "publisher": "Lark or configured external ATS",
+        "variant": "Requested label can mean a recruitment/offer approval, a Base recruitment template, a Meegle template or external ATS. Exact tenant entry remains unverified."
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-RECRUIT-SOLUTION",
+          "BS-DIRECTORY",
+          "BS-APPROVAL-CREATE",
+          "BS-APPROVAL-FORM"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "Approval > Submit Request > organization-defined form",
+            "subscreens": [],
+            "actions": [
+              "fill configured required controls; Submit"
+            ]
+          },
+          {
+            "path": "Approval Center > Submitted / request details",
+            "subscreens": [],
+            "actions": [
+              "track; comment; permitted reminder/modification/recall"
+            ]
+          },
+          {
+            "path": "Approval Admin > definition",
+            "subscreens": [
+              "Basic Info",
+              "Form Design",
+              "Process Design",
+              "More"
+            ],
+            "actions": [
+              "configure and publish"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Recruitment/offer approval",
+            "inputs": [
+              "published definition and form values configured by HR"
+            ],
+            "outputs": [
+              "approval code / instance; decisions"
+            ]
+          },
+          {
+            "name": "Integrated interview coordination",
+            "inputs": [
+              "candidate/CV in external recruitment system",
+              "interviewer availability",
+              "event IDs and participants"
+            ],
+            "outputs": [
+              "notifications; interview calendar event; offer approval"
+            ]
+          }
+        ],
+        "objects": [
+          "ExternalCandidate",
+          "InterviewCalendarEvent",
+          "RecruitmentSystem",
+          "ApprovalDefinition",
+          "OfferApproval"
+        ],
+        "acl": [
+          "Enterprise custom app must obtain relevant contacts/email/employee ID/message/calendar access; HR defines offer approvals.",
+          "Candidate information visibility is not implied by general organization membership."
+        ],
+        "workflow_events": [
+          "External recruitment system progress triggers notifications; event responses coordinate interviews; offer approval precedes onboarding reminders."
+        ],
+        "automations": [
+          "Solution documents calendar/event/message integration and offer approval; does not specify a native ATS database."
+        ],
+        "licensing_and_gates": [
+          "Custom app bot capability, app permissions and event subscriptions required; Approval administrator creates definition and records Approval Code.",
+          "Directory identifies Base Recruitment Management System and Hiring Progress Tracker templates. Exact preset schema is unverified."
+        ],
+        "unknowns": [
+          "No universal recruitment form fields or native international Lark ATS were established.",
+          "hire.v1 in shared SDK/Feishu references is not evidence this Lark tenant has Feishu Hire."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "RecruitmentRequest",
+          "Position",
+          "CandidateReference",
+          "Interview",
+          "OfferApprovalReference"
+        ],
+        "relationships": [
+          "Position 1:N CandidateReference/RecruitmentRequest",
+          "CandidateReference 1:N Interview",
+          "OfferApprovalReference points to authoritative approval instance"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-PERSONAL-TASKS",
+          "ROX-LARK-MESSAGING",
+          "ROX-SESSION-COLLECTIONS"
+        ],
+        "target_surface": "PROPOSED: People > Recruitment; Approvals > Recruitment",
+        "gaps": [
+          "candidate privacy and retention",
+          "ATS identity",
+          "offer authority and HR workflow"
+        ],
+        "approach": "Resolve actual tenant entry; federate external ATS IDs and approval links rather than treat generic session board as HR records."
+      },
+      "dependencies": [
+        "LB-APPROVAL",
+        "LB-WORKPLACE"
+      ],
+      "api_possible": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-OFFICIAL-MCP-API"
+        ],
+        "candidate_methods": [
+          "approval.v4.approval.get",
+          "approval.v4.instance.create/get"
+        ],
+        "required_scope_strings": [],
+        "scope_status": "NOT_VERIFIED",
+        "tenant_entitlement_status": "NOT_VERIFIED",
+        "boundary": "Recruitment solution confirms use of Lark calendar/messages/approval integration. Dedicated hire.v1 eligibility/scopes require separate confirmation."
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-LEAVE",
+      "name": "Leave",
+      "classification": "approvalTemplate",
+      "identity": {
+        "status": "RESOLVED",
+        "publisher": "Lark",
+        "variant": "Attendance request linked to Approval; not a standalone HR SaaS"
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-LEAVE",
+          "BS-APPROVAL-FORM",
+          "BS-ATT-GROUP"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "Mobile > Workplace > Attendance > Requests > Leave",
+            "subscreens": [],
+            "actions": [
+              "select type; Submit"
+            ]
+          },
+          {
+            "path": "Attendance > Requests > Request records > Submitted",
+            "subscreens": [],
+            "actions": [
+              "Modify; More > Recall/Revoke"
+            ]
+          },
+          {
+            "path": "Approval > Submit Request",
+            "subscreens": [],
+            "actions": [
+              "alternate submission through configured leave definition"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Leave request",
+            "inputs": [
+              "eligible leave type",
+              "Start time",
+              "End time",
+              "Reason for leave",
+              "approver if allowed"
+            ],
+            "outputs": [
+              "automatically calculated duration",
+              "approval request",
+              "effective change after approval"
+            ]
+          }
+        ],
+        "objects": [
+          "LeaveType",
+          "LeaveRule",
+          "LeaveBalance",
+          "LeaveRequest",
+          "ApprovalInstance"
+        ],
+        "acl": [
+          "Attendance admin enables types/applicable member scope; Approval admin controls who may select approver and modification/revoke policy."
+        ],
+        "workflow_events": [
+          "Submit enters approval; modifications renew approval and apply only after approval."
+        ],
+        "automations": [
+          "Duration calculation follows rules; attendance-linked widget group synchronizes related attendance data."
+        ],
+        "licensing_and_gates": [
+          "Eligible leave type and applicable scope required.",
+          "Submitted leave type cannot change; Under Review request cannot be modified; modification permitted at most once in documented flow."
+        ],
+        "unknowns": [
+          "Balance accrual, carryover and policy details are tenant-specific and were not exported.",
+          "Native leave approval and Base leave-template rows are different record systems."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "LeaveType",
+          "LeavePolicyVersion",
+          "BalanceLedgerEntry",
+          "LeaveRequest",
+          "ApprovalReference"
+        ],
+        "relationships": [
+          "Member 1:N BalanceLedgerEntry/LeaveRequest",
+          "LeaveRequest links policy version and authoritative ApprovalReference"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-PERSONAL-TASKS",
+          "ROX-LARK-MESSAGING"
+        ],
+        "target_surface": "PROPOSED: People > Leave; Approvals > Leave",
+        "gaps": [
+          "leave balance ledger",
+          "eligibility/duration rules",
+          "absence integration"
+        ],
+        "approach": "Read eligible types/balances and preview duration; preserve provider units/time zone and approved effective state."
+      },
+      "dependencies": [
+        "LB-ATTENDANCE",
+        "LB-APPROVAL"
+      ],
+      "api_possible": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-OFFICIAL-MCP-API"
+        ],
+        "candidate_methods": [
+          "attendance.v1.userApproval.query",
+          "attendance.v1.leaveAccrualRecord.patch",
+          "approval.v4.instance.create/get"
+        ],
+        "required_scope_strings": [],
+        "scope_status": "NOT_VERIFIED",
+        "tenant_entitlement_status": "NOT_VERIFIED",
+        "boundary": "Balance writes are more consequential than request creation. Do not recompute from cached tasks or bypass provider leave rules."
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-PURCHASE",
+      "name": "Purchase",
+      "classification": "approvalTemplate",
+      "identity": {
+        "status": "PARTIALLY_RESOLVED",
+        "publisher": "Organization-configured Approval / optional Base procurement template",
+        "variant": "Purchase approval and full procurement/inventory are distinct"
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-APPROVAL-TEMPLATES",
+          "BS-DIRECTORY",
+          "BS-APPROVAL-CREATE",
+          "BS-APPROVAL-FORM"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "Approval > Submit Request > organization-defined form",
+            "subscreens": [],
+            "actions": [
+              "fill configured required controls; Submit"
+            ]
+          },
+          {
+            "path": "Approval Center > Submitted / request details",
+            "subscreens": [],
+            "actions": [
+              "track; comment; permitted reminder/modification/recall"
+            ]
+          },
+          {
+            "path": "Approval Admin > definition",
+            "subscreens": [
+              "Basic Info",
+              "Form Design",
+              "Process Design",
+              "More"
+            ],
+            "actions": [
+              "configure and publish"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Purchase request",
+            "inputs": [
+              "tenant-defined widgets; exact field IDs, required values and currency controls unknown"
+            ],
+            "outputs": [
+              "approval instance and decision history"
+            ]
+          }
+        ],
+        "objects": [
+          "ApprovalDefinition",
+          "ApprovalInstance",
+          "FormValues"
+        ],
+        "acl": [
+          "Submitter/approver/finance/handler scope follows configured definition; approval does not grant supplier or inventory access."
+        ],
+        "workflow_events": [
+          "Generic Approval lifecycle; post-approval procurement action depends on configured handler/integration."
+        ],
+        "automations": [
+          "Conditional process routing and reminders possible through Approval definition; procurement-contract generation is separately listed as Base template."
+        ],
+        "licensing_and_gates": [
+          "Exact Purchase preset identity/title and schema need tenant confirmation; published custom approval is supported."
+        ],
+        "unknowns": [
+          "No confirmed native purchase-order, receiving, payment or vendor-master domain.",
+          "Suggested ROX form fields below are design requirements, not observed Lark fields."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "PurchaseRequest",
+          "PurchaseLine",
+          "SupplierReference",
+          "BudgetReference",
+          "ApprovalReference"
+        ],
+        "relationships": [
+          "PurchaseRequest 1:N PurchaseLine",
+          "PurchaseRequest references supplier/budget and approval",
+          "Order/receiving/payment remain separate downstream records"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-PERSONAL-TASKS",
+          "ROX-WORKFLOW-CANVAS"
+        ],
+        "target_surface": "PROPOSED: Approvals > Purchase; Procurement > Requests",
+        "gaps": [
+          "line items/units/currency/tax",
+          "supplier and budget authority",
+          "receiving/payment reconciliation"
+        ],
+        "approach": "PROPOSED form: requester, purpose, cost centre, supplier, line description, quantity, unit price, currency, attachments. Discover actual provider schema before mapping."
+      },
+      "dependencies": [
+        "LB-APPROVAL"
+      ],
+      "api_possible": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-OFFICIAL-MCP-API"
+        ],
+        "candidate_methods": [
+          "approval.v4.approval.get",
+          "approval.v4.instance.create/get"
+        ],
+        "required_scope_strings": [],
+        "scope_status": "NOT_VERIFIED",
+        "tenant_entitlement_status": "NOT_VERIFIED",
+        "boundary": "Generic approval API is plausible after schema discovery; no purchase-specific native API verified."
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-OOO",
+      "name": "Out-of-office",
+      "classification": "approvalTemplate",
+      "identity": {
+        "status": "RESOLVED",
+        "publisher": "Lark",
+        "variant": "Attendance-linked out-of-office request; distinct from calendar availability or email auto-reply"
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-ATT-GROUP",
+          "BS-APPROVAL-CREATE",
+          "BS-APPROVAL-FORM"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "Approval > Submit Request > organization-defined form",
+            "subscreens": [],
+            "actions": [
+              "fill configured required controls; Submit"
+            ]
+          },
+          {
+            "path": "Approval Center > Submitted / request details",
+            "subscreens": [],
+            "actions": [
+              "track; comment; permitted reminder/modification/recall"
+            ]
+          },
+          {
+            "path": "Approval Admin > definition",
+            "subscreens": [
+              "Basic Info",
+              "Form Design",
+              "Process Design",
+              "More"
+            ],
+            "actions": [
+              "configure and publish"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Out-of-office attendance widget group",
+            "inputs": [
+              "organization-configured request controls; exact start/end/reason control IDs unverified"
+            ],
+            "outputs": [
+              "approval result consumed by attendance rules"
+            ]
+          }
+        ],
+        "objects": [
+          "OutOfOfficeRequest",
+          "ApprovalResult",
+          "AttendanceRule"
+        ],
+        "acl": [
+          "Attendance/admin rules determine whether approved absence requires clock-in at shift boundaries or departure/return."
+        ],
+        "workflow_events": [
+          "Approved out-of-office period changes expected clocking/calculation based on group settings."
+        ],
+        "automations": [
+          "Attendance widget-group integration; rules distinguish no clocking, shift-boundary clocking and leaving/returning clocking."
+        ],
+        "licensing_and_gates": [
+          "Only one attendance-linked widget group per approval form; policy set by Attendance administration."
+        ],
+        "unknowns": [
+          "No automatic email reply, calendar event or Do Not Disturb change follows merely from documented out-of-office approval."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "OutOfOfficeRequest",
+          "TimeInterval",
+          "ApprovalReference",
+          "AttendanceEffect"
+        ],
+        "relationships": [
+          "Request 1:N TimeInterval",
+          "Approved Request produces policy-dependent AttendanceEffect"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-PERSONAL-TASKS",
+          "ROX-LARK-MESSAGING"
+        ],
+        "target_surface": "PROPOSED: People > Availability; Approvals > Out-of-office",
+        "gaps": [
+          "absence policy",
+          "time interval validation",
+          "attendance state versus presence state"
+        ],
+        "approach": "Keep attendance absence, calendar availability and mail auto-reply as separately authorized effects."
+      },
+      "dependencies": [
+        "LB-APPROVAL",
+        "LB-ATTENDANCE"
+      ],
+      "api_possible": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-OFFICIAL-MCP-API"
+        ],
+        "candidate_methods": [
+          "attendance.v1.userApproval.query",
+          "attendance.v1.approvalInfo.process",
+          "approval.v4.instance.get"
+        ],
+        "required_scope_strings": [],
+        "scope_status": "NOT_VERIFIED",
+        "tenant_entitlement_status": "NOT_VERIFIED",
+        "boundary": "Reading approved absence differs from writing attendance effects; verify own scopes and supported group policy."
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-REIMBURSEMENT",
+      "name": "Reimbursement",
+      "classification": "approvalTemplate",
+      "identity": {
+        "status": "RESOLVED_AS_WORKFLOW",
+        "publisher": "Lark",
+        "variant": "Documented reimbursement approval use case; exact preset fields remain tenant-defined"
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-APPROVAL-REQUESTER",
+          "BS-APPROVAL-TEMPLATES",
+          "BS-APPROVAL-CREATE",
+          "BS-APPROVAL-FORM"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "Approval > Submit Request > organization-defined form",
+            "subscreens": [],
+            "actions": [
+              "fill configured required controls; Submit"
+            ]
+          },
+          {
+            "path": "Approval Center > Submitted / request details",
+            "subscreens": [],
+            "actions": [
+              "track; comment; permitted reminder/modification/recall"
+            ]
+          },
+          {
+            "path": "Approval Admin > definition",
+            "subscreens": [
+              "Basic Info",
+              "Form Design",
+              "Process Design",
+              "More"
+            ],
+            "actions": [
+              "configure and publish"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Reimbursement approval",
+            "inputs": [
+              "administrator-designed expense fields; widgets may be conditionally visible by reimbursement type"
+            ],
+            "outputs": [
+              "approval instance; finance/handler decision"
+            ]
+          }
+        ],
+        "objects": [
+          "ApprovalDefinition",
+          "ReimbursementFormValues",
+          "ApprovalInstance"
+        ],
+        "acl": [
+          "Request and finance/approver access comes from approval process. Receipt attachment access does not imply organization-wide visibility."
+        ],
+        "workflow_events": [
+          "Submission → assigned review → decision/handler step; payment completion is not implied by Approved."
+        ],
+        "automations": [
+          "Form visibility conditions for travel/transport expense items are documented; further expense settlement depends on integration."
+        ],
+        "licensing_and_gates": [
+          "Approval configuration and app access; third-party expense apps have separate installation/payment gates."
+        ],
+        "unknowns": [
+          "Receipt OCR, fraud check, tax compliance, bank payment and accounting export are not established native behavior."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "ExpenseClaim",
+          "ExpenseLine",
+          "ReceiptReference",
+          "ApprovalReference",
+          "SettlementReference"
+        ],
+        "relationships": [
+          "ExpenseClaim 1:N ExpenseLine/ReceiptReference",
+          "ApprovalReference 0..1:1 SettlementReference; statuses remain distinct"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-PERSONAL-TASKS",
+          "ROX-LARK-MESSAGING"
+        ],
+        "target_surface": "PROPOSED: Finance > Reimbursements; Approvals > Expenses",
+        "gaps": [
+          "expense/receipt model",
+          "finance ACL",
+          "currency and settlement state"
+        ],
+        "approach": "PROPOSED form: expense date/category, amount/currency, purpose/cost centre, receipt, payee reference. Read actual approval fields; record settlement only from finance evidence."
+      },
+      "dependencies": [
+        "LB-APPROVAL"
+      ],
+      "api_possible": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-OFFICIAL-MCP-API"
+        ],
+        "candidate_methods": [
+          "approval.v4.approval.get",
+          "approval.v4.instance.create/get",
+          "approval.v4.task.approve/reject"
+        ],
+        "required_scope_strings": [],
+        "scope_status": "NOT_VERIFIED",
+        "tenant_entitlement_status": "NOT_VERIFIED",
+        "boundary": "No reimbursement-specific finance/payment API was verified. General approval writes need explicit business actor authority."
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-REPORT",
+      "name": "Reports / Report",
+      "classification": "nativeLarkFeature",
+      "identity": {
+        "status": "PARTIALLY_RESOLVED",
+        "publisher": "Lark Technologies Pte. Ltd.",
+        "variant": "Directory lists singular Report with short description. Distinct from Attendance bot reports, Base dashboards and report templates."
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-DIRECTORY",
+          "BS-ATT-REPORTS"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "App Directory > Report",
+            "subscreens": [],
+            "actions": [
+              "view listing; get/install gated by tenant policy"
+            ]
+          },
+          {
+            "path": "Attendance > Group Attendance Report",
+            "subscreens": [],
+            "actions": [
+              "enable schedule for documented attendance-specific reports"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Standalone Report form",
+            "inputs": [
+              "NOT_VERIFIED"
+            ],
+            "outputs": [
+              "NOT_VERIFIED"
+            ]
+          }
+        ],
+        "objects": [
+          "Report app listing",
+          "AttendanceReport (separate feature)"
+        ],
+        "acl": [
+          "Standalone Report permissions/admin roles unknown; attendance report access is limited to managed groups."
+        ],
+        "workflow_events": [
+          "Standalone Report delivery/task events unknown; Attendance bot schedule is documented separately."
+        ],
+        "automations": [
+          "No standalone Report automation was established."
+        ],
+        "licensing_and_gates": [
+          "Directory existence does not prove installation, functional scope or entitlement."
+        ],
+        "unknowns": [
+          "Exact Report detail URL/app ID, template editor, recipient controls, recurring reminders and API have not been verified.",
+          "Do not translate the generic title into a claimed native reporting engine."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "ReportTemplate",
+          "ReportSubmission",
+          "ReportingPeriod",
+          "ReportRecipient",
+          "ReportDelivery"
+        ],
+        "relationships": [
+          "PROPOSED only: Template 1:N Submission; period and recipient scope explicit"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-FEED",
+          "ROX-PERSONAL-TASKS"
+        ],
+        "target_surface": "PROPOSED: Reports > Templates / Submissions / Delivery",
+        "gaps": [
+          "identity and real current Report behavior",
+          "report schema/recipient ACL",
+          "provider-specific delivery and acknowledgment"
+        ],
+        "approach": "Hold parity claim until exact app/detail screens are inspected. Separate ROX recurring task summaries from Lark Report and Attendance statistics."
+      },
+      "dependencies": [
+        "LB-WORKPLACE"
+      ],
+      "api_possible": {
+        "evidence_label": "NOT_VERIFIED",
+        "candidate_methods": [],
+        "boundary": "No public standalone Report API confirmed. Use source links; no private endpoint inference."
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-LINGO",
+      "name": "Lingo",
+      "classification": "nativeLarkFeature",
+      "identity": {
+        "status": "RESOLVED",
+        "publisher": "Lark",
+        "variant": "Organization glossary/encyclopedia with contextual term discovery"
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-LINGO-ADMIN",
+          "BS-LINGO-MANAGE",
+          "BS-LINGO-IMPORT",
+          "BS-LINGO-CREATE",
+          "BS-PLANS"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "Lingo home > Entry Collaboration",
+            "subscreens": [
+              "To create",
+              "To update",
+              "campaign page"
+            ],
+            "actions": [
+              "request/create/update; contribute; delete own request"
+            ]
+          },
+          {
+            "path": "Lingo Admin > Manage Entries",
+            "subscreens": [
+              "All Entries",
+              "Batch Import",
+              "Import history",
+              "failed entries"
+            ],
+            "actions": [
+              "New Entry; filter; export; set scope/category; delete"
+            ]
+          },
+          {
+            "path": "Lingo Admin",
+            "subscreens": [
+              "categories",
+              "review mode",
+              "units",
+              "entry review",
+              "usage analytics"
+            ],
+            "actions": [
+              "manage reviewers/review/campaign/data"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Entry/import table",
+            "inputs": [
+              "entry name (required)",
+              "description (required)",
+              "categories",
+              "alias",
+              "description images",
+              "organization-owned Docs",
+              "related links/help desk/persons",
+              "visible scope",
+              "contributor"
+            ],
+            "outputs": [
+              "glossary entry/definition",
+              "highlight scope",
+              "review request/import result"
+            ]
+          }
+        ],
+        "objects": [
+          "Entry",
+          "Alias",
+          "Definition",
+          "Category",
+          "Unit",
+          "Contribution",
+          "Review",
+          "ImportBatch"
+        ],
+        "acl": [
+          "Members contribute; admins/reviewers publish under configured manual-review or review-exempt mode. Only own entry requests can be deleted by requester.",
+          "Display scope in chats/Docs/search is not a substitute for source Docs access. Units are managed separately."
+        ],
+        "workflow_events": [
+          "Request contribution → optional review → entry published; import duplicates/errors produce resolution/failed-table flow."
+        ],
+        "automations": [
+          "Contextual term discovery; Base collection table import; optional manual review; multilingual definitions/export."
+        ],
+        "licensing_and_gates": [
+          "Current plan matrix lists custom-entry quotas: Starter/Basic 50, Pro 50,000, Enterprise 1,000,000. Dated limits require current quote before rollout.",
+          "Admin tasks desktop/web; published terminology and definition visibility must respect units/review policy."
+        ],
+        "unknowns": [
+          "No proprietary matching algorithm or physical entity storage inferred.",
+          "Global search knowledge index is not proof of inline glossary highlighting."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "GlossaryRepo",
+          "GlossaryEntry",
+          "Alias",
+          "DefinitionVersion",
+          "Category",
+          "Contribution",
+          "ReviewDecision"
+        ],
+        "relationships": [
+          "Repo/Unit 1:N Entry; Entry 1:N Alias/DefinitionVersion",
+          "Contribution references author and reviewed definition version"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-KNOWLEDGE-CONTRACT",
+          "ROX-FEED"
+        ],
+        "target_surface": "PROPOSED: Knowledge > Glossary; term popover in Chat/Docs/Search",
+        "gaps": [
+          "aliases and multilingual definitions",
+          "review workflow and quotas",
+          "safe contextual highlighting"
+        ],
+        "approach": "Preserve provider repo/unit/entry IDs and visibility. Publish only approved contributions; hover/focus/click glossary references should show source and freshness."
+      },
+      "dependencies": [
+        "LB-WORKPLACE"
+      ],
+      "api_possible": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-OFFICIAL-MCP-API"
+        ],
+        "candidate_methods": [
+          "lingo.v1.repo.list",
+          "lingo.v1.classification.list",
+          "lingo.v1.entity.get/list/search/match/highlight",
+          "lingo.v1.draft.create/update",
+          "lingo.v1.entity.create/update/delete"
+        ],
+        "required_scope_strings": [],
+        "scope_status": "NOT_VERIFIED",
+        "tenant_entitlement_status": "NOT_VERIFIED",
+        "boundary": "Draft review and review-exempt entity creation are distinct API operations. Presence in shared catalogue does not authorize bypassing manual review."
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-MOMENTS",
+      "name": "Moments",
+      "classification": "nativeLarkFeature",
+      "identity": {
+        "status": "RESOLVED",
+        "publisher": "Lark",
+        "variant": "Organization social feed; only official-account operations are specified by selected detailed source"
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-MOMENTS-ACCOUNT",
+          "BS-PLANS",
+          "BS-ADMIN-ROLES"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "Moments home / category page",
+            "subscreens": [],
+            "actions": [
+              "switch own/official identity; enter content; Post; + Create Moment"
+            ]
+          },
+          {
+            "path": "Admin > Product Settings > Moments > Moments Management > Official Account Settings",
+            "subscreens": [],
+            "actions": [
+              "Create Official Account; Edit; Activate; Deactivate"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Official account",
+            "inputs": [
+              "account name",
+              "profile photo",
+              "account administrators",
+              "optional English/Chinese/Japanese names"
+            ],
+            "outputs": [
+              "official posting identity; Official-tagged post"
+            ]
+          },
+          {
+            "name": "Moment",
+            "inputs": [
+              "content under current posting identity"
+            ],
+            "outputs": [
+              "published moment"
+            ]
+          }
+        ],
+        "objects": [
+          "OfficialAccount",
+          "AccountAdministrator",
+          "Moment",
+          "Interaction"
+        ],
+        "acl": [
+          "Primary/admin with Moments permission creates account; account administrators switch to official identity.",
+          "Posting as person and posting as official organization account require distinct actor identity."
+        ],
+        "workflow_events": [
+          "Post content; deactivate identity prevents future switching while previous posts/interactions remain."
+        ],
+        "automations": [
+          "No public event stream or auto-post automation was confirmed."
+        ],
+        "licensing_and_gates": [
+          "Feature enabled in Admin Console and Lark client >=5.32 for official account support. Moments is listed in plan matrix; exact current tier from text-only matrix unknown."
+        ],
+        "unknowns": [
+          "Category moderation, pinning, voting, user reporting, export and public API were not fully established for international Lark.",
+          "Feishu Moments docs were not imported as Lark parity evidence."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "FeedPost",
+          "PostingIdentity",
+          "OfficialAccount",
+          "Reaction",
+          "Comment",
+          "ModerationEvent"
+        ],
+        "relationships": [
+          "Identity 1:N FeedPost; Post 1:N Reaction/Comment",
+          "Deactivate identity preserves authored posts"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-FEED"
+        ],
+        "target_surface": "PROPOSED: Feed > Team / Moments; Admin > Official identities",
+        "gaps": [
+          "team post backend",
+          "official account ACL",
+          "moderation and retention"
+        ],
+        "approach": "Introduce explicit publishing actor and organization scope; read existing feed code as a surface only, not proof of an implemented social backend."
+      },
+      "dependencies": [
+        "LB-WORKPLACE"
+      ],
+      "api_possible": {
+        "evidence_label": "NOT_VERIFIED",
+        "candidate_methods": [],
+        "boundary": "No international Lark Moments API confirmed; linking/read-only federation is the initial route."
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-MEEGLE",
+      "name": "Meegle",
+      "classification": "independentApp",
+      "identity": {
+        "status": "RESOLVED",
+        "publisher": "Lark Technologies",
+        "variant": "Separate project platform / Lark add-on; related to Lark Project/Feishu Project but host and entitlement are explicit"
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-MEEGLE-HOME",
+          "BS-MEEGLE-WORKFLOW",
+          "BS-MEEGLE-PLANS",
+          "BS-MEEGLE-CLI",
+          "BS-PLANS"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "Meegle workspace / space",
+            "subscreens": [],
+            "actions": [
+              "organize work-item types/workflows/fields"
+            ]
+          },
+          {
+            "path": "Work items / details",
+            "subscreens": [],
+            "actions": [
+              "create/read/update; comments; attachments; subtasks; node/state transition; reopen"
+            ]
+          },
+          {
+            "path": "Views",
+            "subscreens": [],
+            "actions": [
+              "table/tree/kanban/Gantt; charts/dashboard; schedule; panorama"
+            ]
+          },
+          {
+            "path": "My Work",
+            "subscreens": [],
+            "actions": [
+              "this-week/overdue/completed to-dos"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Work item",
+            "inputs": [
+              "space/project",
+              "work-item type",
+              "configured fields/roles",
+              "attachments and relations"
+            ],
+            "outputs": [
+              "work item with workflow state"
+            ]
+          },
+          {
+            "name": "Workflow transition",
+            "inputs": [
+              "node/state",
+              "permitted transition",
+              "required fields"
+            ],
+            "outputs": [
+              "new state; operation record"
+            ]
+          }
+        ],
+        "objects": [
+          "Space",
+          "WorkItemType",
+          "WorkItem",
+          "Field",
+          "Node",
+          "State",
+          "Role",
+          "Team",
+          "View",
+          "Chart",
+          "Schedule",
+          "Relation",
+          "Deliverable"
+        ],
+        "acl": [
+          "Plan matrix documents custom user groups/roles/teams. Exact per-space field/work-item permissions require metadata/admin confirmation.",
+          "Official CLI exposes metadata and current-user inspection; auth and appropriate host required."
+        ],
+        "workflow_events": [
+          "Node-driven handoffs progress workflows; transition/rollback and subtasks supported by official CLI."
+        ],
+        "automations": [
+          "Workflow progression, automation rules, dependency scheduling and cross-space association documented as configurable/plan-dependent."
+        ],
+        "licensing_and_gates": [
+          "Independent Free/Standard/Premium/Enterprise plans; Lark markets Meegle Premium as an add-on.",
+          "CLI auth/device-code/keychain or direct env-token setup is a separate integration gate; no installation/login performed.",
+          "Work-item and field/automation limits differ by plan; no parity assumed from common brand."
+        ],
+        "unknowns": [
+          "Exact authenticated screens and field schemas were not observed.",
+          "No physical backend schema, event internals or guaranteed Lark/Feishu cross-host token portability."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "ExternalProjectSpace",
+          "ExternalWorkItem",
+          "WorkflowSnapshot",
+          "RoleBinding",
+          "WorkItemRelation",
+          "ExternalChangeCursor"
+        ],
+        "relationships": [
+          "Space 1:N WorkItem/Type/RoleBinding",
+          "WorkItem 1:N WorkflowSnapshot; Relation joins provider IDs"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-PERSONAL-TASKS",
+          "ROX-SESSION-COLLECTIONS",
+          "ROX-WORKFLOW-CANVAS"
+        ],
+        "target_surface": "PROPOSED: Projects > Meegle; Tasks > external work items; Map > workflow reference",
+        "gaps": [
+          "provider IDs and role ACL",
+          "field metadata and transition constraints",
+          "separate task/work-item model",
+          "pagination/reconciliation"
+        ],
+        "approach": "Use official API/CLI as an authorized connector. Cache projections with provenance; use provider transition metadata. ROX simulate-only canvas cannot substitute for Meegle execution."
+      },
+      "dependencies": [
+        "LB-WORKPLACE"
+      ],
+      "api_possible": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-MEEGLE-CLI"
+        ],
+        "candidate_methods": [
+          "workitem get/query/meta-fields/meta-roles",
+          "workflow get-node/list-state-transitions/list-state-required",
+          "comment list",
+          "view get/search",
+          "mywork todo"
+        ],
+        "required_scope_strings": [],
+        "scope_status": "NOT_VERIFIED",
+        "boundary": "Official CLI provides structured output and dry-run. Host-specific auth/space roles still apply; no commands installed/executed."
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-COZE",
+      "name": "Coze",
+      "classification": "independentApp",
+      "identity": {
+        "status": "RESOLVED",
+        "publisher": "Lark Technologies Pte. Ltd. in app listing",
+        "app_id": "cli_a55f0abaac38500a",
+        "variant": "External agent/bot builder with a Lark publication channel"
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-COZE-LISTING",
+          "BS-COZE-PUBLISH",
+          "BS-COZE-WORKFLOW",
+          "BS-COZE-API"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "Coze > Develop > agent",
+            "subscreens": [],
+            "actions": [
+              "configure agent; Publish"
+            ]
+          },
+          {
+            "path": "Publish > Lark channel",
+            "subscreens": [],
+            "actions": [
+              "Authorize; select channel; Publish"
+            ]
+          },
+          {
+            "path": "Lark install authorization",
+            "subscreens": [],
+            "actions": [
+              "select allowed team members; Authorize and Install"
+            ]
+          },
+          {
+            "path": "Lark Admin",
+            "subscreens": [],
+            "actions": [
+              "publish generated agent application"
+            ]
+          },
+          {
+            "path": "Coze > workspace > Library > + Resource > Workflow",
+            "subscreens": [],
+            "actions": [
+              "create and configure workflow"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Lark channel authorization",
+            "inputs": [
+              "Lark login/tenant",
+              "Coze application install",
+              "authorized member range",
+              "channel selection"
+            ],
+            "outputs": [
+              "Authorized channel; published Coze agent; Lark app release request"
+            ]
+          },
+          {
+            "name": "Agent/workflow",
+            "inputs": [
+              "models/tools/plugins/knowledge/database/workflow configuration"
+            ],
+            "outputs": [
+              "runnable agent/workflow; deployed version"
+            ]
+          }
+        ],
+        "objects": [
+          "CozeWorkspace",
+          "Agent",
+          "Workflow",
+          "Plugin",
+          "KnowledgeBase",
+          "Database",
+          "ChannelAuthorization",
+          "PublishedAgentVersion",
+          "LarkApplication"
+        ],
+        "acl": [
+          "Coze workspace/token permission and Lark app availability/release are independent.",
+          "Publish API requires token publish permission; it targets API/Web SDK/custom channels, not proof of automatic Lark release."
+        ],
+        "workflow_events": [
+          "First tenant publication requires Coze install/authorize; publish sends notification for Lark Admin release; then users search/chat by agent name."
+        ],
+        "automations": [
+          "Agent workflows/plugins/knowledge expand behavior; no automatic permission to use ROX private tools or knowledge."
+        ],
+        "licensing_and_gates": [
+          "Listing says Free; model/runtime limits and premium billing remain Coze-specific.",
+          "Lark installation/authorization and Lark admin publication required; no install/authorization/release performed."
+        ],
+        "unknowns": [
+          "No current quota/billing or exact requested Lark scopes list was verified.",
+          "Agent store publication is optional and separate; not authorized by research."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "ExternalAgent",
+          "AgentVersion",
+          "ProviderWorkspace",
+          "ChannelBinding",
+          "WorkflowReference",
+          "KnowledgeBinding",
+          "RunReference"
+        ],
+        "relationships": [
+          "Agent 1:N Version; Version 1:N ChannelBinding",
+          "RunReference records provider/external ID and data boundary"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-LARK-MESSAGING",
+          "ROX-WORKFLOW-CANVAS",
+          "ROX-MARKETPLACE"
+        ],
+        "target_surface": "PROPOSED: Sources > Coze; Agents > external provider; Integrations > Lark deployment",
+        "gaps": [
+          "provider run contract",
+          "data egress/knowledge/tool consent",
+          "version/channel release state"
+        ],
+        "approach": "Treat Coze as an external agent provider. Show separate built/published/authorized/released states and do not equate Lark bot transport with Coze runtime."
+      },
+      "dependencies": [
+        "LB-WORKPLACE"
+      ],
+      "api_possible": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-COZE-API"
+        ],
+        "candidate_methods": [
+          "POST https://api.coze.com/v1/bot/publish"
+        ],
+        "required_scope_strings": [],
+        "scope_status": "PARTIAL_CAPABILITY_ONLY",
+        "boundary": "bot_id required; returns deployed version. Documented endpoint does not remove Lark admin release gate.",
+        "permission_capabilities": [
+          "publish"
+        ]
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-TANCA-HR",
+      "name": "Tanca HR",
+      "classification": "thirdPartyAddon",
+      "identity": {
+        "status": "RESOLVED_PRODUCT_PARTIAL_LISTING",
+        "publisher": "Tanca",
+        "vendor_url": "https://tanca.io/",
+        "app_id": null,
+        "variant": "App Directory card and official vendor product match; exact Lark app ID/developer metadata unverified"
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-DIRECTORY",
+          "BS-TANCA",
+          "BS-TANCA-TOUR"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "Lark App Directory > Tanca HR",
+            "subscreens": [],
+            "actions": [
+              "get/install after policy review"
+            ]
+          },
+          {
+            "path": "Vendor HR platform product areas",
+            "subscreens": [
+              "People Directory",
+              "Attendance Tracking",
+              "Smart Scheduling",
+              "Payroll Engine",
+              "E-Office & Approvals",
+              "OKR/KPI",
+              "News Feed",
+              "Information Hub",
+              "Survey",
+              "Recruitment/onboarding"
+            ],
+            "actions": [
+              "vendor-documented capability only"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Vendor operations",
+            "inputs": [
+              "employees/org profiles",
+              "schedules/clock data",
+              "leave and request data",
+              "payroll/performance data"
+            ],
+            "outputs": [
+              "vendor HR records/results; integration behavior not verified"
+            ]
+          }
+        ],
+        "objects": [
+          "EmployeeProfile",
+          "Schedule",
+          "Attendance",
+          "LeaveRequest",
+          "Payroll",
+          "Performance",
+          "Candidate",
+          "Onboarding"
+        ],
+        "acl": [
+          "Vendor tour describes role-based onboarding permissions by department; current Lark connector scopes and mapping unknown."
+        ],
+        "workflow_events": [
+          "Vendor documents candidate-to-employee onboarding and operational history; exact Lark sync events unknown."
+        ],
+        "automations": [
+          "Vendor claims payroll/scheduling/HR AI; all are documented product claims, not verified tenant execution."
+        ],
+        "licensing_and_gates": [
+          "Lark app acquisition plus vendor account/subscription and connector access are separate. No package/tier price or install scopes confirmed."
+        ],
+        "unknowns": [
+          "Exact Lark app ID, developer legal identity, SSO/provisioning direction, API/webhook, deletion/retention and payroll localization must be resolved before integration.",
+          "Bitrix24 integration scopes are not Lark evidence and were not reused."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "ExternalHRTenant",
+          "ExternalEmployee",
+          "EmployeeMapping",
+          "HRSyncCursor",
+          "PayrollSummaryReference"
+        ],
+        "relationships": [
+          "HRTenant 1:N ExternalEmployee",
+          "EmployeeMapping joins ROX/Lark/vendor IDs; payroll remains vendor-owned"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-LARK-MESSAGING",
+          "ROX-FEED"
+        ],
+        "target_surface": "PROPOSED: People > Tanca (federated); Integrations > HR",
+        "gaps": [
+          "third-party identity/contract",
+          "sensitive HR ACL",
+          "local payroll semantics",
+          "supported API/auth"
+        ],
+        "approach": "Start with approved vendor link and read-only summaries; keep payroll/biometrics in authoritative HR system until verified integration contract."
+      },
+      "dependencies": [
+        "LB-WORKPLACE"
+      ],
+      "api_possible": {
+        "evidence_label": "NOT_VERIFIED",
+        "candidate_methods": [],
+        "boundary": "Vendor says system integration exists; no public Lark-specific API/scopes established. Do not invent endpoints or reuse Bitrix permissions."
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-SELEAM",
+      "name": "Seleam",
+      "classification": "thirdPartyAddon",
+      "identity": {
+        "status": "RESOLVED_LISTING_ALIAS_RETAINED",
+        "publisher": "BEIJING YIDEAMOBILE SCIENCE TECHNOLOGY CO LTD",
+        "app_id": "cli_a2fe038a7378d00a",
+        "variant": "Exact directory title Seleam; description says Yidea EAM. Keep source spelling and alias without guessing a corrected name."
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-SELEAM"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "App Directory > Seleam",
+            "subscreens": [],
+            "actions": [
+              "Get; Contact Sales"
+            ]
+          },
+          {
+            "path": "Vendor system / employee self-service",
+            "subscreens": [
+              "Assets",
+              "Equipment",
+              "Inventory",
+              "Purchase",
+              "Finance",
+              "Employee self-service"
+            ],
+            "actions": [
+              "documented functional actions, exact navigation unknown"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Vendor asset operations",
+            "inputs": [
+              "assets/equipment/goods",
+              "purchase/supplier information",
+              "assignment/repair/handover actions"
+            ],
+            "outputs": [
+              "lifecycle/inventory/depreciation records (vendor domain)"
+            ]
+          }
+        ],
+        "objects": [
+          "Asset",
+          "Equipment",
+          "InventoryGoods",
+          "PurchaseRequirement",
+          "Requisition",
+          "Order",
+          "Supplier",
+          "Department",
+          "EmployeeAsset"
+        ],
+        "acl": [
+          "Listing says employees can view/audit assets under their names through Lark. Administrative ACL and connector scopes unverified."
+        ],
+        "workflow_events": [
+          "Listed lifecycle includes check-in/out, borrow/return, maintenance/repair, transfer and disposal; no public event-type contract."
+        ],
+        "automations": [
+          "Depreciation based on asset category and apportionment departments is vendor-documented; formulas unknown."
+        ],
+        "licensing_and_gates": [
+          "Listing labels acquisition Free and says contact vendor for paid version. Paid entitlement and Lark installation are separate gates."
+        ],
+        "unknowns": [
+          "Exact product screens/forms/API, legal agreement, data region, tenant scope and EAM backend schema are unknown."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "Asset",
+          "AssetAssignment",
+          "AssetMovement",
+          "MaintenanceRequest",
+          "InventoryMovement",
+          "ProcurementReference"
+        ],
+        "relationships": [
+          "Asset 1:N Assignment/Movement/MaintenanceRequest",
+          "InventoryMovement records item, quantity, location and actor"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-PERSONAL-TASKS",
+          "ROX-SESSION-COLLECTIONS"
+        ],
+        "target_surface": "PROPOSED: Operations > Assets; Apps > Seleam",
+        "gaps": [
+          "asset/inventory ledger",
+          "custody and transaction authority",
+          "vendor contract and connector"
+        ],
+        "approach": "Preserve app ID and source display name; deep-link to employee asset self-service before considering a separate ROX ledger."
+      },
+      "dependencies": [
+        "LB-WORKPLACE"
+      ],
+      "api_possible": {
+        "evidence_label": "NOT_VERIFIED",
+        "candidate_methods": [],
+        "boundary": "No public Seleam/Yidea Lark integration API confirmed; directory feature list is not an API contract."
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-DOCUGENIUS",
+      "name": "DocuGenius",
+      "classification": "thirdPartyAddon",
+      "identity": {
+        "status": "RESOLVED",
+        "publisher": "点火（杭州）软件有限公司",
+        "app_id": "cli_a4d1b87a54f8d00a",
+        "variant": "Base-integrated document template/print/PDF extension; distinct from other similarly named AI document tools"
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-DOCUGENIUS",
+          "BS-DOCUGENIUS-GUIDE"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "Base > record > Expand details > DocuGenius",
+            "subscreens": [],
+            "actions": [
+              "agree to policies; Add Extension"
+            ]
+          },
+          {
+            "path": "DocuGenius > Create new layout / template > Edit",
+            "subscreens": [],
+            "actions": [
+              "drag components; Exit; Print"
+            ]
+          },
+          {
+            "path": "Base > Automations > Add Workflow",
+            "subscreens": [],
+            "actions": [
+              "set trigger; Generate PDF (beta) > DocuGenius Template; Update record; Save and Enable"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Document layout",
+            "inputs": [
+              "Base record fields",
+              "text/table/image/QR/barcode/line components",
+              "template or new layout"
+            ],
+            "outputs": [
+              "print-ready document"
+            ]
+          },
+          {
+            "name": "PDF automation",
+            "inputs": [
+              "trigger record",
+              "DocuGenius template",
+              "attachment output field"
+            ],
+            "outputs": [
+              "PDF attachment saved to record"
+            ]
+          }
+        ],
+        "objects": [
+          "BaseRecord",
+          "PrintTemplate",
+          "FieldBinding",
+          "GeneratedPDF",
+          "AttachmentField",
+          "AutomationRun"
+        ],
+        "acl": [
+          "Organization admin obtains app and adds member to availability; user separately accepts extension policies. Source Base/record/attachment access remains required."
+        ],
+        "workflow_events": [
+          "Record trigger generates PDF; Update record saves attachment; no private generation service details."
+        ],
+        "automations": [
+          "Generate PDF action plus record update documented; Word/Excel templates mentioned in directory."
+        ],
+        "licensing_and_gates": [
+          "Directory Free label applies to acquisition; HC says separate payment required for feature.",
+          "Admin installation, availability, extension policy acceptance and paid feature entitlement are all separate; Generate PDF described beta."
+        ],
+        "unknowns": [
+          "No public DocuGenius generation API, legal security characteristics or server storage schema verified.",
+          "Generated document may contain source record data; entitlement is not consent to export every Base field."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "DocumentTemplateVersion",
+          "FieldBinding",
+          "DocumentGenerationJob",
+          "GeneratedArtifact",
+          "ProviderEntitlement"
+        ],
+        "relationships": [
+          "TemplateVersion 1:N GenerationJob",
+          "Job references authorized record snapshot and generated artifact"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-WORKFLOW-CANVAS",
+          "ROX-MARKETPLACE",
+          "ROX-KNOWLEDGE-CONTRACT"
+        ],
+        "target_surface": "PROPOSED: Documents > Templates / Generated artifacts; Workflow > Generate document",
+        "gaps": [
+          "deterministic template binding",
+          "generation queue/results",
+          "source ACL and artifact lineage",
+          "vendor entitlement"
+        ],
+        "approach": "Reuse ROX tool/workflow surface with explicit source snapshot/template version/output permissions. Validate vendor connector or choose separate owned generation tool; do not claim native parity."
+      },
+      "dependencies": [
+        "LB-WORKPLACE"
+      ],
+      "api_possible": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-DOCUGENIUS-GUIDE"
+        ],
+        "candidate_methods": [
+          "Base automation: Generate PDF (beta) > DocuGenius Template; Update record"
+        ],
+        "boundary": "Documented no-code action, not a verified public REST API. Requires installed/authorized/entitled extension."
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    },
+    {
+      "id": "LB-SUBSCRIPTIONS",
+      "name": "Subscriptions / Broadcasters / content distribution",
+      "classification": "nativeLarkFeature",
+      "identity": {
+        "status": "RESOLVED",
+        "publisher": "Lark",
+        "variant": "Official distribution app; unrelated to paid SaaS subscription billing or ROX X home timeline"
+      },
+      "documented": {
+        "evidence_label": "DOCUMENTED",
+        "source_ids": [
+          "BS-SUBS-INTRO",
+          "BS-SUBS-CONTENT",
+          "BS-SUBS-GROUPS",
+          "BS-SUBS-DOCS",
+          "BS-SUBS-DATA"
+        ],
+        "accessed_on": "2026-09-30",
+        "screens": [
+          {
+            "path": "Subscriptions > Admin",
+            "subscreens": [],
+            "actions": [
+              "choose Account Administrator/App Administrator; Create Account"
+            ]
+          },
+          {
+            "path": "Account admin",
+            "subscreens": [
+              "Create new",
+              "Manage articles > Unsent / Sent",
+              "Manage comments",
+              "Manage user",
+              "Custom menu",
+              "Account settings",
+              "Statistics"
+            ],
+            "actions": [
+              "create/edit/review/send/recall/manage"
+            ]
+          },
+          {
+            "path": "App admin",
+            "subscreens": [
+              "App settings",
+              "Manage accounts",
+              "Complaint management",
+              "Statistics"
+            ],
+            "actions": [
+              "review/activate/deactivate accounts; complaints; aggregate statistics"
+            ]
+          },
+          {
+            "path": "Docs > Share > Share via > Subscriptions",
+            "subscreens": [],
+            "actions": [
+              "select account; title/subtitle/cover; publish"
+            ]
+          }
+        ],
+        "forms": [
+          {
+            "name": "Content",
+            "inputs": [
+              "text and graphics OR message OR Docs/external link OR video",
+              "title/author/body/cover",
+              "language",
+              "comments/sharing/external-link settings",
+              "recipients/shielded users",
+              "scheduled send time"
+            ],
+            "outputs": [
+              "draft/review request",
+              "sent content/message",
+              "delivery details"
+            ]
+          },
+          {
+            "name": "Recipients/group",
+            "inputs": [
+              "subscriber group/Lark user group/dynamic group",
+              "group visibility and use permission"
+            ],
+            "outputs": [
+              "targeted recipient range"
+            ]
+          }
+        ],
+        "objects": [
+          "SubscriptionAccount",
+          "BroadcasterAccount",
+          "AccountAdministrator",
+          "Article",
+          "ContentVersion",
+          "Subscriber",
+          "UserGroup",
+          "Delivery",
+          "Complaint",
+          "Statistics"
+        ],
+        "acl": [
+          "Account admin manages specified account; app admin manages all team accounts and review. Subscribers follow/read/interact.",
+          "Lark group visibility must include account admin and group permission must permit use in Subscriptions.",
+          "Docs publication requires document edit permission; sharing/targeting governed by configured account/article."
+        ],
+        "workflow_events": [
+          "Create/change account requires review; draft content can require approval; approved content may be scheduled; user comments/complaints handled by admin."
+        ],
+        "automations": [
+          "Scheduled sending; user group/dynamic group targeting; language-specific content; Docs link publication. App statistics update nightly."
+        ],
+        "licensing_and_gates": [
+          "Broadcasters push to Messenger list; Subscriptions content is collected in app. Default creation/follow/review rules vary by account type/settings; recheck tenant.",
+          "Approved recipient/shielded list cannot be changed without edit and reapproval.",
+          "Preview link valid 24 hours and only subscribers can view; do not distribute as permanent public access."
+        ],
+        "unknowns": [
+          "No public Subscriptions article/send API/scopes confirmed.",
+          "Publisher distribution is distinct from billing subscriptions and marketplace licensing."
+        ]
+      },
+      "conceptual_model": {
+        "evidence_label": "PROPOSED",
+        "purpose": "Conceptual ROX domain model only; not a reconstruction of Lark or vendor tables, columns, storage, indexes or private services.",
+        "entities": [
+          "PublisherAccount",
+          "PublicationVersion",
+          "AudienceRule",
+          "Subscription",
+          "DistributionJob",
+          "DeliveryReceipt",
+          "ModeratedComment",
+          "Complaint"
+        ],
+        "relationships": [
+          "Account 1:N Publication/Subscription",
+          "DistributionJob binds immutable publication version and audience snapshot",
+          "Delivery receipt records observed outcome rather than inferred read state"
+        ]
+      },
+      "rox": {
+        "evidence_label": "PROPOSED",
+        "existing_capability_ids": [
+          "ROX-FEED",
+          "ROX-KNOWLEDGE-CONTRACT",
+          "ROX-PERSONAL-TASKS"
+        ],
+        "target_surface": "PROPOSED: Feed > Publications; Content > Channels / Audiences / Delivery",
+        "gaps": [
+          "organization publishing identities",
+          "audience ACL/snapshot",
+          "approval and schedule",
+          "delivery/complaint metrics"
+        ],
+        "approach": "Keep read-only subscription ingestion separate from outbound publication. Prefer approved drafts/deep links until supported publish API and explicit sending authorization exist."
+      },
+      "dependencies": [
+        "LB-WORKPLACE",
+        "LB-APPROVAL"
+      ],
+      "api_possible": {
+        "evidence_label": "NOT_VERIFIED",
+        "candidate_methods": [],
+        "boundary": "No native publishing API confirmed. IM bot sends are not equivalent to official Subscriptions distribution or their subscriber/approval controls."
+      },
+      "verification_state": {
+        "documented": true,
+        "live_observed_by_this_agent": false,
+        "installed_by_this_task": false,
+        "runtime_api_tested": false
+      }
+    }
+  ],
+  "implementation_decisions": [
+    {
+      "id": "LB-D01",
+      "label": "PROPOSED",
+      "decision": "One durable approval engine, typed business request schemas",
+      "reason": "Leave/purchase/expenses/recruitment share definition/process mechanics; domain effects and ACL remain separate."
+    },
+    {
+      "id": "LB-D02",
+      "label": "PROPOSED",
+      "decision": "Provider identity and app/version/entitlement are separate from launch visibility",
+      "reason": "Directory acquisition, scopes, usable range, admin release and paid feature are independent gates."
+    },
+    {
+      "id": "LB-D03",
+      "label": "PROPOSED",
+      "decision": "External products federated before data duplication",
+      "reason": "Meegle/Coze/Tanca/Seleam/DocuGenius have separate authority, schemas, runtime, payment and data boundaries."
+    },
+    {
+      "id": "LB-D04",
+      "label": "PROPOSED",
+      "decision": "No approval, publish, payout or record-write parity from ROX tool permission mode",
+      "reason": "User business authority, object ACL, provider grants and immutable request versions are required."
+    },
+    {
+      "id": "LB-D05",
+      "label": "PROPOSED",
+      "decision": "Unknown app detail and tenant forms stay explicit",
+      "reason": "Report, Tanca app ID and requested preset schemas must be resolved before their implementation contracts."
+    },
+    {
+      "id": "LB-D06",
+      "label": "PROPOSED",
+      "decision": "Conceptual event ledger with idempotency and reconciliation",
+      "reason": "External IDs, duplicated/reordered notifications, revocation, actor identity and freshness must survive reload."
+    }
+  ],
+  "acceptance_for_future_implementation": [
+    "Read actual tenant app ID/version and published form schema; reject unknown control IDs/types.",
+    "Verify international Lark host, token kind, least scopes and per-object business actor ACL; denied/revoked scopes fail without writes.",
+    "Keep source object IDs, definition/template versions, actor, permission snapshot, units/currency/time zone and freshness.",
+    "Duplicate/reordered event and retries do not duplicate approval, document, publication or ledger effects.",
+    "Reload restores pending work; deleted/revoked objects are reconciled; provider unavailable state is explicit.",
+    "Read-only user cannot mutate/approve/publish; seeded invalid actor/version/recipient must be rejected.",
+    "HR/candidate/receipt/asset information cannot leak through generic Feed/search/cache exports.",
+    "Future UI verification uses the actual tenant/client, with availability gates and screenshots labeled OBSERVED separately."
+  ],
+  "research_limitations": [
+    "Official HC public rich-text extraction includes some revision remnants; conflicting old availability text is not treated as current entitlement.",
+    "Shared official SDK/MCP lists Feishu-linked namespaces; Lark host/scopes/tenant entitlement require separate current verification.",
+    "GitHub source files read from main with access date; API commit-pinning attempt returned HTTP 403.",
+    "18 requested feature records; no private backend schema or customer screens reconstructed."
+  ]
+}

@@ -1,0 +1,583 @@
+{
+  "candidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "pass": true,
+  "error": null,
+  "canonicalBuild": {
+    "label": "canonical-build",
+    "argv": [
+      "/workspace/.onboarding-tools/node_modules/.bin/bun",
+      "--no-env-file",
+      "run",
+      "server:build",
+      "--output=../../../workspace/rox-r15-direct-server-dist-20261001"
+    ],
+    "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+    "startedUtc": "2026-10-01T17:16:25.385418+00:00",
+    "seconds": 8.316,
+    "exit": 0,
+    "log": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/canonical-build.log",
+    "logSha256": "44029ca877ed9db4ada7b930affb0f09cc393d0e6df52baa9c2a879901afec4b",
+    "safeEnvironmentKeys": [
+      "BUN_INSTALL_CACHE_DIR",
+      "CRAFT_CONFIG_DIR",
+      "ELECTRON_SKIP_BINARY_DOWNLOAD",
+      "FORCE_COLOR",
+      "HTTPS_PROXY",
+      "HTTP_PROXY",
+      "LANG",
+      "LC_ALL",
+      "NODE_COMPILE_CACHE",
+      "NODE_EXTRA_CA_CERTS",
+      "NO_COLOR",
+      "NO_PROXY",
+      "PATH",
+      "REQUESTS_CA_BUNDLE",
+      "ROX_CONFIG_DIR",
+      "SSL_CERT_FILE",
+      "TMPDIR",
+      "TZ",
+      "XDG_CACHE_HOME",
+      "http_proxy",
+      "https_proxy",
+      "no_proxy",
+      "npm_config_cache"
+    ]
+  },
+  "webuiStaging": {
+    "receipt": "canonical-ui-copy.json",
+    "explicitOutputOnlyCopyAfterCanonicalBuild": true,
+    "canonicalBuilderCopiesUI": false,
+    "buildRevision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "fileCount": 855,
+    "exactPathAndByteInventory": true,
+    "UIRebuilt": false
+  },
+  "mandatoryInternalBuilds": {
+    "rebuilt": [
+      "Pi",
+      "cloud-runner",
+      "WhatsApp worker",
+      "Discord worker"
+    ],
+    "PiAndCloudRunnerBeforeAfterExact": true,
+    "exactUnchangedOutputs": [
+      "packages/cloud-runner/dist/stub-runner.js",
+      "packages/pi-agent-server/dist/index.js"
+    ],
+    "changedGeneratedOutputs": [
+      {
+        "path": "packages/messaging-discord-worker/dist/worker.cjs",
+        "before": {
+          "bytes": 3918513,
+          "sha256": "458bfe3e2d8ebace7bf85adb47dd4026b4c4aa7b2e3ea534990bf770a535cc62"
+        },
+        "after": {
+          "bytes": 3918513,
+          "sha256": "1fbeb435b201c412d1a93d655d1c332a84f6c1caaa857bbd0c0566c313deccdf"
+        }
+      },
+      {
+        "path": "packages/messaging-whatsapp-worker/dist/worker.cjs",
+        "before": {
+          "bytes": 6071683,
+          "sha256": "fd4646339d0bc9330610f42b92986958c266eb766377f6c7d7ea280083aaf6b1"
+        },
+        "after": {
+          "bytes": 6071600,
+          "sha256": "3e80684f3525329c0d4e6341dbbfb8396974abaf36576dde352f96e291985f25"
+        }
+      }
+    ],
+    "sourceAndLockChanges": []
+  },
+  "actualLauncherSmoke": {
+    "label": "canonical-delivery-smoke",
+    "argv": [
+      "/workspace/.onboarding-tools/node_modules/.bin/bun",
+      "--no-env-file",
+      "test",
+      "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/canonical-delivery-smoke.test.ts"
+    ],
+    "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+    "startedUtc": "2026-10-01T17:19:54.808072+00:00",
+    "seconds": 9.704,
+    "exit": 0,
+    "log": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/canonical-delivery-smoke.log",
+    "logSha256": "62da46d877f7a1f6731311c5fc08b5b3c82ab5ae570fd8b4a103616c79693aaa",
+    "safeEnvironmentKeys": [
+      "BUN_INSTALL_CACHE_DIR",
+      "CRAFT_CONFIG_DIR",
+      "ELECTRON_SKIP_BINARY_DOWNLOAD",
+      "FORCE_COLOR",
+      "HTTPS_PROXY",
+      "HTTP_PROXY",
+      "LANG",
+      "LC_ALL",
+      "NODE_COMPILE_CACHE",
+      "NODE_EXTRA_CA_CERTS",
+      "NO_COLOR",
+      "NO_PROXY",
+      "PATH",
+      "REQUESTS_CA_BUNDLE",
+      "ROX_CONFIG_DIR",
+      "SSL_CERT_FILE",
+      "TMPDIR",
+      "TZ",
+      "XDG_CACHE_HOME",
+      "http_proxy",
+      "https_proxy",
+      "no_proxy",
+      "npm_config_cache"
+    ],
+    "actualBunCounts": {
+      "pass": 2,
+      "fail": 0,
+      "expect": 56,
+      "tests": 2,
+      "files": 1
+    }
+  },
+  "actualLauncher": "sh bin/craft-server",
+  "runtime": {
+    "outerBun": "1.3.14",
+    "observedShippedBun": "1.3.9",
+    "node": "24.19.0",
+    "assertions": 56,
+    "passedPhases": 56,
+    "servers": [
+      {
+        "exit": 0,
+        "sigtermSent": true,
+        "sigkillFallback": false,
+        "tokenWasLogged": false
+      },
+      {
+        "exit": 0,
+        "sigtermSent": true,
+        "sigkillFallback": false,
+        "tokenWasLogged": false
+      },
+      {
+        "exit": 1,
+        "sigtermSent": false,
+        "sigkillFallback": false,
+        "tokenWasLogged": false
+      }
+    ],
+    "profilesRemoved": true
+  },
+  "executedCases": [
+    {
+      "name": "runs shipped source/runtime, enforces auth, and restarts the same isolated profile",
+      "testFile": "canonical-delivery-smoke.test.ts",
+      "declarationLine": 228,
+      "actualRawLogLine": 4,
+      "actualRawLogText": "(pass) actual canonical standalone distribution > runs shipped source/runtime, enforces auth, and restarts the same isolated profile [8194.36ms]",
+      "result": "pass",
+      "phaseAssertionCount": 47
+    },
+    {
+      "name": "refuses a short token before readiness without leaving listening endpoints",
+      "testFile": "canonical-delivery-smoke.test.ts",
+      "declarationLine": 251,
+      "actualRawLogLine": 5,
+      "actualRawLogText": "(pass) actual canonical standalone distribution > refuses a short token before readiness without leaving listening endpoints [1450.66ms]",
+      "result": "pass",
+      "phaseAssertionCount": 9
+    }
+  ],
+  "closure": {
+    "commandReceipt": {
+      "label": "shipment-closure-final",
+      "argv": [
+        "python3",
+        "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/verify-shipment-closure.py"
+      ],
+      "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+      "startedUtc": "2026-10-01T17:23:33.148076+00:00",
+      "seconds": 1.559,
+      "exit": 0,
+      "log": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/shipment-closure-final.log",
+      "logSha256": "fa688ef6dbfb9e9e34367a5210c951e54afe6dd000409b4020a0f4921bc55d45",
+      "safeEnvironmentKeys": [
+        "LANG",
+        "LC_ALL",
+        "PATH",
+        "TZ"
+      ]
+    },
+    "summary": {
+      "pass": true,
+      "checks": 57,
+      "passed": 57,
+      "failed": [],
+      "components": {
+        "workspace": {
+          "exact": true,
+          "expected_files": 2062,
+          "delivered_files": 2062
+        },
+        "resources": {
+          "exact": true,
+          "expected_files": 113,
+          "delivered_files": 113
+        },
+        "runtime_binaries": {
+          "exact": true,
+          "expected_files": 2,
+          "delivered_files": 2
+        },
+        "webui": {
+          "exact": true,
+          "expected_files": 855,
+          "delivered_files": 855
+        }
+      },
+      "workspace_symlink_count": 9,
+      "total_delivery_symlink_count": 9
+    },
+    "fullEvidence": "verify-shipment-closure.json",
+    "applicationFailures": 0
+  },
+  "shipment": {
+    "path": "/workspace/rox-r15-direct-server-dist-20261001",
+    "files": 56505,
+    "symlinks": 9,
+    "bytes": 1105833914,
+    "sourceAndWorkspaceCompleteExact": true,
+    "UICompleteExact": true,
+    "allSymlinksExistingAndInternal": true,
+    "runtimeManifestUnchanged": true,
+    "fullBeforeManifest": "shipment-before-runtime-manifest.json",
+    "fullAfterManifest": "canonical-delivery-after.json"
+  },
+  "source": {
+    "headBefore": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "headAfter": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "statusBefore": "?? dist-server/",
+    "statusAfter": "?? dist-server/",
+    "trackedFiles": 6178,
+    "gitlinks": 2,
+    "fullTrackedSourceAndLockExact": true,
+    "lockSha256": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+    "builderSha256": "d737fe594be9b0f20c1e42f39852ddd52245e9c86ac8481dc837b8ac8005b36a",
+    "secureStoragePath": "packages/shared/src/credentials/backends/secure-storage.ts",
+    "secureStorageSha256": "5127a51963ccc422b1a2ddec397c5beb4500afde17ba6eb523d89a2658e104fd",
+    "sqliteRuntimeAdapterPath": "packages/shared/src/utils/sqlite-runtime.ts",
+    "sqliteRuntimeAdapterSha256": "8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831"
+  },
+  "original": {
+    "revision": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "status": "",
+    "fullSourceAndLockUnchanged": true
+  },
+  "initialObserverFailures": [
+    {
+      "receipt": "shipment-closure-receipt.json",
+      "command": [
+        "python3",
+        "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/verify-shipment-closure.py"
+      ],
+      "exit": 2,
+      "reason": "observer file not yet written; orchestration timing error",
+      "applicationFailure": false,
+      "log": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/shipment-closure.log",
+      "logSha256": "b81bf8be5738e1ea80356d5676d16eb2df6df7fb16857c6a9c5349cc613a4fb3"
+    },
+    {
+      "receipt": "shipment-closure-retry-receipt.json",
+      "command": [
+        "python3",
+        "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/verify-shipment-closure.py"
+      ],
+      "exit": 2,
+      "reason": "observer file not yet written; orchestration timing error",
+      "applicationFailure": false,
+      "log": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/shipment-closure-retry.log",
+      "logSha256": "b81bf8be5738e1ea80356d5676d16eb2df6df7fb16857c6a9c5349cc613a4fb3"
+    }
+  ],
+  "initialRedReceiptsRetained": true,
+  "completionParserFinding": {
+    "command": [
+      "python3",
+      "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/complete-verification.py"
+    ],
+    "failedLine": 38,
+    "error": "AssertionError at count parser",
+    "reason": "regex demanded extra whitespace before newline; Bun emits pass/fail lines without trailing whitespace and singular file",
+    "applicationFailure": false,
+    "buildOrSmokeRerun": false,
+    "smokeLogSha256": "62da46d877f7a1f6731311c5fc08b5b3c82ab5ae570fd8b4a103616c79693aaa",
+    "closureAlreadyPassed": true
+  },
+  "initialObserverFailuresResolved": true,
+  "buildAndSmokeRerun": false,
+  "cleanup": {
+    "sourceAndLockPreserved": true,
+    "sourceRegularFileCount": 6178,
+    "gitlinkCount": 2,
+    "liveArtifactsPreserved": true,
+    "liveArtifactFileCount": 856,
+    "originalSourceAndStatusPreserved": true,
+    "originalCleanBeforeAndAfter": true,
+    "ownChildProcessesExited": true,
+    "ownProfilesRemovedByUnchangedHelper": true,
+    "privateTemporaryRootRemoved": true,
+    "canonicalOutputRetainedForRootVerification": true,
+    "sharedCheckoutDependenciesAndArtifactsRetained": true,
+    "shipmentFilesAndSymlinksUnchangedDuringRuntime": true
+  },
+  "retainedArtifacts": [
+    {
+      "file": "canonical-build.log",
+      "bytes": 3181,
+      "sha256": "44029ca877ed9db4ada7b930affb0f09cc393d0e6df52baa9c2a879901afec4b"
+    },
+    {
+      "file": "canonical-build-receipt.json",
+      "bytes": 1053,
+      "sha256": "9f44518d54cc01cc7fe0bd237fb330d66b26a603ee75dd24e383edc579dbfd92"
+    },
+    {
+      "file": "canonical-ui-copy.json",
+      "bytes": 261350,
+      "sha256": "5b9772261935c6f6be8117fd6bb7ee8b10e454b66d9ec79c7be294a75491fa2e"
+    },
+    {
+      "file": "canonical-delivery-smoke.log",
+      "bytes": 503,
+      "sha256": "62da46d877f7a1f6731311c5fc08b5b3c82ab5ae570fd8b4a103616c79693aaa"
+    },
+    {
+      "file": "canonical-delivery-smoke-receipt.json",
+      "bytes": 1100,
+      "sha256": "532d6cf481b7d03efd03001a4bff56cb085627c0e8d1737f7436b4116719e554"
+    },
+    {
+      "file": "canonical-delivery-phases.json",
+      "bytes": 5755,
+      "sha256": "a82a7badfd470e45fceb26f8806fed80dc05b77140e28c45923f2d300cf5f05e"
+    },
+    {
+      "file": "canonical-delivery-child-redacted.log",
+      "bytes": 2177,
+      "sha256": "143b3f1ee8780f7aa881818bb002544fe696cfe329c27a43c9ae492139570b25"
+    },
+    {
+      "file": "canonical-delivery-before.json",
+      "bytes": 830121,
+      "sha256": "5b8ebc734add39bf2a3cbbc6605ba5cae2771c04c27cc083822d3cc14fd3e497"
+    },
+    {
+      "file": "shipment-before-runtime-manifest.json",
+      "bytes": 13547953,
+      "sha256": "c7fb4e0b8058191dbed20e40ae3fa0501778645903c6cca877b85b1c426d6c7c"
+    },
+    {
+      "file": "canonical-delivery-after.json",
+      "bytes": 13547953,
+      "sha256": "c7fb4e0b8058191dbed20e40ae3fa0501778645903c6cca877b85b1c426d6c7c"
+    },
+    {
+      "file": "verify-shipment-closure.json",
+      "bytes": 1221246,
+      "sha256": "04482469816ff7b7173e8a8cbae522de8b9d5861bcd323242f3723b325f267d3"
+    },
+    {
+      "file": "verify-shipment-closure.py",
+      "bytes": 14048,
+      "sha256": "81c8e9854db65492c2d0ce7c07854657e04f5fa77422e819623e2217ca798e14"
+    },
+    {
+      "file": "shipment-closure-final.log",
+      "bytes": 657,
+      "sha256": "fa688ef6dbfb9e9e34367a5210c951e54afe6dd000409b4020a0f4921bc55d45"
+    },
+    {
+      "file": "shipment-closure-final-receipt.json",
+      "bytes": 601,
+      "sha256": "7316f862533e30bb5c27f44cc8a409e8d522b51766f883cdc0c7fe97c6d3a35b"
+    },
+    {
+      "file": "helper-provenance.json",
+      "bytes": 1400,
+      "sha256": "30df90dd91f8b37b00de5ef9916ef6e943eaeedc3508e1fa6282e7318753e2c9"
+    },
+    {
+      "file": "helper-path-only.diff",
+      "bytes": 908,
+      "sha256": "5ac2fdadbb47f961d0f75dccda4b37b8a6d8288aaac1424ee374f8ba7cf6f439"
+    },
+    {
+      "file": "manifest-path-only.diff",
+      "bytes": 532,
+      "sha256": "1f57414de3fe28d066c2444402ea04c031cab96287a24d551750e3e2a6611f66"
+    },
+    {
+      "file": "executed-cases.json",
+      "bytes": 1273,
+      "sha256": "073373c81b6c85cd2db0347b0601e6cd8b138df671fb7c65e6571c235ceed77f"
+    },
+    {
+      "file": "source-before.json",
+      "bytes": 830340,
+      "sha256": "40c018a1279c770cef9f4ed9e18ba10269e00716ea6e3f21a3ab59b83b519e12"
+    },
+    {
+      "file": "source-after-final.json",
+      "bytes": 830340,
+      "sha256": "40c018a1279c770cef9f4ed9e18ba10269e00716ea6e3f21a3ab59b83b519e12"
+    },
+    {
+      "file": "original-source-before.json",
+      "bytes": 707975,
+      "sha256": "9bcc8224ab3c834fc0442572cfcbd6f7691a6d17d5fb76b372d2dbf645d02163"
+    },
+    {
+      "file": "original-source-after-final.json",
+      "bytes": 707975,
+      "sha256": "9bcc8224ab3c834fc0442572cfcbd6f7691a6d17d5fb76b372d2dbf645d02163"
+    },
+    {
+      "file": "live-artifacts-before.json",
+      "bytes": 144418,
+      "sha256": "f8770d72a3aaf0e27ab3f192a0f689bd1a99a81be7e6284005bd755551f3ab7b"
+    },
+    {
+      "file": "live-artifacts-after-final.json",
+      "bytes": 144418,
+      "sha256": "f8770d72a3aaf0e27ab3f192a0f689bd1a99a81be7e6284005bd755551f3ab7b"
+    },
+    {
+      "file": "internal-build-artifacts-before.json",
+      "bytes": 798,
+      "sha256": "09b2619f011d45c3273647c2b4e63c8bc858101d98879c5bae44b2eb85e6b27a"
+    },
+    {
+      "file": "internal-build-artifacts-after.json",
+      "bytes": 798,
+      "sha256": "3063eddbe6df1a04bc3c66275f1ac9d003cdf61f9676c6dc1b15cfadc02ed68f"
+    },
+    {
+      "file": "cleanup-receipt-complete.json",
+      "bytes": 532,
+      "sha256": "536032532a5fd7e1141f5f91447927400e16b9038a4db5591aafc76684ad0e50"
+    },
+    {
+      "file": "verification-receipt.json",
+      "bytes": 5718,
+      "sha256": "7ca62dcb598e78831a5ac2473747fdee44106e85ba87165724bf39901b0d9bbe"
+    },
+    {
+      "file": "final-verification-receipt.json",
+      "bytes": 10920,
+      "sha256": "2d700a570499bd9198db7990df95307dd68737e68960021db662848c5a370632"
+    },
+    {
+      "file": "shipment-closure.log",
+      "bytes": 170,
+      "sha256": "b81bf8be5738e1ea80356d5676d16eb2df6df7fb16857c6a9c5349cc613a4fb3"
+    },
+    {
+      "file": "shipment-closure-retry.log",
+      "bytes": 170,
+      "sha256": "b81bf8be5738e1ea80356d5676d16eb2df6df7fb16857c6a9c5349cc613a4fb3"
+    },
+    {
+      "file": "canonical-delivery-smoke.test.ts",
+      "bytes": 13473,
+      "sha256": "cbe44ec9f255d90f9918f80d31fa1da281070ccfd59af3bdcc069859ccde26e4"
+    },
+    {
+      "file": "canonical-delivery-smoke.original.ts.txt",
+      "bytes": 13448,
+      "sha256": "28c12dba8e84c22c2137683ea80ce3efba6b6b7de31952d5d62a6056fc276fc1"
+    },
+    {
+      "file": "canonical-delivery-manifest.py",
+      "bytes": 5343,
+      "sha256": "4d108b3c3d1f4bdc4fefed59cc2b374ab5e75fbcde0f02fbad6f560421602f7e"
+    },
+    {
+      "file": "canonical-delivery-manifest.original.py.txt",
+      "bytes": 5325,
+      "sha256": "6984c7c30dd89b0272bbe82304ed80781fe2f4150825dfffdaf2d1f3f829195e"
+    },
+    {
+      "file": "manifest-after-runtime-independent.log",
+      "bytes": 398,
+      "sha256": "be2ed057951dcb41b594809f0ee4e6716739a00857c53a1ea5e0429c10694471"
+    },
+    {
+      "file": "completion-parser-error-receipt.json",
+      "bytes": 529,
+      "sha256": "e68f1010f4e844f014150787b62b28641349c04880dfeb9e4d63cbbe79f66de3"
+    },
+    {
+      "file": "run-verification.py",
+      "bytes": 14164,
+      "sha256": "0d3669d92138c7939ad3c636bd2de3ca752a31aac9ad834318d058a0335bc96f"
+    },
+    {
+      "file": "continue-verification.py",
+      "bytes": 7723,
+      "sha256": "2dc24351e9a6a7718b4e6e5dde9b277516d3118eab606a7353cef18d8262a7f8"
+    },
+    {
+      "file": "complete-verification.py",
+      "bytes": 11399,
+      "sha256": "be253d1b65bd14a4249b3e377b8861b2e475a74375d66cafc7e68ce775ccd55a"
+    },
+    {
+      "file": "summary-before-metadata-correction.json",
+      "bytes": 17445,
+      "sha256": "847ed783304ca7f694ebd075138aaaf933bc9038eafb25919bf9a532075c81cd"
+    },
+    {
+      "file": "metadata-correction-receipt.json",
+      "bytes": 1338,
+      "sha256": "51f771802d9a65ee633ab55c3cab1763d92c61ba28053385bd176fb34f5e82c9"
+    },
+    {
+      "file": "correct-receipt-metadata.py",
+      "bytes": 3694,
+      "sha256": "20e1bd231d3e8381ff139979edc5c6db7117fa5248b20ca07f58b49abf482cf3"
+    }
+  ],
+  "scopeLimitations": [
+    "no installed/native Electron or macOS",
+    "no providers/OAuth",
+    "no iOS",
+    "no PG",
+    "no full109/full143",
+    "no security scan acceptance"
+  ],
+  "metadataCorrection": {
+    "changedOnly": "External receipt metadata naming and retained artifact/hash references",
+    "previousSummaryFile": "summary-before-metadata-correction.json",
+    "previousSummarySha256": "847ed783304ca7f694ebd075138aaaf933bc9038eafb25919bf9a532075c81cd",
+    "incorrectPreviousField": "source.ownerAdapterSha256 referred to secure-storage.ts",
+    "correctedFields": [
+      {
+        "path": "packages/shared/src/credentials/backends/secure-storage.ts",
+        "sha256": "5127a51963ccc422b1a2ddec397c5beb4500afde17ba6eb523d89a2658e104fd",
+        "beforeAndAfterAndActualExact": true
+      },
+      {
+        "path": "packages/shared/src/utils/sqlite-runtime.ts",
+        "sha256": "8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831",
+        "beforeAndAfterAndActualExact": true
+      }
+    ],
+    "sourceManifestBeforeSha256": "40c018a1279c770cef9f4ed9e18ba10269e00716ea6e3f21a3ab59b83b519e12",
+    "sourceManifestAfterSha256": "40c018a1279c770cef9f4ed9e18ba10269e00716ea6e3f21a3ab59b83b519e12",
+    "completeTrackedSourceAndLockBeforeAfterActualExact": true,
+    "sourceRegularFiles": 6178,
+    "sourceGitlinks": 2,
+    "originalSourceAndStatusUnchangedAndClean": true,
+    "completeVerificationDriverSha256": "be253d1b65bd14a4249b3e377b8861b2e475a74375d66cafc7e68ce775ccd55a",
+    "applicationSourceChanged": false,
+    "buildTestSmokeOrClosureRerun": false
+  }
+}

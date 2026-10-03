@@ -19,6 +19,7 @@ import {
   type ExportReceipt,
   type PrivacyDto,
   type PrivacyState,
+  type ProviderAccessConsent,
 } from './types.ts'
 import { isPurposeAllowed } from './policy.ts'
 
@@ -43,6 +44,7 @@ export function getDefaultPrivacyState(now = Date.now()): PrivacyState {
         deletionStatus: 'none',
       },
     ],
+    providerAccess: [],
     exports: [],
     deletions: [],
     migratedAt: now,
@@ -72,6 +74,25 @@ export function parsePrivacyState(raw: unknown, now = Date.now()): PrivacyState 
         return typeof event.id === 'string' && typeof event.at === 'number' && typeof event.action === 'string'
       })
     : []
+  const providerAccess = Array.isArray(raw.providerAccess)
+    ? raw.providerAccess.filter((item): item is ProviderAccessConsent => {
+        if (!isRecord(item)) return false
+        return (
+          typeof item.id === 'string' &&
+          typeof item.provider === 'string' &&
+          typeof item.accountRef === 'string' &&
+          Array.isArray(item.domains) &&
+          item.domains.every((domain) => typeof domain === 'string') &&
+          Array.isArray(item.dataScopes) &&
+          item.dataScopes.every((scope) => typeof scope === 'string') &&
+          Array.isArray(item.purposes) &&
+          item.purposes.every((purpose) => typeof purpose === 'string') &&
+          typeof item.grantedAt === 'number' &&
+          (item.revokedAt === null || typeof item.revokedAt === 'number') &&
+          Number.isSafeInteger(item.revision)
+        )
+      })
+    : []
   const exports = Array.isArray(raw.exports) ? (raw.exports as ExportReceipt[]) : []
   const deletions = Array.isArray(raw.deletions) ? (raw.deletions as DeletionReceipt[]) : []
   const migratedAt = typeof raw.migratedAt === 'number' ? raw.migratedAt : now
@@ -80,6 +101,7 @@ export function parsePrivacyState(raw: unknown, now = Date.now()): PrivacyState 
     schemaVersion: CONSENT_SCHEMA_VERSION,
     purposes,
     events,
+    providerAccess,
     exports,
     deletions,
     migratedAt,
@@ -212,11 +234,78 @@ export function purposeEnabled(state: PrivacyState, purpose: ConsentPurpose): bo
   return isPurposeAllowed(state.purposes, purpose)
 }
 
+export function setProviderAccessConsent(input: {
+  provider: string
+  accountRef: string
+  domains: readonly string[]
+  dataScopes: readonly string[]
+  purposes: readonly string[]
+  granted: boolean
+}, configDir: string = resolveConfigDir(), now = Date.now()): PrivacyState {
+  const provider = input.provider.trim()
+  const accountRef = input.accountRef.trim()
+  if (!provider || !accountRef) throw new Error('provider and account reference are required')
+  const state = loadPrivacyState(configDir)
+  const records = state.providerAccess.filter(
+    (entry) => entry.provider === provider && entry.accountRef === accountRef,
+  )
+  const matching = records.filter((entry) => entry.revokedAt === null)
+  if (!input.granted) {
+    if (matching.length === 0) return state
+    for (const entry of matching) entry.revokedAt = now
+    state.updatedAt = now
+    savePrivacyState(state, configDir)
+    return state
+  }
+  const domains = [...new Set(input.domains.map((domain) => domain.trim().toLowerCase().replace(/^\./, '')).filter(Boolean))]
+  const dataScopes = [...new Set(input.dataScopes.map((scope) => scope.trim()).filter(Boolean))]
+  const purposes = [...new Set(input.purposes.map((purpose) => purpose.trim()).filter(Boolean))]
+  if (domains.length === 0 || dataScopes.length === 0 || purposes.length === 0) {
+    throw new Error('provider consent requires domains, data scopes, and purposes')
+  }
+  for (const entry of matching) entry.revokedAt = now
+  state.providerAccess.push({
+    id: randomUUID(),
+    provider,
+    accountRef,
+    domains,
+    dataScopes,
+    purposes,
+    grantedAt: now,
+    revokedAt: null,
+    revision: records.reduce((revision, entry) => Math.max(revision, entry.revision), 0) + 1,
+  })
+  state.updatedAt = now
+  savePrivacyState(state, configDir)
+  return state
+}
+
+export function providerScopeAllowed(
+  state: PrivacyState,
+  provider: string,
+  accountRef: string,
+  domain: string,
+  dataScope: string,
+  purpose: string,
+): boolean {
+  const normalizedDomain = domain.trim().toLowerCase().replace(/^\./, '')
+  return state.providerAccess.some(
+    (entry) =>
+      entry.provider === provider &&
+      entry.accountRef === accountRef &&
+      entry.revokedAt === null &&
+      (entry.domains.includes('*') || entry.domains.includes(normalizedDomain)) &&
+      entry.dataScopes.includes(dataScope) &&
+      entry.purposes.includes(purpose),
+  )
+}
+
 export function toPrivacyDto(state: PrivacyState): PrivacyDto {
   return {
     schemaVersion: state.schemaVersion,
     purposes: state.purposes,
     events: state.events,
+    providerAccess: state.providerAccess,
     exports: state.exports,
     deletions: state.deletions,
     latestDeletion: latestDeletion(state),

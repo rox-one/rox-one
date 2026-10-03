@@ -2,11 +2,12 @@
  * Local meeting recordings (Встречи) — the device-side store shared by main,
  * preload and renderer. Each meeting is a folder `<configDir>/meetings/<id>/`
  * with meeting.json, the audio file, transcript.json/.md and documents/.
- * Audio never leaves the machine: capture is MediaRecorder in the renderer,
- * chunks are appended by main, transcription is a local whisper.cpp process.
+ * Capture/import and Whisper transcription are device-local. Explicit summary
+ * generation uses the ordinary configured agent model/provider separately.
  */
 
 export const MEETINGS_LOCAL_SCHEMA = 1
+export const MEETING_SOURCE_SEEK_SESSION_KEY = 'rox.meetings.sourceSeek.v1'
 
 export const MEETINGS_LOCAL_IPC = {
   LIST: 'meetings-local:list',
@@ -21,8 +22,13 @@ export const MEETINGS_LOCAL_IPC = {
   RECOVER: 'meetings-local:recover',
   IMPORT_AUDIO: 'meetings-local:import-audio',
   READ_AUDIO: 'meetings-local:read-audio',
+  IMPORT_CANCEL: 'meetings-local:import-cancel',
   READ_TRANSCRIPT: 'meetings-local:read-transcript',
+  READ_TRANSCRIPT_REVISION: 'meetings-local:read-transcript-revision',
+  RESTORE_TRANSCRIPT_REVISION: 'meetings-local:restore-transcript-revision',
   TRANSCRIBE: 'meetings-local:transcribe',
+  TRANSCRIBE_CANCEL: 'meetings-local:transcribe-cancel',
+  TRANSCRIPT_SEGMENT_UPDATE: 'meetings-local:transcript-segment-update',
   ENGINE: 'meetings-local:engine',
   MIC_ACCESS: 'meetings-local:mic-access',
   ATTACH: 'meetings-local:attach',
@@ -34,13 +40,15 @@ export const MEETINGS_LOCAL_IPC = {
 
 export type LocalMeetingStatus = 'planned' | 'recording' | 'paused' | 'ready'
 export type LocalMeetingSource = 'microphone' | 'import' | 'none'
-export type TranscriptStatus = 'none' | 'queued' | 'running' | 'done' | 'failed' | 'unavailable'
+export type TranscriptStatus = 'none' | 'queued' | 'running' | 'done' | 'failed' | 'unavailable' | 'cancelled' | 'partial'
 
 export interface LocalMeetingAudio {
   file: string
   mimeType: string
   bytes: number
   originalName?: string
+  /** SHA-256 of the committed local audio when available. */
+  sourceHash?: string
   /** Recovered after the app or renderer stopped mid-recording. */
   recovered?: boolean
 }
@@ -48,6 +56,9 @@ export interface LocalMeetingAudio {
 export interface LocalMeetingTranscriptState {
   status: TranscriptStatus
   progress: number
+  /** Monotonically increases for each transcription request; stale workers cannot publish. */
+  generation?: number
+  attempt?: number
   engine?: string
   model?: string
   language?: string
@@ -55,6 +66,23 @@ export interface LocalMeetingTranscriptState {
   segments?: number
   startedAt?: number
   finishedAt?: number
+  revision?: number
+  provenance?: LocalTranscriptProvenance
+}
+
+export interface LocalTranscriptProvenance {
+  sourceKind: LocalMeetingSource
+  sourceHash?: string
+  engine?: string
+  model?: string
+  generatedAt?: number
+}
+
+export interface LocalMeetingQuestion {
+  id: string
+  text: string
+  sourceSegmentIds: string[]
+  createdAt: number
 }
 
 export interface LocalMeetingAction {
@@ -63,6 +91,8 @@ export interface LocalMeetingAction {
   done: boolean
   taskId?: string
   generated?: boolean
+  sourceSegmentIds?: string[]
+  sourceTranscriptRevision?: number
   createdAt: number
 }
 
@@ -78,6 +108,9 @@ export interface LocalMeetingSummary {
   text: string
   generated: boolean
   sessionId?: string
+  sourceSegmentIds?: string[]
+  sourceTranscriptRevision?: number
+  questions?: LocalMeetingQuestion[]
   updatedAt: number
 }
 
@@ -99,7 +132,7 @@ export interface LocalMeeting {
   audio: LocalMeetingAudio | null
   transcript: LocalMeetingTranscriptState
   summary: LocalMeetingSummary | null
-  summaryRun?: { sessionId: string; startedAt: number }
+  summaryRun?: { sessionId: string; startedAt: number; transcriptRevision?: number }
   actions: LocalMeetingAction[]
   documents: LocalMeetingDocument[]
   updatedAt: number
@@ -110,6 +143,14 @@ export interface LocalTranscriptSegment {
   startMs: number
   endMs: number
   text: string
+  /** Human-correctable only when no diarization engine provides a label. */
+  speakerId?: string | null
+}
+
+export interface LocalTranscriptRevision {
+  revision: number
+  createdAt: number
+  reason: 'transcribed' | 'corrected' | 'restored'
 }
 
 export interface LocalTranscript {
@@ -118,7 +159,23 @@ export interface LocalTranscript {
   language: string | null
   createdAt: number
   elapsedMs: number
+  /** Zero is reserved for normalized legacy transcripts without revision metadata. */
+  revision: number
+  history?: LocalTranscriptRevision[]
+  provenance?: LocalTranscriptProvenance
   segments: LocalTranscriptSegment[]
+}
+
+export interface LocalTranscriptSegmentPatch {
+  startMs?: number
+  endMs?: number
+  speakerId?: string | null
+}
+
+export interface LocalTranscriptSegmentUpdate {
+  expectedRevision: number
+  segmentId: string
+  patch: LocalTranscriptSegmentPatch
 }
 
 export interface LocalAsrEngine {
@@ -148,9 +205,14 @@ export interface MeetingsLocalApi {
   recState(meetingId: string, state: { paused: boolean; durationMs: number }): Promise<void>
   recStop(meetingId: string, input: { durationMs: number }): Promise<MeetingsLocalResult<LocalMeeting>>
   recover(): Promise<string[]>
-  importAudio(input: { meetingId?: string; workspaceId: string | null; path?: string }): Promise<MeetingsLocalResult<LocalMeeting> | null>
+  importAudio(input: { requestId: string; meetingId?: string; workspaceId: string | null; path?: string }): Promise<MeetingsLocalResult<LocalMeeting> | null>
+  cancelImport(requestId: string): Promise<boolean>
   readAudio(id: string): Promise<{ bytes: Uint8Array; mimeType: string } | null>
   readTranscript(id: string): Promise<LocalTranscript | null>
+  readTranscriptRevision(id: string, revision: number): Promise<LocalTranscript | null>
+  restoreTranscriptRevision(id: string, input: { expectedRevision: number; restoreRevision: number }): Promise<MeetingsLocalResult<LocalTranscript>>
+  updateTranscriptSegment(id: string, input: LocalTranscriptSegmentUpdate): Promise<MeetingsLocalResult<LocalTranscript>>
+  cancelTranscription(id: string): Promise<MeetingsLocalResult<LocalMeeting>>
   transcribe(id: string): Promise<MeetingsLocalResult<LocalMeeting>>
   engine(): Promise<LocalAsrEngine>
   micAccess(ask: boolean): Promise<'granted' | 'denied' | 'restricted' | 'not-determined' | 'unknown'>

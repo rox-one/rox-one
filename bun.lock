@@ -240,6 +240,19 @@
         "sonner": "^2.0.7",
       },
     },
+    "apps/workspace-service": {
+      "name": "@craft-agent/workspace-service",
+      "version": "0.11.5",
+      "bin": {
+        "rox-workspace-service": "src/index.ts",
+      },
+      "dependencies": {
+        "@craft-agent/server-core": "workspace:*",
+        "@craft-agent/shared": "workspace:*",
+        "jose": "^6.0.0",
+        "ws": "^8.19.0",
+      },
+    },
     "packages/cloud-runner": {
       "name": "@craft-agent/cloud-runner",
       "version": "0.1.0",
@@ -247,6 +260,9 @@
     "packages/core": {
       "name": "@craft-agent/core",
       "version": "0.11.5",
+      "dependencies": {
+        "yaml": "^2.8.2",
+      },
       "devDependencies": {
         "@types/uuid": "^11.0.0",
       },
@@ -724,6 +740,8 @@
     "@craft-agent/viewer": ["@craft-agent/viewer@workspace:apps/viewer"],
 
     "@craft-agent/webui": ["@craft-agent/webui@workspace:apps/webui"],
+
+    "@craft-agent/workspace-service": ["@craft-agent/workspace-service@workspace:apps/workspace-service"],
 
     "@cspotcode/source-map-support": ["@cspotcode/source-map-support@0.8.1", "", { "dependencies": { "@jridgewell/trace-mapping": "0.3.9" } }, "sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw=="],
 

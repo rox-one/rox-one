@@ -1,0 +1,639 @@
+{
+  "schemaVersion": 1,
+  "files": [
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "LICENSE.txt",
+      "firstLines": [
+        "                    GNU AFFERO GENERAL PUBLIC LICENSE",
+        "                       Version 3, 19 November 2007",
+        "",
+        " Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>",
+        " Everyone is permitted to copy and distribute verbatim copies"
+      ],
+      "sha256": "b1e2de6a24d704320f17b92555c0ee445f2b2af16dabfac6ec26d3fdb38588d5"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "apps/docs/LICENSE",
+      "firstLines": [
+        "MIT License",
+        "",
+        "Copyright (c) 2023 Mintlify",
+        "",
+        "Permission is hereby granted, free of charge, to any person obtaining a copy"
+      ],
+      "sha256": "25b2b8ffd5ed7a8d2b201f215a9ca64d14db709271070d7fb5efa30894655a35"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "apps/web/LICENSE",
+      "firstLines": [
+        "Copyright 2023 CoParse, Inc. All rights reserved.",
+        ""
+      ],
+      "sha256": "9c9c4860038ecab28f095ba86c562a7b1baba693e5a8c308dd8ca10b5e76095c"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "apps/web/src/lib/core/auth/license.ts",
+      "firstLines": [
+        "import { useLicenseStatus } from '@core/context/user';",
+        "import { createMemo } from 'solid-js';",
+        "",
+        "export function useHasPaidAccess() {",
+        "  const licenseStatus = useLicenseStatus();"
+      ],
+      "sha256": "5eaf63d9865b5f0ed70af66aea2e84335f5188a3bd4afb9f26ebf237105b1534"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "apps/web/src/lib/core/util/licenseUpdateBroadcastChannel.ts",
+      "firstLines": [
+        "import { createCrossTabBus } from '@core/cross-tab/cross-tab-bus';",
+        "import { match } from 'ts-pattern';",
+        "",
+        "type LicenseUpdateMessage = {",
+        "  type: 'license-updated';"
+      ],
+      "sha256": "cf1c913ab9a613366f6bd52de8f5f304d0b2a76ebda3f00f759674589dd9693f"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "apps/web/src/lib/filesystem/LICENSE",
+      "firstLines": [
+        "MIT License",
+        "",
+        "Copyright (c) 2021 Chris Hager",
+        "",
+        "Permission is hereby granted, free of charge, to any person obtaining a copy"
+      ],
+      "sha256": "d38285488b75288f5d27d431a9ba7583ed303762a4a116b2537541ee37213b62"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "crates/opensearch_query_builder/LICENSE",
+      "firstLines": [
+        "MIT License",
+        "",
+        "Copyright (c) 2025 William Hutchinson",
+        "",
+        "Permission is hereby granted, free of charge, to any person obtaining a copy"
+      ],
+      "sha256": "5d5cc1bbaf40d78f1f65e7aebf2c2dda4d538fca40acd6c705e498803320e9ad"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "packages/collaboration/src/websocket/THIRD_PARTY_LICENSES.md",
+      "firstLines": [
+        "websocket-ts",
+        "Copyright (c) 2021 jjxxs",
+        "Licensed under the MIT License",
+        "https://github.com/jjxxs/websocket-ts",
+        ""
+      ],
+      "sha256": "9d7c11ea76c744d27b5a211700d8b3b59b1e0d06192e5154bc8220c3a8a9575f"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "packages/loro-mirror/THIRD_PARTY_LICENSES.md",
+      "firstLines": [
+        "loro-mirror",
+        "Copyright (c) 2024 Loro",
+        "Licensed under the MIT License",
+        "https://github.com/loro-dev/loro-mirror",
+        ""
+      ],
+      "sha256": "65ef4cd033a88fe3077ede9cf3d974670129ab49c78bc7282397b22fc1b7efb4"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "LICENSE",
+      "firstLines": [
+        "                                 Apache License",
+        "                           Version 2.0, January 2004",
+        "                        http://www.apache.org/licenses/",
+        "",
+        "   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION"
+      ],
+      "sha256": "9a75ace1224f0f880ddfdd8442d14d5a0d865152c61a2fd363d8e2c351f94d2c"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "NOTICE",
+      "firstLines": [
+        "Craft Agents",
+        "Copyright 2026 Craft Docs Ltd.",
+        "",
+        "This product includes software developed by Craft Docs Ltd.",
+        "https://craft.do"
+      ],
+      "sha256": "b4fe19519f12439760a575d5be66e437f865219c2b2c9a8adc95b7574b89deb0"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "apps/electron/resources/skills/mattpocock-skills/LICENSE",
+      "firstLines": [
+        "MIT License",
+        "",
+        "Copyright (c) 2026 Matt Pocock",
+        "",
+        "Permission is hereby granted, free of charge, to any person obtaining a copy"
+      ],
+      "sha256": "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "apps/electron/resources/skills/superpowers/LICENSE",
+      "firstLines": [
+        "MIT License",
+        "",
+        "Copyright (c) 2025 Jesse Vincent",
+        "",
+        "Permission is hereby granted, free of charge, to any person obtaining a copy"
+      ],
+      "sha256": "a37e0e9697144819e1d965176ac4ae5bc3fa02d11e7812036bbcadf6dafe2400"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "apps/electron/resources/skills/vercel-next-skills/LICENSE",
+      "firstLines": [
+        "The MIT License (MIT)",
+        "",
+        "Copyright (c) 2025 Vercel, Inc.",
+        "",
+        "Permission is hereby granted, free of charge, to any person obtaining a copy"
+      ],
+      "sha256": "ee765244e2d59f5234d474f62e0766fa0c8b99af967fdd4c0cb8dcb0c76ea224"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "docs/specs/2026-08-07-siyuan-integration/NOTICE-siyuan-boundary.md",
+      "firstLines": [
+        "# NOTICE — knowledge kernel boundary",
+        "",
+        "**The Apache Rox tree does not contain kernel sources.**",
+        "",
+        "- `rox-one/rox-one` (Apache-2.0) does **not** vendor kernel source, unpacked UI, or a binary payload in git. Allowed: pin metadata (`oem-kernel-pin.json` version + sha256 + relative path)."
+      ],
+      "sha256": "d549a557cf7903d4c42b350501d935a11fce108cec3366622896a68712e443fb"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "packages/messaging-gateway/src/adapters/wechat/ilink/LICENSE",
+      "firstLines": [
+        "Tencent is pleased to support the open source community by making openclaw-weixin available.",
+        "",
+        "Copyright (C) 2026 Tencent.  All rights reserved.",
+        "",
+        "openclaw-weixin is licensed under the MIT."
+      ],
+      "sha256": "ff2665240dd1da068dfc61c05109fb81b5ddd1c106734315334cc43de1aa7efc"
+    }
+  ],
+  "declarations": [
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/packages/lambda/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/packages/resources/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/packages/service/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/packages/shared/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/packages/utils/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/packages/vpc/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/agent-harness-service/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/agent-schedule-service/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/authentication-service/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/calendar-service/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/call-recording/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/cloud-storage-cache/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/cloud-storage-service/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/connection-gateway/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/contacts-service/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/convert-service/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/deleted-item-poller/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/dlp-handler/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/document-cognition-service/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/document-storage-bucket-integrations/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/document-storage/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/document-text-extractor/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/doppler-projects/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/email-service/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/email-sfs-delete-handler/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/email-suppression/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/fusion-auth/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/fusionauth-instance/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/gateway/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/github-runners/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/image-proxy-service/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/kafka-cluster/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/link-sharing/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/macrodb/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/mcp-server/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/monitoring/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/notification-service/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/opensearch/helpers/package.json",
+      "license": "ISC"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/opensearch/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/organization-retention/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/search-processing-service/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/search-text-extractor-queue/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/search-upload/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/sha-cleanup/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/static-file-service/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "infra/stacks/unfurl-service/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "packages/loro-mirror/package.json",
+      "license": "MIT"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "apps/cli/package.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "apps/electron/package.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "apps/viewer/package.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "apps/webui/package.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "native/apps/craft-native/Cargo.toml",
+      "license": {
+        "workspace": true
+      }
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "native/crates/craft-exec/Cargo.toml",
+      "license": {
+        "workspace": true
+      }
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "native/crates/craft-index/Cargo.toml",
+      "license": {
+        "workspace": true
+      }
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "native/crates/craft-journal/Cargo.toml",
+      "license": {
+        "workspace": true
+      }
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "native/crates/craft-protocol/Cargo.toml",
+      "license": {
+        "workspace": true
+      }
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "native/crates/craft-rund/Cargo.toml",
+      "license": {
+        "workspace": true
+      }
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "package.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "packages/core/package.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "packages/messaging-discord-worker/package.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "packages/messaging-gateway/package.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "packages/messaging-whatsapp-worker/package.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "packages/pi-agent-server/package.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "packages/server-core/package.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "packages/server/package.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "packages/session-mcp-server/package.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "packages/session-tools-core/package.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "packages/shared/package.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "path": "packages/ui/package.json",
+      "license": "Apache-2.0"
+    }
+  ],
+  "note": "Tracked license/manifests audit, not complete dependency license clearance or legal opinion"
+}

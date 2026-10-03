@@ -29,6 +29,7 @@ import {
   Plus,
   Radar as RadarIcon,
   Rss,
+  RotateCcw,
   Search,
   SquarePen,
   Timer,
@@ -39,6 +40,7 @@ import type { LocalMeeting } from '../../../shared/meetings-local'
 import type { NoteSummary } from '@craft-agent/shared/protocol'
 import { isInternalAgentSession } from '@craft-agent/shared/sessions/internal-prompts'
 import { omniboxOpenAtom } from '@/atoms/omnibox'
+import type { AgentBudgetSnapshot } from '@craft-agent/shared/agent'
 import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
 import { parseAutomationsConfig, type AutomationListItem } from '@/components/automations/types'
 import { useActiveWorkspace, useAppShellContext } from '@/context/AppShellContext'
@@ -46,7 +48,7 @@ import { useInboxItems } from '@/hooks/useInboxItems'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { useWorkspaceTaskCount } from '@/hooks/useWorkspaceTaskCount'
 import { subscribeWorkspaceJson } from '@/lib/extra-screens/storage'
-import { createPersonalTask } from '@/lib/extra-screens/personal-task-bridge'
+import { createPersonalTaskConfirmed } from '@/lib/extra-screens/personal-task-bridge'
 import { useFeedItems, usePersonalTasks } from '@/lib/extra-screens/use-rox-sources'
 import { focusMinutesOn, isFocusRunning, loadFocusState, localDay, subscribeFocusState, type FocusState } from '@/lib/focus-session'
 import { startRecording, useRecorder } from '@/lib/meetings/recorder'
@@ -80,6 +82,7 @@ import {
   usageByModel,
 } from './home-data'
 import { Dot, SectionLabel, Toggle, WidgetButton, WidgetEmpty, WidgetFrame, WidgetList, WidgetRow, WidgetStat, type WidgetEditProps } from './widget-kit'
+import { QuickTaskInput } from './QuickTaskInput'
 
 export interface WidgetProps {
   edit: WidgetEditProps | null
@@ -341,17 +344,34 @@ function AgentsWidget({ edit, span }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(30_000)
+  const workspace = useActiveWorkspace()
+  const workspaceId = workspace?.id ?? null
   const { active } = useHomeSessions()
   const { pendingPermissions, pendingCredentials } = useAppShellContext()
+  const [budget, setBudget] = useState<AgentBudgetSnapshot | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const api = window.electronAPI
+    setBudget(null)
+    if (!workspaceId || typeof api?.getSessionBudget !== 'function') return
+    api.getSessionBudget(workspaceId).then((snapshot) => {
+      if (!cancelled) setBudget(snapshot)
+    }).catch(() => {
+      if (!cancelled) setBudget(null)
+    })
+    return () => { cancelled = true }
+  }, [workspaceId])
+
   const center = useMemo(() => buildAgentCenter({
-    sessions: active.map((s) => ({ id: s.id, name: getSessionTitle(s), isProcessing: s.isProcessing, lastMessageAt: s.lastMessageAt, createdAt: s.createdAt, costUsd: s.tokenUsage?.costUsd })),
+    sessions: active.map((s) => ({ id: s.id, name: getSessionTitle(s), isProcessing: s.isProcessing, lastMessageAt: s.lastMessageAt, createdAt: s.createdAt })),
     pendingPermissions: new Map([...pendingPermissions].map(([id, list]) => [id, list.length])),
     pendingCredentials: new Map([...pendingCredentials].map(([id, list]) => [id, list.length])),
     cloudRuns: [],
     automations: [],
     now,
-    dailyBudgetUsd: null,
-  }), [active, pendingPermissions, pendingCredentials, now])
+    budget,
+  }), [active, pendingPermissions, pendingCredentials, now, budget])
   const rows = [
     ...center.waiting.map((w) => ({ id: w.session.id, name: w.session.name, tone: 'warning' as const, note: t('workbench.home.agents.waitingRow') })),
     ...center.stuck.map((s) => ({ id: s.id, name: s.name, tone: 'danger' as const, note: t('workbench.home.agents.stuckRow') })),
@@ -378,7 +398,7 @@ function AgentsWidget({ edit, span }: WidgetProps) {
           </div>
         )}
         <span className="flex-1" />
-        <p className="truncate text-[12px] text-muted-foreground">{t('workbench.home.agents.costToday', { cost: formatUsd(center.costToday) })}</p>
+        <p className="truncate text-[12px] text-muted-foreground">{t('workbench.home.agents.costToday', { cost: center.budget ? formatUsd(center.budget.spentUsd) : t('common.unavailable') })}</p>
       </div>
     </WidgetFrame>
   )
@@ -960,27 +980,48 @@ function FeedWidget({ edit, span }: WidgetProps) {
   const fmt = useFormat()
   const now = useNow(60_000)
   const workspace = useActiveWorkspace()
-  const feed = useFeedItems(workspace?.id ?? null)
+  const feed = useFeedItems(workspace?.id ?? null, { retainStale: true })
   const latest = feed.items.slice(0, span >= 12 ? 10 : 5)
   return (
     <WidgetFrame testId="feed" title={t('workbench.home.w.feed')} onOpen={() => navigate(routes.view.feed())} edit={edit}>
-      {!feed.available ? (
-        <WidgetEmpty text={t('workbench.home.feed.unavailable')} />
+      {feed.refreshing && !feed.loaded ? (
+        <WidgetEmpty text={t('workbench.home.feed.loading')} />
+      ) : !feed.available && latest.length === 0 ? (
+        <WidgetEmpty
+          text={t('workbench.home.feed.unavailable')}
+          hint={feed.error ? t('workbench.home.feed.refreshFailed') : undefined}
+          action={feed.error ? { label: t('workbench.home.feed.retry'), onClick: feed.retry } : undefined}
+        />
       ) : feed.loaded && latest.length === 0 ? (
-        <WidgetEmpty text={t('workbench.home.feed.empty')} hint={t('workbench.home.feed.emptyHint')} />
+        <WidgetEmpty
+          text={t('workbench.home.feed.empty')}
+          hint={feed.error ? t('workbench.home.feed.refreshFailed') : t('workbench.home.feed.emptyHint')}
+          action={feed.error ? { label: t('workbench.home.feed.retry'), onClick: feed.retry } : undefined}
+        />
       ) : (
-        <WidgetList columns={span >= 12 ? 2 : 1}>
-          {latest.map((item) => (
-            <WidgetRow
-              key={item.id}
-              testId={item.id}
-              onClick={() => navigate(routes.view.feed(item.id))}
-              leading={item.status === 'error' ? <Dot tone="danger" /> : item.status === 'running' ? <Dot tone="accent" /> : item.tab === 'agents' ? <Bot className="h-3.5 w-3.5" /> : <Rss className="h-3.5 w-3.5" />}
-              title={item.title || item.summary || item.id}
-              trailing={fmt.ago(item.at, now)}
-            />
-          ))}
-        </WidgetList>
+        <>
+          {feed.error ? (
+            <div className="flex items-center justify-between gap-2 px-1.5 py-1 text-[11px] text-destructive" role="status">
+              <span className="min-w-0">{t('workbench.home.feed.refreshFailed')}</span>
+              <WidgetButton onClick={feed.retry} title={t('workbench.home.feed.retry')} disabled={feed.refreshing}>
+                <RotateCcw className="h-3 w-3" />
+                {t('workbench.home.feed.retry')}
+              </WidgetButton>
+            </div>
+          ) : null}
+          <WidgetList columns={span >= 12 ? 2 : 1}>
+            {latest.map((item) => (
+              <WidgetRow
+                key={item.id}
+                testId={item.id}
+                onClick={() => navigate(routes.view.feed(item.id))}
+                leading={item.status === 'error' ? <Dot tone="danger" /> : item.status === 'running' ? <Dot tone="accent" /> : item.tab === 'agents' ? <Bot className="h-3.5 w-3.5" /> : <Rss className="h-3.5 w-3.5" />}
+                title={item.title || item.summary || item.id}
+                trailing={fmt.ago(item.at, now)}
+              />
+            ))}
+          </WidgetList>
+        </>
       )}
     </WidgetFrame>
   )
@@ -1116,27 +1157,6 @@ function TaskTrackerWidget({ edit, span }: WidgetProps) {
   const now = useNow(60_000)
   const tasks = usePersonalTasks()
   const stats = useMemo(() => taskTrackerStats(tasks, now), [tasks, now])
-  const [draft, setDraft] = useState('')
-  const [added, setAdded] = useState<string | null>(null)
-  const [failed, setFailed] = useState(false)
-  useEffect(() => {
-    if (!added) return
-    const timer = window.setTimeout(() => setAdded(null), 2500)
-    return () => window.clearTimeout(timer)
-  }, [added])
-  const add = () => {
-    const title = draft.trim()
-    if (!title) return
-    try {
-      createPersonalTask({ title, list: 'inbox' })
-      setDraft('')
-      setFailed(false)
-      setAdded(title)
-    } catch (e) {
-      console.warn('[home] quick add task failed', e)
-      setFailed(true)
-    }
-  }
   const open = () => navigate(routes.view.tasks())
   const listTone: Record<string, string> = { inbox: 'bg-foreground/45', today: 'bg-accent', upcoming: 'bg-foreground/70', anytime: 'bg-foreground/30', someday: 'bg-foreground/15' }
   const total = Math.max(1, stats.open)
@@ -1170,24 +1190,7 @@ function TaskTrackerWidget({ edit, span }: WidgetProps) {
           <p className="mt-1 px-1.5 text-[12px] leading-4 text-muted-foreground">{t('workbench.home.tasks.emptyHint')}</p>
         )}
         <span className="flex-1" />
-        <form
-          className="flex items-center gap-1 rounded-[6px] bg-foreground/[0.06] px-1.5"
-          onSubmit={(event) => { event.preventDefault(); add() }}
-          data-home-quick-add=""
-        >
-          <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <input
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder={t('workbench.home.taskTracker.quickAdd')}
-            aria-label={t('workbench.home.taskTracker.quickAdd')}
-            className="h-7 min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
-          />
-          {draft.trim() ? <WidgetButton onClick={add}>{t('workbench.home.taskTracker.add')}</WidgetButton> : null}
-        </form>
-        <p className={cn('h-4 truncate text-[11px] leading-4', failed ? 'text-destructive' : 'text-muted-foreground')} aria-live="polite">
-          {failed ? t('workbench.home.taskTracker.addFailed') : added ? t('workbench.home.taskTracker.added', { title: added }) : ''}
-        </p>
+        <QuickTaskInput disabled={Boolean(edit)} onCreate={(title, previousAttempt) => createPersonalTaskConfirmed({ title, list: 'inbox' }, previousAttempt)} />
       </div>
     </WidgetFrame>
   )
@@ -1378,4 +1381,3 @@ export const HOME_WIDGETS: Record<HomeWidgetId, HomeWidgetDef> = {
   calls: { id: 'calls', titleKey: 'workbench.home.w.calls', descriptionKey: 'workbench.home.d.calls', icon: Phone, Component: CallsWidget },
   calendar: { id: 'calendar', titleKey: 'workbench.home.w.calendar', descriptionKey: 'workbench.home.d.calendar', icon: CalendarDays, Component: CalendarWidget },
 }
-

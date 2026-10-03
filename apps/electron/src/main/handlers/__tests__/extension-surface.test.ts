@@ -13,7 +13,10 @@ import type { RpcServer } from '@craft-agent/server-core/transport'
 import { RPC_CHANNELS, type ExtensionSurfaceState } from '@craft-agent/shared/protocol'
 import type { HandlerDeps } from '../handler-deps'
 
+import { electronMockExports } from '../../__tests__/electron-mock-exports'
+
 mock.module('electron', () => ({
+  ...electronMockExports,
   ipcMain: { handle: () => {}, on: () => {} },
 }))
 

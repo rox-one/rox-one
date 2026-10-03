@@ -1,0 +1,313 @@
+2026-10-01T17:01:55.122Z INFO  [bootstrap] Config artifacts initialized
+2026-10-01T17:01:55.125Z INFO  [bootstrap] Global config found
+2026-10-01T17:01:55.178Z INFO  [session] [browser-pane] setRpcServer called — remote browser bridge is now available
+2026-10-01T17:01:55.202Z INFO  [session] Reinitializing auth for connection: omp (none)
+2026-10-01T17:01:55.202Z INFO  [session] Auth env vars set for connection: omp
+2026-10-01T17:01:55.203Z INFO  [session] Setting up ConfigWatcher for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298 (/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline)
+2026-10-01T17:01:55.228Z INFO  [session] Initialized AutomationSystem for workspace e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:01:55.230Z INFO  [session] Loaded 1 sessions from disk (metadata only)
+2026-10-01T17:01:55.231Z INFO  Rox server listening on ws://127.0.0.1:42223
+[messaging] Disabled via CRAFT_DISABLE_MESSAGING — skipping workspace messaging init
+CRAFT_SERVER_URL=ws://127.0.0.1:42223
+CRAFT_SERVER_TOKEN=[redacted]
+CRAFT_WEBUI_URL=http://0.0.0.0:42223
+2026-10-01T17:01:55.300Z INFO  [bootstrap] Toolchain ensureAll scheduled
+[SchedulerService] TICK at 17:02 UTC: 2026-10-01T17:02:00.003Z
+[SchedulerService] TICK callback completed
+[webui] Successful auth from direct
+2026-10-01T17:02:26.472Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:02:26.477Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:02:26.486Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:02:26.488Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:02:26.492Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:02:26.494Z INFO  personalTasks: migrated 0 task(s) from localStorage (skipped 0)
+2026-10-01T17:02:31.336Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:02:31.336Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:02:31.346Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:02:31.347Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:02:31.351Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:02:31.428Z DEBUG [session] Cold-load triggered for persistSession on 261001-grand-coral
+2026-10-01T17:02:31.429Z DEBUG [session] Cold-hydrated 0 messages for session 261001-grand-coral
+2026-10-01T17:02:42.308Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:02:42.309Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:02:42.315Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:02:42.315Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:02:42.317Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:02:57.432Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:02:57.432Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:02:57.432Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+[SchedulerService] TICK at 17:03 UTC: 2026-10-01T17:03:00.011Z
+[SchedulerService] TICK callback completed
+2026-10-01T17:03:04.875Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:03:04.876Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:03:04.883Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:03:04.885Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:03:04.889Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:03:20.892Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:03:20.892Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:03:20.895Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:03:20.898Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:03:20.898Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:03:33.783Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:03:33.784Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:03:33.804Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:03:33.810Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:03:33.813Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:03:38.903Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:03:38.904Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:03:38.915Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:03:38.916Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:03:38.922Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:03:46.398Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:03:46.399Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:03:46.406Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:03:46.411Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:03:46.420Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:03:54.201Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:03:54.216Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:03:54.241Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:03:54.242Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:03:54.273Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:03:54.625Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:03:54.626Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:03:54.627Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+[SchedulerService] TICK at 17:04 UTC: 2026-10-01T17:04:00.030Z
+[SchedulerService] TICK callback completed
+2026-10-01T17:04:01.817Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:04:01.817Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:04:01.828Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:04:01.833Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:04:01.834Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:04:09.215Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:04:09.215Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:04:09.226Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:04:09.228Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:04:09.233Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:04:32.711Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:04:32.711Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:04:32.718Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:04:32.725Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:04:32.727Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:04:49.832Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:04:49.833Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:04:49.869Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:04:49.877Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:04:49.879Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+[SchedulerService] TICK at 17:05 UTC: 2026-10-01T17:05:00.068Z
+[SchedulerService] TICK callback completed
+2026-10-01T17:05:10.927Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:05:10.929Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:05:10.938Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:05:10.939Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:05:10.949Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:05:18.943Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:05:18.943Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:05:18.947Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:05:18.970Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:05:18.985Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:05:26.732Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:05:26.733Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:05:26.733Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:05:26.737Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:05:26.763Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:05:33.480Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:05:33.481Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:05:33.487Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:05:33.488Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:05:33.490Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:05:41.508Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:05:41.509Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:05:41.516Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:05:41.521Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:05:41.522Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:05:48.436Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:05:48.440Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:05:48.447Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:05:48.448Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:05:48.449Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:05:55.506Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:05:55.508Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:05:55.511Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:05:55.515Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:05:55.516Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+[SchedulerService] TICK at 17:06 UTC: 2026-10-01T17:06:00.071Z
+[SchedulerService] TICK callback completed
+2026-10-01T17:06:02.724Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:06:02.724Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:06:02.728Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:06:02.729Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:06:02.732Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:06:19.923Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:06:19.923Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:06:19.933Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:06:19.935Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:06:19.937Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:06:42.799Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:06:42.800Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:06:42.802Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:06:42.807Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:06:42.808Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+[SchedulerService] TICK at 17:07 UTC: 2026-10-01T17:07:00.073Z
+[SchedulerService] TICK callback completed
+2026-10-01T17:07:05.930Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:07:05.933Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:07:05.948Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:07:05.949Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:07:05.950Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:07:18.909Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:07:18.909Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:07:18.913Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:07:18.914Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:07:18.915Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:07:23.815Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:07:23.816Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:07:23.820Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:07:23.821Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:07:23.822Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:07:30.713Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:07:30.713Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:07:30.716Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:07:30.722Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:07:30.724Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:07:37.819Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:07:37.819Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:07:37.824Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:07:37.825Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:07:37.828Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:07:52.804Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:07:52.805Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:07:52.812Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:07:52.813Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:07:52.817Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+[SchedulerService] TICK at 17:08 UTC: 2026-10-01T17:08:00.076Z
+[SchedulerService] TICK callback completed
+2026-10-01T17:08:04.760Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:08:04.761Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:08:04.770Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:08:04.774Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:08:04.781Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:08:16.697Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:08:16.697Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:08:16.706Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:08:16.710Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:08:16.713Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:08:26.762Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:08:26.763Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:08:26.768Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:08:26.769Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:08:26.771Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:08:37.700Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:08:37.700Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:08:37.703Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:08:37.704Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:08:37.710Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:08:49.642Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:08:49.644Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:08:49.649Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:08:49.649Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:08:49.652Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:08:57.621Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:08:57.622Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:08:57.627Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:08:57.628Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:08:57.633Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+[SchedulerService] TICK at 17:09 UTC: 2026-10-01T17:09:00.076Z
+[SchedulerService] TICK callback completed
+2026-10-01T17:09:04.621Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:09:04.622Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:09:04.626Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:09:04.627Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:09:04.628Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:09:14.683Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:09:14.683Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:09:14.685Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:09:14.687Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:09:14.688Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:09:26.632Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:09:26.632Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:09:26.639Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:09:26.643Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:09:26.645Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:09:26.840Z INFO  Workspace setting updated: enabledSourceSlugs = ["notes","memory","sessions","tasks","projects","workspace-tree","applications","telegram-support"]
+2026-10-01T17:09:31.676Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:09:31.676Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:09:31.681Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:09:31.681Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:09:31.683Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:09:44.681Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:09:44.681Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:09:44.685Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:09:44.689Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:09:44.689Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:09:49.801Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:09:49.801Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:09:49.804Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:09:49.805Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:09:49.807Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:09:56.777Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:09:56.778Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:09:56.782Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:09:56.787Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:09:56.793Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+[SchedulerService] TICK at 17:10 UTC: 2026-10-01T17:10:00.078Z
+[SchedulerService] TICK callback completed
+2026-10-01T17:10:03.671Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:10:03.672Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:10:03.683Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:10:03.688Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:10:03.691Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:10:10.688Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:10:10.689Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:10:10.708Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:10:10.709Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:10:10.714Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:10:22.687Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:10:22.687Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:10:22.691Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:10:22.696Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:10:22.697Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:10:37.705Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:10:37.706Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:10:37.725Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:10:37.728Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:10:37.730Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:10:44.845Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:10:44.846Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:10:44.850Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:10:44.851Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:10:44.857Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:10:51.825Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:10:51.826Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:10:51.831Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:10:51.832Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:10:51.835Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:10:58.667Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:10:58.668Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:10:58.672Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:10:58.673Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:10:58.675Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+[SchedulerService] TICK at 17:11 UTC: 2026-10-01T17:11:00.084Z
+[SchedulerService] TICK callback completed
+2026-10-01T17:11:05.918Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:11:05.922Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:11:05.930Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:11:05.936Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:11:05.965Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:11:07.231Z INFO  Created page: new-page
+2026-10-01T17:11:07.334Z INFO  [session] Pages changed in e0fbee7a-45ae-f362-0248-d9ceb67a3298 (1 pages)
+2026-10-01T17:11:07.335Z INFO  [session] Broadcasting pages changed (1 pages)
+2026-10-01T17:11:16.873Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:11:16.873Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:11:16.877Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:11:16.877Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:11:16.880Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:11:23.749Z INFO  AUTOMATIONS_GET: Loading automations for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:11:23.749Z INFO  AUTOMATIONS_GET: Reading config from: /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:11:23.754Z INFO  SKILLS_GET: Loading skills for workspace: e0fbee7a-45ae-f362-0248-d9ceb67a3298
+2026-10-01T17:11:23.761Z INFO  SKILLS_GET: Loaded 0 skills from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:11:23.762Z INFO  AUTOMATIONS_GET: Loaded 16 event type(s) from /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline/automations.json
+2026-10-01T17:11:26.897Z INFO  Shutting down...
+2026-10-01T17:11:28.899Z INFO  [session] Cleaning up resources...
+2026-10-01T17:11:28.899Z INFO  [session] Stopped config watcher for /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:11:28.900Z INFO  [session] Disposed AutomationSystem for /workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC/workspaces/cloud-ui-baseline
+2026-10-01T17:11:28.900Z INFO  [session] Cleanup complete

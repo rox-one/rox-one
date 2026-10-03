@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "taskId": "recovery-core-1292-integration-gate",
+  "inputRevision": "665ba43ac1f360b7753a0e939d06794a956f4969",
+  "exactRecoveryHead": "01889b4a43a2ce4f730d3109b49750a0fbde4db8",
+  "followupOwnParent": "f8982a04b11169ed88981879ff7130397e792761",
+  "parentRepairOwnParent": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+  "inputReceiptSha256": "eaa632acee8f81f68e9b55ae11177e58006f1d3f5327c17adac7a10af1ca3d36",
+  "supplementalParentPatchSha256": "4b7a7fd45d3d8a40742c4f74abc4342d031786454cac51bf68b3f13e97e51ec8",
+  "scope": {
+    "parentRepair": [
+      "packages/core/src/platform/identity/credential-types.test.ts",
+      "packages/core/src/platform/identity/credential-types.ts",
+      "packages/core/src/tasks/personal/store.ts",
+      "packages/core/src/tasks/personal/things.test.ts"
+    ],
+    "followupCompatiblePort": [
+      "packages/core/src/calendar/calendar.test.ts",
+      "packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts",
+      "packages/core/src/rox2/__tests__/platform-contract.test.ts"
+    ],
+    "exactFollowupOwnParentScope": [
+      "packages/core/src/calendar/calendar.test.ts",
+      "packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts",
+      "packages/core/src/rox2/__tests__/platform-contract.test.ts",
+      "packages/core/src/rox2/meeting-conation-shell.ts"
+    ]
+  },
+  "preserved": [
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "sha256": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af"
+    },
+    {
+      "path": "packages/core/src/rox2/meeting-conation-shell.ts",
+      "sha256": "f2d628e81cc06d722efbc044a10d3b99549c6d9d34fb9cac7e84632c913ad815"
+    },
+    {
+      "path": "packages/core/src/rox2/notes-repository.ts",
+      "sha256": "74384b88dbb255bbc5bad0f87898f6aebc804cd5f6fdaf49131761f49102992c"
+    },
+    {
+      "path": "packages/core/src/rox2/project-membership.ts",
+      "sha256": "c732cf3b3754b834c0db37b99544449fdbe85c48c7e357212589b64ba4a4a237"
+    },
+    {
+      "path": "packages/core/src/platform/identity/attach-credential-ref.ts",
+      "sha256": "777d67ee71446170a4c3dfc5a2dbab9d4a65823e76a70d556a209d2c6f666b5d"
+    },
+    {
+      "path": "bun.lock",
+      "sha256": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1"
+    },
+    {
+      "path": "package.json",
+      "sha256": "19d87bd05284457f64319bcef6fd3eec987648a67e51b17e3b3b6d89d4444858"
+    }
+  ],
+  "sourceInventory": {
+    "beforeFiles": 5945,
+    "afterFiles": 5945,
+    "unchangedFiles": 5938,
+    "changedFiles": 7,
+    "beforeSha256": "e294ab1165f9314a42a61ba4a0b77b134703996548b73549fc29c7cd7e449f40",
+    "afterSha256": "ba233b75b6d859919664832d82b2b66871859a4ea8f0b3068203ec1c298fe8c2"
+  },
+  "dependencies": {
+    "typescript": {
+      "path": "/Users/t/Projects/rox-one-compound-implementation/node_modules/typescript",
+      "version": "5.9.3"
+    },
+    "yaml": {
+      "path": "/Users/t/Projects/rox-one-compound-implementation/node_modules/yaml",
+      "version": "2.9.0"
+    },
+    "@types/bun": {
+      "path": "/Users/t/Projects/rox-one-compound-implementation/node_modules/@types/bun",
+      "version": "1.3.6"
+    },
+    "@types/node": {
+      "path": "/Users/t/Projects/rox-one-compound-implementation/node_modules/@types/node",
+      "version": "25.0.8"
+    },
+    "bun-types": {
+      "path": "/Users/t/Projects/rox-one-compound-implementation/node_modules/bun-types",
+      "version": "1.3.6"
+    },
+    "undici-types": {
+      "path": "/Users/t/Projects/rox-one-compound-implementation/node_modules/undici-types",
+      "version": "7.16.0"
+    }
+  },
+  "currentRuntime": {
+    "executable": "/opt/homebrew/bin/bun",
+    "version": "1.4.2+43848b5a7"
+  },
+  "pinnedRuntime": {
+    "executable": "/tmp/rox-core-integration-gate-ultra-20260930/toolchain/package/bin/bun",
+    "version": "1.3.14+0d9b296af",
+    "sha256": "e0c90ec15d33363e6b70713d56bc3b2c7585c17f40a0fe0f8fd9305901d4e233"
+  },
+  "combinedPatch": {
+    "path": "/tmp/rox-core-integration-gate-ultra-20260930/patches/core-1292-compatible.patch",
+    "sha256": "193573e67cd05103813a18b41edc785da5bc2f394872283dff4d20ac8cdba91b",
+    "bytes": 18760
+  },
+  "artifacts": [
+    {
+      "path": "packages/core/src/calendar/calendar.test.ts",
+      "patchPath": "/tmp/rox-core-integration-gate-ultra-20260930/patches/01-packages__core__src__calendar__calendar.test.ts.patch",
+      "baseSha256": "3a330a32efb89454ff69084e4e508ad9abbea60948d397bd5252f3998ea8dc89",
+      "resultSha256": "9ebeb0ae43b51b86c353669cccab5c5fcf585b11396cab1a8fa0389278ba2b67",
+      "patchSha256": "e75c21180eae2330cbb71aea80b09049a1a4fc6549d2779e72c7429884f76edc",
+      "patchBytes": 859,
+      "provenance": "01889b4-own-parent-followup-compatible-port"
+    },
+    {
+      "path": "packages/core/src/platform/identity/credential-types.test.ts",
+      "patchPath": "/tmp/rox-core-integration-gate-ultra-20260930/patches/02-packages__core__src__platform__identity__credential-types.test.ts.patch",
+      "baseSha256": "4e4ea4e77810de55c355a3ef01a46e0967f0f85aeef13f95926bae0bbb1ea311",
+      "resultSha256": "9cb0c987bb7f712d049d19342a45dd2179cd5efeeb21a1c1880b14231bddd94c",
+      "patchSha256": "bbc5facd218ac4d85ac165b7df3cd7c3411a2ba3d01a4faeca5e7d49435fe311",
+      "patchBytes": 3077,
+      "provenance": "f8982a04-own-parent-repair"
+    },
+    {
+      "path": "packages/core/src/platform/identity/credential-types.ts",
+      "patchPath": "/tmp/rox-core-integration-gate-ultra-20260930/patches/03-packages__core__src__platform__identity__credential-types.ts.patch",
+      "baseSha256": "f39031187bd0d103075f8c41a2d9ab1c2aff155c5e291219f16921fdf57f7b35",
+      "resultSha256": "2f2e6ccd038e9d01961316650ba30bf533d8d6a84a961252f46f207cbec256cf",
+      "patchSha256": "3401282fc1070b503a518089a1d559880feb9ff881dd9656b9cd2f66719d09d1",
+      "patchBytes": 1220,
+      "provenance": "f8982a04-own-parent-repair"
+    },
+    {
+      "path": "packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts",
+      "patchPath": "/tmp/rox-core-integration-gate-ultra-20260930/patches/04-packages__core__src__rox2____tests____meeting-conation-shell.test.ts.patch",
+      "baseSha256": "6f05fb9338c94e9b52d99a8cbc3c871d258ef1deb7738104ef4637344a03a2b2",
+      "resultSha256": "7e02b259c3a1464cbfe1e73f167edffbd257fede213e590a773a054668fb7e02",
+      "patchSha256": "d60abfe581472be8ca2a37aa7c2efcfb02579708f901de04ed566c237442b7ce",
+      "patchBytes": 1155,
+      "provenance": "01889b4-own-parent-followup-compatible-port"
+    },
+    {
+      "path": "packages/core/src/rox2/__tests__/platform-contract.test.ts",
+      "patchPath": "/tmp/rox-core-integration-gate-ultra-20260930/patches/05-packages__core__src__rox2____tests____platform-contract.test.ts.patch",
+      "baseSha256": "da5a6f6d2a0c1bcfd668e7945715747cd206031a3c7e0a30fb6f490d23e58d8a",
+      "resultSha256": "e02c8fe55eea185a199e55cb6f6ab642c55dd623417c0f02709df8871cb24fb9",
+      "patchSha256": "82208db079d22217c80447ed59a2e0e4ead1590b05fba0437dee857750f74cac",
+      "patchBytes": 8132,
+      "provenance": "01889b4-own-parent-followup-compatible-port"
+    },
+    {
+      "path": "packages/core/src/tasks/personal/store.ts",
+      "patchPath": "/tmp/rox-core-integration-gate-ultra-20260930/patches/06-packages__core__src__tasks__personal__store.ts.patch",
+      "baseSha256": "d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c",
+      "resultSha256": "8778151de654ca416591f18f069c760f4b8a4f1bd36d157f91bfcd14f43fb8aa",
+      "patchSha256": "ff522085b0d10f785c21b236e016830bafe047ffc19dee6a0ce51f7d46294936",
+      "patchBytes": 973,
+      "provenance": "f8982a04-own-parent-repair"
+    },
+    {
+      "path": "packages/core/src/tasks/personal/things.test.ts",
+      "patchPath": "/tmp/rox-core-integration-gate-ultra-20260930/patches/07-packages__core__src__tasks__personal__things.test.ts.patch",
+      "baseSha256": "1b1fda8ce1ed38494e426c40304002bdc13dc60adfa414a7b8193bdd0bea9294",
+      "resultSha256": "41574e8f5f5c6a6dc3eb3b32455d5f809bb6f3e88a0f4a4d6b3729a31c8f2e4c",
+      "patchSha256": "405eb55d2c9fcfc2be75f7e899dd6de43eb8b837f21f275f911c34fb1baf94db",
+      "patchBytes": 3344,
+      "provenance": "f8982a04-own-parent-repair"
+    }
+  ],
+  "verification": {
+    "patchCheck": "pass",
+    "whitespaceCheck": "pass",
+    "independentApplyResultHashes": "pass",
+    "sourceScope": "exact-seven-files",
+    "rootApplicationSourceAccess": "none",
+    "rootInstalledExternalDependencyAccess": "six-authorized-readonly-links",
+    "rootGitMutations": "none"
+  }
+}

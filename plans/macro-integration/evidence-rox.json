@@ -1,0 +1,902 @@
+[
+  {
+    "id": "ROX-001",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+    "symbol": "APP_NAV_DESTINATIONS",
+    "lineStart": 87,
+    "lineEnd": 197,
+    "claim": "Реестр native Sessions, Projects, Pages, Memory, Tasks, Meetings, Sources, Skills, Notes, Automations, Connections, Settings."
+  },
+  {
+    "id": "ROX-002",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+    "symbol": "AppNavDestinationId",
+    "lineStart": 51,
+    "lineEnd": 65,
+    "claim": "Union идентификаторов не включает meetings, хотя destination присутствует ниже."
+  },
+  {
+    "id": "ROX-003",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/shared/routes.ts",
+    "symbol": "routes.view",
+    "lineStart": 171,
+    "lineEnd": 295,
+    "claim": "Native routes Tasks, Inbox, Feed, Meetings, Notes, Projects, Pages, Browser, Knowledge, Terminal."
+  },
+  {
+    "id": "ROX-004",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+    "symbol": "MainContentPanel",
+    "lineStart": 322,
+    "lineEnd": 541,
+    "claim": "Routes доходят до native PageView, ProjectsHomeInMain, TasksPage, MeetingsPage, InboxPage, NotesPage, ChatPage; не только nav labels."
+  },
+  {
+    "id": "ROX-005",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+    "symbol": "NavigationProvider.syncUrl",
+    "lineStart": 276,
+    "lineEnd": 333,
+    "claim": "URL сериализует panel routes/proportions/focused panel; semantic history исключает layout-only updates."
+  },
+  {
+    "id": "ROX-006",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/platform/surfaces/types.ts",
+    "symbol": "SurfaceTab / SurfaceDescriptor",
+    "lineStart": 35,
+    "lineEnd": 65,
+    "claim": "Session, Knowledge, Browser, Database, CloudRun, Extension, Diff, Terminal; entity detail generic variant пока нет."
+  },
+  {
+    "id": "ROX-007",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/platform/surfaces/registry.ts",
+    "symbol": "createSurfaceRegistry",
+    "lineStart": 59,
+    "lineEnd": 61,
+    "claim": "Платформа уже предоставляет contribution/resolve seam для поверхностей."
+  },
+  {
+    "id": "ROX-008",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/rox2/platform-contract.ts",
+    "symbol": "Rox2Entity / Rox2Relation / Rox2Event",
+    "lineStart": 17,
+    "lineEnd": 161,
+    "claim": "Универсальный typed seam типов, relations, permissions и event causation/correlation существует, I/O отсутствует."
+  },
+  {
+    "id": "ROX-009",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/rox2/platform-contract.ts",
+    "symbol": "formatRox2EntityId / Rox2EntityRef",
+    "lineStart": 218,
+    "lineEnd": 247,
+    "claim": "entityId=kind:id; ref workspaceId/entityId/revisionId/accountNamespace; external binding provider/account/remoteType/remoteId."
+  },
+  {
+    "id": "ROX-010",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/rox2/platform-contract.ts",
+    "symbol": "registerExternalBinding",
+    "lineStart": 336,
+    "lineEnd": 374,
+    "claim": "Стабильный повторный импорт, quarantine workspace mismatch/binding collision; in-memory index."
+  },
+  {
+    "id": "ROX-011",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/rox2/platform-contract.ts",
+    "symbol": "ROX2_RELATION_RULES / wouldCreateRelationCycle",
+    "lineStart": 380,
+    "lineEnd": 438,
+    "claim": "Domain/range/cycle/deletion правила существуют; member-of ограничен session/note/task → project."
+  },
+  {
+    "id": "ROX-012",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/rox2/surface-context.ts",
+    "symbol": "bindSurfaceContext",
+    "lineStart": 31,
+    "lineEnd": 71,
+    "claim": "Контекст поверхности для agent session: refs, revision map, snapshot/live policy, selection, token estimate."
+  },
+  {
+    "id": "ROX-013",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/types/message.ts",
+    "symbol": "MessageRole",
+    "lineStart": 8,
+    "lineEnd": 22,
+    "claim": "Сообщения agent transcript ролей user/assistant/tool/status/error/plan/auth/thinking, не human author model."
+  },
+  {
+    "id": "ROX-014",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/types/message.ts",
+    "symbol": "Message",
+    "lineStart": 252,
+    "lineEnd": 294,
+    "claim": "id/role/content/timestamp/tool metadata/parentToolUseId/attachments; human membership transport не является этой моделью."
+  },
+  {
+    "id": "ROX-015",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/sessions/types.ts",
+    "symbol": "SessionConfig",
+    "lineStart": 118,
+    "lineEnd": 240,
+    "claim": "Agent session metadata: model/providers/permission mode/project/status/share capability; хранение отдельно от team comments."
+  },
+  {
+    "id": "ROX-016",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/sessions/storage.ts",
+    "symbol": "getSessionFilePath",
+    "lineStart": 80,
+    "lineEnd": 87,
+    "claim": "JSONL session persistence module; exact file structure определена реализацией."
+  },
+  {
+    "id": "ROX-017",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/pages/storage.ts",
+    "symbol": "PAGE_* constants / getWorkspacePagesPath",
+    "lineStart": 40,
+    "lineEnd": 120,
+    "claim": "Page хранит page.json,index.html,data/snapshot.json,script-private SQLite store.sqlite,thumbnail.jpg."
+  },
+  {
+    "id": "ROX-018",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/types/page.ts",
+    "symbol": "PageConfig",
+    "lineStart": 294,
+    "lineEnd": 320,
+    "claim": "Стабильный id/slug/kind/projectId/refresh/contentDigest/source action grants/Cloudflare share pointer."
+  },
+  {
+    "id": "ROX-019",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/pages/storage.ts",
+    "symbol": "createPage",
+    "lineStart": 281,
+    "lineEnd": 310,
+    "claim": "Создание persisted HTML Page metadata; существующую Pages модель нельзя молча заменить Markdown документом."
+  },
+  {
+    "id": "ROX-020",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/components/pages/PageFrame.tsx",
+    "symbol": "sandboxForKind / PageFrame",
+    "lineStart": 74,
+    "lineEnd": 95,
+    "claim": "Sandboxed page frame; границу нужно сохранить для исполняемого HTML."
+  },
+  {
+    "id": "ROX-021",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/handlers/rpc/pages.ts",
+    "symbol": "registerPagesHandlers",
+    "lineStart": 15,
+    "lineEnd": 60,
+    "claim": "Pages RPC include CRUD/data/source actions/grants/refresh/share flow; native surface уже имеет backend."
+  },
+  {
+    "id": "ROX-022",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+    "symbol": "NotesPage",
+    "lineStart": 7,
+    "lineEnd": 14,
+    "claim": "Native Notes используют React TiptapMarkdownEditor."
+  },
+  {
+    "id": "ROX-023",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+    "symbol": "TiptapMarkdownEditor",
+    "lineStart": 252,
+    "lineEnd": 347,
+    "claim": "StarterKit/task items/Markdown/Mermaid/LaTeX/wiki links/hash tags/comments; CRDT plugin в изученном extension list отсутствует."
+  },
+  {
+    "id": "ROX-024",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/handlers/rpc/notes.ts",
+    "symbol": "noteIdFromRelativePath / assertSafeNoteId",
+    "lineStart": 143,
+    "lineEnd": 169,
+    "claim": "Note id основан на относительном пути .md; безопасность пути и imported LOCAL_ONLY enforced."
+  },
+  {
+    "id": "ROX-025",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/handlers/rpc/notes.ts",
+    "symbol": "saveNote",
+    "lineStart": 502,
+    "lineEnd": 523,
+    "claim": "optional expectedRevision contentHash check, затем writeFile; это snapshot compare, не CRDT/atomic transaction."
+  },
+  {
+    "id": "ROX-026",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+    "symbol": "NotesPage.saveCurrentNote",
+    "lineStart": 885,
+    "lineEnd": 894,
+    "claim": "Основной UI save передаёт три параметра; optional expectedRevision не передаётся."
+  },
+  {
+    "id": "ROX-027",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/handlers/rpc/notes.ts",
+    "symbol": "registerNotesHandlers.notes.SAVE",
+    "lineStart": 994,
+    "lineEnd": 1015,
+    "claim": "RPC принимает expectedRevision, обновляет vault index и emits notes.CHANGED."
+  },
+  {
+    "id": "ROX-028",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/knowledge/vault-index.ts",
+    "symbol": "vault-index",
+    "lineStart": 45,
+    "lineEnd": 92,
+    "claim": "SQLite vault documents/backlinks/tasks metadata; local index отдельно от глобального поискового contract."
+  },
+  {
+    "id": "ROX-029",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/knowledge/vault-index.ts",
+    "symbol": "documents_fts",
+    "lineStart": 318,
+    "lineEnd": 337,
+    "claim": "FTS5 documents index и SQLite triggers; optional Bun SQLite driver."
+  },
+  {
+    "id": "ROX-030",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/rox2/notes-engine.ts",
+    "symbol": "createNativeNotesEngine",
+    "lineStart": 391,
+    "lineEnd": 472,
+    "claim": "Отдельный pure native notes revision engine/read/save/rename; не доказательство его подключения в NotesPage RPC file path."
+  },
+  {
+    "id": "ROX-031",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/knowledge/refs.ts",
+    "symbol": "KnowledgeRef / CraftRef / KNOWLEDGE_MENTION_PATTERN",
+    "lineStart": 9,
+    "lineEnd": 55,
+    "claim": "SiYuan/provider ref grammar плюс Craft session/run/skill/automation refs; существующий формат упоминаний требует compatibility bridge."
+  },
+  {
+    "id": "ROX-032",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/knowledge/provider.ts",
+    "symbol": "KnowledgeProvider / createKnowledgeRegistry",
+    "lineStart": 104,
+    "lineEnd": 156,
+    "claim": "Search/read/tree/backlinks provider abstraction уже существует."
+  },
+  {
+    "id": "ROX-033",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/tasks/personal/types.ts",
+    "symbol": "PersonalTask / TaskLink / TaskProject",
+    "lineStart": 8,
+    "lineEnd": 114,
+    "claim": "Personal task list/status/dates/priority/recurrence/checklist/reminders/source/link/backlink; assigneeUserId/workspaceId не объявлены в PersonalTask."
+  },
+  {
+    "id": "ROX-034",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/tasks/personal-persist.ts",
+    "symbol": "PersonalTaskPersistStore",
+    "lineStart": 74,
+    "lineEnd": 113,
+    "claim": "Canonical personal KV per config-dir task JSON с монотонной revision и idempotent unchanged write."
+  },
+  {
+    "id": "ROX-035",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/handlers/rpc/personal-tasks.ts",
+    "symbol": "personalTasksStore / registerPersonalTasksHandlers",
+    "lineStart": 29,
+    "lineEnd": 69,
+    "claim": "Config-dir scoped LIST без workspace аргумента; CHANGED broadcast all; нет multiuser task ACL на этом seam."
+  },
+  {
+    "id": "ROX-036",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/lib/personal-tasks-sync.ts",
+    "symbol": "hydratePersonalTasksFrom",
+    "lineStart": 91,
+    "lineEnd": 120,
+    "claim": "LocalStorage cache → canonical RPC migration, pre-migration raw backup/quarantine; migration evidence не удалять."
+  },
+  {
+    "id": "ROX-037",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/tasks/schema.ts",
+    "symbol": "TaskSpecSchema",
+    "lineStart": 190,
+    "lineEnd": 248,
+    "claim": "Workflow DAG YAML task — отдельная entity/семантика от personal tasks."
+  },
+  {
+    "id": "ROX-038",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/session-tools-core/src/tool-defs.ts",
+    "symbol": "TOOL_DESCRIPTIONS.create_task",
+    "lineStart": 687,
+    "lineEnd": 693,
+    "claim": "create_task пишет task.yaml/orchestrator session и не запускает workflow; это не команда personal task."
+  },
+  {
+    "id": "ROX-039",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/projects/types.ts",
+    "symbol": "ProjectConfig / ProjectPromptContext",
+    "lineStart": 35,
+    "lineEnd": 113,
+    "claim": "Native Project config/slug/context/workingDirectory/assets/Kanban archive, memory prompt."
+  },
+  {
+    "id": "ROX-040",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/handlers/rpc/projects.ts",
+    "symbol": "registerProjectsHandlers",
+    "lineStart": 27,
+    "lineEnd": 165,
+    "claim": "Native persisted CRUD/assets, workspace push, creation notes folder, delete unbinds sessions/pages."
+  },
+  {
+    "id": "ROX-041",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/rox2/project-membership.ts",
+    "symbol": "Rox2ProjectMembership / ProjectMembershipStore",
+    "lineStart": 13,
+    "lineEnd": 36,
+    "claim": "Many-to-many entity→project relation roles primary/member/reference без копирования history."
+  },
+  {
+    "id": "ROX-042",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+    "symbol": "DossierEntity",
+    "lineStart": 8,
+    "lineEnd": 44,
+    "claim": "Native contextual CRM precursor person/company aliases/org/notes/promises/agent brief."
+  },
+  {
+    "id": "ROX-043",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+    "symbol": "DossierPage",
+    "lineStart": 94,
+    "lineEnd": 156,
+    "claim": "Workspace JSON state, text-matched touches from sessions/tasks/meetings/feed/notes; не CRM mail enrichment pipeline."
+  },
+  {
+    "id": "ROX-044",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/calendar/types.ts",
+    "symbol": "CalendarEvent",
+    "lineStart": 22,
+    "lineEnd": 42,
+    "claim": "Account/calendar scoped remote ID, dates/timezone/allDay/recurrence/etag/localDirty; provider-neutral event seam частично есть."
+  },
+  {
+    "id": "ROX-045",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/calendar/adapters.ts",
+    "symbol": "CalendarAdapter",
+    "lineStart": 9,
+    "lineEnd": 17,
+    "claim": "Текущий interface только available/listEvents, без create/update/RSVP."
+  },
+  {
+    "id": "ROX-046",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/calendar/adapters.ts",
+    "symbol": "createProductionAdapter / isCalendarConnectorWired",
+    "lineStart": 112,
+    "lineEnd": 137,
+    "claim": "Production factory всегда UnavailableCalendarAdapter; env presence не означает live provider."
+  },
+  {
+    "id": "ROX-047",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/shared/mail-local.ts",
+    "symbol": "MAIL_IPC / MailMessage / MailLocalApi",
+    "lineStart": 12,
+    "lineEnd": 142,
+    "claim": "Actual Electron mail domain and IPC read/list/compose/reply/forward/drafts/labels flags/attachments."
+  },
+  {
+    "id": "ROX-048",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/main/mail/mail-service.ts",
+    "symbol": "MailService.jmap / startPush",
+    "lineStart": 289,
+    "lineEnd": 322,
+    "claim": "Main-process JMAP client получает secret via credentials; renderer secret не получает; push subscription."
+  },
+  {
+    "id": "ROX-049",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/main/mail/mail-service.ts",
+    "symbol": "MailService.send / saveDraft",
+    "lineStart": 428,
+    "lineEnd": 467,
+    "claim": "Отправка/replace draft/identity/attachments через JMAP, concrete production IO при server connection."
+  },
+  {
+    "id": "ROX-050",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/mail/jmap-client.ts",
+    "symbol": "JmapClient",
+    "lineStart": 140,
+    "lineEnd": 174,
+    "claim": "JMAP adapter module separate from mail UI; root neutral provider adapter registry пока нет."
+  },
+  {
+    "id": "ROX-051",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/pages/InboxPage.tsx",
+    "symbol": "InboxPage",
+    "lineStart": 91,
+    "lineEnd": 121,
+    "claim": "Unified UI attention aggregator agent approvals/proposals/unread plus mail section; notification persistent model не единый."
+  },
+  {
+    "id": "ROX-052",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/feed/types.ts",
+    "symbol": "FeedItem / FeedTab",
+    "lineStart": 10,
+    "lineEnd": 55,
+    "claim": "Agents/team/news/subscriptions activity/feed representation существует."
+  },
+  {
+    "id": "ROX-053",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/meetings/conation/crm.ts",
+    "symbol": "proposeCrmEdit / sendCrm",
+    "lineStart": 29,
+    "lineEnd": 61,
+    "claim": "Conation CRM live edit/send всегда blocked, identity account/type/remoteId resolved; это не native CRM implementation."
+  },
+  {
+    "id": "ROX-054",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/meetings/conation/calendar-calls.ts",
+    "symbol": "applyCalendarWrite / bindCall / fakeDialerEnabled",
+    "lineStart": 24,
+    "lineEnd": 50,
+    "claim": "Conation calendar/call writes fail-closed, fake dialer disabled."
+  },
+  {
+    "id": "ROX-055",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/platform/conation/conation-mail-panels.ts",
+    "symbol": "attemptConationMailSend / attemptConationChannelPost",
+    "lineStart": 29,
+    "lineEnd": 51,
+    "claim": "Conation mail/channel send functions не вызывают network endpoint."
+  },
+  {
+    "id": "ROX-056",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/conation/soup/client.ts",
+    "symbol": "SoupClient",
+    "lineStart": 15,
+    "lineEnd": 22,
+    "claim": "Read-only GraphQL ping/page/group queries; mutation helpers отсутствуют."
+  },
+  {
+    "id": "ROX-057",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/meetings/model.ts",
+    "symbol": "MEETING_KIND / MeetingEntityRef",
+    "lineStart": 11,
+    "lineEnd": 37,
+    "claim": "Core Meeting специализация Rox2 call; revision refs/evidence spans/proposals."
+  },
+  {
+    "id": "ROX-058",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/shared/meetings-local.ts",
+    "symbol": "LocalMeeting / LocalTranscript",
+    "lineStart": 84,
+    "lineEnd": 124,
+    "claim": "Отдельная local recording meeting model с audio/transcript/summary/summaryRun/actions/docs."
+  },
+  {
+    "id": "ROX-059",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/lib/meetings/recorder.ts",
+    "symbol": "startRecording",
+    "lineStart": 126,
+    "lineEnd": 183,
+    "claim": "getUserMedia→MediaRecorder→chunk append promises; реальная microphone capture code path."
+  },
+  {
+    "id": "ROX-060",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/main/meetings/local-store.ts",
+    "symbol": "LocalMeetingStore.recStop / recover",
+    "lineStart": 189,
+    "lineEnd": 260,
+    "claim": "part audio finalize/remux/storage/recovery после умершего capture owner."
+  },
+  {
+    "id": "ROX-061",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/main/meetings/local-asr.ts",
+    "symbol": "detectEngine",
+    "lineStart": 36,
+    "lineEnd": 65,
+    "claim": "Локальные whisper-cli/model/ffmpeg prerequisites; отсутствие показывается unavailable."
+  },
+  {
+    "id": "ROX-062",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/main/meetings/local-store.ts",
+    "symbol": "LocalMeetingStore.transcribe",
+    "lineStart": 333,
+    "lineEnd": 436,
+    "claim": "ASR decode/runWhisper/transcript JSON+Markdown storage; требуется installed engine."
+  },
+  {
+    "id": "ROX-063",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/pages/meetings/LocalMeetingDetail.tsx",
+    "symbol": "LocalMeetingDetail.generateSummary",
+    "lineStart": 212,
+    "lineEnd": 228,
+    "claim": "Agent session summary из transcript, participant names/language; сохраняется summaryRun pointer."
+  },
+  {
+    "id": "ROX-064",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/meetings/rooms.ts",
+    "symbol": "ROOM_PROVIDER_DECISION / joinRoom / roomCapabilityEnabled",
+    "lineStart": 12,
+    "lineEnd": 43,
+    "claim": "SFU provider not chosen; joinRoom always fails; native call room не реализован."
+  },
+  {
+    "id": "ROX-065",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/meetings/capture.ts",
+    "symbol": "nativeCaptureBinding / applyNativeCaptureIntent",
+    "lineStart": 9,
+    "lineEnd": 29,
+    "claim": "Server capture native-journal intent не OS media capture."
+  },
+  {
+    "id": "ROX-066",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/meetings/finalize.ts",
+    "symbol": "applyNativeFinalizeIntent",
+    "lineStart": 22,
+    "lineEnd": 72,
+    "claim": "Server finalization state без ASR; не evidence media processing completion."
+  },
+  {
+    "id": "ROX-067",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/meetings/journal.ts",
+    "symbol": "MeetingJournal",
+    "lineStart": 43,
+    "lineEnd": 190,
+    "claim": "Single-writer snapshot journal, command id dedupe/CAS revision/checksum/quarantine/outbox."
+  },
+  {
+    "id": "ROX-068",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/meetings/executor.ts",
+    "symbol": "executeApprovedProposal",
+    "lineStart": 29,
+    "lineEnd": 117,
+    "claim": "Approval+revoke check+authorization+readback result handling — reusable side-effect policy pattern."
+  },
+  {
+    "id": "ROX-069",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/team/types.ts",
+    "symbol": "TeamLocalState / TeamTarget / TeamOutboxOp",
+    "lineStart": 14,
+    "lineEnd": 146,
+    "claim": "Human collaboration local comments/mentions/assignments/handoff/access/approvals/activity/outbox существует отдельно от transcript."
+  },
+  {
+    "id": "ROX-070",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/team/sync.ts",
+    "symbol": "LocalOnlyTeamSyncAdapter / createTeamSyncAdapter",
+    "lineStart": 37,
+    "lineEnd": 68,
+    "claim": "Factory always local-only; push accepts none, pull null, org-server-required."
+  },
+  {
+    "id": "ROX-071",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/components/team/team-store.ts",
+    "symbol": "TEAM_STATE_STORAGE_KEY",
+    "lineStart": 18,
+    "lineEnd": 51,
+    "claim": "Team state persisted localStorage this device, не workspace server durable delivery."
+  },
+  {
+    "id": "ROX-072",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/team/mentions.ts",
+    "symbol": "resolveMentions",
+    "lineStart": 25,
+    "lineEnd": 38,
+    "claim": "Plain @handles → real roster userIds; неизвестные handles игнорируются, canonical entity mentions отсутствуют."
+  },
+  {
+    "id": "ROX-073",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/platform/identity/types.ts",
+    "symbol": "Profile / WorkspaceMembership / ServiceConnection",
+    "lineStart": 69,
+    "lineEnd": 136,
+    "claim": "Local/cloud Profile, role types, connection credentialRef; WorkspaceMembership types-only remote contract."
+  },
+  {
+    "id": "ROX-074",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/orgs/storage.ts",
+    "symbol": "ORGS_FILE",
+    "lineStart": 32,
+    "lineEnd": 43,
+    "claim": "Organizations/members/device-local invites in orgs.json; не authoritative org server."
+  },
+  {
+    "id": "ROX-075",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/platform/identity/grants.ts",
+    "symbol": "AccessGrant",
+    "lineStart": 7,
+    "lineEnd": 21,
+    "claim": "CredentialRef consumer actions/resources scope; это credential delegation, не entity grant."
+  },
+  {
+    "id": "ROX-076",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/transport/types.ts",
+    "symbol": "RequestContext / RpcHandlerOptions",
+    "lineStart": 7,
+    "lineEnd": 22,
+    "claim": "clientId/workspaceId/webContentsId, opt-in localElectron access; authenticated user principal не объявлен."
+  },
+  {
+    "id": "ROX-077",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/transport/server.ts",
+    "symbol": "WsRpcServerOptions",
+    "lineStart": 106,
+    "lineEnd": 161,
+    "claim": "Token/cookie auth gate + local renderer binding доступны, но это не per-entity multiuser ACL."
+  },
+  {
+    "id": "ROX-078",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/services/search.ts",
+    "symbol": "searchSessions",
+    "lineStart": 187,
+    "lineEnd": 238,
+    "claim": "ripgrep JSONL session-only search; not unified persistent entity index."
+  },
+  {
+    "id": "ROX-079",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/memory/types.ts",
+    "symbol": "Lesson",
+    "lineStart": 12,
+    "lineEnd": 58,
+    "claim": "Memory rule provenance/scope/conflicts/reinforcement metadata; сохранить domain identity."
+  },
+  {
+    "id": "ROX-080",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/memory/fts-index.ts",
+    "symbol": "lessons/history/context FTS5",
+    "lineStart": 98,
+    "lineEnd": 102,
+    "claim": "Memory FTS SQLite отдельный index lessons/history/context, не универсальная entity search."
+  },
+  {
+    "id": "ROX-081",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/platform/resources/types.ts",
+    "symbol": "ResourceItem / ResourceProvider",
+    "lineStart": 11,
+    "lineEnd": 56,
+    "claim": "Omnibox ресурсный fan-out/route/mention seam; entity kinds CRM/call/calendar/task не представлены в enum."
+  },
+  {
+    "id": "ROX-082",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/main/notifications.ts",
+    "symbol": "showNotification",
+    "lineStart": 54,
+    "lineEnd": 91,
+    "claim": "OS adapter привязан к workspaceId/sessionId и click navigation; отдельная persistent notification entity не создаётся здесь."
+  },
+  {
+    "id": "ROX-083",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/automations/event-bus.ts",
+    "symbol": "EventPayloadMap",
+    "lineStart": 134,
+    "lineEnd": 176,
+    "claim": "Существующие PascalCase session/agent/knowledge/cloud events; preserve compat names via mapping."
+  },
+  {
+    "id": "ROX-084",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/automations/event-bus.ts",
+    "symbol": "DEFAULT_RATE_LIMIT / WorkspaceEventBus.emit",
+    "lineStart": 188,
+    "lineEnd": 288,
+    "claim": "Bus rate limit defaults 10/min/type, Scheduler 60/min; overflow drops events, поэтому bus не durable source events."
+  },
+  {
+    "id": "ROX-085",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/automations/types.ts",
+    "symbol": "WebhookAction",
+    "lineStart": 93,
+    "lineEnd": 114,
+    "claim": "Automation action endpoints exist, alongside command/prompt/knowledge actions; доменный event bridge нужно расширить."
+  },
+  {
+    "id": "ROX-086",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/agent/session-tool-defs.ts",
+    "symbol": "buildSessionToolDefs",
+    "lineStart": 61,
+    "lineEnd": 107,
+    "claim": "Shared Pi/OMP session tool defs + source MCP proxies + browser/mini model gates + dedupe."
+  },
+  {
+    "id": "ROX-087",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/session-tools-core/src/tool-defs.ts",
+    "symbol": "SESSION_TOOL_DEFS pages/knowledge/agent teams",
+    "lineStart": 889,
+    "lineEnd": 921,
+    "claim": "Registry already includes CRUD Pages, knowledge tools, sessions, Agent Teams, messaging bindings."
+  },
+  {
+    "id": "ROX-088",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/mcp/mcp-pool.ts",
+    "symbol": "McpClientPool",
+    "lineStart": 104,
+    "lineEnd": 157,
+    "claim": "Central source MCP/API client ownership, per-source proxy names; domain tools should reuse execution seam."
+  },
+  {
+    "id": "ROX-089",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/agent/knowledge-permissions.ts",
+    "symbol": "assertKnowledgeActionAllowed",
+    "lineStart": 70,
+    "lineEnd": 89,
+    "claim": "safe denied; ask/auto does not remove human apply policy. Agent permission mode differs from entity ACL."
+  },
+  {
+    "id": "ROX-090",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/cloud-runner/src/native-provider.ts",
+    "symbol": "NativeRunProvider",
+    "lineStart": 39,
+    "lineEnd": 71,
+    "claim": "Compute-run RPC adapter, not collaboration backend; runtime provider contracts reuse for jobs only."
+  }
+]

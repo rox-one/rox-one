@@ -1,0 +1,57 @@
+{
+  "schema": "wp48_93c1d8cff4e7",
+  "root": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-qyenqu",
+  "port": 52802,
+  "baseline": {
+    "http": 200,
+    "evidenceState": "review_required",
+    "counts": {
+      "receipts": 1,
+      "events": 1,
+      "revision": "1"
+    }
+  },
+  "variant": {
+    "onlyMutated": [
+      "license_component.evidence",
+      "license_component.audit_digest"
+    ],
+    "forgedEvidence": {
+      "state": "reviewed_exact_artifact",
+      "findings": [],
+      "components": [
+        {
+          "id": "fixture",
+          "name": "@fixture/wp48",
+          "version": "1.0.0",
+          "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+          "licenseExpression": "MIT"
+        }
+      ]
+    },
+    "forgedDigest": "6480c3d715bcda066c78b7c42d60a9f4bc444d3776cc165517f70709e76a3f75",
+    "httpGetStatus": 503,
+    "get": {
+      "error": {
+        "code": "PROVIDER_UNAVAILABLE"
+      }
+    },
+    "httpListStatus": 503,
+    "list": {
+      "error": {
+        "code": "PROVIDER_UNAVAILABLE"
+      }
+    },
+    "wsGet": {
+      "deniedCode": "PROVIDER_UNAVAILABLE"
+    },
+    "wsList": {
+      "deniedCode": "PROVIDER_UNAVAILABLE"
+    },
+    "httpOriginalReceiptReplayStatus": 200,
+    "originalReceiptExact": true,
+    "originalReceiptEvidenceState": "review_required"
+  },
+  "legalApproval": false,
+  "sourceOrOracleMutation": false
+}

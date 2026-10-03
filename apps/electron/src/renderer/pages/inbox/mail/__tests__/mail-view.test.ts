@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import type { MailMessage } from '../../../../../shared/mail-local'
-import { buildDraft, draftFromMessage, emailIdFromItem, mailToInboxItem, statusKey } from '../mail-view'
+import { buildDraft, draftFromMessage, draftHasContent, emailIdFromItem, mailToInboxItem, statusKey } from '../mail-view'
 
 const msg: MailMessage = {
   id: 'e1', threadId: 't1', folderIds: ['i'], subject: 'План', preview: 'привет', receivedAt: Date.UTC(2026, 8, 29, 12),
@@ -29,8 +29,19 @@ describe('mail-view', () => {
     expect(fwd.to).toBe('')
     expect(fwd.subject).toBe('Fwd: План')
   })
-  it('reopens drafts', () => {
+  it('restores Bcc recipients and server-stored attachments from a saved draft', () => {
+    const attachment = { blobId: 'blob-1', name: 'report.txt', type: 'text/plain', size: 5, inline: false }
+    const draft = draftFromMessage({ ...msg, draft: true, bcc: [{ name: null, email: 'hidden@example.com' }], attachments: [attachment] })
+    expect(draft.bcc).toBe('hidden@example.com')
+    expect(draft.attachments).toEqual([attachment])
+  })
+  it('reopens saved drafts', () => {
     expect(draftFromMessage({ ...msg, draft: true }).draftId).toBe('e1')
+  })
+  it('keeps drafts whose only content is Bcc or a server-stored attachment', () => {
+    const attachment = { blobId: 'blob-1', name: 'report.txt', type: 'text/plain', size: 5, inline: false }
+    expect(draftHasContent({ mode: 'new', to: '', cc: '', bcc: 'hidden@example.com', subject: '', text: '' })).toBe(true)
+    expect(draftHasContent({ mode: 'new', to: '', cc: '', bcc: '', subject: '', text: '', attachments: [attachment] })).toBe(true)
   })
   it('maps status to honest keys', () => {
     expect(statusKey(null)).toBe('inbox.mail.status.loading')

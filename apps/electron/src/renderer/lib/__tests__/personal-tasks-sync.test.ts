@@ -23,25 +23,48 @@ function kv(initial: Record<string, string> = {}) {
 }
 
 /** In-memory stand-in for the personalTasks:* RPC (same semantics as the server service). */
-function fakeApi(initial: PersonalTasksSnapshot = { tasks: [], meta: null, migration: null }) {
+function fakeApi(initial: PersonalTasksSnapshot = { tasks: [], revisions: {}, meta: null, migration: null }) {
   const state = structuredClone(initial)
   const calls: string[] = []
   const api: PersonalTasksApi = {
     async personalTasksList() { calls.push('list'); return structuredClone(state) },
-    async personalTasksPut(tasks, meta) {
+    async personalTasksPut(writes, meta) {
       calls.push('put')
-      for (const task of tasks) {
-        const i = state.tasks.findIndex((t) => t.id === task.id)
-        if (i >= 0) state.tasks[i] = task
-        else state.tasks.push(task)
+      const accepted = []
+      const conflicts = []
+      const rejected: string[] = []
+      for (const write of writes) {
+        const i = state.tasks.findIndex((t) => t.id === write.task.id)
+        const revision = state.revisions[write.task.id]
+        if (write.expectedRevision !== (revision ?? null)) {
+          conflicts.push({ id: write.task.id, current: i < 0 ? null : { task: state.tasks[i]!, revision: revision! } })
+          continue
+        }
+        state.tasks[i < 0 ? state.tasks.length : i] = write.task
+        const nextRevision = (revision ?? 0) + 1
+        state.revisions[write.task.id] = nextRevision
+        accepted.push({ task: write.task, revision: nextRevision })
       }
       if (meta) state.meta = meta
-      return { written: tasks.length, rejected: [] }
+      return { accepted, conflicts, rejected }
     },
-    async personalTasksDelete(ids) {
+    async personalTasksDelete(deletes) {
       calls.push('delete')
-      state.tasks = state.tasks.filter((t) => !ids.includes(t.id))
-      return { removed: ids.length }
+      const removed: string[] = []
+      const conflicts = []
+      const rejected: string[] = []
+      for (const deletion of deletes) {
+        const i = state.tasks.findIndex((t) => t.id === deletion.id)
+        const revision = state.revisions[deletion.id]
+        if (i < 0 || revision !== deletion.expectedRevision) {
+          conflicts.push({ id: deletion.id, current: i < 0 ? null : { task: state.tasks[i]!, revision: revision! } })
+          continue
+        }
+        state.tasks.splice(i, 1)
+        delete state.revisions[deletion.id]
+        removed.push(deletion.id)
+      }
+      return { removed, conflicts, rejected }
     },
     async personalTasksMigrate(input: PersonalTasksMigrateInput) {
       calls.push('migrate')
@@ -50,6 +73,7 @@ function fakeApi(initial: PersonalTasksSnapshot = { tasks: [], meta: null, migra
       for (const task of input.bundle?.tasks ?? []) {
         if (state.tasks.some((t) => t.id === task.id)) continue
         state.tasks.push(task)
+        state.revisions[task.id] = 1
         imported += 1
       }
       state.migration = { migratedAt: 1, imported, skipped: 0, source: 'localStorage', ...(input.quarantined ? { quarantined: true } : {}) }

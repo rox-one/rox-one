@@ -1,0 +1,2473 @@
+{
+  "schemaVersion": 1,
+  "program": "macro-integration-revision-4",
+  "referenceCodeSha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+  "specDigest": "b9c78d5ee785601b7ea0e1612a4ae1ec56a7f2093657642c154d76458a9d90e9",
+  "launchState": "PREPARED_NOT_LAUNCHED",
+  "scope": "cloud coding packets; no credentials/purchase/deployment performed",
+  "lanes": {
+    "linux-domain": {
+      "environment": "Linux24.04, pinned Bun1.3.14, Node22, PostgreSQL for integration; targeted tests",
+      "proof": "domain/API/DB/concurrency/recovery and negative controls"
+    },
+    "linux-renderer": {
+      "environment": "Linux Chromium Playwright synthetic fixtures explicitly fixture",
+      "proof": "interactions/ARIA/loading/empty/error/keyboard/narrow/reduced-motion screenshots"
+    },
+    "macos-native": {
+      "environment": "macOS Electron pinned source build, controlled test workspace",
+      "proof": "IPC/preload/fonts/capture/import/device permissions actual runtime"
+    },
+    "provider-live": {
+      "environment": "dedicated test tenant/self-host media/provider sandbox, scoped ephemeral credentials",
+      "proof": "external read-back and callback/retry/reconciliation; never inferred from fixture"
+    }
+  },
+  "minimumResources": {
+    "linuxDomainDiskGiB": 8,
+    "linuxRendererDiskGiB": 16,
+    "ramGiB": 8,
+    "cpus": 4,
+    "meaning": "conservative preflight minimum; install/build footprint measured before expanding lane, not actual benchmark"
+  },
+  "environment": {
+    "bun": "1.3.14",
+    "node": "22",
+    "lockfile": "bun.lock",
+    "ci": "existing CI is self-hosted; this packet preparation does not provision a new runner"
+  },
+  "workPackages": [
+    {
+      "id": "WP-01",
+      "dependencies": [],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/projects/CreateProjectDialog.tsx",
+        "apps/electron/src/renderer/hooks/useProjects.ts",
+        "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "apps/workspace-service/migrations/01-domain-contract.sql",
+        "apps/workspace-service/src/modules/identity/commands.ts",
+        "apps/workspace-service/src/modules/identity/repository.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/server-core/src/handlers/rpc/identity.ts",
+        "packages/server-core/src/handlers/rpc/projects.ts",
+        "packages/server-core/src/transport/server.ts",
+        "packages/server-core/src/transport/types.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/orgs/types.ts",
+        "packages/shared/src/projects/storage.ts",
+        "packages/shared/src/workspace-domain/identity/contracts.ts",
+        "tests/macro-integration/ui/col-19.spec.ts",
+        "tests/macro-integration/wp-01.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-01.json",
+      "prompt": "cloud/macro-integration/packets/WP-01.md",
+      "packetSha256": "75f4aba935cdf3be75aeed5488a43270d1a6bbddf8ee85518cec0c932b40508d",
+      "promptSha256": "64fa11d3b70f62b3376bd5384c4cb8c3b6bf601e8c348ee84e18d4d05b058d22"
+    },
+    {
+      "id": "WP-02",
+      "dependencies": [
+        "WP-01"
+      ],
+      "allowedPaths": [
+        "apps/workspace-service/migrations/02-domain-contract.sql",
+        "apps/workspace-service/src/modules/graph/commands.ts",
+        "apps/workspace-service/src/modules/graph/repository.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/core/src/rox2/project-membership.ts",
+        "packages/core/src/rox2/surface-context.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/graph/contracts.ts",
+        "tests/macro-integration/wp-02.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-02.json",
+      "prompt": "cloud/macro-integration/packets/WP-02.md",
+      "packetSha256": "af90d6c63dff5c97439acc483633a623aee7809973d75cb1c5cb6f810dc8d57c",
+      "promptSha256": "f543d454c89f58ba798e10b541f63838745da3b5299c2c5e81df392565654c41"
+    },
+    {
+      "id": "WP-03",
+      "dependencies": [
+        "WP-01",
+        "WP-02"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/pages/SharePageDialog.tsx",
+        "apps/workspace-service/migrations/03-domain-contract.sql",
+        "apps/workspace-service/src/modules/identity/commands.ts",
+        "apps/workspace-service/src/modules/identity/repository.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/server-core/src/handlers/rpc/identity.ts",
+        "packages/server-core/src/transport/types.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/orgs/types.ts",
+        "packages/shared/src/workspace-domain/identity/contracts.ts",
+        "tests/macro-integration/wp-03.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-03.json",
+      "prompt": "cloud/macro-integration/packets/WP-03.md",
+      "packetSha256": "3c34adccc99ae4fc0712ab8d411f0bb1f5f55f8d0e3d744b631e2653bd7e4c9d",
+      "promptSha256": "8f41401fee9da12d1d07f1fb5336bfe876384c7c279ccd8556bdf5322ffa8aa0"
+    },
+    {
+      "id": "WP-04",
+      "dependencies": [
+        "WP-02",
+        "WP-03"
+      ],
+      "allowedPaths": [
+        "apps/workspace-service/migrations/04-domain-contract.sql",
+        "apps/workspace-service/src/modules/commands/commands.ts",
+        "apps/workspace-service/src/modules/commands/repository.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/server-core/src/handlers/rpc/command-gateway.ts",
+        "packages/server-core/src/handlers/rpc/projects.ts",
+        "packages/server-core/src/transport/types.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/projects/storage.ts",
+        "packages/shared/src/workspace-domain/commands/contracts.ts",
+        "tests/macro-integration/wp-04.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-04.json",
+      "prompt": "cloud/macro-integration/packets/WP-04.md",
+      "packetSha256": "acbd87acffba4d1d5c8773d771bb806fefb8255f7ce485964344455b2360721c",
+      "promptSha256": "6c8dba0c61f15ff5ef0b9f061fb10fee7ba5abad7e66490acc54a96962a008f5"
+    },
+    {
+      "id": "WP-05",
+      "dependencies": [
+        "WP-04"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/lib/personal-tasks-sync.ts",
+        "apps/workspace-service/migrations/05-domain-contract.sql",
+        "apps/workspace-service/src/modules/commands/commands.ts",
+        "apps/workspace-service/src/modules/commands/repository.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/core/src/tasks/personal/cache.ts",
+        "packages/core/src/tasks/personal/store.ts",
+        "packages/server-core/src/handlers/rpc/command-gateway.ts",
+        "packages/server-core/src/transport/types.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/commands/contracts.ts",
+        "tests/macro-integration/wp-05.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-05.json",
+      "prompt": "cloud/macro-integration/packets/WP-05.md",
+      "packetSha256": "c605a76556582aedab83ac7c7128492af048ff182a1c8c22b95d4b0bd552509c",
+      "promptSha256": "439f0740bbc164609d0caaeb10c9a59a19e41569d311f7e1f0499a94d1b18b9f"
+    },
+    {
+      "id": "WP-06",
+      "dependencies": [
+        "WP-04"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/memory/MemoryScreen.tsx",
+        "apps/electron/src/renderer/platform/Omnibox.tsx",
+        "apps/workspace-service/migrations/06-domain-contract.sql",
+        "apps/workspace-service/src/modules/search/commands.ts",
+        "apps/workspace-service/src/modules/search/repository.ts",
+        "packages/core/src/rox2/surface-context.ts",
+        "packages/server-core/src/handlers/rpc/knowledge.ts",
+        "packages/server-core/src/handlers/rpc/memory.ts",
+        "packages/server-core/src/knowledge/vault-index.ts",
+        "packages/server-core/src/memory/fts-index.ts",
+        "packages/server-core/src/services/search.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/search/contracts.ts",
+        "tests/macro-integration/ui/sh-02.spec.ts",
+        "tests/macro-integration/wp-06.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-06.json",
+      "prompt": "cloud/macro-integration/packets/WP-06.md",
+      "packetSha256": "6198f7364f051cf6c33675dfe4ae1855847087e482f17ae054b1499318ad6d5f",
+      "promptSha256": "25e7e34f4cbcdd25922b2e53816ceaefec789c0d4cfd1820fd3f1ec59d97a4e6"
+    },
+    {
+      "id": "WP-07",
+      "dependencies": [
+        "WP-04",
+        "WP-03"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/main/notifications.ts",
+        "apps/electron/src/renderer/components/notifications/NotificationPanel.tsx",
+        "apps/electron/src/renderer/components/team/TeamInboxSection.tsx",
+        "apps/electron/src/renderer/hooks/useInboxItems.ts",
+        "apps/electron/src/renderer/pages/InboxPage.tsx",
+        "apps/electron/src/renderer/pages/inbox/inbox-model.ts",
+        "apps/workspace-service/migrations/07-domain-contract.sql",
+        "apps/workspace-service/src/modules/attention/commands.ts",
+        "apps/workspace-service/src/modules/attention/repository.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/team/state.ts",
+        "packages/shared/src/team/sync.ts",
+        "packages/shared/src/workspace-domain/attention/contracts.ts",
+        "tests/macro-integration/ui/sh-05.spec.ts",
+        "tests/macro-integration/ui/sh-06.spec.ts",
+        "tests/macro-integration/wp-07.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-07.json",
+      "prompt": "cloud/macro-integration/packets/WP-07.md",
+      "packetSha256": "4e90ce255d32cb73add13b035f238d6cb11f828f2f8ef770f903830136aa9706",
+      "promptSha256": "e58846449d062ad5d9fdedac7106ca76119185dfa3d52b16325d44e89a06af9a"
+    },
+    {
+      "id": "WP-08",
+      "dependencies": [
+        "WP-04",
+        "WP-03"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+        "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx",
+        "apps/electron/src/renderer/components/channels/ChannelDirectory.tsx",
+        "apps/electron/src/renderer/components/channels/ChannelView.tsx",
+        "apps/electron/src/renderer/components/channels/MessageThread.tsx",
+        "apps/electron/src/renderer/components/discussions/EntityDiscussion.tsx",
+        "apps/electron/src/renderer/components/messaging/MessageComposer.tsx",
+        "apps/electron/src/renderer/components/messaging/MessageTimeline.tsx",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+        "apps/electron/src/renderer/pages/ChatPage.tsx",
+        "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "apps/electron/src/shared/route-parser.ts",
+        "apps/electron/src/shared/routes.ts",
+        "apps/workspace-service/migrations/08-domain-contract.sql",
+        "apps/workspace-service/src/modules/messaging/commands.ts",
+        "apps/workspace-service/src/modules/messaging/repository.ts",
+        "packages/messaging-gateway/src/index.ts",
+        "packages/server-core/src/handlers/rpc/messaging.ts",
+        "packages/shared/src/agent/session-tool-defs.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/team/state.ts",
+        "packages/shared/src/team/sync.ts",
+        "packages/shared/src/team/types.ts",
+        "packages/shared/src/workspace-domain/messaging/contracts.ts",
+        "tests/macro-integration/ui/col-07.spec.ts",
+        "tests/macro-integration/ui/col-08.spec.ts",
+        "tests/macro-integration/ui/col-09.spec.ts",
+        "tests/macro-integration/ui/col-10.spec.ts",
+        "tests/macro-integration/wp-08.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-08.json",
+      "prompt": "cloud/macro-integration/packets/WP-08.md",
+      "packetSha256": "e20cf22422feaba0404d283ad577cc65e99a2b57f495dcd9465f835d65c98015",
+      "promptSha256": "602b4d224c98266425872926f2de2d066e85613386a2baaf8de95b9b43008f56"
+    },
+    {
+      "id": "WP-09",
+      "dependencies": [
+        "WP-08",
+        "WP-07",
+        "WP-06"
+      ],
+      "allowedPaths": [
+        "apps/workspace-service/migrations/09-domain-contract.sql",
+        "apps/workspace-service/src/modules/graph/commands.ts",
+        "apps/workspace-service/src/modules/graph/repository.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/core/src/rox2/project-membership.ts",
+        "packages/core/src/rox2/surface-context.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/graph/contracts.ts",
+        "tests/macro-integration/wp-09.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-09.json",
+      "prompt": "cloud/macro-integration/packets/WP-09.md",
+      "packetSha256": "6f13842e86dabf679d2aca9860fbe6d40df5a861dd1ee63daee910c4bac08947",
+      "promptSha256": "22a3764a59fbfd677e80643e4cd2c9e66e11a4ac32abb7eec3f978ce9c387593"
+    },
+    {
+      "id": "WP-10",
+      "dependencies": [
+        "WP-05",
+        "WP-03",
+        "WP-06",
+        "WP-09",
+        "WP-49",
+        "WP-51"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx",
+        "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+        "apps/electron/src/renderer/components/pages/CollaborativeDocumentEditor.tsx",
+        "apps/electron/src/renderer/components/pages/PageFrame.tsx",
+        "apps/electron/src/renderer/components/pages/PageView.tsx",
+        "apps/electron/src/renderer/components/pages/PagesHome.tsx",
+        "apps/electron/src/renderer/hooks/usePages.ts",
+        "apps/electron/src/renderer/pages/NotesPage.tsx",
+        "apps/electron/src/shared/routes.ts",
+        "apps/workspace-service/migrations/10-domain-contract.sql",
+        "apps/workspace-service/src/modules/pages/commands.ts",
+        "apps/workspace-service/src/modules/pages/repository.ts",
+        "packages/server-core/src/handlers/rpc/pages.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/pages/storage.ts",
+        "packages/shared/src/pages/types.ts",
+        "packages/shared/src/workspace-domain/collaboration/contracts.ts",
+        "packages/shared/src/workspace-domain/pages/contracts.ts",
+        "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+        "tests/macro-integration/ui/col-01.spec.ts",
+        "tests/macro-integration/ui/col-02.spec.ts",
+        "tests/macro-integration/wp-10.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-10.json",
+      "prompt": "cloud/macro-integration/packets/WP-10.md",
+      "packetSha256": "ba5b21606963b57308cfc1b4d0be05e919b10903fc5d406ce8ba066e5812843e",
+      "promptSha256": "fd4d04536740acc969ad809b2202d3e7247596ab902308e381dff4b5d0ef681b"
+    },
+    {
+      "id": "WP-11",
+      "dependencies": [
+        "WP-08",
+        "WP-09",
+        "WP-07",
+        "WP-04"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/tasks/CreateTaskFromMessageDialog.tsx",
+        "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx",
+        "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+        "apps/electron/src/renderer/pages/tasks/atoms.ts",
+        "apps/workspace-service/migrations/11-domain-contract.sql",
+        "apps/workspace-service/src/modules/tasks/commands.ts",
+        "apps/workspace-service/src/modules/tasks/repository.ts",
+        "packages/core/src/tasks/personal/rpc.ts",
+        "packages/core/src/tasks/personal/types.ts",
+        "packages/server-core/src/handlers/rpc/personal-tasks.ts",
+        "packages/server-core/src/tasks/personal-persist.ts",
+        "packages/server-core/src/tasks/personal-tasks-service.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/tasks/contracts.ts",
+        "tests/macro-integration/ui/col-15.spec.ts",
+        "tests/macro-integration/wp-11.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-11.json",
+      "prompt": "cloud/macro-integration/packets/WP-11.md",
+      "packetSha256": "72fb3b9106797d74ee8e45d5bcb5ca832d0583ae09447535603875bd87224568",
+      "promptSha256": "b4535263a89589c4f33a887ad3373f77b65574958c433439241e43e995af335e"
+    },
+    {
+      "id": "WP-12",
+      "dependencies": [
+        "WP-11",
+        "WP-02"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx",
+        "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "apps/electron/src/shared/routes.ts",
+        "apps/workspace-service/migrations/12-domain-contract.sql",
+        "apps/workspace-service/src/modules/projects/commands.ts",
+        "apps/workspace-service/src/modules/projects/repository.ts",
+        "packages/core/src/rox2/project-membership.ts",
+        "packages/core/src/rox2/surface-context.ts",
+        "packages/core/src/tasks/personal/types.ts",
+        "packages/server-core/src/handlers/rpc/projects.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/projects/storage.ts",
+        "packages/shared/src/projects/types.ts",
+        "packages/shared/src/workspace-domain/projects/contracts.ts",
+        "tests/macro-integration/ui/col-17.spec.ts",
+        "tests/macro-integration/wp-12.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-12.json",
+      "prompt": "cloud/macro-integration/packets/WP-12.md",
+      "packetSha256": "d2b220f2599fb67318f704de5969d8bf76b3bb82260e18d79abdc04c7044d507",
+      "promptSha256": "d355d1d9cdd3fecf187f486cab55e9b5b32abae03dc30e8e56398589c814da7b"
+    },
+    {
+      "id": "WP-13",
+      "dependencies": [
+        "WP-11"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/pages/TasksPage.tsx",
+        "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx",
+        "apps/electron/src/renderer/pages/tasks/TaskBoard.tsx",
+        "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+        "apps/electron/src/shared/routes.ts",
+        "apps/workspace-service/migrations/13-domain-contract.sql",
+        "apps/workspace-service/src/modules/tasks/commands.ts",
+        "apps/workspace-service/src/modules/tasks/repository.ts",
+        "packages/core/src/tasks/personal/types.ts",
+        "packages/server-core/src/handlers/rpc/personal-tasks.ts",
+        "packages/server-core/src/tasks/personal-tasks-service.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/tasks/contracts.ts",
+        "tests/macro-integration/ui/col-12.spec.ts",
+        "tests/macro-integration/ui/col-13.spec.ts",
+        "tests/macro-integration/ui/col-14.spec.ts",
+        "tests/macro-integration/wp-13.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-13.json",
+      "prompt": "cloud/macro-integration/packets/WP-13.md",
+      "packetSha256": "531c1a91d56c15facf52a623fc687e018074290f9e63a663e051b45108dfc9b7",
+      "promptSha256": "fb6119d8cdfa91bdf351d4e6330d7f2eb2a380510114d7b6948269317890b07c"
+    },
+    {
+      "id": "WP-14",
+      "dependencies": [
+        "WP-13",
+        "WP-07"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+        "apps/workspace-service/migrations/14-domain-contract.sql",
+        "apps/workspace-service/src/modules/tasks/commands.ts",
+        "apps/workspace-service/src/modules/tasks/repository.ts",
+        "packages/core/src/tasks/personal/types.ts",
+        "packages/server-core/src/handlers/rpc/personal-tasks.ts",
+        "packages/server-core/src/tasks/personal-tasks-service.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/tasks/contracts.ts",
+        "tests/macro-integration/ui/col-16.spec.ts",
+        "tests/macro-integration/ui/sh-18.spec.ts",
+        "tests/macro-integration/wp-14.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-14.json",
+      "prompt": "cloud/macro-integration/packets/WP-14.md",
+      "packetSha256": "deb8f427bb61a5155829f2d459d86b253f269f67b229d83cf751190208f25382",
+      "promptSha256": "932bfb08b0321fede33527e9f9a7a685bfb14a11da7fc8cbebc3eccdedf0e8d1"
+    },
+    {
+      "id": "WP-15",
+      "dependencies": [
+        "WP-10",
+        "WP-08"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/messaging/MessageComposer.tsx",
+        "apps/electron/src/renderer/components/messaging/MessageTimeline.tsx",
+        "apps/electron/src/renderer/components/pages/CollaborativeDocumentEditor.tsx",
+        "apps/electron/src/renderer/components/pages/PageView.tsx",
+        "apps/electron/src/renderer/pages/NotesPage.tsx",
+        "apps/workspace-service/migrations/15-domain-contract.sql",
+        "apps/workspace-service/src/modules/pages/commands.ts",
+        "apps/workspace-service/src/modules/pages/repository.ts",
+        "packages/server-core/src/handlers/rpc/pages.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/pages/storage.ts",
+        "packages/shared/src/pages/types.ts",
+        "packages/shared/src/workspace-domain/collaboration/contracts.ts",
+        "packages/shared/src/workspace-domain/messaging/contracts.ts",
+        "packages/shared/src/workspace-domain/pages/contracts.ts",
+        "tests/macro-integration/ui/col-04.spec.ts",
+        "tests/macro-integration/ui/col-11.spec.ts",
+        "tests/macro-integration/wp-15.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-15.json",
+      "prompt": "cloud/macro-integration/packets/WP-15.md",
+      "packetSha256": "a16db60a9abf266a42ab3993984b2d6d9dfeb893ee5058680b225c7fbf0107bc",
+      "promptSha256": "8de04b5e0abcf85259a2dbf87467c057663a5d7f32c3e8ccc6a83baca703c598"
+    },
+    {
+      "id": "WP-16",
+      "dependencies": [
+        "WP-02",
+        "WP-06",
+        "WP-10"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+        "apps/electron/src/renderer/pages/NotesPage.tsx",
+        "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+        "apps/electron/src/shared/routes.ts",
+        "apps/workspace-service/migrations/16-domain-contract.sql",
+        "apps/workspace-service/src/modules/notes/commands.ts",
+        "apps/workspace-service/src/modules/notes/repository.ts",
+        "packages/core/src/rox2/notes-engine.ts",
+        "packages/core/src/rox2/notes-repository.ts",
+        "packages/server-core/src/handlers/rpc/notes.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/notes/contracts.ts",
+        "tests/macro-integration/ui/col-05.spec.ts",
+        "tests/macro-integration/ui/col-06.spec.ts",
+        "tests/macro-integration/wp-16.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-16.json",
+      "prompt": "cloud/macro-integration/packets/WP-16.md",
+      "packetSha256": "b78ebe8512de146afe11647f0c74afe2fee4fdc4de4ed95afdec771471a7030d",
+      "promptSha256": "249aafc5eab96511335511b72a0a81773f10573f8e360f45b5548a20fe3bc03e"
+    },
+    {
+      "id": "WP-17",
+      "dependencies": [
+        "WP-04",
+        "WP-03",
+        "WP-06"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/main/mail/__tests__/mail-model.test.ts",
+        "apps/electron/src/main/mail/local-ipc.ts",
+        "apps/electron/src/main/mail/mail-model.ts",
+        "apps/electron/src/main/mail/mail-service.ts",
+        "apps/electron/src/preload/bootstrap.ts",
+        "apps/electron/src/renderer/pages/InboxPage.tsx",
+        "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx",
+        "apps/electron/src/renderer/pages/inbox/mail/useMail.ts",
+        "apps/electron/src/shared/mail-local.ts",
+        "apps/workspace-service/migrations/017_mail_accounts_entities_aliases.sql",
+        "apps/workspace-service/migrations/17-domain-contract.sql",
+        "apps/workspace-service/src/modules/mail/adapters/jmap-adapter.ts",
+        "apps/workspace-service/src/modules/mail/commands.ts",
+        "apps/workspace-service/src/modules/mail/repository.ts",
+        "apps/workspace-service/src/modules/mail/service.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/mail/__tests__/mail.test.ts",
+        "packages/shared/src/mail/jmap-client.ts",
+        "packages/shared/src/mail/provisioning.ts",
+        "packages/shared/src/workspace-domain/mail/commands.ts",
+        "packages/shared/src/workspace-domain/mail/contracts.ts",
+        "packages/shared/src/workspace-domain/mail/provider-contract.ts",
+        "packages/shared/src/workspace-domain/mail/types.ts",
+        "tests/macro-integration/mail-domain-jmap-regression.test.ts",
+        "tests/macro-integration/ui/mail-01.spec.ts",
+        "tests/macro-integration/wp-17.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native",
+        "provider-live"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-17.json",
+      "prompt": "cloud/macro-integration/packets/WP-17.md",
+      "packetSha256": "f7d9ae9a67b4082171c03e6b9a491f900ef069599ea0c79ca9b5e005630f3092",
+      "promptSha256": "00462eb914138e2c48a76e197686520f4669636600f08000593192c4eca04028"
+    },
+    {
+      "id": "WP-18",
+      "dependencies": [
+        "WP-17",
+        "WP-05"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/main/mail/mail-service.ts",
+        "apps/electron/src/renderer/pages/inbox/mail/useMail.ts",
+        "apps/workspace-service/migrations/018_mail_cursors_ingestion_tombstones.sql",
+        "apps/workspace-service/migrations/18-domain-contract.sql",
+        "apps/workspace-service/src/jobs/mail-sync.ts",
+        "apps/workspace-service/src/modules/mail/commands.ts",
+        "apps/workspace-service/src/modules/mail/repository.ts",
+        "apps/workspace-service/src/modules/mail/sync.ts",
+        "apps/workspace-service/src/modules/mail/webhooks.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/mail/jmap-client.ts",
+        "packages/shared/src/workspace-domain/mail/contracts.ts",
+        "tests/macro-integration/mail-cursor-tombstone-recovery.test.ts",
+        "tests/macro-integration/wp-18.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native",
+        "provider-live"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-18.json",
+      "prompt": "cloud/macro-integration/packets/WP-18.md",
+      "packetSha256": "6af075f053ca8e6aa6b4b9f480d71a6acf519079451a1695f371c337ff0127ef",
+      "promptSha256": "19b0c70e11c8e6ca4e868929d26242ae8e90c53979491c5c9c81c1329f1eb834"
+    },
+    {
+      "id": "WP-19",
+      "dependencies": [
+        "WP-17",
+        "WP-18",
+        "WP-39"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/main/mail/local-ipc.ts",
+        "apps/electron/src/main/mail/mail-model.ts",
+        "apps/electron/src/main/mail/mail-service.ts",
+        "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx",
+        "apps/electron/src/renderer/pages/inbox/mail/__tests__/mail-view.test.ts",
+        "apps/electron/src/renderer/pages/inbox/mail/mail-view.ts",
+        "apps/electron/src/renderer/pages/inbox/mail/useMail.ts",
+        "apps/electron/src/shared/mail-local.ts",
+        "apps/workspace-service/migrations/019_mail_draft_revisions_submissions.sql",
+        "apps/workspace-service/migrations/19-domain-contract.sql",
+        "apps/workspace-service/src/modules/mail/attachments.ts",
+        "apps/workspace-service/src/modules/mail/commands.ts",
+        "apps/workspace-service/src/modules/mail/drafts.ts",
+        "apps/workspace-service/src/modules/mail/repository.ts",
+        "apps/workspace-service/src/modules/mail/send.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/mail/__tests__/mail.test.ts",
+        "packages/shared/src/mail/jmap-client.ts",
+        "packages/shared/src/workspace-domain/mail/contracts.ts",
+        "packages/shared/src/workspace-domain/mail/send-receipt.ts",
+        "tests/macro-integration/mail-submission-ambiguity.test.ts",
+        "tests/macro-integration/ui/mail-02.spec.ts",
+        "tests/macro-integration/ui/mail-03.spec.ts",
+        "tests/macro-integration/wp-19.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native",
+        "provider-live"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-19.json",
+      "prompt": "cloud/macro-integration/packets/WP-19.md",
+      "packetSha256": "f97c0e424d2bb7cc549d7226a4ffc14857d6819681c805010e6e5e203a8d811d",
+      "promptSha256": "ccc2fcadade1a0d683af65f36c2555f151cbf86f3a7ec10d74a22d458fd068eb"
+    },
+    {
+      "id": "WP-20",
+      "dependencies": [
+        "WP-18",
+        "WP-19"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/main/mail/local-ipc.ts",
+        "apps/electron/src/main/mail/mail-service.ts",
+        "apps/electron/src/renderer/pages/ConnectionsPage.tsx",
+        "apps/electron/src/renderer/pages/inbox/mail/useMail.ts",
+        "apps/electron/src/shared/mail-local.ts",
+        "apps/workspace-service/migrations/20-domain-contract.sql",
+        "apps/workspace-service/src/modules/connections/oauth-callback.ts",
+        "apps/workspace-service/src/modules/mail/adapters/gmail-adapter.ts",
+        "apps/workspace-service/src/modules/mail/adapters/microsoft-adapter.ts",
+        "apps/workspace-service/src/modules/mail/commands.ts",
+        "apps/workspace-service/src/modules/mail/repository.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/mail/jmap-client.ts",
+        "packages/shared/src/mail/provisioning.ts",
+        "packages/shared/src/workspace-domain/mail/contracts.ts",
+        "packages/shared/src/workspace-domain/mail/provider-capabilities.ts",
+        "tests/macro-integration/oauth-provider-bindings.test.ts",
+        "tests/macro-integration/ui/mail-05.spec.ts",
+        "tests/macro-integration/wp-20.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native",
+        "provider-live"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-20.json",
+      "prompt": "cloud/macro-integration/packets/WP-20.md",
+      "packetSha256": "ba3d6a760485884c5196f13aec7b3742e4eda08ffcf99b14ffeb2beb8793703e",
+      "promptSha256": "a17358fa74ff7e486c4f2ffd6ef94b91b873975b80abff0d547f1a2cab0eda53"
+    },
+    {
+      "id": "WP-21",
+      "dependencies": [
+        "WP-18",
+        "WP-19"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/main/mail/mail-service.ts",
+        "apps/electron/src/renderer/pages/InboxPage.tsx",
+        "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx",
+        "apps/electron/src/renderer/pages/inbox/mail/useMail.ts",
+        "apps/electron/src/shared/mail-local.ts",
+        "apps/workspace-service/migrations/021_mail_imap_identity_schedules.sql",
+        "apps/workspace-service/migrations/21-domain-contract.sql",
+        "apps/workspace-service/src/jobs/mail-scheduled-send.ts",
+        "apps/workspace-service/src/modules/mail/adapters/imap-adapter.ts",
+        "apps/workspace-service/src/modules/mail/adapters/smtp-adapter.ts",
+        "apps/workspace-service/src/modules/mail/commands.ts",
+        "apps/workspace-service/src/modules/mail/repository.ts",
+        "apps/workspace-service/src/modules/mail/schedules.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/mail/jmap-client.ts",
+        "packages/shared/src/workspace-domain/mail/contracts.ts",
+        "tests/macro-integration/scheduled-send-uidvalidity.test.ts",
+        "tests/macro-integration/ui/mail-04.spec.ts",
+        "tests/macro-integration/wp-21.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native",
+        "provider-live"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-21.json",
+      "prompt": "cloud/macro-integration/packets/WP-21.md",
+      "packetSha256": "2187438a059f36efbdc22b2658edb80818f5b6c7298de7409895ab0f5ea61f08",
+      "promptSha256": "ffc9c283b253a0e623cb47360e214e0c2f19192997a1b6e1c94f74c5b9688275"
+    },
+    {
+      "id": "WP-22",
+      "dependencies": [
+        "WP-17",
+        "WP-18",
+        "WP-02",
+        "WP-03"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+        "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+        "apps/workspace-service/migrations/022_crm_contacts_companies_provenance.sql",
+        "apps/workspace-service/migrations/22-domain-contract.sql",
+        "apps/workspace-service/src/jobs/crm-enrichment.ts",
+        "apps/workspace-service/src/modules/crm/commands.ts",
+        "apps/workspace-service/src/modules/crm/domain-policy.ts",
+        "apps/workspace-service/src/modules/crm/ingestion.ts",
+        "apps/workspace-service/src/modules/crm/repository.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/crm/contracts.ts",
+        "packages/shared/src/workspace-domain/crm/types.ts",
+        "tests/macro-integration/crm-inbound-provenance.test.ts",
+        "tests/macro-integration/wp-22.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-22.json",
+      "prompt": "cloud/macro-integration/packets/WP-22.md",
+      "packetSha256": "f0817c17f6280ee6f4b480c342729ff031506f09dac3c9acc1be73b16a89ffb1",
+      "promptSha256": "8503e19a0557062de4b8d75c35f097f45d9d9e926ac660a7729f9e104b89d665"
+    },
+    {
+      "id": "WP-23",
+      "dependencies": [
+        "WP-22"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/lib/extra-screens/storage.ts",
+        "apps/electron/src/renderer/pages/extra-screens/__tests__/dossier-model.test.ts",
+        "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+        "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+        "apps/workspace-service/migrations/023_crm_dossier_alias_merge_journal.sql",
+        "apps/workspace-service/migrations/23-domain-contract.sql",
+        "apps/workspace-service/src/modules/crm/aliases.ts",
+        "apps/workspace-service/src/modules/crm/commands.ts",
+        "apps/workspace-service/src/modules/crm/merge.ts",
+        "apps/workspace-service/src/modules/crm/repository.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/server-core/src/meetings/conation/crm.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/crm/contracts.ts",
+        "packages/shared/src/workspace-domain/crm/dossier-import.ts",
+        "tests/macro-integration/dossier-identity-merge-rollback.test.ts",
+        "tests/macro-integration/ui/crm-04.spec.ts",
+        "tests/macro-integration/ui/crm-07.spec.ts",
+        "tests/macro-integration/wp-23.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-23.json",
+      "prompt": "cloud/macro-integration/packets/WP-23.md",
+      "packetSha256": "cb55567a93b6c5b04fb3e9b36572f11dd48fd52dfbb06fdc2972064bf28aa5d0",
+      "promptSha256": "ffe0e029f7a4e2b0d8f1f866fb671ce47e2a311b46a8da3250a03f16fcbfda64"
+    },
+    {
+      "id": "WP-24",
+      "dependencies": [
+        "WP-22",
+        "WP-03"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/pages/extra-screens/dossier/CompanyBoard.tsx",
+        "apps/electron/src/renderer/pages/extra-screens/dossier/CompanyPropertyEditor.tsx",
+        "apps/electron/src/renderer/pages/extra-screens/dossier/CrmBoard.tsx",
+        "apps/electron/src/renderer/pages/extra-screens/dossier/CrmFilters.tsx",
+        "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+        "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+        "apps/workspace-service/migrations/024_crm_stages_properties.sql",
+        "apps/workspace-service/migrations/24-domain-contract.sql",
+        "apps/workspace-service/src/modules/crm/commands.ts",
+        "apps/workspace-service/src/modules/crm/pipeline.ts",
+        "apps/workspace-service/src/modules/crm/queries.ts",
+        "apps/workspace-service/src/modules/crm/repository.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/server-core/src/meetings/conation/crm.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/crm/contracts.ts",
+        "packages/shared/src/workspace-domain/crm/property-schema.ts",
+        "tests/macro-integration/crm-stage-revision-money.test.ts",
+        "tests/macro-integration/ui/crm-01.spec.ts",
+        "tests/macro-integration/ui/crm-02.spec.ts",
+        "tests/macro-integration/ui/crm-06.spec.ts",
+        "tests/macro-integration/wp-24.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-24.json",
+      "prompt": "cloud/macro-integration/packets/WP-24.md",
+      "packetSha256": "ab58f7914fcb0b35810d11d901eb3de96095e811dc95ec6c43a013607650d76e",
+      "promptSha256": "4346b42e81b0da2195da91c0c8008604552113008bc8527d03fe7e84006e29e5"
+    },
+    {
+      "id": "WP-25",
+      "dependencies": [
+        "WP-24",
+        "WP-08",
+        "WP-09",
+        "WP-07"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/pages/extra-screens/dossier/CrmDiscussion.tsx",
+        "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+        "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+        "apps/workspace-service/migrations/25-domain-contract.sql",
+        "apps/workspace-service/src/modules/crm/commands.ts",
+        "apps/workspace-service/src/modules/crm/discussion-context.ts",
+        "apps/workspace-service/src/modules/crm/repository.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/server-core/src/meetings/conation/crm.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/crm/context-query.ts",
+        "packages/shared/src/workspace-domain/crm/contracts.ts",
+        "tests/macro-integration/crm-discussion-mention-acl.test.ts",
+        "tests/macro-integration/ui/crm-05.spec.ts",
+        "tests/macro-integration/wp-25.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-25.json",
+      "prompt": "cloud/macro-integration/packets/WP-25.md",
+      "packetSha256": "dead423c6ea7c969607d1ebbda650edf7b80e9ce0750f780790aef5a53b34d01",
+      "promptSha256": "089ffa2cd5d263fac50551e5f9b160c62249bbd980799423412992cfbcbd06f8"
+    },
+    {
+      "id": "WP-26",
+      "dependencies": [
+        "WP-22",
+        "WP-25"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+        "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+        "apps/workspace-service/migrations/026_crm_visibility_preferences.sql",
+        "apps/workspace-service/migrations/26-domain-contract.sql",
+        "apps/workspace-service/src/modules/crm/commands.ts",
+        "apps/workspace-service/src/modules/crm/context-policy.ts",
+        "apps/workspace-service/src/modules/crm/repository.ts",
+        "apps/workspace-service/src/modules/crm/visibility.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/crm/contracts.ts",
+        "tests/macro-integration/crm-context-visibility.test.ts",
+        "tests/macro-integration/ui/mail-06.spec.ts",
+        "tests/macro-integration/wp-26.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-26.json",
+      "prompt": "cloud/macro-integration/packets/WP-26.md",
+      "packetSha256": "72992b736ed1b78d065b3d732e159982cd673ffb9042fcbc1e90ebbd48598246",
+      "promptSha256": "b4c521e91916a12493ec4a8bafcb0e9fdace348d5cc4488b46a11e219b732baa"
+    },
+    {
+      "id": "WP-27",
+      "dependencies": [
+        "WP-04",
+        "WP-03",
+        "WP-02"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/meetings/CalendarGrid.tsx",
+        "apps/electron/src/renderer/pages/ConnectionsPage.tsx",
+        "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+        "apps/workspace-service/migrations/027_calendar_accounts_sources_occurrences.sql",
+        "apps/workspace-service/migrations/27-domain-contract.sql",
+        "apps/workspace-service/src/jobs/calendar-sync.ts",
+        "apps/workspace-service/src/modules/calendar/adapters/google-adapter.ts",
+        "apps/workspace-service/src/modules/calendar/commands.ts",
+        "apps/workspace-service/src/modules/calendar/repository.ts",
+        "apps/workspace-service/src/modules/calendar/sync.ts",
+        "apps/workspace-service/src/modules/calendar/webhooks.ts",
+        "packages/core/src/calendar/adapters.ts",
+        "packages/core/src/calendar/calendar.test.ts",
+        "packages/core/src/calendar/occurrences.ts",
+        "packages/core/src/calendar/store.ts",
+        "packages/core/src/calendar/types.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/calendar/contracts.ts",
+        "packages/shared/src/workspace-domain/calendar/provider-contract.ts",
+        "tests/macro-integration/google-calendar-sync-recovery.test.ts",
+        "tests/macro-integration/ui/cal-01.spec.ts",
+        "tests/macro-integration/wp-27.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native",
+        "provider-live"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-27.json",
+      "prompt": "cloud/macro-integration/packets/WP-27.md",
+      "packetSha256": "86887839ced08b0b999b03b7a3af65a132e1427240b62603386835ec825f83e2",
+      "promptSha256": "78d04f1935167f4fb43de4de95b98840abf905efb005ddbc53dd7f3cfdd6d1f4"
+    },
+    {
+      "id": "WP-28",
+      "dependencies": [
+        "WP-27",
+        "WP-06",
+        "WP-09"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/meetings/CalendarEventEditor.tsx",
+        "apps/electron/src/renderer/components/meetings/CalendarGrid.tsx",
+        "apps/electron/src/renderer/pages/calendar/CalendarWorkspace.tsx",
+        "apps/electron/src/renderer/pages/calendar/EventEditor.tsx",
+        "apps/workspace-service/migrations/028_calendar_write_receipts.sql",
+        "apps/workspace-service/migrations/28-domain-contract.sql",
+        "apps/workspace-service/src/modules/calendar/commands.ts",
+        "apps/workspace-service/src/modules/calendar/repository.ts",
+        "apps/workspace-service/src/modules/calendar/write-reconciliation.ts",
+        "packages/core/src/calendar/adapters.ts",
+        "packages/core/src/calendar/calendar.test.ts",
+        "packages/core/src/calendar/merge.ts",
+        "packages/core/src/calendar/occurrences.ts",
+        "packages/core/src/calendar/store.ts",
+        "packages/core/src/calendar/types.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/calendar/contracts.ts",
+        "tests/macro-integration/calendar-provider-write-reconcile.test.ts",
+        "tests/macro-integration/ui/cal-02.spec.ts",
+        "tests/macro-integration/wp-28.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native",
+        "provider-live"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-28.json",
+      "prompt": "cloud/macro-integration/packets/WP-28.md",
+      "packetSha256": "94f0117a3ef0cc473588192f000721d3df90df0054bd3b2f5d0a4cb8d075b4f6",
+      "promptSha256": "8decab53578cb7e5786493213887d20944ae5e33cd2dded4bf1cde8502a44b00"
+    },
+    {
+      "id": "WP-29",
+      "dependencies": [
+        "WP-28"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/pages/calendar/CalendarPreferences.tsx",
+        "apps/workspace-service/migrations/029_calendar_recurrence_working_hours.sql",
+        "apps/workspace-service/migrations/29-domain-contract.sql",
+        "apps/workspace-service/src/modules/calendar/availability.ts",
+        "apps/workspace-service/src/modules/calendar/commands.ts",
+        "apps/workspace-service/src/modules/calendar/recurrence-commands.ts",
+        "apps/workspace-service/src/modules/calendar/repository.ts",
+        "packages/core/src/calendar/__tests__/occurrences.test.ts",
+        "packages/core/src/calendar/adapters.ts",
+        "packages/core/src/calendar/occurrences.ts",
+        "packages/core/src/calendar/store.ts",
+        "packages/core/src/calendar/types.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/calendar/contracts.ts",
+        "packages/shared/src/workspace-domain/calendar/recurrence.ts",
+        "tests/macro-integration/calendar-recurrence-dst-availability.test.ts",
+        "tests/macro-integration/ui/cal-03.spec.ts",
+        "tests/macro-integration/wp-29.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "provider-live"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-29.json",
+      "prompt": "cloud/macro-integration/packets/WP-29.md",
+      "packetSha256": "b6572aaee84a5c2e3ecd701968f9adcc72cc4eac7fd8db8040da0ad25ae16d02",
+      "promptSha256": "f5aaeae03c24201c728bc6aadc6d3010b38ee3edc1c32cc56d139a07b120ea19"
+    },
+    {
+      "id": "WP-30",
+      "dependencies": [
+        "WP-28",
+        "WP-12",
+        "WP-22"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/main/meetings/local-model.ts",
+        "apps/electron/src/renderer/components/meetings/MeetingContext.tsx",
+        "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+        "apps/electron/src/renderer/pages/meetings/MeetingsPage.tsx",
+        "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx",
+        "apps/workspace-service/migrations/030_meeting_calendar_context_links.sql",
+        "apps/workspace-service/migrations/30-domain-contract.sql",
+        "apps/workspace-service/src/modules/calls/commands.ts",
+        "apps/workspace-service/src/modules/calls/repository.ts",
+        "apps/workspace-service/src/modules/meetings/calendar-binding.ts",
+        "apps/workspace-service/src/modules/meetings/context.ts",
+        "packages/core/src/meetings/model.ts",
+        "packages/server-core/src/handlers/rpc/meetings.ts",
+        "packages/server-core/src/meetings/conation/__tests__/calendar-calls.test.ts",
+        "packages/server-core/src/meetings/conation/calendar-calls.ts",
+        "packages/server-core/src/meetings/journal.ts",
+        "packages/server-core/src/meetings/rooms.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/calls/contracts.ts",
+        "packages/shared/src/workspace-domain/meetings/context-types.ts",
+        "tests/macro-integration/calendar-meeting-identity.test.ts",
+        "tests/macro-integration/ui/mtg-01.spec.ts",
+        "tests/macro-integration/ui/mtg-02.spec.ts",
+        "tests/macro-integration/wp-30.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-30.json",
+      "prompt": "cloud/macro-integration/packets/WP-30.md",
+      "packetSha256": "6390ec095c7e04b71d317c249f64b342f7dc51bcb759bf7e58d1cbefa55072ad",
+      "promptSha256": "8ca87cdb89f673add5d34c08f2be92c868b77604b24f02f880d758a11ee0cf25"
+    },
+    {
+      "id": "WP-31",
+      "dependencies": [
+        "WP-08",
+        "WP-03",
+        "WP-04",
+        "WP-12",
+        "WP-52"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/meetings/LiveCallView.tsx",
+        "apps/electron/src/renderer/pages/meetings/LiveCallPanel.tsx",
+        "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx",
+        "apps/workspace-service/migrations/031_call_rooms_participation.sql",
+        "apps/workspace-service/migrations/31-domain-contract.sql",
+        "apps/workspace-service/src/modules/calls/commands.ts",
+        "apps/workspace-service/src/modules/calls/livekit-adapter.ts",
+        "apps/workspace-service/src/modules/calls/repository.ts",
+        "apps/workspace-service/src/modules/calls/room-tokens.ts",
+        "apps/workspace-service/src/modules/calls/service.ts",
+        "packages/core/src/meetings/model.ts",
+        "packages/server-core/src/handlers/rpc/meetings.ts",
+        "packages/server-core/src/meetings/__tests__/rooms.test.ts",
+        "packages/server-core/src/meetings/repository.ts",
+        "packages/server-core/src/meetings/rooms.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/calls/contracts.ts",
+        "packages/shared/src/workspace-domain/calls/types.ts",
+        "tests/macro-integration/livekit-room-channel-acl.test.ts",
+        "tests/macro-integration/ui/mtg-05.spec.ts",
+        "tests/macro-integration/wp-31.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native",
+        "provider-live"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-31.json",
+      "prompt": "cloud/macro-integration/packets/WP-31.md",
+      "packetSha256": "fb112e4c0dd6d1c78e6de85f567edbe702064d853d2f99cd19ee7d2fa0628eb5",
+      "promptSha256": "e46c216244666997ff7e799adff0d1e1bc72634889f4dee4f3a0c89a3710723d"
+    },
+    {
+      "id": "WP-32",
+      "dependencies": [
+        "WP-31"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/pages/meetings/CallParticipants.tsx",
+        "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx",
+        "apps/workspace-service/migrations/032_call_guest_tokens_media_receipts.sql",
+        "apps/workspace-service/migrations/32-domain-contract.sql",
+        "apps/workspace-service/src/modules/calls/commands.ts",
+        "apps/workspace-service/src/modules/calls/guests.ts",
+        "apps/workspace-service/src/modules/calls/participants.ts",
+        "apps/workspace-service/src/modules/calls/repository.ts",
+        "apps/workspace-service/src/modules/calls/webhooks.ts",
+        "packages/core/src/meetings/model.ts",
+        "packages/server-core/src/handlers/rpc/meetings.ts",
+        "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts",
+        "packages/server-core/src/meetings/rooms.ts",
+        "packages/server-core/src/meetings/sharing.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/calls/contracts.ts",
+        "tests/macro-integration/call-guest-revoke-webhook.test.ts",
+        "tests/macro-integration/wp-32.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native",
+        "provider-live"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-32.json",
+      "prompt": "cloud/macro-integration/packets/WP-32.md",
+      "packetSha256": "c32bd5bd27a34c442a98c18f4596874d60ceeae753a611b4c90b76cba161f559",
+      "promptSha256": "8ecabbd4fc936dd6afd43856cd1808193c3d8af7058dd30f59d12405e8ab9f8a"
+    },
+    {
+      "id": "WP-33",
+      "dependencies": [
+        "WP-31",
+        "WP-32",
+        "WP-39",
+        "WP-52"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/meetings/RecordingConsentDialog.tsx",
+        "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx",
+        "apps/electron/src/shared/meetings-local.ts",
+        "apps/workspace-service/migrations/033_call_recording_consent_artifacts.sql",
+        "apps/workspace-service/migrations/33-domain-contract.sql",
+        "apps/workspace-service/src/jobs/call-recording-preview.ts",
+        "apps/workspace-service/src/modules/calls/commands.ts",
+        "apps/workspace-service/src/modules/calls/egress-reconciliation.ts",
+        "apps/workspace-service/src/modules/calls/recording.ts",
+        "apps/workspace-service/src/modules/calls/repository.ts",
+        "packages/core/src/meetings/model.ts",
+        "packages/server-core/src/handlers/rpc/meetings.ts",
+        "packages/server-core/src/meetings/__tests__/security.test.ts",
+        "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts",
+        "packages/server-core/src/meetings/finalize.ts",
+        "packages/server-core/src/meetings/retention.ts",
+        "packages/server-core/src/meetings/rooms.ts",
+        "packages/server-core/src/meetings/security-policy.ts",
+        "packages/server-core/src/meetings/sharing.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/calls/contracts.ts",
+        "services/rox-media-worker/src/preview.ts",
+        "tests/macro-integration/call-recording-artifact-recovery.test.ts",
+        "tests/macro-integration/ui/mtg-06.spec.ts",
+        "tests/macro-integration/wp-33.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native",
+        "provider-live"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-33.json",
+      "prompt": "cloud/macro-integration/packets/WP-33.md",
+      "packetSha256": "c5b919017940ab7593a59a057af60cbb2ee46d395466214bca673ab541da0f8b",
+      "promptSha256": "ae3116aec4d273cb085e7b516056682bc41ba057ed6411b3e766d6225e504c8b"
+    },
+    {
+      "id": "WP-34",
+      "dependencies": [
+        "WP-33",
+        "WP-06",
+        "WP-39",
+        "WP-50"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/main/meetings/local-asr.ts",
+        "apps/electron/src/main/meetings/local-model.ts",
+        "apps/electron/src/renderer/pages/meetings/LocalMeetingDetail.tsx",
+        "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx",
+        "apps/workspace-service/migrations/034_transcript_revisions_summary_jobs.sql",
+        "apps/workspace-service/migrations/34-domain-contract.sql",
+        "apps/workspace-service/src/jobs/call-summary.ts",
+        "apps/workspace-service/src/jobs/call-transcription.ts",
+        "apps/workspace-service/src/modules/calls/commands.ts",
+        "apps/workspace-service/src/modules/calls/repository.ts",
+        "apps/workspace-service/src/modules/calls/summaries.ts",
+        "apps/workspace-service/src/modules/calls/transcripts.ts",
+        "packages/core/src/meetings/model.ts",
+        "packages/server-core/src/handlers/rpc/meetings.ts",
+        "packages/server-core/src/meetings/__tests__/finalize.test.ts",
+        "packages/server-core/src/meetings/finalize.ts",
+        "packages/server-core/src/meetings/rooms.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/calls/contracts.ts",
+        "packages/shared/src/workspace-domain/meetings/evidence.ts",
+        "services/rox-media-worker/src/transcribe.ts",
+        "tests/macro-integration/transcript-evidence-summary-jobs.test.ts",
+        "tests/macro-integration/ui/mtg-07.spec.ts",
+        "tests/macro-integration/ui/mtg-08.spec.ts",
+        "tests/macro-integration/wp-34.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native",
+        "provider-live"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-34.json",
+      "prompt": "cloud/macro-integration/packets/WP-34.md",
+      "packetSha256": "361168b36403cdafc1c5e34bc26722d20978b804eb6bbc2988df1516023471f1",
+      "promptSha256": "63a09e335a8dd3a3d01c893e9b26187ccffa42bc8bab47fd09d9c8548446c1d5"
+    },
+    {
+      "id": "WP-35",
+      "dependencies": [
+        "WP-02",
+        "WP-03",
+        "WP-04",
+        "WP-05",
+        "WP-39",
+        "WP-51"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/main/meetings/__tests__/capture.test.ts",
+        "apps/electron/src/main/meetings/__tests__/local-store.test.ts",
+        "apps/electron/src/main/meetings/__tests__/overlay.test.ts",
+        "apps/electron/src/main/meetings/local-asr.ts",
+        "apps/electron/src/main/meetings/local-domain-adapter.ts",
+        "apps/electron/src/main/meetings/local-ipc.ts",
+        "apps/electron/src/main/meetings/local-model.ts",
+        "apps/electron/src/main/meetings/local-store.ts",
+        "apps/electron/src/main/meetings/local-upload-consent.ts",
+        "apps/electron/src/preload/bootstrap.ts",
+        "apps/electron/src/renderer/lib/meetings/recorder.ts",
+        "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+        "apps/electron/src/renderer/pages/meetings/LocalMeetingDetail.tsx",
+        "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx",
+        "apps/electron/src/renderer/pages/meetings/local-meetings-model.ts",
+        "apps/electron/src/shared/meetings-local.ts",
+        "apps/workspace-service/migrations/035_local_meeting_alias_device_receipts.sql",
+        "apps/workspace-service/migrations/35-domain-contract.sql",
+        "apps/workspace-service/src/modules/calls/commands.ts",
+        "apps/workspace-service/src/modules/calls/repository.ts",
+        "apps/workspace-service/src/modules/meetings/local-import.ts",
+        "packages/core/src/meetings/model.ts",
+        "packages/server-core/src/handlers/rpc/meetings.ts",
+        "packages/server-core/src/meetings/__tests__/finalize.test.ts",
+        "packages/server-core/src/meetings/__tests__/import-intent.test.ts",
+        "packages/server-core/src/meetings/capture.ts",
+        "packages/server-core/src/meetings/finalize.ts",
+        "packages/server-core/src/meetings/import.ts",
+        "packages/server-core/src/meetings/rooms.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/calls/contracts.ts",
+        "packages/shared/src/workspace-domain/meetings/local-alias.ts",
+        "tests/macro-integration/local-recording-offline-recovery.test.ts",
+        "tests/macro-integration/ui/mtg-03.spec.ts",
+        "tests/macro-integration/ui/mtg-04.spec.ts",
+        "tests/macro-integration/wp-35.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-35.json",
+      "prompt": "cloud/macro-integration/packets/WP-35.md",
+      "packetSha256": "28e5663288b376469f6010d6bce3569c13f012fb3c9bef4495ade788132fbc87",
+      "promptSha256": "729cca057d453d77f8afcdab3cd75b86cb15903d61026751dc7fc769a1579977"
+    },
+    {
+      "id": "WP-36",
+      "dependencies": [
+        "WP-04",
+        "WP-06",
+        "WP-09",
+        "WP-51"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/memory/MemoryScreen.tsx",
+        "apps/workspace-service/migrations/36-domain-contract.sql",
+        "apps/workspace-service/src/modules/agents/commands.ts",
+        "apps/workspace-service/src/modules/agents/repository.ts",
+        "packages/core/src/rox2/surface-context.ts",
+        "packages/server-core/src/handlers/rpc/sessions.ts",
+        "packages/server-core/src/meetings/executor.ts",
+        "packages/session-tools-core/src/tool-defs.ts",
+        "packages/shared/src/agent/session-tool-defs.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/agents/contracts.ts",
+        "tests/macro-integration/ui/sh-07.spec.ts",
+        "tests/macro-integration/ui/sh-09.spec.ts",
+        "tests/macro-integration/wp-36.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-36.json",
+      "prompt": "cloud/macro-integration/packets/WP-36.md",
+      "packetSha256": "6765925f1569d621cec0961fa99fd3bb9b606090da0caad5786cfa3b89df1b4e",
+      "promptSha256": "c8c71c342d872635919098c189b6e9d0acf8631948bb3ec0b721a3e89d326ee6"
+    },
+    {
+      "id": "WP-37",
+      "dependencies": [
+        "WP-07",
+        "WP-36"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/automations/AutomationEditor.tsx",
+        "apps/electron/src/renderer/components/automations/AutomationsListPanel.tsx",
+        "apps/workspace-service/migrations/37-domain-contract.sql",
+        "apps/workspace-service/src/modules/automation/commands.ts",
+        "apps/workspace-service/src/modules/automation/repository.ts",
+        "packages/server-core/src/handlers/rpc/automations.ts",
+        "packages/shared/src/automations/meeting-followup.ts",
+        "packages/shared/src/automations/types.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/automation/contracts.ts",
+        "tests/macro-integration/ui/sh-10.spec.ts",
+        "tests/macro-integration/wp-37.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-37.json",
+      "prompt": "cloud/macro-integration/packets/WP-37.md",
+      "packetSha256": "d29209cfb43c6b2695faa75fca9b790dcfae79447fe8c2942cf75080c9a56ca5",
+      "promptSha256": "5032aeef7298aa0faa30c52ad2f18537ee96abf81516a91915189b5b25182243"
+    },
+    {
+      "id": "WP-38",
+      "dependencies": [
+        "WP-12",
+        "WP-25",
+        "WP-28",
+        "WP-34",
+        "WP-36",
+        "WP-50",
+        "WP-39",
+        "WP-16"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "apps/electron/src/renderer/pages/extra-screens/dossier/CompanyContext.tsx",
+        "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+        "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+        "apps/workspace-service/migrations/38-domain-contract.sql",
+        "apps/workspace-service/src/modules/crm/commands.ts",
+        "apps/workspace-service/src/modules/crm/repository.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/crm/contracts.ts",
+        "tests/macro-integration/ui/col-18.spec.ts",
+        "tests/macro-integration/ui/crm-03.spec.ts",
+        "tests/macro-integration/wp-38.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-38.json",
+      "prompt": "cloud/macro-integration/packets/WP-38.md",
+      "packetSha256": "acdcaaa12e84c86109cf7b120523ce5c42883a7884d6ac3bf1cbf517972d009c",
+      "promptSha256": "9d30f22236f6698314724c3d4341ecdf1de571f5caef08e1f6cd5e859ff8931d"
+    },
+    {
+      "id": "WP-39",
+      "dependencies": [
+        "WP-02",
+        "WP-03",
+        "WP-04",
+        "WP-06"
+      ],
+      "allowedPaths": [
+        "apps/workspace-service/migrations/39-domain-contract.sql",
+        "apps/workspace-service/src/modules/files/commands.ts",
+        "apps/workspace-service/src/modules/files/repository.ts",
+        "packages/server-core/src/handlers/rpc/files.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/pages/share-bundle.ts",
+        "packages/shared/src/projects/storage.ts",
+        "packages/shared/src/workspace-domain/files/contracts.ts",
+        "tests/macro-integration/ui/sh-12.spec.ts",
+        "tests/macro-integration/wp-39.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-39.json",
+      "prompt": "cloud/macro-integration/packets/WP-39.md",
+      "packetSha256": "870cb549a66b03fe8a90fae57fa2d02af356c0c2280311716f83e6922f7c6ac1",
+      "promptSha256": "b9978c6781948159845958482a4019318a199093d147b8bff397afeb22fc4781"
+    },
+    {
+      "id": "WP-40",
+      "dependencies": [
+        "WP-02",
+        "WP-03",
+        "WP-06"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/pages/PageView.tsx",
+        "apps/electron/src/renderer/pages/ChatPage.tsx",
+        "apps/electron/src/renderer/platform/Omnibox.tsx",
+        "apps/workspace-service/migrations/40-domain-contract.sql",
+        "apps/workspace-service/src/modules/graph/commands.ts",
+        "apps/workspace-service/src/modules/graph/repository.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/core/src/rox2/project-membership.ts",
+        "packages/core/src/rox2/surface-context.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/graph/contracts.ts",
+        "tests/macro-integration/ui/col-03.spec.ts",
+        "tests/macro-integration/ui/sh-01.spec.ts",
+        "tests/macro-integration/ui/sh-03.spec.ts",
+        "tests/macro-integration/wp-40.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-40.json",
+      "prompt": "cloud/macro-integration/packets/WP-40.md",
+      "packetSha256": "a0e39720093490cb300aea2b78e39ed75a5d1e7f653d02cd8a22bf5115394def",
+      "promptSha256": "8d865ef19f8ee0dcb53583af276d074629ebfa66bb2147f0bc82eb7ab07a4067"
+    },
+    {
+      "id": "WP-41",
+      "dependencies": [
+        "WP-10",
+        "WP-15",
+        "WP-16",
+        "WP-21",
+        "WP-26",
+        "WP-29",
+        "WP-34",
+        "WP-35",
+        "WP-37",
+        "WP-38",
+        "WP-39",
+        "WP-40",
+        "WP-50",
+        "WP-51"
+      ],
+      "allowedPaths": [
+        "apps/workspace-service/migrations/41-domain-contract.sql",
+        "apps/workspace-service/src/modules/commands/commands.ts",
+        "apps/workspace-service/src/modules/commands/repository.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/server-core/src/handlers/rpc/command-gateway.ts",
+        "packages/server-core/src/transport/types.ts",
+        "packages/shared/src/workspace-domain/commands/contracts.ts",
+        "tests/macro-integration/wp-41.test.ts"
+      ],
+      "lanes": [
+        "linux-domain"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-41.json",
+      "prompt": "cloud/macro-integration/packets/WP-41.md",
+      "packetSha256": "3a60f4d3a9fbffeb65021f181d0001fd1aa829174ab2cdd7ab04111e2c4cc09b",
+      "promptSha256": "fb919d3f31b6cded457970d809e61f19628a2a7ab8279c8cdaafa211fad15a7d"
+    },
+    {
+      "id": "WP-42",
+      "dependencies": [
+        "WP-10",
+        "WP-15"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/pages/PageView.tsx",
+        "apps/electron/src/renderer/components/pages/SpreadsheetView.tsx",
+        "apps/workspace-service/migrations/42-domain-contract.sql",
+        "apps/workspace-service/src/modules/pages/commands.ts",
+        "apps/workspace-service/src/modules/pages/repository.ts",
+        "packages/server-core/src/handlers/rpc/pages.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/pages/storage.ts",
+        "packages/shared/src/pages/types.ts",
+        "packages/shared/src/workspace-domain/pages/contracts.ts",
+        "tests/macro-integration/ui/sh-13.spec.ts",
+        "tests/macro-integration/wp-42.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-42.json",
+      "prompt": "cloud/macro-integration/packets/WP-42.md",
+      "packetSha256": "c76740b7ac6ac2271e46e70cc6123f5307947431adc349c5feef0341fe0ba790",
+      "promptSha256": "2dd0be462d2a41077568e6bee1653240c7fa8395462679082bef536d1265682b"
+    },
+    {
+      "id": "WP-43",
+      "dependencies": [
+        "WP-10",
+        "WP-39"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/pages/CanvasView.tsx",
+        "apps/electron/src/renderer/components/pages/PageView.tsx",
+        "apps/workspace-service/migrations/43-domain-contract.sql",
+        "apps/workspace-service/src/modules/pages/commands.ts",
+        "apps/workspace-service/src/modules/pages/repository.ts",
+        "packages/server-core/src/handlers/rpc/pages.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/pages/storage.ts",
+        "packages/shared/src/pages/types.ts",
+        "packages/shared/src/workspace-domain/pages/contracts.ts",
+        "tests/macro-integration/ui/sh-14.spec.ts",
+        "tests/macro-integration/wp-43.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-43.json",
+      "prompt": "cloud/macro-integration/packets/WP-43.md",
+      "packetSha256": "1db697e56a2e4bb264145420ad695103087dedd9f32044eb633e662e572b0e6a",
+      "promptSha256": "20d8ab2f6006d94d9f90e6c1f055639f7d0803b0d46b28f42d3332d471119cb7"
+    },
+    {
+      "id": "WP-44",
+      "dependencies": [
+        "WP-39",
+        "WP-15"
+      ],
+      "allowedPaths": [
+        "apps/workspace-service/migrations/44-domain-contract.sql",
+        "apps/workspace-service/src/modules/files/commands.ts",
+        "apps/workspace-service/src/modules/files/repository.ts",
+        "packages/server-core/src/handlers/rpc/files.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/pages/share-bundle.ts",
+        "packages/shared/src/projects/storage.ts",
+        "packages/shared/src/workspace-domain/files/contracts.ts",
+        "tests/macro-integration/wp-44.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-44.json",
+      "prompt": "cloud/macro-integration/packets/WP-44.md",
+      "packetSha256": "4c32a053f1090c27a9d9fefe1bd33d0636e28d956a85324dc14033cf017e6995",
+      "promptSha256": "692f4a9faf12bbc1c4b41015fc49ccb68937c922bcddff07fa6f27777f2a3f91"
+    },
+    {
+      "id": "WP-45",
+      "dependencies": [
+        "WP-36",
+        "WP-12"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx",
+        "apps/workspace-service/migrations/45-domain-contract.sql",
+        "apps/workspace-service/src/modules/agents/commands.ts",
+        "apps/workspace-service/src/modules/agents/repository.ts",
+        "packages/core/src/rox2/surface-context.ts",
+        "packages/server-core/src/meetings/executor.ts",
+        "packages/shared/src/agent/session-tool-defs.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/agents/contracts.ts",
+        "tests/macro-integration/ui/sh-15.spec.ts",
+        "tests/macro-integration/wp-45.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-45.json",
+      "prompt": "cloud/macro-integration/packets/WP-45.md",
+      "packetSha256": "a769995181b0679f0e91027426d237346110e11808282f7bcfb52084b7844011",
+      "promptSha256": "402852aa26b159bf32417e8d8cc52e1a356ffd68abe13242477a06fc2e2c5e99"
+    },
+    {
+      "id": "WP-46",
+      "dependencies": [
+        "WP-41"
+      ],
+      "allowedPaths": [
+        "apps/ios/CraftAgentKit/Sources/CraftAgentKit/Client/RPCClient.swift",
+        "apps/ios/CraftAgentKit/Sources/CraftAgentKit/Protocol/ProtocolVersionPolicy.swift",
+        "apps/workspace-service/migrations/46-domain-contract.sql",
+        "apps/workspace-service/src/modules/commands/commands.ts",
+        "apps/workspace-service/src/modules/commands/repository.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/server-core/src/handlers/rpc/command-gateway.ts",
+        "packages/server-core/src/transport/capabilities.ts",
+        "packages/server-core/src/transport/client.ts",
+        "packages/server-core/src/transport/server.ts",
+        "packages/server-core/src/transport/types.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/commands/contracts.ts",
+        "tests/macro-integration/ui/sh-16.spec.ts",
+        "tests/macro-integration/wp-46.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-46.json",
+      "prompt": "cloud/macro-integration/packets/WP-46.md",
+      "packetSha256": "b2c8d6bdd94770c7fd680e4e2d5f0e7d582efa37e0e806483b7ba2e8bab5874d",
+      "promptSha256": "90ba5c5bb7996c17498521cd6934778fab32a3b986ad1f67e01d5f9856fe32d7"
+    },
+    {
+      "id": "WP-47",
+      "dependencies": [
+        "WP-31",
+        "WP-33",
+        "WP-39",
+        "WP-04",
+        "WP-10",
+        "WP-18",
+        "WP-34",
+        "WP-17",
+        "WP-35",
+        "WP-52"
+      ],
+      "allowedPaths": [
+        "Dockerfile.server",
+        "apps/workspace-service/migrations/047_retention_job_leases_delete_receipts.sql",
+        "apps/workspace-service/migrations/47-domain-contract.sql",
+        "apps/workspace-service/src/health.ts",
+        "apps/workspace-service/src/jobs/retention-sweep.ts",
+        "apps/workspace-service/src/modules/commands/commands.ts",
+        "apps/workspace-service/src/modules/commands/repository.ts",
+        "ops/fleet-infra/control-plane.test.ts",
+        "ops/fleet-infra/inventory/group_vars/all/versions.yml",
+        "ops/macro-integration/backup-restore.sh",
+        "ops/macro-integration/compose.yaml",
+        "ops/macro-integration/env.example",
+        "ops/macro-integration/livekit.yaml",
+        "ops/macro-integration/prometheus-rules.yaml",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/server-core/src/handlers/rpc/command-gateway.ts",
+        "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts",
+        "packages/server-core/src/meetings/observability.ts",
+        "packages/server-core/src/meetings/retention.ts",
+        "packages/server-core/src/transport/types.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/commands/contracts.ts",
+        "services/rox-media-worker/Dockerfile",
+        "tests/macro-integration/selfhost-restore-retention.test.ts",
+        "tests/macro-integration/wp-47.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "provider-live"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-47.json",
+      "prompt": "cloud/macro-integration/packets/WP-47.md",
+      "packetSha256": "991d28b6921cc176070021f67ba3d440fe260badef33a3dc8a26e0b56b5bec6d",
+      "promptSha256": "7165e9cbd7e4bebabb4859029089e18a4653d4bf07b0212f7e792eed6aa1ebf4"
+    },
+    {
+      "id": "WP-48",
+      "dependencies": [],
+      "allowedPaths": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/license-gate.yml",
+        "Dockerfile.server",
+        "LICENSE",
+        "bun.lock",
+        "notices/THIRD-PARTY-NOTICES.txt",
+        "package.json",
+        "plans/compliance/component-decisions.json",
+        "scripts/compliance/generate-sbom.ts",
+        "tests/macro-integration/wp-48.test.ts"
+      ],
+      "lanes": [
+        "linux-domain"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-48.json",
+      "prompt": "cloud/macro-integration/packets/WP-48.md",
+      "packetSha256": "16970fa2a86512aafd1407b737bd41f36f5d8a7705303f5e5ec7e6bdb146f1cc",
+      "promptSha256": "61e83e0139a4886635ff4e419646eefe436ef52fddb9db255dc58608905c67b4"
+    },
+    {
+      "id": "WP-49",
+      "dependencies": [
+        "WP-02",
+        "WP-03"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/renderer/components/pages/PageView.tsx",
+        "apps/electron/src/renderer/pages/NotesPage.tsx",
+        "packages/server-core/src/handlers/rpc/pages.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/pages/storage.ts",
+        "packages/shared/src/pages/types.ts",
+        "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+        "plans/macro-integration/editor-binding-decision.json",
+        "spikes/editor-binding/lexical-loro.ts",
+        "spikes/editor-binding/tiptap-loro.ts",
+        "tests/macro-integration/wp-49.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-49.json",
+      "prompt": "cloud/macro-integration/packets/WP-49.md",
+      "packetSha256": "eaa28a0b0c00b1441942ee7606be2ca42ed13a11701847f1f36c16ea59452a07",
+      "promptSha256": "4053e55fb304e83a4de7bd17b1d354a0605a549f80d1fc9b47dd1f6d4bcc2243"
+    },
+    {
+      "id": "WP-50",
+      "dependencies": [
+        "WP-36",
+        "WP-03"
+      ],
+      "allowedPaths": [
+        "apps/workspace-service/migrations/50-domain-contract.sql",
+        "apps/workspace-service/src/modules/agents/commands.ts",
+        "apps/workspace-service/src/modules/agents/repository.ts",
+        "packages/core/src/rox2/surface-context.ts",
+        "packages/core/src/types/message.ts",
+        "packages/server-core/src/handlers/rpc/sessions.ts",
+        "packages/server-core/src/meetings/executor.ts",
+        "packages/server-core/src/sessions/share-capability.ts",
+        "packages/shared/src/agent/session-tool-defs.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/sessions/storage.ts",
+        "packages/shared/src/workspace-domain/agents/contracts.ts",
+        "tests/macro-integration/ui/sh-08.spec.ts",
+        "tests/macro-integration/wp-50.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-50.json",
+      "prompt": "cloud/macro-integration/packets/WP-50.md",
+      "packetSha256": "fc64dc24c0396d2ab8f00427b1fd588192f2b913c8f59d676b0310ae590a7339",
+      "promptSha256": "132f0f22e04f9eadc0e31dd694ef835e68bb05751f293e13752883f894a7969e"
+    },
+    {
+      "id": "WP-51",
+      "dependencies": [
+        "WP-03",
+        "WP-04",
+        "WP-05"
+      ],
+      "allowedPaths": [
+        "apps/electron/src/main/meetings/local-ipc.ts",
+        "apps/electron/src/renderer/components/pages/SharePageDialog.tsx",
+        "apps/workspace-service/migrations/51-domain-contract.sql",
+        "apps/workspace-service/src/modules/commands/commands.ts",
+        "apps/workspace-service/src/modules/commands/repository.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/server-core/src/handlers/rpc/command-gateway.ts",
+        "packages/server-core/src/handlers/rpc/notes.ts",
+        "packages/server-core/src/handlers/rpc/pages.ts",
+        "packages/server-core/src/handlers/rpc/personal-tasks.ts",
+        "packages/server-core/src/handlers/rpc/projects.ts",
+        "packages/server-core/src/transport/types.ts",
+        "packages/shared/src/agent/session-tool-defs.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/workspace-domain/commands/contracts.ts",
+        "tests/macro-integration/ui/sh-04.spec.ts",
+        "tests/macro-integration/wp-51.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-51.json",
+      "prompt": "cloud/macro-integration/packets/WP-51.md",
+      "packetSha256": "9bca5210fa61c2683f13f03a4928c7ea6bba660f5a45bacef52427288d81aacc",
+      "promptSha256": "3d1f48fd2580f527c81b67e20f0749ae60a4014d81b1f86b1d555bd389564049"
+    },
+    {
+      "id": "WP-52",
+      "dependencies": [
+        "WP-01",
+        "WP-03",
+        "WP-04",
+        "WP-51"
+      ],
+      "allowedPaths": [
+        "Dockerfile.server",
+        "apps/electron/src/renderer/components/connections/RuntimeCapabilitiesPanel.tsx",
+        "apps/electron/src/renderer/pages/ConnectionsPage.tsx",
+        "apps/workspace-service/src/operations/capabilities.ts",
+        "docs/workspace/self-host-bootstrap.md",
+        "ops/fleet-infra/control-plane.test.ts",
+        "ops/fleet-infra/inventory/group_vars/all/versions.yml",
+        "ops/macro-integration/compose.yaml",
+        "ops/macro-integration/env.example",
+        "ops/macro-integration/livekit.yaml",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/server-core/src/handlers/rpc/command-gateway.ts",
+        "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts",
+        "packages/server-core/src/meetings/observability.ts",
+        "packages/server-core/src/meetings/retention.ts",
+        "packages/server-core/src/transport/types.ts",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/ru.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "scripts/workspace/verify-providers.ts",
+        "tests/macro-integration/ui/sh-11.spec.ts",
+        "tests/macro-integration/ui/sh-17.spec.ts",
+        "tests/macro-integration/wp-52.test.ts"
+      ],
+      "lanes": [
+        "linux-domain",
+        "linux-renderer",
+        "macos-native",
+        "provider-live"
+      ],
+      "packet": "plans/macro-integration/cloud/packets/WP-52.json",
+      "prompt": "cloud/macro-integration/packets/WP-52.md",
+      "packetSha256": "244693bbcdb47f1103f7091446f13fde9a9649d8da4092eccac648440819a9b0",
+      "promptSha256": "1125f0a3e46fff509468da9e1cb33be0ddad2697009e73a8c91f16d01ad36ac0"
+    }
+  ],
+  "specInputs": [
+    {
+      "path": "plans/macro-integration/collaboration-screen-contracts.json",
+      "sha256": "63c95d71b0f263a1d593a4539be9acdda6cc40f0a3897457ef311f8c8633b89b"
+    },
+    {
+      "path": "plans/macro-integration/domain-screen-contracts.json",
+      "sha256": "17c6876ff3903c4ea6369bd9b9f321550f5a346021ed9179e045b19ee686c59b"
+    },
+    {
+      "path": "plans/macro-integration/shared-screen-contracts.json",
+      "sha256": "af48f378a818dd9b9775276af6306b8fb8d881aa70d8b53db99c1e7f8594dd9c"
+    },
+    {
+      "path": "plans/macro-integration/cloud/ui-slices.json",
+      "sha256": "41cfbda3e7a9daa5a9fed09b02c8cc6263b5fc6fb093442a95f3a61899f90d43"
+    },
+    {
+      "path": "plans/macro-integration/cloud/contract-amendments.json",
+      "sha256": "0d525c24c846cbf4ad3a6c7b235d9774f16a0ef70197117768563d737188cf4d"
+    },
+    {
+      "path": "docs/macro-integration/product/PRD.md",
+      "sha256": "bf21be0841068157a59f84109f5501a99c77562805c08692cdeff202d43da43b"
+    },
+    {
+      "path": "docs/macro-integration/product/UI-UX-CONTRACT.md",
+      "sha256": "1d913a2c22f87c2d3dd87e529e1e983c050602f70693879bf667cee30dfaaa78"
+    },
+    {
+      "path": "docs/macro-integration/19-target-architecture.md",
+      "sha256": "951c4bef1bb4146f9868b48f1c319f92b1369c30d534be29975f4743db5b17c3"
+    },
+    {
+      "path": "docs/macro-integration/18-licensing.md",
+      "sha256": "e433a3e9c6b4db406e39335382249a6a0b71f799f385ec3af5543845de926cf1"
+    },
+    {
+      "path": "plans/macro-integration/work-packages.json",
+      "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"
+    },
+    {
+      "path": "plans/macro-integration/dependency-dag.json",
+      "sha256": "f74014a13fb1a3b78ef6c5d778a6bdd448af7944e92fb05ab96c21517c8e3c35"
+    },
+    {
+      "path": "cloud/macro-integration/AGENTS.md",
+      "sha256": "925e9e52d1281c4e2d5ad5fcda90c2acbc031e608c8b0271e7971c19bb0cb048"
+    },
+    {
+      "path": "cloud/macro-integration/SPEC.md",
+      "sha256": "eebd13530ccd287e7525aee8b5f28cb7fea2852796dc95280dd059f459cedf4b"
+    },
+    {
+      "path": "cloud/macro-integration/completion.schema.json",
+      "sha256": "2a9af6e7a76ef32f4d9d3e59220a5c898dbad379aaa1e9315d8aa1928272005d"
+    },
+    {
+      "path": "scripts/macro-integration/cloud/gates.mjs",
+      "sha256": "bacb23add2f8743a3b732c6780186a804eab2d87228e7ad782140a3dec4d1594"
+    },
+    {
+      "path": "scripts/macro-integration/cloud/cli.mjs",
+      "sha256": "c9881f7edf02d343cbe9056a9818404ac263570edf242400ae7a1a7423b79597"
+    },
+    {
+      "path": "scripts/macro-integration/cloud/build.mjs",
+      "sha256": "48343f4faf9567bef7875c2674bfb3583c06fc5cb213b21c63b0cada8ee8bfee"
+    },
+    {
+      "path": "plans/macro-integration/shared-interactions.json",
+      "sha256": "d3b0065fb16c385db0bc62515b3d3990f43664d920744813d40752e16fafa68c"
+    },
+    {
+      "path": "plans/macro-integration/control-handoff.json",
+      "sha256": "4b90be16479699a99468f1e34db25d5fd2d2ade55f6ee080e667f47ace106465"
+    },
+    {
+      "path": "plans/macro-integration/collaboration-walkthroughs.json",
+      "sha256": "45e959c5e77c238ec720d217506dbf0799924041ab22b819a4218d173b84e125"
+    },
+    {
+      "path": "plans/macro-integration/domain-forms.json",
+      "sha256": "f6a25cc7e6d632a713a12faa8ed03aeee27275393187b8d0e4470d83e71bb146"
+    },
+    {
+      "path": "plans/macro-integration/resolved-operation-contracts.json",
+      "sha256": "c98c9a256ee234dee27e43ae73c22702a079b6dbd82a93fa105ea0e6ff69ef15"
+    },
+    {
+      "path": "plans/macro-integration/source-reverification-v4.json",
+      "sha256": "8a050880d36c4d7ec49162fb160d323e562dae55a50191a51ace0d9bb178b39d"
+    },
+    {
+      "path": "plans/macro-integration/cloud/executor-contract.json",
+      "sha256": "208a111128c2d8afa4315ce312d32d4272ccd12ae2da0ce42d11db5360bfe35d"
+    },
+    {
+      "path": "docs/macro-integration/product/collaboration-walkthroughs.md",
+      "sha256": "aab982d7b60f106692be5323fa982526823e71a51cb89bacf986d54d3050fffe"
+    },
+    {
+      "path": "docs/macro-integration/product/domain-forms.md",
+      "sha256": "40fc1504aeb18882a1c91ea6b2c17a3b3bd358877684a34dc969a7815ca15008"
+    },
+    {
+      "path": "docs/macro-integration/product/cache-upgrade-recovery.md",
+      "sha256": "da5bbb8bf719696e53d6d57d82ce9b3004fd9c02eb22fd6040732e03f3dea7d6"
+    },
+    {
+      "path": "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+      "sha256": "f1efd9dc71858d12fce3e8813a7f40f006fd7300baaa23e84954c0b47c2524b4"
+    },
+    {
+      "path": "cloud/macro-integration/run-spec.schema.json",
+      "sha256": "fac208cc9b4798f9e5be9c1cdc3959cc85d90d6398e4e676602f66c4ed238fcc"
+    },
+    {
+      "path": "scripts/macro-integration/control-handoff.mjs",
+      "sha256": "724ec9f8c502e26677447d592d78169f1a5f9e7f16b8c343b3ae4ace5f6537fb"
+    },
+    {
+      "path": "scripts/macro-integration/resolve-v4-contracts.mjs",
+      "sha256": "607bf16b545d1fd584cf36d1f6e70fc6156450cd8cc5c747d00c209f9ba0d5ae"
+    }
+  ]
+}

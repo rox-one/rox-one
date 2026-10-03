@@ -1,0 +1,529 @@
+/** Temporary real-browser observer. Application source, RPC implementations and responses remain untouched. */
+const fs = require('node:fs')
+const fsp = require('node:fs/promises')
+const path = require('node:path')
+const crypto = require('node:crypto')
+const cp = require('node:child_process')
+const net = require('node:net')
+const { createRequire } = require('node:module')
+
+const checkout = path.resolve(process.argv[2])
+const expectedRevision = process.argv[3]
+const allowOwnedToolingDirty = process.argv.includes('--allow-owned-tooling-dirty')
+if (!/^[0-9a-f]{40}$/.test(expectedRevision || '')) throw new Error('Exact candidate revision argument required')
+const taskRoot = '/tmp/rox-ui-surface-discovery-20260930/ui-runtime'
+const runRoot = path.join(taskRoot, 'run-union')
+const bun = '/workspace/.onboarding-tools/node_modules/.bin/bun'
+const secrets = new Set()
+const children = new Set()
+const childClosePromises = new Map()
+function trackChild(child) {
+  children.add(child)
+  childClosePromises.set(child, new Promise(resolve => child.once('close', resolve)))
+}
+const profiles = new Set()
+let browser
+let browserTmp
+const result = { kind: 'mounted-built-webui-union-observation', revision: expectedRevision, checkout, startedAt: new Date().toISOString(), phases: [], assertions: [], servers: [], pages: [], limitations: [], errors: [] }
+
+function redact(value) {
+  let s = String(value)
+  for (const token of secrets) s = s.replaceAll(token, '[ephemeral test token redacted]')
+  return s.replace(/CRAFT_SERVER_TOKEN=[^\r\n]*/g, 'CRAFT_SERVER_TOKEN=[redacted]')
+    .replace(/((?:Cookie|Set-Cookie|Authorization)\s*[:=])[^\r\n]*/gi, '$1[redacted]')
+    .replace(/(\b(?:accessToken|refreshToken|password|token)\s*[=:]\s*["']?)[^\s,"'}]+/gi, '$1[redacted]')
+}
+function safeValues(value) {
+  if (typeof value === 'string') return redact(value)
+  if (Array.isArray(value)) return value.map(safeValues)
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, safeValues(v)]))
+  return value
+}
+function writeJson(name, data) { fs.writeFileSync(path.join(runRoot, name), JSON.stringify(safeValues(data), null, 2)) }
+function assert(name, ok, detail) { result.assertions.push({ name, pass: Boolean(ok), detail }); if (!ok) throw new Error(name) }
+function check(name, ok, detail) { result.assertions.push({ name, pass: Boolean(ok), detail }) }
+function checkpoint() { writeJson('results.json', result) }
+async function within(promise, ms, message) {
+  let timer
+  try { return await Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(message)), ms) })]) }
+  finally { clearTimeout(timer) }
+}
+async function phase(name, fn) {
+  const entry = { name, startedAt: new Date().toISOString() }; result.phases.push(entry)
+  try { entry.evidence = await fn(); entry.status = 'completed' }
+  catch (e) { entry.status = 'failed'; entry.error = redact(e.stack || e); result.errors.push({ phase: name, error: entry.error }); }
+  entry.finishedAt = new Date().toISOString(); checkpoint(); console.log(`${name}: ${entry.status}`)
+  return entry
+}
+function trackedStatus() { return cp.execFileSync('git', ['status', '--porcelain=v1', '--untracked-files=no'], { cwd: checkout, encoding: 'utf8' }) }
+function applicationStatus(status) { return status.split('\n').filter(line => line && !(allowOwnedToolingDirty && line.slice(3) === 'scripts/electron-build-main.ts')).join('\n') }
+function hashFile(file) { return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex') }
+async function reservePort() {
+  const server = net.createServer(); await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve) })
+  const port = server.address().port; await new Promise(resolve => server.close(resolve)); return port
+}
+async function spawnServer(profile, label, sameProfile = {}) {
+  const token = sameProfile.token || crypto.randomBytes(32).toString('hex'); secrets.add(token)
+  const port = sameProfile.port || await reservePort()
+  const child = cp.spawn(bun, [path.join(checkout, 'dist-server/index.js')], {
+    cwd: checkout, detached: true,
+    env: { PATH: path.dirname(bun) + ':' + (process.env.PATH || ''), LANG: 'C.UTF-8', TMPDIR: path.join(runRoot, 'tmp'),
+      ROX_CONFIG_DIR: profile, CRAFT_CONFIG_DIR: profile, ROX_SERVER_TOKEN: token, CRAFT_SERVER_TOKEN: token,
+      CRAFT_RPC_HOST: '127.0.0.1', CRAFT_RPC_PORT: String(port), CRAFT_HEALTH_PORT: '0',
+      CRAFT_WEBUI_DIR: path.join(checkout, 'apps/webui/dist'), CRAFT_BROWSER_BACKEND: 'none',
+      CRAFT_BUNDLED_ASSETS_ROOT: path.join(checkout, 'apps/electron'), CRAFT_DISABLE_MESSAGING: 'true' },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
+  trackChild(child)
+  let output = ''; let readyResolve; const ready = new Promise(resolve => { readyResolve = resolve })
+  const exited = new Promise(resolve => { child.once('exit', (code, signal) => resolve({ code, signal })); child.once('error', error => resolve({ error: error.message })) })
+  const closed = childClosePromises.get(child)
+  function collect(chunk) { output += chunk.toString(); if (output.includes(`CRAFT_SERVER_URL=ws://127.0.0.1:${port}`)) readyResolve() }
+  child.stdout.on('data', collect); child.stderr.on('data', collect)
+  const audit = { label, pid: child.pid, profile, origin: `http://127.0.0.1:${port}`, sentSigterm: false, usedSigkill: false }
+  result.servers.push(audit)
+  const server = { child, exited, origin: audit.origin, token, audit, profile,
+    async stop() {
+      if (audit.exit) return
+      audit.preStopExitCode = child.exitCode
+      if (child.exitCode === null && child.signalCode === null) { audit.sentSigterm = child.kill('SIGTERM') }
+      try { audit.exit = await within(exited, 10_000, 'UI baseline server SIGTERM timeout') }
+      catch (error) { audit.usedSigkill = true; try { process.kill(-child.pid, 'SIGKILL') } catch { child.kill('SIGKILL') } audit.exit = await within(exited, 5000, 'Owned server did not exit after SIGKILL'); audit.stopError = String(error) }
+      await within(closed, 5000, 'Owned server did not close after stop'); fs.writeFileSync(path.join(runRoot, `${label}-server.log`), redact(output)); audit.fullEphemeralTokenLogged = output.includes(token)
+      children.delete(child); checkpoint()
+    },
+  }
+  try { await within(Promise.race([ready, exited.then(e => { throw new Error(`Server exited before readiness: ${JSON.stringify(e)}`) })]), 45_000, 'UI server readiness timeout') }
+  catch (error) { await server.stop(); throw new Error(`${error}\n${redact(output)}`) }
+  return server
+}
+async function createProfile(label, provisioned) {
+  const profile = await fsp.mkdtemp(path.join(runRoot, `${label}-profile-`))
+  profiles.add(profile)
+  await fsp.copyFile(path.join(checkout, 'apps/electron/resources/config-defaults.json'), path.join(profile, 'config-defaults.json'))
+  if (provisioned) {
+    const proc = cp.spawn(bun, [path.join(taskRoot, 'provision-private-union-profile.ts'), checkout], { cwd: checkout,
+      env: { PATH: path.dirname(bun) + ':' + (process.env.PATH || ''), LANG: 'C.UTF-8', TMPDIR: path.join(runRoot, 'tmp'), ROX_CONFIG_DIR: profile, CRAFT_CONFIG_DIR: profile, CRAFT_BUNDLED_ASSETS_ROOT: path.join(checkout, 'apps/electron') }, stdio: ['ignore', 'pipe', 'pipe'] })
+    trackChild(proc); let log = ''; proc.stdout.on('data', c => { log += c }); proc.stderr.on('data', c => { log += c })
+    const code = await within(new Promise((resolve, reject) => { proc.once('error', reject); proc.once('close', resolve) }), 20_000, 'Private config utility timeout')
+    children.delete(proc); fs.writeFileSync(path.join(runRoot, 'provision.log'), redact(log))
+    assert('Actual config utility provisioning exited 0', code === 0, { code })
+  }
+  return profile
+}
+function observe(page, label) {
+  const log = { label, pageErrors: [], consoleErrors: [], consoleWarnings: [], failedRequests: [], badResponses: [], webSockets: [] }
+  result.pages.push(log)
+  page.on('pageerror', error => log.pageErrors.push(redact(error.stack || error.message)))
+  page.on('console', msg => { if (msg.type() === 'error') log.consoleErrors.push(redact(msg.text())); if (msg.type() === 'warning') log.consoleWarnings.push(redact(msg.text())) })
+  page.on('requestfailed', req => log.failedRequests.push({ url: redact(req.url()), method: req.method(), error: req.failure()?.errorText }))
+  page.on('response', response => { if (response.status() >= 400) log.badResponses.push({ url: redact(response.url()), status: response.status() }) })
+  page.on('websocket', ws => {
+    const requests = new Map()
+    const socket = { url: redact(ws.url()), sentChannels: [], receivedTypes: [], rpcRefusals: [], acknowledgedWorkspaceIds: [], errors: [], closed: false }; log.webSockets.push(socket)
+    ws.on('framesent', ({ payload }) => { try { const data = JSON.parse(String(payload)); if (typeof data.channel === 'string') { socket.sentChannels.push(data.channel); if (data.id) requests.set(data.id, data.channel) } } catch {} })
+    ws.on('framereceived', ({ payload }) => { try { const data = JSON.parse(String(payload)); if (typeof data.type === 'string') socket.receivedTypes.push(data.type); if (data.type === 'handshake_ack') socket.acknowledgedWorkspaceIds.push(typeof data.workspaceId === 'string' ? data.workspaceId : null); if (data.error) socket.rpcRefusals.push({ channel: data.channel || requests.get(data.id), code: data.error.code, message: redact(data.error.message || '') }) } catch {} })
+    ws.on('socketerror', error => socket.errors.push(redact(error))); ws.on('close', () => { socket.closed = true })
+  })
+  return log
+}
+async function snapshot(page, name) {
+  const state = await page.evaluate(() => {
+    const visible = el => Boolean(el && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0 && getComputedStyle(el).visibility !== 'hidden' && getComputedStyle(el).display !== 'none')
+    const describe = el => { if (!el) return null; const r = el.getBoundingClientRect(); return { visible: visible(el), tag: el.tagName, text: (el.innerText || '').slice(0, 1800), ariaLabel: el.getAttribute('aria-label'), rect: { x: r.x, y: r.y, width: r.width, height: r.height } } }
+    return { url: location.href, title: document.title, bodyText: document.body.innerText.slice(0, 18_000),
+      appRootChildren: document.getElementById('root')?.childElementCount,
+      topBar: describe(document.querySelector('.chrome-topbar')),
+      modePill: describe(document.querySelector('[data-testid="titlebar-mode-pill"]')),
+      rail: describe(document.querySelector('[data-shell-role="activity-rail"]')),
+      mainNavigation: describe(document.querySelector('nav[aria-label="Main navigation"]')),
+      headers: [...document.querySelectorAll('h1,h2,h3,[role="heading"]')].filter(visible).map(e => e.textContent?.trim()),
+      testIds: [...document.querySelectorAll('[data-testid]')].filter(visible).map(e => e.getAttribute('data-testid')),
+      modeButtons: [...document.querySelectorAll('[data-testid="titlebar-mode-pill"] button')].map(e => ({ mode: e.getAttribute('data-mode'), label: e.getAttribute('aria-label'), current: e.getAttribute('aria-current'), disabled: e.getAttribute('aria-disabled'), visible: visible(e) })),
+      railButtons: [...document.querySelectorAll('[data-shell-role="activity-rail"] button')].map(e => ({ label: e.getAttribute('aria-label'), disabled: e.getAttribute('aria-disabled'), visible: visible(e) })),
+      sourceStates: [...document.querySelectorAll('[data-authority-state],[data-project-authority-state],[data-source],[data-error-code],[role="alert"],[role="status"],[data-home-quick-add]')].filter(visible).map(e => ({ tag: e.tagName, testId: e.getAttribute('data-testid'), authority: e.getAttribute('data-authority-state') || e.getAttribute('data-project-authority-state'), source: e.getAttribute('data-source'), error: e.getAttribute('data-error-code'), role: e.getAttribute('role'), text: (e.innerText || '').slice(0,1200), disabled: e.getAttribute('data-disabled'), failed: e.getAttribute('data-error') })),
+      preferences: Object.fromEntries(['craft-workbench-enabled','craft-feature-unified-shell','craft-feature-workbench-top-chrome-v2','craft-feature-workbench-mode-registry-v1','craft-activity-rail-collapsed','craft-sidebar-width','craft-session-list-width'].map(k => [k, localStorage.getItem(k)])),
+    }
+  })
+  state.screenshot = `${name}.png`; state.html = `${name}.html`
+  await page.screenshot({ path: path.join(runRoot, state.screenshot), fullPage: true })
+  fs.writeFileSync(path.join(runRoot, state.html), redact(await page.content()))
+  writeJson(`${name}.json`, state); return state
+}
+async function settle(page) {
+  await page.waitForTimeout(1800)
+  const dialog = page.getByRole('dialog').filter({ has: page.getByRole('heading', { name: translated('memory.onboardingTitle'), exact: true }) }).first()
+  if (await dialog.isVisible()) {
+    if (!result.firstRunMemoryDialog) result.firstRunMemoryDialog = await snapshot(page, 'genuine-first-run-memory-dialog')
+    await dialog.getByRole('button', { name: translated('memory.onboardingSkip'), exact: true }).click()
+    result.firstRunMemoryDialogDismissals ??= []
+    result.firstRunMemoryDialogDismissals.push({ realUiClick: 'Skip', noSeedLessonsRequested: true, markerMayPersistInOwnProfile: true, at: new Date().toISOString() })
+    await page.waitForTimeout(300)
+  }
+}
+async function login(page, server) {
+  await page.addInitScript(() => {
+    localStorage.setItem('i18nextLng', 'en')
+    window.addEventListener('unhandledrejection', event => {
+      const reason = event.reason
+      console.error('[actual-unhandled-rejection]', JSON.stringify({ type: typeof reason, name: reason?.name, code: reason?.code, message: reason?.message, stack: reason?.stack }))
+    })
+  })
+  await page.goto(server.origin + '/login', { waitUntil: 'domcontentloaded' })
+  await page.locator('#password').fill(server.token)
+  await Promise.all([page.waitForURL(url => !url.pathname.startsWith('/login'), { timeout: 15_000, waitUntil: 'domcontentloaded' }), page.locator('#submit-btn').click()])
+  await settle(page)
+  const cookie = (await page.context().cookies()).find(c => c.name === 'craft_session')
+  assert('Real login stores HttpOnly cookie', cookie?.httpOnly === true, { present: Boolean(cookie), httpOnly: cookie?.httpOnly })
+}
+const routes = ['home','allSessions','tasks','meetings','notes','feed','inbox','projects','pages','memory','sources','skills','automations','connections','knowledge','search','settings','dossier','radar','decisions','agents','focus']
+result.plannedRootRoutes = routes
+const settings = ['account','privacy','runtime','context','marketplace','knowledge','extensions','import','app','ai','appearance','input','workspace','accounts','permissions','security','labels','organizations','messaging','server','cloudRuns','shortcuts']
+const selectors = { home: '[data-home-dashboard]', tasks: '[data-testid="tasks-list"]', meetings: '[data-testid="meetings-list"]', notes: '[data-testid="notes-vault-rail"]', feed: '[data-testid="feed-list"]', inbox: '[data-testid="inbox-list"]', memory: '[data-testid="memory-screen"]', automations: '[data-testid="automations-empty-editor"]', connections: '[data-testid="connections-page"]', settings: '[data-testid="settings-overview"]', knowledge: '[data-testid="knowledge-open-rox-notes"]' }
+const en = JSON.parse(fs.readFileSync(path.join(checkout, 'packages/shared/src/i18n/locales/en.json'), 'utf8'))
+function translated(key) {
+  if (typeof en[key] === 'string') return en[key]
+  let value = en
+  for (const part of key.split('.')) value = value?.[part]
+  return typeof value === 'string' ? value : key
+}
+async function renderedSurface(page, route) {
+  const alternatives = {
+    home: ['[data-home-dashboard]'], tasks: ['[data-testid="tasks-page"]','[data-testid="tasks-list"]','[data-testid="tasks-select-hint"]','[data-testid="tasks-sync-state"]'],
+    meetings: ['[data-testid="meetings-page"]','[data-testid="meetings-engine"]','[data-testid="meetings-list"]'], notes: ['[data-testid="notes-vault-rail"]','[data-testid="notes-authority-unavailable"]'],
+    feed: ['[data-testid="feed-toolbar"]','[data-testid="feed-list"]'], inbox: ['[data-testid="inbox-list"]'],
+    memory: ['[data-testid="memory-screen"]'], automations: ['[data-testid="automations-empty-editor"]'],
+    connections: ['[data-testid="connections-page"]'], settings: ['[data-testid="settings-overview"]'], knowledge: ['[data-testid="knowledge-open-rox-notes"]'],
+    projects: ['[data-testid="shared-project-create-open"]'],
+  }
+  const visibleMarkers = []
+  for (const marker of alternatives[route] || []) if (await page.locator(marker).first().isVisible()) visibleMarkers.push(marker)
+  if (visibleMarkers.length) return { rendered: true, visibleMarkers, kind: 'actual surface element; capability state recorded separately' }
+  const pKeys = { allSessions: 'session.noSessionSelected', sources: 'sourcesList.selectSource', skills: 'skillsList.selectSkill' }
+  if (pKeys[route]) {
+    const text = translated(pKeys[route]); const visible = await page.locator('p').filter({ hasText: text }).first().isVisible()
+    return { rendered: visible, text, kind: 'main detail picker paragraph' }
+  }
+  const buttonKeys = { projects: 'projectsList.addProject', pages: 'pages.newPage' }
+  if (buttonKeys[route]) {
+    const text = translated(buttonKeys[route]); const visible = await page.getByRole('button', { name: text, exact: true }).first().isVisible()
+    return { rendered: visible, text, kind: 'surface-specific action button; no action submitted' }
+  }
+  const headerKey = route.startsWith('settings/') ? 'settings.' + (route.slice(9) === 'organizations' ? 'orgs' : route.slice(9)) + '.title'
+    : ['dossier','radar','decisions','agents','focus'].includes(route) ? 'extraScreens.' + route + '.title'
+    : route === 'search' ? 'searchPage.title' : null
+  if (headerKey) {
+    const text = translated(headerKey); const visible = await page.getByRole('heading', { name: text, exact: true }).first().isVisible()
+    if (visible) return { rendered: true, text, kind: 'surface-specific heading' }
+    if (['dossier','radar','decisions','agents','focus'].includes(route)) {
+      const disabledText = translated('extraScreens.disabledTitle'); const disabled = await page.getByRole('heading', { name: disabledText, exact: true }).first().isVisible()
+      return { rendered: disabled, text: disabledText, kind: 'explicit disabled extra screen' }
+    }
+    return { rendered: false, text, kind: 'expected surface heading absent' }
+  }
+  return { rendered: false, kind: 'registered marker not observed' }
+}
+async function shellStage(server) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'en-US' })
+  const page = await context.newPage(); const log = observe(page, 'private-provisioned-shell')
+  try {
+    await login(page, server)
+    const workspaceConfig = await (await page.request.get(server.origin + '/api/config/workspaces')).json()
+    const authoritativeWorkspaceId = workspaceConfig.defaultWorkspaceId
+    result.authenticatedTransport = { authoritativeWorkspaceId, acknowledgements: log.webSockets.flatMap(socket => socket.acknowledgedWorkspaceIds), nativePrincipalClaimed: false, hostInventoryCapability: 'unavailable' }
+    assert('Actual browser ACK scope equals authoritative HTTP default', typeof authoritativeWorkspaceId === 'string' && authoritativeWorkspaceId.length > 0 && result.authenticatedTransport.acknowledgements.includes(authoritativeWorkspaceId) && result.authenticatedTransport.acknowledgements.every(id => id === authoritativeWorkspaceId), result.authenticatedTransport)
+    await page.goto(server.origin + '/?route=home', { waitUntil: 'domcontentloaded' }); await settle(page)
+    const initial = await snapshot(page, 'default-shell-home')
+    result.defaultShell = initial
+    check('Fresh browser master preferences remain absent', initial.preferences['craft-workbench-enabled'] === null && initial.preferences['craft-feature-unified-shell'] === null, initial.preferences)
+    check('Actual renderer mounted top header', initial.topBar?.visible === true, { topBar: initial.topBar, pageErrors: log.pageErrors })
+    assert('No fatal initialization page exceptions', log.pageErrors.length === 0, log.pageErrors)
+    assert('Actual web startup marks host inventory unavailable and exits splash', await page.locator('[data-host-session-capability="unavailable"]').isVisible() && initial.topBar?.visible && !await page.locator('.z-splash').isVisible(), { splashVisible: await page.locator('.z-splash').isVisible(), statusVisible: await page.locator('[data-host-session-capability="unavailable"]').isVisible(), topBar: initial.topBar })
+    check('Web startup calls no desktop identity/provider/native bootstrap RPC', !log.webSockets.flatMap(socket => socket.sentChannels).some(channel => ['orgs:getIdentity','config:getSetupNeeds','llmConnections:listWithStatus','llmConnections:getStartupSummary','workspaces:get'].includes(channel)), { observedChannels: log.webSockets.flatMap(socket => socket.sentChannels) })
+    check('Default master off hides ModeBar and ActivityRail', !initial.modePill?.visible && !initial.rail?.visible, { modePill: initial.modePill, rail: initial.rail })
+    await page.evaluate(() => { localStorage.setItem('craft-workbench-enabled', 'true'); localStorage.setItem('craft-activity-rail-collapsed', 'false') })
+    await page.reload({ waitUntil: 'domcontentloaded' }); await settle(page)
+    let enabled = await snapshot(page, 'workbench-enabled-home'); result.enabledShell = enabled
+    if (enabled.rail?.visible) {
+      const collapse = page.getByRole('button', { name: translated('rail.collapse'), exact: true }).first()
+      if (await collapse.isVisible()) {
+        await collapse.click(); await settle(page)
+        const collapsed = await snapshot(page, 'actual-activity-rail-user-collapsed')
+        await page.getByRole('button', { name: translated('rail.expand'), exact: true }).first().click(); await settle(page)
+        enabled = await snapshot(page, 'actual-activity-rail-user-expanded'); result.enabledShell = enabled
+        result.realSidebarToggle = { realUserClicks: ['Collapse navigation','Expand navigation'], collapsed: collapsed.rail, expanded: enabled.rail, collapsedButtons: collapsed.railButtons.filter(b => b.visible), expandedButtons: enabled.railButtons.filter(b => b.visible), collapsedPreference: collapsed.preferences['craft-activity-rail-collapsed'], expandedPreference: enabled.preferences['craft-activity-rail-collapsed'], sourceContract: 'ActivityRail.tsx intentionally uses 44px for both states; actual visible controls change' }
+        check('Actual sidebar collapse/expand changes visible controls and persisted preference', collapsed.rail?.visible && enabled.rail?.visible && result.realSidebarToggle.collapsedPreference === 'true' && result.realSidebarToggle.expandedPreference === 'false' && result.realSidebarToggle.collapsedButtons.length < result.realSidebarToggle.expandedButtons.length && result.realSidebarToggle.expandedButtons.length >= 12, result.realSidebarToggle)
+      }
+    }
+    check('Explicit private Workbench preference persisted true', enabled.preferences['craft-workbench-enabled'] === 'true', enabled.preferences)
+    check('Enabled Workbench mounts visible ModeBar and ActivityRail', enabled.modePill?.visible && enabled.rail?.visible, { modePill: enabled.modePill, rail: enabled.rail })
+    check('Header is on top', enabled.topBar?.rect.y === 0 && enabled.topBar?.rect.height > 0 && enabled.topBar?.rect.height < 100, enabled.topBar?.rect)
+    check('Mode pill is inside header vertically', enabled.modePill && enabled.topBar && enabled.modePill.rect.y >= enabled.topBar.rect.y && enabled.modePill.rect.y + enabled.modePill.rect.height <= enabled.topBar.rect.y + enabled.topBar.rect.height + 1, { topBar: enabled.topBar?.rect, modePill: enabled.modePill?.rect })
+    check('Enabled header shows all seven root modes', enabled.modeButtons.filter(b => b.visible).length === 7, enabled.modeButtons)
+    check('Enabled new expanded left sidebar is visible with navigation buttons', enabled.rail?.visible === true && enabled.rail.rect.width > 32 && enabled.railButtons.filter(button => button.visible).length >= 12, { rail: enabled.rail, buttons: enabled.railButtons, contextualSessionsSidebar: enabled.mainNavigation })
+    check('Enabled centered pill matches window center', enabled.modePill && Math.abs(enabled.modePill.rect.x + enabled.modePill.rect.width / 2 - 720) <= 2, enabled.modePill?.rect)
+    result.modeClickObservations = []
+    if (enabled.modePill?.visible) for (const mode of ['home','chat','tasks','meetings','notes','feed','inbox']) {
+      await page.locator(`[data-testid="titlebar-mode-pill"] button[data-mode="${mode}"]`).click(); await settle(page)
+      const state = await snapshot(page, `mode-click-${mode}`)
+      result.modeClickObservations.push({ mode, actualUrl: state.url, activeModes: state.modeButtons.filter(b => b.current), bodyText: state.bodyText, testIds: state.testIds, screenshot: state.screenshot })
+      check(`Real mode click ${mode} becomes active`, state.modeButtons.some(b => b.mode === mode && b.current === 'page'), state.modeButtons)
+      checkpoint()
+    }
+    result.routeObservations = []
+    for (let i = 0; i < routes.length; i++) {
+      const route = routes[i]; const beforeErrors = log.pageErrors.length
+      await page.goto(server.origin + '/?route=' + encodeURIComponent(route), { waitUntil: 'domcontentloaded' }); await settle(page)
+      const state = await snapshot(page, `route-${String(i + 1).padStart(2, '0')}-${route}`)
+      const marker = selectors[route]; const markerVisible = marker ? await page.locator(marker).first().isVisible() : null
+      const surfaceEvidence = await renderedSurface(page, route)
+      const observation = { route, actualUrl: state.url, mountedTopBar: state.topBar?.visible === true, routeSurvived: new URL(state.url).searchParams.get('route') === route, marker, markerVisible, surfaceEvidence, visibleModePill: state.modePill?.visible === true, visibleRail: state.rail?.visible === true, bodyText: state.bodyText, headers: state.headers, testIds: state.testIds, sourceStates: state.sourceStates, screenshot: state.screenshot, html: state.html, newPageErrors: log.pageErrors.slice(beforeErrors) }
+      result.routeObservations.push(observation)
+      check(`Actual route ${route} has rendered content`, observation.mountedTopBar && state.bodyText.length > 0 && observation.newPageErrors.length === 0 && surfaceEvidence.rendered, observation)
+      checkpoint(); console.log(`route ${route}: observed`)
+    }
+    result.settingsObservations = []
+    for (const subpage of settings) {
+      const beforeErrors = log.pageErrors.length
+      await page.goto(server.origin + '/?route=' + encodeURIComponent('settings/' + subpage), { waitUntil: 'domcontentloaded' }); await settle(page)
+      const state = await snapshot(page, `settings-${subpage}`)
+      const surfaceEvidence = await renderedSurface(page, 'settings/' + subpage)
+      result.settingsObservations.push({ subpage, surfaceEvidence, actualUrl: state.url, mountedTopBar: state.topBar?.visible === true, bodyText: state.bodyText, testIds: state.testIds, sourceStates: state.sourceStates, screenshot: state.screenshot, newPageErrors: log.pageErrors.slice(beforeErrors) })
+      check(`Settings ${subpage} renders without page exception`, state.topBar?.visible === true && state.bodyText.length > 0 && surfaceEvidence.rendered && log.pageErrors.length === beforeErrors, surfaceEvidence)
+      checkpoint(); console.log(`settings ${subpage}: observed`)
+    }
+    const fixture = JSON.parse(fs.readFileSync(path.join(server.profile, 'fixture-info.json'), 'utf8')); result.privateFixture = fixture
+    result.contextualObservations = []
+    for (const [route, marker, label] of [[`projects/project/${fixture.projectSlug}`, '[data-testid="project-roadmap-page"]', 'genuine-project-roadmap'], [`notes/note/${fixture.noteId}`, '[data-testid="notes-content-authority"]', 'pre-existing-private-note']]) {
+      const beforeErrors = log.pageErrors.length
+      await page.goto(server.origin + '/?route=' + encodeURIComponent(route), { waitUntil: 'domcontentloaded' }); await settle(page)
+      const state = await snapshot(page, label)
+      const markerVisible = await page.locator(marker).first().isVisible()
+      const unavailableMarker = label === 'genuine-project-roadmap' ? '[data-testid="project-workspace-unavailable"]' : '[data-testid="notes-authority-unavailable"]'
+      const unavailableVisible = await page.locator(unavailableMarker).isVisible()
+      const observation = { route, marker, markerVisible, unavailableMarker, unavailableVisible, renderedSupportedDetail: markerVisible, functionalNativeDetailExecuted: false, bodyText: state.bodyText, testIds: state.testIds, sourceStates: state.sourceStates, screenshot: state.screenshot, newPageErrors: log.pageErrors.slice(beforeErrors) }
+      result.contextualObservations.push(observation)
+      check(`Genuine fixture ${label} renders supported detail or explicit unavailable state without page error`, (markerVisible || unavailableVisible) && log.pageErrors.length === beforeErrors, observation)
+      if (!markerVisible) result.limitations.push({ surface: label, status: 'NOT EXECUTED: actual unavailable UI observed', reason: label === 'genuine-project-roadmap' ? 'HTTP/ACK proves workspace ID; no trusted local Workspace metadata or native project context is invented' : 'Real nativeReplica/nativeData preload is absent; native editor/controller not mounted', note: 'Unavailable rendering is not functional native/Project/Roadmap/RepositorySnapshot acceptance' })
+      if (label === 'genuine-project-roadmap' && markerVisible) check('Compound RepositorySnapshot panel composes with supported Project roadmap', await page.locator('[data-testid="repository-snapshot-panel"]').isVisible(), {})
+      if (label === 'pre-existing-private-note' && unavailableVisible) {
+        const button = page.locator('[data-testid="notes-unavailable-new-note"]')
+        const disabled = await button.isDisabled()
+        const sentBefore = log.webSockets.flatMap(socket => socket.sentChannels).length
+        const bounds = await button.boundingBox()
+        if (bounds) await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)
+        await page.keyboard.press('Enter'); await page.waitForTimeout(250)
+        const sentAfter = log.webSockets.flatMap(socket => socket.sentChannels).slice(sentBefore)
+        const mutationChannels = sentAfter.filter(channel => /notes:.*(?:create|write|delete|rename|save|import|move)|nativeData:mutate|nativeReplica:enqueue/i.test(channel))
+        result.notesUnavailableControl = { disabled, realMouseClickAttempted: Boolean(bounds), realEnterPressed: true, mutationChannels, nativeEditorMounted: await page.locator('[data-testid="notes-vault-rail"]').isVisible(), status: 'explicit missing-capability refusal; no native functional acceptance' }
+        check('Unavailable Notes blocks real create control and hidden mutation paths', disabled && Boolean(bounds) && mutationChannels.length === 0 && !result.notesUnavailableControl.nativeEditorMounted && !await page.getByRole('dialog').isVisible(), result.notesUnavailableControl)
+      }
+      checkpoint()
+    }
+    // A real private Pages write through the UI, persisted by the production RPC.
+    // The blank page has no agent content/provider work or granted source actions.
+    await page.goto(server.origin + '/?route=pages', { waitUntil: 'domcontentloaded' }); await settle(page)
+    const beforeCreateErrors = log.pageErrors.length
+    const createButton = page.getByRole('button', { name: translated('pages.newPage'), exact: true }).first()
+    result.functionalPageCreate = { attempted: false, realUiClick: false, actualUrl: page.url(), noLlmOrSourceActionRequested: true }
+    if (await createButton.isVisible() && await createButton.isEnabled()) {
+      result.functionalPageCreate.attempted = true
+      await createButton.click(); result.functionalPageCreate.realUiClick = true
+      try { await page.waitForFunction(() => new URL(location.href).searchParams.get('route')?.startsWith('pages/page/'), undefined, { timeout: 10_000 }) }
+      catch (error) { result.functionalPageCreate.navigationError = redact(error.message) }
+      await settle(page)
+      const createdState = await snapshot(page, 'functional-created-private-page')
+      const actualRoute = new URL(createdState.url).searchParams.get('route') || ''
+      const slug = actualRoute.startsWith('pages/page/') ? actualRoute.slice('pages/page/'.length) : null
+      const actualConfigPath = slug ? path.join(server.profile, 'workspaces/cloud-ui-baseline/pages', slug, 'page.json') : null
+      const persisted = actualConfigPath && fs.existsSync(actualConfigPath) ? JSON.parse(fs.readFileSync(actualConfigPath, 'utf8')) : null
+      Object.assign(result.functionalPageCreate, { actualUrl: createdState.url, actualRoute, slug, actualConfigPath, persisted: persisted ? { id: persisted.id, slug: persisted.slug, name: persisted.name, kind: persisted.kind } : null, bodyText: createdState.bodyText, sourceStates: createdState.sourceStates, screenshot: createdState.screenshot })
+      check('Actual UI creates a persisted private blank page', Boolean(slug && persisted?.slug === slug && persisted?.name === translated('pages.newPage') && createdState.bodyText.includes(translated('pages.noContentTitle')) && log.pageErrors.length === beforeCreateErrors), result.functionalPageCreate)
+      if (slug) {
+        await page.reload({ waitUntil: 'domcontentloaded' }); await settle(page)
+        const reloaded = await snapshot(page, 'functional-created-private-page-reloaded')
+        result.functionalPageCreate.reload = { actualUrl: reloaded.url, bodyText: reloaded.bodyText, screenshot: reloaded.screenshot, pageErrors: log.pageErrors.slice(beforeCreateErrors) }
+        check('Created private page survives browser reload and reads actual persisted data', new URL(reloaded.url).searchParams.get('route') === actualRoute && reloaded.bodyText.includes(translated('pages.noContentTitle')) && fs.existsSync(actualConfigPath) && log.pageErrors.length === beforeCreateErrors, result.functionalPageCreate.reload)
+      }
+    } else check('Private Pages create control available for genuine fixture', false, result.functionalPageCreate)
+    checkpoint()
+    result.contextRequiredUnexecuted = [
+      { surface: 'browser', required: 'real browser instanceId/backend', source: 'MainContentPanel.tsx:354' },
+      { surface: 'terminal', required: 'real terminalId/native terminal backend', source: 'MainContentPanel.tsx:403' },
+      { surface: 'cloud-run', required: 'real runId/cloud provider', source: 'MainContentPanel.tsx:414' },
+      { surface: 'extension', required: 'installed extensionId/viewId', source: 'MainContentPanel.tsx:383' },
+      { surface: 'diff', required: 'real write proposalId', source: 'MainContentPanel.tsx:425' },
+    ]
+    await page.goto(server.origin + '/?route=home', { waitUntil: 'domcontentloaded' }); await settle(page)
+    await page.setViewportSize({ width: 1024, height: 768 }); await settle(page); result.narrowShell = await snapshot(page, 'workbench-enabled-home-1024')
+    // Restart the same genuine profile, preserving the cookie and private Pages data.
+    const persistedPage = result.functionalPageCreate?.actualRoute
+    await server.stop()
+    const stoppedEndpoints = []
+    for (const endpoint of ['/health','/login','/api/config','/']) {
+      let unreachable = false
+      try { await fetch(server.origin + endpoint, { signal: AbortSignal.timeout(1500) }) } catch { unreachable = true }
+      stoppedEndpoints.push({ endpoint, unreachable })
+    }
+    check('Stopped actual browser server HTTP endpoints are unreachable', stoppedEndpoints.every(item => item.unreachable), stoppedEndpoints)
+    const stoppedWebSocket = await within(new Promise(resolve => {
+      const socket = new WebSocket(server.origin.replace(/^http/, 'ws'))
+      socket.addEventListener('error', () => { socket.close(); resolve(true) }, { once: true })
+      socket.addEventListener('open', () => { socket.close(); resolve(false) }, { once: true })
+    }), 3000, 'Stopped WebSocket endpoint probe did not settle')
+    check('Stopped actual browser server rejects WebSocket connection', stoppedWebSocket === true, {})
+    const beforeRestartErrors = log.pageErrors.length
+    const beforeRestartSocketCount = log.webSockets.length
+    const restarted = await spawnServer(server.profile, 'shell-restart', { token: server.token, port: Number(new URL(server.origin).port) })
+    let beforeMismatchErrors
+    try {
+      const restartConfig = await page.request.get(restarted.origin + '/api/config')
+      check('Same-profile restart retains old HttpOnly login cookie', restartConfig.status() === 200, { status: restartConfig.status() })
+      const restartedDefault = await (await page.request.get(restarted.origin + '/api/config/workspaces')).json()
+      check('Same-profile restart retains authoritative workspace', restartedDefault.defaultWorkspaceId === authoritativeWorkspaceId, restartedDefault)
+      const resumedRoute = persistedPage || 'home'
+      await page.goto(restarted.origin + '/?route=' + encodeURIComponent(resumedRoute), { waitUntil: 'domcontentloaded' }); await settle(page)
+      result.sameProfileRestart = await snapshot(page, 'same-profile-restart-persisted-page')
+      const restartedSockets = log.webSockets.slice(beforeRestartSocketCount)
+      const restartedAcks = restartedSockets.flatMap(socket => socket.acknowledgedWorkspaceIds)
+      result.sameProfileRestart.newConnectionAcknowledgments = { newSocketCount: restartedSockets.length, actualWorkspaceIds: restartedAcks }
+      check('Same-profile restart mounts actual header with real acknowledged workspace and no page error', result.sameProfileRestart.topBar?.visible && restartedAcks.includes(authoritativeWorkspaceId) && restartedAcks.every(id => id === authoritativeWorkspaceId) && log.pageErrors.length === beforeRestartErrors, result.sameProfileRestart)
+      if (persistedPage) check('Same-profile restart rereads genuinely created private page', new URL(result.sameProfileRestart.url).searchParams.get('route') === persistedPage && result.sameProfileRestart.bodyText.includes(translated('pages.noContentTitle')), result.sameProfileRestart)
+    beforeMismatchErrors = log.pageErrors.length
+    await page.goto(server.origin + '/?workspace=__invalid_private_workspace__', { waitUntil: 'domcontentloaded' }); await settle(page)
+    } finally {
+      await restarted.stop()
+      check('Restarted browser server SIGTERM exits0 without SIGKILL', restarted.audit.sentSigterm && !restarted.audit.usedSigkill && restarted.audit.exit.code === 0, restarted.audit)
+      check('Restarted browser server emits no full ephemeral token', !restarted.audit.fullEphemeralTokenLogged, {})
+    }
+    result.mismatchedUrlWorkspace = await snapshot(page, 'negative-mismatched-url-workspace')
+    check('Actual URL workspace mismatch refuses shell without page exception', !result.mismatchedUrlWorkspace.topBar?.visible && result.mismatchedUrlWorkspace.bodyText.includes('Requested workspace does not match') && log.pageErrors.length === beforeMismatchErrors, result.mismatchedUrlWorkspace)
+    check('Actual browser run has no page exceptions', log.pageErrors.length === 0, log.pageErrors)
+    return { observedRoutes: result.routeObservations.length, defaultMounted: initial.topBar?.visible, enabledMounted: enabled.topBar?.visible, pageErrors: log.pageErrors.length }
+  } finally { await context.close() }
+}
+async function emptyStage(server) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'en-US' })
+  const page = await context.newPage(); const log = observe(page, 'fresh-empty-profile')
+  try {
+    await login(page, server)
+    result.emptyProfile = await snapshot(page, 'fresh-empty-profile')
+    assert('Fresh actual app initializes without page exception', log.pageErrors.length === 0, log.pageErrors)
+    check('Actual empty profile refuses shell with honest unconfigured-workspace state', !result.emptyProfile.topBar?.visible && result.emptyProfile.bodyText.includes('Server has no configured default workspace') && !await page.locator('#onboarding-username').isVisible(), result.emptyProfile)
+    check('Unconfigured WebUI makes no desktop identity/provider/bootstrap RPC', log.webSockets.length === 0, log.webSockets)
+    return { mountedRootChildren: result.emptyProfile.appRootChildren, unavailableWorkspace: result.emptyProfile.bodyText.includes('Server has no configured default workspace'), onboardingVisible: await page.locator('#onboarding-username').isVisible(), pageErrors: log.pageErrors.length }
+  } finally { await context.close() }
+}
+async function main() {
+  await fsp.mkdir(runRoot, { recursive: true }); await fsp.mkdir(path.join(runRoot, 'tmp'), { recursive: true })
+  await fsp.copyFile(__filename, path.join(runRoot, 'executed-helper.cjs'))
+  await fsp.copyFile(path.join(taskRoot, 'provision-private-union-profile.ts'), path.join(runRoot, 'executed-provisioner.ts'))
+  result.command = ['node', __filename, checkout, expectedRevision]
+  result.reproductionLayout = { taskRoot, ownRunRoot: runRoot, bunBinary: bun, chromiumBinary: '/usr/bin/chromium', dependencies: 'existing checkout node_modules used via createRequire; no install/system/environment changes by observer' }
+  await phase('artifact and revision verification', async () => {
+    const revision = cp.execFileSync('git', ['rev-parse', 'HEAD'], { cwd: checkout, encoding: 'utf8' }).trim()
+    assert('Exact baseline revision', revision === expectedRevision, { revision })
+    result.helperSha256 = hashFile(__filename)
+    result.privateProvisionerSha256 = hashFile(path.join(taskRoot, 'provision-private-union-profile.ts'))
+    result.trackedStatusBefore = trackedStatus(); result.allowedOwnedToolingDirty = allowOwnedToolingDirty
+    assert(allowOwnedToolingDirty ? 'Application source and lock unchanged before; exact tooling dirty status recorded' : 'Tracked source and lock clean before', applicationStatus(result.trackedStatusBefore) === '', { trackedStatus: result.trackedStatusBefore, exception: allowOwnedToolingDirty ? 'scripts/electron-build-main.ts only; outside Bun server/WebUI app build graphs' : null })
+    result.artifacts = Object.fromEntries(['dist-server/index.js','apps/webui/dist/index.html','apps/webui/dist/login.html','packages/server/src/__tests__/smoke.test.ts'].map(file => [file, { sha256: hashFile(path.join(checkout, file)), bytes: fs.statSync(path.join(checkout, file)).size }]))
+    // Dist may retain earlier generated chunks. Bind only the fresh HTML entry's
+    // real import graph, never another revision's leftover main/App source maps.
+    const webuiDist = path.join(checkout, 'apps/webui/dist')
+    const html = fs.readFileSync(path.join(webuiDist, 'index.html'), 'utf8')
+    const entryMatch = html.match(/<script[^>]*\bsrc=["']([^"']+\.js)["']/)
+    if (!entryMatch) throw new Error('Actual built HTML has no JavaScript entry')
+    const entryFile = path.resolve(webuiDist, entryMatch[1])
+    const reachable = new Set(); const queue = [entryFile]
+    while (queue.length) {
+      const asset = queue.shift()
+      if (reachable.has(asset)) continue
+      if (!asset.startsWith(path.join(webuiDist, 'assets') + path.sep) || !fs.existsSync(asset)) throw new Error('Built import outside own asset directory or missing: ' + asset)
+      reachable.add(asset)
+      const code = fs.readFileSync(asset, 'utf8')
+      for (const match of code.matchAll(/["']((?:\.{1,2}\/|assets\/)[^"'\s]+\.js)["']/g)) {
+        const imported = path.resolve(match[1].startsWith('assets/') ? webuiDist : path.dirname(asset), match[1])
+        if (imported.startsWith(path.join(webuiDist, 'assets') + path.sep) && fs.existsSync(imported)) queue.push(imported)
+      }
+    }
+    const selected = [...reachable].filter(file => /^(main-|browser-main-|App-).*\.js$/.test(path.basename(file)))
+    const selectedWithMaps = selected.flatMap(file => [file, file + '.map']).filter(file => fs.existsSync(file))
+    result.compiledAssetSelection = { htmlEntry: path.relative(checkout, entryFile), reachableJsCount: reachable.size, selected: selectedWithMaps.map(file => path.relative(checkout, file)), oldGeneratedEntryChunksIgnored: fs.readdirSync(path.join(webuiDist, 'assets')).filter(file => /^(main-|browser-main-|App-).*\.js$/.test(file) && !reachable.has(path.join(webuiDist, 'assets', file))) }
+    result.compiledAssets = Object.fromEntries(selectedWithMaps.map(file => [path.relative(checkout, file), { sha256: hashFile(file), bytes: fs.statSync(file).size }]))
+    result.productionSources = Object.fromEntries(['apps/electron/src/renderer/lib/scoped-capability-read.ts', 'apps/electron/src/renderer/lib/notes-capability.ts', 'apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx', 'apps/electron/src/renderer/components/projects/ProjectAuthorityConnectionPanel.tsx', 'apps/electron/src/renderer/pages/settings/MessagingSettingsPage.tsx', 'apps/electron/src/renderer/pages/settings/EnvironmentSettingsSection.tsx', 'apps/electron/src/renderer/pages/settings/VoiceSettingsSection.tsx', 'apps/electron/src/renderer/pages/settings/desktop-settings-session.ts', 'apps/electron/src/renderer/pages/NotesPage.tsx', 'apps/electron/src/renderer/pages/ProjectInfoPage.tsx','apps/webui/vite.config.ts','apps/webui/src/main.tsx','apps/webui/src/browser-globals.ts','apps/webui/src/browser-main.tsx','apps/webui/src/App.tsx','apps/webui/src/adapter/web-api.ts','apps/webui/src/adapter/transport-bootstrap.ts','apps/electron/src/renderer/lib/authenticated-web-bootstrap.ts','apps/electron/src/renderer/lib/desktop-appearance.ts','apps/electron/src/renderer/hooks/useShellAppearance.ts','apps/electron/src/renderer/components/app-shell/TopBar.tsx','apps/electron/src/renderer/pages/settings/ZenShellSettings.tsx','apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx','apps/electron/src/renderer/App.tsx','packages/server-core/src/transport/client.ts','apps/electron/src/renderer/shims/node-stub.ts','apps/electron/src/renderer/components/app-shell/AppShell.tsx','apps/electron/src/renderer/components/app-shell/TopBar.tsx','apps/electron/src/renderer/platform/ModeBar.tsx','apps/electron/src/renderer/platform/ActivityRail.tsx','apps/electron/src/renderer/pages/ProjectInfoPage.tsx','apps/electron/src/renderer/pages/NotesPage.tsx','packages/shared/src/credentials/backends/secure-storage.ts'].map(file => [file, hashFile(path.join(checkout,file))]))
+    result.mappedSourceClosure = []
+    const closureFiles = ['apps/electron/src/renderer/lib/scoped-capability-read.ts', 'apps/electron/src/renderer/lib/notes-capability.ts', 'apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx', 'apps/electron/src/renderer/components/projects/ProjectAuthorityConnectionPanel.tsx', 'apps/electron/src/renderer/pages/settings/MessagingSettingsPage.tsx', 'apps/electron/src/renderer/pages/settings/EnvironmentSettingsSection.tsx', 'apps/electron/src/renderer/pages/settings/VoiceSettingsSection.tsx', 'apps/electron/src/renderer/pages/settings/desktop-settings-session.ts', 'apps/electron/src/renderer/pages/NotesPage.tsx', 'apps/electron/src/renderer/pages/ProjectInfoPage.tsx','apps/webui/src/App.tsx','apps/webui/src/adapter/web-api.ts','apps/webui/src/adapter/transport-bootstrap.ts','apps/electron/src/renderer/lib/authenticated-web-bootstrap.ts','apps/electron/src/renderer/lib/desktop-appearance.ts','apps/electron/src/renderer/hooks/useShellAppearance.ts','apps/electron/src/renderer/components/app-shell/TopBar.tsx','apps/electron/src/renderer/pages/settings/ZenShellSettings.tsx','apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx','apps/electron/src/renderer/App.tsx','packages/server-core/src/transport/client.ts','apps/webui/src/main.tsx','apps/webui/src/browser-globals.ts','apps/webui/src/browser-main.tsx','apps/electron/src/renderer/shims/node-stub.ts','packages/shared/src/credentials/backends/secure-storage.ts']
+    result.mappedEvidenceAssets = {}
+    for (const asset of [...reachable].map(file => path.relative(checkout, file + '.map')).filter(file => fs.existsSync(path.join(checkout, file)))) {
+      const map = JSON.parse(fs.readFileSync(path.join(checkout, asset), 'utf8'))
+      for (let index = 0; index < map.sources.length; index++) {
+        const absolute = path.resolve(path.dirname(path.join(checkout, asset)), map.sources[index])
+        const file = closureFiles.find(file => absolute === path.join(checkout, file))
+        if (!file || typeof map.sourcesContent?.[index] !== 'string') continue
+        const mappedContentSha256 = crypto.createHash('sha256').update(map.sourcesContent[index]).digest('hex')
+        result.mappedEvidenceAssets[asset] = { sha256: hashFile(path.join(checkout, asset)), bytes: fs.statSync(path.join(checkout, asset)).size }
+        result.mappedSourceClosure.push({ asset, source: map.sources[index], file, mappedContentSha256, actualSha256: hashFile(absolute), contentMatchesCheckout: mappedContentSha256 === hashFile(absolute) })
+      }
+    }
+    check('Actual built maps bind bootstrap and affected shared initialization sources', closureFiles.every(file => result.mappedSourceClosure.some(entry => entry.file === file && entry.contentMatchesCheckout)) && result.mappedSourceClosure.every(entry => entry.contentMatchesCheckout), result.mappedSourceClosure)
+    return result.artifacts
+  })
+  if (result.phases.at(-1).status !== 'completed') return
+  const { chromium } = createRequire(path.join(checkout, 'package.json'))('playwright')
+  result.playwrightVersion = createRequire(path.join(checkout, 'package.json'))('playwright/package.json').version
+  await phase('existing Chromium launch', async () => {
+    // Chromium's AF_UNIX SingletonSocket path must fit under 108 bytes.
+    // This short, owned temporary directory changes only the browser child.
+    browserTmp = await fsp.mkdtemp('/tmp/rox-ui-c-')
+    browser = await chromium.launch({ executablePath: '/usr/bin/chromium', headless: true, chromiumSandbox: false, env: { PATH: process.env.PATH, LANG: 'C.UTF-8', TMPDIR: browserTmp } })
+    result.browserVersion = browser.version(); result.browserLaunch = { executablePath: '/usr/bin/chromium', headless: true, chromiumSandbox: false, isolatedContexts: true, tlsVerificationDisabled: false }
+    return result.browserLaunch
+  })
+  if (!browser) return
+  for (const [label, provisioned] of [['empty', false], ['shell', true]]) {
+    let profile; let server
+    await phase(`${label} private built server and mounted UI`, async () => {
+      profile = await createProfile(label, provisioned); server = await spawnServer(profile, label)
+      assert(`${label} actual health is 200`, (await fetch(server.origin + '/health')).status === 200, {})
+      return await (provisioned ? shellStage(server) : emptyStage(server))
+    })
+    if (server) await phase(`${label} owned server cleanup`, async () => { await server.stop(); assert(`${label} SIGTERM exit0 without SIGKILL`, server.audit.sentSigterm && !server.audit.usedSigkill && server.audit.exit.code === 0, server.audit); assert(`${label} no full test token logged`, !server.audit.fullEphemeralTokenLogged, {}); return server.audit })
+    if (profile) { await fsp.rm(profile, { recursive: true, force: true }); profiles.delete(profile) }
+  }
+  await browser.close(); browser = null
+  result.trackedStatusAfter = trackedStatus(); await phase('source cleanliness and private process cleanup', async () => {
+    assert(allowOwnedToolingDirty ? 'Application source and lock unchanged after; exact tooling dirty status recorded' : 'Tracked source and lock clean after', applicationStatus(result.trackedStatusAfter) === '', { trackedStatus: result.trackedStatusAfter })
+    assert('No owned running child processes', children.size === 0, { remaining: [...children].map(p => p.pid) })
+    await fsp.rm(path.join(runRoot, 'tmp'), { recursive: true, force: true })
+    assert('All created private profiles deleted', profiles.size === 0, { remainingProfiles: profiles.size })
+    return { remainingChildren: children.size, privateProfilesDeleted: profiles.size === 0, privateBrowserContextsClosed: true }
+  })
+}
+async function finalCleanup() {
+  const audit = { browserClosed: !browser, childAudits: [], profilesDeleted: [], errors: [] }
+  if (browser) try { await within(browser.close(), 15_000, 'Owned browser cleanup timed out'); browser = null; audit.browserClosed = true } catch (error) { audit.errors.push(String(error)) }
+  for (const child of children) {
+    const childAudit = { pid: child.pid, initiallyExited: child.exitCode !== null || child.signalCode !== null, usedSigkill: false }
+    const closed = childClosePromises.get(child)
+    if (!childAudit.initiallyExited) {
+      try { child.kill('SIGTERM') } catch {}
+      try { await within(closed, 3_000, 'Owned child cleanup SIGTERM timed out') }
+      catch { childAudit.usedSigkill = true; try { process.kill(-child.pid, 'SIGKILL') } catch { try { child.kill('SIGKILL') } catch {} } }
+    }
+    try { await within(closed, 5_000, 'Owned child did not close after cleanup'); childAudit.confirmedStopped = true; children.delete(child) }
+    catch (error) { childAudit.confirmedStopped = false; audit.errors.push(String(error)) }
+    childAudit.exitCode = child.exitCode; childAudit.signalCode = child.signalCode; audit.childAudits.push(childAudit)
+  }
+  for (const profile of profiles) try { await fsp.rm(profile, { recursive: true, force: true }); profiles.delete(profile); audit.profilesDeleted.push(profile) } catch (error) { audit.errors.push(String(error)) }
+  try { await fsp.rm(path.join(runRoot, 'tmp'), { recursive: true, force: true }) } catch (error) { audit.errors.push(String(error)) }
+  if (browserTmp) try { await fsp.rm(browserTmp, { recursive: true, force: true }); audit.shortBrowserTmpDeleted = true } catch (error) { audit.errors.push(String(error)) }
+  audit.remainingChildren = children.size; audit.remainingProfiles = profiles.size; result.finalCleanup = audit
+  if (audit.errors.length || children.size || profiles.size || !audit.browserClosed) result.errors.push({ phase: 'final cleanup', evidence: audit })
+}
+main().catch(error => { result.errors.push({ phase: 'runner', error: redact(error.stack || error) }); console.error(redact(error.stack || error)) }).finally(async () => {
+  await finalCleanup()
+  result.finishedAt = new Date().toISOString(); result.assertionsPassed = result.assertions.filter(a => a.pass).length; result.assertionsFailed = result.assertions.filter(a => !a.pass).length
+  checkpoint(); console.log(`UI OBSERVATION DONE: ${result.assertionsPassed} passed checks, ${result.assertionsFailed} failed checks, ${result.errors.length} phase errors`)
+  process.exitCode = result.errors.length || result.assertionsFailed ? 1 : 0
+})

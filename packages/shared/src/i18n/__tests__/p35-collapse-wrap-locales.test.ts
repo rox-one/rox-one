@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { createInstance } from 'i18next'
 
 const localesDirectory = join(import.meta.dir, '../locales')
 const en = JSON.parse(readFileSync(join(localesDirectory, 'en.json'), 'utf8')) as Record<string, string>
@@ -13,17 +14,17 @@ function interpolationVars(value: string): string[] {
 /** Collapsed leftover wraps from open fix(i18n) drafts. One assertion map, not 219 PRs. */
 const WRAPPED_RU: Record<string, string> = {
   "accountMenu.account": "Аккаунт",
-  "accountMenu.connectionsSummary": "{connected} подключено · {expired} истекло",
-  "accountMenu.credentialHealth": "Состояние учётных данных: {status}",
-  "accountMenu.healthIssues": "{count} проблем",
+  "accountMenu.connectionsSummary": "Подключено: {{connected}} · истекло: {{expired}} · ошибок: {{errors}}",
+  "accountMenu.credentialHealth": "Состояние учётных данных: {{status}}",
+  "accountMenu.healthIssues": "{{count}} проблем",
   "accountMenu.healthOk": "норма",
   "accountMenu.healthUnknown": "неизвестно",
-  "accountMenu.licenseStatus": "Лицензия: {status}",
+  "accountMenu.licenseStatus": "Лицензия: {{status}}",
   "accountMenu.localProfile": "Локальный профиль",
   "accountMenu.openMenu": "Меню аккаунта",
-  "accountMenu.profileMode": "Профиль: {mode}",
+  "accountMenu.profileMode": "Профиль: {{mode}}",
   "accountMenu.resetDone": "Данные приложения сброшены",
-  "accountMenu.resetFailed": "Не удалось сбросить: {message}",
+  "accountMenu.resetFailed": "Не удалось сбросить: {{message}}",
   "accountReplica.excludedCredentials": "Пароли, файлы cookie и ключи доступа остаются на этом устройстве",
   "apiSetup.accessKeyId": "ID ключа доступа",
   "apiSetup.defaultModelRequired": "Для пользовательских конечных точек требуется модель по умолчанию.",
@@ -141,9 +142,9 @@ const WRAPPED_RU: Record<string, string> = {
   "hints.refactorCode": "Переработай код в {folder}, затем отправь в {source:GitHub}",
   "hints.reviewGitHubPRs": "Проверь запросы на слияние в {source:GitHub} и опиши изменения в {source:Craft}",
   "inspector.context.skills": "Навыки",
-  "inspector.empty.agent.body": "Инспектор Rox-агента появится с рабочей областью «База знаний» (волна W2). Контекстные действия над документами и блоками будут здесь.",
-  "inspector.empty.backlinks.body": "Входящие ссылки на текущий документ появятся с рабочей областью «База знаний» (волна W2).",
-  "inspector.empty.outline.body": "Структура документа и сессии появится с рабочей областью «База знаний» (волна W2).",
+  "inspector.empty.agent.body": "Здесь появятся контекстные действия над документами и блоками.",
+  "inspector.empty.backlinks.body": "Здесь появятся входящие ссылки на текущий документ.",
+  "inspector.empty.outline.body": "Здесь появится структура документа или сессии.",
   "kanban.column.backlog": "Бэклог",
   "knowledge.agent.openSessionBrief": "Контекст: я смотрю документ {{mention}} ({{title}}). Прочитай его инструментом knowledge_read (contextMode: \"snapshot\"), затем дай краткую ориентацию: о чём документ, ключевые разделы и обратные ссылки. Дальше дождись моих вопросов.",
   "knowledge.diff.patch": "Правка",
@@ -173,11 +174,11 @@ const WRAPPED_RU: Record<string, string> = {
   "marketplace.deferredHint": "Устанавливается через инструментарий Runtime при повторе.",
   "marketplace.downloadsHint": "Загрузки за неделю (npm + релизов GitHub)",
   "meetings.crm.useIds": "Идентификация по аккаунту, типу и удалённому идентификатору, не по имени",
-  "meetings.openFailed": "Не удалось открыть цель Persist",
+  "meetings.openFailed": "Не удалось открыть запись встречи",
   "meetings.outboxRequired": "Применение заблокировано: нужна очередь исходящих",
   "meetings.payloadConflict": "Другое предложение уже использует этот идентификатор",
-  "meetings.persistMiss": "Цель Persist отсутствует или ревизия не совпадает",
-  "meetings.revisionRequired": "Открытие заблокировано: нужна Persist-ревизия",
+  "meetings.persistMiss": "Запись встречи не найдена или устарела",
+  "meetings.revisionRequired": "Открытие заблокировано: нужна сохранённая версия записи",
   "meetings.rooms.undecided": "Комнаты заблокированы: SFU-поставщик не выбран",
   "meetings.threads.empty": "Нет писем. Живые входящие заблокированы без учётных данных.",
   "memory.insightsLine": "7 дней: {{lessonsAdded7d}} уроков · {{conflicts7d}} конфликтов · {{pendingCount}} в ожидании · {{approved7d}} одобрено",
@@ -225,7 +226,7 @@ const WRAPPED_RU: Record<string, string> = {
   "projectInfo.iconHint": "Отображается в списке проектов и на карточках доски.",
   "rail.collapse": "Свернуть панель активности",
   "rail.expand": "Развернуть панель активности",
-  "rail.knowledgeDisabled": "«База знаний» — появится с рабочей областью «База знаний» (волна W2)",
+  "rail.knowledgeDisabled": "«База знаний» пока недоступна",
   "rail.title": "Панель активности",
   "security.acceptance.description": "Объясните, почему этот риск приемлем для этого рабочего пространства.",
   "security.confirm.currentWorkspace": "Текущее рабочее пространство",
@@ -237,44 +238,44 @@ const WRAPPED_RU: Record<string, string> = {
   "settings.account.event.cloudRunImported": "Облачный запуск импортирован",
   "settings.account.source.cloudRunImported": "Импортировать облачный запуск · +40",
   "settings.accounts.account": "Аккаунт",
-  "settings.accounts.accountLabelPlaceholder": "Метка аккаунта (email)",
-  "settings.accounts.connectCloud": "Подключить SiYuan Cloud",
-  "settings.accounts.connectFailed": "Не удалось подключить: {message}",
+  "settings.accounts.accountLabelPlaceholder": "name@example.com",
+  "settings.accounts.connectCloud": "Подключить облачную синхронизацию",
+  "settings.accounts.connectFailed": "Не удалось подключить: {{message}}",
   "settings.accounts.connected": "Подключено",
   "settings.accounts.credentialHealth": "Состояние хранилища учётных данных",
   "settings.accounts.devices": "Устройства",
   "settings.accounts.devicesPlaceholder": "Это устройство",
-  "settings.accounts.disconnectFailed": "Не удалось выйти: {message}",
+  "settings.accounts.disconnectFailed": "Не удалось выйти: {{message}}",
   "settings.accounts.disconnected": "Вы вышли",
   "settings.accounts.displayName": "Отображаемое имя",
-  "settings.accounts.entitlement.active": "активна ({product})",
-  "settings.accounts.entitlement.expired": "истекла ({product})",
+  "settings.accounts.entitlement.active": "активна ({{product}})",
+  "settings.accounts.entitlement.expired": "истекла ({{product}})",
   "settings.accounts.entitlement.none": "нет",
-  "settings.accounts.entitlement.trial": "пробная ({product})",
-  "settings.accounts.entitlementExpiredBanner": "Подписка SiYuan Cloud истекла — синхронизация приостановлена. Локальное редактирование работает.",
-  "settings.accounts.healthFailed": "Проверка состояния не удалась: {message}",
+  "settings.accounts.entitlement.trial": "пробная ({{product}})",
+  "settings.accounts.entitlementExpiredBanner": "Подписка на облачную синхронизацию истекла — синхронизация приостановлена. Локальное редактирование работает.",
+  "settings.accounts.healthFailed": "Проверка состояния не удалась: {{message}}",
   "settings.accounts.healthIssues": "есть проблемы",
   "settings.accounts.healthOk": "норма",
-  "settings.accounts.healthSummary": "{status} · проблем: {count}",
+  "settings.accounts.healthSummary": "{{status}} · проблем: {{count}}",
   "settings.accounts.healthUnknown": "Неизвестно",
-  "settings.accounts.loadFailed": "Не удалось загрузить данные аккаунта: {message}",
+  "settings.accounts.loadFailed": "Не удалось загрузить данные аккаунта: {{message}}",
   "settings.accounts.managedInAi": "Управляется в настройках ИИ",
   "settings.accounts.managedInKnowledge": "Управляется в настройках «База знаний»",
-  "settings.accounts.noConnections": "Сервисных подключений пока нет. Подключите SiYuan Cloud ниже или добавьте сервисы позже.",
+  "settings.accounts.noConnections": "Сервисных подключений пока нет. Подключите облачную синхронизацию ниже или добавьте сервисы позже.",
   "settings.accounts.noWorkspace": "Сначала выберите рабочее пространство",
   "settings.accounts.notConnected": "Не подключено",
   "settings.accounts.openAiSettings": "Открыть настройки ИИ",
   "settings.accounts.openKnowledgeSettings": "Открыть настройки «База знаний»",
-  "settings.accounts.profileMeta": "id: {id} · режим: {mode}",
-  "settings.accounts.profileSaveFailed": "Не удалось сохранить профиль: {message}",
+  "settings.accounts.profileMeta": "id: {{id}} · режим: {{mode}}",
+  "settings.accounts.profileSaveFailed": "Не удалось сохранить профиль: {{message}}",
   "settings.accounts.profileSaved": "Профиль сохранён",
   "settings.accounts.provider.custom": "Пользовательский",
-  "settings.accounts.provider.siyuan-local": "Локальный SiYuan",
+  "settings.accounts.provider.siyuan-local": "Локальное ядро знаний",
   "settings.accounts.refresh": "Обновить",
-  "settings.accounts.refreshFailed": "Не удалось обновить: {message}",
+  "settings.accounts.refreshFailed": "Не удалось обновить: {{message}}",
   "settings.accounts.resetAppDataDesc": "Выйти из всех сессий — очищает учётные данные и конфигурацию. Переписки будут удалены.",
   "settings.accounts.resetDone": "Данные приложения сброшены",
-  "settings.accounts.resetFailed": "Не удалось сбросить: {message}",
+  "settings.accounts.resetFailed": "Не удалось сбросить: {{message}}",
   "settings.accounts.roxServerUrl": "URL сервера Rox",
   "settings.accounts.runHealthCheck": "Проверить состояние",
   "settings.accounts.siyuanCloudDesc": "Облачная синхронизация и подписка для знаний",
@@ -302,7 +303,7 @@ const WRAPPED_RU: Record<string, string> = {
   "settings.appearance.harnessSkipDesc": "Эти рантаймы в Rox не входят. Список заморожен.",
   "settings.appearance.kanbanBoard": "Доска",
   "settings.appearance.workbenchBrowserSurfaceDesc": "Показывать окна браузера в полоске вкладок, а не значками в верхней панели",
-  "settings.appearance.workbenchDesc": "Предпросмотр следующей панели оболочки. Экспериментальные флаги включены по умолчанию; мастер unified-shell остаётся выкл.",
+  "settings.appearance.workbenchDesc": "Предпросмотр новой оболочки. Экспериментальные функции включены по умолчанию.",
   "settings.appearance.workbenchHarnessAgentTeams": "Команды агентов",
   "settings.appearance.workbenchHarnessChatChrome": "Панель чата",
   "settings.appearance.workbenchTopChrome": "Верхняя панель v2",
@@ -344,24 +345,24 @@ const WRAPPED_RU: Record<string, string> = {
   "settings.identity.description": "Имя и персона, которые используются в новых сессиях. Имена рантайма и поставщика остаются в технических деталях.",
   "settings.identity.nameDesc": "Так агент представляется в новых сессиях. По умолчанию Агент Rox#001.",
   "settings.identity.namePlaceholder": "Агент Rox#001",
-  "settings.import.empty": "Сканирование только список. Импорт — только после Persist.",
-  "settings.import.scanHint": "Скан ≠ импорт. Persist пишет чаты Rox в это рабочее пространство.",
+  "settings.import.empty": "Сканирование только показывает список локальных чатов. Ничего не импортируется, пока вы не импортируете выбранные.",
+  "settings.import.scanHint": "Сканирование только показывает чаты; импорт добавляет выбранные в это рабочее пространство как сессии.",
   "settings.input.sttCloudRoxDesc": "Аудио уходит в облачную речь Rox. Политика хранения видна до использования.",
   "settings.input.voiceEnhancementConsent": "Разрешить облачное улучшение запроса",
   "settings.input.voiceModeImprove": "Улучшить запрос",
   "settings.input.voiceModelsHint": "Whisper Large v3 Turbo, Nemotron 3.5 streaming 0.6B и GigaAM v3 e2e_rnnt ставятся из подписанного каталога. «Готово» — это прошедший проверочный вывод, а не переключатель в настройках.",
   "settings.input.voiceOverlayPosition": "Положение предпросмотра",
-  "settings.knowledge.baseUrlHint": "Адрес API ядра SiYuan (режим «Внешний локальный»).",
-  "settings.knowledge.connectionEmptyBody": "Чтобы подключить SiYuan:\n1. Запустите SiYuan на этом устройстве.\n2. В SiYuan откройте «Настройки → О программе → API-токен» и скопируйте токен.\n3. Локальное подключение (http://localhost:6806) появится здесь после настройки на стороне сервера.\n4. Вставьте токен выше и нажмите «Проверить подключение».",
+  "settings.knowledge.baseUrlHint": "Опциональный URL внешнего API знаний (для продвинутых). Предпочтительны Rox Notes.",
+  "settings.knowledge.connectionEmptyBody": "Внешнего подключения знаний нет. Для заметок используйте Rox Notes. Опциональный HTTP API знаний может настроить администратор при необходимости.",
   "settings.knowledge.metrics.automationRuns": "Облачные запуски автоматизации",
-  "settings.knowledge.metrics.g1Note": "Шлюз G1: пороги пока не заданы — управляемое ядро заблокировано до продакшен-данных и юридического решения G2.",
+  "settings.knowledge.metrics.g1Note": "Шлюз G1: пороги не заданы — управляемое внешнее ядро заблокировано до продуктового решения.",
   "settings.knowledge.metrics.surfaceOpens": "Открытия поверхности «База знаний»",
   "settings.knowledge.mode.externalLocal": "Внешний локальный",
   "settings.knowledge.mode.managed": "Управляемый",
   "settings.knowledge.mode.remote": "Удалённый",
   "settings.marketplace.description": "Установка навыков, шаблонов и наборов инструментов",
   "settings.messaging.telegram.access.bindingPopover.mode.publicInbox.label": "Публичные входящие",
-  "settings.messaging.telegram.access.bindingPopover.trigger.publicInbox": "Публичные входящие — {count} владелец(ев) проверяют входящие.",
+  "settings.messaging.telegram.access.bindingPopover.trigger.publicInbox": "Публичные входящие — {{count}} владелец(ев) проверяют входящие.",
   "settings.messaging.telegram.access.bindingPopover.trigger.publicInboxEmpty": "Публичные входящие — владельцы ещё не заданы.",
   "settings.messaging.telegram.supergroup.autoTopicNote": "Автоматизации с заданным параметром telegramTopic будут публиковать в соответствующие темы здесь (создаются при первом использовании).",
   "settings.messaging.telegram.supergroup.dialogDescription": "Добавьте бота в свою супергруппу, затем введите команду в любой теме. У бота должен быть отключён режим приватности (BotFather → команда /setprivacy → пункт Disable) или права администратора, чтобы читать сообщения, не являющиеся командами.",
@@ -389,7 +390,7 @@ const WRAPPED_RU: Record<string, string> = {
   "settings.runtime.secretAdd": "Добавить secretRef",
   "settings.runtime.secretRefPlaceholder": "secretRef (необязательно)",
   "settings.unifiedShell.enable": "Единая оболочка (предпросмотр)",
-  "settings.unifiedShell.enableDesc": "Панель активности, вкладки поверхностей и инспектор. Волна W1 единой оболочки.",
+  "settings.unifiedShell.enableDesc": "Панель активности, вкладки и инспектор.",
   "settings.workspace.localMcpServersDesc": "Включить серверы подпроцессов с транспортом stdio",
   "shortcuts.action.simplifyDiff": "Упростить разницу",
   "sideThread.applyPrompt": "Применить запрос",
@@ -419,6 +420,14 @@ const WRAPPED_RU: Record<string, string> = {
 }
 
 describe('P35 leftover wrap collapse', () => {
+  it('renders account health counts and failures with the real catalogs', async () => {
+    const instance = createInstance()
+    await instance.init({ lng: 'ru', fallbackLng: 'en', resources: { ru: { translation: ru }, en: { translation: en } }, keySeparator: false, interpolation: { escapeValue: false } })
+    expect(instance.t('accountMenu.connectionsSummary', { connected: 7, expired: 2, errors: 1 })).toBe('Подключено: 7 · истекло: 2 · ошибок: 1')
+    expect(instance.t('accountMenu.resetFailed', { message: 'offline' })).toBe('Не удалось сбросить: offline')
+    await instance.changeLanguage('en')
+    expect(instance.t('accountMenu.connectionsSummary', { connected: 7, expired: 2, errors: 1 })).toBe('7 connected · 2 expired · 1 errors')
+  })
   it('applies every unique leftover wrap on current Russian catalog keys', () => {
     const keys = Object.keys(WRAPPED_RU)
     expect(keys).toHaveLength(404)
@@ -427,7 +436,7 @@ describe('P35 leftover wrap collapse', () => {
     for (const key of keys) {
       expect(en[key], key).toBeTruthy()
       expect(ru[key], key).toBe(WRAPPED_RU[key])
-      expect(ru[key], key).not.toBe(en[key])
+      if (key !== "settings.accounts.accountLabelPlaceholder") expect(ru[key], key).not.toBe(en[key])
       expect(interpolationVars(ru[key]!), `${key} interpolation`).toEqual(interpolationVars(en[key]!))
     }
   })

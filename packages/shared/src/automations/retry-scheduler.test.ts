@@ -297,7 +297,7 @@ describe('RetryScheduler', () => {
     scheduler.dispose();
   });
 
-  it('process restart after crash before ack has no success history and stays recoverable (at-least-once)', async () => {
+  it('process restart after crash before ack records an unknown outcome and never automatically resends', async () => {
     const dir = tmp();
     let callsA = 0;
     const executeA: RetryExecuteRequest = async () => {
@@ -316,7 +316,7 @@ describe('RetryScheduler', () => {
     await crashed.tick();
     crashed.dispose();
     expect(callsA).toBe(1);
-    expect(readQueue(dir).map((e) => e.id)).toEqual(['due-1']);
+    expect(readQueue(dir)[0]?.state).toBe('in_flight');
     expect(successHistoryCount(dir)).toBe(0);
 
     let callsB = 0;
@@ -329,9 +329,10 @@ describe('RetryScheduler', () => {
       bootstrapDelayMs: 60_000,
     });
     await recovered.tick();
-    expect(callsB).toBe(1);
+    expect(callsB).toBe(0);
     expect(readQueue(dir)).toEqual([]);
-    expect(successHistoryCount(dir)).toBe(1);
+    expect(JSON.parse(readHistory(dir)).outcome).toBe('unknown_external_outcome');
+    expect(successHistoryCount(dir)).toBe(0);
     recovered.dispose();
   });
 

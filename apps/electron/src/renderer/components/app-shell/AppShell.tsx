@@ -105,6 +105,7 @@ import {
 } from "../../platform"
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
 import { useExtraScreensBackground } from "@/pages/extra-screens/background"
+import { useInspectorSuppressed } from "@/platform/inspector-suppression"
 import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, activityRailCollapsedAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom, bottomTerminalOpenAtom, bottomDockHeightAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
@@ -197,6 +198,7 @@ import { WebBrowserPanel } from "../browser/WebBrowserPanel"
 import { KnowledgeNavigator } from "../../knowledge/KnowledgeNavigator"
 import { buildNewDocumentCreateArgs, pickOpenNotebook } from "../../knowledge/knowledge-new-note"
 import { isScreenNavigation } from '../../../shared/types'
+import { MiniSessionSurface } from "./MiniSessionSurface"
 
 /**
  * AppShellProps - Minimal props interface for AppShell component
@@ -244,10 +246,27 @@ export function shouldHideSessionsSidebar(navState: NavigationState): boolean {
 }
 
 export function AppShell(props: AppShellProps) {
-  // Wrap with EscapeInterruptProvider so AppShellContent can use useEscapeInterrupt
+  const [mini, setMini] = useState(() => new URLSearchParams(window.location.search).get('mini') === 'true')
+
+  useEffect(() => {
+    const syncMiniMode = () => setMini(new URLSearchParams(window.location.search).get('mini') === 'true')
+    window.addEventListener('resize', syncMiniMode)
+    window.addEventListener('popstate', syncMiniMode)
+    return () => {
+      window.removeEventListener('resize', syncMiniMode)
+      window.removeEventListener('popstate', syncMiniMode)
+    }
+  }, [])
+
   return (
     <EscapeInterruptProvider>
-      <AppShellContent {...props} />
+      {mini ? (
+        <AppShellProvider value={props.contextValue}>
+          <MiniSessionSurface />
+        </AppShellProvider>
+      ) : (
+        <AppShellContent {...props} />
+      )}
     </EscapeInterruptProvider>
   )
 }
@@ -307,6 +326,7 @@ function AppShellContent({
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
   const topChromeEnabled = useAtomValue(featureWorkbenchTopChromeV2Atom)
   const harnessInspectorEnabled = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
+  const inspectorSuppressed = useInspectorSuppressed()
   const statusBarEnabled = useAtomValue(featureWorkbenchStatusBarV1Atom)
   // PR-2: the rail offset follows the same two-key decision as the host.
   const workbenchUserPreference = useAtomValue(featureWorkbenchAtom)
@@ -1689,6 +1709,7 @@ function AppShellContent({
     labels: displayLabelConfigs,
     onSessionLabelsChange: handleSessionLabelsChange,
     projects: projectMenuOptions,
+    loadedProjects: projects,
     onSetProjectId: handleSessionProjectChange,
     enabledModes,
     sessionStatuses: effectiveSessionStatuses,
@@ -1708,7 +1729,7 @@ function AppShellContent({
     automationTestResults,
     getAutomationHistory,
     onReplayAutomation: handleReplayAutomation,
-  }), [contextValue, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, automationTestResults, getAutomationHistory, handleReplayAutomation])
+  }), [contextValue, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, projects, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, automationTestResults, getAutomationHistory, handleReplayAutomation])
   // Persist expanded folders to localStorage (workspace-scoped)
   React.useEffect(() => {
     if (!activeWorkspaceId) return
@@ -2504,12 +2525,12 @@ function AppShellContent({
           onAddBrowserPanel={() => { void handleNewBrowserWindow() }}
           onOpenMap={handleOpenMap}
           mapAvailable={Boolean(effectiveSessionId)}
-          showInspectorToggle={unifiedShellEnabled || workbenchEnabled || harnessInspectorEnabled}
+          showInspectorToggle={(unifiedShellEnabled || workbenchEnabled || harnessInspectorEnabled) && !inspectorSuppressed}
           compactHeaderRenderer={compactHeaderRenderer}
           isCompactChatMode={isAutoCompact && isSessionsNavigation(navState) && !!navState.details}
           isCompactSettingsMode={isWebUI && isAutoCompact && isSettingsNavigation(navState)}
           isCompact={isAutoCompact}
-          showWorkspaceSelector={showTopBarWorkspaceSelector || isAutoCompact}
+          showWorkspaceSelector={showTopBarWorkspaceSelector || (isAutoCompact && !isWebUI)}
           leftInset={topBarLeftInset}
         />
 
@@ -2999,17 +3020,6 @@ function AppShellContent({
                 selectedSkillSlug={isSkillsNavigation(navState) && navState.details?.type === 'skill' ? navState.details.skillSlug : null}
               />
             )}
-            {isProjectsNavigation(navState) && activeWorkspaceId && (
-              /* Projects List */
-              <ProjectsListPanel
-                projects={projects}
-                workspaceId={activeWorkspaceId}
-                onProjectClick={(slug) => navigate(routes.view.projects(slug))}
-                onAddProject={openAddProject}
-                onJumpToSessions={handleJumpToProjectSessions}
-                selectedProjectSlug={isProjectsNavigation(navState) ? navState.details?.projectSlug ?? null : null}
-              />
-            )}
             {isAutomationsNavigation(navState) && (
               /* Automations List - filtered by type if automationFilter is active */
               <AutomationsListPanel
@@ -3107,8 +3117,8 @@ function AppShellContent({
         />
         </WorkspaceSurfaceHost>
 
-        {/* Sidebar Resize Handle (absolute, hidden in focused mode) */}
-        {!effectiveSidebarAndNavigatorHidden && (
+        {/* A collapsed sidebar has no resize boundary; its sash would intercept main-panel controls. */}
+        {isSidebarVisible && !effectiveSidebarAndNavigatorHidden && (
         <ResizeHandle
           labelKey="shell.resize.sidebar"
           controlsId="shell-sidebar"
@@ -3121,10 +3131,7 @@ function AppShellContent({
             top: PANEL_STACK_TOP_INSET,
             bottom: terminalClearance,
             height: 'auto',
-            left: unifiedRailOffset + (isSidebarVisible
-              ? sidebarWidth + (PANEL_GAP / 2) - sashHitWidthPx() / 2
-              : -PANEL_GAP),
-            transition: sidebarResize.dragging ? undefined : 'left 0.15s ease-out',
+            left: unifiedRailOffset + sidebarWidth + (PANEL_GAP / 2) - sashHitWidthPx() / 2,
           }}
           onPointerDown={(event) => {
             setIsResizing('sidebar')

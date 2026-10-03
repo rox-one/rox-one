@@ -1,0 +1,34 @@
+{
+  "candidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "actualCases": [
+    {
+      "name": "runs shipped source/runtime, enforces auth, and restarts the same isolated profile",
+      "testFile": "canonical-delivery-smoke.test.ts",
+      "declarationLine": 228,
+      "actualRawLogLine": 4,
+      "actualRawLogText": "(pass) actual canonical standalone distribution > runs shipped source/runtime, enforces auth, and restarts the same isolated profile [8194.36ms]",
+      "result": "pass",
+      "phaseAssertionCount": 47
+    },
+    {
+      "name": "refuses a short token before readiness without leaving listening endpoints",
+      "testFile": "canonical-delivery-smoke.test.ts",
+      "declarationLine": 251,
+      "actualRawLogLine": 5,
+      "actualRawLogText": "(pass) actual canonical standalone distribution > refuses a short token before readiness without leaving listening endpoints [1450.66ms]",
+      "result": "pass",
+      "phaseAssertionCount": 9
+    }
+  ],
+  "actualBunCounts": {
+    "pass": 2,
+    "fail": 0,
+    "expect": 56,
+    "tests": 2,
+    "files": 1
+  },
+  "helperAssertionCount": 56,
+  "caseAssertionsSum": 56,
+  "declarationsMatchedToActualPassLog": true,
+  "logSha256": "62da46d877f7a1f6731311c5fc08b5b3c82ab5ae570fd8b4a103616c79693aaa"
+}

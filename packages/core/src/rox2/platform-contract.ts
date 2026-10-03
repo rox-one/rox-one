@@ -14,6 +14,15 @@
 
 import type { SoupEntityConcreteType } from '../conation/soup/types.ts'
 
+/** Server-owned identity. Never deserialize this type from command/query bodies. */
+export interface AuthenticatedActor {
+  readonly principalId: string
+  readonly deviceId: string
+  readonly sessionId: string
+  readonly authenticatedWorkspaceIds: readonly string[]
+  readonly expiresAt: number
+}
+
 export const ROX2_ENTITY_KINDS = [
   'session',
   'note',
@@ -35,6 +44,7 @@ export const ROX2_ENTITY_KINDS = [
   'reminder',
   'workflow',
   'person',
+  'license-component',
 ] as const
 
 export type Rox2EntityKind = (typeof ROX2_ENTITY_KINDS)[number]
@@ -654,9 +664,17 @@ function isSystemFields(value: unknown): value is Rox2SystemFields {
   )
 }
 
+const TYPED_RECORD_FIELDS: Record<string, true> = {
+  schemaVersion: true,
+  kind: true,
+  system: true,
+  properties: true,
+  unknownFields: true,
+}
+
 /** Versioned entity envelope. Unknown versions keep the original payload. */
 export function parseRox2TypedRecord(raw: unknown): Rox2TypedParseResult {
-  if (!raw || typeof raw !== 'object') return { ok: false, code: 'invalid', preserved: raw }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ok: false, code: 'invalid', preserved: raw }
   const record = raw as Record<string, unknown>
   const version = record.schemaVersion
   if (typeof version !== 'number' || !Number.isInteger(version) || version < 1) {
@@ -669,14 +687,21 @@ export function parseRox2TypedRecord(raw: unknown): Rox2TypedParseResult {
     return { ok: false, code: 'invalid', preserved: raw }
   }
   if (!isSystemFields(record.system)) return { ok: false, code: 'invalid', preserved: raw }
-  const properties =
-    record.properties && typeof record.properties === 'object' && !Array.isArray(record.properties)
-      ? (record.properties as Record<string, unknown>)
-      : {}
-  const unknownFields =
-    record.unknownFields && typeof record.unknownFields === 'object' && !Array.isArray(record.unknownFields)
-      ? (record.unknownFields as Record<string, unknown>)
-      : undefined
+  if (
+    (record.properties !== undefined && (!record.properties || typeof record.properties !== 'object' || Array.isArray(record.properties)))
+    || (record.unknownFields !== undefined && (!record.unknownFields || typeof record.unknownFields !== 'object' || Array.isArray(record.unknownFields)))
+  ) return { ok: false, code: 'invalid', preserved: raw }
+  const properties = (record.properties ?? {}) as Record<string, unknown>
+  const declaredUnknown = (record.unknownFields ?? {}) as Record<string, unknown>
+  const extraFields: Record<string, unknown> = Object.create(null)
+  for (const [key, value] of Object.entries(record)) {
+    if (Object.hasOwn(TYPED_RECORD_FIELDS, key)) continue
+    // Two differently placed versions must not silently overwrite one another.
+    if (Object.hasOwn(declaredUnknown, key)) return { ok: false, code: 'invalid', preserved: raw }
+    extraFields[key] = value
+  }
+  const preservedFields = { ...declaredUnknown, ...extraFields }
+  const unknownFields = Object.keys(preservedFields).length > 0 ? preservedFields : undefined
   return {
     ok: true,
     record: {

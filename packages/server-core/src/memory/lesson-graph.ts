@@ -19,7 +19,7 @@
  * the workspace list (getWorkspaces() result) so the module stays testable
  * with plain `{id, rootPath}` refs.
  */
-import type { Lesson, LessonCategory } from '@craft-agent/shared/memory/types'
+import type { Lesson, LessonCategory, LessonOwner } from '@craft-agent/shared/memory/types'
 import { LessonStore, lessonKey } from './LessonStore'
 import { MemoryFileStore } from './MemoryFileStore'
 
@@ -129,7 +129,7 @@ export function parseConflicts(text: string, existingRules: string[]): LessonCon
  * that appear as workspace-scope lessons in ≥2 DISTINCT workspaces.
  * Unreadable stores are skipped, never thrown. Sorted by fan-out desc.
  */
-export function scanPromotionCandidates(workspaces: WorkspaceRef[]): PromotionCandidate[] {
+export function scanPromotionCandidates(workspaces: WorkspaceRef[], owner?: LessonOwner): PromotionCandidate[] {
   const byKey = new Map<string, PromotionCandidate>()
   // Alias ids pointing at one root are ONE store — a rule must live in ≥2
   // distinct workspace stores, not merely under ≥2 ids.
@@ -139,7 +139,7 @@ export function scanPromotionCandidates(workspaces: WorkspaceRef[]): PromotionCa
     seenStores.add(ws.rootPath)
     let lessons: Lesson[]
     try {
-      lessons = new LessonStore(new MemoryFileStore('workspace', ws.rootPath).lessonsPath, 'workspace').list()
+      lessons = new LessonStore(new MemoryFileStore('workspace', ws.rootPath).lessonsPath, 'workspace').listForOwner(owner)
     } catch {
       continue
     }
@@ -174,6 +174,7 @@ export function promoteLessonToGlobal(
   workspaces: WorkspaceRef[],
   rule: string,
   ts: string = new Date().toISOString(),
+  owner?: LessonOwner,
 ): PromoteLessonResult | null {
   const key = lessonKey(rule)
   if (!key) return null
@@ -181,7 +182,7 @@ export function promoteLessonToGlobal(
   for (const ws of workspaces) {
     let lessons: Lesson[]
     try {
-      lessons = new LessonStore(new MemoryFileStore('workspace', ws.rootPath).lessonsPath, 'workspace').list()
+      lessons = new LessonStore(new MemoryFileStore('workspace', ws.rootPath).lessonsPath, 'workspace').listForOwner(owner)
     } catch {
       continue
     }
@@ -192,9 +193,9 @@ export function promoteLessonToGlobal(
 
   const promoted = { fromScope: 'workspace' as const, workspaceIds: carriers.map(c => c.workspaceId), ts }
   const store = new LessonStore(new MemoryFileStore('global').lessonsPath, 'global')
-  const existing = store.list().find(l => lessonKey(l.rule) === key)
+  const existing = store.listForOwner(owner).find(l => lessonKey(l.rule) === key)
   if (existing) {
-    const lesson = store.update(existing.rule, { promoted })
+    const lesson = store.update(existing.rule, { promoted }, 'rpc', owner)
     return lesson ? { lesson, workspaceIds: promoted.workspaceIds, alreadyGlobal: true } : null
   }
   const template = carriers[0].lesson
@@ -203,6 +204,7 @@ export function promoteLessonToGlobal(
     rule: template.rule,
     category: template.category,
     scope: 'global',
+    ...(owner ? { owner } : {}),
     ...(template.negative ? { negative: true } : {}),
     promoted,
     source: { trigger: 'explicit' },

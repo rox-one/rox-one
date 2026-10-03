@@ -11,6 +11,7 @@
  * name screen always leads straight into the app.
  */
 import type { LlmConnectionSetup } from '../../../shared/types'
+import type { StartupRuntimeSummary } from '@craft-agent/shared/protocol'
 
 export const ROX_RUNTIME_PROVIDER = 'omp' as const
 export const ROX_RUNTIME_CONNECTION_NAME = 'Rox'
@@ -19,6 +20,8 @@ export const ROX_RUNTIME_BASE_SLUG = 'omp'
 type ConnectionSummary = { slug: string; providerType?: string; isDefault?: boolean }
 
 export type RoxRuntimeDefaultApi = {
+  getOrgIdentity?(): Promise<{ authority: 'native' | 'local' }>
+  getStartupRuntimeSummary?(): Promise<StartupRuntimeSummary | null>
   listLlmConnectionsWithStatus(): Promise<ReadonlyArray<ConnectionSummary>>
   setupLlmConnection(setup: LlmConnectionSetup): Promise<{ success: boolean; error?: string }>
   setDefaultLlmConnection(slug: string): Promise<{ success: boolean; error?: string }>
@@ -26,6 +29,7 @@ export type RoxRuntimeDefaultApi = {
 
 export type RoxRuntimeDefaultResult =
   | { status: 'already-default'; slug: string }
+  | { status: 'preserved-default'; slug: string }
   | { status: 'set-default'; slug: string }
   | { status: 'created'; slug: string }
   | { status: 'failed'; error: string }
@@ -38,16 +42,35 @@ function uniqueSlug(base: string, taken: ReadonlySet<string>): string {
 }
 
 /**
- * Make sure the global default LLM connection is a Rox runtime connection.
- * Reuses the seeded Rox connection when present; otherwise creates one.
+ * Ensure new profiles have a Rox runtime without replacing an existing
+ * user's selected provider.
  */
 export async function ensureRoxRuntimeDefault(api: RoxRuntimeDefaultApi): Promise<RoxRuntimeDefaultResult> {
   try {
+    const identity = api.getOrgIdentity ? await api.getOrgIdentity() : null
+    if (api.getOrgIdentity && (!identity || identity.authority !== 'native' && identity.authority !== 'local')) {
+      return { status: 'failed', error: 'runtime-identity-unavailable' }
+    }
+    if (identity?.authority === 'native') {
+      const summary = await api.getStartupRuntimeSummary?.()
+      if (!summary || summary.kind !== 'configuration-only' || summary.isDefault !== true
+        || typeof summary.slug !== 'string' || !summary.slug.trim() || summary.slug !== summary.slug.trim()
+        || !['anthropic', 'pi', 'pi_compat', 'anthropic_compat', 'omp'].includes(summary.providerType)) {
+        return { status: 'failed', error: 'runtime-configuration-unavailable' }
+      }
+      // Native onboarding observes configuration without requesting host
+      // accounts, refreshing credentials, or changing the host's default.
+      return { status: summary.providerType === ROX_RUNTIME_PROVIDER ? 'already-default' : 'preserved-default', slug: summary.slug }
+    }
     const connections = await api.listLlmConnectionsWithStatus()
     const current = connections.find((c) => c.isDefault)
     if (current?.providerType === ROX_RUNTIME_PROVIDER) {
       return { status: 'already-default', slug: current.slug }
     }
+    if (current) {
+      return { status: 'preserved-default', slug: current.slug }
+    }
+
 
     const existing = connections.find((c) => c.providerType === ROX_RUNTIME_PROVIDER)
     if (existing) {

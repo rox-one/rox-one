@@ -69,6 +69,7 @@ export function Omnibox({
   const [input, setInput] = useState('')
   const [resourcesList, setResourcesList] = useState<ResourceItem[]>([])
   const [loading, setLoading] = useState(false)
+  const [searchFailed, setSearchFailed] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -96,6 +97,7 @@ export function Omnibox({
     setInput('')
     setResourcesList([])
     setLoading(false)
+    setSearchFailed(false)
     abortRef.current?.abort()
     abortRef.current = null
     clearTimeout(debounceRef.current ?? undefined)
@@ -105,6 +107,7 @@ export function Omnibox({
   // Federated resource search (debounced)
   useEffect(() => {
     if (!open) return
+    setSearchFailed(false)
     // Commands-only prefix: skip resource providers
     if (parsed.prefix === '>') {
       setResourcesList([])
@@ -135,6 +138,7 @@ export function Omnibox({
         } catch {
           if (!controller.signal.aborted) {
             setResourcesList([])
+            setSearchFailed(true)
             setLoading(false)
           }
         }
@@ -172,13 +176,28 @@ export function Omnibox({
   const close = useCallback(() => onOpenChange(false), [onOpenChange])
 
   const runResource = useCallback(
-    (item: ResourceItem) => {
-      if (item.route) {
-        navigate(item.route as Route)
+    async (item: ResourceItem) => {
+      try {
+        const currentItems = await resources.search({
+          query: parsed.query,
+          prefix: parsed.prefix as OmniboxPrefix,
+          keys,
+          limit: RESOURCES_LIMIT,
+        })
+        setResourcesList(currentItems)
+        setSearchFailed(false)
+        const current = currentItems.find(
+          (candidate) => candidate.id === item.id && candidate.route,
+        )
+        if (!current?.route) return
+        navigate(current.route as Route)
+        close()
+      } catch {
+        setResourcesList([])
+        setSearchFailed(true)
       }
-      close()
     },
-    [close],
+    [close, keys, parsed.prefix, parsed.query, resources],
   )
 
   const runCommand = useCallback(
@@ -222,7 +241,7 @@ export function Omnibox({
   const showNavigation = parsed.prefix !== '>'
   const emptyHint =
     !loading && resourcesList.length === 0 && commandHits.length === 0
-      ? t('omnibox.empty')
+      ? searchFailed ? t('omnibox.searchFailed') : t('omnibox.empty')
       : null
 
   return (

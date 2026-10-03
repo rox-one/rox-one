@@ -1,0 +1,1754 @@
+{
+  "kind": "R15-direct-source-build-test-browser-and-shipped-server-delivery",
+  "recordedAtMoscow": "2026-10-01T20:31:47.193603+03:00",
+  "branch": "cloud/all-surfaces-20260930",
+  "sourceCandidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "publicationParent": "1937be14afd9bd68ce8ec3df5af9b82f0fe3abc1",
+  "publicationScope": "docs-only; exact resulting head is in final remote readback",
+  "isolatedCheckoutDuringExecution": "/tmp/rox-r15-exact-ui-20261001/checkout",
+  "managedRuntime": {
+    "recordedAtUtc": "2026-10-01 17:11:24 UTC",
+    "observationsCurrent": true,
+    "provider": "cloud",
+    "desiredPhase": "running",
+    "observedPhase": "running",
+    "specRevision": "3",
+    "observedSpecRevision": "3",
+    "connectivity": "connected",
+    "networkPolicy": {
+      "mode": "restricted",
+      "state": "unknown",
+      "allowed_hosts": [
+        "api.github.com",
+        "codeload.github.com",
+        "github.com"
+      ],
+      "presets": [
+        "package_managers"
+      ]
+    },
+    "failure": null,
+    "modelEffortAttestation": "Not exposed by supported runtime tool; worker requests explicitly gpt-6.1-sol/ultra",
+    "credentialBindingsAndValues": "Omitted"
+  },
+  "frozenInputs": {
+    "main": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "september": "bac082301aed341fe078cb5bd539c4ba074560eb",
+    "compound": "3027028c6c8cb420efe3ea4b255ac725747de9e5",
+    "sqlitePublishedOwner": "bdd28272856be5fdead6c7a93ca1b45eb13b17ed"
+  },
+  "ordinaryMergeParents": [
+    {
+      "commit": "b30b4c67e00ca43d945076f471809278ced33363",
+      "parents": [
+        "ea083e387e170552ee6102e29c2cf31adc8b6973",
+        "8106f22185fb3b3e9a6a585320d48b1bf5f10fbd"
+      ],
+      "subject": "feat(integration): assemble September authority and scoped Compound surfaces"
+    },
+    {
+      "commit": "8851e8f9bd7ede447524dbe4e77c4234bee31da5",
+      "parents": [
+        "b30b4c67e00ca43d945076f471809278ced33363",
+        "bdd28272856be5fdead6c7a93ca1b45eb13b17ed"
+      ],
+      "subject": "merge: include published September SQLite recovery owner result"
+    },
+    {
+      "commit": "19ee83bf4ef52140d6478395ccb984eef7eaf96f",
+      "parents": [
+        "8851e8f9bd7ede447524dbe4e77c4234bee31da5",
+        "8c1b8d95944cc21c4745484ba45edd0cf0afbb73"
+      ],
+      "subject": "merge: retain published UTB strict V1 starter and pending criteria"
+    },
+    {
+      "commit": "04246ceffee0b54819a6c9bf170c8fbf4169b04e",
+      "parents": [
+        "ff75a6421607efc18c165cac578216ef8808e449",
+        "bac082301aed341fe078cb5bd539c4ba074560eb"
+      ],
+      "subject": "merge: include published September scheduler and budget recovery"
+    },
+    {
+      "commit": "944662346b87020349f085a0a4d72d007db7ae44",
+      "parents": [
+        "04246ceffee0b54819a6c9bf170c8fbf4169b04e",
+        "3027028c6c8cb420efe3ea4b255ac725747de9e5"
+      ],
+      "subject": "merge: include published Compound project intents and licensed resources"
+    }
+  ],
+  "conflicts": {
+    "initial": 28,
+    "instances": 35,
+    "uniquePaths": 31,
+    "fullStageMap": "cloud-all-surfaces-integration-20260930.json"
+  },
+  "rootApprovedProjectScopeRepair": {
+    "remoteRef": "ops/use-projects-scope-repair-20260930",
+    "source": "260daf5c38d70cd833ae9413123bb03a5900cf61",
+    "docsOnlyHead": "3cc2483d61e587fa3e3b54331b1bf623206f16b1",
+    "parent": "4413e4ae352a6844b498b31f239ffc6c3676d7a7",
+    "isolatedCherryPick": "65547d788eebdf5d39b8f4180880f5abba580d93",
+    "beforeSha256": "13543daf34873c044fb089504e6d6146878cdb327b6e94d6a43f776ecd243d31",
+    "afterSha256": "2b87d14b619e470a531e82f5e10f94af0fd916dee1e8abcbfdfb64590f0186ac",
+    "scope": "controlled React lifecycle and actual transpiled callbacks, real Jotai; actual DOM proof remains separately applicable"
+  },
+  "specAndPlanPreserved": {
+    "docs/spec.md": "abb7283508df56b5e7b2f2b4a6e799077234599ecd3eec57ccc94e76bfddb04d",
+    "docs/plan.md": "cb8e9d571d973b5f1a30cfe1c324a0a99f5db781b5931d927fa48108d53b25a7"
+  },
+  "toolchain": {
+    "buildTestBun": "1.3.14",
+    "node": "24.19.0",
+    "shippedPinnedBun": "1.3.9"
+  },
+  "directProductionBrowser": {
+    "kind": "direct-exact010-production-build-and-browser",
+    "sourceCandidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "isolatedCheckout": "/tmp/rox-r15-exact-ui-20261001/checkout",
+    "clonedBranch": "cloud/all-surfaces-20260930",
+    "clonedBranchHead": "1937be14afd9bd68ce8ec3df5af9b82f0fe3abc1",
+    "detachedSourceHead": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "frozenInputs": {
+      "main": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "september": "bac082301aed341fe078cb5bd539c4ba074560eb",
+      "compound": "3027028c6c8cb420efe3ea4b255ac725747de9e5",
+      "runtime1319": "bdd28272856be5fdead6c7a93ca1b45eb13b17ed"
+    },
+    "builds": {
+      "frozen-install": {
+        "label": "frozen-install",
+        "command": [
+          "/workspace/.onboarding-tools/node_modules/.bin/bun",
+          "--no-env-file",
+          "install",
+          "--frozen-lockfile"
+        ],
+        "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+        "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "exit": 0,
+        "seconds": 18.187,
+        "log": "frozen-install.log",
+        "logSha256": "7fd6470ef8569f2c809a330f71d4cce2a43989b07e5f9ec8202469e3b6861cf9",
+        "envKeys": [
+          "BUN_INSTALL_CACHE_DIR",
+          "CRAFT_CONFIG_DIR",
+          "ELECTRON_SKIP_BINARY_DOWNLOAD",
+          "HTTPS_PROXY",
+          "HTTP_PROXY",
+          "LANG",
+          "LC_ALL",
+          "NODE_EXTRA_CA_CERTS",
+          "NODE_OPTIONS",
+          "NO_PROXY",
+          "PATH",
+          "REQUESTS_CA_BUNDLE",
+          "ROX_CONFIG_DIR",
+          "SSL_CERT_FILE",
+          "TMPDIR",
+          "XDG_CACHE_HOME",
+          "http_proxy",
+          "https_proxy",
+          "no_proxy",
+          "npm_config_cache"
+        ],
+        "dotenvDisabled": true,
+        "minimalChildEnvironment": true,
+        "HOMERepurposed": false
+      },
+      "server-subprocess-build": {
+        "label": "server-subprocess-build",
+        "command": [
+          "/workspace/.onboarding-tools/node_modules/.bin/bun",
+          "--no-env-file",
+          "run",
+          "server:build:subprocess"
+        ],
+        "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+        "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "exit": 0,
+        "seconds": 1.229,
+        "log": "server-subprocess-build.log",
+        "logSha256": "d7fdc5517739d17803bf11b58e66b2c4123ed29b48003ecb298194381e2f2393",
+        "envKeys": [
+          "BUN_INSTALL_CACHE_DIR",
+          "CRAFT_CONFIG_DIR",
+          "ELECTRON_SKIP_BINARY_DOWNLOAD",
+          "HTTPS_PROXY",
+          "HTTP_PROXY",
+          "LANG",
+          "LC_ALL",
+          "NODE_EXTRA_CA_CERTS",
+          "NODE_OPTIONS",
+          "NO_PROXY",
+          "PATH",
+          "REQUESTS_CA_BUNDLE",
+          "ROX_CONFIG_DIR",
+          "SSL_CERT_FILE",
+          "TMPDIR",
+          "XDG_CACHE_HOME",
+          "http_proxy",
+          "https_proxy",
+          "no_proxy",
+          "npm_config_cache"
+        ],
+        "dotenvDisabled": true,
+        "minimalChildEnvironment": true,
+        "HOMERepurposed": false
+      },
+      "webui-production-build": {
+        "label": "webui-production-build",
+        "command": [
+          "/workspace/.onboarding-tools/node_modules/.bin/bun",
+          "--no-env-file",
+          "run",
+          "webui:build"
+        ],
+        "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+        "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "exit": 0,
+        "seconds": 71.331,
+        "log": "webui-production-build.log",
+        "logSha256": "b0102977bfddeb20f653649435448ba8e164a3d300bff0ac5bbd5b8b8b4e8af2",
+        "envKeys": [
+          "BUN_INSTALL_CACHE_DIR",
+          "CRAFT_CONFIG_DIR",
+          "ELECTRON_SKIP_BINARY_DOWNLOAD",
+          "HTTPS_PROXY",
+          "HTTP_PROXY",
+          "LANG",
+          "LC_ALL",
+          "NODE_EXTRA_CA_CERTS",
+          "NODE_OPTIONS",
+          "NO_PROXY",
+          "PATH",
+          "REQUESTS_CA_BUNDLE",
+          "ROX_CONFIG_DIR",
+          "SSL_CERT_FILE",
+          "TMPDIR",
+          "XDG_CACHE_HOME",
+          "http_proxy",
+          "https_proxy",
+          "no_proxy",
+          "npm_config_cache"
+        ],
+        "dotenvDisabled": true,
+        "minimalChildEnvironment": true,
+        "HOMERepurposed": false
+      },
+      "bun-server-build": {
+        "label": "bun-server-build",
+        "command": [
+          "/workspace/.onboarding-tools/node_modules/.bin/bun",
+          "--no-env-file",
+          "build",
+          "packages/server/src/index.ts",
+          "--target",
+          "bun",
+          "--outdir",
+          "dist-server",
+          "--external",
+          "xlsx"
+        ],
+        "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+        "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "exit": 0,
+        "seconds": 0.744,
+        "log": "bun-server-build.log",
+        "logSha256": "ea5802ed995bffe3b894c51e99618ac050e0718383010f2712e3bdafdef69626",
+        "envKeys": [
+          "BUN_INSTALL_CACHE_DIR",
+          "CRAFT_CONFIG_DIR",
+          "ELECTRON_SKIP_BINARY_DOWNLOAD",
+          "HTTPS_PROXY",
+          "HTTP_PROXY",
+          "LANG",
+          "LC_ALL",
+          "NODE_EXTRA_CA_CERTS",
+          "NODE_OPTIONS",
+          "NO_PROXY",
+          "PATH",
+          "REQUESTS_CA_BUNDLE",
+          "ROX_CONFIG_DIR",
+          "SSL_CERT_FILE",
+          "TMPDIR",
+          "XDG_CACHE_HOME",
+          "http_proxy",
+          "https_proxy",
+          "no_proxy",
+          "npm_config_cache"
+        ],
+        "dotenvDisabled": true,
+        "minimalChildEnvironment": true,
+        "HOMERepurposed": false
+      }
+    },
+    "optimizedEntry": {
+      "path": "apps/webui/dist/assets/main-C_p8tRWb.js",
+      "sha256": "42c107212df162cea09f9d1ef136fe5ab7bf108eb9b44ba47c495e715c202d96",
+      "bytes": 32945
+    },
+    "actualBuildInputRevision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "actualBrowserInputRevision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "executionEquivalenceRequired": false,
+    "browser": {
+      "pass": 99,
+      "fail": 0,
+      "phaseErrors": 0,
+      "lifetimePageErrors": 0,
+      "rootRoutes": 22,
+      "settingsRoutes": 22,
+      "scopedModes": 7,
+      "screenshots": 64,
+      "chromium": "151.0.7922.173",
+      "playwright": "1.49.1",
+      "webSocketObservationCountedOnce": {
+        "observedSockets": 53,
+        "observedAckCount": 53
+      },
+      "freshRestartAcknowledgments": {
+        "newSocketCount": 1,
+        "actualWorkspaceIds": [
+          "e0fbee7a-45ae-f362-0248-d9ceb67a3298"
+        ]
+      },
+      "cleanup": {
+        "browserClosed": true,
+        "childAudits": [],
+        "profilesDeleted": [],
+        "errors": [],
+        "shortBrowserTmpDeleted": true,
+        "remainingChildren": 0,
+        "remainingProfiles": 0
+      }
+    },
+    "supplementalAuth": {
+      "pass": 11,
+      "fail": 0,
+      "phaseErrors": 0,
+      "lifetimePageErrors": 0,
+      "actualBadAuthentication": {
+        "status": 401,
+        "actualUrl": "http://127.0.0.1:40953/login",
+        "errorText": "Invalid credentials",
+        "sessionCookiePresent": false,
+        "webSocketCount": 0
+      },
+      "actualCorrectAuthentication": {
+        "defaultWorkspaceId": "bec3a5ec-29a8-d365-9bfb-ac6613551f6d",
+        "acknowledgments": [
+          "bec3a5ec-29a8-d365-9bfb-ac6613551f6d"
+        ]
+      },
+      "webSocketObservationCountedOnce": {
+        "observedSockets": 1,
+        "observedAckCount": 1
+      },
+      "cleanup": {
+        "browserClosed": true,
+        "childAudits": [],
+        "profilesDeleted": [],
+        "errors": [],
+        "shortBrowserTmpDeleted": true,
+        "remainingChildren": 0,
+        "remainingProfiles": 0
+      }
+    },
+    "preservedFirstAuthTimingRed": {
+      "actualExitCode": 1,
+      "pass": 8,
+      "fail": 0,
+      "phaseErrors": 1,
+      "observedFailure": "15s DOMContentLoaded observer wait timed out after genuine correct-login navigation to /",
+      "rerunChange": "only supplemental observer navigation wait 15s to45s; no application edits"
+    },
+    "preservation": {
+      "trackedFilesHashed": 6178,
+      "beforeInstallAfterInstallBeforeBuildAfterBuildAfterBrowserAllEqual": true,
+      "buildArtifactsBeforeAfterBrowserEqual": true,
+      "trackedStatusAfter": "",
+      "originalRevision": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "originalStatusUnchanged": true,
+      "originalStatusAfter": "",
+      "applicationOrLockfileEdits": false
+    },
+    "nativeLimitations": [
+      {
+        "surface": "genuine-project-roadmap",
+        "status": "NOT EXECUTED: actual unavailable UI observed",
+        "reason": "HTTP/ACK proves workspace ID; no trusted local Workspace metadata or native project context is invented",
+        "note": "Unavailable rendering is not functional native/Project/Roadmap/RepositorySnapshot acceptance"
+      },
+      {
+        "surface": "pre-existing-private-note",
+        "status": "NOT EXECUTED: actual unavailable UI observed",
+        "reason": "Real nativeReplica/nativeData preload is absent; native editor/controller not mounted",
+        "note": "Unavailable rendering is not functional native/Project/Roadmap/RepositorySnapshot acceptance"
+      }
+    ],
+    "contextRequiredUnexecuted": [
+      {
+        "surface": "browser",
+        "required": "real browser instanceId/backend",
+        "source": "MainContentPanel.tsx:354"
+      },
+      {
+        "surface": "terminal",
+        "required": "real terminalId/native terminal backend",
+        "source": "MainContentPanel.tsx:403"
+      },
+      {
+        "surface": "cloud-run",
+        "required": "real runId/cloud provider",
+        "source": "MainContentPanel.tsx:414"
+      },
+      {
+        "surface": "extension",
+        "required": "installed extensionId/viewId",
+        "source": "MainContentPanel.tsx:383"
+      },
+      {
+        "surface": "diff",
+        "required": "real write proposalId",
+        "source": "MainContentPanel.tsx:425"
+      }
+    ],
+    "acceptance": {
+      "boundedWebUIOnly": true,
+      "full109": false,
+      "full143": false,
+      "nativeInstalledHosts": false,
+      "providerOAuth": false,
+      "iOS": false,
+      "postgresProtectedGates": false,
+      "securityAcceptance": false,
+      "nativePrincipalFabricated": false,
+      "notesNativeFunctionalAcceptance": false
+    },
+    "modelEffortAttestation": {
+      "toolAttestationAvailable": false,
+      "requested": "GPT-6.1 Sol Ultra",
+      "noRuntimeModelAttestationInvented": true
+    }
+  },
+  "directElectronAndTypes": {
+    "candidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "isolatedCheckout": "/tmp/rox-r15-exact-ui-20261001/checkout",
+    "isolatedRevisionMode": "detached exact010 source clone",
+    "toolchain": {
+      "bun": "1.3.14",
+      "node": "24.19.0"
+    },
+    "receipts": {
+      "validate-ci": {
+        "label": "validate-ci",
+        "command": [
+          "/workspace/.onboarding-tools/node_modules/.bin/bun",
+          "--no-env-file",
+          "run",
+          "validate:ci"
+        ],
+        "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+        "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "exit": 0,
+        "seconds": 199.679,
+        "log": "validate-ci.log",
+        "logSha256": "5b0225ed4c0f98b6e39aece940694e05a08b9acce53033bcc5c627c7283d5c61",
+        "envKeys": [
+          "BUN_INSTALL_CACHE_DIR",
+          "CRAFT_CONFIG_DIR",
+          "ELECTRON_SKIP_BINARY_DOWNLOAD",
+          "HTTPS_PROXY",
+          "HTTP_PROXY",
+          "LANG",
+          "LC_ALL",
+          "NODE_EXTRA_CA_CERTS",
+          "NODE_OPTIONS",
+          "NO_PROXY",
+          "PATH",
+          "REQUESTS_CA_BUNDLE",
+          "ROX_CONFIG_DIR",
+          "SSL_CERT_FILE",
+          "TMPDIR",
+          "XDG_CACHE_HOME",
+          "http_proxy",
+          "https_proxy",
+          "no_proxy",
+          "npm_config_cache"
+        ],
+        "minimalChildEnvironment": true,
+        "HOMERepurposed": false,
+        "sourceAndLockUnchanged": true,
+        "regularFileCount": 6178,
+        "gitlinkCount": 2
+      },
+      "webui-typecheck": {
+        "label": "webui-typecheck",
+        "command": [
+          "/workspace/.onboarding-tools/node_modules/.bin/bun",
+          "--no-env-file",
+          "run",
+          "webui:typecheck"
+        ],
+        "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+        "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "exit": 0,
+        "seconds": 73.983,
+        "log": "webui-typecheck.log",
+        "logSha256": "2f81eb99ff92fd33b68966d34e38497fde1c57e3efbc3c0a364442498bc88092",
+        "envKeys": [
+          "BUN_INSTALL_CACHE_DIR",
+          "CRAFT_CONFIG_DIR",
+          "ELECTRON_SKIP_BINARY_DOWNLOAD",
+          "HTTPS_PROXY",
+          "HTTP_PROXY",
+          "LANG",
+          "LC_ALL",
+          "NODE_EXTRA_CA_CERTS",
+          "NODE_OPTIONS",
+          "NO_PROXY",
+          "PATH",
+          "REQUESTS_CA_BUNDLE",
+          "ROX_CONFIG_DIR",
+          "SSL_CERT_FILE",
+          "TMPDIR",
+          "XDG_CACHE_HOME",
+          "http_proxy",
+          "https_proxy",
+          "no_proxy",
+          "npm_config_cache"
+        ],
+        "minimalChildEnvironment": true,
+        "HOMERepurposed": false,
+        "sourceAndLockUnchanged": true,
+        "regularFileCount": 6178,
+        "gitlinkCount": 2
+      },
+      "electron-build": {
+        "label": "electron-build",
+        "command": [
+          "/workspace/.onboarding-tools/node_modules/.bin/bun",
+          "--no-env-file",
+          "run",
+          "electron:build"
+        ],
+        "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+        "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "exit": 0,
+        "seconds": 126.565,
+        "log": "electron-build.log",
+        "logSha256": "97bea1ebc0ff46f8266660a02930d504d1b479a4e36e4ddfafd5652f1fdd2cb6",
+        "envKeys": [
+          "BUN_INSTALL_CACHE_DIR",
+          "CRAFT_CONFIG_DIR",
+          "ELECTRON_SKIP_BINARY_DOWNLOAD",
+          "HTTPS_PROXY",
+          "HTTP_PROXY",
+          "LANG",
+          "LC_ALL",
+          "NODE_EXTRA_CA_CERTS",
+          "NODE_OPTIONS",
+          "NO_PROXY",
+          "PATH",
+          "REQUESTS_CA_BUNDLE",
+          "ROX_CONFIG_DIR",
+          "SSL_CERT_FILE",
+          "TMPDIR",
+          "XDG_CACHE_HOME",
+          "http_proxy",
+          "https_proxy",
+          "no_proxy",
+          "npm_config_cache"
+        ],
+        "minimalChildEnvironment": true,
+        "HOMERepurposed": false,
+        "sourceAndLockUnchanged": true,
+        "regularFileCount": 6178,
+        "gitlinkCount": 2
+      },
+      "compiled-sqlite": {
+        "label": "compiled-sqlite",
+        "command": [
+          "node",
+          "/tmp/rox-r15-exact-ui-20261001/electron-types-private/compiled-sqlite.cjs"
+        ],
+        "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+        "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "exit": 0,
+        "seconds": 1.277,
+        "log": "compiled-sqlite.log",
+        "logSha256": "c7c810a730420ec529c83ff8b33fb2b9e77194866449bb48ea59f9ec0cd70b6e",
+        "envKeys": [
+          "BUN_INSTALL_CACHE_DIR",
+          "CRAFT_CONFIG_DIR",
+          "ELECTRON_SKIP_BINARY_DOWNLOAD",
+          "HTTPS_PROXY",
+          "HTTP_PROXY",
+          "LANG",
+          "LC_ALL",
+          "NODE_EXTRA_CA_CERTS",
+          "NODE_OPTIONS",
+          "NO_PROXY",
+          "PATH",
+          "REQUESTS_CA_BUNDLE",
+          "ROX_CONFIG_DIR",
+          "SSL_CERT_FILE",
+          "TMPDIR",
+          "XDG_CACHE_HOME",
+          "http_proxy",
+          "https_proxy",
+          "no_proxy",
+          "npm_config_cache"
+        ],
+        "minimalChildEnvironment": true,
+        "HOMERepurposed": false,
+        "sourceAndLockUnchanged": true,
+        "regularFileCount": 6178,
+        "gitlinkCount": 2
+      },
+      "compiled-main-host": {
+        "label": "compiled-main-host",
+        "command": [
+          "node",
+          "/tmp/rox-r15-exact-ui-20261001/electron-types-private/compiled-main-host.cjs"
+        ],
+        "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+        "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "exit": 0,
+        "seconds": 2.035,
+        "log": "compiled-main-host.log",
+        "logSha256": "2c87ddfd6ec6ecc29bc76d42d67d2529354a4ba88af292246b62cae847fe6478",
+        "envKeys": [
+          "BUN_INSTALL_CACHE_DIR",
+          "CRAFT_CONFIG_DIR",
+          "ELECTRON_SKIP_BINARY_DOWNLOAD",
+          "HTTPS_PROXY",
+          "HTTP_PROXY",
+          "LANG",
+          "LC_ALL",
+          "NODE_EXTRA_CA_CERTS",
+          "NODE_OPTIONS",
+          "NO_PROXY",
+          "PATH",
+          "REQUESTS_CA_BUNDLE",
+          "ROX_CONFIG_DIR",
+          "SSL_CERT_FILE",
+          "TMPDIR",
+          "XDG_CACHE_HOME",
+          "http_proxy",
+          "https_proxy",
+          "no_proxy",
+          "npm_config_cache"
+        ],
+        "minimalChildEnvironment": true,
+        "HOMERepurposed": false,
+        "sourceAndLockUnchanged": true,
+        "regularFileCount": 6178,
+        "gitlinkCount": 2
+      }
+    },
+    "validateCiExecutedBunTests": 248,
+    "validateCiExecutedPythonTests": 19,
+    "validateCiFailures": 0,
+    "validateCiExpectedCalls": 708,
+    "validateCiSkippedTargets": [
+      "workers/pages absent from OSS export"
+    ],
+    "i18n": {
+      "parity": "11 locales /7449 keys each",
+      "coverage": "7165 literal references /5256 unique keys /7449 English keys",
+      "sorted": "PASS"
+    },
+    "rendererMapClosure": {
+      "rendererMapCount": 408,
+      "textualSourceEntryCount": 1192,
+      "exactTextualMatches": 1192,
+      "textualMismatches": [],
+      "generatedAssetWrapperCount": 23,
+      "allGeneratedAssetWrappers": true,
+      "allRequiredShellSourcesCompiled": true,
+      "htmlEntries": [
+        "apps/electron/dist/renderer/browser-empty-state.html",
+        "apps/electron/dist/renderer/browser-toolbar.html",
+        "apps/electron/dist/renderer/index.html",
+        "apps/electron/dist/renderer/playground.html",
+        "apps/electron/dist/renderer/voice-overlay.html"
+      ],
+      "artifactCount": 1618,
+      "sqliteAdapterOwnerSha256": "8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831",
+      "sqliteAdapterOwnerBytesExpected": true
+    },
+    "probeResults": {
+      "compiled-sqlite": {
+        "actualNode": "24.19.0",
+        "builtInitializerLoaded": true,
+        "fileUrlExact": true,
+        "rows": 1,
+        "rollback": true,
+        "readonlyRefusal": true,
+        "closedRefusal": true,
+        "restartPersistence": true,
+        "assertions": 16,
+        "runtimeAssertions": 14,
+        "extractionAssertions": 2,
+        "bundleSha256": "c18f109ed52c09c5b7cf2b131e4ab3bfd01c116c55a10a8799454fc27cd4f261",
+        "initializerSha256": "325b0b150cc1c33e6f740d86af7c395d4702b52d44e2c5541f76fc6755fb3b75",
+        "compiledStartLine": 437408
+      },
+      "compiled-main-host": {
+        "bundleSha256": "c18f109ed52c09c5b7cf2b131e4ab3bfd01c116c55a10a8799454fc27cd4f261",
+        "actualNode": "24.19.0",
+        "mockedElectronHost": true,
+        "declaredMockElectronVersion": "39.2.7",
+        "installedElectronOrMacAcceptance": false,
+        "readinessHeld": true,
+        "electronRequires": 46,
+        "whenReadyCalls": 2,
+        "windowConstructions": 0,
+        "networkAttempts": 0,
+        "childAttempts": 0,
+        "outsideReads": 0,
+        "outsideWrites": 0,
+        "publicSystemMetadataReads": 2,
+        "outsideFileDetails": [],
+        "protocolRegistrations": 2,
+        "ipcHandlers": 1,
+        "requireReturned": true,
+        "error": null
+      }
+    },
+    "warnings": [
+      "Existing duplicate-case route-parser pages/page-info warnings; large renderer chunks.",
+      "Pi subprocess build reports koffi absent/not required by current Pi SDK."
+    ],
+    "scopeLimitations": [
+      "Mock Electron host gate; no installed/native/macOS/iOS/provider acceptance.",
+      "No full143/full109/PG/CodeQL acceptance."
+    ],
+    "cleanup": {
+      "ownProcessesActive": [],
+      "removedOwnPrivateDirectories": [
+        "/tmp/rox-r15-exact-ui-20261001/electron-types-private/private-config",
+        "/tmp/rox-r15-exact-ui-20261001/electron-types-private/cache",
+        "/tmp/rox-r15-exact-ui-20261001/electron-types-private/tmp"
+      ],
+      "sharedCheckoutDependenciesAndDistRetained": true,
+      "originalUnchangedAndClean": {
+        "revision": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": ""
+      },
+      "helpersRetainedAndCopiedToEvidence": true
+    }
+  },
+  "directIntegratedAndBuiltSmoke": {
+    "candidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "results": [
+      {
+        "label": "integrated-controls",
+        "candidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "logicalArgv": [
+          "bun",
+          "--no-env-file",
+          "test",
+          "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+          "packages/server-core/src/transport/__tests__/before-response-authority.test.ts",
+          "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+          "packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts",
+          "packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts",
+          "scripts/electron-main-cjs.test.ts",
+          "scripts/__tests__/check-i18n-coverage.test.ts",
+          "packages/pi-agent-server/src/custom-endpoint-registration.test.ts",
+          "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+          "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+          "apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts",
+          "apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts",
+          "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+          "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+          "apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts",
+          "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+          "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+          "packages/shared/src/projects/__tests__",
+          "apps/webui/__tests__"
+        ],
+        "actualArgv": [
+          "/workspace/.onboarding-tools/node_modules/.bin/bun",
+          "--no-env-file",
+          "test",
+          "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+          "packages/server-core/src/transport/__tests__/before-response-authority.test.ts",
+          "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+          "packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts",
+          "packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts",
+          "scripts/electron-main-cjs.test.ts",
+          "scripts/__tests__/check-i18n-coverage.test.ts",
+          "packages/pi-agent-server/src/custom-endpoint-registration.test.ts",
+          "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+          "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+          "apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts",
+          "apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts",
+          "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+          "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+          "apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts",
+          "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+          "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+          "packages/shared/src/projects/__tests__",
+          "apps/webui/__tests__"
+        ],
+        "commandSha256": "68209aff1821f2fb1f4130de9e180f764f78e01cf825fd8c598fd255696a7a73",
+        "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+        "startedUtc": "2026-10-01T17:05:12.620314+00:00",
+        "seconds": 16.348,
+        "exit": 0,
+        "headBefore": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "headAfter": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "log": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/negative-smoke/integrated-controls.log",
+        "logSha256": "109e82f568a5cec724853e80222b8323c6d256c51802401ce470a0afe8a33763",
+        "safeEnvironmentKeys": [
+          "BUN_INSTALL_CACHE_DIR",
+          "CRAFT_CONFIG_DIR",
+          "FORCE_COLOR",
+          "LANG",
+          "LC_ALL",
+          "NODE_COMPILE_CACHE",
+          "NO_COLOR",
+          "PATH",
+          "ROX_CONFIG_DIR",
+          "TMPDIR",
+          "TZ",
+          "XDG_CACHE_HOME",
+          "npm_config_cache"
+        ],
+        "explicitEnvironmentOverrides": {},
+        "actualBunCounts": {
+          "pass": 198,
+          "fail": 0,
+          "expect": 930,
+          "tests": 198,
+          "files": 26
+        },
+        "executedCaseReceipt": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/negative-smoke/executed-cases.json",
+        "caseDeclarationRowsResolved": 198
+      },
+      {
+        "label": "strict-built-smoke",
+        "candidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "logicalArgv": [
+          "bun",
+          "--no-env-file",
+          "test",
+          "packages/server/src/__tests__/smoke.test.ts"
+        ],
+        "actualArgv": [
+          "/workspace/.onboarding-tools/node_modules/.bin/bun",
+          "--no-env-file",
+          "test",
+          "packages/server/src/__tests__/smoke.test.ts"
+        ],
+        "commandSha256": "ed7ff957833b7e668d704f05d0654c67c37cd52f7f6749ee2f70734150b2984e",
+        "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+        "startedUtc": "2026-10-01T17:05:28.981701+00:00",
+        "seconds": 9.224,
+        "exit": 0,
+        "headBefore": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "headAfter": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "log": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/negative-smoke/strict-built-smoke.log",
+        "logSha256": "74dd440908dde094f5d6920ce61f0be11d79d2bde21a1d25b25c6ebb7c14f7c0",
+        "safeEnvironmentKeys": [
+          "BUN_INSTALL_CACHE_DIR",
+          "CRAFT_CONFIG_DIR",
+          "FORCE_COLOR",
+          "LANG",
+          "LC_ALL",
+          "NODE_COMPILE_CACHE",
+          "NO_COLOR",
+          "PATH",
+          "ROX_CONFIG_DIR",
+          "ROX_SERVER_SMOKE_ENTRY",
+          "ROX_SERVER_SMOKE_WEBUI_DIR",
+          "TMPDIR",
+          "TZ",
+          "XDG_CACHE_HOME",
+          "npm_config_cache"
+        ],
+        "explicitEnvironmentOverrides": {
+          "ROX_SERVER_SMOKE_ENTRY": "dist-server/index.js",
+          "ROX_SERVER_SMOKE_WEBUI_DIR": "apps/webui/dist"
+        },
+        "actualBunCounts": {
+          "pass": 4,
+          "fail": 0,
+          "expect": 37,
+          "tests": 4,
+          "files": 1
+        },
+        "executedCaseReceipt": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/negative-smoke/executed-cases.json",
+        "caseDeclarationRowsResolved": 4
+      }
+    ],
+    "immutabilityAndCleanup": {
+      "sourcePreserved": true,
+      "originalPreserved": true,
+      "artifactsPreserved": true,
+      "artifactCountBefore": 856,
+      "artifactCountAfter": 856,
+      "sourceRegularFileCount": 6178,
+      "sourceGitlinkCount": 2,
+      "sourceSymlinkCount": 0,
+      "artifactManifestSha256Before": "530498d114f89e2a7af4b296d99a2436d39811b0029b55dfd0eb335beb254964",
+      "artifactManifestSha256After": "530498d114f89e2a7af4b296d99a2436d39811b0029b55dfd0eb335beb254964",
+      "privateRootContentsBeforeDeletion": [
+        "cache",
+        "cache/bun",
+        "cache/node",
+        "cache/node/v24.19.0-x64-cf738c9d-1000",
+        "cache/node/v24.19.0-x64-cf738c9d-1000/1d12534f",
+        "cache/node/v24.19.0-x64-cf738c9d-1000/8784caaf",
+        "cache/npm",
+        "cache/xdg",
+        "cache/xdg/bun",
+        "cache/xdg/bun/@t@",
+        "cache/xdg/bun/@t@/000149b6767408ee.pile",
+        "cache/xdg/bun/@t@/25c30fff34feacd6.pile",
+        "cache/xdg/bun/@t@/27f27f788a0f55ce.pile",
+        "cache/xdg/bun/@t@/2cb3d7f985ca06f1.pile",
+        "cache/xdg/bun/@t@/3688b03add558363.pile",
+        "cache/xdg/bun/@t@/3fda9ea7bea3fd8c.pile",
+        "cache/xdg/bun/@t@/477a240cdc199340.pile",
+        "cache/xdg/bun/@t@/49fdd386b315c7ee.pile",
+        "cache/xdg/bun/@t@/543945be7452b7ee.pile",
+        "cache/xdg/bun/@t@/68e509de22116596.pile",
+        "cache/xdg/bun/@t@/74083224da97ffb5.pile",
+        "cache/xdg/bun/@t@/7be958ac26f124ea.pile",
+        "cache/xdg/bun/@t@/8373486318260841.pile",
+        "cache/xdg/bun/@t@/8ddfc6ecc4d0a30a.pile",
+        "cache/xdg/bun/@t@/95741a0dde87b7da.pile",
+        "cache/xdg/bun/@t@/aa25f80a14c31a89.pile",
+        "cache/xdg/bun/@t@/aba93bcc465856c6.pile",
+        "cache/xdg/bun/@t@/be4787342d07771c.pile",
+        "cache/xdg/bun/@t@/d036417ee42cdd71.pile",
+        "cache/xdg/bun/@t@/dbe06a8709c8d392.pile",
+        "cache/xdg/bun/@t@/e6f06091b7472a55.pile",
+        "cache/xdg/bun/@t@/ec49c70a3f7e4fb8.pile",
+        "cache/xdg/bun/@t@/ede925c4c3f0d195.pile",
+        "cache/xdg/bun/@t@/f071c94abc1ad571.pile",
+        "cache/xdg/bun/@t@/f20e3341e15472b8.pile",
+        "cache/xdg/bun/@t@/f7ceedf1ed875538.pile",
+        "cache/xdg/bun/@t@/fb6a55c88964e5d2.pile",
+        "config",
+        "config/config-defaults.json",
+        "config/logs",
+        "tmp",
+        "tmp/bun",
+        "tmp/bun/@t@",
+        "tmp/bun/@t@/80e36f562e6689a9.pile",
+        "tmp/bun/@t@/8373486318260841.pile",
+        "tmp/bun/@t@/87990cb862c11e1b.pile",
+        "tmp/bun/@t@/aa25f80a14c31a89.pile",
+        "tmp/roadmap-95twsf",
+        "tmp/roadmap-95twsf/projects",
+        "tmp/roadmap-95twsf/projects/project",
+        "tmp/roadmap-95twsf/projects/project/assets",
+        "tmp/roadmap-95twsf/projects/project/config.json",
+        "tmp/roadmap-95twsf/projects/project/roadmap.corrupt-1790874323414.json",
+        "tmp/roadmap-95twsf/projects/project/roadmap.json",
+        "tmp/roadmap-95twsf/projects/project/roadmap.md"
+      ],
+      "ownPrivateRootDeleted": true
+    },
+    "executedCaseReceipt": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/negative-smoke/executed-cases.json",
+    "executedCaseReceiptSha256": "b9a9c77d9de671a7648c01159c5c136766cd15a00a7dcdf2dd149f4ef42f7c00",
+    "executedRunnerSha256": "4d3342cecdea954374e1e28012525749e8c51e3b718d0442b3596b7641dda6b7",
+    "caseParserSha256": "cd6130721d08d54fa2405d96a8f775be3026210b25f90c0943fe6c0a40c0d75b",
+    "caseParserActualCommand": [
+      "node",
+      "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/negative-smoke/parse-executed-cases.cjs"
+    ],
+    "processCleanupObservation": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/negative-smoke/process-cleanup-observation.json",
+    "boundedClaim": true,
+    "pending": [
+      "full109",
+      "full143",
+      "native",
+      "provider",
+      "iOS",
+      "PG",
+      "CodeQL"
+    ],
+    "rootSolePublisher": true
+  },
+  "directCanonicalShipment": {
+    "candidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "pass": true,
+    "error": null,
+    "canonicalBuild": {
+      "label": "canonical-build",
+      "argv": [
+        "/workspace/.onboarding-tools/node_modules/.bin/bun",
+        "--no-env-file",
+        "run",
+        "server:build",
+        "--output=../../../workspace/rox-r15-direct-server-dist-20261001"
+      ],
+      "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+      "startedUtc": "2026-10-01T17:16:25.385418+00:00",
+      "seconds": 8.316,
+      "exit": 0,
+      "log": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/canonical-build.log",
+      "logSha256": "44029ca877ed9db4ada7b930affb0f09cc393d0e6df52baa9c2a879901afec4b",
+      "safeEnvironmentKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "FORCE_COLOR",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_COMPILE_CACHE",
+        "NODE_EXTRA_CA_CERTS",
+        "NO_COLOR",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "TZ",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ]
+    },
+    "webuiStaging": {
+      "receipt": "canonical-ui-copy.json",
+      "explicitOutputOnlyCopyAfterCanonicalBuild": true,
+      "canonicalBuilderCopiesUI": false,
+      "buildRevision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "fileCount": 855,
+      "exactPathAndByteInventory": true,
+      "UIRebuilt": false
+    },
+    "mandatoryInternalBuilds": {
+      "rebuilt": [
+        "Pi",
+        "cloud-runner",
+        "WhatsApp worker",
+        "Discord worker"
+      ],
+      "PiAndCloudRunnerBeforeAfterExact": true,
+      "exactUnchangedOutputs": [
+        "packages/cloud-runner/dist/stub-runner.js",
+        "packages/pi-agent-server/dist/index.js"
+      ],
+      "changedGeneratedOutputs": [
+        {
+          "path": "packages/messaging-discord-worker/dist/worker.cjs",
+          "before": {
+            "bytes": 3918513,
+            "sha256": "458bfe3e2d8ebace7bf85adb47dd4026b4c4aa7b2e3ea534990bf770a535cc62"
+          },
+          "after": {
+            "bytes": 3918513,
+            "sha256": "1fbeb435b201c412d1a93d655d1c332a84f6c1caaa857bbd0c0566c313deccdf"
+          }
+        },
+        {
+          "path": "packages/messaging-whatsapp-worker/dist/worker.cjs",
+          "before": {
+            "bytes": 6071683,
+            "sha256": "fd4646339d0bc9330610f42b92986958c266eb766377f6c7d7ea280083aaf6b1"
+          },
+          "after": {
+            "bytes": 6071600,
+            "sha256": "3e80684f3525329c0d4e6341dbbfb8396974abaf36576dde352f96e291985f25"
+          }
+        }
+      ],
+      "sourceAndLockChanges": []
+    },
+    "actualLauncherSmoke": {
+      "label": "canonical-delivery-smoke",
+      "argv": [
+        "/workspace/.onboarding-tools/node_modules/.bin/bun",
+        "--no-env-file",
+        "test",
+        "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/canonical-delivery-smoke.test.ts"
+      ],
+      "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+      "startedUtc": "2026-10-01T17:19:54.808072+00:00",
+      "seconds": 9.704,
+      "exit": 0,
+      "log": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/canonical-delivery-smoke.log",
+      "logSha256": "62da46d877f7a1f6731311c5fc08b5b3c82ab5ae570fd8b4a103616c79693aaa",
+      "safeEnvironmentKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "FORCE_COLOR",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_COMPILE_CACHE",
+        "NODE_EXTRA_CA_CERTS",
+        "NO_COLOR",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "TZ",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "actualBunCounts": {
+        "pass": 2,
+        "fail": 0,
+        "expect": 56,
+        "tests": 2,
+        "files": 1
+      }
+    },
+    "actualLauncher": "sh bin/craft-server",
+    "runtime": {
+      "outerBun": "1.3.14",
+      "observedShippedBun": "1.3.9",
+      "node": "24.19.0",
+      "assertions": 56,
+      "passedPhases": 56,
+      "servers": [
+        {
+          "exit": 0,
+          "sigtermSent": true,
+          "sigkillFallback": false,
+          "tokenWasLogged": false
+        },
+        {
+          "exit": 0,
+          "sigtermSent": true,
+          "sigkillFallback": false,
+          "tokenWasLogged": false
+        },
+        {
+          "exit": 1,
+          "sigtermSent": false,
+          "sigkillFallback": false,
+          "tokenWasLogged": false
+        }
+      ],
+      "profilesRemoved": true
+    },
+    "executedCases": [
+      {
+        "name": "runs shipped source/runtime, enforces auth, and restarts the same isolated profile",
+        "testFile": "canonical-delivery-smoke.test.ts",
+        "declarationLine": 228,
+        "actualRawLogLine": 4,
+        "actualRawLogText": "(pass) actual canonical standalone distribution > runs shipped source/runtime, enforces auth, and restarts the same isolated profile [8194.36ms]",
+        "result": "pass",
+        "phaseAssertionCount": 47
+      },
+      {
+        "name": "refuses a short token before readiness without leaving listening endpoints",
+        "testFile": "canonical-delivery-smoke.test.ts",
+        "declarationLine": 251,
+        "actualRawLogLine": 5,
+        "actualRawLogText": "(pass) actual canonical standalone distribution > refuses a short token before readiness without leaving listening endpoints [1450.66ms]",
+        "result": "pass",
+        "phaseAssertionCount": 9
+      }
+    ],
+    "closure": {
+      "commandReceipt": {
+        "label": "shipment-closure-final",
+        "argv": [
+          "python3",
+          "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/verify-shipment-closure.py"
+        ],
+        "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+        "startedUtc": "2026-10-01T17:23:33.148076+00:00",
+        "seconds": 1.559,
+        "exit": 0,
+        "log": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/shipment-closure-final.log",
+        "logSha256": "fa688ef6dbfb9e9e34367a5210c951e54afe6dd000409b4020a0f4921bc55d45",
+        "safeEnvironmentKeys": [
+          "LANG",
+          "LC_ALL",
+          "PATH",
+          "TZ"
+        ]
+      },
+      "summary": {
+        "pass": true,
+        "checks": 57,
+        "passed": 57,
+        "failed": [],
+        "components": {
+          "workspace": {
+            "exact": true,
+            "expected_files": 2062,
+            "delivered_files": 2062
+          },
+          "resources": {
+            "exact": true,
+            "expected_files": 113,
+            "delivered_files": 113
+          },
+          "runtime_binaries": {
+            "exact": true,
+            "expected_files": 2,
+            "delivered_files": 2
+          },
+          "webui": {
+            "exact": true,
+            "expected_files": 855,
+            "delivered_files": 855
+          }
+        },
+        "workspace_symlink_count": 9,
+        "total_delivery_symlink_count": 9
+      },
+      "fullEvidence": "verify-shipment-closure.json",
+      "applicationFailures": 0
+    },
+    "shipment": {
+      "path": "/workspace/rox-r15-direct-server-dist-20261001",
+      "files": 56505,
+      "symlinks": 9,
+      "bytes": 1105833914,
+      "sourceAndWorkspaceCompleteExact": true,
+      "UICompleteExact": true,
+      "allSymlinksExistingAndInternal": true,
+      "runtimeManifestUnchanged": true,
+      "fullBeforeManifest": "shipment-before-runtime-manifest.json",
+      "fullAfterManifest": "canonical-delivery-after.json"
+    },
+    "source": {
+      "headBefore": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "headAfter": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "statusBefore": "?? dist-server/",
+      "statusAfter": "?? dist-server/",
+      "trackedFiles": 6178,
+      "gitlinks": 2,
+      "fullTrackedSourceAndLockExact": true,
+      "lockSha256": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+      "builderSha256": "d737fe594be9b0f20c1e42f39852ddd52245e9c86ac8481dc837b8ac8005b36a",
+      "secureStoragePath": "packages/shared/src/credentials/backends/secure-storage.ts",
+      "secureStorageSha256": "5127a51963ccc422b1a2ddec397c5beb4500afde17ba6eb523d89a2658e104fd",
+      "sqliteRuntimeAdapterPath": "packages/shared/src/utils/sqlite-runtime.ts",
+      "sqliteRuntimeAdapterSha256": "8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831"
+    },
+    "original": {
+      "revision": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "status": "",
+      "fullSourceAndLockUnchanged": true
+    },
+    "initialObserverFailures": [
+      {
+        "receipt": "shipment-closure-receipt.json",
+        "command": [
+          "python3",
+          "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/verify-shipment-closure.py"
+        ],
+        "exit": 2,
+        "reason": "observer file not yet written; orchestration timing error",
+        "applicationFailure": false,
+        "log": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/shipment-closure.log",
+        "logSha256": "b81bf8be5738e1ea80356d5676d16eb2df6df7fb16857c6a9c5349cc613a4fb3"
+      },
+      {
+        "receipt": "shipment-closure-retry-receipt.json",
+        "command": [
+          "python3",
+          "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/verify-shipment-closure.py"
+        ],
+        "exit": 2,
+        "reason": "observer file not yet written; orchestration timing error",
+        "applicationFailure": false,
+        "log": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/shipment-closure-retry.log",
+        "logSha256": "b81bf8be5738e1ea80356d5676d16eb2df6df7fb16857c6a9c5349cc613a4fb3"
+      }
+    ],
+    "initialRedReceiptsRetained": true,
+    "completionParserFinding": {
+      "command": [
+        "python3",
+        "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/complete-verification.py"
+      ],
+      "failedLine": 38,
+      "error": "AssertionError at count parser",
+      "reason": "regex demanded extra whitespace before newline; Bun emits pass/fail lines without trailing whitespace and singular file",
+      "applicationFailure": false,
+      "buildOrSmokeRerun": false,
+      "smokeLogSha256": "62da46d877f7a1f6731311c5fc08b5b3c82ab5ae570fd8b4a103616c79693aaa",
+      "closureAlreadyPassed": true
+    },
+    "initialObserverFailuresResolved": true,
+    "buildAndSmokeRerun": false,
+    "cleanup": {
+      "sourceAndLockPreserved": true,
+      "sourceRegularFileCount": 6178,
+      "gitlinkCount": 2,
+      "liveArtifactsPreserved": true,
+      "liveArtifactFileCount": 856,
+      "originalSourceAndStatusPreserved": true,
+      "originalCleanBeforeAndAfter": true,
+      "ownChildProcessesExited": true,
+      "ownProfilesRemovedByUnchangedHelper": true,
+      "privateTemporaryRootRemoved": true,
+      "canonicalOutputRetainedForRootVerification": true,
+      "sharedCheckoutDependenciesAndArtifactsRetained": true,
+      "shipmentFilesAndSymlinksUnchangedDuringRuntime": true
+    },
+    "retainedArtifacts": [
+      {
+        "file": "canonical-build.log",
+        "bytes": 3181,
+        "sha256": "44029ca877ed9db4ada7b930affb0f09cc393d0e6df52baa9c2a879901afec4b"
+      },
+      {
+        "file": "canonical-build-receipt.json",
+        "bytes": 1053,
+        "sha256": "9f44518d54cc01cc7fe0bd237fb330d66b26a603ee75dd24e383edc579dbfd92"
+      },
+      {
+        "file": "canonical-ui-copy.json",
+        "bytes": 261350,
+        "sha256": "5b9772261935c6f6be8117fd6bb7ee8b10e454b66d9ec79c7be294a75491fa2e"
+      },
+      {
+        "file": "canonical-delivery-smoke.log",
+        "bytes": 503,
+        "sha256": "62da46d877f7a1f6731311c5fc08b5b3c82ab5ae570fd8b4a103616c79693aaa"
+      },
+      {
+        "file": "canonical-delivery-smoke-receipt.json",
+        "bytes": 1100,
+        "sha256": "532d6cf481b7d03efd03001a4bff56cb085627c0e8d1737f7436b4116719e554"
+      },
+      {
+        "file": "canonical-delivery-phases.json",
+        "bytes": 5755,
+        "sha256": "a82a7badfd470e45fceb26f8806fed80dc05b77140e28c45923f2d300cf5f05e"
+      },
+      {
+        "file": "canonical-delivery-child-redacted.log",
+        "bytes": 2177,
+        "sha256": "143b3f1ee8780f7aa881818bb002544fe696cfe329c27a43c9ae492139570b25"
+      },
+      {
+        "file": "canonical-delivery-before.json",
+        "bytes": 830121,
+        "sha256": "5b8ebc734add39bf2a3cbbc6605ba5cae2771c04c27cc083822d3cc14fd3e497"
+      },
+      {
+        "file": "shipment-before-runtime-manifest.json",
+        "bytes": 13547953,
+        "sha256": "c7fb4e0b8058191dbed20e40ae3fa0501778645903c6cca877b85b1c426d6c7c"
+      },
+      {
+        "file": "canonical-delivery-after.json",
+        "bytes": 13547953,
+        "sha256": "c7fb4e0b8058191dbed20e40ae3fa0501778645903c6cca877b85b1c426d6c7c"
+      },
+      {
+        "file": "verify-shipment-closure.json",
+        "bytes": 1221246,
+        "sha256": "04482469816ff7b7173e8a8cbae522de8b9d5861bcd323242f3723b325f267d3"
+      },
+      {
+        "file": "verify-shipment-closure.py",
+        "bytes": 14048,
+        "sha256": "81c8e9854db65492c2d0ce7c07854657e04f5fa77422e819623e2217ca798e14"
+      },
+      {
+        "file": "shipment-closure-final.log",
+        "bytes": 657,
+        "sha256": "fa688ef6dbfb9e9e34367a5210c951e54afe6dd000409b4020a0f4921bc55d45"
+      },
+      {
+        "file": "shipment-closure-final-receipt.json",
+        "bytes": 601,
+        "sha256": "7316f862533e30bb5c27f44cc8a409e8d522b51766f883cdc0c7fe97c6d3a35b"
+      },
+      {
+        "file": "helper-provenance.json",
+        "bytes": 1400,
+        "sha256": "30df90dd91f8b37b00de5ef9916ef6e943eaeedc3508e1fa6282e7318753e2c9"
+      },
+      {
+        "file": "helper-path-only.diff",
+        "bytes": 908,
+        "sha256": "5ac2fdadbb47f961d0f75dccda4b37b8a6d8288aaac1424ee374f8ba7cf6f439"
+      },
+      {
+        "file": "manifest-path-only.diff",
+        "bytes": 532,
+        "sha256": "1f57414de3fe28d066c2444402ea04c031cab96287a24d551750e3e2a6611f66"
+      },
+      {
+        "file": "executed-cases.json",
+        "bytes": 1273,
+        "sha256": "073373c81b6c85cd2db0347b0601e6cd8b138df671fb7c65e6571c235ceed77f"
+      },
+      {
+        "file": "source-before.json",
+        "bytes": 830340,
+        "sha256": "40c018a1279c770cef9f4ed9e18ba10269e00716ea6e3f21a3ab59b83b519e12"
+      },
+      {
+        "file": "source-after-final.json",
+        "bytes": 830340,
+        "sha256": "40c018a1279c770cef9f4ed9e18ba10269e00716ea6e3f21a3ab59b83b519e12"
+      },
+      {
+        "file": "original-source-before.json",
+        "bytes": 707975,
+        "sha256": "9bcc8224ab3c834fc0442572cfcbd6f7691a6d17d5fb76b372d2dbf645d02163"
+      },
+      {
+        "file": "original-source-after-final.json",
+        "bytes": 707975,
+        "sha256": "9bcc8224ab3c834fc0442572cfcbd6f7691a6d17d5fb76b372d2dbf645d02163"
+      },
+      {
+        "file": "live-artifacts-before.json",
+        "bytes": 144418,
+        "sha256": "f8770d72a3aaf0e27ab3f192a0f689bd1a99a81be7e6284005bd755551f3ab7b"
+      },
+      {
+        "file": "live-artifacts-after-final.json",
+        "bytes": 144418,
+        "sha256": "f8770d72a3aaf0e27ab3f192a0f689bd1a99a81be7e6284005bd755551f3ab7b"
+      },
+      {
+        "file": "internal-build-artifacts-before.json",
+        "bytes": 798,
+        "sha256": "09b2619f011d45c3273647c2b4e63c8bc858101d98879c5bae44b2eb85e6b27a"
+      },
+      {
+        "file": "internal-build-artifacts-after.json",
+        "bytes": 798,
+        "sha256": "3063eddbe6df1a04bc3c66275f1ac9d003cdf61f9676c6dc1b15cfadc02ed68f"
+      },
+      {
+        "file": "cleanup-receipt-complete.json",
+        "bytes": 532,
+        "sha256": "536032532a5fd7e1141f5f91447927400e16b9038a4db5591aafc76684ad0e50"
+      },
+      {
+        "file": "verification-receipt.json",
+        "bytes": 5718,
+        "sha256": "7ca62dcb598e78831a5ac2473747fdee44106e85ba87165724bf39901b0d9bbe"
+      },
+      {
+        "file": "final-verification-receipt.json",
+        "bytes": 10920,
+        "sha256": "2d700a570499bd9198db7990df95307dd68737e68960021db662848c5a370632"
+      },
+      {
+        "file": "shipment-closure.log",
+        "bytes": 170,
+        "sha256": "b81bf8be5738e1ea80356d5676d16eb2df6df7fb16857c6a9c5349cc613a4fb3"
+      },
+      {
+        "file": "shipment-closure-retry.log",
+        "bytes": 170,
+        "sha256": "b81bf8be5738e1ea80356d5676d16eb2df6df7fb16857c6a9c5349cc613a4fb3"
+      },
+      {
+        "file": "canonical-delivery-smoke.test.ts",
+        "bytes": 13473,
+        "sha256": "cbe44ec9f255d90f9918f80d31fa1da281070ccfd59af3bdcc069859ccde26e4"
+      },
+      {
+        "file": "canonical-delivery-smoke.original.ts.txt",
+        "bytes": 13448,
+        "sha256": "28c12dba8e84c22c2137683ea80ce3efba6b6b7de31952d5d62a6056fc276fc1"
+      },
+      {
+        "file": "canonical-delivery-manifest.py",
+        "bytes": 5343,
+        "sha256": "4d108b3c3d1f4bdc4fefed59cc2b374ab5e75fbcde0f02fbad6f560421602f7e"
+      },
+      {
+        "file": "canonical-delivery-manifest.original.py.txt",
+        "bytes": 5325,
+        "sha256": "6984c7c30dd89b0272bbe82304ed80781fe2f4150825dfffdaf2d1f3f829195e"
+      },
+      {
+        "file": "manifest-after-runtime-independent.log",
+        "bytes": 398,
+        "sha256": "be2ed057951dcb41b594809f0ee4e6716739a00857c53a1ea5e0429c10694471"
+      },
+      {
+        "file": "completion-parser-error-receipt.json",
+        "bytes": 529,
+        "sha256": "e68f1010f4e844f014150787b62b28641349c04880dfeb9e4d63cbbe79f66de3"
+      },
+      {
+        "file": "run-verification.py",
+        "bytes": 14164,
+        "sha256": "0d3669d92138c7939ad3c636bd2de3ca752a31aac9ad834318d058a0335bc96f"
+      },
+      {
+        "file": "continue-verification.py",
+        "bytes": 7723,
+        "sha256": "2dc24351e9a6a7718b4e6e5dde9b277516d3118eab606a7353cef18d8262a7f8"
+      },
+      {
+        "file": "complete-verification.py",
+        "bytes": 11399,
+        "sha256": "be253d1b65bd14a4249b3e377b8861b2e475a74375d66cafc7e68ce775ccd55a"
+      },
+      {
+        "file": "summary-before-metadata-correction.json",
+        "bytes": 17445,
+        "sha256": "847ed783304ca7f694ebd075138aaaf933bc9038eafb25919bf9a532075c81cd"
+      },
+      {
+        "file": "metadata-correction-receipt.json",
+        "bytes": 1338,
+        "sha256": "51f771802d9a65ee633ab55c3cab1763d92c61ba28053385bd176fb34f5e82c9"
+      },
+      {
+        "file": "correct-receipt-metadata.py",
+        "bytes": 3694,
+        "sha256": "20e1bd231d3e8381ff139979edc5c6db7117fa5248b20ca07f58b49abf482cf3"
+      }
+    ],
+    "scopeLimitations": [
+      "no installed/native Electron or macOS",
+      "no providers/OAuth",
+      "no iOS",
+      "no PG",
+      "no full109/full143",
+      "no security scan acceptance"
+    ],
+    "metadataCorrection": {
+      "changedOnly": "External receipt metadata naming and retained artifact/hash references",
+      "previousSummaryFile": "summary-before-metadata-correction.json",
+      "previousSummarySha256": "847ed783304ca7f694ebd075138aaaf933bc9038eafb25919bf9a532075c81cd",
+      "incorrectPreviousField": "source.ownerAdapterSha256 referred to secure-storage.ts",
+      "correctedFields": [
+        {
+          "path": "packages/shared/src/credentials/backends/secure-storage.ts",
+          "sha256": "5127a51963ccc422b1a2ddec397c5beb4500afde17ba6eb523d89a2658e104fd",
+          "beforeAndAfterAndActualExact": true
+        },
+        {
+          "path": "packages/shared/src/utils/sqlite-runtime.ts",
+          "sha256": "8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831",
+          "beforeAndAfterAndActualExact": true
+        }
+      ],
+      "sourceManifestBeforeSha256": "40c018a1279c770cef9f4ed9e18ba10269e00716ea6e3f21a3ab59b83b519e12",
+      "sourceManifestAfterSha256": "40c018a1279c770cef9f4ed9e18ba10269e00716ea6e3f21a3ab59b83b519e12",
+      "completeTrackedSourceAndLockBeforeAfterActualExact": true,
+      "sourceRegularFiles": 6178,
+      "sourceGitlinks": 2,
+      "originalSourceAndStatusUnchangedAndClean": true,
+      "completeVerificationDriverSha256": "be253d1b65bd14a4249b3e377b8861b2e475a74375d66cafc7e68ce775ccd55a",
+      "applicationSourceChanged": false,
+      "buildTestSmokeOrClosureRerun": false
+    }
+  },
+  "independentReview": {
+    "file": "cloud-all-surfaces-direct-010-evidence-20261001/independent-review.json",
+    "sha256": "ffceef760fbc5b97e97604b32152a908b3e48dedcd158c8390ecc17235202541",
+    "status": "PASS"
+  },
+  "freshDurableEarlierSameDay": {
+    "actualSource": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "durable": {
+      "pass": 1002,
+      "fail": 0,
+      "expect": 7441,
+      "files": 101,
+      "seconds": 9.233
+    },
+    "septemberProcessLoss": {
+      "pass": 24,
+      "fail": 0,
+      "expect": 147,
+      "files": 4,
+      "seconds": 2.011
+    },
+    "receipt": "cloud-all-surfaces-checkpoint-evidence-20261001/fresh-durable/fresh-validation.json",
+    "executedCases": "cloud-all-surfaces-checkpoint-evidence-20261001/fresh-durable/executed-cases.json",
+    "rerunThisDirectBrowserBatch": false
+  },
+  "allCountsRemainPerInvocationWithoutUniqueAggregate": true,
+  "notesWireAndAuthority": {
+    "sourceBlob": "ebe1cfd273bee9f299a6c654430f80d6f03ad218",
+    "path": "packages/server-core/src/handlers/rpc/notes.ts",
+    "positionsAfterCtx": [
+      "workspaceId",
+      "noteId",
+      "content",
+      "expectedRevision?:string",
+      "operation?:NoteMutationOptions"
+    ],
+    "compoundArg5": "sourceStoreId:string; frozen declaration optional string",
+    "SAVEdeclarationLine": 1239,
+    "nativeCanonicalCommitLine": 1256,
+    "legacyBranchLine": 1277,
+    "purePrepareCreateLines": [
+      1288,
+      1304
+    ],
+    "negativeCaseFile": "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+    "negativeCaseLine": 196,
+    "actualFreshPASSlogLine": 233,
+    "arg4OrArg5NeverReinterpretedAsSourceStoreId": true,
+    "nativeActionPreserved": true,
+    "canonicalSingleWriterPreserved": true,
+    "encryptedDurableEnqueueTrustedAckCallerFenceCustodyPreserved": true,
+    "sourceReadback": "cloud-all-surfaces-checkpoint-evidence-20261001/notes-review.json"
+  },
+  "sourceDefectsAndBoundaries": [
+    {
+      "kind": "remaining tooling defect",
+      "file": "scripts/build-server.ts",
+      "line": 837,
+      "cause": "join(rootDir, values.output!) prepends checkout even for absolute output",
+      "testedWorkaroundCommand": "bun --no-env-file run server:build --output=../../../workspace/rox-r15-direct-server-dist-20261001"
+    },
+    {
+      "kind": "existing nonfatal source warning",
+      "file": "apps/electron/src/shared/route-parser.ts",
+      "lines": [
+        1321,
+        1323,
+        1347,
+        1349
+      ],
+      "cause": "duplicate pages/page-info switch cases; builds exit0"
+    },
+    {
+      "kind": "capability boundary, not native functional acceptance",
+      "file": "packages/server-core/src/transport/server.ts",
+      "line": 1084,
+      "observation": "Actual LOCAL_ONLY_DENIED desktop RPC refusals; honest unavailable UI, no fabricated native context"
+    }
+  ],
+  "infrastructureAndObserverFindings": [
+    {
+      "kind": "DNS/network observation",
+      "file": "apps/webui/src/index.html",
+      "line": 14,
+      "otherLocation": "apps/webui/src/login.html:13",
+      "observation": "fonts.googleapis.com ERR_NAME_NOT_RESOLVED in real browser console; renderer and pageerrors gates passed; policy unchanged"
+    },
+    {
+      "kind": "preserved observer timing RED",
+      "file": "cloud-all-surfaces-direct-010-evidence-20261001/browser/auth-negative-first-red/executed-helper.cjs.txt",
+      "line": 174,
+      "actualExit": 1,
+      "passedChecks": 8,
+      "phaseErrors": 1,
+      "cause": "15s DOMContentLoaded wait after actual correct-login navigation to root timed out",
+      "greenChange": "only observer wait15s to45s; actual11PASS/0FAIL; no application edit or bootstrap-timeout acceptance"
+    },
+    {
+      "kind": "preserved orchestration RED",
+      "command": "python3 verify-shipment-closure.py",
+      "actualExit": 2,
+      "cause": "observer invoked twice before parallel worker created its file",
+      "resolution": "existing shipment retained, launcher executed, ready observer completed independently; no application edit"
+    },
+    {
+      "kind": "corrected receipt metadata label",
+      "file": "canonical-delivery/complete-verification.py",
+      "line": 127,
+      "cause": "secure-storage.ts hash was labeled ownerAdapterSha256; corrected to explicit secureStorage vs sqliteRuntime path/hash fields",
+      "sourceChanged": false
+    },
+    {
+      "kind": "preserved evidence parser RED",
+      "file": "cloud-all-surfaces-direct-010-evidence-20261001/canonical-delivery/complete-verification.py.txt",
+      "line": 38,
+      "cause": "count parser expected trailing whitespace/plural file formatting that Bun did not emit",
+      "resolution": "only metadata parser corrected; successful build/smoke/closure did not rerun"
+    },
+    {
+      "kind": "existing hosted evidence boundary",
+      "observation": "Exact source010 SQLite push/PR 4/4jobs,68/68metadata steps SUCCESS; official hosted log redirect403 prevents printed-checkout/test-count attestation; current docs head does not inherit execution attribution"
+    },
+    {
+      "kind": "pending external owner gates",
+      "observation": "queued native owner runs, protectedPG WP01/WP48 preflight, Vercel accountblocked; no credentials or infrastructure settings changed"
+    }
+  ],
+  "historicalMainComparison": {
+    "source": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "tests": {
+      "pass": 817,
+      "fail": 3,
+      "files": 79,
+      "expect": 3519
+    },
+    "WebUITypesDiagnostics": 52,
+    "serverTypesDiagnostics": 8,
+    "fixedTests": [
+      {
+        "file": "packages/core/src/platform/identity/attach-credential-ref.test.ts",
+        "lines": [
+          93,
+          136
+        ],
+        "cause": "hidden enumerable/prototype locator runtime validation"
+      },
+      {
+        "file": "packages/core/src/tasks/personal/things.test.ts",
+        "historicalLine": 111,
+        "cause": "implicitDate.now vs fixedfixture; explicit callerclock and deterministicfixture now preserved"
+      }
+    ],
+    "currentTypesExit": 0,
+    "countsNotComparableAsFixedTestDelta": true,
+    "fullBaseline": "cloud-all-surfaces-evidence-20260930/baseline/main-f632-validation.md"
+  },
+  "security": {
+    "rawCodeQLAnnotations": 96,
+    "high": 64,
+    "medium": 32,
+    "validatedVulnerabilityCountNotClaimed": true,
+    "triagePending": true
+  },
+  "acceptance": {
+    "full109": false,
+    "full143": false,
+    "UTB": false,
+    "DATA_SHARED": false,
+    "nativeInstalledHosts": false,
+    "nativeNotesMutationUI": false,
+    "nativeProjectsRoadmapRepositoryUI": false,
+    "providerOAuth": false,
+    "iOS": false,
+    "postgresProtectedGates": false,
+    "securityAcceptance": false
+  },
+  "original": {
+    "path": "/workspace/rox-one",
+    "revision": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "lockSha256": "b29cf0eb0eaa357069172fe728123d1bd56ab77ef18d90e426f1f42cf85fb79b",
+    "cleanAndUnchangedDuringGates": true
+  },
+  "isolatedSourceLockSha256": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+  "publishedEvidence": {
+    "directory": "cloud-all-surfaces-direct-010-evidence-20261001",
+    "files": 295,
+    "manifestSha256": "cb9daa511fee39a30a7f4c77df8ab833aa67bf1d034eb50897c36d27baf7dfec"
+  },
+  "fullCompiledArtifactsAndMapsRetainedLocally": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/retained-build",
+  "cleanup": "All worker-owned processes/privateprofiles removed. Root removes own checkout and standalone shipment only after commit/push/remote readback; final cleanup receipt records actual result."
+}

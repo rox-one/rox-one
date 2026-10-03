@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+import { isClaimableLive, normalizeRox2Result } from '@craft-agent/core/rox2'
 import { SETTINGS_PAGES } from '../../../../shared/settings-registry.ts'
 import {
   ROX2_SETTINGS_WAVE2_PAGE_IDS,
@@ -132,9 +132,9 @@ describe('ROX2-044..046 native settings pages', () => {
       source: 'native',
       granted: true,
     })
-    expect(verified.executionMode).toBe('live')
-    expect(verified.lifecycle).toBe('succeeded')
-    expect(verified.verification).toBe('receipt_verified')
+    expect(normalizeRox2Result(verified).executionMode).toBe('live')
+    expect(normalizeRox2Result(verified).lifecycle).toBe('succeeded')
+    expect(normalizeRox2Result(verified).verification).toBe('receipt_verified')
   })
 
   test('pages call the Rox2 gate and do not treat marketplace as spend', () => {

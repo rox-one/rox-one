@@ -1,0 +1,3466 @@
+{
+  "schemaVersion": 1,
+  "sourceRefs": [
+    "U26",
+    "seq703"
+  ],
+  "status": "ACCEPTANCE_OWNERSHIP_PLAN_NOT_PRODUCT_PROOF",
+  "mappingPolicy": "Primary owner follows the actual Conation product/screen. Dedicated Conation AUTH/DELIVERY/E2E/SHARE cards own their stated scope; cross-product issues are primary only for screen scope they explicitly state. Where no dedicated applicable Conation screen owner exists, CONATION-E2E-01 retains the exact screen acceptance row with per-screen delegation metadata. No issue arrays or source acceptance text are changed.",
+  "rows": [
+    {
+      "requirementId": "U26-R001",
+      "product": "Conation (agisota/conation)",
+      "screen": "Branch / delivery handoff",
+      "primaryIssue": "CONATION-DELIVERY-01",
+      "acceptanceOwner": "CONATION-DELIVERY-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R002",
+      "product": "Conation (agisota/conation)",
+      "screen": "Branch / delivery handoff",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R003",
+      "product": "Conation (agisota/conation)",
+      "screen": "Branch / delivery handoff",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R004",
+      "product": "Conation (agisota/conation)",
+      "screen": "Branch / delivery handoff",
+      "primaryIssue": "CONATION-DELIVERY-01",
+      "acceptanceOwner": "CONATION-DELIVERY-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R005",
+      "product": "Conation (agisota/conation)",
+      "screen": "Branch / delivery handoff",
+      "primaryIssue": "CONATION-DELIVERY-01",
+      "acceptanceOwner": "CONATION-DELIVERY-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R006",
+      "product": "Conation (agisota/conation)",
+      "screen": "Branch / delivery handoff",
+      "primaryIssue": "CONATION-DELIVERY-01",
+      "acceptanceOwner": "CONATION-DELIVERY-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R007",
+      "product": "Conation (agisota/conation)",
+      "screen": "Branch / delivery handoff",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R008",
+      "product": "Conation (agisota/conation)",
+      "screen": "Branch / delivery handoff",
+      "primaryIssue": "CONATION-DELIVERY-01",
+      "acceptanceOwner": "CONATION-DELIVERY-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R009",
+      "product": "Conation (agisota/conation)",
+      "screen": "Operator authentication",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R010",
+      "product": "Conation (agisota/conation)",
+      "screen": "Operator authentication",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R011",
+      "product": "Conation (agisota/conation)",
+      "screen": "Operator authentication",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R012",
+      "product": "Conation (agisota/conation)",
+      "screen": "Operator authentication",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R013",
+      "product": "Conation (agisota/conation)",
+      "screen": "Operator authentication",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R014",
+      "product": "Conation (agisota/conation)",
+      "screen": "Operator authentication",
+      "primaryIssue": "DRIVE-01",
+      "acceptanceOwner": "DRIVE-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R015",
+      "product": "Conation (agisota/conation)",
+      "screen": "Login / session",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R016",
+      "product": "Conation (agisota/conation)",
+      "screen": "Login / session",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R017",
+      "product": "Conation (agisota/conation)",
+      "screen": "Login / session",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Login / session",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R018",
+      "product": "Conation (agisota/conation)",
+      "screen": "Login / session",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R019",
+      "product": "Conation (agisota/conation)",
+      "screen": "Login / session",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R020",
+      "product": "Conation (agisota/conation)",
+      "screen": "App navigation",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "App navigation",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R021",
+      "product": "Conation (agisota/conation)",
+      "screen": "App navigation",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "App navigation",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R022",
+      "product": "Conation (agisota/conation)",
+      "screen": "App navigation",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "App navigation",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R023",
+      "product": "Conation (agisota/conation)",
+      "screen": "Inbox",
+      "primaryIssue": "INBOX-01",
+      "acceptanceOwner": "INBOX-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R024",
+      "product": "Conation (agisota/conation)",
+      "screen": "Drive",
+      "primaryIssue": "DRIVE-01",
+      "acceptanceOwner": "DRIVE-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R025",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R026",
+      "product": "Conation (agisota/conation)",
+      "screen": "Chat / Channels",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Chat / Channels",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R027",
+      "product": "Conation (agisota/conation)",
+      "screen": "Tasks",
+      "primaryIssue": "TASKS-01",
+      "acceptanceOwner": "TASKS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R028",
+      "product": "Conation (agisota/conation)",
+      "screen": "Agents",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Agents",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R029",
+      "product": "Conation (agisota/conation)",
+      "screen": "CRM / Clients",
+      "primaryIssue": "CRM-01",
+      "acceptanceOwner": "CRM-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R030",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation surface",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Conation surface",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R031",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation surface",
+      "primaryIssue": "REMINDERS-01",
+      "acceptanceOwner": "REMINDERS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R032",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation surface",
+      "primaryIssue": "SEARCH-01",
+      "acceptanceOwner": "SEARCH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R033",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation surface",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Notes",
+          "issue": "NOTES-03"
+        },
+        {
+          "screen": "Canvas",
+          "issue": "CANVAS-02"
+        },
+        {
+          "screen": "Spreadsheet",
+          "issue": "SPREADSHEET-01"
+        },
+        {
+          "screen": "PDF viewer",
+          "issue": "PDF-01"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R034",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation surface",
+      "primaryIssue": "PAYMENTS-01",
+      "acceptanceOwner": "PAYMENTS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R035",
+      "product": "Conation (agisota/conation)",
+      "screen": "Calls",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Calls",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R036",
+      "product": "Conation (agisota/conation)",
+      "screen": "Activity",
+      "primaryIssue": "ACTIVITY-01",
+      "acceptanceOwner": "ACTIVITY-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R037",
+      "product": "Conation (agisota/conation)",
+      "screen": "Sharing",
+      "primaryIssue": "CONATION-SHARE-01",
+      "acceptanceOwner": "CONATION-SHARE-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R038",
+      "product": "Conation (agisota/conation)",
+      "screen": "Navigation / touch",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Navigation / touch",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R039",
+      "product": "Conation (agisota/conation)",
+      "screen": "Search / command palette",
+      "primaryIssue": "SEARCH-01",
+      "acceptanceOwner": "SEARCH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R040",
+      "product": "Conation (agisota/conation)",
+      "screen": "Cross-screen motion / accessibility",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Cross-screen motion / accessibility",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R041",
+      "product": "Conation (agisota/conation)",
+      "screen": "Cross-screen motion / accessibility",
+      "primaryIssue": "A11Y-01",
+      "acceptanceOwner": "A11Y-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R042",
+      "product": "Conation (agisota/conation)",
+      "screen": "Cross-screen motion / accessibility",
+      "primaryIssue": "A11Y-01",
+      "acceptanceOwner": "A11Y-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R043",
+      "product": "Conation (agisota/conation)",
+      "screen": "Cross-screen motion / accessibility",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Cross-screen motion / accessibility",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R044",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mac desktop / Tauri",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Mac desktop / Tauri",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R045",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mac desktop / Tauri",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Mac desktop / Tauri",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R046",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mac desktop / Tauri",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Mac desktop / Tauri",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R047",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mac desktop / Tauri",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R048",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation automated acceptance",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R049",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation automated acceptance",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Home, Dashboard, CRM, Reminders, Settings, navigation shortcut",
+          "issue": "CONATION-E2E-01"
+        },
+        {
+          "screen": "Calendar",
+          "issue": "CALENDAR-01"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R050",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation automated acceptance",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Conation automated acceptance",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R051",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation automated acceptance",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R052",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation automated acceptance",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Conation automated acceptance",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R053",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R054",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R055",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R056",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R057",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R058",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R059",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R060",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R061",
+      "product": "Conation (agisota/conation)",
+      "screen": "Agents",
+      "primaryIssue": "AGENTCENTER-01",
+      "acceptanceOwner": "AGENTCENTER-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R062",
+      "product": "Conation (agisota/conation)",
+      "screen": "Agents",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Agents",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R063",
+      "product": "Conation (agisota/conation)",
+      "screen": "Agents",
+      "primaryIssue": "A11Y-01",
+      "acceptanceOwner": "A11Y-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R064",
+      "product": "Conation (agisota/conation)",
+      "screen": "Agents",
+      "primaryIssue": "AGENTCENTER-01",
+      "acceptanceOwner": "AGENTCENTER-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R065",
+      "product": "Conation (agisota/conation)",
+      "screen": "Agents",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Agents",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R066",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R067",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R068",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R069",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R070",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R071",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R072",
+      "product": "Conation (agisota/conation)",
+      "screen": "Tasks",
+      "primaryIssue": "TASKS-01",
+      "acceptanceOwner": "TASKS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R073",
+      "product": "Conation (agisota/conation)",
+      "screen": "Tasks",
+      "primaryIssue": "TASKS-01",
+      "acceptanceOwner": "TASKS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R074",
+      "product": "Conation (agisota/conation)",
+      "screen": "Tasks",
+      "primaryIssue": "INBOX-01",
+      "acceptanceOwner": "INBOX-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R075",
+      "product": "Conation (agisota/conation)",
+      "screen": "Tasks",
+      "primaryIssue": "TASKS-01",
+      "acceptanceOwner": "TASKS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R076",
+      "product": "Conation (agisota/conation)",
+      "screen": "Notes and document viewers",
+      "primaryIssue": "NOTES-03",
+      "acceptanceOwner": "NOTES-03",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R077",
+      "product": "Conation (agisota/conation)",
+      "screen": "Notes and document viewers",
+      "primaryIssue": "NOTES-03",
+      "acceptanceOwner": "NOTES-03",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R078",
+      "product": "Conation (agisota/conation)",
+      "screen": "Notes and document viewers",
+      "primaryIssue": "NOTES-03",
+      "acceptanceOwner": "NOTES-03",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R079",
+      "product": "Conation (agisota/conation)",
+      "screen": "Drive",
+      "primaryIssue": "DRIVE-01",
+      "acceptanceOwner": "DRIVE-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R080",
+      "product": "Conation (agisota/conation)",
+      "screen": "Drive",
+      "primaryIssue": "DRIVE-01",
+      "acceptanceOwner": "DRIVE-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R081",
+      "product": "Conation (agisota/conation)",
+      "screen": "Drive",
+      "primaryIssue": "DRIVE-01",
+      "acceptanceOwner": "DRIVE-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R082",
+      "product": "Conation (agisota/conation)",
+      "screen": "Drive",
+      "primaryIssue": "DRIVE-01",
+      "acceptanceOwner": "DRIVE-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R083",
+      "product": "Conation (agisota/conation)",
+      "screen": "Home",
+      "primaryIssue": "A11Y-01",
+      "acceptanceOwner": "A11Y-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R084",
+      "product": "Conation (agisota/conation)",
+      "screen": "Home",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Home",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R085",
+      "product": "Conation (agisota/conation)",
+      "screen": "Home",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R086",
+      "product": "Conation (agisota/conation)",
+      "screen": "Home",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R087",
+      "product": "Conation (agisota/conation)",
+      "screen": "Inbox",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Inbox",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R088",
+      "product": "Conation (agisota/conation)",
+      "screen": "Inbox",
+      "primaryIssue": "INBOX-01",
+      "acceptanceOwner": "INBOX-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R089",
+      "product": "Conation (agisota/conation)",
+      "screen": "Inbox",
+      "primaryIssue": "INBOX-01",
+      "acceptanceOwner": "INBOX-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R090",
+      "product": "Conation (agisota/conation)",
+      "screen": "Inbox",
+      "primaryIssue": "INBOX-01",
+      "acceptanceOwner": "INBOX-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R091",
+      "product": "Conation (agisota/conation)",
+      "screen": "Chat / Channels",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Chat / Channels",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R092",
+      "product": "Conation (agisota/conation)",
+      "screen": "Chat / Channels",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Chat / Channels",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R093",
+      "product": "Conation (agisota/conation)",
+      "screen": "Calendar",
+      "primaryIssue": "CALENDAR-01",
+      "acceptanceOwner": "CALENDAR-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R094",
+      "product": "Conation (agisota/conation)",
+      "screen": "Calendar",
+      "primaryIssue": "CALENDAR-01",
+      "acceptanceOwner": "CALENDAR-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R095",
+      "product": "Conation (agisota/conation)",
+      "screen": "Calendar",
+      "primaryIssue": "CALENDAR-01",
+      "acceptanceOwner": "CALENDAR-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R096",
+      "product": "Conation (agisota/conation)",
+      "screen": "Calendar",
+      "primaryIssue": "CALENDAR-01",
+      "acceptanceOwner": "CALENDAR-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R097",
+      "product": "Conation (agisota/conation)",
+      "screen": "CRM / Clients",
+      "primaryIssue": "CRM-01",
+      "acceptanceOwner": "CRM-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R098",
+      "product": "Conation (agisota/conation)",
+      "screen": "CRM / Clients",
+      "primaryIssue": "CRM-01",
+      "acceptanceOwner": "CRM-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R099",
+      "product": "Conation (agisota/conation)",
+      "screen": "CRM / Clients",
+      "primaryIssue": "CRM-01",
+      "acceptanceOwner": "CRM-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R100",
+      "product": "Conation (agisota/conation)",
+      "screen": "CRM / Clients",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "CRM / Clients",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R101",
+      "product": "Conation (agisota/conation)",
+      "screen": "Settings",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Settings",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R102",
+      "product": "Conation (agisota/conation)",
+      "screen": "Settings",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Settings",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R103",
+      "product": "Conation (agisota/conation)",
+      "screen": "Login / onboarding",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R104",
+      "product": "Conation (agisota/conation)",
+      "screen": "Login / onboarding",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R105",
+      "product": "Conation (agisota/conation)",
+      "screen": "Login / onboarding",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Login / onboarding",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R106",
+      "product": "Conation (agisota/conation)",
+      "screen": "Login / onboarding",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R107",
+      "product": "Conation (agisota/conation)",
+      "screen": "Search / command palette",
+      "primaryIssue": "SEARCH-01",
+      "acceptanceOwner": "SEARCH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R108",
+      "product": "Conation (agisota/conation)",
+      "screen": "Search / command palette",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Search / command palette",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R109",
+      "product": "Conation (agisota/conation)",
+      "screen": "Payments / paywall",
+      "primaryIssue": "PAYMENTS-01",
+      "acceptanceOwner": "PAYMENTS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R110",
+      "product": "Conation (agisota/conation)",
+      "screen": "Payments / paywall",
+      "primaryIssue": "PAYMENTS-01",
+      "acceptanceOwner": "PAYMENTS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R111",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R112",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R113",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R114",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R115",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R116",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R117",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard modules",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R118",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard modules",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R119",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard additional views",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R120",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard additional views",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R121",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard additional views",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R122",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard additional views",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R123",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard save / preview",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R124",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard save / preview",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R125",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard save / preview",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R126",
+      "product": "Conation (agisota/conation)",
+      "screen": "11. Типографика",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "11. Типографика",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R127",
+      "product": "Conation (agisota/conation)",
+      "screen": "11. Типографика",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "11. Типографика",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R128",
+      "product": "Conation (agisota/conation)",
+      "screen": "11. Типографика",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Rail / app navigation",
+          "issue": "CONATION-E2E-01"
+        },
+        {
+          "screen": "Composer",
+          "issue": "CONATION-E2E-01"
+        },
+        {
+          "screen": "Settings",
+          "issue": "CONATION-E2E-01"
+        },
+        {
+          "screen": "Calendar header",
+          "issue": "CALENDAR-01"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R129",
+      "product": "Conation (agisota/conation)",
+      "screen": "11. Типографика",
+      "primaryIssue": "A11Y-01",
+      "acceptanceOwner": "A11Y-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R130",
+      "product": "Conation (agisota/conation)",
+      "screen": "12. Motion-система",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "12. Motion-система",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R131",
+      "product": "Conation (agisota/conation)",
+      "screen": "12. Motion-система",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "12. Motion-система",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R132",
+      "product": "Conation (agisota/conation)",
+      "screen": "12. Motion-система",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "12. Motion-система",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R133",
+      "product": "Conation (agisota/conation)",
+      "screen": "12. Motion-система",
+      "primaryIssue": "A11Y-01",
+      "acceptanceOwner": "A11Y-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R134",
+      "product": "Conation (agisota/conation)",
+      "screen": "12. Motion-система",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "12. Motion-система",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R135",
+      "product": "Conation (agisota/conation)",
+      "screen": "12. Motion-система",
+      "primaryIssue": "A11Y-01",
+      "acceptanceOwner": "A11Y-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R136",
+      "product": "Conation (agisota/conation)",
+      "screen": "13. Ребранд-хвосты",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R137",
+      "product": "Conation (agisota/conation)",
+      "screen": "13. Ребранд-хвосты",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R138",
+      "product": "Conation (agisota/conation)",
+      "screen": "13. Ребранд-хвосты",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R139",
+      "product": "Conation (agisota/conation)",
+      "screen": "13. Ребранд-хвосты",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "13. Ребранд-хвосты",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R140",
+      "product": "Conation (agisota/conation)",
+      "screen": "Authentication / OTP",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R141",
+      "product": "Conation (agisota/conation)",
+      "screen": "Authentication / OTP",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R142",
+      "product": "Conation (agisota/conation)",
+      "screen": "7. e2e + Tauri",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "7. e2e + Tauri",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R143",
+      "product": "Conation (agisota/conation)",
+      "screen": "Navigation rail",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Navigation rail",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R144",
+      "product": "Conation (agisota/conation)",
+      "screen": "Cross-screen tooltips",
+      "primaryIssue": "A11Y-01",
+      "acceptanceOwner": "A11Y-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R145",
+      "product": "Conation (agisota/conation)",
+      "screen": "7. e2e + Tauri",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R146",
+      "product": "Conation (agisota/conation)",
+      "screen": "7. e2e + Tauri",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R147",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mac desktop / Tauri",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Mac desktop / Tauri",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R148",
+      "product": "Conation (agisota/conation)",
+      "screen": "7. e2e + Tauri",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "7. e2e + Tauri",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R149",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mac desktop / Tauri",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R150",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Onboarding",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R151",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R152",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R153",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Onboarding",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R154",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R155",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R156",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R157",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "A11Y-01",
+      "acceptanceOwner": "A11Y-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R158",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R159",
+      "product": "Conation (agisota/conation)",
+      "screen": "OTP authentication",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R160",
+      "product": "Conation (agisota/conation)",
+      "screen": "OTP authentication",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R161",
+      "product": "Conation (agisota/conation)",
+      "screen": "OTP authentication",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R162",
+      "product": "Conation (agisota/conation)",
+      "screen": "OTP authentication",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R163",
+      "product": "Conation (agisota/conation)",
+      "screen": "OTP authentication",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R164",
+      "product": "Conation (agisota/conation)",
+      "screen": "OTP authentication",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R165",
+      "product": "Conation (agisota/conation)",
+      "screen": "OTP authentication",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R166",
+      "product": "Conation (agisota/conation)",
+      "screen": "OTP authentication",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R167",
+      "product": "Conation (agisota/conation)",
+      "screen": "OTP authentication",
+      "primaryIssue": "CONATION-AUTH-01",
+      "acceptanceOwner": "CONATION-AUTH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R168",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R169",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R170",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Onboarding",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R171",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "A11Y-01",
+      "acceptanceOwner": "A11Y-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R172",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Onboarding",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R173",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Onboarding",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R174",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Onboarding",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R175",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Onboarding",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R176",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Onboarding",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R177",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Onboarding",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R178",
+      "product": "Conation (agisota/conation)",
+      "screen": "Onboarding",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Onboarding",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R179",
+      "product": "Conation (agisota/conation)",
+      "screen": "Navigation rail",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Navigation rail",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R180",
+      "product": "Conation (agisota/conation)",
+      "screen": "Navigation rail",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Navigation rail",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R181",
+      "product": "Conation (agisota/conation)",
+      "screen": "Navigation rail",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R182",
+      "product": "Conation (agisota/conation)",
+      "screen": "Navigation rail",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Navigation rail",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R183",
+      "product": "Conation (agisota/conation)",
+      "screen": "Navigation rail",
+      "primaryIssue": "SEARCH-01",
+      "acceptanceOwner": "SEARCH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R184",
+      "product": "Conation (agisota/conation)",
+      "screen": "Navigation rail",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Navigation rail",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R185",
+      "product": "Conation (agisota/conation)",
+      "screen": "Navigation rail",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Navigation rail",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R186",
+      "product": "Conation (agisota/conation)",
+      "screen": "Navigation rail",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Home / navigation rail",
+          "issue": "CONATION-E2E-01"
+        },
+        {
+          "screen": "Inbox",
+          "issue": "INBOX-01"
+        },
+        {
+          "screen": "Drive",
+          "issue": "DRIVE-01"
+        },
+        {
+          "screen": "Mail",
+          "issue": "MAIL-04"
+        },
+        {
+          "screen": "Chat / Channels",
+          "issue": "CONATION-E2E-01"
+        },
+        {
+          "screen": "Tasks",
+          "issue": "TASKS-01"
+        },
+        {
+          "screen": "Calendar",
+          "issue": "CALENDAR-01"
+        },
+        {
+          "screen": "Agents",
+          "issue": "CONATION-E2E-01"
+        },
+        {
+          "screen": "CRM / Clients",
+          "issue": "CRM-01"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R187",
+      "product": "Conation (agisota/conation)",
+      "screen": "Navigation rail",
+      "primaryIssue": "A11Y-01",
+      "acceptanceOwner": "A11Y-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R188",
+      "product": "Conation (agisota/conation)",
+      "screen": "Navigation rail",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Navigation rail",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R189",
+      "product": "Conation (agisota/conation)",
+      "screen": "Navigation rail",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Navigation rail",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R190",
+      "product": "Conation (agisota/conation)",
+      "screen": "Home",
+      "primaryIssue": "A11Y-01",
+      "acceptanceOwner": "A11Y-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R191",
+      "product": "Conation (agisota/conation)",
+      "screen": "Home",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Home",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R192",
+      "product": "Conation (agisota/conation)",
+      "screen": "Home",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R193",
+      "product": "Conation (agisota/conation)",
+      "screen": "Home",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R194",
+      "product": "Conation (agisota/conation)",
+      "screen": "Home",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Home",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R195",
+      "product": "Conation (agisota/conation)",
+      "screen": "Home",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Home",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R196",
+      "product": "Conation (agisota/conation)",
+      "screen": "Home",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Home",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R197",
+      "product": "Conation (agisota/conation)",
+      "screen": "Home",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Home",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R198",
+      "product": "Conation (agisota/conation)",
+      "screen": "Home",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Home",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R199",
+      "product": "Conation (agisota/conation)",
+      "screen": "Home",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Home",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R200",
+      "product": "Conation (agisota/conation)",
+      "screen": "Home",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Home",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R201",
+      "product": "Conation (agisota/conation)",
+      "screen": "Inbox",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Inbox",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R202",
+      "product": "Conation (agisota/conation)",
+      "screen": "Inbox",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Inbox error/retry surface",
+          "issue": "INBOX-01"
+        },
+        {
+          "screen": "Drive error/retry surface",
+          "issue": "DRIVE-01"
+        },
+        {
+          "screen": "Mail error/retry surface",
+          "issue": "MAIL-04"
+        },
+        {
+          "screen": "Shared visual/language parity",
+          "issue": "L10N-01"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R203",
+      "product": "Conation (agisota/conation)",
+      "screen": "Inbox",
+      "primaryIssue": "INBOX-01",
+      "acceptanceOwner": "INBOX-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R204",
+      "product": "Conation (agisota/conation)",
+      "screen": "Inbox",
+      "primaryIssue": "INBOX-01",
+      "acceptanceOwner": "INBOX-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R205",
+      "product": "Conation (agisota/conation)",
+      "screen": "Inbox",
+      "primaryIssue": "INBOX-01",
+      "acceptanceOwner": "INBOX-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R206",
+      "product": "Conation (agisota/conation)",
+      "screen": "Inbox",
+      "primaryIssue": "INBOX-01",
+      "acceptanceOwner": "INBOX-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R207",
+      "product": "Conation (agisota/conation)",
+      "screen": "Inbox",
+      "primaryIssue": "INBOX-01",
+      "acceptanceOwner": "INBOX-01",
+      "delegation": [
+        {
+          "screen": "Inbox cross-source aggregation",
+          "issue": "INBOX-01"
+        },
+        {
+          "screen": "Mail rows",
+          "issue": "MAIL-04"
+        },
+        {
+          "screen": "Task rows",
+          "issue": "TASKS-01"
+        },
+        {
+          "screen": "Document rows",
+          "issue": "DRIVE-01"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R208",
+      "product": "Conation (agisota/conation)",
+      "screen": "Inbox",
+      "primaryIssue": "INBOX-01",
+      "acceptanceOwner": "INBOX-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R209",
+      "product": "Conation (agisota/conation)",
+      "screen": "Inbox",
+      "primaryIssue": "INBOX-01",
+      "acceptanceOwner": "INBOX-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R210",
+      "product": "Conation (agisota/conation)",
+      "screen": "Inbox",
+      "primaryIssue": "INBOX-01",
+      "acceptanceOwner": "INBOX-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R211",
+      "product": "Conation (agisota/conation)",
+      "screen": "Inbox",
+      "primaryIssue": "INBOX-01",
+      "acceptanceOwner": "INBOX-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R212",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R213",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R214",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R215",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R216",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R217",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R218",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R219",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R220",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R221",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R222",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R223",
+      "product": "Conation (agisota/conation)",
+      "screen": "Dashboard editor",
+      "primaryIssue": "DASHBOARD-01",
+      "acceptanceOwner": "DASHBOARD-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R224",
+      "product": "Conation (agisota/conation)",
+      "screen": "Drive",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R225",
+      "product": "Conation (agisota/conation)",
+      "screen": "Drive",
+      "primaryIssue": "DRIVE-01",
+      "acceptanceOwner": "DRIVE-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R226",
+      "product": "Conation (agisota/conation)",
+      "screen": "Drive",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Drive retry control",
+          "issue": "DRIVE-01"
+        },
+        {
+          "screen": "Mail retry control",
+          "issue": "MAIL-04"
+        },
+        {
+          "screen": "Tasks retry control",
+          "issue": "TASKS-01"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R227",
+      "product": "Conation (agisota/conation)",
+      "screen": "Drive",
+      "primaryIssue": "DRIVE-01",
+      "acceptanceOwner": "DRIVE-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R228",
+      "product": "Conation (agisota/conation)",
+      "screen": "Drive",
+      "primaryIssue": "DRIVE-01",
+      "acceptanceOwner": "DRIVE-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R229",
+      "product": "Conation (agisota/conation)",
+      "screen": "Drive",
+      "primaryIssue": "DRIVE-01",
+      "acceptanceOwner": "DRIVE-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R230",
+      "product": "Conation (agisota/conation)",
+      "screen": "Drive",
+      "primaryIssue": "DRIVE-01",
+      "acceptanceOwner": "DRIVE-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R231",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R232",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R233",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R234",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R235",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R236",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R237",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R238",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R239",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R240",
+      "product": "Conation (agisota/conation)",
+      "screen": "Mail",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R241",
+      "product": "Conation (agisota/conation)",
+      "screen": "Chat / Channels",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Chat / Channels",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R242",
+      "product": "Conation (agisota/conation)",
+      "screen": "Chat / Channels",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Chat / Channels",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R243",
+      "product": "Conation (agisota/conation)",
+      "screen": "Chat / Channels",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Chat / Channels",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R244",
+      "product": "Conation (agisota/conation)",
+      "screen": "Chat / Channels",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Chat / Channels",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R245",
+      "product": "Conation (agisota/conation)",
+      "screen": "Chat / Channels",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Chat / Channels",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R246",
+      "product": "Conation (agisota/conation)",
+      "screen": "Chat / Channels",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Chat / Channels",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R247",
+      "product": "Conation (agisota/conation)",
+      "screen": "Tasks",
+      "primaryIssue": "TASKS-01",
+      "acceptanceOwner": "TASKS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R248",
+      "product": "Conation (agisota/conation)",
+      "screen": "Tasks",
+      "primaryIssue": "TASKS-01",
+      "acceptanceOwner": "TASKS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R249",
+      "product": "Conation (agisota/conation)",
+      "screen": "Tasks",
+      "primaryIssue": "TASKS-01",
+      "acceptanceOwner": "TASKS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R250",
+      "product": "Conation (agisota/conation)",
+      "screen": "Tasks",
+      "primaryIssue": "TASKS-01",
+      "acceptanceOwner": "TASKS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R251",
+      "product": "Conation (agisota/conation)",
+      "screen": "Tasks",
+      "primaryIssue": "TASKS-01",
+      "acceptanceOwner": "TASKS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R252",
+      "product": "Conation (agisota/conation)",
+      "screen": "Tasks",
+      "primaryIssue": "TASKS-01",
+      "acceptanceOwner": "TASKS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R253",
+      "product": "Conation (agisota/conation)",
+      "screen": "Calendar",
+      "primaryIssue": "CALENDAR-01",
+      "acceptanceOwner": "CALENDAR-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R254",
+      "product": "Conation (agisota/conation)",
+      "screen": "Calendar",
+      "primaryIssue": "CALENDAR-01",
+      "acceptanceOwner": "CALENDAR-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R255",
+      "product": "Conation (agisota/conation)",
+      "screen": "Calendar",
+      "primaryIssue": "CALENDAR-01",
+      "acceptanceOwner": "CALENDAR-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R256",
+      "product": "Conation (agisota/conation)",
+      "screen": "Calendar",
+      "primaryIssue": "CALENDAR-01",
+      "acceptanceOwner": "CALENDAR-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R257",
+      "product": "Conation (agisota/conation)",
+      "screen": "Calendar",
+      "primaryIssue": "CALENDAR-01",
+      "acceptanceOwner": "CALENDAR-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R258",
+      "product": "Conation (agisota/conation)",
+      "screen": "Calendar",
+      "primaryIssue": "CALENDAR-01",
+      "acceptanceOwner": "CALENDAR-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R259",
+      "product": "Conation (agisota/conation)",
+      "screen": "Calendar",
+      "primaryIssue": "CALENDAR-01",
+      "acceptanceOwner": "CALENDAR-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R260",
+      "product": "Conation (agisota/conation)",
+      "screen": "Agents",
+      "primaryIssue": "AGENTCENTER-01",
+      "acceptanceOwner": "AGENTCENTER-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R261",
+      "product": "Conation (agisota/conation)",
+      "screen": "Agents",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R262",
+      "product": "Conation (agisota/conation)",
+      "screen": "Agents",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Agents",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R263",
+      "product": "Conation (agisota/conation)",
+      "screen": "Agents",
+      "primaryIssue": "A11Y-01",
+      "acceptanceOwner": "A11Y-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R264",
+      "product": "Conation (agisota/conation)",
+      "screen": "Agents",
+      "primaryIssue": "AGENTCENTER-01",
+      "acceptanceOwner": "AGENTCENTER-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R265",
+      "product": "Conation (agisota/conation)",
+      "screen": "Agents",
+      "primaryIssue": "AGENTCENTER-01",
+      "acceptanceOwner": "AGENTCENTER-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R266",
+      "product": "Conation (agisota/conation)",
+      "screen": "Agents",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R267",
+      "product": "Conation (agisota/conation)",
+      "screen": "CRM / Clients",
+      "primaryIssue": "CRM-01",
+      "acceptanceOwner": "CRM-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R268",
+      "product": "Conation (agisota/conation)",
+      "screen": "CRM / Clients",
+      "primaryIssue": "CRM-01",
+      "acceptanceOwner": "CRM-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R269",
+      "product": "Conation (agisota/conation)",
+      "screen": "CRM / Clients",
+      "primaryIssue": "CRM-01",
+      "acceptanceOwner": "CRM-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R270",
+      "product": "Conation (agisota/conation)",
+      "screen": "CRM / Clients",
+      "primaryIssue": "CRM-01",
+      "acceptanceOwner": "CRM-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R271",
+      "product": "Conation (agisota/conation)",
+      "screen": "CRM / Clients",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "CRM / Clients",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R272",
+      "product": "Conation (agisota/conation)",
+      "screen": "CRM / Clients",
+      "primaryIssue": "CRM-01",
+      "acceptanceOwner": "CRM-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R273",
+      "product": "Conation (agisota/conation)",
+      "screen": "CRM / Clients",
+      "primaryIssue": "CRM-01",
+      "acceptanceOwner": "CRM-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R274",
+      "product": "Conation (agisota/conation)",
+      "screen": "CRM / Clients",
+      "primaryIssue": "CRM-01",
+      "acceptanceOwner": "CRM-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R275",
+      "product": "Conation (agisota/conation)",
+      "screen": "Search / command palette",
+      "primaryIssue": "SEARCH-01",
+      "acceptanceOwner": "SEARCH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R276",
+      "product": "Conation (agisota/conation)",
+      "screen": "Search / command palette",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Search / command palette",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R277",
+      "product": "Conation (agisota/conation)",
+      "screen": "Search / command palette",
+      "primaryIssue": "SEARCH-01",
+      "acceptanceOwner": "SEARCH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R278",
+      "product": "Conation (agisota/conation)",
+      "screen": "Search / command palette",
+      "primaryIssue": "SEARCH-01",
+      "acceptanceOwner": "SEARCH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R279",
+      "product": "Conation (agisota/conation)",
+      "screen": "Search / command palette",
+      "primaryIssue": "SEARCH-01",
+      "acceptanceOwner": "SEARCH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R280",
+      "product": "Conation (agisota/conation)",
+      "screen": "Search / command palette",
+      "primaryIssue": "SEARCH-01",
+      "acceptanceOwner": "SEARCH-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R281",
+      "product": "Conation (agisota/conation)",
+      "screen": "Settings",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Settings",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R282",
+      "product": "Conation (agisota/conation)",
+      "screen": "Settings",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R283",
+      "product": "Conation (agisota/conation)",
+      "screen": "Settings",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Settings",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R284",
+      "product": "Conation (agisota/conation)",
+      "screen": "Settings",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Settings",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R285",
+      "product": "Conation (agisota/conation)",
+      "screen": "Settings",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Settings",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R286",
+      "product": "Conation (agisota/conation)",
+      "screen": "Settings",
+      "primaryIssue": "PAYMENTS-01",
+      "acceptanceOwner": "PAYMENTS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R287",
+      "product": "Conation (agisota/conation)",
+      "screen": "Settings",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Settings",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R288",
+      "product": "Conation (agisota/conation)",
+      "screen": "Settings",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Settings",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R289",
+      "product": "Conation (agisota/conation)",
+      "screen": "Settings",
+      "primaryIssue": "L10N-01",
+      "acceptanceOwner": "L10N-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R290",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R291",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R292",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R293",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R294",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R295",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R296",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R297",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R298",
+      "product": "Conation (agisota/conation)",
+      "screen": "Canvas",
+      "primaryIssue": "CANVAS-02",
+      "acceptanceOwner": "CANVAS-02",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R299",
+      "product": "Conation (agisota/conation)",
+      "screen": "Spreadsheet",
+      "primaryIssue": "SPREADSHEET-01",
+      "acceptanceOwner": "SPREADSHEET-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R300",
+      "product": "Conation (agisota/conation)",
+      "screen": "Spreadsheet",
+      "primaryIssue": "SPREADSHEET-01",
+      "acceptanceOwner": "SPREADSHEET-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R301",
+      "product": "Conation (agisota/conation)",
+      "screen": "Spreadsheet",
+      "primaryIssue": "SPREADSHEET-01",
+      "acceptanceOwner": "SPREADSHEET-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R302",
+      "product": "Conation (agisota/conation)",
+      "screen": "Spreadsheet",
+      "primaryIssue": "SPREADSHEET-01",
+      "acceptanceOwner": "SPREADSHEET-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R303",
+      "product": "Conation (agisota/conation)",
+      "screen": "Spreadsheet",
+      "primaryIssue": "SPREADSHEET-01",
+      "acceptanceOwner": "SPREADSHEET-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R304",
+      "product": "Conation (agisota/conation)",
+      "screen": "Spreadsheet",
+      "primaryIssue": "SPREADSHEET-01",
+      "acceptanceOwner": "SPREADSHEET-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R305",
+      "product": "Conation (agisota/conation)",
+      "screen": "Spreadsheet",
+      "primaryIssue": "SPREADSHEET-01",
+      "acceptanceOwner": "SPREADSHEET-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R306",
+      "product": "Conation (agisota/conation)",
+      "screen": "PDF viewer",
+      "primaryIssue": "PDF-01",
+      "acceptanceOwner": "PDF-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R307",
+      "product": "Conation (agisota/conation)",
+      "screen": "PDF viewer",
+      "primaryIssue": "PDF-01",
+      "acceptanceOwner": "PDF-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R308",
+      "product": "Conation (agisota/conation)",
+      "screen": "PDF viewer",
+      "primaryIssue": "PDF-01",
+      "acceptanceOwner": "PDF-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R309",
+      "product": "Conation (agisota/conation)",
+      "screen": "Reminders",
+      "primaryIssue": "REMINDERS-01",
+      "acceptanceOwner": "REMINDERS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R310",
+      "product": "Conation (agisota/conation)",
+      "screen": "Reminders",
+      "primaryIssue": "REMINDERS-01",
+      "acceptanceOwner": "REMINDERS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R311",
+      "product": "Conation (agisota/conation)",
+      "screen": "Reminders",
+      "primaryIssue": "REMINDERS-01",
+      "acceptanceOwner": "REMINDERS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R312",
+      "product": "Conation (agisota/conation)",
+      "screen": "Reminders",
+      "primaryIssue": "REMINDERS-01",
+      "acceptanceOwner": "REMINDERS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R313",
+      "product": "Conation (agisota/conation)",
+      "screen": "Reminders",
+      "primaryIssue": "REMINDERS-01",
+      "acceptanceOwner": "REMINDERS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R314",
+      "product": "Conation (agisota/conation)",
+      "screen": "Notifications",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Notifications",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R315",
+      "product": "Conation (agisota/conation)",
+      "screen": "Notifications",
+      "primaryIssue": "CALENDAR-01",
+      "acceptanceOwner": "CALENDAR-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R316",
+      "product": "Conation (agisota/conation)",
+      "screen": "Notifications",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Notifications",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R317",
+      "product": "Conation (agisota/conation)",
+      "screen": "Notifications",
+      "primaryIssue": "ACTIVITY-01",
+      "acceptanceOwner": "ACTIVITY-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R318",
+      "product": "Conation (agisota/conation)",
+      "screen": "Sharing",
+      "primaryIssue": "CONATION-SHARE-01",
+      "acceptanceOwner": "CONATION-SHARE-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R319",
+      "product": "Conation (agisota/conation)",
+      "screen": "Sharing",
+      "primaryIssue": "MAIL-04",
+      "acceptanceOwner": "MAIL-04",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R320",
+      "product": "Conation (agisota/conation)",
+      "screen": "Sharing",
+      "primaryIssue": "CONATION-SHARE-01",
+      "acceptanceOwner": "CONATION-SHARE-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R321",
+      "product": "Conation (agisota/conation)",
+      "screen": "Payments / paywall",
+      "primaryIssue": "PAYMENTS-01",
+      "acceptanceOwner": "PAYMENTS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R322",
+      "product": "Conation (agisota/conation)",
+      "screen": "Payments / paywall",
+      "primaryIssue": "PAYMENTS-01",
+      "acceptanceOwner": "PAYMENTS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R323",
+      "product": "Conation (agisota/conation)",
+      "screen": "Payments / paywall",
+      "primaryIssue": "PAYMENTS-01",
+      "acceptanceOwner": "PAYMENTS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R324",
+      "product": "Conation (agisota/conation)",
+      "screen": "Payments / paywall",
+      "primaryIssue": "PAYMENTS-01",
+      "acceptanceOwner": "PAYMENTS-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R325",
+      "product": "Conation (agisota/conation)",
+      "screen": "Split view",
+      "primaryIssue": "SPLIT-01",
+      "acceptanceOwner": "SPLIT-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R326",
+      "product": "Conation (agisota/conation)",
+      "screen": "Split view",
+      "primaryIssue": "SPLIT-01",
+      "acceptanceOwner": "SPLIT-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R327",
+      "product": "Conation (agisota/conation)",
+      "screen": "Split view",
+      "primaryIssue": "SPLIT-01",
+      "acceptanceOwner": "SPLIT-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R328",
+      "product": "Conation (agisota/conation)",
+      "screen": "Cross-screen visual/accessibility",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Cross-screen visual/accessibility",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R329",
+      "product": "Conation (agisota/conation)",
+      "screen": "Cross-screen visual/accessibility",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Cross-screen visual/accessibility",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R330",
+      "product": "Conation (agisota/conation)",
+      "screen": "Cross-screen visual/accessibility",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Cross-screen visual/accessibility",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R331",
+      "product": "Conation (agisota/conation)",
+      "screen": "Cross-screen visual/accessibility",
+      "primaryIssue": "A11Y-01",
+      "acceptanceOwner": "A11Y-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R332",
+      "product": "Conation (agisota/conation)",
+      "screen": "Cross-screen visual/accessibility",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Cross-screen typography and type tokens",
+          "issue": "CONATION-E2E-01"
+        },
+        {
+          "screen": "Hit-target minimum after font reduction",
+          "issue": "A11Y-01"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R333",
+      "product": "Conation (agisota/conation)",
+      "screen": "Cross-screen visual/accessibility",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Cross-screen visual/accessibility",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R334",
+      "product": "Conation (agisota/conation)",
+      "screen": "Cross-screen visual/accessibility",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Cross-screen visual/accessibility",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R335",
+      "product": "Conation (agisota/conation)",
+      "screen": "Cross-screen visual/accessibility",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Cross-screen visual/accessibility",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R336",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation browser/Tauri acceptance",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Calendar",
+          "issue": "CALENDAR-01"
+        },
+        {
+          "screen": "CRM / Clients",
+          "issue": "CRM-01"
+        },
+        {
+          "screen": "Reminder flows",
+          "issue": "REMINDERS-01"
+        },
+        {
+          "screen": "Login, Home, navigation, Settings",
+          "issue": "CONATION-E2E-01"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R337",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation browser/Tauri acceptance",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Conation browser/Tauri acceptance",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R338",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation browser/Tauri acceptance",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Conation browser/Tauri acceptance",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R339",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation browser/Tauri acceptance",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Conation browser/Tauri acceptance",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R340",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation acceptance / operational dependencies",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Conation acceptance / operational dependencies",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R341",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation acceptance / operational dependencies",
+      "primaryIssue": "CONATION-DELIVERY-01",
+      "acceptanceOwner": "CONATION-DELIVERY-01",
+      "delegation": []
+    },
+    {
+      "requirementId": "U26-R342",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation acceptance / operational dependencies",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Conation acceptance / operational dependencies",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    },
+    {
+      "requirementId": "U26-R343",
+      "product": "Conation (agisota/conation)",
+      "screen": "Conation acceptance / operational dependencies",
+      "primaryIssue": "CONATION-E2E-01",
+      "acceptanceOwner": "CONATION-E2E-01",
+      "delegation": [
+        {
+          "screen": "Conation acceptance / operational dependencies",
+          "issue": "CONATION-E2E-01",
+          "role": "primary screen acceptance"
+        }
+      ]
+    }
+  ]
+}

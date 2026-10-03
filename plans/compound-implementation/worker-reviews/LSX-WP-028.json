@@ -1,0 +1,228 @@
+{
+  "task_id": "LSX-WP-028-preflight",
+  "attempt_id": "3b171a0df2a7c91acc2ab211406e54ef",
+  "packet_hash": "4be552b2c5830654b3d8b32f35ef44885ef837909a8e39835f9ba509ce63e9fe",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-028",
+  "featureComplete": false,
+  "mode": "READ_ONLY_PREFLIGHT",
+  "workTier": "bounded-workflow: one source-backed report; no product implementation or nested workers",
+  "dependencies": ["LSX-WP-003", "LSX-WP-006", "LSX-WP-026"],
+  "inspection": {
+    "basis": "Live working-tree source, not a clean checkout of input_revision. Input revision is the dispatch binding, not a claim that all inspected bytes belong to that commit.",
+    "specManifestMatched": true,
+    "workPackagesSha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952",
+    "executionPackagesSha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b",
+    "sourceFreshness": "Hashes identify inspected whole files. Root integration can invalidate them; re-read and rehash after wave0 commit before applying any request. NotesViewHost hash differs from its published baseline blob; do not apply the old heading-outline patch.",
+    "newFilePresence": "All four normative new paths were absent in the scoped glob result during inspection.",
+    "toolLimitations": ["Codegraph reported no index; no index was created.", "Scoped find failed because its judgment service returned HTTP 402; no-hit output was not treated as evidence of absent behavior. Used exact normative paths and direct imports with read/grep instead."],
+    "notExecuted": ["builds", "tests", "native UI", "network operations", "Git operations", "product edits", "dispatch verification_argv"],
+    "verificationBoundary": "Only report JSON/required metadata and source/spec evidence are locally checkable in this preflight. Feature proof and lead's dispatch verifier remain separate; no acceptance lane has been passed."
+  },
+  "foundationGates": [
+    {
+      "id": "WAVE0_AND_DEPENDENCY_RECEIPTS",
+      "kind": "launch prerequisite, not an extra explicit DAG edge",
+      "evidence": "Dispatch instruction; work-packages.json:10540-10547; dependency records at 1941-1964, 2988-3008 and 9489-9513.",
+      "required": "Lead wave0 commit, accepted artifact/readback receipts for LSX-WP-003/006/026, approved integrated base and exclusive leases for both shared paths. Resolve immutable reference_package_revision/digest and hashes of both spec_refs. Reconcile specification product baseline e953786 with dispatch input a21aeab through the lead's delivery manifest, not a worker checkout.",
+      "state": "RECEIPTS_NOT_INSPECTED_OR_VERIFIED"
+    },
+    {
+      "id": "EG-COLLABORATION",
+      "kind": "explicit external prerequisite, separate from package dependencies",
+      "evidence": "work-packages.json:92-97,10213-10215; 06-rox-docs-design.md:176-220; RS-DOC-01.md:37,52-58.",
+      "required": "Accepted Macro WP-49/WP-51 single-writer adoption/epoch/revoke and docWAL transport receipts. Text and structural writes must share one serialized authority and durable aggregate frontier; offline intent includes base revision and stable IDs, reconnect reauthorizes, stale epoch rejects before rebase, late text cannot resurrect a deleted ancestor.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "PUBLISHED_DRIVE_DISCUSSION_FOUNDATIONS",
+      "kind": "hidden published foundation gates, not additions to dependencies",
+      "evidence": "RS-DOC-01.md:79-82 requires RS-DRV-01/#1109 and RS-MSG-02/#1107; RS-NOTE-01.md:79-82 requires RS-DRV-01/#1109 and RS-DOC-01/#1110. work-packages.json:68-72 says publication is not implementation readiness.",
+      "required": "Lead must supply or resolve accepted readiness for the relevant Drive identity/authority and common Discussion/ACL foundations before claiming the linked shared-document flow. Outline must not fabricate a new library, comments engine, identity store or collaboration backend. These links do not make all Drive/Discussion features this worker's implementation scope.",
+      "state": "PUBLISHED_REQUIREMENTS_ONLY_NO_RUNTIME_RECEIPTS"
+    },
+    {
+      "id": "ONE_WRITER_NATIVE_SHARED_ROUTING",
+      "kind": "hidden published authority gate",
+      "evidence": "RS-NOTE-01.md:37,42,53-57; RS-DOC-01.md:37,54,58; 07-domain-entity-model.md:196-199.",
+      "required": "Canonical authority router must fence ordinary save/raw-agent/watcher writers after shared cutover, preserve native aliases and private source/assets ACL, keep docWAL distinct from disposable cache, and authorize replay. For shared CRDT authority Markdown is a materialized projection, not a concurrently writable master. Current native Notes must remain native until explicit adoption.",
+      "state": "NOT_VERIFIED; OUTSIDE_THIS_PACKAGE_OWNED_FILES"
+    },
+    {
+      "id": "IDENTITY_EFFECTS_AND_AGGREGATE_TOKEN",
+      "kind": "transitive dependency foundations and interface gate",
+      "evidence": "LSX-WP-003 external prerequisites EG-IDENTITY/EG-EFFECTS at work-packages.json:1961-1964; required proofs at 76-89; command-envelope.ts:2-45; content-descriptor.ts:24-33; 07-domain-entity-model.md:171-189.",
+      "required": "Accepted authenticated-actor ACL evaluator and native content+receipt+outbox recovery transaction. LSX-WP-003 must expose a usable per-document semantic commit boundary and single token covering text/tree/epoch. Current MarkdownCommitCommand decoder only establishes a sha256-shaped token, operationId and epoch input; it does not prove aggregate epoch coverage, persisted receipts, tree API registration or block-level policy. Outbox must use verified document.revisionCommitted alias/envelope, never emit before durable commit.",
+      "state": "SOURCE_SCHEMA_PRESENT; AUTHORITATIVE_INTERFACE_AND_RUNTIME_RECEIPT_NOT_VERIFIED"
+    },
+    {
+      "id": "BOUNDED_PACKET_INTEGRATION_GAPS",
+      "kind": "implementation integration prerequisite discovered at scoped seam",
+      "evidence": "NotesViewHost.tsx:48-78,112-114 has blockTree/onOpenBlock but no command dispatcher, document revision, epoch or permission capabilities; work-packages.json:10337-10359 and10550 allow only two named shared paths. Published RS-NOTE-01.md:41-43 names parent NotesPage and RPC authority routing.",
+      "required": "LSX-WP-026/lead must supply canonical document session state and typed structural dispatcher to NotesViewHost. If accepted dependencies do not already provide host-callsite wiring, RPC/command registry registration, renderer-accessible schema imports and all ten locale entries, obtain an updated reviewed packet/path lease before touching those extra files. Do not silently add source paths or claim a standalone EditableOutline is integrated.",
+      "state": "MISSING_INTERFACE_OR_REVIEWED_SCOPE_RECEIPT"
+    },
+    {
+      "id": "LOSSLESS_BRANCH_AND_ATTACHED_PROSE_POLICY",
+      "kind": "semantic foundation prerequisite",
+      "evidence": "list-tree.ts:69-98 leaves prose/code in retainedRegions; block-identity.ts:13-23 distinguishes opaque blocks; document-ia.ts:228-233 trims cells and702-708 rewrites comments/trailing whitespace; 06-rox-docs-design.md:124,140.",
+      "required": "Reuse accepted LSX-WP-006 identity mapping and retained byte ranges, never reconstruct Markdown from visible tree. TreeCommand must carry explicit attached-prose delete/reparent policy with affected-span preview; branch extent includes descendant markers and attached content, not merely the list row's sourceRange. Opaque unsupported spans remain exact or command returns unknownFormat/conflict. Unanchored rows require accepted marker mapping, not synthetic projection IDs.",
+      "state": "SOURCE_PROJECTIONS_PRESENT; COMMAND_POLICY_NOT_IMPLEMENTED"
+    },
+    {
+      "id": "ACTUAL_ELECTRON_PROOF_SURFACE",
+      "kind": "acceptance environment gate",
+      "evidence": "work-packages.json:10433-10441,10464-10465; RS-DOC-01.md:76; RS-NOTE-01.md:58,76.",
+      "required": "Lead discovers supported actual Electron runner and native interaction lane, plus integrated two-actor domain/restart fixture. Retain real app screenshots/ARIA/computed and loaded font, all locale parity, pointer/keyboard/IME/focus/zoom/theme/reduced-motion evidence. No guessed runner command, isolated fixture screenshot or plan validation substitutes for native acceptance.",
+      "state": "NOT_RUN_BY_PREFLIGHT_AUTHORIZATION"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/server-core/src/docs/tree-commands.ts",
+    "apps/electron/src/renderer/pages/docs/EditableOutline.tsx",
+    "tests/lark-suite-extension/lsx-wp-028.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-028.spec.ts"
+  ],
+  "proposedCodeContributions": [
+    {
+      "path": "packages/server-core/src/docs/tree-commands.ts",
+      "symbols": ["TreeCommandEnvelope", "TreeCommandResult", "TreeCommandError", "decodeTreeCommandEnvelope", "doc.insertNode", "doc.moveBranch", "doc.deleteBranch", "doc.rebaseTreeIntent"],
+      "symbolStatus": "PROPOSED_NOT_EXISTING; normative operation names, implementation exports to be agreed with accepted dependency interfaces",
+      "change": "Define schema-versioned wire decoders and discriminated receipts/errors, with documentRef/workspace preconditions, one expectedRevision, authorityEpoch, idempotencyKey, markerMappingVersion and stable nodeId/parentId/afterId; delete/reparent includes reviewed attached-prose policy. Resolve actor only from transport context. At LSX-WP-003 authority boundary check epoch first, current document/source-node permissions, aggregate CAS, parent/after sibling membership, ID existence/uniqueness and self/descendant cycles. Use retainSource/projectBlockIdentity/projectListTree and validated RawSpanPatch byte ranges; regenerate projection and verify acyclic IDs/order before committing through the existing durable native command/receipt/outbox. Outdent is moveBranch to parent-of-parent, not a second writer/API. Allocate new markers through accepted stable-ID policy and bind allocations to idempotent receipt. Deleted-node/deleted-ancestor intent returns deleted/conflict rather than allocation or restoration. rebaseTreeIntent is explicit, same-epoch and reauthorized; computes current stable-ID intent and new preconditions/receipt rather than accepting stale CAS. Diagnostic structureRevision never authorizes a write. Expose all eight required errors without protected content on denied. No private Map or separate tree persistence."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/docs/EditableOutline.tsx",
+      "symbols": ["EditableOutline"],
+      "symbolStatus": "PROPOSED_NOT_EXISTING",
+      "change": "Render the existing document's canonical ListTreeProjection and use dependency-owned draft/session/receipt lifecycle. Receive typed dispatcher, descriptor/preconditions, capabilities, current projection, selection and fold handlers from NotesViewHost; no copied content authority. Anchored node IDs own selection and focus through commit/reload/view switch. Implement child/sibling/outdent, branch reorder/delete preview, keyboard move, row/group drag insertion+level announcements and accessible non-gesture alternatives. Text edit/IME retains caret priority; Enter/Tab structural commands only in the correct focused mode, composition never triggers commands. Show local draft/pending/durable/conflict/denied/offline distinctions and preserve rejected drafts. Undo/redo submits a local semantic inverse rebased against latest authority so remote text survives. Apply existing i18n/theme/Rox font/help/focus/reduced-motion patterns; no renderer-only success toast as ACK."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-028.test.ts",
+      "symbols": ["generated tree invariants", "aggregate CAS race scenarios", "semantic inverse and late edit assertions"],
+      "symbolStatus": "PROPOSED_TEST_CASES",
+      "change": "Seed deterministic insert/move/outdent/delete command sequences and adversarial two-reparent cycle races; assert exact IDs, tree order, nonedited bytes and stable-node text. Exercise actual accepted native authority for stale epoch/revision, auth spoof/denial, idempotent replay, text-vs-move/delete and restart recovery; retain seed/input SHA and exact receipts. Own-semantic inverse must preserve remote inserts. Mutant accepting independent tree/text CAS or resurrecting deleted subtree must fail named semantic assertions, not throw infrastructure errors."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-028.spec.ts",
+      "symbols": ["integrated EditableOutline native interaction scenarios"],
+      "symbolStatus": "PROPOSED_TEST_CASES; runner not discovered in authorized scope",
+      "change": "Use lead-discovered real Electron runner against the integrated Notes/Docs surface; create native document, edit/reorder via keyboard and drag, switch Doc/Outline and reload, assert exact canonical node IDs/text/order and persisted selection behavior. Exercise IME, conflict draft retention, denied/offline controls, focus restoration, 200% zoom, Russian/locale strings, loaded Cyrillic Rox font, both user themes and reduced motion. Record actual screenshots/ARIA/font and domain receipt/readback, not mock dispatcher echoes."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewHost / NotesViewNote / NotesOutlineView / OutlineTree",
+      "change": "Under integration-owner lease, replace the existing outline-only read tree branch at112-114/476-536 with the owned EditableOutline when the accepted canonical editing session is available; keep unavailable/readOnly/denied states explicit. Add typed document descriptor/revision+epoch/capabilities and structural-dispatch/session bindings to the host contract (48-78), supplied by LSX-WP-026/lead, never inferred from activeNoteId or workspaceId. Pass canonical blockTree, onOpenBlock, stable selected IDs and existing folds at491-511. Retain the notes:outline-folds storage as personal view state only; block:<nodeId> remains identity and projection:<hash>:<index> cannot issue mutations. Remove OutlineTree only if fully superseded and no caller remains; preserve table/canvas/graph and existing source navigation. Any parent callsite addition requires dependency integration or updated reviewed scope.",
+      "reason": "Current host already renders canonical list projection, not heading-derived outline, but only navigation/folding is wired. EditableOutline must replace this same surface rather than create another editor or content store.",
+      "inspectedSha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a",
+      "prerequisite": "Accepted LSX-WP-026 canonical session/dispatcher and lead-owned host caller wiring; rehash after wave0."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/document-ia.ts",
+      "symbol": "extractBlockIds / parseNoteDocument / roundTripNoteMarkdown / serializeColumns",
+      "change": "Under lease, bridge extractBlockIds and parseNoteDocument blockIds to accepted projectBlockIdentity(retainSource(markdown)) mappings, preserving block/node alias identity and existing NoteBlockId preview return compatibility; no allocation on read, no regex/title-derived write identity. Keep headings as ToC and tasks/columns/comments as existing feature projections, not a writable list serializer. For the structural command path keep original retained bytes and RawSpanPatch result; do not pass through roundTripNoteMarkdown (702-708) or serializeColumns (228-233), which normalize unrelated bytes. If the lead needs a command-aware bridge in roundTripNoteMarkdown, accept a validated retained patch result and preserve unchanged bytes, leaving intentional comment authoring behavior explicit; do not globally replace comment logic. No change to serializeColumns is needed merely to support structural edits; it must not become the lossless serializer.",
+      "reason": "Legacy ^id-only extraction diverges from new ROX/Obsidian stable mappings. Existing comment/column helpers normalize source and cannot safely serialize a moved branch with opaque/attached content.",
+      "inspectedSha256": "f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa",
+      "prerequisite": "Accepted LSX-WP-006 mapping/error contract and reviewed caller compatibility; use the normative named seams only."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "one aggregate revision for text/tree/epoch",
+      "currentEvidence": "06-rox-docs-design.md:176 explicitly specifies this invariant. ListTreeProjection has sourceHash/authorityEpoch (list-tree.ts:22-36), but only reads. MarkdownCommitCommand has expectedRevision/epoch (command-envelope.ts:2-45). NativeNotesEngine.save checks revision in memory (notes-engine.ts:432-445), and legacy writeHead restamps/normalizes source (395-415,154-160). None of these inspected seams proves a durable aggregate text/tree/epoch authority or structural command.",
+      "requiredChange": "Implement tree-commands.ts at accepted LSX-WP-003 serialized authority, check epoch before CAS/rebase, make all text/structural writes advance the same aggregate token and keep structureRevision diagnostic only. Validate acyclic stable IDs and attached prose policy on latest retained source. Return explicit conflict when racing text cannot be safely retained at the same node.",
+      "verification": "Seed text-vs-move/delete and two-reparent cycle races; stale epoch must reject before any rebase, text-only acknowledged change must invalidate stale tree CAS, each ACK text must remain at its node or receive explicit conflict, late edit must not resurrect deleted branch. Native readback verifies one ref/epoch/revision across both views. Planned command: bun test tests/lark-suite-extension/lsx-wp-028.test.ts, not run.",
+      "missingPrerequisite": "Accepted LSX-WP-003 aggregate/durable commit interface, LSX-WP-006 markers and EG-COLLABORATION shared frontier/epoch receipts.",
+      "state": "NOT_IMPLEMENTED_OR_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "Doc/Outline reload equal content/order",
+      "currentEvidence": "NotesViewHost.tsx:514-530 projects blockTree.roots into the existing Outline; list-tree.ts:61-107 derives rows and exports retained source, never serializes view text. Host has no structural dispatcher. RetainedRegions includes prose omitted from visible rows.",
+      "requiredChange": "Integrate EditableOutline in NotesViewHost; dispatch stable-ID tree operations to the same authority as Doc editor, refresh both from authoritative receipts and preserve selection/folds without duplicating Markdown. Compute branch spans including markers/descendants/attached prose; preserve unedited frontmatter/BOM/CRLF/tables/code/opaque content and trailing prose.",
+      "verification": "Use real Doc to seed exact bytes; insert/move/outdent/delete in Outline, switch Doc, reload and restart, compare node IDs/text/order and canonical bytes/hash for same EntityRef. Compare retained nonedited byte regions exactly and verify rootless/multiple-list and attached-prose cases. UI evidence is the integrated native surface, not a fixture rendering.",
+      "missingPrerequisite": "Accepted LSX-WP-026 editor/session receipt flow, LSX-WP-006 identity mapping, lead host-callsite wiring, actual Electron runner.",
+      "state": "READ_ONLY_PROJECTION_PRESENT; EDITABLE_ROUNDTRIP_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "command-envelope.ts:22-45 runtime-decodes native content writes and ignores extra authorization assertions; its error union at13 lacks offlineUnsupported/missingDependency. Host props at48-78 carry neither command receipt nor authenticated capabilities. Normative structural operations/errors at work-packages.json:10376-10396 remain proposed.",
+      "requiredChange": "Own schema-versioned TreeCommandEnvelope/result/error decoders in tree-commands.ts with all eight discriminants validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Use authenticated transport actor and server-resolved authority/source binding. Reauthorize Doc and source node, validate destination, never trust payload owner/actor/workspace as grant. Renderer compiles against wire types/decoder without pulling native-only implementation; command dispatch must use accepted registry/transport.",
+      "verification": "Compile server and renderer boundaries on integrated version; decode malformed IDs/epoch/revision/format and error receipts. Submit spoofed actor/owner/workspace and allowed-Doc/denied-node mutations; assert denial without protected content, no commit/outbox side effect. Actual command invocation must return typed native receipt, not mock forwarding.",
+      "missingPrerequisite": "Authenticated actor/node policy interface from dependencies/EG-IDENTITY, command registry registration and schema import/export scope if not supplied by lead/dependencies.",
+      "state": "BASE_CONTENT_DECODER_EXISTS; STRUCTURAL_CONTRACT_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "NativeNotesEngine.createNativeNotesEngine stores heads/history in Maps (391-415) and cannot establish fsync/restart evidence. RawSpanResult is only an applied byte result (retained-source.ts:176-199). 07-domain-entity-model.md:180-189 requires atomic content+receipt+outbox and file journal/rename recovery. No runtime readback was authorized or performed.",
+      "requiredChange": "Tree operations commit through LSX-WP-003 native durability transaction, including command idempotency receipt and canonical document.revisionCommitted outbox intent. UI only marks committed after durable native receipt; drafts and pending intents use LSX-WP-026/EG-COLLABORATION storage, not localStorage content or an in-memory tree. Preserve exact ref/revision/hash receipts and authoritative reread.",
+      "verification": "Crash before commit, between content/receipt/outbox recovery points, after durable commit before reply, and restart after ACK. Replay same command returns same committed receipt and one event/ID allocation; authoritative bytes/revision/hash equal receipt before and after restart. Queued/local draft states must not render durable success.",
+      "missingPrerequisite": "Accepted LSX-WP-003 durability/recovery/outbox receipts and EG-EFFECTS transaction capability; real native restart fixture.",
+      "state": "NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "work-packages.json:10427-10441 names generated stable-ID/no-cycle, text-vs-ancestor move/delete and inverse-rebase cases. Existing block-identity.ts:261-302 detects ambiguous/duplicate mappings; list-tree.ts:78-81 marks unsupported indentation readOnly; rebaseRawSpanPreview conservatively conflicts on selected-span overlap (203-226). No package tests exist in inspected new paths.",
+      "requiredChange": "Implement insert child/sibling, move/outdent/reorder, delete with attached-prose preview, explicit rebase and local inverse semantics. Add deterministic generated behavior cases plus ACL, stale epoch/revision, duplicate/replay key, deleted/invalid/self-descendant parent, unsupported/opaque/ambiguous mapping, offline reconnect/revoke and durability recovery. Treat raw span overlap as conflict, not permissive merge; apply rebased intent only with fresh authority preconditions.",
+      "verification": "Run planned bun test command after accepted integration and use authoritative native/readback lane for races/restart. Record seed, baseline input SHA, all attempts/statuses, operation IDs, exact evaluated commit and receipts. Validate replay cannot allocate duplicate stable IDs; inverse undo preserves remote text and deleted ancestry remains deleted.",
+      "missingPrerequisite": "Accepted commit/identity/session APIs, attached-prose policy contract, collaboration/ACL and native fixture; supported test/UI runner discovery by lead.",
+      "state": "PLANNED_NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:10443-10451 names independent tree/text CAS or late-edit resurrection mutation and must-fail assertions: ACK text retained at stable node or conflict, tree acyclic, deleted subtree not resurrected and remote text not rolled back.",
+      "requiredChange": "Build meaningful race/rebase oracles in lsx-wp-028.test.ts against real authority behavior. Evaluate an isolated mutant of the exact integrated tree commit/precondition path that admits independent tree CAS or late resurrection, with identical retained input and seed; retain baseline and mutant byte hashes. Do not alter the production tree or treat runner failure as a caught semantic mutation.",
+      "verification": "Green baseline and named assertion failure for mutant on the same seeded trace; record expected/actual stable node text, ancestry/order and receipts. Failed infrastructure/timeout is recorded separately and requires another valid semantic run.",
+      "missingPrerequisite": "Implemented and green package/native lane with a controlled mutation mechanism and integrated artifact hashes; this preflight cannot execute tests or mutations.",
+      "state": "PLANNED_NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "NotesViewHost.tsx:640-664 currently has navigation/fold buttons, not editing/reorder; uses existing t()/theme classes elsewhere. 06-rox-docs-design.md:120-140 specifies structural keys, selection priority, drag insertion+level announcement, inverse undo and attached-prose policy. Repository context requires ten locale files. No native UI observation occurred.",
+      "requiredChange": "Implement same-surface EditableOutline interactions, stable-ID selection, IME-safe focused key dispatch, drag/keyboard move and announced destination/level, visible disabled/conflict/offline states, non-gesture alternatives, hover/focus/click help and focus restoration. Retain theme, actual Rox Mono/Cyrillic font, reduced-motion and accessible controls; all new strings through t() with all ten locale keys added by authorized integration owner. Local semantic undo must not roll back remote edits.",
+      "verification": "Exercise actual integrated Electron surface with pointer drag and equivalent keyboard operations, composition, Escape/focus restore, selection across receipt/view switch, both themes, Russian plus locale parity, 200% zoom and reduced motion. Capture screenshots, ARIA/announcements, computed font and actual loaded font evidence, canonical readback for edited content. Discover supported runner before running ui/lsx-wp-028.spec.ts; no invented passing command.",
+      "missingPrerequisite": "Accepted LSX-WP-026 session/editor binding, host caller wiring, authorized locale integration beyond packet's two shared files, actual native runner/font environment.",
+      "state": "NOT_IMPLEMENTED_OR_UI_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "Normative proof lanes at work-packages.json:10434-10441 are SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI. Linked published specs explicitly separate fixture, service, Electron and provider evidence. All inspections here are source evidence only.",
+      "requiredChange": "Lead retains per-lane, revision-bound artifact/receipt evidence and revalidates after shared integration. Keep featureComplete false until every DoD row has actual acceptance, dependency receipts and readback. Collaboration evidence is required for exercised shared/text-race lane; provider evidence is conditional on actual provider use, never a substitute for native commit.",
+      "verification": "Audit exact integrated commit/input hashes, compiled schemas, seeded baseline/mutant semantic assertions, native authoritative ref/revision/hash before/after restart, ACL-negative results and real Electron interaction/font records. Reject final-text-only, fixture-only, queued or stale-revision receipts; this JSON is preflight, not implementation proof.",
+      "missingPrerequisite": "All preceding implementation and observed proof-lane receipts plus lead acceptance of integrated artifact.",
+      "state": "FEATURE_INCOMPLETE; NO_PROOF_LANE_PASSED"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx", "symbol": "NotesViewHost / NotesViewNote", "lineStart": 48, "lineEnd": 117, "sha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx", "symbol": "NotesOutlineView", "lineStart": 476, "lineEnd": 536, "sha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path": "apps/electron/src/renderer/pages/notes/document-ia.ts", "symbol": "extractBlockIds", "lineStart": 182, "lineEnd": 193, "sha256": "f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa"},
+    {"path": "apps/electron/src/renderer/pages/notes/document-ia.ts", "symbol": "parseNoteDocument / roundTripNoteMarkdown", "lineStart": 655, "lineEnd": 709, "sha256": "f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa"},
+    {"path": "apps/electron/src/renderer/pages/notes/note-views.ts", "symbol": "outlineFromHeadings (legacy ToC identity, not write identity)", "lineStart": 352, "lineEnd": 378, "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path": "packages/core/src/rox2/notes-engine.ts", "symbol": "createNativeNotesEngine / save / writeHead", "lineStart": 391, "lineEnd": 445, "sha256": "77f8c14ade5249c5dbaba4e5bb22551a9a4f98954b9dc7244ee5274404cd1480"},
+    {"path": "packages/core/src/docs/index.ts", "symbol": "docs exports", "lineStart": 1, "lineEnd": 7, "sha256": "8b5e0db083c582f579b2aaf591f6c0f0430e102b27025612df4a5ca051b377e9"},
+    {"path": "packages/core/src/docs/list-tree.ts", "symbol": "ListTreeProjection / projectListTree / listTreeMarkdown", "lineStart": 22, "lineEnd": 107, "sha256": "e845f5988d2806c695009c65a26e12700c9010fe392c151e29b0dfa8ab74c1c3"},
+    {"path": "packages/core/src/docs/block-identity.ts", "symbol": "projectBlockIdentity / previewMarkerMapping / applyMarkerMapping", "lineStart": 261, "lineEnd": 378, "sha256": "866be41e9d6345dea48a3e02a4a6e90cbf1373d346eccea14c73b1cca97d96a6"},
+    {"path": "packages/core/src/docs/retained-source.ts", "symbol": "previewRawSpanPatches / applyRawSpanPatches / rebaseRawSpanPreview", "lineStart": 146, "lineEnd": 226, "sha256": "eafb42712b3e5d349c370c733484867be2db3d390cd973556ac8b44d2abea4e5"},
+    {"path": "packages/core/src/docs/command-envelope.ts", "symbol": "MarkdownCommitCommand / decodeMarkdownCommitCommand", "lineStart": 1, "lineEnd": 46, "sha256": "39e55e808796e48fee16ff0ee40c345886af9264bbc776c91657ce1ea2286817"},
+    {"path": "packages/core/src/docs/content-descriptor.ts", "symbol": "DocumentDescriptor", "lineStart": 24, "lineEnd": 33, "sha256": "0234ad0d971b59dd3d9fc511b6257601c584bc76112faea0ddaf555321b47263"},
+    {"path": "plans/lark-suite-reference/work-packages.json", "symbol": "work_packages[27] LSX-WP-028", "lineStart": 10190, "lineEnd": 10551, "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "LSX-WP-028 execution record", "lineStart": 2372, "lineEnd": 2459, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/lark-suite-reference/06-rox-docs-design.md", "symbol": "RD-04/05 controls / aggregate command and collaboration contract", "lineStart": 119, "lineEnd": 220, "sha256": "a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path": "docs/lark-suite-reference/07-domain-entity-model.md", "symbol": "events consistency / migration rules", "lineStart": 169, "lineEnd": 201, "sha256": "cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path": "docs/rox-suite/published/RS-DOC-01.md", "symbol": "published domain/WAL/ACL and normative foundation links", "lineStart": 35, "lineEnd": 82, "sha256": "b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"},
+    {"path": "docs/rox-suite/published/RS-NOTE-01.md", "symbol": "native/shared authority and normative foundation links", "lineStart": 35, "lineEnd": 82, "sha256": "48915bdf82194df2ade2c05b2b7db346e4f4f01be854b3aa0756da08fe24c002"}
+  ],
+  "nextExecutableAction": "Lead consumes this preflight and resolves foundation/interface/path-scope requests while wave0 finishes. After lead wave0 commit and accepted LSX-WP-003/006/026 receipts, reference delivery manifest and required external readiness, re-read/hash these seams against approved integrated base, lease both shared files, and implement the four normative new files using the accepted single-authority API. Apply only reviewed shared patches serially; execute all proof lanes on integrated revision. This worker performs no implementation now.",
+  "risks": [
+    "Uncommitted root-owned wave0 bytes are not input_revision proof. Hash-bound observations become stale when root integrates; no Git state was changed or queried.",
+    "Current Outline is already canonical list projection. Reintroducing outlineFromHeadings IDs, text-hash IDs or projection index IDs as mutation identity would regress stable anchors.",
+    "ListTreeProjection sourceRange is not automatically a whole branch/attached-prose span; retainedRegions contains content absent from visible rows. A tree-only serializer loses prose/code/tables/frontmatter/newlines.",
+    "Plain content sourceHash plus independent epoch input does not alone prove an aggregate token changes across authority cutover; accepted LSX-WP-003 interface must prove the required invariant.",
+    "Descriptor decoding permits epoch zero (content-descriptor.ts:147); content commit and identity projection require epoch >=1. Do not silently coerce it; reject unsupported/unbound editing state and resolve accepted descriptor lifecycle with lead.",
+    "Conservative raw-span rebase cannot resolve arbitrary overlapping structural/text edits. Use explicit stable-ID intent rebase or conflict review; no universal merge promise.",
+    "Shared CRDT and native Markdown routing differ. Published specs reject a writable Markdown master beside shared WAL; reuse real router instead of building a second authority in tree-commands.ts.",
+    "Host dispatcher, RPC registration, schema exposure and locale files may require paths outside the two allowed shared patches. They must come from accepted dependencies or a revised reviewed packet, not unauthorized worker edits.",
+    "A property test or UI stub cannot establish durable native commit, restart, ACL denial or actual Electron appearance; preflight report is never feature-completion evidence."
+  ]
+}

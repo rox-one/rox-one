@@ -1,0 +1,26 @@
+{
+  "recordedAt": "2026-09-30T15:03:44.376Z",
+  "original": {
+    "path": "/tmp/rox-wp01-current-independent-ultra-20260930/baseline/tests/macro-integration/ui/wp-01-electron.test.ts",
+    "sha256": "b6489291bd615f5b86e495445caa05ba65be9ac4cd653dc5cd729c7754a49955"
+  },
+  "current": {
+    "path": "/Users/t/Projects/rox-one-compound-implementation/tests/macro-integration/ui/wp-01-electron.test.ts",
+    "sha256": "2b1b2584ec244d63c1c7a0db570726c631dc3a4996a3600a4eb20606559a0111"
+  },
+  "diff": {
+    "path": "/tmp/rox-wp01-current-independent-ultra-20260930/closure-leaves-current/ime-oracle.diff",
+    "sha256": "daa56eac08cb501a754ac846d2cddf6b9d955c061ebe1c03a1ae3421eec4151d"
+  },
+  "onlyRemovedOriginalLine": "-          expect(committedEvents.some(event=>event.type==='compositionend' && event.isTrusted===true)).toBe(true)",
+  "originalGatesRetained": true,
+  "acceptedStaticOracleCorrection": true,
+  "actualProductNativeAcceptance": false,
+  "implementedProtections": [
+    "Fresh target-specific ordered trusted compositionstart/update/input(insertCompositionText)/composing Enter; exact name/data compositionend; later trusted ArrowRight isComposing=false",
+    "After commit zero CREATE RPC and real SQL Project/receipt/project.created counts all zero",
+    "Exact native persisted-intent view none before and unchanged after commit",
+    "All pre-existing symmetric native create/open, privacy, maxLength, authority/restart/revoke, themes/zoom/narrow and local-host parity gates retained"
+  ],
+  "interpretation": "Two fixed-engine bare HTML controls justify removing only the engine-specific isTrusted predicate. Actual composition machinery and trusted subsequent key prove commit; no synthetic composition dispatch/DOM assignment introduced. Full native scenario still requires actual receipt."
+}

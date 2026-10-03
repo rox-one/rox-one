@@ -12,7 +12,6 @@ import {
   isHighRiskDefaultInstall,
   marketplaceExtensionId,
   seedDefaultMarketplaceInstalls,
-  seedLockStatusFor,
 } from '../default-install.ts'
 import { countInstalledExtensionRecords } from '../installed-counts.ts'
 
@@ -75,29 +74,24 @@ describe('default marketplace install seed', () => {
     ])
   })
 
-  it('marks tools deferred/high-risk and skillpacks installed', () => {
+  it('treats shipped toolpacks as suggestions, not installed artifacts', () => {
     expect(isHighRiskDefaultInstall(tool('just-bash'))).toBe(true)
     expect(isHighRiskDefaultInstall(skillpack('superpowers'))).toBe(false)
-    expect(seedLockStatusFor(tool('just-bash'))).toBe('deferred')
-    expect(seedLockStatusFor(skillpack('superpowers'))).toBe('installed')
   })
 
-  it('seeds missing lock rows once and disables high-risk tools', () => {
+  it('records catalog exposure without fabricating installation locks', () => {
     const configDir = tmp()
     const store = new ExtensionStateStore({ configDir })
     const first = seedDefaultMarketplaceInstalls({
       catalog: CATALOG,
       configDir,
       stateStore: store,
-      now: 42,
     })
     expect(first.seeded.sort()).toEqual(['hallmark', 'just-bash', 'superpowers'])
     expect(first.disabled).toEqual(['just-bash'])
 
     const lock = readLock(marketplacePaths(configDir).lockFile)
-    expect(lock.entries.superpowers?.status).toBe('installed')
-    expect(lock.entries.superpowers?.targets).toEqual([])
-    expect(lock.entries['just-bash']?.status).toBe('deferred')
+    expect(lock.entries).toEqual({})
     expect(store.isEnabled(marketplaceExtensionId('just-bash'))).toBe(false)
     expect(store.isEnabled(marketplaceExtensionId('superpowers'))).toBe(true)
 
@@ -105,11 +99,10 @@ describe('default marketplace install seed', () => {
       catalog: CATALOG,
       configDir,
       stateStore: store,
-      now: 99,
     })
     expect(second.seeded).toEqual([])
     expect(second.skipped.sort()).toEqual(['hallmark', 'just-bash', 'superpowers'])
-    expect(readLock(marketplacePaths(configDir).lockFile).entries.superpowers?.installedAt).toBe(42)
+    expect(readLock(marketplacePaths(configDir).lockFile).entries).toEqual({})
   })
 
   it('does not re-add an id after the user removes the lock row', () => {

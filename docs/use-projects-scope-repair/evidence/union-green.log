@@ -1,0 +1,22 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:
+(pass) useProjects workspace and load generations > clears A from the atom and returned view at B commit before B RPC completes [67.56ms]
+(pass) useProjects workspace and load generations > late A success cannot overwrite an already loaded B [11.14ms]
+(pass) useProjects workspace and load generations > obsolete A failure neither clears B nor reports a current load error [10.17ms]
+(pass) useProjects workspace and load generations > the newest same-workspace refresh wins over an older load [15.34ms]
+(pass) useProjects workspace and load generations > same-workspace broadcast supersedes an older pending query [8.80ms]
+(pass) useProjects workspace and load generations > queued callback from a disposed A subscription cannot alter B [7.36ms]
+(pass) useProjects workspace and load generations > an obsolete refresh closure cannot start a request for the old scope [11.93ms]
+(pass) useProjects workspace and load generations > unmount cancels late RPC and queued broadcasts without atom writes [9.01ms]
+(pass) useProjects workspace and load generations > A-to-B-to-A does not revive the first A lease [8.38ms]
+(pass) useProjects workspace and load generations > effect replay does not revive callbacks from the disposed subscription [5.48ms]
+(pass) useProjects workspace and load generations > RPC and broadcast payloads retain only current-workspace LoadedProjects [7.17ms]
+(pass) useProjects workspace and load generations > null scope clears previous projects and invalidates pending load [5.33ms]
+(pass) useProjects workspace and load generations > same-workspace success, broadcast and current failure retain their supported behavior [6.18ms]
+(pass) useProjects workspace and load generations > actual projectCatalogAtom wrapper preserves shared metadata during local clear and load [5.59ms]
+
+ 14 pass
+ 0 fail
+ 31 expect() calls
+Ran 14 tests across 1 file. [358.00ms]

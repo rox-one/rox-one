@@ -1,0 +1,567 @@
+{
+  "task_id": "WP-17-preflight",
+  "attempt_id": "584d1bd10e43760a133ab6e7dbf521ef",
+  "packet_hash": "4db8aa22097f924ad428e1230faef15b3271eebe89e6b2b0280948cbac827f33",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-17",
+  "featureComplete": false,
+  "mode": "inspect; owned artifact only",
+  "workTier": "bounded-workflow; source-backed preflight, not implementation",
+  "dependencies": ["WP-04", "WP-03", "WP-06"],
+  "evidenceBoundary": {
+    "inputRevisionAuthority": "Dispatch packet; Git state was not queried or modified. Source evidence describes inspected working-tree files, not a claim that those bytes equal input HEAD.",
+    "specificationSha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "runtime": "No builds, product tests, native UI, provider calls, or network operations performed. All proposed verification below is future work, not PASS evidence.",
+    "foundationPaths": "glob observed apps/workspace-service/, packages/shared/src/workspace-domain/, and tests/macro-integration/ absent during inspection. This is a working-tree observation, not a permanent assertion about the lead's wave0 integration.",
+    "discovery": "Codegraph reported no project index; built-in read/grep/glob used. Descriptive find failed because its judgment backend rejected the account; this was not interpreted as source absence.",
+    "freshness": "Whole-file hashes were obtained after reading the concrete source ranges. Integration must compare hashes and re-read changed seams after wave0; unchanged files retain their source evidence. No dependency acceptance receipts were supplied or inspected, and their acceptance is not claimed."
+  },
+  "foundationGates": [
+    {
+      "gate": "Wave0 integration and accepted prerequisite receipts",
+      "classification": "Implementation start gate, separate from the explicit DAG array",
+      "relatedPackages": ["WP-04", "WP-03", "WP-06"],
+      "source": "Dispatch instruction; work-packages.json WP-17 inputs at 14245-14269",
+      "currentEvidence": "Only preflight authorized; published service/domain/test directories absent at inspection.",
+      "requiredArtifact": "Lead's committed wave0 revision plus each producer's accepted typed interface, applied migration or justified migration-N/A receipt, and scenario verification receipt. N/A cannot replace missing behavior.",
+      "integrationRequest": "Root supplies revision-bound contracts and migration ownership before any mail source change; rebase the inspection evidence by hash comparison, without overwriting concurrent work."
+    },
+    {
+      "gate": "Authenticated workspace service and canonical entity/alias registry",
+      "classification": "Transitive foundation, not a new explicit dependency",
+      "relatedPackages": ["WP-01", "WP-02"],
+      "source": "Published WP-03 depends on WP-01/WP-02; WP-04 depends on WP-02/WP-03; WP-17 migrations at 14662-14713",
+      "currentEvidence": "toSummary returns raw e.id/e.threadId (mail-model.ts:25-41); no workspace-domain directory found.",
+      "requiredArtifact": "Transport-derived principal and workspace resolver, canonical kind:id registry, alias binding/quarantine API and composite entity FK migration; selected service runner and migrator.",
+      "integrationRequest": "Mail repository consumes the accepted registry and policy interfaces; never introduce an email-address identity registry or mail-only command store."
+    },
+    {
+      "gate": "Durable client replay and single-writer/revocation fencing",
+      "classification": "Hidden completeness gate: offline/reconnect and shared/local authority requirements are published but WP-05/WP-51 are not WP-17 explicit edges",
+      "relatedPackages": ["WP-05", "WP-51"],
+      "source": "WP-17 featureCompleteness and permissions; 22-test-plan.md:9,204-208,222; published WP-05/WP-51 goals",
+      "currentEvidence": "MailService calls JMAP directly for all writes; useMail has no durable queue and module-global autoEnsureTried; MailCompose quiet autosave failure is not displayed.",
+      "requiredArtifact": "Accepted execution-mode routing, durable client projection/outbox replay API, current policy fence and revoke subscription enforcement; otherwise those WP-17 checklist rows remain missing.",
+      "integrationRequest": "Reuse the common queue/fence when ready. Root must resolve this gate explicitly rather than silently treating standalone autosave as shared offline support."
+    },
+    {
+      "gate": "Provider sandbox, credentials and independent read-back",
+      "classification": "Hidden operational gate; real provider evidence required without introducing Gmail dependency",
+      "relatedPackages": ["WP-52"],
+      "source": "WP-17 verificationGate and verification fixtures; 22-test-plan.md:7,28,243; published WP-52 provider prerequisite goal",
+      "currentEvidence": "Existing fakeStalwart implements provisioning-only x: methods; JmapClient.compose returns a submission ID, but MailService.send removes it.",
+      "requiredArtifact": "Isolated Stalwart/JMAP test server, owner/delegated account credentials via secret references, supported submission/read-back capabilities and independent client; runner pins image/schema/source hashes. Mail does not require unrelated LiveKit readiness.",
+      "integrationRequest": "Record actual provider capability and submission evidence. API connectivity, mock success, Email/set draft creation and EmailSubmission creation are not proof of external delivery."
+    },
+    {
+      "gate": "Mentions, recipient notifications and agent dispatcher integration",
+      "classification": "Hidden completeness integration gate, not additional declared DAG edges",
+      "relatedPackages": ["WP-09", "WP-36"],
+      "source": "WP-17 featureCompleteness; 22-test-plan.md:199,211-215; published WP-09 and WP-36 goals",
+      "currentEvidence": "Inspected mail bridge and renderer expose no common domain mention/notification/agent command registration. Broadcast refresh is not a notification receipt.",
+      "requiredArtifact": "Accepted occurrence/source-revision and recipient-policy hooks, agent acting-user authority and domain tool registration. Determine applicable mail metadata/link occurrence behavior without parsing arbitrary email into login principals or granting body access.",
+      "integrationRequest": "Root supplies shared service integration seams; keep checklist requirements missing until exercised, not N/A because foundations are unfinished. Do not create mail-only mention, notification or MCP stores."
+    },
+    {
+      "gate": "Canonical navigation and attachment-policy integration",
+      "classification": "Hidden shared integration coordination; full WP-39/WP-40 completion is not asserted necessary for the direct IPC isolation fix",
+      "relatedPackages": ["WP-39", "WP-40"],
+      "source": "WP-17 body/attachment domain constraints; 22-test-plan.md:202,209; published WP-39/WP-40 goals",
+      "currentEvidence": "mailItemId prefixes raw email ID; SAVE_ATTACHMENT ignores emailId and savedPaths is global.",
+      "requiredArtifact": "Accepted canonical navigation resolver and source-mail authorization for any managed blob/file port. Direct local attachment download must independently verify message membership and caller scope even before managed files integration.",
+      "integrationRequest": "Use existing Inbox/Mail navigation and common blob policy. Coordinate canonical link and managed-file hooks with owners rather than adding second surfaces or bypassing local checks."
+    },
+    {
+      "gate": "Migration identifiers and provider-connection ownership",
+      "classification": "Normative specification ambiguity requiring root integration resolution",
+      "relatedPackages": [],
+      "source": "WP-17 newFiles at 14128-14140; migrations at 14662-14713; newArtifacts at 14715-14770",
+      "currentEvidence": "Both 017_mail_accounts_entities_aliases.sql and 17-domain-contract.sql are in newFiles; only the latter carries the generic migration record, while newArtifacts lists the former. No selected migrator observed.",
+      "requiredArtifact": "Root-selected migrator and accepted ownership of entity, command_receipt, consumer receipt, alias and provider_connection tables.",
+      "integrationRequest": "Treat both paths as proposed identifiers, not two competing schemas. Allocate additive mail schema/backfill once, reconcile names through the selected migrator, and do not recreate shared receipt/provider tables."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/mail/contracts.ts",
+    "apps/workspace-service/src/modules/mail/commands.ts",
+    "apps/workspace-service/src/modules/mail/repository.ts",
+    "tests/macro-integration/wp-17.test.ts",
+    "packages/shared/src/workspace-domain/mail/types.ts",
+    "packages/shared/src/workspace-domain/mail/provider-contract.ts",
+    "packages/shared/src/workspace-domain/mail/commands.ts",
+    "apps/workspace-service/src/modules/mail/service.ts",
+    "apps/workspace-service/src/modules/mail/adapters/jmap-adapter.ts",
+    "apps/workspace-service/migrations/017_mail_accounts_entities_aliases.sql",
+    "tests/macro-integration/mail-domain-jmap-regression.test.ts",
+    "apps/workspace-service/migrations/17-domain-contract.sql"
+  ],
+  "ownedNewFilesBoundary": "Normative future implementation paths only; preflight owns and creates none of them. Common mail/contracts.ts, service commands/repository and migration areas also appear in later mail packages: root must designate one integration owner. Proposed symbol names below are contributions, not claims of existing exports.",
+  "proposedContributions": [
+    {
+      "paths": ["packages/shared/src/workspace-domain/mail/contracts.ts", "packages/shared/src/workspace-domain/mail/types.ts", "packages/shared/src/workspace-domain/mail/provider-contract.ts", "packages/shared/src/workspace-domain/mail/commands.ts"],
+      "change": "Define provider-neutral MailAccount/MailThread/MailMessage/MailLabel DTOs with Rox2EntityRef, revision, account namespace and provider aliases; immutable body references separate from mutable flags/labels. Publish strict mail.openThread account/thread validation and GetMailThread/QueryInbox pagination plus SendMail capability/result port. Reuse accepted RoxCommand v2/canonical result types and error mapping. Provider result includes email/submission IDs, actual capability and evidence provenance; queued/unknown never becomes verified because the adapter returned successfully. No credential values in DTOs."
+    },
+    {
+      "paths": ["apps/workspace-service/src/modules/mail/repository.ts", "apps/workspace-service/src/modules/mail/service.ts", "apps/workspace-service/src/modules/mail/commands.ts"],
+      "change": "Resolve authenticated actor before account and alias lookup; authorize source account separately from linked entity, constrain every lookup by workspace and account, bind cursors to actor/account/query/policy. Upsert canonical entities/aliases using shared registry in one transaction with revision/outbox receipt, persist immutable bodies and token references separately, and apply policy/tombstone fences before query serialization. Register exact HTTP/native RPC mail.openThread and common mail provider commands through existing authority. Persist outbound intent and provider evidence through the common receipt mechanism; after unknown remote effect reconcile rather than blindly recompose."
+    },
+    {
+      "paths": ["apps/workspace-service/src/modules/mail/adapters/jmap-adapter.ts"],
+      "change": "Adapt the existing JmapClient, not another provider implementation. Bind provider account to the authenticated canonical account namespace, resolve remote thread membership with Thread/get then bounded Email/get, and preserve Mailbox/get, Email/query/get/set, compose, upload/download and subscribe. Read actual submission status through provider capability; perform independent email/submission read-back and record cursor/watch state before claiming observed revision. Subscription is a refresh hint, not durable domain event storage. Preserve loopback-only provisioning and external-recipient restrictions."
+    },
+    {
+      "paths": ["apps/workspace-service/migrations/017_mail_accounts_entities_aliases.sql", "apps/workspace-service/migrations/17-domain-contract.sql"],
+      "change": "After root resolves proposed identifiers, apply one coordinated additive schema/backfill: workspace/entity composite FK, schema_version>0/revision>=0, timestamps/tombstones, account owner/delegated grants, UNIQUE(workspace_id,provider,provider_account_id) and scoped remote aliases, immutable body/blob references, separate token refs and stable inbox cursor indexes. Message-ID is not unique mailbox identity. Use accepted command/outbox/consumer tables instead of redeclaring them; quarantine ambiguous legacy IDs and retain old writer snapshot for pre-cutover rollback."
+    },
+    {
+      "paths": ["tests/macro-integration/wp-17.test.ts", "tests/macro-integration/mail-domain-jmap-regression.test.ts"],
+      "change": "Exercise exact seven acceptance criteria, strict transport rejection, owner/delegate/outsider and same-address workspace cases, canonical identity/search watermark, provider submission receipt and independent read-back, duplicate/drop/out-of-order event controls and crash between commit/reply. Use seed 20260947 and PRIVATE_WP-17; mocked adapter tests remain explicitly fixture evidence. Runtime Electron/provider scenario evidence must be separate from deterministic package tests."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/main/mail/local-ipc.ts",
+      "symbol": "registerMailIpc / service / broadcast / savedPaths",
+      "change": "At every handler resolve authoritative workspace/principal/mode from event.sender via accepted host window/session binding, then validate requested account against that context. Route shared reads/writes through workspace authority, keeping explicit standalone JMAP execution. Replace global mailbox service usage with context-bound access to the existing MailService mechanism; filter CHANGED subscribers by authorized account and workspace. Scope savedPaths to requesting principal/workspace/account and revoke them on context disposal. No client actor field may establish authority.",
+      "reason": "Lines 16-22 and 91-120 currently use one service and broadcast all windows; sender event is ignored for mail authority. Required same-address isolation, owner/delegate policy and single-writer boundary are absent."
+    },
+    {
+      "path": "apps/electron/src/main/mail/local-ipc.ts",
+      "symbol": "credentialManagerSecrets",
+      "change": "Bind the existing MailboxSecretStore implementation to verified workspace/canonical account/provider origin; store a scoped credential reference in CredentialManager instead of global rox-mail.<address>. Legacy global key is read only during a verified owner/account migration; validate original origin, owner and JMAP account before adopting, persist scoped reference and stop ordinary global fallback after cutover. Never duplicate the legacy credential into another workspace merely because email matches.",
+      "reason": "Lines 26-38 key solely by sanitized email under workspaceId='global'; two namespaces collide. Provisioning's secret-store injection allows a scoped implementation without a second secret store."
+    },
+    {
+      "path": "apps/electron/src/main/mail/local-ipc.ts",
+      "symbol": "registerMailIpc SAVE_ATTACHMENT / REVEAL / PICK_FILES",
+      "change": "Stop ignoring emailId. Authorize caller, canonical source message and account, resolve the actual message attachment by trusted blob membership rather than accepting arbitrary renderer blobId/name/type, recheck current policy before reading/writing, and restrict reveal to the same authorized download context. Bind picked-file capabilities to the requesting sender; preserve existing dialog and download mechanism.",
+      "reason": "Lines 130-141 currently download arbitrary attachment metadata and permit every caller to reveal globally saved paths. Blob and file operations must inherit source-mail ACL."
+    },
+    {
+      "path": "apps/electron/src/main/mail/mail-service.ts",
+      "symbol": "MailServiceDeps / constructor / status / ensureMailbox / jmap / resetClient",
+      "change": "Consume accepted scoped authority/mode/account context and scoped metadata/secret references; preserve local provisioning/autostart in explicit standalone mode. Import legacy mailbox.json/owner.json with ownership/provenance verification into the accepted account model; do not infer grants from a stored address or API connection. Keep client and push lifecycle bound to provider origin/account; dispose/reset on account, actor, mode or workspace change. Shared mode uses common projection/authority rather than writing local authoritative mailbox metadata.",
+      "reason": "Lines 99-115,171-176,216-239,243-299 keep one mailbox record and reuse its owner/client; setServerUrl resets client but leaves record. Namespace and authority cutover must preserve credentials and existing local behavior."
+    },
+    {
+      "path": "apps/electron/src/main/mail/mail-service.ts",
+      "symbol": "MailService.send / saveDraft / prepare / setFlags / move / download",
+      "change": "Propagate compose submissionId and provider evidence instead of returning emailId alone. Shared mutations use common command identity, execution grant, expectedRevision where mutable, persisted intent and reconciliation; standalone remains actual JMAP. Resolve source/draft/forward attachments and all IDs inside the authorized account, validate provider per-item errors and verified read-back before reporting applied. Keep loopback external-blocked guard explicit and capability-based; do not loosen it after gateway connection. MailService.download must accept authorized source-message context, not bare blob metadata.",
+      "reason": "send:428-451 discards submissionId; prepare:409-423 trusts forward blobs; setFlags/move:363-375 return partial updated counts; download:468-470 lacks source-message validation."
+    },
+    {
+      "path": "apps/electron/src/main/mail/mail-service.ts",
+      "symbol": "MailService.startPush / emitSoon / ensureMailbox logging / errorResult",
+      "change": "Preserve existing JMAP subscription/retry and local refresh, but forward bound account watch/state information to the shared durable ingestion/outbox path; only publish canonical verified changes with account/policy/revision/watermark. Reconnect read-back closes missed change gaps. Replace mailbox-ready raw address log and raw provisioning/provider error logging with redacted error/correlation codes; UI errors may remain descriptive without entering telemetry.",
+      "reason": "302-315 currently discard provider changed-state payload and only emit a timer hint; 267,273-276 log address or raw error. WP-17 requires durable events, observability and no raw email/body/tokens in logs. Full webhook/cursor recovery mechanisms belong to WP-18 and must not be falsely claimed here."
+    },
+    {
+      "path": "packages/shared/src/mail/jmap-client.ts",
+      "symbol": "JmapClient.accountId / call / getEmail / compose / subscribe",
+      "change": "Extend existing client with validated bound-account selection and thread/submission read-back helpers using current call transport; verify selected account/capability belongs to session. Check response tag/method/account agreement and preserve typed provider submission result. Distinguish submission acceptance from delivery/observed canonical effect and method errors from unknown external outcome. Reuse same-origin credential guard and existing EventSource retry; expose state/watch hints without introducing event storage in the client.",
+      "reason": "187-191 select primary account only; 240-246 get one email, not a thread; 318-365 already expose submissionId that the caller discards. Required domain identity, whole-thread query and receipt reconciliation are adapter extensions, not Gmail replacement."
+    },
+    {
+      "path": "apps/electron/src/main/mail/mail-model.ts",
+      "symbol": "toFolder / toSummary / toMessage / threadHeaders",
+      "change": "Map provider mailbox/thread/email IDs through the accepted scoped canonical aliases for shared DTOs while retaining provider aliases and RFC Message-ID/References independently. Preserve body/attachment mapping and reply headers; never use Message-ID or subject as global unique identity. Keep standalone mapping explicit at the existing adapter boundary.",
+      "reason": "25-41 directly equate e.id/e.threadId to UI IDs; 44-73 retain useful MIME body/header metadata and must survive the cutover."
+    },
+    {
+      "path": "apps/electron/src/shared/mail-local.ts",
+      "symbol": "MAIL_IPC / MailLocalApi / MailStatus / MailSummary / MailMessage / MailListQuery / MailComposeInput",
+      "change": "Evolve the existing bridge, not add a second surface: add validated workspace/account refs and mode/result provenance to methods/events, typed canonical thread/inbox DTOs and bounded cursor, structured domain failure/result statuses and send receipt with provider submission reference. Keep local capability behavior and attachments explicit. Migrate every caller and preload atomically; compatibility means preserved behavior, not an unscoped privileged fallback API.",
+      "reason": "126-141 expose unscoped methods, bare blob metadata and send emailId only; status union at 30 lacks permission_denied/offline_queued/applied_verified distinctions."
+    },
+    {
+      "path": "apps/electron/src/preload/bootstrap.ts",
+      "symbol": "mailLocal",
+      "change": "Update all invoke arguments and onChanged typed payloads with the shared contract; preload passes resource context but authority comes from the main-process sender binding. Keep the existing mailLocal exposure and callback cleanup; reject/discard mismatched namespace events defensively without substituting renderer filtering for server-side policy.",
+      "reason": "582-602 are the real bridge bindings and must move together with MailLocalApi, IPC handlers and UI callers."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/inbox/mail/useMail.ts",
+      "symbol": "useMail / autoEnsureTried / refresh / open / act",
+      "change": "Bind hook to the current workspace/account and reset/cancel outstanding state on context or permission changes. Scope auto-provision attempt tracking rather than module-global boolean. Open canonical thread through the existing bridge, preserve folders/message/draft flow, filter scoped event payloads and wait for authorized query/watermark read-back. Do not optimistically mark seen after a failed or queued result; represent loading, empty, denied, retryable, queued and verified states explicitly and erase cached private detail on denial/revoke.",
+      "reason": "20 is global, 54-66 use unscoped list/get; 87-90 consume all broadcasts; 123 ignores setFlags result; old openId protection covers one fetch but not all refresh/context races."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx",
+      "symbol": "MailListPanel / MailCompose.saveDraft / MailCompose.send / MailReader.save",
+      "change": "Migrate direct mailLocal.saveDraft/send/file callers to scoped contract/controller. Do not close composer as sent for queued/reconciling/ambiguous results; show actual receipt state. Preserve unsent draft on failure/offline, make quiet autosave failure/pending visible, and do not show empty inbox while initial query is loading or denied. Use existing controls, accessibility markers and i18n rather than new mail UI.",
+      "reason": "Direct callers at 452 and 483 bypass useMail.act; 483-486 equate any ok result with sent; 457-459 hide quiet save failure; 155-160 render empty whenever item count is zero without a loading check. This direct mail consumer is a required shared patch beyond affectedFiles."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/inbox/mail/mail-view.ts",
+      "symbol": "mailItemId / emailIdFromItem / mailToInboxItem / statusKey",
+      "change": "Route typed scoped canonical mail references through existing Inbox navigation, retain raw provider identifiers only as explicit aliases for standalone import, and extend status mapping for new domain states. Canonical link/selection must survive rename/reload without granting target access; denied lookup exposes no subject/preview.",
+      "reason": "21-42 prefix a raw email ID and include private subject/preview-derived list metadata; 110-120 only map the legacy status union."
+    },
+    {
+      "path": "packages/shared/src/mail/provisioning.ts",
+      "symbol": "MailboxSecretStore / provisionMailbox / verify",
+      "change": "Retain owner-marker adoption checks, app-password minting/repair and JMAP verified READY. Inject verified scoped secret-store binding and enforce namespace/owner/provider provenance for existing mailbox import. No automatic global-address fallback; emit redacted provisioning diagnostics. If interface context must change, update all callers/tests together, preserving the current transport-independent provisioning function.",
+      "reason": "40-44 identify secrets only by address; 81-86 already check existing.ownerUuid, 117-121 reject foreign owner and 135-154 verify credential/account. Preserve these protections rather than replace provisioning."
+    },
+    {
+      "path": "packages/shared/src/mail/__tests__/mail.test.ts",
+      "symbol": "fakeStalwart / provisionMailbox describe / jmap helpers describe",
+      "change": "Keep existing behavior tests and extend consumer-visible coverage for scoped credential import, matching email in distinct namespaces, invalid account binding, Thread/get read-back and submission failure/unknown receipt semantics. Fake provider evidence remains marked fixture; add no tests that merely echo forwarded arguments.",
+      "reason": "46-91 fakeStalwart covers x: provisioning methods only; 99-132 protect owner/idempotency/repair but do not exercise mail inbox/draft/send."
+    },
+    {
+      "path": "apps/electron/src/main/mail/__tests__/mail-model.test.ts",
+      "symbol": "mail-model describe",
+      "change": "Preserve useful local recipient/header tests and add boundaries showing canonical alias namespace isolation, same Message-ID in two mailbox copies, body/header fidelity and attachment-source validation at the service integration test seam.",
+      "reason": "Existing lines 4-29 test local helpers only; they are not evidence of multi-user mail correctness."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/search/contracts.ts",
+      "symbol": "WP-06 accepted extractor/projection contract (proposed module; absent during inspection)",
+      "change": "Request mail_thread/mail_message extractor registration with canonical refs, source revision and source-account policy; process shared outbox events with watermark and deletion/revoke fence, and reauthorize query snippets/titles/totals at serialization. Exact export name must come from accepted WP-06 receipt, not guessed now.",
+      "reason": "Mail-local text search in JmapClient.queryEmails is not the required canonical authorized Search/Memory projection. This is a request to the foundation owner, not a source-verified existing symbol."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/commands/contracts.ts",
+      "symbol": "WP-04/WP-05/WP-51 accepted command, replay and fence contract (proposed module; absent during inspection)",
+      "change": "Request mail query/mutation registration and provider-intent receipt/reconciliation extension through accepted common contracts, including account-scope execution grant, expectedRevision for existing mutations, redacted correlation and queued/rejected results. Root identifies actual exports and shared native/HTTP router files after wave0.",
+      "reason": "No second command/idempotency/outbox store; published mail errors and restart acceptance require the common durable boundary."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/identity/contracts.ts",
+      "symbol": "WP-03 accepted account grant and transport authority contract (proposed module; absent during inspection)",
+      "change": "Request account owner/delegate policy independent of workspace membership/entity sharing, source-mail body/attachment ACL, current policyEpoch/fence and trusted native sender-to-workspace binding. Exact exports/router locations await accepted receipts.",
+      "reason": "API connectivity, allow-all and a link must not become mailbox read/send authority."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-17",
+      "change": "After implementation, record actual authority modes, canonical thread/inbox/query contracts, provider submission evidence levels, dependency/foundation receipts, selected migration identifiers, credential backfill and unsupported loopback external delivery. Do not mark preflight as implementation.",
+      "reason": "314-334 currently describe planned behavior and acceptance; source-backed contribution must update operational limits without weakening them."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "General acceptance boundary / JMAP Mail / Feature completeness / Evidence record",
+      "change": "Attach revision-bound mail scenario and negative-control receipts, canonical/search/policy watermarks, provider independent read-back and failure/restart evidence, distinguishing fixture/standalone/shared and submission/delivery. Keep all mandatory completeness rows visible.",
+      "reason": "7-9,184,197-222,243-247 require actual changed-surface proof, not adapter fixtures or missing-as-N/A."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Existing Stalwart inbox/detail/draft/send still work",
+      "currentEvidence": "MailService.list/get/send/saveDraft:347-465; JmapClient.queryEmails/getEmail/compose; MailCompose autosave and send:445-492. Existing mechanism present, not runtime verified.",
+      "requiredChange": "Preserve standalone paths while adapting existing Inbox/Mail callers to scoped provider-neutral authority/results; keep draft reopen/replace, reply headers and attachments.",
+      "verification": "On real isolated Stalwart through Electron: provision, receive message, list/open detail, save/reopen draft after reload, send and independently read back submission/email and sent-folder state. Run relevant existing mail tests and mail-domain-jmap-regression suite after integration.",
+      "missingPrerequisite": "Wave0 and accepted dependencies; isolated provider/credentials and actual Electron runner.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "threads canonical/searchable",
+      "currentEvidence": "mail-model.toSummary:28-29 returns provider IDs; useMail.open:110-126 fetches one email. JmapClient text search:224-237 is account-local, not canonical Search/Memory.",
+      "requiredChange": "Bind scoped thread/message/account/label aliases through registry; implement bounded Thread/get+Email/get port; register canonical mail extractor in WP-06 and authorized watermark-backed query.",
+      "verification": "Same remote IDs in two accounts/workspaces and repeated import yield distinct/correct canonical refs and one row per alias. Search unique authorized marker after watermark, open whole thread, revoke before projection update and assert no title/snippet/count leak.",
+      "missingPrerequisite": "WP-02 transitive registry/aliases, accepted WP-06 extractor/query and WP-03 current-policy contracts.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "other user cannot read account",
+      "currentEvidence": "registerMailIpc:110-120 ignores sender authority; credentialManagerSecrets uses global email key; MailService.jmap reuses stored record/client.",
+      "requiredChange": "Transport actor and workspace bind account owner/delegate policy before aliases/body/query/count/attachment lookup; link or allow-all grants no implicit account permission.",
+      "verification": "Owner A succeeds, separately delegated B succeeds only with account grant, member without grant and outsider C fail HTTP/native IPC/agent queries including forged raw IDs and alias refs; denied replies contain no PRIVATE_WP-17 metadata/body.",
+      "missingPrerequisite": "Accepted WP-03 account ACL and trusted native sender context; common agent dispatcher for agent variant.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "actual send uses provider receipt",
+      "currentEvidence": "JmapClient.compose:351-365 requires created submission ID; MailService.send:451 returns only emailId; MailCompose:483-486 closes on any ok.",
+      "requiredChange": "Carry and persist real submission evidence in common command receipt with provider account/canonical refs/request hash; reconcile/read back before applied_verified, retain queued/unknown/ambiguous states. Submission acceptance is not delivery.",
+      "verification": "Send through real provider sandbox, independently query submission/email, retain command/provider IDs and observed revision. Timeout after provider acceptance plus restart cannot blindly resend; notCreated draft-only outcome and fabricated fixture receipt must not count as actual send.",
+      "missingPrerequisite": "Accepted WP-04 provider-intent/reconciliation receipt semantics, supported JMAP read-back capability and independent sandbox client.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Existing JMAP mailbox provisioning, push, inbox, draft, move/flag/send pass without connecting Gmail.",
+      "currentEvidence": "provisionMailbox:75-156 handles owner/idempotency/repair; JmapClient.subscribe:373-425 retries; MailService:302-315,323-465 exposes operations. fakeStalwart:46-91 only simulates provisioning.",
+      "requiredChange": "Retain Stalwart/JMAP adapter and scoped existing credentials, verified mutation results and account-bound push lifecycle; Gmail must not be required for readiness.",
+      "verification": "Run complete JMAP-only Electron flow including owner-marker collision/credential repair, event arrival, disconnect/reconnect, read, draft reload, move, flag and actual submission read-back; assert no Gmail account/connection used.",
+      "missingPrerequisite": "Stalwart isolated test accounts, capability receipt and integrated scoped renderer/main contracts.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Two workspaces with same email address cannot see each other’s metadata via IPC broadcast or attachment retrieval.",
+      "currentEvidence": "local-ipc:16-38 global service/broadcast/secrets; SAVE_ATTACHMENT:130-135 ignores emailId; savedPaths/REVEAL:17,138-141 shared.",
+      "requiredChange": "Namespace service/credential refs/events/download capabilities by verified workspace/account/actor; authorize real attachment membership and source-mail policy, not just supplied blobId.",
+      "verification": "Open W1/W2 windows with equal email and overlapping remote IDs. Trigger W1 changes/status and capture W2 event payloads: no W1 address/status/title/counters. Forge email/blob/ref in W2, request W1 attachment and reveal path: denied with no bytes/path metadata. Repeat after revoke/context switch/restart.",
+      "missingPrerequisite": "Trusted window/session context and WP-03 scoped account policy; managed blob port if shared files used.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Remote submission rejected in loopback environment remains explicit unsupported path; do not turn fixture success into production receipt.",
+      "currentEvidence": "MailService.send:431-435 returns external-blocked for outside-domain recipients; ensureMailbox:250-252 rejects remote admin provisioning; MailCompose:484 displays local external-blocked.",
+      "requiredChange": "Preserve explicit capability-denied path and distinguish unsupported/rejected from fixture/live submission receipts; API connection is not mailbox authority or MX delivery capability.",
+      "verification": "In loopback mode send external to/cc/bcc: explicit rejection, no submission/verified receipt. Same-domain sandbox send uses real submission evidence but cannot claim production remote delivery. Invalid remote provisioning remains rejected.",
+      "missingPrerequisite": "Integrated capability/result port and loopback provider scenario; not a Gmail connection.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "MailPanels.MailListPanel, MailReader and MailCompose are the existing surface; current send treats every ok as final.",
+      "requiredChange": "Use existing panels for canonical thread/account context and honest domain/receipt states; retain sanitization, compact i18n controls and keyboard behavior.",
+      "verification": "Real Electron interaction, visual/ARIA evidence of list/detail/draft/send and denied/error/queued states, keyboard/focus/hover and reload on exact revision.",
+      "missingPrerequisite": "Integrated contracts and authorized Electron runtime/sandbox; preflight prohibits UI execution.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "mail-view.mailItemId/emailIdFromItem:21-29 wrap raw email IDs; mailToInboxItem:32-42 exposes metadata in existing Inbox.",
+      "requiredChange": "Resolve workspace/account/canonical thread deep link into existing Mail panel and navigation history; legacy aliases require authorized resolution, not raw global ID.",
+      "verification": "Open canonical thread from search/link, back/forward/reload restores correct panel; forged workspace or revoked target yields denied without title/preview.",
+      "missingPrerequisite": "Accepted canonical navigation/alias resolution integration; exact routing exports await root receipts.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "MailSummary/MailMessage:58-94 carry provider IDs and useful RFC headers, but no canonical workspace refs/revisions.",
+      "requiredChange": "Typed mail_account/thread/message/label with scoped aliases; separate Message-ID/References from canonical identity and immutable body from mutable metadata.",
+      "verification": "Strict schema rejects invalid/mismatched refs; collisions quarantine, repeated import stable, same Message-ID in mailbox copies remains distinct canonical message identity.",
+      "missingPrerequisite": "Accepted WP-02 entity/alias registry and migration contract.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "MailService:112-142 persists one local mailbox.json/config; JMAP stores drafts; no shared mail repository observed.",
+      "requiredChange": "One shared workspace authority stores canonical metadata/immutable body refs; local files become scoped import/projection and standalone mode stays explicit. Additive provenance backfill, no duplicate shared stores.",
+      "verification": "Restart service/Electron after accepted write and before reply: same canonical entity/revision/receipt and intact draft/body; DB row/unique-key counts stable; ambiguity quarantined.",
+      "missingPrerequisite": "Selected migrator, accepted entity/provider/receipt table ownership and WP-04 transactions.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "MailService.setFlags/move/send/saveDraft perform direct JMAP operations; no command envelope or durable idempotency in inspected mail bridge.",
+      "requiredChange": "Use RoxCommand v2 through common authority for shared mutations: actor from transport, workspace/resource ACL, explicit outbound execution grant, idempotency hash and expectedRevision on existing mutable aggregates.",
+      "verification": "Same key/payload returns same receipt, changed payload fails IDEMPOTENCY_CONFLICT, stale mutable revision fails REVISION_CONFLICT, forged actor fails and agent allow-all cannot override ACL/grant. No scalar CAS imposed on read-only openThread merely because mutations require it.",
+      "missingPrerequisite": "Accepted WP-04 envelope/receipt and WP-03 execution/resource contracts.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "JmapClient.queryEmails uses position/limit and calculateTotal; MailService.list caps upper limit to 200 but has no authorized cursor; get opens one provider email.",
+      "requiredChange": "Implement GetMailThread and QueryInbox with bounded validated limit, stable cursor, canonical source, current account policy and no unauthorized hidden totals/title.",
+      "verification": "Paginate tied sort values without loss/duplicates; swapped/expired/other-account cursor rejected; workspace/thread/account mismatch fails; revoked actor cannot reuse old cursor. DTO fields conform exactly to strict contract.",
+      "missingPrerequisite": "Accepted registry, policy and domain pagination primitives.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "JmapClient.subscribe reports changed state; MailService.startPush discards it and emits a debounced refresh; broadcast is unscoped/lossy.",
+      "requiredChange": "Keep provider push hints and local retry, persist canonical change/outbox before domain delivery, account/policy-bound subscriptions and reconnect read-back with revision/watermark. Do not label a browser hint a durable domain event.",
+      "verification": "Receive actual provider mail, observe mail.message_received, authorized UI refresh and watermark. Duplicate/out-of-order event leaves one projection; disconnect/restart and read-back closes gap; unauthorized window gets nothing. Full cursor reset/webhook algorithms are WP-18, but required WP-17 delivery cannot be missing.",
+      "missingPrerequisite": "WP-04 outbox/consumer receipt API, provider watch/read-back and WP-03/51 delivery fence.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "Provisioning owner marker protects adoption, but IPC handlers have no sender ACL and global metadata is reused.",
+      "requiredChange": "Separate account owner/delegates, workspace membership, entity sharing and outbound execution grants; recheck policy epoch for queries, bodies, downloads, events and shared writes.",
+      "verification": "Owner/editor/viewer/member/outsider/guest and revoked actor matrix across IPC/HTTP/agent; allow-all no bypass; revoke while detail and push active erases future body/event access and cached authorized surface.",
+      "missingPrerequisite": "Accepted WP-03 account delegation, revocation and transport principal APIs plus current fence contract.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "WP-17 permissions explicitly prohibit link-based body access; inspected local mail contract contains no grant model.",
+      "requiredChange": "Reuse common explicit grants and inheritance rules; personal mail linked from shared entities remains private; account connection grants differ from entity/link grants; expired public links reveal no body/attachments.",
+      "verification": "B sees shared project/link but cannot read A-mail; separate delegated inbox grant enables only intended account; revoke/expiry blocks thread and attachment including cached/search paths.",
+      "missingPrerequisite": "Accepted WP-03 sharing/account-grant and graph target-policy hooks.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "useMail.search/JmapClient Email/query text is local provider search only; published WP-06 supplies authorized Search/Memory projection.",
+      "requiredChange": "Register mail canonical extractor/upsert/tombstone with source-account policy and source revision; forbid token/raw private payload telemetry and stale denied snippets/counts.",
+      "verification": "Authorized distinctive phrase searchable after watermark; deleted/revoked thread absent even while index stale; worker crash/replay preserves one correct version and no unauthorized snippets.",
+      "missingPrerequisite": "Accepted WP-06 extraction/query/watermark interface and current ACL fence.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "Mandatory checklist 22-test-plan:211; no occurrence/source-revision integration in inspected mail UI/model.",
+      "requiredChange": "Integrate applicable canonical mail references/mention occurrences with common target policy and source revision; mentions do not grant mail access. Determine exact supported representation with foundation owner, without interpreting arbitrary sender email as Principal.",
+      "verification": "Authorized mention resolves canonical thread, forbidden target exposes no title/body, edit/remove occurrence updates linkage without body mutation and without expanding ACL.",
+      "missingPrerequisite": "Accepted WP-09 occurrence/recipient-policy interface and owner-defined mail representation; cannot mark N/A because unimplemented.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "CHANGED is a refresh broadcast, not recipient-policy notification; completeness checklist:212 requires dedup and seen/done/mute/snooze.",
+      "requiredChange": "Feed accepted mail domain events into common recipient-policy notification mechanism; authorization is current at delivery/open, semantic reason dedup and user state preserved. No mail-only notification store.",
+      "verification": "One notification for authorized recipient despite repeated event/reasons; unauthorized/revoked recipient gets neither private preview nor mail body; seen/done/mute/snooze persists/replays without changing account ACL.",
+      "missingPrerequisite": "Accepted common notification/recipient service integration (published mention/notification foundation), event receipts and root hook locations.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Existing mail emits refresh/log only; WP-17 declares mail.message_received/mail.message_sent and audit privacy.",
+      "requiredChange": "Use common activity/audit from accepted events with actor/cause/revision and scoped account authorization; omit body, addresses and credential values in logs/audit telemetry.",
+      "verification": "One activity entry per accepted effect with correct canonical ref/actor/cause/revision; duplicate replay dedup; denied user cannot infer private mail activity; private markers absent from telemetry.",
+      "missingPrerequisite": "Common outbox/activity consumer contract and policy-filtered activity query.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "Inspected MailLocalApi is renderer IPC; no common mail domain tool registration observed. Checklist explicitly forbids unimplemented agent access as N/A.",
+      "requiredChange": "Expose authorized GetMailThread/QueryInbox/mail.openThread through accepted domain tools/context with acting user and provenance; outbound agent send obeys separate execution grant and same receipt path.",
+      "verification": "Agent-A obtains authorized canonical thread at watermark, agent with denied acting user/allow-all gets no body, forged actor denied, send without explicit grant rejected; receipt/provenance matches native/HTTP path.",
+      "missingPrerequisite": "Accepted WP-36 common dispatcher/context plus WP-03/WP-04 contracts; root registration seam not yet supplied.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Normative operation mandates POST /v1/workspaces/{workspaceId}/commands/mail.openThread and nativeRpc domain.mail.openThread; current MAIL_IPC.GET differs.",
+      "requiredChange": "Register specified HTTP/native domain operation and applicable common agent/MCP adapter to the same typed service, strict schema/error/result translation, not privileged local bypass.",
+      "verification": "Equivalent authorized and forbidden results across HTTP/native/MCP; body actor or extra property rejected, unauthenticated/workspace mismatch fails, result DTO leaks no unauthorized hidden fields.",
+      "missingPrerequisite": "Accepted workspace transport router and agent/MCP registration contracts after wave0.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "WP-17:14203-14213 mandates commandId, causationId, correlationId, aggregateRevision, policyEpoch, projectionWatermark and retry/DLQ counters; current local bridge carries none.",
+      "requiredChange": "Attach required correlation/sequence/policy/watermark fields to common command/event/projection diagnostics and queue/error metrics; privacy-filter raw provider errors and mailbox-ready logs.",
+      "verification": "Trace one read/write/event/projection/retry end-to-end with required fields and bounded counters; scan emitted logs/evidence for raw email/body/transcript/token/private marker, including failure path.",
+      "missingPrerequisite": "Accepted common redacted telemetry/outbox/projection interfaces and real runner evidence capture.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Existing mail.test.ts protects provisioning/helper behavior and mail-model.test.ts pure helpers only; no mail integration test directory observed.",
+      "requiredChange": "Add normative WP-17/domain JMAP regression tests covering behavior, boundaries, errors and recovery; preserve useful existing tests, seed meaningful sensitivity controls and distinguish infrastructure error from caught mutation.",
+      "verification": "Future runner: bun test tests/macro-integration/wp-17.test.ts tests/macro-integration/mail-domain-jmap-regression.test.ts packages/shared/src/mail/__tests__/mail.test.ts apps/electron/src/main/mail/__tests__/mail-model.test.ts; then actual Electron/provider scenarios and independent seeded control/holdout.",
+      "missingPrerequisite": "Implemented foundations/mail paths and isolated runtime; no tests authorized in preflight.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan WP-17 and 22-test-plan are planned normative requirements, not implementation results.",
+      "requiredChange": "Document actual existing-surface behavior, authority modes, provider capability/unsupported boundaries, credential migration, canonical alias/search flow, reconciliation/recovery and evidence receipts at named docs.",
+      "verification": "Review operator recovery against exercised failures and actual migration/transport signatures; docs cannot promote fixture or unknown effects to live verified.",
+      "missingPrerequisite": "Integrated implementation and observed runtime receipts; documentation source mutation is root-owned.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "MailState has error/unreachable; MailResult generic code/message; provider draft-only error in compose and external-blocked exist but domain denial/conflict/reauth/quarantine/unknown are not represented.",
+      "requiredChange": "Map all normative operation errors and canonical statuses explicitly through bridge/UI; preserve draft on failed/reconciling send and block unsafe retry; render unsupported capability separately from genuine empty.",
+      "verification": "Inject UNAUTHENTICATED, FORBIDDEN, WORKSPACE_MISMATCH, INVALID_PAYLOAD, REVISION_CONFLICT, IDEMPOTENCY_CONFLICT, PROVIDER_UNAVAILABLE, UNKNOWN_EXTERNAL_EFFECT, SCHEMA_VERSION_UNSUPPORTED and REVOKE_FENCE_PENDING at real boundary; no false success and retry follows receipt state.",
+      "missingPrerequisite": "Typed common error/fence/result contract, provider failure scenario runner and scoped UI cutover.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "useMail sets loading:52-71; MailListPanel:155 checks zero items without using loading, so initial pending fetch can appear empty.",
+      "requiredChange": "Differentiate initial loading and stale refresh, retain authorized prior data only while current ACL permits; scope request generations so late other-account data cannot replace current list/detail.",
+      "verification": "Delay provider/list/detail queries, switch account while pending, revoke while refreshing: correct loading surface and no stale private content; no empty marker before authorized query completion.",
+      "missingPrerequisite": "Integrated scoped hook/contracts and actual UI delay/failure harness.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "MailListPanel zero-items EmptyState and MailStatusBlock legacy status exist; denied/unavailable queries not distinguished as domain states.",
+      "requiredChange": "Show genuinely empty inbox/search only after successful authorized query, distinct from unconfigured, denied, provider unsupported, offline/unavailable and still loading.",
+      "verification": "Exercise each empty/unconfigured/denied/unavailable state through actual surface; no private address/count leaked and denied state never labeled successful empty inbox.",
+      "missingPrerequisite": "Domain query/result state contract and integrated UI runtime.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "JmapClient.subscribe retries; MailCompose autosaves to provider after 4s, quiet failures suppressed; no durable offline command/draft projection found in these seams.",
+      "requiredChange": "Use accepted common durable draft/projection/outbox, show offline_queued not verified, replay once after reauthorization, quarantine rejected/revoked draft without leaking or resending.",
+      "verification": "Disconnect during edit/send, restart Electron/service, recover draft/intent, reconnect accepted once; revoke while offline then reconnect yields rejection/quarantine and no provider side effect. Unknown remote outcome reconciles before retry.",
+      "missingPrerequisite": "WP-05 replay and WP-51 single-writer/fence integration; not explicit WP-17 edges, therefore hidden gate must be resolved by lead.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Negative control: unauthorized actor or dropped/duplicated event must fail acceptance; independent second failure variant",
+      "currentEvidence": "Normative WP-17 tests/verification specify body access via another account's thread alias and independent holdout; no execution evidence exists.",
+      "requiredChange": "Keep assertions that detect authorization bypass, event loss and duplicate projection effects; inject seeded mutation without converting setup failure into caught control.",
+      "verification": "Baseline passes on exact integrated revision, then bypass account ACL for alias-body read and prove content-negative assertion fails; drop/duplicate event separately must break receipt/watermark or uniqueness assertion. Independent evaluator injects holdout; preserve seed 20260947 and failure trace.",
+      "missingPrerequisite": "Passing baseline service/provider/UI scenario and independent evaluator, plus accepted outbox/projection hooks.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Restart between persisted command and reply preserves state/receipt/canonical ID",
+      "currentEvidence": "MailService local JSON write is atomic rename, but JMAP send and local result have no durable command reply linkage; normative persistence-recovery test:14184-14186.",
+      "requiredChange": "Persist common receipt/entity/outbox transaction and provider intent/evidence with recoverable lifecycle; replay same identity after crash and reconcile external uncertainty without blind resend.",
+      "verification": "Kill after DB commit before response, retry same idempotency key after restart, verify same entity/revision/event/receipt and DB unique-key counts; kill after remote acceptance before persisted result and assert reconciling/ambiguous until real provider read-back.",
+      "missingPrerequisite": "Accepted WP-04 transaction/receipt and provider reconciliation capability, controllable isolated process runner.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Normative transport, request/response schemas and account-scoped query DTO",
+      "currentEvidence": "WP-17 operation at 14273-14660 is mail.openThread query with strict account/thread EntityRef; current bridge get takes a bare string ID.",
+      "requiredChange": "Validate required account/thread/workspace refs, reject actor/extra fields and unsupported schema, map request to typed GetMailThread, return authorized Rox2CanonicalResult status/receiptId with actual command/hash/revision/verifiedAt only where supported by evidence; pagination cursor bound to authority.",
+      "verification": "Schema/transport tests reject forged actor, unexpected property, invalid kind:id, cross-workspace/account thread and stale policy cursor; valid DTO contains only authorized fields and truthful queued/reconciling/applied state.",
+      "missingPrerequisite": "Accepted RoxCommand v2/Rox2EntityRef/result schema and transport adapters; no invented alternate schema.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Database/domain constraints, forward migration and rollback safety",
+      "currentEvidence": "WP-17 migrations:14662-14713 mandate scoped entity/alias/idempotency/event constraints, immutable bodies and token refs; proposed filenames are unresolved.",
+      "requiredChange": "Apply additive canonical mail schema using accepted common entity/provider/receipt tables; scoped unique/FKs, stable cursor indexes, body/attachment policy inheritance, backfill provenance and quarantine ambiguity. Preserve recent shared writes on rollback/forward repair.",
+      "verification": "Migration smoke on isolated DB; cross-workspace FK and duplicate alias/account attempts fail; repeated import one canonical row, Message-ID mailbox copies allowed; flag/move cannot mutate stored body; no secrets in entity/event/search; restart/backfill and pre-/post-cutover repair exercised.",
+      "missingPrerequisite": "Root-selected migrator, common table ownership and applied dependency migration receipts.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "License policy: behavior reimplementation; upstream dependency-only after exact audit",
+      "currentEvidence": "WP-17 licensePolicy:14243; existing ROX JMAP/provisioning mechanisms inspected, no upstream source copied.",
+      "requiredChange": "Implement behavior using existing local mechanisms and accepted typed authority; no Macro source vendoring or new upstream dependency without exact license receipt.",
+      "verification": "Review future contribution provenance and dependency/license/SBOM receipt at integrated revision; any upstream addition must have explicit dependency-only audit.",
+      "missingPrerequisite": "Future implementation diff and exact audit for any introduced dependency; this preflight performs no dependency changes.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Verification gate: real changed surface and relevant failure/reload path, fixture is not live receipt",
+      "currentEvidence": "WP-17:14244 and 22-test-plan.md:7-9,243-247 explicitly distinguish implementation, verification and delivery; preflight source-only.",
+      "requiredChange": "Bind all completed DoD assertions to actual implementation SHA/dirty hash, image/schema/fixture seed, canonical refs/revisions, command/provider/event receipts and UI/ARIA failure/reload evidence. Keep featureComplete false until all requirements verified.",
+      "verification": "Lead independently accepts runtime receipts including real isolated provider read-back, negative control/holdout and reload/failure paths; fixture/queued/unknown/unsupported cases cannot be promoted to live verified.",
+      "missingPrerequisite": "Implemented integrated revision and authorized actual provider/Electron evaluation; no such execution authorized for this preflight.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-17 dependencies/acceptance/featureCompleteness/migrations","lineStart":14089,"lineEnd":14713,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"apps/electron/src/main/mail/local-ipc.ts","symbol":"registerMailIpc / credentialManagerSecrets / broadcast / SAVE_ATTACHMENT","lineStart":16,"lineEnd":145,"sha256":"e10fcfdf62c0dbd2f4881e70b7ad1310f1d6ba1394d16462c5af852bfe39726c"},
+    {"path":"apps/electron/src/main/mail/mail-service.ts","symbol":"MailService.send / saveDraft / download","lineStart":399,"lineEnd":470,"sha256":"7322905a2f22660bbb04eb9084a2a16677a0c7c2f1ec2530b2c939997e60c36d"},
+    {"path":"apps/electron/src/main/mail/mail-service.ts","symbol":"MailService constructor / status / ensureMailbox / jmap / startPush","lineStart":99,"lineEnd":315,"sha256":"7322905a2f22660bbb04eb9084a2a16677a0c7c2f1ec2530b2c939997e60c36d"},
+    {"path":"packages/shared/src/mail/jmap-client.ts","symbol":"JmapClient.accountId / queryEmails / getEmail / compose / subscribe","lineStart":187,"lineEnd":425,"sha256":"31a2c26b3499532894b71b0492dcb9b6b4372009915fffcd50398b236bc83028"},
+    {"path":"apps/electron/src/main/mail/mail-model.ts","symbol":"toSummary / toMessage / threadHeaders / externalRecipients","lineStart":25,"lineEnd":94,"sha256":"75af3dfc936f3a47c7baeec8c67ebac0bee4a263cc0583eaeff56f2ca7a2ab4d"},
+    {"path":"apps/electron/src/shared/mail-local.ts","symbol":"MAIL_IPC / MailLocalApi / MailSummary / MailMessage","lineStart":12,"lineEnd":142,"sha256":"65689fe50e18d5c8a9e7bb0032ce6e0db65d5cb6ce42f40d4bea19e04c41c3d2"},
+    {"path":"apps/electron/src/preload/bootstrap.ts","symbol":"mailLocal","lineStart":580,"lineEnd":603,"sha256":"a5f07c5a1924e6595e791170ffa1b8827e32eaad45eb725e4fdd232faf0ff9d2"},
+    {"path":"packages/shared/src/mail/provisioning.ts","symbol":"MailboxSecretStore / verify / provisionMailbox","lineStart":40,"lineEnd":156,"sha256":"7d97023aa42e95e473cbc746229034ab5427233bff3ec5d3c0b951b2f7dfa14e"},
+    {"path":"apps/electron/src/renderer/pages/inbox/mail/useMail.ts","symbol":"autoEnsureTried / useMail.refresh / open / act","lineStart":20,"lineEnd":145,"sha256":"552929f76ee0f841414061a364914fd08fbba67b8c637ac9ff9d36a21aa7a6a9"},
+    {"path":"apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx","symbol":"MailListPanel","lineStart":105,"lineEnd":179,"sha256":"58489312903d05712ece9e6cdac4b8eb6f771bd0180e1ce77561e26b79511044"},
+    {"path":"apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx","symbol":"MailCompose.saveDraft / send","lineStart":420,"lineEnd":492,"sha256":"58489312903d05712ece9e6cdac4b8eb6f771bd0180e1ce77561e26b79511044"},
+    {"path":"apps/electron/src/renderer/pages/inbox/mail/mail-view.ts","symbol":"mailItemId / emailIdFromItem / mailToInboxItem","lineStart":21,"lineEnd":42,"sha256":"7b363494bd97e74a92858f8bd026170185e0a667b2d376bcff0a65ac00b70331"},
+    {"path":"apps/electron/src/renderer/pages/inbox/mail/mail-view.ts","symbol":"statusKey","lineStart":109,"lineEnd":120,"sha256":"7b363494bd97e74a92858f8bd026170185e0a667b2d376bcff0a65ac00b70331"},
+    {"path":"packages/shared/src/mail/__tests__/mail.test.ts","symbol":"fakeStalwart / provisionMailbox describe","lineStart":45,"lineEnd":132,"sha256":"dfadbdbb9a242e5d8914364e47e3cf72bf80f264e813476f535f3d7abe43aa6f"},
+    {"path":"apps/electron/src/main/mail/__tests__/mail-model.test.ts","symbol":"mail-model describe","lineStart":1,"lineEnd":29,"sha256":"78eff41bd6128b782fe81fcf52958a81da9515fed4bf2e5f6f1c4ad8ea35cbba"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-17","lineStart":314,"lineEnd":334,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"General acceptance boundary / fixtures","lineStart":5,"lineEnd":34,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Feature completeness checklist / seeded sensitivity / evidence receipt","lineStart":197,"lineEnd":247,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": "Root accepts this preflight, commits wave0 and supplies revision-bound WP-04/WP-03/WP-06 typed-interface/migration/scenario receipts. Compare each source hash and re-read changed seams, resolve migrator/provider_connection ownership and hidden completeness gates, then begin the normative mail contracts/repository/JMAP adapter in dependency order. First behavioral implementation slice is authorized canonical GetMailThread/QueryInbox through the existing bridge with same-address account isolation, preserving explicit standalone JMAP. No source implementation is authorized or claimed by this report.",
+  "risks": [
+    "Root-owned uncommitted work may change inspected files. Hash mismatch invalidates the affected seam and requires reinspection; dispatch input revision is not proof of current file bytes.",
+    "Global mailbox/service/keychain lookup and broadcast are concrete current cross-context seams, not evidence of an observed live exploit; runtime impact has not been exercised.",
+    "JMAP provider primary account ID, email address, RFC Message-ID and canonical entity ID are different identities. Dropping namespace or merging by email/message subject corrupts isolation and mailbox copies.",
+    "Legacy global secret migration is dangerous for matching email across workspaces/origins. Ownership and original provider provenance must be verified, with ambiguous bindings quarantined; compatibility cannot be perpetual privileged fallback.",
+    "EmailSubmission creation is acceptance, not confirmed recipient delivery. Crash after unknown provider effect cannot be repaired by blind compose retry; read-back capability/reconciliation limitations must remain explicit.",
+    "Replacing MAIL_IPC contract without migrating direct MailPanels saveDraft/send/file consumers would leave authority bypasses and false sent UI, even if useMail is updated.",
+    "Quiet draft failure currently suppresses UI error; source-preserving cutover still requires durable offline draft/replay rather than labelling current autosave complete.",
+    "Provider push is lossy refresh, not a transaction outbox. WP-18 owns extended sync reset/webhook mechanisms, but WP-17 still needs its own durable accepted events and reconnect read-back proof.",
+    "Both migration filenames are normative proposed paths; applying competing table definitions or recreating shared provider/receipt tables is incorrect. Root owns migrator and cross-package schema integration.",
+    "WP-05/WP-51, mention/notification/agent integration and real provider sandbox are hidden completeness gates beyond WP-17's three declared edges; unresolved gates block featureComplete rather than reducing acceptance.",
+    "Logs currently include mailbox address/raw provider errors. New observability must redact content and credentials without hiding actionable error classifications or falsely suppressing failures.",
+    "This report proves only inspected source seams and a contribution plan; no feature implementation, runtime regression, provider receipt or dependency acceptance has been verified."
+  ]
+}

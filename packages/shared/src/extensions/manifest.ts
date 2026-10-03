@@ -50,6 +50,18 @@ const contributesSchema = z
   })
   .optional()
 
+const operationNameSchema = z.string().regex(/^[A-Za-z][A-Za-z0-9._:-]{0,127}$/, 'invalid operation name')
+const operationsSchema = z
+  .record(z.string(), z.array(permissionSchema))
+  .superRefine((operations, ctx) => {
+    for (const name of Object.keys(operations)) {
+      if (!operationNameSchema.safeParse(name).success) {
+        ctx.addIssue({ code: 'custom', message: `invalid operation name: ${name}`, path: [name] })
+      }
+    }
+  })
+  .optional()
+
 export const ExtensionManifestSchema = z.object({
   id: z.string().min(1).regex(ID_RE, 'invalid extension id'),
   name: z.string().min(1),
@@ -57,11 +69,11 @@ export const ExtensionManifestSchema = z.object({
   runtime: runtimeSchema,
   activationEvents: z.array(z.string()).optional(),
   permissions: z.array(permissionSchema),
+  operations: operationsSchema,
   contributes: contributesSchema,
   engines: z.object({ craft: z.string().optional() }).optional(),
   dependencies: z.array(z.string()).optional(),
 })
-
 export type ParsedExtensionManifest = z.infer<typeof ExtensionManifestSchema>
 
 function collectZodIssues(err: z.ZodError): string[] {
@@ -100,6 +112,7 @@ export function parseExtensionManifest(raw: unknown): ExtensionManifest {
     runtime: data.runtime,
     activationEvents: data.activationEvents,
     permissions: data.permissions as ExtensionPermission[],
+    operations: data.operations as Record<string, ExtensionPermission[]> | undefined,
     contributes,
     engines: data.engines,
     dependencies: data.dependencies,

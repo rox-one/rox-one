@@ -1,0 +1,241 @@
+{
+  "task_id": "CI-011-preflight",
+  "attempt_id": "54cb45a99aa9244bc7ee766c48b11e56",
+  "packet_hash": "df9e81d6b881f6f5adb2a90aa22cb3da5fb9b264010935304a4b27c7ead3fe1f",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "CI-011",
+  "featureComplete": false,
+  "mode": "inspect-only; owned report creation only",
+  "workTier": "bounded-workflow",
+  "dependencies": ["CI-006", "CI-008", "CI-009", "LSX-WP-025"],
+  "dependencyEvidence": {
+    "authority": "plans/lark-suite-reference/execution-packages.json:4969-4977",
+    "sourceRecordDifference": "code-intelligence.json:4225-4229 lists only CI-006/CI-008/CI-009. The normative execution record and supplied progress entry additionally require LSX-WP-025; that edge is retained.",
+    "dispatchDifference": "The preflight dispatch depends_on array is empty because this is inspection, not implementation. It does not remove implementation prerequisites.",
+    "receipts": "No accepted dependency artifact/readback receipts were provided or inspected; published records are PLANNED_NOT_EXECUTED, not proof of current runtime state.",
+    "contractsNeeded": [
+      {"package": "CI-006", "contract": "Provider-neutral canonical page/section refs, search/read/list, complete bounded sections or explicit limit errors, ownership, claims with evidence versions and semantic verification receipts; local retrieval independent of model generation."},
+      {"package": "CI-008", "contract": "Authoritative current/stale/missing statuses, affected-artifact queries, immutable artifact manifest, source fingerprint and idempotency identity; watcher/restart/reconnect invalidation."},
+      {"package": "CI-009", "contract": "Accepted Project/Sources Code Intelligence host and canonical deep links carrying workspace/repository/snapshot/ref; no second rail or independent state store."},
+      {"package": "LSX-WP-025", "contract": "Capability-filtered permitted Docs rows and same existing note/page route, preserving document ref and content descriptor."}
+    ]
+  },
+  "evidenceScope": {
+    "baseline": "input_revision is the supplied packet revision, not a Git state independently verified by this worker. Inspected files are live working-tree bytes, potentially including lead-owned uncommitted changes.",
+    "hashing": "Whole-file SHA256 values were obtained using one read-only shasum -a 256 command after source inspection. The two specification hashes match the supplied input_manifest.",
+    "staleness": "No atomic snapshot or freeze was taken. Concurrent root edits can make line ranges and source observations stale, including between read and hash. Re-read and re-hash these seams after wave0 commit and dependency integration; do not apply this report as a ready patch against the old baseline.",
+    "discovery": "codegraph reported no index for this project. Built-in find failed with a judge-account 402, so known normative paths were read directly and known symbols searched with grep; neither failure is treated as evidence that implementation is absent.",
+    "newFilePresence": "glob of the three normative proposed file paths reported Path not found at inspection time; the code-intelligence component directory listing showed RepositorySnapshotPanel.tsx.",
+    "verificationPerformed": "Source/spec inspection, read-only SHA256 collection, and artifact readback only. No builds, tests, validator command, native UI, network operations, Git commands or source edits were performed. Verification scenarios below are future requirements, not results."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-REF-AND-ACTIVE-HOST",
+      "relationshipToDAG": "Hidden cutover gate within CI-006/CI-009/LSX-WP-025 delivery, not an added explicit dependency.",
+      "evidence": ["KnowledgeSurfacePage:105-125 redirects to routes.view.notes() and hard-disables knowledgeEnabled", "KnowledgeEntityPage:26-41,66-78,124-141 accepts SiYuan kind/id, probes SiYuan and constructs scheme:siyuan", "useSiyuanConnected:8-10 always returns false", "knowledgeEntityCompanionRef:11-17 reconstructs a SiYuan ref", "refs.ts:17-32,69-86,184-205 supports provider strings but only SiYuan scheme and notebook/document/block/database/asset kinds"],
+      "requiredBeforeImplementation": "Lead/dependency owners must accept the active Rox Notes/Docs mounting and canonical provider/section ref contract. Preserve provider, connection, snapshot and section identity end-to-end; do not revive embedded SiYuan, cast repository paths to SiYuan IDs, or introduce a second Wiki store. Proposed RepoWiki routing must run before the legacy redirect in a correctly separated component branch so hooks remain unconditional within each component.",
+      "state": "MISSING_ACCEPTED_CONTRACT"
+    },
+    {
+      "id": "FG-REVIEWED-MANIFEST-APPLY",
+      "relationshipToDAG": "Specification API/authority requirement with an unresolved integration-owner contract; no separate artifact-apply backend owner is named by CI-011's three owned files.",
+      "evidence": ["code-intelligence.json:1346-1361 ReviewProposal includes artifactId/baseHash/affectedFiles", "code-intelligence.json:1840-1874 requires selected files, exposure summary and disabled apply for unknown base hash", "code-intelligence.json:2076-2110 requires current actor policy and atomic writes/rollback", "MutationProposal:123-151 has one targetRef and SiYuan-oriented ops, no artifact manifest or selected-files field", "KnowledgeMutationsApi:24-39 applyProposal accepts only proposalId/workspaceId"],
+      "requiredBeforeImplementation": "Integration owner must provide an accepted typed extension through the existing knowledge proposal lifecycle for generated artifacts: immutable artifact identity, permitted affected-file manifest, selected targets, reviewed revision/base hashes, exposure metadata, authorization, durable rejection/application/conflict receipts, and authoritative atomic apply/rollback. UI cannot emulate these guarantees or privately write artifacts. Exact final DTO names must come from the accepted dependency/backend schema, not be invented by this worker.",
+      "state": "MISSING_ACCEPTED_BACKEND_SCHEMA_AND_OWNER_RECEIPT"
+    },
+    {
+      "id": "FG-SHARED-AUTHORIZATION-AND-OFFLINE",
+      "relationshipToDAG": "Transitive CI-002 foundation plus EG-IDENTITY, not another direct edge.",
+      "evidence": ["code-intelligence.json:2359-2396", "code-intelligence.json:4281-4289", "docs/lark-suite-reference/14-code-intelligence-ui.md:38,57-59,67,107"],
+      "requiredBeforeImplementation": "Accepted actor/workspace/source-scoped resolver must gate page bodies, ToC, backlinks, claim evidence, source opens and review/apply. Local-owned reads follow local policy; remote-private offline reads default deny; enabled signed leases bind actor/workspace/source and expiry, cannot renew offline and invalidate on reconnect. Clear protected data and cancel/ignore old requests on workspace/ref/authorization changes. Record disconnected revocation exposure window rather than claiming instantaneous revocation.",
+      "state": "REQUIRES_TRANSITIVE_AND_EXTERNAL_READINESS_RECEIPTS"
+    },
+    {
+      "id": "FG-SEMANTIC-CLAIM-AND-SNAPSHOT",
+      "relationshipToDAG": "Required CI-006/CI-008 output semantics, beyond merely importing claims or rendering badges.",
+      "evidence": ["code-intelligence.json:1297-1327,1399-1415,3151-3168,3625-3640", "docs/lark-suite-reference/14-code-intelligence-ui.md:73-77"],
+      "requiredBeforeImplementation": "Claim status needs two dimensions: evidence freshness/current-stale-missing-retracted and support assessment supported/partial/contradicted/unresolved with exact-source receipt. File existence cannot produce Source-verified. Dirty snapshots carry parent commit separately from content-manifest digest; changed bytes cannot link to the parent remote commit as exact evidence. Generated ownership and canonical artifact idempotency must survive retries/aliases/restart.",
+      "state": "REQUIRES_ACCEPTED_RESOLVER_AND_RECEIPTS"
+    },
+    {
+      "id": "FG-I18N-AND-UI-READINESS",
+      "relationshipToDAG": "Shared integration work outside CI-011's owned new-file list.",
+      "evidence": ["Repository AGENTS.md requires t(), ten locale files, ASCII-sorted key parity and Russian plural conventions", "docs/lark-suite-reference/14-code-intelligence-ui.md:38,57,63-67", "KnowledgeNavigator:61-85 and KnowledgeDiff:132-173 use existing t() conventions"],
+      "requiredBeforeImplementation": "Integration owner must add any new knowledge.repoWiki/knowledge.claims/artifact-review translations in all ten packages/shared/src/i18n/locales/*.json files with key parity and Russian copy. Final key names depend on accepted DTO states. Reuse light compact Docs chrome and loaded Rox Mono; keyboard/focus/hover/click access, reduced-motion behavior, narrow-screen sheets, ARIA and actual computed font need native UI proof. Locale paths are not worker-authorized source edits.",
+      "state": "SHARED_INTEGRATION_REQUEST_REQUIRED"
+    },
+    {
+      "id": "FG-BASELINE-LEASE-AND-PROVIDER",
+      "relationshipToDAG": "Published cloud launch gates and external gates, separate from explicit package dependencies.",
+      "evidence": ["execution-packages.json:5011-5055", "code-intelligence.json:4387-4404", "docs/lark-suite-reference/14-code-intelligence-ui.md:11-19"],
+      "requiredBeforeImplementation": "Wait for lead wave0 commit and accepted prerequisite artifact+readback receipts; resolve reference revision/digest from delivery manifest and reconcile the published e953786 baseline with this packet's a21aeab1 baseline. Acquire shared-path leases. Verify identity, repository/egress policy and pinned upstream version/license/runtime readiness; native agent transport only when tools are exercised. Optional OpenWiki stays on-demand in the existing capability pack; no new wiki daemon or unaudited removal of duplicate-daemon rejection.",
+      "state": "NOT_ESTABLISHED_BY_PREFLIGHT"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/code-intelligence/RepoWikiPanel.tsx",
+    "apps/electron/src/renderer/components/code-intelligence/ClaimsPanel.tsx",
+    "apps/electron/src/renderer/components/code-intelligence/__tests__/repo-wiki-review.test.ts"
+  ],
+  "ownedContributions": [
+    {
+      "path": "apps/electron/src/renderer/components/code-intelligence/RepoWikiPanel.tsx",
+      "proposedSymbol": "RepoWikiPanel",
+      "change": "Render the dependency-owned canonical page/section DTO inside the existing Docs/Wiki host. Scope inputs to active workspace, connection/repository, exact snapshot and canonical page/section ref; no local authoritative store. Show generated read-only ownership, provider, source revision/time, tree/search, focusable canonical ToC/headings, same-ref backlinks and stale-section filter. Reuse the host's accepted Markdown renderer and source-open callback rather than implement another renderer or raw-file fetch. Compose ClaimsPanel. Request update only stages generation via existing lifecycle; generation completion never adopts the draft. Handle not-generated/loading/empty/error/denied/offline/current/stale/read-only/generation-pending states explicitly; reset protected bodies on scope changes. Final props/imports must bind to accepted CI-006/008/009/LSX-WP-025 exports, not local copies of their DTOs."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/code-intelligence/ClaimsPanel.tsx",
+      "proposedSymbol": "ClaimsPanel",
+      "change": "Present selected section's canonical claims, evidence versions and VerificationReceipts, preserving current/stale/missing/retracted separately from supported/partial/contradicted/unresolved. Keep retracted/deleted evidence visible with explanation instead of filtering it away; do not label unassessed evidence verified. Hover/focus explains rule, snapshot and assessment; click opens the existing authorized evidence/source viewer at exact range. Review mode shows added/retracted/stale claims between draft and current revision and RC-11 impacted sections without mutating either. Provider disconnection is explicit, not an empty-success or current status."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/code-intelligence/__tests__/repo-wiki-review.test.ts",
+      "proposedSymbol": "RepoWiki navigation and reviewed-apply behavior cases",
+      "change": "Follow bun:test conventions and use accepted canonical resolvers/state transitions with deterministic data. Cover duplicate-heading canonical-section identity/backlink roundtrip, retracted/missing/contradicted/unresolved claims, approve-without-write then explicit apply, rejection without adoption, unknown base hash, drift conflict with zero writes, rebase requiring new review, workspace/lease invalidation and provider-disconnected reload. Assertions must inspect consumer-visible ref/claim/transition/target state, not source-text imports or mock forwarding. Keep native UI and authoritative persistence/readback proof as separate lead-run lanes; logic tests cannot prove either."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/KnowledgeSurfacePage.tsx",
+      "symbol": "KnowledgeSurfacePage / KnowledgeSurfacePageProps",
+      "change": "At the composition entry, use the accepted canonical ref/content descriptor to branch to RepoWikiPanel through the active Docs host before any legacy SiYuan-specific component/effects mount. Move the current legacy kind/id behavior behind its own component boundary if needed for hook ordering; preserve Rox Notes cutover and never set knowledgeEnabled=true to resurrect SiYuan. Generated pages must not receive editor mutation controls or siyuanEngine/createEmbedded effects. Preserve panel focus/layout ownership.",
+      "reason": "Lines 105-125 currently redirect all callers to Notes and disable the old surface. Adding RepoWiki UI below that effect would redirect it away; treating repo refs as SiYuan would violate ownership and exact identity."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/KnowledgeEntityPage.tsx",
+      "symbol": "KnowledgeEntityPage / KnowledgeEntityPageProps / body dispatch",
+      "change": "Accept and preserve the canonical provider/ref/content descriptor from dependency routes. Derive view capabilities from that provider instead of useSiyuanConnected; render RepoWikiPanel for generated page/section refs without listConnections fallback selection. Keep companion/agent context on the same accepted canonical ref rather than reconstructing scheme:siyuan. ToC/backlink navigation must carry workspace, connection and immutable snapshot; errors/denials must remain visible instead of converting getBacklinks failures to []. Cancel/ignore old loads and clear private body on scope changes.",
+      "reason": "Lines 26-41,66-78,124-141 constrain provider identity and dispatch to the retired surface. Lines 78 and 92-94 suppress lookup failures; those fallbacks cannot certify canonical RepoWiki sections or distinguish denied/disconnected backlinks. Direct-import knowledge-entity-ref.ts also needs dependency-owner canonicalization before this wiring is accepted."
+    },
+    {
+      "path": "apps/electron/src/renderer/knowledge/KnowledgeNavigator.tsx",
+      "symbol": "KnowledgeNavigator",
+      "change": "Extend the existing navigator slot with the accepted provider-capability branch for RepoWiki collections and canonical page/section selection, reusing the same Project/workspace-filtered host and navigation API. Show loading/empty/denied/disconnected states for supported RepoWiki; do not disguise an unavailable provider as an uncontracted hidden section. Keep proposals entry on the existing KnowledgeHome/KnowledgeProposals route. Do not place RepoWiki in the debug-only full-interface control or add a second rail/store.",
+      "reason": "Current lines 66-76 only mount KnowledgeNotebookTree and the existing proposals route. Its imported loader at KnowledgeNotebookTree:148-163 picks connections[0] and loads SiYuan notebooks, which is not the canonical repository/provider-scoped page contract."
+    },
+    {
+      "path": "apps/electron/src/renderer/knowledge/KnowledgeProposals.tsx",
+      "symbol": "KnowledgeProposals / load / PROPOSAL_STATUS_FILTERS",
+      "change": "Use the accepted extension of the existing proposal list to render artifact provenance, repository/snapshot, permitted file manifest, claim changes and reviewed/apply/conflict/rejection receipt state. Keep click-through through routes.view.proposal. Scope list and invalidation by canonical workspace/connection/artifact identity, clear stale protected rows on workspace/authorization changes and ignore stale loads. Do not introduce a parallel proposal list/store or pretend the existing discarded-record deletion is a durable rejected artifact status.",
+      "reason": "Current list is MutationProposal[] with status/ops/targetRef only; load errors can retain earlier rows because items remain nonempty. Global onChanged reload lacks canonical artifact discrimination. The normative ReviewProposal includes manifest and actor metadata not present in that UI contract."
+    },
+    {
+      "path": "apps/electron/src/renderer/knowledge/KnowledgeDiff.tsx",
+      "symbol": "KnowledgeDiff / conflictActionsFor / act / renderAction / conflict columns",
+      "change": "Add an accepted typed artifact variant to the existing review surface, preserving the server-owned status machine and distinct Approve/Reject versus Apply actions. Display immutable artifact/source identity, base hashes, file manifest with explicit selected targets, exposure summary, claims delta/source proof, reasons and revision/provenance receipt. Apply requires reviewed status, known base hashes, current authorized navigator and valid target selection; otherwise disable with concrete localized reason. On authoritative mismatch show Base/Current/Patch and only re-read/rebuild, discard and canonical target/source-open, never force overwrite. Rebuild supersedes the old review and requires new approval. Use full canonical ref equality for invalidation, including workspace/provider/connection/snapshot; replace the generic Notes redirect for artifact conflicts with exact accepted target navigation. Render partial rollback distinctly and reload authoritative proposal after transitions.",
+      "reason": "Existing conflictActionsFor:60-75 and renderAction:159-278 already separate review/apply, but Apply:194-210 is gated only by busy; three-column conflict:316-330 is single-target; onChanged:109-111 compares only id; openInSiyuan:249-259 currently navigates generically to Notes. Repo artifacts require stronger DTOs, base-hash gating and recoverable exact-target navigation without a second review surface."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "CI-011-AC-1",
+      "criterion": "Generated read-only pages distinguish authored knowledge",
+      "currentEvidence": "KnowledgeSurfacePage:105-125 is retired/redirected, KnowledgeEntityPage:138-141 renders its editor/graph branch. KnowledgeNode:86-97 supplies markdown/contentHash but no typed generated ownership/snapshot/claims descriptor. No normative RepoWikiPanel/ClaimsPanel files were found.",
+      "actualSeam": "KnowledgeSurfacePage, KnowledgeEntityPage, KnowledgeProvider.get and accepted CI-006 page descriptor",
+      "requiredChange": "Mount RepoWikiPanel in the active Docs surface with explicit generated/read-only/provider/snapshot/time badge and separate authored ownership. Allow draft/update staging without automatic adoption or mutation. Same-ref Docs navigation must preserve authored page identity and revisions.",
+      "verification": ["Load authored page and generated page for same repository; generated badges/read-only actions differ and original authored ref/hash stays unchanged after generation, rejection and restart.", "Exercise exact heading source navigation, backlink roundtrip, retracted claim, review reject/apply/basehashconflict and reload provider disconnected as required by this AC's published proof array.", "Actual desktop and narrow UI: screenshots, keyboard/ARIA/read-only controls and computed Rox Mono font; integrated revision-bound authoritative readback before/after restart."],
+      "missingPrerequisite": ["Accepted CI-006 generated namespace/ownership DTO", "CI-009 active mounting/deep links", "LSX-WP-025 same-ref Docs descriptor", "FG-REF-AND-ACTIVE-HOST and authorization receipts"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-011-AC-2",
+      "criterion": "ToC/backlinks use canonical sections",
+      "currentEvidence": "KnowledgeEntityPage:74-107 builds a SiYuan ref and maps getContext children/backlinks to a mindmap, swallowing backlink errors. KnowledgeNavigator:66-76 provides notebook navigation/proposals, not canonical RepoWiki headings. refs.ts:17-52 does not declare section kind; provider form exists but does not itself define WikiSection identity.",
+      "actualSeam": "KnowledgeEntityPage context/backlinks loader, KnowledgeNavigator and canonical refs serialization/parser",
+      "requiredChange": "Use CI-006 authoritative WikiSection id/pageId/anchor/contentHash, not client-generated Markdown slugs. Headings/ToC focusable; page search, stale-section filter and backlink targets resolve exact same page/section/snapshot. Preserve bounded complete-context or explicit limit-error semantics and distinguish denied/unavailable from empty links.",
+      "verification": ["Fixture with duplicate headings and nested sections: select each ToC row and assert resolved canonical section/ref/hash and exact source range; backlink to another section and return preserves the starting ref/snapshot.", "Malformed/missing section, bounded-limit error, denied source, workspace switch and disconnected provider remain explicit; no fallback to arbitrary connection or heading slug.", "Run all five published proof scenarios: exact heading source navigation, backlink roundtrip, retracted claim, review reject/apply/basehashconflict, reload provider disconnected; keyboard/native route readback."],
+      "missingPrerequisite": ["CI-006 section/backlink/ref contracts and serialization receipt", "CI-009 canonical routing/source viewer callbacks", "CI-008 immutable snapshot/freshness", "LSX-WP-025 same-ref route"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-011-AC-3",
+      "criterion": "claim stale/missing status visible",
+      "currentEvidence": "Inspected knowledge pages and diff render markdown, target metadata or mutation ops, not Claim/VerificationReceipt. Domain specification:1297-1327,1399-1415 distinguishes evidence versions from semantic support. CI-008:3625-3640 requires deleted evidence to remain missing and dirty bytes not cite parent commit.",
+      "actualSeam": "New ClaimsPanel composed in RepoWikiPanel and existing KnowledgeDiff artifact variant",
+      "requiredChange": "Render current/stale/missing/retracted and supported/partial/contradicted/unresolved independently, with reason/source version/checker receipt. Retain retracted/deleted rows; show draft/current deltas and impacted sections for RC-05/RC-11. Never turn an existing file, timestamp-only change or provider error into verified support.",
+      "verification": ["Change then delete evidence and retract a claim; reload/restart keeps stale/missing/retracted visible. Existing unrelated source statement stays unresolved; contradictory receipt stays disputed; dirty snapshot source navigation returns the exact local digest/range rather than parent commit URL.", "Hover/focus/click explanations and authorized exact source-open; claim evidence revoked while panel open clears protected bodies on reconnect.", "Run exact heading source navigation, backlink roundtrip, retracted claim, review reject/apply/basehashconflict and reload provider disconnected; authoritative resolver/readback receipts."],
+      "missingPrerequisite": ["CI-006 semantic verification/evidence receipts", "CI-008 authoritative freshness/affected sections/restart behavior", "FG-SHARED-AUTHORIZATION-AND-OFFLINE", "Accepted source-open DTO"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-011-AC-4",
+      "criterion": "review and application remain separate",
+      "currentEvidence": "KnowledgeDiff.conflictActionsFor:60-75 exposes approve/reject before approval and apply only for approved UI status. proposal-actions:65-101 makes separate RPCs. mutations.transition:783-808 approves without execute-ops and rejects by deleting proposal file. The UI includes draft approval although transition permits approve only from pending_review; generated artifact durable rejection/manifest schema is not present in inspected MutationProposal.",
+      "actualSeam": "KnowledgeProposals, KnowledgeDiff.conflictActionsFor/renderAction, KnowledgeMutationsApi, mutations.transition",
+      "requiredChange": "Reuse existing lifecycle with accepted artifact variant, not a new state machine. Align allowed review states to authoritative backend; show file/exposure/claims preview and approval receipt; require separate selected-target apply by permitted navigator. Staging, generation completion and approval never write adopted content. Preserve rejected receipt/reason via accepted backend rather than falsely treating v1 deletion as a rejected status. Agents can propose but cannot use navigator apply authority.",
+      "verification": ["Hash target and record revision before stage, approve and reject: none changes target. Explicit authorized apply updates exactly selected permitted files and produces provenance/application receipt surviving restart.", "Unreviewed, rejected/superseded proposal and agent/foreign-workspace direct RPC attempts cannot write; partial failure yields explicit rollback/conflict and unchanged unrelated targets.", "Run exact heading source navigation, backlink roundtrip, retracted claim, review reject/apply/basehashconflict, reload provider disconnected; UI click/keyboard action sequence and authoritative before/after receipts, not just selector tests."],
+      "missingPrerequisite": ["FG-REVIEWED-MANIFEST-APPLY typed backend and integration ownership", "CI-006/CI-008 artifact/proposal identity", "EG-IDENTITY navigator/agent enforcement", "CI-009 review routing and translations"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-011-AC-5",
+      "criterion": "base hash mismatch blocks apply with recoverable conflict",
+      "currentEvidence": "mutations.transition:833-853 requires approved, rereads target, emits execute-ops only for matching baseHash and persists mismatch conflict without execute-ops. KnowledgeDiff:316-330 shows Base/Current/Patch and conflictActionsFor:67-68 has no apply. rebaseProposalAction:124-142 links a fresh proposal. Current Apply control:194-210 only checks busy and has no unknown-base/manifest selection gate.",
+      "actualSeam": "KnowledgeDiff approved action/conflict face, proposal-actions.rebaseProposalAction, mutations.transition resolveHashCheck",
+      "requiredChange": "Extend the accepted server guard to artifact source/review revision and every selected target base hash, preserve immutable reviewed manifest and atomic-write semantics. Disable unknown base hash with explicit reason. On mismatch surface expected/actual and exact current target; re-read/rebuild creates a newly reviewed proposal, not force-overwrite or silent reuse of approval. No client-computed hash may stand in for authoritative re-read.",
+      "verification": ["Approve at H0, independently change one target to H1, apply: authoritative conflict, zero writes to all selected/unrelated files, expected/actual fingerprint shown. Repeat for source snapshot drift and absent base hash.", "Rebuild reads H1, supersedes old proposal, blocks apply until new review; subsequent explicit apply at matching hash succeeds. Restart in conflict preserves receipt; provider-disconnected re-read is explicit unavailable rather than apply success.", "Run exact heading source navigation, backlink roundtrip, retracted claim, review reject/apply/basehashconflict and reload provider disconnected; negative-control semantic zero-write assertion and integrated UI/readback receipts."],
+      "missingPrerequisite": ["FG-REVIEWED-MANIFEST-APPLY authoritative per-file source/target guard and rollback", "CI-008 snapshot/manifest ownership", "CI-006/CI-009 canonical conflict target navigation", "Accepted compiled result/error schema"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-011-CROSSCUT-SCOPE-OFFLINE",
+      "criterion": "ToC/backlinks/claim panel use the same lease/scope; reconnect invalidates protected cached section bodies",
+      "currentEvidence": "code-intelligence.json:4281-4289 and UI design:38,57-59 require this. KnowledgeDiff reload:86-113 is proposalId/id-based without workspace in load arguments; KnowledgeProposals load:43-60 retains earlier list on request failure. Source review cannot prove backend authorization.",
+      "actualSeam": "RepoWikiPanel load lifecycle, ClaimsPanel source-open, KnowledgeProposals.load and KnowledgeDiff.reload/onChanged",
+      "requiredChange": "Bind reads and writes to the accepted shared resolver, ignore stale completions and clear private state on workspace/ref/authorization changes. Reconcile freshness and authorization on restart/reconnect; expired remote-private lease must block all protected bodies including section/backlink/evidence panels, not just hide buttons.",
+      "verification": ["Switch workspaces during inflight private read; old result must not render. Revoke/expire signed lease, disconnect/reconnect/restart: pages, ToC/backlinks and evidence denied consistently. Local authorized read remains available without model provider; remote provider generation remains unavailable offline. Record actual disconnected exposure window."],
+      "missingPrerequisite": ["Transitive CI-002 shared authorization", "CI-006 local retrieval", "CI-008 invalidation events", "EG-IDENTITY readiness"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-011-CROSSCUT-UI-AND-EVENTS",
+      "criterion": "RC-03/RC-05/RC-11 surfaces, translated accessible interactions, durable reviewed revision/rejection/conflict receipts",
+      "currentEvidence": "code-intelligence.json:4273-4318,1755-1796,1840-1876 and UI design:46-59,63-77 publish these behaviors. Existing diff onChanged filters only payload.ref.id; inspected proposal protocol has no artifact manifest or explicit rejected status.",
+      "actualSeam": "RepoWikiPanel, ClaimsPanel, KnowledgeDiff/KnowledgeProposals and accepted knowledge invalidation extension",
+      "requiredChange": "Render RC-03 generated reader, RC-05 draft/current Markdown and claims review, RC-11 affected/stale/missing section review in the existing host. Expose backend-produced repo-wiki.revision.applied, artifact.proposal.rejected and artifact.apply.conflict receipts through the accepted event bridge; UI must not fabricate these events. Keep human page unchanged absent reviewed mutation. Provide loading/empty/error/denied/stale/offline, mobile sheets, translated explanations, keyboard/focus, reduced motion and font evidence.",
+      "verification": ["Observe exact revision/provenance, reject reason and conflict receipt through real actions and authoritative restart readback; approved/generation-finished must not emit applied. Exercise wide/narrow layouts, ToC/backlink/source keyboard paths, hover/focus/click help, ARIA and computed Rox Mono with screenshots bound to integrated revision."],
+      "missingPrerequisite": ["Accepted event/receipt schema and backend lifecycle", "Integration-owner locale patches", "CI-009/LSX-WP-025 active Docs host", "Actual UI/runtime proof lane after implementation"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "plans/lark-suite-reference/code-intelligence.json", "symbol": "workPackages[10] CI-011; WikiPage/WikiSection/Claim/ReviewProposal/VerificationReceipt; CI-UI-05/07", "lineStart": 4219, "lineEnd": 4422, "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "CI-011 dependencies, ownership, cloudPacket", "lineStart": 4968, "lineEnd": 5057, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/lark-suite-reference/14-code-intelligence-ui.md", "symbol": "RC-03/RC-05/RC-11; offline policy; claim proof; reviewed apply", "lineStart": 38, "lineEnd": 108, "sha256": "2c07a58511e385a7bef7d8630d333c685b924fb8e71819cf2215c097107b3c75"},
+    {"path": "apps/electron/src/renderer/pages/KnowledgeSurfacePage.tsx", "symbol": "KnowledgeSurfacePage / knowledgeEnabled", "lineStart": 85, "lineEnd": 148, "sha256": "c3803d5274cc10f4aaeb45967c700b62b8d8c626b38e319d3bb4524c4dc1b9a8"},
+    {"path": "apps/electron/src/renderer/pages/KnowledgeEntityPage.tsx", "symbol": "KnowledgeEntityPage / context loader / body dispatch", "lineStart": 26, "lineEnd": 164, "sha256": "8342ea6d0835716c424e5b3c710714357797a2899350af98c58b88e52518684f"},
+    {"path": "apps/electron/src/renderer/knowledge/KnowledgeNavigator.tsx", "symbol": "KnowledgeNavigator", "lineStart": 42, "lineEnd": 108, "sha256": "d9f92353e897145dda65073e36f738949267dc7e7b67faa18ab900738322a2dd"},
+    {"path": "apps/electron/src/renderer/knowledge/KnowledgeProposals.tsx", "symbol": "KnowledgeProposals / load / onChanged", "lineStart": 24, "lineEnd": 158, "sha256": "dabb90905745163ba3a3255f23d8d3ba409d3a07383861018d113a2cf1ee7204"},
+    {"path": "apps/electron/src/renderer/knowledge/KnowledgeDiff.tsx", "symbol": "conflictActionsFor / KnowledgeDiff / renderAction / conflict columns", "lineStart": 60, "lineEnd": 350, "sha256": "40936547c62258583d693d898ad3fc4b57a95b70b4e5cc3b48ea8dda80f15653"},
+    {"path": "apps/electron/src/renderer/knowledge/proposal-actions.ts", "symbol": "KnowledgeMutationsApi / approveProposalAction / applyProposalAction / rebaseProposalAction", "lineStart": 24, "lineEnd": 143, "sha256": "183b6b31f4167adf48a56dafc09615b4aa2aba2b34946262a2369a86dd0421c2"},
+    {"path": "apps/electron/src/renderer/knowledge/KnowledgeNotebookTree.tsx", "symbol": "KnowledgeNavigatorApi / loadKnowledgeNavigatorData", "lineStart": 59, "lineEnd": 218, "sha256": "2a8e760ef5219d80890940bfe1c181682996eab7ba9deb6b732a81919825d46f"},
+    {"path": "apps/electron/src/renderer/knowledge/knowledge-entity-ref.ts", "symbol": "knowledgeEntityCompanionRef", "lineStart": 9, "lineEnd": 18, "sha256": "0de1756ed9d1c2fc712d53124a9f3a9a17a6c7d3326e307863d90b63338e623d"},
+    {"path": "apps/electron/src/renderer/hooks/useSiyuanConnected.ts", "symbol": "useSiyuanConnected", "lineStart": 3, "lineEnd": 10, "sha256": "ad14f7418512486507613e01039489a5642cb111ff2309d9344eb7a49e98b36c"},
+    {"path": "packages/core/src/knowledge/refs.ts", "symbol": "KnowledgeRef / parseKnowledgeRef / validateKnowledgeRef", "lineStart": 17, "lineEnd": 205, "sha256": "b5e2d52d1e58687854ef30129c9db1fd4f97b9d6389d8675bb6dae654ef05241"},
+    {"path": "packages/core/src/knowledge/provider.ts", "symbol": "KnowledgeNode / KnowledgeProvider / hashKnowledgeContent", "lineStart": 86, "lineEnd": 145, "sha256": "e675f22be93f414e6fbdad2f305bc23208c821d01a1320be1c6bfb26c3156a3c"},
+    {"path": "packages/core/src/knowledge/mutations.ts", "symbol": "MutationProposal / ApplyResult", "lineStart": 123, "lineEnd": 178, "sha256": "df2329725a75159951fce462154de40abe7f55e5d32d6a22c9b74e6a0651f242"},
+    {"path": "packages/core/src/knowledge/mutations.ts", "symbol": "transition approve/reject/beginApply/resolveHashCheck", "lineStart": 766, "lineEnd": 853, "sha256": "df2329725a75159951fce462154de40abe7f55e5d32d6a22c9b74e6a0651f242"},
+    {"path": "packages/shared/src/protocol/dto.ts", "symbol": "MutationProposal and ApplyResult re-export from core/knowledge", "lineStart": 843, "lineEnd": 854, "sha256": "b4c6e49e9135b778456f769133ce822dab433e9ca7238a06b8c4dafded3c3e57"},
+    {"path": "apps/electron/src/renderer/knowledge/__tests__/knowledge-diff.test.ts", "symbol": "conflictActionsFor selector-only tests", "lineStart": 45, "lineEnd": 84, "sha256": "649437291d64efd485bd55c198c7ba98713801e9e4de8b066e77ba72a708ef3a"},
+    {"path": "apps/electron/src/renderer/knowledge/__tests__/knowledge-navigator.test.ts", "symbol": "shouldShowFullKnowledgeInterface tests", "lineStart": 1, "lineEnd": 22, "sha256": "b5d48bd1977662f1a0b64dab4911a7ccdf000a20a24e41c4bf135ef3a918d04f"}
+  ],
+  "nextExecutableAction": {
+    "owner": "integration-owner / lead",
+    "now": "Review this artifact against the exact packet and assign resolution owners for active Docs/canonical-ref cutover and reviewed manifest-apply DTO/backend. Do not launch CI-011 implementation against the live dirty tree.",
+    "implementationStartCondition": "Lead wave0 committed; CI-006, CI-008, CI-009 and LSX-WP-025 accepted by artifact and authoritative readback receipts; baseline/reference manifest resolved; external readiness receipts and shared leases accepted.",
+    "firstImplementationStepAfterGates": "Re-read and hash all changed shared seams on the integrated dependency revision, consume their compiled DTO/ref/permission/event exports, then implement only the three normative owned files and submit the five shared-path patch requests for serial integration.",
+    "leadOnlyReportValidation": "The dispatch verification_argv can be run by the lead. It was deliberately not executed by this inspection worker because this assignment prohibits running checks/tests."
+  },
+  "risks": [
+    "Published source seams target an old embedded SiYuan host that is retired in inspected live source; injecting UI without an active Docs mounting contract would redirect it away or revive an obsolete surface.",
+    "Optional provider strings in canonical refs are not sufficient section/snapshot identity. Dropping provider/connection/workspace on companion refs or id-only invalidation can open wrong or unauthorized content.",
+    "Existing single-target SiYuan mutation DTO cannot represent selected multi-file artifact adoption, source fingerprint guards, exposure summary or durable rejected artifact receipts without an accepted server extension.",
+    "Existing draft UI approval and pending_review-only engine approval differ; generated proposals must use authoritative transitions rather than copy selector behavior blindly.",
+    "Approval UI checks busy but not unknown base hashes, selected targets or actor permission; client hiding alone cannot enforce navigator/agent separation.",
+    "Backlink errors converted to [] and retained proposal rows after load failure can disguise denied/disconnected state or leak prior-workspace content.",
+    "A valid citation/file does not verify claim support. Freshness and semantic assessment need distinct labels and durable version-bound receipts.",
+    "Parent commit links for dirty bytes, client heading slugs and connection[0] selection can silently produce incorrect exact-source navigation.",
+    "Selector tests and navigator debug-flag tests do not prove mounted Wiki UI, zero-write conflict behavior, authorization or restart persistence. All published proof lanes remain required.",
+    "No acceptance criterion is N/A or PASS in this preflight; featureComplete remains false. Whole-file hashes are sampled live evidence, not an implementation commit or accepted dependency receipt."
+  ]
+}

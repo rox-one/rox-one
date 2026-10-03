@@ -1,4 +1,4 @@
-import { parseQuickEntry, startOfLocalDay } from './dates.ts'
+import { parseQuickEntry, startOfLocalDay, zonedDateTimeParts, zonedDateTimeToEpoch } from './dates.ts'
 import { nextRepeatDate } from './quick-entry.ts'
 import {
   emptyBundle,
@@ -31,6 +31,8 @@ export function resetPersonalTaskIds(): void {
 
 export interface CreateTaskInput {
   title: string
+  /** Optional deterministic ID for idempotent domain transitions. */
+  id?: string
   notes?: string
   list?: TaskListId
   projectId?: string
@@ -48,6 +50,7 @@ export interface CreateTaskInput {
   quickEntry?: boolean
   checklist?: ChecklistItem[]
   reminderAt?: number
+  reminderTimeZone?: string
   source?: TaskLink
   /** Insert right after this task in its list order (magic plus / inline new row). */
   afterId?: string
@@ -173,8 +176,9 @@ export class PersonalTaskStore {
       }
     }
     if (!title) throw new Error('Task title is required')
+    if (input.id && this.get(input.id)) throw new Error(`Task id already exists: ${input.id}`)
     const task: PersonalTask = {
-      id: this.uniqueId('task'),
+      id: input.id ?? this.uniqueId('task'),
       title,
       notes: input.notes ?? '',
       list,
@@ -193,6 +197,7 @@ export class PersonalTaskStore {
       createdAt: now,
       ...(input.checklist?.length ? { checklist: input.checklist } : {}),
       ...(input.reminderAt != null ? { reminderAt: input.reminderAt } : {}),
+      ...(input.reminderAt != null && input.reminderTimeZone ? { reminderTimeZone: input.reminderTimeZone } : {}),
       ...(input.source ? { source: input.source } : {}),
     }
     if (input.source && !task.links.some((l) => l.kind === input.source!.kind && l.id === input.source!.id)) {
@@ -432,13 +437,37 @@ export class PersonalTaskStore {
    * date). Returns the completed task and the new one, if any.
    */
   completeTask(id: string, now = Date.now()): { task: PersonalTask; next: PersonalTask | null } {
-    const task = this.complete(id, now)
-    if (!task.recurrence) return { task, next: null }
+    const task = this.require(id)
+    if (task.repeatNextId) return { task, next: this.get(task.repeatNextId) ?? null }
+    if (task.completedAt == null) this.complete(id, now)
+    const recurrence = task.recurrence
+    if (!recurrence) return { task, next: null }
     const anchor = task.startAt ?? task.dueAt ?? now
-    const nextAt = nextRepeatDate(task.recurrence, anchor, now)
-    if (nextAt == null) return { task, next: null }
+    const nextAt = nextRepeatDate(recurrence, anchor, now)
+    if (nextAt == null) {
+      task.recurrence = undefined
+      return { task, next: null }
+    }
+    const rootId = task.repeatOf ?? task.id
+    const existing = this.bundle.tasks.find((candidate) => candidate.repeatOf === rootId && candidate.repeatOccurrenceAt === nextAt)
     const deadlineShift = task.dueAt != null && task.startAt != null ? task.dueAt - startOfLocalDay(task.startAt) : null
-    const next = this.create({
+    let reminderAt: number | undefined
+    const reminderTimeZone = task.reminderTimeZone ?? recurrence.timeZone
+    if (task.reminderAt != null) {
+      if (reminderTimeZone) {
+        try {
+          const reminderClock = zonedDateTimeParts(task.reminderAt, reminderTimeZone)
+          const nextDay = zonedDateTimeParts(nextAt, reminderTimeZone)
+          reminderAt = zonedDateTimeToEpoch({ ...nextDay, hour: reminderClock.hour, minute: reminderClock.minute, second: reminderClock.second, millisecond: reminderClock.millisecond }, reminderTimeZone)
+        } catch {
+          reminderAt = nextAt + (task.reminderAt - startOfLocalDay(task.reminderAt))
+        }
+      } else {
+        reminderAt = nextAt + (task.reminderAt - startOfLocalDay(task.reminderAt))
+      }
+    }
+    const next = existing ?? this.create({
+      id: `${rootId}.occ.${nextAt.toString(36)}`,
       title: task.title,
       notes: task.notes,
       list: 'upcoming',
@@ -450,21 +479,23 @@ export class PersonalTaskStore {
       startAt: nextAt,
       dueAt: deadlineShift != null ? nextAt + deadlineShift : task.dueAt != null && task.startAt == null ? nextAt : undefined,
       evening: task.evening,
-      recurrence: task.recurrence,
-      links: task.links.map((l) => ({ ...l })),
+      recurrence,
+      links: task.links.map((link) => ({ ...link })),
       checklist: (task.checklist ?? []).map((item) => ({ ...item, id: this.uniqueChecklistId(), done: false })),
-      reminderAt: task.reminderAt != null ? nextAt + (task.reminderAt - startOfLocalDay(task.reminderAt)) : undefined,
+      reminderAt,
+      reminderTimeZone,
       source: task.source,
       now,
     })
-    next.repeatOf = task.repeatOf ?? task.id
-    // The finished occurrence stops repeating; the rule lives on the new one.
+    next.repeatOf = rootId
+    next.repeatOccurrenceAt = nextAt
+    task.repeatNextId = next.id
     task.recurrence = undefined
     return { task, next }
   }
 
   /** Set «Когда». */
-  setWhen(id: string, when: TaskWhen): PersonalTask {
+  setWhen(id: string, when: TaskWhen, now = Date.now()): PersonalTask {
     const task = this.require(id)
     switch (when.kind) {
       case 'inbox':
@@ -484,7 +515,7 @@ export class PersonalTaskStore {
         break
       case 'date': {
         const at = startOfLocalDay(when.at)
-        const isToday = at === startOfLocalDay(Date.now())
+        const isToday = at === startOfLocalDay(now)
         Object.assign(task, isToday
           ? { list: 'today', startAt: undefined, evening: Boolean(when.evening) }
           : { list: 'upcoming', startAt: at, evening: Boolean(when.evening) })

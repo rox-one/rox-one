@@ -9,7 +9,9 @@ function nodeBuiltinShimPlugin() {
   const names: Record<string, true> = {
     fs: true, 'fs/promises': true, path: true, os: true, crypto: true, child_process: true,
     url: true, util: true, stream: true, events: true, http: true, https: true,
-    net: true, tls: true, zlib: true, buffer: true, assert: true,
+    // Bare `buffer` is the browser package used by node-stub itself.
+    // Intercepting it would make the stub import its own uninitialized Buffer.
+    net: true, tls: true, zlib: true, assert: true,
     string_decoder: true, readline: true, module: true,
     'node:fs': true, 'node:fs/promises': true, 'node:path': true, 'node:os': true,
     'node:crypto': true, 'node:child_process': true, 'node:url': true, 'node:util': true,

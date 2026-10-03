@@ -144,6 +144,44 @@ describe('installEntry (context-doc)', () => {
     expect(readFileSync(join(configDir, 'context', 'agents.md'), 'utf8')).toBe(body)
     expect(readLock(marketplacePaths(configDir).lockFile).entries['soul-pack']?.status).toBe('installed')
   })
+  it('rolls back replaced context documents and provenance when a later pin fails', async () => {
+    const entry: MarketplaceEntry = {
+      ...DOC_ENTRY,
+      documents: [
+        { repoPath: 'A.md', targetName: 'a.md' },
+        { repoPath: 'B.md', targetName: 'b.md' },
+      ],
+    }
+    const fetchVersion = (version: string): MarketplaceFetch => async (url) => ({
+      ok: true,
+      status: 200,
+      headers: { get: () => null },
+      text: async () => (url.endsWith('/A.md') ? `# A ${version}` : `# B ${version}`),
+    })
+    await installEntry(entry, { configDir, fetchFn: fetchVersion('v1') })
+    const a = join(configDir, 'context', 'a.md')
+    const b = join(configDir, 'context', 'b.md')
+    const previousLock = readLock(marketplacePaths(configDir).lockFile).entries[entry.id]
+
+    await expect(
+      installEntry(
+        {
+          ...entry,
+          expectedContentSha256: {
+            'a.md': sha256FileContent('# A v2'),
+            'b.md': '0'.repeat(64),
+          },
+        },
+        { configDir, fetchFn: fetchVersion('v2') },
+      ),
+    ).rejects.toThrow(/content sha256 mismatch/)
+
+    expect(readFileSync(a, 'utf8')).toBe('# A v1')
+    expect(readFileSync(b, 'utf8')).toBe('# B v1')
+    expect(readInstallMarker(a)?.ref).toBe(REF)
+    expect(readLock(marketplacePaths(configDir).lockFile).entries[entry.id]).toEqual(previousLock)
+  })
+
 })
 
 describe('removeEntry (soft-clean)', () => {
@@ -414,6 +452,36 @@ describe('installEntry (unowned target guard)', () => {
     expect(readFileSync(join(deploy, 'SKILL.md'), 'utf8')).toBe('# USER edited deploy')
     expect(skillResult.collisions?.some((c) => c.includes('locally-modified'))).toBe(true)
     expect(skillResult.skills).toContain('deploy')
+  })
+
+  it('restores every previous skill target when a later target fails its content pin', async () => {
+    await installEntry(GUARD_ENTRY, { configDir, skillsDir, execFileFn: guardGit })
+    const priorLock = readLock(marketplacePaths(configDir).lockFile).entries['guard-pack']
+    const expectedDir = join(home, 'expected-review')
+    mkdirSync(expectedDir, { recursive: true })
+    writeFileSync(join(expectedDir, 'SKILL.md'), '# Pack Review v2')
+    const updatedGit: ExecFileFn = async (_file, args, options) => {
+      if (args.includes('checkout')) {
+        mkdirSync(join(options.cwd!, 'review'), { recursive: true })
+        writeFileSync(join(options.cwd!, 'review', 'SKILL.md'), '# Pack Review v2')
+        mkdirSync(join(options.cwd!, 'deploy'), { recursive: true })
+        writeFileSync(join(options.cwd!, 'deploy', 'SKILL.md'), '# Pack Deploy v2')
+      }
+      return { stdout: args[0] === 'rev-parse' ? `${REF}\n` : '', stderr: '' }
+    }
+
+    await expect(
+      installEntry(
+        { ...GUARD_ENTRY, expectedContentSha256: { review: sha256Directory(expectedDir), deploy: '0'.repeat(64) } },
+        { configDir, skillsDir, execFileFn: updatedGit, now: () => 100 },
+      ),
+    ).rejects.toThrow(/content sha256 mismatch/)
+
+    expect(readFileSync(join(skillsDir, 'review', 'SKILL.md'), 'utf8')).toBe('# Pack Review')
+    expect(readFileSync(join(skillsDir, 'deploy', 'SKILL.md'), 'utf8')).toBe('# Pack Deploy')
+    const lock = readLock(marketplacePaths(configDir).lockFile).entries['guard-pack']
+    expect(lock).toEqual(priorLock)
+    expect(readInstallMarker(join(skillsDir, 'review'))?.ref).toBe(REF)
   })
 
   it('fails closed when every skill collides (no empty installed lock row)', async () => {

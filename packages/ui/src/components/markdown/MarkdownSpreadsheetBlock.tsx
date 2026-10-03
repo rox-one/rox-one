@@ -134,20 +134,34 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
     }
   }, [code])
 
-  // Load file data when src is present
+  // Load file data when src is present. A generation-local flag prevents a
+  // slower read from replacing the contents of a newer source.
   const [fileData, setFileData] = React.useState<SpreadsheetData | null>(null)
+  const [fileDataSource, setFileDataSource] = React.useState<string | null>(null)
   const [fileError, setFileError] = React.useState<string | null>(null)
   const [fileLoading, setFileLoading] = React.useState(false)
+  const [loadAttempt, setLoadAttempt] = React.useState(0)
 
   React.useEffect(() => {
-    if (!spec?.src || !onReadFile) return
+    if (!spec?.src) return
+    let active = true
+    setFileData(null)
+    setFileDataSource(null)
     setFileLoading(true)
     setFileError(null)
-    onReadFile(spec.src)
+    if (!onReadFile) {
+      setFileError('File reading is unavailable')
+      setFileLoading(false)
+      return () => { active = false }
+    }
+    const sourcePath = spec.src
+    onReadFile(sourcePath)
       .then((content) => {
+        if (!active) return
         try {
           const raw = JSON.parse(content)
           if (Array.isArray(raw)) {
+            setFileDataSource(sourcePath)
             setFileData({ rows: raw, columns: [] })
           } else if (raw && typeof raw === 'object') {
             setFileData({
@@ -156,6 +170,7 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
               columns: Array.isArray(raw.columns) ? raw.columns : [],
               rows: Array.isArray(raw.rows) ? raw.rows : [],
             })
+            setFileDataSource(sourcePath)
           } else {
             setFileError('File does not contain valid spreadsheet data')
           }
@@ -164,16 +179,19 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
         }
       })
       .catch((err) => {
-        setFileError(err instanceof Error ? err.message : 'Failed to read data file')
+        if (active) setFileError(err instanceof Error ? err.message : 'Failed to read data file')
       })
-      .finally(() => setFileLoading(false))
-  }, [spec?.src, onReadFile])
+      .finally(() => {
+        if (active) setFileLoading(false)
+      })
+    return () => { active = false }
+  }, [spec?.src, onReadFile, loadAttempt])
 
   // Merge: inline spec takes precedence, file provides rows
   const parsed = React.useMemo<SpreadsheetData | null>(() => {
     if (!spec) return null
     if (spec.src) {
-      if (!fileData) return null
+      if (!fileData || fileDataSource !== spec.src) return null
       return {
         filename: spec.filename ?? fileData.filename,
         sheetName: spec.sheetName ?? fileData.sheetName,
@@ -183,13 +201,13 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
     }
     if (!Array.isArray(spec.columns) || !Array.isArray(spec.rows)) return null
     return { filename: spec.filename, sheetName: spec.sheetName, columns: spec.columns, rows: spec.rows }
-  }, [spec, fileData])
+  }, [spec, fileData, fileDataSource])
 
   const [isFullscreen, setIsFullscreen] = React.useState(false)
   const { scrollRef, maskImage } = useScrollFade()
 
   // Loading state for file-backed spreadsheet
-  if (spec?.src && fileLoading) {
+  if (spec?.src && (fileLoading || (fileDataSource !== spec.src && !fileError))) {
     const loadingLabel = [spec.filename, spec.sheetName].filter(Boolean).join(' — ') || t('spreadsheet.defaultTitle')
     return (
       <div className={cn('rounded-[8px] overflow-hidden border bg-muted/10', className)}>
@@ -209,7 +227,16 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
         <div className="px-3 py-2 bg-muted/50 border-b">
           <span className="text-[12px] text-muted-foreground font-medium">{errorLabel}</span>
         </div>
-        <div className="py-6 text-center text-destructive/70 text-[13px]">{fileError}</div>
+        <div className="flex flex-col items-center gap-3 py-6 text-center">
+          <p className="text-[13px] text-destructive/70">{fileError}</p>
+          <button
+            type="button"
+            onClick={() => setLoadAttempt((attempt) => attempt + 1)}
+            className="rounded border px-3 py-1.5 text-sm hover:bg-muted"
+          >
+            {t('common.retry')}
+          </button>
+        </div>
       </div>
     )
   }

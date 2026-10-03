@@ -12,9 +12,9 @@
  */
 
 import * as React from 'react'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Editor from 'react-simple-code-editor'
-import { codeToHtml, bundledLanguages, type BundledLanguage } from 'shiki'
+import { codeToHtml, bundledLanguages, type BundledLanguage, type ThemeRegistrationRaw } from 'shiki'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/hooks/useTheme'
 
@@ -72,20 +72,41 @@ export function ShikiCodeEditor({
   className,
   placeholder,
 }: ShikiCodeEditorProps) {
-  const { isDark, shikiTheme } = useTheme()
+  const { isDark, shikiTheme, presetTheme } = useTheme()
+  const resolvedLang = LANGUAGE_ALIASES[language] ?? language
   const hasCalledReady = useRef(false)
   const [highlightedCode, setHighlightedCode] = useState<string>('')
 
-  // Resolve language alias
-  const resolvedLang = LANGUAGE_ALIASES[language.toLowerCase()] || language.toLowerCase()
-  // Use the Shiki theme from the preset, falling back to github themes
-  const theme = shikiTheme
+  // Build a Shiki theme from Rox semantic tokens so syntax and editor surfaces
+  // change together; themes without a preset retain the bundled Shiki theme.
+  const theme = useMemo<string | ThemeRegistrationRaw>(() => {
+    if (!presetTheme) return shikiTheme
+    const colors = isDark && presetTheme.dark
+      ? { ...presetTheme, ...presetTheme.dark }
+      : presetTheme
+    return {
+      name: `rox-${presetTheme.name ?? 'custom'}-${isDark ? 'dark' : 'light'}`,
+      type: isDark ? 'dark' : 'light',
+      colors: {
+        'editor.background': colors.background ?? (isDark ? '#302f33' : '#faf9fb'),
+        'editor.foreground': colors.foreground ?? (isDark ? '#d4d4d4' : '#1f1f1f'),
+      },
+      settings: [
+        { scope: ['comment', 'punctuation.definition.comment'], settings: { foreground: colors.info, fontStyle: 'italic' } },
+        { scope: ['keyword', 'storage', 'entity.name.function', 'entity.name.type'], settings: { foreground: colors.accent } },
+        { scope: ['string', 'string.quoted', 'string.template'], settings: { foreground: colors.success } },
+        { scope: ['constant.numeric', 'constant.language', 'variable.language'], settings: { foreground: colors.info } },
+        { scope: ['invalid', 'invalid.illegal'], settings: { foreground: colors.destructive } },
+      ],
+    }
+  }, [isDark, presetTheme, shikiTheme])
+  const themeKey = typeof theme === 'string' ? theme : JSON.stringify(theme)
 
   // Highlight function for the editor
   const highlight = useCallback(async (code: string): Promise<string> => {
     if (!code) return ''
 
-    const cacheKey = getCacheKey(code, resolvedLang, theme)
+    const cacheKey = getCacheKey(code, resolvedLang, themeKey)
     const cached = highlightCache.get(cacheKey)
     if (cached) return cached
 
@@ -110,7 +131,7 @@ export function ShikiCodeEditor({
       console.warn(`Shiki highlighting failed:`, error)
       return code
     }
-  }, [resolvedLang, theme])
+  }, [resolvedLang, theme, themeKey])
 
   // Initial highlight
   useEffect(() => {
@@ -146,7 +167,7 @@ export function ShikiCodeEditor({
   // Synchronous highlight wrapper (for the editor component)
   // The editor needs a sync function, so we return cached or plain text
   const syncHighlight = useCallback((code: string): string => {
-    const cacheKey = getCacheKey(code, resolvedLang, theme)
+    const cacheKey = getCacheKey(code, resolvedLang, themeKey)
     const cached = highlightCache.get(cacheKey)
     if (cached) return cached
 
@@ -159,12 +180,12 @@ export function ShikiCodeEditor({
 
     // Return plain text or cached highlighted code for now
     return highlightedCode || code
-  }, [resolvedLang, theme, highlight, highlightedCode])
+  }, [resolvedLang, theme, themeKey, highlight, highlightedCode])
 
-  // Background color (must match CSS --background values)
-  const backgroundColor = isDark ? '#302f33' : '#faf9fb'
-  const textColor = isDark ? '#d4d4d4' : '#1f1f1f'
-  const placeholderColor = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)'
+  // Editor surfaces follow active Rox tokens instead of a separately hardcoded palette.
+  const backgroundColor = `var(--background, ${isDark ? '#302f33' : '#faf9fb'})`
+  const textColor = `var(--foreground, ${isDark ? '#d4d4d4' : '#1f1f1f'})`
+  const placeholderColor = `color-mix(in srgb, ${textColor} 30%, transparent)`
 
   return (
     <div

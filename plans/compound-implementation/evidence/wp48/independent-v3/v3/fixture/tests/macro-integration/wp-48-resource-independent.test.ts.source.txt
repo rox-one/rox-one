@@ -1,0 +1,109 @@
+import { afterEach, expect, test, setDefaultTimeout } from 'bun:test'
+import { SQL } from 'bun'
+import { randomBytes, randomUUID } from 'node:crypto'
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { homedir, tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
+import { create as createTar } from 'tar'
+import { createWorkspaceServer, loadWorkspaceBootstrapMigrations } from '../../apps/workspace-service/src/server'
+import { loadProtectedWorkspaceDatabaseUrl } from '../../apps/workspace-service/src/auth/postgres-identity'
+import { TrustedLicenseRegistry, licenseCanonical, licenseHash } from '../../apps/workspace-service/src/modules/licenses/registry'
+import { WsRpcClient } from '../../packages/server-core/src/transport/client'
+import { DOMAIN_LICENSE_RPC, type LicenseComponent } from '../../packages/shared/src/workspace-domain/licenses/contracts'
+setDefaultTimeout(30000)
+const cleanups: (() => Promise<void>)[] = []
+afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) await cleanup() })
+function object(value: unknown): Record<string, unknown> { if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Expected object'); return Object.fromEntries(Object.entries(value)) }
+function string(value: unknown): string { if (typeof value !== 'string' || !value) throw new Error('Expected string'); return value }
+function required<T>(value: T | undefined | null): T { if (value === undefined || value === null) throw new Error('Missing fixture'); return value }
+function component(value: unknown): LicenseComponent {
+  const data=object(value); const entity=object(data.entity); const reference=object(data.decisionManifest)
+  if(!string(entity.entityId).startsWith('license-component:')||string(reference.resourceId)!==string(entity.entityId).slice(18)||typeof data.canAudit!=='boolean')throw new Error('Invalid component response')
+  // Actual external response port; test assertions below independently check canonical fields and DB evidence.
+  return value as LicenseComponent
+}
+async function fixture(delayChecker = false) {
+  const root=realpathSync(mkdtempSync(join(tmpdir(),'wp48-domain-')));const schema='wp48_93c1d8cff4e7'
+  const url=await loadProtectedWorkspaceDatabaseUrl(process.env.ROX_WORKSPACE_TEST_CONFIG??join(homedir(),'.agents/state/rox-compound-workspace/postgres-environment.json'))
+  let database=new SQL(url,{max:12});const workspaceId=randomUUID();const resourceId=randomUUID();const issuer='urn:rox:wp48:'+randomUUID();const password='synthetic-wp48-'+randomUUID()
+  const authDirectory=join(root,'auth');mkdirSync(authDirectory,{mode:0o700});const stateDirectory=join(root,'audit-state');mkdirSync(stateDirectory,{mode:0o700})
+  const migrations=await loadWorkspaceBootstrapMigrations(resolve(import.meta.dir,'../../apps/workspace-service/migrations'),true)
+  let service:Awaited<ReturnType<typeof createWorkspaceServer>>|undefined;const clients:WsRpcClient[]=[]
+  const current=()=>required(service)
+  async function stop(){for(const client of clients.splice(0))client.destroy();if(service){service.server.close();service=undefined}}
+  cleanups.push(async()=>{await stop();try{await database.unsafe(`DROP SCHEMA "${schema}" CASCADE`)}finally{await database.close();rmSync(root,{recursive:true,force:true})}})
+  await database.unsafe(`CREATE SCHEMA "${schema}"`)
+  async function start(registry?:TrustedLicenseRegistry){service=await createWorkspaceServer({database,schema,migrations,host:'127.0.0.1',port:0,serverId:'wp48-'+schema,licenseRegistry:registry,authentication:{mode:'local-bootstrap',configuration:{mode:'local-bootstrap',issuer,audience:'wp48-test',stateDirectory:authDirectory,checkoutDirectory:process.cwd(),tokenLifetimeSeconds:300}}});await service.server.listen()}
+  await start()
+  const account=async(label:string)=>{const login=label+'-'+randomUUID()+'@example.invalid';return {login,...await current().identity.provisionAccount(login,password)}}
+  const owner=await account('owner'),member=await account('member'),outsider=await account('outsider')
+  await current().repository.provisionWorkspace(owner.principalId,workspaceId,'Synthetic WP48 workspace')
+  await database.unsafe(`INSERT INTO "${schema}".workspace_member(workspace_id,principal_id,role) VALUES($1,$2,'member')`,[workspaceId,member.principalId])
+  const staging=join(root,'staged'),payload=join(staging,'payload');mkdirSync(payload,{recursive:true})
+  const notice='MIT License\nCopyright synthetic WP48 fixture only\n';writeFileSync(join(staging,'LICENSE'),notice);writeFileSync(join(payload,'LICENSE'),notice);writeFileSync(join(payload,'code.js'),"export const release = 'fixture bytes'")
+  await createTar({cwd:payload,file:join(staging,'release.tgz'),gzip:true,portable:true},['LICENSE','code.js'])
+  const lock=JSON.stringify({lockfileVersion:1,workspaces:{'packages/fixture':{name:'@fixture/wp48',version:'1.0.0'}},packages:{}});writeFileSync(join(root,'bun.lock'),lock)
+  const codeHash=licenseHash(readFileSync(join(payload,'code.js'))),noticeHash=licenseHash(notice)
+  const release={schemaVersion:1,sourceRevision:'a'.repeat(40),lockSha256:licenseHash(lock),artifacts:[{id:'fixture',kind:'workspace',path:'release.tgz',contentRoot:'payload',sha256:licenseHash(readFileSync(join(staging,'release.tgz'))),platform:'darwin',arch:'arm64',buildFlags:{format:'esm',minify:false},files:[{path:'LICENSE',sha256:noticeHash,componentId:'fixture'},{path:'code.js',sha256:codeHash,componentId:'fixture'}]}],components:[{id:'fixture',kind:'workspace',name:'@fixture/wp48',version:'1.0.0',licenseExpression:'MIT',origin:{repository:'SYNTHETIC_FIXTURE_NOT_PRODUCTION',revision:'b'.repeat(40),path:'packages/fixture/source.ts',sha256:codeHash,modifications:'',transfer:'independent'},notices:[{path:'LICENSE',sha256:noticeHash}]}]}
+  const review={schemaVersion:1,policy:'LICENSE_REVIEW_REQUIRED',reviewers:[],preservedNotices:[],knownScopes:[],decisions:[]}
+  writeFileSync(join(root,'release.json'),JSON.stringify(release));writeFileSync(join(root,'review.json'),JSON.stringify(review));writeFileSync(join(root,'notices.txt'),notice)
+  let checker=resolve(import.meta.dir,'../../scripts/compliance/generate-sbom.ts');
+  if(delayChecker){const directory=join(root,'checker');mkdirSync(directory);for(const name of ['generate-sbom.ts','collect-build-attribution.ts','verify-registry-attribution.ts']){let source=readFileSync(join(checker,'..',name),'utf8');if(name==='generate-sbom.ts')source=source.replace('if (import.meta.main) {','if (import.meta.main) { await Bun.sleep(1500)');writeFileSync(join(directory,name),source)}checker=join(directory,'generate-sbom.ts')}
+  const modules=['generate-sbom.ts','collect-build-attribution.ts','verify-registry-attribution.ts'].map(name=>{const path=join(checker,'..',name);return {path,sha256:licenseHash(readFileSync(path))}})
+  const preflight=join(root,'preflight.json');const checkerRevision='c'.repeat(40),reviewRevision='d'.repeat(40)
+  const preflightProcess=Bun.spawnSync([process.execPath,checker,'check','--release',join(root,'release.json'),'--root',staging,'--lock',join(root,'bun.lock'),'--decisions',join(root,'review.json'),'--notices',join(root,'notices.txt'),'--source-revision',release.sourceRevision,'--review-revision',reviewRevision,'--auditor-revision',checkerRevision,'--output',preflight],{stdout:'pipe',stderr:'pipe'})
+  if(preflightProcess.exitCode!==1)throw new Error('Expected actual unreviewed checker result: '+preflightProcess.stderr.toString())
+  const audit=object(JSON.parse(readFileSync(preflight,'utf8')));if(!Array.isArray(audit.artifactDigests))throw new Error('Missing checker digests')
+  const build={schemaVersion:1,artifactDigest:licenseHash(licenseCanonical(audit.artifactDigests)),sbomDigest:string(audit.sbomSha256),releaseSha256:licenseHash(readFileSync(join(root,'release.json'))),lockSha256:licenseHash(lock),reviewSha256:licenseHash(readFileSync(join(root,'review.json'))),noticeSha256:noticeHash,sourceRevision:release.sourceRevision,reviewRevision,checkerRevision,checkerSha256:licenseHash(readFileSync(checker)),producerRevision:'e'.repeat(40)}
+  writeFileSync(join(root,'build.json'),JSON.stringify(build),{mode:0o600})
+  const file=(name:string)=>({path:join(root,name),sha256:licenseHash(readFileSync(join(root,name)))})
+  const registryConfig={schemaVersion:1,stateDirectory,checker:{path:checker,sha256:build.checkerSha256,revision:checkerRevision,bunSha256:licenseHash(readFileSync(process.execPath)),modules},resources:[{resourceId,workspaceId,label:'PRIVATE_WP-48 synthetic artifact',root:staging,release:file('release.json'),lock:file('bun.lock'),review:file('review.json'),notices:file('notices.txt'),build:file('build.json'),policy:{mode:'owner_bootstrap',read:true,write:true,action:true}}]}
+  const configPath=join(root,'registry.json');writeFileSync(configPath,JSON.stringify(registryConfig),{mode:0o600})
+  const registry=await TrustedLicenseRegistry.load(configPath);await stop();await start(registry)
+  async function http(path:string,token?:string,body?:unknown){const response=await fetch(`http://127.0.0.1:${current().server.port}${path}`,{method:body===undefined?'GET':'POST',headers:{...(token?{authorization:'Bearer '+token}:{}),...(body===undefined?{}:{'content-type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(15000)});const text=await response.text();return {status:response.status,text,body:JSON.parse(text) as unknown}}
+  const token=async(login:string)=>string(object((await http('/v1/auth/local/token',undefined,{login,password})).body).token)
+  const ownerToken=await token(owner.login),memberToken=await token(member.login),outsiderToken=await token(outsider.login)
+  async function ws(token:string){const client=new WsRpcClient(`ws://127.0.0.1:${current().server.port}`,{token,workspaceId,mode:'remote',autoReconnect:false,connectTimeout:2000,requestTimeout:15000});clients.push(client);await new Promise<void>((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('WS handshake timeout')),2500);const off=client.onConnectionStateChanged(state=>{if(state.status==='connected'){clearTimeout(timer);off();resolve()}else if(state.status==='failed'||state.status==='disconnected'){clearTimeout(timer);off();reject(new Error('WS handshake denied'))}});client.connect()});return client}
+  const prefix='/v1/workspaces/'+workspaceId;const entityId='license-component:'+resourceId
+  const get=async()=>component((await http(prefix+'/licenses/'+resourceId,ownerToken)).body)
+  const command=async()=>{const row=await get();return {commandId:randomUUID(),schemaVersion:2,workspaceId,idempotencyKey:randomUUID(),expectedRevision:row.revision,payload:{artifactDigest:row.artifactDigest,sbomDigest:row.sbomDigest,decisionManifest:row.decisionManifest}}}
+  const counts=async()=>{const [row]=await database.unsafe<{receipts:number;events:number;revision:string}[]>(`SELECT (SELECT count(*)::integer FROM "${schema}".license_audit_receipt) AS receipts,(SELECT count(*)::integer FROM "${schema}".project_event WHERE type='audit.license_reviewed') AS events,(SELECT revision::text FROM "${schema}".license_component WHERE resource_id=$1) AS revision`,[resourceId]);return required(row)}
+  const restart=async()=>{await stop();await database.close();database=new SQL(url,{max:12});await start(await TrustedLicenseRegistry.load(configPath))}
+  return {root,get database(){return database},restart,schema,workspaceId,resourceId,entityId,registry,configPath,registryConfig,current,start,stop,http,ws,prefix,owner,member,outsider,ownerToken,memberToken,outsiderToken,get,command,counts,stateDirectory}
+}
+
+test('independent real Resource READ revoke after final identity await suppresses HTTP and WS while original receipt survives restore',async()=>{
+ const f=await fixture(),observationPath=process.env.ROX_WP48_RESOURCE_OBSERVATIONS!
+ if(!observationPath)throw new Error('Independent evidence path required')
+ const command=await f.command(),auditPath=f.prefix+'/commands/audit.releaseLicense'
+ const first=await f.http(auditPath,f.ownerToken,command);expect(first.status).toBe(200)
+ expect(component(object(first.body).data).evidence?.state).toBe('review_required')
+ const client=await f.ws(f.ownerToken),resolver=f.current().actorResolver,original=resolver.revalidate.bind(resolver)
+ const observations:{schema:string;root:string;port:number;transports:unknown[];baseline:unknown;restored?:unknown}={schema:f.schema,root:f.root,port:f.current().server.port,transports:[],baseline:{http:first.status,evidenceState:'review_required',counts:await f.counts()}}
+ try{
+  for(const transport of ['HTTP','WS'] as const){
+   await f.database.unsafe(`UPDATE "${f.schema}".license_component SET can_read=true WHERE resource_id=$1`,[f.resourceId])
+   let arrivals=0,admit!:()=>void,release!:()=>void
+   const admitted=new Promise<void>(resolve=>{admit=resolve}),barrier=new Promise<void>(resolve=>{release=resolve})
+   // Timing only: every identity value/query comes from the original cryptographic issuer/session implementation.
+   resolver.revalidate=async bound=>{const current=await original(bound);if(++arrivals===2){admit();await barrier}return current}
+   const pending=transport==='HTTP'
+    ?f.http(f.prefix+'/licenses/'+f.resourceId,f.ownerToken).then(value=>({httpStatus:value.status,accepted:value.status===200,code:value.status===200?null:object(object(value.body).error).code,text:value.text}))
+    :client.invoke(DOMAIN_LICENSE_RPC.GET,f.workspaceId,{entityId:f.entityId}).then(value=>({accepted:true,code:null,text:JSON.stringify(value)})).catch((error:unknown)=>({accepted:false,code:object(error).code,text:String(object(error).code)}))
+   try{
+    await Promise.race([admitted,Bun.sleep(5000).then(()=>{throw new Error('Real final-identity barrier missing')})])
+    await f.database.unsafe(`UPDATE "${f.schema}".license_component SET can_read=false,policy_epoch=policy_epoch+1 WHERE resource_id=$1`,[f.resourceId])
+   }finally{release()}
+   const received=await pending
+   observations.transports.push({transport,identityRevalidations:arrivals,...received,privateLabelExposed:received.text.includes('PRIVATE_WP-48'),evidenceExposed:received.text.includes('review_required')})
+   resolver.revalidate=original
+  }
+  await f.database.unsafe(`UPDATE "${f.schema}".license_component SET can_read=true,policy_epoch=policy_epoch+1 WHERE resource_id=$1`,[f.resourceId])
+  const restored=await f.http(auditPath,f.ownerToken,command),ws=await client.invoke(DOMAIN_LICENSE_RPC.AUDIT,f.workspaceId,command)
+  expect(restored.status).toBe(200);expect(restored.body).toEqual(first.body);expect(ws).toEqual(first.body)
+  expect(await f.counts()).toEqual({receipts:1,events:1,revision:'1'})
+  observations.restored={http:restored.status,originalHttpReceiptExact:true,originalWsReceiptExact:true,counts:await f.counts()}
+  writeFileSync(observationPath,JSON.stringify(observations,null,2)+'\n')
+  for(const value of observations.transports){const received=object(value);expect(received.accepted).toBe(false);expect(received.code).toBe('FORBIDDEN');expect(received.privateLabelExposed).toBe(false);expect(received.evidenceExposed).toBe(false)}
+ }finally{resolver.revalidate=original}
+})

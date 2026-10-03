@@ -1,0 +1,293 @@
+{
+  "task_id": "LSX-WP-021-preflight",
+  "attempt_id": "48a43511f67b6df676f6637b492fff03",
+  "packet_hash": "c85c5c562c37cf07d0891191f664683572e8d5afb5b3c3c163a28396caa6afb7",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-021",
+  "featureComplete": false,
+  "mode": "SOURCE_BACKED_PREFLIGHT_ONLY",
+  "workTier": "bounded-workflow",
+  "scope": {
+    "ownedArtifact": "plans/compound-implementation/worker-reviews/LSX-WP-021.json",
+    "productChanges": false,
+    "testsBuildsUiNetworkRun": false,
+    "gitOperationsRun": false,
+    "inspection": "Package specification, four normative read-only source paths, relevant direct imports note-views.ts and personal/types.ts, and linked specification/gate records only.",
+    "codegraph": "Unavailable: tool reported no .codegraph index for this checkout; no indexing attempted. Scoped find also failed because its judgment backend returned 402; known paths were read directly instead.",
+    "evidenceFreshness": "Working-tree source inspection, not a claim that these bytes belong to the supplied HEAD. Root-owned uncommitted work was preserved. The supplied input revision was not independently checked through Git. Whole-file hashes below identify the inspected bytes and must be revalidated after wave0/dependency integration."
+  },
+  "dependencies": ["LSX-WP-012", "LSX-WP-009", "LSX-WP-010"],
+  "dependencyInterfaces": [
+    {
+      "packageId": "LSX-WP-009",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:4207-4257",
+      "requiredAcceptedOutput": "SourceBinding descriptors and permitted rows with owner/ref/revision/freshness, per-field read/write/create capabilities and missing-provider diagnostics; preserve account/calendar/event identity and native task ownership.",
+      "plannedSeams": ["packages/server-core/src/bases/source-adapters.ts", "packages/core/src/bases/source-capabilities.ts"],
+      "status": "Accepted implementation/readback receipts were not supplied or inspected; symbols in these proposed files are not assumed implemented."
+    },
+    {
+      "packageId": "LSX-WP-010",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:4532-4587",
+      "requiredAcceptedOutput": "base.query/base.getQueryWatermark; typed authorized query snapshot with queryRevision, permissionEpoch, schema/source revisions, evaluationTime/timezone, stable refs and cursor invalidation. Calendar and Table consume the same snapshot, not independent browser-side queries.",
+      "plannedSeams": ["packages/server-core/src/bases/query-service.ts", "packages/core/src/bases/query-contract.ts"],
+      "status": "Accepted implementation/readback receipts absent. Its explicit upstream dependency is LSX-WP-009."
+    },
+    {
+      "packageId": "LSX-WP-012",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:5180-5235",
+      "requiredAcceptedOutput": "base.previewCellEdit/base.applyCellEdit native field/action mapping, typed draft/patch/DomainReceipt, normalized readback, current ACL/revision checks, recoverable failed draft and durable native write routing. Reuse its Date editor and owner command path.",
+      "plannedSeams": ["apps/electron/src/renderer/pages/bases/ScalarCellEditor.tsx", "packages/core/src/bases/cell-edit-command.ts"],
+      "status": "Accepted implementation/readback receipts absent. Its explicit upstream dependencies are LSX-WP-004, LSX-WP-005, LSX-WP-010 and LSX-WP-011; do not implement competing field/schema/Table/command mechanisms here."
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "LEAD_WAVE0_AND_ACCEPTED_DEPENDENCIES",
+      "kind": "launch-order gate, not an extra explicit DAG edge",
+      "evidence": "Worker prompt; work-packages.json:8165-8172",
+      "requirement": "Implementation starts only after the lead's wave0 commit and accepted dependency artifact plus authoritative readback receipts. Dependency-ready order is 009 then 010 then 012 then 021, also respecting each dependency's own prerequisites.",
+      "missingPrerequisite": "Lead-delivered wave0/integrated input commit and accepted 009/010/012 receipts.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "REFERENCE_MANIFEST_AND_BASELINE_RECONCILIATION",
+      "kind": "normative launch gate",
+      "evidence": "execution-packages.json:1795-1800,1828-1835; work-packages.json:7856-7859",
+      "requirement": "Resolve reference_package_revision/digest and verify spec_ref hashes. Reconcile normative product baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab with dispatch input a21aeab1da5a67e56788384ff930945b0f487879 and approved prerequisite commits; reject unexplained dirty/ancestor state for implementation, without altering the current root work during preflight.",
+      "missingPrerequisite": "Resolved delivery manifest and lead-approved exact integration baseline; reference values remain RESOLVE_FROM_DELIVERY_MANIFEST in the inspected specification.",
+      "state": "UNRESOLVED"
+    },
+    {
+      "id": "EG-PROVIDERS",
+      "kind": "explicit external prerequisite, separate from internal dependencies",
+      "evidence": "work-packages.json:116-121,7873-7875; docs/macro-integration/12-calendar.md:26-38,54-66",
+      "requirement": "Real authenticated provider capability, idempotency, normalized ACK/readback and unknown-result reconciliation. Provider/local persistence split must recover without repeating a successful external write. Respect writable account/calendar and recurrence scope; preserve all-day exclusive-end and IANA semantics.",
+      "missingPrerequisite": "Readiness receipt for the actually exercised provider/connection, its native authority, capability/etag/occurrence mapping and reconciliation journal. Macro documentation says production adapters were unavailable at its audited baseline; this is historical source evidence, not a live probe of this checkout.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "RS-BASE-01_TO_RS-DRV-01",
+      "kind": "hidden published-spec dependency, not present in LSX-WP-021 dependencies array",
+      "evidence": "work-packages.json:8120-8128; docs/rox-suite/published/RS-BASE-01.md:95-109",
+      "requirement": "Linked published RS-BASE-01 explicitly requires RS-DRV-01 (#1109). Lead must reconcile its affected library/canonical Base routing foundation with this bounded package and obtain readiness evidence; publication does not imply implementation. This does not authorize importing the entire Drive feature into 021.",
+      "missingPrerequisite": "Accepted RS-DRV-01 affected-scope receipt or a reviewed dependency/scope reconciliation from the integration owner; no readiness evidence supplied.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "COMMON_IDENTITY_ACL_COMMAND_AUTHORITY",
+      "kind": "hidden foundation explicitly named by published Drive specification; transitive via dependencies",
+      "evidence": "docs/rox-suite/published/RS-DRV-01.md:60-62,69-75; docs/rox-suite/published/RS-BASE-01.md:44-56; work-packages.json:75-89,4022-4029,4402-4406",
+      "requirement": "Authenticated actor/source grants, canonical entity resolution, current field/provider action authorization and revoke invalidation are prerequisites even though RS-DRV-01 lists no new issue prerequisite. Reuse common policy/commands/outbox, not a Base-only authorization or notifications engine.",
+      "missingPrerequisite": "Accepted common identity/ACL/authority receipts inherited through 009/010/012 and their EG-IDENTITY/EG-DOMAIN-OWNERS foundations, with forged actor/cross-account/revoke tests.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "NATIVE_DATE_PRECISION_AND_DURABLE_EFFECTS",
+      "kind": "implementation foundation exposed by actual source and mandatory DoD, not an extra declared edge",
+      "evidence": "personal/types.ts:42-75; personal/dates.ts:5-16,35-53; personal/projections.ts:100-103,231-235; calendar/types.ts:22-38; docs/lark-suite-reference/07-domain-entity-model.md:169-189",
+      "requirement": "Native owner must persist DateValue precision/timezone and expected revisions; atomically persist owner mutation, receipt and outbox intent or an existing file journal equivalent. Midnight timestamps cannot establish stored date-only precision. Provider queued intents/ACKs need a durable version fence. Core date mapping is not a new authority store.",
+      "missingPrerequisite": "Accepted owner precision mapping/migration and receipt/outbox/recovery interfaces. Inspected PersonalTask has only numeric dueAt/startAt and updatedAt, not DateValue/zone/precision or a revision field. CalendarEvent has allDay/timeZone/etag but numeric bounds. These read-only types cannot be changed by this package's worker without a reviewed packet amendment or prerequisite-owner contribution.",
+      "state": "NOT_ESTABLISHED_BY_INSPECTED_SOURCE"
+    },
+    {
+      "id": "SERVER_TRANSPORT_REGISTRATION_SCOPE",
+      "kind": "bounded-scope integration hole",
+      "evidence": "work-packages.json:8010-8027,8088-8096,8175; execution-packages.json:1785-1793; NotesViewHost.tsx:58-78",
+      "requirement": "base.previewCalendarMove/base.applyCalendarMove need compiled server and renderer schemas and authenticated authority routing. Normative contract_file points to renderer BaseCalendar.tsx and the only shared patch path is NotesViewHost.tsx; renderer callbacks alone cannot register/enforce server operations. Put framework-neutral move types/validation in the normative core mapping module and reuse the accepted common transport/owner dispatch, never import TSX into the server.",
+      "missingPrerequisite": "009/012 must deliver an extensible authoritative command registration seam usable within authorized scope, or the lead must review an amended packet naming the precise server registration path/symbol. No server endpoint availability is claimed from this inspection.",
+      "state": "REQUIRES_DEPENDENCY_INTERFACE_OR_REVIEWED_PACKET"
+    },
+    {
+      "id": "ROUTING_I18N_AND_UI_PROOF_SCOPE",
+      "kind": "cross-cutting integration prerequisites",
+      "evidence": "NotesViewHost.tsx:1-46,58-117; note-views.ts:5-34; work-packages.json:8042-8045,8063-8071; repository AGENTS.md i18n rules; docs/rox-suite/published/RS-BASE-01.md:36-42",
+      "requirement": "Calendar must be reachable in the existing shell/Base tabs, use all ten locale catalogs through t(), preserve existing views and theme/fonts, and use the discovered actual Electron/UI runner. Existing NotesViewHost's view union excludes Calendar; its note-views direct import also has no Calendar kind. New locale keys require serial integration into existing locale files rather than worker writes outside the packet.",
+      "missingPrerequisite": "Accepted shared Base/Table routing and locale-key contribution mechanism from upstream/integration owner, reviewed extra-path authorization if required, and actual Electron runner discovery. Neither upstream callers nor locale files were inspected beyond allowed scope.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/bases/BaseCalendar.tsx",
+    "packages/core/src/bases/calendar-date-mapping.ts",
+    "tests/lark-suite-extension/lsx-wp-021.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-021.spec.ts"
+  ],
+  "newFilePresence": "Exact-path glob returned Path not found for all four normative new paths during preflight; this is a working-tree observation subject to integration drift, not authorization to create them now.",
+  "proposedContributions": [
+    {
+      "path": "packages/core/src/bases/calendar-date-mapping.ts",
+      "symbols": ["CalendarMoveInput", "CalendarMoveEnvelope", "CalendarMoveResult", "CalendarMoveError", "projectCalendarRows", "previewCalendarDateMove"],
+      "symbolStatus": "Proposed names only; align with accepted dependency contracts before implementation.",
+      "change": "Import the accepted common DateValue, EntityRef, query snapshot and command/result types rather than define second field/reference unions. Implement pure projection from the authorized filtered snapshot with explicit mapped date field, date window and IANA timezone; partition undated separately from invalid/denied/unsupported values. Preserve raw YYYY-MM-DD for date-only, never convert it to UTC midnight. Resolve zoned wall-time input with explicit gap/overlap diagnostics and selected disambiguation, not fixed 24-hour arithmetic. Include framework-neutral typed preview/apply payload schemas that reuse the shared command envelope/error algebra. Retain owner ref/revision/schema/query/permission metadata and provider account/calendar/event/occurrence identity. Return proposed changes to the native schedule mapping, never persist a row mirror or call a provider from this module.",
+      "requiredInterfaces": "009 source mapping/capabilities; 010 AuthorizedQuerySnapshot; 012 shared DateValue/editor/command and native receipt; accepted precision owner mapping.",
+      "errorDiscriminants": ["validation", "conflict", "denied", "deleted", "offlineUnsupported", "missingDependency", "rateLimited", "unknownFormat"]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/bases/BaseCalendar.tsx",
+      "symbols": ["BaseCalendar", "BaseCalendarProps", "base.previewCalendarMove", "base.applyCalendarMove"],
+      "symbolStatus": "Proposed surface and normative operation names, not existing functions/endpoints.",
+      "change": "Render month/week/day/list modes over the accepted query snapshot and mapping projection, preserving canonical ref selection/open actions and freshness. Provide undated bucket, date-window navigation/arrows/Today, click-date create prefill with source create-capability preview, pointer move and keyboard date dialog using the same typed preview/apply path. Reuse accepted Date editor; show DST gap/overlap prompt and keep precision/zone visible. Show read-only/unsupported event diagnostics before commit; recheck on apply at authority. Keep pending native, queuedProvider, acknowledged and failed/reconciliation states distinct; match ACKs to command/ref/revision and ignore stale ACKs. Maintain recoverable local draft on validation/conflict and use existing durable draft/outbox support only. Include loading/source-empty/filtered-empty/error/denied/offline/stale states, help on hover/focus/click, focus return, IME-safe submit, reduced motion, existing theme/font tokens and t() for every user-facing string.",
+      "requiredInterfaces": "Existing shell/Base route contribution, shared toolbar/query context, authenticated transport functions, owner event subscriptions with revision fence and approved locale contributions. A readonly source is not a fake successfully saved event."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-021.test.ts",
+      "change": "Behavior/property tests for the exact DoD and semantic controls: Table/Calendar ref equivalence for identical query/date predicates, stable undated partition, date-only across timezone/DST, account/calendar identity collisions by remote ID, typed DST gap/overlap handling, read-only provider denial, stale revisions/schema, replay idempotency, actor spoof/revoke, offline unsupported, queue versus ACK and stale ACK fence. Native restart/readback and live provider lanes require real owner integration separately from pure unit fixtures. Preserve seed and baseline input/mutant byte hashes.",
+      "verificationCommandAfterAuthorization": "bun test tests/lark-suite-extension/lsx-wp-021.test.ts"
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-021.spec.ts",
+      "change": "Use the discovered existing actual Electron runner against integrated native Task/provider-backed rows and the reachable Base Calendar route. Exercise pointer move/create, keyboard dialogs/navigation/cancel, DST prompts, undated bucket, all four modes, conflict/revoke/offline/ACK states, Russian/all-locale key coverage, IME, focus, help, reduced motion, zoom and themes. Capture screenshots/ARIA/computed loaded Rox Mono and revision-bound readback, not standalone fixture screenshots as completion evidence.",
+      "verificationCommandAfterAuthorization": "Not invented; discover the supported actual Electron/UI invocation when the implementation and dependency receipts are accepted."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewHost",
+      "lineStart": 58,
+      "lineEnd": 117,
+      "change": "After accepted upstream Base routing, import BaseCalendar and its props type from ../bases/BaseCalendar. Extend the existing host view discriminant with 'calendar' and require an authoritative calendar context for that branch (queryRef/snapshot, mapped date field/window/zone, transport preview/apply/create, current capabilities and canonical open-ref actions). Insert a dedicated if (view === 'calendar') branch before the graph fallback. Pass the accepted shared query snapshot unchanged; do not map CalendarEvent into markdown notes or derive native Task rows from parseNoteDocument. Preserve table/canvas/outline/graph behavior and the existing shell; do not expose a standalone route or second store.",
+      "reason": "Current union at line 71 is table/canvas/graph/outline only; unhandled view values fall through to NotesGraphView at line 116. The current callbacks contain no scheduling transport. Calendar must consume the same authoritative query as Table and be reachable through the existing Base host.",
+      "prerequisite": "Accepted Base host/Table context and reviewed existing caller routing contribution; server operations must exist before enabling writable controls.",
+      "owner": "integration-owner",
+      "mode": "REVIEWED_SERIAL_PATCH_ONLY_AFTER_PATH_LEASE"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewNote",
+      "lineStart": 48,
+      "lineEnd": 56,
+      "change": "Keep NotesViewNote as the existing note input, retaining id/title/markdown/properties and links. If accepted upstream Notes adapter supplies canonical source metadata for shared Base views, thread its existing typed ref/revision metadata without replacing legacy note id or requiring markdown on native Task/Event rows. Pass mixed-source Calendar projection through the dedicated calendar-context prop, not a widening of NotesViewNote into an untyped universal row. Do not invent revisions from id, markdown hashes or updatedAt.",
+      "reason": "NotesViewNote requires markdown and lacks authoritative ref/revision/capability metadata. Reusing it as a native event/task container would fabricate Notes and violate distinct entity identity/owner semantics.",
+      "prerequisite": "009 accepted source projection contract; exact optional metadata property names must come from that contract, not this preflight.",
+      "owner": "integration-owner",
+      "mode": "REVIEWED_SERIAL_PATCH_ONLY_AFTER_PATH_LEASE"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Calendar refs/filtered date rows agree Table",
+      "currentEvidence": "NotesViewHost memoizes projectNoteRows(notes + parsed markdown tasks) at 79-88. NotesTableView applies browser-local applyNoteBaseView at 161-162, then keys rows by note id at 266-273. note-views.ts:73-83,133-169 contains no native EntityRef/queryRevision/permissionEpoch/date mapping. calendarEventIdentity at calendar/types.ts:103-107 already scopes remote events by account/calendar/event. No BaseCalendar file was found.",
+      "symbolSeams": ["NotesViewHost", "NotesTableView", "projectNoteRows", "applyNoteBaseView", "calendarEventIdentity", "proposed projectCalendarRows/BaseCalendar"],
+      "requiredChange": "Consume 009 canonical native rows and 010 same typed authorized query snapshot as Table. Apply the identical date predicate/window semantics for comparison, partition genuine missing dates into undated, and never drop/merge remote-ID collisions or treat invalid/redacted dates as writable empty values. Preserve account/calendar identity and task-versus-event refs. Native source filtering/ACL occurs before projection; don't use legacy note-only local filters as the security authority.",
+      "verification": "Planned: on integrated native fixtures, compare exact sorted canonical ref/revision sets in Table and all Calendar modes for the same queryRevision/permissionEpoch/filter/date predicate; verify undated coverage with explicit policy, no duplicate/skipped refs across query pages, two accounts and two calendars sharing remote id, and revoked/denied fields absent from rows and diagnostics.",
+      "missingPrerequisites": ["Accepted 009 source rows/capabilities", "Accepted 010 snapshot and Table consumer interface via 012/011", "Shared NotesViewHost route patch and caller contribution"],
+      "state": "NOT_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "native schedule reload proof + DST explicit",
+      "currentEvidence": "PersonalTask defines dueAt/startAt as numbers and no precision/timezone at personal/types.ts:42-75. taskCalendarAt simply chooses startAt ?? dueAt at projections.ts:100-103. localDayKey/startOfLocalDay use host-local Date at dates.ts:5-16; parseNlDate turns ISO day into a host-local 09:00/18:00 timestamp at 40-44 and uses fixed-day offsets at 47-53. buildTodayPlan infers allDay from midnight at projections.ts:231-235. CalendarEvent has allDay/timeZone/numeric bounds and optional etag at calendar/types.ts:22-38.",
+      "symbolSeams": ["PersonalTask", "localDayKey", "startOfLocalDay", "parseNlDate", "taskCalendarAt", "buildTodayPlan", "CalendarEvent", "proposed previewCalendarDateMove"],
+      "requiredChange": "Preserve accepted owner DateValue precision; date-only remains a calendar day rather than UTC midnight. Use explicit mapped Task.startAt/dueAt and event start/end/allDay/timeZone without changing owner semantics. Resolve zoned input gaps/overlaps through explicit preview diagnostics/disambiguation before apply. Native owner writes must persist precision and reload the same ref/normalized date; remote event moves require actual writable capability and preserve duration/all-day exclusive-end/recurrence semantics under supported scope. Do not modify legacy date helpers blindly or infer new metadata from existing midnight values.",
+      "verification": "Planned: preserve literal date-only day through display and move across UTC, America/Los_Angeles and Europe/Berlin, including DST boundaries; use Europe/Berlin 2026-03-29 02:30 nonexistent and 2026-10-25 02:30 ambiguous input to assert explicit rejection/choice before write. Read exact owner ref/revision/hash and date precision before/after process restart. For native Task startAt and dueAt mappings verify only the selected supported schedule semantics change; inspect provider all-day/timed echo in its separate live lane.",
+      "missingPrerequisites": ["Accepted native date precision mapping/migration and durable owner API", "009/012 accepted field/action mappings", "EG-PROVIDERS for real event writes"],
+      "state": "NOT_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "Specification work-packages.json:8010-8027 proposes previewCalendarMove/applyCalendarMove and eight error discriminants, but points contract_file at the not-present renderer TSX. NotesViewHost:58-78 exposes only open/create-note/convert callbacks; inspected scoped source does not establish either endpoint or server schema registration.",
+      "symbolSeams": ["NotesViewHost props", "proposed CalendarMoveInput/CalendarMoveEnvelope/CalendarMoveResult/CalendarMoveError", "normative base.previewCalendarMove/base.applyCalendarMove"],
+      "requiredChange": "Keep transport-neutral typed schemas in calendar-date-mapping.ts using accepted shared command/query/date types. Input binds row ref/revision, schema/query context, mapped date field, target DateValue/zone/disambiguation and supported occurrence scope. Apply uses the shared operationId/expectedRevision/preview-token envelope, not renderer-supplied actor grants. Compile exhaustive validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat result handling at both boundaries. Reuse authenticated server transport/current capability and revision checks; renderer preview is not server authorization.",
+      "verification": "Planned: compile accepted core/server/renderer boundary consumers through project-supported checks; exercise invalid date/zone, stale row/schema, deleted source, unavailable adapter, offline unsupported and provider rate-limit errors. Send forged actor/owner/workspace and cross-account refs through the actual transport; assert no unauthorized owner/provider mutation. UI displays the typed diagnostic without protected details.",
+      "missingPrerequisites": ["Accepted 012 shared command envelope/error/transport interface", "Authoritative registration seam or reviewed additional server-path packet", "Common identity/ACL foundation"],
+      "state": "NOT_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "CalendarBundle holds accounts/events/journals/proposals at types.ts:86-94; SyncJournal has cursor/lastSyncAt/lastSyncedRevision/conflicts at 64-70, not a demonstrated command-specific provider ACK fence. PersonalTask has optional updatedAt, not a durable receipt contract. The mandatory atomic content/receipt/outbox and consumer fence are proposed in 07-domain-entity-model.md:169-189, not proven by these types.",
+      "symbolSeams": ["CalendarBundle", "SyncJournal", "CalendarEvent.etag/localDirty", "PersonalTask", "accepted 012 DomainReceipt and native owner command seam", "proposed BaseCalendar pending/ACK state"],
+      "requiredChange": "Dispatch mapped schedule writes through native authority and expose pending versus durable-native-committed versus queuedProvider/ACK/failure states. A durable local queued intent is not external completion. Match sourceCommandId/ref/revision to ACK and ignore ACKs older than the current authoritative revision. Use existing durable receipt/outbox/reconciliation support; never call localStorage or a toast a native schedule commit. Subscribe to verified task.updated/provider.syncAcknowledged aliases through common events.",
+      "verification": "Planned: record before/after native ref/revision/hash and normalized typed values, then restart and reread authority rather than cached renderer state. Delay/reorder/duplicate provider ACKs and assert queued remains unconfirmed before matching ACK; an old ACK cannot reverse a newer date. Crash after durable native commit/before UI response and resume with same operation ID. In live provider lane reconcile provider success/local persistence failure without repeated external write.",
+      "missingPrerequisites": ["Accepted durable native command/receipt/outbox recovery", "Verified event aliases and envelope", "Real provider reconciliation/ACK readiness"],
+      "state": "NOT_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "work-packages.json:8058-8061 specifies date-only, scoped remote identity and read-only subscription denial. Current CalendarEvent type has no subscription write capability flag; CalendarAccount status/scopedCalendarIds is connection metadata, not permission to mutate a visible event. Scoped inspected helpers do not establish ACL/expected-revision/replay/recovery handlers. No product tests were run in this preflight.",
+      "symbolSeams": ["CalendarAccount", "CalendarEvent", "calendarEventIdentity", "PersonalTask", "accepted 009 source-capabilities", "accepted 012 owner command", "proposed BaseCalendar move/create dialogs"],
+      "requiredChange": "Add specified package behavior tests without alternate stores/adapters. Deny read-only subscription moves before commit/provider invocation and recheck current field/action grants on apply even after a writable preview. Retain draft on validation/conflict, show deleted/offline/missingDependency/rateLimited honestly, and use shared operation replay/idempotency/recovery support. Click-date creation previews source create capability before invoking supported owner creation.",
+      "verification": "Planned: happy Task move and writable event move/readback; read-only feed pointer/keyboard/forged RPC denial with zero provider writes; revision/schema conflicts and revoke between preview/apply with zero writes; replay same operation once; crash/reconnect intent revalidation and unknown-result reconciliation; date-only DST and same-remoteID separation. Capture every expected/observed attempt, exact source/input hashes and reproduction seed. Unit fixtures do not satisfy native/provider lanes.",
+      "missingPrerequisites": ["Accepted 009/010/012 implementation receipts", "Native owner and authenticated transport harness", "Actual provider capability receipt for provider cases"],
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:8074-8082 names mutation 'Coerce date-only to UTC midnight или считать subscription writable' and assertions stored date-only precision retained, no provider write for read-only feed, UI queued not confirmed before provider ACK. Normative package tests are not present; no baseline/mutant has been exercised.",
+      "symbolSeams": ["proposed calendar-date-mapping.ts date-only projection/move", "accepted source-capability guard/owner apply", "proposed BaseCalendar queued/ACK state", "normative lsx-wp-021.test.ts and ui/lsx-wp-021.spec.ts"],
+      "requiredChange": "Implement deterministic seeded controls on isolated actual-owner/source fixtures: date-only UTC-midnight coercion must fail stored-precision/day assertions; subscription-writable mutation must fail zero-provider-write assertion. Add an early-confirm mutation for the required queued-before-ACK assertion. Keep unmodified baseline green and bind each semantic failure to exact mutated bytes/input/seed, without treating setup failure/timeout as sensitivity.",
+      "verification": "Planned: run bun test tests/lark-suite-extension/lsx-wp-021.test.ts after authorization and integrate native/readback lanes; execute separately hashed controls and preserve failing named assertions plus green baseline results. UI state control is evaluated through the actual supported runner. Reproduce retained seeds and inspect that failure is semantic, not infrastructure.",
+      "missingPrerequisites": ["Implemented normative tests and green integrated baseline", "Native precision and provider-call observable fixture", "Supported actual Electron runner for queued UI control"],
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "NotesViewHost imports useTranslation/UI primitives and uses t() and theme tokens at 1-6,132,166-250. There is no Calendar route at 71,90-117 and no BaseCalendar file. RS-BASE-01:36-42 requires hover/focus/click help, actual computed font, 120-160ms opacity/transform motion, reduced motion and responsive panes. Existing rendering source alone is not font/native UI proof.",
+      "symbolSeams": ["NotesViewHost", "proposed BaseCalendar", "accepted ScalarCellEditor Date editor", "existing useTranslation and semantic UI tokens"],
+      "requiredChange": "Implement month/week/day/list, undated bucket, keyboard date dialog and DST prompt, click-date create capability preview, Today/arrows, pointer reschedule/cancel and canonical open-ref action. Add explicit native/provider status diagnostics and meaningful loading/empty/denied/error/offline/stale states. Use t() with integrated keys in all ten locales, preserve selected theme/semantic fonts, provide hover/focus/click help with precision/zone/source/freshness/example, keyboard/focus return, IME composition priority and reduced-motion handling; no separate shell or forced global theme/font.",
+      "verification": "Planned: through reachable real Electron Calendar view capture pointer/keyboard/IME interactions, focus order/return and ARIA, help via all three triggers, DST choice and no-write denial, all four modes/date-create flow and queue/ACK transitions. Verify 200% zoom, light/dark/current theme, Russian Cyrillic and all-locale key parity, actual loaded Rox Mono computed font, reduced-motion preference and responsive pane layouts. Bind screenshots/ARIA/font and native readback to integrated commit and fixture seed.",
+      "missingPrerequisites": ["Accepted existing Base host navigation context and serial NotesViewHost patch", "Approved shared locale key integration outside current worker write paths", "Actual Electron/UI runner and integrated backend"],
+      "state": "NOT_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "Specification work-packages.json:8065-8071 requires SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI; 8155-8172 requires integrated exact-commit/hashes/readback and affected provider/collaboration receipts. This artifact is source-only preflight and featureComplete is false.",
+      "symbolSeams": ["normative package proof-lane contract", "proposed BaseCalendar and calendar-date-mapping.ts", "native Task owner/provider authority via dependencies"],
+      "requiredChange": "Lead integrates only approved owned files and leased shared patches after accepted prerequisites, then reruns authoritative readback on exact integrated commit. Gather all six mandatory lanes independently plus real provider lane for event writes; record source/diff/hash/seed/attempts, compiled boundary schema report, negative controls, restart receipts and actual UI evidence. Collaboration lane is required if exercised, not asserted from this single-view source inspection. Fail closed on missing owner/provider/authority instead of replacing the lane with fixtures or marking an unimplemented requirement N/A.",
+      "verification": "Planned: acceptance owner checks an evidence manifest mapping each DoD row to observed integrated behavior, validates artifact and spec hashes and input revision, checks authoritative ref/revision/hash after restart and actual UI proof, and independently verifies provider reconciliation where used. Report validation proves only this JSON artifact, never feature completion.",
+      "missingPrerequisites": ["Wave0 and accepted dependency/foundation receipts", "Complete integrated implementation and all mandatory proof lanes", "Independent integration review and exact revision-bound evidence"],
+      "state": "PREFLIGHT_ONLY_FEATURE_NOT_COMPLETE"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "packages/core/src/calendar/types.ts", "symbol": "CalendarEvent", "lineStart": 22, "lineEnd": 38, "sha256": "3654f8c7ed213947f21368633981c89553e46385021d27e568ed5b8a6ee00e9e"},
+    {"path": "packages/core/src/calendar/types.ts", "symbol": "CalendarBundle / calendarEventIdentity / sameCalendarEvent", "lineStart": 86, "lineEnd": 114, "sha256": "3654f8c7ed213947f21368633981c89553e46385021d27e568ed5b8a6ee00e9e"},
+    {"path": "packages/core/src/calendar/types.ts", "symbol": "CalendarAccount / SyncJournal", "lineStart": 11, "lineEnd": 70, "sha256": "3654f8c7ed213947f21368633981c89553e46385021d27e568ed5b8a6ee00e9e"},
+    {"path": "packages/core/src/tasks/personal/dates.ts", "symbol": "localDayKey / startOfLocalDay / parseNlDate", "lineStart": 5, "lineEnd": 79, "sha256": "6b8ac9696b55c5f5e9406664c947eec59fdd7946264c450bd57209d8a9afaa87"},
+    {"path": "packages/core/src/tasks/personal/projections.ts", "symbol": "taskCalendarAt / upcomingByDay", "lineStart": 100, "lineEnd": 155, "sha256": "d2cdc1cc648ca38d82cdf788e3d88f6ca3e9668184ef2eea04dbaf165f148ff2"},
+    {"path": "packages/core/src/tasks/personal/projections.ts", "symbol": "buildTodayPlan", "lineStart": 207, "lineEnd": 260, "sha256": "d2cdc1cc648ca38d82cdf788e3d88f6ca3e9668184ef2eea04dbaf165f148ff2"},
+    {"path": "packages/core/src/tasks/personal/types.ts", "symbol": "PersonalTask", "lineStart": 42, "lineEnd": 75, "sha256": "4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"},
+    {"path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx", "symbol": "NotesViewNote / NotesViewHost", "lineStart": 48, "lineEnd": 117, "sha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx", "symbol": "NotesTableView", "lineStart": 119, "lineEnd": 300, "sha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path": "apps/electron/src/renderer/pages/notes/note-views.ts", "symbol": "NoteBaseView / NoteProjectionRow / projectNoteRows / applyNoteBaseView", "lineStart": 24, "lineEnd": 170, "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path": "plans/lark-suite-reference/work-packages.json", "symbol": "work_packages[20] LSX-WP-021", "lineStart": 7850, "lineEnd": 8177, "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "LSX-WP-021 normative execution record", "lineStart": 1754, "lineEnd": 1840, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/lark-suite-reference/05-rox-bases-design.md", "symbol": "Date field registry / Calendar view / native edit semantics", "lineStart": 107, "lineEnd": 132, "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path": "docs/lark-suite-reference/05-rox-bases-design.md", "symbol": "Query ACL / Calendar view / native edit semantics", "lineStart": 158, "lineEnd": 212, "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path": "docs/lark-suite-reference/06-rox-docs-design.md", "symbol": "TaskNotes / Day Planner", "lineStart": 156, "lineEnd": 156, "sha256": "a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path": "docs/lark-suite-reference/07-domain-entity-model.md", "symbol": "Events and consistency", "lineStart": 169, "lineEnd": 189, "sha256": "cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path": "docs/rox-suite/published/RS-BASE-01.md", "symbol": "Published dependency RS-DRV-01 / common authority", "lineStart": 95, "lineEnd": 109, "sha256": "78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"},
+    {"path": "docs/rox-suite/published/RS-DRV-01.md", "symbol": "Mandatory common identity/ACL/command foundation gate", "lineStart": 60, "lineEnd": 75, "sha256": "ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3"},
+    {"path": "docs/macro-integration/12-calendar.md", "symbol": "Provider-authoritative mutation split / target ROX calendar / acceptance", "lineStart": 26, "lineEnd": 66, "sha256": "4a81b44f3d365143ad9cd6e92496671a7112b914aa1ea3cc16e6df35a97104ed"}
+  ],
+  "sourceDigestNotes": {
+    "method": "Read-only shasum -a 256 over concrete inspected whole files; sha256 values are whole-file digests, not selected ranges or Git blobs.",
+    "manifestMatch": "The inspected execution-packages.json and work-packages.json hashes match both dispatch input_manifest entries.",
+    "baselineMatches": "calendar/types.ts, personal/dates.ts and personal/projections.ts whole-file hashes match their normative existing_code blob_sha256 values.",
+    "baselineDifference": "NotesViewHost.tsx observed a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a differs from normative baseline 2fc3fc07f0cfb84bb7e7e18cc6548a34417ec6c34508a796942d0a80a6e13358. Its actual line ranges above are therefore working-tree evidence, not baseline line promises. No authorship or cause is inferred; root changes are preserved.",
+    "staleEvidencePolicy": "All requests and symbol locations are tied to the listed inspected bytes. They become stale on any relevant source change; re-read changed files and regenerate hashes/patch coordinates before implementation or integration. Do not apply baseline source_line snippets against a different file hash."
+  },
+  "verificationStatus": {
+    "observed": ["Exact package specification and linked gates read", "Scoped actual source/direct-import seams inspected", "Normative new files not found by exact-path glob", "Whole-file source/specification digests captured and input manifest hashes matched", "Saved report parsed as a single JSON object; dispatch identifiers, exact dependency array, four normative new files, all eight exact DoD criteria in order, shared-patch scope and 19 source-reference records validated read-only"],
+    "notRun": ["Product implementation", "Builds/typechecks/tests/mutation runs", "Native or fixture UI", "Network/provider operations", "Git changes or revision checkout"],
+    "meaning": "This is a preflight integration request, not feature implementation or runtime acceptance."
+  },
+  "nextExecutableAction": {
+    "actor": "integration-owner/lead",
+    "action": "Accept/reject this preflight artifact, finish and commit wave0, then bind accepted 009 -> 010 -> 012 receipts and reconcile the published Drive/common-authority/provider gates. Resolve the reference manifest and baseline lineage. Confirm native DateValue precision persistence plus common preview/apply transport registration and Base route/locale contributions. Refresh source hashes and acquire NotesViewHost path lease before dispatching the four normative new files for 021 implementation.",
+    "firstImplementationContributionAfterGates": "Implement pure framework-neutral calendar-date-mapping.ts on the accepted DateValue/query/owner contracts, then BaseCalendar plus the two normative test artifacts and the serial host patch; do not invent a provider, owner precision store, server route or second Base surface to bypass missing foundations.",
+    "ifInterfacesDoNotCoverScope": "Return an exact newly discovered server/locale/navigation path and symbol to the lead for a reviewed packet amendment before touching it; these additional paths are not granted by this report."
+  },
+  "risks": [
+    "Native PersonalTask timestamps do not encode precision or IANA zone. Storing date-only only in Calendar UI would silently lose it on owner reload; prerequisite-owner precision support is mandatory.",
+    "Host-local Date and fixed MS_DAY arithmetic in existing helpers are not a timezone/DST implementation. Reusing parseNlDate as a lossless DateValue converter would fabricate 09:00 times and shift calendar days.",
+    "Calendar event visibility/connected account/scoped calendar IDs are not write authorization. Subscriptions must remain read-only with no local fake save or provider write.",
+    "Remote event id alone collides across accounts/calendars; native Task and Event must remain different refs even when titles/dates match. Use the accepted authoritative ref mapping and existing account-scoped helper without flattening identifiers.",
+    "Provider queued versus externally acknowledged state, etag conflicts, unknown external outcomes and out-of-order ACKs require native journal/fence evidence. A local receipt/toast or fixture adapter is not live-provider success.",
+    "Recurring events need explicit supported occurrence/series scope from the provider owner; do not accidentally move a whole series or erase exceptions. Missing support must remain an honest typed diagnostic.",
+    "Only NotesViewHost is a normative shared patch path. Backend registration, upstream route selectors, native type changes and locale catalogs cannot be opportunistically edited by the 021 worker; accepted upstream interfaces or reviewed packet changes are needed.",
+    "Published RS-BASE-01 points at an older 249b3b44220bcfbd7d467de9cfc18f76e1c37807 snapshot, normative LSX source is e953786ba7e30fb5da5dca7e88e20e324d5aebab and dispatch input is a21aeab1da5a67e56788384ff930945b0f487879. Publication and static source descriptions do not prove readiness at the integrated revision.",
+    "Concurrent wave0/shared-source integration can invalidate all inspected locations. Existing NotesViewHost already differs from the normative baseline digest; revalidate bytes before a serial patch.",
+    "Calendar/Table equivalence must be compared under the same authorized date predicates, queryRevision and permissionEpoch, not against different windows or client-only filtering. Denied fields and stale cached data must not leak through date buckets/help/errors.",
+    "Actual Electron keyboard/IME/focus/font/theme/200% zoom evidence and independent native restart/provider proofs are missing and remain required, never N/A because this preflight cannot run them."
+  ]
+}

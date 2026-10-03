@@ -1,0 +1,8 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {loadInputs,buildHandoff,validateHandoff} from './control-handoff.mjs';
+const {catalogs,ownership}=loadInputs();
+test('all61screens219controls have exact owned interaction handoff',()=>{const h=buildHandoff(catalogs,ownership);assert.equal(h.counts.screens,61);assert.equal(h.counts.controls,219);assert.deepEqual(validateHandoff(h,catalogs,ownership),[]);});
+test('coverage gate rejects dropped, duplicate and unknown controls',()=>{for(const mutate of [h=>h.controls.pop(),h=>h.controls.push(structuredClone(h.controls[0])),h=>h.controls[0].id='SH-00.fake']){const h=buildHandoff(catalogs,ownership);mutate(h);assert(validateHandoff(h,catalogs,ownership).length>0);}});
+test('independent review identity, root selector, owners and proof mutations are rejected',()=>{for(const mutate of [h=>h.controls[0].screenId='FAKE',h=>h.controls[0].controlId='fake',h=>h.controls[0].testHook.root='body',h=>h.controls[0].proofRequirements=[],h=>h.controls[0].featureOwners=['WP-48']]){const h=buildHandoff(catalogs,ownership);mutate(h);assert(validateHandoff(h,catalogs,ownership).length>0);}});
+test('owner, interaction, source and runtime evidence mutations are rejected',()=>{for(const mutate of [h=>h.controls[0].primaryUiOwner='WP-48',h=>delete h.controls[0].interaction.hover,h=>h.controls[0].interaction.click='silently copy private source',h=>h.controls[0].labelRu='Destination',h=>h.controls[0].source.pointer='/wrong',h=>h.inputs[0].sha256='0'.repeat(64),h=>h.controls[0].runtimeStatus='PASSED']){const h=buildHandoff(catalogs,ownership);mutate(h);assert(validateHandoff(h,catalogs,ownership).length>0);}});

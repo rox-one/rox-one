@@ -132,6 +132,7 @@ const TOOLBAR_CHANNELS = {
   THEME_COLOR: 'browser-toolbar:theme-color',
 } as const
 export const BROWSER_PANE_SESSION_PARTITION = 'persist:browser-pane'
+export const BROWSER_COOKIE_IMPORT_PARTITION = 'persist:browser-cookie-import'
 const SESSION_PARTITION = BROWSER_PANE_SESSION_PARTITION
 
 interface AgentControlState {
@@ -156,7 +157,8 @@ export interface EmbeddedBoundsRect {
 
 interface BrowserInstance {
   id: string
-  /** Null for embedded instances composited onto the main app window. */
+  partition: string
+  /** Null for embedded instances composited onto the main window. */
   window: BrowserWindow | null
   toolbarView: WebContentsView
   pageView: WebContentsView
@@ -216,6 +218,7 @@ interface CreateBrowserInstanceOptions {
   ownerType?: 'session' | 'manual'
   ownerSessionId?: string
   workspaceId?: string | null
+  useImportedCookies?: boolean
 }
 
 export interface BrowserScreenshotOptions {
@@ -358,6 +361,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
   static CdpImpl = BrowserCDP
 
   private instances: Map<string, BrowserInstance> = new Map()
+  private cookieImportConsent = false
   private destroyingIds: Set<string> = new Set()
   private stateChangeCallback: ((info: BrowserInstanceInfo) => void) | null = null
   private removedCallback: ((id: string) => void) | null = null
@@ -392,6 +396,14 @@ export class BrowserPaneManager implements IBrowserPaneManager {
   onInteracted(callback: (id: string) => void): void {
     this.interactedCallback = callback
   }
+  setCookieImportConsent(enabled: boolean): void {
+    this.cookieImportConsent = enabled
+    if (!enabled) {
+      for (const instance of [...this.instances.values()]) {
+        if (instance.partition === BROWSER_COOKIE_IMPORT_PARTITION) this.destroyInstance(instance.id)
+      }
+    }
+  }
 
   createInstance(id?: string, options?: CreateBrowserInstanceOptions): string {
     const instanceId = id || `browser-${++instanceCounter}`
@@ -405,7 +417,11 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       return instanceId
     }
 
-    const ses = session.fromPartition(SESSION_PARTITION)
+    const partition =
+      options?.useImportedCookies === true && this.cookieImportConsent
+        ? BROWSER_COOKIE_IMPORT_PARTITION
+        : SESSION_PARTITION
+    const ses = session.fromPartition(partition)
     this.setupSessionPermissions(ses)
     this.setupSessionObservers(ses)
 
@@ -422,7 +438,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       // Fully chromeless — toolbar is rendered in a dedicated WebContentsView
       frame: false,
       webPreferences: {
-        partition: SESSION_PARTITION,
+        partition,
         session: ses,
         contextIsolation: true,
         nodeIntegration: false,
@@ -433,7 +449,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     const toolbarView = new WebContentsView({
       webPreferences: {
         preload: join(__dirname, 'browser-toolbar-preload.cjs'),
-        partition: SESSION_PARTITION,
+        partition,
         session: ses,
         contextIsolation: true,
         nodeIntegration: false,
@@ -443,7 +459,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 
     const pageView = new WebContentsView({
       webPreferences: {
-        partition: SESSION_PARTITION,
+        partition,
         session: ses,
         contextIsolation: true,
         nodeIntegration: false,
@@ -457,7 +473,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 
     const nativeOverlayView = new WebContentsView({
       webPreferences: {
-        partition: SESSION_PARTITION,
+        partition,
         session: ses,
         contextIsolation: true,
         nodeIntegration: false,
@@ -477,6 +493,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 
     const instance: BrowserInstance = {
       id: instanceId,
+      partition,
       window,
       toolbarView,
       pageView,
@@ -685,12 +702,10 @@ export class BrowserPaneManager implements IBrowserPaneManager {
   private resolveLaunchWorkspaceId(): string | null {
     if (!this.windowManager) return null
 
-    const focusedWindow = this.windowManager.getFocusedWindow()
-    if (focusedWindow) {
-      const focusedWorkspaceId = this.windowManager.getWorkspaceForWindow(focusedWindow.webContents.id)
-      if (focusedWorkspaceId) {
-        return focusedWorkspaceId
-      }
+    const lastActiveWindow = this.windowManager.getLastActiveWindow()
+    if (lastActiveWindow) {
+      const workspaceId = this.windowManager.getWorkspaceForWindow(lastActiveWindow.webContents.id)
+      if (workspaceId) return workspaceId
     }
 
     const managedWindows = this.windowManager.getAllWindows()
@@ -1977,10 +1992,10 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 
   private getAgentControlLabel(agentControl: Pick<AgentControlState, 'displayName' | 'intent'> | null | undefined): string {
     if (agentControl?.intent) {
-      return `${agentControl.displayName ?? i18n.t('browser.agentControl.agent')} — ${agentControl.intent}`
+      return `${agentControl.displayName ?? i18n.t('browser.agentControl.agent') ?? 'Agent'} — ${agentControl.intent}`
     }
 
-    return agentControl?.displayName ?? i18n.t('browser.agentControl.working')
+    return agentControl?.displayName ?? i18n.t('browser.agentControl.working') ?? 'Agent is working…'
   }
 
   private reapplyAgentControlVisual(instance: BrowserInstance): void {
@@ -2058,7 +2073,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
   <body>
     <div id="overlay">
       <div id="shield"></div>
-      <div id="chip">${escapeOverlayText(i18n.t('browser.agentControl.working'))}</div>
+      <div id="chip">${escapeOverlayText(i18n.t('browser.agentControl.working') ?? 'Working')}</div>
     </div>
   </body>
 </html>`
@@ -2218,10 +2233,16 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       return instanceId
     }
 
-    const partition =
+    const requestedPartition =
       typeof input?.partition === 'string' && input.partition.trim().length > 0
         ? input.partition.trim()
-        : SESSION_PARTITION
+        : null
+    const partition =
+      requestedPartition === BROWSER_COOKIE_IMPORT_PARTITION
+        ? this.cookieImportConsent
+          ? BROWSER_COOKIE_IMPORT_PARTITION
+          : SESSION_PARTITION
+        : requestedPartition ?? SESSION_PARTITION
     const ses = session.fromPartition(partition)
     this.setupSessionPermissions(ses)
     this.setupSessionObservers(ses)
@@ -2294,6 +2315,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 
     const instance: BrowserInstance = {
       id: instanceId,
+      partition,
       window: null,
       toolbarView,
       pageView,
@@ -2376,9 +2398,10 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 
   /**
    * Position or hide an embedded instance's composited views.
-   * Rect is in CSS px relative to the main window's client area; `null` hides.
+   * Rect is in CSS px relative to its renderer's client area; `null` hides.
+   * RPC callers pass the sender's webContents id so views stay on their owner.
    */
-  syncEmbeddedBounds(id: string, rect: EmbeddedBoundsRect | null): void {
+  syncEmbeddedBounds(id: string, rect: EmbeddedBoundsRect | null, hostWebContentsId?: number): void {
     const instance = this.instances.get(id)
     if (!instance || !instance.embedded) {
       mainLog.warn(`[browser-pane] syncEmbeddedBounds ignored: no embedded instance id=${id}`)
@@ -2397,11 +2420,11 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       return
     }
 
-    const hostWindow = this.resolveEmbedHostWindow()
+    const hostWindow = this.resolveEmbedHostWindow(hostWebContentsId, instance.workspaceId)
     if (!hostWindow) {
-      // Main window destroyed or not yet created — stay hidden; the renderer
-      // re-sends its rect on focus/resize so attach will recover later.
-      mainLog.warn(`[browser-pane] syncEmbeddedBounds: no live main window for id=${id}; hiding for now`)
+      // A stale or foreign sender must never move a native surface onto another
+      // workspace window. Keep it detached until its owning renderer reports again.
+      mainLog.warn(`[browser-pane] syncEmbeddedBounds: no authorized host window for id=${id}; hiding for now`)
       instance.embeddedRect = null
       this.detachEmbeddedViews(instance)
       return
@@ -2410,18 +2433,70 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     this.attachEmbeddedViews(instance, hostWindow)
   }
 
-  /** Pick the main app window to composite embedded views onto. */
-  private resolveEmbedHostWindow(): BrowserWindow | null {
+  /** Resolve the renderer-owned managed window, preferring authenticated sender identity. */
+  private resolveEmbedHostWindow(hostWebContentsId?: number, workspaceId?: string | null): BrowserWindow | null {
     if (!this.windowManager) return null
-    const candidates = [
-      this.windowManager.getLastActiveWindow(),
-      this.windowManager.getFocusedWindow(),
-      this.windowManager.getAllWindows()[0]?.window ?? null,
-    ]
-    for (const win of candidates) {
-      if (win && !win.isDestroyed()) return win
+    if (hostWebContentsId !== undefined) {
+      const host = this.windowManager.getWindowByWebContentsId(hostWebContentsId)
+      const hostWorkspaceId = this.windowManager.getWorkspaceForWindow(hostWebContentsId)
+      if (!host || host.isDestroyed() || (workspaceId && hostWorkspaceId !== workspaceId)) return null
+      return host
     }
+
+    if (workspaceId) {
+      const workspaceWindow = this.windowManager.getWindowByWorkspace(workspaceId)
+      if (workspaceWindow && !workspaceWindow.isDestroyed()) return workspaceWindow
+    }
+
+    const lastActive = this.windowManager.getLastActiveWindow()
+    if (lastActive && !lastActive.isDestroyed()) return lastActive
     return null
+  }
+
+  private sendPanelFocusDirection(
+    instance: BrowserInstance,
+    event: { preventDefault(): void },
+    input: { type?: string; key?: string; meta?: boolean; control?: boolean; alt?: boolean; shift?: boolean; isComposing?: boolean },
+  ): boolean {
+    if (
+      input.type !== 'keyDown' ||
+      input.isComposing === true ||
+      input.alt !== true ||
+      input.shift === true ||
+      (process.platform === 'darwin' ? input.meta !== true : input.control !== true) ||
+      !instance.embedded ||
+      !instance.embeddedAttached ||
+      !instance.embeddedRect ||
+      this.instances.get(instance.id) !== instance
+    ) {
+      return false
+    }
+
+    const direction =
+      input.key?.toLowerCase() === 'arrowleft'
+        ? 'left'
+        : input.key?.toLowerCase() === 'arrowright'
+          ? 'right'
+          : input.key?.toLowerCase() === 'arrowup'
+            ? 'up'
+            : input.key?.toLowerCase() === 'arrowdown'
+              ? 'down'
+              : null
+    if (!direction) return false
+
+    const host = instance.embeddedHostWindow
+    if (!host || host.isDestroyed() || host.webContents.isDestroyed()) return false
+    if (this.resolveEmbedHostWindow(host.webContents.id, instance.workspaceId) !== host) return false
+    try {
+      host.webContents.send('window:panel-focus-direction', direction)
+      event.preventDefault()
+      return true
+    } catch (error) {
+      mainLog.warn(
+        `[browser-pane] panel focus direction send failed id=${instance.id}: ${error instanceof Error ? error.message : String(error)}`,
+      )
+      return false
+    }
   }
 
   /**
@@ -3885,6 +3960,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
         event.preventDefault()
         return
       }
+      if (this.sendPanelFocusDirection(instance, event, input)) return
       if (isOmniboxChord(input)) {
         event.preventDefault()
         this.requestOmniboxOpen(instance)
@@ -4065,7 +4141,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
           parent: instance.window ?? undefined,
           modal: false,
           webPreferences: {
-            partition: SESSION_PARTITION,
+            partition: instance.partition,
             session: pageWc.session,
             contextIsolation: true,
             nodeIntegration: false,

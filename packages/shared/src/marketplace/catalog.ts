@@ -436,15 +436,27 @@ export function atomicWriteFileSync(path: string, content: string): void {
 function readCache(paths: MarketplacePaths): { catalog: MarketplaceCatalog; fetchedAt: number | null } | null {
   try {
     if (!existsSync(paths.catalogCache)) return null
-    const parsed = JSON.parse(readFileSync(paths.catalogCache, 'utf8')) as { fetchedAt?: unknown; catalog?: unknown }
-    return { catalog: parseCatalog(parsed.catalog), fetchedAt: typeof parsed.fetchedAt === 'number' ? parsed.fetchedAt : null }
+    const cached = JSON.parse(readFileSync(paths.catalogCache, 'utf8')) as {
+      fetchedAt?: unknown
+      body?: unknown
+      signature?: unknown
+    }
+    if (typeof cached.body !== 'string' || typeof cached.signature !== 'string') return null
+    assertCatalogBodySignature(cached.body, cached.signature, 'cached catalog')
+    return {
+      catalog: parseCatalog(JSON.parse(cached.body)),
+      fetchedAt: typeof cached.fetchedAt === 'number' ? cached.fetchedAt : null,
+    }
   } catch {
-    return null // corrupt cache is treated as absent; bundled fallback still works
+    return null // corrupt or unauthenticated cache is treated as absent
   }
 }
 
-function writeCache(paths: MarketplacePaths, rawCatalogJson: string): void {
-  atomicWriteFileSync(paths.catalogCache, JSON.stringify({ fetchedAt: Date.now(), catalog: JSON.parse(rawCatalogJson) }))
+function writeCache(paths: MarketplacePaths, body: string, signature: string): void {
+  atomicWriteFileSync(
+    paths.catalogCache,
+    JSON.stringify({ fetchedAt: Date.now(), body, signature }),
+  )
 }
 
 function loadBundled(bundledCatalogPath?: string): MarketplaceCatalog | null {
@@ -521,31 +533,32 @@ async function refreshCatalogInternal(options: GetCatalogOptions & { allowFreshC
       if (Buffer.byteLength(body) > MAX_CATALOG_BYTES) {
         throw new Error(`catalog exceeds 4MB cap (${Buffer.byteLength(body)} bytes)`)
       }
-      // Integrity + authenticity when URL ends with catalog.json:
-      // sibling .sha256 (body digest) and .sig (ed25519 over body bytes).
-      if (remoteUrl.endsWith('catalog.json')) {
-        const digestUrl = remoteUrl.replace(/catalog\.json$/, 'catalog.json.sha256')
-        const digestRes = await fetchFn(digestUrl, {
-          headers: { 'user-agent': 'craft-agents-marketplace' },
-          signal: AbortSignal.timeout(30_000),
-        })
-        if (!digestRes.ok) throw new Error(`catalog digest HTTP ${digestRes.status}`)
-        assertCatalogBodyMatchesSidecar(body, await digestRes.text(), 'remote catalog')
-        const sigUrl = remoteUrl.replace(/catalog\.json$/, 'catalog.json.sig')
-        const sigRes = await fetchFn(sigUrl, {
-          headers: { 'user-agent': 'craft-agents-marketplace' },
-          signal: AbortSignal.timeout(30_000),
-        })
-        if (!sigRes.ok) throw new Error(`catalog signature HTTP ${sigRes.status}`)
-        assertCatalogBodySignature(body, await sigRes.text(), 'remote catalog')
+      // Every remote catalog is an install trust root. Custom URLs follow the
+      // same signed format; URL overrides never disable authenticity checks.
+      if (!parsedUrl.pathname.endsWith('/catalog.json')) {
+        throw new Error('catalog URL must end in /catalog.json to locate signed sidecars')
       }
-
+      const digestUrl = remoteUrl.replace(/catalog\.json$/, 'catalog.json.sha256')
+      const digestRes = await fetchFn(digestUrl, {
+        headers: { 'user-agent': 'craft-agents-marketplace' },
+        signal: AbortSignal.timeout(30_000),
+      })
+      if (!digestRes.ok) throw new Error(`catalog digest HTTP ${digestRes.status}`)
+      assertCatalogBodyMatchesSidecar(body, await digestRes.text(), 'remote catalog')
+      const sigUrl = remoteUrl.replace(/catalog\.json$/, 'catalog.json.sig')
+      const sigRes = await fetchFn(sigUrl, {
+        headers: { 'user-agent': 'craft-agents-marketplace' },
+        signal: AbortSignal.timeout(30_000),
+      })
+      if (!sigRes.ok) throw new Error(`catalog signature HTTP ${sigRes.status}`)
+      const signature = await sigRes.text()
+      assertCatalogBodySignature(body, signature, 'remote catalog')
       const catalog = parseCatalog(JSON.parse(body)) // throws CatalogValidationError
       // Version monotonicity: never replace a newer cache with an older catalog.
       if (cached && catalog.catalogVersion < cached.catalog.catalogVersion) {
         throw new Error(`catalogVersion regression (${catalog.catalogVersion} < ${cached.catalog.catalogVersion})`)
       }
-      writeCache(paths, body) // atomic swap
+      writeCache(paths, body, signature) // atomic signed-body swap
       const fetchedAt = now()
       const etag = res.headers.get('etag') ?? undefined
       metaStore.set({ catalogEtag: etag, lastCatalogFetchAt: fetchedAt })

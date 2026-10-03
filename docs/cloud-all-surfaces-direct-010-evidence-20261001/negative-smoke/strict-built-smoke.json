@@ -1,0 +1,55 @@
+{
+  "label": "strict-built-smoke",
+  "candidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "logicalArgv": [
+    "bun",
+    "--no-env-file",
+    "test",
+    "packages/server/src/__tests__/smoke.test.ts"
+  ],
+  "actualArgv": [
+    "/workspace/.onboarding-tools/node_modules/.bin/bun",
+    "--no-env-file",
+    "test",
+    "packages/server/src/__tests__/smoke.test.ts"
+  ],
+  "commandSha256": "ed7ff957833b7e668d704f05d0654c67c37cd52f7f6749ee2f70734150b2984e",
+  "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+  "startedUtc": "2026-10-01T17:05:28.981701+00:00",
+  "seconds": 9.224,
+  "exit": 0,
+  "headBefore": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "headAfter": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "log": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/negative-smoke/strict-built-smoke.log",
+  "logSha256": "74dd440908dde094f5d6920ce61f0be11d79d2bde21a1d25b25c6ebb7c14f7c0",
+  "safeEnvironmentKeys": [
+    "BUN_INSTALL_CACHE_DIR",
+    "CRAFT_CONFIG_DIR",
+    "FORCE_COLOR",
+    "LANG",
+    "LC_ALL",
+    "NODE_COMPILE_CACHE",
+    "NO_COLOR",
+    "PATH",
+    "ROX_CONFIG_DIR",
+    "ROX_SERVER_SMOKE_ENTRY",
+    "ROX_SERVER_SMOKE_WEBUI_DIR",
+    "TMPDIR",
+    "TZ",
+    "XDG_CACHE_HOME",
+    "npm_config_cache"
+  ],
+  "explicitEnvironmentOverrides": {
+    "ROX_SERVER_SMOKE_ENTRY": "dist-server/index.js",
+    "ROX_SERVER_SMOKE_WEBUI_DIR": "apps/webui/dist"
+  },
+  "actualBunCounts": {
+    "pass": 4,
+    "fail": 0,
+    "expect": 37,
+    "tests": 4,
+    "files": 1
+  },
+  "executedCaseReceipt": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/negative-smoke/executed-cases.json",
+  "caseDeclarationRowsResolved": 4
+}

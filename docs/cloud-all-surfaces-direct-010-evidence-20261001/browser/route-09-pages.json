@@ -1,0 +1,250 @@
+{
+  "url": "http://127.0.0.1:42223/?route=pages&ws=e0fbee7a-45ae-f362-0248-d9ceb67a3298",
+  "title": "Rox",
+  "bodyText": "Sessions: Unavailable\nPages\nHome\nSessions\nMeetings\nTasks\nNotes\nFeed\nInbox\nMORE\nNew Session\nSessions\n0\nFavorites\n0\nArchive\nLabels\nProjects\n1\nCloud UI Genuine Project\nPages\n0\nMemory\nTasks\nMeetings\nSources\n10\nAPIs\n2\nMCPs\n0\nLocal Folders\n8\nSkills\n0\nNotes\nAutomations\n30\nScheduled\n10\nEvent-based\n10\nAgentic\n10\nSettings\nUser\nStandard · Balance —\nPages\n0\nAll Projects\nNew Page\nNo pages yet\nPages are small live dashboards that agents build and keep fresh for you. Ask an agent to create one, or start from a blank page.\nAsk an agent\nCreate blank Page\nInfo\nTITLE\nPages\nRemote\nSync OK\n0 runs\n0 approvals",
+  "appRootChildren": 3,
+  "topBar": {
+    "visible": true,
+    "tag": "DIV",
+    "text": "Pages\nHome\nSessions\nMeetings\nTasks\nNotes\nFeed\nInbox",
+    "ariaLabel": null,
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1440,
+      "height": 40
+    }
+  },
+  "modePill": {
+    "visible": true,
+    "tag": "NAV",
+    "text": "Home\nSessions\nMeetings\nTasks\nNotes\nFeed\nInbox",
+    "ariaLabel": "Modes",
+    "rect": {
+      "x": 459.0703125,
+      "y": 7,
+      "width": 521.859375,
+      "height": 26
+    }
+  },
+  "rail": {
+    "visible": true,
+    "tag": "NAV",
+    "text": "MORE",
+    "ariaLabel": "Activity rail",
+    "rect": {
+      "x": 0,
+      "y": 74.75,
+      "width": 44,
+      "height": 901.25
+    }
+  },
+  "mainNavigation": {
+    "visible": true,
+    "tag": "NAV",
+    "text": "Sessions\n0\nFavorites\n0\nArchive\nLabels\nProjects\n1\nCloud UI Genuine Project\nPages\n0\nMemory\nTasks\nMeetings\nSources\n10\nAPIs\n2\nMCPs\n0\nLocal Folders\n8\nSkills\n0\nNotes\nAutomations\n30\nScheduled\n10\nEvent-based\n10\nAgentic\n10\nSettings",
+    "ariaLabel": "Main navigation",
+    "rect": {
+      "x": 44,
+      "y": 119.75,
+      "width": 320,
+      "height": 718.75
+    }
+  },
+  "headers": [],
+  "testIds": [
+    "bottom-terminal-toggle",
+    "titlebar-mode-pill",
+    "rail-extra-screens",
+    "profile-strip-balance"
+  ],
+  "modeButtons": [
+    {
+      "mode": "home",
+      "label": "Home",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "chat",
+      "label": "Sessions",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "meetings",
+      "label": "Meetings",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "tasks",
+      "label": "Tasks",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "notes",
+      "label": "Notes",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "feed",
+      "label": "Feed",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "inbox",
+      "label": "Inbox",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    }
+  ],
+  "railButtons": [
+    {
+      "label": "Sessions",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Projects",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Pages",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Memory",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Tasks",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Meetings",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Sources",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Skills",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Notes",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Automations",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Connections",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Settings",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Dossier",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Radar",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Decisions",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Agent center",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Focus",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Collapse activity rail",
+      "disabled": null,
+      "visible": true
+    }
+  ],
+  "sourceStates": [
+    {
+      "tag": "DIV",
+      "testId": null,
+      "authority": null,
+      "source": null,
+      "error": null,
+      "role": "status",
+      "text": "Sessions: Unavailable",
+      "disabled": null,
+      "failed": null
+    },
+    {
+      "tag": "SPAN",
+      "testId": null,
+      "authority": null,
+      "source": null,
+      "error": null,
+      "role": "status",
+      "text": "",
+      "disabled": null,
+      "failed": null
+    },
+    {
+      "tag": "DIV",
+      "testId": null,
+      "authority": null,
+      "source": null,
+      "error": null,
+      "role": "status",
+      "text": "",
+      "disabled": null,
+      "failed": null
+    }
+  ],
+  "preferences": {
+    "craft-workbench-enabled": "true",
+    "craft-feature-unified-shell": null,
+    "craft-feature-workbench-top-chrome-v2": null,
+    "craft-feature-workbench-mode-registry-v1": null,
+    "craft-activity-rail-collapsed": "false",
+    "craft-sidebar-width": "320",
+    "craft-session-list-width": "300"
+  },
+  "screenshot": "route-09-pages.png",
+  "html": "route-09-pages.html"
+}

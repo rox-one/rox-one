@@ -113,6 +113,7 @@ export function registerMailIpc(log?: (message: string, error?: unknown) => void
   handle(C.FOLDERS, () => wrap(() => s.folders()))
   handle(C.LIST, (_e, query: MailListQuery) => wrap(() => s.list(query ?? {})))
   handle(C.GET, (_e, id: string) => wrap(() => s.get(String(id))))
+  handle(C.GET_THREAD, (_e, threadId: string) => wrap(() => s.getThread(String(threadId))))
   handle(C.SET_FLAGS, (_e, ids: string[], flags: { seen?: boolean; flagged?: boolean }) => wrap(() => s.setFlags(Array.isArray(ids) ? ids.map(String) : [], flags ?? {})))
   handle(C.MOVE, (_e, ids: string[], target: string) => wrap(() => s.move(Array.isArray(ids) ? ids.map(String) : [], String(target))))
   handle(C.REMOVE, (_e, ids: string[]) => wrap(() => s.remove(Array.isArray(ids) ? ids.map(String) : [])))

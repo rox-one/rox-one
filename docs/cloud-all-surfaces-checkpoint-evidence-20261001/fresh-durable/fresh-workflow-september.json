@@ -1,0 +1,67 @@
+{
+  "label": "fresh-workflow-september",
+  "historicalCommandLabel": "r19-workflow-september",
+  "command": [
+    "bun",
+    "--no-env-file",
+    "test",
+    "packages/shared/src/automations/scheduler-process-loss-acceptance.test.ts",
+    "packages/server-core/src/handlers/rpc/__tests__/source-status-runtime.test.ts",
+    "packages/shared/src/agent/core/__tests__/budget-owner-process-acceptance.test.ts",
+    "packages/server-core/src/transport/__tests__/native-authorization.test.ts"
+  ],
+  "commandByteArrayMatchesHistorical": true,
+  "cwd": "/tmp/rox-r15-durable-recheck-20261001/checkout",
+  "sourceBefore": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "sourceAfter": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "sourceBeforeManifestSha256": "afafaf9499a8f41869f44a5aa057a16d158120480a8a9bac0ba9d6b58d99c415",
+  "sourceAfterManifestSha256": "afafaf9499a8f41869f44a5aa057a16d158120480a8a9bac0ba9d6b58d99c415",
+  "lockBefore": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+  "lockAfter": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+  "changedTrackedFiles": {},
+  "originalUnchanged": true,
+  "versions": {
+    "bun": "1.3.14",
+    "node": "v24.19.0"
+  },
+  "envKeys": [
+    "BUN_INSTALL_CACHE_DIR",
+    "CRAFT_CONFIG_DIR",
+    "ELECTRON_SKIP_BINARY_DOWNLOAD",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LC_ALL",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_PROXY",
+    "PATH",
+    "REQUESTS_CA_BUNDLE",
+    "ROX_CONFIG_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "XDG_CACHE_HOME",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy",
+    "npm_config_cache"
+  ],
+  "dotenvAbsent": true,
+  "sourceAndLockUnchanged": true,
+  "startedAtUtc": "2026-10-01T04:43:38.926380+00:00",
+  "completedAtUtc": "2026-10-01T04:43:41.155330+00:00",
+  "exit": 0,
+  "seconds": 2.011,
+  "logPath": "/workspace/rox-r15-evidence-20260930/checkpoint-20261001/fresh-durable/fresh-workflow-september.log",
+  "logSha256": "586c2e794c97e9ae3d221fc38d107f709c9dc45c85a22b97a789994262596c31",
+  "logBytes": 2697,
+  "childBunSummaryBlocks": [
+    {
+      "pass": 24,
+      "fail": 0,
+      "expect": 147,
+      "tests": 24,
+      "files": 4
+    }
+  ],
+  "fullDoDAccepted": false
+}

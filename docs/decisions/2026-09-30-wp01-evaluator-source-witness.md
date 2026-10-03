@@ -1,0 +1,5 @@
+# WP-01: имя архивного source witness
+
+Выбрано автономно. Копия неизменённого исторического evaluator oracle сохраняется в evidence как `holdout.test.ts.source.txt`; SHA256 `b8222c7836463af8639e7f9a85475470ffb50effd5ac6a12918e1894803fe741` прежний. Оригинальный реально выполненный oracle с его физическими baseline/mutant fixtures остаётся вне checkout неизменённым. Файлы fixtures не являются частью public repository.
+
+Причина: копирование исходника с `.test.ts` ошибочно объявляло архивное свидетельство новым auto-discovered тестом, хотя его обязательная приватная baseline-directory отсутствует в публичном evidence. Сохранена каждая строка assertions и выполненные reports; production suite и каждый зарегистрированный integration test неизменны. Путь/хеш witness доступны через `source-witness-location.json`. Это не skip, удаление падающего production test или замена assertions. Полная repository suite должна проверять runnable source, а историческое доказательство — по сохранённым байтам и execution receipts.

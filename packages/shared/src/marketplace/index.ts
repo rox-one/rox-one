@@ -8,6 +8,7 @@ export * from './catalog-signing.ts'
 export * from './lock.ts'
 export * from './stats.ts'
 export * from './installer.ts'
+export * from './filters.ts'
 
 import type { CatalogLoadResult } from './catalog.ts'
 import type { MarketplaceLockRecord } from './lock.ts'

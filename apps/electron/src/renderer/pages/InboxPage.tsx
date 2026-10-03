@@ -8,7 +8,11 @@
  * no list RPC yet — stated, not faked.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useTeamInboxNav } from '@/components/team/TeamInboxNavItem'
+import { useAtom } from 'jotai'
+import { inboxPreferencesAtom } from '@/atoms/inbox'
+import { decideRecipientRequest, selectInboxForUser } from '@craft-agent/shared/team'
+import { TEAM_FLAG, dispatchTeam, readTeamState, teamActionContext, useTeamFlag, useTeamState } from '@/components/team/team-store'
+import { useTeamRoster } from '@/components/team/use-team-roster'
 import { useTranslation } from 'react-i18next'
 import { navigate, routes } from '@/lib/navigate'
 import { useInboxItems } from '@/hooks/useInboxItems'
@@ -48,6 +52,7 @@ import type { MailFolder } from '../../shared/mail-local'
 import { useMail } from './inbox/mail/useMail'
 import { MailCompose, MailListPanel, MailNavSection, MailReader, folderLabel, useComposeState } from './inbox/mail/MailPanels'
 import { emailIdFromItem, mailItemId, mailToInboxItem, statusKey } from './inbox/mail/mail-view'
+import type { TeamInboxItem } from '@craft-agent/shared/team'
 
 const KIND_GLYPH: Record<InboxKind, string> = {
   permission: '⚿',
@@ -59,6 +64,7 @@ const KIND_GLYPH: Record<InboxKind, string> = {
   reply: '◧',
   error: '!',
   mail: '✉',
+  'team-recipient': '↗',
 }
 
 const KIND_TONE: Record<InboxKind, Tone> = {
@@ -71,9 +77,10 @@ const KIND_TONE: Record<InboxKind, Tone> = {
   reply: 'muted',
   error: 'danger',
   mail: 'info',
+  'team-recipient': 'info',
 }
 
-const KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender', 'reply', 'error']
+const KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender', 'reply', 'error', 'team-recipient']
 
 /** Inbox views plus a mail folder (`mail` = JMAP mailbox id, 'inbox' before the list loads). */
 type PageFilter = InboxFilter | { mail: string }
@@ -89,10 +96,27 @@ function sameFilter(a: PageFilter, b: PageFilter): boolean {
 }
 
 export default function InboxPage({ selectedId }: { selectedId?: string | null }) {
-  const teamInbox = useTeamInboxNav()
   const { t, i18n } = useTranslation()
-  const { items, state, setState, counts, now, errors, reload, workspaceId, shell } = useInboxItems({ withRemote: true })
+  const teamInboxEnabled = useTeamFlag(TEAM_FLAG.mentions)
+  const teamState = useTeamState()
+  const teamRoster = useTeamRoster()
+  const teamInboxConnected = teamRoster.sync.state === 'connected'
+  const trustedViewer = teamRoster.identityAuthority === 'native' && !!teamRoster.identityIssuer
+  const teamInbox = useMemo(
+    () => teamInboxEnabled && teamInboxConnected && trustedViewer && teamRoster.selfUserId &&
+      teamRoster.members.some((member) => member.userId === teamRoster.selfUserId)
+      ? selectInboxForUser(teamState, teamRoster.selfUserId)
+      : [],
+    [teamInboxEnabled, teamInboxConnected, trustedViewer, teamRoster.selfUserId, teamRoster.members, teamState],
+  )
+  const { items, state, setState, counts, now, errors, staleSources, reload, workspaceId, shell, sessions } = useInboxItems({ withRemote: true, teamInbox })
+  const [preferences, setPreferences] = useAtom(inboxPreferencesAtom)
+  const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<PageFilter>('all')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
+  const [bulkAction, setBulkAction] = useState<'read' | 'archive' | null>(null)
+  const [bulkFailures, setBulkFailures] = useState<Record<string, string>>({})
+  const [bulkBusy, setBulkBusy] = useState(false)
   const mail = useMail({ active: true })
   const composeState = useComposeState(mail)
   const [mailSelected, setMailSelected] = useState<string | null>(null)
@@ -128,17 +152,39 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     if (!mailItems.length) return items
     return sortInbox([...items, ...mailItems])
   }, [items, mailItems])
-  const allCounts = useMemo(() => {
-    const n = mailReady ? mail.unread.length : 0
-    return { ...counts, all: counts.all + n, messages: counts.messages + n, byKind: { ...counts.byKind, mail: n } }
-  }, [counts, mailReady, mail.unread.length])
-
-  const visible = useMemo(() => (isMailFilter(filter) ? [] : filterInbox(allItems, state, filter, now)), [allItems, state, filter, now])
-  const selected = useMemo(() => (inMail ? null : allItems.find((i) => i.id === currentId) ?? null), [allItems, currentId, inMail])
+  const sessionById = useMemo(() => new Map(sessions.map((session) => [session.id, session])), [sessions])
+  const matchesQuery = useCallback((item: InboxItem) => {
+    if (preferences.signalFilter === 'signal' && item.group !== 'decision') return false
+    if (preferences.signalFilter === 'noise' && item.group !== 'message') return false
+    const unread = item.kind === 'mail'
+      ? unreadMailIds.has(item.id)
+      : item.group === 'message' && state.done[item.id] === undefined
+    if (preferences.unreadOnly && !unread) return false
+    const needle = query.trim().toLocaleLowerCase()
+    if (!needle) return true
+    const sessionPreview = item.sessionId ? sessionById.get(item.sessionId)?.preview ?? '' : ''
+    const recipientText = item.kind === 'team-recipient' ? (item.data as TeamInboxItem).text ?? '' : ''
+    return `${item.id}\n${item.title}\n${item.source}\n${sessionPreview}\n${recipientText}`.toLocaleLowerCase().includes(needle)
+  }, [preferences.signalFilter, preferences.unreadOnly, query, sessionById, state.done, unreadMailIds])
+  const visible = useMemo(
+    () => (isMailFilter(filter) ? [] : filterInbox(allItems, state, filter, now).filter(matchesQuery)),
+    [allItems, state, filter, now, matchesQuery],
+  )
+  const selected = useMemo(() => (inMail ? null : visible.find((i) => i.id === currentId) ?? null), [visible, currentId, inMail])
   const selectedEmailId = selected?.kind === 'mail' ? emailIdFromItem(selected.id) : null
   const decisions = visible.filter((i) => i.group === 'decision')
   const messages = visible.filter((i) => i.group === 'message')
   const ordered = useMemo(() => [...decisions, ...messages], [decisions, messages])
+  const visibleBlockingCount = visible.reduce((count, item) => count + (item.blocking ? 1 : 0), 0)
+  const countFor = (view: InboxFilter) => filterInbox(allItems, state, view, now).filter(matchesQuery).length
+  const filteredCounts = {
+    all: countFor('all'),
+    decisions: countFor('decisions'),
+    messages: countFor('messages'),
+    snoozed: countFor('snoozed'),
+    done: countFor('done'),
+    byKind: Object.fromEntries(KINDS.concat('mail').map((kind) => [kind, countFor({ kind })])) as typeof counts.byKind,
+  }
 
   useEffect(() => {
     if (inMail) return
@@ -180,20 +226,81 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     return ordered[idx + 1]?.id ?? ordered[idx - 1]?.id ?? null
   }
 
-  const done = (item: InboxItem) => {
+  const done = async (item: InboxItem) => {
+    if (busy === item.id) return
     const next = nextAfter(item.id)
-    if (item.kind === 'mail') {
-      const emailId = emailIdFromItem(item.id)
-      if (emailId && unreadMailIds.has(item.id)) void mail.act((a) => a.setFlags([emailId], { seen: true })).catch(() => undefined)
-      setPinnedMail(null)
+    setBusy(item.id)
+    setActionError(null)
+    try {
+      if (item.kind === 'team-recipient') throw new Error('This team request needs its authorized recipient action')
+      if (item.kind === 'mail') {
+        const emailId = emailIdFromItem(item.id)
+        if (!emailId) throw new Error('Mail item has no source ID')
+        if (unreadMailIds.has(item.id)) await mail.act((a) => a.setFlags([emailId], { seen: true }))
+        setPinnedMail(null)
+        select(next)
+        return
+      }
+      if ((item.kind === 'reply' || item.kind === 'error') && item.sessionId) {
+        const markRead = window.electronAPI?.sessionCommand
+        if (!markRead) throw new Error('Session read action is unavailable')
+        await markRead(item.sessionId, { type: 'markRead' })
+      }
+      setState((s) => markDone(s, item.id, Date.now()))
       select(next)
-      return
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : String(error))
+    } finally {
+      setBusy(null)
     }
-    setState((s) => markDone(s, item.id, Date.now()))
-    if (item.kind === 'reply' || item.kind === 'error') {
-      if (item.sessionId) void window.electronAPI?.sessionCommand?.(item.sessionId, { type: 'markRead' })
+  }
+
+  const toggleSelected = (id: string, checked: boolean) => {
+    setSelectedIds((previous) => {
+      const next = new Set(previous)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }
+
+  const runBulk = async (action: 'read' | 'archive', ids: string[]) => {
+    setBulkBusy(true)
+    setBulkAction(action)
+    setBulkFailures({})
+    const failed: Record<string, string> = {}
+    const succeeded = new Set<string>()
+    for (const id of ids) {
+      const item = allItems.find((candidate) => candidate.id === id)
+      try {
+        if (!item) throw new Error('Item is no longer available')
+        if (item.kind === 'team-recipient') throw new Error('This team request needs its authorized recipient action')
+        if (action === 'archive') {
+          if (item.kind !== 'mail') throw new Error('Only mail messages can be archived')
+          const emailId = emailIdFromItem(item.id)
+          if (!emailId) throw new Error('Mail item has no source ID')
+          await mail.act((a) => a.move([emailId], 'archive'))
+        } else if (item.kind === 'mail') {
+          const emailId = emailIdFromItem(item.id)
+          if (!emailId) throw new Error('Mail item has no source ID')
+          if (unreadMailIds.has(item.id)) await mail.act((a) => a.setFlags([emailId], { seen: true }))
+          setPinnedMail((current) => current?.id === item.id ? null : current)
+        } else if (item.kind === 'reply' || item.kind === 'error') {
+          const markRead = window.electronAPI?.sessionCommand
+          if (!item.sessionId || !markRead) throw new Error('Session read action is unavailable')
+          await markRead(item.sessionId, { type: 'markRead' })
+          setState((current) => markDone(current, item.id, Date.now()))
+        } else {
+          setState((current) => markDone(current, item.id, Date.now()))
+        }
+        succeeded.add(id)
+      } catch (error) {
+        failed[id] = error instanceof Error ? error.message : String(error)
+      }
     }
-    select(next)
+    setBulkFailures(failed)
+    setSelectedIds((current) => new Set([...current].filter((id) => !succeeded.has(id))))
+    setBulkBusy(false)
   }
   const snoozeItem = (item: InboxItem, until: number) => {
     const next = nextAfter(item.id)
@@ -216,6 +323,30 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
       setBusy(null)
     }
   }
+
+  const decideTeamRequest = (item: InboxItem, decision: 'accepted' | 'rejected') => run(item, () => {
+    if (!trustedViewer || !teamRoster.identityIssuer || !teamRoster.selfUserId) {
+      throw new Error('A trusted recipient identity is required')
+    }
+    const request = item.data as TeamInboxItem
+    if (!request.requestId) throw new Error('Team request has no stable ID')
+    const previous = readTeamState()
+    try {
+      const persisted = dispatchTeam((current) => decideRecipientRequest(
+        current,
+        teamActionContext(teamRoster.selfUserId!),
+        request.requestId!,
+        decision,
+      ))
+      if (!persisted) {
+        dispatchTeam(() => previous)
+        throw new Error('The recipient decision could not be saved locally')
+      }
+    } catch (error) {
+      if (readTeamState() !== previous) dispatchTeam(() => previous)
+      throw error
+    }
+  })
 
   const onListKeys = useListKeys(ordered, selected && ordered.includes(selected) ? selected : null, (i) => select(i.id), openSession)
   useEffect(() => {
@@ -248,17 +379,17 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   const navigator = (
     <>
       <NavTitle>{t('inbox.title')}</NavTitle>
-      <NavItem label={t('inbox.view.all')} count={allCounts.all} active={sameFilter(filter, 'all')} onClick={() => setFilter('all')} testId="inbox-nav-all" />
-      <NavItem label={t('inbox.view.decisions')} count={counts.decisions} dot={counts.blocking ? 'warning' : undefined} active={sameFilter(filter, 'decisions')} onClick={() => setFilter('decisions')} testId="inbox-nav-decisions" />
-      <NavItem label={t('inbox.view.messages')} count={allCounts.messages} active={sameFilter(filter, 'messages')} onClick={() => setFilter('messages')} />
-      <NavItem label={t('inbox.view.snoozed')} count={counts.snoozed} active={sameFilter(filter, 'snoozed')} onClick={() => setFilter('snoozed')} />
-      <NavItem label={t('inbox.view.done')} count={counts.done} active={sameFilter(filter, 'done')} onClick={() => setFilter('done')} />
+      <NavItem label={t('inbox.view.all')} count={filteredCounts.all} active={sameFilter(filter, 'all')} onClick={() => setFilter('all')} testId="inbox-nav-all" />
+      <NavItem label={t('inbox.view.decisions')} count={filteredCounts.decisions} dot={visibleBlockingCount ? 'warning' : undefined} active={sameFilter(filter, 'decisions')} onClick={() => setFilter('decisions')} testId="inbox-nav-decisions" />
+      <NavItem label={t('inbox.view.messages')} count={filteredCounts.messages} active={sameFilter(filter, 'messages')} onClick={() => setFilter('messages')} />
+      <NavItem label={t('inbox.view.snoozed')} count={filteredCounts.snoozed} active={sameFilter(filter, 'snoozed')} onClick={() => setFilter('snoozed')} />
+      <NavItem label={t('inbox.view.done')} count={filteredCounts.done} active={sameFilter(filter, 'done')} onClick={() => setFilter('done')} />
       <NavSection title={t('inbox.types')}>
         {KINDS.map((kind) => (
           <NavItem
             key={kind}
             label={kindLabel(kind)}
-            count={counts.byKind[kind]}
+            count={filteredCounts.byKind[kind]}
             active={sameFilter(filter, { kind })}
             onClick={() => setFilter({ kind })}
           />
@@ -267,35 +398,52 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
       <MailNavSection mail={mail} activeFolderId={inMail ? filter.mail : null} onSelectFolder={openFolder} />
       <NavSection title={t('inbox.notConnected')}>
         <NavItem label={t('inbox.kind.meetingProposals')} dot="muted" onClick={() => navigate(routes.view.meetings())} testId="inbox-nav-meetings" />
-        {teamInbox.enabled && !teamInbox.connected ? (
-          <NavItem label={t('teamCollab.inboxNav')} count={teamInbox.count || undefined} dot="muted" onClick={() => navigate(routes.view.settings('organizations'))} testId="inbox-nav-team" />
+        {teamInboxEnabled && !teamInboxConnected ? (
+          <NavItem label={t('teamCollab.inboxNav')} dot="muted" onClick={() => navigate(routes.view.settings('organizations'))} testId="inbox-nav-team" />
         ) : null}
       </NavSection>
     </>
   )
 
-  const row = (item: InboxItem) => (
-    <ListRow
-      key={item.id}
-      testId={`inbox-row-${item.kind}`}
-      selected={item.id === currentId}
-      unread={item.kind === 'mail' ? unreadMailIds.has(item.id) : item.group === 'message' && state.done[item.id] === undefined}
-      onClick={() => select(item.id)}
-    >
-      <span aria-hidden className="w-4 shrink-0 pt-px text-center text-text-muted">{KIND_GLYPH[item.kind]}</span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[12px] text-text-muted">{kindLabel(item.kind)} · {item.source}</span>
-        <span className={`block truncate ${item.group === 'message' || item.blocking ? 'font-semibold' : ''}`}>{item.title}</span>
-      </span>
-      <span className="flex shrink-0 flex-col items-end gap-0.5">
-        <span className="text-[11px] tabular-nums text-text-muted">{when(item.at)}</span>
-        {item.blocking ? <Badge tone="warning">{t('inbox.blocking')}</Badge> : null}
-      </span>
-    </ListRow>
-  )
+  const row = (item: InboxItem) => {
+    const sourceKey = item.kind === 'memory' ? 'memory' : item.kind === 'skill' ? 'skills' : item.kind === 'sender' ? 'senders' : null
+    const stale = sourceKey !== null && staleSources.includes(sourceKey)
+    const unread = item.kind === 'mail' ? unreadMailIds.has(item.id) : item.group === 'message' && state.done[item.id] === undefined
+    return (
+      <ListRow
+        key={item.id}
+        testId={`inbox-row-${item.kind}`}
+        selected={item.id === currentId}
+        unread={unread}
+        onClick={() => select(item.id)}
+      >
+        <input
+          type="checkbox"
+          aria-label={t('inbox.selectItem', { title: item.title, defaultValue: `Select ${item.title}` })}
+          checked={selectedIds.has(item.id)}
+          onClick={(event) => event.stopPropagation()}
+          onChange={(event) => toggleSelected(item.id, event.currentTarget.checked)}
+          className="mt-1 size-3.5 shrink-0 accent-[var(--accent)]"
+        />
+        <span aria-hidden className="w-4 shrink-0 pt-px text-center text-text-muted">{KIND_GLYPH[item.kind]}</span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[12px] text-text-muted">{kindLabel(item.kind)} · {item.source}</span>
+          <span className={`block truncate ${unread || item.blocking ? 'font-semibold' : ''}`}>{item.title}</span>
+        </span>
+        <span className="flex shrink-0 flex-col items-end gap-0.5">
+          <span className="text-[11px] tabular-nums text-text-muted">{when(item.at)}</span>
+          {item.blocking ? <Badge tone="warning">{t('inbox.blocking')}</Badge> : null}
+          {stale ? <Badge tone="warning">{t('inbox.staleSource', { defaultValue: 'Stale' })}</Badge> : null}
+        </span>
+      </ListRow>
+    )
+  }
 
   const errorEntries = Object.entries(errors).filter(([, v]) => v)
   const mailFolder = inMail ? mail.folders.find((f) => f.id === filter.mail) : undefined
+  const selectedVisibleIds = visible.filter((item) => selectedIds.has(item.id)).map((item) => item.id)
+  const selectedMailIds = visible.filter((item) => selectedIds.has(item.id) && item.kind === 'mail').map((item) => item.id)
+  const allVisibleSelected = visible.length > 0 && visible.every((item) => selectedIds.has(item.id))
   const listPanel = inMail ? (
     <MailListPanel
       mail={mail}
@@ -308,9 +456,62 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     <>
       <ListHeader
         title={typeof filter === 'object' ? kindLabel(filter.kind) : t(`inbox.view.${filter}`)}
-        subtitle={counts.blocking ? t('inbox.blockingCount', { count: counts.blocking }) : undefined}
+        subtitle={visibleBlockingCount ? t('inbox.blockingCount', { count: visibleBlockingCount }) : undefined}
         actions={<Button variant="ghost" onClick={() => void reload()}>{t('inbox.refresh')}</Button>}
       />
+      <div className="mx-3 flex flex-wrap items-center gap-1.5 border-b border-foreground/[0.08] py-2">
+        <input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.currentTarget.value)}
+          placeholder={t('inbox.searchPlaceholder', { defaultValue: 'Search inbox' })}
+          aria-label={t('inbox.searchPlaceholder', { defaultValue: 'Search inbox' })}
+          className="min-w-[120px] flex-1 rounded-[5px] border border-foreground/10 bg-background px-2 py-1 text-[12px] outline-none focus:border-accent"
+        />
+        <Button variant={preferences.signalFilter === 'all' ? 'primary' : 'ghost'} onClick={() => setPreferences((p) => ({ ...p, signalFilter: 'all' }))}>{t('inbox.view.all')}</Button>
+        <Button variant={preferences.signalFilter === 'signal' ? 'primary' : 'ghost'} onClick={() => setPreferences((p) => ({ ...p, signalFilter: 'signal' }))}>{t('inbox.signal', { defaultValue: 'Signal' })}</Button>
+        <Button variant={preferences.signalFilter === 'noise' ? 'primary' : 'ghost'} onClick={() => setPreferences((p) => ({ ...p, signalFilter: 'noise' }))}>{t('inbox.noise', { defaultValue: 'Noise' })}</Button>
+        <label className="flex items-center gap-1.5 px-1 text-[11px] text-text-secondary">
+          <input
+            type="checkbox"
+            checked={preferences.unreadOnly}
+            onChange={(event) => setPreferences((p) => ({ ...p, unreadOnly: event.currentTarget.checked }))}
+            className="size-3.5 accent-[var(--accent)]"
+          />
+          {t('inbox.unreadOnly', { defaultValue: 'Unread only' })}
+        </label>
+      </div>
+      <div className="mx-3 flex flex-wrap items-center gap-1.5 border-b border-foreground/[0.08] py-1.5 text-[11px]">
+        <input
+          type="checkbox"
+          aria-label={t('inbox.selectAll', { defaultValue: 'Select all matching' })}
+          checked={allVisibleSelected}
+          onChange={(event) => {
+            const checked = event.currentTarget.checked
+            setSelectedIds((current) => {
+              const next = new Set(current)
+              for (const item of visible) checked ? next.add(item.id) : next.delete(item.id)
+              return next
+            })
+          }}
+          className="size-3.5 accent-[var(--accent)]"
+        />
+        <span>{t('inbox.selectedCount', { count: selectedVisibleIds.length, defaultValue: `${selectedVisibleIds.length} selected` })}</span>
+        <Button variant="ghost" disabled={selectedIds.size === 0} onClick={() => setSelectedIds(new Set())}>{t('inbox.clearSelection', { defaultValue: 'Clear selection' })}</Button>
+        <Button variant="ghost" disabled={bulkBusy || selectedVisibleIds.length === 0} onClick={() => void runBulk('read', selectedVisibleIds)}>{t('inbox.bulkMarkRead', { defaultValue: 'Mark selected done/read' })}</Button>
+        <Button variant="ghost" disabled={bulkBusy || selectedMailIds.length === 0} onClick={() => void runBulk('archive', selectedMailIds)}>{t('inbox.bulkArchive', { defaultValue: 'Archive selected mail' })}</Button>
+        {Object.keys(bulkFailures).length > 0 ? (
+          <Button variant="ghost" disabled={bulkBusy || !bulkAction} onClick={() => bulkAction && void runBulk(bulkAction, Object.keys(bulkFailures))}>
+            {t('inbox.retryFailed', { defaultValue: 'Retry failed items' })} ({Object.keys(bulkFailures).length})
+          </Button>
+        ) : null}
+      </div>
+      {Object.keys(bulkFailures).length > 0 ? (
+        <div role="alert" className="mx-3 mt-1 rounded-[6px] bg-destructive/10 px-2.5 py-1.5 text-[11px] text-destructive">
+          {t('inbox.failedIds', { items: Object.keys(bulkFailures).join(', '), defaultValue: `Failed items: ${Object.keys(bulkFailures).join(', ')}` })}
+          {Object.entries(bulkFailures).map(([id, error]) => <div key={id}>{id}: {error}</div>)}
+        </div>
+      ) : null}
       {errorEntries.length ? (
         <div role="alert" className="mx-3 mt-1 rounded-[6px] bg-destructive/10 px-2.5 py-1.5 text-[12px] text-destructive">
           {t('inbox.sourceError', { sources: errorEntries.map(([k]) => t(`inbox.source.${k}`)).join(', ') })}
@@ -320,8 +521,8 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
         {visible.length === 0 ? (
           <EmptyState
             testId="inbox-empty"
-            title={filter === 'done' ? t('inbox.empty.doneTitle') : filter === 'snoozed' ? t('inbox.empty.snoozedTitle') : t('inbox.empty.zeroTitle')}
-            body={filter === 'all' || filter === 'decisions' ? t('inbox.empty.zeroBody') : undefined}
+            title={query.trim() ? t('inbox.empty.search', { defaultValue: 'No matching items' }) : filter === 'done' ? t('inbox.empty.doneTitle') : filter === 'snoozed' ? t('inbox.empty.snoozedTitle') : t('inbox.empty.zeroTitle')}
+            body={!query.trim() && (filter === 'all' || filter === 'decisions') ? t('inbox.empty.zeroBody') : undefined}
           />
         ) : (
           <>
@@ -340,11 +541,11 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     const isDone = state.done[item.id] !== undefined
     return (
       <div className="flex flex-wrap items-center gap-1.5 pt-4">
-        {isDone ? (
+        {item.kind !== 'team-recipient' ? (isDone ? (
           <Button onClick={() => setState((s) => reopen(s, item.id))}>{t('inbox.reopen')}</Button>
         ) : (
-          <Button onClick={() => done(item)} title="E">{t('inbox.done')}</Button>
-        )}
+          <Button disabled={busy === item.id} onClick={() => void done(item)} title="E">{t('inbox.done')}</Button>
+        )) : null}
         <span className="pl-2 text-[11px] text-text-muted">{t('inbox.snooze')}:</span>
         <Button variant="ghost" onClick={() => snoozeItem(item, targets.laterToday)}>{t('inbox.snoozeLaterToday')}</Button>
         <Button variant="ghost" onClick={() => snoozeItem(item, targets.tomorrow)} title="S">{t('inbox.snoozeTomorrow')}</Button>
@@ -443,6 +644,36 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
           </>
         )
       }
+      case 'team-recipient': {
+        const request = item.data as TeamInboxItem
+        const ref = item.sourceRef
+        return (
+          <>
+            <Card>
+              <p className="whitespace-pre-wrap text-[13px]">{request.text || request.target.title || ''}</p>
+              <p className="pt-1 text-[11px] text-text-muted">{request.fromUserId}</p>
+              {request.pendingAction ? (
+                <p role="status" className="pt-2 text-[12px] text-text-secondary">
+                  {t('inbox.recipientQueued', {
+                    action: t(request.pendingAction === 'accepted' ? 'inbox.recipientAccept' : 'inbox.recipientReject'),
+                    defaultValue: `Decision queued: ${request.pendingAction}; awaiting server acknowledgment.`,
+                  })}
+                </p>
+              ) : null}
+              {ref ? <p className="pt-2 font-mono text-[11px] text-text-muted">{ref.organizationId} · {ref.requestId} · {ref.targetKind}:{ref.targetId}@{ref.targetRevision}</p> : null}
+            </Card>
+            {!request.pendingAction ? (
+              <div className="flex flex-wrap gap-1.5 pt-3">
+                <Button variant="primary" disabled={!trustedViewer || isBusy || !request.requestId} onClick={() => void decideTeamRequest(item, 'accepted')}>{t('inbox.recipientAccept')}</Button>
+                <Button variant="danger" disabled={!trustedViewer || isBusy || !request.requestId} onClick={() => void decideTeamRequest(item, 'rejected')}>{t('inbox.recipientReject')}</Button>
+              </div>
+            ) : null}
+            <p role="status" className="pt-2 text-[12px] text-text-muted">
+              {t('inbox.recipientActionUnavailable', { defaultValue: 'The server must acknowledge this recipient decision before access changes.' })}
+            </p>
+          </>
+        )
+      }
       case 'reply':
       case 'error':
         return (
@@ -485,7 +716,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
         />
       ) : null}
       <div className="px-5 pb-4">
-        <Button onClick={() => done(selected)} title="E">{t('inbox.done')}</Button>
+        <Button disabled={busy === selected.id} onClick={() => void done(selected)} title="E">{t('inbox.done')}</Button>
       </div>
     </div>
   ) : selected ? (

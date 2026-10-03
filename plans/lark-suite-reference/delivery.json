@@ -1,0 +1,531 @@
+{
+  "schemaVersion": 1,
+  "status": "SPECIFICATION_PACKAGE_DELIVERED",
+  "repository": "rox-one/rox-one",
+  "branch": "docs/lark-suite-reference-20260930",
+  "sourceBaselineSha": "e953786ba7e30fb5da5dca7e88e20e324d5aebab",
+  "packageCommit": "242492868a11b4d9af1c1011f20b31a346875f0a",
+  "packageDigest": "9023153c4d6e4a6dac51991c2d82b512ed3df7d7803825845222160224369cb5",
+  "packageFiles": [
+    {
+      "path": "docs/lark-suite-reference/00-executive-summary.md",
+      "sha256": "c23abf36dc844bb55eac12601d0bf44661dab3f83831a145fef17958b06339ae",
+      "bytes": 7161
+    },
+    {
+      "path": "docs/lark-suite-reference/01-live-product-audit.md",
+      "sha256": "5cb8c48b53c6f14da36e4cd0ef65239db9c108e4770f7d68cbfe14c47d3841dd",
+      "bytes": 13218
+    },
+    {
+      "path": "docs/lark-suite-reference/02-core-suite.md",
+      "sha256": "b2209d6f2e59df43c86b9853920e0b69d5e89d62106e9eaed3a945f84cae08df",
+      "bytes": 179274
+    },
+    {
+      "path": "docs/lark-suite-reference/03-business-ecosystem.md",
+      "sha256": "edc7d2d6852532660d3550ff0bd49bafb15e7a9df47fe31dfd5d87259d1bc6fb",
+      "bytes": 75032
+    },
+    {
+      "path": "docs/lark-suite-reference/04-obsidian-reference-audit.md",
+      "sha256": "6d1ef21c61984365f5919676fc0607bf1c17c64dee7961bbf4f5db0ebc83e281",
+      "bytes": 39468
+    },
+    {
+      "path": "docs/lark-suite-reference/05-rox-bases-design.md",
+      "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c",
+      "bytes": 48335
+    },
+    {
+      "path": "docs/lark-suite-reference/06-rox-docs-design.md",
+      "sha256": "a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68",
+      "bytes": 32586
+    },
+    {
+      "path": "docs/lark-suite-reference/07-domain-entity-model.md",
+      "sha256": "cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b",
+      "bytes": 16876
+    },
+    {
+      "path": "docs/lark-suite-reference/08-automation-integration.md",
+      "sha256": "32b1ffb806b8dab6be2ffe38f3144b1a5601e0695620b5a8f7bbed9b4f345a68",
+      "bytes": 10478
+    },
+    {
+      "path": "docs/lark-suite-reference/09-implementation-plan.md",
+      "sha256": "7cdfbe2aa8b75d343b1a9a1c5630b66d776b8e7e8f98e95226586f91515133bb",
+      "bytes": 163035
+    },
+    {
+      "path": "docs/lark-suite-reference/10-test-plan.md",
+      "sha256": "be0a076d6f608f1c88e0b32169f45eb31078d0061fcbb99dddc21a36450c3f67",
+      "bytes": 14802
+    },
+    {
+      "path": "docs/lark-suite-reference/11-decisions-open-questions.md",
+      "sha256": "6360f58fa8c1260b36dc51a16a8a3786bfd89f321856837cefa31723e3f7a875",
+      "bytes": 7146
+    },
+    {
+      "path": "docs/lark-suite-reference/12-critical-review.md",
+      "sha256": "c0afd71869344f1fabd4434caa37cc8dc15f7dd4a90416e27643fec332561cd1",
+      "bytes": 22378
+    },
+    {
+      "path": "docs/lark-suite-reference/13-code-intelligence.md",
+      "sha256": "3b02aede2c134158b3cc4c3afb21d58639a0bf7000563ab4c5f46da14f101b05",
+      "bytes": 138420
+    },
+    {
+      "path": "docs/lark-suite-reference/14-code-intelligence-ui.md",
+      "sha256": "2c07a58511e385a7bef7d8630d333c685b924fb8e71819cf2215c097107b3c75",
+      "bytes": 16305
+    },
+    {
+      "path": "docs/lark-suite-reference/README.md",
+      "sha256": "226abf4a2999fbeb7123334fbf784343848be5932c5e0d2134b2758fd7acb284",
+      "bytes": 6182
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/ci-001.md",
+      "sha256": "1623a25417481b625aec150c65cf3213d161176524c52856aec79b54e3ac1b87",
+      "bytes": 14262
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/ci-002.md",
+      "sha256": "979eb752607be2c902aabed90919489f03f5f572f4f3913c53fc419e0e930b8a",
+      "bytes": 11433
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/ci-003.md",
+      "sha256": "f4129a2e9bb0f43dc7d7b2a8f4d05a60fbc7f439407c5902b1ceaf00d6b1f92c",
+      "bytes": 12904
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/ci-004.md",
+      "sha256": "f45eea3a264ddb34b8af46a3784ba05b794010f7d6d02e12bfacca63c37bfdcc",
+      "bytes": 11824
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/ci-005.md",
+      "sha256": "589d365bd248e3786c4e2b8af3dc68143f8cb0154761a240bbc7bd39a397cbf9",
+      "bytes": 11247
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/ci-006.md",
+      "sha256": "e7d88a8c9ef93449b06843fc8a033b7bb667bc25f530474c2659cc0b34d6cf33",
+      "bytes": 14509
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/ci-007.md",
+      "sha256": "49b1e88361531d6e835e8f370c0d4da13304fcdc23562eb856fbb2624deb9a98",
+      "bytes": 12135
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/ci-008.md",
+      "sha256": "f58dbb9635b9653cf184989ce80a83e9ec30109c24a753b6236e6a47ac37b22f",
+      "bytes": 12086
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/ci-009.md",
+      "sha256": "28af91e4c88a334f7ab62f84d4014e262b2ee3f7b3f4744baf38939d132658bd",
+      "bytes": 13172
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/ci-010.md",
+      "sha256": "bd0beed9a129aca64859728102a65ac5d7443d703a0f348bc5cb8c547b440dd5",
+      "bytes": 11446
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/ci-011.md",
+      "sha256": "195a128fe44a7a8f49f69a55235cc07263185e9e0576840c18a18eaaeb7a92eb",
+      "bytes": 12742
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/ci-012.md",
+      "sha256": "bc25ae34910f12b2ea3c4501486b4a2b4f469fd1b99f36964838b1d8e50b75c4",
+      "bytes": 14252
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/ci-013.md",
+      "sha256": "9bfda5427e635deab4d6871802c8ba67084d7354ed21b79e0a14d5e6404f63cc",
+      "bytes": 12392
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/ci-014.md",
+      "sha256": "f8c6be6ed72e273a34a939c8d6d6ce8c9e488d81efd1d928a31ec3808e0c5dd7",
+      "bytes": 10296
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/ci-015.md",
+      "sha256": "67ea4bbcf55306d1c51d3ae3709459cce59dd7e810432fb88b0e5b6be3602381",
+      "bytes": 13504
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-001.md",
+      "sha256": "5b4f50f66e7e699bf5769224dda5848e421966c6db5f0cfbff1a0118a4d76180",
+      "bytes": 18659
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-002.md",
+      "sha256": "987b947bc6f16eb05f819abf2a1682752a3e365bc90ac86e87cbdd80ccb5dab6",
+      "bytes": 19122
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-003.md",
+      "sha256": "49b20d0b5f6d47d5d1a4143933d00be790a3d9dc00177b9c32558f1a7dc4fe47",
+      "bytes": 19243
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-004.md",
+      "sha256": "ceb46e78e942c343d8dd9336dd9f0fe9fc8fbcb09af2224408c60d91544b61b2",
+      "bytes": 19506
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-005.md",
+      "sha256": "969f1fdd997ef1dfa72656187e3a012e6966d899237be02902ae9612a2ea8c8e",
+      "bytes": 19030
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-006.md",
+      "sha256": "79f53d7c08ca1371157126162c8ef4ce38303a9fab6c77f1f53447740610b17a",
+      "bytes": 18327
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-007.md",
+      "sha256": "dafb13892036e9be7eaf7feffdd70f0256aff531175d63d06e4aff05717d0b81",
+      "bytes": 19193
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-008.md",
+      "sha256": "bc2fa2d127c84d0d5934ce8012a61b21c2589cb2391b6d5bdd08ddfe255aeb8c",
+      "bytes": 18811
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-009.md",
+      "sha256": "c9a538a8efad07779eb1f54bf3ad49266867bf68ddbbcca32d12d0706bd53972",
+      "bytes": 20678
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-010.md",
+      "sha256": "79404be275a948c18a2a7bb934f2fab60701cb6cea1ae0afcd23788fc07b28a1",
+      "bytes": 18783
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-011.md",
+      "sha256": "4689c95e99e22bfd07205c8e7f3d260020a1ffaa4258798881a0a5d16932bae1",
+      "bytes": 17830
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-012.md",
+      "sha256": "12db1e4e527fa5e278b1e7e0ef4d372411533928ad9bfaa9abd40befbf9d658e",
+      "bytes": 19438
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-013.md",
+      "sha256": "a7df939800eff51ada53c0883346a34daa8cef2db2ec408c14e959570b7fac82",
+      "bytes": 18556
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-014.md",
+      "sha256": "802d78edf971d13118c3065db33087c1a16dc4c5dda25297f6b4181f7423b279",
+      "bytes": 18260
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-015.md",
+      "sha256": "8c000a16abba5fbcaabf9ba0c4bf27c158263e8572a13bd80fe16f3ac565fe6d",
+      "bytes": 18160
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-016.md",
+      "sha256": "5a70dacd1fd5fa4abfb5da85734b4e53402fbd2da5a6724c28de33e990ff7c18",
+      "bytes": 18783
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-017.md",
+      "sha256": "bcf4793e12bdd0df140fbd4cfa74e5851729ac584155fd794a32ce4abec06ba2",
+      "bytes": 17734
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-018.md",
+      "sha256": "b466cc4b0f2482074dd59d353d16f262a84e2c0dc6974f373728bff9ef998556",
+      "bytes": 18207
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-019.md",
+      "sha256": "1bba1e82b968d618a3d7887bdcc15c61d3b834aefcc55dcfc1c30ce395721c47",
+      "bytes": 17268
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-020.md",
+      "sha256": "b2bd99ded863c568ce2d1b46649910a055c759ea72437e97314cc8eee23029b2",
+      "bytes": 19338
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-021.md",
+      "sha256": "16f0299d6d61814162f45aff3a468949083c79c3a96506043f8902c4fb4a0735",
+      "bytes": 19139
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-022.md",
+      "sha256": "446630f07ce2e0ae20b8864c52108ccb85b4377f43f54b8d1920c4ea995a2334",
+      "bytes": 18052
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-023.md",
+      "sha256": "8c17f0433c214db77c0435fb84fe30643e9884dce0d55137c4a64a5fb26b969e",
+      "bytes": 17915
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-024.md",
+      "sha256": "2032d376082a54af46872a818cd056b2d31937124d29fedc24ab5d8fba623a07",
+      "bytes": 19625
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-025.md",
+      "sha256": "675ec49b73f3893c10069bbcb1af907e6df956a4e9739b111c35bb5df662e2c0",
+      "bytes": 18138
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-026.md",
+      "sha256": "8f5a09cf8593afc0eaf8c5eccd31834fa63705ba63b0a70b55e43dc680414a59",
+      "bytes": 19583
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-027.md",
+      "sha256": "b38c4cf079a4426ec3c66a0e1aa45c41f47d4a73b70830c133ebb9fbef6fe5d5",
+      "bytes": 19675
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-028.md",
+      "sha256": "5da1ce8c49f977a62b380ad81a249412a1fd26f3c959559609585da46e37290d",
+      "bytes": 19929
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-029.md",
+      "sha256": "e21206e1f4f4b03718e10d5a91fd002ad52313a9bd33c544100603a54d8aea3b",
+      "bytes": 17731
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-030.md",
+      "sha256": "542736afeb59541f13be1742297b5be5da49a9bda3159f62d72455dfbfecff99",
+      "bytes": 19713
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-031.md",
+      "sha256": "708bc7b73e9d72206f8efbbe25b543b906c597621861139124ac5e87c7f931d4",
+      "bytes": 18143
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-032.md",
+      "sha256": "68ecf00c6575d6e5e608493b2a229d8416be6b775d2d3bb33d8634fb3daa4f31",
+      "bytes": 17777
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-033.md",
+      "sha256": "04897fdbf6037d726bf134f79e45c491dad332cfa76d2d126d7b3e2cc5c52372",
+      "bytes": 18800
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-034.md",
+      "sha256": "091129eb309920ef92246a91ac7e9855ab6da664f052650bbfbff6168ca206cf",
+      "bytes": 20012
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-035.md",
+      "sha256": "24c1e21e9d769bc02004ecc5a852b6d95e986cb818d23f0243889b9031aae033",
+      "bytes": 19467
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-036.md",
+      "sha256": "113ba981b55f869348a332d76b35a0ea48973b2a4494fae5098b11de1ff2e269",
+      "bytes": 19507
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-037.md",
+      "sha256": "2c5de7671a31febdf6c1223e4a8ef4fb1253c5edd85453adc3a4bad29bed8dee",
+      "bytes": 20185
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-038.md",
+      "sha256": "7de49074cba606ae49f04884e2d694228daba22a82c825cf5d54061fe8627de0",
+      "bytes": 20414
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-039.md",
+      "sha256": "91a2de2628c3b0f54535b9495d0beae3bbcde1db87a1aea86f66f6a5ba2f6a99",
+      "bytes": 19151
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-040.md",
+      "sha256": "a2d56285af69d7fcbc7a643a68f9b925edf5f25af4801ddad3b383530c9a063d",
+      "bytes": 20308
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-041.md",
+      "sha256": "7e43457a16038666b65a0a5ce0856cfb7e09caa3aaf7e36f132980857c9ec2b8",
+      "bytes": 20503
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-042.md",
+      "sha256": "91734b37860e3e301c1fe9e914c519f803e09b62f2b4a3ac985b65f0ed51601a",
+      "bytes": 22256
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-043.md",
+      "sha256": "89d0e4a284de79f578cbb3f1e7de3649e49d3c7d2e9039771c53b3edd96025fa",
+      "bytes": 21120
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-044.md",
+      "sha256": "0df0b0bdcb75a1b01b83bea2470e945b0e3920da5dc85baec5ebf591337949f9",
+      "bytes": 21465
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-045.md",
+      "sha256": "c5502122b9e071d8dbdf0d535e5f9cade8e52dc95293ba26083e2f635eb30bc5",
+      "bytes": 19134
+    },
+    {
+      "path": "docs/lark-suite-reference/issues/lsx-wp-046.md",
+      "sha256": "f7879a08c7f644633caf8ee465503d04176f3e6e99a9ad6d675ff06e9200d139",
+      "bytes": 20064
+    },
+    {
+      "path": "docs/plan.md",
+      "sha256": "aa38423c11134159496f5a45052f78a99ea173c0af3bf0ae21ac0b9c11865356",
+      "bytes": 8375
+    },
+    {
+      "path": "docs/spec.md",
+      "sha256": "9210c9bb71039bf45e3f5da02b63bda40c108fa6ee4be8254d841a38bb3da933",
+      "bytes": 9293
+    },
+    {
+      "path": "plans/lark-suite-reference/business-catalog.json",
+      "sha256": "f4c64ba28bb77b9740c1d8914c19479ce367bbbccd3bf2ad2ad3f7e4e24c8dce",
+      "bytes": 119012
+    },
+    {
+      "path": "plans/lark-suite-reference/capabilities.json",
+      "sha256": "c884b245db83105d7cffa0063a715eb3aa3a4edf9699b9fcfceb6b368d68082b",
+      "bytes": 26016
+    },
+    {
+      "path": "plans/lark-suite-reference/code-intelligence.json",
+      "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7",
+      "bytes": 231010
+    },
+    {
+      "path": "plans/lark-suite-reference/core-catalog.json",
+      "sha256": "1228ff3eec2679001a9db2ed72c8348e8c233c0039ddece0a38fff0cb2a2554d",
+      "bytes": 370713
+    },
+    {
+      "path": "plans/lark-suite-reference/dependency-dag.json",
+      "sha256": "c4d88298832d867cc586f2e2310ec7e8fd9fd15494e98ca5e0829bb336f2eaea",
+      "bytes": 54056
+    },
+    {
+      "path": "plans/lark-suite-reference/entity-graph.json",
+      "sha256": "79f9914ee46a8e3b1ce37a0e681d4abd2d5cdd054ed6eafba0ab990446c1bcfd",
+      "bytes": 24493
+    },
+    {
+      "path": "plans/lark-suite-reference/execution-dag.json",
+      "sha256": "56979e22dd9500a2d079889a108c6e4f88718eca2ce55f705f70b7718b5900a5",
+      "bytes": 29263
+    },
+    {
+      "path": "plans/lark-suite-reference/execution-packages.json",
+      "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b",
+      "bytes": 287400
+    },
+    {
+      "path": "plans/lark-suite-reference/issue-drafts.json",
+      "sha256": "e4664b59750862f8d10b6909e03df02fd977774b725ccc24327a170af9c24f09",
+      "bytes": 365888
+    },
+    {
+      "path": "plans/lark-suite-reference/live-capture-index.json",
+      "sha256": "fe062c601a2d83e34b420e60905b1e556f6c73c3fe00c300738ea5ba3a2e39cc",
+      "bytes": 13945
+    },
+    {
+      "path": "plans/lark-suite-reference/live-observations.json",
+      "sha256": "41e30f396f4377062e170a536f9d6e467d8b222dd6449084c9446266673f0ff0",
+      "bytes": 19689
+    },
+    {
+      "path": "plans/lark-suite-reference/obsidian-sources.json",
+      "sha256": "5b383371f065104eb26fd590e584b93057dc1311f7ee5d5c0ae57d73f57a2bba",
+      "bytes": 32758
+    },
+    {
+      "path": "plans/lark-suite-reference/publication-catalog.json",
+      "sha256": "4773c1bd18570618978b84aa08a787df840c9ae167be4a5d1140233ec928b1d5",
+      "bytes": 371118
+    },
+    {
+      "path": "plans/lark-suite-reference/validation-report.json",
+      "sha256": "d595ee04910d245408c8cfe73956429dea8099f97eb080b35a713fbf46656198",
+      "bytes": 12662
+    },
+    {
+      "path": "plans/lark-suite-reference/work-packages.json",
+      "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952",
+      "bytes": 798172
+    },
+    {
+      "path": "tools/lark-suite-reference.mjs",
+      "sha256": "08986296ef6a641a407a688c7cded39d7815cdd5ec0219eb62117f4a7aa18789",
+      "bytes": 26983
+    },
+    {
+      "path": "tools/publish-lark-issues.mjs",
+      "sha256": "d1be12977d50b2298cb6f6da2f58d15ff91ccc0e63374f9fd902268330a09d40",
+      "bytes": 16916
+    }
+  ],
+  "packageRemoteVerified": true,
+  "remoteReadback": {
+    "method": "GitHub ref + nontruncated recursive tree + every blob decoded and SHA256 compared",
+    "fileCount": 96,
+    "verifiedAt": "2026-09-30T04:14:14.004Z"
+  },
+  "productImplementationStatus": "NOT_IMPLEMENTED_BY_THIS_PACKAGE",
+  "cloudExecutionStatus": "PREPARED_NOT_LAUNCHED",
+  "cloudJobsLaunched": 0,
+  "issuePublicationStatus": "PUBLISHED_VERIFIED",
+  "privateCapturesUploaded": false,
+  "issueCount": 61,
+  "publicationManifest": {
+    "path": "plans/lark-suite-reference/publication.json",
+    "sha256": "87c3c458164f6e4e210424c98b09f2ec235e1ccce28628e265eb1ed56066903f",
+    "completedAt": "2026-09-30T04:22:30.832Z"
+  },
+  "publisherChecks": {
+    "exactTitleBodyOpenStateReadback": "PASS_61_OF_61",
+    "numericPrerequisiteLinks": "VERIFIED_DURING_PUBLICATION",
+    "exclusiveConcurrentPublisher": "PASS_SECOND_PROCESS_REJECTED_BEFORE_GITHUB",
+    "controlledCrashRetry": "NOT_RUN"
+  },
+  "receiptCompletedAt": "2026-09-30T04:23:35.809Z",
+  "independentReadOnlyAudit": {
+    "reviewer": "/root/rox_knowledge_design",
+    "status": "PASS",
+    "packageFiles": "96_OF_96_HASH_SIZE_PASS",
+    "baselineUniqueBlobs": 75,
+    "declarationAnchors": 84,
+    "codeIntelligenceSeams": 40,
+    "remoteBlobSample": "6_OF_6_PASS",
+    "remoteIssues": "61_OF_61_EXACT_NORMALIZED_BODY_HASH_TITLE_STATE_MARKER_PASS",
+    "numericDependencyLinks": "161_OF_161_PASS",
+    "uniquePackageIds": 61,
+    "uniqueIssueNumbers": 61,
+    "findings": 0,
+    "productRuntimeVerified": false,
+    "cloudJobsLaunched": 0
+  }
+}

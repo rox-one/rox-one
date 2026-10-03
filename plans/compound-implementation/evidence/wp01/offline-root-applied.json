@@ -1,0 +1,127 @@
+{
+  "manifestSha256": "2cfbf2943b2ce5fe567ffa7fdc6e31e32cabfe5565f8caafe47b427f530bd33e",
+  "verifiedAppliedCount": 24,
+  "paths": [
+    {
+      "path": "apps/electron/src/shared/project-create-intent.ts",
+      "baseSha256": null,
+      "resultSha256": "b757b80a64b35d32255c0afb71241e7259595652667d8fcde5f11f7332d5d009"
+    },
+    {
+      "path": "apps/electron/src/main/project-create-intent.ts",
+      "baseSha256": null,
+      "resultSha256": "86328212987fb1a5018371e0ac69508a53dba46140cb264e975be7ed52b8a6ad"
+    },
+    {
+      "path": "apps/workspace-service/src/http.ts",
+      "baseSha256": "5ec7953dc652bba0cd0119922a38f039ed5554ccb391e795c24e87868cd9cd2c",
+      "resultSha256": "461192aff3985fa5c015ce468b08e54cfc1fb60b8d3dabccd016bbdb9cabf57c"
+    },
+    {
+      "path": "apps/electron/src/main/project-authority.ts",
+      "baseSha256": "6f35b1b5bd76b7c8fecff5107e6bab72ad428f6858f6da0803e3c0d2b4f03540",
+      "resultSha256": "a5317ee286e8383bb0672e12a32383ab71e384f6140b9cb1f403164af0857bd9"
+    },
+    {
+      "path": "apps/electron/src/main/index.ts",
+      "baseSha256": "59e83da201dd22471da7178c108a8f8e89ba30501ebccb22842c3d6f3fd74049",
+      "resultSha256": "d6b5152bfccf22c447623a4c89ac2518d31c873a396daa97872b85d00092a391"
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "baseSha256": "81b3f6f59614deb95705e570335e7f4ecc27dcffe5d6f5ed086b3707ca5ae95a",
+      "resultSha256": "0d0de589efc52485d628349c6ff9b2b07282c97504d7a9b484f333fb718498f7"
+    },
+    {
+      "path": "apps/electron/src/preload/bootstrap.ts",
+      "baseSha256": "62b2315268218b0f86ba32eeab645e066badefca5930ea844e8d357941de8aad",
+      "resultSha256": "f2be23aa4f69f1126ad79413fcc40ad10e69037ba97e8c4b5aa8a2c8622f3cb5"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+      "baseSha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24",
+      "resultSha256": "a8b55d0ca2d527edea3c5be46f7f193647b3c1f6e6e360e1819a971355fb3d2f"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ar.json",
+      "baseSha256": "83989a84565b4aba18593f3f3cbd5c68dd7592b8d730e0b924e9bdf100bea81c",
+      "resultSha256": "4f347e828413b0b998965089ee699bac69522e96ba196b59969e55899c7cffb5"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/de.json",
+      "baseSha256": "c8d2afc5f70102bf58da9fa24ed751fe18b71ce75240b8f86320da939c57e061",
+      "resultSha256": "b2268b3ceaeb5c4b8b2767ec6708ddd18516a2ea0dda8a033ba13ece17468941"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/en.json",
+      "baseSha256": "fef557e97dc86a9d720b990d92ae7aa16f7e39a95faa4f8fb44c3ae5498fec7d",
+      "resultSha256": "d7a483ff48a3dc3a201ebc786b230c354f6604245f4f6bb8c085764d2b63b5bc"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/es.json",
+      "baseSha256": "c34e68c3eaada09599a1f389bc1a5ed97be438c68ac46c20d97fcd04c53aad7c",
+      "resultSha256": "ab40878b12343a1915ccfe5bd06064c3fb0fbf036d0ab2fbe290988caa4d19b4"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/fr.json",
+      "baseSha256": "0f4b589565fb9e92ae901d5d56bf7834d60a602f476a4b140c6d6b736f846710",
+      "resultSha256": "532df5a6fb35b00bda957b0e81b33477db34264dc12c998c1b105054a0b323da"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/hu.json",
+      "baseSha256": "9ca1052cc270b694ea3464b025b95d32d010f80db422802de110fb2a980d65d1",
+      "resultSha256": "f84d246bafac219b46980860f3d5a0edd62a68ad08213bb4a4dd436ba3638206"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ja.json",
+      "baseSha256": "ce15a32978d955e77905aa2473d3c01ca2ee095800fa4c1cbd3be5c7a926bc5e",
+      "resultSha256": "9b59bb49b1101367ab2f21c65027e3e0f2612e63f057551334ceb811f537e118"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ko.json",
+      "baseSha256": "ef8be25f88d3833af0febbab4c9ccf4cac580220f3b51c32f255dd3ba1d7941b",
+      "resultSha256": "8a19476cc5165dcbbbdd1a34fd2978abf9a370bf75eaf12a73ea2808c262c261"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/pl.json",
+      "baseSha256": "2de4235db0649c6cdeb6fd6172d3bf55bab2ce8282edd5febcda71239de00974",
+      "resultSha256": "b71986b2d9303d320b23e9310efb3c9a999aefb61bd7a44e5b46ebc2beed9b03"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "baseSha256": "78d9c7e93f76646958f916689536bee60fddbcbf10185957db0bd16f2da384ad",
+      "resultSha256": "792c4718821cadd3e01ce903ae2e0109d2ec3eb35f5cdfff06df9a66bd6b3354"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "baseSha256": "21c05b7fb8b0118684718520e2022d8ec5889628fc08f08a62b79e7f5072bb32",
+      "resultSha256": "1f3e78d16c45ce42ffa8ecbab4d8f99fbd765bc1e108ff40f090c0e03fbe6777"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hant.json",
+      "baseSha256": "80134d7faebc0ec58b0014bdd423a2b1d890536af8845fad52d45ff863e96e91",
+      "resultSha256": "7d13d6ec73293de5f283a181d7aa075fc4a5049c433c26afbb97897e8f9aecf6"
+    },
+    {
+      "path": "apps/electron/src/transport/project-authority-connection.ts",
+      "baseSha256": "daaa05c5c1323ab86f44bd308f70b9a56f47a587b930db5cfd962ed98d57983e",
+      "resultSha256": "b13a62332d71b83bbd01c39abe1248613426a1749387b6d1794feee1f76a0f39"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-offline.test.ts",
+      "baseSha256": null,
+      "resultSha256": "262f369ce10429f3419da437935515b5730891e90c2f461495c55301ce46588a"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-offline-child.ts",
+      "baseSha256": null,
+      "resultSha256": "bb611b58627df71fb3c6ac3a0b3ec08cb13dbd455b9f600e8272ed753942f5bd"
+    },
+    {
+      "path": "docs/macro-integration/wp-01-runtime.md",
+      "baseSha256": "39ab203b08f38ec08090e9899ededd1c6ff573f7dfacfd4c02b0f56ce5f4679a",
+      "resultSha256": "b9fa0b5f793fab6664d73a4c3c10ef4d26d8c96f5a064a3f8f5c96ec57070623"
+    }
+  ],
+  "nativeAcceptance": "PENDING"
+}

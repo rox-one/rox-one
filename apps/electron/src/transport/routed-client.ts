@@ -14,6 +14,8 @@ import type { WsRpcClient, TransportConnectionState } from './client'
 import type { RpcClient } from '@craft-agent/server-core/transport'
 import type { RemoteServerConfig } from '@craft-agent/core/types'
 import { isLocalOnly, RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { ProjectAuthorityConnection, isProjectAuthorityChannel } from './project-authority-connection'
+import { ProjectAuthorityError } from '../shared/project-authority'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -39,6 +41,13 @@ export type WorkspaceClientFactory = (remoteServer: RemoteServerConfig) => WsRpc
 
 export class RoutedClient implements RpcClient {
   private workspaceClient: WsRpcClient
+  private projectAuthority: ProjectAuthorityConnection | null = null
+
+  setProjectAuthority(authority: ProjectAuthorityConnection, workspaceId: string): void {
+    this.projectAuthority?.destroy()
+    this.projectAuthority = authority
+    void authority.setWorkspace(workspaceId)
+  }
 
   /** REMOTE_ELIGIBLE listener registry — survives workspace switches. */
   private remoteListeners = new Map<string, Set<ListenerEntry>>()
@@ -93,6 +102,11 @@ export class RoutedClient implements RpcClient {
   // -------------------------------------------------------------------------
 
   async invoke(channel: string, ...args: any[]): Promise<any> {
+    if (isProjectAuthorityChannel(channel)) {
+      if (!this.projectAuthority) throw new ProjectAuthorityError('CAPABILITY_UNAVAILABLE')
+      return this.projectAuthority.invoke(channel, ...args)
+    }
+    if (channel.startsWith('domain.project.')) throw new ProjectAuthorityError('CAPABILITY_UNAVAILABLE')
     const isLocal = isLocalOnly(channel)
     const target = isLocal ? this.localClient : this.workspaceClient
 
@@ -123,6 +137,7 @@ export class RoutedClient implements RpcClient {
   }
 
   on(channel: string, callback: (...args: any[]) => void): () => void {
+    if (channel.startsWith('domain.project.')) throw new ProjectAuthorityError('CAPABILITY_UNAVAILABLE')
     if (isLocalOnly(channel)) {
       return this.localClient.on(channel, callback)
     }
@@ -178,6 +193,8 @@ export class RoutedClient implements RpcClient {
   // -------------------------------------------------------------------------
 
   isChannelAvailable(channel: string): boolean {
+    if (isProjectAuthorityChannel(channel)) return this.projectAuthority?.isAvailable(channel) === true
+    if (channel.startsWith('domain.project.')) return false
     const target = isLocalOnly(channel) ? this.localClient : this.workspaceClient
     return target.isChannelAvailable(channel)
   }
@@ -202,6 +219,7 @@ export class RoutedClient implements RpcClient {
 
   private handleWorkspaceSwitch(result: WorkspaceSwitchResult): void {
     if (!result) return
+    void this.projectAuthority?.setWorkspace(result.workspaceId)
 
     if (result.remoteServer && this.clientFactory) {
       // Remote workspace — set up ID mapping and create + connect new client

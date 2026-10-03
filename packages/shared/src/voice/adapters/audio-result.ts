@@ -6,7 +6,7 @@ export interface NormalizedTranscript {
   segments: TranscriptSegment[]
   words?: TranscriptWord[]
   requestedModelId: string
-  resolvedModelId: string
+  resolvedModelId?: string
   routeVersion?: string
   requestId: string
   durationMs: number
@@ -40,7 +40,7 @@ export function validateAudioLimits(bytes: Uint8Array, limits: { maxBytes: numbe
   if (!limits.allowedMime.includes(mime)) throw new AudioValidationError('invalid-mime', `MIME ${mime} is not allowed`)
   return mime
 }
-export function normalizeVerboseJson(raw: unknown, meta: { requestedModelId: string; resolvedModelId: string; routeVersion?: string; requestId: string; durationMs?: number }): NormalizedTranscript {
+export function normalizeVerboseJson(raw: unknown, meta: { requestedModelId: string; resolvedModelId?: string; routeVersion?: string; requestId: string; durationMs?: number }): NormalizedTranscript {
   if (!raw || typeof raw !== 'object') throw new AudioValidationError('damaged', 'ASR payload is not an object')
   const obj = raw as Record<string, unknown>
   const text = typeof obj.text === 'string' ? obj.text : ''

@@ -1,0 +1,357 @@
+{
+  "task_id": "RS-MTG-04-preflight",
+  "attempt_id": "c693de7dd8ce2b47d117670f660cf35b",
+  "packet_hash": "0d816e89bf19508814488f970c877ebff8ac529c4984196e2d8f2f031f2bfe76",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-MTG-04",
+  "featureComplete": false,
+  "mode": "inspect-only; owned report write",
+  "workTier": "bounded-workflow",
+  "dependencies": ["RS-MTG-01"],
+  "dependencyEvidence": "plans/rox-suite/issues.json:454-483 and docs/rox-suite/published/RS-MTG-04.md:85-90. Packet depends_on=[] applies to preflight dispatch, not implementation dependencies.",
+  "evidenceStatus": {
+    "scope": "Current working-tree source inspected read-only, not a clean checkout of the supplied input revision. Existing root wave0 work was not modified.",
+    "specificationManifest": "Both inspected RS-MTG-04 specification and issues.json whole-file hashes match the packet input_manifest.",
+    "sourceDigests": "Whole-file shasum -a 256 captured after source reads. These are inspection fingerprints, not proof that files equal input HEAD or the future wave0 commit. Concurrent integration can stale evidence; lead must compare hashes and re-read changed seams before applying requests.",
+    "discovery": "Codegraph reported no .codegraph index. Descriptive find failed with provider 402 Insufficient credits; literal searches and explicit specification source paths supplied actual evidence instead. No absence claim relies on failed find.",
+    "runtime": "No builds, tests, native UI, provider calls, network operations or Git commands run. All verification below is proposed, not observed feature evidence.",
+    "implementation": "No product source, tests, manifests or progress edited. Only this owned report is delivered. Normative new-file paths were absent in the glob lookup, but ownership must still be confirmed against integrated wave0."
+  },
+  "foundationGates": [
+    {
+      "gate": "Accepted wave0 and shared-file ownership",
+      "explicitDagEdge": false,
+      "evidence": "Worker authorization requires lead wave0 commit and accepted dependency receipts; RS-MTG-04 specification:78 requires agreed shared scope and typed registry.",
+      "requiredReceipt": "Committed wave0 revision, accepted RS-MTG-01 receipt, allocated three proposed new files, and one integration owner for MeetingsPage, LocalMeetingDetail, model/schema/RPC and persistence changes.",
+      "state": "receipt_not_supplied"
+    },
+    {
+      "gate": "RS-MTG-02 signed participation and provider readback",
+      "explicitDagEdge": false,
+      "evidence": "RS-MTG-04:15,35-39,51-52,62; RS-MTG-02:35-43. rooms.ts:12-16 has provider=null/decided=false and roomCapabilityEnabled():false at 41-42.",
+      "requiredReceipt": "Canonical Call/provider alias, authenticated principal/scoped guest identity, verified signature/body/delivery ID ingestion, join/leave/rejoin intervals, reconnect cursor, configured provider sandbox and independent readback. Issuing a token is not a join event.",
+      "state": "required_for_full_remote_DoD; no accepted receipt supplied"
+    },
+    {
+      "gate": "RS-MTG-05 authorized artifact projection and lifecycle",
+      "explicitDagEdge": false,
+      "evidence": "RS-MTG-04:29,35,39,62 and RS-MTG-05:21,45-49,66-72. LocalMeetingDetail uses local audio and document IDs; these are not shared ArtifactRefs.",
+      "requiredReceipt": "ArtifactRefs, per-material denial/unavailable reasons, authorized playback, revoke/delete invalidation, independent artifact processing states and preservation of local tasks/files.",
+      "state": "required_for_full_material_DoD; no accepted receipt supplied"
+    },
+    {
+      "gate": "One canonical identity and local device alias",
+      "explicitDagEdge": false,
+      "evidence": "RS-MTG-04:5,67,69. MeetingEntityRef=model.ts:68; Rox2EntityRef=platform-contract.ts:233-239; LocalMeeting=meetings-local.ts:84-106 lacks canonical ref/revision/device alias.",
+      "requiredReceipt": "RS-MTG-01 typed catalog/detail contract resolving the existing local ID and registered device to one workspace-scoped Call ref without matching on title/time or creating a history entity.",
+      "state": "contract_missing_in_inspected_local_surface"
+    },
+    {
+      "gate": "Shared authority, transactional event outbox and catch-up",
+      "explicitDagEdge": false,
+      "evidence": "RS-MTG-04:35-39,68-70. MeetingJournal persists local JSON with command-ID CAS; MeetingJournalEvent has no participation events. outbox.ts is follow-up mail, not the required shared realtime/event outbox. repository.ts:20 contains an always-true workspace filter.",
+      "requiredReceipt": "Root-owned authenticated gateway/domain/Postgres contract for event+interval+provider-alias writes and transactional outbox, stable watermark/asOf/paging and policy-revision-aware replay. Exact integrated shared module location is not established by this package-only inspection.",
+      "state": "shared_contract_not_established; do_not_add_second_writer"
+    },
+    {
+      "gate": "Field/material ACL and revocation fanout",
+      "explicitDagEdge": false,
+      "evidence": "RS-MTG-04:43,55,70. queries.ts only has workspace/allowed/deleted filtering; local-ipc.ts:83-84,119-120 exposes reads by ID without scoped actor checks in these handlers; LocalMeetingDetail:117-134 only releases audio on effect cleanup.",
+      "requiredReceipt": "Transport-derived actor and common Call/channel/source grant checks before fields, counts, search, notifications and agent evidence; open-detail revocation epoch invalidates local/remote caches and in-flight reads without a token leak.",
+      "state": "full_contract_missing_in_inspected_seams"
+    },
+    {
+      "gate": "Actual local event persistence, not inferred presence",
+      "explicitDagEdge": false,
+      "evidence": "RS-MTG-04:31,39,54. recState is both a five-second heartbeat and pause/resume notification; LocalMeetingStore retains only current status/duration, and normalizeMeeting reconstructs known fields.",
+      "requiredReceipt": "Agreed extension of existing device-owned atomic meeting.json writer/normalizer for immutable capture/pause/resume/stop/recovery events, transition-only append and no provider presence fabricated from text or legacy timestamps.",
+      "state": "local_timeline_events_not_persisted"
+    },
+    {
+      "gate": "Independent verification lanes and accessible presentation",
+      "explicitDagEdge": false,
+      "evidence": "RS-MTG-04:47,57,71-74. Current ModeScreenLayout has fixed minimum-width columns, no narrow detail drilldown; current date formatters use implicit host zone.",
+      "requiredReceipt": "Linux render/domain assertions plus actual macOS Electron/IPC/device acceptance plus provider sandbox readback; revision-bound expected/observed logs, screenshots/ARIA, font evidence and assertion-specific negative controls. No fixture-only closure.",
+      "state": "not_executed_by_preflight_authorization"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/meetings/MeetingHistoryDrawer.tsx",
+    "apps/electron/src/renderer/components/meetings/CallParticipationTimeline.tsx",
+    "tests/rox-suite/meetings/history-recovery.spec.ts"
+  ],
+  "newFileOwnershipStatus": "Only normative proposed files from RS-MTG-04:80-82; future allocation subject to lead confirmation. This preflight owns only its JSON report.",
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+      "symbol": "MeetingsPage / selectedId / selectMeeting / onListKeys / detailPanel",
+      "change": "Consume RS-MTG-01's authorized canonical catalog/detail projection, retain the local adapter and existing route; separate selected row/ref from drawer-open presentation state. Retain bucket/query/list scroll anchor and row focus target across close/narrow Back. Pass an Enter open callback to useListKeys; route selection or reload opens the same canonical ref. Mount MeetingHistoryDrawer at the existing detail seam with LocalMeetingDetail inside for local materials; Refresh performs a read with watermark, never start/create. Clear revoked detail and transcriptText entries; reject late async results from a stale ref/workspace/policy epoch.",
+      "reason": "Current selected row directly mounts LocalMeetingDetail, Enter lacks an open callback, close can only clear selection, and transcript search has a local cache without revoke handling. RS-MTG-01 also owns this root file, so lead integration is required."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/mode-screen/ModeScreen.tsx",
+      "symbol": "ModeScreenLayout / ListRow / useListKeys",
+      "change": "Integrate agreed meetings-only drawer/detail presentation support without changing other mode defaults: approximately 400px wide history detail, narrow full-detail drilldown with Back, retained mounted list/scroll, accessible row ref or equivalent focus targeting, and roving keyboard focus. Reuse role=option/aria-selected and current useListKeys rather than duplicate navigation logic.",
+      "reason": "Current fixed navigator/list/minimum detail columns cannot implement narrow Back; ListRow supplies no forwarded focus ref. Shared kit changes must preserve Tasks/Inbox/Feed behavior."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/meetings/LocalMeetingDetail.tsx",
+      "symbol": "LocalMeetingDetail / DetailTab / header / overview / audio effect / generateSummary / actionsTab / documentsTab",
+      "change": "Retain all six existing local DetailTab values and local action/document refs. Compose them under the drawer's overview/materials view without creating another player or rewriting tasks/documents. Add the manual-participant provenance label. Receive authorized detail/access epoch; on revoke immediately pause and detach audio, revoke Blob URL, clear transcript/material state, cancel or epoch-guard pending reads and hide denied titles/counts. Use authorized canonical evidence for generateSummary rather than raw unfiltered participants. Coordinate these changes with RS-MTG-05.",
+      "reason": "Manual participant chips are editable strings; audio URL only revokes on effect cleanup. Existing summary prompt passes m.participants directly and current actions/documents must remain available after reload."
+    },
+    {
+      "path": "apps/electron/src/shared/meetings-local.ts",
+      "symbol": "LocalMeeting / MeetingsLocalApi / LocalMeetingPatch",
+      "change": "Extend the existing local meeting contract with persisted device capture events and an explicit manual provenance representation, plus read-only canonical alias/context fields agreed with RS-MTG-01. Events carry canonical/local event ID, kind, occurredAt and observedAt and are owned by main; exclude them from LocalMeetingPatch. Extend authorized detail read/change payloads to carry revision/access epoch/watermark/asOf only through the agreed shared contract; preserve local IDs and audio/actions/documents.",
+      "reason": "Current shape has participants:string[], status and duration only; onChanged only carries id. Adding event UI alone would lose the timeline after reload."
+    },
+    {
+      "path": "apps/electron/src/main/meetings/local-store.ts",
+      "symbol": "LocalMeetingStore.write / recStart / recState / finalizeRecording / recover / readAudio",
+      "change": "Append real local capture transitions within the existing atomic meeting.json write, using main timestamps and stable event IDs. recState heartbeats must not append resume events repeatedly: append only when previous paused/recording state actually changes. Finalize/empty/recovered completion records a distinguishable stop/recovery event once, retains bytes and existing ownerAlive/finalizing protection, and never derives pause intervals from aggregate duration. Read-only projection must not create another journal writer; authorize local material reads via the agreed device/access boundary.",
+      "reason": "Current writes are atomic but preserve only current status and aggregate duration; recovery reconstructs endedAt from duration. Existing devices/files must remain the local authority."
+    },
+    {
+      "path": "apps/electron/src/main/meetings/local-model.ts",
+      "symbol": "normalizeMeeting / emptyLocalMeeting / applyPatch",
+      "change": "Normalize and round-trip the new persisted local event/provenance/alias fields, validate finite integer timestamps and durations, initialize empty event history for legacy metadata without synthesizing historic pause/join events, and keep event mutation outside applyPatch. Preserve the exact existing audio/actions/documents fields.",
+      "reason": "normalizeMeeting reconstructs an explicit object and would otherwise silently discard every added timeline field on read."
+    },
+    {
+      "path": "apps/electron/src/main/meetings/local-ipc.ts",
+      "symbol": "registerLocalMeetingsIpc / handle(C.GET) / handle(C.READ_AUDIO) / handle(C.READ_TRANSCRIPT) / broadcast",
+      "change": "Bind selected-detail/material access to the existing trusted transport actor/workspace/device contract from wave0, not request-body identity. Enforce authorized projection before metadata/audio/transcript/doc replies and emit access-revision invalidation for open readers. Keep direct device IPC and renderer recovery, never proxy microphone bytes through a new remote writer.",
+      "reason": "These inspected read handlers discard the sender event and pass bare IDs to the store; local origin media permission is not field/material ACL or revocation. Preload wiring must be handled by its shared integration owner; it was not inspected here."
+    },
+    {
+      "path": "packages/core/src/meetings/model.ts",
+      "symbol": "MeetingEntityRef / Meeting / EvidenceSpan / OperationResultV2 / isUiVerified",
+      "change": "Add the agreed typed history context projection over the same MeetingEntityRef: revision/title/source/startedAt/endedAt/durationMs, duration verification/current state, authorized principals/events/intervals/artifacts, watermark/asOf/display zone. Participation event fields include canonical event ID, principal/scoped guest ref, joined/left/rejoined kind, occurredAt/observedAt, provider sequence/delivery ID and source confidence. Keep material lifecycle and room ending/ended distinct from executionMode/lifecycle/verification; do not overload completed or local recording state as proof of live Call.",
+      "reason": "Meeting currently has metadata/status/binding but no history projection. Existing OperationResultV2 already separates fixture/production and verification; preserve it and avoid another identity/store."
+    },
+    {
+      "path": "packages/core/src/meetings/rpc.ts",
+      "symbol": "MEETING_RPC_METHODS / MeetingCommitCommand / MeetingJournalEvent / MeetingOutboxEntry",
+      "change": "Register the history read/context and paging/catch-up operation in the root agreed typed registry, reusing meetings:get if that is the accepted context contract. Extend journal event types for legitimate local capture/participation references only where the existing domain owner commits them; use transport-derived actor and workspace/command/idempotency/hash/expectedRevision/policyRevision envelope for commands. Do not equate command-ID dedupe with signed provider delivery dedupe or turn the current proposal-operation outbox shape into a second shared notification store.",
+      "reason": "Inspected event union contains no participation/capture events and commit envelope lacks idempotency/policy fields. GetArchivedCall was not found in the inspected meetings paths; its integrated registry location remains a root prerequisite, not an invented existing symbol."
+    },
+    {
+      "path": "packages/core/src/meetings/schemas.ts",
+      "symbol": "parseMeeting / assertWritableSchema and new history-event/context validators in this file",
+      "change": "Validate the agreed history projection and events at the existing schema boundary: principal/ref scoping, integer finite timestamps/durations/sequence, required delivery identity/source confidence, supported version, and no negative derived intervals. Preserve legacy local reads and reject unsupported write versions rather than silently accepting untyped event payloads.",
+      "reason": "Current Meeting schema does not validate history event metadata; schema-version protection must accompany typed extensions."
+    },
+    {
+      "path": "packages/server-core/src/meetings/queries.ts",
+      "symbol": "MeetingQueryRecord / MeetingQueryActor / getMeeting / queryVisibleMeetings / searchMatches / listMeetings",
+      "change": "Use the one shared authorized context projection for detail and search, applying Call/channel/source/material field grants before serialization and search matching. Return canonical ref/revision, ordered paged timeline, artifacts/reasons, duration state and watermark/asOf; include policy scope in cursor validation and reject stale access. Distinguish revoked/notfound/denied/offline/incomplete without returning forbidden title/principal/count. Do not use the current collection updatedAt cursor as a provider-delivery watermark.",
+      "reason": "Current getMeeting returns raw MeetingQueryRecord after workspace/allowed checks; sources/private handling is limited to text matching and cannot enforce participant/material ACL."
+    },
+    {
+      "path": "packages/server-core/src/meetings/journal.ts",
+      "symbol": "JournalSnapshot / MeetingJournal.commit / read / applyCommand",
+      "change": "Preserve the existing local CAS/command dedupe/atomic snapshot/quarantine mechanisms when agreed local event types are added. Replay capture events idempotently into the read projection, without treating journal entries as verified provider presence. Do not place shared Postgres participation writes in this device journal; consume the root-owned provider/context authority.",
+      "reason": "Journal currently appends all events and dedupes command IDs, not provider delivery IDs; replacing it or adding a second writer would violate local recovery."
+    },
+    {
+      "path": "packages/server-core/src/meetings/rooms.ts",
+      "symbol": "ROOM_PROVIDER_DECISION / joinRoom / roomCapabilityEnabled",
+      "change": "RS-MTG-02 owner must supply the selected real provider capability and signed ingestion/readback contract. RS-MTG-04 consumes persisted verified aliases/events from that authority and renders a truthful unavailable remote state until the receipt is accepted; do not enable this capability merely because the drawer renders.",
+      "reason": "Current room capability is hard-disabled and provider undecided. Remote full DoD cannot be closed by fixture timelines or UI changes."
+    },
+    {
+      "path": "packages/server-core/src/meetings/repository.ts",
+      "symbol": "MeetingRepository.read / pending",
+      "change": "If this adapter participates in history/realtime reads, retain workspace checks on read and replace pending's always-true workspace filter with explicit workspace-scoped outbox metadata/query from the agreed shared contract; filter scope before limiting results. If wave0 supersedes this path, remove this integration dependency rather than treating the current helper as a safe common event outbox.",
+      "reason": "pending currently uses operationId.startsWith(workspaceId) || true, so it cannot be evidence of authorized workspace fanout. This is a hidden integration risk, not authorization for unrelated source cleanup in preflight."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/meetings/local-meetings-model.ts",
+      "symbol": "meetingMatches / formatDuration / meetingTime",
+      "change": "Restrict search input to the common authorized projection and material evidence; keep local grouping, but format finite integer duration values with explicit current/unconfirmed state supplied by the projection. Do not derive durations from localized date strings or use the local clock as server-final interval authority. Share explicit display-zone formatting with drawer/timeline.",
+      "reason": "meetingMatches currently searches all participant strings/document names in its input, and formatDuration returns an unqualified duration with no verification state."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "symbol": "meetings.history.* new keys and existing meetings.local.* context",
+      "change": "Add ASCII-sorted t() keys for display ID/Copy and display-not-identity help, overview/participation/materials, manual participants, current/unconfirmed duration, no events, asOf/offline/revoked and partial-material reasons. Add meaning/units/formula/source/freshness/example help consistently to hover 500ms/focus/separate click. Apply the same new key set via the locale owner to de.json, en.json, es.json, fr.json, hu.json, ja.json, pl.json, zh-Hans.json and zh-Hant.json; preserve Russian one/few/many plurals.",
+      "reason": "Existing ru/en keys label generic participants/duration only; repository requires all ten locale files for every new user-facing key."
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view.meetings",
+      "change": "Preserve the existing meetings[/meeting/id] destination and encoded ID builder; root catalog owner must provide canonical/local-alias resolution at the existing route consumer. Do not introduce history entity IDs or a second destination. Only modify the builder if accepted typed route allocation explicitly requires it.",
+      "reason": "Current deep-link syntax exists and should be reused; reloading the selected canonical ref is a required invariant, not a new URL surface."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "DoD 1: two synthetic participants join/leave/rejoin via signed callbacks produce distinct intervals, one principal and one event per delivery",
+      "currentEvidence": "rooms.ts:12-42 is undecided/disabled. model.ts:102-120 has no participation data; rpc.ts:42-50 has no participation event. Journal.commit:121-126 dedupes commandId, not signed delivery ID.",
+      "symbolSeam": "RS-MTG-02 signed ingestion authority -> Meeting history context -> CallParticipationTimeline; existing MeetingEntityRef and MeetingJournalEvent",
+      "requiredChange": "Consume authenticated signed event ingestion, verified provider aliases and shared DB interval projection; use principal identity across rejoin and a unique provider/account/delivery dedupe tuple. Timeline reads events, never creates presence from tokens or names.",
+      "verification": "Future provider-sandbox run with Анна/Борис and one rejoin: independently inspect persisted delivery/event IDs, principal refs and interval endpoints; replay the same signed callback and require unchanged row/event count and distinct rejoin interval. Invalid signature creates no event. Save readback separate from render evidence.",
+      "missingPrerequisite": ["accepted wave0 and RS-MTG-01", "RS-MTG-02 signed callback/DB/provider receipt", "provider sandbox credentials and callbacks"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 2: replay/out-of-order/late end stable order, nonnegative duration, reconnect recovers missing events",
+      "currentEvidence": "Journal.read/applyCommand replay append order; local onChanged contains id only. listMeetings cursor is updatedAt:id, not participation watermark. No scoped inspected path contains observedAt or joined events.",
+      "symbolSeam": "MeetingJournal.read/applyCommand; MeetingsLocalApi.onChanged; listMeetings/decodeMeetingCursor; root-owned provider event projection",
+      "requiredChange": "Sort occurredAt -> provider sequence -> canonical eventID with deterministic missing-sequence policy agreed with ingestion; dedupe before interval reconciliation, retain late ends, calculate integer duration from valid server intervals without subtracting arrival time, and implement paged watermark catch-up after reconnect with fresh policy checks.",
+      "verification": "Future history-recovery.spec.ts sends permutations/replays, leave-before-join and late end, pages a long timeline and disconnects during delivery; exact IDs/order/intervals after catch-up equal fresh authorized read, duration is nonnegative integer, no missing/duplicate page entries. Negative controls remove dedupe/order/catch-up and must fail the corresponding assertion.",
+      "missingPrerequisite": ["RS-MTG-02 event receipts", "shared DB/outbox/watermark/cursor contract", "accepted ownership of query/model changes"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 3: drawer/close/reload/narrow Back preserve selection/scroll/focus",
+      "currentEvidence": "MeetingsPage:71-77 routes selection; 158 omits useListKeys open callback; 371-400 directly renders LocalMeetingDetail. ModeScreenLayout:28-44 has fixed minimum-width columns. ListRow:159-165 already has option/aria-selected.",
+      "symbolSeam": "MeetingsPage.selectedId/selectMeeting/detailPanel; ModeScreenLayout/ListRow/useListKeys; routes.view.meetings; new MeetingHistoryDrawer",
+      "requiredChange": "Separate drawer visibility from selected canonical row; retain list mount/scroll anchor/filter and focus target. Implement 400px wide drawer and narrow full-detail Back, Close/Escape that respects inner dialog or dirty edit and never ends a Call; Enter opens selected row. Persist/restore route-bound selection and presentation state through the existing host contract.",
+      "verification": "Future actual Electron interaction: mouse and arrows/Enter open, Close/Escape/narrow Back return to same selected row and scroll pixel/anchor with actual focus, reload deep link restores same canonical ref. Repeat during recording, active inner dialog and unsaved local title/notes; no stop/end command. Capture wide/narrow screenshots and ARIA.",
+      "missingPrerequisite": ["lead wave0 commit", "accepted RS-MTG-01 host/presentation-state receipt", "shared ModeScreen ownership"],
+      "state": "PARTIAL_EXISTING_ROUTE_ARIA; REQUIRED_DRAWER_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 4: manual local participants are not displayed as verified provider presence",
+      "currentEvidence": "LocalMeeting.participants:string[] at meetings-local.ts:97; LocalMeetingDetail:341-351 allows free-text addition; normalizeMeeting:87 preserves strings. No manual provenance label is shown in these inspected blocks.",
+      "symbolSeam": "LocalMeetingDetail.overview; LocalMeeting.participants; normalizeMeeting/applyPatch; CallParticipationTimeline",
+      "requiredChange": "Label legacy and newly entered names 'Участники введены вручную', keep manual labels separate from authorized PrincipalRefs and render no provider join/leave intervals for them. Persist actual local capture/pause/resume/stop events through the current writer, not participant-presence inference.",
+      "verification": "Future synthetic local meeting with two entered names: reload shows manual label and zero provider-presence claims/events; real capture/pause/resume/stop produces device events exactly once despite repeated heartbeat. Negative control promotes manual names to verified and must fail.",
+      "missingPrerequisite": ["accepted local model/normalizer/store ownership", "agreed provenance and device event types", "actual macOS capture verification after implementation"],
+      "state": "EXISTING_MANUAL_DATA; PROVENANCE_AND_TIMELINE_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "DoD 5: revoke open drawer purges audio/detail; search/agent same ACL; unfiltered participant seed fails",
+      "currentEvidence": "LocalMeetingDetail:117-134 reads audio and revokes URL only on cleanup; generateSummary:216-222 passes raw participants. MeetingsPage:132-143 caches transcripts. queries.ts:147-157 returns record after coarse checks. local-ipc.ts:83-84,119-120 uses bare IDs. authorizeMeetingAction:45-62 supplies reusable grant checks but is not wired to these detail reads.",
+      "symbolSeam": "authorized getMeeting/listMeetings/searchMatches projection; LocalMeetingDetail audio/transcript/generateSummary; MeetingsPage transcriptText; registerLocalMeetingsIpc; authorizeMeetingAction",
+      "requiredChange": "Field/material grants before search or serialization; use same canonical authorized evidence for agent/search/notification/favorite context. Revoke invalidates detail, counts, titles, transcript cache, in-flight reads and audio Blob/signed URLs, pauses/detaches player and displays 'Доступ отозван'. Never include private email/tooltips or guest token, and opening history cannot grant access/share.",
+      "verification": "Future open-playing drawer then revoke grant: assert stopped player, detached src, revoked URLs, cleared detail/cache and stale promise cannot repopulate; fresh search/agent/notification deep-link all deny without forbidden title/count/participant/token. Seed unfiltered participants at projection boundary must fail exact redaction assertions, not merely throw an infrastructure error.",
+      "missingPrerequisite": ["common transport actor/Call/channel/source ACL", "revocation epoch and invalidation fanout", "RS-MTG-05 playback/artifact receipt", "canonical search/agent contracts from root"],
+      "state": "REQUIRED_SECURITY_INTEGRATION_NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 6: fixture timeline does not prove live Call; provider evidence kept separate",
+      "currentEvidence": "model.ts:148-181 has separate mode/lifecycle/verification and isUiVerified requires production+succeeded+verified; verification.ts:4-7 reuses it. rooms.ts remains disabled. Existing local recording status is not remote provider proof.",
+      "symbolSeam": "OperationResultV2/isUiVerified/verificationLabel; roomCapabilityEnabled; history source confidence and drawer status",
+      "requiredChange": "Preserve independent execution/lifecycle/verification/outcome and display provenance/unknown/unavailable status. Keep fixture/local device evidence distinct from live signed provider readback and artifact readiness. Do not label history fixture or token issuance as verified live presence.",
+      "verification": "Future render fixture timeline plus simulated/queued/token-only and failed-connect results: no live verified indicator; real provider delivery/readback alone supports provider presence while room ended/artifacts processing remain distinct. Mutation fixture=>verified must fail.",
+      "missingPrerequisite": ["accepted typed context/source-confidence contract", "RS-MTG-02 provider readback for the live branch"],
+      "state": "EXISTING_VERIFICATION_PRIMITIVE; DRAWER_AND_PROVIDER_PROOF_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 7: zones/DST/integer duration; loading/empty/offline/error screenshots and ARIA",
+      "currentEvidence": "LocalMeetingDetail:98-99 and MeetingsPage:155-156 use implicit timezone. formatDuration:120-127 rounds ms to displayed seconds; normalizeMeeting:84 accepts finite fractional milliseconds. MeetingsPage has loading/empty/error states but no offline/asOf detail or participation empty state.",
+      "symbolSeam": "LocalMeetingDetail dateFmt/shortFmt; formatDuration; normalizeMeeting; MeetingsPage loadState/detailPanel; new drawer/timeline",
+      "requiredChange": "Use explicit display zone for occurredAt, show observedAt separately, derive duration from integer server intervals, label active duration and unknown final duration, and retain selected row while loading. Render no-events, cached offline with asOf, fresh denial/notfound without secret identity, and per-material partial reasons. Implement accessible names/keyboard/help, reduced motion and touch targets without forcing theme.",
+      "verification": "Future exact epoch fixtures across Europe/Berlin spring/fall DST and another display zone assert timestamps and numeric interval duration independent of formatted dates; zero/active/unknown cases have explicit labels. Actual Electron wide/narrow screenshots plus ARIA for loading/no-events/offline/error/denied/revoked/partial, help hover500ms/focus/click equality and loaded font evidence; keyboard and reduced-motion inspection.",
+      "missingPrerequisite": ["agreed display-zone/asOf/duration-state projection", "locale parity integration", "Linux render and actual macOS UI acceptance after implementation"],
+      "state": "PARTIAL_EXISTING_LOCAL_STATES; FULL_CRITERION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 8: existing local tabs/tasks/files from #568 remain available with prior refs and reload",
+      "currentEvidence": "LocalMeetingDetail:46,229-237,657-666 has overview/recording/transcript/decisions/actions/documents. actionsTab:585-591 uses persisted taskId and routes.view.tasks; documentsTab:610-649 uses d.id with api.openDocument. LocalMeetingStore.write is atomic and recover preserves recording bytes.",
+      "symbolSeam": "LocalMeetingDetail DetailTab/actionsTab/documentsTab/useDecisionsData; LocalMeeting actions/documents; LocalMeetingStore.write/recover; existing task route",
+      "requiredChange": "Compose the existing local detail under the history drawer/materials view rather than replace it; preserve actions/taskId/doc IDs/decision source m.id and device alias->canonical ref mapping, singleton recorder, stored audio/transcript and reload recovery. Coordinate artifact surface with RS-MTG-05, retaining personal Tasks/documents.",
+      "verification": "Future actual local capture/import meeting, attach synthetic document, create personal task and decision, navigate all six tabs through drawer, close/reopen/reload/crash-recover; assert identical IDs, task target, bytes and transcript/decision/document contents and working open/reveal operations. Closing drawer cannot stop recording or create a second capture.",
+      "missingPrerequisite": ["accepted RS-MTG-01 alias/host integration", "RS-MTG-05 material composition receipt", "shared LocalMeetingDetail owner and native IPC/device lane"],
+      "state": "EXISTING_LOCAL_FEATURES_TO_PRESERVE; REGRESSION_NOT_RUN"
+    },
+    {
+      "criterion": "Specification controls: authorized display ID Copy, avatars/context, immutable timeline, read-only Refresh and artifact placeholders",
+      "currentEvidence": "Existing detail metadata lacks display ID/Copy; participant strings are editable local chips. Current retry reloads list. No participation timeline exists at the normative proposed path.",
+      "symbolSeam": "MeetingHistoryDrawer metadata/actions; CallParticipationTimeline; MeetingsPage reload; LocalMeetingDetail local content",
+      "requiredChange": "Copy only authorized display ID, never token/provider secret; explain display ID is not identity. Authorized avatars have accessible names and scoped context without private email. Timeline is immutable, paged and displays occurred vs observed time; Refresh requests current context with watermark and cannot create/rejoin room. Material click resolves an authorized ArtifactRef or redacted denied/unavailable placeholder.",
+      "verification": "Future clipboard assertion contains only permitted display ID, secret principal/email/token seeds absent in DOM/help/clipboard, timeline click cannot mutate, and Refresh produces only reads. Material denied/unavailable labels reveal no secret title; participant contextual access cannot mint share.",
+      "missingPrerequisite": ["typed display ID/principal/artifact projection", "RS-MTG-02/05 accepted contracts", "shared clipboard/help primitives from integrated host"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Shared integration contract: authenticated command envelopes, one authority/outbox, canonical search/notifications/favorites/agents/memory",
+      "currentEvidence": "MeetingEntityRef and Rox2EntityRef exist, but LocalMeeting has only local ID. MeetingCommitCommand has workspace/revision/commandId only. ActorFromRpc reuses transport actor; current query helpers and mail outbox do not prove common field ACL/event fanout.",
+      "symbolSeam": "MeetingCommitCommand/MeetingOutboxEntry; actorFromRpc; MeetingRepository; common RS-MTG-01 context registry",
+      "requiredChange": "Root assigns the shared domain/gateway/Postgres/outbox typed contract; consume it with provenance and policy revision rather than introduce another store. Search/link/mention/favorite/activity/notification/agent/memory references open the same authorized canonical Call; history reads never issue shares or automatic wider private exports. Same intention retains payload/hash/idempotency key; changed payload is a new intention.",
+      "verification": "Future integrated authenticated read and event fanout with authorized/denied actor and stale policy; same canonical ref in all consumers, no duplicate notifications/replayed events, no private-source export without decision. Alter body actor and ensure transport actor wins. Prove local adapter remains sole writer of local bytes.",
+      "missingPrerequisite": ["root canonical registry/gateway/event taxonomy and Postgres/outbox receipts", "shared search/notification/agent/memory integration ownership", "accepted RS-MTG-01 context receipt"],
+      "state": "SHARED_FOUNDATION_REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Shared UI/help contract: compact Russian t() UI, existing theme/tokens/font, hover/focus/click help, keyboard/reduced motion/hit areas",
+      "currentEvidence": "MeetingsPage/LocalMeetingDetail already use t(), mode-screen tokens and locale; generic participants/duration keys exist in ru/en. ModeScreenLayout uses font-sans, which is not evidence of the loaded Rox font. No actual UI was launched.",
+      "symbolSeam": "MeetingHistoryDrawer/CallParticipationTimeline; ModeScreenLayout; meetings.local.* and proposed meetings.history.* locale keys",
+      "requiredChange": "Use current product theme and typography primitives, no imposed light theme; preserve compact 28-36px desktop controls with sufficient hit areas and >=44px narrow/touch targets. Add matching help content on hover500ms/focus/separate click including meaning, units/formula/source/asOf/example; hover/focus cannot mutate. Maintain ten-locale parity and Russian plurals, keyboard and reduced-motion handling.",
+      "verification": "Future locale parity check by lead plus real UI inspection of Russian strings, actual loaded font, themes, narrow/touch target dimensions, keyboard focus and reduced motion. Compare help contents on three activation routes; assert no writes from hover/focus.",
+      "missingPrerequisite": ["allocated common help/font/motion primitives", "locale owner integration", "actual Electron UI verification"],
+      "state": "EXISTING_STYLE_PRIMITIVES; FULL_UI_CONTRACT_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Full-feature evidence: persistence/recovery/observability/tests/docs and separate Linux/native/provider lanes with negative controls",
+      "currentEvidence": "Published specification:73-74 explicitly includes these gates. This preflight has source evidence and no runtime evidence; history-recovery.spec.ts is a proposed new entrypoint, not an existing passing suite.",
+      "symbolSeam": "tests/rox-suite/meetings/history-recovery.spec.ts proposed; existing MeetingJournal and LocalMeetingStore recovery; shared provider/context authority",
+      "requiredChange": "Implement assertion-rich recovery/ACL/order/focus scenarios using accepted real contracts, document canonical context and unavailable states in root-owned documentation, and attach revision-bound logs/screenshots/ARIA/provider readback with expected/observed results. Observability must expose delivery dedupe, reconciliation, watermark lag and revoke/purge outcomes without tokens/PII; reuse common telemetry, not a package-owned second surface.",
+      "verification": "Lead runs Linux domain/render scenarios, genuine macOS Electron/IPC/device scenarios and real signed provider sandbox readback on the integrated revision. Each dedupe/order/ACL/fixture/purge negative control must fail its named assertion. Preserve failure history and hashes; do not mark fullFeatureDoD VERIFIED based on this report, mocked callbacks alone or screenshots alone.",
+      "missingPrerequisite": ["implementation in dependency order", "accepted full shared/provider/artifact contracts", "real verification environments and evidence capture", "root documentation/observability ownership"],
+      "state": "NOT_RUN; FEATURE_INCOMPLETE"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-MTG-04.md","symbol":"E2E / DoD and shared integration contract","lineStart":49,"lineEnd":82,"sha256":"08c3cb8c68f9302dc1c4587589f14f6b345234b59d16fe29264ed608da7c2d04"},
+    {"path":"plans/rox-suite/issues.json","symbol":"RS-MTG-04 normative dependsOn","lineStart":454,"lineEnd":483,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"docs/rox-suite/published/RS-MTG-01.md","symbol":"catalog projection and history host","lineStart":18,"lineEnd":59,"sha256":"fec41688a5bd49a70e2482955d36b275c9cb44cfdf96839150dac010e1fdd730"},
+    {"path":"docs/rox-suite/published/RS-MTG-02.md","symbol":"signed webhooks and provider participation","lineStart":33,"lineEnd":63,"sha256":"1a677b83146d9982d09f9bdd156b6e2792f24251f4feb8ebf23b3d382a189f00"},
+    {"path":"docs/rox-suite/published/RS-MTG-05.md","symbol":"artifact authority and lifecycle","lineStart":43,"lineEnd":72,"sha256":"58622d94dbed0985bea4cc57f88f9a9808a0df3b24782a107650803d263a82f8"},
+    {"path":"apps/electron/src/renderer/pages/MeetingsPage.tsx","symbol":"MeetingsPage selectedId/selectMeeting/onChanged","lineStart":59,"lineEnd":158,"sha256":"85d3159d5c618df80973c650af3e9b85a68acbe3ad90eef595781f17fa6ebfc8"},
+    {"path":"apps/electron/src/renderer/pages/MeetingsPage.tsx","symbol":"MeetingsPage listPanel/detailPanel","lineStart":327,"lineEnd":400,"sha256":"85d3159d5c618df80973c650af3e9b85a68acbe3ad90eef595781f17fa6ebfc8"},
+    {"path":"apps/electron/src/renderer/pages/meetings/LocalMeetingDetail.tsx","symbol":"LocalMeetingDetail audio effect, generateSummary, tabs","lineStart":108,"lineEnd":237,"sha256":"2d9f6d62914806164c7ba73a899073f7cfa2b56c6179467ee77198067885b6e1"},
+    {"path":"apps/electron/src/renderer/pages/meetings/LocalMeetingDetail.tsx","symbol":"manual participant overview","lineStart":341,"lineEnd":375,"sha256":"2d9f6d62914806164c7ba73a899073f7cfa2b56c6179467ee77198067885b6e1"},
+    {"path":"apps/electron/src/renderer/pages/meetings/LocalMeetingDetail.tsx","symbol":"actionsTab/documentsTab/detail tab rendering","lineStart":576,"lineEnd":684,"sha256":"2d9f6d62914806164c7ba73a899073f7cfa2b56c6179467ee77198067885b6e1"},
+    {"path":"apps/electron/src/renderer/pages/meetings/local-meetings-model.ts","symbol":"meetingMatches/formatDuration","lineStart":95,"lineEnd":127,"sha256":"38308ba67bae82f8273886f6d6db01e62a9d56f3672039e321c1a5e25a71e590"},
+    {"path":"apps/electron/src/renderer/components/mode-screen/ModeScreen.tsx","symbol":"ModeScreenLayout","lineStart":12,"lineEnd":54,"sha256":"9610f99c424dcf1760915eaff638eaf1b4cea9a854399e9eb420e3a5ec3c3905"},
+    {"path":"apps/electron/src/renderer/components/mode-screen/ModeScreen.tsx","symbol":"ListRow","lineStart":143,"lineEnd":175,"sha256":"9610f99c424dcf1760915eaff638eaf1b4cea9a854399e9eb420e3a5ec3c3905"},
+    {"path":"apps/electron/src/renderer/components/mode-screen/ModeScreen.tsx","symbol":"useListKeys","lineStart":287,"lineEnd":307,"sha256":"9610f99c424dcf1760915eaff638eaf1b4cea9a854399e9eb420e3a5ec3c3905"},
+    {"path":"apps/electron/src/renderer/lib/meetings/recorder.ts","symbol":"startRecording/pauseRecording/resumeRecording/stopRecording","lineStart":126,"lineEnd":216,"sha256":"086de22cb3db2c0d805e336b6b02bd5e3de6c09d2528eab6d4a25d23685c6a71"},
+    {"path":"apps/electron/src/shared/meetings-local.ts","symbol":"LocalMeeting/LocalMeetingPatch/MeetingsLocalApi","lineStart":84,"lineEnd":162,"sha256":"577d5de0a91d51483a0c639b82dbe063f3ca1e6f4c2f6c73b1f4edcf1fa2a2a4"},
+    {"path":"apps/electron/src/shared/routes.ts","symbol":"routes.view.meetings","lineStart":180,"lineEnd":181,"sha256":"c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path":"apps/electron/src/main/meetings/local-ipc.ts","symbol":"registerLocalMeetingsIpc reads/device recovery","lineStart":67,"lineEnd":166,"sha256":"41da18f46fa5f7b35aedc594b80ddb3911d5a683f563b62f9943b6f46c1a5d50"},
+    {"path":"apps/electron/src/main/meetings/local-store.ts","symbol":"LocalMeetingStore.read/write/list","lineStart":84,"lineEnd":125,"sha256":"ccbe9826afffdd87caf06a466af15948cefa463c65d07634f8693f483700366b"},
+    {"path":"apps/electron/src/main/meetings/local-store.ts","symbol":"recStart/recState/finalizeRecording/recover","lineStart":150,"lineEnd":255,"sha256":"ccbe9826afffdd87caf06a466af15948cefa463c65d07634f8693f483700366b"},
+    {"path":"apps/electron/src/main/meetings/local-model.ts","symbol":"normalizeMeeting/emptyLocalMeeting/applyPatch","lineStart":64,"lineEnd":162,"sha256":"cd90c4f46211a956a56bf14d4490c03ca2f07820bf5c9e9f69ee170ad3d89522"},
+    {"path":"packages/core/src/meetings/model.ts","symbol":"MeetingEntityRef/EvidenceSpan/Meeting","lineStart":68,"lineEnd":120,"sha256":"67b9b6f0f90315eb3cf537a1a3a73762d47427d74989aa8b82e2ca45ad7781d5"},
+    {"path":"packages/core/src/meetings/model.ts","symbol":"OperationResultV2/isUiVerified","lineStart":148,"lineEnd":182,"sha256":"67b9b6f0f90315eb3cf537a1a3a73762d47427d74989aa8b82e2ca45ad7781d5"},
+    {"path":"packages/core/src/meetings/rpc.ts","symbol":"MeetingCommitCommand/MeetingJournalEvent/MeetingOutboxEntry","lineStart":33,"lineEnd":63,"sha256":"6c10c01f90b111e60acc2189ec7ba9f4218e85bbb0534534aa65096d3e900e6d"},
+    {"path":"packages/core/src/meetings/schemas.ts","symbol":"parseMeeting","lineStart":33,"lineEnd":52,"sha256":"14b8e71c967e492b7e8f6306a0a271a8863e10bf813bb13b849947b141484f42"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef","lineStart":233,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/server-core/src/meetings/journal.ts","symbol":"MeetingJournal.read/commit/applyCommand","lineStart":82,"lineEnd":189,"sha256":"c5938700403fe6c90c189c6229fd9d9c58fdba63507c542ad71c6122d2d0baf1"},
+    {"path":"packages/server-core/src/meetings/queries.ts","symbol":"MeetingQueryRecord/Actor/queryVisibleMeetings/searchMatches/listMeetings/getMeeting","lineStart":40,"lineEnd":157,"sha256":"103973e225ded18d9bc925ab4ca36367de95337ac0f2f409645694d380f1408f"},
+    {"path":"packages/server-core/src/meetings/rooms.ts","symbol":"ROOM_PROVIDER_DECISION/joinRoom/roomCapabilityEnabled","lineStart":6,"lineEnd":43,"sha256":"5bab2a582a2f87ebc2e88bbb769d55fdfbc97e2fddb7e9acb0d6fe517e7cda88"},
+    {"path":"packages/server-core/src/meetings/security-policy.ts","symbol":"actorFromRpc/approveThenRevoke","lineStart":13,"lineEnd":48,"sha256":"463ea4e391b97f30f3c3c42514a6633a460b6ef8ff7715adc7b26f2d93657640"},
+    {"path":"packages/server-core/src/meetings/repository.ts","symbol":"MeetingRepository.read/commit/pending","lineStart":4,"lineEnd":21,"sha256":"56d58884ab24097b7c5853339a2331afc938c1c822c5263b151e0a9c23f2c00b"},
+    {"path":"packages/server-core/src/meetings/catalog.ts","symbol":"searchNativeMeetings/startNativeMeeting","lineStart":24,"lineEnd":88,"sha256":"e41a291018a7883179b4a6f05d49c354bdcd293b749e689157642c1fa08535d2"},
+    {"path":"packages/server-core/src/meetings/verification.ts","symbol":"verificationLabel","lineStart":4,"lineEnd":8,"sha256":"7c1956499c77ea2463fbb1c71cc858888b68b51b43ac826bfaa0fb5448555ebb"},
+    {"path":"packages/server-core/src/meetings/outbox.ts","symbol":"reserveOutbox/dispatchOutbox follow-up mail scope","lineStart":21,"lineEnd":42,"sha256":"b7c802c2e559eac7d43f6ba96ee221aa161abc598fc40a9f7ce47c2e7d2e110f"},
+    {"path":"packages/shared/src/meeting-agents/policies.ts","symbol":"MeetingGrant/authorizeMeetingAction","lineStart":16,"lineEnd":62,"sha256":"f5ab0ed8f26ff63eda1c9da16eb9588ec030231f9cc7c65f2ad471996c4aa2bd"},
+    {"path":"packages/shared/src/i18n/locales/ru.json","symbol":"meetings.local.participants/participantsCount/tab.overview","lineStart":2736,"lineEnd":2775,"sha256":"00f1c379fb222ea3cb0c4408c561ab44b2bf2c20e58bd0454f413d63e59dd496"},
+    {"path":"packages/shared/src/i18n/locales/en.json","symbol":"meetings.local.participants/participantsCount/tab.overview","lineStart":2734,"lineEnd":2773,"sha256":"bf062a46091bf57211308cbfcfa54b698b0ce783d2bfc16faeb89e75ba8dc8dc"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead reviews this owned preflight report; no feature implementation is authorized to start from this receipt alone.",
+    "afterPrerequisites": "After lead wave0 commit and accepted RS-MTG-01 receipt, compare inspected source hashes with the committed integration revision, re-read changed seams and obtain shared-file allocations/typed context contract. Then implement the three normative files against the one existing Meetings destination and local writer, submitting shared requests to the root owner. Local history may be the first slice with honest remote/artifact unavailable states, but cannot close full DoD until RS-MTG-02/05 and all verification lanes are accepted.",
+    "requiredOrder": ["lead wave0 commit", "accepted RS-MTG-01 implementation receipt", "typed registry/shared-file ownership and hash rebase", "local history implementation plus accepted shared patches", "accepted RS-MTG-02 participation and RS-MTG-05 materials contracts for complete behavior", "integrated full DoD verification and documentation"],
+    "reportVerification": "Owned JSON readback only in this preflight. Lead may run the supplied launch-worker-pool.py --verify receipt command; it was not run here under the no-tests/no-shared-mutations scope."
+  },
+  "risks": [
+    "Explicit DAG only names RS-MTG-01, yet full remote and material acceptance requires RS-MTG-02 and RS-MTG-05. Unavailable slices are permitted sequencing, not a weakened featureComplete criterion.",
+    "RS-MTG-01 itself requires drawer preservation, while RS-MTG-04 explicitly depends on it: host/presentation seam must be allocated in the dependency receipt to avoid cyclic completion claims.",
+    "No accepted provider choice/readback or shared Postgres/context authority is established by inspected package code. Legacy journal/mail-outbox/helpers cannot substitute for signed provider ingestion or transactional shared outbox.",
+    "Current local onChanged has neither watermark nor access epoch; stale read promises can resurrect revoked data unless the integration contract guards them.",
+    "Five-second recState heartbeats share the pause/resume API. Naively logging each call fabricates repeated resume events; only actual state transitions are capture events.",
+    "normalizeMeeting discards unknown fields and local duration permits fractional milliseconds; timeline additions need normalizer round-trip and numeric validation or reload silently loses evidence.",
+    "Current local recovery endedAt is inferred from accumulated duration and cannot reconstruct historical pause/provider presence. Legacy records must disclose missing event history rather than invent it.",
+    "Coarse allowed/workspace filtering is not Call/channel/source/material ACL, and repository pending contains an always-true workspace filter. Shared consumer authorization must precede fanout and paging.",
+    "Fixed minimum-width ModeScreenLayout and selection-clearing close behavior would violate narrow Back/row/focus acceptance; avoid regressions in other modes through explicit root ownership.",
+    "Replacing LocalMeetingDetail would regress the six existing tabs, taskId/document/decision refs, audio player and recorder singleton. Compose and retain these mechanisms.",
+    "Whole-file fingerprints are working-tree observations and may become stale during lead integration. Supplied input_revision is recorded provenance, not a verified clean-tree claim.",
+    "No runtime checks are allowed for this preflight; every acceptance row remains unverified. Fixture renders, mocked signed events and screenshots cannot establish live provider participation or revoke correctness."
+  ]
+}

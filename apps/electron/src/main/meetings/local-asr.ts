@@ -70,36 +70,43 @@ export function run(
   args: readonly string[],
   options: { onOutput?: (chunk: string) => void; signal?: AbortSignal } = {},
 ): Promise<RunResult> {
-  return new Promise((resolve) => {
-    const child = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] })
-    let stdout = ''
-    let stderr = ''
-    const onAbort = () => child.kill('SIGTERM')
-    options.signal?.addEventListener('abort', onAbort, { once: true })
-    child.stdout.on('data', (d: Buffer) => {
-      const s = d.toString('utf8')
-      if (stdout.length < 2_000_000) stdout += s
-      options.onOutput?.(s)
-    })
-    child.stderr.on('data', (d: Buffer) => {
-      const s = d.toString('utf8')
-      stderr = (stderr + s).slice(-20_000)
-      options.onOutput?.(s)
-    })
-    child.on('error', (error) => resolve({ code: -1, stdout, stderr: `${stderr}\n${error.message}` }))
-    child.on('close', (code) => {
-      options.signal?.removeEventListener('abort', onAbort)
-      resolve({ code, stdout, stderr })
-    })
+  const { promise, resolve } = Promise.withResolvers<RunResult>()
+  const child = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] })
+  let stdout = ''
+  let stderr = ''
+  let settled = false
+  const onAbort = () => {
+    if (!settled) child.kill('SIGTERM')
+  }
+  const finish = (result: RunResult) => {
+    if (settled) return
+    settled = true
+    options.signal?.removeEventListener('abort', onAbort)
+    resolve(result)
+  }
+  if (options.signal?.aborted) onAbort()
+  else options.signal?.addEventListener('abort', onAbort, { once: true })
+  child.stdout.on('data', (d: Buffer) => {
+    const s = d.toString('utf8')
+    if (stdout.length < 2_000_000) stdout += s
+    options.onOutput?.(s)
   })
+  child.stderr.on('data', (d: Buffer) => {
+    const s = d.toString('utf8')
+    stderr = (stderr + s).slice(-20_000)
+    options.onOutput?.(s)
+  })
+  child.on('error', (error) => finish({ code: -1, stdout, stderr: `${stderr}\n${error.message}` }))
+  child.on('close', (code) => finish({ code, stdout, stderr }))
+  return promise
 }
 
 /** Duration in ms via ffprobe (next to ffmpeg); null when unknown. */
-export async function probeDurationMs(ffmpeg: string | null, file: string): Promise<number | null> {
+export async function probeDurationMs(ffmpeg: string | null, file: string, signal?: AbortSignal): Promise<number | null> {
   if (!ffmpeg) return null
   const ffprobe = join(ffmpeg, '..', 'ffprobe')
   if (!existsSync(ffprobe)) return null
-  const res = await run(ffprobe, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', file])
+  const res = await run(ffprobe, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', file], { signal })
   const seconds = Number.parseFloat(res.stdout.trim())
   return res.code === 0 && Number.isFinite(seconds) && seconds > 0 ? Math.round(seconds * 1000) : null
 }
@@ -111,8 +118,8 @@ export async function remuxAudio(ffmpeg: string | null, input: string, output: s
   return res.code === 0 && existsSync(output) && statSync(output).size > 0
 }
 
-export async function decodeToWav(ffmpeg: string, input: string, output: string): Promise<RunResult> {
-  return run(ffmpeg, ['-hide_banner', '-loglevel', 'error', '-y', '-i', input, '-vn', '-ar', '16000', '-ac', '1', '-c:a', 'pcm_s16le', output])
+export async function decodeToWav(ffmpeg: string, input: string, output: string, signal?: AbortSignal): Promise<RunResult> {
+  return run(ffmpeg, ['-hide_banner', '-loglevel', 'error', '-y', '-i', input, '-vn', '-ar', '16000', '-ac', '1', '-c:a', 'pcm_s16le', output], { signal })
 }
 
 export async function runWhisper(

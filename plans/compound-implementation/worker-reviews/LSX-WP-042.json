@@ -1,0 +1,280 @@
+{
+  "task_id": "LSX-WP-042-preflight",
+  "attempt_id": "f00b195291fbfa2cbc3fda3654b72a98",
+  "packet_hash": "5d075bf5ee3efe173c588a23a50ad6f1c95824db8d798d8913e34d0dd22d2151",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-042",
+  "featureComplete": false,
+  "mode": "READ_ONLY_PREFLIGHT",
+  "workTier": "bounded-workflow: one package, specification-to-source mapping, artifact-only delivery",
+  "dependencies": ["LSX-WP-033", "LSX-WP-036", "LSX-WP-040", "LSX-WP-041"],
+  "inspection": {
+    "basis": "Actual working-tree source and local specifications; no source, test, manifest, progress or Git mutations. No product execution, builds, tests, native UI or network operations.",
+    "specification": "plans/lark-suite-reference/work-packages.json /work_packages/41; plans/lark-suite-reference/execution-packages.json LSX-WP-042; docs/lark-suite-reference/issues/lsx-wp-042.md",
+    "manifestHashesMatchPacket": true,
+    "sourceSnapshot": "All six primary inspected source files have whole-file SHA256 equal to the source blobs cited by the normative work-package record. This establishes inspected bytes, not accepted implementation or live readiness.",
+    "revisionCaveat": "input_revision is the dispatched revision, not a claim that the dirty tree equals that commit. Root-owned wave0 is intentionally untouched. Re-read and rehash after wave0 and dependency integration; all line anchors and requests are provisional against these inspected hashes. No Git commands were run.",
+    "proposedFilePresence": "Exact-path glob found none of the four normative proposed new files in the inspected tree.",
+    "toolLimitations": ["Codegraph reports no project index; no index was created.", "Initial descriptive find could not judge candidates because its provider returned 402. Exact LSX-WP-042 literal search and direct reads supplied evidence instead."],
+    "runtimeEvidence": "NOT_RUN_BY_AUTHORIZATION",
+    "uiEvidence": "NOT_RUN_BY_AUTHORIZATION"
+  },
+  "foundationGates": [
+    {
+      "id": "EG-AUTOMATION",
+      "kind": "EXPLICIT_EXTERNAL_READINESS_NOT_LSX_DAG_EDGE",
+      "source": "work-packages.json:15126-15129; issue lsx-wp-042.md:159-162; 08-automation-integration.md:7-16,51,78-84",
+      "requiredCapability": "Accepted immutable WorkflowVersion/run/step owner, durable checkpoint and attempt receipts, stable logical effect key, restart resume/reconciliation, current scoped principal, stopOnError, cancellation and registered compensation.",
+      "currentEvidence": "AutomationSystem.createHandlers wires independent event handlers; executeAgentEvent only matches, and buildSdkHooks returns empty. RetryScheduler is explicitly webhook-only/single-process/at-least-once across restart; pendingAcks is memory-only. Graph compileGraph lowers linear prompt/webhook chains, not a general immutable executor.",
+      "requiredReceipt": "Owner's implementation commit plus actual typed-command, duplicate event, crash-after-effect, durable restart/resume, revoked-principal and partial-cancel readback receipts. Provide concrete step-store/query/registration interfaces before adapter coding.",
+      "state": "NOT_VERIFIED; NOT_REPLACED_BY_THIS_ADAPTER"
+    },
+    {
+      "id": "EG-APPROVAL",
+      "kind": "EXPLICIT_EXTERNAL_READINESS_NOT_LSX_DAG_EDGE",
+      "source": "work-packages.json:15126-15129,15433-15469; issue lsx-wp-042.md:159-166; RS-APR-01.md:13,18-22,49-57; RS-SIG-01.md:13,22,44,52-58",
+      "requiredCapability": "Native versioned approval policy/instance and authorized signed decision owner; immutable FileVersion/content-hash and access/revoke owner; actual signature-request capability only when exercised.",
+      "currentEvidence": "Published RS-APR-01 is explicitly PROPOSED_NOT_IMPLEMENTED and is a definition designer, not the decision-instance executor. It points to RS-APR-02 for requests. Published RS-SIG-01 is a secure version viewer, not a signing service, and its Signing control delegates to RS-SIG-02. Existing tool/admin permission prompts and local file reads cannot satisfy this business checkpoint.",
+      "requiredReceipt": "Accepted native policy/version/instance/decision readback, changed-digest rejection, revoked-approver and timeout failure evidence, FileRef/version/hash and export ACL readback, and owner-supplied interfaces. Resolve actual decision/signature owner beyond the broad cited issue titles; publication alone is not readiness.",
+      "state": "NOT_VERIFIED; MISSING_OWNER_INTERFACE_RECEIPTS"
+    },
+    {
+      "id": "AUTHENTICATED_PRINCIPAL_RESOLUTION",
+      "kind": "HIDDEN_FOUNDATION_INTERFACE_GATE",
+      "source": "issue lsx-wp-042.md:68,90-92; platform-contract.ts:592-610; transport/types.ts:7-20; handler-deps.ts:56-72",
+      "requiredCapability": "Server-controlled mapping from authenticated RequestContext.clientId/session to human or workflow principal, policy epoch and resource/asset/approver grants; reject payload actor/owner/workspace spoofing.",
+      "currentEvidence": "RequestContext has clientId/workspaceId/webContentsId only. HandlerDeps has no document artifact/approval/principal service. registerAutomationsHandlers ignores _ctx on existing paths. authorizeRox2Action accepts actor plus supplied grants but does not fetch authoritative policy or resolve identity.",
+      "requiredReceipt": "Foundation owner supplies a typed authenticated resolver and common policy adapter composed by the host; direct RPC spoof/cross-workspace and revoked-policy negative receipts. Any new HandlerDeps/transport/host-composition patch needs a reviewed packet, not assumed authorization.",
+      "state": "BLOCKED_INTERFACE; DO_NOT_INFER_ACTOR_FROM_WORKSPACE"
+    },
+    {
+      "id": "TYPED_NODE_AND_BOUNDARY_EXTENSION",
+      "kind": "HIDDEN_SHARED_SCOPE_GATE",
+      "source": "graph.ts:80,107-138,216-222,385-489; types.ts:316-431; schemas.ts:312-360; protocol/channels.ts:811-824; work-packages.json:15519",
+      "requiredCapability": "LSX-WP-041 accepted registry/compiler extension that can consume these node definitions and immutable runtime versions, plus server/renderer API registration for the three proposed logical operations.",
+      "currentEvidence": "Graph node union/schema lists trigger/matcher/prompt/webhook/annotation/group/decision; decision is metadata-only, not approval. compileGraph only executes prompt/webhook. The automation channels list has no previewDocumentArtifact/applyDigestDecision/reconcileDocumentStep channel. Config-load passthrough of unknown actions does not confer execution support.",
+      "requiredReceipt": "LSX-WP-041 publishes a registration interface and accepted compilation/UI proof. If missing, integration owner must expand the reviewed packet for graph/types/schemas/protocol/renderer/host composition, with named owners and leases, before any edits. Do not build a second constructor or use metadata decision as executable approval.",
+      "state": "BLOCKED_ON_ACCEPTED_DEPENDENCY_INTERFACE_OR_REVIEWED_SCOPE_EXTENSION"
+    },
+    {
+      "id": "DURABLE_ARTIFACT_RECEIPT_AND_OUTBOX",
+      "kind": "HIDDEN_RECOVERY_BOUNDARY_GATE",
+      "source": "07-domain-entity-model.md:169-189; 08-automation-integration.md:57,67-75,80-84; history-store.ts:57-74,152-204; retry-scheduler.ts:18-25,135-155,202-222",
+      "requiredCapability": "Native artifact/decision receipt and outbox intent recoverable across owner boundaries; read-after-effect before retry, same logical key, source/workflow version fences, separate queuedProvider/unknownExternalResult states.",
+      "currentEvidence": "History is capped diagnostics and can evict old rows; appendFile is not a native domain commit. Retry enqueue generates timestamp/random identity, and successful HTTP effect is acknowledged by queue rewrite without a durable provider reconcile receipt surviving process loss. Existing mutexes are process-local, not distributed leases.",
+      "requiredReceipt": "Native owners supply idempotent effect and lookup-by-operation/key APIs, immutable hash receipts, durable workflow linkage and LSX-WP-040 outbox/alias checkpoint interfaces. Test crash points before/after effect, receipt, runtime ACK and event consumption. No fictitious cross-owner atomic transaction.",
+      "state": "NOT_VERIFIED; HISTORY_AND_WEBHOOK_QUEUE_ARE_NOT_AUTHORITIES"
+    },
+    {
+      "id": "EXISTING_RA_SURFACE_BINDINGS",
+      "kind": "HIDDEN_UI_SCOPE_GATE",
+      "source": "issue lsx-wp-042.md:43-58,134-143; work-packages.json:15355-15359; 08-automation-integration.md:18-29",
+      "requiredCapability": "Existing RA-05/06/07/08 render typed artifact/digest/effect/recipient/version/decision/outcome projections and expose review/decision/cancel without a new surface.",
+      "currentEvidence": "Normative allowed writes contain two modules and two test files; shared patch paths contain no renderer/preload/i18n/UI source. Actual renderer sources were outside this inspection slice, so their current ability to bind these results is unverified, not claimed absent.",
+      "requiredReceipt": "LSX-WP-041/EG-AUTOMATION and approval UI owners provide reusable render/action contracts or a reviewed integration packet explicitly names existing RA components, transport binding and all ten locale patches. Discover supported actual Electron runner after authorization; a fixture-only .spec.ts is not UI implementation.",
+      "state": "REQUIRES_OWNER_HANDOFF_OR_SCOPE_REVIEW; UI_DOD_REMAINS_REQUIRED"
+    },
+    {
+      "id": "LAUNCH_AND_EVIDENCE_BINDING",
+      "kind": "PUBLISHED_LAUNCH_GATE",
+      "source": "execution-packages.json:3670-3674,3706-3716; user dispatch input_revision and wave0 instruction",
+      "requiredCapability": "Lead wave0 commit and accepted dependencies; immutable spec delivery revision/digest with spec-ref hashes; approved implementation base reconciled with historical product_baseline_sha; exclusive leases and integrated-revision readback.",
+      "currentEvidence": "Cloud reference revision/digest remain RESOLVE_FROM_DELIVERY_MANIFEST; historic product baseline is e953786ba7e30fb5da5dca7e88e20e324d5aebab while this preflight input is a21aeab1da5a67e56788384ff930945b0f487879. No dependency readiness receipts were supplied or executed here.",
+      "requiredReceipt": "Lead supplies authoritative delivery manifest and approved base/prerequisite commits rather than checking out or overwriting the dirty wave0 tree. Root integrates serially and reruns all required proof lanes on exact delivered bytes.",
+      "state": "PREFLIGHT_ONLY; IMPLEMENTATION_NOT_READY_TO_LAUNCH_FROM_THIS_REPORT"
+    }
+  ],
+  "ownedNewFiles": [
+    {
+      "path": "packages/shared/src/automations/document-artifact-nodes.ts",
+      "proposedContribution": "Define versioned request/result/error schemas and node descriptors for automation.previewDocumentArtifact, automation.applyDigestDecision and automation.reconcileDocumentStep. Define ArtifactManifest/ApprovalCheckpoint/StepReceipt projections referencing canonical owners, not new stores. Require document revision, workflow/schema version, logical step ref/key, operationId, expectedRevision, namespace and applicable authorityEpoch; bind digest to exact command payload, revision, format/theme and declared effects/recipients. Model waiting/approved/rejected/expired, invalidated digest, queuedProvider and unknownExternalResult distinctly. Accept authenticated principal only as trusted server execution context. Reuse the accepted registry/compiler interface from LSX-WP-041; fail closed missingDependency when owners are unavailable. Names/interfaces here are proposals, not existing implementations."
+    },
+    {
+      "path": "packages/server-core/src/docs/workflow-artifact-adapter.ts",
+      "proposedContribution": "Implement adapter methods for the three operations against accepted Docs/export, immutable run/step, approval and common policy owners. Preview is read/validation-only and never creates an effect/grant/signature. Render/apply as authorized runtime actions under frozen version and one logical key; reread current Doc and ACL/asset/export/approver policy before committing decisions/effects. Reject changed revision/digest, expired and revoked decisions. Persist native receipt references through existing runtime, reconcile by the original key, preserve queued/unknown and committed partial effects on cancel. Use registered authorized compensation only; no ad hoc rollback or duplicated owner database."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-042.test.ts",
+      "proposedContribution": "Deterministic semantic tests: immutable artifact hash/ref/revision, changed Doc while awaiting approval, wrong exact digest, revoked/expired approver, payload actor spoof, same-key duplicate and after-effect crash/restart, queued/unknown reconciliation, cancellation retaining committed receipts and blocking unstarted steps, stopOnError and authorized registered compensation. Persist seed/input/version receipts for baseline and separately seeded digest/key mutants. Unit fixtures do not replace native owner/restart proof."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-042.spec.ts",
+      "proposedContribution": "Use the discovered supported actual Electron runner to exercise existing RA-05/06/07/08 against authoritative owners. Verify immutable revision/effects/recipient preview, approved/rejected/expired/conflict/denied/queued/unknown/partial-cancel text, keyboard review/decision/cancel, pointer/IME/focus/Escape, help, reduced motion, zoom200%, light/dark, Russian and locale parity, actual loaded Rox Mono; capture synthetic/redacted screenshots/ARIA and reload/readback. No invented passing runner or fixture replacement."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/automations/automation-system.ts",
+      "symbol": "AutomationSystemOptions; AutomationSystem.createHandlers; AutomationSystem.dispose",
+      "change": "After LSX-WP-041/EG-AUTOMATION interfaces are accepted, inject the server-owned document-artifact adapter/executor capability using the optional executor pattern at options:62-73 and createHandlers:343-371. Register the new module's descriptors through that existing typed domain-node registry exactly once per workspace; subscribe only to accepted LSX-WP-040 aliases. Delegate immutable run/step checkpoint, current authorization, stable logical key, stopOnError, cancel and restart resume to the native executor; cleanup owned subscription/handler at dispose:643-652. Missing capability is reported as missingDependency, not silently skipped. Do not send this slice through executeAgentEvent's matching-only path or a new webhook queue.",
+      "reason": "This is the existing workspace lifecycle seam and avoids a second orchestrator; present facade alone is not a durable graph executor.",
+      "prerequisite": "Accepted typed registry/runtime and adapter/principal composition contract; exclusive path lease; exact rebase on wave0/dependency commit.",
+      "status": "REQUEST_ONLY_NOT_APPLIED"
+    },
+    {
+      "path": "packages/shared/src/automations/history-store.ts",
+      "symbol": "appendAutomationHistoryEntry; compactAutomationHistory",
+      "change": "Use appendAutomationHistoryEntry:57-74 to append only canonical redacted diagnostic projections of already-native-durable step outcomes: matcher/run/version/step/attempt IDs, original logical key, exact source revision and payload/artifact hash, native artifact/decision/effect receipt refs and explicit outcome/verification. No protected input/output bodies or new ACK authority. Preserve the raw safe projection through existing mutex/compaction:152-204 without promoting a retained history row into a checkpoint. Keep capped history as a view; recovery and readback query canonical runtime/owner receipts even when corresponding history rows are evicted. If accepted runtime currently relies on this capped file for authoritative receipts, reject that interface and require its owner to supply durability rather than making history an unbounded second store.",
+      "reason": "Existing append takes untyped records, retention drops old per-matcher/global rows, and file append does not prove a domain commit. Safe retry cannot rely on diagnostic retention.",
+      "prerequisite": "Accepted runtime receipt/query owner and redaction schema; exclusive lease. Compaction behavior need not change if it already preserves these safe raw projections; any change is narrowly reviewed, not a broad rewrite.",
+      "status": "REQUEST_ONLY_NOT_APPLIED"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/automations.ts",
+      "symbol": "registerAutomationsHandlers; withConfigMutex",
+      "change": "Bind the three proposed logical operations to accepted typed protocol channels and the server artifact adapter, parsing shared request/result/error schemas and resolving trusted principal from ctx.clientId/session. Enforce current authorized workspace/ref/namespace rather than payload actor/owner/workspace. Preview must not call TEST or legacy REPLAY. Decision apply revalidates exact digest/revision/deadline and principal inside native owner CAS; reconcile reads persisted run/version/step and original effect key, not current editable matcher configuration. Return all eight error discriminants and queued/unknown separately, with no protected title/body leak. Preserve withConfigMutex for config edits/registration and existing graph CAS only; do not hold it over provider/render waits or treat it as cross-owner atomicity. Any document-node replay must use the native checkpoint path, not REPLAY:529-578's parallel webhook dispatch.",
+      "reason": "Existing handlers ignore ctx, list/replay live-result checks are not approver/resource authorization, and REPLAY rereads mutable config then refires effects. New operations require authenticated and revision-pinned native boundaries.",
+      "prerequisite": "Protocol/server/renderer binding plus principal/adapter host composition delivered by foundation owners or updated reviewed packet; exclusive path lease.",
+      "status": "REQUEST_ONLY_NOT_APPLIED"
+    }
+  ],
+  "outOfScopeIntegrationNeeds": [
+    {
+      "path": "packages/shared/src/automations/graph.ts; packages/shared/src/automations/types.ts; packages/shared/src/automations/schemas.ts",
+      "symbol": "compileGraph/isFlowNode/isActionNode/narrowRuntimeAction; AutomationGraphNode; AutomationGraphNodeSchema",
+      "changeNeeded": "LSX-WP-041 must expose accepted typed node registration/compilation for artifact/approval. Current strict graph union and linear compiler reject them; unknown runtime action passthrough is not execution. Do not modify these read-only source-evidence paths in LSX-WP-042 without reviewed scope expansion.",
+      "reason": "New module definitions alone cannot make nodes usable in the existing constructor."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts; packages/shared/src/protocol/routing.ts; packages/server-core/src/handlers/handler-deps.ts; packages/server-core/src/transport/types.ts",
+      "symbol": "RPC_CHANNELS.automations; workspace channel routing; HandlerDeps; RequestContext",
+      "changeNeeded": "Foundation/integration owners must supply typed channels and renderer-bound invocations plus server-owned authenticated resolver and adapter composition. Exact additional transport/generated client/composition locations are not inspected and must be discovered by their owner before patching. All these files are outside current sharedPatchPaths.",
+      "reason": "Existing automation channels have none of the three new operations; RequestContext/HandlerDeps have no business principal or adapter service."
+    },
+    {
+      "path": "Existing RA-05/06/07/08 renderer hosts and existing i18n locales; exact patch targets require owner discovery",
+      "symbol": "Validate/Test; Publish review; Run history; Approval checkpoint",
+      "changeNeeded": "Reuse accepted existing surfaces to consume typed projections and dispatch review/decision/cancel. Supply an authorized renderer/i18n patch receipt or reviewed additional scope if the accepted dependency registry does not render them. No second approval product or standalone fixture UI.",
+      "reason": "Normative UI acceptance is mandatory while this packet grants no renderer/i18n write path."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Approval/artifact pinned to immutable Doc revision and exact payload digest; changed Doc invalidates pending request (published issue:136 and package goal).",
+      "currentEvidence": "graph.automationGraphRevision:208-214 is an FNV config CAS revision explicitly not a security token, not Doc/artifact hash. buildAutomationGraphSave:538-562 only pins editable config save. Rox2EntityRef:233-239 supports optional revision; authorizeRox2Action:601-610 checks supplied grant identity. No proposed document module is present.",
+      "requiredChange": "In document-artifact-nodes.ts define immutable source/workflow/schema refs and exact command digest contract. workflow-artifact-adapter.ts obtains revision-pinned export from LSX-WP-036/native artifact owner and authoritatively compares Doc revision, command bytes, format/theme, recipients/effects and policy on apply. Doc edits invalidate waiting request; never retarget old approval to new content. Read current revision after preview and reject mismatched expectedRevision/digest without issuing effect.",
+      "verification": "Render permitted Doc r1, record FileRef/revision/hash/digest; start waiting checkpoint; edit to r2; applying r1 digest must conflict/invalidate with zero new decision/effect. New r2 approval must use r2 hash/digest and retain r1 immutable artifact. Verify native readback after restart and concurrent edit/apply; seeded bypass of digest fence must fail assertion.",
+      "missingPrerequisite": "LSX-WP-033 action payload registry, LSX-WP-036 export receipt; EG-APPROVAL native immutable version/decision owners; EG-AUTOMATION frozen run/step store and CAS interface.",
+      "state": "BLOCKED_ON_NATIVE_OWNERS; NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "current ACL on replay; unknown provider result reconciled (work-packages definition_of_done[0]); stable logical step key, explicit partial cancellation and no timeout autoapprove (published issue:137).",
+      "currentEvidence": "RetryQueueEntry:53-62 lacks run/version/digest/principal/receipt key; enqueue:141-149 assigns a time/random ID. pendingAcks:92 is memory-only and dispose:131 clears it. RPC REPLAY:529-578 reads current matcher and executes webhooks in parallel while ignoring _ctx. Transport RequestContext lacks actor. No evidence of checkpoint expiry or approval decisions in these seams.",
+      "requiredChange": "Adapter uses one persisted logical step key from accepted immutable runtime on every retry/reconcile. Resolve native effect/receipt by that key before resending; return unknownExternalResult until authoritative result is known, distinguish queuedProvider and verified completion. Revalidate current resource/asset/approver policy on every resume/replay, atomically refuse late/revoked/digest-changed decisions. Cancel prevents unstarted steps and keeps committed/unknown effect refs visible; no automatic reversal or expiry approval.",
+      "verification": "Revoke approver/export grant between preview and replay; direct API must deny without protected content. Simulate provider accepted/timeout, crash after effect before ACK and restart: reconcile original key and assert exactly one native artifact/effect. Expire waiting checkpoint with deterministic clock; approved decision remains absent. Cancel after one committed step and one unknown provider outcome; unstarted side effects remain absent and partial receipts persist.",
+      "missingPrerequisite": "EG-AUTOMATION durable idempotent step/reconcile/cancel owner; EG-APPROVAL deadline/current decision policy owner; authenticated principal resolver; real provider lane only if actually used.",
+      "state": "BLOCKED_FOUNDATION; NOT_VERIFIED"
+    },
+    {
+      "criterion": "default stopOnError; compensation only registered authorized action (work-packages definition_of_done[1]).",
+      "currentEvidence": "AutomationMatcher:274-312 holds actions but no chain failure policy; compileGraph:467-475 compiles linear actions, not receipt-driven control flow. Independent createHandlers subscriptions:298-371 do not establish sequential transactional compensation. 06-rox-docs-design.md:146 and 08-automation-integration.md:80 explicitly require stopOnError and registered authorized compensation.",
+      "requiredChange": "Node descriptors inherit accepted runtime stopOnError default; adapter propagates classified denied/conflict/unknown outcomes to stop subsequent dangerous steps unless an explicitly permitted safe continue policy was frozen. Compensation invokes only a registry command under current ACL with its own revision/key/receipt, never user script/eval/arbitrary rollback. Committed effects remain visible when uncompensated.",
+      "verification": "Fail artifact or digest decision before send; downstream effect must not occur under default policy. Unregistered compensation and revoked compensation principal must deny without effect. Registered permitted compensation produces one separate native receipt. Repeat/resume does not duplicate original or compensating effect.",
+      "missingPrerequisite": "LSX-WP-033 registry/policy and EG-AUTOMATION error/cancellation/compensation interfaces; do not implement a second chain engine.",
+      "state": "BLOCKED_FOUNDATION; NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport (work-packages definition_of_done[2], published issue:138).",
+      "currentEvidence": "graph.ts imports strict Zod schemas; schemas.AutomationGraphNodeSchema:312-341 has no artifact/approval. RPC_CHANNELS.automations:811-824 lacks proposed operations. RequestContext:7-11 has no actor; HandlerDeps:56-72 has no principal/approval/artifact service. platform-contract authorizeRox2Action is a pure grant predicate, not an authority service.",
+      "requiredChange": "Shared module exports versioned schemas for previewDocumentArtifact/applyDigestDecision/reconcileDocumentStep with mandatory ref/namespace/revision/operation/key and applicable epoch, typed manifest/checkpoint/receipt results and validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat errors. Keep queued/unknown domain outcomes outside success. Bind same schemas at RPC and accepted renderer registry; reject payload actors as authority, unknown versions read-only/preserved.",
+      "verification": "After authorized integration, compile both actual server and renderer consumers and run malformed/unknown-version/error-contract cases. Forged actor/workspace/namespace must deny via direct RPC; policy resolver must use authenticated session. Preview must cause no new artifact/decision/effect/outbox or grant. Verify protected body/title absent in denied outputs and logs.",
+      "missingPrerequisite": "Accepted LSX-WP-041 registration; protocol/client/composition interfaces and authenticated resolver; scope update for any extra shared boundary edits. Compilation is planned, not run in this preflight.",
+      "state": "SCHEMA_AND_BOUNDARY_NOT_IMPLEMENTED; NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; authoritative readback at exact ref/revision/hash and after restart (work-packages definition_of_done[3], published issue:139).",
+      "currentEvidence": "appendAutomationHistoryEntry:57-74 performs a capped JSONL append. compactEntries:186-199 evicts rows; RetryScheduler.tick:195-222 holds effects in memory until queue rewrite and only then writes history. Rox2Receipt:99-105 has generic optional observedRevision, while isClaimableLive:540-551 separates lifecycle and verification; these helpers are not artifact receipt persistence.",
+      "requiredChange": "Artifact/approval owners commit immutable receipt before runtime acknowledgment; workflow stores canonical native refs and hashes. Adapter uses authoritative lookup to reconcile after effect/ACK loss. History remains redacted projection; never use ok:true or retained history as proof. Expose exact Doc revision, FileRef/hash, decisionRef/digest and run/version/step linkage with verification derived from actual readback. No fake shared transaction across artifact/approval/runtime/provider owners.",
+      "verification": "Read native ref/revision/hash immediately after durable commit and after full owner/runtime process restart. Fault inject before effect, after effect before receipt/runtime ACK and after ACK before history; assert lookup resolves same effect/key and no false success. Exercise history compaction beyond caps, then recover old waiting/unknown step through canonical owner, not diagnostics.",
+      "missingPrerequisite": "EG-AUTOMATION native durable step store and EG-APPROVAL artifact/decision owners; LSX-WP-036 native export and LSX-WP-040 recoverable outbox handoff receipts.",
+      "state": "BLOCKED_DURABILITY_GATE; NOT_VERIFIED"
+    },
+    {
+      "criterion": "Happy path plus specified denied/conflict/replay/recovery cases; retain all attempts and reproduction seeds (work-packages definition_of_done[4], published issue:140).",
+      "currentEvidence": "Normative tests:15365-15385 specify Doc edits while waiting, crash after render/effect before ACK, revoked/timeout and committed cancellation. Exact test files are not present; no tests executed by authorization. Existing code reads alone are SOURCE_VERIFIED_NOT_RUNTIME.",
+      "requiredChange": "Implement deterministic package tests and authorized native scenario harness using accepted owners; record exact source/input/workflow/schema/seed hashes and all attempts. Cover each declared error discriminant, stale Doc/decision/policy, duplicates and crash/restart, denied export asset, payload spoof, stopped chain, unknown result, timeout, cancel and redaction. Domain result failures must remain separate from infrastructure failures.",
+      "verification": "Planned source command: bun test tests/lark-suite-extension/lsx-wp-042.test.ts. Then independently exercise integrated native handler/export/decision/restart paths on exact delivered commit, with expected-observed receipt bundle. Discover actual Electron runner before invoking planned UI spec. No invented success command or proof.",
+      "missingPrerequisite": "Accepted dependency/foundation implementation, isolated native owners, deterministic fault hooks/clock and evidence destination; product verification currently prohibited in this worker.",
+      "state": "PLANNED_NOT_RUN; REQUIRED_NOT_NA"
+    },
+    {
+      "criterion": "Green baseline plus seeded negative control fails named semantic assertions; infrastructure timeout is not mutation sensitivity (work-packages definition_of_done[5], published issue:141).",
+      "currentEvidence": "work-packages.json:15387-15395 names mutant 'Approve changed revision under old digest or retry logical step with new key' and assertions wrong digest rejected / one immutable artifact-effect per step / revoked-timeout cannot autoapprove. No mutant or baseline has run.",
+      "requiredChange": "Package tests provide deterministic green owner-backed baseline. Separately seed removal of revision/digest fence and regeneration of logical side-effect key; preserve exact evaluated implementation bytes, input hash and seed. Assert semantic rejection and artifact/effect uniqueness, plus revoked/expired never approved. Receipt distinguishes assertion failure from startup/timeout/dependency errors.",
+      "verification": "For digest mutant observe intended wrong-digest assertion failure; for key mutant observe duplicate native effect/artifact assertion failure on crash/replay. Re-run baseline on identical fixture/seed and confirm green. Save every baseline/mutant attempt and native readback; do not count infrastructure failure as caught mutation.",
+      "missingPrerequisite": "Working integrated owner-backed baseline with accepted fault injection; no tests/mutations allowed in preflight.",
+      "state": "PLANNED_NOT_RUN; REQUIRED_NOT_NA"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists (work-packages definition_of_done[6], published issue:142).",
+      "currentEvidence": "Spec requires RA-05/06/07/08 exact effects/recipients/revision and redacted outcomes; allowed paths do not include renderer/i18n and UI runner is explicitly to be discovered. Actual renderer surfaces were not inspected or launched in this limited worker, so no appearance/functionality claim is made.",
+      "requiredChange": "Bind module metadata/result/actions into existing accepted RA surfaces, not new approval UI. Show loading, source-empty, filtered-empty, error/retry, stale/offline, denied/read-only/unsupported, validation/conflict and queued/unknown/committed/partial-cancel independently of color. Preserve draft until native ACK, theme, focus and keyboard-critical review/decision/cancel; hover/help causes no mutation or grant. Supply all ten locale keys using t(), RU default; actual loaded Rox Mono including Cyrillic.",
+      "verification": "Authorized actual Electron run: pointer and keyboard review/apply/cancel; IME comment/input; visible focus and Escape return; hover/focus/click help, no hover side effects; reduced motion, zoom200%, light/dark, Russian and locale parity, computed/loaded font and screenshots/ARIA. Reload retains native checkpoint and redacted committed effects. UI spec must query real receipt, not a toast/fixture.",
+      "missingPrerequisite": "LSX-WP-041/RA host and EG-APPROVAL UI interfaces or explicitly expanded renderer/i18n packet; supported actual Electron runner and desktop authorization. UI stays required despite scope gap.",
+      "state": "BLOCKED_UI_BINDING_AND_NATIVE_PROOF; REQUIRED_NOT_NA"
+    },
+    {
+      "criterion": "No completion from plan validation, isolated fixture UI, toast or queued receipt; satisfy each required proof lane separately (work-packages definition_of_done[7], published issue:143).",
+      "currentEvidence": "Six required lanes are SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE, ACTUAL_ELECTRON_UI. Rox2 live/queued/verification helpers distinguish unverified queue from claimable success. This report is inspection only and featureComplete is false.",
+      "requiredChange": "Maintain lane-specific receipt bundle bound to implementation/integration commit and input/spec hashes. Native artifact/approval owner readback is separate from test pass and UI rendering. Use provider/collaboration proof only when actually exercised, without hiding mandatory native/restart/ACL/UI gaps. Do not change canonical Rox2 enums to represent package domain states; preserve separate typed outcomes.",
+      "verification": "Integration owner independently checks every required lane, accepted dependency and gate receipt, integrated version authoritative readback after restart, redacted logs and actual UI artifacts. Queued/unknown, fixture/simulated and missing capability never yield featureComplete or done.",
+      "missingPrerequisite": "All implementation/readback/UI receipts; approved immutable reference manifest and integrated revision. None are established by this preflight.",
+      "state": "ALL_PRODUCT_PROOF_LANES_NOT_RUN; FEATURE_INCOMPLETE"
+    },
+    {
+      "criterion": "Published version freeze, duplicate-event same-key reconciliation, authorized event aliases and sensitive output redaction (normative changes.events/acl/realtime and issue:78-92).",
+      "currentEvidence": "graph is authoring metadata compiled back to mutable matchers; RPC replay reads latest config. 08-automation-integration.md:51 freezes published node/schema versions; 07-domain-entity-model.md:171-189 requires recoverable commit/outbox/checkpoint. Event families are proposed aliases, not proven registered names.",
+      "requiredChange": "Use LSX-WP-040 accepted outbox/alias mapping for artifact.created/workflow.runChanged/approval.decisionRecorded with full eventId/workspace/ref/revision/actor/time/schema/correlation/causation/sourceCommand envelope. Use native published workflow snapshot and typed schema refs, not latest graph. Dedup with owner checkpoints and current policy; history and event consumers see only authorized safe summaries, detail queries reauthorize.",
+      "verification": "Edit graph/schema while run waits and prove resume executes pinned version. Deliver duplicate event and stale source ACK, asserting one effect and unchanged newer source fence. Denied viewer cannot retrieve private title/body/assets via history/readback/push; revoke invalidates derived previews. Crash after domain commit before outbox consumption recovers original event/key.",
+      "missingPrerequisite": "LSX-WP-040 outbox/aliases and LSX-WP-041 typed version snapshot plus EG-AUTOMATION checkpoint/principal owner; no extra event system.",
+      "state": "BLOCKED_ACCEPTED_DEPENDENCIES; NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/shared/src/automations/graph.ts","symbol":"automationGraphRevision","lineStart":208,"lineEnd":214,"sha256":"976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path":"packages/shared/src/automations/graph.ts","symbol":"compileGraph / compileAutomationGraph","lineStart":385,"lineEnd":494,"sha256":"976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path":"packages/shared/src/automations/graph.ts","symbol":"buildAutomationGraphSave","lineStart":538,"lineEnd":562,"sha256":"976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"AutomationSystemOptions","lineStart":41,"lineEnd":74,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"AutomationSystem.createHandlers","lineStart":298,"lineEnd":374,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"AutomationSystem.executeAgentEvent / buildSdkHooks / dispose","lineStart":584,"lineEnd":659,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"packages/shared/src/automations/retry-scheduler.ts","symbol":"RetryQueueEntry / RetryScheduler.enqueue / tick","lineStart":53,"lineEnd":229,"sha256":"c6a88847a789eeeee3734770c3d307b8869cfc17a1d23db0931df41a8d7bf1d9"},
+    {"path":"packages/shared/src/automations/history-store.ts","symbol":"appendAutomationHistoryEntry","lineStart":57,"lineEnd":74,"sha256":"8b9140ff67ddecc119259288b5c5c5ea29c3ee0f7fcf66252a13d2b13d3730df"},
+    {"path":"packages/shared/src/automations/history-store.ts","symbol":"compactAutomationHistory / compactEntries","lineStart":83,"lineEnd":204,"sha256":"8b9140ff67ddecc119259288b5c5c5ea29c3ee0f7fcf66252a13d2b13d3730df"},
+    {"path":"packages/server-core/src/handlers/rpc/automations.ts","symbol":"withConfigMutex","lineStart":25,"lineEnd":33,"sha256":"aba4af4d3a034a4829c255670bf0f6fcfe82c494bcef981c9fd32781a3a23162"},
+    {"path":"packages/server-core/src/handlers/rpc/automations.ts","symbol":"registerAutomationsHandlers: GET_GRAPH / SAVE_GRAPH","lineStart":151,"lineEnd":252,"sha256":"aba4af4d3a034a4829c255670bf0f6fcfe82c494bcef981c9fd32781a3a23162"},
+    {"path":"packages/server-core/src/handlers/rpc/automations.ts","symbol":"registerAutomationsHandlers: GET_HISTORY / REPLAY","lineStart":505,"lineEnd":579,"sha256":"aba4af4d3a034a4829c255670bf0f6fcfe82c494bcef981c9fd32781a3a23162"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef","lineStart":233,"lineEnd":246,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"isClaimableLive / queuedResult","lineStart":539,"lineEnd":563,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"authorizeRox2Action","lineStart":592,"lineEnd":610,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/shared/src/automations/types.ts","symbol":"AutomationMatcher / AutomationGraphNode / AutomationsConfig","lineStart":274,"lineEnd":431,"sha256":"c338cad64d6b2296ac171b14e0957f66d364e557a5c82aca85ffadfe9f186691"},
+    {"path":"packages/shared/src/automations/schemas.ts","symbol":"AutomationGraphNodeSchema / SaveAutomationGraphPayloadSchema","lineStart":312,"lineEnd":366,"sha256":"232547920900c0fb134ade7e7cdd7bdd793cde4901f230c04048011802511530"},
+    {"path":"packages/server-core/src/transport/types.ts","symbol":"RequestContext / RpcHandlerOptions / RpcServer","lineStart":7,"lineEnd":34,"sha256":"844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path":"packages/server-core/src/handlers/handler-deps.ts","symbol":"HandlerDeps","lineStart":56,"lineEnd":72,"sha256":"501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.automations","lineStart":811,"lineEnd":824,"sha256":"89177712f430183f89657f08f985ea50861c8d774652dbb56471d5eb7cca0aaa"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[41] / LSX-WP-042","lineStart":15102,"lineEnd":15520,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-042 / cloudPacket","lineStart":3625,"lineEnd":3717,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/issues/lsx-wp-042.md","symbol":"Acceptance / external readiness gates","lineStart":134,"lineEnd":170,"sha256":"91734b37860e3e301c1fe9e914c519f803e09b62f2b4a3ac985b65f0ed51601a"},
+    {"path":"docs/lark-suite-reference/08-automation-integration.md","symbol":"Node semantics / workflows / failure and security","lineStart":34,"lineEnd":84,"sha256":"32b1ffb806b8dab6be2ffe38f3144b1a5601e0695620b5a8f7bbed9b4f345a68"},
+    {"path":"docs/rox-suite/published/RS-APR-01.md","symbol":"Architecture prerequisites / current approval boundaries","lineStart":11,"lineEnd":24,"sha256":"031077b67e4e89ba3d317a4f67933c064e508b7dcf2e7fef377da800f1b6e14c"},
+    {"path":"docs/rox-suite/published/RS-SIG-01.md","symbol":"Signing control / domain and file versions","lineStart":34,"lineEnd":58,"sha256":"77419303a3933c03f1441e841146ee2595239012bb31c4f6847205bcc35c653e"}
+  ],
+  "nextExecutableAction": {
+    "preflight": "Root reads this report; it is a contribution/integration request, not implementation acceptance.",
+    "implementation": "After lead wave0 commit, obtain accepted LSX-WP-033/036/040/041 artifact plus readback receipts and EG-AUTOMATION/EG-APPROVAL actual owner interfaces. Resolve immutable reference manifest and approved base; confirm authenticated principal, durable receipt/reconcile and existing RA bindings or update reviewed scope. Acquire shared-path leases; re-read/rehash all relevant seams against that accepted integrated revision. Then implement only the four normative new files and submit the three named shared patch requests for serial integration. Do not start by modifying dirty root source or treating this report as a dependency receipt.",
+    "orderedInputs": ["wave0 integrated commit", "LSX-WP-033 accepted typed command/button registry", "LSX-WP-036 accepted revision-pinned export/readback", "LSX-WP-040 accepted native outbox/alias checkpoints", "LSX-WP-041 accepted typed constructor/runtime/renderer registry", "EG-AUTOMATION and EG-APPROVAL owner readiness plus principal/receipt/UI contracts", "resolved spec digest/base and exclusive leases"],
+    "proofAfterIntegration": "Run native happy/denied/conflict/duplicate/crash/restart/cancel/compensation scenarios, deterministic semantic baseline+mutants, both boundary compiles and actual Electron UI; preserve exact bytes/seeds/attempts and rerun authoritative readback on delivered integration commit. No product checks run by this worker."
+  },
+  "risks": [
+    "Four explicit LSX dependencies do not supply proof of generic workflow durability or approval/signature readiness; adapter implementation must not silently recreate broad RS products.",
+    "RS-APR-01 and RS-SIG-01 are definition/viewer specifications, not evidence of an executable native decision or signature owner. Their related RS-APR-02/RS-SIG-02 owner interfaces must be resolved by lead, not inferred from issue names.",
+    "Current allowed paths cannot alone bind executable graph kinds, new protocol/client methods, authenticated principal/host composition or UI/i18n. Missing binding is a reviewed scope/interface prerequisite, not permission to edit read-only evidence paths.",
+    "Retry scheduler has an after-effect process-loss window; timestamp/random queue identity cannot stand in for stable logical side-effect idempotency. Wrapping it would preserve duplicate-effect risk.",
+    "History compaction can remove records, and append history does not prove a durable native commit. Treating it as recovery state would either lose checkpoints or create a second store.",
+    "Config revision FNV is optimistic concurrency only; it must not be reused as cryptographic Doc/artifact/payload approval digest.",
+    "Replaying current editable matchers or using old grants can execute different effects under stale approval. Use frozen workflow/schema/Doc refs with current authorization.",
+    "Cancel cannot reverse already committed external effects; timeout/queued/unknown must not become autoapproved or successful by UI shorthand.",
+    "Mutexes and single-process queue locks are not cross-owner transactions or distributed leases. Durable owner handoff/reconciliation must be proven.",
+    "Inspected tree may change during root wave0/dependency integration. Whole-file hashes bind this evidence only; stale anchors must be re-read, not blindly patched.",
+    "No product runtime/UI/negative-control proof is claimed. Report/schema validation cannot close any feature DoD lane."
+  ]
+}

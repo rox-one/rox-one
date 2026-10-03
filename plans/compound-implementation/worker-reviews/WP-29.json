@@ -1,0 +1,489 @@
+{
+  "task_id": "WP-29-preflight",
+  "attempt_id": "9b788b3e6463837fc2c01ab2d9613b17",
+  "packet_hash": "75e0ff127c4f396d92048f5895d37f7d62979e36b53c847bfc64614969a76189",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-29",
+  "featureComplete": false,
+  "mode": "inspect-only; owned preflight artifact, not feature implementation",
+  "workTier": "bounded-workflow",
+  "dependencies": ["WP-28"],
+  "dependencyReceiptRequirements": {
+    "WP-28": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+    "startBoundary": "Implementation starts only after lead wave0 commit and accepted WP-28 receipts; no dependency acceptance or wave0 completion was verified in this preflight."
+  },
+  "inspection": {
+    "basis": "Actual working-tree source and published specifications, not a claim that working tree equals input HEAD or historical baseline.",
+    "freshness": "Five calendar source hashes and the specification hash were identical in two read-only shasum snapshots during inspection. Later lead integration may invalidate any reference; compare whole-file hashes and re-read changed seams before implementing.",
+    "specificationManifestMatched": true,
+    "codegraph": "Unavailable: tool reported no .codegraph index; no index created.",
+    "fallback": "find failed because its judgment provider returned 402 insufficient credits. Inspection continued through literal symbol grep and ranged read, not through a feature runtime.",
+    "artifactPresence": "Exact-path glob returned Path not found for all eleven WP-29 normative newFiles at inspection time. This is absence evidence at inspection time only, not a prediction about wave0/WP-28 integration.",
+    "scope": "Inspected calendar affected files, their direct imports, WP-29 normative record, immediately preceding dependency record and specified implementation/test documentation. No product source, tests, manifests, progress, shared files or Git state were written; no builds, product tests, UI or network operations were run."
+  },
+  "foundationGates": [
+    {
+      "gate": "Single authenticated authority and current resource/action policy",
+      "relationship": "Transitive foundation through WP-28 -> WP-27 -> WP-02/WP-03/WP-04; not another explicit WP-29 dependency.",
+      "evidence": "work-packages.json:25382-25385,25488-25492; 21-implementation-plan.md:15-25,48-63,536-554. CalendarStore currently accepts no principal/workspace/grants and occurrenceFromCalendarEvent sets permission=write.",
+      "requiredReceipt": "Transport-derived principal, workspace/ref validation, current resource policy epoch and provider execution grant available to both recurrence command and availability query. Reject actor payload and cross-workspace targets; offline/agent allow-all never overrides ACL.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "Verified provider recurrence and reconciliation capability",
+      "relationship": "Transitive provider foundation WP-27/WP-28, rather than an added direct edge.",
+      "evidence": "adapters.ts:9-15,112-139 only list events and always produce UnavailableCalendarAdapter; capabilities.ts:3-44 contains static supportsRecurrence flags, not per-operation proof. WP-28 defines write-reconciliation.ts and WP-27 requires fixture-free read-back.",
+      "requiredReceipt": "Live sandbox provider adapter with master/original-start/instance IDs, cancelled-instance sync, conditional etag writes and read-back reconciliation; explicit one/series/following/move/freebusy capability and destination permission semantics. Unsupported following must return typed unsupported_scope, not invoke a series update.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "Durable registry, revisioned command/outbox and migrator contract",
+      "relationship": "Transitive WP-02/WP-04 foundation; additional migration filename decision hidden in WP-29 published newFiles.",
+      "evidence": "work-packages.json:25891-25939 requires composite entity FK, command uniqueness/request hash, alias uniqueness, consumer inbox and policy/tombstone fences. CalendarStore snapshot/exportJson is a bundle, not a server transaction/outbox.",
+      "requiredReceipt": "Accepted entity/alias schema, atomic mutation+receipt+calendar.series_updated outbox, durable provider-pending state, consumer replay/watermark, selected migrator and applied additive migration. Resolve 029_calendar_recurrence_working_hours.sql versus proposed 29-domain-contract.sql without two authoritative schemas or duplicate table creation.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "Offline projection/replay and revocation rejection",
+      "relationship": "WP-05 is a foundation named in implementation plan but is not an explicit edge of WP-29 or WP-28 in the inspected records; do not silently add it to dependencies.",
+      "evidence": "work-packages.json:25390-25396,25470; 21-implementation-plan.md:84-90; 22-test-plan.md:9,132,222. Current bundle has no command queue/receipt or durable shared projection cursor.",
+      "requiredReceipt": "Lead-approved reuse of common shared projection/outbox and replay contract including queued occurrence edit surviving restart and rejection/quarantine after revoke; preserve explicit standalone local authority without a second shared writer.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "Cross-surface integrations cannot be deferred behind calendar feature",
+      "relationship": "WP-06 and WP-09 are explicit prerequisites of WP-28, so search/mentions are transitive. Notifications/activity/agent/API are full DoD gates even when no new WP-29 edge names them.",
+      "evidence": "work-packages.json:24335-24338,25448-25470; 22-test-plan.md:199-218,247.",
+      "requiredReceipt": "Accepted shared extractor/backlink/attention/activity/context dispatch seams and revision+policy-aware event consumption; validate each calendar recurrence integration instead of treating unimplemented items as N/A.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "Canonical public wire/domain contract reconciliation",
+      "relationship": "Hidden specification consistency gate, not a dependency edge.",
+      "evidence": "work-packages.json:25506-25523 declares event/occurrenceKey/scope one|series|following/patch; 26203-26206 instead declares eventRef/scope instance|following|series/originalStart/baseRevision. Response status schema at 25693-25733 differs from existing Rox2Status triad at platform-contract.ts:107-110,158-166.",
+      "requiredReceipt": "WP-28/lead freezes one wire contract. Validate primary calendar.updateOccurrence payload and map one to domain instance at a single boundary; preserve expectedRevision CAS and canonical result triad alongside receipt status, never manufacture verifiedAt before independent read-back. Constrain CalendarPatch unknown fields and specify target-calendar move and TemporalValue gap/overlap policy.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "Real surface and independent provider verification environment",
+      "relationship": "Acceptance/runtime foundation, not another explicit WP-29 dependency.",
+      "evidence": "work-packages.json:25473,26116-26151; 22-test-plan.md:7-9,25-34,128-136,239-247.",
+      "requiredReceipt": "Changed native Calendar/Meetings context, isolated authorized provider account, independent readonly provider client, two calendar sources, actors A/B/viewer/outsider/agent, exact source/deploy/schema evidence and caught negative controls. Fixture adapter is not live acceptance.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "tests/macro-integration/wp-29.test.ts",
+    "packages/shared/src/workspace-domain/calendar/recurrence.ts",
+    "apps/workspace-service/src/modules/calendar/recurrence-commands.ts",
+    "apps/workspace-service/src/modules/calendar/availability.ts",
+    "apps/electron/src/renderer/pages/calendar/CalendarPreferences.tsx",
+    "apps/workspace-service/migrations/029_calendar_recurrence_working_hours.sql",
+    "tests/macro-integration/calendar-recurrence-dst-availability.test.ts",
+    "apps/workspace-service/migrations/29-domain-contract.sql"
+  ],
+  "ownershipNotes": [
+    "ownedNewFiles lists only normative WP-29 paths, and only proposed later implementation ownership; this preflight owns solely worker-reviews/WP-29.json.",
+    "contracts.ts, calendar/commands.ts and calendar/repository.ts appear in WP-27, WP-28 and WP-29. They must become shared patch requests against accepted predecessor code, not independent newly written copies.",
+    "Both migration identifiers are normative newFiles but 29-domain-contract.sql is explicitly proposed; lead/migrator must decide additive migration mapping before any DDL. Listing both does not request duplicate tables or a second store.",
+    "CalendarWorkspace.tsx/EventEditor.tsx are normative WP-28 artifacts, not WP-29 owned files. CalendarPreferences must attach to that accepted existing native surface. No second calendar destination."
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/calendar/types.ts",
+      "symbol": "CalendarEvent, CalendarAccount, CapabilityGap, CalendarBundle, calendarEventIdentity",
+      "change": "Extend accepted WP-28 event DTO with discriminated master/instance/override identity, originalStart TemporalValue+zone, master canonical ref, provider instance ID, EXDATE/override cancellation metadata, actual read/write capabilities and transparency/declined/cancelled busy policy. Add versioned user-zone working-hours projection only through accepted shared contract/bundle migration; preserve account/calendar/provider identity. Keep all-day date-only distinct from instant/wall time.",
+      "reason": "Current event has recurrence string only; no original-start identity or scoped editability. Existing account/calendar/id identity must not be replaced by unscoped remote ID."
+    },
+    {
+      "path": "packages/core/src/calendar/adapters.ts",
+      "symbol": "CalendarAdapter, CalendarListPage, createProductionAdapter, isCalendarConnectorWired",
+      "change": "Against accepted WP-27/28 provider interface, add typed occurrence update/cancel/series/split and explicit target calendar move/freebusy operations or capabilities; preserve master+originalStart+provider ID in list pages. Route shared commands through authenticated authority with etag and reconciliation receipt; keep fixture and unavailable modes honest and standalone mode explicit. Unsupported following returns unsupported_scope, never series fallback.",
+      "reason": "Current CalendarAdapter has only listEvents and production always returns unavailable; static supportsRecurrence is insufficient proof of split/write/freebusy support."
+    },
+    {
+      "path": "packages/core/src/calendar/store.ts",
+      "symbol": "CalendarStore.events, markLocalDirty, sync, snapshot, fromJson",
+      "change": "Add account+calendar-scoped event queries and full scoped ref/occurrence identity for local-dirty targeting; reject out-of-scope incoming calendars. Merge recurrence exceptions and retained cancellation tombstones with original-start keys and revision fences, including full sync. Serialize/restore accepted projection metadata with bundle version migration rather than resetting new data to version 1. Shared state remains projection/queue, not direct shared authority.",
+      "reason": "events() returns every nondeleted event, markLocalDirty ignores calendarId, sync unconditionally Object.assigns existing rows and has no occurrence override retention; fromJson currently persists only four arrays and hardcodes version 1."
+    },
+    {
+      "path": "packages/core/src/calendar/occurrences.ts",
+      "symbol": "TemporalOccurrence, occurrenceFromCalendarEvent, occurrenceKey, dedupeOccurrences, occurrencesInRange",
+      "change": "Use bounded recurrence expansion from the accepted recurrence domain seam, with original occurrence identity independent of moved time. Apply overrides/EXDATE/cancellation before projection; sourceRef retains canonical event ref and recurrenceInstance becomes original-start+zone identity rather than RRULE. Derive editable/permission from live provider and current grant, retain readonly task/activity semantics. Define half-open all-day/range bounds; dedupe replay by identity+revision/fence rather than first arrival when revisions differ.",
+      "reason": "recurrenceInstance currently equals event.recurrence and all calendar events receive write permission. First-arrival dedupe can keep an older occurrence during replay."
+    },
+    {
+      "path": "packages/core/src/calendar/__tests__/occurrences.test.ts",
+      "symbol": "describe('TemporalOccurrence'), event fixture helper",
+      "change": "Extend behavior assertions for multiple instances of one master, moved instance key stability, retained cancelled exception, readonly provider/grant, same remote ID in two calendars, latest authorized revision, half-open boundaries and civil all-day dates. Keep existing task-vs-event separation and account identity tests; assert outputs/invariants, not source text or incidental defaults.",
+      "reason": "Current four tests cover mapping, one civil date, first-arrival duplicate and deleted/completed filtering, but not recurrence/DST/ACL/availability."
+    },
+    {
+      "path": "packages/core/src/calendar/capabilities.ts",
+      "symbol": "CALENDAR_CAPABILITIES, capabilityFor",
+      "change": "Keep static provider descriptors informational; consume verified per-calendar operation capabilities from accepted provider contract for scope selection, cross-calendar move, freebusy and readonly drag. Do not infer a connected writable adapter from supportsRecurrence or environment presence.",
+      "reason": "Direct import descriptor says Google/Outlook support recurrence but it has no scope, permission or live verification fields."
+    },
+    {
+      "path": "packages/core/src/calendar/merge.ts",
+      "symbol": "eventOverlapsLocalDay, mergeTodayUpcoming, startOfLocalDay",
+      "change": "Request WP-28 owner to preserve or repair zoned calendar-date boundaries through its accepted temporal seam before recurrence projections enter this merge. Next civil midnight must be resolved in the intended zone, not start+86400000; preserve task scheduling semantics separately.",
+      "reason": "Direct import file uses host-local day and fixed MS_DAY; reusing it for working-hours/recurrence would miscount DST days. This is a dependency integration request, not independent WP-29 expansion."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/calendar/contracts.ts",
+      "symbol": "WP-28 accepted calendar domain contracts; ChangeCalendarOccurrence, GetAvailability proposed by WP-29 spec",
+      "change": "Extend predecessor-owned contracts with strict CalendarPatch, occurrence/master/original-start identity, one/series/following scope mapping, move semantics, WorkingHours version+zone, privacy-minimal busy/free intervals, unavailableSources, sourceRevision/expiry, bounded range and typed unsupported/conflict/denied results. Use existing Rox2EntityRef/TemporalValue and common RoxCommand/result envelope, not a second ref/status model.",
+      "reason": "Path is not present at inspection and shared across WP-27/28/29; named new domain symbols are proposed, not verified existing implementations."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/calendar/commands.ts",
+      "symbol": "WP-28 accepted calendar command registration; calendar.updateOccurrence proposed",
+      "change": "Register calendar.updateOccurrence and accepted availability/freebusy query through the common authenticated command/query gateway; delegate recurrence mutation to recurrence-commands.ts, reject body actor/unknown fields, enforce expectedRevision/idempotencyHash/current grants and linked destination refs. Map canonical pending/reconciling/applied receipt honestly across HTTP and native RPC.",
+      "reason": "Not present at inspection; predecessor-owned registration must not be replaced by an independent WP-29 dispatcher. Transport paths are normative but mounting symbols must be supplied by accepted WP-28/wave0 receipt."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/calendar/repository.ts",
+      "symbol": "WP-28 accepted calendar repository; override/working-hours/availability persistence proposed",
+      "change": "Extend common repository transaction with calendar_override keyed by workspace+master+originalStart+zone, provider instance/cancellation retention, versioned working hours, and revision/expiry-stamped availability data. Reuse entity/alias, command_receipt and outbox authority; no parallel calendar store or separate receipt tables. Apply policy/tombstone fences and inbox dedup during provider reconciliation.",
+      "reason": "Not present at inspection; three domain tables/constraints are normative but actual repository transaction symbols require predecessor receipt."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/calendar/CalendarWorkspace.tsx",
+      "symbol": "WP-28 proposed CalendarWorkspace, actual exported symbols pending accepted receipt",
+      "change": "Integrate WP-29 CalendarPreferences and availability overlays into the accepted native Calendar context with per-calendar selection, explicit partial/unavailable indicator, stable occurrence deep links and current-grant readonly drag. Render loading/empty/denied/offline/retryable/applied_verified from canonical receipts; use existing t() localization conventions.",
+      "reason": "Normative WP-28 artifact, not inspected existing code or WP-29 new-file ownership; must be patched only after accepted predecessor surface exists."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/calendar/EventEditor.tsx",
+      "symbol": "WP-28 proposed EventEditor, actual exported symbols pending accepted receipt",
+      "change": "Add explicit one/series/following edit/cancel scope chooser, move destination/calendar permission disclosure and typed unsupported response; keep original occurrence key when editing or dragging. Show DST gap/overlap policy and all-day date-only meaning; do not mark optimistic edit verified before provider read-back.",
+      "reason": "Scope UI must reuse predecessor editor rather than create another editing surface; source/symbol not yet verified."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/*.json",
+      "symbol": "Calendar recurrence, working-hours and availability translation keys; exact key names pending accepted UI namespace",
+      "change": "Lead requests synchronized ASCII-sorted keys in all ten existing locales for scope, unsupported, readonly, partial/unavailable, DST disambiguation and verification states. CalendarPreferences and predecessor UI patches use t(); no literal user-facing strings.",
+      "reason": "Required repository convention for proposed user-facing UI; locale files were not inspected because they are outside this package's direct imports. Integration owner must resolve accepted namespace."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-29 section, lines 578-599",
+      "change": "After implementation proof, document explicit recurrence scope/move/provider support, bounded expansion, DST/overnight/all-day busy policy, freebusy privacy, partial sources, single authority and recovery limits with revision-bound receipts. Until then preserve planned/unverified status.",
+      "reason": "Published section is plan only, not implementation evidence."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "CALENDAR-01, completeness checklist, recurrence invariant and evidence record",
+      "change": "Add executable WP-29 occurrence cancellation/full-sync, following unsupported/split, busy union/privacy, working-hours DST/overnight, partial provider and readonly-drag observations, with negative-control and restart/reconciliation evidence references. Keep fixtures distinct from real provider acceptance.",
+      "reason": "Current scenarios describe future tests; no PASS/runtime receipts are established."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Change one occurrence does not alter series",
+      "currentEvidence": "types.ts:22-38 has only recurrence?:string; occurrences.ts:44-60 projects one event and treats recurrence rule as instance. No occurrence command exists in CalendarAdapter:9-15.",
+      "seam": "CalendarEvent; occurrenceFromCalendarEvent/occurrenceKey; proposed recurrence.ts and recurrence-commands.ts extending accepted WP-28 command/repository",
+      "requiredChange": "Persist master+originalStart+zone identity, bounded expansion, EXDATE/override and instance-specific conditional provider update. Keep master and every other occurrence's time/metadata unchanged; store one canonical receipt and verified target revision.",
+      "verification": "UI edit scope one through domain.calendar.updateOccurrence and HTTP equivalent; independent provider read-back target/master/neighbour instances before/after, reload and replay. Assert unchanged nontarget occurrences and one override. Seed series-update mutation must fail this invariant (seed 20260959).",
+      "missingPrerequisite": "Accepted WP-28 interface/migration/scenario receipt plus provider instance update/readback and registry/outbox.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "move across calendar semantics explicit",
+      "currentEvidence": "calendarEventIdentity uses account/calendar/id at types.ts:103-114. markLocalDirty uses account/id without calendar at store.ts:111-118; no move operation in adapter.",
+      "seam": "calendarEventIdentity; CalendarStore.markLocalDirty; CalendarAdapter; accepted WP-28 EventEditor; strict CalendarPatch",
+      "requiredChange": "Require explicit destination canonical calendar ref and scope; validate source/destination grants/provider move capability. Specify same-provider move versus unsupported cross-account/provider behavior, alias continuity, organizer/attendee/send-update and wall-time/all-day semantics. Never silently copy+delete or change entire series.",
+      "verification": "Move one occurrence between two authorized calendars; assert intended destination, master/neighbours invariant, canonical ref/alias consistency, provider IDs/readback and receipt. Exercise readonly destination, outsider, stale revision and unsupported cross-provider request with zero unintended remote changes.",
+      "missingPrerequisite": "WP-28 move contract/provider reconciliation plus lead-agreed cross-calendar DTO semantics (not constrained in current generic patch schema).",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "free/busy hides titles",
+      "currentEvidence": "CalendarEvent requires title (types.ts:27); CalendarStore.events returns full event objects (store.ts:67-69). No privacy-minimal FreeBusy/GetAvailability implementation was located at normative paths.",
+      "seam": "proposed availability.ts and GetAvailability contract; accepted calendar repository/provider freebusy query",
+      "requiredChange": "Use authorized busy intervals only; construct allowlisted freebusy DTO without title/body/attendees/private totals or provider metadata. Recheck each calendar action grant and attach permitted source revision/expiry; define transparent/declined/cancelled/all-day inclusion.",
+      "verification": "Seed PRIVATE_WP-29 title/body/attendees; busy-only actor obtains correct intervals with marker absent from HTTP/RPC/MCP serialization, UI/ARIA, logs, notifications and denied errors. Denied calendar refs do not leak IDs/titles/counts; full event read remains separately authorized.",
+      "missingPrerequisite": "Accepted provider freebusy permission/capability and common query policy/serialization contract.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "working-hours DST",
+      "currentEvidence": "civilDateInZone (occurrences.ts:35-42) formats a date but does not resolve wall-time intervals; direct import merge.ts:15-19 uses start+MS_DAY. No WorkingHours persistence or zoned expansion exists in inspected DTOs.",
+      "seam": "proposed recurrence.ts, availability.ts, CalendarPreferences and calendar_working_hours; civilDateInZone",
+      "requiredChange": "Persist versioned weekly working-hours rules in user IANA zone. Resolve each civil date independently with explicit nonexistent/ambiguous local-time handling and overnight split; do not add 24h to advance calendar days. Preserve half-open ranges and all-day civil dates.",
+      "verification": "Assert exact Europe/Berlin spring-gap and fall-overlap interval endpoints and free durations, including 22:00-06:00 overnight rules, timezone change/version, reload and independent expected instants. UI communicates selected disambiguation; fixed-24h seeded mutation is caught.",
+      "missingPrerequisite": "Accepted TemporalValue/time-zone resolver and documented gap/fold rule plus applied working-hours migration.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "multical overlap",
+      "currentEvidence": "types.ts:16 has scopedCalendarIds but events() is global; occurrencesInRange:96-102 filters overlap only and dedupeOccurrences:87-93 keeps first identity. No interval union/free complement query exists.",
+      "seam": "CalendarStore.events/sync; occurrenceKey; proposed availability.ts/GetAvailability",
+      "requiredChange": "Query only requested authorized account/calendar refs, expand bounded occurrences and compute clipped sorted busy union across sources, then complement within working-hours windows. Preserve source identity/revision/expiry and define touching half-open interval behavior; do not sum overlapping busy time twice.",
+      "verification": "Two calendars with same remote IDs and overlapping/touching/nested intervals produce exact union/free intervals independent of input order; same occurrence replay does not duplicate busy duration. Wrong account/workspace calendar denied; paginated/complete source data cannot falsely omit busy intervals.",
+      "missingPrerequisite": "Accepted per-calendar query/provider cursor contract and bounded availability range DTO.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Instance cancel survives sync; following edit either provider-supported split or typed unsupported, never silently changes entire series.",
+      "currentEvidence": "CalendarStore.sync:128-153 merges remote events by remote account/calendar/id and can overwrite deletion data. CalendarEvent lacks original-start cancellation key; CalendarAdapter cannot cancel or split.",
+      "seam": "CalendarStore.sync/snapshot/fromJson; proposed calendar_override repository and recurrence-commands.ts; provider scope capabilities",
+      "requiredChange": "Retain cancelled occurrence tombstone with original-start/zone/provider ID across incremental/full refresh and restart. Following uses provider-supported conditional split and reconciles original/new masters, or returns unsupported_scope without remote mutation. Apply revision/policy/tombstone fence to late delivery.",
+      "verification": "Cancel middle instance, restart client/service, full-sync and replay older/duplicate master deliveries: cancelled instance stays absent while siblings stay present. Supported following changes only suffix; unsupported following returns typed error and provider/master digest remains unchanged. Crash during supported split reconciles without duplicate series.",
+      "missingPrerequisite": "WP-27 full-sync/watch tombstone guarantees and WP-28 pending-provider reconciliation/conditional write.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DST gap/overlap, overnight working hours, all-day events and two calendars union tested.",
+      "currentEvidence": "occurrences.test.ts:40-47 tests one Auckland civil date, and :49-60 tests dedupe/range; no gap/fold/overnight/union assertions. merge.ts uses fixed day milliseconds.",
+      "seam": "existing occurrences.test.ts; normative calendar-recurrence-dst-availability.test.ts and wp-29.test.ts",
+      "requiredChange": "Add behavior-focused deterministic generated/boundary cases for gap/fold/leap/date-only, overnight windows, all-day transparent/cancelled/declined policy and exact two-calendar busy/free union. Use chosen temporal semantics, not environment host timezone or mock echo.",
+      "verification": "Future bun test tests/macro-integration/wp-29.test.ts tests/macro-integration/calendar-recurrence-dst-availability.test.ts and relevant existing calendar tests; run real Electron preference/edit/availability scenarios afterward. Seed fixed-24h and wrong-series mutations and independent holdout; distinguish infra failure from caught mutant.",
+      "missingPrerequisite": "Implemented recurrence/availability DTO and explicit boundary policy; runnable service/UI/provider harness on integrated revision.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Unavailable calendar makes availability partial/unavailable, not false fully-free; read-only occurrence rejects drag.",
+      "currentEvidence": "createProductionAdapter always unavailable (adapters.ts:112-114) and listEvents throws; occurrenceFromCalendarEvent unconditionally editable=true/permission=write (:59-60). No partial availability result exists.",
+      "seam": "CalendarProviderUnavailableError; occurrenceFromCalendarEvent; proposed GetAvailability/CalendarPreferences; accepted CalendarWorkspace drag handler",
+      "requiredChange": "Report unavailableSources with explicit partial/unavailable state and freshness; do not assert fully free for incomplete sources. Compute readonly/editability from actual provider+grant and enforce denial at server command even if UI is bypassed; preserve verified intervals from healthy sources without inventing completeness.",
+      "verification": "One healthy/one failed calendar yields partial and no fully-free claim; all failed yields unavailable, not empty success. Viewer drag disabled and forged RPC rejected with no provider side effect; revoke mid-drag/offline replay denied. Reload preserves honest pending/unavailable/read-only state.",
+      "missingPrerequisite": "Current resource grants, per-calendar provider health/operation capability and canonical UI receipt/state mapping.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "WP-29 specifies Native Calendar/Meetings event context and proposed CalendarPreferences (25387-25397,25367); accepted predecessor surface is not available in inspected normative paths.",
+      "seam": "CalendarPreferences.tsx proposed; WP-28 CalendarWorkspace/EventEditor integration",
+      "requiredChange": "Expose recurrence scope, calendar selection, working-hours zone and availability inside native context; localized t() strings, visible honest states, accessible scope/zone controls, existing design conventions.",
+      "verification": "Actual Electron interactions, visual/ARIA proof, hover/focus help, scope chooser, working-hours change, readonly and partial state; reload and second-device readback on exact revision.",
+      "missingPrerequisite": "Accepted WP-28 native surface and UI integration owner/locale patch receipt.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "Spec transport HTTP/nativeRpc at 25488-25492; occurrence sourceRef exists but no WP-29 deep-link or dispatcher implementation inspected.",
+      "seam": "occurrenceKey/sourceRef; accepted CalendarWorkspace routing; calendar commands registration",
+      "requiredChange": "Resolve canonical event plus immutable original occurrence key across deep links/history/panels; register common HTTP/RPC command and availability query, not another surface.",
+      "verification": "Open direct occurrence link, navigate back/forward, refresh moved instance and use same command via HTTP/native RPC; wrong-workspace/denied link discloses no title.",
+      "missingPrerequisite": "Accepted predecessor route and wave0 common gateway mount symbols.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "calendarEventIdentity scopes remote ID; platform-contract.ts:233-246 already has workspace ref/account namespace and external binding.",
+      "seam": "CalendarEvent/calendarEventIdentity; Rox2EntityRef/Rox2ExternalBinding; proposed recurrence contracts",
+      "requiredChange": "Reuse registry/aliases for master/instance/calendar refs; stable original-start+zone key, schema validation and explicit TemporalValue; quarantine ambiguous import identities.",
+      "verification": "Two accounts/calendars with colliding remote IDs remain distinct; move/retry/sync preserves canonical identity and cancelled provider ID; malformed and cross-workspace refs rejected.",
+      "missingPrerequisite": "Accepted WP-02 registry and WP-28 typed event patch/ref contract.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "CalendarStore.exportJson/fromJson persist bundle only; normative migration requires three domain tables plus shared constraints (25891-25939).",
+      "seam": "CalendarStore snapshot/fromJson; accepted calendar repository; normative migrations",
+      "requiredChange": "Add override, working-hours and revision/expiry availability persistence in one authority with composite FKs, cancellation retention and additive backfill; local cache projection follows accepted schema version.",
+      "verification": "Restart between command commit/reply and provider result persistence; same receipt/ref/revision, one override/outbox event, no resurrection; migrate existing standalone bundle without losing reminders/events.",
+      "missingPrerequisite": "Applied predecessor schema and selected migrator/filename decision.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "Primary calendar.updateOccurrence strict request and expectedRevision policy specified at 25484-25523,25680-25692; no current adapter write command.",
+      "seam": "accepted commands.ts gateway; proposed recurrence-commands.ts; CalendarAdapter",
+      "requiredChange": "Authorize transport principal/current policy, validate patch/scope/destination, CAS/idempotency request hash; transactional receipt+outbox and pending external effect with read-back reconciliation.",
+      "verification": "Same key/payload returns same receipt; altered payload idempotency conflict; stale revision conflict; forged actor/workspace rejected; provider timeout never blind-resends split/cancel/move.",
+      "missingPrerequisite": "Accepted WP-04 gateway and WP-28 saga/reconciliation interface.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "GetAvailability input/output/errors are proposed at 26208-26212; store.events has no scoped query or range bound.",
+      "seam": "accepted calendar repository queries; proposed availability.ts and GetAvailability",
+      "requiredChange": "Current ACL per calendar, bounded expansion/query range, stable authorized cursor, privacy-minimal intervals with source revisions/expiry/unavailableSources; separate genuine empty from missing data.",
+      "verification": "Large range typed range_too_large; denied/expired sources filtered without title/count leakage; stable pagination/revision and exact clipped union; stale cache does not claim current free time.",
+      "missingPrerequisite": "Accepted common query cursor/policy and provider source completeness contract.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "Store.sync records cursor after one page (120-158); spec requires calendar.series_updated transactional outbox and provider watch/read-back (25379-25401).",
+      "seam": "CalendarStore.sync; accepted provider sync/watch and repository outbox; recurrence command event",
+      "requiredChange": "Replay/gap-safe revisioned occurrence/series updates with inbox dedup, policy/tombstone fence and projection watermark; late watches cannot resurrect cancellations or overwrite newer revision.",
+      "verification": "Duplicate/dropped/reordered deliveries, consumer crash after claim and full refresh; second device converges once, cancellation persists, unauthorized subscriber gets no title/event payload.",
+      "missingPrerequisite": "WP-27 watch/sync and WP-04 durable outbox/projection consumer receipts.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "occurrences.ts:59-60 gives every event write; CalendarStore has no authenticated actor. Spec expressly separates resource ACL and agent execution policy.",
+      "seam": "occurrence projection; accepted command/query Authorize seam and provider execution grant",
+      "requiredChange": "Derive read/write/action rights from current authenticated grants and provider role; validate source/destination/linked refs and revocation epoch for reads/writes/replay. Enforce server deny independent of UI/allow-all.",
+      "verification": "Owner/member/viewer/outsider and agent-viewer allow-all through UI/RPC/HTTP; forged actor/workspace rejected, revoked queued drag denied, busy-only actor gets no event title.",
+      "missingPrerequisite": "Accepted WP-03 resource policy/epoch and identity transport context.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "Spec requires authorized calendars/resource grants, but inspected account/event types have no sharing inheritance or expiry contract.",
+      "seam": "accepted calendar/resource policy and GetAvailability calendarRefs; common grants rather than new store",
+      "requiredChange": "Reuse explicit calendar/event grants and inheritance; distinguish event detail from busy-only sharing, source versus moved destination rights and expiring public links if exposed by common surface. Do not invent implicit grants via occurrence/mention.",
+      "verification": "Grant busy-only/detail separately, revoke while open, test moved destination and expiring common share link; no title leakage after revoke/expiry and no permission inheritance escalation.",
+      "missingPrerequisite": "Lead/predecessor accepted calendar grant/action/inheritance and shared-link exposure contract; requirement remains missing, not N/A.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "WP-28 depends on WP-06 and requires searchable event; WP-29 full completeness includes search (25458). No extractor is a direct import of inspected calendar seams.",
+      "seam": "accepted calendar.series_updated event -> WP-06 shared extractor/index projection",
+      "requiredChange": "Patch accepted event extractor for changed/removed occurrence dates and current canonical refs, upsert/delete with revision/tombstone/policy fences; no private title leakage into freebusy search/context.",
+      "verification": "Updated instance searchable after watermark; cancelled occurrence removed while master/siblings remain correct; revoke before index catch-up yields no stale title/snippet.",
+      "missingPrerequisite": "Accepted WP-28/WP-06 extractor and registry/watermark contract; exact extractor path/symbol must come from dependency receipt, not guesswork.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "WP-28 depends on WP-09 and requires event mentionability; WP-29 requires mentions and stable occurrence identity.",
+      "seam": "canonical event/occurrence ref + accepted WP-09 mention occurrence/backlink projection",
+      "requiredChange": "Use stable original-start identity when moved/cancelled, authorized current target resolution and source revision/backlinks; cancellation renders retained safe tombstone, not new event identity or implicit ACL.",
+      "verification": "Mention moved occurrence resolves same target/time; cancelled target safe fallback; duplicate sync yields one backlink; unauthorized/revoked target leaks no title and mention grants no access.",
+      "missingPrerequisite": "Accepted WP-09/WP-28 target resolver/backlink registration path and receipt.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "WP-29 completeness explicitly includes notifications; provider attendee list is absent in current CalendarEvent and calendar.series_updated has no inspected attention consumer.",
+      "seam": "accepted series/occurrence outbox -> common notification recipient policy/dedup; WP-28 provider send-update options",
+      "requiredChange": "Integrate occurrence/series change/cancel attention with current recipient authorization and reason/idempotency dedup; keep provider attendee updates separate from internal notifications and respect existing seen/done/mute/snooze.",
+      "verification": "One permitted notification after crash/replay, no private title to busy-only/revoked recipients, mute/snooze and seen/done persist; instance edit does not emit one notification per unaffected occurrence.",
+      "missingPrerequisite": "Accepted common attention consumer and predecessor attendee/send-update semantics; no unsupported N/A claim.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Rox2Event has causationId/correlationId/aggregateRevision (platform-contract.ts:131-140); WP-29 declares calendar.series_updated.",
+      "seam": "recurrence command common outbox event -> accepted activity projection",
+      "requiredChange": "Record principal, exact edit scope/target, cause/revision and receipt via shared activity stream with ACL-filtered payload; no raw titles/emails/tokens in operational logs.",
+      "verification": "Replay produces one authorized activity entry with command/event/revision link; viewer/outsider privacy and cancelled occurrence target fallback preserved.",
+      "missingPrerequisite": "Accepted activity consumer registration and event payload contract from integration owner.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "Rox2Context already carries workspace and permissionMode (143-156), but that is not authenticated actor policy; WP-29 spec requires common agent access.",
+      "seam": "accepted agent domain tool/context dispatcher -> calendar.updateOccurrence/GetAvailability",
+      "requiredChange": "Expose identical authorized domain operations and privacy-minimal availability/context with acting user/provenance/current revision. Agent allow-all never bypasses calendar ACL or provider execution grant.",
+      "verification": "Native agent owner edits one instance and observes receipt/readback; agent-viewer allow-all denied writes; busy-only agent context contains correct intervals without PRIVATE_WP-29 marker.",
+      "missingPrerequisite": "Accepted common domain tool registration and authenticated acting-user/provenance interface; exact dispatcher symbol not inspected.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Spec declares HTTP and native RPC operation; no direct MCP exposure implementation inspected. Full DoD requires identical checks/results rather than mock-only routing.",
+      "seam": "accepted calendar command/query registration and common domain/MCP dispatcher",
+      "requiredChange": "Bind accepted operations to existing API/native/MCP exposure mechanism where mounted, with same schema, principal, expectedRevision, idempotency and canonical receipt/error translation. Lead must identify real mounted dispatcher, not invent a second transport.",
+      "verification": "Exercise same authorized/denied/stale/unsupported occurrence and freebusy cases through each accepted exposed transport, asserting same canonical target/receipt and no hidden title data.",
+      "missingPrerequisite": "Accepted common dispatcher/mount contract and explicit MCP exposure decision/receipt; absence of implementation is not N/A.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Spec requires commandId/causationId/correlationId/aggregateRevision/policyEpoch/projectionWatermark/retry-DLQ counters (25432-25442); current journal contains cursor/time/conflicts only.",
+      "seam": "common command/provider reconciliation/outbox consumer instrumentation; SyncJournal projection",
+      "requiredChange": "Attach required identifiers and safe retry/DLQ/queue lag/policy-watermark observations to recurrence and availability flows, including source revision/expiry and unsupported/partial outcome; log no raw email/body/transcript/tokens.",
+      "verification": "Trace UI command to provider read-back and projection event; crash/retry shows counters and same receipt, failed sources visible, private-marker/secrets absent in logs/evidence.",
+      "missingPrerequisite": "Accepted telemetry contract and actual event/provider correlation paths.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Existing four occurrence tests do not cover scoped writes/availability. Spec mandates integration, unauthorized or dropped/duplicated event negative control and persistence-recovery (25403-25415).",
+      "seam": "wp-29.test.ts, calendar-recurrence-dst-availability.test.ts proposed; existing occurrences.test.ts",
+      "requiredChange": "Implement deterministic consumer-visible assertions for all eight acceptance criteria plus full integration gates. Keep independent seeded wrong-series and unauthorized/event-loss/duplicate controls and persistence/recovery with canonical IDs/receipt/watermark.",
+      "verification": "Relevant bun tests and real changed native/API/provider path on exact integrated revision; record seed 20260959, actors W1 A/B/C, PRIVATE_WP-29, sandbox refs, SQL key counts and failure history; independent holdout mutation must be caught.",
+      "missingPrerequisite": "Integrated implementation and isolated provider/UI harness. No tests run during this preflight as instructed.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "Implementation plan WP-29 is planned; test plan explicitly future/no PASS and specifies evidence acceptance boundaries.",
+      "seam": "21-implementation-plan.md#wp-29 and 22-test-plan.md calendar/completeness sections",
+      "requiredChange": "Document implemented scope/move/DST/busy/partial-source behavior, provider limits, privacy, migrator/authority, recovery and revision-bound verification; preserve not-verified state until real receipts exist.",
+      "verification": "Cross-check docs against accepted DTO/error/migration/capability and actual scenario traces; show only exercised outcomes, no fixture-to-live substitution.",
+      "missingPrerequisite": "Accepted final semantics and runtime verification evidence.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "Adapter has typed provider-unavailable error; spec lists conflict/idempotency/unknown effect/revoke fence and test plan:132 lists provider failures, invalid interval and offline move.",
+      "seam": "CalendarProviderUnavailableError; recurrence command/query result; predecessor reconciliation/UI states",
+      "requiredChange": "Render and preserve typed unsupported, conflict, reauth, retryable rate-limit/unavailable, ambiguous external effect, denied/quarantine and pending fence. No false applied/free claim or blind retry after unknown effect.",
+      "verification": "Inject etag412, timeout after remote success, 429, grant expiry/revoke, invalid interval and failed calendar; observe UI rollback/pending/typed error, correct persisted receipt and recovery readback.",
+      "missingPrerequisite": "Accepted common error/receipt mapping and provider fault-injection sandbox path.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "CalendarUiStatus only none/pending/connected/conflict/timezone; spec explicitly requires loading and receipt-derived applied_verified.",
+      "seam": "accepted CalendarWorkspace/EventEditor + proposed CalendarPreferences; availability query state",
+      "requiredChange": "Show bounded expansion/provider refresh loading and distinguish stale cached availability from verified current data; do not flash empty/free while loading or mark optimistic drag verified.",
+      "verification": "Delay provider/query and reconnect; capture loading/stale/pending transitions before verified result with no empty/free flicker and preserved original occurrence target.",
+      "missingPrerequisite": "Accepted UI query/receipt state machine and actual surface.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "Store.events filters deleted but does not describe source availability. UnavailableCalendarAdapter throws rather than supplying healthy empty list.",
+      "seam": "proposed GetAvailability result and CalendarPreferences/accepted CalendarWorkspace state rendering",
+      "requiredChange": "Only display genuinely empty/free when every requested authorized source is complete and fresh under working-hours policy; distinct denied/unconfigured/unavailable/partial states with no private counts.",
+      "verification": "Separate empty healthy two-calendar range from all-failed/one-failed/no-selection/denied/expired-source scenarios; exact free intervals appear only with completeness evidence.",
+      "missingPrerequisite": "Accepted source completeness/freshness result and permission-safe UI contract.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "CalendarBundle has no durable command queue; localDirty flag is not receipt/replay and spec requires offline_queued plus persistence recovery.",
+      "seam": "accepted WP-05 common projection/outbox/replay; CalendarStore projection and occurrence command/UI",
+      "requiredChange": "Queue occurrence edits durably with original key/base revision/idempotency and honest unverified state; replay once with current policy/provider reconciliation, reject/quarantine revoked/conflicting writes and preserve local draft without new shared writer.",
+      "verification": "Offline drag/edit/preferences then restart/reconnect; one provider effect/receipt, same canonical ID; revoke during offline interval rejects replay; remote concurrent edit yields explicit conflict and no series corruption.",
+      "missingPrerequisite": "Common projection/replay acceptance receipt not supplied by explicit WP-29 dependency alone.",
+      "state": "MISSING_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/core/src/calendar/types.ts","symbol":"CalendarAccount, CalendarEvent, CapabilityGap, CalendarBundle, calendarEventIdentity","lineStart":11,"lineEnd":114,"sha256":"3654f8c7ed213947f21368633981c89553e46385021d27e568ed5b8a6ee00e9e"},
+    {"path":"packages/core/src/calendar/adapters.ts","symbol":"CalendarAdapter, FixtureCalendarAdapter, UnavailableCalendarAdapter, createProductionAdapter, isCalendarConnectorWired","lineStart":4,"lineEnd":139,"sha256":"c762334baa96ea8685eeae5ce87179fb15ff1f24018b2dc1ffb05e48eb729997"},
+    {"path":"packages/core/src/calendar/store.ts","symbol":"CalendarStore.snapshot/fromJson/events/markLocalDirty/sync","lineStart":31,"lineEnd":158,"sha256":"d6cb1872ea20c9068e9c7765c3c32dae8c3498497856ef7d46f5ad6692872038"},
+    {"path":"packages/core/src/calendar/occurrences.ts","symbol":"TemporalOccurrence, civilDateInZone, occurrenceFromCalendarEvent, occurrenceKey, dedupeOccurrences, occurrencesInRange","lineStart":21,"lineEnd":102,"sha256":"2729411c6d3ffc7946ecda00ebdba3517ecd03679317243d5544ec88e498a1c7"},
+    {"path":"packages/core/src/calendar/__tests__/occurrences.test.ts","symbol":"event helper and describe('TemporalOccurrence')","lineStart":12,"lineEnd":66,"sha256":"d15bca4b636bfa7b345b7f71466bf2e91824b4fd730d1effe4d226e7bbd7fa68"},
+    {"path":"packages/core/src/calendar/capabilities.ts","symbol":"CALENDAR_CAPABILITIES, capabilityFor, appleRemindersAvailable","lineStart":3,"lineEnd":52,"sha256":"a7951b3aeec51c8a8dcc2b724e9313a26c01d7808b1bd7396c7f61c2939dbb94"},
+    {"path":"packages/core/src/calendar/merge.ts","symbol":"startOfLocalDay, eventOverlapsLocalDay, mergeTodayUpcoming, timezoneWarnings","lineStart":3,"lineEnd":49,"sha256":"1401f058fe868919d614a65d4a2baf0814932125230632855a8b8457006e4e52"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2Status, Rox2Event, Rox2Context, Rox2CanonicalResult","lineStart":107,"lineEnd":166,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"formatRox2EntityId, Rox2EntityRef, Rox2ExternalBinding","lineStart":218,"lineEnd":246,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-29 dependencies/newFiles/acceptance/fullFeatureDoD/operation input","lineStart":25326,"lineEnd":25523,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-29 migrations and domainApiContracts/domainConstraints","lineStart":25891,"lineEnd":26234,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0","note":"Inspected selected nested ranges: 25891-26048 and 26085-26234; not a claim to have inspected every intervening line."},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"Foundation/shared ownership notes and WP-01..WP-05 contracts","lineStart":3,"lineEnd":90,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-27/WP-28/WP-29 dependency and acceptance sections","lineStart":534,"lineEnd":599,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"CALENDAR-01 actual surface/provider acceptance and negative controls","lineStart":115,"lineEnd":136,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Feature completeness, invariant suites and evidence/receipt decision","lineStart":197,"lineEnd":247,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": "Lead accepts this inspect-only report, commits wave0 and obtains WP-28 accepted typed interface, migration and scenario receipts. Then compare source hashes/re-read changed seams; settle one|instance scope mapping, CalendarPatch/move DTO, canonical result triad, DST policy and migrator filename; assign one calendar shared-file integration owner. First WP-29 implementation contribution is recurrence.ts plus strict occurrence/working-hours/availability contract extension through that owner, followed in true dependency order by recurrence persistence/commands and availability, predecessor UI integration, full tests/runtime receipts. Do not start implementation against this unaccepted working-tree snapshot.",
+  "risks": [
+    "featureComplete remains false: every acceptance/full DoD row is missing or unverified; no runtime proof, build, product test or feature implementation occurred.",
+    "Current static capability booleans can be mistaken for live recurrence/split/freebusy support; production factory is actually unavailable.",
+    "RRULE as recurrenceInstance collapses all projected instances; moved time cannot serve as original occurrence identity.",
+    "markLocalDirty scopes by account+remote ID only, so colliding remote IDs in two calendars can target the wrong row.",
+    "sync Object.assign and first-arrival dedupe lack override/tombstone revision fences; full refresh or delayed watch could resurrect cancelled instances or stale data.",
+    "Every projected calendar event is editable/write today; readonly UI alone would not satisfy server ACL/agent execution-policy boundary.",
+    "Fixed 24-hour host-local day arithmetic in the direct merge import is unsafe to reuse for zoned working-hours and all-day DST boundaries.",
+    "Unavailable source must never be converted to empty fully-free availability; event-title DTO reuse would leak busy-only private data.",
+    "Shared contracts/commands/repository are repeated normative new paths across WP-27/28/29; independent whole-file creations would overwrite predecessor authority.",
+    "Normative operation and domain API differ in scope names, field names, revisions and result shapes; silently selecting one would weaken contract acceptance.",
+    "Migration identifiers overlap in purpose and one is explicitly proposed; migrator acceptance must settle naming/DDL once without duplicate tables or a second calendar store.",
+    "Working-hours/availability is explicitly target extension, not proven Macro parity; bounded RRULE/zone/privacy semantics require direct tests and documented policy, not upstream code copying.",
+    "Later wave0/root integration can stale this snapshot despite matching hashes during inspection; this artifact is not a revision-bound feature receipt.",
+    "Report verification is artifact-only. Packet verifier/product scenario acceptance is retained for the lead; this worker does not claim acceptance from a launch receipt or JSON structure."
+  ]
+}

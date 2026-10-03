@@ -221,12 +221,13 @@ export class JmapClient {
     return (await this.mailboxes()).find((m) => m.role === role) ?? null
   }
 
-  async queryEmails(opts: { mailboxId?: string; text?: string; limit?: number; position?: number; notInMailboxIds?: string[] } = {}): Promise<{ ids: string[]; total: number; emails: JmapEmailSummary[]; queryState: string }> {
+  async queryEmails(opts: { mailboxId?: string; text?: string; limit?: number; position?: number; notInMailboxIds?: string[]; unseenOnly?: boolean } = {}): Promise<{ ids: string[]; total: number; emails: JmapEmailSummary[]; queryState: string }> {
     const accountId = await this.accountId()
     const filter: Record<string, unknown> = {}
     if (opts.mailboxId) filter.inMailbox = opts.mailboxId
     if (opts.text?.trim()) filter.text = opts.text.trim()
     if (opts.notInMailboxIds?.length) filter.inMailboxOtherThan = opts.notInMailboxIds
+    if (opts.unseenOnly) filter.notKeyword = '$seen'
     const responses = await this.call([
       ['Email/query', { accountId, filter, sort: [{ property: 'receivedAt', isAscending: false }], position: opts.position ?? 0, limit: opts.limit ?? 50, calculateTotal: true }, 'q'],
       ['Email/get', { accountId, '#ids': { resultOf: 'q', name: 'Email/query', path: '/ids' }, properties: [...SUMMARY_PROPERTIES] }, 'g'],
@@ -244,6 +245,19 @@ export class JmapClient {
       fetchTextBodyValues: true, fetchHTMLBodyValues: true, maxBodyValueBytes: 1_000_000,
     }, 'e']])
     return (res.list?.[0] as JmapEmailFull | undefined) ?? null
+  }
+  async getThread(threadId: string): Promise<JmapEmailFull[]> {
+    const accountId = await this.accountId()
+    const [[, threadResult]] = await this.call([['Thread/get', { accountId, ids: [threadId], properties: ['id', 'emailIds'] }, 't']])
+    const emailIds = (threadResult.list?.[0]?.emailIds ?? []) as string[]
+    if (emailIds.length === 0) return []
+    const [[, result]] = await this.call([['Email/get', {
+      accountId, ids: emailIds, properties: [...FULL_PROPERTIES],
+      fetchTextBodyValues: true, fetchHTMLBodyValues: true, maxBodyValueBytes: 1_000_000,
+    }, 'e']])
+    const byId = new Map<string, JmapEmailFull>((result.list ?? []).map((email: JmapEmailFull) => [email.id, email]))
+    return emailIds.map((id) => byId.get(id)).filter((email): email is JmapEmailFull => !!email)
+      .sort((a, b) => (Date.parse(a.sentAt ?? a.receivedAt) || 0) - (Date.parse(b.sentAt ?? b.receivedAt) || 0))
   }
 
   async updateEmails(patches: Record<string, Record<string, unknown>>): Promise<{ updated: string[]; notUpdated: Record<string, unknown> }> {
@@ -448,17 +462,53 @@ export function describeSetError(err: unknown): string {
   return [e.type, e.description].filter(Boolean).join(': ') || 'unknown error'
 }
 
-/** Parse "Name <a@b>" / "a@b, c@d" into JMAP addresses. */
+/** Parse a practical address list while preserving quoted display-name commas and rejecting partial sends. */
 export function parseAddressList(raw: string): JmapAddress[] {
-  return raw
-    .split(/[,;\n]/)
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .map((part) => {
-      const m = part.match(/^(.*?)\s*<([^>]+)>$/)
-      const email = (m?.[2] ?? part).trim()
-      const name = m ? (m[1] ?? '').replace(/^"|"$/g, '').trim() || null : null
-      return { name, email }
-    })
-    .filter((a) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.email))
+  const parts: string[] = []
+  let start = 0
+  let quoted = false
+  let escaped = false
+  let angle = false
+  for (let i = 0; i < raw.length; i++) {
+    const char = raw[i]
+    if (escaped) {
+      escaped = false
+      continue
+    }
+    if (quoted && char === '\\') {
+      escaped = true
+      continue
+    }
+    if (char === '"') {
+      quoted = !quoted
+      continue
+    }
+    if (!quoted && char === '<') {
+      if (angle) throw new JmapError('Invalid email address list', 'protocol')
+      angle = true
+      continue
+    }
+    if (!quoted && char === '>') {
+      if (!angle) throw new JmapError('Invalid email address list', 'protocol')
+      angle = false
+      continue
+    }
+    if (!quoted && !angle && (char === ',' || char === ';' || char === '\n')) {
+      const part = raw.slice(start, i).trim()
+      if (part) parts.push(part)
+      start = i + 1
+    }
+  }
+  if (quoted || angle || escaped) throw new JmapError('Invalid email address list', 'protocol')
+  const last = raw.slice(start).trim()
+  if (last) parts.push(last)
+  const addresses = parts.map((part) => {
+    const match = part.match(/^(.*?)\s*<([^>]+)>$/)
+    const email = (match?.[2] ?? part).trim()
+    const name = match ? (match[1] ?? '').replace(/^"|"$/g, '').trim() || null : null
+    return { name, email }
+  })
+  const invalid = addresses.find((address) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address.email))
+  if (invalid) throw new JmapError(`Invalid email address: ${invalid.email}`, 'protocol')
+  return addresses
 }

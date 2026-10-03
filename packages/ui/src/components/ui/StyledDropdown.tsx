@@ -60,18 +60,29 @@ const DropdownMenuTrigger = React.forwardRef<
   React.ComponentRef<typeof DropdownMenuPrimitive.Trigger>,
   DropdownMenuTriggerProps
 >(({ className, autoMirrorHoverToOpen = true, asChild, children, ...props }, ref) => {
-  const triggerClassName = autoMirrorHoverToOpen ? mirrorHoverToOpenStateClasses(className) : className
+  const triggerClassName = cn(
+    'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    className,
+  )
+  const finalTriggerClassName = autoMirrorHoverToOpen
+    ? mirrorHoverToOpenStateClasses(triggerClassName)
+    : triggerClassName
 
-  if (asChild && autoMirrorHoverToOpen && React.isValidElement(children)) {
-    const childClassName = (children.props as { className?: string }).className
-    const mergedChildClassName = mirrorHoverToOpenStateClasses(cn(childClassName, className))
+  if (asChild && React.isValidElement(children)) {
+    const childProps = children.props
+    const childClassName =
+      childProps &&
+      typeof childProps === 'object' &&
+      'className' in childProps &&
+      typeof childProps.className === 'string'
+        ? childProps.className
+        : undefined
+    const mergedChildClassName = autoMirrorHoverToOpen
+      ? mirrorHoverToOpenStateClasses(cn(childClassName, triggerClassName))
+      : cn(childClassName, triggerClassName)
 
     return (
-      <DropdownMenuPrimitive.Trigger
-        ref={ref}
-        asChild
-        {...props}
-      >
+      <DropdownMenuPrimitive.Trigger ref={ref} asChild {...props}>
         {React.cloneElement(children as React.ReactElement<{ className?: string }>, {
           className: mergedChildClassName,
         })}
@@ -83,7 +94,7 @@ const DropdownMenuTrigger = React.forwardRef<
     <DropdownMenuPrimitive.Trigger
       ref={ref}
       asChild={asChild}
-      className={triggerClassName}
+      className={finalTriggerClassName}
       {...props}
     >
       {children}
@@ -150,8 +161,9 @@ export const StyledDropdownMenuItem = React.forwardRef<
       'relative flex cursor-default items-center gap-2 px-2 py-1.5 text-sm outline-hidden select-none',
       '[&_svg]:pointer-events-none [&_svg]:shrink-0',
       'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
-      // styled additions
-      'pr-4 rounded-[4px] hover:bg-foreground/[0.03] focus:bg-foreground/[0.03]',
+      // Keep pointer hover understated; keyboard focus gets a visible ring.
+      'pr-4 rounded-[4px] hover:bg-foreground/[0.03] focus:bg-foreground/[0.1]',
+      'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
       '[&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0',
       variant === 'destructive' && 'text-destructive focus:text-destructive hover:text-destructive [&_svg]:!text-destructive',
       className,
@@ -187,10 +199,10 @@ export const StyledDropdownMenuSubTrigger = React.forwardRef<
       'relative flex cursor-default items-center gap-2 px-2 py-1.5 text-sm outline-hidden select-none',
       '[&_svg]:pointer-events-none [&_svg]:shrink-0',
       'pr-1.5 rounded-[4px] hover:bg-foreground/10 focus:bg-foreground/10 data-[state=open]:bg-foreground/10',
+      'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
       '[&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0',
       className,
     )}
-    {...props}
   >
     {children}
     <ChevronRightIcon className="ml-auto size-4" />

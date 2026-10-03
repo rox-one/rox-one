@@ -422,7 +422,7 @@ export function getSystemPrompt(
  * or the monorepo CLAUDE.md context.
  */
 /** Block tags whose closing form must not appear inside injected body content. */
-const PROJECT_BLOCK_TAGS = ['project_context', 'project_memory', 'project_assets'] as const;
+const PROJECT_BLOCK_TAGS = ['project_context', 'project_memory', 'project_assets', 'project_roadmap'] as const;
 
 /**
  * Neutralize a literal closing tag inside injected body content so user- or
@@ -492,6 +492,12 @@ export function formatProjectContextForPrompt(ctx: ProjectPromptContext): string
     lines.push('</project_assets>');
   }
 
+  if (ctx.roadmapContent?.trim()) {
+    lines.push('<project_roadmap>');
+    lines.push(sanitizeProjectBodyText(ctx.roadmapContent.trim()));
+    lines.push('</project_roadmap>');
+  }
+
   lines.push(`<project_memory_path>${sanitizeProjectBodyText(ctx.memoryPath)}</project_memory_path>`);
   if (ctx.memoryContent?.trim()) {
     lines.push('<project_memory>');
@@ -510,6 +516,10 @@ export function formatProjectContextForPrompt(ctx: ProjectPromptContext): string
   lines.push(`established context. When you learn something durable (a decision, gotcha, convention, or`);
   lines.push(`project-specific user preference), record it in MEMORY.md at <project_memory_path> via Write/Edit —`);
   lines.push(`concise, newest/most-important first, kept under ~5000 tokens.`);
+  if (ctx.roadmapContent?.trim()) {
+    lines.push(`<project_roadmap> is the user's agreed spec for this project (goal, definition of done, milestones,`);
+    lines.push(`requirements with acceptance criteria). Work towards it and check results against its acceptance criteria.`);
+  }
   lines.push(`</project_context>`);
   lines.push('');
   return lines.join('\n');

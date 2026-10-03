@@ -1,0 +1,511 @@
+{
+  "task_id": "WP-04-preflight",
+  "attempt_id": "6e7961bb9559eb8eb4cffad18218bc16",
+  "packet_hash": "d04ca2f44d9f23ae765d16e0dfffaa78dbd763d57854ffe34332cb6b61766455",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-04",
+  "featureComplete": false,
+  "mode": "read-only preflight; no feature implementation",
+  "workTier": "bounded-workflow inside the lead-owned dispatched DAG",
+  "dependencies": ["WP-02", "WP-03"],
+  "dependencyReceiptsRequired": [
+    {"producer": "WP-02", "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"]},
+    {"producer": "WP-03", "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"]}
+  ],
+  "inspectionBoundary": {
+    "scope": "WP-04 affected files, their direct import/export seams, WP-04 normative record and its named documentation; adjacent package records inspected only to establish dependency/gate relationships",
+    "mutation": "Only this report written. No product source, tests, manifest, progress, Git or shared files changed.",
+    "runtimeVerification": "Not performed: builds, tests, native UI and network operations prohibited by packet. All verification entries below are future procedures, not observed PASS results.",
+    "index": "codegraph reported no project index; no indexing attempted",
+    "searchRecovery": "find failed with judge-provider 402; known-symbol grep and bounded reads supplied evidence instead",
+    "revisionBinding": "input_revision is the dispatch revision, not a claim that inspected working-tree bytes equal committed HEAD. Root-owned uncommitted wave0 is preserved.",
+    "freshness": "Whole-file digests below were observed after bounded source reads. They identify live working-tree files, not the historical specification baseline. No concurrent-edit atomic snapshot is claimed. Rehash and re-read changed ranges after the lead wave0 commit or dependency integration; invalidate affected evidence on digest mismatch.",
+    "specManifest": "Observed work-packages.json SHA-256 equals packet manifest 79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0.",
+    "missingPathsObserved": ["apps/workspace-service", "packages/shared/src/workspace-domain/commands/contracts.ts", "tests/macro-integration/wp-04.test.ts"],
+    "missingPathsMeaning": "glob returned Path not found for these paths during inspection; this is a dated observation, not proof they will remain absent during root integration."
+  },
+  "foundationGates": [
+    {
+      "id": "lead-wave0-and-receipts",
+      "explicitDagEdge": false,
+      "gate": "Do not start implementation until the lead's wave0 commit and accepted WP-02/WP-03 dependency receipts.",
+      "evidence": "Dispatch instruction; WP-04 inputs at work-packages.json:2729-2745.",
+      "missingPrerequisite": "Lead-accepted committed integration input plus both dependency receipt sets; no acceptance inferred from source declarations.",
+      "resolution": "Lead publishes revision and receipts; worker rebinds inspected hashes before implementing normative new files."
+    },
+    {
+      "id": "transitive-private-project-auth-runtime",
+      "explicitDagEdge": false,
+      "gate": "WP-01's authenticated actor, private Project bootstrap, workspace service and persistence must actually exist through WP-02/WP-03, not be recreated inside commands.",
+      "evidence": "21-implementation-plan.md:11-25,29,48; RequestContext:7-11 has no principal; HandlerDeps:62-71 has only pending approval store; apps/workspace-service absent in inspection.",
+      "missingPrerequisite": "Accepted actor/principal injection contract, service composition root, Project table/typed repository transaction port and selected migrator/DB connection.",
+      "resolution": "Reuse transitive WP-01 interfaces via accepted dependencies. A local profile/email, clientId or window workspace is not an authenticated shared actor. Do not invent another authority/store."
+    },
+    {
+      "id": "canonical-registry-and-policy-transaction",
+      "explicitDagEdge": false,
+      "gate": "Project CAS, policy epoch and entity registry revision must participate in one authoritative transaction/fence.",
+      "evidence": "WP-04 migration:3139-3184 requires scoped entity FK, atomic mutation/receipt/event and policy/tombstone fences; 21-implementation-plan.md:33,52 defines entity registry and monotonic revoke epoch.",
+      "missingPrerequisite": "WP-02 Project alias/canonical identity backfill and WP-03 authorize/revoke transaction/fence ports compatible with the same DB transaction.",
+      "resolution": "Request dependency-owned transaction-compatible ports, lock/check policy epoch with mutation, update one aggregate revision; do not dual-write independent entity/project authorities."
+    },
+    {
+      "id": "wire-contract-versus-canonical-triad",
+      "explicitDagEdge": false,
+      "gate": "Published response says Rox2CanonicalResult but JSON Schema uses a string status and additionalProperties:false; existing canonical result requires executionMode/lifecycle/verification.",
+      "evidence": "work-packages.json:2922-2987 versus platform-contract.ts:99-110,158-166; receipt currently lacks commandId/requestHash/receiptId.",
+      "missingPrerequisite": "Lead-accepted typed mapping between the strict wire DTO and preserved Rox2Status triad, with full immutable persisted receipt fields.",
+      "resolution": "Define wire DTO in normative commands/contracts.ts and an explicit canonical-result adapter; never label a pre-operation native action marker as durable verification. No schema widening or triad replacement without lead-owned contract decision."
+    },
+    {
+      "id": "legacy-single-writer-bypass",
+      "explicitDagEdge": false,
+      "gate": "Shared Project writer guard is needed during WP-04 even though generalized authority/fence package WP-51 depends on WP-03/WP-04/WP-05.",
+      "evidence": "projects.ts:94-105 ignores context and writes local files; storage.ts:131-146,306-331 accepts direct updates; 21-implementation-plan.md:1022-1036 names direct legacy Project writes and warns adding a gateway leaves bypass.",
+      "missingPrerequisite": "Authoritative shared-versus-standalone writer-mode resolver supplied by lead/dependency integration and inventory/migration of Project write callers by owning integrator.",
+      "resolution": "Fence the Project update path now, keep explicit standalone file writer, and reject shared IDs at local write boundaries. Do not add a WP-51 -> WP-04 edge and create a cycle; request minimal Project guard interface and coordinate later generalized fence ownership."
+    },
+    {
+      "id": "durable-projection-offline-completeness",
+      "explicitDagEdge": false,
+      "gate": "WP-04 UI requires offline_queued and full checklist requires search, notifications, agent access and durable reconnect, while WP-05/06/07 consume WP-04 downstream.",
+      "evidence": "work-packages.json:2646-2660,2703-2725; 21-implementation-plan.md:86-106,125-127; 22-test-plan.md:197-222,247 disallows missing-as-N/A and deferring slice permissions/search/agent tests.",
+      "missingPrerequisite": "Accepted consumer cursor/inbox/projection ports and actual existing-surface integration; for full feature completion, downstream projection/offline/attention receipts or an explicitly accepted contract resolution.",
+      "resolution": "Deliver transactional command/outbox producer without claiming complete UI/offline/search/notification behavior. Retain every required checklist item as missing until exercised. Do not turn downstream consumers into cyclic prerequisite implementation edges or silently waive requirements."
+    },
+    {
+      "id": "cold-runtime-and-live-evidence",
+      "explicitDagEdge": false,
+      "gate": "WP-04 needs a real authoritative persistent service and native/HTTP scenarios even though full self-host bootstrap WP-52 depends on WP-04/WP-51.",
+      "evidence": "work-packages.json:2728,3397-3428; 22-test-plan.md:3,7-9,243-247; 21-implementation-plan.md:1040-1053.",
+      "missingPrerequisite": "Minimal WP-01 test/runtime service, applied migrations and isolated DB/fault/restart harness with revision/image/schema evidence; full deployment receipt later.",
+      "resolution": "Use minimal accepted runtime for actual WP-04 scenarios, not a fixture-only substitute. Do not wait for all of WP-52 to implement commands or invent a reverse DAG edge."
+    },
+    {
+      "id": "preserved-native-patch-capabilities",
+      "explicitDagEdge": false,
+      "gate": "Existing UPDATE accepts description, details, workingDirectory, theme/color/icon, archive and Kanban edits; normative primary operation schema allows only project and optional name.",
+      "evidence": "projects.ts:98 and ProjectConfig:35-57; work-packages.json:2757-2772 has additionalProperties:false; storage.ts:303-331 preserves id/slug/createdAt and icon clearing.",
+      "missingPrerequisite": "Lead-owned caller migration/preservation contract for existing non-name Project actions in shared versus standalone modes.",
+      "resolution": "Implement exact published project.update payload; preserve standalone capabilities, do not smuggle extra fields through strict schema or leave unsupported shared fields writing files. Request explicit authorized contracts for remaining shared patch actions before claiming native parity."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/commands/contracts.ts",
+    "apps/workspace-service/src/modules/commands/commands.ts",
+    "apps/workspace-service/src/modules/commands/repository.ts",
+    "tests/macro-integration/wp-04.test.ts",
+    "apps/workspace-service/migrations/04-domain-contract.sql"
+  ],
+  "ownedNewFilesMeaning": "Normative WP-04 proposed implementation contributions only, not authorization to create them in this preflight. commands/contracts.ts and commands service paths are also named by downstream WP-05: lead retains shared ownership. Migration path is a proposed identifier; selected migrator supplies actual filename, never a fabricated timestamp.",
+  "proposedImplementation": [
+    {
+      "path": "packages/shared/src/workspace-domain/commands/contracts.ts",
+      "change": "Define strict project.update payload {project:Rox2EntityRef,name?:string} and RoxCommand v2 envelope with required idempotencyKey/expectedRevision/workspaceId, schemaVersion and correlation metadata; reject unknown payload/body actor fields and workspace/entity-kind mismatches. Define durable receipt/wire result and typed injected command/repository/policy ports using existing Rox2EntityRef/Rox2Status. No service I/O in core; no second registry."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/commands/commands.ts",
+      "change": "Implement transport-independent project.update against injected authenticated actor. Validate and authorize before exposing receipts/results. Compute immutable canonical semantic request hash including operation/workspace/project/expectedRevision/name; transport retry metadata must not change semantic hash. In one transaction serialize (workspace,actor,key), replay matching committed receipt BEFORE fresh CAS, reject hash mismatch, check current resource policy/revoke fence, apply required expectedRevision CAS, persist resulting Project/registry revision, entity.updated and project.updated events, outbox rows and final receipt. Return only after durable commit; duplicate concurrent retries must converge to the same committed result."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/commands/repository.ts",
+      "change": "Implement transaction port using accepted dependency Project/entity/policy repositories, not another Project store. Store immutable receipt response/revision/timestamp/event IDs; unique actor-scoped idempotency tuple; atomic CAS+events+receipt+outbox. Lease outbox deliveries durably with expiry/retry/DLQ accounting; do not mark claimed as processed. consumer_inbox UNIQUE(consumer_id,event_id) and actual projection effect/watermark commit together; fence stale aggregate revisions, policy epochs and tombstones. Resume outstanding leases after crash; cursor is persisted and authorization-scoped."
+    },
+    {
+      "path": "apps/workspace-service/migrations/04-domain-contract.sql",
+      "change": "Add command_receipt/domain_event/outbox/consumer_inbox, typed receipt/job keys, workspace UUIDs, scoped entity FKs, schema_version>0, revision>=0, timestamps, unique (workspace_id,actor_principal_id,idempotency_key), immutable request_hash guard, unique (consumer_id,event_id), lease/processed separation and pending/cursor indexes. Reuse dependency alias table/unique keys and Project/entity revision, not duplicate alias/project tables. Backfill accepted canonical identity/provenance; quarantine ambiguity. Before cutover rollback uses verified snapshot/writer route; after accepted writes forward repair or verified reverse replay, never delete new writes."
+    },
+    {
+      "path": "tests/macro-integration/wp-04.test.ts",
+      "change": "Real service/DB scenarios with seed 20260934, W1, A owner/B member/C outsider and PRIVATE_WP-04: process kill after commit before reply and exact retry receipt/revision/event identity; stale revision HTTP 409; altered payload same key rejection; concurrent duplicate key and actor/workspace key isolation; duplicate/reordered event delivery and consumer crash after effect before ACK; actor/workspace/ref forgery and revoke/allow-all denial; rollback/no premature ACK. ACK-before-commit seeded control must specifically fail data-survival oracle, with independent second holdout control. UI/native/HTTP/API readback and projection receipts remain distinct from fixture preparation."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2Receipt / Rox2CanonicalResult / Rox2Event / Rox2EntityRef",
+      "change": "Extend durable receipt typing for commandId/requestHash/receiptId/observedRevision/verifiedAt and revisioned event metadata including workspace, schema version, policyEpoch and projection watermark as accepted by the shared contract owner. Preserve existing triad and entity ID formatting/ref rather than another status/entity model. Adapt strict wire DTO through shared commands contract; verified success only from persisted command evidence, not nativeLive marker.",
+      "reason": "Current receipt lacks durable identity/hash, events have optional lineage but no workspace/policy/cursor, while the published command requires all. Core stays I/O-free."
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "symbol": "RequestContext / RpcHandlerOptions",
+      "change": "Consume accepted WP-01/WP-03 server-derived authenticated principal and writer-authority context for shared commands. Require that context on domain.project.update; client/window workspace is only routing scope, never identity. Do not manufacture actor fields from request body or local profile. Use dependency-owned additions rather than concurrent alternate fields.",
+      "reason": "Observed RequestContext only contains clientId/workspaceId/webContentsId; neither authentication nor resource grants are established by these fields."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/command-gateway.ts",
+      "symbol": "registerCommandGatewayHandlers / HANDLED_CHANNELS / authorizeWorkspace / requireStore",
+      "change": "Register domain.project.update via injected shared-domain command port, strict envelope parser and transport actor; call same implementation as HTTP. Keep pending approval list/approve/deny behavior and requireStore for its existing execution-policy purpose. Do not persist domain receipts in PendingCommandsStore or use hardcoded decidedBy='owner' as shared command actor.",
+      "reason": "Current gateway is phase-0 approvals over pending.json, not transactional Project commands. Existing workspace guard alone is insufficient for ACL/revision/idempotency."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/projects.ts",
+      "symbol": "registerProjectsHandlers UPDATE / GET / GET_ONE / broadcastChanged",
+      "change": "Route shared Project updates through authenticated domain.project.update with stable canonical ref, caller's observed revision and retained idempotency key; retain explicit standalone updateProject branch. Shared GET/GET_ONE read authorized canonical DTO/projection, not file authority. Replace shared broadcastChanged's full workspace file-list push with authorized committed revision/event invalidation and replay-capable cursor; only publish after outbox commit. Standalone list/broadcast behavior remains explicit.",
+      "reason": "UPDATE currently discards context and writes files, GET/GET_ONE read files, and broadcastChanged broadcasts all loaded projects to workspace audience with no resource filtering/cursor. New service alone leaves bypass and leakage."
+    },
+    {
+      "path": "packages/shared/src/projects/storage.ts",
+      "symbol": "updateProject / saveProjectConfig / loadProjectConfig / createProject",
+      "change": "Use lead-owned authority resolver to reject shared Project mutation through standalone file helpers, including saveProjectConfig bypass; preserve original standalone behavior, portable paths, stable id/slug/createdAt and icon clearing. Treat shared local files as projection/import assets using accepted canonical alias mapping, never ACK or increment shared revision from Date.now. Shared projection writes must not masquerade as user writes.",
+      "reason": "Atomic config-file rename is not atomic with DB receipt/events; direct writes bypass shared ACL/CAS. Legacy proj_<8 chars> and path basename cannot be assumed canonical shared UUID identity."
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps.commandGateway / HandlerDeps",
+      "change": "Expose the accepted typed workspace-domain command client/port from normative commands/contracts.ts, composed only by host/service root; keep commandGateway as existing PendingCommandsStore approvals. Inject authority/policy dependency ports from WP-01/WP-03 rather than instantiate service/database inside RPC handlers.",
+      "reason": "Current dependency bag only wires PendingCommandsStore and has no domain transaction or Project command port. Exact field naming follows accepted lead-owned interface."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.projects / RPC_CHANNELS.commandGateway",
+      "change": "Add accepted native wire channel domain.project.update to the existing registry and migrate shared native callers to its typed envelope/result. Keep existing projects:update only as explicit standalone operation, not a writable shared compatibility alias. No second RPC registry.",
+      "reason": "Normative native channel differs from current projects:update; command:list/approve/deny are execution approvals."
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "symbol": "REMOTE_ELIGIBLE_CHANNELS / isRemoteEligible",
+      "change": "Classify domain.project.update as workspace-authority routed using existing exhaustive channel classification; preserve local-only standalone authority and ensure proxy does not trust body workspace/actor. Coordinate with channel registry owner.",
+      "reason": "Current projects UPDATE/CHANGED are remote eligible; new channel needs the same established routing mechanism plus authenticated shared checks."
+    },
+    {
+      "path": "packages/shared/src/protocol/types.ts",
+      "symbol": "ErrorCode / KNOWN_ERROR_CODES / CodedError",
+      "change": "Register WP-04 command error codes UNAUTHENTICATED, FORBIDDEN, WORKSPACE_MISMATCH, INVALID_PAYLOAD, REVISION_CONFLICT, IDEMPOTENCY_CONFLICT, PROVIDER_UNAVAILABLE, UNKNOWN_EXTERNAL_EFFECT, SCHEMA_VERSION_UNSUPPORTED, REVOKE_FENCE_PENDING in both typed union and wire validation set as accepted by transport owner. Shared HTTP error adapter maps REVISION_CONFLICT to 409; RPC preserves typed code. Branch by code, not cross-wire instanceof.",
+      "reason": "Current ErrorCode and validator have none of the command-domain errors; generic HANDLER_ERROR would destroy conflict/permission UI semantics."
+    },
+    {
+      "path": "packages/shared/src/protocol/events.ts",
+      "symbol": "BroadcastEventMap[RPC_CHANNELS.projects.CHANGED]",
+      "change": "Define accepted shared authorized Project invalidation/event DTO with canonical ref, aggregate revision, eventId, policyEpoch and replay watermark/cursor; update all shared subscribers through lead-owned migration. Retain standalone file-list event only in explicit standalone branch. Do not append a cursor to an unfiltered full private-project list.",
+      "reason": "Current push contract is [workspaceId,LoadedProject[]], lacking event identity/replay/fence and per-resource delivery filtering."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-04 section",
+      "change": "After actual verification, document selected transaction/migrator/ports, exact native/HTTP command behavior, writer-mode cutover, conflict/idempotency semantics and remaining full-completeness gates. Keep planned/unverified until revision-bound runtime evidence exists.",
+      "reason": "Existing WP-04 section is a proposed plan, not operator recovery or observed implementation evidence."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "Feature completeness checklist / Evidence/receipt record and completion decision",
+      "change": "Attach the exact WP-04 implementation revision/schema/image, scenario results, seeded-control sensitivity and restart receipts, and specify outbox lease recovery/DLQ replay/rollback readback. Retain missing checklist rows rather than reclassify unimplemented requirements as N/A.",
+      "reason": "Published full DoD explicitly separates fixture, verified live behavior, delivery and completeness."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Crash after commit before response: retry yields same Project revision/event",
+      "seam": "projects.ts:94-105; storage.ts:306-331; proposed commands/repository.ts transaction and receipt lookup",
+      "currentEvidence": "Direct file mutation followed by broadcast, no command key, receipt or atomic domain event; retry runs updateProject again and bumps timestamp.",
+      "requiredChange": "Atomically commit Project+registry revision+immutable response receipt+both event types+outbox. Replay matching persisted receipt before testing original expectedRevision against newer state, after current authorization; replay cannot run mutation or create fresh event IDs/verifiedAt.",
+      "verification": "Real command via native and HTTP, kill after DB commit before transport reply, restart and resend exact key/payload; compare commandId/requestHash/receiptId/verifiedAt/canonical ref/revision/event IDs with durable rows. Assert one revision increment and one event per specified event type, no new effect after retry.",
+      "missingPrerequisite": "Accepted dependencies, service transaction port, applied migration and post-commit pre-response fault/restart harness.",
+      "state": "missing_not_implemented_not_verified"
+    },
+    {
+      "criterion": "stale version 409",
+      "seam": "storage.ts:306-330; platform-contract.ts:233-239; normative expectedRevision policy:2940",
+      "currentEvidence": "ProjectConfig has timestamps but no revision; updateProject merges an unchecked patch.",
+      "requiredChange": "Require scalar expectedRevision for existing Project; conditional authoritative mutation under current policy fence; map REVISION_CONFLICT to HTTP 409 and preserve RPC code. Never substitute updatedAt for revision or silently overwrite.",
+      "verification": "Read r, apply competing edit to r+1, submit different-key stale r; HTTP 409/native REVISION_CONFLICT, stored new name/r+1 unchanged and no mutation event/outbox side effect. Missing/malformed revision rejected; concurrent writers produce exactly one accepted CAS.",
+      "missingPrerequisite": "Canonical revision continuity/import and typed error adapters/HTTP service route.",
+      "state": "missing_not_implemented_not_verified"
+    },
+    {
+      "criterion": "same key altered payload rejected",
+      "seam": "command-gateway.ts:69-113; PendingCommandsStore.create:129-147; migration idempotency:3163-3165",
+      "currentEvidence": "Approval create generates random cmd ID; Project update has no key/hash check. Existing approval persistence is not a domain receipt ledger.",
+      "requiredChange": "UNIQUE(workspace,authenticated actor,key), canonical immutable semantic request hash and compare-on-conflict, serialized duplicate resolution. Same key different name/project/expectedRevision/operation must produce IDEMPOTENCY_CONFLICT without effect; other actors/workspaces are distinct scopes.",
+      "verification": "Apply once, retry identical semantic request and compare exact receipt; alter each semantic field under same key and assert typed conflict/no revision or event change. Reordered object keys hash identically. Concurrent duplicates converge to one receipt/effect; actor/workspace key isolation verified.",
+      "missingPrerequisite": "Accepted canonical hashing and receipt schema plus real DB unique/immutable constraints.",
+      "state": "missing_not_implemented_not_verified"
+    },
+    {
+      "criterion": "event replay dedup",
+      "seam": "projects.ts:30-34,103-104; BroadcastEventMap:78; proposed repository consumer_inbox/outbox",
+      "currentEvidence": "Full list push has no event ID, persisted cursor, outbox or inbox uniqueness.",
+      "requiredChange": "Transactional producer events/outbox; unique consumer/event inbox with actual consumer effect+processed marker+watermark atomic, recoverable leases, authorized replay, aggregate revision/policy/tombstone fences.",
+      "verification": "Replay same event repeatedly and out of order; consumer crash before/after effect and ACK; restart lease owner; assert one committed consumer effect per event, monotonic resulting revision/watermark, eventual delivery of every committed event and no revoked payload. Distinguish the two intentional event types from duplicate delivery.",
+      "missingPrerequisite": "Durable consumer transaction/cursor port and actual projection integration, not only inserted inbox fixtures.",
+      "state": "missing_not_implemented_not_verified"
+    },
+    {
+      "criterion": "UI",
+      "seam": "registerProjectsHandlers UPDATE/GET_ONE/broadcastChanged is the observed native Project backend; component ownership requires accepted WP-01 native surface receipt",
+      "currentEvidence": "Existing backend returns plain ProjectConfig. Renderer not inspected because it is outside WP-04 affected files/direct imports; no UI receipt exists in this preflight.",
+      "requiredChange": "Reuse existing native Project/entity action surface; retain draft+revision+key across retries and render loading/empty/permission_denied/offline_queued/retryable_error/applied_verified from actual command state. Never create a second Project panel.",
+      "verification": "Actual native Project rename, conflict/retry/revoke/offline and reload interaction; ARIA state assertions and screenshots with exact persisted receipt readback; hover/focus/keyboard and reduced-motion checks where changed.",
+      "missingPrerequisite": "Lead-owned renderer/caller discovery and patch, accepted native/HTTP adapter and offline persistence interface.",
+      "state": "missing_uninspected_ui_not_verified"
+    },
+    {
+      "criterion": "routing",
+      "seam": "RPC_CHANNELS.projects:829-839; REMOTE_ELIGIBLE_CHANNELS:855-864; registerCommandGatewayHandlers",
+      "currentEvidence": "projects:update and workspace CHANGED exist; published domain.project.update channel is not in the observed gateway handlers.",
+      "requiredChange": "Add native domain.project.update to existing channel/routing registry and POST /v1/workspaces/{workspaceId}/commands/project.update to accepted service root, same actor/policy/domain command port. Preserve canonical ref/slug navigation mapping via WP-02 aliases.",
+      "verification": "Execute same command through native and HTTP and verify one canonical result; wrong workspace/context denied, remote authority routing and existing Project history/panel navigation preserved.",
+      "missingPrerequisite": "Root transport/service composition and native caller migration; navigation caller evidence not inspected here.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "entity model",
+      "seam": "Rox2EntityRef / formatRox2EntityId / parseRox2EntityId; storage.createProject:284-294; ProjectConfig:35-57",
+      "currentEvidence": "Existing canonical kind:id utilities; local project IDs use proj_<8-character UUID prefix>; no scalar revision in ProjectConfig.",
+      "requiredChange": "Reuse WP-02 canonical project identity/alias/backfill and typed reference validator, enforce workspace+kind and stable id/slug through rename. Project row and entity registry revision must agree.",
+      "verification": "Imported/native/shared identity roundtrip then rename/reload/retry retains canonical ID and stable slug; ambiguous alias quarantined, wrong kind/workspace rejected and registry/project revisions match.",
+      "missingPrerequisite": "Accepted WP-02 typed interface/migration/import provenance receipt.",
+      "state": "missing_dependency_receipt_not_verified"
+    },
+    {
+      "criterion": "persistence",
+      "seam": "saveProjectConfig:131-146 versus proposed repository/migration",
+      "currentEvidence": "Atomic file write exists but cannot atomically persist Project plus DB receipt and event.",
+      "requiredChange": "One authoritative transaction stores state/receipt/events/outbox with required unique/FK/check constraints; local shared files are read-only projection/import assets. Persist committed response including verifiedAt and IDs across restart.",
+      "verification": "Restart service/client at every transaction/reply boundary and read independently through API+DB; rolled-back attempt has no state/event effect, committed attempt returns exact previous receipt; verify constraints against invalid rows in isolated DB.",
+      "missingPrerequisite": "Selected DB/migrator, WP-01 Project table and WP-02/03 applied schemas/ports.",
+      "state": "missing_not_implemented_not_verified"
+    },
+    {
+      "criterion": "commands",
+      "seam": "registerProjectsHandlers UPDATE; registerCommandGatewayHandlers; normative commands/contracts.ts",
+      "currentEvidence": "Current Project patch is unversioned; gateway is owner approval decisions, not project.update.",
+      "requiredChange": "Typed strictly validated RoxCommand v2 and single project.update handler with injected actor, ACL, semantic hash, immutable durable receipt, expectedRevision CAS and commit-before-response. Keep approval/execution policy separate.",
+      "verification": "Exercise exact request/result schemas through both transports, duplicate/concurrent/reordered retries, altered payload, absent revision/key, unknown fields and workspace/ref mismatch; reject without mutation.",
+      "missingPrerequisite": "Accepted dependency interfaces and wire/canonical triad contract resolution.",
+      "state": "missing_not_implemented_not_verified"
+    },
+    {
+      "criterion": "queries",
+      "seam": "projects.ts GET:37-47 and GET_ONE:50-58; loadWorkspaceProjects/loadProjectById",
+      "currentEvidence": "File reads/list scan take requested workspace and do not use RPC context/resource ACL.",
+      "requiredChange": "Shared readback from accepted canonical authorized query/projection; bounded stable cursor when listing; receipt lookup also current-ACL filtered. No hidden title/count/path fields in DTO.",
+      "verification": "After command and restart authorized reader sees exact canonical revision/name; outsider/revoked actor cannot see title/receipt/hidden total; cursor remains authorization-scoped with stable pagination.",
+      "missingPrerequisite": "WP-01 Project query DTO and WP-03 policy plus lead-owned query/cursor integration.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "realtime where needed",
+      "seam": "broadcastChanged and BroadcastEventMap.projects.CHANGED",
+      "currentEvidence": "Workspace-wide lossy list broadcast exists, no revision/event cursor or replay gap recovery.",
+      "requiredChange": "Publish committed entity.updated/project.updated through outbox, authorized subscription delivery and revisioned invalidation/replay cursor, distinct from lossy presence.",
+      "verification": "Drop connection/event, update, reconnect/restart and recover missing committed revisions exactly once; duplicates/reordering cannot roll projection back; revoked subscriber receives no new private payload.",
+      "missingPrerequisite": "Accepted WP-03 subscription fence and durable replay/cursor consumer integration.",
+      "state": "missing_not_implemented_not_verified"
+    },
+    {
+      "criterion": "permissions",
+      "seam": "RequestContext:7-11; authorizeWorkspace:38-55; UPDATE _ctx:95; normative policy:2641-2644",
+      "currentEvidence": "Gateway checks workspace equality only; Project UPDATE ignores context; transport has no principal.",
+      "requiredChange": "Transport-derived principal, authenticated workspace/resource write/action grant, current epoch/fence and linked-reference authorization. Reject forged actor/workspace; allow-all never substitutes for ACL; deny unsafe shared standalone writes.",
+      "verification": "A owner success; B member without Project write, C outsider, viewer/Agent-V allow-all, revoked actor and forged body actor/workspace denied through HTTP/native and receipt/replay paths, with no title/effect. Interleave revoke with mutation and observe fence.",
+      "missingPrerequisite": "WP-03 accepted policy/epoch/transaction interface and WP-01 authenticated actor receipt.",
+      "state": "missing_dependency_receipt_not_verified"
+    },
+    {
+      "criterion": "sharing",
+      "seam": "registerProjectsHandlers GET/UPDATE/broadcastChanged plus WP-03 grant/revoke contract documented in implementation-plan:52-63",
+      "currentEvidence": "Observed update/broadcast lacks resource-specific audience/grants; sharing surfaces not inspected.",
+      "requiredChange": "Project command uses existing explicit resource grants/inheritance/public-link policy; rename never broadens audience or publishes private title via event/receipt; reauthorize shared recipients.",
+      "verification": "Shared editor sees update; viewer read-only; outsider/expired guest/public-link/revoked recipient cannot mutate or acquire fresh title through replay/query/notification. Existing sharing behavior preserved.",
+      "missingPrerequisite": "Accepted grant/inheritance/public-link policy and actual sharing-surface receipt; missing is not N/A.",
+      "state": "missing_dependency_surface_not_verified"
+    },
+    {
+      "criterion": "search",
+      "seam": "Producer entity.updated/project.updated outbox specified at work-packages.json:2637-2660; WP-06 projection documented in implementation-plan:106-108",
+      "currentEvidence": "No Project update outbox in observed code; search consumer outside inspected paths.",
+      "requiredChange": "Expose canonical ref/revision/policy epoch to accepted search extractor/upsert/tombstone consumer and watermark query; current ACL filters renamed title regardless of index lag. Do not build a Project-only second index.",
+      "verification": "Rename visible in authorized search after watermark and restart/replay; old title/tombstone no longer authoritative, revoked/outsider query cannot reveal private marker or cached snippet before index catch-up.",
+      "missingPrerequisite": "Actual search adapter/consumer and WP-06 integration receipt; cannot declare complete because only producer exists.",
+      "state": "missing_downstream_integration_not_verified"
+    },
+    {
+      "criterion": "mentions",
+      "seam": "Canonical Project ref/Rox2Event producer and WP-04 featureCompleteness:2714; 22-test-plan.md:211",
+      "currentEvidence": "Observed ProjectConfig.name is plain text; occurrence/mention consumer not inspected or supplied by WP-04 paths.",
+      "requiredChange": "Retain canonical Project references used by existing mention resolver across rename, with source revision/target policy filtering; consume update event through existing primitive, no per-Project mention store.",
+      "verification": "Existing source mention of renamed Project still resolves same canonical target; authorized label refreshes after event/watermark; revoked target resolution exposes no title; duplicate replay cannot duplicate occurrences.",
+      "missingPrerequisite": "Accepted mention resolver/occurrence integration contract and exercised consumer surface; keep missing, not N/A.",
+      "state": "missing_uninspected_consumer_not_verified"
+    },
+    {
+      "criterion": "notifications",
+      "seam": "WP-04 outbox producer; WP-07 assignment/attention documented in implementation-plan:125-127; 22-test-plan.md:212",
+      "currentEvidence": "Observed update only broadcasts a list; no durable notification delivery/dedup receipt in scope.",
+      "requiredChange": "Supply causation/ref/revision to established authorized notification consumer; preserve recipient policy and dedup/lifecycle controls, do not emit one notification per replay or both event aliases.",
+      "verification": "Applicable existing Project attention flow receives intended recipient effect once after repeated event replay/restart; seen/done/mute/snooze persistence and revoked recipient suppression exercised on actual consumer.",
+      "missingPrerequisite": "Lead-accepted Project notification semantics plus WP-07/existing consumer receipt; full checklist requirement cannot be waived as unimplemented.",
+      "state": "missing_downstream_integration_not_verified"
+    },
+    {
+      "criterion": "activity",
+      "seam": "Rox2Event:131-141 / isAuditableRox2Event:618-619; domain_event migration",
+      "currentEvidence": "Event lineage fields exist as optional pure types; current Project update creates no durable event/audit record.",
+      "requiredChange": "Persist server actor/command causation/correlation/aggregate revision/schema/policy metadata and expose authorized existing activity consumer. Event payload remains minimized, private raw text not log output.",
+      "verification": "Authorized activity read after rename/restart shows stable event identity/actor/ref/revision; duplicate replay creates no duplicate activity, revoked actor sees no private details, inspect privacy-safe audit logs.",
+      "missingPrerequisite": "Actual activity consumer/query integration and durable event schema.",
+      "state": "missing_not_implemented_not_verified"
+    },
+    {
+      "criterion": "agent access",
+      "seam": "Rox2Context.permissionMode:143-155; shared Project command port and WP-03 acting-user authority",
+      "currentEvidence": "Pure context has permissionMode but no evidence that agent Project mutation uses authenticated shared gateway; agent tools not inspected.",
+      "requiredChange": "Lead routes existing agent Project action/context readers through same canonical domain command/query with acting user/service principal and provenance, current ACL and execution grants separate.",
+      "verification": "Actual native agent dispatcher updates authorized Project and reads resulting revision; Agent-V allow-all and revoked actor denied, forged principal rejected, retry same key returns same receipt.",
+      "missingPrerequisite": "Agent dispatcher/caller inventory by owner and accepted acting-user port; cannot mark N/A.",
+      "state": "missing_uninspected_agent_integration_not_verified"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "seam": "Normative POST command/native domain.project.update; registerCommandGatewayHandlers and RequestContext",
+      "currentEvidence": "Existing RPC approval channels do not expose the new command; HTTP/MCP implementation outside observed scope.",
+      "requiredChange": "Register typed HTTP and native operation with identical domain checks/result/error serialization; applicable existing MCP/agent tools forward authenticated context, not alternate writers.",
+      "verification": "Native+HTTP+applicable MCP dispatch return same canonical command result and deny same actor/ref/key/revision violations; no unknown or private fields serialized.",
+      "missingPrerequisite": "Root-owned HTTP composition and MCP/tool mapping/discovery receipt; unimplemented coverage stays missing.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "observability",
+      "seam": "Rox2Event/Rox2Receipt, HandlerDeps.platform.logger; normative observability:2687-2697",
+      "currentEvidence": "Current update has no command correlation or delivery counters; event fields optional; Project name and private payload should not become log context.",
+      "requiredChange": "Record commandId, causationId, correlationId, aggregateRevision, policyEpoch, projectionWatermark, retry/DLQ counters in existing metrics/log pipeline without raw email/body/transcript/tokens; use privacy-safe identifiers and lag/error state.",
+      "verification": "Fault/replay/DLQ scenario observes correlated IDs/revision/epoch/watermark and accurate counters; private marker and secrets absent logs, receipts tied to exact revision/schema.",
+      "missingPrerequisite": "Lead-owned metrics/composition sink and durable outbox worker, not just type fields.",
+      "state": "missing_not_implemented_not_verified"
+    },
+    {
+      "criterion": "tests",
+      "seam": "Normative tests/macro-integration/wp-04.test.ts; work-packages.json:2662-2674,3397-3419",
+      "currentEvidence": "WP-04 test file absent during inspection; no execution authorized in preflight.",
+      "requiredChange": "Permanent consumer-visible regression scenarios for four acceptance criteria, permission negatives and persistence recovery; independent actual-surface proof and seeded controls, no wiring/mock/source-text tests.",
+      "verification": "Future bun test tests/macro-integration/wp-04.test.ts plus relevant existing package regressions; actual native/API scenarios at exact SHA. ACK-before-commit mutation and independent event/actor failure variant must fail specific oracle, baseline infra failures separately recorded.",
+      "missingPrerequisite": "Implemented runtime/migration/fixtures/fault harness and accepted dependency receipts; all runners deferred to implementation owner.",
+      "state": "missing_not_run_by_instruction"
+    },
+    {
+      "criterion": "documentation",
+      "seam": "21-implementation-plan.md#wp-04 and 22-test-plan.md:197-247",
+      "currentEvidence": "Published proposed acceptance exists and explicitly disclaims PASS; implementation/operator recovery documentation not yet present.",
+      "requiredChange": "Lead updates named docs with actual request/receipt/error semantics, canonical mapping, writer-mode limits, migration/cutover/recovery/DLQ operations and exact verified receipts without changing shared progress from worker.",
+      "verification": "Documentation statements trace to implemented typed API/readback and fault/restart evidence; commands and boundaries match tested revision, missing checklist rows remain explicit.",
+      "missingPrerequisite": "Implementation and observed runtime evidence before docs can claim behavior.",
+      "state": "planned_only_not_verified"
+    },
+    {
+      "criterion": "failure states",
+      "seam": "CodedError/ErrorCode/KNOWN_ERROR_CODES; projects.ts UPDATE; normative errors:2928-2938",
+      "currentEvidence": "Project not found is generic Error; command-specific error codes absent in observed protocol types.",
+      "requiredChange": "Typed auth/payload/revision/idempotency/fence/schema/unavailable states carried through native/HTTP and existing UI; preserve uncertain committed outcome for safe receipt lookup/retry, never false applied success.",
+      "verification": "Fault before commit, after commit before reply, DB unavailable, malformed schema, denied/fenced/stale request and disconnected client; inspect exact error/status and retained draft/key, then retry/readback without double effect.",
+      "missingPrerequisite": "Protocol error adapter, UI integration and actual faultable service.",
+      "state": "missing_not_implemented_not_verified"
+    },
+    {
+      "criterion": "loading states",
+      "seam": "registerProjectsHandlers GET/GET_ONE and future receipt-driven native adapter",
+      "currentEvidence": "GET returns [] on missing workspace/not-claimable; no observed UI loading/stale contract.",
+      "requiredChange": "Existing Project surface distinguishes pending command/read refresh/stale projection from empty and verified applied; disable unsafe duplicate actions while preserving same retry key.",
+      "verification": "Delay response/projection delivery on actual UI, observe loading/stale state, no premature saved label or empty flash; resulting receipt/readback transitions to applied_verified.",
+      "missingPrerequisite": "Lead-owned renderer/query state integration and response-delay scenario harness.",
+      "state": "missing_uninspected_ui_not_verified"
+    },
+    {
+      "criterion": "empty states",
+      "seam": "projects.ts GET:37-47 and GET_ONE:50-58",
+      "currentEvidence": "Current backend collapses unavailable/missing workspace to []/null; no receipt of genuine empty versus denied/unavailable UI distinction.",
+      "requiredChange": "Canonical authorized query separates truly empty/not-found from denied/unconfigured/unavailable without title leakage; existing surface renders correct state without second panel.",
+      "verification": "Empty authorized workspace, nonexistent/deleted Project, outsider known ID and disconnected service yield distinct safe state; no private title or misleading empty success on failure.",
+      "missingPrerequisite": "Accepted query error DTO and native UI integration.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "seam": "Native Project UPDATE and durable receipt/cursor ports; WP-04 offline_queued:2653, WP-05 replay documented at plan:86-102",
+      "currentEvidence": "No command envelope/durable queue or replay cursor on inspected Project path.",
+      "requiredChange": "Existing Project action persists pending draft/key/original revision before claiming offline_queued; reconnect replays through same policy/CAS/idempotency gateway, rejected/revoked draft stays quarantined/not synced. Do not create independent client store here; integrate accepted shared projection queue.",
+      "verification": "Offline rename, client restart, reconnect, duplicate retries and revoke while offline; accepted once with exact receipt or safely rejected draft, no false verified/synced label and standalone regression preserved.",
+      "missingPrerequisite": "WP-05/existing durable queue adapter integration; downstream gate must be resolved without inventing cyclic implementation dependency.",
+      "state": "missing_downstream_integration_not_verified"
+    },
+    {
+      "criterion": "Strict request/result, expectedRevision and errors contract",
+      "seam": "work-packages.json:2749-2772,2922-2987; platform-contract.ts:99-166",
+      "currentEvidence": "Schema request permits project and optional name only; scalar expectedRevision lives in envelope; strict response schema is not existing canonical triad shape.",
+      "requiredChange": "Validate name length 1..10000 when provided and unknown-field rejection, workspace scoped project ref, required envelope version/key/revision; persist complete applied receipt and provide explicit wire/triad mapping. Do not silently require name when spec only requires project; agree no-op revision semantics through lead contract.",
+      "verification": "Boundary lengths, absent optional name, unknown actor/fields, wrong kind/ref/workspace and unsupported version; schema-valid response contains no unauthorized fields and real receipt controls verification.",
+      "missingPrerequisite": "Accepted typed domain schema and optional-name/no-op semantic clarification from contract owner.",
+      "state": "missing_contract_integration_not_verified"
+    },
+    {
+      "criterion": "Migration constraints, import and rollback",
+      "seam": "work-packages.json:3139-3184; local Project ID creation/storage paths",
+      "currentEvidence": "Normative migration names proposed tables/constraints; service/migration absent during inspection; local file IDs/workspace basename are not shared UUID registry identity.",
+      "requiredChange": "Apply selected-migrator additive receipt/event/outbox/inbox schema with constraints/indexes, reuse Project/entity/alias tables and typed principal IDs; provenance backfill/quarantine; one writer cutover and non-destructive post-write recovery.",
+      "verification": "Migration on clean and imported isolated DB, constraint failures, accepted mapping and revision continuity; before-cutover rollback snapshot restore and after-write forward repair/reverse replay retain all acknowledged updates.",
+      "missingPrerequisite": "Dependency-applied schemas, canonical backfill manifest, selected migrator and verified backup/restore procedure.",
+      "state": "missing_not_applied_not_verified"
+    },
+    {
+      "criterion": "Negative controls and persistence recovery",
+      "seam": "work-packages.json:2667-2674,3416-3419; 22-test-plan.md:230-231,239",
+      "currentEvidence": "No WP-04 implementation or runtime evidence; preflight must not count fixtures or infrastructure errors as caught controls.",
+      "requiredChange": "Introduce isolated ACK-before-transaction-commit control, then independent second unauthorized actor or dropped/duplicated event variant; preserve reproducer seed/failure trace and exact artifact revision.",
+      "verification": "Baseline user/API/restart scenario passes first; seeded premature ACK specifically loses acknowledged update after kill and fails survival assertion; second holdout catches authorization/event-integrity regression, not boot failure. Valid implementation passes same unchanged oracle.",
+      "missingPrerequisite": "Fault/control-enabled real runtime and independent evaluator; prohibited to execute in this preflight.",
+      "state": "missing_not_run_by_instruction"
+    },
+    {
+      "criterion": "License and verification/completion gate",
+      "seam": "work-packages.json:2727-2728,3421-3428; 22-test-plan.md:243-247",
+      "currentEvidence": "Normative policy is BEHAVIOR_REIMPLEMENTATION and dependency-only upstream after exact license audit; plan and this report are not live receipts.",
+      "requiredChange": "Reimplement observed behavior in existing ROX mechanisms; any upstream dependency needs exact license audit. Record implementation SHA/dirty patch hash/image/schema/seed, authenticated actors/refs, commands/events/DB counts/watermarks and UI/API fault/reload evidence separately from delivery/journal states.",
+      "verification": "Lead's artifact verifier accepts report independently; later evaluator observes actual changed surface/failure/reload and seeded sensitivity with revision-bound receipts. No featureComplete until every required item verified; fixtures/worker prose cannot establish live success.",
+      "missingPrerequisite": "Actual implementation/verification/delivery receipts; dependency license evidence if any upstream package is selected.",
+      "state": "preflight_only_feature_incomplete"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "packages/server-core/src/handlers/rpc/projects.ts", "symbol": "registerProjectsHandlers UPDATE / broadcastChanged / GET / GET_ONE", "lineStart": 27, "lineEnd": 106, "sha256": "baa907c847103a2fb1a9f39be6170f5a89ad9bebb899a11ba769fc48d6736df4"},
+    {"path": "packages/shared/src/projects/storage.ts", "symbol": "updateProject", "lineStart": 306, "lineEnd": 332, "sha256": "19ed9f5bf2927e7c7fcc76b8c3b2fa7211c03ccc2b9fc800a1f4e37529857092"},
+    {"path": "packages/shared/src/projects/storage.ts", "symbol": "saveProjectConfig", "lineStart": 131, "lineEnd": 147, "sha256": "19ed9f5bf2927e7c7fcc76b8c3b2fa7211c03ccc2b9fc800a1f4e37529857092"},
+    {"path": "packages/shared/src/projects/storage.ts", "symbol": "createProject", "lineStart": 277, "lineEnd": 300, "sha256": "19ed9f5bf2927e7c7fcc76b8c3b2fa7211c03ccc2b9fc800a1f4e37529857092"},
+    {"path": "packages/server-core/src/handlers/rpc/command-gateway.ts", "symbol": "authorizeWorkspace / requireStore / registerCommandGatewayHandlers", "lineStart": 38, "lineEnd": 114, "sha256": "2dbf30f23d0df9f217a6bfbc338a5467b93fb59b210703631fd298c347bfb171"},
+    {"path": "packages/server-core/src/transport/types.ts", "symbol": "RequestContext / RpcHandlerOptions", "lineStart": 7, "lineEnd": 21, "sha256": "844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "Rox2Receipt / Rox2Status / Rox2Entity / Rox2Event / Rox2CanonicalResult", "lineStart": 99, "lineEnd": 167, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "formatRox2EntityId / parseRox2EntityId / Rox2EntityRef", "lineStart": 218, "lineEnd": 239, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "isRevisionedEntityRef / isAuditableRox2Event", "lineStart": 612, "lineEnd": 620, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/shared/src/projects/types.ts", "symbol": "ProjectConfig", "lineStart": 35, "lineEnd": 57, "sha256": "a40c43fc73a8918b91b9608c67c303be48432f3d2f84d8bdf15b8ac8e1e8d6fc"},
+    {"path": "packages/server-core/src/handlers/handler-deps.ts", "symbol": "HandlerDeps", "lineStart": 56, "lineEnd": 72, "sha256": "501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path": "packages/server-core/src/command-gateway/pending-commands.ts", "symbol": "PendingCommandsStore.load / save / create / decide", "lineStart": 84, "lineEnd": 170, "sha256": "f92bb1201eac36d1dd4e020ee633fbc13d90e22fdfae47a87a1f874b9e3c1228"},
+    {"path": "packages/core/src/rox2/rpc-native-actions.ts", "symbol": "nativeLive", "lineStart": 390, "lineEnd": 400, "sha256": "692630527926522d5a3989a2650a595e5f04a932dcc1ab821bc28cc801482d6a"},
+    {"path": "packages/core/src/rox2/rpc-native-actions.ts", "symbol": "rpcProjectsReadResult / rpcProjectsActResult", "lineStart": 1112, "lineEnd": 1127, "sha256": "692630527926522d5a3989a2650a595e5f04a932dcc1ab821bc28cc801482d6a"},
+    {"path": "packages/shared/src/protocol/channels.ts", "symbol": "RPC_CHANNELS.commandGateway", "lineStart": 679, "lineEnd": 683, "sha256": "c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path": "packages/shared/src/protocol/channels.ts", "symbol": "RPC_CHANNELS.projects", "lineStart": 829, "lineEnd": 839, "sha256": "c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path": "packages/shared/src/protocol/types.ts", "symbol": "ErrorCode / KNOWN_ERROR_CODES / CodedError", "lineStart": 81, "lineEnd": 179, "sha256": "ba2d2070819ca69ea0ffa63b1c5ab97152bc9136f89254ef87d91a19c5688395"},
+    {"path": "packages/shared/src/protocol/routing.ts", "symbol": "REMOTE_ELIGIBLE_CHANNELS Project entries", "lineStart": 855, "lineEnd": 864, "sha256": "f9a3ffeef82eb6edfcd7435de78814db3f1c2b7a1ef0d4f7ef1df007ee399d6e"},
+    {"path": "packages/shared/src/protocol/events.ts", "symbol": "BroadcastEventMap[RPC_CHANNELS.projects.CHANGED]", "lineStart": 78, "lineEnd": 78, "sha256": "2c488ef99e2bf5e9600c20b9795dd70360901e8a378e478df2410728b44fee62"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "workPackages[id=WP-04]", "lineStart": 2588, "lineEnd": 3455, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-04", "lineStart": 65, "lineEnd": 82, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-51 / WP-52 dependency and writer/runtime gates", "lineStart": 1020, "lineEnd": 1053, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/22-test-plan.md", "symbol": "Feature completeness / invariant sensitivity / evidence decision", "lineStart": 197, "lineEnd": 247, "sha256": "55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": "Lead verifies this owned report, commits wave0 and publishes accepted WP-02/WP-03 typed/migration/scenario receipts. Then rehash/rebind changed source at that committed revision, resolve shared command port/actor/writer-mode and strict DTO-to-triad contract requests, and implement normative contracts -> transaction repository/migration -> project.update command -> lead-owned native/HTTP/projection integration -> real crash/retry/CAS/hash/replay scenarios. This preflight itself is complete only as a report, not a feature.",
+  "risks": [
+    "Legacy UPDATE, saveProjectConfig and uninspected agent/direct callers can bypass service; lead must inventory/migrate callers before shared cutover.",
+    "Rechecking CAS before finding an already committed matching receipt would incorrectly reject safe retry after post-commit reply loss.",
+    "Receipt replay after revoke can leak DTO/title unless current authorization is checked before returning persisted data; dedup does not override policy.",
+    "Concurrent same-key retry must be serialized by DB uniqueness/transaction semantics, not process-local map; receipt hash immutability must survive restart.",
+    "consumer_inbox inserted or marked processed before actual projection commit suppresses replay after crash; claimed lease is not processed receipt.",
+    "Two intended event types must not cause duplicate downstream effects; consumers need typed event identity/semantic dedup and revision fences.",
+    "Request schema preserves only name while native ProjectConfig patch supports many fields; narrowing shared behavior or falling back to files silently violates preservation/single authority.",
+    "Response schema string status and canonical triad conflict; pre-operation nativeLive receipt markers are not post-commit command verification.",
+    "Date.now updatedAt and local proj_<8-char> IDs cannot prove authoritative revision or canonical import continuity; use accepted aliases/provenance.",
+    "Optional name permits an identity-only payload; no-op revision/event policy is unspecified and must be resolved by contract owner, not rejected by invented required field.",
+    "Full checklist has downstream offline/search/attention dependencies; accepted producer implementation is not featureComplete and missing items cannot become N/A.",
+    "Making WP-51/WP-52 prerequisite packages for WP-04 creates a published DAG cycle; extract minimal accepted guards/runtime interfaces instead.",
+    "Working tree changes during integration can stale line/hash evidence; hashes here represent observed files only, input_revision is dispatch metadata.",
+    "No product checks were executed in this authorized read-only preflight; all proposed verification requires implementation owner and exact runtime revision evidence."
+  ]
+}

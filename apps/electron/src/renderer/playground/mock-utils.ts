@@ -643,7 +643,7 @@ export const mockElectronAPI = {
     ],
     truncated: false,
   }),
-  foreignPersistSessions: async () => ({ results: [] }),
+  foreignPersistSessions: async () => ({ results: [], failed: 0, truncated: false, omitted: 0 }),
   foreignAutoImportStatus: async () => ({
     workspaceId: 'playground',
     enabled: true,
@@ -654,7 +654,9 @@ export const mockElectronAPI = {
     updated: 1,
     remaining: 2,
     bySource: { claude: 7, codex: 3, cursor: 2 },
-    lastRunAt: Date.now() - 60_000,
+    failed: 0,
+    failureReasons: {},
+    truncated: false,
   }),
   foreignAutoImportRun: async () => ({
     workspaceId: 'playground',
@@ -666,7 +668,9 @@ export const mockElectronAPI = {
     updated: 0,
     remaining: 0,
     bySource: { claude: 7, codex: 3, cursor: 2 },
-    lastRunAt: Date.now(),
+    failed: 0,
+    failureReasons: {},
+    truncated: false,
   }),
   foreignAutoImportSet: async (args: { enabled: boolean }) => ({
     workspaceId: 'playground',
@@ -678,7 +682,9 @@ export const mockElectronAPI = {
     updated: 0,
     remaining: 0,
     bySource: {},
-    lastRunAt: null,
+    failed: 0,
+    failureReasons: {},
+    truncated: false,
   }),
   discoverBrowserProfiles: async () => [],
   browserCookieAutoStatus: async () => ({

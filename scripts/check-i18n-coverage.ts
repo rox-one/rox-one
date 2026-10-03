@@ -151,13 +151,15 @@ function extractReferences(file: string): Reference[] {
   const relFile = relative(REPO_ROOT, file)
   const refs: Reference[] = []
 
+  // A concatenation prefix is not a complete translation key. Keep standalone
+  // literals covered even when followed by a comment or a TypeScript cast.
   const patterns: Array<{ kind: Reference['kind']; regex: RegExp }> = [
-    { kind: 'i18n.t', regex: /(?<![\w$])i18n\.t\s*\(\s*'((?:\\.|[^'\\])*)'/g },
-    { kind: 'i18n.t', regex: /(?<![\w$])i18n\.t\s*\(\s*"((?:\\.|[^"\\])*)"/g },
-    { kind: 'i18next.t', regex: /(?<![\w$])i18next\.t\s*\(\s*'((?:\\.|[^'\\])*)'/g },
-    { kind: 'i18next.t', regex: /(?<![\w$])i18next\.t\s*\(\s*"((?:\\.|[^"\\])*)"/g },
-    { kind: 't', regex: /(?<![\w$.])t\s*\(\s*'((?:\\.|[^'\\])*)'/g },
-    { kind: 't', regex: /(?<![\w$.])t\s*\(\s*"((?:\\.|[^"\\])*)"/g },
+    { kind: 'i18n.t', regex: /(?<![\w$])i18n\.t\s*\(\s*'((?:\\.|[^'\\])*)'(?!\s*\+)/g },
+    { kind: 'i18n.t', regex: /(?<![\w$])i18n\.t\s*\(\s*"((?:\\.|[^"\\])*)"(?!\s*\+)/g },
+    { kind: 'i18next.t', regex: /(?<![\w$])i18next\.t\s*\(\s*'((?:\\.|[^'\\])*)'(?!\s*\+)/g },
+    { kind: 'i18next.t', regex: /(?<![\w$])i18next\.t\s*\(\s*"((?:\\.|[^"\\])*)"(?!\s*\+)/g },
+    { kind: 't', regex: /(?<![\w$.])t\s*\(\s*'((?:\\.|[^'\\])*)'(?!\s*\+)/g },
+    { kind: 't', regex: /(?<![\w$.])t\s*\(\s*"((?:\\.|[^"\\])*)"(?!\s*\+)/g },
     { kind: 'Trans', regex: /\bi18nKey\s*=\s*'((?:\\.|[^'\\])*)'/g },
     { kind: 'Trans', regex: /\bi18nKey\s*=\s*"((?:\\.|[^"\\])*)"/g },
   ]

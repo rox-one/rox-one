@@ -148,7 +148,7 @@ export function createWebApi(options: WebApiOptions): {
     },
 
     // Workspace operations — web UI works with a single connection
-    getWindowWorkspace: () => Promise.resolve(workspaceId ?? null),
+    getWindowWorkspace: () => Promise.resolve(client.getAcknowledgedWorkspaceId()),
     getWindowMode: () => Promise.resolve('main'),
     // switchWorkspace must call the server so it registers the client's
     // workspaceId — otherwise push events (session updates) won't arrive.

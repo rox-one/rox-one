@@ -75,7 +75,7 @@ Sentry.setUser({ id: machineId })
 
 import { join, delimiter } from 'path'
 import { refreshLegacySeededWorkspaceIcons } from './brand-icon-migration'
-import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync } from 'fs'
 import { resolveOemManagedLayout } from '@craft-agent/shared/knowledge/oem-pin'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 
@@ -97,6 +97,7 @@ import { createWorkGraphKernel, type WorkGraphKernel } from '@craft-agent/server
 import type { PlatformServices } from '../runtime/platform'
 import { createElectronPlatform } from './platform'
 import type { HandlerDeps } from './handlers/handler-deps'
+import { resolveNativeTransportCredential } from './native-transport-credential'
 import { bootstrapServer, releaseServerLock, maskTokenForDisplay } from '@craft-agent/server-core/bootstrap'
 import { isAllowedServerEndpoint } from './server-endpoint-policy'
 import { createMessagingBootstrap, type MessagingBootstrapHandle } from '@craft-agent/messaging-gateway'
@@ -137,6 +138,7 @@ import { createLocalClientBindingRegistry } from './local-client-binding'
 import { registerMeetingCaptureIpc } from './meetings/ipc'
 import { registerLocalMeetingsIpc } from './meetings/local-ipc'
 import { registerMailIpc } from './mail/local-ipc'
+import { registerNativeReplicaIpc } from './native-replica'
 import type { OpenClawRuntimeManager, OpenClawSecurityAuditService } from '@craft-agent/server-core/openclaw'
 
 // Initialize electron-log for renderer process support
@@ -236,6 +238,7 @@ let moduleClientResolver: ((webContentsId: number) => string | undefined) | null
 let openClawRuntimeManager: OpenClawRuntimeManager | null = null
 let openClawSecurityAuditService: OpenClawSecurityAuditService | null = null
 let workGraphKernel: WorkGraphKernel | null = null
+let cleanupNativeReplicaIpc: (() => void) | null = null
 const localClientBindingRegistry = createLocalClientBindingRegistry()
 
 // Messaging gateway: the bootstrap handle is created once sessionManager is
@@ -658,6 +661,16 @@ app.whenReady().then(async () => {
     )
 
     if (!isClientOnly) {
+      // Keep durable Notes replica custody in main and the existing encrypted credential store.
+      cleanupNativeReplicaIpc = registerNativeReplicaIpc(ipcMain, {
+        configDir: realpathSync(CONFIG_DIR),
+        credentials: getCredentialManager(),
+        getWorkspaceForWindow: webContentsId => {
+          const owner = windowManager?.getWindowByWebContentsId(webContentsId)
+          if (!owner || owner.isDestroyed() || owner.webContents.id !== webContentsId) return null
+          return windowManager?.getWorkspaceForWindow(webContentsId) ?? null
+        },
+      })
       // Restore persisted Git Bash path on Windows (must happen before any SDK subprocess spawn)
       if (process.platform === 'win32') {
         const { getGitBashPath, clearGitBashPath } = await import('@craft-agent/shared/config')
@@ -769,6 +782,7 @@ app.whenReady().then(async () => {
       }
 
       // Bootstrap the WS RPC server via shared bootstrap function.
+      let localNativeAuthority: NonNullable<HandlerDeps['nativeData']>['authority'] | null = null
       const instance = await bootstrapServer<SessionManager, HandlerDeps>({
         serverToken,
         rpcHost,
@@ -813,7 +827,8 @@ app.whenReady().then(async () => {
           return sm
         },
         bindRpcServer: (sm, server) => sm.setRpcServer(server),
-        createHandlerDeps: ({ sessionManager: sm, platform: p, oauthFlowStore: ofs }) => {
+        createHandlerDeps: ({ sessionManager: sm, platform: p, oauthFlowStore: ofs, nativeAuthority, nativeJournal, collaborationSync }) => {
+          localNativeAuthority = nativeAuthority
           // The messaging handle is built here because it needs sessionManager.
           // The WS publisher is attached after bootstrapServer resolves (via
           // handle.setPublisher) because wsServer isn't available yet.
@@ -857,6 +872,7 @@ app.whenReady().then(async () => {
             oauthFlowStore: ofs,
             messagingRegistry: messagingHandle.registry,
             ...(openClawSecurity ? { openClawSecurity: openClawSecurity.service } : {}),
+            nativeData: { authority: nativeAuthority, journal: nativeJournal, sync: collaborationSync },
           }
         },
         // Headless: register only core handlers (no GUI handlers for browser, settings, etc.)
@@ -1136,9 +1152,90 @@ app.whenReady().then(async () => {
       ipcMain.on('__get-ws-port', (e) => {
         e.returnValue = instance.port
       })
-      ipcMain.on('__get-ws-token', (e) => {
-        e.returnValue = instance.token
+      ipcMain.handle('__resolve-local-ws-token', async (event, expectedWorkspaceId: unknown) => {
+        try {
+          if (typeof expectedWorkspaceId !== 'string' || !localNativeAuthority) throw new Error('Unavailable')
+          return await resolveNativeTransportCredential({
+            credentials: getCredentialManager(),
+            authority: localNativeAuthority,
+            expectedWorkspaceId,
+            legacyToken: instance.token,
+            getBinding: () => {
+              const owner = windowManager?.getWindowByWebContentsId(event.sender.id)
+              if (!owner || owner.isDestroyed() || owner.webContents !== event.sender || event.sender.isDestroyed()) return null
+              const workspaceId = windowManager?.getWorkspaceForWindow(event.sender.id)
+              const workspace = workspaceId ? getWorkspaceByNameOrId(workspaceId) : null
+              return workspace ? { workspaceId: workspace.id, nativeRoot: workspace.rootPath } : null
+            },
+          })
+        } catch {
+          // Never propagate storage/provider exceptions or enrolled secrets through IPC errors.
+          throw new Error('Local transport credential unavailable or denied')
+        }
       })
+      const projectAuthorityRequests = new Map<number, number>()
+      const quiesceProjectAuthorityWindows = (workspaceId: string, initiatingSenderId: number): void => {
+        for (const window of windowManager?.getAllWindowsForWorkspace(workspaceId) ?? []) {
+          if (!window.isDestroyed() && window.webContents.id !== initiatingSenderId) window.webContents.send('__project-authority:configuration-changed')
+        }
+      }
+      ipcMain.handle('__project-authority:resolve', async (event, localWorkspaceId: unknown) => {
+        const bound = windowManager?.getWorkspaceForWindow(event.sender.id)
+        if (!bound || typeof localWorkspaceId !== 'string' || localWorkspaceId !== bound) throw new Error('WORKSPACE_MISMATCH')
+        const { resolveStoredProjectAuthority } = await import('./project-authority')
+        const result = await resolveStoredProjectAuthority(bound)
+        if (windowManager?.getWorkspaceForWindow(event.sender.id) !== bound) throw new Error('WORKSPACE_MISMATCH')
+        return result
+      })
+      ipcMain.handle('__project-authority:configuration', async (event, localWorkspaceId: unknown) => {
+        const bound = windowManager?.getWorkspaceForWindow(event.sender.id)
+        if (!bound || typeof localWorkspaceId !== 'string' || localWorkspaceId !== bound) throw new Error('WORKSPACE_MISMATCH')
+        const { getStoredProjectAuthorityConfiguration } = await import('./project-authority')
+        const result = await getStoredProjectAuthorityConfiguration(bound)
+        if (event.sender.isDestroyed() || windowManager?.getWorkspaceForWindow(event.sender.id) !== bound) throw new Error('WORKSPACE_MISMATCH')
+        return result
+      })
+      ipcMain.handle('__project-create-intent', async (event, localWorkspaceId: unknown, action: unknown, input: unknown) => {
+        const senderId = event.sender.id
+        const bound = windowManager?.getWorkspaceForWindow(senderId)
+        if (!bound || localWorkspaceId !== bound || (typeof action !== 'string' || !['get', 'queue', 'retry', 'cancel'].includes(action))
+          || (action !== 'queue' && input !== undefined)) return { state: 'blocked', eligible: false, code: 'WORKSPACE_MISMATCH' }
+        const { storedProjectCreateIntent } = await import('./project-authority')
+        const intentAction = action === 'get' ? 'get' : action === 'queue' ? 'queue' : action === 'retry' ? 'retry' : 'cancel'
+        const result = await storedProjectCreateIntent(bound, intentAction, input, () => !event.sender.isDestroyed()
+          && windowManager?.getWorkspaceForWindow(senderId) === bound)
+        if (event.sender.isDestroyed() || windowManager?.getWorkspaceForWindow(senderId) !== bound) return { state: 'blocked', eligible: false, code: 'WORKSPACE_MISMATCH' }
+        return result
+      })
+      ipcMain.handle('__project-authority:connect', async (event, localWorkspaceId: unknown, input: unknown) => {
+        const senderId = event.sender.id
+        const bound = windowManager?.getWorkspaceForWindow(senderId)
+        if (!bound || typeof localWorkspaceId !== 'string' || localWorkspaceId !== bound) {
+          return { ok: false, error: { code: 'WORKSPACE_MISMATCH', status: 403 } }
+        }
+        const generation = (projectAuthorityRequests.get(senderId) ?? 0) + 1
+        projectAuthorityRequests.set(senderId, generation)
+        const { connectStoredProjectAuthority } = await import('./project-authority')
+        const result = await connectStoredProjectAuthority(bound, input, () => !event.sender.isDestroyed()
+          && windowManager?.getWorkspaceForWindow(senderId) === bound && projectAuthorityRequests.get(senderId) === generation)
+        if (result.ok) quiesceProjectAuthorityWindows(bound, senderId)
+        return result
+      })
+      ipcMain.handle('__project-authority:disconnect', async (event, localWorkspaceId: unknown) => {
+        const senderId = event.sender.id
+        const bound = windowManager?.getWorkspaceForWindow(senderId)
+        if (!bound || typeof localWorkspaceId !== 'string' || localWorkspaceId !== bound) {
+          return { ok: false, error: { code: 'WORKSPACE_MISMATCH', status: 403 } }
+        }
+        const generation = (projectAuthorityRequests.get(senderId) ?? 0) + 1
+        projectAuthorityRequests.set(senderId, generation)
+        const { disconnectStoredProjectAuthority } = await import('./project-authority')
+        const result = await disconnectStoredProjectAuthority(bound, undefined, () => !event.sender.isDestroyed()
+          && windowManager?.getWorkspaceForWindow(senderId) === bound && projectAuthorityRequests.get(senderId) === generation)
+        if (result.ok) quiesceProjectAuthorityWindows(bound, senderId)
+        return result
+      })
+
       ipcMain.on('__get-workspace-remote-config', (e) => {
         const wsId = windowManager?.getWorkspaceForWindow(e.sender.id)
         if (!wsId) { e.returnValue = null; return }
@@ -1424,11 +1521,14 @@ let isQuitting = false
 function captureAndSaveWindowState(reason: 'before-quit' | 'pre-update'): number {
   if (!windowManager) return -1
   const windows = windowManager.getWindowStates()
-  const focusedWindow = BrowserWindow.getFocusedWindow()
-  const lastFocusedWorkspaceId = focusedWindow
-    ? windowManager.getWorkspaceForWindow(focusedWindow.webContents.id) ?? undefined
+  const lastActiveWindow = windowManager.getLastActiveWindow()
+  const lastFocusedWorkspaceId = lastActiveWindow
+    ? windowManager.getWorkspaceForWindow(lastActiveWindow.webContents.id) ?? undefined
     : undefined
-  saveWindowState({ windows, lastFocusedWorkspaceId })
+  if (!saveWindowState({ windows, lastFocusedWorkspaceId })) {
+    mainLog.error('[window-state] save failed', { windowCount: windows.length, reason })
+    return -1
+  }
   mainLog.info('[window-state] saved', { windowCount: windows.length, reason })
   return windows.length
 }
@@ -1445,6 +1545,10 @@ async function performQuitCleanup(): Promise<void> {
     return
   }
   quitCleanupRan = true
+  if (cleanupNativeReplicaIpc) {
+    cleanupNativeReplicaIpc()
+    cleanupNativeReplicaIpc = null
+  }
 
   if (sessionManager) {
     try {

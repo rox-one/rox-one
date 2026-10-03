@@ -5,7 +5,7 @@
 import { app, BrowserWindow, dialog, ipcMain, session, shell, systemPreferences, webContents } from 'electron'
 import { join } from 'node:path'
 import { CONFIG_DIR } from '@craft-agent/shared/config'
-import { MEETINGS_LOCAL_IPC as C, type LocalMeetingPatch } from '../../shared/meetings-local'
+import { MEETINGS_LOCAL_IPC as C, type LocalMeetingPatch, type LocalTranscriptSegmentUpdate } from '../../shared/meetings-local'
 import { detectEngine } from './local-asr'
 import { IMPORTABLE_AUDIO_EXTENSIONS, isMeetingId } from './local-model'
 import { LocalMeetingStore } from './local-store'
@@ -104,7 +104,7 @@ export function registerLocalMeetingsIpc(log?: (message: string, error?: unknown
   handle(C.REC_STOP, (_e, id: string, input: { durationMs: number }) => s.recStop(id, input))
   handle(C.RECOVER, (e) => s.recover(ownerAlive, e.sender.id))
 
-  handle(C.IMPORT_AUDIO, async (e, input: { meetingId?: string; workspaceId: string | null; path?: string }) => {
+  handle(C.IMPORT_AUDIO, async (e, input: { requestId: string; meetingId?: string; workspaceId: string | null; path?: string }) => {
     let path = input?.path
     if (!path) {
       const win = BrowserWindow.fromWebContents(e.sender) ?? undefined
@@ -114,11 +114,17 @@ export function registerLocalMeetingsIpc(log?: (message: string, error?: unknown
       if (picked.canceled || !picked.filePaths[0]) return null
       path = picked.filePaths[0]
     }
-    return s.importAudio({ path, meetingId: input?.meetingId, workspaceId: input?.workspaceId ?? null })
+    return s.importAudio({ requestId: input.requestId, path, meetingId: input.meetingId, workspaceId: input.workspaceId ?? null })
   })
+  handle(C.IMPORT_CANCEL, (_e, requestId: string) => s.cancelImport(requestId))
   handle(C.READ_AUDIO, (_e, id: string) => s.readAudio(id))
   handle(C.READ_TRANSCRIPT, (_e, id: string) => s.readTranscript(id))
+  handle(C.READ_TRANSCRIPT_REVISION, (_e, id: string, revision: number) => s.readTranscriptRevision(id, revision))
+  handle(C.RESTORE_TRANSCRIPT_REVISION, (_e, id: string, input: { expectedRevision: number; restoreRevision: number }) =>
+    s.restoreTranscriptRevision(id, input))
   handle(C.TRANSCRIBE, (_e, id: string) => s.transcribe(id))
+  handle(C.TRANSCRIBE_CANCEL, (_e, id: string) => s.cancelTranscription(id))
+  handle(C.TRANSCRIPT_SEGMENT_UPDATE, (_e, id: string, input: LocalTranscriptSegmentUpdate) => s.updateTranscriptSegment(id, input))
   handle(C.ENGINE, () => detectEngine(CONFIG_DIR))
   handle(C.MIC_ACCESS, (_e, ask: boolean) => micAccess(!!ask))
 

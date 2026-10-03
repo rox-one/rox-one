@@ -1,0 +1,166 @@
+[
+  {
+    "id": "RS-FOCUS-01",
+    "title": "Главная: заменить толстую рамку быстрого ввода задачи на спокойный доступный focus-индикатор",
+    "area": "focus",
+    "bodyFile": "docs/rox-suite/issue-drafts/product/RS-FOCUS-01.md",
+    "dependsOn": [],
+    "relatedIssues": [
+      553,
+      578
+    ],
+    "images": [
+      1
+    ]
+  },
+  {
+    "id": "RS-SHEET-01",
+    "title": "Rox Sheets: сохраняемая таблица с формулами, совместным редактированием и связями с сущностями",
+    "area": "sheets",
+    "bodyFile": "docs/rox-suite/issue-drafts/product/RS-SHEET-01.md",
+    "dependsOn": [
+      "RS-DRV-01",
+      "RS-DOC-01"
+    ],
+    "relatedIssues": [
+      563,
+      564,
+      570
+    ],
+    "images": [
+      5
+    ]
+  },
+  {
+    "id": "RS-SLIDE-01",
+    "title": "Rox Slides: редактор презентаций, показ, комментарии и экспорт как общая Document entity",
+    "area": "slides",
+    "bodyFile": "docs/rox-suite/issue-drafts/product/RS-SLIDE-01.md",
+    "dependsOn": [
+      "RS-DRV-01",
+      "RS-DOC-01"
+    ],
+    "relatedIssues": [
+      570,
+      563
+    ],
+    "images": [
+      5
+    ]
+  },
+  {
+    "id": "RS-BASE-01",
+    "title": "Rox Base: типизированные записи и views Table/Board/Form поверх единого entity graph",
+    "area": "base",
+    "bodyFile": "docs/rox-suite/issue-drafts/product/RS-BASE-01.md",
+    "dependsOn": [
+      "RS-DRV-01"
+    ],
+    "relatedIssues": [
+      564,
+      381
+    ],
+    "images": [
+      5,
+      7
+    ]
+  },
+  {
+    "id": "RS-FORM-01",
+    "title": "Rox Forms: form builder, безопасная публикация и response-to-entity workflows",
+    "area": "forms",
+    "bodyFile": "docs/rox-suite/issue-drafts/product/RS-FORM-01.md",
+    "dependsOn": [
+      "RS-DRV-01",
+      "RS-BASE-01"
+    ],
+    "relatedIssues": [
+      570,
+      569
+    ],
+    "images": [
+      5
+    ]
+  },
+  {
+    "id": "RS-AUT-01",
+    "title": "Automations: расширить текущий граф до визуального canvas с palette, ports и inspector",
+    "area": "automations",
+    "bodyFile": "docs/rox-suite/issue-drafts/product/RS-AUT-01.md",
+    "dependsOn": [],
+    "relatedIssues": [
+      569
+    ],
+    "images": [
+      8
+    ]
+  },
+  {
+    "id": "RS-AUT-02",
+    "title": "Automations: каталог connector actions, Auth и типизированные Input/Output/Error mappings",
+    "area": "automations",
+    "bodyFile": "docs/rox-suite/issue-drafts/product/RS-AUT-02.md",
+    "dependsOn": [
+      "RS-AUT-01",
+      "RS-MCP-01"
+    ],
+    "relatedIssues": [
+      569,
+      566
+    ],
+    "images": [
+      8
+    ]
+  },
+  {
+    "id": "RS-AUT-03",
+    "title": "Automations: durable event workflow runtime с Scheduler, DateTime, ветвлениями и возобновлением",
+    "area": "automations",
+    "bodyFile": "docs/rox-suite/issue-drafts/product/RS-AUT-03.md",
+    "dependsOn": [
+      "RS-AUT-01",
+      "RS-AUT-02"
+    ],
+    "relatedIssues": [
+      569
+    ],
+    "images": [
+      8
+    ]
+  },
+  {
+    "id": "RS-AUT-04",
+    "title": "Automations: Debug, журнал узлов, ошибки, конфигурация и проверяемые результаты запусков",
+    "area": "automations",
+    "bodyFile": "docs/rox-suite/issue-drafts/product/RS-AUT-04.md",
+    "dependsOn": [
+      "RS-AUT-03"
+    ],
+    "relatedIssues": [
+      569,
+      578
+    ],
+    "images": [
+      8
+    ]
+  },
+  {
+    "id": "RS-AUT-05",
+    "title": "Automations: draft/publish versioning, guided tutorial и шаблон Scheduler → DateTime → Connector",
+    "area": "automations",
+    "bodyFile": "docs/rox-suite/issue-drafts/product/RS-AUT-05.md",
+    "dependsOn": [
+      "RS-AUT-01",
+      "RS-AUT-02",
+      "RS-AUT-03",
+      "RS-AUT-04"
+    ],
+    "relatedIssues": [
+      569,
+      577
+    ],
+    "images": [
+      8
+    ]
+  }
+]

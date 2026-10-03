@@ -1,0 +1,141 @@
+{
+  "inputRevision": "a0fea0034d2101e9a194913fe4c0257693722707",
+  "manifestSha256": "fcf0311297b6bc8d72b663b904a9fbba3723d600c474632581d4911324c6445b",
+  "patchSha256": "193573e67cd05103813a18b41edc785da5bc2f394872283dff4d20ac8cdba91b",
+  "paths": [
+    "packages/core/src/calendar/calendar.test.ts",
+    "packages/core/src/platform/identity/credential-types.test.ts",
+    "packages/core/src/platform/identity/credential-types.ts",
+    "packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts",
+    "packages/core/src/rox2/__tests__/platform-contract.test.ts",
+    "packages/core/src/tasks/personal/store.ts",
+    "packages/core/src/tasks/personal/things.test.ts"
+  ],
+  "preimageCheck": "PASS",
+  "resultHashCheck": "PASS",
+  "preservedHashesCheck": "PASS",
+  "rootTests": {
+    "pass": 816,
+    "fail": 0,
+    "assertions": 3499,
+    "files": 77,
+    "runtime": "Bun1.4.2"
+  },
+  "fullCompoundDoD": "NOT_VERIFIED",
+  "rootTypecheck": {
+    "exitCode": 0,
+    "diagnostics": 0
+  },
+  "artifactReadback": [
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/baseline-core-tests.log",
+      "sha256": "fc909f42053900a0dfaf3d5f51d0108fa502c3d6c2429761e96e8c841cb1290d",
+      "bytes": 95746
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/proposed-core-tests.log",
+      "sha256": "dca82a8e87315e55ecb618b57fade4bc653e846e0a6651c7bc00883ac241c211",
+      "bytes": 95749
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/baseline-core-tests-bun1314.log",
+      "sha256": "25903c38fac759e32ba2cdb355377b6003fab88a838b4bb90c47f8c52eacc59d",
+      "bytes": 95760
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/parent-regressions-red.log",
+      "sha256": "f64965307eaa70589fe449152fbf38b135e987ed2c6dcc1818f9343df253b09d",
+      "bytes": 13393
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/parent-regressions-red-bun1314.log",
+      "sha256": "3a0a66b0eacb547463ce7960c7f597dffcc0d8e990e59a1a259e926aaca92bec",
+      "bytes": 13404
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/final-core-tests-bun142.log",
+      "sha256": "900705e67d33e53a5ca7adb185ce0e7d22e66497f5552fa5d17f241c2f0ab106",
+      "bytes": 94342
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/final-core-tests-bun1314.log",
+      "sha256": "9e58a10739e2031bf4e073bee20e0386e180ef446c63a6f62d7d993a93365234",
+      "bytes": 94423
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/baseline-types.log",
+      "sha256": "df55a9109f33f79a6bf39e336fd05d279be71b8f59fefeebe697cf009176ff7f",
+      "bytes": 2529
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/proposed-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/final-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/controls-bun142/focused-core-acl-receipt.log",
+      "sha256": "8175bb96763f9ae8e783baa1a45cc2053c26ce00aa8ae222099244d5ca00450b",
+      "bytes": 33348
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/controls-bun142/independent-private-acl-receipt.log",
+      "sha256": "6a721ccc104d47d18fe8c7401bcfb223bd2b9418bb6aa793288d419c9a59937d",
+      "bytes": 493
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/controls-bun142/negative-controls.json",
+      "sha256": "529220d1fb5dc2de07a734b6b94a2c5fb5b86a9d83967516b6542a6bdb6e0209",
+      "bytes": 11512
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/controls-bun1314/focused-core-acl-receipt.log",
+      "sha256": "228b17e965267d0068ed8030c6844f81a844b395ce06b4b48f8ac40108bbd57d",
+      "bytes": 33356
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/controls-bun1314/independent-private-acl-receipt.log",
+      "sha256": "dbf0b4ee03537f5566ec259c0fe008a5eb03832abf1447a3943e8aa3c162b513",
+      "bytes": 493
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/controls-bun1314/negative-controls.json",
+      "sha256": "a22d911315f99b1a80051ba356bb7107b00cfa7bc5a1c9513567b349a545cdcf",
+      "bytes": 12163
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/type-only-control-history/actor-acl-grant-substitution-mutant.log",
+      "sha256": "ff5ffc0ac665afc1ca961a037d5d7d07b5e3fc593085ecba08f458442693c869",
+      "bytes": 281
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/evidence/canonical-acl-private.test.ts.source.txt",
+      "sha256": "97b7e5a66c4da8388f7a159896a12732aa4937e48c70f3dbba26a0022736a211",
+      "bytes": 2943
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/run-controls.ts.source.txt",
+      "sha256": "0ad5321cd0da9fdc8203fd5d96ae19953b3ba4d450d1470009338160392fc8ae",
+      "bytes": 6933
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/independent/seal-gate.ts.source.txt",
+      "sha256": "f91622245a37aea5c73c669cd2fdb5697e9fe2d3d3905450bc90a07162ca21ef",
+      "bytes": 9045
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/root-tests.log",
+      "sha256": "ec941809e748e7b08db36d2248f8b28c4d3c711103b980011da031ab446c084f",
+      "bytes": 94316
+    },
+    {
+      "path": "plans/compound-implementation/evidence/core-recovery-1292/root-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ]
+}

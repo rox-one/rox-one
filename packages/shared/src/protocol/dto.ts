@@ -29,6 +29,14 @@ import type {
 // Re-export generateMessageId for handler convenience
 export { generateMessageId } from '@craft-agent/core/types'
 
+/** Persisted default configuration only; no account or credential readiness claim. */
+export interface StartupRuntimeSummary {
+  kind: 'configuration-only'
+  slug: string
+  providerType: LlmProviderType
+  isDefault: true
+}
+
 // ---------------------------------------------------------------------------
 // Session types
 // ---------------------------------------------------------------------------
@@ -690,8 +698,77 @@ export interface NoteSummary {
 }
 
 export interface NoteDocument extends NoteSummary {
+  /** Immutable journal identity; path-derived id may change after move/rename. */
+  nativeId?: string
   content: string
   backlinks: NoteBacklink[]
+  /** Present for journal-backed native notes; distinct from the legacy content hash. */
+  nativeRevision?: number | null
+  /** Native content revision. Optional for older remote peers and stored fixtures. */
+  revision?: string
+  /** Server-issued native owner binding; a write precondition, never a grant. */
+  sourceStoreId?: string
+}
+
+export interface NoteMutationOptions {
+  operationId: string
+  expectedRevision: number | null
+  schemaVersion: 1
+}
+
+export interface NativeDataContext {
+  issuer: string
+  subject: string
+  workspaceId: string
+  permissionFence: string
+}
+
+export interface NativeDataReadEntityInput {
+  workspaceId: string
+  kind: 'notes'
+  nativeId: string
+}
+
+export interface NativeDataMutationInput extends NativeDataReadEntityInput, NoteMutationOptions {
+  changes: Array<{ path: string; content: string | null }>
+}
+
+export interface NativeDataPullChangesInput {
+  workspaceId: string
+  afterSequence: number
+  limit?: number
+}
+
+/** Authenticated journal receipt; server filesystem roots never cross the wire. */
+export interface NativeDataReceipt {
+  issuer: string
+  subject: string
+  workspaceId: string
+  kind: string
+  nativeId: string
+  operationId: string
+  sequence: number
+  revision: number
+  contentHash: string
+  deleted: boolean
+}
+
+export interface NativeDataEntitySnapshot {
+  workspaceId: string
+  kind: string
+  nativeId: string
+  revision: number
+  contentHash: string
+  deleted: boolean
+  files: Array<{ path: string; content: string }>
+}
+
+export interface NativeDataPullChangesOutput {
+  changes: NativeDataReceipt[]
+  nextSequence: number
+  hasMore: boolean
+  entities: NativeDataEntitySnapshot[]
+  permissionFence: string
 }
 
 export interface NoteRenameImpact {
@@ -719,7 +796,9 @@ export interface NoteAssetRenameResult {
 
 export interface NoteChangedPayload {
   workspaceId: string
-  reason?: 'external' | 'save' | 'create' | 'rename' | 'delete' | 'asset' | 'properties'
+  /** Stable identity of a durable native invalidation; replay may deliver it again. */
+  eventId?: string
+  reason?: 'external' | 'save' | 'create' | 'rename' | 'move' | 'delete' | 'asset' | 'properties' | 'descriptor'
   noteId?: string
 }
 
@@ -1282,3 +1361,7 @@ export interface CredentialMigrationRollbackDto extends CredentialMigrationCount
 export type CredentialMigrationResult<T> =
   | { ok: true; data: T }
   | { ok: false; code: CredentialMigrationErrorCode }
+
+/** Native document block projections carry the exact authority preconditions. */
+export type { GetBlockTreeRequest, BlockTreeResult, PreviewMarkerMappingRequest, NativeMarkerMappingPreview,
+  ApplyMarkerMappingRequest, MarkerMappingCommitResult } from '@craft-agent/server-core/docs/block-tree-service'

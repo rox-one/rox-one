@@ -56,7 +56,7 @@ export interface ParsedRoute {
 // Compound Route Types (new format)
 // =============================================================================
 
-export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home'
+export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'search' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home'
   // Extra workbench screens («Ещё»): one navigator, screen id in `screen`
   | 'screen'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
@@ -65,6 +65,8 @@ export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'autom
 export interface ParsedCompoundRoute {
   /** The navigator type */
   navigator: NavigatorType
+  /** Search page query (only for search navigator). */
+  query?: string
   /** Session filter (only for sessions navigator) */
   sessionFilter?: SessionFilter
   /** Source filter (only for sources navigator) */
@@ -89,55 +91,35 @@ export interface ParsedCompoundRoute {
   } | null
 }
 
-// =============================================================================
-// Compound Route Parsing
-// =============================================================================
-
 /**
- * Known prefixes that indicate a compound route.
- *
- * Exported so the main-process deep-link handler (`rox://<route>`) accepts
- * exactly the same set of view routes the renderer can navigate to.
+ * Known prefixes that indicate a compound route. Shared with the deep-link
+ * handler so `rox://search?q=...` is accepted like renderer navigation.
  */
 export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
-  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home',
+  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home',
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
   ...EXTRA_SCREEN_IDS,
 ]
 
-/**
- * Check if a route is a compound route (new format)
- */
 export function isCompoundRoute(route: string): boolean {
   const firstSegment = route.split('?')[0].split('/')[0]
   return COMPOUND_ROUTE_PREFIXES.includes(firstSegment)
 }
 
-/**
- * Parse a compound route into structured navigation
- *
- * Examples:
- *   'allSessions' -> { navigator: 'sessions', sessionFilter: { kind: 'allSessions' }, details: null }
- *   'allSessions/session/abc123' -> { navigator: 'sessions', sessionFilter: { kind: 'allSessions' }, details: { type: 'session', id: 'abc123' } }
- *   'flagged/session/abc123' -> { navigator: 'sessions', sessionFilter: { kind: 'flagged' }, details: { type: 'session', id: 'abc123' } }
- *   'sources' -> { navigator: 'sources', details: null }
- *   'sources/api' -> { navigator: 'sources', sourceFilter: { kind: 'type', sourceType: 'api' }, details: null }
- *   'sources/mcp' -> { navigator: 'sources', sourceFilter: { kind: 'type', sourceType: 'mcp' }, details: null }
- *   'sources/local' -> { navigator: 'sources', sourceFilter: { kind: 'type', sourceType: 'local' }, details: null }
- *   'sources/source/github' -> { navigator: 'sources', details: { type: 'source', id: 'github' } }
- *   'sources/api/source/gmail' -> { navigator: 'sources', sourceFilter: { kind: 'type', sourceType: 'api' }, details: { type: 'source', id: 'gmail' } }
- *   'settings' -> { navigator: 'settings', details: null }  // navigator-only view
- *   'settings/shortcuts' -> { navigator: 'settings', details: { type: 'shortcuts', id: 'shortcuts' } }
- */
 export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
-  // Compound routes are pure slash-segment paths; defensively strip any query tail
-  // so a stray `?x=y` never leaks into segment parsing (e.g. into a labelId).
-  const [pathPart] = route.split('?')
+  // Keep the query separate from slash-delimited route segments.
+  const [pathPart, queryPart] = route.split('?')
   const segments = pathPart.split('/').filter(Boolean)
   if (segments.length === 0) return null
 
   const first = segments[0]
-
+  if (first === 'search') {
+    return {
+      navigator: 'search',
+      query: queryPart ? new URLSearchParams(queryPart).get('q') ?? '' : '',
+      details: null,
+    }
+  }
   // Kanban board — standalone route. A view of all sessions in board mode.
   // Encoded as its own prefix (not `allSessions/board`) so it never collides
   // with the positional `{filter}/session/{id}` detail parsing below.
@@ -558,6 +540,11 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
  * Build a compound route string from parsed state
  */
 export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
+  if (parsed.navigator === 'search') {
+    const query = parsed.query
+    return query ? `search?${new URLSearchParams({ q: query }).toString()}` : 'search'
+  }
+
   if (parsed.navigator === 'settings') {
     if (!parsed.details) return 'settings'
     return `settings/${parsed.details.type}`
@@ -775,6 +762,10 @@ export function parseRoute(route: string): ParsedRoute | null {
  * Convert a parsed compound route to ParsedRoute format (type: 'view')
  */
 function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute {
+  if (compound.navigator === 'search') {
+    return { type: 'view', name: 'search', params: compound.query ? { q: compound.query } : {} }
+  }
+
   // Settings
   if (compound.navigator === 'settings') {
     if (!compound.details) {
@@ -972,6 +963,10 @@ export function parseRouteToNavigationState(
  * Convert a ParsedCompoundRoute to NavigationState
  */
 function convertCompoundToNavigationState(compound: ParsedCompoundRoute): NavigationState {
+  if (compound.navigator === 'search') {
+    return { navigator: 'search', query: compound.query ?? '' }
+  }
+
   // Settings
   if (compound.navigator === 'settings') {
     if (!compound.details) {
@@ -1434,6 +1429,10 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
  * Convert NavigationState to ParsedCompoundRoute
  */
 function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundRoute {
+  if (state.navigator === 'search') {
+    return { navigator: 'search', query: state.query, details: null }
+  }
+
   if (state.navigator === 'settings') {
     if (state.subpage === null) {
       return { navigator: 'settings', details: null }

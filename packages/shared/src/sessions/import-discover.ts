@@ -29,26 +29,29 @@ export interface DiscoverForeignOptions {
   maxPerKind?: number
   /** Reuse unchanged entries from the previous scan cache (incremental rescans). */
   reuseCache?: boolean
+  /** Rechecked before each source metadata/content read so consent revocation stops the scan. */
+  shouldContinue?: () => boolean
 }
 
-function listDirs(path: string): string[] {
-  if (!existsSync(path)) return []
+function listDirs(path: string, shouldContinue: () => boolean): string[] {
+  if (!shouldContinue() || !existsSync(path)) return []
   try {
     return readdirSync(path, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory() && !entry.isSymbolicLink() && !entry.name.startsWith('.'))
+      .filter((entry) => shouldContinue() && entry.isDirectory() && !entry.isSymbolicLink() && !entry.name.startsWith('.'))
       .map((entry) => join(path, entry.name))
   } catch {
     return []
   }
 }
 
-function listFiles(path: string, suffix: string): string[] {
-  if (!existsSync(path)) return []
+function listFiles(path: string, suffix: string, shouldContinue: () => boolean): string[] {
+  if (!shouldContinue() || !existsSync(path)) return []
   try {
     return readdirSync(path, { withFileTypes: true })
-      .filter((entry) => entry.isFile() && !entry.isSymbolicLink() && entry.name.endsWith(suffix))
+      .filter((entry) => shouldContinue() && entry.isFile() && !entry.isSymbolicLink() && entry.name.endsWith(suffix))
       .map((entry) => join(path, entry.name))
       .filter((file) => {
+        if (!shouldContinue()) return false
         const maxBytes = file.endsWith('.json') && !file.endsWith('.jsonl') ? MAX_FOREIGN_EXPORT_BYTES : undefined
         return inspectForeignSource(file, maxBytes).status === 'ok'
       })
@@ -57,17 +60,18 @@ function listFiles(path: string, suffix: string): string[] {
   }
 }
 
-function walkFiles(root: string, suffix: string, maxDepth: number, depth = 0): string[] {
-  if (depth > maxDepth || !existsSync(root)) return []
+function walkFiles(root: string, suffix: string, maxDepth: number, halted: () => boolean, depth = 0): string[] {
+  if (halted() || depth > maxDepth || !existsSync(root)) return []
   try {
     if (lstatSync(root).isSymbolicLink()) return []
   } catch {
     return []
   }
-  const files = listFiles(root, suffix)
+  const files = listFiles(root, suffix, () => !halted())
   if (depth === maxDepth) return files
-  for (const dir of listDirs(root)) {
-    files.push(...walkFiles(dir, suffix, maxDepth, depth + 1))
+  for (const dir of listDirs(root, () => !halted())) {
+    if (halted()) break
+    files.push(...walkFiles(dir, suffix, maxDepth, halted, depth + 1))
   }
   return files
 }
@@ -132,7 +136,7 @@ function* scanKindFiles(
   if (halted()) return
   for (const root of roots) {
     for (const suffix of suffixes) {
-      for (const file of walkFiles(root, suffix, depth)) {
+      for (const file of walkFiles(root, suffix, depth, halted)) {
         if (halted()) return
         if (shouldSkipFile(file)) continue
         if (filter && !filter(file)) continue
@@ -188,6 +192,8 @@ function* discoverForeignSessionsIter(options: DiscoverForeignOptions): Generato
   const maxPerKind = options.maxPerKind ?? MAX_SCAN_PER_KIND
   let truncated = false
   let halt = false
+  const shouldContinue = options.shouldContinue ?? (() => true)
+  const halted = () => halt || !shouldContinue()
 
   // Incremental rescans: reuse the previous scan's entry for any source whose
   // mtime has not changed, so only new or modified chats are re-parsed.
@@ -200,6 +206,7 @@ function* discoverForeignSessionsIter(options: DiscoverForeignOptions): Generato
     for (const [path, mtime] of Object.entries(prev.empties)) emptyPrev.set(path, mtime)
   }
   const entryFor: EntryFor = (kind, sourcePath) => {
+    if (!shouldContinue()) return { id: `${kind}:${sourcePath}`, kind, sourcePath, userTurns: 0, skipReason: 'empty' }
     const mtime = mtimeMs(sourcePath)
     const prev = reuse.get(sourcePath)
     if (prev && prev.kind === kind && mtime !== undefined && prev.mtimeMs === mtime) return prev
@@ -207,6 +214,7 @@ function* discoverForeignSessionsIter(options: DiscoverForeignOptions): Generato
       emptyNext[sourcePath] = mtime
       return { id: `${kind}:${sourcePath}`, kind, sourcePath, userTurns: 0, mtimeMs: mtime, skipReason: 'empty' }
     }
+    if (!shouldContinue()) return { id: `${kind}:${sourcePath}`, kind, sourcePath, userTurns: 0, skipReason: 'empty' }
     const entry = toEntry(kind, sourcePath, convertForeignSource(sourcePath, kind))
     if (entry.userTurns === 0 && mtime !== undefined) emptyNext[sourcePath] = mtime
     return entry
@@ -224,6 +232,10 @@ function* discoverForeignSessionsIter(options: DiscoverForeignOptions): Generato
 
   const consider = (entry: ForeignIndexEntry): boolean => {
     if (halt) return false
+    if (!shouldContinue()) {
+      halt = true
+      return false
+    }
     const result = add(entry)
     if (result === 'full') {
       truncated = true
@@ -238,8 +250,10 @@ function* discoverForeignSessionsIter(options: DiscoverForeignOptions): Generato
   }
 
   const grokRoot = join(home, '.grok', 'sessions')
-  grok: for (const encodedCwd of listDirs(grokRoot)) {
-    for (const sessionDir of listDirs(encodedCwd)) {
+  grok: for (const encodedCwd of listDirs(grokRoot, shouldContinue)) {
+    if (halted()) break
+    for (const sessionDir of listDirs(encodedCwd, shouldContinue)) {
+      if (halted()) break grok
       if (!existsSync(join(sessionDir, 'summary.json')) && !existsSync(join(sessionDir, 'chat_history.jsonl'))) {
         continue
       }
@@ -249,25 +263,25 @@ function* discoverForeignSessionsIter(options: DiscoverForeignOptions): Generato
   }
 
   const claudeRoot = join(home, '.claude', 'projects')
-  claude: for (const projectDir of listDirs(claudeRoot)) {
-    if (halt) break
-    for (const jsonl of listFiles(projectDir, '.jsonl')) {
+  claude: for (const projectDir of listDirs(claudeRoot, shouldContinue)) {
+    if (halted()) break
+    for (const jsonl of listFiles(projectDir, '.jsonl', shouldContinue)) {
       if (!consider(entryFor('claude', jsonl))) break claude
       yield
     }
   }
 
   const codexRoot = join(home, '.codex', 'sessions')
-  if (!halt) {
-    for (const jsonl of walkFiles(codexRoot, '.jsonl', 4)) {
+  if (!halted()) {
+    for (const jsonl of walkFiles(codexRoot, '.jsonl', 4, halted)) {
       if (!consider(entryFor('codex', jsonl))) break
       yield
     }
   }
 
-  if (!halt) {
+  if (!halted()) {
     opencode: for (const root of [join(home, '.local', 'share', 'opencode'), join(home, '.opencode')]) {
-      for (const db of [...walkFiles(root, '.db', 3), ...walkFiles(root, '.sqlite', 3)]) {
+      for (const db of [...walkFiles(root, '.db', 3, halted), ...walkFiles(root, '.sqlite', 3, halted)]) {
         if (
           !consider({
             id: `opencode:${db}`,
@@ -285,8 +299,8 @@ function* discoverForeignSessionsIter(options: DiscoverForeignOptions): Generato
   }
 
   const hermesRoot = join(home, '.hermes', 'sessions')
-  if (!halt) {
-    for (const jsonl of walkFiles(hermesRoot, '.jsonl', 3)) {
+  if (!halted()) {
+    for (const jsonl of walkFiles(hermesRoot, '.jsonl', 3, halted)) {
       if (!consider(entryFor('hermes', jsonl))) break
       yield
     }
@@ -304,8 +318,6 @@ function* discoverForeignSessionsIter(options: DiscoverForeignOptions): Generato
     const rest = posix.slice(at + '/sessions/'.length)
     return rest.split('/').length <= 2
   }
-  const halted = () => halt
-
   yield* scanKindFiles('chatgpt', [homeJoin('.chatgpt'), homeJoin('Downloads', 'chatgpt'), homeJoin('Downloads', 'ChatGPT')], ['.json', '.jsonl'], 3, consider, halted, entryFor)
   yield* scanKindFiles('deepseek', [homeJoin('.deepseek'), homeJoin('Downloads', 'deepseek')], ['.json', '.jsonl'], 3, consider, halted, entryFor)
   yield* scanKindFiles('gemini', [homeJoin('.gemini')], ['.jsonl', '.json'], 4, consider, halted, entryFor)
@@ -322,12 +334,13 @@ function* discoverForeignSessionsIter(options: DiscoverForeignOptions): Generato
 
   const scannedAt = options.now ?? Date.now()
   const cachePath = foreignImportScanCachePath(options.workspaceRoot)
-  if (options.writeCache !== false) {
+  const aborted = !shouldContinue()
+  if (options.writeCache !== false && !aborted) {
     mkdirSync(dirname(cachePath), { recursive: true })
     writeFileSync(cachePath, `${JSON.stringify({ scannedAt, entries, truncated, empties: emptyNext })}\n`)
   }
 
-  return { entries, scannedAt, cachePath, truncated }
+  return { entries, scannedAt, cachePath, truncated, aborted }
 }
 
 /** Synchronous scan (tests, CLI). Prefer discoverForeignSessionsAsync in the app. */

@@ -1,8 +1,5 @@
 import { shouldUploadAudio } from './policy.ts'
 import type {
-  SpeakAdapter,
-  SpeakInput,
-  SpeakResult,
   TranscribeAdapter,
   TranscribeInput,
   TranscribeResult,
@@ -25,10 +22,17 @@ export async function transcribeWithPolicy(
   adapters: { local: TranscribeAdapter; cloud: TranscribeAdapter },
   options: { offline?: boolean } = {},
 ): Promise<TranscribeResult> {
+  if (options.offline && prefs.sttEngine === 'cloud-rox') {
+    throw new VoicePrivacyError('cloud-stt-offline', 'Cloud speech is unavailable offline')
+  }
+
   if (prefs.privacyMigrationPending && shouldUploadAudio(prefs)) {
     throw new VoicePrivacyError('consent-required', 'Confirm archive and cloud ASR consent before recording')
   }
 
+  if (prefs.sttEngine === 'cloud-rox' && !prefs.cloudAsrConsent) {
+    throw new VoicePrivacyError('consent-required', 'Enable cloud ASR consent or select local Whisper')
+  }
   if (!shouldUploadAudio(prefs)) {
     if (prefs.whisperStatus !== 'ready') {
       throw new VoicePrivacyError(
@@ -38,11 +42,9 @@ export async function transcribeWithPolicy(
     }
     const result = await adapters.local.transcribe(input)
     return {
-      text: result.text,
+      ...result,
       engine: 'local-whisper',
       uploaded: false,
-      noSpeech: result.noSpeech,
-      requestId: result.requestId,
     }
   }
 
@@ -52,23 +54,12 @@ export async function transcribeWithPolicy(
 
   const result = await adapters.cloud.transcribe(input)
   return {
-    text: result.text,
-    engine: prefs.sttEngine,
+    ...result,
+    engine: adapters.cloud.engine,
     uploaded: true,
-    noSpeech: result.noSpeech,
-    requestId: result.requestId,
   }
 }
 
-export async function speakWithPolicy(
-  prefs: VoicePrefs,
-  input: SpeakInput,
-  adapters: { edge: SpeakAdapter; fish: SpeakAdapter },
-): Promise<SpeakResult> {
-  const adapter = prefs.ttsEngine === 'fish-speech' ? adapters.fish : adapters.edge
-  const result = await adapter.speak(input)
-  return { engine: prefs.ttsEngine, uploaded: false }
-}
 
 export function assertEditableTranscript(text: string): string {
   const next = text.trim()

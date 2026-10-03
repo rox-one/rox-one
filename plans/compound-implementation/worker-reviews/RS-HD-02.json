@@ -1,0 +1,446 @@
+{
+  "task_id": "RS-HD-02-preflight",
+  "attempt_id": "73f39fda6064726130b44f4048a7b7c8",
+  "packet_hash": "240cab181d618c5a529fee1a18b4c42677a04a22d8630d81b00dd6013e133764",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "RS-HD-02",
+  "featureComplete": false,
+  "dependencies": ["RS-HD-01", "RS-MCP-01"],
+  "reviewMode": "bounded-workflow; source-backed preflight only; root retains source integration",
+  "evidenceStatus": {
+    "scope": "Published package specification, exact issue record, explicit dependency specifications, package target paths and directly relevant imports of the published existing source seams.",
+    "specManifestMatches": true,
+    "sourceVersion": "Hashes describe the inspected working-tree files, not a claim that their bytes equal input_revision. Root-owned uncommitted wave0 work was not modified or attributed to this worker.",
+    "freshness": "Reads and whole-file hashing were sequential, not an atomic snapshot. Concurrent integration can invalidate evidence; root must rehash and re-read changed seams after its wave0 commit and accepted dependency receipts.",
+    "codegraph": "Unavailable for this checkout: tool returned no .codegraph index. No index or upgrade was attempted.",
+    "find": "Initial descriptive find failed because its judging provider returned HTTP 402. Inspection continued with exact specification-named paths and literal symbol grep; no network operation was separately launched by the worker.",
+    "runtimeVerification": "NOT_RUN: builds, tests, native UI and network operations were prohibited. Proposed checks below are future acceptance requirements, not observed passes.",
+    "targetAvailability": "Glob found no apps/workspace-service tree, helpdesk component directory, HelpDeskPage.tsx, TicketDetail.tsx, workspace-domain/helpdesk/contracts.ts, helpdesk commands.ts, capabilities commands.ts, or helpdesk-sla.spec.ts at inspection. This is a scoped path observation, not a repository-wide assertion that all foundation mechanisms are absent."
+  },
+  "foundationGates": [
+    {
+      "kind": "published_architecture_prerequisites_not_explicit_DAG_edges",
+      "ids": ["WP-04", "WP-06", "WP-07", "WP-09", "WP-14", "WP-15", "WP-16", "WP-28", "WP-36", "WP-37", "WP-38"],
+      "source": "docs/rox-suite/published/RS-HD-02.md:13,70,96",
+      "requirement": "Consume accepted Revision2 authority contracts rather than rebuilding foundation infrastructure inside Help Desk. The eleven WP identifiers are normative gates even though dependsOn contains only two RS identifiers.",
+      "missingPrerequisite": "Lead-provided accepted, revision-bound WP receipts and actual authority exports. This package spec does not map each WP identifier to its title or implementation symbol; those mappings were not invented or researched outside scope.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "kind": "transitive_dependency",
+      "ids": ["RS-ADM-01"],
+      "source": "docs/rox-suite/published/RS-HD-01.md:11; docs/rox-suite/published/RS-MCP-01.md:11; docs/rox-suite/published/RS-HD-02.md:12,28",
+      "requirement": "RS-ADM-01 is related, not a direct RS-HD-02 edge; it is an explicit prerequisite of both direct dependencies. Queue-policy entry belongs in the existing Admin hub.",
+      "missingPrerequisite": "Accepted dependency chain and Admin hub queue-policy integration seam.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "kind": "business_calendar_contract",
+      "source": "docs/rox-suite/published/RS-HD-02.md:13,39-40,51-57,108-110",
+      "requirement": "Versioned calendar/timezone/rules, working intervals and holidays; start/stop/pause/reopen semantics; timezone changes and DST handling; prospective publish versus explicitly audited recalculation. No wall-clock substitute or screenshot-derived calendar engine.",
+      "missingPrerequisite": "Accepted calendar contract with explicit ambiguous/nonexistent-local-time and timezone-change rules. Package cannot silently choose those policy semantics.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "kind": "canonical_ticket_and_capability_authority",
+      "source": "docs/rox-suite/published/RS-HD-02.md:51-54,74-78; docs/rox-suite/published/RS-HD-01.md:51-57; docs/rox-suite/published/RS-MCP-01.md:54-58,75",
+      "requirement": "Ticket identity/revision/lifecycle and ticket.reply remain RS-HD-01 authority; RS-MCP-01 supplies authenticated tool invocation and current resource/connection/capability checks. Assignment is not an ACL grant, and agent drafting is not sending.",
+      "missingPrerequisite": "Accepted HD-01 and MCP-01 implementation receipts including actual service contracts, generated transport and guarded reply handler. Their normative target files are not present in the inspected tree.",
+      "state": "BLOCKED_ON_EXPLICIT_DEPENDENCIES"
+    },
+    {
+      "kind": "canonical_revisioned_knowledge_and_export_policy",
+      "source": "docs/rox-suite/published/RS-HD-02.md:22,41-43,51-55,74-78; packages/shared/src/pages/types.ts:40-45,86-100; apps/electron/src/renderer/pages/NotesPage.tsx:1041-1057,1749-1779",
+      "requirement": "KB stores Page/Note ref and version only, not duplicate article bodies. Citation includes revision/span/digest and customer audience decision. Existing Page action-grant digest/expiry and Notes side-session timestamp context are not proof of KB export authorization or immutable citation revisions.",
+      "missingPrerequisite": "Canonical version resolution, quote/span/digest contract, purpose/current grants and explicit export/declassification policy shared by draft and send.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "kind": "durable_jobs_and_projections",
+      "source": "docs/rox-suite/published/RS-HD-02.md:55-57,65,76,78,104,115",
+      "requirement": "Commit-bound outbox, durable deadline jobs keyed by milestone+generation, monotonic event sequence and stale-generation rejection; authorized search/activity/Inbox/memory projections with event-version recipient dedup and revoke retraction.",
+      "missingPrerequisite": "Foundation scheduler/outbox/replay/projection hooks and accepted policy-aware notification/search/memory contracts. Existing Inbox local aggregation is not this engine.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "kind": "external_provider_and_readback_lane",
+      "source": "docs/rox-suite/published/RS-HD-02.md:43,102,115,128; docs/rox-suite/published/RS-HD-01.md:13",
+      "requirement": "Explicit preview/send through canonical reply, distinguish local_durable/provider_accepted/readback, then close the appropriate response milestone once. Actual adapter requires provider-live acceptance; accepted is not readback.",
+      "missingPrerequisite": "HD-01 reply adapter, synthetic dedicated tenant and its authoritative provider readback/reconciliation receipt contract.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "kind": "verification_and_delivery",
+      "source": "docs/rox-suite/published/RS-HD-02.md:117,127-131,137",
+      "requirement": "Linux domain/renderer, source-pinned macOS native IPC/font/device and provider-live where applicable; independent review, seeded negative controls, synthetic screenshots/ARIA and revision-bound logs, runbook, user docs and GitHub commit/PR evidence. Pending required lane leaves feature incomplete.",
+      "missingPrerequisite": "Lead-owned committed integration, lane runners, native surface and provider environment plus evidence delivery/review authorization after this preflight.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/helpdesk/TriageView.tsx",
+    "apps/electron/src/renderer/components/helpdesk/SlaTimeline.tsx",
+    "apps/workspace-service/src/modules/helpdesk/sla-clock.ts",
+    "apps/workspace-service/src/modules/helpdesk/answer-drafts.ts",
+    "apps/workspace-service/migrations/helpdesk-sla.sql",
+    "tests/rox-suite/helpdesk-sla.spec.ts"
+  ],
+  "ownershipNotes": "ownedNewFiles is exactly the six normative RS-HD-02 implementation targets at spec lines 88-94, not permission to create them during preflight. Migration registration/shared SQL integration remains with the single shared owner. The only current writable owned path is this report; HD-01's HelpDeskPage/TicketDetail/contracts/commands are dependency-owned, not RS-HD-02 new files.",
+  "proposedCodeContributions": [
+    {
+      "path": "apps/workspace-service/src/modules/helpdesk/sla-clock.ts",
+      "symbols": ["sla.previewPolicy", "sla.publishPolicy", "sla.getClock", "sla.recalculate", "TicketMilestone/SlaClock projection"],
+      "change": "Consume canonical Ticket events and the accepted business-calendar contract. Calculate elapsed/remaining/dueAt by consuming ordered working intervals minus specified pause intervals, not by adding duration to UTC/wall time. Persist policyVersion/calendar timezone/hash/asOf, pause history and lastEventSequence. Distinguish prospective publish from explicit authorized audited recalculation; rotate milestone generation so old deadline jobs cannot breach the recalculated milestone. Handle duplicate/reordered events and reopened policy as explicit contract transitions, not guessed behavior.",
+      "prerequisite": "HD-01 contracts/events, calendar semantics, common command ledger/outbox/scheduler and gateway accepted first. Domain command names are normative targets, not existing TypeScript exports."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/helpdesk/answer-drafts.ts",
+      "symbols": ["ticket.answerDraft", "KBArticleRef", "AnswerDraft provenance"],
+      "change": "Resolve only allowed canonical Page/Note versions under authenticated actor and purpose; record citations(ref,revision,span,digest), audienceDecision, generatedAt and uncertainties. Recheck current grants after generation; remove/reject revoked evidence. Persist draft provenance/receipts without a separate KB body store. Keep generated text reviewable/editable and cancellable, never invoke reply automatically. Provide citation/audience binding to the existing ticket.reply preview/send guard so manual edits and revoke invalidate stale preview evidence.",
+      "prerequisite": "MCP invocation policy, canonical version/quote/export contracts, HD-01 reply previewHash/receipt checks and scoped durable draft retention."
+    },
+    {
+      "path": "apps/workspace-service/migrations/helpdesk-sla.sql",
+      "symbols": ["sla_policy_versions", "ticket_sla_milestones", "durable deadline jobs"],
+      "change": "Add versioned policy/calendar/timezone/rule hash persistence and ticket-linked milestones with dueAt/business elapsed/pause intervals/policyVersion/lastEventSequence. Register durable deadline uniqueness milestone+generation using the foundation job store; do not create another scheduler. Persist SupportQueuePolicy, KB version references and draft provenance/receipts through the accepted canonical schema; no copied article body. Alias and upgrade behavior must be integrated by the migration owner.",
+      "prerequisite": "Actual workspace-service schema, Ticket foreign keys, canonical revision/alias conventions and scheduler tables after accepted wave0/dependencies. Exact SQL column types and registry identifier remain unbound until those contracts exist."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/helpdesk/TriageView.tsx",
+      "symbols": ["TriageView", "ticket.triagePreview/apply", "sla.previewPolicy/publishPolicy"],
+      "change": "Render unassigned/overdue/waiting queue rows from authorized Ticket queries with stable Ticket refs; show policy/calendar versions. Assignment/classification sends baseRevision and previews actual SLA recalculation before guarded apply. Embed queue-admin policy preview/publish via Admin hub, without ACL grants or hidden retroactive changes. Use existing theme/preferences/controls and t(); preserve draft/selection/scroll across errors/navigation under current grants.",
+      "prerequisite": "HD-01 HelpDeskPage, list/read/update contracts, Admin hub seam, typed transport and common help primitives."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/helpdesk/SlaTimeline.tsx",
+      "symbols": ["SlaTimeline", "sla.getClock", "TicketDetail SLA strip"],
+      "change": "Render milestone states, working elapsed/remaining/dueAt, calendar/timezone/version/asOf, pause reason and evidence timeline. Focus/click exposes formula and detailed timeline. Clock remains a server projection, not a component Date.now()+duration engine; unauthorized, stale or unavailable data is not rendered as zero/empty/verified. Preserve stable selection and reduced-motion behavior.",
+      "prerequisite": "Accepted SLA clock result/events, TicketDetail integration and shared status/help contracts."
+    },
+    {
+      "path": "tests/rox-suite/helpdesk-sla.spec.ts",
+      "symbols": ["business-calendar scenarios", "revoke/uncertain draft scenarios", "end-to-end persisted Help Desk scenario", "seeded mutants"],
+      "change": "Implement behavior assertions for all six spec test criteria and the persisted/reloaded end-to-end scenario; compare UI and API/tool equivalents, denied paths and adjacent Notes/Pages/Inbox/HD-01 flows. Separate deterministic clock/event tests from renderer/native/provider evidence lanes. Mutate wall-clock addition, event dedup and source export guard one at a time against a green baseline and assert intended observable failure.",
+      "prerequisite": "Runnable real domain/renderer/service fixtures plus native/provider lanes; no planning-schema or mock echo accepted as feature proof."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "NotesPage.saveCurrentNote / flushBeforeAction / openNotesRightSession",
+      "change": "Add a KB quote/link handoff from the existing preview using canonical Note ref, confirmed persisted revision and source span/digest plus audience check; flush dirty content and stop on failed save before creating provenance. Reuse commitMarkdown revision/operationId receipt and pending replay handling at lines 1041-1089. Do not use updatedAt from openNotesRightSession lines 1755-1766 as a citation revision or attach the whole Note to customer scope. Revoke removes the quote eligibility while preserving only policy-allowed draft retention.",
+      "reason": "Reuses real editor/authority rather than introducing a KB editor; current side-session is prefill only, not authorized KB publishing."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PagesHome.tsx",
+      "symbol": "PagesHome.openPage / visiblePages / handleAskAgent",
+      "change": "Allow the knowledge picker to peek the existing page through routes.view.pages and return a canonical versioned Page reference from the shared resolver. Filter results and counts server-side for actor/purpose before presenting KB choices; project filtering of pagesAtom is not ACL. Do not treat generic routes.action.newSession input as a citation-bound ticket answer or add KB document storage here.",
+      "reason": "Existing library has navigation and workspace-scoped project filters but no verified KB revision/export workflow."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/InboxPage.tsx",
+      "symbol": "InboxPage / KIND_GLYPH / KIND_TONE / KINDS / openSession / done",
+      "change": "Integrate authorized assignment/breach attention into the existing list/count/detail and typed Ticket deep links, preferably extending the HD-01 ticket attention kind. Update exhaustive kind maps and keyboard-open dispatch for Ticket items; display event/policy version and recovery. Inbox dismissal/snooze must not close a Ticket milestone, hide audited breach history or grant reply permission. Preserve existing mail merge and permission/session actions.",
+      "reason": "allItems currently merges useInboxItems with mail; no SLA engine or common breach events are present in this surface."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/useInboxItems.ts",
+      "symbol": "InboxRemoteSource / useInboxItems.load / buildInboxItems input / allLoaded prune gate",
+      "change": "Consume the canonical authorized Help Desk attention projection via the accepted generated client and realtime/reconnect invalidation; add its loaded/error state and include it in the source-complete prune gate. Scope requests/results to workspace and policy revision; retract denied rows/counts promptly. Missing backend must yield unsupported/degraded reason rather than copying the current optional-RPC Promise.resolve([]) fallback for the new source.",
+      "reason": "Changing InboxPage alone cannot supply assignment/breach rows: current remote union includes only memory, skills and senders; prune waits for all sources."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/inbox/inbox-model.ts",
+      "symbol": "InboxKind / InboxSources / buildInboxItems / ALL_KINDS / DECISION_KINDS",
+      "change": "Adapt canonical ticket attention received from the shared projection to existing InboxItem rows, reusing HD-01 kind if delivered. Stable IDs must use authoritative milestone/event version and recipient identity, not firstSeen/client clock; retain canonical Ticket reference for drilldown. Map only already-authorized title/body metadata. Do not implement domain event dedup or notification permission in this pure aggregation function.",
+      "reason": "Inbox row contracts and aggregation currently have no Help Desk source; list/count support needs the actual model, not just visual glyphs."
+    },
+    {
+      "path": "packages/shared/src/agent/session-tool-defs.ts",
+      "symbol": "buildSessionToolDefs",
+      "change": "Integrate the RS-MCP-01 policy-filtered descriptors for ticket read/search/triagePreview/answerDraft and canonical reply into its existing registry/pool flow, with server enforcement on invoke. Keep first-wins name dedup, browser gate, mini-model hint and optional lens behavior; do not manually duplicate JSON schemas or make lens a security guard. Apply the authority/descriptor refresh interface supplied by the accepted MCP owner; this builder itself currently has no actor/resource authorization.",
+      "reason": "Existing advertisement seam is real, but advertised tool availability does not authorize a Ticket or KB export."
+    },
+    {
+      "path": "packages/shared/src/agent/backend/pi/session-tool-defs.ts",
+      "symbol": "getSessionToolProxyDefs",
+      "change": "Keep this a thin getToolDefsAsJsonSchema adapter. If HD-02 tools are registered as session tools, request registration once in the canonical session-tools-core registry from its owner and consume those definitions here; if MCP source proxies are chosen, use the existing pool route. Do not add a second Help Desk registry or prefixed hardcoded schema in this adapter. The canonical registry source file was not inspected in this bounded preflight and must be bound by the registry owner.",
+      "reason": "Direct import reveals definitions already originate in one canonical package; changing only buildSessionToolDefs would otherwise risk advertising unexecuted tools."
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view / ViewRoute / Route",
+      "change": "Extend the accepted HD-01 canonical Help Desk route builder with Triage/SLA/Knowledge selection and Ticket contextual link state; retain routes.view.inbox/notes/pages and URI encoding. Coordinate the actual parser, navigation history and MainContentPanel dispatch with the shared route owner so reload/back/forward restores the same Ticket and tab. No parallel URL builder inside TriageView. Parser symbol was outside inspected direct imports and remains an explicit integration prerequisite.",
+      "reason": "Current typed builder has inbox/notes/pages but no helpdesk match in inspected routes; HD-01 owns primary entry/routing."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "electronAPI typed Notes methods / generated Help Desk transport contract",
+      "change": "Through the transport owner, expose typed triage preview/apply, policy preview/publish, clock read/recalculate and answer draft inputs/results from accepted workspace-domain contracts alongside the HD-01 client. Bind baseRevision/commandId/previewHash/citations and receipt/outcome/failure codes; actor is derived on the transport side, not accepted from renderer. Extend preload/IPC or generated authenticated API coherently, choosing the already accepted foundation route rather than a second client.",
+      "reason": "Existing resolveContent/commitMarkdown/getMarkdownCommitReceipt APIs are reusable Note seams; they are not Ticket commands. Actual new RPC names/channel ownership awaits dependencies."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/helpdesk/contracts.ts",
+      "symbol": "HD-01 Ticket contracts; NEW SupportQueuePolicy/SlaCalendar/SlaClock/KBArticleRef/AnswerDraft and typed command results",
+      "change": "After the dependency file exists, extend canonical Ticket contracts with triagePreview/apply, sla.previewPolicy/publishPolicy/getClock/recalculate and ticket.answerDraft. Define versioned policy/calendar/milestone/generation/asOf fields, citations(ref,revision,span,digest), audienceDecision/generatedAt/uncertainties and domain outcomes/errors. Use common EntityRef and Rox2Status without novel lifecycle/verification enum values.",
+      "reason": "Normative HD-01 dependency-owned path is absent at inspection; this is a future shared patch request, not a claim of an existing symbol."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/helpdesk/commands.ts",
+      "symbol": "HD-01 ticket.update/link/reply canonical handlers; NEW ticket.triagePreview/apply",
+      "change": "After dependency acceptance, add triage preview/apply with baseRevision conflict handling, ticket.assign permission and audited SLA recalculation. Extend canonical reply preflight/send to validate current source revision/digest/audience and edited-content recipient previewHash/commandId before external send; preserve idempotent receipt and provider reconciliation. Close the configured response milestone exactly once from canonical reply lifecycle events, not UI success or provider-accepted alone when required readback is pending.",
+      "reason": "Reply must remain HD-01 authority; implementing a send path in answer-drafts would bypass normal command policy. Target file is absent now."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/HelpDeskPage.tsx",
+      "symbol": "HD-01 HelpDeskPage",
+      "change": "After its owner delivers the page, mount TriageView and existing Pages/Notes preview-based Knowledge selection as typed tabs; bind policy/SLA view to canonical queue/Ticket route state. Preserve HD-01 manual intake/list/detail flows, selection/history and theme preferences. Do not create another ticket/entity store or helpdesk shell.",
+      "reason": "Dependency-owned normative page is missing; an isolated new screen cannot satisfy in-shell routing/history DoD."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/helpdesk/TicketDetail.tsx",
+      "symbol": "HD-01 TicketDetail",
+      "change": "After dependency delivery, mount SlaTimeline and a reviewable editable agent draft panel with source freshness/permission chips and unknowns. Ask agent uses ticket.answerDraft; CmdEnter requests and Escape cancels. Explicit Send follows recipient/source/audience-bound canonical reply preview, never generation completion. Preserve draft on conflicts/timeouts/navigation according to current grant/purpose, show receipt and actual provider outcome separately.",
+      "reason": "Dependency-owned target is absent; the SLA strip and review-to-send path require this canonical detail, not another Ticket surface."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/*.json",
+      "symbol": "t() keys for Help Desk triage/SLA/knowledge/draft/help/state controls",
+      "change": "Shared locale owner adds matching ASCII-sorted keys to de/en/es/fr/hu/ja/pl/ru/zh-Hans/zh-Hant, with required plural forms and Russian labels. Include definition/formula/units/source/asOf/example/role/disabled-reason help and receipt/error recovery wording. Locale bodies were not inspected; exact namespace must follow the accepted HD-01 keys rather than being guessed in this preflight.",
+      "reason": "Repository AGENTS requires all user-facing text through react-i18next with ten-locale parity; serialized shared ownership is mandatory."
+    },
+    {
+      "path": "docs/rox-suite/published/RS-HD-02.md",
+      "symbol": "Checked current ROX / States, failure and observability / Tests / Definition of Done",
+      "change": "After real implementation and observed verification, link exact implementation commit, expected-observed scenario artifacts, failure/reconciliation/stale permission cleanup runbook, user explanation of business time and policy recalculation, source/license/dependency review and independent reviewer receipt. Preserve synthetic-only data and keep proposed/incomplete status until every required lane passes; link GitHub completion to the implementation PR, not this preflight.",
+      "reason": "Current normative spec explicitly records proposed-not-implemented behavior and requires docs/runbook/evidence; no such completion is asserted here."
+    }
+  ],
+  "sharedOwnerRequestsUnbound": [
+    "Migration registration and foundation deadline scheduler/outbox hooks: exact symbols must be supplied after wave0/HD-01; no apps/workspace-service tree was found.",
+    "Admin hub queue-policy placement, common entity/mention/link registry, current resource gateway, search/activity/notification/memory projection and retraction hooks: accepted WP/ADM contracts required; no invented implementation paths.",
+    "Shared route parser/history/deep-link dispatch and preload/IPC or generated-client registrations: bind exact delivered symbols through route/transport owner before editing; standalone routes.view addition is insufficient."
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "DoD-1",
+      "criterion": "UI и typed routes/history/contextual deep links работают в существующем ROX.",
+      "currentEvidence": "routes.view.inbox/notes/pages and Route exist at routes.ts:174-184,219-223,300-302; PagesHome.openPage and InboxPage.select use them. HelpDeskPage and TicketDetail normative target paths are absent.",
+      "seam": "routes.view / navigate / dependency HelpDeskPage and TicketDetail / NEW TriageView and SlaTimeline",
+      "requiredChange": "Integrate tabs/detail into HD-01 surface and shared builder/parser/history with one canonical Ticket ref; contextual Inbox and Page/Note links retain authorized versions.",
+      "verification": "Real in-shell Triage->Ticket->SLA->Knowledge and Inbox deep link; reload/direct URL/back/forward and encoded IDs restore selection/tab/scroll. Denied Ticket deep link redacts data; existing Notes/Pages/Inbox and manual intake still work.",
+      "missingPrerequisites": ["Committed wave0 and accepted HD-01 page/detail/routes", "Actual shared route parser/history seam and authenticated client"],
+      "state": "NOT_VERIFIED_BLOCKED_ON_DEPENDENCIES"
+    },
+    {
+      "id": "DoD-2",
+      "criterion": "Entity model, persistence/migration aliases, queries/commands/receipts и required background processing реализованы.",
+      "currentEvidence": "Spec:51-57 declares new models/commands/tables/events; workspace-service and helpdesk SLA migration/module targets were not found. Notes saveCurrentNote confirms an existing unrelated revision/receipt mechanism.",
+      "seam": "NEW sla-clock.ts/answer-drafts.ts/helpdesk-sla.sql; dependency helpdesk/contracts.ts and commands.ts; canonical scheduler/outbox",
+      "requiredChange": "Persist SupportQueuePolicy/calendar/rule versions, milestones/pause/event sequence/generation, canonical KB refs and AnswerDraft provenance; implement every listed query/command with revisions/idempotent receipts and guarded durable deadline jobs. Integrate aliases/upgrade through migration owner; reuse ticket.reply.",
+      "verification": "Persist/reload each result and receipt; migration on existing synthetic workspace preserves Ticket/Page/Note aliases. Restart worker between commit and dispatch; duplicate command/job and reordered events cannot duplicate milestones/events/replies. Compare API/tool equivalent and denied background execution.",
+      "missingPrerequisites": ["Accepted Ticket schema and service command/migration registry", "Calendar, ledger, outbox and durable job authority contracts"],
+      "state": "NOT_IMPLEMENTED_IN_NORMATIVE_TARGETS"
+    },
+    {
+      "id": "DoD-3",
+      "criterion": "Source/entity links и mentions используют общие IDs; source audience не расширяется автоматически.",
+      "currentEvidence": "PagesHome navigates by Page slug; NotesPage commits Note sourceStoreId/expectedRevision and side-session binds note ID with updatedAt. Neither is evidence of KB citation/version/export authority (spec:41,51,70,74).",
+      "seam": "NotesPage.flushBeforeAction/saveCurrentNote; PagesHome.openPage; NEW KBArticleRef/citation provenance and canonical EntityLink/mention adapter",
+      "requiredChange": "Use canonical Page/Note/Ticket IDs and immutable revision/span/digest; sourceStoreId/authority where required. Resolve quote audience explicitly through common policy; cross-entity linking is not a grant. No duplicate KB body or mention engine.",
+      "verification": "Authorized versioned quote opens the same Page/Note span after reload; editing source makes old preview stale. Private sentinel title/body/count/attachment cannot escape via link, mention, search, agent or requester reply; denied link creates no audience grant.",
+      "missingPrerequisites": ["Canonical Page/Note version and span/digest resolver", "Common links/mentions/export audience contracts"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "DoD-4",
+      "criterion": "Shared authorization/sharing/revoke покрывают UI/API/MCP/jobs/offline replay.",
+      "currentEvidence": "buildSessionToolDefs:61-106 advertises/deduplicates tools, without actor/resource checks. isPageGrantUsable:40-45 binds page action digest/expiry, not KB audience. Spec:74-78 explicitly requires one gateway.",
+      "seam": "RS-MCP-01 gateway/descriptors; HD-01 command handlers; NEW SLA/draft handlers and deadline job guard",
+      "requiredChange": "Transport derives actor; distinguish sla.manage, ticket.assign and ticket.reply with queue grants. Recheck source export/grants before draft completion/send/job execution/replay; audit explicit recalculation so permissions cannot be used to erase breaches. Disable unsupported offline mutation honestly and current-policy-check allowed queued replay.",
+      "verification": "Same denied/allowed matrix through UI/direct API/MCP/jobs/reconnect replay, including queue non-admin, different workspace/requester and revoke while screen/draft open. No mutation, leaked title/count/body or stale send after revoke; classification/assignment never grants ACL.",
+      "missingPrerequisites": ["Accepted MCP capability and resource gateway", "HD-01 guarded reply and foundation offline/current-grant contracts"],
+      "state": "NOT_VERIFIED_BLOCKED_ON_DEPENDENCIES"
+    },
+    {
+      "id": "DoD-5",
+      "criterion": "Search/notification/activity/agent/memory projections сохраняют policy и provenance; dedup/retraction проверены.",
+      "currentEvidence": "useInboxItems:26,61-65,91-112 aggregates memory/skills/senders and sessions, with a loaded-source prune gate. inbox-model:8-35,94-103,120-198 contains no Help Desk projection. Spec:55-57,76,78 requires common authorized projections.",
+      "seam": "useInboxItems / buildInboxItems / InboxPage; common search/activity/notification/memory projection and revoke hooks",
+      "requiredChange": "Project committed Ticket/SLA/draft events through existing primitives, keep ref/revision/purpose/audience provenance, one breach notification per milestone/event version and authorized recipient; retract denied rows/counts/citations on revoke. No private memory corpus or second notification store.",
+      "verification": "Duplicate event/outbox delivery and restart produce exactly one authorized notification/activity result; source or recipient revoke removes search/title/count/body/push and agent-memory visibility. Inbox dismiss does not alter canonical milestone; existing mail/permission flows remain intact.",
+      "missingPrerequisites": ["Accepted commit-bound event/projection/retraction APIs", "HD-01 attention kind and authenticated attention query/realtime contract"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "DoD-6",
+      "criterion": "Required realtime/reconnect/persistence concurrency сценарии из tests пройдены; unavailable capability честно disabled.",
+      "currentEvidence": "NotesPage:1031-1096 has serialized saves, revisions, retained pending operations and explicit conflict codes; useInboxItems:68-83 subscribes only existing pending sources. Spec:47,100-104,110,115-117 requires Help Desk concurrency/recovery.",
+      "seam": "NEW SLA projection/event cursor/deadline generation; triage baseRevision; ticket reply commandId; accepted realtime/replay client",
+      "requiredChange": "Consume versioned events with dedup/order handling and catch-up, preserve permitted drafts on failed query/conflict/timeout/navigation, reconcile unknown receipts before retry, reauthorize queued replay. Render unsupported/degraded distinct from empty or success; keep canonical Rox2Status enums.",
+      "verification": "Two operators conflicting on baseRevision; dropped connection/reordered or duplicated events; worker/service restart; stale deadline after recalculation; provider timeout with later receipt/readback. Reload must preserve history and close milestone once; unsupported lane visibly disabled with reason.",
+      "missingPrerequisites": ["Delivered realtime/outbox/replay service and status contract", "Runnable concurrency/restart fixtures and receipt reconciliation"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "DoD-7",
+      "criterion": "Hover/focus/click help, keyboard, loading/empty/error/offline, narrow390px, zoom200%, reduced-motion verified.",
+      "currentEvidence": "Spec:32,36-47 defines exact interaction/help contract; existing Page/Note/Inbox use t() and native controls. New TriageView/SlaTimeline/TicketDetail paths absent or dependency-pending; no UI was launched.",
+      "seam": "TriageView / SlaTimeline / dependency TicketDetail draft panel / existing theme and shared help primitives",
+      "requiredChange": "Russian ten-locale t() labels; 500ms hover and focus definitions, visible ring and separate What-is-this popover with meaning/units/formula/source/asOf/example/role/disabled reason. Escape returns focus; Tab/ShiftTab normal, roving arrows only menus/tablists. Preserve input, stable keys/scroll; one drilldown/sheets at 390px/200%; spatial transitions off under reduced motion.",
+      "verification": "Real hover timing, focus/click and keyboard walkthrough for each table control; opening help causes no mutation. Exercise loading/genuine empty/filtered empty/forbidden/unsupported/degraded/stale_revision/retryable_error/conflict/offline_cached/queued/cancelled/unknown plus all listed domain states; screenshots at 390px, 200% and reduced motion prove no shell horizontal overflow or reset theme/font.",
+      "missingPrerequisites": ["Implemented in-shell surface, shared help and locale integration", "Native/renderer visual lane with authorized synthetic fixture"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "DoD-8",
+      "criterion": "Linux domain/renderer lane; source-pinned macOS native для IPC/font/device; provider-live где actual adapter действует. Pending required lane оставляет feature incomplete.",
+      "currentEvidence": "Spec:128 names three mandatory conditional lanes; input packet is a preflight with no implementation runtime evidence. No build/test/native/provider run performed.",
+      "seam": "helpdesk-sla.spec.ts domain/renderer tests; delivered IPC/font/device surface; canonical reply adapter",
+      "requiredChange": "Run real domain/renderer on Linux and source-pinned macOS application/IPC/font checks; use synthetic dedicated provider tenant for adapter send/readback/reconciliation. Distinguish unavailable environment from baseline code failure and leave incomplete until all required lanes accepted.",
+      "verification": "Record command/environment/source commit and expected-observed behavior for each lane; provider_live evidence must come from actual adapter outcome/readback, not a stub or screenshot. Pending required lane cannot become N/A.",
+      "missingPrerequisites": ["Exact integrated commit and lane runners", "Native app runtime and HD-01 dedicated provider tenant/readback"],
+      "state": "NOT_VERIFIED_NO_LANES_RUN"
+    },
+    {
+      "id": "DoD-9",
+      "criterion": "Screenshots/ARIA и logs/hash/expected-observed предоставлены с synthetic data и exact tested commit.",
+      "currentEvidence": "Spec:7,104,129 requires synthetic-only data and correlation without bodies/secrets; this preflight hashes source but has no behavioral artifact or screenshot.",
+      "seam": "Shared observability/evidence collector; SLA/triage/draft receipts and policy/event IDs; UI accessible state",
+      "requiredChange": "Emit workspace/entity/command/receipt/event/policy-revision correlation with actionable errors and bounded recovery, command latency/retry/denied/reconcile/projection-lag metrics with denominator/source. Collect screenshots/ARIA/logs and hashes bound to exact tested commit and environment; redact secret/body payloads.",
+      "verification": "For each scenario, compare actual persisted/reloaded output with expected values and correlate receipts/events/logs. Hash artifacts and verify synthetic fixture; scan logs and screenshots for private sentinel/secret disclosure. Source hashes in this report are not runtime proof.",
+      "missingPrerequisites": ["Delivered telemetry/evidence interfaces", "Observed final scenario runs and exact integration commit"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "DoD-10",
+      "criterion": "Independent review, meaningful negative controls, runbook, source licensing/dependencies и user docs готовы.",
+      "currentEvidence": "Spec:104,113,117,130,137 explicitly requires runbook, seeded mutants and independent review; source/UI assets copying is forbidden at lines 7 and 96. No implementation review or negative control was run.",
+      "seam": "helpdesk-sla.spec.ts; shared documentation/evidence ownership; published RS-HD-02 acceptance and user help",
+      "requiredChange": "Independent review of calendar/DST/versioning, retroactive recalculation audit, authorization/revoke/export and provider reconciliation. Supply restart/deadline/projection cleanup runbook, business-time/policy/citation user docs and dependency/license provenance; no screenshot assets/source reuse. Keep three seed mutants with meaningful expected failures.",
+      "verification": "Green baseline then wall-clock addition/event-dedup removal/export-bypass mutants fail their intended assertions; restore exact baseline. Reviewer checks code plus independently rerunnable evidence; runbook recovery preserves history and current grants.",
+      "missingPrerequisites": ["Real implemented baseline and reproducible fixture", "Independent reviewer, runbook/user-doc owner and source/license receipts"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "DoD-11",
+      "criterion": "GitHub completion связывает implementation commit/PR и доказательства, а не только rendered screen.",
+      "currentEvidence": "issues.json:797-824 records issue 1116 OPEN, implementationStatus PLANNED_NOT_IMPLEMENTED and explicit predecessor issues 1115/1113; spec:131,146 forbids conflating dependency references with completion.",
+      "seam": "Lead-owned issue #1116 and implementation PR/commit evidence delivery",
+      "requiredChange": "Lead links accepted dependency receipts, integrated implementation commit/PR, all per-criterion lane evidence and independent review before closing issue. This JSON stays featureComplete=false and is not a completion receipt.",
+      "verification": "Lead's authorized GitHub readback shows implementation revision and evidence links, every required criterion verified at that revision, and no missing mandatory lane hidden by a screen-only claim.",
+      "missingPrerequisites": ["Implemented and fully verified integration", "Lead-owned authorized GitHub delivery; this worker performs no network/Git mutation"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "Test-1",
+      "criterion": "Business hours09–17 Mon–Fri, Friday16:30+2business hours→Monday10:30; holiday Monday→Tuesday10:30.",
+      "currentEvidence": "Spec:108 gives exact expected dueAt; no SLA clock target exists at inspection.",
+      "seam": "NEW sla-clock.ts and helpdesk-sla.spec.ts / sla.getClock",
+      "requiredChange": "Consume remaining Friday working half-hour, then next allowed 1.5 business hours; skip weekend and configured Monday holiday with versioned calendar/timezone/asOf exposed.",
+      "verification": "Fixed calendar/zone fixture asserts exact Monday10:30 and Tuesday10:30 respectively in API, persisted/reloaded projection and UI formula/timeline; denied read cannot expose dueAt/title.",
+      "missingPrerequisites": ["Accepted working-calendar contract and deterministic timezone fixture", "Real SLA persistence/query"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "Test-2",
+      "criterion": "Paused awaiting requester excludes specified pause interval; reopened ticket policy explicitly tested.",
+      "currentEvidence": "Spec:109 and entities/tables at 51-55 require pause intervals and reopened policy; current Notes/Inbox seams have no such lifecycle.",
+      "seam": "HD-01 Ticket status events -> sla-clock.ts TicketMilestone state transitions",
+      "requiredChange": "Track paired, versioned pause/resume intervals, subtract only their working-time overlap, preserve pause reason; apply explicitly published reopen/start/stop policy instead of silently continuing or resetting.",
+      "verification": "Fixed pause crossing working and nonworking intervals gives exact elapsed/dueAt before/after restart; reopen policy's expected milestone/history matches documented rule. Duplicate pause/resume has no double subtraction or extra closure.",
+      "missingPrerequisites": ["Ticket event contract and explicit reopen/pause rules", "Canonical event sequence/receipt store"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "Test-3",
+      "criterion": "DST transition, timezone change, duplicate/reordered events and stale deadline generation stable/reproducible.",
+      "currentEvidence": "Spec:110,55-57 defines event sequence and generation guards but does not specify DST ambiguity semantics. Deadline target/module absent.",
+      "seam": "sla-clock.ts calendar projection/recalculate; canonical deadline job execute guard",
+      "requiredChange": "Use accepted timezone/DST business-calendar conversion, pin rule/calendar versions to history and explicit change/recalculate action. Dedup events and process/reconcile sequence deterministically; current generation check and milestone closure guard precede breach notification.",
+      "verification": "Fixtures across spring/fall DST and configured timezone changes assert exact UTC/local dueAt and elapsed per accepted contract. Permuted/duplicate event deliveries and restarted jobs equal ordered baseline; stale-generation job emits neither breach nor notification.",
+      "missingPrerequisites": ["Accepted ambiguous/nonexistent time and timezone-change contract", "Durable scheduler/outbox and monotonic event sequence"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "Test-4",
+      "criterion": "KB private sentinel doesn't reach customer reply/search/agent wider scope; source revoke mid generation rejects stale send.",
+      "currentEvidence": "Spec:111,41-43,74-78 requires these boundaries; NotesPage side-session prefill and Page grant digest/expiry alone do not implement them.",
+      "seam": "answer-drafts.ts resolver/provenance; RS-MCP-01 gateway; HD-01 ticket.reply preview/send; shared search/memory retraction",
+      "requiredChange": "Gate each canonical KB version by actor/purpose and recipient export policy, recheck after generation and at send. Bind citations/audience/source revision to previewHash so revoke or edited recipients invalidate it and cannot be replayed.",
+      "verification": "Synthetic private body/title sentinel denied across requester reply, search/count, broader agent context/memory. Revoke at generation barrier, attempt old preview via UI/API/MCP and replay; stale send is rejected with no external provider effect and permitted manual draft preserved.",
+      "missingPrerequisites": ["Canonical knowledge/export policy and revoke hooks", "Real guarded reply/provider-effect fixture and draft cancellation barrier"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "Test-5",
+      "criterion": "Agent uncertain/missing source returns draft unknowns; no send without normal command policy.",
+      "currentEvidence": "Spec:112,53 defines uncertainties and no unattended send; NotesPage:1774-1778 is prefill-only, not ticket draft provenance.",
+      "seam": "ticket.answerDraft / AnswerDraft uncertainties / TicketDetail review panel / canonical ticket.reply",
+      "requiredChange": "Return explicit unknowns for insufficient/missing source and citation_denied for denied evidence without fabricated citations or confidence. Draft creation never grants ownership/reply or auto-sends; human review and normal preview/send guard required.",
+      "verification": "Missing and contradictory allowed source fixtures persist reviewable unknowns, no invented citations and zero provider sends. Actor with draft/read but no reply permission is denied send through UI/API/MCP; explicit authorized edited preview/send obtains receipt/readback.",
+      "missingPrerequisites": ["Real agent draft adapter and accepted provenance/error contract", "HD-01 normal reply command policy"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "Test-6",
+      "criterion": "Seed wall-clock addition, event dedup removal and source export bypass must fail assertions.",
+      "currentEvidence": "Spec:113,117 requires seeded failures at intended assertion with green baseline, not planner/schema success.",
+      "seam": "helpdesk-sla.spec.ts; calendar dueAt engine, event dedup/generation guard and audience/export guard",
+      "requiredChange": "Retain independent meaningful assertions for exact Friday/holiday dueAt, exactly-once milestone/notification/reply and no private-source export. Build mutation lane that changes each corresponding behavior in an isolated baseline copy without mutating user data.",
+      "verification": "Record green baseline and each mutation's intended failing assertion with exact source revision/hash, then restored green artifact. Environment/import failure is not accepted as mutation detection.",
+      "missingPrerequisites": ["Implemented baseline and runnable deterministic behavior fixtures", "Authorized lead mutation lane; this preflight runs no tests or source edits"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "Scenario-E2E",
+      "criterion": "Unassigned ticket triaged→SLA dueAt reproducible from rule/calendar→agent cites allowed KB→human reviews→reply read-back→clock milestone closes once. Reload/restart/duplicate jobs preserve history.",
+      "currentEvidence": "Spec:115-117 defines integrated acceptance including persisted/reloaded output, API/tool equivalent, denied path and adjacent existing flow. Target surfaces/service are absent or dependency-pending; no live run observed.",
+      "seam": "HD-01 HelpDeskPage/TicketDetail and ticket.reply; TriageView/sla-clock/answer-drafts/SlaTimeline; shared attention/knowledge/gateway/outbox",
+      "requiredChange": "Complete every vertical slice through existing surface/authority: authorized triage receipt, versioned reproducible clock, allowed versioned citations, human edited reply preview/send, actual readback, idempotent milestone closure and authorized projections. No standalone mock screen or auto-send shortcut.",
+      "verification": "Synthetic unassigned Ticket with 09–17 calendar: exercise actual UI then compare API/tool and persisted reloaded outputs. Restart service/worker, redeliver deadline/reply events, reconnect; dueAt/history/receipt and one closure remain identical. Include source revoke, unauthorized operator, provider timeout reconciliation and neighboring Notes/Pages/Inbox/manual intake checks on exact committed revision.",
+      "missingPrerequisites": ["All accepted direct/transitive/foundation dependency receipts and full integrated implementation", "Linux/native/provider-live evidence lanes and independent review"],
+      "state": "NOT_VERIFIED_FEATURE_INCOMPLETE"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "docs/rox-suite/published/RS-HD-02.md", "symbol": "Architecture prerequisites; domain/contracts; normative paths; tests and full DoD", "lineStart": 11, "lineEnd": 137, "sha256": "902624d19670400468911c9748f3be55813b0bd8f6e6e448b5faafe17aa851c6"},
+    {"path": "plans/rox-suite/issues.json", "symbol": "RS-HD-02 normative issue record", "lineStart": 797, "lineEnd": 824, "sha256": "5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path": "docs/rox-suite/published/RS-HD-01.md", "symbol": "Ticket authority, canonical ticket.reply and dependency-owned implementation targets", "lineStart": 49, "lineEnd": 96, "sha256": "c88d30b3a78a48a1ef7a6587094c7b1f18fb2937a5f003f1e11c75cc5722ba45"},
+    {"path": "docs/rox-suite/published/RS-MCP-01.md", "symbol": "Capability/invocation policy and dependency-owned contracts", "lineStart": 50, "lineEnd": 96, "sha256": "7e0e4f01c7ab1230e9befeec9e93fdb360eb17ee0a441ec24863f27f99446d50"},
+    {"path": "apps/electron/src/renderer/pages/NotesPage.tsx", "symbol": "NotesPage.saveCurrentNote", "lineStart": 1023, "lineEnd": 1099, "sha256": "872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"},
+    {"path": "apps/electron/src/renderer/pages/NotesPage.tsx", "symbol": "NotesPage.openNotesRightSession", "lineStart": 1749, "lineEnd": 1780, "sha256": "872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"},
+    {"path": "apps/electron/src/renderer/components/pages/PagesHome.tsx", "symbol": "PagesHome.visiblePages / openPage / handleCreatePage / handleAskAgent", "lineStart": 66, "lineEnd": 105, "sha256": "3941920dba5049e0bb966d4f001e49816982d7396891727dd75d0e262319a484"},
+    {"path": "apps/electron/src/renderer/pages/InboxPage.tsx", "symbol": "InboxPage.allItems / select / visible", "lineStart": 91, "lineEnd": 141, "sha256": "9e7b98fc482a3dca7a18042123f48e295d8c5a88d0f9cb48a2e6b464943209e3"},
+    {"path": "packages/shared/src/agent/session-tool-defs.ts", "symbol": "buildSessionToolDefs", "lineStart": 61, "lineEnd": 107, "sha256": "67ead826b61bdfc6e979b26fc22d6d4e07ab3c6d3c1704a2eb241678a69c9de6"},
+    {"path": "packages/shared/src/agent/backend/pi/session-tool-defs.ts", "symbol": "getSessionToolProxyDefs", "lineStart": 19, "lineEnd": 24, "sha256": "561b97ce3105daec438f1c0a45c69b562add767d9bb9fb7f7cb3ffeef2c86a69"},
+    {"path": "apps/electron/src/renderer/hooks/useInboxItems.ts", "symbol": "InboxRemoteSource / useInboxItems", "lineStart": 26, "lineEnd": 117, "sha256": "6d19994bf049e6200f0005efd3e1da775979045f57f5d33c618f3b7116a6eca7"},
+    {"path": "apps/electron/src/renderer/pages/inbox/inbox-model.ts", "symbol": "InboxKind / InboxItem / InboxSources / buildInboxItems", "lineStart": 8, "lineEnd": 198, "sha256": "e6834df3cd5881c81b4c92f512b9ed698a68e9311011c07ada9fe60caba8fda2"},
+    {"path": "apps/electron/src/renderer/lib/navigate.ts", "symbol": "navigate and shared routes import", "lineStart": 15, "lineEnd": 50, "sha256": "fbf258fb42a94c07a2a5db579714706140e75c049e9ccad6125959c2b21a7fac"},
+    {"path": "apps/electron/src/shared/routes.ts", "symbol": "routes.view.inbox/notes/pages", "lineStart": 174, "lineEnd": 184, "sha256": "c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path": "apps/electron/src/shared/routes.ts", "symbol": "ActionRoute / ViewRoute / Route", "lineStart": 300, "lineEnd": 302, "sha256": "c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path": "packages/shared/src/pages/types.ts", "symbol": "isPageGrantUsable", "lineStart": 40, "lineEnd": 45, "sha256": "89ec620aa244c217cc77e904197ede8b6ff31c46990a3ce7740550d2387a2caa"},
+    {"path": "packages/shared/src/pages/types.ts", "symbol": "LoadedPage", "lineStart": 86, "lineEnd": 100, "sha256": "89ec620aa244c217cc77e904197ede8b6ff31c46990a3ce7740550d2387a2caa"},
+    {"path": "apps/electron/src/shared/types.ts", "symbol": "electronAPI resolveContent / commitMarkdown / getMarkdownCommitReceipt", "lineStart": 930, "lineEnd": 948, "sha256": "9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead accepts this preflight as an inspection artifact only; no source implementation starts from this worker.",
+    "implementationGate": "Wait for lead wave0 commit and accepted RS-HD-01/RS-MCP-01 receipts in explicit dependency order, including their RS-ADM-01 chain and relevant WP authority receipts. Rehash/re-read changed source and bind actual canonical Ticket, calendar, gateway, transport, outbox/scheduler/projection/versioned-knowledge exports before patching.",
+    "firstCodeSliceAfterGate": "Implement persisted business-calendar/SLA policy/clock/deadline behavior in normative SLA module/migration plus shared Ticket command/contract patches, connect TriageView/SlaTimeline to HD-01 surface and prove Friday/holiday, denied access and reload/restart behavior. Then complete versioned KB/draft/human reply/readback slice with revoke and unknown-source controls; keep issue open until all DoD lanes pass.",
+    "artifactVerificationHandoff": ["python3", "plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/RS-HD-02.json", "${ROX_COMPOUND_PACKET_ROOT}/RS-HD-02/packet.json"],
+    "verificationBoundary": "Lead runs its supplied packet/report verifier; this is artifact validation, never E2E feature evidence. Worker does not launch tests/builds/native UI/network or mutate shared files/Git."
+  },
+  "risks": [
+    "A two-edge RS DAG hides eleven explicit architecture prerequisites, transitive RS-ADM-01 and live-provider/calendar/export contracts. Accepted predecessor receipts alone do not prove every gate.",
+    "Published source references pin older 249b3b44220bcfbd7d467de9cfc18f76e1c37807; current inspected Notes save is at 1023-1099, not cited historical 858-904. Working-tree whole-file hashes must be rechecked after root integration; preflight is not an input-HEAD runtime receipt.",
+    "Canonical Help Desk target/service files are not present now. Creating a local Ticket store, KB body store, scheduler, notification service or isolated screen to bypass those prerequisites violates scope.",
+    "Calendar/DST/timezone/reopen semantics need explicit accepted contract, not arbitrary math. Prospective publishing versus audited recalculation must preserve historical breaches and rule provenance.",
+    "Notes side-session revisionByEntityId currently uses updatedAt and prefill allow-all context. Neither proves canonical revision/export authorization; using it as customer citation provenance could disclose private source text.",
+    "Tool schemas/dedup/MCP lens are advertisement mechanisms, not authorization. Drafting must not call another reply path or extend ownership/grants.",
+    "Existing Inbox optional RPC empty fallbacks and local firstSeen/done/snooze state must not be adopted as backend availability, SLA event dedup or milestone lifecycle evidence. Attention errors/loaded gate/revoke/counts need coherent shared integration.",
+    "Provider accepted is not readback. Duplicate/replayed/late provider events or stale deadline generations must not produce multiple milestone closures or breach notifications.",
+    "Multiple packages share Notes/Pages/Inbox/routes/agent definitions/contracts/migrations/transport/locales. Single-owner serialized patch application and post-wave0 re-read are required; no shared edits were made here.",
+    "Native/provider lanes, negative mutants and independent review remain mandatory. An accepted JSON/schema report, screenshots alone or a narrowed green test cannot make this feature complete."
+  ],
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

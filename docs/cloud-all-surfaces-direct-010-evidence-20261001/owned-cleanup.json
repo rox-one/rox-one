@@ -1,0 +1,86 @@
+{
+  "ownedRunProfiles": [
+    {
+      "path": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/empty-profile-NcsQLz",
+      "existsAfter": false
+    },
+    {
+      "path": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC",
+      "existsAfter": false
+    },
+    {
+      "path": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/shell-profile-OKakoC",
+      "existsAfter": false
+    },
+    {
+      "path": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/auth-negative/auth-negative-profile-sJFiM2",
+      "existsAfter": false
+    },
+    {
+      "path": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/auth-negative/auth-negative-profile-P3Sa4H",
+      "existsAfter": false
+    }
+  ],
+  "servers": [
+    {
+      "label": "empty",
+      "pid": 116274,
+      "stillExists": false,
+      "actualExit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "label": "shell",
+      "pid": 116395,
+      "stillExists": false,
+      "actualExit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "label": "shell-restart",
+      "pid": 119299,
+      "stillExists": false,
+      "actualExit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "label": "auth-negative",
+      "pid": 118038,
+      "stillExists": false,
+      "actualExit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "label": "auth-negative",
+      "pid": 117228,
+      "stillExists": false,
+      "actualExit": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  ],
+  "removedOwnTaskDirs": [
+    {
+      "path": "/tmp/rox-r15-exact-ui-20261001/private-config",
+      "existsAfter": false
+    },
+    {
+      "path": "/tmp/rox-r15-exact-ui-20261001/cache",
+      "existsAfter": false
+    },
+    {
+      "path": "/tmp/rox-r15-exact-ui-20261001/tmp",
+      "existsAfter": false
+    }
+  ],
+  "checkoutAndDependenciesRetained": true
+}

@@ -1,0 +1,66 @@
+{
+  "attempts": [
+    {
+      "status": "FAILED",
+      "counts": {
+        "requiredDocs": 24,
+        "totalDocs": 26,
+        "surfaces": 38,
+        "capabilities": 162,
+        "entities": 38,
+        "workPackages": 52,
+        "dependencyEdges": 154,
+        "evidenceRecords": 308,
+        "compiledJsonSchemas": 104,
+        "parsedMermaidDiagrams": 8,
+        "checkedCommitSourceLinks": 612,
+        "negativeControls": 7
+      },
+      "errors": [
+        "10-crm.md Mermaid 1: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "10-crm.md Mermaid 1: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "08-chat-and-messaging.md Mermaid 2: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "19-target-architecture.md Mermaid 2: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "16-agent-integration.md Mermaid 5: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "11-mail.md Mermaid 5: Parse error on line 16:\n...le failures retained\n-----------------------^\nExpecting 'SOLID_OPEN_ARROW', 'DOTTED_OPEN_ARROW', 'SOLID_ARROW', 'BIDIRECTIONAL_SOLID_ARROW', 'DOTTED_ARROW', 'BIDIRECTIONAL_DOTTED_ARROW', 'SOLID_CROSS', 'DOTTED_CROSS', 'SOLID_POINT', 'DOTTED_POINT', got 'NEWLINE'",
+        "17-infrastructure.md Mermaid 5: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "07-collaboration-runtime.md Mermaid 5: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "07-collaboration-runtime.md Mermaid 6: Parse error on line 12:\n...al causal operations  W->>S: retry unde\n-----------------------^\nExpecting 'SOLID_OPEN_ARROW', 'DOTTED_OPEN_ARROW', 'SOLID_ARROW', 'BIDIRECTIONAL_SOLID_ARROW', 'DOTTED_ARROW', 'BIDIRECTIONAL_DOTTED_ARROW', 'SOLID_CROSS', 'DOTTED_CROSS', 'SOLID_POINT', 'DOTTED_POINT', got 'NEWLINE'",
+        "07-collaboration-runtime.md Mermaid 6: Parse error on line 10:\n...; no persistent edit  S-->>B: RemoteAwa\n-----------------------^\nExpecting 'SOLID_OPEN_ARROW', 'DOTTED_OPEN_ARROW', 'SOLID_ARROW', 'BIDIRECTIONAL_SOLID_ARROW', 'DOTTED_ARROW', 'BIDIRECTIONAL_DOTTED_ARROW', 'SOLID_CROSS', 'DOTTED_CROSS', 'SOLID_POINT', 'DOTTED_POINT', got 'NEWLINE'",
+        "07-collaboration-runtime.md Mermaid 6: Parse error on line 12:\n...kips this validation  Note over C,W: Pr\n-----------------------^\nExpecting 'SOLID_OPEN_ARROW', 'DOTTED_OPEN_ARROW', 'SOLID_ARROW', 'BIDIRECTIONAL_SOLID_ARROW', 'DOTTED_ARROW', 'BIDIRECTIONAL_DOTTED_ARROW', 'SOLID_CROSS', 'DOTTED_CROSS', 'SOLID_POINT', 'DOTTED_POINT', got 'NEWLINE'",
+        "13-calls-meetings.md Mermaid 6: Parse error on line 27:\n...all; add participant  API-->>UI: fresh \n-----------------------^\nExpecting 'SOLID_OPEN_ARROW', 'DOTTED_OPEN_ARROW', 'SOLID_ARROW', 'BIDIRECTIONAL_SOLID_ARROW', 'DOTTED_ARROW', 'BIDIRECTIONAL_DOTTED_ARROW', 'SOLID_CROSS', 'DOTTED_CROSS', 'SOLID_POINT', 'DOTTED_POINT', got 'NEWLINE'",
+        "02-macro-architecture.md Mermaid 6: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "02-macro-architecture.md Mermaid 6: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "architecture-review.md Mermaid 6: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "03-rox-current-state.md Mermaid 6: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "03-rox-current-state.md Mermaid 8: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "03-rox-current-state.md Mermaid 8: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "15-search-notifications.md Mermaid 8: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "06-entity-graph.md Mermaid 8: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "20-migration-dag.md Mermaid 8: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "12-calendar.md Mermaid 9: DOMPurify.addHook is not a function. (In 'DOMPurify.addHook(\"beforeSanitizeAttributes\", (node) => {\n    if (node.tagName === \"A\" && node.hasAttribute(\"target\"))\n      node.setAttribute(\"data-temp-href-target\", node.getAttribute(\"target\") ?? \"\");\n  })', 'DOMPurify.addHook' is undefined)",
+        "Required diagram families absent"
+      ],
+      "diagnosis": "DOMPurify Node environment missing DOM; distinct real Mermaid syntax failures caused by semicolon in sequence text. Added jsdom and corrected message delimiters."
+    },
+    {
+      "status": "PASSED",
+      "counts": {
+        "requiredDocs": 24,
+        "totalDocs": 26,
+        "surfaces": 38,
+        "capabilities": 162,
+        "entities": 38,
+        "workPackages": 52,
+        "dependencyEdges": 154,
+        "evidenceRecords": 308,
+        "compiledJsonSchemas": 104,
+        "parsedMermaidDiagrams": 30,
+        "checkedCommitSourceLinks": 612,
+        "negativeControls": 7
+      },
+      "errors": [],
+      "diagnosis": "All schemas/source paths/links/DAG/Mermaid pass after DOM environment and syntax fixes;7 corrupt-artifact negative controls rejected. Final independent readback closed listed blockers."
+    }
+  ]
+}

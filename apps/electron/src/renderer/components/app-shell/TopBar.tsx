@@ -16,6 +16,7 @@ import { TopBarButton } from "../ui/TopBarButton"
 import { cn } from "@/lib/utils"
 import { isMac, isWebUI } from "@/lib/platform"
 import { zenTopBarSafeLeftPx } from "./zen-topbar-safe-area"
+import { readDesktopAppearance } from '@/lib/desktop-appearance'
 import { useActionLabel } from "@/actions"
 import {
   DropdownMenu,
@@ -259,9 +260,9 @@ export function TopBar({
   const [zoomPercent, setZoomPercent] = useState(100)
   const [isFullScreen, setIsFullScreen] = useState(false)
   useEffect(() => {
-    void window.electronAPI?.getDefaultZoomLevel?.().then((level) => {
+    return readDesktopAppearance(window.electronAPI, () => window.electronAPI.getDefaultZoomLevel(), level => {
       if (typeof level === 'number' && Number.isFinite(level)) setZoomPercent(level)
-    })
+    }, error => { if (error) console.warn('Desktop zoom preference unavailable:', error) })
   }, [])
   useEffect(() => {
     const sync = () => {

@@ -1,4 +1,4 @@
-import { RPC_CHANNELS, type LlmConnectionSetup } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS, type LlmConnectionSetup, type StartupRuntimeSummary } from '@craft-agent/shared/protocol'
 import { getLlmConnections, getLlmConnection, addLlmConnection, updateLlmConnection, deleteLlmConnection, getDefaultLlmConnection, setDefaultLlmConnection, touchLlmConnection, isCompatProvider, isAnthropicProvider, getDefaultModelsForConnection, getDefaultModelForConnection, resolveMidStreamBehavior, type LlmConnection, type LlmConnectionWithStatus, toBedrockNativeId, deriveBedrockRegionPrefix } from '@craft-agent/shared/config'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { setSetupDeferred } from '@craft-agent/shared/config/storage'
@@ -108,6 +108,7 @@ async function refreshLlmOAuthIfNeeded(
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.llmConnections.LIST,
   RPC_CHANNELS.llmConnections.LIST_WITH_STATUS,
+  RPC_CHANNELS.llmConnections.GET_STARTUP_SUMMARY,
   RPC_CHANNELS.llmConnections.GET,
   RPC_CHANNELS.llmConnections.GET_API_KEY,
   RPC_CHANNELS.llmConnections.SAVE,
@@ -540,6 +541,13 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
   // ============================================================
 
   // List all LLM connections (includes built-in and custom)
+  server.handle(RPC_CHANNELS.llmConnections.GET_STARTUP_SUMMARY, async (): Promise<StartupRuntimeSummary | null> => {
+    const slug = getDefaultLlmConnection()
+    const connection = slug ? getLlmConnection(slug) : null
+    return connection ? { kind: 'configuration-only', slug: connection.slug,
+      providerType: connection.providerType, isDefault: true } : null
+  }, { access: 'localElectron', nativeAction: 'read' })
+
   server.handle(RPC_CHANNELS.llmConnections.LIST, async (): Promise<LlmConnection[]> => {
     const listed = rpcLlmConnectionsListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []

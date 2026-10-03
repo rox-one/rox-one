@@ -1,0 +1,425 @@
+{
+  "task_id": "WP-51-preflight",
+  "attempt_id": "feb9ed8479f9c5a953ba990f08aa3b38",
+  "packet_hash": "9c8d074576046250051e2cf8b94c5ff20edf9ab8442bcc26492a236c05ae0448",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-51",
+  "featureComplete": false,
+  "mode": "inspect-only; owned artifact delivery",
+  "workTier": "bounded-workflow; one scoped independent preflight worker, no nested delegation",
+  "dependencies": ["WP-03", "WP-04", "WP-05"],
+  "dependencyPrerequisites": [
+    {"producer": "WP-03", "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"], "requiredSeam": "Authorize/Grant/Revoke/Subscribe with monotonic policy_epoch and transport-derived actor; permission.revoke must expose a pending-to-applied fence transition", "state": "accepted receipts not supplied or inspected; cannot treat planned specification as implementation"},
+    {"producer": "WP-04", "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"], "requiredSeam": "one RoxCommand v2 gateway, command_receipt request hash/idempotency/revision transaction, outbox and consumer inbox; common commands files have one integration owner", "state": "accepted receipts not supplied or inspected; normative commands directory absent at inspection"},
+    {"producer": "WP-05", "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"], "requiredSeam": "SyncSince/ReplayCommand/GetCommandReceipt, durable shared projection cursor/outbox and quarantined denied drafts; explicit personal standalone adapter", "state": "accepted receipts not supplied or inspected; no accepted client adapter assumed"}
+  ],
+  "evidenceScope": {
+    "specification": "plans/macro-integration/work-packages.json:45952-46882",
+    "specificationHashMatchesPacket": true,
+    "sourceBasis": "live working-tree bytes, including any lead-owned uncommitted wave0 edits; not represented as clean input-HEAD bytes",
+    "stalenessPolicy": "whole-file hashes bind this inspection only; lead must reject or re-inspect changed references after wave0 commit and accepted dependency integration; input_revision is dispatch lineage, not a claim that current files equal that commit",
+    "limitations": ["No product source/tests/manifests/progress/Git changes", "No builds, product tests, native UI, network, or feature runtime verification", "Codegraph reported no index; scoped read/grep/glob used instead", "find failed with provider credit error; known package paths and literal-symbol searches supplied evidence", "Inspected package affected paths and direct imported adapters only; renderer surfaces and composition-root callback implementations not inspected", "Normative apps/workspace-service and packages/shared/src/workspace-domain directories were not found by glob at inspection"]
+    ,"inspectionRecovery": {
+      "firstArtifactVerifierResult": "FAILED: Source changed after inspection: packages/server-core/src/handlers/rpc/notes.ts",
+      "staleSnapshots": [
+        {"path": "packages/server-core/src/handlers/rpc/notes.ts", "sha256": "01bc67a676bbbd286097054da73494dde89171b71f0126fc67a85e8efc5bb5bc"},
+        {"path": "packages/server-core/src/handlers/rpc/content.ts", "sha256": "fea0284cc2d8a36785bd33c905e2a6894c591151a59ae830fd76209d0f04c627"},
+        {"path": "packages/server-core/src/docs/markdown-commit.ts", "sha256": "9819cff391050923a5bc2dd895f611514faff21345e7703d8726dc4f3d92786c"}
+      ],
+      "recovery": "Re-read changed note handlers, content authority/commit composition and markdown native lifecycle, invalidation journal, vault/physical-file lease, recovery and publication seams. Current sourceReferences replace stale hashes/ranges. Newly observed writeNative, vault-wide lease and durable native invalidation acceptance must be reused; they are not shared policy leases or remote-delivery acknowledgements. No product tests executed.",
+      "secondArtifactVerifierResult": "FAILED after refreshed report: Source changed after inspection: packages/server-core/src/docs/markdown-commit.ts",
+      "remainingStaleness": "Concurrent integration changed markdown-commit.ts again after re-inspection. Its recorded hash and line ranges are retained honestly as historical inspected evidence, not current live-source proof. All findings relying on that file require lead reconciliation against committed wave0/dependency bytes. No stable-revision acceptance or validPreflight=true is claimed.",
+      "scope": "Concurrent source modifications belong to lead/root; this worker did not modify them."
+    }
+  },
+  "foundationGates": [
+    {
+      "gate": "Committed foundation and common-file ownership",
+      "explicitDagEdge": false,
+      "evidence": "Dispatch requires lead wave0 commit. WP-04 newFiles 2623-2625, WP-05 3491-3493 and WP-51 45991-45993 repeat the same three commands files; those directories were absent at inspection.",
+      "requiredContribution": "After wave0 commit, consume accepted WP-03/04/05 interfaces in dependency order; extend their common commands module under its existing owner, never create a second command/receipt store.",
+      "missingPrerequisite": "lead wave0 revision and accepted dependency receipts with file-area ownership"
+    },
+    {
+      "gate": "Executable service, migrator, authenticated principal and injected domain port",
+      "explicitDagEdge": false,
+      "evidence": "RequestContext types.ts:7-11 has clientId/workspaceId/webContentsId only; HandlerDeps:70-71 offers PendingCommandsStore only. command-gateway.ts:69-113 handles approval queue, not domain command execution. Migration requires uuid workspace IDs while WORKSPACE_ID_PATTERN accepts local names. apps/workspace-service was absent. WP-52 depends on WP-51 at spec:46891-46895.",
+      "requiredContribution": "Reuse foundation authentication, registry alias mapping, transaction runner/migrator and HTTP/native composition from WP-01/02 transitively through dependencies; inject one authority/commands port. Supply a real local service/database validation path before WP-52 deployment instead of treating WP-52 as a reverse dependency.",
+      "missingPrerequisite": "accepted foundational service composition and UUID/legacy workspace mapping; migration runner and readback evidence"
+    },
+    {
+      "gate": "Real sync append/delivery boundary is specified downstream",
+      "explicitDagEdge": false,
+      "evidence": "WP-51 requires partitioned sync shard lease expiration, FenceDocument and durable append/broadcast fence. WP-10:7938-7991 owns OpenSync/PushUpdate/Materialize, CRDT WAL/snapshot/policy lease and depends on WP-51. Existing Pages CREATE_LEASE:335-345 is an in-process HTML render lease; refreshed MarkdownCommitStore.acquireLease:666-700 is a PID filesystem lock, not a distributed policy lease.",
+      "requiredContribution": "Lead must allocate an executable bounded policy-lease, fenced append and authorized delivery port to foundation/WP-51, then WP-10 consumes it. Define finite lease lifetime and clock-skew margin, authority/policy epochs, shard identity, durable frontier and fence acknowledgements. No dependence on completed WP-10 and no mock-only acceptance.",
+      "missingPrerequisite": "real sync shard/storage and delivery consumer port/owner, executable partition harness; numeric lease bound is not supplied in this specification"
+    },
+    {
+      "gate": "Canonical writer ownership and aliases, including locally valid shared IDs",
+      "explicitDagEdge": false,
+      "evidence": "Rox2EntityRef:233-239 is workspace-scoped; registerExternalBinding:336-370 supplies alias/quarantine semantics. Projects create native proj_ IDs at storage.ts:284-296; task persistence TASK_ID_RE rejects colon IDs but accepts ordinary legacy IDs, without authority mapping. Notes paths and page slugs are used by legacy writes.",
+      "requiredContribution": "ResolveWriterMode must use accepted canonical registry/native aliases and trusted resource binding, not a colon-prefix or accountNamespace heuristic. Shared aliases, create-in-shared-workspace, folder descendants, linked refs and project-delete unbindings must be guarded before any side effect. Unknown/stale authority fails closed; explicit standalone remains local.",
+      "missingPrerequisite": "accepted WP-02 identity/alias lookup surfaced by dependency ports; authoritative writer-mode cutover/backfill rules"
+    },
+    {
+      "gate": "Storage enforcement beyond declared RPC/tool surface",
+      "explicitDagEdge": false,
+      "evidence": "shared pages/storage.ts saves content before config at 455-462; projects/storage.ts and personal-persist.ts write without policy ownership. session-tool-defs.ts:61-107 only builds definitions; core tools dispatch ctx.pages/ctx.createTask. Host bash:89-116 can call a sidecar or local spawn; narrowing cwd is not resource ACL enforcement. LocalMeetingStore has background recovery/ASR writes independent of IPC.",
+      "requiredContribution": "Owner patches storage and injected executable callbacks in addition to named affected files. Shared authoritative state is service-owned, never a writable local authoritative file exposed to bash/MCP; local projection writes require a verified projection path rather than general legacy mutation. Retain existing local files for explicit standalone only.",
+      "missingPrerequisite": "accepted execution-context actor binding, authoritative/projection filesystem ownership design and executable callback integration requests accepted by lead"
+    },
+    {
+      "gate": "Fence linearization across policy DB, append and delivery",
+      "explicitDagEdge": false,
+      "evidence": "Spec risk 46048 says DB and CRDT storage are not atomic. Refreshed MarkdownCommitStore rechecks authorize/epoch at publishContent:646-648, but policy check and file rename remain separate; content.ts:115 always returns epoch 1. New native changed journal at markdown-commit.ts:527-547 persists callback acceptance, explicitly not remote/client delivery ACK (owner comment:88). Pages REVOKE_GRANT:319-329 edits action grants and sends CHANGED, not resource-policy durable fence completion.",
+      "requiredContribution": "Serialize revoke target epoch with authoritative append admission, persist pending fence and durable shard/frontier acknowledgements, invalidate delivery audience and bound old leases. ConfirmRevokeApplied returns applied only when fenced append and delivery/broadcast boundary is proven. Disconnected actors need not acknowledge, but old shard authority must be acknowledged fenced or provably expired before success. Restart resumes pending fence instead of inferring completion from push().",
+      "missingPrerequisite": "WP-03 revoke completion hook and WP-04 durable outbox/inbox barrier, authoritative sync lease clock/expiry proof"
+    },
+    {
+      "gate": "Completeness surfaces not owned by the affected-path list",
+      "explicitDagEdge": false,
+      "evidence": "WP-51 featureCompleteness:46068-46090 and docs/22-test-plan.md:199-222 require UI/routing/search/mentions/notifications/activity and offline states. Named affected files are mostly backend seams; renderer callers, search and notification implementations are outside this scoped inspection.",
+      "requiredContribution": "Lead assigns existing-surface adapters and cross-domain current-policy read/delivery consumers without adding new stores or panels. Keep all unverified criteria missing, not N/A merely because their producer is later. WP-49 editor choice and WP-52 deployment remain downstream/integration prerequisites, not new explicit WP-51 edges.",
+      "missingPrerequisite": "accepted UI/projection and policy-consumer contracts plus real native scenario access after implementation"
+    }
+  ],
+  "normativeNewFiles": [
+    "packages/shared/src/workspace-domain/commands/contracts.ts",
+    "apps/workspace-service/src/modules/commands/commands.ts",
+    "apps/workspace-service/src/modules/commands/repository.ts",
+    "tests/macro-integration/wp-51.test.ts",
+    "apps/workspace-service/migrations/51-domain-contract.sql"
+  ],
+  "ownedNewFiles": [
+    "tests/macro-integration/wp-51.test.ts",
+    "apps/workspace-service/migrations/51-domain-contract.sql"
+  ],
+  "ownershipNotes": "These are future implementation allocations, not writes made by this preflight. The three normative commands files are common WP-04/WP-05/WP-51 integration-owner files and are requested below, not independently owned replacements. Migration path is a proposed identifier; selected migrator generates the actual filename. Current worker owns ONLY this JSON report.",
+  "sharedPatchRequests": [
+    {"path": "packages/shared/src/workspace-domain/commands/contracts.ts", "symbol": "accepted WP-04/05 RoxCommand v2 contracts; proposed ResolveWriterMode/FenceDocument/ConfirmRevokeApplied/authority.applyFence", "change": "Extend accepted module with strict applyFence request {resource:Rox2EntityRef,targetPolicyEpoch:nonnegative integer,authorityEpoch:nonnegative integer}; reject actor/additional fields; canonical result supports pending_fence/REVOKE_FENCE_PENDING. Define explicit standalone/shared writer resolution, policy-lease and append/delivery barrier domain ports; keep I/O out of contracts.", "reason": "Normative common new file repeated by dependencies; schema and fence statuses must agree across HTTP/native/tools without a second store."},
+    {"path": "apps/workspace-service/src/modules/commands/commands.ts", "symbol": "accepted command dispatcher; proposed authority.applyFence and ConfirmRevokeApplied", "change": "Register operation in the same authenticated revision/idempotency gateway; validate transport principal, workspace/ref consistency, resource/action and linked refs. Coordinate WP-03 revoke target epoch with WP-51 fenced append/delivery barrier; persist pending status and resume after restart; finalize receipt/events only after durable fence proof. Reject stale lease/authority/policy at append and delivery admission.", "reason": "New wrapper around legacy approval queue is not authority; revoke success cannot be a fire-and-forget invalidation."},
+    {"path": "apps/workspace-service/src/modules/commands/repository.ts", "symbol": "accepted transaction/outbox/inbox repository; workspace_authority/policy_fence/sync_delivery_lease", "change": "Add monotonic authority/policy epoch and bounded lease operations using accepted transaction runner. Persist pending/applied fence, shard epoch/expiry and durable append/delivery frontier; CAS stale epochs, recheck revoked grants at append, dedup consumer event IDs, and atomically record receipt/event/outbox with relevant DB state. Reconcile external WAL boundary explicitly rather than assert DB+WAL atomicity.", "reason": "Single existing durable pipeline must support replay, partition expiry and crash recovery."},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "Rox2EntityRef / formatRox2EntityId / parseRox2EntityId / Rox2Status / registerExternalBinding", "change": "Reuse canonical refs, encoded binding aliases and status verification triad; add only pure authority/fence types or domain-result mapping needed by accepted contracts. Do not mark pending_fence as succeeded/verified, embed persistence, or create another entity map.", "reason": "Core is already an I/O-free identity/status seam; native IDs must resolve to existing canonical entities."},
+    {"path": "packages/server-core/src/transport/types.ts", "symbol": "RequestContext / RpcHandlerOptions", "change": "Consume WP-03 transport-derived authenticated principal/actor and workspace binding on domain handlers; keep explicit localElectron principal route for standalone. Do not trust clientId or body actor as an authenticated principal, or accept epoch from client as server authority.", "reason": "Current context carries client routing identity only; no resource principal is represented here."},
+    {"path": "packages/server-core/src/handlers/handler-deps.ts", "symbol": "HandlerDeps.commandGateway", "change": "Have foundation owner inject the accepted authority/domain command port and writer-mode resolver alongside, not in place of, the existing PendingCommandsStore; instantiate adapters only at composition root. Unavailable shared authority fails closed, never falls back to standalone.", "reason": "Existing pending-command approval store is not transactional domain authority; named handlers need a common trusted port."},
+    {"path": "packages/server-core/src/handlers/rpc/command-gateway.ts", "symbol": "HANDLED_CHANNELS / registerCommandGatewayHandlers / authorizeWorkspace / requireStore", "change": "Add accepted domain.authority.applyFence native route through the injected common command port and strict schema/envelope/auth. Preserve LIST/APPROVE/DENY pending-command behavior; remove neither its store nor its owner decisions. Map pending/applied/error statuses and allow receipt recovery rather than returning {ok:true} for incomplete fence.", "reason": "Observed module is owner approval queue, not the normative HTTP/native domain dispatcher."},
+    {"path": "packages/server-core/src/handlers/rpc/notes.ts", "symbol": "registerNotesHandlers; SAVE/UPDATE_PROPERTIES/CREATE/RENAME/DELETE/RENAME_FOLDER/DELETE_FOLDER/GET_DAILY_NOTE/LIST/asset mutations", "change": "Resolve trusted canonical writer mode before commit, creation, asset mutation, descendant/link rewrites and LIST's ensureDailyNotes. Reject legacy writes to shared IDs/aliases including indirect modified notes before side effects; standalone uses existing commit path. Replace hardcoded authorityEpoch:1 in SAVE/UPDATE_PROPERTIES with trusted standalone authority binding, never a shared fallback.", "reason": "SAVE is scoped, but other paths still write/unlink/rename; LIST also creates or merges daily notes."},
+    {"path": "packages/server-core/src/handlers/rpc/content.ts", "symbol": "NativeContentPorts / services / ContentOwner.bindingFor / MarkdownCommitStore owner / commit", "change": "Inject accepted trusted writer resolver; verify standalone ownership in services, descriptor adoption, content COMMIT_MARKDOWN and block-tree mutations, and epoch/auth callbacks. Deny shared aliases even when local file exists. Preserve localContentPrincipal/window/source binding, durable receipt/readback behavior; do not replace with weaker workspace-only checks.", "reason": "Direct content RPC and block-tree paths bypass Notes SAVE; owner and epoch are currently always markdown/1."},
+    {"path": "packages/server-core/src/docs/markdown-commit.ts", "symbol": "MarkdownCommitOwner / commit / writeNative / withVaultLease / recover / publishContent / deliverChanged / deliverNativeChanged", "change": "Reuse refreshed fsync journal, vault-wide transition lease, physical-file lease, native lifecycle CAS chain and pending/accepted changed-event journal. Guard authorize and authorizeNative with trusted standalone writer ownership through commit/recovery/delivery; serialize writer cutover with existing leases and authority barrier. Preserve documented distinction between native invalidation callback acceptance and remote/client ACK; do not add a second local lifecycle journal or treat PID-lock wait as sync policy lease.", "reason": "Concurrent lead foundation adds writeNative and durable native invalidation; these are reusable foundations, not shared resource revoke linearization."},
+    {"path": "packages/server-core/src/handlers/rpc/pages.ts", "symbol": "registerPagesHandlers mutating channels / broadcastChanged / REVOKE_GRANT / EXECUTE_ACTION", "change": "Guard CREATE/UPDATE/DELETE/SET_CONTENT/ISSUE_GRANT/REVOKE_GRANT/PUBLISH/password/UNPUBLISH/thumbnail enqueue and outbound actions against shared authority before filesystem/provider side effects. Route accepted shared operations through common domain command adapters, reject direct legacy calls. Recheck current ACL for content/leases/actions and deliveries. Preserve standalone HTML action grants; distinguish those grants from WP-03 resource-policy revocation.", "reason": "Current writes ignore _ctx and call local storage; HTML render leases and CHANGED push are not sync fences."},
+    {"path": "packages/shared/src/pages/storage.ts", "symbol": "savePageConfig / savePageContent / createPage / deletePage / unbindProjectFromPages / revokePageGrant", "change": "Enforce trusted standalone writer binding before first disk mutation for all exported legacy primitives; gate cross-page project unbinding and derived refresh/share/thumbnail writes. Accepted shared projections have a separate verified projection admission through the same authority, not a general bypass flag. Do not create another Page store.", "reason": "Tool/background callers can bypass RPC; savePageContent writes content before metadata."},
+    {"path": "packages/server-core/src/handlers/rpc/projects.ts", "symbol": "registerProjectsHandlers CREATE/UPDATE/DELETE/UPLOAD_ASSET/DELETE_ASSET", "change": "Use trusted writer-mode lookup with slug-to-canonical aliases; reject shared legacy writes before local create/update/assets and before session/Page unbindings. Shared native entity actions go through accepted WP-04 gateway with revision/idempotency envelope. Broadcast only policy-authorized canonical invalidations, not local full-list snapshots for shared mode.", "reason": "UPDATE and asset upload presently write local files without policy checks; DELETE mutates linked entities before deleting."},
+    {"path": "packages/shared/src/projects/storage.ts", "symbol": "saveProjectConfig / createProject / updateProject / deleteProject / uploadProjectAsset / deleteProjectAsset", "change": "Have existing storage owner add standalone authority admission before directories/writes/deletes and reject all shared IDs/legacy aliases. Reuse WP-04 project command adapter and registry; no proj_ ID reminting for existing shared entities and no read-only projection treated as authoritative storage.", "reason": "Exported storage primitives are public direct-import bypasses beyond project RPC."},
+    {"path": "packages/server-core/src/handlers/rpc/personal-tasks.ts", "symbol": "registerPersonalTasksHandlers PUT/DELETE/MIGRATE / personalTasksStore", "change": "Resolve writer mode for all batch IDs/aliases and migration bundle before mutations or meta/marker changes; shared mutations reject rather than enter config-dir store. Use accepted WP-05 explicit standalone adapter, preserve local personal task revisions/migration semantics, and avoid CHANGED to all clients for shared resources.", "reason": "Batch entrypoints lack workspace/principal authority; syntax rejection of task: IDs is insufficient for legacy aliases."},
+    {"path": "packages/server-core/src/tasks/personal-tasks-service.ts", "symbol": "putPersonalTasks / deletePersonalTasks / migratePersonalTasks", "change": "Accept trusted standalone authority admission from existing adapter; preflight shared aliases before batch store.put/store.delete/writeMeta/writeMigration. Propagate typed policy rejection without swallowing it into generic invalid-ID counts; retain invalid standalone-input behavior.", "reason": "Direct service calls and partial batch/migration side effects otherwise bypass the handler guard."},
+    {"path": "packages/server-core/src/tasks/personal-persist.ts", "symbol": "PersonalTaskPersistStore.put/delete/writeMeta/writeMigration", "change": "Enforce standalone-only authority ownership at persistence entrypoints supplied by composition, using canonical registry aliases; retain existing monotonic per-file revision and non-destructive schema backups. Do not infer standalone solely from TASK_ID_RE.", "reason": "A locally valid ID can alias a shared task, and raw direct store consumers bypass RPC/service policy."},
+    {"path": "packages/shared/src/agent/session-tool-defs.ts", "symbol": "SessionToolDefBuildOptions / buildSessionToolDefs", "change": "Advertise accepted canonical domain tool schemas/results through existing builder, preserving proxy dedup/browser/model/bash gates. Any hiding of standalone-only tools is convenience, not the guard. Bind executable resource commands to acting user's accepted domain port in tool contexts and require execution-grant checks for outbound effects.", "reason": "This file declares names/schema only; editing descriptions or removing tools does not prevent direct tool calls."},
+    {"path": "packages/session-tools-core/src/context.ts", "symbol": "SessionToolContext.createTask / pages / PagesToolCallbacks", "change": "Have tool composition owner provide trusted acting-user/canonical command callbacks with accepted receipt/status contracts for shared mode; retain existing dependency-free callback pattern. Both merged PagesToolCallbacks declarations must remain consistent if interface changes are needed.", "reason": "Current callback ports expose no canonical policy/receipt envelope; real implementations are outside this inspection and require lead integration."},
+    {"path": "packages/session-tools-core/src/handlers/pages.ts", "symbol": "handleCreatePage / handleUpdatePage / handleWritePageData / handleDeletePage", "change": "Consume policy-enforced canonical callback results; do not serialize pending/denied mutation as successResponse of a local DTO. Require callbacks to reject shared legacy write paths and preserve standalone HTML operations; read callbacks also enforce current actor policy.", "reason": "Core tools call ctx.pages directly, including write_page_data; no RPC guard is traversed here."},
+    {"path": "packages/session-tools-core/src/handlers/create-task.ts", "symbol": "handleCreateTask", "change": "Require the injected createTask callback to resolve authoritative workspace/resource ownership and route authorized shared domain Task creation through the accepted gateway; preserve the existing standalone board/task.yaml behavior where explicitly selected. Report canonical receipt status rather than inventing success.", "reason": "This tool creates a Craft board/DAG task, not the personal-task RPC model; it must not be silently conflated or left as a tool bypass."},
+    {"path": "packages/session-tools-core/src/handlers/host-bash.ts", "symbol": "runHostBash / handleHostBash", "change": "Have execution owner ensure shared authoritative storage and credentials are unreachable for mutation through both sidecar and fallback local spawn. Supply only projection/standalone filesystem capabilities consistent with writer mode; do not classify shell command strings as a resource ACL or rely on cwd confinement. Preserve authorized standalone bash behavior.", "reason": "Optional sandbox and host-sidecar fallback otherwise expose a tool path around application storage guards; infrastructure enforcement must be accepted by lead."},
+    {"path": "apps/electron/src/main/meetings/local-ipc.ts", "symbol": "registerLocalMeetingsIpc / handle / broadcast / recording/import/update/trash/attach handlers", "change": "Derive trusted sender workspace/local principal and resolve IDs through accepted authority alias mapping before mutating IPC. Reject shared resource IDs before dialogs/trash/recording/import/attachments; keep local device recording explicit standalone. Use authorized target delivery for shared invalidations, not broadcast to every BrowserWindow; preserve renderer-death local finalization/recovery.", "reason": "Current _e mutation handlers ignore sender authorization and use a global local store; main-process media permission is not a writer guard."},
+    {"path": "apps/electron/src/main/meetings/local-store.ts", "symbol": "LocalMeetingStoreDeps / write / mutate / recChunk / finalizeRecording / transcribe / resumePending / attach / removeDocument", "change": "Have local Meetings owner inject standalone ownership admission before audio/transcript/document writes and background recovery/ASR persistence, not just IPC metadata writes. Retain private device drafts and interrupted-recording recovery after revoke; do not publish recovered bytes to shared resources automatically.", "reason": "recChunk appends audio and ASR writes transcript files outside write(); IPC-only enforcement leaves background/direct-store bypasses."},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-51", "change": "After implementation, document exact writer cutover/alias rules, finite lease bound/clock assumptions, pending-vs-applied revoke boundary, recovery and accepted integration ownership. Record downstream sync/service foundation gate without fabricating an explicit DAG edge or weakening DoD.", "reason": "Normative plan currently names behavior but does not resolve executable sync boundary ownership."},
+    {"path": "docs/macro-integration/22-test-plan.md", "symbol": "Feature completeness checklist / collaboration revocation controls", "change": "Add concrete WP-51 scenario receipts for legacy bypass, partitioned append/delivery, revoke crash/retry, negative-control and native failure/loading/offline states; preserve original completeness requirements.", "reason": "Fixture-only approval would violate verificationGate and per-capability completeness checklist."}
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Direct legacy Notes/Page/Task/Project/IPC/tool writes rejected for shared IDs",
+      "currentEvidence": "Re-read notes.ts:993-1018 SAVE uses nativeContent.commit and constant epoch 1, but CREATE/RENAME/DELETE/folder/assets/LIST daily upserts still write separately. Refreshed content.ts:94-118 binds local notes as markdown authority 1; MarkdownCommitStore now has writeNative/vault lease and native invalidation journal, not yet used by these legacy note handlers at inspection. pages.ts:201-329 and projects.ts:61-170 call local storage with _ctx unused. personal-tasks.ts:45-67 writes config-dir batches/migration. local-ipc.ts:85-149 mutates local store; core tool callbacks execute independently; builder is not enforcement.",
+      "requiredChange": "Resolve canonical ownership including all aliases at trusted adapter AND first storage mutation; direct shared legacy calls reject before any file/provider/meta/link effect. Accepted native shared entity actions use existing domain gateway/projection; standalone paths retain current mechanisms. Guard content RPC, folder/linked rewrites, create-in-shared-workspace, task migration, IPC/background and executable tools, not just named SAVE/UPDATE.",
+      "verification": "Future bun test tests/macro-integration/wp-51.test.ts: W1 shared, A owner/B member/C outsider, seed 20260981. Invoke each real legacy handler and direct imported storage/tool/IPC seam for canonical and locally valid aliased IDs; all actors including owner get legacy shared-write rejection and no file/DB/revision/event/provider change. Exercise mixed batches, folder/link rewrites and unknown/stale ownership; authorized canonical shared command succeeds once. Explicit standalone Notes/HTML Page/personal Task/Project/local recording CRUD/recovery remain functional. Real native surface plus typed readback/reload required.",
+      "state": "missing; source-inspected, not implemented or runtime-verified",
+      "missingPrerequisites": ["wave0 commit", "accepted WP-03/04/05 receipts", "registry alias/writer-mode port", "storage/tool/composition patch ownership and native scenario harness"]
+    },
+    {
+      "criterion": "partitioned sync shard rejects after bounded lease",
+      "currentEvidence": "Spec:46521-46524 requires sync_delivery_lease; no apps/workspace-service directory found at initial inspection. Pages CREATE_LEASE:335-345 is HTML render authority in memory. Refreshed MarkdownCommitStore.acquireLease:666-700 uses PID filesystem lease and withVaultLease:212-218 serializes local transitions, neither is a bounded distributed policy grant. WP-10 owns planned OpenSync/PushUpdate/CRDT WAL/policy lease and depends on WP-51.",
+      "requiredChange": "Implement real shared sync policy lease admission for durable append and protected delivery, bound by shard identity/workspace/resource/authorityEpoch/policyEpoch/expiry and conservative time handling. Partition prevents renewal; expired/old-epoch shard cannot append, broadcast protected bytes or rejoin using stale token. Rejoin must fetch current policy; rejected edits stay private/quarantined. No scalar content CAS substitute for CRDT causal frontier.",
+      "verification": "Run real shard with known finite lease, isolate its authority renewal, revoke B concurrently, hold stale socket/token and pending update. Assert writes/deliveries reject at expiry including exact boundary and stale epoch despite cached grants; inspect durable WAL/frontier and authorized audience, not only UI errors. Exercise renewal race, clock/restart behavior, healthy owner shard continuity and reconnect. Record numeric bound and trace; existing filesystem lock or HTML render test cannot count.",
+      "state": "missing; executable sync foundation required, not N/A",
+      "missingPrerequisites": ["accepted policy lease/append/delivery ports and owner", "real service/shard storage integration before downstream WP-10", "numeric lease bound and clock/skew model", "partition/restart scenario harness"]
+    },
+    {
+      "criterion": "successful revoke response waits fenced durable append/broadcast boundary",
+      "currentEvidence": "Pages REVOKE_GRANT:319-329 calls revokePageGrant then broadcastChanged; storage revokePageGrant:642-657 only rewrites action grants. push() returns void in transport/types.ts:25. Current command gateway approval returns {ok:true}; no durable resource-revoke fence completion exposed. Markdown append publication and independent epoch callback are not atomic with policy revocation.",
+      "requiredChange": "Bind WP-03 resource revoke to pending fence, durable target epoch and WP-04 receipt/outbox. Fence append admission and authorized delivery for all old shards; prove bounded expired authority or durable fence acknowledgements and corresponding frontier. Persist/confirm applied state and permission.revoke_applied only after barrier, never interpret push() as durable completion; incomplete/unreachable proof stays pending_fence/REVOKE_FENCE_PENDING. Retry/restart resumes same command identity.",
+      "verification": "Race B append and queued delivery with A revoke. Delay append fence, delivery fence, outbox acknowledgement and disconnected shard lease expiry separately; A must never receive applied early. At applied readback, all post-boundary stale B writes/reads/subscriptions/deliveries deny while A remains functional. Kill between policy commit/fence/WAL boundary/applied receipt/reply; retry same key returns same receipt/revision/events. Inspect DB, WAL frontier, delivery audience and projection watermark; duplicate delivery is deduped.",
+      "state": "missing; resource/action grant distinction and durable barrier not implemented",
+      "missingPrerequisites": ["accepted WP-03 revoke completion port", "WP-04 atomic receipt/outbox/inbox", "sync append/delivery fencing and lease expiration proof"]
+    },
+    {
+      "criterion": "authority.applyFence HTTP/native API and strict RoxCommand v2 contracts",
+      "currentEvidence": "Spec:46122-46174 declares POST /v1/workspaces/{workspaceId}/commands/authority.applyFence and domain.authority.applyFence with strict fields. Existing command-gateway.ts:69-113 only LIST/APPROVE/DENY; RequestContext:7-11 lacks authenticated resource actor.",
+      "requiredChange": "Register both transports on accepted command gateway; reject body actor/additional fields, invalid refs/epochs, workspace mismatch and unsupported schema; require expectedRevision for existing aggregate and idempotency/hash semantics. Map all declared canonical statuses/errors without leaking denied fields; preserve local-only explicit authority.",
+      "verification": "Future actual HTTP/native calls compare canonical receipts for valid request; malformed/forged actor/cross-workspace/stale revision/same key altered payload/unsupported schema deny deterministically. pending fence is not applied_verified; inspect same-key recovery.",
+      "state": "missing",
+      "missingPrerequisites": ["accepted transport auth/command envelope", "common module ownership", "service composition"]
+    },
+    {
+      "criterion": "workspace_authority, policy_fence and sync_delivery_lease migration and cutover",
+      "currentEvidence": "Spec:46517-46561 declares proposed migration, uuid workspace/canonical entity keys, monotonic revision, FK, idempotency/inbox uniqueness, additive backfill/quarantine and post-cutover forward repair. Existing standalone stores are filesystem based.",
+      "requiredChange": "Generate migration through selected foundation migrator; add three authority tables and indexes using canonical parent registry and reuse WP-04 receipt/outbox/inbox uniqueness. Backfill native aliases with provenance/quarantine ambiguity; persist epoch/expiry/frontier and writer route; do not duplicate receipt or entity tables. Cutover is serialized and never deletes accepted shared writes on rollback.",
+      "verification": "Apply/read back real DB migration and constraints; stale epoch and duplicate receipt/delivery rejected, lookup scoped by workspace/entity, restart retains route/lease/fence. Exercise pre-cutover snapshot restore and post-cutover forward repair/replay with no lost writes.",
+      "state": "missing",
+      "missingPrerequisites": ["accepted migrator/schema/alias registry", "applied WP-03/04/05 migration receipts", "writer cutover recovery protocol"]
+    },
+    {
+      "criterion": "Negative-control sensitivity and independent holdout",
+      "currentEvidence": "Spec:46033-46035 and 46844-46847 require unauthorized or dropped/duplicated event failures and legacy direct-write mutation; docs/22-test-plan.md:239 distinguishes baseline infrastructure failure from caught mutation.",
+      "requiredChange": "Add normative wp-51 tests that detect one legacy bypass mutation through durable state, unauthorized actor, early revoke success and dropped/duplicated delivery; retain independent second-variant evaluator and trace seed.",
+      "verification": "After passing unmodified live baseline, inject legacy shared write guard removal and observe specific no-shared-mutation assertion fail; independent holdout uses a different append/delivery fence defect. Infrastructure failure does not count. Preserve minimal reproduction, hashes, DB/revision/frontier and consumer uniqueness.",
+      "state": "missing; tests prohibited during preflight",
+      "missingPrerequisites": ["executable integrated shared service and consumers", "independent evaluator and mutant artifacts"]
+    },
+    {
+      "criterion": "Persistence/recovery between persisted command and reply",
+      "currentEvidence": "Spec:46038-46039 requires stable state/receipt/canonical ID after restart. Refreshed MarkdownCommitStore:105-156/615-650 provides standalone fsync journal/recovery/receipt; writeNative:221-230 and deliverChanged/deliverNativeChanged:527-547 add vault-serialized native lifecycle and persisted invalidation acceptance. No shared resource-policy fence state is established by those local mechanisms.",
+      "requiredChange": "Use accepted command receipt/outbox and persistent pending fence; resume partial fencing idempotently after restart and recheck current policy before any recovery append/delivery. Preserve local journal rather than adding a second standalone receipt store.",
+      "verification": "Kill real service at policy tx commit, before WAL fence ack, before delivery ack, after applied receipt commit before reply; replay same key returns canonical ID/receipt/revision once, altered key payload conflicts, no duplicate events or stale-authority recovery write. Repeat standalone note/local recording reload regression.",
+      "state": "missing",
+      "missingPrerequisites": ["WP-04 durable execution receipt", "pending-fence repository", "fault/restart harness"]
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "Spec:46012-46022 targets existing Native Project/entity actions; backend writes currently return local DTO/booleans. Renderer implementation not inspected within package scope.",
+      "requiredChange": "Lead-owned existing native surfaces consume accepted canonical projection/receipt and policy states; no second panel/store and no success indicator while fence pending.",
+      "verification": "Actual Electron interaction A revoke/B edit with visual/ARIA assertions, reload and current canonical readback; preserve existing standalone actions.",
+      "state": "missing",
+      "missingPrerequisites": ["accepted UI adapter/renderer ownership", "real native scenario harness"]
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "Rox2EntityRef is scoped; project/page RPC routes by slug and workspace argument; renderer route behavior not inspected.",
+      "requiredChange": "Existing native route/history/tab actions resolve canonical refs/aliases and trusted writer mode; shared route cannot invoke legacy storage on unavailable authority.",
+      "verification": "Open canonical deep link and legacy alias in existing UI, history/reload; same canonical entity/revision, cross-workspace link denied, standalone route unchanged.",
+      "state": "missing",
+      "missingPrerequisites": ["registry aliases", "lead-owned existing routing adapter"]
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "platform-contract.ts:223-250/336-370 provides canonical refs/binding quarantine; local proj_ IDs and path/slug aliases remain.",
+      "requiredChange": "Use same scoped identity and provenance for writer mode/fence; epoch/resource mapping must not remint entities or conflate accounts/workspaces.",
+      "verification": "Alias/canonical lookup yields identical fenced resource; collision/workspace mismatch quarantines; mutable revision/frontier rules enforced.",
+      "state": "missing",
+      "missingPrerequisites": ["accepted WP-02 registry through dependency ports"]
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "Standalone MarkdownCommitStore is durable; other local stores are files; new shared authority tables absent in inspected normative directory.",
+      "requiredChange": "Persist one writer authority, epochs/leases/fences/receipts using accepted service transaction and projection route; preserve local journal only for standalone.",
+      "verification": "Restart/reload retains one authority and canonical revision/receipt; old authority cannot mutate after cutover; inspect DB unique keys and local snapshots.",
+      "state": "missing",
+      "missingPrerequisites": ["accepted migrations and shared repository"]
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "Existing command gateway is pending approval queue; no authority.applyFence runtime handler.",
+      "requiredChange": "Extend accepted domain command pipeline with strict ACL/idempotency/expectedRevision and fence completion, keeping pending approval behavior separate.",
+      "verification": "Authorized command applies once, stale revision conflicts, repeated key altered body conflicts, forged/outsider actor denied, same-key restart returns receipt.",
+      "state": "missing",
+      "missingPrerequisites": ["WP-03/04 accepted command/auth interfaces"]
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "pages.ts GET_CONTENT/GET_DATA/LIST_GRANTS and project/list handlers use workspace argument with _ctx unused; command list is pending approval only.",
+      "requiredChange": "Writer-mode/fence/receipt query and existing shared reads use canonical source and current resource ACL, bounded accepted authorized cursors; denied fields/titles/totals not serialized.",
+      "verification": "Read/replay cursor after revoke cannot return protected content/metadata or hidden counts; authorized owner query returns current epoch/frontier/receipt; forged cursor/workspace denies.",
+      "state": "missing",
+      "missingPrerequisites": ["accepted domain query/ACL/cursor ports"]
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "push() is void; Pages/Projects send workspace full lists; local Meetings broadcasts all BrowserWindows; spec requires outbox revisioned invalidation/replay.",
+      "requiredChange": "Use policy-filtered durable outbox/inbox consumers with revision/cursor/gap handling; fence old audiences and epochs at protected delivery. Presence is separate and lossy.",
+      "verification": "Partition/reconnect replays accepted events once; revoked B receives no protected bytes after applied revoke; stale event/frontier rejected, gaps repaired, duplicate delivery does not duplicate effects.",
+      "state": "missing",
+      "missingPrerequisites": ["WP-04/05 outbox/inbox/projection and real delivery port"]
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "localContentPrincipal authenticates local window ownership, but ContentPolicy uses native-v1/file writability; other legacy handlers often ignore ctx.",
+      "requiredChange": "Resource read/write/action ACL with current policy epoch and linked-target recheck; viewer/editor/admin/guest/outsider cases, body actor rejection and agent allow-all non-override. Standalone explicit, not failure fallback.",
+      "verification": "Positive/negative role matrix including revoked queued actor, forged actor/workspace and stale socket/token; verify no content/snippet/event side effects.",
+      "state": "missing",
+      "missingPrerequisites": ["accepted WP-03 policy and actor binding"]
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "Pages ISSUE_GRANT/REVOKE_GRANT/PUBLISH/password/UNPUBLISH have local action/publication semantics; shared resource revocation is separate normative WP-03 behavior.",
+      "requiredChange": "Route shared sharing through accepted resource grants and explicit execution policy; guard legacy action/publication side effects and current inheritance/expiry checks. Fence shared revocation, preserve standalone HTML grants.",
+      "verification": "Viewer cannot share, editor loses inherited/public access per accepted policy, expiry/linked-ref rechecks, successful resource revoke waits fence; standalone HTML share/action regression.",
+      "state": "missing",
+      "missingPrerequisites": ["WP-03 grants and execution-policy adapter", "publication integration owner"]
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "notes.ts:1012/1024/1031/1043 refreshes local vault index; SEARCH:1065 reads it. Shared projection/search consumers not inspected.",
+      "requiredChange": "Shared content/index derives from accepted canonical events, not legacy local write; current-policy filtering and policy/tombstone watermark remove revoked content. Route writer changes without duplicate index authority.",
+      "verification": "PRIVATE_WP-51 exact phrase searchable to authorized A only, never B/C after fence even with stale search index/cache; delete/update watermark reconciles after replay.",
+      "state": "missing",
+      "missingPrerequisites": ["accepted canonical search extractor/upsert/delete and policy-filtered consumer owner"]
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "notes.ts rename rewrites other notes at 585-586; UPDATE_PROPERTIES commits derived text. Normative completeness requires occurrence/source revision/target policy; mention subsystem not inspected.",
+      "requiredChange": "Guard linked and indirectly rewritten shared notes before first write; existing mention occurrence/backlink consumers recheck source/target policy and fence epoch; mentions grant no implicit access.",
+      "verification": "Rename/edit mention cannot modify shared target through local alias; revoked target title/backlink withheld, occurrence revision reconciles once, mention does not restore grant.",
+      "state": "missing",
+      "missingPrerequisites": ["accepted link/mention consumer contracts and owner", "canonical alias/policy lookup"]
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "Spec requires notifications and docs/22-test-plan.md:109 requires permission recheck at delivery; no notification implementation inspected in scoped affected paths.",
+      "requiredChange": "Existing durable notification/push consumers enforce current recipient/source policy and fence epoch, dedup event IDs and preserve accepted seen/done/mute/snooze state; no copied protected excerpt to revoked recipient.",
+      "verification": "Enqueue before revoke, deliver after applied fence: B/C get no protected excerpt/notification; A gets one authorized event; retry/replay preserves consumer uniqueness and notification transitions.",
+      "state": "missing",
+      "missingPrerequisites": ["accepted notification consumer/delivery owner and contracts"]
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Spec declares permission.revoke_applied and workspace.writer_mode_changed; existing logs/CHANGED pushes do not prove durable activity entries.",
+      "requiredChange": "Record canonical actor/cause/revision/policy epoch activity from existing outbox after accepted boundaries; current ACL filters activity content and no sensitive raw data in audit.",
+      "verification": "Fence retry/restart produces one authorized activity event with same causation/revision; denied actor sees no protected record; pending status not logged as applied.",
+      "state": "missing",
+      "missingPrerequisites": ["accepted activity event consumer and WP-04 outbox"]
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "buildSessionToolDefs only advertises definitions; ctx.pages and ctx.createTask execute callbacks; host bash may sidecar or spawn locally with optional sandbox.",
+      "requiredChange": "Use same authenticated acting-user domain port for shared tools/context, provenance/current-policy lookup and canonical receipts; allow-all does not override ACL, direct file/bash/proxy routes cannot change shared authority.",
+      "verification": "Actual host tool calls as B/C with allow-all deny shared legacy writes and protected context; A authorized canonical operation returns receipt. Direct callback/storage and shell projection tamper cannot mutate canonical shared state.",
+      "state": "missing",
+      "missingPrerequisites": ["accepted executable callback composition", "shared service/file capability enforcement", "actual tool scenario harness"]
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "HTTP/native applyFence specified; session builder includes MCP pool proxies whose enforcement is not implemented in builder.",
+      "requiredChange": "Native/HTTP/host domain tools expose identical schema, canonical errors/status/receipt and resource checks. External source proxy effects remain under explicit execution grants and cannot become a local shared-write bypass.",
+      "verification": "Invoke both actual transports and executable tool/MCP path using same authorized/denied principals, altered idempotency payload and pending fence; compare canonical receipts/policy behavior without leaking DTO fields.",
+      "state": "missing",
+      "missingPrerequisites": ["transport/domain tool registration and executable proxy owner"]
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Spec:46052-46062 requires commandId/causationId/correlationId/aggregateRevision/policyEpoch/projectionWatermark/retry-DLQ counters and privacy; current legacy logs report slugs or task IDs.",
+      "requiredChange": "Add structured safe correlation to same accepted command/fence/outbox/lease pipeline, lag/pending/error/retry/DLQ counters; no bodies/email/transcripts/tokens.",
+      "verification": "Trace command through pending/applied fence and replay to projection using required IDs/epochs/watermark; force consumer retry/DLQ, inspect counters and absence of PRIVATE_WP-51 raw content/tokens in logs.",
+      "state": "missing",
+      "missingPrerequisites": ["accepted runtime telemetry/logging port and consumers"]
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Normative tests/macro-integration/wp-51.test.ts proposed; specification requires integration, meaningful negative control, persistence recovery and real surface evidence.",
+      "requiredChange": "Implement scoped tests against real adapters with seed 20260981, W1/A/B/C and PRIVATE_WP-51; exercise all three acceptance criteria, alias/role/time boundaries and crash/delivery controls. Keep fixture results separate from live receipts.",
+      "verification": "Future bun test tests/macro-integration/wp-51.test.ts plus relevant existing package tests, independent caught mutation/holdout and actual native/tool/service scenario with DB/API/event readbacks bound to delivered revision.",
+      "state": "missing; deliberately not executed by preflight",
+      "missingPrerequisites": ["integrated implementation and executable scenario infrastructure"]
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "docs/21-implementation-plan.md:1020-1036 records package behavior; docs/22-test-plan.md:199-222 mandates completeness and operational/failure coverage.",
+      "requiredChange": "Lead updates existing normative sections with accepted ownership/API, writer cutover/rollback, lease timing, pending revoke meaning, durable recovery and actual evidence limits; no completion claim from this report.",
+      "verification": "Compare documented bound/status/recovery paths with executed acceptance receipts and typed contracts; operator recovery reproduces without lost shared writes.",
+      "state": "missing for feature implementation; preflight documentation delivered only as this JSON",
+      "missingPrerequisites": ["accepted implementation contracts and verified scenario receipts"]
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "Spec includes rejected/unavailable/pending_fence and ten errors. Refreshed content.ts:169-171 distinguishes durable write from failed readback via DOCUMENT_RESULT_UNAVAILABLE.",
+      "requiredChange": "Preserve draft/receipt on ambiguous or failed readback; map retryable/terminal/conflict/reauth/quarantine/pending fence distinctly on existing surfaces. Authority outage never selects local writer fallback.",
+      "verification": "Force transport loss, revision conflict, forbidden, unknown authority, expired lease and failed fence delivery; inspect canonical status/UI and recovery receipt, no false success or blind replay.",
+      "state": "missing",
+      "missingPrerequisites": ["canonical result/error mapping and lead-owned UI adapter"]
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "Spec UI states include loading; existing backend list fallback returns [] when not claimable/not found, which cannot prove a genuine shared empty state.",
+      "requiredChange": "Existing shared projection/native UI distinguishes loading/stale/refresh and fence progress from empty; never show applied_verified while waiting on authority/delivery.",
+      "verification": "Delay authority/receipt/projection query and fence acknowledgements, observe actual loading/pending state and transition on readback; no flash of empty or saved/applied.",
+      "state": "missing",
+      "missingPrerequisites": ["accepted projection query status and UI surface owner"]
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "Spec UI includes empty; pages/project list handlers return [] for unavailable native capability/not found; shared status interpretation not inspected.",
+      "requiredChange": "Canonical queries and existing UI distinguish genuinely empty from denied/unconfigured/unavailable; do not leak hidden totals/titles or interpret denied as empty success.",
+      "verification": "Compare empty authorized W1 with denied C, unconfigured authority and stopped service; observed UI/API states differ correctly, no protected metadata.",
+      "state": "missing",
+      "missingPrerequisites": ["accepted query state contract and lead-owned native UI mapping"]
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "WP-05 spec:3497-3502 owns client_projection/local_outbox and explicit standalone adapter; WP-51 lease/fence must gate replay. Local Meetings recovery already resumes recording/ASR independently of remote service.",
+      "requiredChange": "Use WP-05 durable private draft/outbox; reconnect resolves current writer/policy/authority epoch before replay. Expired/revoked drafts quarantine, never fall back to legacy write or publish recovered local audio/transcript without consent.",
+      "verification": "Queue B edit offline, restart client, revoke before reconnect, verify private draft retained and shared replay denied with no DB/WAL/event effects; authorized A replay applies once. Partitioned shard lease expires despite open socket; standalone local recording/import/recovery remains functional offline.",
+      "state": "missing",
+      "missingPrerequisites": ["accepted WP-05 projection/outbox/quarantine adapter", "real shard expiry and reconnect harness"]
+    },
+    {
+      "criterion": "BEHAVIOR_REIMPLEMENTATION license policy and real-surface verification gate",
+      "currentEvidence": "Spec:46092-46093 forbids completion without real changed surface/failure/reload proof and permits upstream only dependency-only after exact license audit.",
+      "requiredChange": "Reimplement required behavior through existing ROX contracts; do not copy Macro code or add dependency without accepted exact license audit. Lead retains implemented/verified/delivered distinctions and evidence hashes.",
+      "verification": "Review accepted implementation provenance/dependency audit if any, then actual native/API/tool and partition/restart receipts bound to tested revision; fixture, screenshot alone or preflight approval cannot claim feature completion.",
+      "state": "missing for feature; no upstream code copied or dependencies added by preflight",
+      "missingPrerequisites": ["integrated implementation and real scenario evidence; exact license audit only if upstream dependency selected"]
+    }
+  ],
+  "sourceReferences": [
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "workPackages WP-51; WP-03/04/05; WP-10/WP-52 foundation contracts", "lineStart": 45952, "lineEnd": 46882, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0", "additionalInspectedRanges": [[1738,1810],[2589,2655],[3457,3525],[7938,7991],[46885,46938]]},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-51", "lineStart": 1020, "lineEnd": 1036, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/22-test-plan.md", "symbol": "Feature completeness checklist; revoke delivery/negative-control constraints", "lineStart": 199, "lineEnd": 222, "sha256": "55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "parseRox2EntityId / Rox2EntityRef / registerExternalBinding", "lineStart": 223, "lineEnd": 239, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5", "additionalInspectedRanges": [[336,370]]},
+    {"path": "packages/server-core/src/handlers/rpc/command-gateway.ts", "symbol": "authorizeWorkspace / HANDLED_CHANNELS / registerCommandGatewayHandlers", "lineStart": 38, "lineEnd": 113, "sha256": "2dbf30f23d0df9f217a6bfbc338a5467b93fb59b210703631fd298c347bfb171"},
+    {"path": "packages/server-core/src/transport/types.ts", "symbol": "RequestContext / RpcHandlerOptions / RpcServer.push", "lineStart": 7, "lineEnd": 33, "sha256": "844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path": "packages/server-core/src/handlers/rpc/notes.ts", "symbol": "registerNotesHandlers SAVE/CREATE/RENAME/DELETE/folder handlers", "lineStart": 956, "lineEnd": 1063, "sha256": "4cc3e67ef5f7027a892e10c294dd6c1f93e6840dbcf3ed2486222b4df9588ee3", "additionalInspectedRanges": [[1174,1187]], "inspectionState": "refreshed after concurrent root modification"},
+    {"path": "packages/server-core/src/handlers/rpc/pages.ts", "symbol": "registerPagesHandlers mutation/REVOKE_GRANT/CREATE_LEASE/EXECUTE_ACTION", "lineStart": 201, "lineEnd": 367, "sha256": "c6bc8a9161d21c228dabf55c8406bce2bbfe5419315919cba072e8b6c01c7a04", "additionalInspectedRanges": [[408,454]]},
+    {"path": "packages/server-core/src/handlers/rpc/personal-tasks.ts", "symbol": "registerPersonalTasksHandlers / personalTasksStore", "lineStart": 29, "lineEnd": 68, "sha256": "bfb9080767d6a349c5d09a0cbe29190bccf6b8d70a88b4dd1bbfa6c0932d758f"},
+    {"path": "packages/server-core/src/handlers/rpc/projects.ts", "symbol": "registerProjectsHandlers CREATE/UPDATE/DELETE/assets", "lineStart": 61, "lineEnd": 170, "sha256": "baa907c847103a2fb1a9f39be6170f5a89ad9bebb899a11ba769fc48d6736df4"},
+    {"path": "packages/shared/src/agent/session-tool-defs.ts", "symbol": "SessionToolDefBuildOptions / buildSessionToolDefs", "lineStart": 34, "lineEnd": 107, "sha256": "67ead826b61bdfc6e979b26fc22d6d4e07ab3c6d3c1704a2eb241678a69c9de6"},
+    {"path": "apps/electron/src/main/meetings/local-ipc.ts", "symbol": "broadcast / registerLocalMeetingsIpc", "lineStart": 67, "lineEnd": 165, "sha256": "41da18f46fa5f7b35aedc594b80ddb3911d5a683f563b62f9943b6f46c1a5d50", "additionalInspectedRanges": [[13,34]]},
+    {"path": "packages/server-core/src/handlers/rpc/content.ts", "symbol": "localContentPrincipal / services / NativeContentPorts / commit", "lineStart": 15, "lineEnd": 120, "sha256": "adeaa0c8da8f46ab386110c65a26fbe70706d97f4becf4aa9ec33451ecc64083", "additionalInspectedRanges": [[125,188],[198,207]], "inspectionState": "refreshed after concurrent root modification"},
+    {"path": "packages/server-core/src/docs/markdown-commit.ts", "symbol": "MarkdownCommitStore.commit / writeNative / withVaultLease / deliverChanged / recover / publishContent / acquireLease", "lineStart": 105, "lineEnd": 156, "sha256": "2a789ec4a219171a81c1424bc4a276305e891dc2b64211712dc7de8e567c27c4", "additionalInspectedRanges": [[34,120],[181,230],[318,331],[527,550],[615,706]], "inspectionState": "STALE: refreshed foundation was inspected, then source changed again; hash/ranges preserve historical evidence only, lead must reconcile after commit"},
+    {"path": "packages/server-core/src/handlers/handler-deps.ts", "symbol": "HandlerDeps.commandGateway", "lineStart": 56, "lineEnd": 72, "sha256": "501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path": "packages/server-core/src/tasks/personal-tasks-service.ts", "symbol": "putPersonalTasks / deletePersonalTasks / migratePersonalTasks", "lineStart": 38, "lineEnd": 105, "sha256": "a4b41cbdfaa663872b5a70f2c81a51ce81c761973c8dd955eb89285de3f2429e"},
+    {"path": "packages/server-core/src/tasks/personal-persist.ts", "symbol": "TASK_ID_RE / PersonalTaskPersistStore.put/delete", "lineStart": 83, "lineEnd": 113, "sha256": "024688ed60a4795ff0d25d080a98e45b47690abdb74077314734ce830443e49a", "additionalInspectedRanges": [[21,54],[173,192]]},
+    {"path": "packages/shared/src/pages/storage.ts", "symbol": "savePageConfig / savePageContent / unbindProjectFromPages / revokePageGrant", "lineStart": 445, "lineEnd": 463, "sha256": "b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7", "additionalInspectedRanges": [[176,195],[345,406],[642,657]]},
+    {"path": "packages/shared/src/projects/storage.ts", "symbol": "createProject / updateProject / deleteProject", "lineStart": 277, "lineEnd": 343, "sha256": "19ed9f5bf2927e7c7fcc76b8c3b2fa7211c03ccc2b9fc800a1f4e37529857092"},
+    {"path": "apps/electron/src/main/meetings/local-store.ts", "symbol": "LocalMeetingStoreDeps / write / mutate / recChunk / recStop", "lineStart": 57, "lineEnd": 136, "sha256": "ccbe9826afffdd87caf06a466af15948cefa463c65d07634f8693f483700366b", "additionalInspectedRanges": [[175,205]]},
+    {"path": "packages/session-tools-core/src/context.ts", "symbol": "SessionToolContext.createTask/pages / PagesToolCallbacks", "lineStart": 350, "lineEnd": 373, "sha256": "aab3e5e2bb0099beae5c46aac559337d858c0777088fcf6acfe16fe746845fb3", "additionalInspectedRanges": [[650,656],[928,934]]},
+    {"path": "packages/session-tools-core/src/handlers/pages.ts", "symbol": "handleCreatePage / handleUpdatePage / handleWritePageData / handleDeletePage", "lineStart": 85, "lineEnd": 173, "sha256": "6c583d9a5d73743a3b5a72eb39c0e8e1cde6c78156913ea779b4852fe06ea9d4"},
+    {"path": "packages/session-tools-core/src/handlers/create-task.ts", "symbol": "handleCreateTask", "lineStart": 14, "lineEnd": 35, "sha256": "d3b3ac45585bb2f90a591fa26cc33452324d2d846c58d25fb850132744c3aa83"},
+    {"path": "packages/session-tools-core/src/handlers/host-bash.ts", "symbol": "runHostBash / handleHostBash", "lineStart": 68, "lineEnd": 116, "sha256": "b818aec2422bd491ec8f829c335fd0fe93ad183ae90af35ee61032bc0fe230df", "additionalInspectedRanges": [[179,190]]}
+  ],
+  "nextExecutableAction": {
+    "preflight": "Lead first reconciles stale markdown-commit.ts reference and dependent findings against committed wave0 bytes, then validates this owned JSON against dispatch packet and all current source hashes; no feature execution by this worker.",
+    "implementation": "Wait for lead's wave0 commit and accepted WP-03 then WP-04 then WP-05 interfaces/migration/scenario receipts; reconcile current file hashes and common commands ownership. First actionable contribution is extending the accepted contracts with ResolveWriterMode/FenceDocument/ConfirmRevokeApplied and accepting executable shard append/delivery/service foundation ports. Then implement authority repository/migration and guards through existing mechanisms, integrate lead-owned callers/UI, and run all three real scenarios plus negative-control and restart proof before any completion claim.",
+    "blockedUntil": ["lead wave0 commit", "accepted explicit dependency receipts", "sync append/delivery foundation owner and executable implementation allocation", "trusted canonical registry/actor/authority integration"]
+  },
+  "risks": [
+    "Gateway-only guard leaves direct file storage, content/block-tree RPC, tool callbacks, shell/proxy and background recovery bypasses.",
+    "A prefix-only shared-ID guard misses native slug/path/proj_/task aliases and creates while selecting shared workspace.",
+    "LIST daily-note maintenance, note/folder rename backlink rewrites and Project delete unbinding mutate entities indirectly before visible primary write.",
+    "Hardcoded native authorityEpoch 1 and file writability policy cannot enforce shared authority or resource revocation.",
+    "Filesystem PID lease is not sync_delivery_lease; its 10-second acquisition wait cannot serve as partition policy bound.",
+    "DB policy and CRDT WAL not atomic; check-then-append/rename or check-then-push races survive if no serialized durable fence boundary.",
+    "HTML source-action grant revocation is not resource ACL revoke; render lease and push() return do not prove durable broadcast fence.",
+    "WP-10 and WP-52 depend on WP-51 yet specify real sync/deployment surfaces; lead must extract executable foundation contracts without reverse dependency or mock completion.",
+    "Unrestricted same-user shell can alter local projections/files; authoritative shared service must not trust such bytes or expose its persistence credentials/paths as local writer authority.",
+    "Standalone personal tasks, board/DAG create_task and local Meetings are different models; forcing them into one store breaks preserved capabilities.",
+    "Common commands files repeat across packages; independent creation/replacement would violate single-owner foundation integration.",
+    "Numeric lease duration/clock assumptions, sender principal composition, migration runner and renderer/notification/search consumers are missing integration prerequisites, not grounds to mark requirements N/A.",
+    "Working tree may change during lead integration; report binds inspected bytes only and must not be applied blindly to committed wave0/dependency revisions."
+  ],
+  "verification": {
+    "productRuntimeExecuted": false,
+    "productTestsExecuted": false,
+    "implementationClaim": false,
+    "artifactCheck": "Read-only dispatch verifier checks JSON lineage, required fields, at least three concrete references, whole-file hashes and featureComplete=false; it is not feature acceptance.",
+    "artifactVerificationAccepted": false,
+    "observedArtifactResults": ["Verifier parsed JSON and passed dispatch lineage/required-field checks, then rejected stale notes.ts hash.", "After re-reading three concurrently changed files and updating report references/findings, verifier parsed refreshed JSON and again passed lineage/required-field checks, then rejected markdown-commit.ts because it changed again."],
+    "acceptanceLimit": "This is a completed source-backed preflight artifact with an explicit stale evidence gate, not an accepted stable-revision receipt or implemented feature. Product tests/UI/network were not run.",
+    "verificationArgv": ["python3", "plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/WP-51.json", "${ROX_COMPOUND_PACKET_ROOT}/WP-51/packet.json"]
+  },
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

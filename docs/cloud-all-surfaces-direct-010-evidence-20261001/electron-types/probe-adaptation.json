@@ -1,0 +1,32 @@
+[
+  {
+    "original": "/workspace/rox-r15-evidence-20260930/union-validation/r15-final-compiled-sqlite-probe.cjs",
+    "executed": "/tmp/rox-r15-exact-ui-20261001/electron-types-private/compiled-sqlite.cjs",
+    "originalSha256": "0c42fdca5456bcb83020b0c4139608a193c99f2cb1c77e92c76746f7abbf04a8",
+    "executedSha256": "c06c3ad22553a14ccaaa70854fd37d5854430161f0a1eae2a7b8218162dd96a6",
+    "changes": [
+      {
+        "old": "const bundle = path.resolve(__dirname, '../all-surfaces/apps/electron/dist/main.cjs');",
+        "new": "const bundle = '/tmp/rox-r15-exact-ui-20261001/checkout/apps/electron/dist/main.cjs';"
+      }
+    ],
+    "observerPathsOnly": true
+  },
+  {
+    "original": "/workspace/rox-r15-evidence-20260930/union-validation/r15-final-main-host-probe.cjs",
+    "executed": "/tmp/rox-r15-exact-ui-20261001/electron-types-private/compiled-main-host.cjs",
+    "originalSha256": "6e8503ee2a0a6696501756309ceffc1ecdd44be203238bbdbec7dc5d6dfa36a8",
+    "executedSha256": "6b52fe4af938bfd9ad1ac866c754cb611926cbe2797eef84d6eb207f165fed3f",
+    "changes": [
+      {
+        "old": "const task = path.resolve(__dirname, '..');",
+        "new": "const task = '/tmp/rox-r15-exact-ui-20261001';"
+      },
+      {
+        "old": "const checkout = path.join(task, 'all-surfaces');",
+        "new": "const checkout = path.join(task, 'checkout');"
+      }
+    ],
+    "observerPathsOnly": true
+  }
+]

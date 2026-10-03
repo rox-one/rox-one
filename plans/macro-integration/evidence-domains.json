@@ -1,0 +1,1102 @@
+[
+  {
+    "id": "D001",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/crm/src/domain/model.rs",
+    "symbol": "CrmCompany",
+    "lineStart": 59,
+    "lineEnd": 91,
+    "claim": "Company team-scoped UUID, email_sync, hidden, interaction timestamps and domains"
+  },
+  {
+    "id": "D002",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/crm/src/domain/model.rs",
+    "symbol": "CrmContact",
+    "lineStart": 173,
+    "lineEnd": 201,
+    "claim": "Contact belongs to company, email/name/hidden and first/last interaction"
+  },
+  {
+    "id": "D003",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/macro_db_client/migrations/20260514120000_crm_contact_sources.up.sql",
+    "symbol": "crm_contact_sources",
+    "lineStart": 1,
+    "lineEnd": 14,
+    "claim": "Contact provenance keyed by contact and email link"
+  },
+  {
+    "id": "D004",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/crm/src/domain/service.rs",
+    "symbol": "CrmServiceImpl.populate_contact",
+    "lineStart": 562,
+    "lineEnd": 656,
+    "claim": "Reject own/generic domains; sent-only enrichment; delegates transaction"
+  },
+  {
+    "id": "D005",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/crm/src/outbound/companies_repo.rs",
+    "symbol": "CompaniesRepository.populate_contact",
+    "lineStart": 298,
+    "lineEnd": 443,
+    "claim": "Team/domain lock, killswitch, inbound unknown company no-op; sent creates; contact/source upsert"
+  },
+  {
+    "id": "D006",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/crm/src/domain/generic_email_domains.rs",
+    "symbol": "is_generic_email_domain",
+    "lineStart": 44,
+    "lineEnd": 93,
+    "claim": "Filter provider/disposable/alias/vendor/bulk and reserved domains"
+  },
+  {
+    "id": "D007",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/crm/src/outbound/apollo_resolver.rs",
+    "symbol": "ApolloCompanyMetadataResolver.resolve",
+    "lineStart": 71,
+    "lineEnd": 151,
+    "claim": "Apollo enrichment best effort with no-key short circuit and negative results"
+  },
+  {
+    "id": "D008",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/macro_db_client/migrations/20260707183206_seed_crm_company_system_properties.sql",
+    "symbol": "Stage / Owner / Revenue property definitions",
+    "lineStart": 1,
+    "lineEnd": 111,
+    "claim": "CRM business properties reuse universal property tables"
+  },
+  {
+    "id": "D009",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/crm/src/domain/stages.rs",
+    "symbol": "CrmStageServiceImpl / TeamStage",
+    "lineStart": 28,
+    "lineEnd": 183,
+    "claim": "Team pipeline stores property option IDs; stage mutation role-gated"
+  },
+  {
+    "id": "D010",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/entity_access/src/outbound/pg_access_repo/queries/crm_company_access.rs",
+    "symbol": "team_role_to_access_level",
+    "lineStart": 86,
+    "lineEnd": 93,
+    "claim": "Visible CRM members edit; hidden plain members have no access"
+  },
+  {
+    "id": "D011",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/email/src/domain/service/previews.rs",
+    "symbol": "validate_crm_scope",
+    "lineStart": 175,
+    "lineEnd": 226,
+    "claim": "CRM email queries require team receipt, enabled CRM, visible rows and email_sync"
+  },
+  {
+    "id": "D012",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/crm/src/outbound/companies_repo.rs",
+    "symbol": "set_company_hidden",
+    "lineStart": 1107,
+    "lineEnd": 1201,
+    "claim": "Company hiding cascades to contacts and disables email_sync"
+  },
+  {
+    "id": "D013",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/companies/Company/CompanyDiscussionSection.tsx",
+    "symbol": "CompanyDiscussionSection",
+    "lineStart": 5,
+    "lineEnd": 14,
+    "claim": "CRM UI uses shared EntityDiscussion with crm_company parent"
+  },
+  {
+    "id": "D014",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/crm/src/inbound/axum_router/comments/adapter.rs",
+    "symbol": "CrmCommentAdapter",
+    "lineStart": 32,
+    "lineEnd": 182,
+    "claim": "Legacy CRM comment routes adapt canonical MessageServiceApi; explicit legacy mentions empty"
+  },
+  {
+    "id": "D015",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/crm/src/outbound/search_repo.rs",
+    "symbol": "CrmSearchRepositoryImpl.search_company_names",
+    "lineStart": 59,
+    "lineEnd": 149,
+    "claim": "CRM name/domain search is Postgres ILIKE with team/hidden scope and keyset cursor"
+  },
+  {
+    "id": "D016",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/crm/src/inbound/toolset/list_companies.rs",
+    "symbol": "ListCompanies",
+    "lineStart": 77,
+    "lineEnd": 161,
+    "claim": "Agent CRM list filters stage owner search and hidden; uses permission receipts"
+  },
+  {
+    "id": "D017",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/companies/Company/Company.tsx",
+    "symbol": "Company",
+    "lineStart": 24,
+    "lineEnd": 100,
+    "claim": "Detail uses discussions, email, metadata, properties, contacts/sharing; inbound references TODO"
+  },
+  {
+    "id": "D018",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/companies/route.tsx",
+    "symbol": "companiesRoute",
+    "lineStart": 38,
+    "lineEnd": 45,
+    "claim": "Customers route uses authenticated feature-gated SoupView"
+  },
+  {
+    "id": "D019",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/email_service/src/pubsub/backfill/populate_crm_contact.rs",
+    "symbol": "populate_crm_contact",
+    "lineStart": 25,
+    "lineEnd": 67,
+    "claim": "Email queue worker resolves team for link and calls CRM service with direction and timestamps"
+  },
+  {
+    "id": "D020",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/email_db_client/src/crm_cleanup/job.rs",
+    "symbol": "CRM cleanup job",
+    "lineStart": 1,
+    "lineEnd": 101,
+    "claim": "Cleanup uses email DB candidate scan with persisted job state"
+  },
+  {
+    "id": "D021",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/docs/product/crm.mdx",
+    "symbol": "CRM product documentation",
+    "lineStart": 35,
+    "lineEnd": 103,
+    "claim": "Documentation conflicts internally on mention sharing; intended board/list/email discussion semantics"
+  },
+  {
+    "id": "D022",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/email/src/domain/models/link.rs",
+    "symbol": "UserProvider / EmailSyncStatus",
+    "lineStart": 10,
+    "lineEnd": 120,
+    "claim": "Only Gmail enum implementation; inbox sync derived from active/reauth/backfill facts"
+  },
+  {
+    "id": "D023",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/email/src/domain/models/message.rs",
+    "symbol": "MessageRow / Message",
+    "lineStart": 9,
+    "lineEnd": 166,
+    "claim": "Mail separates DB UUID from provider message/thread IDs and global Message-ID"
+  },
+  {
+    "id": "D024",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/email/src/domain/service.rs",
+    "symbol": "EmailServiceImpl",
+    "lineStart": 57,
+    "lineEnd": 123,
+    "claim": "Email service depends on CRM, entity access management, event broker and persistence"
+  },
+  {
+    "id": "D025",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/email_service/src/api/email.rs",
+    "symbol": "email.router",
+    "lineStart": 20,
+    "lineEnd": 38,
+    "claim": "Mail API nests attachment labels threads drafts messages links contacts filters backfill settings sync"
+  },
+  {
+    "id": "D026",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/email_service/src/pubsub/inbox_sync/process.rs",
+    "symbol": "inner_process_message",
+    "lineStart": 56,
+    "lineEnd": 115,
+    "claim": "Queue checks link active and dispatches Gmail/upsert/delete/label operations"
+  },
+  {
+    "id": "D027",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/email_api_client/src/outbound/gmail/sync.rs",
+    "symbol": "GmailApiClientRepository MailboxSyncClient",
+    "lineStart": 9,
+    "lineEnd": 36,
+    "claim": "Provider delta sync via Gmail history cursor"
+  },
+  {
+    "id": "D028",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/email_service/src/api/gmail/webhook.rs",
+    "symbol": "webhook_handler",
+    "lineStart": 19,
+    "lineEnd": 109,
+    "claim": "Gmail webhook entry for sync pipeline"
+  },
+  {
+    "id": "D029",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/email_refresh_handler/src/handler.rs",
+    "symbol": "send_refresh_messages",
+    "lineStart": 97,
+    "lineEnd": 167,
+    "claim": "Hourly bucketed Gmail link refresh plus health and inactive cleanup"
+  },
+  {
+    "id": "D030",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/email/src/domain/service/draft.rs",
+    "symbol": "draft lifecycle",
+    "lineStart": 1,
+    "lineEnd": 86,
+    "claim": "Email-owned draft persistence has sent/draft race guards and provider ID mapping"
+  },
+  {
+    "id": "D031",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/email/src/domain/scheduled_delivery.rs",
+    "symbol": "deliver_scheduled",
+    "lineStart": 37,
+    "lineEnd": 64,
+    "claim": "Due unsent message claim commits before provider call; only owner releases/finalizes"
+  },
+  {
+    "id": "D032",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/email/src/inbound/attachment.rs",
+    "symbol": "attachment adapter",
+    "lineStart": 3,
+    "lineEnd": 98,
+    "claim": "Attachment inbound service adapter"
+  },
+  {
+    "id": "D033",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/email/src/inbound/toolset.rs",
+    "symbol": "Email tools / resolve_inbox_selector",
+    "lineStart": 25,
+    "lineEnd": 113,
+    "claim": "Email tools include list inboxes labels get thread send-confirmed and sender policies; accessible inbox selectors"
+  },
+  {
+    "id": "D034",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/email/src/domain/events.rs",
+    "symbol": "EmailTopicEvent",
+    "lineStart": 434,
+    "lineEnd": 544,
+    "claim": "Mail Kafka topic taxonomy"
+  },
+  {
+    "id": "D035",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/email/src/domain/invitation_extraction.rs",
+    "symbol": "invitation extraction",
+    "lineStart": 2,
+    "lineEnd": 87,
+    "claim": "Email-owned calendar invitations are separate scheduling facts"
+  },
+  {
+    "id": "D036",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/email-view/email-view.tsx",
+    "symbol": "EmailView",
+    "lineStart": 1,
+    "lineEnd": 91,
+    "claim": "Mail frontend routes/views use Solid state and mail query sources"
+  },
+  {
+    "id": "D037",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "packages/sdk/src/entities/email/thread.ts",
+    "symbol": "Thread",
+    "lineStart": 38,
+    "lineEnd": 198,
+    "claim": "Mail SDK thread entity mutation and load interfaces"
+  },
+  {
+    "id": "D038",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/calendar_events/src/domain/models.rs",
+    "symbol": "CalendarEvent",
+    "lineStart": 572,
+    "lineEnd": 648,
+    "claim": "Per-owner canonical event with iCal UID, recurrence, attendees/conference and sources"
+  },
+  {
+    "id": "D039",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/calendar_events/src/domain/models.rs",
+    "symbol": "EventTime",
+    "lineStart": 132,
+    "lineEnd": 198,
+    "claim": "Timed UTC with IANA zone or all-day inclusive start exclusive end"
+  },
+  {
+    "id": "D040",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/calendar_events/src/domain/mutations.rs",
+    "symbol": "CalendarMutationServiceImpl",
+    "lineStart": 36,
+    "lineEnd": 191,
+    "claim": "Google provider-authoritative write then normalized local projection; event publish best effort"
+  },
+  {
+    "id": "D041",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/calendar_service/src/api.rs",
+    "symbol": "api_router",
+    "lineStart": 63,
+    "lineEnd": 74,
+    "claim": "Calendar mutation routes only mounted with calendar_sync_enabled"
+  },
+  {
+    "id": "D042",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/calendar_service/src/calendar_backfill.rs",
+    "symbol": "run_worker",
+    "lineStart": 126,
+    "lineEnd": 282,
+    "claim": "Calendar own queue worker/coordinator with claim and retry disposition"
+  },
+  {
+    "id": "D043",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/calendar_service/src/calendar_outbox.rs",
+    "symbol": "calendar outbox",
+    "lineStart": 27,
+    "lineEnd": 147,
+    "claim": "Outbox publication at least once; locks and SKIP LOCKED drain"
+  },
+  {
+    "id": "D044",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/calendar_service/src/api/calendar_watch.rs",
+    "symbol": "calendar watch handler",
+    "lineStart": 28,
+    "lineEnd": 68,
+    "claim": "Google watch token checked then calendar sync rearmed"
+  },
+  {
+    "id": "D045",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/calendar/components/CalendarGrid.tsx",
+    "symbol": "CalendarGrid eventDrop/eventResize",
+    "lineStart": 261,
+    "lineEnd": 287,
+    "claim": "Drag move and resize callbacks map into edit behavior"
+  },
+  {
+    "id": "D046",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/calendar/availability/availability.ts",
+    "symbol": "busyIntervalsFromOccurrences",
+    "lineStart": 165,
+    "lineEnd": 205,
+    "claim": "Availability computed from local occurrence busy intervals; excludes canceled transparent and declined"
+  },
+  {
+    "id": "D047",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/calendar/availability/settings.ts",
+    "symbol": "useAvailabilitySettings",
+    "lineStart": 19,
+    "lineEnd": 86,
+    "claim": "Working hours are local persisted sanitized preferences shared with email composer"
+  },
+  {
+    "id": "D048",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "packages/sdk/src/entities/calendar/event.ts",
+    "symbol": "CalendarEvent",
+    "lineStart": 93,
+    "lineEnd": 196,
+    "claim": "SDK byId mutations work but field read throws: no fetch-by-id endpoint"
+  },
+  {
+    "id": "D049",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/search_processing_service/src/process/calendar_event.rs",
+    "symbol": "upsert_calendar_event",
+    "lineStart": 37,
+    "lineEnd": 117,
+    "claim": "Index series master only with owner/source/attendees properties; missing row removes"
+  },
+  {
+    "id": "D050",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/calendar_events/src/inbound/toolset.rs",
+    "symbol": "calendar toolset",
+    "lineStart": 17,
+    "lineEnd": 137,
+    "claim": "Calendar domain agent tools registration"
+  },
+  {
+    "id": "D051",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/calendar_events/src/domain/events.rs",
+    "symbol": "CalendarTopicEvent",
+    "lineStart": 33,
+    "lineEnd": 82,
+    "claim": "macro.calendar created/updated/deleted stable entity key schema version 1"
+  },
+  {
+    "id": "D052",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/call/src/domain/service.rs",
+    "symbol": "get_or_create_call",
+    "lineStart": 734,
+    "lineEnd": 842,
+    "claim": "UUIDv7 room, race-safe call creation, transcription dispatch and optional egress"
+  },
+  {
+    "id": "D053",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/call/src/outbound/livekit_rtc_client.rs",
+    "symbol": "generate_token / generate_guest_token",
+    "lineStart": 148,
+    "lineEnd": 192,
+    "claim": "LiveKit token TTL six hours room scoped publish subscribe data"
+  },
+  {
+    "id": "D054",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/call/src/domain/service.rs",
+    "symbol": "process_webhook_event",
+    "lineStart": 1134,
+    "lineEnd": 1361,
+    "claim": "Signed webhook archives and reconciles participants; egress recording lifecycle"
+  },
+  {
+    "id": "D055",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/call/src/domain/service.rs",
+    "symbol": "ingest_transcript_segment",
+    "lineStart": 1500,
+    "lineEnd": 1561,
+    "claim": "Accepts segments only active call, handles guests and stream recording time"
+  },
+  {
+    "id": "D056",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/transcription/transcriber.py",
+    "symbol": "Transcriber",
+    "lineStart": 149,
+    "lineEnd": 202,
+    "claim": "LiveKit per-track Deepgram nova-3 with voice clustering and segment delivery"
+  },
+  {
+    "id": "D057",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/call/src/domain/service.rs",
+    "symbol": "summarize_call",
+    "lineStart": 1785,
+    "lineEnd": 1862,
+    "claim": "Summary configurable; empty transcript skips; custom speaker/name then persisted summary event"
+  },
+  {
+    "id": "D058",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/call_recording_preview_handler/src/event.rs",
+    "symbol": "process_record",
+    "lineStart": 116,
+    "lineEnd": 197,
+    "claim": "Object event presigns MP4, generates JPG, uploads and patches DB"
+  },
+  {
+    "id": "D059",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/call_recording_preview_handler/src/ffmpeg.rs",
+    "symbol": "FfmpegTools.create_preview_jpeg",
+    "lineStart": 29,
+    "lineEnd": 153,
+    "claim": "ffprobe midpoint frame and start fallback; per command timeout"
+  },
+  {
+    "id": "D060",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "packages/sdk/src/entities/calls/call-record.ts",
+    "symbol": "CallRecord",
+    "lineStart": 12,
+    "lineEnd": 136,
+    "claim": "Calls first-class favoritable/searchable SDK entity recording transcript summary participants and guests"
+  },
+  {
+    "id": "D061",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/search_processing_service/src/process/call.rs",
+    "symbol": "process_call_record",
+    "lineStart": 13,
+    "lineEnd": 103,
+    "claim": "Call search requires transcript segments; parent properties and participant IDs indexed"
+  },
+  {
+    "id": "D062",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/entity_access/src/outbound/pg_access_repo/queries/call_access.rs",
+    "symbol": "get_call_access",
+    "lineStart": 18,
+    "lineEnd": 116,
+    "claim": "Calls share canonical entity grants/public/team SharePermission"
+  },
+  {
+    "id": "D063",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/call/src/domain/service/meetings.rs",
+    "symbol": "join_guest_invitation",
+    "lineStart": 250,
+    "lineEnd": 296,
+    "claim": "Guest meeting join uses bearer invitation capability; channel guest joins denied; scoped guest JWT"
+  },
+  {
+    "id": "D064",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/call/src/domain/events.rs",
+    "symbol": "CallTopicEvent",
+    "lineStart": 114,
+    "lineEnd": 169,
+    "claim": "Macro calls started archived updated deleted summarized recording-ready taxonomy"
+  },
+  {
+    "id": "D065",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/channel/Call/CallContext.tsx",
+    "symbol": "CallContext.toggleScreenShare",
+    "lineStart": 1485,
+    "lineEnd": 1510,
+    "claim": "LiveKit local participant media APIs and shared call state"
+  },
+  {
+    "id": "D066",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "infra/stacks/call-recording/index.ts",
+    "symbol": "callRecordingBucket",
+    "lineStart": 20,
+    "lineEnd": 50,
+    "claim": "S3 recording bucket with service user Secrets Manager and CloudFront/preview infrastructure"
+  },
+  {
+    "id": "D067",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/call/src/outbound/s3_recording_storage.rs",
+    "symbol": "S3RecordingStorage.presign_recording_url",
+    "lineStart": 111,
+    "lineEnd": 133,
+    "claim": "Local S3 and prod signed CDN URL adapter"
+  },
+  {
+    "id": "D068",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/main/mail/mail-service.ts",
+    "symbol": "MailService",
+    "lineStart": 99,
+    "lineEnd": 219,
+    "claim": "ROX existing JMAP/Stalwart mail bridge and persisted mailbox metadata"
+  },
+  {
+    "id": "D069",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/shared/src/mail/jmap-client.ts",
+    "symbol": "JmapClient.compose",
+    "lineStart": 318,
+    "lineEnd": 367,
+    "claim": "ROX JMAP draft + submit request with server error reporting"
+  },
+  {
+    "id": "D070",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/calendar/adapters.ts",
+    "symbol": "createProductionAdapter",
+    "lineStart": 112,
+    "lineEnd": 124,
+    "claim": "ROX production calendar adapters unavailable; fixture never selected"
+  },
+  {
+    "id": "D071",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/main/meetings/local-store.ts",
+    "symbol": "LocalMeetingStore finalization/recovery",
+    "lineStart": 188,
+    "lineEnd": 259,
+    "claim": "ROX real local audio finalize, ASR enqueue, crash recovery"
+  },
+  {
+    "id": "D072",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/server-core/src/meetings/rooms.ts",
+    "symbol": "ROOM_PROVIDER_DECISION / joinRoom",
+    "lineStart": 12,
+    "lineEnd": 43,
+    "claim": "ROX live rooms provider null, fail-closed capability false"
+  },
+  {
+    "id": "D073",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/meetings/model.ts",
+    "symbol": "Meeting",
+    "lineStart": 102,
+    "lineEnd": 125,
+    "claim": "ROX meeting workspace/call specialization with sourceBinding revision"
+  },
+  {
+    "id": "D074",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx",
+    "symbol": "MailListPanel",
+    "lineStart": 105,
+    "lineEnd": 173,
+    "claim": "ROX native mail UI list compose and search route; keep surface"
+  },
+  {
+    "id": "D075",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "packages/core/src/calendar/store.ts",
+    "symbol": "CalendarStore",
+    "lineStart": 31,
+    "lineEnd": 177,
+    "claim": "Existing ROX bundle account event journal proposals plus cursor/etag conflicts"
+  },
+  {
+    "id": "D076",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "infra/stacks/connection-gateway/index.ts",
+    "symbol": "connectionGatewayRedis",
+    "lineStart": 39,
+    "lineEnd": 64,
+    "claim": "WebSocket gateway Redis configured"
+  },
+  {
+    "id": "D077",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "infra/stacks/connection-gateway/connection_table.ts",
+    "symbol": "Connection table",
+    "lineStart": 1,
+    "lineEnd": 33,
+    "claim": "DynamoDB connection table infrastructure"
+  },
+  {
+    "id": "D078",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "infra/stacks/notification-service/push.ts",
+    "symbol": "Push infrastructure",
+    "lineStart": 10,
+    "lineEnd": 86,
+    "claim": "SNS topic fanout to notification push queue"
+  },
+  {
+    "id": "D079",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/authentication_service/src/main.rs",
+    "symbol": "authentication email sender",
+    "lineStart": 246,
+    "lineEnd": 256,
+    "claim": "System SMTP local otherwise SES, separate from Gmail product send"
+  },
+  {
+    "id": "D080",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "infra/packages/resources/src/resources/redis.ts",
+    "symbol": "Redis",
+    "lineStart": 19,
+    "lineEnd": 110,
+    "claim": "Reusable ECS-backed Redis infrastructure resource"
+  },
+  {
+    "id": "D081",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "infra/packages/service/src/cluster.ts",
+    "symbol": "Cluster",
+    "lineStart": 1,
+    "lineEnd": 17,
+    "claim": "ECS cluster service infrastructure"
+  },
+  {
+    "id": "D082",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "infra/stacks/opensearch/index.ts",
+    "symbol": "OpenSearch stack",
+    "lineStart": 1,
+    "lineEnd": 96,
+    "claim": "Search configured OpenSearch service"
+  },
+  {
+    "id": "D083",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/sync-service/wrangler.docker.toml",
+    "symbol": "sync service worker bindings",
+    "lineStart": 22,
+    "lineEnd": 74,
+    "claim": "Cloudflare Worker Durable Objects SQLite / D1 / R2 / KV"
+  },
+  {
+    "id": "D084",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "infra/stacks/calendar-service/index.ts",
+    "symbol": "calendar infrastructure",
+    "lineStart": 62,
+    "lineEnd": 142,
+    "claim": "Calendar Redis request gate and ECS service depends on database secret"
+  },
+  {
+    "id": "D085",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "infra/stacks/email-service/attachments-bucket.ts",
+    "symbol": "Email attachment bucket",
+    "lineStart": 1,
+    "lineEnd": 96,
+    "claim": "Object storage for mail attachments"
+  },
+  {
+    "id": "D086",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "infra/stacks/call-recording/call-recording-preview-lambda.ts",
+    "symbol": "CallRecordingPreviewLambda",
+    "lineStart": 50,
+    "lineEnd": 139,
+    "claim": "Lambda provided.al2023 ffmpeg layer and S3 permissions"
+  },
+  {
+    "id": "D087",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/email_api_client/src/domain/ports.rs",
+    "symbol": "Mailbox capability ports",
+    "lineStart": 21,
+    "lineEnd": 241,
+    "claim": "Provider capability ports separate sync subscription messages sends labels calendar attachments contacts/blocklist"
+  },
+  {
+    "id": "D088",
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "path": "apps/electron/src/main/mail/mail-service.ts",
+    "symbol": "MailService.send",
+    "lineStart": 428,
+    "lineEnd": 453,
+    "claim": "ROX loopback send rejects external recipient; production provision separate"
+  },
+  {
+    "id": "D089",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/transcription/transcriber.py",
+    "symbol": "Transcriber.on_user_turn_completed",
+    "lineStart": 465,
+    "lineEnd": 495,
+    "claim": "Segment UUIDv5 plus bounded HTTP retries, internal-call token; not durable transcript queue"
+  },
+  {
+    "id": "D090",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/crm/src/inbound/toolset/get_company.rs",
+    "symbol": "GetCompany",
+    "lineStart": 92,
+    "lineEnd": 185,
+    "claim": "Company agent context includes contacts, business properties and interaction facts"
+  },
+  {
+    "id": "D091",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/call/src/domain/service.rs",
+    "symbol": "spawn_summarize_call",
+    "lineStart": 1908,
+    "lineEnd": 1995,
+    "claim": "Summary launched in tokio task; no durable retry; process-lifetime risk"
+  },
+  {
+    "id": "D092",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/companies/Company/use-company-emails-query.ts",
+    "symbol": "useCompanyEmailsQuery",
+    "lineStart": 1,
+    "lineEnd": 60,
+    "claim": "CRM detail emails use scoped query integration"
+  },
+  {
+    "id": "D093",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/email_service/src/pubsub/inbox_sync/operations/upsert_message.rs",
+    "symbol": "upsert_message CRM enqueue",
+    "lineStart": 329,
+    "lineEnd": 349,
+    "claim": "CRM populated for sent recipients and received senders, drafts skipped"
+  },
+  {
+    "id": "D094",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/companies/views/CrmImport.tsx",
+    "symbol": "CrmImport",
+    "lineStart": 6,
+    "lineEnd": 83,
+    "claim": "CSV import 1MB and 1-100 companies; validates name/domain, retains failed rows"
+  },
+  {
+    "id": "D095",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/companies/views/CrmExport.tsx",
+    "symbol": "CrmExport",
+    "lineStart": 19,
+    "lineEnd": 139,
+    "claim": "Companies/people CSV export current/all scope, selected/custom columns"
+  },
+  {
+    "id": "D096",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/companies/views/CrmPeople.tsx",
+    "symbol": "CrmPeople",
+    "lineStart": 30,
+    "lineEnd": 85,
+    "claim": "Contact directory paged search/sort name/company/first-last interactions"
+  },
+  {
+    "id": "D097",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "apps/web/src/features/email-view/route.tsx",
+    "symbol": "emailSplitRoute",
+    "lineStart": 66,
+    "lineEnd": 72,
+    "claim": "Mail route mail plus :threadId entity block reference"
+  },
+  {
+    "id": "D098",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/crm/src/inbound/axum_router.rs",
+    "symbol": "crm_router",
+    "lineStart": 138,
+    "lineEnd": 216,
+    "claim": "CRM exact REST route mutation/settings/stages/legacy comment inventory"
+  },
+  {
+    "id": "D099",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/macro_db_client/migrations/20260928152757_crm_discussion_parents.sql",
+    "symbol": "crm discussion parents migration",
+    "lineStart": 9,
+    "lineEnd": 42,
+    "claim": "Generated FK parent columns cascade CRM hard-delete and trigger cleans entity mentions"
+  },
+  {
+    "id": "D100",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/crm/Cargo.toml",
+    "symbol": "CRM crate manifest",
+    "lineStart": 7,
+    "lineEnd": 95,
+    "claim": "CRM imports entity_access/messages/properties/sqlx and optional inbound/search ports"
+  },
+  {
+    "id": "D101",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "infra/stacks/kafka-cluster/index.ts",
+    "symbol": "kafkaCluster",
+    "lineStart": 15,
+    "lineEnd": 37,
+    "claim": "Kafka cluster infrastructure with three brokers and IAM bootstrap"
+  },
+  {
+    "id": "D102",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/document_storage_service/src/api.rs",
+    "symbol": "setup API",
+    "lineStart": 288,
+    "lineEnd": 300,
+    "claim": "DSS API hosts CRM router at /crm; nearby call route and calendar reads"
+  },
+  {
+    "id": "D103",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/document_storage_service/src/main.rs",
+    "symbol": "main CRM wiring",
+    "lineStart": 377,
+    "lineEnd": 394,
+    "claim": "DSS wires CRM Postgres repository with NoOpCompanyMetadataResolver"
+  },
+  {
+    "id": "D104",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "services/document_storage_service/src/main.rs",
+    "symbol": "main call wiring",
+    "lineStart": 677,
+    "lineEnd": 702,
+    "claim": "DSS wires LiveKit CallService plus AiCallSummarizer and optional egress"
+  },
+  {
+    "id": "D105",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/macro_db_client/migrations/20260725014930_calendar_entities.sql",
+    "symbol": "calendar_events schema",
+    "lineStart": 87,
+    "lineEnd": 149,
+    "claim": "Canonical event identity unique owner/source_link/ical_uid plus time checks"
+  },
+  {
+    "id": "D106",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/calendar_events/src/outbound/pg.rs",
+    "symbol": "CalendarRepository upsert_event",
+    "lineStart": 753,
+    "lineEnd": 802,
+    "claim": "Event runtime uses owner/inbox-link/UID unique key"
+  },
+  {
+    "id": "D107",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/macro_db_client/migrations/20260806202039_drop_email_ics_calendar_sources.up.sql",
+    "symbol": "drop ICS sources migration",
+    "lineStart": 1,
+    "lineEnd": 53,
+    "claim": "Email ICS no longer calendar source; current source kind Google-only"
+  },
+  {
+    "id": "D108",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/macro_db_client/migrations/20260331170640_add_call_tables.sql",
+    "symbol": "calls / call_records initial schema",
+    "lineStart": 3,
+    "lineEnd": 74,
+    "claim": "Active calls separate archived records and participants/transcript tables"
+  },
+  {
+    "id": "D109",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/macro_db_client/migrations/20260918183729_shareable_calls.sql",
+    "symbol": "shareable calls schema",
+    "lineStart": 8,
+    "lineEnd": 47,
+    "claim": "Guest active/archive rows and bearer call_meetings table; channel nullable"
+  },
+  {
+    "id": "D110",
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "path": "crates/call/src/outbound/pg_call_repo/lifecycle.rs",
+    "symbol": "PgCallRepo.archive_session",
+    "lineStart": 7,
+    "lineEnd": 229,
+    "claim": "Atomic same-ID archive copies participants/guests, rolls adjacent transcript segments with MIN(segment_id), deletes live rows"
+  }
+]

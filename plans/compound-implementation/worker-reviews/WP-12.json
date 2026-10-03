@@ -1,0 +1,507 @@
+{
+  "task_id": "WP-12-preflight",
+  "attempt_id": "00c12d9d9b870b3f1e4fb7296e8731d3",
+  "packet_hash": "f9fd5d5d0a390a0e976fb0bd67817846d6b76e2d1cf8eefc5f9757bc399b9d3d",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-12",
+  "featureComplete": false,
+  "mode": "source-backed preflight; no implementation",
+  "workTier": "bounded-workflow: inspect package and direct imports, map requirements, write one owned report",
+  "dependencies": ["WP-11", "WP-02"],
+  "dependencyReceiptRequirements": {
+    "WP-11": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+    "WP-02": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"]
+  },
+  "evidenceBoundary": {
+    "revision": "Input revision is the supplied dispatch revision; no Git command was run to assert current HEAD or tree cleanliness.",
+    "source": "Line evidence is from actual working-tree reads. Whole-file SHA-256 values were obtained by read-only shasum. The work-packages input hash matches the dispatch manifest. Source may include uncommitted lead work; hashes do not assert those bytes belong to input HEAD.",
+    "freshness": "This is an inspection snapshot, not a revision-bound implementation or runtime receipt. No drift was observed by the inspection tools, but read/hash atomicity and subsequent lead edits are not guaranteed. Before applying any request, rehash and reread changed files on the wave0 commit; invalidate affected line evidence rather than reusing it silently.",
+    "codegraph": "Per-project exploration returned no .codegraph index. Used scoped read/grep/glob instead; did not initialize an index.",
+    "artifactPresence": "Scoped glob reported all five normative WP-12 new-file paths not found at inspection time; this is not proof of absence of foundation code elsewhere.",
+    "execution": "No builds, product tests, native UI, network operations, Git changes or product/source edits performed. Only this report is written. All behavior verification below is proposed, not executed.",
+    "uninspected": "Service composition root, concrete transport principal implementation, task persistence implementation, project detail route consumer and agent tool dispatchers outside the package/direct imports were not inspected. Their exact accepted interfaces must come from owners, not guessed symbols."
+  },
+  "foundationGates": [
+    {
+      "id": "lead-wave0-commit",
+      "classification": "dispatch prerequisite, not an explicit package DAG edge",
+      "evidence": "Worker instruction requires implementation after lead wave0 commit and accepted dependency receipts.",
+      "requiredReceipt": "Lead commit SHA plus refreshed file hashes and accepted WP-11/WP-02 receipts.",
+      "state": "NOT_OBSERVED"
+    },
+    {
+      "id": "authenticated-authority-grants-command-outbox",
+      "packages": ["WP-01", "WP-03", "WP-04"],
+      "classification": "transitive foundation through WP-02/WP-11; not extra explicit edges",
+      "evidence": "21-implementation-plan.md:27-82; WP-12 operation requires transport principal, current resource policy, expectedRevision, immutable idempotency hash, transaction outbox and replay. registerProjectsHandlers ignores _ctx and directly calls local storage; HandlerDeps exposes only optional PendingCommandsStore, not the normative shared domain port.",
+      "requiredReceipt": "Accepted actor/workspace policy port, command v2 gateway and transactional repository/outbox interfaces usable by WP-12; receipt must prove grant recheck and crash-after-commit retry.",
+      "state": "RECEIPTS_NOT_OBSERVED"
+    },
+    {
+      "id": "single-writer-and-revoke-fence",
+      "packages": ["WP-51"],
+      "classification": "hidden shared-writer foundation, not an explicit WP-12 edge",
+      "evidence": "21-implementation-plan.md:1020-1036 explicitly includes direct legacy Project/IPC/tool writes. WP-12 declares authenticated shared authority plus preserved explicit standalone mode; storage.ts saveProjectConfig and RPC UPDATE/asset mutations currently have no authority-mode check in inspected code.",
+      "requiredReceipt": "ResolveWriterMode/current authority epoch and fence integration accepted by the lead; shared IDs cannot reach local writers, including legacy asset and delete paths. Revoke response waits for the durable/broadcast fence.",
+      "state": "RECEIPT_NOT_OBSERVED"
+    },
+    {
+      "id": "projections-search-mentions-attention",
+      "packages": ["WP-05", "WP-06", "WP-07", "WP-09"],
+      "classification": "WP-06/07/09 arrive transitively via WP-11; WP-05 offline client machinery is a non-explicit integration gate",
+      "evidence": "22-test-plan.md:197-222 makes search/mentions/notifications/activity/offline requirements mandatory rather than omitted until later. 21-implementation-plan.md:84-178 defines these common capabilities. Current project event is a LoadedProject[] broadcast with no replay cursor.",
+      "requiredReceipt": "Reusable current-ACL index/mention/attention adapters, durable event consumer and restart-safe offline queue/projection interfaces; no Project-only duplicate stores.",
+      "state": "RECEIPTS_NOT_OBSERVED"
+    },
+    {
+      "id": "agent-context-provenance",
+      "packages": ["WP-36", "WP-50"],
+      "classification": "hidden full-completeness/shared-context gates, not explicit WP-12 edges",
+      "evidence": "21-implementation-plan.md:5 and 1002-1018 require WP-50 provenance before shared transcripts/context; WP-36:736-753 requires native/MCP same ACL. bindSurfaceContext records refs/revisions but not a share decision or audience taint; ProjectPromptContext includes free-form details and memory bodies.",
+      "requiredReceipt": "Accepted acting-user domain tools plus source-ref/revision/ACL provenance and mixed-audience decision. Until accepted, do not serialize private mail-derived transcript, memory or details to project members.",
+      "state": "RECEIPTS_NOT_OBSERVED"
+    },
+    {
+      "id": "registered-existing-pages-versus-collaborative-pages",
+      "packages": ["WP-10", "WP-49", "WP-51"],
+      "classification": "conditional full Page capability gate; not a prerequisite to merely list an authorized existing registered Page reference",
+      "evidence": "WP-12 acceptance explicitly permits authorized existing Page refs and forbids unsupported-live claims. 21-implementation-plan.md:5,180-198,984-1000 puts editor binding/fence before collaborative Page.",
+      "requiredReceipt": "WP-02 registry Page read/route adapter for existing refs; separate accepted WP-10/49/51 receipts before claiming collaborative Page behavior in Project context.",
+      "state": "RECEIPTS_NOT_OBSERVED"
+    },
+    {
+      "id": "late-all-domain-conformance",
+      "packages": ["WP-38", "WP-28", "WP-34", "WP-39", "WP-16"],
+      "classification": "published fullConformanceDependency, not a start dependency; WP-38 itself depends on WP-12",
+      "evidence": "work-packages.json:10691 says WP-38 integrates Calendar/Call/File/Pages after individual packages. 21-implementation-plan.md:774-808 defines aggregation/file gates. Treating WP-38 as a WP-12 start dependency would introduce a cycle.",
+      "requiredReceipt": "WP-12 base Task/Channel/existing Page behavior can land after explicit dependencies. Full goal remains unverified until registered Calendar/Call/File/Page and agent adapters are actually integrated and exercised in WP-38; unsupported domains must be explicitly unavailable meanwhile.",
+      "state": "FULL_CONFORMANCE_NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/projects/contracts.ts",
+    "apps/workspace-service/src/modules/projects/commands.ts",
+    "apps/workspace-service/src/modules/projects/repository.ts",
+    "tests/macro-integration/wp-12.test.ts",
+    "apps/workspace-service/migrations/12-domain-contract.sql"
+  ],
+  "newFileContributions": [
+    {
+      "path": "packages/shared/src/workspace-domain/projects/contracts.ts",
+      "change": "Define strict LinkToProject request using existing Rox2EntityRef: project/entity/role(primary|context|attachment)/inheritPermissions, no actor fields or extra properties. Define ProjectOverview authorized typed items with ref/revision/capability status, stable actor-authorized cursor and watermark, plus AddMember typed principal/resource grant input/result. Reuse accepted RoxCommand v2 and canonical result/status contract; domain ports contain no service I/O. AddMember role vocabulary and exact DTO names require accepted identity/graph interfaces; do not fabricate roles from execution permissionMode."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/projects/commands.ts",
+      "change": "Implement project.linkEntity, ProjectOverview and AddMember through the accepted gateway: transport actor, workspace/ref-kind validation, resource checks on project and target, current epoch/fence, expectedRevision and request hash. Link never implicitly widens private mail/session/file visibility. inheritPermissions requires explicit permitted grant semantics; otherwise typed rejection. Use registered domain resolvers, not switchboards reading legacy stores. Emit project.entity_linked/project.member_added only from committed transactions; register HTTP/native/agent entry points through lead composition."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/projects/repository.ts",
+      "change": "Reuse canonical project/entity authority, entity_link and accepted receipt/outbox/inbox infrastructure. Persist role/visibility plus project_member and project_alias; do not create another project identity store. Implement authorized stable pagination and target ACL filtering before DTO/count generation. Import TaskProject by scoped source identity, keep provenance and quarantine ambiguous collisions; idempotent retry returns same alias/entity. Mutation/revision/receipt/outbox commit atomically. Provider adapters are composition-root injected."
+    },
+    {
+      "path": "apps/workspace-service/migrations/12-domain-contract.sql",
+      "change": "Normative proposed identifier, subject to actual selected migrator filename. Add project_member/project_alias and extend or reuse WP-02 entity_link rather than CREATE a competing link table. Preserve existing project IDs and cwd/assets/details via accepted storage/import projection. Composite workspace/entity FKs, typed principal FK, alias unique(workspace,provider,account,remote_type,remote_id), schema/revision constraints, stable-cursor/backlink indexes. Backfill legacy TaskProject identities/provenance without name matching, quarantine ambiguous IDs. Existing command_receipt/consumer inbox uniqueness is reused, not duplicated. Before cutover snapshot and old writer route; after accepted shared writes forward repair or verified reverse replay, never delete new writes."
+    },
+    {
+      "path": "tests/macro-integration/wp-12.test.ts",
+      "change": "Use accepted integration runner and real product API/UI path, W1 A owner/B member/C outsider, private marker PRIVATE_WP-12 and seed 20260942. Verify registered Task/Channel/existing Page context, unsupported state, identity-only TaskProject migration, private-mail noninheritance, transaction restart/retry and event replay. Catch private-mail-sharing mutation, unauthorized actor and dropped/duplicated-event controls with specific behavioral assertions; keep infrastructure failure distinct and independent evaluator holdout. Persist canonical refs/revisions/row counts/receipts/watermarks and error traces, not fixture-live claims."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/projects/types.ts",
+      "symbol": "ProjectConfig / ProjectPromptContext / LoadedProject",
+      "change": "Reuse existing identity and config fields; add accepted canonical scoped ref/revision/authority projection metadata and typed project overview/context refs from contracts. Keep slug stable, workingDirectory/details/colorTheme/color/icon/kanbanColumns/archive timestamps and asset/memory paths. Prompt context must consume an actor-authorized source-ref/revision projection, not copy linked bodies into shared details/memory. Exact field names bind to accepted foundation contracts.",
+      "reason": "Config has no scoped entity ref or aggregate revision; prompt context is currently local free-form text plus asset/memory manifest. Preserve native capabilities without a second Project model."
+    },
+    {
+      "path": "packages/shared/src/projects/storage.ts",
+      "symbol": "loadProjectConfig / saveProjectConfig / loadProjectById / createProject / updateProject / getProjectAssetsPath / getProjectMemoryPath",
+      "change": "Integrate accepted authority-mode guard at all shared-ID write entry points; retain file writer only for explicit standalone mode and shared projection/import use. Import lookup keys are exact scoped source IDs/aliases, never name/slug equality. Keep expandPath/toPortablePath, stable slug, atomic config writes, assets and MEMORY.md. Preserve ProjectConfig metadata by spread, with explicit mapping of TaskProject area/order/notes/deadline/completed/trashed/created fields via accepted extension/projection instead of dropping them.",
+      "reason": "Direct local file writes currently supply the sole inspected project persistence. Shared writes must cut over cleanly, preserve context and avoid title-based import merges."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/projects.ts",
+      "symbol": "HANDLED_CHANNELS / registerProjectsHandlers / broadcastChanged",
+      "change": "Consume transport-derived actor from ctx and accepted shared domain port. Add domain.project.linkEntity and accepted overview/member endpoints; route all existing shared GET/GET_ONE/CREATE/UPDATE/DELETE/asset paths through the same resource policy and authority gateway while retaining explicit standalone behavior. Validate workspace and refs, reject body actor, use expectedRevision/idempotency, return authorized canonical DTO/receipt. Replace shared full-list broadcast with revisioned policy-filtered invalidation/replay metadata; never use granted:true or native-source classification as shared ACL proof.",
+      "reason": "All inspected handlers discard _ctx; UPDATE/upload/list directly hit local storage. broadcastChanged sends all LoadedProject rows including local paths/details. Runtime ACL enforcement is not established by nativeLive."
+    },
+    {
+      "path": "packages/core/src/rox2/project-membership.ts",
+      "symbol": "PROJECT_MEMBERSHIP_SCHEMA_VERSION / ProjectLinkRole / Rox2ProjectMembership / parseProjectMembershipStore / linkEntityToProject / entityIdsForProject / portfolioEntityIds",
+      "change": "Accept the WP-02 canonical scoped membership projection, typed role/visibility and current target readability. Reconcile API roles primary/context/attachment with legacy primary/member/reference using explicit versioned import semantics approved by graph owner; no silent relabel or parallel store. Preserve history and singular primary pointer as derived legacy projection, not source authority. Validate project kind/workspace and both refs in command boundary. Filter target entities as well as projects before listing/counting; preserve unsupported-version payloads for recovery.",
+      "reason": "Current rows have no workspace/revision/visibility and parser accepts only legacy roles. List/count helpers check project readability only, not linked target ACL. linkEntityToProject rejects Channel/Page via relation rule."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_RELATION_RULES['member-of'] / Rox2EntityRef / Rox2CanonicalResult",
+      "change": "Graph owner extends relation admissibility for registered Channel and existing Page project membership, plus registered File/Call/Calendar and agent-session context as domain capabilities land. Keep no unregistered kind live claim, cycle/deletion semantics and scoped Rox2EntityRef. Reuse canonical result triad with explicit mapping from service receipt status; do not add an ad hoc boolean success contract. Clarify agent means existing session/service-principal ref rather than inventing agent: kind.",
+      "reason": "member-of permits only session/note/task; registered kinds include channel/page/file/call/calendar-event, but not agent or meeting. Proposed API cannot work for required Page/Channel refs by only changing UI."
+    },
+    {
+      "path": "packages/core/src/tasks/personal/types.ts",
+      "symbol": "TaskProject / PersonalTask.projectId / TaskHeading.projectId / PersonalTaskBundle",
+      "change": "Coordinate with WP-11 owner: import exact legacy TaskProject ID and scoped provenance into Project alias, then canonicalize task and heading project references through that alias. TaskProject becomes accepted standalone/import/projection DTO, not a second shared writer. Retain areaId/order/notes/deadlineAt/completedAt/trashedAt/createdAt. Equal names produce distinct entities absent an explicit verified alias; reject/quarantine ambiguous identity rather than guessing. Version conversion must preserve unknown future payloads.",
+      "reason": "TaskProject independently owns name and metadata and PersonalTaskBundle.projects; ProjectConfig has a different identity and lacks those fields. Name matching would collapse unrelated projects and lose metadata."
+    },
+    {
+      "path": "packages/core/src/rox2/surface-context.ts",
+      "symbol": "bindSurfaceContext / visibleContextEntityRefs / rebaseLiveContext / requiresContextGrant",
+      "change": "Bind Project context from accepted current actor-authorized overview refs and revisions. Recheck ACL/epoch before context serialization, tool retrieval and live rebase, remove revoked revision/selection metadata and enforce source provenance/audience intersection through WP-50 port. Keep snapshot/live contract; permissionMode allow-all must not act as a resource grant. No service I/O in this pure module.",
+      "reason": "bindSurfaceContext deduplicates strings, not authority; visibleContextEntityRefs only filters IDs using a caller-provided set. Project visibility alone cannot protect private linked content or derived agent memory."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx",
+      "symbol": "ProjectsHomeInMain / handleCreate / handleJumpToSessions",
+      "change": "Consume authorized existing project projection and distinct loading/denied/offline/retry/applied states; keep routes.view.projects(slug) and allSessions filter navigation. Align prop contract with actual LoadedProject[] passed to ProjectsListPanel rather than the narrower AppShellContext project-picker shape. Link command UI must show receipt-backed applied only after read-back; project context overview belongs within the existing selected Projects destination, whose route consumer requires lead handoff/discovery, not another surface.",
+      "reason": "This component only lists/creates projects and navigates. It does not render linked entities. Its prop type derives id/slug/name/color picker rows but its child requires config/paths LoadedProject rows; no build was run to assess callsites."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/ProjectsListPanel.tsx",
+      "symbol": "ProjectsListPanel / ProjectRow / ProjectsListPanelProps",
+      "change": "Use actor-authorized overview/list projection; distinguish loading/error/denied/unavailable from genuinely empty. Preserve existing icon, workingDirectory subtitle, sessions jump, confirmation and navigation. Shared delete goes through accepted canonical command/fence rather than bypassing it; hide metadata for unreadable projects and targets.",
+      "reason": "Current projects.length===0 is always an empty screen; ProjectRow directly exposes description or local workingDirectory. Existing surface must remain one shared/standalone adapter."
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps.commandGateway / HandlerDeps",
+      "change": "Lead injects accepted authenticated Project domain command/query port and authority mode through the existing dependency bag/composition convention, using foundation contracts. Do not treat PendingCommandsStore as the shared transactional receipt service or introduce a Project-only gateway.",
+      "reason": "Inspected dependency bag only has optional restart-safe PendingCommandsStore, no visible shared Project service port. Concrete foundation interface is required before implementing RPC adapter."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.projects",
+      "change": "Transport owner registers domain.project.linkEntity and accepted ProjectOverview/AddMember operations in the existing domain/native dispatch convention, with typed envelopes and errors; migrate affected desktop callers through accepted common gateway without alternate Project transports.",
+      "reason": "Current project channels cover only CRUD and assets; normative domain command channel is absent in inspected project block."
+    },
+    {
+      "path": "packages/shared/src/protocol/events.ts",
+      "symbol": "RpcEventMap[RPC_CHANNELS.projects.CHANGED]",
+      "change": "Use accepted revisioned invalidation/replay event shape for shared project updates with current policy epoch and cursor; keep explicit standalone adapter behavior where appropriate. Migrate every affected subscriber under lead ownership; do not broadcast a full unfiltered LoadedProject[] as shared delivery.",
+      "reason": "Current event tuple contains only workspaceId and complete local rows, with no eventId/revision/watermark or policy fence."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-12",
+      "change": "Record accepted role mapping, identity-only import, authority cutover, receipt state semantics and non-explicit foundation gates; keep implementation/verification distinct and full WP-38 conformance unverified until observed.",
+      "reason": "The section is explicitly a proposed plan; it must not be presented as implemented behavior."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "CHAT-TASK-01 / ACCOUNT-01 / Feature completeness checklist",
+      "change": "Document exact WP-12 scenario receipts, revision/environment, role/visibility checks, migration quarantine and recovery; retain private-mail mutation and independent holdout requirements. Add actual UI readiness/error markers to existing surface only during implementation.",
+      "reason": "All behavior tests are future acceptance and current marker names are proposed contracts, not existing runtime evidence."
+    }
+  ],
+  "leadIntegrationRequests": [
+    "Confirm shared entity_link/project table ownership with WP-02/WP-01 before WP-12 migration: extend those tables, never introduce duplicate graph or Project stores.",
+    "Supply accepted native/HTTP composition and principal interfaces, DTO/port names, migrator convention and source-scoped alias namespace. AddMember schema and grant roles are not fully specified in the WP-12 primary operation record.",
+    "Locate and assign the existing routes.view.projects(slug) selected-project consumer to its current owner; ProjectsHomeInMain is not that overview. Keep existing selected Projects destination and history rather than adding another screen.",
+    "Assign all caller/subscriber/type-export changes and all ten sorted translation files to shared owners; worker ownership remains normative new files only when implementation is dispatched.",
+    "Clarify lifecycle of WP-12 base acceptance versus published WP-38 full-conformance dependency without adding a reverse DAG edge or weakening private-content/search/agent requirements."
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Project lists registered Task/Channel and authorized existing Page refs; unsupported not silently rendered live",
+      "seam": "ProjectMembershipStore/linkEntityToProject/entityIdsForProject; ROX2_RELATION_RULES.member-of; registerProjectsHandlers; ProjectsHomeInMain",
+      "currentEvidence": "Membership rule permits session/note/task only. Project lists return local configs, not typed linked domain DTOs. Home renders ProjectsListPanel and navigates; no linked context overview.",
+      "requiredChange": "Use WP-02 registered refs and WP-11 task projection, extend relation validation for Channel/Page, query target-authorized typed overview through canonical repository and render within existing Projects destination. Unsupported/missing capability is unavailable, never nativeLive merely because its kind exists.",
+      "verification": "W1 A/B list linked task/channel and readable Page with exact canonical refs/revisions; deny Page to B and assert no title/snippet/count. Probe unsupported kind and observe unavailable UI/API. Open each supported item in existing destination and reload.",
+      "missingPrerequisite": "Wave0 commit; accepted WP-11/WP-02 receipts and shared policy/query port; selected-project consumer handoff.",
+      "state": "MISSING_IMPLEMENTATION_AND_RUNTIME_PROOF"
+    },
+    {
+      "criterion": "cwd/assets/details retained; private mail link does not share content",
+      "seam": "ProjectConfig/ProjectPromptContext; loadProjectConfig/saveProjectConfig/getProjectAssetsPath/getProjectMemoryPath; visibleContextEntityRefs",
+      "currentEvidence": "Local config persists cwd/details and portable paths; assets and memory are separate paths. Membership lists only filter project visibility; context refs have no enforced share decision.",
+      "requiredChange": "Preserve config/path/asset/memory data during canonical import; link mail without copying body/labels into shared DTO, details, memory, index or notification. Recheck mail/account ACL; inheritPermissions cannot broaden private mail automatically. Carry provenance for derived context.",
+      "verification": "Snapshot existing paths, asset byte hashes and details; import/restart and compare. Link A-private mail PRIVATE_WP-12 to shared P; A may read, B/C see no body/title/snippet/hidden total through UI/RPC/HTTP/search/agent/event/log paths, including true/false inheritPermissions attempts and revoke/reload.",
+      "missingPrerequisite": "Accepted grant and single-writer ports; mail ref resolver; WP-50 share provenance for derived agent context and WP-39 for full shared file semantics.",
+      "state": "LOCAL_RETENTION_SEAMS_EXIST_SHARED_PRIVACY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "TaskProject→ProjectConfig mapping never merges by name",
+      "seam": "TaskProject/PersonalTask.projectId/TaskHeading.projectId/PersonalTaskBundle; ProjectConfig.id; loadProjectById; project_alias migration",
+      "currentEvidence": "TaskProject and ProjectConfig have independent IDs/metadata. loadProjectById uses exact config.id; createProject generates proj_ ID. No alias import exists in the inspected package files.",
+      "requiredChange": "Backfill exact workspace/provider/account/remote_type/remote_id alias with provenance; distinct same-name IDs stay distinct. Only accepted identity alias can reuse a canonical Project; ambiguous collision quarantined. Remap task/heading refs transactionally and preserve legacy metadata.",
+      "verification": "Import two same-name TaskProjects and a same-name native Project; assert three identities and correct task/heading links and metadata. Replay import yields unchanged entity/alias counts. Rename and restart preserve refs. Same remote ID in another account/workspace never merges; ambiguous alias quarantined.",
+      "missingPrerequisite": "Accepted WP-02 alias namespace/repository, WP-11 task import writer, canonical Project metadata mapping and selected migrator.",
+      "state": "MISSING_IMPORT_AND_RUNTIME_PROOF"
+    },
+    {
+      "criterion": "UI",
+      "seam": "ProjectsHomeInMain / ProjectsListPanel",
+      "currentEvidence": "Existing translated Project library/create/delete/session navigation only.",
+      "requiredChange": "Integrate typed context and member/link controls into current Projects surface, preserve native context controls and display domain/receipt state.",
+      "verification": "Real Electron/Web interaction, screenshot and ARIA assertions on loading/empty/denied/error/applied states plus hover/focus/keyboard and reload; no screenshot-only completion.",
+      "missingPrerequisite": "Existing selected-project consumer ownership and accepted renderer domain bridge; implementation test authorization.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "seam": "ProjectsHomeInMain handleCreate/onProjectClick/handleJumpToSessions; navigateRoute(routes.view.projects)",
+      "currentEvidence": "Routes use stable project slug for selected Project and projectId for sessions filter.",
+      "requiredChange": "Resolve canonical aliases to existing destination; supported typed context refs use registered route adapters, denied/stale refs do not reveal metadata.",
+      "verification": "Navigate task/channel/Page from Project, history back/forward and reload after rename; denied/unknown refs render distinct state without new parallel surface.",
+      "missingPrerequisite": "WP-02 canonical resolver and accepted typed route adapters; route consumer not inspected.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "seam": "Rox2EntityRef / Rox2ProjectMembership / ProjectLinkRole / ProjectConfig",
+      "currentEvidence": "Canonical scoped refs exist, but local membership uses unscoped projectId and legacy role values.",
+      "requiredChange": "Reuse scoped refs, relation rules and aliases; versioned mapping of primary/member/reference to accepted primary/context/attachment semantics, plus visibility. Separate principal membership from entity links.",
+      "verification": "Cross-workspace, invalid kind/role/project target and unsupported schema rejected; unknown payload preserved; backlinks and primary projection consistent.",
+      "missingPrerequisite": "WP-02 accepted role/schema/graph contract and identity principal keys.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "seam": "saveProjectConfig / updateProject; normative repository.ts and migration",
+      "currentEvidence": "Local atomic JSON writes, no inspected canonical membership transaction.",
+      "requiredChange": "One shared authority, durable relation/member/alias rows, revision and atomic receipt/outbox; file storage standalone/projection only. Preserve paths/assets/details.",
+      "verification": "Restart after persisted command before response; same retry gives identical canonical ID/revision/receipt and one edge/event. DB key counts and file byte hashes remain correct.",
+      "missingPrerequisite": "WP-04 transaction/receipt/outbox, WP-51 mode guard, accepted migration application receipt.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "seam": "registerProjectsHandlers / linkEntityToProject; normative LinkToProject/AddMember ports",
+      "currentEvidence": "No domain.link operation in current project channel block; helpers mutate an in-memory copy without principal or CAS.",
+      "requiredChange": "Strict v2 envelope, actor from transport, authorized LinkToProject/AddMember, expectedRevision and immutable scoped idempotency; receipt-backed result.",
+      "verification": "Same key/same request returns same receipt, changed payload conflicts, stale revision conflicts, forged actor/workspace rejected; member add emits once and read-back matches.",
+      "missingPrerequisite": "Accepted command gateway, AddMember role/schema and principal/membership policy.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "seam": "entityIdsForProject / portfolioEntityIds / registerProjectsHandlers GET/GET_ONE",
+      "currentEvidence": "Project-only readability filtering; RPC list returns all local rows.",
+      "requiredChange": "ProjectOverview reads canonical links with current target ACL before serialization/counting; stable bounded actor-authorized cursor and watermark.",
+      "verification": "Multiple pages have deterministic ordering/no duplicates; revoke between pages invalidates or safely reauthorizes cursor. No hidden title/count, including direct guessed IDs.",
+      "missingPrerequisite": "Accepted graph query port, policy epoch and authorized cursor contract.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "seam": "broadcastChanged / RPC_CHANNELS.projects.CHANGED / RpcEventMap",
+      "currentEvidence": "Workspace broadcast contains full LoadedProject[] only; no durable replay metadata in event shape.",
+      "requiredChange": "Committed outbox project.member_added/project.entity_linked drive authorized invalidation, revision/watermark and replay cursor; inbox dedup/gap handling with policy/tombstone fence.",
+      "verification": "B sees committed update once; dropped event recovered by replay, duplicate not duplicated, revoke blocks delivery. Restart consumer during lease does not skip effect.",
+      "missingPrerequisite": "WP-04 outbox/inbox and policy-filtered subscription, WP-05 projection/reconnect and WP-51 fence.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "seam": "registerProjectsHandlers _ctx; entityIdsForProject; requiresContextGrant",
+      "currentEvidence": "RPC ignores ctx; native destroy callers pass granted:true; resource authority not proved by these helpers.",
+      "requiredChange": "Read/write/share/action checks on Project and linked entity from current actor/workspace, viewer/editor/admin/guest semantics, revocation recheck; agent allow-all remains execution mode only.",
+      "verification": "Owner/member/viewer/outsider/expired guest matrix through HTTP/native/agent; forged body actor/cross-workspace denied without metadata. Revoke while open/retry prevents future read/write/events.",
+      "missingPrerequisite": "WP-01/03 identity/grants and WP-51 current authority fence receipts.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "seam": "Rox2ProjectMembership visibility; ProjectPromptContext; normative inheritPermissions/AddMember",
+      "currentEvidence": "Local membership row contains no visibility/inheritance; no accepted member grant logic inspected.",
+      "requiredChange": "Explicit project_member policy separate from entity-link role. Linking cannot grant private target access. Validate inheritance against share permission and source policy; tainted agent-derived content audience constrained.",
+      "verification": "Link private mail then add B: no new source grant, preview/count/agent leak. Viewer cannot share; expired/revoked public or guest grant denied wherever supported; source owner retains access.",
+      "missingPrerequisite": "WP-03 grant/inheritance/expiry and WP-50 derived audience policy.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "seam": "ProjectConfig.details / ProjectPromptContext / project.entity_linked outbox / visibleContextEntityRefs",
+      "currentEvidence": "No search adapter is present in inspected Project files; no inference that search is globally absent.",
+      "requiredChange": "Register Project metadata/context references with common WP-06 extractor/index consumer; source-revision and policy epoch, deletion/revoke filtering before snippets/counts.",
+      "verification": "After watermark search finds permitted project/task/Page refs; private marker absent for B/C even before index invalidation. Rename/delete/revoke and consumer restart update results without duplicate identities.",
+      "missingPrerequisite": "Accepted WP-06 adapter/watermark; graph owner registers project kind without Project-only index store.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "seam": "ROX2_RELATION_KINDS.mentions / ProjectConfig.details / ProjectOverview typed refs",
+      "currentEvidence": "Relation kind exists; inspected Project files have no source occurrence/revision extraction or authorization pipeline.",
+      "requiredChange": "Reuse WP-09 occurrence/target-policy adapters for project references/details where supported; mention does not grant access. Preserve canonical ref on rename and remove occurrence/backlink on edit.",
+      "verification": "Authorized mention opens exact Project; denied target has no title or implicit grant. Edit/delete removes occurrence; retries do not duplicate mention/attention.",
+      "missingPrerequisite": "Accepted WP-09 extraction/resolve contracts and occurrence policy; owning text surface integration.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "seam": "normative project.member_added/project.entity_linked outbox; registerProjectsHandlers broadcastChanged",
+      "currentEvidence": "Current Project broadcast is not a durable recipient notification.",
+      "requiredChange": "Use common WP-07 recipient policy/dedup; approved member/link/mention attention carries no private linked snippets, and recipient seen/done/mute/snooze remains per-user.",
+      "verification": "Member add and overlapping reasons yield policy-defined single notification; event replay/restart no duplicate; B sees no private mail snippet; seen/done persists on second device and muted recipient behavior is respected.",
+      "missingPrerequisite": "Accepted attention interfaces and exact project event recipient policy, not invented notifications for every link.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "seam": "Rox2Event / project.member_added/project.entity_linked / registerProjectsHandlers logging",
+      "currentEvidence": "Rox2Event supports actor/cause/correlation/revision; local handlers emit logs and Changed without domain audit record.",
+      "requiredChange": "Committed typed events feed common authorized activity with canonical refs, cause/revision and privacy filtering; maintain one event source.",
+      "verification": "Read authorized activity after link/add/retry; actor/ref/revision correct, exactly one effect after replay, private content never present in unauthorized activity or logs.",
+      "missingPrerequisite": "WP-04 durable event and WP-07 activity consumer policy.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "seam": "ProjectPromptContext / bindSurfaceContext / visibleContextEntityRefs / rebaseLiveContext",
+      "currentEvidence": "Refs/revisions and local assets/memory context exist; pure helpers do not establish transport actor or safe derived sharing.",
+      "requiredChange": "Common domain tools get bounded authorized Project context with source refs/revisions/freshness and missing capability states; honor acting user/current ACL, enforce provenance and snapshot/live updates.",
+      "verification": "Agent-A resolves allowed task/channel/Page citations. Agent-B/outsider allow-all cannot retrieve PRIVATE_WP-12 or modify viewer Project. Revoke removes future context and unsafe cached/derived output; owner private transcript retained.",
+      "missingPrerequisite": "WP-36 native domain dispatch and WP-50 provenance receipts; shared context remains gated, not N/A.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "seam": "registerProjectsHandlers / RPC_CHANNELS.projects / normative domain.project.linkEntity",
+      "currentEvidence": "Existing native RPC CRUD/asset channels only; HTTP/MCP product routes not inspected.",
+      "requiredChange": "HTTP POST /v1/workspaces/{workspaceId}/commands/project.linkEntity and native domain.project.linkEntity plus agent/MCP use identical strict schema/domain gateway/receipt/errors. Overview and AddMember interfaces use accepted domain registration.",
+      "verification": "Same actor/intent across HTTP/native/MCP produces consistent canonical receipt and enforcement; extra actor fields, mismatched refs, revision/idempotency conflicts and revoked grants rejected through each path.",
+      "missingPrerequisite": "Accepted transport/principal/command composition and WP-36 MCP registration, owned by lead.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "seam": "Rox2Event / broadcastChanged / registerProjectsHandlers logs / normative commands/repository",
+      "currentEvidence": "Event type has cause/correlation/revision fields, while Project handlers log slugs/asset filename and lack command/epoch/watermark telemetry.",
+      "requiredChange": "Propagate commandId/causationId/correlationId/aggregateRevision/policyEpoch/projectionWatermark and retry/DLQ counters through common gateway/events. Exclude mail body/transcript/tokens and unauthorized target metadata from telemetry.",
+      "verification": "Correlate one link command to committed event/receipt/projection; induce consumer retry/DLQ and observe counters. Assert PRIVATE_WP-12 and secret/body fixtures absent from captured logs.",
+      "missingPrerequisite": "Accepted structured telemetry and outbox/DLQ instrumentation conventions.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "seam": "tests/macro-integration/wp-12.test.ts normative new file; existing membership/storage/RPC/UI seams",
+      "currentEvidence": "Normative test path not found; no product tests or UI run under this preflight authorization.",
+      "requiredChange": "Implement meaningful scenario, negative controls and persistence recovery covering exact criteria, plus impacted existing suites/caller contract updates. No source-text/mock-wiring tests as acceptance.",
+      "verification": "Later run bun test tests/macro-integration/wp-12.test.ts and relevant existing suites, then actual changed surface/failure/reload. Baseline passes before private-mail leak mutation; assertion fails specifically, independent second holdout caught; unauthorized/drop/duplicate boundaries exercised.",
+      "missingPrerequisite": "Accepted foundation receipts and real runner/environment; lead authorization to execute implementation verification.",
+      "state": "NOT_RUN_PREFLIGHT_ONLY"
+    },
+    {
+      "criterion": "documentation",
+      "seam": "21-implementation-plan.md#wp-12 / 22-test-plan.md",
+      "currentEvidence": "Published plans clearly say future planned behavior, not runtime pass.",
+      "requiredChange": "Document actual role/import/visibility semantics, authority mode, capabilities/limits, migration/quarantine/repair, offline/revoke states and receipt-bound implementation evidence. Preserve full-conformance dependency distinction.",
+      "verification": "Lead checks docs match accepted API/migration/state receipts and observed UI, never mark feature complete from fixture or preflight.",
+      "missingPrerequisite": "Accepted implemented contracts and observed revision-bound scenario evidence.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "failure states",
+      "seam": "registerProjectsHandlers thrown errors/null/[]; ProjectsHomeInMain toast; parseProjectMembershipStore unsupported-version",
+      "currentEvidence": "RPC returns null/[] on missing workspace and generic errors; parser preserves future schema payload, create UI only generic toast.",
+      "requiredChange": "Expose normative UNAUTHENTICATED/FORBIDDEN/WORKSPACE_MISMATCH/INVALID_PAYLOAD/REVISION_CONFLICT/IDEMPOTENCY_CONFLICT/PROVIDER_UNAVAILABLE/UNKNOWN_EXTERNAL_EFFECT/SCHEMA_VERSION_UNSUPPORTED/REVOKE_FENCE_PENDING and distinct retryable/terminal/quarantine/reauth states. Preserve unsupported payload; do not mark unavailable/ambiguous applied.",
+      "verification": "Exercise each applicable typed branch through domain/API and renderer state mapping, including injected outage/fence and schema mismatch. Unsupported outbound provider capability explicitly unavailable; no fake provider call to satisfy error coverage.",
+      "missingPrerequisite": "Accepted canonical error mapping and common client state model; outbound capability contracts if any are enabled.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "seam": "ProjectsHomeInMain props / ProjectsListPanel projects.length / ProjectOverview query",
+      "currentEvidence": "Home/List accept rows with no query lifecycle; empty rows render empty immediately.",
+      "requiredChange": "Separate initial loading, refreshing/stale projection and receipt reconciliation from empty; retain authorized stale data only under current epoch policy.",
+      "verification": "Delay query/projection, observe loading not empty; refresh with pending revision shows stale/refresh indicator until authorized watermark; revoke removes stale content.",
+      "missingPrerequisite": "Accepted renderer query/projection lifecycle from shared bridge/WP-05.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "seam": "ProjectsListPanel empty branch / registerProjectsHandlers GET and GET_ONE",
+      "currentEvidence": "Missing workspace or nonclaimable list returns [], indistinguishable from empty; UI only length-based empty.",
+      "requiredChange": "Genuine empty authorized Project list/context only after successful query; denied/offline/unconfigured/unsupported/missing source remain separate without hidden totals.",
+      "verification": "Compare empty Project with denied Project, unsupported kind, unavailable service and nonexistent alias; each has correct distinct state and no leaked title/count.",
+      "missingPrerequisite": "Accepted typed query/error DTO and UI state bridge.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "seam": "ProjectsHomeInMain handleCreate; registerProjectsHandlers broadcastChanged; normative receipt/outbox",
+      "currentEvidence": "Creation is immediate RPC and toast on failure; no durable queued Project command mechanism in inspected files.",
+      "requiredChange": "Reuse WP-05 durable queue for permitted link/member intents with fixed idempotency key and expectedRevision, offline_queued until canonical receipt/read-back. Reconnect rechecks ACL/conflict; revoked pending intent quarantined/rejected, never fake applied.",
+      "verification": "Queue link offline, reload client, reconnect and observe one edge/receipt/event. Revoke or concurrent revision update during offline period rejects safely; restart after server commit before reply does not duplicate.",
+      "missingPrerequisite": "Accepted WP-05 persistent projection/queue and WP-51 authority epoch/fence.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Goal: Page/task/channel/meeting/file/agent context and late full conformance",
+      "seam": "ROX2_ENTITY_KINDS / ProjectOverview / bindSurfaceContext; work-packages.json fullConformanceDependency",
+      "currentEvidence": "Registry kind list includes Page/Channel/File/Call/Calendar and session; member-of does not admit them all. No agent or meeting literal kind. WP-38 is a later integration package dependent on WP-12.",
+      "requiredChange": "Use capability-registered existing canonical refs and adapters, preserving session/Meeting aliases rather than minting unsupported kind strings. Base Task/Channel/existing Page acceptance is not proof of complete all-domain goal; explicitly unavailable domains until actual adapters and WP-38 integration.",
+      "verification": "After individual package receipts, Project/ACCOUNT-01 context opens actual authorized Page/task/channel/meeting/file/agent-session sources with source refs/revisions/freshness. Unsupported provider pending remains visibly pending/unavailable; same hidden-mail assertions across domains.",
+      "missingPrerequisite": "Later accepted domain adapters, WP-36/50 and WP-38 full-conformance scenario; no reverse start dependency.",
+      "state": "FULL_CONFORMANCE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Migration constraints, forward/rollback and no duplicate stores",
+      "seam": "ProjectConfig.id/storage; ProjectMembershipStore; TaskProject; migration 12-domain-contract.sql",
+      "currentEvidence": "Local file configs and legacy task bundle are separate mechanisms; normative migration is not present at inspected path.",
+      "requiredChange": "Additive canonical relation/member/alias migration, workspace/entity/principal constraints, alias identity uniqueness and stable cursor/backlink indexes; reuse command/inbox tables. Preserve source metadata/provenance, quarantine ambiguous IDs; guard cutover and use post-write forward repair/reverse replay, not destructive rollback.",
+      "verification": "Apply migration on snapshot, backfill/retry with equal-name and cross-account inputs, assert keys/foreign refs/unique counts and preserved data; restart and perform new writes, exercise repair without losing them. Record actual migrator revision and applied receipt.",
+      "missingPrerequisite": "Lead migrator convention, WP-01/02 canonical tables, WP-04 receipt/inbox schema and accepted writer cutover.",
+      "state": "NOT_APPLIED_OR_VERIFIED"
+    },
+    {
+      "criterion": "Verification gate, negative controls and evidence artifacts",
+      "seam": "wp-12.test.ts; real Projects/RPC/HTTP surface; verification record in work-packages.json:10634-10690",
+      "currentEvidence": "This worker has source evidence only; fixture/mock status cannot establish live operation. nativeLive sets receipt_verified by source classification, not Project read-back.",
+      "requiredChange": "Lead integrates exact tested revision and records UI screenshot/ARIA, typed API read-back, canonical ID/revision, DB unique counts, receipts, event/projection watermark and seeded failure trace. Explicit implementation/verified/delivered states remain separate; apply private-mail mutation and independent holdout.",
+      "verification": "Real W1 actors A/B/C and seed 20260942 through changed UI/API; failure/reload and crash-between-commit-reply observed; private marker never enters logs. Catch ACL leak, dropped/duplicated event and identity-collapse controls with specific assertions rather than infrastructure exceptions.",
+      "missingPrerequisite": "Implemented integrated artifacts, accepted dependencies and authorized real scenario runner; none supplied as observed runtime receipts here.",
+      "state": "SOURCE_PREFLIGHT_ONLY"
+    },
+    {
+      "criterion": "License policy: behavior reimplementation; upstream dependency-only after exact audit",
+      "seam": "WP-12 licensePolicy; all normative new artifacts",
+      "currentEvidence": "This preflight reads existing ROX code and the published spec; no upstream source was copied or fetched.",
+      "requiredChange": "Reimplement behavior using existing ROX patterns; any newly chosen upstream dependency needs exact artifact/version/license decision, not file copying from Macro.",
+      "verification": "Lead reviews implementation origin and lock-pinned dependency audit before delivery; no dependency/source import performed by this worker.",
+      "missingPrerequisite": "Exact license receipt only if such dependency is selected; implementation provenance review still required.",
+      "state": "IMPLEMENTATION_GATE_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/shared/src/projects/types.ts","symbol":"ProjectConfig / ProjectPromptContext","lineStart":35,"lineEnd":113,"sha256":"a40c43fc73a8918b91b9608c67c303be48432f3d2f84d8bdf15b8ac8e1e8d6fc"},
+    {"path":"packages/shared/src/projects/storage.ts","symbol":"loadProjectConfig / saveProjectConfig","lineStart":106,"lineEnd":147,"sha256":"19ed9f5bf2927e7c7fcc76b8c3b2fa7211c03ccc2b9fc800a1f4e37529857092"},
+    {"path":"packages/shared/src/projects/storage.ts","symbol":"loadProjectById / createProject / updateProject","lineStart":227,"lineEnd":331,"sha256":"19ed9f5bf2927e7c7fcc76b8c3b2fa7211c03ccc2b9fc800a1f4e37529857092"},
+    {"path":"packages/server-core/src/handlers/rpc/projects.ts","symbol":"registerProjectsHandlers / broadcastChanged","lineStart":27,"lineEnd":171,"sha256":"baa907c847103a2fb1a9f39be6170f5a89ad9bebb899a11ba769fc48d6736df4"},
+    {"path":"packages/core/src/rox2/project-membership.ts","symbol":"ProjectLinkRole / Rox2ProjectMembership / ProjectMembershipStore / linkEntityToProject","lineStart":9,"lineEnd":118,"sha256":"c732cf3b3754b834c0db37b99544449fdbe85c48c7e357212589b64ba4a4a237"},
+    {"path":"packages/core/src/rox2/project-membership.ts","symbol":"entityIdsForProject / portfolioEntityIds","lineStart":139,"lineEnd":167,"sha256":"c732cf3b3754b834c0db37b99544449fdbe85c48c7e357212589b64ba4a4a237"},
+    {"path":"packages/core/src/tasks/personal/types.ts","symbol":"PersonalTask / TaskProject / TaskHeading / PersonalTaskBundle","lineStart":42,"lineEnd":119,"sha256":"4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"},
+    {"path":"packages/core/src/rox2/surface-context.ts","symbol":"bindSurfaceContext / visibleContextEntityRefs / rebaseLiveContext / requiresContextGrant","lineStart":31,"lineEnd":96,"sha256":"ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"ROX2_ENTITY_KINDS / Rox2Event / Rox2Context / Rox2CanonicalResult","lineStart":17,"lineEnd":167,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"ROX2_RELATION_RULES / isAllowedRox2Relation","lineStart":380,"lineEnd":402,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/rpc-native-actions.ts","symbol":"nativeLive / rpcNativeListResult","lineStart":390,"lineEnd":428,"sha256":"692630527926522d5a3989a2650a595e5f04a932dcc1ab821bc28cc801482d6a"},
+    {"path":"apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx","symbol":"ProjectsHomeInMain / handleCreate / handleJumpToSessions","lineStart":16,"lineEnd":95,"sha256":"f94728b77f2d9d34ce46167983fe8ea114c62e850ce5824ddd83d83949a6b49e"},
+    {"path":"apps/electron/src/renderer/components/app-shell/ProjectsListPanel.tsx","symbol":"ProjectsListPanel / ProjectRow","lineStart":26,"lineEnd":152,"sha256":"25d88481076b826208d8a9043be73ee088ae85f47956acdbe6969028829a0782"},
+    {"path":"apps/electron/src/renderer/context/AppShellContext.tsx","symbol":"AppShellContextType.projects","lineStart":81,"lineEnd":84,"sha256":"da1e2e5c44019fa50072109eebf93b8cd6cfbf672ed03df74bf12d0c17a35fe3"},
+    {"path":"packages/server-core/src/handlers/handler-deps.ts","symbol":"HandlerDeps / commandGateway","lineStart":56,"lineEnd":72,"sha256":"501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.projects","lineStart":829,"lineEnd":839,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"packages/shared/src/protocol/events.ts","symbol":"RpcEventMap project CHANGED tuple","lineStart":74,"lineEnd":81,"sha256":"2c488ef99e2bf5e9600c20b9795dd70360901e8a378e478df2410728b44fee62"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"workPackages[WP-12] metadata/DoD","lineStart":9822,"lineEnd":9980,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-12 migrations","lineStart":10385,"lineEnd":10430,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-12 verification/fullConformanceDependency","lineStart":10634,"lineEnd":10691,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-12","lineStart":221,"lineEnd":237,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-50 / WP-51 hidden foundation gates","lineStart":1002,"lineEnd":1036,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Feature completeness checklist","lineStart":197,"lineEnd":222,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"CHAT-TASK-01 / general acceptance boundary","lineStart":5,"lineEnd":74,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": "Lead first commits wave0 and supplies accepted WP-11/WP-02 typed interfaces, migration/scenario receipts and current foundation ports. On that exact revision, rehash/reread changed seams; agree role migration and source-scoped TaskProject alias mapping with WP-02/WP-11 owners, then implement normative projects/contracts.ts against accepted ports. Root integrates shared patch requests and existing selected Projects overview/transport callers. Do not start feature implementation from this preflight or claim full conformance before relevant foundation/domain receipts.",
+  "risks": [
+    "Legacy role set primary/member/reference does not equal normative primary/context/attachment; automatic replacement could alter existing primary pointer behavior and attachment semantics.",
+    "ROX2 member-of rejects Channel/Page even though registry enumerates those kinds; UI-only rendering would fake or fail required behavior.",
+    "Current project list helpers authorize Project only; leaking target IDs/titles/counts or deriving private mail into shared details/memory remains possible unless source policy is rechecked before serialization.",
+    "RPC native source status helpers classify receipt_verified before storage read-back; source classification must not be repurposed as authenticated shared receipt proof.",
+    "LoadedProject contains local root/assets paths and config details; full-list workspace broadcasts are unsuitable as an unfiltered shared projection.",
+    "TaskProject and ProjectConfig have independent identity and different metadata; name/slug joining or dropping task deadline/area/order/status fields violates migration acceptance.",
+    "entity_link is already a WP-02 foundation table; WP-12 creating another link graph or another canonical Project table would violate single authority.",
+    "ProjectsHomeInMain derives picker-shaped prop types but passes them to a LoadedProject[] child; exact callsites and selected-project overview need owner inspection. No compile failure is claimed.",
+    "Published WP-38 fullConformanceDependency is reverse of the implementation DAG: it gates later all-domain verification, not WP-12 start. Treating it as a start edge deadlocks.",
+    "WP-51/WP-50 shared-writer and mixed-audience context prerequisites are not explicit WP-12 edges. Landing a new gateway without fencing legacy IPC/file/tool paths or tracking derived source provenance is incomplete.",
+    "AddMember typed API is named but its exact request/member role DTO is not specified by the primary LinkToProject schema; accepted identity/policy interface must resolve it without inventing execution-mode roles.",
+    "Concurrent lead integration can invalidate inspected lines/hashes. Rebind this report to wave0 before implementation; no runtime, migration or feature completeness is inferred from this artifact."
+  ]
+}

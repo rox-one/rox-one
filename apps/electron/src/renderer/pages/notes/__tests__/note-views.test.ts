@@ -25,7 +25,9 @@ import {
   parseOutlineFolds,
   progressiveGraph,
   projectNoteRows,
+  parseNotePropertyValue,
   removeFormula,
+  setNotePropertyColumn,
   restoreSavedViews,
   serializeJsonCanvas,
   serializeNoteBaseView,
@@ -152,6 +154,19 @@ describe('notes views', () => {
     expect(folds.has('ops/alpha:0:Intro')).toBe(true)
   })
 
+  test('editable table property columns persist in view and preserve property types', () => {
+    const view = loadSavedViews(null)[0]!
+    const withColumn = setNotePropertyColumn(view, 'priority', true)
+    expect(withColumn.columns).toContain('property:priority')
+    expect(setNotePropertyColumn(withColumn, 'priority', true)).toEqual(withColumn)
+    expect(setNotePropertyColumn(withColumn, 'priority', false).columns).not.toContain('property:priority')
+    expect(restoreSavedViews(`[${serializeNoteBaseView(withColumn)}]`)[0]?.columns).toContain('property:priority')
+    expect(parseNotePropertyValue(7, '12')).toBe(12)
+    expect(parseNotePropertyValue(true, 'false')).toBe(false)
+    expect(parseNotePropertyValue(7, 'high')).toBe('high')
+    expect(parseNotePropertyValue(null, 'note')).toBe('note')
+    expect(setNotePropertyColumn(view, 'bad key', true)).toEqual(view)
+  })
   test('formula columns add, remove and evaluate without duplicating exprs', () => {
     const view = loadSavedViews(null)[0]!
     expect(view.formulas.map((formula) => formula.expr)).toEqual(['openTaskCount'])

@@ -1,10 +1,6 @@
 import { resolveConfigDir } from "../config/paths.ts"
 /**
- * Organization / team workspace types (P3.1).
- *
- * Local-first bookkeeping under CONFIG_DIR/orgs.json. When the Rox Server URL
- * (env CRAFT_SERVER_URL) is set, invite redemption prefers the server path;
- * pure local multi-user stores pending invites redeemed on this device.
+ * Organization and team workspace types for local persistence and authorized RPC.
  */
 
 export type OrgRole = 'owner' | 'admin' | 'member'
@@ -36,19 +32,33 @@ export interface OrgInvite {
   role: Exclude<OrgRole, 'owner'>
   token: string
   createdAt: number
+  /** Invitations expire after a bounded acceptance window. */
+  expiresAt: number
   createdBy: string
   acceptedAt?: number
   acceptedByUserId?: string
+  revokedAt?: number
+  revokedByUserId?: string
 }
 
 /** List/get DTO invite — token is never exposed outside create/accept. */
 export type OrgInvitePublic = Omit<OrgInvite, 'token'> & { token?: never }
 
+export interface OrgAuditEvent {
+  id: string
+  orgId: string
+  actorUserId: string
+  action: 'invite' | 'accept' | 'role-change' | 'member-remove' | 'invite-revoke'
+  outcome: 'denied'
+  occurredAt: number
+}
+
 export interface OrgsStoreFile {
-  version: 1
+  version: 2
   organizations: Organization[]
   members: OrgMember[]
   invites: OrgInvite[]
+  auditEvents: OrgAuditEvent[]
 }
 
 export interface CreateOrganizationInput {
@@ -64,12 +74,32 @@ export interface InviteToOrgInput {
 
 export interface AcceptInviteInput {
   token: string
-  /** Optional override; defaults to local profile identity */
-  userId?: string
 }
 
 export interface OrganizationWithMembers extends Organization {
   members: OrgMember[]
-  /** Pending invites without redeem tokens (use create/accept for tokens). */
+  /** Current caller identity, supplied by the authorized listing boundary. */
+  viewerUserId?: string
+  viewerAuthority?: 'native' | 'local'
+  viewerIssuer?: string
+  /** Pending invites without redeem tokens (create/accept return tokens). */
   pendingInvites: OrgInvitePublic[]
+}
+
+/** Identity response explicitly distinguishes server principal from local profile. */
+export interface OrgCallerIdentity {
+  /** Authenticated self profile display name; native actors never inherit host preferences. */
+  name?: string
+  userId: string
+  username?: string
+  email?: string
+  authority: 'native' | 'local'
+  issuer?: string
+}
+
+/** Authenticated identity supplied by the RPC server, never request payload data. */
+export interface OrgActorIdentity {
+  userId: string
+  email?: string
+  username?: string
 }

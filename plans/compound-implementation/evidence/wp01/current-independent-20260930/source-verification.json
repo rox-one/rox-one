@@ -1,0 +1,25 @@
+{
+  "recordedAt": "2026-09-30T14:23:31.901Z",
+  "copies": [
+    {
+      "variant": "baseline",
+      "verifiedRegularFiles": 3408,
+      "changes": []
+    },
+    {
+      "variant": "mutation",
+      "verifiedRegularFiles": 3408,
+      "changes": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "originalSha256": "9899ca80d645ea243e395debcec2fa9405f64e6e3c945ff706a5e533269e0a6d",
+          "sha256": "d63d7981a36792043bbbe2a7c2bf77fe454ffef1e0854fbd41f75dd3fa9e3908"
+        }
+      ]
+    }
+  ],
+  "currentSourceDiffs": [],
+  "oracleSha256": "b8222c7836463af8639e7f9a85475470ffb50effd5ac6a12918e1894803fe741",
+  "sourceManifestSha256": "9e6db6e9af347e63068f58be47d4379344a69434997b0ae145c17af22f14513a",
+  "oldArtifactsStillIntact": true
+}

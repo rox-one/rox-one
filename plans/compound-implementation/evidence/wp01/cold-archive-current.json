@@ -1,0 +1,116 @@
+{
+  "at": "2026-09-30T14:19:40.569Z",
+  "status": "PASS_COLD_ARCHIVE_FUNCTIONAL",
+  "inputRevision": "8106f22185fb3b3e9a6a585320d48b1bf5f10fbd",
+  "archivePath": "/Users/t/Projects/rox-one-compound-implementation/apps/workspace-service/workspace-service.tgz",
+  "archiveSha256": "8dc3bdb0f8df4241b8709322cf1b09786d7b0edecd740b3365918e7a611ce35f",
+  "expectedMemberSha256": {
+    "dist/index.js": "5b33a9583ee4bac078ddfa86272baa2795d76f0fdfdfd367aad4d8dd53298426",
+    "migrations/01-domain-contract.sql": "1e98bc23bdbf921f8e72e67194544666ffb33911f577b7581fa32ea9deeda900",
+    "migrations/01-local-auth-bootstrap.sql": "2412ea8aa4f763d5bb9680f344276a9ed6bcf89486629a4fe9e3d23282cba9bc",
+    "LICENSE": "9a75ace1224f0f880ddfdd8442d14d5a0d865152c61a2fd363d8e2c351f94d2c",
+    "NOTICE": "b4fe19519f12439760a575d5be66e437f865219c2b2c9a8adc95b7574b89deb0",
+    "notices/THIRD-PARTY-NOTICES.txt": "53b7930876b314d8b444e4db64f9d9f3960092de504f14ac870135c4fc6b49ef"
+  },
+  "bunExecutable": "/opt/homebrew/Cellar/bun/1.4.2/bin/bun",
+  "driverSha256": {
+    "tests/macro-integration/wp-01-archive.test.ts": "b50edc60292e9bcdc7d8f39df5cca925118f6b8d4c7dc04fe0e3e350f200825c",
+    "scripts/compliance/generate-sbom.ts": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+    "packages/server-core/src/transport/client.ts": "dce98dac82735fc5d585acf36465d59a6992027facb5127de723b2af746fb5f0",
+    "apps/workspace-service/src/auth/postgres-identity.ts": "8b8124e55e98d9ef29617e06b107db3643cca205e6af48f9c16cae95f9b2d146"
+  },
+  "driverUnchanged": true,
+  "artifactUnchanged": true,
+  "sourceBuildOrInstallExecuted": false,
+  "legalReleaseCleared": false,
+  "fullFeatureDoDComplete": false,
+  "cases": [
+    {
+      "name": "actual-cold-two-user-restart",
+      "directory": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-wp01-archive-yeontm",
+      "startedAt": "2026-09-30T14:19:33.846Z",
+      "proof": {
+        "absoluteBun": "/opt/homebrew/Cellar/bun/1.4.2/bin/bun",
+        "childFlags": [
+          "--no-install",
+          "--no-env-file"
+        ],
+        "isolatedCwd": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-wp01-archive-yeontm/payload",
+        "emptyPathAndNodePath": true,
+        "noNodeModulesAncestor": true,
+        "sixMemberSha256": {
+          "dist/index.js": "5b33a9583ee4bac078ddfa86272baa2795d76f0fdfdfd367aad4d8dd53298426",
+          "migrations/01-domain-contract.sql": "1e98bc23bdbf921f8e72e67194544666ffb33911f577b7581fa32ea9deeda900",
+          "migrations/01-local-auth-bootstrap.sql": "2412ea8aa4f763d5bb9680f344276a9ed6bcf89486629a4fe9e3d23282cba9bc",
+          "LICENSE": "9a75ace1224f0f880ddfdd8442d14d5a0d865152c61a2fd363d8e2c351f94d2c",
+          "NOTICE": "b4fe19519f12439760a575d5be66e437f865219c2b2c9a8adc95b7574b89deb0",
+          "notices/THIRD-PARTY-NOTICES.txt": "53b7930876b314d8b444e4db64f9d9f3960092de504f14ac870135c4fc6b49ef"
+        },
+        "accounts": [
+          "2511420b-4c47-4d0e-a69d-3a9f5875b4d2",
+          "c574dee0-9e97-4686-834e-9af961e05087"
+        ],
+        "canonicalEntity": {
+          "workspaceId": "e437c42c-5056-4ad0-8daa-4594a5c8e3f0",
+          "entityId": "project:20dd94b2-a3b6-4f57-b596-3e73303379d1",
+          "revisionId": "1"
+        },
+        "commandId": "f541b46d-904a-4731-b0a8-c7ea08395296",
+        "idempotencyKey": "ee29f633-b40e-4cb7-bca3-b3ad14bb178f",
+        "receiptSha256": "0b8199a8fc93228089cb103d8bffe583485345d6e894c184152ee6099aaaaf36",
+        "jwksSha256": "a7f628abe309bd9b0a1a337c2b921a657f3543359736601d8400fd9a30499b37",
+        "originalReceiptAfterRealProcessRestart": true,
+        "counts": {
+          "projects": 1,
+          "receipts": 1,
+          "events": 1
+        },
+        "privateHttpStatus": 403,
+        "privateWsCode": "FORBIDDEN",
+        "argon2idCredentialCount": 2,
+        "childPids": [
+          15491,
+          15624
+        ],
+        "sourceBuildUnchanged": true
+      },
+      "ownedSchemaDropped": true,
+      "status": "PASS",
+      "finishedAt": "2026-09-30T14:19:39.915Z",
+      "ownedDirectoryRemoved": true
+    },
+    {
+      "name": "tampered-bundle-denied",
+      "directory": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-wp01-archive-0d2o7G",
+      "startedAt": "2026-09-30T14:19:39.927Z",
+      "proof": {
+        "candidateSha256": "1f6aa20b34b77736884d6b16928cc284b861f909c01da90e7ca72255755e7fa6",
+        "deniedBeforePayloadCreation": true,
+        "actualBypassExit": 89,
+        "actualChangedExecutableRanInOwnedNegativeControl": true
+      },
+      "status": "PASS",
+      "finishedAt": "2026-09-30T14:19:40.024Z",
+      "ownedDirectoryRemoved": true
+    },
+    {
+      "name": "missing-migration-denied",
+      "directory": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-wp01-archive-vYVHz8",
+      "startedAt": "2026-09-30T14:19:40.026Z",
+      "proof": {
+        "candidateSha256": "87dc8a05a0e03333bf939aa675c3f35c869c0ffe6149288bacf92fa5973ff2bb",
+        "missingMember": "migrations/01-local-auth-bootstrap.sql",
+        "deniedBeforePayloadCreation": true,
+        "actualRuntimeExitWithoutMigration": 1,
+        "actualRuntimeDiagnostic": "{\"error\":{\"code\":\"STARTUP_FAILED\"}}",
+        "reachableRealPostgres": true,
+        "actualSchemaTables": 0,
+        "noCheckoutMigrationFallback": true
+      },
+      "ownedSchemaDropped": true,
+      "status": "PASS",
+      "finishedAt": "2026-09-30T14:19:40.546Z",
+      "ownedDirectoryRemoved": true
+    }
+  ]
+}

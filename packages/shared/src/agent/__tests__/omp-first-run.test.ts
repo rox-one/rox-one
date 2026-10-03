@@ -18,6 +18,7 @@ import {
   inspectOmpFirstRunReadiness,
   isOmpCredentialErrorCode,
   provisionOmpRoxConfig,
+  prepareOmpRoxRuntimeConfig,
 } from '../omp-first-run.ts';
 import { getSetupNeeds, type AuthState } from '../../auth/state.ts';
 import { ompStartupErrorToAgentError, OmpStartupError } from '../errors.ts';
@@ -134,8 +135,9 @@ describe('provisionOmpRoxConfig', () => {
     expect(config).not.toContain('super-secret-rox-key');
     expect(models).toMatch(/apiKey:\s*ROX_API_KEY/);
     expect(models).toContain('https://api.rox.one/v1');
-    expect(models).toContain('kimi-K3');
-    expect(config).toMatch(/modelRoles:[\s\S]*default:\s*rox\/kimi-K3/);
+    expect(models).toContain('rox/standard');
+    expect(models).not.toContain('kimi-K3');
+    expect(config).toMatch(/modelRoles:[\s\S]*default:\s*rox\/rox\/standard/);
   });
 
   it('does not overwrite an existing models.yml', () => {
@@ -163,6 +165,31 @@ describe('provisionOmpRoxConfig', () => {
       env: { ROX_API_KEY: 'rox-test-key' },
     });
     expect(readiness.ready).toBe(true);
+  });
+});
+
+describe('private public Rox runtime catalog', () => {
+  it('provisions canonical public IDs without changing existing user files or storing its secret', () => {
+    const home = tempHome();
+    const userAgent = join(home, '.omp', 'agent');
+    mkdirSync(userAgent, { recursive: true });
+    const original = 'providers:\n  user:\n    models:\n      - id: private-choice\n';
+    const originalConfig = 'modelRoles:\n  default: user/private-choice\n';
+    writeFileSync(join(userAgent, 'models.yml'), original);
+    writeFileSync(join(userAgent, 'config.yml'), originalConfig);
+    const runtime = prepareOmpRoxRuntimeConfig({ runtimeRoot: join(home, 'private-runs'), apiKey: 'private-fixture-secret' });
+    const models = readFileSync(join(runtime.agentDir, 'models.yml'), 'utf8');
+    expect([...models.matchAll(/- id: (.+)/g)].map(match => match[1])).toEqual(['rox/explore', 'rox/standard', 'rox/max', 'rox/vision', 'rox/fast']);
+    expect(models).not.toContain('private-fixture-secret');
+    expect(models).not.toContain('kimi-K3');
+    expect(runtime.env).toEqual({ PI_CODING_AGENT_DIR: runtime.agentDir, OMP_PROFILE: 'default', ROX_API_KEY: 'private-fixture-secret' });
+    expect(readFileSync(join(userAgent, 'models.yml'), 'utf8')).toBe(original);
+    expect(readFileSync(join(userAgent, 'config.yml'), 'utf8')).toBe(originalConfig);
+    runtime.dispose();
+    runtime.dispose();
+    expect(existsSync(runtime.agentDir)).toBe(false);
+    expect(readFileSync(join(userAgent, 'models.yml'), 'utf8')).toBe(original);
+    expect(readFileSync(join(userAgent, 'config.yml'), 'utf8')).toBe(originalConfig);
   });
 });
 

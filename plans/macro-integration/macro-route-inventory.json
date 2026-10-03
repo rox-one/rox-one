@@ -1,0 +1,740 @@
+{
+  "schemaVersion": 1,
+  "snapshot": {
+    "repository": "macro-inc/macro",
+    "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+  },
+  "note": "Literal route candidates; runtime registration verified separately in product map",
+  "routes": [
+    {
+      "path": "apps/web/src/components/app/split-layout/SplitLayoutRoute.tsx",
+      "line": 23,
+      "declaration": "path: '/*splits',"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/componentRegistry.tsx",
+      "line": 163,
+      "declaration": "<RedirectSplit to={{ type: 'component', id: 'home' }} />"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/componentRegistry.tsx",
+      "line": 170,
+      "declaration": "else panel.handle.replace({ next: { type: 'component', id: 'tasks' } });"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/componentRegistry.tsx",
+      "line": 215,
+      "declaration": "<RedirectSplit to={{ type: 'component', id: 'tasks' }} />"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/componentRegistry.tsx",
+      "line": 286,
+      "declaration": "<RedirectSplit to={{ type: 'component', id: 'activity' }} />"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/componentRegistry.tsx",
+      "line": 289,
+      "declaration": "<RedirectSplit to={{ type: 'component', id: 'activity' }} />"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/componentRegistry.tsx",
+      "line": 332,
+      "declaration": "<RedirectSplit to={{ type: 'component', id: 'agents' }} />"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/componentRegistry.tsx",
+      "line": 491,
+      "declaration": "fallback={<RedirectSplit to={{ type: 'component', id: 'home' }} />}"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/app-middleware.ts",
+      "line": 78,
+      "declaration": ".with({ type: 'component', id: 'documents' }, () => '/drive')"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/app-middleware.ts",
+      "line": 79,
+      "declaration": ".with({ type: 'component', id: 'settings' }, () => '/settings')"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/app-routes.ts",
+      "line": 61,
+      "declaration": "location: { route: { matches: [{ id: 'view-home', params: {} }] } },"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/debug-routes.ts",
+      "line": 49,
+      "declaration": "id: `view-${id}`,"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/debug-routes.ts",
+      "line": 50,
+      "declaration": "path: `debug/${id}`,"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/legacy-route.ts",
+      "line": 55,
+      "declaration": "return { type: 'component', id: 'settings' };"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/legacy-route.ts",
+      "line": 103,
+      "declaration": "route: { matches: [{ id: 'settings', params: { tab: id } }] },"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/legacy-route.ts",
+      "line": 111,
+      "declaration": "route: { matches: [{ id: 'settings', params: { tab: 'account' } }] },"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/legacy-route.ts",
+      "line": 118,
+      "declaration": "location: { route: { matches: [{ id: 'drive', params: {} }] } },"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/legacy-route.ts",
+      "line": 127,
+      "declaration": "matches: [{ id: 'legacy-content', params: { type, id } }],"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/legacy-route.ts",
+      "line": 140,
+      "declaration": "route: { matches: [{ id: 'drive', params: {} }] },"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/legacy-route.ts",
+      "line": 224,
+      "declaration": "matches: [{ id: 'pr-detail', params: { foreignEntityId: content.id } }],"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/legacy-route.ts",
+      "line": 232,
+      "declaration": "matches: [{ id: 'call-detail', params: { callId: content.id } }],"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/legacy-route.ts",
+      "line": 238,
+      "declaration": "return { route: { matches: [{ id: 'drive', params: {} }] } };"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/legacy-route.ts",
+      "line": 244,
+      "declaration": "matches: [{ id: 'settings', params: { tab: 'account' } }],"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/legacy-route.ts",
+      "line": 264,
+      "declaration": "matches: [{ id: 'legacy-content', params: { type, id } }],"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/legacy-route.ts",
+      "line": 343,
+      "declaration": "if (root.id === 'drive') return { type: 'component', id: 'documents' };"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/legacy-route.ts",
+      "line": 344,
+      "declaration": "if (root.id === 'settings') return { type: 'component', id: 'settings' };"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/legacy-route.ts",
+      "line": 383,
+      "declaration": "id: 'legacy-content',"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/legacy-route.ts",
+      "line": 384,
+      "declaration": "path: ':type/:id',"
+    },
+    {
+      "path": "apps/web/src/components/app/split-layout/split-router/legacy-route.ts",
+      "line": 415,
+      "declaration": "id: `${content.aliasContext?.baseType ?? content.type}:${id}`,"
+    },
+    {
+      "path": "apps/web/src/features/activity/route.tsx",
+      "line": 29,
+      "declaration": "<RedirectSplit to={{ type: 'component', id: 'home' }} />"
+    },
+    {
+      "path": "apps/web/src/features/activity/route.tsx",
+      "line": 39,
+      "declaration": "id: 'view-activity',"
+    },
+    {
+      "path": "apps/web/src/features/activity/route.tsx",
+      "line": 40,
+      "declaration": "path: 'activity',"
+    },
+    {
+      "path": "apps/web/src/features/activity/route.tsx",
+      "line": 43,
+      "declaration": "claim: () => ({ namespace: 'component', id: 'activity' }),"
+    },
+    {
+      "path": "apps/web/src/features/agents-view/route.tsx",
+      "line": 111,
+      "declaration": "id: 'agents',"
+    },
+    {
+      "path": "apps/web/src/features/agents-view/route.tsx",
+      "line": 112,
+      "declaration": "path: 'agents/:id',"
+    },
+    {
+      "path": "apps/web/src/features/agents-view/route.tsx",
+      "line": 122,
+      "declaration": "id: 'coders',"
+    },
+    {
+      "path": "apps/web/src/features/agents-view/route.tsx",
+      "line": 123,
+      "declaration": "path: 'coders/:id',"
+    },
+    {
+      "path": "apps/web/src/features/agents-view/route.tsx",
+      "line": 133,
+      "declaration": "id: 'agent-chats',"
+    },
+    {
+      "path": "apps/web/src/features/agents-view/route.tsx",
+      "line": 134,
+      "declaration": "path: 'agents/chat/:id',"
+    },
+    {
+      "path": "apps/web/src/features/agents-view/route.tsx",
+      "line": 145,
+      "declaration": "id: 'view-agents',"
+    },
+    {
+      "path": "apps/web/src/features/agents-view/route.tsx",
+      "line": 146,
+      "declaration": "path: 'agents',"
+    },
+    {
+      "path": "apps/web/src/features/agents-view/route.tsx",
+      "line": 150,
+      "declaration": "claim: () => ({ namespace: 'component', id: 'agents' }),"
+    },
+    {
+      "path": "apps/web/src/features/block-call/route.tsx",
+      "line": 38,
+      "declaration": "id: 'call-detail',"
+    },
+    {
+      "path": "apps/web/src/features/block-call/route.tsx",
+      "line": 39,
+      "declaration": "path: 'call/:callId',"
+    },
+    {
+      "path": "apps/web/src/features/block-call/route.tsx",
+      "line": 45,
+      "declaration": "claim: ({ callId }) => ({ namespace: 'block', id: `call:${callId}` }),"
+    },
+    {
+      "path": "apps/web/src/features/block-pr/route.tsx",
+      "line": 25,
+      "declaration": "id: 'pr-detail',"
+    },
+    {
+      "path": "apps/web/src/features/block-pr/route.tsx",
+      "line": 26,
+      "declaration": "path: 'pr/:foreignEntityId',"
+    },
+    {
+      "path": "apps/web/src/features/block-pr/route.tsx",
+      "line": 32,
+      "declaration": "id: `pr:${foreignEntityId}`,"
+    },
+    {
+      "path": "apps/web/src/features/calendar-view/route.tsx",
+      "line": 22,
+      "declaration": "path: 'calendar/:period',"
+    },
+    {
+      "path": "apps/web/src/features/channels-view/route.tsx",
+      "line": 53,
+      "declaration": "id: 'channels-channel',"
+    },
+    {
+      "path": "apps/web/src/features/channels-view/route.tsx",
+      "line": 54,
+      "declaration": "path: ':channelId',"
+    },
+    {
+      "path": "apps/web/src/features/channels-view/route.tsx",
+      "line": 61,
+      "declaration": "id: `channel:${channelId}`,"
+    },
+    {
+      "path": "apps/web/src/features/channels-view/route.tsx",
+      "line": 67,
+      "declaration": "id: 'view-channels',"
+    },
+    {
+      "path": "apps/web/src/features/channels-view/route.tsx",
+      "line": 68,
+      "declaration": "path: 'channels',"
+    },
+    {
+      "path": "apps/web/src/features/companies/route.tsx",
+      "line": 21,
+      "declaration": "return <RedirectSplit to={{ type: 'component', id: 'home' }} />;"
+    },
+    {
+      "path": "apps/web/src/features/companies/route.tsx",
+      "line": 39,
+      "declaration": "id: 'view-companies',"
+    },
+    {
+      "path": "apps/web/src/features/companies/route.tsx",
+      "line": 40,
+      "declaration": "path: 'companies',"
+    },
+    {
+      "path": "apps/web/src/features/companies/route.tsx",
+      "line": 44,
+      "declaration": "claim: () => ({ namespace: 'component', id: 'companies' }),"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 63,
+      "declaration": "id: 'drive-call',"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 64,
+      "declaration": "path: 'call/:callId',"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 69,
+      "declaration": "claim: ({ callId }) => ({ namespace: 'block', id: `call:${callId}` }),"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 84,
+      "declaration": "id: 'drive-document',"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 86,
+      "declaration": "path: ':documentType/:documentId',"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 93,
+      "declaration": "id: `${driveDocumentBlockType(documentType)}:${documentId}`,"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 100,
+      "declaration": "id: 'drive-folder-document',"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 102,
+      "declaration": "path: ':documentType/:documentId',"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 109,
+      "declaration": "id: `${driveDocumentBlockType(documentType)}:${documentId}`,"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 116,
+      "declaration": "id: 'drive-tab-document',"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 118,
+      "declaration": "path: ':documentType/:documentId',"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 125,
+      "declaration": "id: `${driveDocumentBlockType(documentType)}:${documentId}`,"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 132,
+      "declaration": "id: 'drive-folder',"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 133,
+      "declaration": "path: 'folder/:folderId?',"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 145,
+      "declaration": "id: 'drive-tab',"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 146,
+      "declaration": "path: ':tab',"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 154,
+      "declaration": "id: 'drive',"
+    },
+    {
+      "path": "apps/web/src/features/drive-view/route.tsx",
+      "line": 155,
+      "declaration": "path: 'drive',"
+    },
+    {
+      "path": "apps/web/src/features/email-view/route.tsx",
+      "line": 53,
+      "declaration": "id: 'mail-thread',"
+    },
+    {
+      "path": "apps/web/src/features/email-view/route.tsx",
+      "line": 54,
+      "declaration": "path: ':threadId',"
+    },
+    {
+      "path": "apps/web/src/features/email-view/route.tsx",
+      "line": 61,
+      "declaration": "id: `email:${threadId}`,"
+    },
+    {
+      "path": "apps/web/src/features/email-view/route.tsx",
+      "line": 67,
+      "declaration": "id: 'view-mail',"
+    },
+    {
+      "path": "apps/web/src/features/email-view/route.tsx",
+      "line": 68,
+      "declaration": "path: 'mail',"
+    },
+    {
+      "path": "apps/web/src/features/getting-started/route.tsx",
+      "line": 18,
+      "declaration": "id: 'view-getting-started',"
+    },
+    {
+      "path": "apps/web/src/features/getting-started/route.tsx",
+      "line": 19,
+      "declaration": "path: 'getting-started',"
+    },
+    {
+      "path": "apps/web/src/features/getting-started/route.tsx",
+      "line": 22,
+      "declaration": "claim: () => ({ namespace: 'component', id: 'getting-started' }),"
+    },
+    {
+      "path": "apps/web/src/features/home/route.tsx",
+      "line": 98,
+      "declaration": "id: 'home-calendar',"
+    },
+    {
+      "path": "apps/web/src/features/home/route.tsx",
+      "line": 99,
+      "declaration": "path: 'calendar/:period',"
+    },
+    {
+      "path": "apps/web/src/features/home/route.tsx",
+      "line": 108,
+      "declaration": "id: 'home-channel',"
+    },
+    {
+      "path": "apps/web/src/features/home/route.tsx",
+      "line": 109,
+      "declaration": "path: 'channel/:channelId',"
+    },
+    {
+      "path": "apps/web/src/features/home/route.tsx",
+      "line": 115,
+      "declaration": "id: 'home-document',"
+    },
+    {
+      "path": "apps/web/src/features/home/route.tsx",
+      "line": 136,
+      "declaration": "id: 'home-preview',"
+    },
+    {
+      "path": "apps/web/src/features/home/route.tsx",
+      "line": 137,
+      "declaration": "path: ':blockType/:previewId',"
+    },
+    {
+      "path": "apps/web/src/features/home/route.tsx",
+      "line": 175,
+      "declaration": "id: 'view-home',"
+    },
+    {
+      "path": "apps/web/src/features/home/route.tsx",
+      "line": 176,
+      "declaration": "path: 'home',"
+    },
+    {
+      "path": "apps/web/src/features/next-soup/route.tsx",
+      "line": 42,
+      "declaration": "<RedirectSplit to={{ type: 'component', id: 'home' }} />"
+    },
+    {
+      "path": "apps/web/src/features/next-soup/route.tsx",
+      "line": 110,
+      "declaration": "id: 'view-recent',"
+    },
+    {
+      "path": "apps/web/src/features/next-soup/route.tsx",
+      "line": 111,
+      "declaration": "path: 'recent',"
+    },
+    {
+      "path": "apps/web/src/features/next-soup/route.tsx",
+      "line": 114,
+      "declaration": "claim: () => ({ namespace: 'component', id: 'recent' }),"
+    },
+    {
+      "path": "apps/web/src/features/next-soup/route.tsx",
+      "line": 118,
+      "declaration": "id: 'view-calls',"
+    },
+    {
+      "path": "apps/web/src/features/next-soup/route.tsx",
+      "line": 119,
+      "declaration": "path: 'calls',"
+    },
+    {
+      "path": "apps/web/src/features/next-soup/route.tsx",
+      "line": 122,
+      "declaration": "claim: () => ({ namespace: 'component', id: 'calls' }),"
+    },
+    {
+      "path": "apps/web/src/features/next-soup/route.tsx",
+      "line": 126,
+      "declaration": "id: 'view-folders',"
+    },
+    {
+      "path": "apps/web/src/features/next-soup/route.tsx",
+      "line": 127,
+      "declaration": "path: 'folders',"
+    },
+    {
+      "path": "apps/web/src/features/next-soup/route.tsx",
+      "line": 130,
+      "declaration": "claim: () => ({ namespace: 'component', id: 'folders' }),"
+    },
+    {
+      "path": "apps/web/src/features/next-soup/route.tsx",
+      "line": 134,
+      "declaration": "id: 'view-search',"
+    },
+    {
+      "path": "apps/web/src/features/next-soup/route.tsx",
+      "line": 135,
+      "declaration": "path: 'search',"
+    },
+    {
+      "path": "apps/web/src/features/next-soup/route.tsx",
+      "line": 138,
+      "declaration": "claim: () => ({ namespace: 'component', id: 'search' }),"
+    },
+    {
+      "path": "apps/web/src/features/reminders/route.tsx",
+      "line": 17,
+      "declaration": "return <RedirectSplit to={{ type: 'component', id: 'home' }} />;"
+    },
+    {
+      "path": "apps/web/src/features/reminders/route.tsx",
+      "line": 32,
+      "declaration": "id: 'view-reminders',"
+    },
+    {
+      "path": "apps/web/src/features/reminders/route.tsx",
+      "line": 33,
+      "declaration": "path: 'reminders',"
+    },
+    {
+      "path": "apps/web/src/features/reminders/route.tsx",
+      "line": 36,
+      "declaration": "claim: () => ({ namespace: 'component', id: 'reminders' }),"
+    },
+    {
+      "path": "apps/web/src/features/reviews-view/route.tsx",
+      "line": 53,
+      "declaration": "id: 'reviews-pr',"
+    },
+    {
+      "path": "apps/web/src/features/reviews-view/route.tsx",
+      "line": 54,
+      "declaration": "path: 'pr/:foreignEntityId',"
+    },
+    {
+      "path": "apps/web/src/features/reviews-view/route.tsx",
+      "line": 60,
+      "declaration": "id: `pr:${foreignEntityId}`,"
+    },
+    {
+      "path": "apps/web/src/features/reviews-view/route.tsx",
+      "line": 66,
+      "declaration": "id: 'view-reviews',"
+    },
+    {
+      "path": "apps/web/src/features/reviews-view/route.tsx",
+      "line": 67,
+      "declaration": "path: 'reviews',"
+    },
+    {
+      "path": "apps/web/src/features/settings/route.tsx",
+      "line": 14,
+      "declaration": "id: 'settings',"
+    },
+    {
+      "path": "apps/web/src/features/settings/route.tsx",
+      "line": 15,
+      "declaration": "path: 'settings/:tab?',"
+    },
+    {
+      "path": "apps/web/src/features/settings/route.tsx",
+      "line": 23,
+      "declaration": "claim: () => ({ namespace: 'component', id: 'settings' }),"
+    },
+    {
+      "path": "apps/web/src/features/tasks-view/route.tsx",
+      "line": 61,
+      "declaration": "id: 'tasks-task',"
+    },
+    {
+      "path": "apps/web/src/features/tasks-view/route.tsx",
+      "line": 62,
+      "declaration": "path: ':taskId',"
+    },
+    {
+      "path": "apps/web/src/features/tasks-view/route.tsx",
+      "line": 68,
+      "declaration": "id: `md:${taskId}`,"
+    },
+    {
+      "path": "apps/web/src/features/tasks-view/route.tsx",
+      "line": 179,
+      "declaration": "id: 'tasks-project-task',"
+    },
+    {
+      "path": "apps/web/src/features/tasks-view/route.tsx",
+      "line": 180,
+      "declaration": "path: 'task/:taskId',"
+    },
+    {
+      "path": "apps/web/src/features/tasks-view/route.tsx",
+      "line": 184,
+      "declaration": "claim: ({ taskId }) => ({ namespace: 'block', id: `md:${taskId}` }),"
+    },
+    {
+      "path": "apps/web/src/features/tasks-view/route.tsx",
+      "line": 190,
+      "declaration": "id: 'tasks-project',"
+    },
+    {
+      "path": "apps/web/src/features/tasks-view/route.tsx",
+      "line": 191,
+      "declaration": "path: 'projects/:projectId/:section',"
+    },
+    {
+      "path": "apps/web/src/features/tasks-view/route.tsx",
+      "line": 203,
+      "declaration": "id: 'tasks-projects',"
+    },
+    {
+      "path": "apps/web/src/features/tasks-view/route.tsx",
+      "line": 204,
+      "declaration": "path: 'projects',"
+    },
+    {
+      "path": "apps/web/src/features/tasks-view/route.tsx",
+      "line": 209,
+      "declaration": "id: 'view-tasks',"
+    },
+    {
+      "path": "apps/web/src/features/tasks-view/route.tsx",
+      "line": 210,
+      "declaration": "path: 'tasks',"
+    },
+    {
+      "path": "apps/web/src/routes/Root.tsx",
+      "line": 238,
+      "declaration": "{ path: '/meet/*path', component: MeetingRouter },"
+    },
+    {
+      "path": "apps/web/src/routes/Root.tsx",
+      "line": 240,
+      "declaration": "path: '/task-slug/:taskSlug',"
+    },
+    {
+      "path": "apps/web/src/routes/Root.tsx",
+      "line": 245,
+      "declaration": "path: '/',"
+    },
+    {
+      "path": "apps/web/src/routes/Root.tsx",
+      "line": 249,
+      "declaration": "path: '/signup',"
+    },
+    {
+      "path": "apps/web/src/routes/Root.tsx",
+      "line": 261,
+      "declaration": "path: '/login/popup/success',"
+    },
+    {
+      "path": "apps/web/src/routes/Root.tsx",
+      "line": 290,
+      "declaration": "path: '/login',"
+    },
+    {
+      "path": "apps/web/src/routes/Root.tsx",
+      "line": 294,
+      "declaration": "path: '/welcome',"
+    },
+    {
+      "path": "apps/web/src/routes/Root.tsx",
+      "line": 303,
+      "declaration": "path: '/mobile-email-signup',"
+    },
+    {
+      "path": "apps/web/src/routes/Root.tsx",
+      "line": 307,
+      "declaration": "path: '/onboarding',"
+    },
+    {
+      "path": "apps/web/src/routes/Root.tsx",
+      "line": 316,
+      "declaration": "path: '/setup',"
+    },
+    {
+      "path": "apps/web/src/routes/Root.tsx",
+      "line": 321,
+      "declaration": "path: '/invite',"
+    },
+    {
+      "path": "apps/web/src/routes/Root.tsx",
+      "line": 326,
+      "declaration": "path: '/internal/invite-links',"
+    },
+    {
+      "path": "apps/web/src/routes/Root.tsx",
+      "line": 330,
+      "declaration": "path: '/team-invite',"
+    },
+    {
+      "path": "apps/web/src/routes/Root.tsx",
+      "line": 334,
+      "declaration": "path: '/channel-invite',"
+    },
+    {
+      "path": "apps/web/src/routes/Root.tsx",
+      "line": 339,
+      "declaration": "path: '*404',"
+    },
+    {
+      "path": "apps/web/src/routes/Root.tsx",
+      "line": 602,
+      "declaration": "path: '/',"
+    }
+  ]
+}

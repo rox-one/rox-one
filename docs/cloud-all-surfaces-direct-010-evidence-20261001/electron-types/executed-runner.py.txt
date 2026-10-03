@@ -1,0 +1,42 @@
+import hashlib,json,os,pathlib,subprocess,sys,time
+ROOT=pathlib.Path('/tmp/rox-r15-exact-ui-20261001/electron-types-private')
+CHECKOUT=pathlib.Path('/tmp/rox-r15-exact-ui-20261001/checkout')
+EVIDENCE=pathlib.Path('/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/electron-types')
+BUN='/workspace/.onboarding-tools/node_modules/.bin/bun'
+REVISION='010fa8c040e3a84cd40cd8195473f52d8582f159'
+def capture(args,cwd=CHECKOUT):return subprocess.check_output(args,cwd=cwd,text=True).strip()
+def save(name,data): (EVIDENCE/name).write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+def manifest():
+ entries={};links={}
+ for item in subprocess.check_output(['git','ls-files','-s','-z'],cwd=CHECKOUT).split(b'\0'):
+  if not item:continue
+  meta,name=item.split(b'\t',1);mode,sha,stage=meta.decode().split();name=name.decode()
+  if mode=='160000':links[name]=sha
+  else:
+   target=CHECKOUT/name
+   assert target.is_file(),name
+   entries[name]=hashlib.sha256(target.read_bytes()).hexdigest()
+ return {'files':entries,'gitlinks':links,'revision':capture(['git','rev-parse','HEAD']),'regularFileCount':len(entries),'gitlinkCount':len(links)}
+allow=['PATH','HTTP_PROXY','HTTPS_PROXY','NO_PROXY','http_proxy','https_proxy','no_proxy','NODE_EXTRA_CA_CERTS','SSL_CERT_FILE','REQUESTS_CA_BUNDLE']
+env={k:os.environ[k] for k in allow if k in os.environ}
+for directory in ['private-config','cache/bun','cache/npm','cache/xdg','tmp']:(ROOT/directory).mkdir(parents=True,exist_ok=True)
+env.update(PATH=str(pathlib.Path(BUN).parent)+':'+env.get('PATH',''),LANG='C.UTF-8',LC_ALL='C.UTF-8',ROX_CONFIG_DIR=str(ROOT/'private-config'),CRAFT_CONFIG_DIR=str(ROOT/'private-config'),BUN_INSTALL_CACHE_DIR=str(ROOT/'cache/bun'),npm_config_cache=str(ROOT/'cache/npm'),XDG_CACHE_HOME=str(ROOT/'cache/xdg'),TMPDIR=str(ROOT/'tmp'),ELECTRON_SKIP_BINARY_DOWNLOAD='1',NODE_OPTIONS='--max-old-space-size=4096')
+def run(label,args):
+ before=manifest();save(label+'-source-before.json',before)
+ assert before['revision']==REVISION
+ assert not capture(['git','status','--porcelain=v1','--untracked-files=no'])
+ assert not (CHECKOUT/'.env').exists() and not (CHECKOUT/'.env.local').exists()
+ start=time.time();log=EVIDENCE/(label+'.log')
+ with log.open('w') as stream:proc=subprocess.run(args,cwd=CHECKOUT,env=env,stdout=stream,stderr=subprocess.STDOUT)
+ after=manifest();save(label+'-source-after.json',after)
+ receipt={'label':label,'command':args,'cwd':str(CHECKOUT),'revision':capture(['git','rev-parse','HEAD']),'exit':proc.returncode,'seconds':round(time.time()-start,3),'log':log.name,'logSha256':hashlib.sha256(log.read_bytes()).hexdigest(),'envKeys':sorted(env),'minimalChildEnvironment':True,'HOMERepurposed':False,'sourceAndLockUnchanged':before==after,'regularFileCount':after['regularFileCount'],'gitlinkCount':after['gitlinkCount']}
+ save(label+'.json',receipt);print(json.dumps(receipt),flush=True)
+ if before!=after:sys.exit(90)
+ sys.exit(proc.returncode)
+mode=sys.argv[1]
+if mode in ['validate-ci','webui-typecheck','electron-build']:
+ command={'validate-ci':'validate:ci','webui-typecheck':'webui:typecheck','electron-build':'electron:build'}[mode]
+ run(mode,[BUN,'--no-env-file','run',command])
+elif mode in ['compiled-sqlite','compiled-main-host']:
+ run(mode,['node',str(ROOT/(mode+'.cjs'))])
+else:raise ValueError(mode)

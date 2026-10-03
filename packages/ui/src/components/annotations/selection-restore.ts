@@ -31,14 +31,14 @@ export function restoreDomSelection(
 
 export function clearDomSelection(): void {
   if (typeof window === 'undefined') return
-  window.getSelection()?.removeAllRanges()
+  window.getSelection?.()?.removeAllRanges()
 }
 
 export function scheduleDomSelectionRestore(
   rootRef: { current: HTMLElement | null },
   selection: RestorableTextSelection | null | undefined,
 ): void {
-  if (!selection || typeof window === 'undefined') {
+  if (!selection || typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
     return
   }
 

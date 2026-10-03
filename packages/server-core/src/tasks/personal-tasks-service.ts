@@ -11,7 +11,11 @@
  */
 import type {
   PersonalTask,
+  PersonalTaskDelete,
+  PersonalTaskDeleteResult,
   PersonalTaskMeta,
+  PersonalTaskPutResult,
+  PersonalTaskWrite,
   PersonalTasksMigrateInput,
   PersonalTasksMigrateResult,
   PersonalTasksSnapshot,
@@ -27,37 +31,54 @@ export function readPersonalTasks(store: PersonalTaskPersistStore): PersonalTask
     backedUp.add(store)
     try { store.ensureSchemaBackup() } catch { /* best effort — never blocks reads */ }
   }
+  const records = store.list()
   return {
-    tasks: store.list().map((entry) => entry.task),
+    tasks: records.map((entry) => entry.task),
+    revisions: Object.fromEntries(records.map(({ task, revision }) => [task.id, revision])),
     meta: store.readMeta(),
     migration: store.readMigration(),
   }
 }
 
-/** Upsert tasks (and optionally meta). Invalid ids are skipped, never thrown to the renderer. */
+/** Compare each task write against its caller-observed revision before persisting. */
 export function putPersonalTasks(
   store: PersonalTaskPersistStore,
-  tasks: readonly PersonalTask[],
+  writes: readonly PersonalTaskWrite[],
   meta?: PersonalTaskMeta | null,
-): { written: number; rejected: string[] } {
-  let written = 0
+): PersonalTaskPutResult {
+  const accepted: PersonalTaskPutResult['accepted'] = []
+  const conflicts: PersonalTaskPutResult['conflicts'] = []
   const rejected: string[] = []
-  for (const task of tasks) {
+  for (const write of writes) {
     try {
-      store.put(task)
-      written += 1
+      const result = store.putIfRevision(write)
+      if (result.status === 'accepted') accepted.push(result.record)
+      else conflicts.push({ id: write.task.id, current: result.current })
     } catch {
-      rejected.push(String(task?.id))
+      rejected.push(String(write?.task?.id))
     }
   }
   if (meta) store.writeMeta(meta)
-  return { written, rejected }
+  return { accepted, conflicts, rejected }
 }
 
-export function deletePersonalTasks(store: PersonalTaskPersistStore, ids: readonly string[]): number {
-  let removed = 0
-  for (const id of ids) if (store.delete(id)) removed += 1
-  return removed
+export function deletePersonalTasks(
+  store: PersonalTaskPersistStore,
+  deletes: readonly PersonalTaskDelete[],
+): PersonalTaskDeleteResult {
+  const removed: string[] = []
+  const conflicts: PersonalTaskDeleteResult['conflicts'] = []
+  const rejected: string[] = []
+  for (const item of deletes) {
+    try {
+      const result = store.deleteIfRevision(item.id, item.expectedRevision)
+      if (result.status === 'removed') removed.push(item.id)
+      else conflicts.push({ id: item.id, current: result.current })
+    } catch {
+      rejected.push(String(item?.id))
+    }
+  }
+  return { removed, conflicts, rejected }
 }
 
 export function migratePersonalTasks(

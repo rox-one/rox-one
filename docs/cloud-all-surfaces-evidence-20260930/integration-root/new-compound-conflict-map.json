@@ -1,0 +1,76 @@
+{
+  "ours": "04246ceffee0b54819a6c9bf170c8fbf4169b04e",
+  "theirs": "3027028c6c8cb420efe3ea4b255ac725747de9e5",
+  "conflicts": {
+    "packages/core/src/platform/identity/credential-types.ts": {
+      "1": {
+        "mode": "100644",
+        "blob": "ec964accaa4ec321d3345e6d8e44da70ce61cc22"
+      },
+      "2": {
+        "mode": "100644",
+        "blob": "7ab8134e08fb2e5e0f0381eee817862486bca65e"
+      },
+      "3": {
+        "mode": "100644",
+        "blob": "e87306826b2bbdd4b49363e901bb9d90476fa75b"
+      }
+    },
+    "packages/core/src/tasks/personal/things.test.ts": {
+      "1": {
+        "mode": "100644",
+        "blob": "48055167d5efce6507f9197dbe5ac25ae2984244"
+      },
+      "2": {
+        "mode": "100644",
+        "blob": "c6522a5d069d57457609d34b347bd4d5076f0ac3"
+      },
+      "3": {
+        "mode": "100644",
+        "blob": "30d09c2715e144cda8cea139412215e18e894be9"
+      }
+    },
+    "packages/server-core/src/transport/server.ts": {
+      "1": {
+        "mode": "100644",
+        "blob": "d8d7da55c12fe971b7fb917a40f75dfd8bf9dcbb"
+      },
+      "2": {
+        "mode": "100644",
+        "blob": "66c794602b12ed3633453062bf5551bd82197c32"
+      },
+      "3": {
+        "mode": "100644",
+        "blob": "3a923bac776a2e382f1642710b099628a964bedb"
+      }
+    },
+    "packages/server-core/src/transport/types.ts": {
+      "1": {
+        "mode": "100644",
+        "blob": "9d2025e8e22463af7886bfd7b38970d8aa66dec9"
+      },
+      "2": {
+        "mode": "100644",
+        "blob": "400f0630978a34248e866ca9fe38f9354373716a"
+      },
+      "3": {
+        "mode": "100644",
+        "blob": "b311bfc6462563a259e48184c403aa77142daa12"
+      }
+    },
+    "packages/shared/package.json": {
+      "1": {
+        "mode": "100644",
+        "blob": "8aef9290daf5eadbf0310340ee48c347b460e305"
+      },
+      "2": {
+        "mode": "100644",
+        "blob": "3ab345a488a31d7874446c407d033d40db2c78ac"
+      },
+      "3": {
+        "mode": "100644",
+        "blob": "0003aec8802eb7358d09e5fc2f12aa70dd1ddeec"
+      }
+    }
+  }
+}

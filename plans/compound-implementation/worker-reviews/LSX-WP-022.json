@@ -1,0 +1,235 @@
+{
+  "task_id": "LSX-WP-022-preflight",
+  "attempt_id": "1a77a007a557a5232360520264f09064",
+  "packet_hash": "d244b6f94ccda749c3935742fa62222dd626f570ced35aa4a0f5085485dd8ad1",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-022",
+  "featureComplete": false,
+  "state": "SOURCE_INSPECTED_PREFLIGHT_ONLY",
+  "scope": {
+    "mode": "inspect",
+    "tier": "bounded-workflow",
+    "onlyWrittenPath": "plans/compound-implementation/worker-reviews/LSX-WP-022.json",
+    "productImplementation": "NOT_PERFORMED",
+    "buildsTestsNativeUiNetwork": "NOT_RUN_BY_INSTRUCTION",
+    "gitState": "NOT_CHANGED_OR_QUERIED",
+    "codegraph": "Unavailable: project has no index; used exact-path grep/read after find failed with judge API 402. No index created.",
+    "evidenceBinding": "input_revision is packet lineage, not a claim that dirty working-tree bytes equal that commit. Whole-file hashes below bind the actual inspected source. Re-read and rehash after wave0 and dependency integration; do not reuse stale line numbers or treat preflight as a dependency acceptance receipt."
+  },
+  "dependencies": ["LSX-WP-021"],
+  "explicitExternalPrerequisites": [],
+  "foundationGates": [
+    {
+      "id": "wave0-and-accepted-calendar",
+      "kind": "implementation_launch_gate",
+      "evidence": "Worker instruction requires lead wave0 commit and accepted dependency receipts. work-packages.json:8196-8199 has only LSX-WP-021; :8497-8507 requires accepted artifact/readback receipts and reviewed write scope. LSX-WP-021 at :7868-7875 itself depends on LSX-WP-012/009/010 and EG-PROVIDERS.",
+      "requiredPrerequisite": "Committed wave0, root-verified LSX-WP-021 artifacts/native readback and its applicable transitive gates; accepted DateValue, TaskSchedule, provider capabilities, authorized Base rows and revisioned command transport. A running worker or final message is not acceptance.",
+      "dagTreatment": "Do not append transitive or foundation requirements to the explicit dependencies array. EG-PROVIDERS is an inherited prerequisite when the provider scope is exercised, not an explicit LSX-WP-022 edge."
+    },
+    {
+      "id": "published-base-drive-foundation",
+      "kind": "hidden_published_spec_dependency",
+      "evidence": "docs/rox-suite/published/RS-BASE-01.md:95-113 explicitly requires RS-DRV-01/#1109, although LSX-WP-022's explicit DAG lists only LSX-WP-021. RS-BASE-01:46-56 requires canonical entity/schema authority, authenticated commands, grants and shared outbox. RS-DRV-01:27-38 requires canonical-ref navigation, create routing, shared library ACL and collection semantics.",
+      "requiredPrerequisite": "Lead must reconcile the published RS-BASE-01 -> RS-DRV-01 foundation requirement with this refinement and supply an accepted readiness receipt for the Base Page/ref/routing scope used by Timeline. No new Drive implementation or alternate Base store in this package.",
+      "dagTreatment": "Separate published foundation gate; not silently added as an explicit LSX-WP dependency or declared fulfilled by publication."
+    },
+    {
+      "id": "atomic-owner-command-and-durable-receipt",
+      "kind": "hidden_mechanism_and_scope_gate",
+      "evidence": "PersonalTaskStore.update at store.ts:207-215 only Object.assign/deletes fields and returns the same in-memory task. get/snapshot/exportJson at :81-87,154-156 are not authoritative durable readback. docs/lark-suite-reference/05-rox-bases-design.md:264 assigns required CAS/atomic commit/receipts to native mutation owners. 07-domain-entity-model.md:180-189 requires content+receipt+outbox atomicity and file-backed recovery.",
+      "requiredPrerequisite": "Accepted owner command that CAS-checks the exact task/ref revision, atomically persists both final interval bounds (or start plus native duration), idempotency receipt and outbox intent, then supports revision/hash readback and restart recovery. The inspected store alone does not provide this. Reuse approved prerequisite machinery; if missing, lead must amend the reviewed packet for owner persistence/transport seams before writing there.",
+      "scopeConstraint": "store.ts, server persistence, RPC/IPC registrations and event consumers are not LSX-WP-022 allowed writes/shared patches. Their existence is not proved by this bounded inspection; do not fake support with an injected fixture or two existing setters."
+    },
+    {
+      "id": "native-task-duration-migration",
+      "kind": "model_and_lifecycle_gate",
+      "evidence": "PersonalTask:42-75 contains dueAt/startAt but no endAt or duration. CreateTaskInput/store.create:32-54,175-197 lists copied fields; completeTask:434-463 and duplicate:555-575 explicitly reconstruct tasks and omit any proposed duration. setWhen:467-496 clears startAt or normalizes it to local midnight. setDeadline:499-504 is a deadline, not an interval end. CalendarEvent:22-38 is a distinct account-scoped event, not an alternative Task store.",
+      "requiredPrerequisite": "Approved optional Task-owned duration extension and migration with units/basis/precision from LSX-WP-021, native owner serialization/readback and explicit create/duplicate/recurrence/schedule-change behavior. Preserve dueAt deadline semantics. Do not reinterpret dueAt as scheduling end or maintain renderer-only bounds.",
+      "scopeConstraint": "Only PersonalTask/TaskLink/Recurrence are named shared type seams. Any required store input/lifecycle/persistence patch needs an updated reviewed packet or accepted foundation-owner contribution; a type-only patch cannot satisfy persistence."
+    },
+    {
+      "id": "base-query-view-config-and-route",
+      "kind": "hidden_ui_foundation_gate",
+      "evidence": "NotesViewHost:48-117 accepts note-shaped inputs and table/canvas/graph/outline only, deriving Markdown checkbox counts. note-views.ts:24-34,73-83 has v1 table/base config and rows without canonical rowRef/revision/permissionEpoch; parseNoteBaseView:108-126 rejects other view kinds. NotesTableView:132-155 persists config in localStorage.",
+      "requiredPrerequisite": "Accepted common Base host/query/view definition and supported route supplying authorized canonical rows, schema/field mapping, owner capabilities, expected revisions and revisioned persisted view config. Register Timeline at that host seam after LSX-WP-021, not by converting NotesViewNote into mirrored tasks or extending the old parser locally.",
+      "scopeConstraint": "note-views.ts and route callers are direct-import evidence, not permitted LSX-WP-022 patch paths. Additional changes require scope amendment/foundation integration."
+    },
+    {
+      "id": "authenticated-boundaries-and-change-feed",
+      "kind": "authority_and_consistency_gate",
+      "evidence": "work-packages.json:8344-8375 requires preview/apply, eight error discriminants, authenticated actor, both field checks and scheduling action. :8382-8384 requires Timeline/Calendar/Tasks repositioning after reload. 07-domain-entity-model.md:161-189 requires common policy, preview digest, reauthorization, revision fencing and shared outbox.",
+      "requiredPrerequisite": "Actual authenticated server/renderer command registration, common policy evaluator and current field/action/provider checks, revision-fenced event alias mapping for task.updated/provider.syncAcknowledged, and existing projection invalidation/readback. Do not infer atomicInterval support from event visibility, supportsAllDay or supportsRecurrence."
+    },
+    {
+      "id": "localization-native-ui-and-reference-binding",
+      "kind": "proof_and_shared_integration_gate",
+      "evidence": "work-packages.json:8377-8407,8426-8431 and AGENTS.md require real Electron UI, Russian defaults, all ten locales, actual Rox Mono font and separate proof lanes. :8498 requires resolved reference revision/digest and spec-ref hashes. Proposed test/UI files are not present in the inspected tree.",
+      "requiredPrerequisite": "Resolve delivery manifest reference revision/digest; bind spec hashes and post-wave0 product revision; discover the supported actual Electron runner and isolated authoritative fixtures/fault injection. Lead must arrange approved locale-key integration across ten existing locale files; none are in this package's shared patch allowlist. Never invent a passing UI command or screenshots."
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/bases/BaseTimeline.tsx",
+    "packages/core/src/bases/interval-command.ts",
+    "tests/lark-suite-extension/lsx-wp-022.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-022.spec.ts"
+  ],
+  "ownedNewFileContributions": [
+    {
+      "path": "packages/core/src/bases/interval-command.ts",
+      "presence": "NOT_PRESENT_AT_INSPECTION",
+      "proposedSymbols": ["IntervalMapping", "IntervalEditInput", "IntervalEditEnvelope", "IntervalEditResult", "IntervalEditError", "previewIntervalEdit", "applyIntervalEdit"],
+      "preciseChange": "Import accepted LSX-WP-021 date/precision and shared ref/receipt contracts rather than redefining them. Map stable start/end/duration field IDs; carry units/basis, owner identity, rowRef, expectedRevision, operationId/idempotencyKey and proposed interval. Preview is side-effect-free, resolves capabilities and validates missing/invalid/inverted/unsupported precision/DST inputs and milestone equality; produce a digest-bound proposal. Apply revalidates current schema, both field ACLs, scheduling action, capabilities and expected revision using authenticated context, then invokes exactly one accepted native atomic interval command, never sequential start/end setters. Return a durable receipt containing both resolved final bounds/ref/revision; expose queuedProvider separately. Use all eight required error discriminants; diagnostics can carry missing/inverted/unsupported-atomicity reasons without inventing a new wire error family. Names here are proposed exports, not claimed existing endpoints.",
+      "prerequisite": "Accepted date/command/authority contracts and owner atomic operation; real server registration is integration work outside this file, not a renderer callback proof."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/bases/BaseTimeline.tsx",
+      "presence": "NOT_PRESENT_AT_INSPECTION",
+      "proposedSymbols": ["BaseTimeline"],
+      "preciseChange": "Render the accepted common authorized Base snapshot into grouped time-axis intervals/milestones with explicit diagnostic rows. Consume preview/apply commands from the existing host transport; keep only drafts and viewport state locally. Capability/atomicity diagnostics precede editing. Implement interval move and each-edge resize, accessible keyboard schedule dialog, Fit/zoom/pan, Escape/pointer-cancel restoration, visible/announced validation and conflict current-vs-draft. Retain canonical ref selection; reconcile only authoritative receipt/readback with revision fences; pending provider is not confirmed. Use existing t(), theme tokens and common font/help/motion mechanisms; no second timeline store or saved-view format.",
+      "prerequisite": "Common host route/config/query receipt and approved locale integration; exact host prop types must be taken from accepted prerequisite implementation."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-022.test.ts",
+      "presence": "NOT_PRESENT_AT_INSPECTION",
+      "preciseChange": "Deterministic semantic coverage for move/resize preserving supported units/precision, milestone, missing/inverted/unknown precision and DST disambiguation, no-write preview and unsupported atomicity, same-revision concurrent move/resize exactly one win, denied/deleted/replay/offline/recovery, one durable receipt with both bounds, authoritative persisted/restarted equality and fault injection between would-be bounds. Retain exact fixture input hash and reproduction seeds. The independently acknowledged two-write mutant must fail the three specified semantic assertions, not merely crash test setup.",
+      "prerequisite": "Real native owner fixture, durable receipts/readback and fault hooks approved by lead; pure/in-memory tests cannot substitute for native proof lanes."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-022.spec.ts",
+      "presence": "NOT_PRESENT_AT_INSPECTION",
+      "preciseChange": "Use the discovered supported runner against the integrated Electron route and actual owner-backed rows. Exercise pointer move/resize, keyboard dialog, Escape, Fit/zoom/pan, IME/focus, denied/conflict/unsupported diagnostics, receipt-driven Timeline/Calendar/Tasks reconciliation and reload, Russian/default/locales, hover/focus/click help, reduced motion, 200% zoom and current theme; retain screenshots/ARIA/computed and loaded Rox Mono font evidence tied to tested bytes.",
+      "prerequisite": "Actual Electron runner/native desktop proof and source-backed shared route; do not invent a Playwright command or accept fixture-only UI."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/tasks/personal/types.ts",
+      "symbol": "PersonalTask",
+      "baseSha256": "4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82",
+      "change": "After accepted LSX-WP-021 TaskSchedule/DateValue integration, add an optional native Task-owned TaskDurationExtension binding on PersonalTask. Proposed shape is a versioned duration descriptor with explicit value/unit and elapsed-versus-calendar basis; start remains the accepted canonical Task schedule and end is derived from start+duration for this mapping, not duplicated in renderer state. Reuse the accepted field registry's units/precision types; reject unsupported combinations instead of coercing. If the accepted owner uses canonical start/end instead, bind its existing end field and derive duration rather than storing competing duration/end authorities. Do not rename/reinterpret dueAt, modify TaskLink identity/labels, change Recurrence rule meanings or add CalendarEvent fields to Tasks. Absence of extension on v1 tasks remains representable and diagnostic until explicitly scheduled.",
+      "reason": "Current PersonalTask:42-75 has no native duration/end field. Timeline requires Task-owned extension with consistent precision; the existing deadline and recurrence/link contracts must retain their semantics.",
+      "integrationPrerequisite": "Lead-approved exact duration storage representation, migration and owner lifecycle/readback changes. This is a requested type contribution, not permission to patch store/persistence. Rebase this request onto accepted LSX-WP-021 types before applying under exclusive lease."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewHost; NotesViewNote",
+      "baseSha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a",
+      "change": "At the accepted common Base host/view dispatch, import BaseTimeline and register the timeline branch with authorized Base snapshot, interval mapping/config, canonical ref selection, current capabilities and existing preview/apply transport. Dispatch before legacy graph fallback. Use the accepted shared view-kind/props contract introduced by foundation/calendar owners instead of a separately hardcoded timeline union. Preserve NotesViewNote as note content input; do not append copied Task dates to it or derive scheduling entities from parsed Markdown checkbox counts. Reuse the accepted persistent view config/change feed; local state is draft and viewport only.",
+      "reason": "Current NotesViewHost:48-117 only handles table/canvas/outline/graph and derives note rows; adding the component file alone does not expose a usable Timeline or bind it to native scheduling authority.",
+      "integrationPrerequisite": "Accepted LSX-WP-021/common Base dispatch and approved route callers/config types. note-views.ts rejects timeline today but is outside this patch allowlist; foundation integration or reviewed packet extension is required, not an unleased edit."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "move+resize atomic within declared supported owner",
+      "seam": "PersonalTaskStore.update (store.ts:207-215); PersonalTask (types.ts:42-75); proposed interval-command.ts previewIntervalEdit/applyIntervalEdit and BaseTimeline",
+      "currentEvidence": "update applies a patch in memory without CAS/receipt/durability. Task has startAt/dueAt only. CalendarEvent has both bounds but belongs to distinct event authority. Normative new interval files are absent.",
+      "requiredChange": "Map accepted native start/end or start+duration fields with precise units/precision; move and resize compute one validated final interval and issue exactly one native CAS atomic commit. Preserve duration during move, change appropriate bound/duration during resize, preserve dueAt semantics. Receipt must cover both final resolved bounds. No temporary half interval can be acknowledged.",
+      "verification": "Future bun test tests/lark-suite-extension/lsx-wp-022.test.ts: concurrent move/resize on same revision yields exactly one committed receipt and one conflict; crash fault points leave old complete interval or new complete interval, never half ACK. Exercise real Electron move/resize and compare Tasks/Calendar/Timeline authoritative same ref/revision bounds after reload/restart.",
+      "missingPrerequisite": "Accepted owner atomic command/duration migration plus LSX-WP-021 receipt and integrated actual UI route.",
+      "state": "UNIMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "unsupported transactions shown before edit",
+      "seam": "CalendarEvent/CapabilityGap (calendar/types.ts:22-47); NotesViewHost:58-117; proposed previewIntervalEdit and BaseTimeline diagnostics",
+      "currentEvidence": "Existing CapabilityGap flags OAuth/reminders/allDay/recurrence, not scheduling atomicity; host has no interval editor or atomic capability preview.",
+      "requiredChange": "Use accepted owner field/action/atomic scheduling capability for the whole interval before enabling drag/resize/dialog Save. Show missing/inverted/precision/unsupported/read-only/offline distinctions and explicit unsupported transaction reason. Apply rechecks capability and permissions in case preview went stale; no simulated transaction from two writes.",
+      "verification": "Real read-only subscription, unsupported atomic owner and one-field-denied scenarios show diagnostics before pointer or keyboard edit; command spy/owner audit proves preview has no effects and no bounds mutate. Revocation/capability loss between preview and apply returns typed rejection without writes.",
+      "missingPrerequisite": "Accepted LSX-WP-021 owner capabilities and field ACL/atomic preview contract with authenticated apply enforcement.",
+      "state": "UNIMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "seam": "work-packages.json:8344-8363; proposed interval-command.ts core schema and BaseTimeline transport call; existing NotesViewHost props:69-77",
+      "currentEvidence": "Spec names base.previewIntervalEdit/base.applyIntervalEdit but calls them PROPOSED. Inspected host has only note callbacks, no authenticated interval boundary; native store has no actor parameter.",
+      "requiredChange": "Share runtime-validated typed interval request/result/error schemas across real server and renderer registration. Include rowRef/expectedRevision, field IDs/schema precision/units, operationId/idempotencyKey and preview digest. Exhaustively handle validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Derive actor and authorization context from authenticated transport, not payload actor/owner/workspace; validate row workspace rather than granting from it.",
+      "verification": "Compile the accepted real server and renderer boundary using supported project typecheck commands discovered at implementation time. Submit malformed dates/schema refs and spoofed actor/owner/workspace via actual transport; reject without native mutation. Assert both field and scheduling action ACL checks, not just UI disablement.",
+      "missingPrerequisite": "Existing accepted common transport/policy and schema registration; current allowed files contain no writable server registration seam. Lead must supply foundation contribution or amend packet.",
+      "state": "UNIMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "seam": "PersonalTaskStore.snapshot/exportJson/get:81-87,154-156; update:207-215; 07-domain-entity-model.md:53-57,180-189",
+      "currentEvidence": "Store getters/export clone or serialize memory; returning PersonalTask from update is not a durable DomainReceipt. No native restart proof was run.",
+      "requiredChange": "Delegate to accepted native content+receipt+outbox commit; surface committed only after durability. Bind receipt to same canonical ref, revision and final start/end readback hash. Reload/restart native authority and re-query all projections; expose queuedProvider/pending separately until actual ACK, with revision fences preventing stale ACK reversal.",
+      "verification": "Record before/after owner ref/revision/hash, command/idempotency key and both bounds; terminate at approved fault points/restart authority and compare durable row+receipt+outbox to Timeline/Calendar/Tasks. Provider scope requires real ACK/readback, not enqueue success.",
+      "missingPrerequisite": "Accepted persistence transaction/journal, authoritative readback service, restart harness and existing event consumers; none proved by in-memory source.",
+      "state": "UNIMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "seam": "proposed tests/lark-suite-extension/lsx-wp-022.test.ts; store.ts:467-504; dates.ts:13-17; calendar/types.ts:103-114",
+      "currentEvidence": "Legacy schedule/deadline setters normalize to machine-local midnight and execute separate mutations. Calendar identity is account/calendar/event scoped. Test files are absent; no tests run in preflight.",
+      "requiredChange": "Test successful move/left and right resize, zero-duration milestone, missing/nonfinite/inverted/unsupported precision, DST gap/fold disambiguation and date-only behavior; authenticated denied for either field or schedule action, stale schema/revision conflict, deleted, unsupported offline, replay same operation returning same receipt, crash/restart recovery and distinct same-ID remote accounts. Preserve failed attempts, fixture/input SHA256 and seeds.",
+      "verification": "Future bun test tests/lark-suite-extension/lsx-wp-022.test.ts plus native domain/fault/readback lanes on exact integrated bytes. Same expected revision race must have one win; replay must not increment revision or duplicate events. Include native duration lifecycle migration behavior identified in foundation gates.",
+      "missingPrerequisite": "Accepted DateValue/DST semantics from LSX-WP-021 and real owner CAS/idempotency/fault fixture; supported owner lifecycle changes require reviewed integration scope.",
+      "state": "UNIMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "seam": "work-packages.json:8409-8417; proposed lsx-wp-022.test.ts; unsafe pattern represented by independently calling store.setWhen/setDeadline:467-504",
+      "currentEvidence": "Spec's mutant applies start/end as independently acknowledged writes. Current store has separate date setters but deadline is not a true schedule end; do not use it as a fake supported baseline.",
+      "requiredChange": "Build green baseline against the supported actual interval owner and inject the specified split-ACK mutant in isolated synthetic owner/source fixture; pause/crash between the two writes. Assert exactly: one receipt contains both final bounds; no acknowledged half/inverted interval; reloaded native interval equals Timeline. Retain evaluated mutant/baseline byte hashes, exact seed, logs and assertion receipts.",
+      "verification": "Baseline semantic assertions pass; split-write mutant fails its named assertions with deterministic partial-ACK or persisted/projection mismatch. Report setup failure/timeout separately; an infrastructure failure is not accepted control evidence.",
+      "missingPrerequisite": "Functional native atomic baseline, deterministic crash barrier and isolated authoritative fixture plus revision-bound evaluator.",
+      "state": "UNIMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "seam": "NotesViewHost imports useTranslation and existing Button/PremiumMenuSelect:1-6; NotesViewHost dispatch:90-117; proposed BaseTimeline and ui/lsx-wp-022.spec.ts; design 05:181,190",
+      "currentEvidence": "Existing host uses t() and theme-token classes; no Timeline is rendered. There is no inspected actual Timeline UI evidence or verified runner.",
+      "requiredChange": "Implement grouped intervals/milestones and diagnostic rows, pointer move/resize plus keyboard schedule dialog, Fit/zoom/pan and Escape. Preserve current theme, actual loaded Rox Mono, compact Russian-default controls and all ten locale keys via existing conventions. Help meaning/units/precision/timezone/source/freshness/example on hover/focus/click; reduced-motion support, non-color-only states, focus restoration and IME-safe commit/cancel.",
+      "verification": "Run supported actual Electron surface against native data; capture pointer/keyboard/IME, focus/ARIA announcements and post-cancel/post-conflict states, reduced-motion and 200% zoom, theme and Russian/default plus locale parity. Capture screenshots and actual loaded-font/computed font evidence tied to exact source hashes; exercise pan/zoom/Fit without mutation.",
+      "missingPrerequisite": "Integrated Base route and real Electron runner, accepted host state/config, approved locale shared-file contribution and available native UI proof lane.",
+      "state": "UNIMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "seam": "work-packages.json:8398-8407,8431,8487-8507; published RS-BASE-01.md:84-93",
+      "currentEvidence": "This report is source-only preflight with featureComplete=false. No product mechanism, runtime, provider, restart or actual UI verification has been performed.",
+      "requiredChange": "Lead must integrate reviewed bounded changes after accepted dependencies, then gather separate SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI receipts on the integrated revision. Attach patch/base/implementation commit, schema results, seed/control logs, native ref/revision/hash readback and UI artifacts; applicable provider/collaboration evidence is separate and actor-redacted.",
+      "verification": "Root independently checks each proof lane and exact input/artifact hashes, source generation, native restart readback and actual UI behavior. Report verifier success validates report lineage/source hashes only, never feature completion or dependency readiness.",
+      "missingPrerequisite": "All implementation and root-integrated proof lanes; resolved delivery manifest reference revision/digest and shared path leases.",
+      "state": "PREFLIGHT_ONLY_FULL_DOD_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/core/src/tasks/personal/types.ts","symbol":"PersonalTask; TaskLink; Recurrence","lineStart":17,"lineEnd":75,"sha256":"4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"},
+    {"path":"packages/core/src/tasks/personal/store.ts","symbol":"PersonalTaskStore.update","lineStart":207,"lineEnd":215,"sha256":"d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c"},
+    {"path":"packages/core/src/tasks/personal/store.ts","symbol":"PersonalTaskStore.completeTask; setWhen; setDeadline","lineStart":434,"lineEnd":504,"sha256":"d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c"},
+    {"path":"packages/core/src/tasks/personal/store.ts","symbol":"CreateTaskInput","lineStart":32,"lineEnd":54,"sha256":"d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c"},
+    {"path":"packages/core/src/tasks/personal/store.ts","symbol":"PersonalTaskStore.duplicate","lineStart":555,"lineEnd":576,"sha256":"d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c"},
+    {"path":"packages/core/src/calendar/types.ts","symbol":"CalendarEvent; CapabilityGap","lineStart":22,"lineEnd":47,"sha256":"3654f8c7ed213947f21368633981c89553e46385021d27e568ed5b8a6ee00e9e"},
+    {"path":"packages/core/src/calendar/types.ts","symbol":"calendarEventIdentity; sameCalendarEvent","lineStart":102,"lineEnd":114,"sha256":"3654f8c7ed213947f21368633981c89553e46385021d27e568ed5b8a6ee00e9e"},
+    {"path":"packages/core/src/tasks/personal/dates.ts","symbol":"startOfLocalDay","lineStart":13,"lineEnd":17,"sha256":"6b8ac9696b55c5f5e9406664c947eec59fdd7946264c450bd57209d8a9afaa87"},
+    {"path":"packages/core/src/tasks/personal/quick-entry.ts","symbol":"dayOffset; monthOffset","lineStart":68,"lineEnd":81,"sha256":"210159903504cfc7b7c7011f72315b04cd0a3e60fdaa217ac79313d5aafbbe7c"},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesViewHost.tsx","symbol":"NotesViewHost; NotesViewNote","lineStart":48,"lineEnd":117,"sha256":"a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesViewHost.tsx","symbol":"NotesTableView saved view persistence","lineStart":132,"lineEnd":155,"sha256":"a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"parseNoteBaseView; projectNoteRows","lineStart":108,"lineEnd":158,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[21] LSX-WP-022 definition_of_done and negative control","lineStart":8409,"lineEnd":8435,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-022 normative execution record","lineStart":1841,"lineEnd":1926,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"Sections 8 and 9 Timeline/native edit contract","lineStart":179,"lineEnd":212,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path":"docs/lark-suite-reference/07-domain-entity-model.md","symbol":"Section 8 Events and consistency","lineStart":169,"lineEnd":189,"sha256":"cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path":"docs/rox-suite/published/RS-BASE-01.md","symbol":"Dependencies / GitHub normative handoff RS-DRV-01","lineStart":95,"lineEnd":113,"sha256":"78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"},
+    {"path":"docs/rox-suite/published/RS-DRV-01.md","symbol":"Controls and Domain/API/storage foundations","lineStart":27,"lineEnd":38,"sha256":"ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3"}
+  ],
+  "sourceGenerationObservations": [
+    "Both normative JSON input hashes equal the dispatch input_manifest hashes at inspection.",
+    "Actual NotesViewHost whole-file hash a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a differs from baseline existing_code blob_sha256 2fc3fc07f0cfb84bb7e7e18cc6548a34417ec6c34508a796942d0a80a6e13358. Evidence describes current inspected bytes, not unchanged product_baseline_sha; it must be refreshed after integration. No attribution of intervening changes is made.",
+    "All four normative proposed-new-file paths were absent on the exact-path glob inspection. Presence can change during other workers' integration; no file creation lease is inferred from this observation."
+  ],
+  "nextExecutableAction": "Lead finishes and commits wave0, accepts LSX-WP-021 by artifact plus native readback, reconciles RS-BASE-01 -> RS-DRV-01 and verifies the actual Task owner atomic interval/duration/transport foundations. Resolve reference manifest revision/digest and reread/hash this report's source generations on that committed dependency base. Obtain exclusive leases for the two normative shared seams and an amended reviewed packet for any missing owner/transport/locale/route work. Only then launch LSX-WP-022 implementation of the four normative new files and reviewed type/host requests; keep full DoD unverified until root integration and separate native/restart/ACL/actual-Electron proof lanes pass.",
+  "risks": [
+    "Allowed files alone cannot prove a new durable authenticated atomic owner command: server persistence/transport/events are not writable in this packet. Hidden foundation absence must fail closed, not be replaced with in-memory callback support.",
+    "dueAt is a deadline; mapping it to schedule end changes semantics. Existing schedule setters clear startAt for Today and normalize local days, so timestamp precision cannot be added by chaining them.",
+    "Duration added only to PersonalTask types can disappear in explicit create/duplicate/recurrence reconstruction or leave inconsistent state after legacy schedule changes. Lifecycle migration requires the foundation owner or a reviewed scope extension.",
+    "Naive milliseconds-per-day arithmetic shifts date-only schedules across DST; LSX-WP-021 precision/timezone disambiguation is mandatory, not optional UI formatting.",
+    "Event supportsAllDay/supportsRecurrence does not imply writable/atomic schedule support; remote identity remains account/calendar/event scoped and events never become local Tasks.",
+    "Preview rights/capabilities can become stale before apply; both fields plus owner scheduling action must be rechecked at authority, with conflict/denied restoration and no partial ACK.",
+    "task.updated/provider.syncAcknowledged are proposed families; accepted aliases, event revisions and native consumers must be verified, not blindly renamed. queuedProvider is never durable external ACK.",
+    "Current v1 saved-view parser/host and route types cannot render timeline just from a new component import. No separate localStorage interval database or parallel saved-view parser is permitted.",
+    "All ten locale key additions and actual Electron runner evidence require shared integration outside this packet; tests and UI acceptance are not N/A.",
+    "Published RS-BASE-01 uses an older source snapshot and has a Drive dependency omitted from the LSX explicit edge; publication and links are not implementation/readiness receipts.",
+    "Root-owned changes may stale hashes and patch line anchors during preflight/integration. Keep packet input_revision unchanged and rebind reviewed implementation requests to accepted current bytes."
+  ]
+}

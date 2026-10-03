@@ -1,0 +1,252 @@
+{
+  "task_id": "LSX-WP-036-preflight",
+  "attempt_id": "dfeb7d6f63a2b726ea8f63f4ed04b589",
+  "packet_hash": "479afaf291c2c4a4665cecbd7594a17fa383bb9c4952925956b5a2c11bc7d5f4",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-036",
+  "featureComplete": false,
+  "state": "PREFLIGHT_ONLY_IMPLEMENTATION_NOT_STARTED",
+  "dependencies": ["LSX-WP-029", "LSX-WP-030", "LSX-WP-034"],
+  "inspection": {
+    "mode": "read-only source/spec inspection; only this report is authored",
+    "tier": "bounded-workflow",
+    "sourceStatus": "SOURCE_VERIFIED_NOT_RUNTIME",
+    "revisionStatus": "Packet input revision retained verbatim; Git state was not queried or changed. Whole-file hashes bind inspected working-tree bytes, not a claim that every file belongs to that commit.",
+    "stalenessPolicy": "Rehash these references against the lead's wave0 commit and accepted dependency commits before implementation. Changed bytes invalidate the associated seam analysis; do not silently replace the input_revision or treat historical preflight as current readiness.",
+    "discoveryLimits": "Codegraph reported no index. Descriptive find failed because its judge provider returned 402, so known normative paths and their direct platform-contract import were inspected with read/grep. No builds, product tests, UI, or external service probes ran.",
+    "newFilesPresence": "Scoped glob did not find any of the five normative LSX-WP-036 files. Other uncommitted docs foundation modules were visible by name only; their contents and readiness were not inspected or inferred."
+  },
+  "dependencyContracts": [
+    {
+      "packageId": "LSX-WP-029",
+      "specEvidence": "work-packages.json:10554-10574,10654-10717",
+      "requiredReceipt": "Accepted immutable ListNode/tree and MapLayout/theme revision readback; shared layout distinct from personal folds/focus/viewport. Consume accepted map-view-config.ts contract rather than create another layout store.",
+      "status": "MISSING_ACCEPTED_RECEIPT"
+    },
+    {
+      "packageId": "LSX-WP-030",
+      "specEvidence": "work-packages.json:10873-10895,11004-11067; 06-rox-docs-design.md:138-140",
+      "requiredReceipt": "Accepted conversion-service authority/epoch and retained source mapping with preview/CAS/copy/rollback. Export reads that mapping and does not reconvert or overwrite the source.",
+      "status": "MISSING_ACCEPTED_RECEIPT"
+    },
+    {
+      "packageId": "LSX-WP-034",
+      "specEvidence": "work-packages.json:12202-12227,12321-12383; 05-rox-bases-design.md:235-244",
+      "requiredReceipt": "Accepted vault-import origin identity and AttachmentMap owner contracts, per-file errors, path validation and textual roundtrip readback; reuse canonical attachment mappings.",
+      "status": "MISSING_ACCEPTED_RECEIPT"
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "EG-FILES",
+      "classification": "EXPLICIT_EXTERNAL_PREREQUISITE_NOT_DAG_EDGE",
+      "evidence": "work-packages.json:108-113,12926-12928; RS-DRV-01.md:29,38,55",
+      "requirement": "Common FileRef/assets export and revocation owner with finalize/download, checksum, durable metadata and authorized readback. contentHash() is an FNV-derived token, not an output SHA256 or FileRef.",
+      "missingPrerequisite": "Verified owner implementation commit, finalize/readback/revoke runtime receipts, allowed asset source capability and retention/cancellation policy.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "PUBLISHED_IDENTITY_ACL_COMMAND_AUTHORITY",
+      "classification": "HIDDEN_PUBLISHED_FOUNDATION_GATE",
+      "evidence": "RS-DRV-01.md:38,62; RS-DOC-01.md:37,74; platform-contract.ts:233-238,597-609",
+      "requirement": "Authenticated workspace/actor identity, current document/asset export policy, durable native command receipt and common outbox. Entity.permissions, renderer permissionMode and visibleContextEntityRefs are not authenticated server authorization.",
+      "missingPrerequisite": "Lead readiness receipts for common identity/ACL/command authority and exact export adapter interfaces; no payload actor/owner/workspace trusted for grants.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "RS-DOC-01_PUBLISHED_DEPENDENCIES",
+      "classification": "HIDDEN_PUBLISHED_DEPENDENCY_LINKS_NOT_LSX_DAG_EDGES",
+      "evidence": "work-packages.json:13195-13204; RS-DOC-01.md:60-62,79-87",
+      "requirement": "Linked published specification requires RS-DRV-01 #1109 and RS-MSG-02 #1107. Preserve these as separate foundation checks rather than append invented LSX edges. RS-MSG-02 is the common discussion owner, not permission to implement document comments here.",
+      "missingPrerequisite": "Lead mapping/readiness decision for those published prerequisites and accepted common-owner receipts. This worker did not inspect the message subsystem or establish its readiness.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "COLLABORATIVE_REVISION_AUTHORITY",
+      "classification": "HIDDEN_PUBLISHED_FOUNDATION_CONDITIONAL_ON_SHARED_DOCUMENT_SCOPE",
+      "evidence": "RS-DOC-01.md:3,37,52-58; 06-rox-docs-design.md:182,218-220",
+      "requirement": "For a collaborative document, freeze the accepted single-writer authority epoch/body revision or frontier, durable snapshot and current revoke fence. NativeNotesEngine read()/revisions() return mutable objects; export must not render live references.",
+      "missingPrerequisite": "Accepted shared-document snapshot/revoke/durability receipts when that source is exercised. Local-owned Notes may use their actual owner policy; do not invent a CRDT adapter or waive shared scope.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "BOUNDED_NATIVE_IMAGE_RENDERER",
+      "classification": "EXPLICIT_RUNTIME_RISK_OUTSIDE_DAG",
+      "evidence": "work-packages.json:13108-13110,13137-13140,13177-13178",
+      "requirement": "Actual PNG/SVG renderer, Rox Mono font bytes/Cyrillic support, image decoder, isolated execution and limits for dimensions/pixels/node count/depth/time/memory. No spontaneous network image fetch.",
+      "missingPrerequisite": "Verified native render environment and compatible approved renderer dependency. Manifest edits are outside this package; require lead-owned scope update if installation is necessary.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "INTEGRATION_SCOPE_AND_LOCALE_GATE",
+      "classification": "DISCOVERED_INTEGRATION_GATE",
+      "evidence": "execution-packages.json:3111-3119,3166; note-views.ts:1-245,352-377; work-packages.json:13123-13125",
+      "requirement": "Named shared symbols are Base projection/config utilities, not a mounted export dialog, authenticated doc API registry or progress/cancel transport. New MapExportReview.tsx alone does not create a reachable surface. All new user-facing keys must exist in all 10 existing locales.",
+      "missingPrerequisite": "Integration owner must discover and authorize exact API registration, existing Docs/Map host entry point, transport cancellation/progress, package export and locale seams in an updated reviewed packet. Do not edit guessed callsites, locale files or manifests from this worker scope.",
+      "state": "BLOCKED_ON_REVIEWED_SCOPE"
+    },
+    {
+      "id": "LAUNCH_LINEAGE_AND_LEASE",
+      "classification": "EXPLICIT_LAUNCH_GATE",
+      "evidence": "execution-packages.json:3124-3127,3156-3166",
+      "requirement": "Resolve delivery manifest reference revision/digest/spec hashes, lead wave0 commit and accepted dependency receipt order; acquire exclusive note-views.ts lease and bind future implementation to the approved revision.",
+      "missingPrerequisite": "Lead wave0 integration commit, approved baseline reconciliation (normative product baseline e953786 differs from dispatch input a21aeab1), delivery manifest and dependency acceptances.",
+      "state": "NOT_READY_FOR_IMPLEMENTATION"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/core/src/docs/tree-export-codecs.ts",
+    "packages/server-core/src/docs/map-render-export.ts",
+    "apps/electron/src/renderer/pages/docs/MapExportReview.tsx",
+    "tests/lark-suite-extension/lsx-wp-036.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-036.spec.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "packages/core/src/docs/tree-export-codecs.ts",
+      "symbols": ["TreeExportManifest", "previewTreeExport request/result schemas", "renderTreeExport request/result schemas", "textual codec support descriptors", "textual roundtrip comparator"],
+      "change": "Define shared runtime-validated discriminated contracts for MD/OPML/JSONCanvas/PNG/SVG and all eight required errors. Require revisioned canonical Doc ref, authority epoch where applicable, theme/layout revision, full or explicit branch IDs, asset/fallback policy and preview digest. Manifest records source snapshot hashes/revisions, format/version/supports/losses, authorized scope IDs/count, asset outcomes/mapping, font/layout/viewport choices and immutable output FileRef+SHA256. MD consumes retained original spans, not reconstructed heading text; textual codecs compare supported stable IDs, parent/order, text and declared metadata after parsing. Proposed symbol names are design contributions, not existing APIs."
+    },
+    {
+      "path": "packages/server-core/src/docs/map-render-export.ts",
+      "symbols": ["doc.previewTreeExport implementation", "doc.renderTreeExport implementation"],
+      "change": "Resolve canonical snapshot through accepted dependencies and authenticated authority; validate revisions, scope and assets on preview and render. Persist preview binding via existing command/owner mechanisms rather than a new tree store. Changed source/layout/theme makes preview stale/conflict, never a mixed live export. Build isolated bounded SVG/PNG render from frozen data; allowlist vector elements/attributes/links and approved resolved asset bytes, no script/event/unsafe URL or external fetch. Finalize through EG-FILES with exact-byte SHA256 and emit verified artifact.created envelope only through the accepted durable command/outbox owner. Expose progress/cancel through approved transport and owner cancellation semantics; acknowledge completion only after durable receipt and authoritative readback."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/docs/MapExportReview.tsx",
+      "symbols": ["MapExportReview"],
+      "change": "Build a controlled review panel inside the existing Docs/Map surface (not a separate shell/store). Typed API inputs come from the current canonical document/view binding. Show format/scope/assets/fallback and precise loss/support report before confirmation; distinguish previewing/rendering/cancelled/stale/conflict/denied/error/committed/readback states. Show explicit font/layout/viewport choices for raster/vector, source revision/theme, receipt FileRef/hash, progress/cancel, accessible help and Escape focus restoration. Use t(), current user theme, reduced motion and actual Rox Mono font evidence. Host mounting and locale integration need reviewed additional seams."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-036.test.ts",
+      "symbols": ["LSX-WP-036 behavioral/property scenarios"],
+      "change": "Deterministic seeded supported-codec roundtrip assertions for IDs/text/parent/order and declared losses; retain non-tree source bytes and opaque metadata; denied asset URL removal and SVG injection controls; immutable snapshot under concurrent edits; exact artifact-byte hash and durable readback/replay/restart against the real owner lane. Separate native receipts from isolated unit fixture results."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-036.spec.ts",
+      "symbols": ["LSX-WP-036 actual mounted export UI scenarios"],
+      "change": "Use the discovered supported actual Electron runner, with canonical owner fixtures and artifact readback, to exercise preview/confirm/progress/cancel/stale/denied states, pointer/keyboard/IME/focus/zoom/theme/locales/font. Assert full authorized scope unaffected by personal fold/focus. Capture screenshots/ARIA/computed font and actual downloaded PNG/SVG output evidence, not only a mock panel."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "projectNoteRows",
+      "change": "Do not use or expand projectNoteRows as the Map export authority: retain its existing Base projection fields and provenance mapping. The integration request is to connect the export action to the accepted canonical document/tree revision and MapLayout binding, not to rows, formula results or filtered/folded rendered nodes. No meaningful executable export wiring exists inside this named symbol today; discover the actual Docs/Map host and API registration seams and revise the packet before submitting a code patch. No patch is proposed to NoteBaseView, formulaValue or notesViewsStorageKey, and no export manifest is to be persisted under notes:views:*.",
+      "reason": "projectNoteRows drops markdown, blocks, content revision, theme/layout revision and authorization at lines 133-158; NoteBaseView kind is table|base. Pretending this seam can mount MapExportReview or register doc.renderTreeExport would hide a scope gap and create a second authority.",
+      "state": "SCOPE_AMENDMENT_REQUIRED_NO_SAFE_EXECUTABLE_PATCH_YET",
+      "baseSha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "MD retains non-tree prose; textual compatibility declared",
+      "currentEvidence": "document-ia.ts::parseNoteDocument (655-699) is a structural summary, not a lossless tree parser; roundTripNoteMarkdown (702-708) rewrites comments/trailing whitespace. note-views.ts::outlineFromHeadings (352-377) derives node IDs from heading index/text. 06-rox-docs-design.md:116,140 requires list authority plus preserved prose/code/tables/unknown metadata/BOM/EOL.",
+      "requiredChange": "tree-export-codecs.ts must read accepted ListNode/retained source authority, retain non-tree prose/opaque regions without roundTripNoteMarkdown or stampBlockMarkers reconstruction, and declare format/version-supported subset plus losses before render. Branch export needs an explicit retained-prose policy, not silent omission. OPML/JSONCanvas must carry supported stable IDs/order/text with parsers and declared unsupported features.",
+      "verification": "Future bun test tests/lark-suite-extension/lsx-wp-036.test.ts: export/parse comparison of supported tree semantics; fixtures with BOM, CRLF, YAML unknown fields/comments, inter-item/trailing prose, code/tables, duplicate labels and Unicode. Compare exact retained bytes as well as IDs/order/text; run dependency roundtrip/import readback for supported text formats.",
+      "missingPrerequisite": "Accepted LSX-WP-029/030/034 contracts and their transitive list-tree/lossless-source foundation receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "artifact readback exact hash, not UI success toast only",
+      "currentEvidence": "notes-engine.ts::contentHash (75-81) is length+FNV-like token; exportVault (475-485) exports a vault payload with that token, not immutable output FileRef. work-packages.json:13083-13086 requires an output FileRef/hash and EG-FILES is READINESS_NOT_VERIFIED (108-113).",
+      "requiredChange": "map-render-export.ts must finalize exact encoded output bytes through common file owner, compute SHA256 over those bytes and persist manifest/output binding; MapExportReview displays receipt only after owner readback rather than labeling client render as success.",
+      "verification": "Download/read authoritative artifact by exact FileRef/revision, recompute SHA256 and compare manifest; parse supported output or inspect PNG pixels/SVG layout. Reopen/restart and download same bytes. Wrong hash/partial finalize must never produce accepted completion.",
+      "missingPrerequisite": "EG-FILES finalize/download immutable readback and metadata durability receipts plus authenticated API wiring.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "Rox2EntityRef exists at platform-contract.ts:233-238; authorizeRox2Action (601-609) denies a missing actor/grant. SurfaceContextInput (18-28) is renderer/context input, not authenticated transport. work-packages.json:13092-13106 proposes operations and required errors; no package files were found.",
+      "requiredChange": "Define runtime request/result/error schemas in tree-export-codecs.ts, consume them at server and renderer with exact validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat discriminants; derive actor and authorized workspace from transport and compare requested ref scope. Use a FileRef from the real owner contract, never a homemade substitute.",
+      "verification": "Compile both approved package boundaries after integration; runtime reject unknown format, invalid scope/revisions and forged actor/workspace payloads. Verify deny/error bodies contain no protected text, asset URLs or internal paths.",
+      "missingPrerequisite": "Accepted authenticated doc transport/schema export interfaces, real FileRef type and reviewed registration/package export seams.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "NativeNotesEngine (366-375) has read/save/revisions/exportVault, but createNativeNotesEngine (391-415) holds Maps in memory and read/revisions return references (429-430,472-473). Generic Rox2Receipt (99-105) alone does not prove file durability. RS-DOC-01:37 requires ACK after durable commit.",
+      "requiredChange": "Consume revision-pinned owner snapshot and common durable command/file transaction, await finalize/manifest commit, persist source/layout/theme revisions and correlation/command IDs. Emit artifact.created through verified existing event alias/outbox with required envelope, not ad hoc UI event. Recover exact completed output after process restart and reconcile in-flight work per owner policy.",
+      "verification": "Actual domain readback of manifest and FileRef/ref/revision/hash before and after service restart; kill between render/finalize/receipt boundaries, retry same command without duplicate artifacts/events or lost acknowledged output. Log receipts and exact artifact hashes bound to integrated commit.",
+      "missingPrerequisite": "Native command/outbox/file persistence and recovery interfaces; event alias verification; lead-authorized restart scenario. An in-memory engine fixture is not this proof lane.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "notes-engine.ts::save (432-445) provides expectedRevision conflict; bindSurfaceContext (31-48) stores revisions; visibleContextEntityRefs (51-55) only filters a caller-supplied readable set. Spec 13119 and 13128-13129 requires policy recheck and immutable revision render.",
+      "requiredChange": "Implement all five formats with full/branch authorized scope, current ACL/asset policy checks, stale preview rejection for changed source/layout/theme and no mixed tree. Same command replay reconciles to owner receipt. Surface missing/denied assets with actor-safe diagnostics and fallback preview; unknown formats, deletion, offline unsupported, limits and missing dependencies return typed errors. Cancel does not acknowledge or orphan a half-ready artifact.",
+      "verification": "For MD/OPML/JSONCanvas/PNG/SVG execute native happy path; change source/theme/layout after preview; revoke document/asset access during rendering; use missing assets and external URLs; replay/crash/restart/cancel; assert exact authorized IDs/count and no protected data. Record baseline input SHA256, seeds, all failed attempts and real recovered receipt IDs.",
+      "missingPrerequisite": "Accepted dependency revisions, file/ACL/native renderer owners and actual progress/cancel transport semantics.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:13153-13161 defines mutant rendering live mutable tree or embedding unauthorized asset URL and named assertions. NativeNotesEngine read()/revisions() expose mutable references; outlineFromHeadings embeds personal collapsed state, so fixture-only equality is insufficient.",
+      "requiredChange": "Package tests must retain exact evaluated bytes/seed/input hash and check manifest revision matches all rendered nodes, denied asset URL absent and tree counts equal declared authorized scope. Use deterministic coordination to alter tree during render rather than sleep-races; inject each specified faulty behavior as a negative control.",
+      "verification": "Run green baseline then each mutant against the same snapshot/seed. Observe failure of the named semantic oracle (including actual output bytes), not timeout/compile failure; record command/results/mutant digest and integrated artifact digest.",
+      "missingPrerequisite": "Implemented exporter and deterministic native owner/render fixtures; authorized tests run only in later implementation phase.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "work-packages.json:13121-13125 specifies review controls and common UI contract. Existing note-views.ts contains only pure type/projection/layout helpers; MapExportReview.tsx and package UI spec were not found. 06-rox-docs-design.md:45,136,231 requires actual font, theme retention and native UI proof.",
+      "requiredChange": "Mount MapExportReview in existing Docs/Map UI via approved integration seam; implement all preview/format/scope/assets/fallback/progress/cancel/error controls with keyboard/IME/focus restoration/help. Use t() with all 10 locales and RU default, preserve user theme, reduced motion and explicit actual export font/viewport/layout options.",
+      "verification": "Discover supported actual Electron runner, exercise pointer and keyboard, IME composition, Escape return, hover/focus/click help, reduced-motion, 200% zoom, Russian/all-key parity/light/dark. Capture mounted actual UI screenshots/ARIA/computed font and font readiness; inspect PNG/SVG Cyrillic glyphs/layout and budgets. Compare full scope with folded/focused UI and selected branch counts.",
+      "missingPrerequisite": "Actual mounted host/API seams and locale path leases outside current packet, approved Electron environment and image renderer/font readiness.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "Spec proof lanes (13144-13150) are SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE, ACTUAL_ELECTRON_UI. Published RS-DOC-01:76 separates fixture UI/live/Electron/provider evidence. This preflight performed source/spec inspection only.",
+      "requiredChange": "Lead must collect separate version-bound receipts for every required lane after actual integration; do not convert this report or validator acceptance into implementation/readiness. Provider/collaboration evidence is additionally required when actually exercised; no fabricated queued receipt or screenshot.",
+      "verification": "Acceptance audit ties each lane to exact integrated commit, input/seed and artifact SHA256 and authoritative ref/revision. Verify dependency/file receipts and post-restart readback independently of worker text and UI toasts.",
+      "missingPrerequisite": "All implementation, integration and runtime lanes remain unexecuted by explicit preflight scope.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "SVG scripts/links safe; missing/denied assets report; PNG/SVG actual font/layout and large tree budget; stable supported OPML/Canvas IDs+text",
+      "currentEvidence": "Normative tests at work-packages.json:13137-13140 and outputs at 13083-13086. JsonCanvas types (note-views.ts:44-68) contain nodes/edges but no tree codec or revision manifest; canvasFitTransform (328-349) is a personal viewport helper, not immutable render geometry.",
+      "requiredChange": "Implement textual encoders/parsers with support descriptors, safe bounded vector serializer and actual raster renderer. Freeze accepted shared MapLayout and theme, disclose viewport/full-tree/branch behavior and font fallback, recheck asset bytes by owner. Reject scripts/handlers/unsafe links/CSS and unresolved external sources. Enforce finite geometry/node/depth/pixel/time/resource budgets with explicit errors, not clipped success.",
+      "verification": "Roundtrip parent/order/ID/Unicode text fixtures; SVG adversarial attributes/URLs/styles and denied image fixtures; inspect exact SVG and actual PNG pixels/glyphs/dimensions; run largest permitted tree and over-budget/deep-tree inputs; ensure cancellation and no asset network bypass.",
+      "missingPrerequisite": "MapLayout, tree codecs' supported profile, EG-FILES asset resolver and real sandboxed renderer/font capabilities.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"NoteBaseView; projectNoteRows; formulaValue; notesViewsStorageKey","lineStart":24,"lineEnd":202,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"canvasFitTransform; outlineFromHeadings","lineStart":328,"lineEnd":377,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/document-ia.ts","symbol":"parseNoteDocument; roundTripNoteMarkdown","lineStart":655,"lineEnd":708,"sha256":"f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa"},
+    {"path":"apps/electron/src/renderer/pages/notes/document-ia.ts","symbol":"extractBlockIds; serializeColumns","lineStart":182,"lineEnd":232,"sha256":"f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa"},
+    {"path":"packages/core/src/rox2/notes-engine.ts","symbol":"contentHash; parseBlocks; stampBlockMarkers","lineStart":75,"lineEnd":160,"sha256":"77f8c14ade5249c5dbaba4e5bb22551a9a4f98954b9dc7244ee5274404cd1480"},
+    {"path":"packages/core/src/rox2/notes-engine.ts","symbol":"NativeNotesEngine; createNativeNotesEngine; read; save; revisions; exportVault","lineStart":366,"lineEnd":485,"sha256":"77f8c14ade5249c5dbaba4e5bb22551a9a4f98954b9dc7244ee5274404cd1480"},
+    {"path":"packages/core/src/rox2/surface-context.ts","symbol":"bindSurfaceContext; visibleContextEntityRefs; rebaseLiveContext","lineStart":31,"lineEnd":91,"sha256":"ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef","lineStart":233,"lineEnd":238,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"authorizeRox2Action","lineStart":597,"lineEnd":609,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[35] LSX-WP-036","lineStart":12903,"lineEnd":13252,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-036 normative execution record","lineStart":3080,"lineEnd":3168,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/06-rox-docs-design.md","symbol":"section 8 Ideascape and Conversion contract","lineStart":114,"lineEnd":140,"sha256":"a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"section 11 Import/export and frontmatter portability","lineStart":231,"lineEnd":244,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path":"docs/rox-suite/published/RS-DOC-01.md","symbol":"published domain/ACL and normative dependency handoff","lineStart":35,"lineEnd":87,"sha256":"b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"},
+    {"path":"docs/rox-suite/published/RS-DRV-01.md","symbol":"File owner contract and mandatory common foundation gate","lineStart":36,"lineEnd":62,"sha256":"ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3"}
+  ],
+  "nextExecutableAction": "Lead reads this preflight, resolves delivery manifest and baseline lineage, commits wave0 and accepts LSX-WP-029, LSX-WP-030 and LSX-WP-034 with artifact plus authoritative readback receipts in dependency order. Verify EG-FILES and published common foundations; discover and authorize actual API/UI/locale integration seams with path leases. Rehash scoped evidence and issue an updated implementation packet; then implement tree-export-codecs.ts first against the accepted canonical source/layout/file contracts. No feature implementation is authorized by this preflight report.",
+  "risks": [
+    "Current heading Outline IDs change with rename/reorder; do not export them as durable list node identities.",
+    "parseNoteDocument is a summary; roundTripNoteMarkdown and native stampBlockMarkers normalize source bytes and cannot satisfy non-tree prose/BOM/CRLF preservation by themselves.",
+    "Native engine read and revision objects are mutable references; late edits can mix revisions unless rendering resolves an immutable owner snapshot.",
+    "Personal collapsed/focus/viewport state can silently remove authorized branches if export traverses only rendered nodes; selected branch and full tree must be explicit scopes.",
+    "contentHash is not cryptographic artifact SHA256; existing vault export is not the common immutable file export owner.",
+    "SurfaceContext visibility/permissionMode is not current transport ACL. Denied/missing asset reports must not leak protected URLs/names; imported ACL does not grant access.",
+    "Raster font, Cyrillic glyphs, decoder and sandbox budgets require separate real runtime acceptance; a syntactically valid SVG or mock canvas is insufficient.",
+    "The sole shared path's named Base utilities cannot register authenticated APIs or mount the review panel. Broadening source paths without a reviewed packet violates the bounded slice.",
+    "Published RS-DOC-01 uses a different historical source SHA and collaborative Page framing; reconcile accepted identity/authority capabilities without adding another tree/content/comments store or importing unrelated feature scope.",
+    "Any root integration changing source bytes makes the affected report evidence historical; all future behavioral receipts must bind to the integrated revision.",
+    "Actual product verification is deliberately NOT_RUN here. Preflight lineage/hash validation only demonstrates report integrity, never feature completion."
+  ],
+  "verification": {
+    "productBuildsTestsUiNetwork": "NOT_RUN_BY_PREFLIGHT_SCOPE",
+    "plannedReportValidationArgv": ["python3", "plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/LSX-WP-036.json", "${ROX_COMPOUND_PACKET_ROOT}/LSX-WP-036/packet.json"],
+    "reportValidationResult": "Observe the separately returned verifier output; this JSON does not predeclare a passing result."
+  },
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

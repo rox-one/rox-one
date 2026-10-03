@@ -179,6 +179,7 @@ const now = Date.now()
 const mockAutomations: AutomationListItem[] = [
   {
     id: 'automation-1',
+    revision: 'playground:automation-1:v1',
     event: 'SchedulerTick',
     matcherIndex: 0,
     name: 'Daily Weather Report',
@@ -193,6 +194,7 @@ const mockAutomations: AutomationListItem[] = [
   },
   {
     id: 'automation-2',
+    revision: 'playground:automation-2:v1',
     event: 'LabelAdd',
     matcherIndex: 0,
     name: 'Urgent Label Notification',
@@ -205,6 +207,7 @@ const mockAutomations: AutomationListItem[] = [
   },
   {
     id: 'automation-3',
+    revision: 'playground:automation-3:v1',
     event: 'PreToolUse',
     matcherIndex: 0,
     name: 'Git Pre-commit Check',
@@ -216,6 +219,7 @@ const mockAutomations: AutomationListItem[] = [
   },
   {
     id: 'automation-4',
+    revision: 'playground:automation-4:v1',
     event: 'LabelAdd',
     matcherIndex: 1,
     name: 'Label Change Logger',
@@ -227,6 +231,7 @@ const mockAutomations: AutomationListItem[] = [
   },
   {
     id: 'automation-5',
+    revision: 'playground:automation-5:v1',
     event: 'SchedulerTick',
     matcherIndex: 1,
     name: 'Hourly Health Check',
@@ -242,6 +247,7 @@ const mockAutomations: AutomationListItem[] = [
   },
   {
     id: 'automation-6',
+    revision: 'playground:automation-6:v1',
     event: 'PostToolUse',
     matcherIndex: 0,
     name: 'Build Artifact Logger',
@@ -253,6 +259,7 @@ const mockAutomations: AutomationListItem[] = [
   },
   {
     id: 'automation-7',
+    revision: 'playground:automation-7:v1',
     event: 'SessionStart',
     matcherIndex: 0,
     name: 'Welcome Prompt',
@@ -264,6 +271,7 @@ const mockAutomations: AutomationListItem[] = [
   },
   {
     id: 'automation-8',
+    revision: 'playground:automation-8:v1',
     event: 'PostToolUseFailure',
     matcherIndex: 0,
     name: 'Error Alert',
@@ -275,6 +283,7 @@ const mockAutomations: AutomationListItem[] = [
   },
   {
     id: 'automation-9',
+    revision: 'playground:automation-9:v1',
     event: 'SessionStatusChange',
     matcherIndex: 0,
     name: 'Done after 9 AM (priority)',
@@ -296,6 +305,7 @@ const mockAutomations: AutomationListItem[] = [
   },
   {
     id: 'automation-10',
+    revision: 'playground:automation-10:v1',
     event: 'SchedulerTick',
     matcherIndex: 2,
     name: 'Morning AI News (Weekdays)',

@@ -1,0 +1,129 @@
+{
+  "revision": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+  "canonical_build": {
+    "label": "a4ca-canonical-server-build",
+    "command": [
+      "bun",
+      "--no-env-file",
+      "run",
+      "server:build",
+      "--output=../../../workspace/rox-union-server-dist-final-20260930"
+    ],
+    "reproduce": "bun --no-env-file run server:build --output=../../../workspace/rox-union-server-dist-final-20260930",
+    "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+    "exit": 0,
+    "seconds": 7.294,
+    "envKeys": [
+      "BUN_INSTALL_CACHE_DIR",
+      "CRAFT_CONFIG_DIR",
+      "ELECTRON_SKIP_BINARY_DOWNLOAD",
+      "HOME",
+      "HTTPS_PROXY",
+      "HTTP_PROXY",
+      "LANG",
+      "LC_ALL",
+      "NODE_EXTRA_CA_CERTS",
+      "NODE_OPTIONS",
+      "NO_PROXY",
+      "PATH",
+      "REQUESTS_CA_BUNDLE",
+      "ROX_CONFIG_DIR",
+      "SSL_CERT_FILE",
+      "TMPDIR",
+      "XDG_CACHE_HOME",
+      "http_proxy",
+      "https_proxy",
+      "no_proxy",
+      "npm_config_cache"
+    ],
+    "dotenvAbsent": true
+  },
+  "canonical_smoke": {
+    "label": "a4ca-canonical-delivery-smoke",
+    "command": [
+      "bun",
+      "--no-env-file",
+      "test",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/canonical-delivery-smoke.test.ts"
+    ],
+    "reproduce": "bun --no-env-file test /tmp/rox-ui-surface-discovery-20260930/union-validation/canonical-delivery-smoke.test.ts",
+    "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+    "exit": 1,
+    "seconds": 2.398,
+    "envKeys": [
+      "BUN_INSTALL_CACHE_DIR",
+      "CRAFT_CONFIG_DIR",
+      "ELECTRON_SKIP_BINARY_DOWNLOAD",
+      "HOME",
+      "HTTPS_PROXY",
+      "HTTP_PROXY",
+      "LANG",
+      "LC_ALL",
+      "NODE_EXTRA_CA_CERTS",
+      "NODE_OPTIONS",
+      "NO_PROXY",
+      "PATH",
+      "REQUESTS_CA_BUNDLE",
+      "ROX_CONFIG_DIR",
+      "SSL_CERT_FILE",
+      "TMPDIR",
+      "XDG_CACHE_HOME",
+      "http_proxy",
+      "https_proxy",
+      "no_proxy",
+      "npm_config_cache"
+    ],
+    "dotenvAbsent": true
+  },
+  "counts": {
+    "pass": 0,
+    "fail": 2,
+    "expect": 4
+  },
+  "cause": {
+    "classification": "source packaging defect",
+    "source_import": "packages/server-core/src/handlers/rpc/cloud-runs.ts",
+    "source_import_line": 49,
+    "packaging_script": "scripts/build-server.ts",
+    "omitted_workspace_package": "@craft-agent/cloud-runner",
+    "diagnostic": "Cannot find module '@craft-agent/cloud-runner' from delivered packages/server-core/src/handlers/rpc/cloud-runs.ts"
+  },
+  "executed": [
+    "canonical standalone assembly",
+    "source-pinned vendor Bun 1.3.9 version",
+    "two actual sh bin/craft-server attempts",
+    "early exit1 before readiness",
+    "exact855-file final WebUI copy"
+  ],
+  "not_executed": [
+    "health",
+    "login",
+    "HTTP authentication/config/HTML",
+    "valid/invalid WebSocket auth",
+    "gracefulSIGTERM",
+    "same-profile restart/persistence",
+    "actual short-token validation"
+  ],
+  "artifact_manifests": [
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/a4ca-canonical-delivery-before.json",
+      "sha256": "c84484ecfec1154bbce8b4d3d38a83d228bdebe48c53eae58af5091a3dfbc322"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/a4ca-canonical-delivery-after.json",
+      "sha256": "24e96349ce7a6acad725d7ce77f7ed9fc3aeba01e8b226b9088ebaa231a5c80f"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/a4ca-canonical-delivery-phases.json",
+      "sha256": "941cfd6d711b90ec592c6d4eb6395de6c138f8e2ee3d44b468f462b638b7fe30"
+    },
+    {
+      "path": "/tmp/rox-ui-surface-discovery-20260930/union-validation/a4ca-canonical-delivery-child-redacted.log",
+      "sha256": "5bdb027ce29b65dcb3c09cf42fe25c55d6be2c343077209094382dc0734a2872"
+    }
+  ],
+  "profiles_removed": true,
+  "both_children_exit": 1,
+  "token_logged": false,
+  "app_source_changes_from_builders": false
+}

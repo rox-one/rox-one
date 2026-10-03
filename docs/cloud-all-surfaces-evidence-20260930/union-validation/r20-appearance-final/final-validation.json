@@ -1,0 +1,307 @@
+{
+  "startHead": "b8416534b6cf571ac6b18c38b3845bb92218a1a5",
+  "endHead": "b8416534b6cf571ac6b18c38b3845bb92218a1a5",
+  "statusBefore": [
+    "?? dist-server/"
+  ],
+  "statusAfter": [
+    "?? dist-server/"
+  ],
+  "trackedManifestBefore": "dea0ebed5a4eec397c6f0db466c3a578090d736b26383c472fdbe1aefd51c00b",
+  "trackedManifestAfter": "dea0ebed5a4eec397c6f0db466c3a578090d736b26383c472fdbe1aefd51c00b",
+  "trackedChanges": [],
+  "lockSha256": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+  "sourceOrLockWritesByThisAgent": false,
+  "gates": [
+    {
+      "label": "r20-electron-typecheck",
+      "command": [
+        "bun",
+        "--no-env-file",
+        "run",
+        "typecheck:electron"
+      ],
+      "reproduce": "bun --no-env-file run typecheck:electron",
+      "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+      "exit": 0,
+      "seconds": 48.617,
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HOME",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true,
+      "actualTestCounts": null,
+      "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/r20-electron-typecheck.log",
+      "logSha256": "71228a274898dd4fa50280c05b5fdb2dce28aa3a991cd9816aca89d2989b8d39"
+    },
+    {
+      "label": "r20-webui-typecheck",
+      "command": [
+        "bun",
+        "--no-env-file",
+        "run",
+        "webui:typecheck"
+      ],
+      "reproduce": "bun --no-env-file run webui:typecheck",
+      "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+      "exit": 0,
+      "seconds": 46.192,
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HOME",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true,
+      "actualTestCounts": null,
+      "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/r20-webui-typecheck.log",
+      "logSha256": "2f81eb99ff92fd33b68966d34e38497fde1c57e3efbc3c0a364442498bc88092"
+    },
+    {
+      "label": "r20-integrated-controls",
+      "command": [
+        "bun",
+        "--no-env-file",
+        "test",
+        "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+        "packages/server-core/src/transport/__tests__/before-response-authority.test.ts",
+        "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+        "packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts",
+        "packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts",
+        "scripts/electron-main-cjs.test.ts",
+        "scripts/__tests__/check-i18n-coverage.test.ts",
+        "packages/pi-agent-server/src/custom-endpoint-registration.test.ts",
+        "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+        "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+        "packages/shared/src/projects/__tests__",
+        "apps/webui/__tests__"
+      ],
+      "reproduce": "bun --no-env-file test packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts packages/server-core/src/transport/__tests__/before-response-authority.test.ts packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts scripts/electron-main-cjs.test.ts scripts/__tests__/check-i18n-coverage.test.ts packages/pi-agent-server/src/custom-endpoint-registration.test.ts apps/electron/src/main/__tests__/native-notes-runtime.test.ts apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts packages/shared/src/projects/__tests__ apps/webui/__tests__",
+      "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+      "exit": 0,
+      "seconds": 9.344,
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HOME",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true,
+      "actualTestCounts": {
+        "pass": 167,
+        "fail": 0,
+        "expect": 789,
+        "tests": 167,
+        "files": 23
+      },
+      "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/integrated/r20-integrated-controls.log",
+      "logSha256": "b2ad2d4cd589d7b7d1181c59874343661c8d7d19585ad605a5d43bd3608c03bd"
+    },
+    {
+      "label": "r20-i18n-coverage",
+      "command": [
+        "bun",
+        "--no-env-file",
+        "run",
+        "lint:i18n:coverage"
+      ],
+      "reproduce": "bun --no-env-file run lint:i18n:coverage",
+      "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+      "exit": 0,
+      "seconds": 3.287,
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HOME",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true,
+      "actualTestCounts": null,
+      "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/r20-i18n-coverage.log",
+      "logSha256": "ab5c3567844f6284f8bbacc1543029b290a940522b24f7d8513e70780e0e06ba"
+    },
+    {
+      "label": "r20-final-built-smoke",
+      "command": [
+        "bun",
+        "--no-env-file",
+        "test",
+        "packages/server/src/__tests__/smoke.test.ts"
+      ],
+      "reproduce": "bun --no-env-file test packages/server/src/__tests__/smoke.test.ts",
+      "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+      "exit": 0,
+      "seconds": 8.781,
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HOME",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "ROX_SERVER_SMOKE_ENTRY",
+        "ROX_SERVER_SMOKE_WEBUI_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true,
+      "actualTestCounts": {
+        "pass": 4,
+        "fail": 0,
+        "expect": 37,
+        "tests": 4,
+        "files": 1
+      },
+      "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/r20-final-built-smoke.log",
+      "logSha256": "21227644e84289bf2ac3b8f7f2f7a6e26938a6896c9acdd05aa871499a42c573"
+    }
+  ],
+  "frozenInstallCoreDurableNotRepeated": true,
+  "carriedSourceProof": {
+    "base": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+    "onlyChangedPaths": [
+      ".github/workflows/sqlite-runtime-recovery.yml",
+      "apps/electron/src/renderer/components/app-shell/TopBar.tsx",
+      "apps/electron/src/renderer/hooks/useShellAppearance.ts",
+      "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+      "apps/electron/src/renderer/lib/desktop-appearance.ts",
+      "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/ZenShellSettings.tsx",
+      "apps/electron/src/renderer/pages/settings/__tests__/AppearanceSettingsPage.test.ts"
+    ],
+    "coreSharedServerBackendClientLockUnchanged": true
+  },
+  "artifact": {
+    "sourceCommit": "b8416534b6cf571ac6b18c38b3845bb92218a1a5",
+    "manifestBefore": "87a35402d7b90af8de06afc929224983a1415f83637acd9521e042ce38bd6e3f",
+    "manifestAfter": "87a35402d7b90af8de06afc929224983a1415f83637acd9521e042ce38bd6e3f",
+    "files": 854,
+    "unchanged": true,
+    "server": {
+      "path": "dist-server/index.js",
+      "sha256": "d5d3f983eef4abcf8cce857c51feca92f4a89d5c2f942b041d18a0901fc3e49e",
+      "bytes": 36851657
+    },
+    "webui": {
+      "path": "apps/webui/dist/index.html",
+      "sha256": "583bc6de7c5ae2b3ab1a7d289b7fdd3116f4a5a07e5d05c162de09bc1643ef7d",
+      "bytes": 1767
+    }
+  },
+  "strictSmokeEnvironment": {
+    "ROX_SERVER_SMOKE_ENTRY": "dist-server/index.js",
+    "ROX_SERVER_SMOKE_WEBUI_DIR": "apps/webui/dist"
+  },
+  "cleanup": {
+    "ownProcessesRemaining": [],
+    "removedOnlyOwnRunnerDirs": [
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/config",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/tmp",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/cache",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/npm-cache",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/xdg-cache",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/integrated/config",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/integrated/tmp",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/integrated/cache",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/integrated/npm-cache",
+      "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/integrated/xdg-cache"
+    ],
+    "otherAgentBrowserProfilesProcessesUntouched": true
+  },
+  "originalHead": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+  "originalStatus": [],
+  "fullFeatureDoDComplete": false,
+  "proofLimits": [
+    "Appearance cases are helper unit/fixture controls, not actual native IPC acceptance.",
+    "Strict lifecycle does not imply full mounted WebUI functional acceptance; browser owner records that separately.",
+    "Protected PostgreSQL prerequisite and prior RED receipts remain pending/historical; not rerun."
+  ],
+  "timestampUnix": 1790796228.178572
+}

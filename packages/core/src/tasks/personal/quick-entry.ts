@@ -4,8 +4,9 @@
  * через неделю», «Спорт каждый пн», «Идея когда-нибудь». Tokens are removed
  * from the title; everything is local time. Pure — tests pass `now`.
  */
-import { startOfLocalDay } from './dates.ts'
+import { startOfLocalDay, startOfZonedDay, zonedDateTimeParts, zonedDateTimeToEpoch } from './dates.ts'
 import type { Recurrence } from './types.ts'
+import type { ZonedDateTimeParts } from './dates.ts'
 
 const MS_DAY = 24 * 60 * 60 * 1000
 const B = '(?<![\\p{L}\\p{N}])'
@@ -288,6 +289,57 @@ function nextWeekdayOrToday(now: number, weekday: number): number {
 /** Next start date for a repeating task (local midnight), or null when the rule ended. */
 export function nextRepeatDate(rec: Recurrence, anchor: number, completedAt: number): number | null {
   const interval = Math.max(1, Math.floor(rec.interval || 1))
+  if (rec.timeZone) {
+    try {
+      const zone = rec.timeZone
+      const source = rec.mode === 'after' ? completedAt : anchor
+      const wallClock = zonedDateTimeParts(source, zone)
+      const baseDay = zonedDateTimeParts(startOfZonedDay(source, zone), zone)
+      const floor = startOfZonedDay(completedAt, zone)
+      const stepZoned = (from: ZonedDateTimeParts): ZonedDateTimeParts => {
+        const date = new Date(Date.UTC(from.year, from.month - 1, from.day))
+        switch (rec.rule) {
+          case 'daily':
+            date.setUTCDate(date.getUTCDate() + interval)
+            break
+          case 'weekly': {
+            const days = (rec.weekdays ?? []).filter((d) => d >= 0 && d <= 6).sort((a, b) => a - b)
+            if (days.length === 0) date.setUTCDate(date.getUTCDate() + 7 * interval)
+            else {
+              const dow = date.getUTCDay()
+              const later = days.find((d) => d > dow)
+              date.setUTCDate(date.getUTCDate() + (later != null ? later - dow : 7 * (interval - 1) + 7 - dow + days[0]!))
+            }
+            break
+          }
+          case 'monthly':
+          case 'yearly': {
+            const month = from.month - 1 + interval * (rec.rule === 'yearly' ? 12 : 1)
+            const year = from.year + Math.floor(month / 12)
+            const targetMonth = month % 12
+            const lastDay = new Date(Date.UTC(year, targetMonth + 1, 0)).getUTCDate()
+            date.setUTCFullYear(year, targetMonth, Math.min(from.day, lastDay))
+            break
+          }
+          default:
+            date.setUTCDate(date.getUTCDate() + 1)
+        }
+        return { ...wallClock, year: date.getUTCFullYear(), month: date.getUTCMonth() + 1, day: date.getUTCDate() }
+      }
+      let nextParts = stepZoned(baseDay)
+      let next = zonedDateTimeToEpoch(nextParts, zone)
+      let guard = 0
+      while (rec.mode !== 'after' && next <= floor && guard < 1000) {
+        nextParts = stepZoned(nextParts)
+        next = zonedDateTimeToEpoch(nextParts, zone)
+        guard += 1
+      }
+      if (rec.until != null && next > rec.until) return null
+      return next
+    } catch {
+      // Invalid legacy timezone values retain the local-calendar behavior.
+    }
+  }
   const base = startOfLocalDay(rec.mode === 'after' ? completedAt : anchor)
   const floor = startOfLocalDay(completedAt)
   const step = (from: number): number => {

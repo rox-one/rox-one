@@ -1,0 +1,2 @@
+$ cd apps/webui && bun run typecheck
+$ tsc --noEmit

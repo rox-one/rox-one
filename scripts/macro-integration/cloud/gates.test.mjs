@@ -1,0 +1,39 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import cp from 'node:child_process';
+import {validateReceipt,ready,overlap,machinePreflight,safeProof,sha256} from './gates.mjs';
+import {buildHandoff} from '../control-handoff.mjs';
+const sha='a'.repeat(40),digest='d'.repeat(64),p={id:'WP-A',dependencies:[],allowedPaths:['src/domain.ts'],lanes:['linux-domain']};
+const manifest={specDigest:digest,workPackages:[p,{id:'WP-B',dependencies:['WP-A'],allowedPaths:['src/other.ts'],lanes:['linux-domain']},{id:'WP-C',dependencies:['WP-A'],allowedPaths:['src/other.ts'],lanes:['linux-domain']}]};
+const receipt=()=>({schemaVersion:1,wpId:p.id,specDigest:digest,inputSha:sha,commitSha:'b'.repeat(40),status:'verified',owner:'worker',review:{status:'approved',reviewer:'reviewer'},changedPaths:['src/domain.ts'],lanes:{'linux-domain':{status:'passed',executionMode:'fixture'}},tests:[{lane:'linux-domain',command:'targeted scenario',exitCode:0,expected:'one row',observed:'one row',logPath:'proof/macro-integration/WP-A/log.txt',sha256:sha256('pass')}],negativeControls:[{lane:'linux-domain',caught:true,mutation:'remove idempotency unique key',reproduction:'seed=42',assertion:'one canonical row on duplicate command',baselineExitCode:0,mutantExitCode:1,failureKind:'assertion',baselineLogPath:'proof/macro-integration/WP-A/baseline.txt',baselineSha256:sha256('baseline pass'),mutantLogPath:'proof/macro-integration/WP-A/mutant.txt',mutantSha256:sha256('assertion failed: duplicate row')}]});
+test('successor opens only from verified dependency; overlapping file owners serialize',()=>{assert.deepEqual(ready(manifest,{}).ready,['WP-A']);const r=ready(manifest,{'WP-A':receipt()});assert.deepEqual(r.ready,['WP-B']);assert.deepEqual(r.deferred,[{id:'WP-C',conflictsWith:'WP-B'}]);});
+test('stale spec / missing lane / unreviewed / unowned / broken test block successor',()=>{for(const mutate of [r=>r.specDigest='e'.repeat(64),r=>r.inputSha=r.commitSha,r=>r.lanes['linux-domain'].status='pending',r=>r.review.reviewer='worker',r=>r.changedPaths.push('secret.env'),r=>r.tests[0].exitCode=1,r=>r.negativeControls[0].caught=false]){const r=receipt();mutate(r);assert.throws(()=>validateReceipt(r,p,manifest));assert(!ready(manifest,{'WP-A':r}).ready.includes('WP-B'));}});
+test('fixture cannot satisfy provider read-back gate',()=>{const q={...p,lanes:['provider-live']},r=receipt();r.lanes['provider-live']={status:'passed',executionMode:'fixture'};assert.throws(()=>validateReceipt(r,q,manifest),/fixture/);});
+test('unintegrated dependency commit denied by actual ancestry port',()=>{assert.throws(()=>validateReceipt(receipt(),p,manifest,{inputSha:sha,isAncestor:()=>false}),/ancestor/);});
+test('parent directory lease overlaps child, unrelated paths do not',()=>{assert(overlap(['src/domain'],['src/domain/commands.ts']));assert(!overlap(['src/domain.ts'],['src/domain-two.ts']));});
+test('preflight rejects storage/toolchain/dirty/platform/CPU failures and requires16GiB renderer',()=>{const good={actualSha:sha,expectedSha:sha,dirty:false,diskGiB:20,ramGiB:16,cpus:4,platform:'linux',bunVersion:'1.3.14',nodeMajor:22};assert.equal(machinePreflight(good).status,'ready');for(const bad of [{diskGiB:1},{dirty:true},{expectedSha:'b'.repeat(40)},{bunVersion:'1.4.2'},{nodeMajor:24},{cpus:2},{platform:'darwin'},{diskGiB:12,lane:'linux-renderer'}])assert.equal(machinePreflight({...good,...bad}).status,'blocked');});
+test('real proof checksum mutation and symlink traversal rejected',()=>{const root=fs.mkdtempSync(path.join(os.tmpdir(),'rox-cloud-gate-'));try{const d=path.join(root,'proof/macro-integration/WP-A');fs.mkdirSync(d,{recursive:true});fs.writeFileSync(path.join(d,'log.txt'),'pass');fs.writeFileSync(path.join(d,'baseline.txt'),'baseline pass');fs.writeFileSync(path.join(d,'mutant.txt'),'assertion failed: duplicate row');validateReceipt(receipt(),p,manifest,{root,verifyProof:true});fs.writeFileSync(path.join(d,'mutant.txt'),'tampered');assert.throws(()=>validateReceipt(receipt(),p,manifest,{root,verifyProof:true}),/checksum/);fs.writeFileSync(path.join(d,'mutant.txt'),'assertion failed: duplicate row');fs.writeFileSync(path.join(d,'log.txt'),'tampered');assert.throws(()=>validateReceipt(receipt(),p,manifest,{root,verifyProof:true}),/checksum/);assert.throws(()=>safeProof(root,'../elsewhere'),/unsafe/);fs.symlinkSync(os.tmpdir(),path.join(d,'escape'));assert.throws(()=>safeProof(root,'proof/macro-integration/WP-A/escape'),/escape/);}finally{fs.rmSync(root,{recursive:true});}});
+test('fake changedPaths cannot conceal actual unowned file',()=>{assert.throws(()=>validateReceipt(receipt(),p,manifest,{actualChangedPaths:()=>['src/domain.ts','src/unowned.ts']}),/git diff/);});
+test('receipt for successor without transitive prerequisite is not accepted',()=>{const r=receipt();r.wpId='WP-B';r.changedPaths=['src/other.ts'];const result=ready(manifest,{'WP-B':r});assert(!result.verified.includes('WP-B'));assert(result.receiptErrors.some(e=>e.id==='WP-B'));});
+test('infra failure and unbound caught flag do not prove mutation sensitivity',()=>{for(const change of [r=>r.negativeControls[0].failureKind='infrastructure',r=>delete r.negativeControls[0].mutantSha256,r=>r.negativeControls[0].baselineExitCode=1]){const r=receipt();change(r);assert.throws(()=>validateReceipt(r,p,manifest),/negative/);}});
+test('actual CLI rejects an unallocated screen implementation path',()=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'rox-cloud-allocation-'));
+ try{
+  const put=(f,x)=>{const dst=path.join(root,f);fs.mkdirSync(path.dirname(dst),{recursive:true});fs.writeFileSync(dst,typeof x==='string'?x:JSON.stringify(x));};
+  for(const f of ['cli.mjs','gates.mjs'])put('scripts/'+f,fs.readFileSync(new URL(f,import.meta.url),'utf8'));
+  put('control-handoff.mjs',fs.readFileSync(new URL('../control-handoff.mjs',import.meta.url),'utf8'));
+  const dir='plans/macro-integration',control={id:'create',labelRu:'Создать',input:'name',output:'ref',hover:'help',focus:'help',click:'create',keyboard:'Enter',help:'meaning'},leaf={screenContracts:[{id:'COL-X',workPackages:['WP-A'],controls:[control],implementationFiles:{new:['src/NewView.tsx']}}]};
+  put(dir+'/collaboration-screen-contracts.json',leaf);for(const n of ['domain','shared'])put(dir+'/'+n+'-screen-contracts.json',{screenContracts:[]});
+  put(dir+'/cloud/ui-slices.json',{screenPrimaryUiOwners:{'COL-X':'WP-A'}});put(dir+'/cloud/screen-index.json',{screens:[{id:'COL-X',workPackages:['WP-A'],controls:['create']}]});
+  const catalogs=['collaboration','domain','shared'].map(n=>{const p=dir+'/'+n+'-screen-contracts.json',bytes=fs.readFileSync(path.join(root,p),'utf8');return{path:p,bytes,data:JSON.parse(bytes)};});const h=buildHandoff(catalogs,{screenPrimaryUiOwners:{'COL-X':'WP-A'}});put(dir+'/control-handoff.json',h);
+  const q={id:'WP-A',dependencies:[],specDigest:digest,screenRefs:[{id:'COL-X',controls:['create']}],domainSpecification:{affectedFiles:[]}};
+  const packet=dir+'/cloud/packets/WP-A.json',prompt='cloud/WP-A.md';put(packet,q);put(prompt,'planned fixture');
+  const m={specDigest:digest,specInputs:[],workPackages:[{id:'WP-A',dependencies:[],allowedPaths:['src/NewView.tsx',h.controls[0].testFile],packet,prompt,packetSha256:sha256(fs.readFileSync(path.join(root,packet))),promptSha256:sha256('planned fixture')}]};put(dir+'/cloud/manifest.json',m);
+  const run=()=>cp.spawnSync(process.execPath,['scripts/cli.mjs','validate'],{cwd:root,encoding:'utf8'});
+  const baseline=run();assert.equal(baseline.status,0,baseline.stderr);
+  m.workPackages[0].allowedPaths=[h.controls[0].testFile];put(dir+'/cloud/manifest.json',m);const mutant=run();assert.notEqual(mutant.status,0);assert.match(mutant.stderr,/unallocated screen implementation file COL-X/);
+ }finally{fs.rmSync(root,{recursive:true});}
+});

@@ -1,0 +1,350 @@
+{
+  "task_id": "LSX-WP-015-preflight",
+  "attempt_id": "b3990b09684793238d07bf237f440ec1",
+  "packet_hash": "f4358948063f5cecf7896e946228726cb978f3f4dd0c599d43f4360373fb68c5",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-015",
+  "featureComplete": false,
+  "state": "PREFLIGHT_ONLY_IMPLEMENTATION_NOT_STARTED",
+  "workTier": "bounded-workflow: one read-only package investigation and one owned report; no implementation delegation",
+  "scope": {
+    "mode": "inspect",
+    "onlyWrittenPath": "plans/compound-implementation/worker-reviews/LSX-WP-015.json",
+    "productSourceTestsManifestsProgressGit": "UNCHANGED_BY_THIS_WORKER",
+    "productBuildTestsNativeUINetwork": "NOT_RUN_AS_DIRECTED",
+    "codegraph": "UNAVAILABLE: no .codegraph index; not initialized",
+    "find": "Semantic search failed with provider HTTP 402; explicit-path read and literal grep provided the evidence instead.",
+    "verificationScope": "Report lineage, JSON structure and inspected whole-file hashes only; no feature/runtime acceptance."
+  },
+  "dependencies": ["LSX-WP-013", "LSX-WP-014"],
+  "externalPrerequisitesExplicitInPackage": [],
+  "dependencyContracts": [
+    {
+      "id": "LSX-WP-013",
+      "evidence": "work-packages.json:5462-5511,5533-5553",
+      "requiredReceipt": "Accepted formula-parser.ts/formula-evaluator.ts implementation and readback: typed value/error union, dependency DAG/cycle checks, shared evaluationTime/timezone, bounded resource accounting and actor/policy/snapshot cache semantics.",
+      "transitiveDependencies": ["LSX-WP-008", "LSX-WP-010", "LSX-WP-011"],
+      "state": "ACCEPTED_IMPLEMENTATION_RECEIPT_NOT_INSPECTED"
+    },
+    {
+      "id": "LSX-WP-014",
+      "evidence": "work-packages.json:5696-5702,5763-5839",
+      "requiredReceipt": "Accepted relation-commands.ts implementation and authoritative relation/inverse readback: stable EntityRefs, cardinality, target policy, source/target revisions, tombstones and recoverable journal. Do not implement another relation store.",
+      "transitiveDependencies": ["LSX-WP-002", "LSX-WP-010", "LSX-WP-011"],
+      "inheritedExternalGate": "EG-EFFECTS",
+      "state": "ACCEPTED_IMPLEMENTATION_RECEIPT_NOT_INSPECTED"
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "ROOT_WAVE0_AND_REFERENCE_BINDING",
+      "classification": "implementation launch gate, not an additional explicit DAG edge",
+      "source": "execution-packages.json:1307-1317; work-packages.json:9-11,6272-6282; dispatch prompt",
+      "requirement": "Wait for lead wave0 commit and accepted dependency receipts. Resolve immutable reference revision/digest and spec_ref hashes from lead delivery manifest; obtain refreshed implementation packet on the approved committed generation. Preserve the supplied preflight lineage, do not checkout or mutate Git here.",
+      "missingPrerequisite": "Committed wave0 generation, delivery manifest resolution and dependency acceptance receipts were not supplied or inspected.",
+      "state": "NOT_ESTABLISHED"
+    },
+    {
+      "id": "RS-DRV-01",
+      "classification": "surprising explicit prerequisite in linked published RS-BASE-01, absent from LSX-WP-015 dependencies and external_prerequisites",
+      "source": "RS-BASE-01.md:95-109; RS-DRV-01.md:36-38,60-62,71-75",
+      "requirement": "Lead must reconcile the published Base prerequisite with accepted canonical Page/Note/File library and identity/ACL/command authority receipts. Published issue #1109 is not an implementation receipt; do not add a private Base library or implement Drive in this slice.",
+      "missingPrerequisite": "RS-DRV-01 readiness receipt or an explicitly reviewed foundation mapping for this bounded Base slice.",
+      "state": "NOT_ESTABLISHED"
+    },
+    {
+      "id": "AUTHENTICATED_ROW_FIELD_POLICY_AND_REVOKE",
+      "classification": "hidden foundation; related EG-IDENTITY, not a newly asserted package edge",
+      "source": "work-packages.json:74-89; RS-BASE-01.md:50-56; 05-rox-bases-design.md:31,162-167; 07-domain-entity-model.md:161-167",
+      "requirement": "Use one server evaluator for actor/action/EntityRef/field/policyVersion, source grants and permissionEpoch. Derive actor/workspace from authenticated transport. authorizeRox2Action checks actor+permission only; it does not resolve entity/field ACL or policy epoch. Renderer permissionMode and visibleContextEntityRefs are not substitutes.",
+      "missingPrerequisite": "Accepted transport principal resolver, row/field policy API and revocation/read-time fence on the integrated dependency generation.",
+      "state": "NOT_ESTABLISHED"
+    },
+    {
+      "id": "CANONICAL_SCHEMA_QUERY_AND_SNAPSHOT",
+      "classification": "transitive foundation via LSX-WP-013/014, not an extra explicit dependency",
+      "source": "work-packages.json:5377-5381,5696-5700; 05-rox-bases-design.md:47-53,75-81,162-175; RS-BASE-01.md:27-34,46-52",
+      "requirement": "Consume accepted schema/type registry, canonical Base definition and authorized full-query snapshot from LSX-WP-008/010/011. Aggregate over all filtered authorized rows with stable revisions; display pagination is separate. Do not materialize native Tasks/CRM in a Base-only database.",
+      "missingPrerequisite": "Exact exported contracts and acceptance receipts for schema, source adapters, queryRef, queryRevision, permissionEpoch and full-set traversal.",
+      "state": "NOT_ESTABLISHED"
+    },
+    {
+      "id": "DURABLE_RECEIPT_OUTBOX_AND_INVALIDATION",
+      "classification": "hidden/inherited foundation, EG-EFFECTS through relation dependency",
+      "source": "work-packages.json:84-89,5701-5702,6145-6148,6203-6205; 07-domain-entity-model.md:171-189; RS-BASE-01.md:50-56",
+      "requirement": "Use the existing durable native receipt and shared event/outbox registry. Verify alias for base.aggregateInvalidated with eventId/workspaceId/entityRef/entityRevision/actorRef/occurredAt/schemaVersion/correlationId/causationId/sourceCommandId; deduplicate and fence revisions. No new notification engine or fire-and-forget event after write.",
+      "missingPrerequisite": "Accepted authority receipt/readback and shared outbox/revoke subscription interface with restart/replay evidence.",
+      "state": "NOT_ESTABLISHED"
+    },
+    {
+      "id": "ASSET_URL_AND_OFFLINE_POLICY",
+      "classification": "affected-scope foundation; EG-FILES for asset-valued lookup, not blanket new DAG edge",
+      "source": "work-packages.json:108-113,6159-6161; 07-domain-entity-model.md:165-167; RS-BASE-01.md:56",
+      "requirement": "Asset/url derived values use common resolver and expiry/revocation. Remote-private offline reads fail closed absent a signed bounded policy lease; reconnect purges/fences private caches before reads. Do not promise immediate remote revoke on a disconnected device.",
+      "missingPrerequisite": "File/asset resolver readiness for exercised media fields and accepted offline lease/reconnect rules.",
+      "state": "NOT_ESTABLISHED"
+    },
+    {
+      "id": "REAL_SURFACE_TRANSPORT_AND_INTEGRATION_SCOPE",
+      "classification": "scope/registration foundation; current allowed shared seam cannot alone mount a component or register server operations",
+      "source": "work-packages.json:6092-6104,6124-6139,6154-6157,6277-6282; RS-BASE-01.md:42,52,60,84-89",
+      "requirement": "Lead must provide existing RPC/IPC/tool registration, real Table/Chart/export consumer and inspector mount seams, plus locale integration ownership under reviewed path leases. This packet permits only note-views.ts named symbols as shared patches; no silent expansion to host, handlers or locale files.",
+      "missingPrerequisite": "Reviewed extended integration packet or accepted dependency-owned hooks that perform transport registration, actual UI mounting, chart/export consumption, field write rejection and all ten locale additions.",
+      "state": "NOT_ESTABLISHED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/server-core/src/bases/relation-computation.ts",
+    "apps/electron/src/renderer/pages/bases/DerivedFieldInspector.tsx",
+    "tests/lark-suite-extension/lsx-wp-015.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-015.spec.ts"
+  ],
+  "newFilePresenceAtInspection": "All four exact normative paths were absent in the scoped glob result. This is an inspection observation, not implementation readiness.",
+  "proposedContributions": [
+    {
+      "path": "packages/server-core/src/bases/relation-computation.ts",
+      "symbols": ["LookupDefinition", "RollupDefinition", "AuthorizedAggregate", "base.previewDerivedField", "base.getAggregateContributors"],
+      "symbolStatus": "PROPOSED_BY_SPEC_NOT_EXISTING_API",
+      "change": "Implement the specified typed request/scalar-or-list/result/error contract against accepted dependency interfaces. Resolve stable relation fieldId/target fieldId and explicit cardinality/operator/null/count/unit policy. Authorize source, target row and target field before traversal/value projection/counting. Use full authorized query snapshot and bounded dependency evaluator; return only permitted contributor refs and authoritative aggregate snapshot receipt. Cache is rebuildable, never a second authority.",
+      "cacheKeyProposal": ["authenticated workspace/account scope", "authenticated actorId, or proven safe policy cohort", "verified policy fingerprint and permissionEpoch", "schema and derived-definition revision/config digest", "source and relation revisions", "target revision dependency fingerprint", "queryRef/queryRevision and filter snapshot digest", "pinned evaluationTime/timezone"],
+      "cacheSafety": "Reauthorize and check current policy/source revision fences before returning any cache hit or contributor page. If verified cohorts are unavailable use actor keys. Evict or make old epochs unreachable synchronously before next read/render; do not reuse owner entries for viewers. No hidden target labels/counts in results, errors, tool output or event payloads.",
+      "errorDiscriminants": ["validation", "conflict", "denied", "deleted", "offlineUnsupported", "missingDependency", "rateLimited", "unknownFormat"],
+      "missingPrerequisite": "Accepted LSX-WP-013/014 and transitive schema/query/policy/receipt interfaces; source generations must be refreshed after root integration."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/bases/DerivedFieldInspector.tsx",
+      "symbols": ["DerivedFieldInspector"],
+      "symbolStatus": "PROPOSED_BY_NORMATIVE_PATH",
+      "change": "Render existing derived cell/inspector contract as read-only: typed scalar/list/error, formula, units, source, snapshot/freshness and permitted contributor drill-down via authenticated transport. Distinguish loading/empty/null/error/denied/offline/retry without revealing forbidden identities. Help available by hover/focus/click; keyboard focus/return, IME-safe controls, reduced motion, 200% zoom, Russian default, all ten locales, user theme and actual Rox Mono font proof. Use the existing surface, not a separate demo screen.",
+      "missingPrerequisite": "Approved host mount, transport client, shared UI conventions and locale patch ownership outside this worker's writable scope."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-015.test.ts",
+      "symbols": ["LSX-WP-015 behavioral regression cases"],
+      "symbolStatus": "PROPOSED_NOT_WRITTEN",
+      "change": "Cover actor subset totals/list/cardinality/average, row and field denial, full-set pagination, explicit null/type/unit/error semantics, immutable derived fields at authority, stale snapshots, revoke cache misses before next read, contributor reauthorization, replay/recovery and inherited legacy checkbox meanings. Generated cases retain seeds. Include specified unrestricted-target/owner-cache seeded control and semantic equality checks, not source-text or mock-forwarding assertions.",
+      "missingPrerequisite": "Real accepted query/authority fixture and mutation runner; no tests executed in preflight."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-015.spec.ts",
+      "symbols": ["LSX-WP-015 real Electron UI scenarios"],
+      "symbolStatus": "PROPOSED_NOT_WRITTEN",
+      "change": "Use discovered supported actual Electron runner to exercise mounted derived fields, help, contributor drill-down, read-only editing/paste rejection, revoke while open and keyboard/pointer/IME/focus/reduced-motion/zoom/theme/locale/font behavior. Correlate displayed values with authoritative domain receipts and persistence/readback; isolated fixture UI is not native proof.",
+      "missingPrerequisite": "Supported real Electron runner and integrated mounted surface; no UI or network run permitted during this preflight."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteBaseView",
+      "lineStart": 24,
+      "lineEnd": 34,
+      "baseSha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8",
+      "change": "On the accepted LSX-WP-010/013 schema generation, reference canonical stable derived field IDs/definitions and readonly capabilities instead of creating another formula/lookup schema or persisting results in the view. Preserve versioned legacy built-ins and shared/personal ownership from prerequisites. Exact field/type names must come from their accepted exports, not this baseline v1 shape.",
+      "reason": "Current v1 formulas carry only name/expr, columns are label-like strings and no lookup/rollup/query/policy contract exists. Definition persistence belongs to the canonical schema, not actor cache.",
+      "owner": "integration-owner",
+      "mode": "REVIEWED_SERIAL_PATCH_AFTER_DEPENDENCY_ACCEPTANCE"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "projectNoteRows",
+      "lineStart": 133,
+      "lineEnd": 158,
+      "baseSha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8",
+      "change": "Consume accepted authorized projection and derived-result metadata keyed by canonical rowRef/fieldId, retaining source revision/queryRevision/permissionEpoch/freshness/provenance for rendering. Do not traverse raw relation targets or recompute aggregates over notes supplied to this browser helper. Drop invalid old policy epochs through accepted projection contract before render.",
+      "reason": "Current helper maps every supplied note and raw properties without actor/field ACL or revisions; its row list must not become the aggregate source or private target store.",
+      "owner": "integration-owner",
+      "mode": "REVIEWED_SERIAL_PATCH_AFTER_DEPENDENCY_ACCEPTANCE"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "formulaValue",
+      "lineStart": 188,
+      "lineEnd": 203,
+      "baseSha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8",
+      "change": "Rebase on LSX-WP-013's accepted typed evaluator integration: resolve server-authorized lookup/rollup result by stable field ID and matching query/policy snapshot, with missing/null/invalid/denied/error states preserved. Keep taskCount/openTaskCount as Markdown checkbox semantics and backlinks/tag counts unchanged; do not overload them as native relation counts or coerce denied values to zero. Never evaluate raw owner rows here.",
+      "reason": "Current return type is number and switch is only four fixed counters; widening just the enum cannot implement actor-scoped derivation and would corrupt null/error/filter behavior.",
+      "owner": "integration-owner",
+      "mode": "REVIEWED_SERIAL_PATCH_AFTER_DEPENDENCY_ACCEPTANCE"
+    }
+  ],
+  "intentionallyUnchangedSharedSeams": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "notesViewsStorageKey",
+      "lineStart": 96,
+      "lineEnd": 102,
+      "reason": "Current workspace-only notes:views key is a legacy view-config preference key, not an aggregate cache. Do not retrofit a second aggregate store here. Canonical config migration/personal preference key changes belong to accepted LSX-WP-010; derived cache actor/policy scoping belongs to relation-computation at authority. No LSX-WP-015-only rename or silent data clearing is justified."
+    }
+  ],
+  "integrationScopeGaps": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbols": ["parseNoteBaseView", "isFormula", "readField", "matchesFilter", "compareUnknown"],
+      "actualEvidence": "108-126,551-555,576-618: parser filters to the fixed enum, field evaluation returns raw properties, equality stringifies values and numeric comparisons coerce through Number.",
+      "request": "Confirm accepted LSX-WP-010/013 already migrates these consumers to stable typed fields/results. Otherwise update reviewed named-symbol scope before patches; modifying only formulaValue leaves parsing, sort/filter/group unable to preserve typed list/error/null/denied states.",
+      "writableInCurrentPacket": false
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbols": ["NotesViewHost"],
+      "actualEvidence": "Named as existing host by RS-BASE-01.md:16,60 and design05:266; source not inspected because it is outside this package's source/direct-import scope.",
+      "request": "Lead supplies accepted mount/derived cell/read-only capability integration hook or updated reviewed path/symbol packet; a new DerivedFieldInspector file alone cannot satisfy actual UI acceptance.",
+      "writableInCurrentPacket": false
+    },
+    {
+      "path": "UNRESOLVED_EXISTING_TRANSPORT_QUERY_WRITE_EVENT_AND_EXPORT_SEAMS",
+      "symbols": ["base.previewDerivedField", "base.getAggregateContributors", "base.aggregateInvalidated"],
+      "actualEvidence": "work-packages.json:6124-6161 defines proposed operations and event, but only note-views.ts is an allowed shared path. Existing transport/authority registries were not inspected in this bounded preflight.",
+      "request": "Integration owner resolves exact existing registration/capability/event/consumer symbols after accepted dependencies, including server derived-field write rejection and Table/Chart/export same-snapshot consumption, then issues reviewed patch scope. Do not invent passing endpoints or sidecar handlers.",
+      "writableInCurrentPacket": false
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/*.json",
+      "symbols": ["t() keys for derived-field labels/help/errors"],
+      "actualEvidence": "Repository AGENTS.md requires all ten locales and ASCII-sorted keys; work-packages.json:6157 and RS-BASE-01.md:42 require RU+i18n. Locale contents not inspected in this bounded package scope.",
+      "request": "Lead assigns locale additions to integration owner with exact reused/new key inventory before UI implementation; current packet has no locale write permission. No hardcoded Russian or English copy as a substitute.",
+      "writableInCurrentPacket": false
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "derived fields not writable",
+      "specSource": "work-packages.json:6201",
+      "currentEvidence": "note-views.ts NoteViewFormula:19-22 and formulaValue:188-203 are computed counters; NoteBaseView:24-34 has no field capability, server write guard or lookup/rollup contract. New computation/inspector files absent.",
+      "requiredChange": "Use accepted registry readonly capability for formula/lookup/rollup; reject write/paste/bulk/import/tool attempts at canonical server write boundary regardless of renderer flags. Inspector and grid must not enter value editing; definition changes remain separate authorized schema operations.",
+      "verification": "Through real RPC/tool and UI attempt update of derived field, including forged writable metadata and bulk/paste; expect typed rejection and unchanged source/schema revision/hash after authoritative readback/restart. Preserve legacy writable native field behavior.",
+      "missingPrerequisite": "Accepted field registry/native write authority and approved write-handler/real grid integration seam.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "pagination windows do not truncate aggregate input",
+      "specSource": "work-packages.json:6202; design05:165-166,193",
+      "currentEvidence": "projectNoteRows:133-158 and applyNoteBaseView:160-170 process only supplied rows. Rox2Context.binding:149-155 carries revisions but no full authorized query cursor or aggregate receipt.",
+      "requiredChange": "relation-computation consumes accepted full authorized filtered snapshot, computes aggregate before display pagination and binds results/contributor traversal to identical queryRevision/permissionEpoch. Server traversal must be bounded without silently partial totals; resource exhaustion returns explicit error.",
+      "verification": "Use multiple pages with contributions 10 and 20 and hidden 900 beyond visible window; query page sizes 1 and 2, later cursors and virtualized windows. A totals 30/count2/avg15, B totals10/count1/avg10 on every page; actual Table/Chart/export and drill-down agree at same snapshot.",
+      "missingPrerequisite": "Accepted full-set query/source traversal contract from LSX-WP-011 and real Chart/export consumers.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "specSource": "work-packages.json:6203",
+      "currentEvidence": "Rox2EntityRef:233-239 supplies canonical identity; authorizeRox2Action:601-609 checks actor grants but takes a caller-supplied actor and no field/policyVersion. NoteProjectionRow:73-83 exposes untyped properties. No proposed operation implementation exists in the four new paths.",
+      "requiredChange": "In relation-computation define the specified requests/results and eight error discriminants; reuse accepted shared typed values and boundary validation without node runtime imports into renderer. Bind authenticated actor/workspace/account scope, queryRef, policy fingerprint and current permission epoch on server; payload actor/owner/workspace are never authorization. Resolve source and target row/field ACL with common evaluator.",
+      "verification": "Compile actual server and renderer consumers in implementation phase; exercise valid scalar/list result, malformed/cross-workspace/deleted refs, denied field and forged actor/workspace payload. Check typed errors are sanitized and actor B never reads owner A's result.",
+      "missingPrerequisite": "Accepted typed evaluator/schema exports and authenticated transport/policy registration hooks with reviewed integration scope.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "specSource": "work-packages.json:6204",
+      "currentEvidence": "Rox2Receipt:99-105 has optional observedRevision but no required native durable aggregate snapshot hash. liveResult:515-536 defaults verification to unverified; isClaimableLive:540-551 excludes unverified/queued status. notesViewsStorageKey:100-102 is not domain persistence.",
+      "requiredChange": "Reuse canonical native authority/receipt registry for committed definition/source revisions and aggregate snapshot provenance. Bind aggregate receipt to exact query/source/schema/relation/target/policy revisions and output hash; pure preview performs no domain write/effect and cannot fabricate a commit. Rebuild disposable cache on restart from authoritative refs, never browser cache truth.",
+      "verification": "Persist definition through accepted schema authority, compute/readback exact refs/revisions/hash, restart actual domain process and reread. Observe identical permitted result for unchanged snapshot, fenced conflict for changed source/policy, and no claim of committed/provider-confirmed from queued/unverified response.",
+      "missingPrerequisite": "Durable native receipt/readback and restart-capable owner fixture accepted via dependencies/EG-EFFECTS.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "specSource": "work-packages.json:6205,6170-6173",
+      "currentEvidence": "visibleContextEntityRefs:51-55 merely filters supplied IDs; rebaseLiveContext:76-91 changes revision metadata for live contexts. Neither executes policy, relation journal recovery or aggregate cache invalidation. Tests absent and not run.",
+      "requiredChange": "Add behavioral cases using accepted real authority interfaces: A/B subset sum/count/list/avg, row-vs-field denial, null/error/type/unit rules, missing/deleted targets, stale schema/query/source revisions, repeated requests and duplicate invalidation events, revoke while cached, reconnect/restart. Bind errors to specified discriminants, preserve failed attempts and seeds.",
+      "verification": "Future command: bun test tests/lark-suite-extension/lsx-wp-015.test.ts. Separately run live native denied/conflict/replay/recovery/readback paths; record expected/observed refs/values/revisions/hashes and reproduction seeds. No pure helper suite accepted as proof of server ACL.",
+      "missingPrerequisite": "Accepted dependencies, integrated domain fixture and durable relation/policy events; runtime explicitly forbidden during preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "specSource": "work-packages.json:6206,6186-6194",
+      "currentEvidence": "No LSX-WP-015 test or mutation implementation exists at inspected paths; spec names unrestricted relation targets/owner-cache reuse as the mutant.",
+      "requiredChange": "Use isolated synthetic accepted-owner fixture and retained input SHA256/seed. Run green baseline then exact-byte mutant that removes target ACL or reuses owner aggregate cache for B. Ensure behavioral evaluator compares B sum10/count1 rather than30/2, actual chart/table/export equality and hidden target name absence in diagnostics.",
+      "verification": "Record mutation file/hash, baseline and mutant invocation/results, named assertion failures and seed. Restore evaluated baseline and rerun semantic path; timeout/import failure/infra error is a separate failed lane, not evidence the mutant was caught.",
+      "missingPrerequisite": "Accepted mutation runner and integrated domain/UI/export comparison fixture; tests and mutations not executed in this preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "specSource": "work-packages.json:6207,6154-6157; RS-BASE-01.md:38-42,84-88",
+      "currentEvidence": "DerivedFieldInspector.tsx absent. Existing named seam note-views.ts is pure projection/config code and cannot mount or prove UI. Published host reference does not authorize changing NotesViewHost.tsx.",
+      "requiredChange": "Mount DerivedFieldInspector in accepted existing Base surface; render readonly value/unit/formula/source/freshness and only permitted contributors, full loading/empty/error/denied/offline/retry states. Add t() keys in all ten locales via integration owner; inherit theme and actual Rox Mono. Implement hover/focus/click help, pointer/keyboard/focus return, IME-safe navigation and reduced motion; preserve responsive drawer behavior.",
+      "verification": "Discover and use actual supported Electron runner after integration. Capture real pointer/keyboard/IME/focus/revoke interaction, 200% zoom, light and user dark-theme regression, reduced-motion, Russian/default and locale switching; retain screenshots/ARIA/computed loaded-font evidence with revision/environment/hash. Help must contain definitions/units/formula/source/freshness/example. No fabricated UI command or fixture-only proof.",
+      "missingPrerequisite": "Reviewed mount/client/locales scope and actual Electron runner; native UI explicitly forbidden in preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "specSource": "work-packages.json:6208,6177-6183,6262-6268",
+      "currentEvidence": "Only source/spec inspection and hashes performed. This artifact sets featureComplete=false. Existing canonical status helpers separate live, fixture, queued and verified outcomes.",
+      "requiredChange": "Lead integrates reviewed exact diff then obtains distinct SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI receipts for integrated revision. Include exact input/seed/artifact hashes and review/rollback evidence. Provider/collaboration evidence only if actually exercised; never use a queued external receipt as acceptance.",
+      "verification": "Root independently evaluates each lane's expected/observed behavioral evidence and binds it to integrated commit/source generations. Report validator success establishes lineage/hash integrity only, not implementation or full DoD.",
+      "missingPrerequisite": "Implementation/integration commits and all required runtime/UI receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "ACL-filtered lookup/rollup, cardinality and sanitized contributor drill-down",
+      "specSource": "work-packages.json:5975-5976,6111-6119,6150-6152; design05:152-156; domain07:153,157,161-165",
+      "currentEvidence": "Rox2EntityRef:233-239 is usable identity; projectNoteRows copies raw properties. authorizeRox2Action and visibleContextEntityRefs are only supporting seams, not row/field lookup authority.",
+      "requiredChange": "Resolve stable relation refs, never title match. Authorize target row and target field before value, list cardinality, count and numerator/denominator. One-to-one scalar, many list or explicit first/unique policy; never arbitrary first. Contributor endpoint rechecks same query predicates and current actor policy; denied IDs/names/counts cannot appear in results/errors/tool/help.",
+      "verification": "A sees10+20=30/count2/list[10,20]/avg15; B sees10/count1/list[10]/avg10; inaccessible900 absent. Distinct equal-title refs resolve by identity. Denied target field does not contribute or become zero; hidden name/count absent in diagnostics and contributor pages. Revoke between aggregate and contributor read denies stale access.",
+      "missingPrerequisite": "Accepted relation cardinality/ref semantics and common row/field ACL.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed operators, explicit count/null/empty/unit/error policy, exact numeric representation and bounded cycles/fanout",
+      "specSource": "work-packages.json:6111-6114,6172; design05:138-140,152-154; domain07:153-157",
+      "currentEvidence": "formulaValue currently returns number; readField/matchesFilter:580-611 use unknown/raw properties and coercion. No relation type/units/budget/cycle evaluation is present at this seam.",
+      "requiredChange": "Reuse LSX-WP-013 typed values/interpreter budget/DAG. Implement sum/count/avg/min/max/distinct/list; distinguish count rows versus count nonempty by persisted config. Empty authorized count=0; sum=0 only if schema allows; avg/min/max=null. Preserve missing/null/invalid/denied errors, reject TYPE/unit mismatch, use accepted decimal/minor-unit exact representation for money. Field-label rename does not change fieldId; legacy checkbox formulas retain meaning.",
+      "verification": "Generated deterministic cases with retained seeds: empty/all-null mixed values, invalid and incompatible units, exact decimal sums, count policies, one/many cardinality, ambiguous unique/first, cycle and fanout/budget exhaustion returning typed bounded errors. Preserve legacy taskCount/openTaskCount behavior.",
+      "missingPrerequisite": "Accepted typed value/count/unit/cardinality/error contracts and LSX-WP-013 evaluator.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Actor-scoped rebuildable cache and revoke before next read/render, including asset/url lookup values",
+      "specSource": "work-packages.json:6141-6148,6159-6161,6173,6211; design05:156,167; domain07:157,167",
+      "currentEvidence": "notesViewsStorageKey is workspace-only config key. bindSurfaceContext/sameContextSnapshot/rebaseLiveContext track revisions but no authenticated actor, policy fingerprint or permissionEpoch. No aggregate invalidation implementation exists at inspected package paths.",
+      "requiredChange": "Cache using authenticated actor or proven safe cohort, policy epoch, query/definition/source/target revisions and pinned evaluation context. Revalidate before hits and fence old results before next read/render on relation/source/field/policy changes. Deduplicate shared invalidation events, remove media URLs and cached contributors; restart may rebuild only from current permitted authority. Follow accepted offline leases/reconnect policy.",
+      "verification": "Warm A then query B and observe10 not30; revoke20 while inspector open and immediately next read/render sees10/count1/avg10. Source/target revision, schema/unit/operator changes and duplicate/out-of-order invalidations never restore old data. Revoke asset field removes URL/preview. Restart/reconnect with expired lease returns denied/offlineUnsupported rather than stale private content.",
+      "missingPrerequisite": "Authenticated policy epoch, durable relation/source/revoke events, asset resolver and offline rules.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "apps/electron/src/renderer/pages/notes/note-views.ts", "symbol": "NoteBaseView / NoteProjectionRow / projectNoteRows / formulaValue / notesViewsStorageKey", "lineStart": 15, "lineEnd": 203, "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path": "apps/electron/src/renderer/pages/notes/note-views.ts", "symbol": "isFormula / readField / matchesFilter / compareUnknown", "lineStart": 551, "lineEnd": 618, "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "Rox2EntityRef", "lineStart": 233, "lineEnd": 239, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "Rox2ActorGrant / authorizeRox2Action", "lineStart": 592, "lineEnd": 610, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "liveResult / isClaimableLive", "lineStart": 515, "lineEnd": 551, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/surface-context.ts", "symbol": "bindSurfaceContext / visibleContextEntityRefs / sameContextSnapshot / rebaseLiveContext", "lineStart": 18, "lineEnd": 91, "sha256": "ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"},
+    {"path": "plans/lark-suite-reference/work-packages.json", "symbol": "work_packages[14]: LSX-WP-015", "lineStart": 5972, "lineEnd": 6284, "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "packages: LSX-WP-015 normative execution record", "lineStart": 1235, "lineEnd": 1319, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/lark-suite-reference/05-rox-bases-design.md", "symbol": "6.3 Lookup и Rollup / 7.1 Единый порядок", "lineStart": 150, "lineEnd": 169, "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path": "docs/lark-suite-reference/07-domain-entity-model.md", "symbol": "6. Bases types and computation / 7. Permissions, sharing, agents", "lineStart": 151, "lineEnd": 167, "sha256": "cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path": "docs/rox-suite/published/RS-BASE-01.md", "symbol": "Commands / API / DB / events and normative RS-DRV-01 dependency", "lineStart": 48, "lineEnd": 109, "sha256": "78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"},
+    {"path": "docs/rox-suite/published/RS-DRV-01.md", "symbol": "Dependencies / related / complexity and common quality gates", "lineStart": 60, "lineEnd": 75, "sha256": "ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3"}
+  ],
+  "evidenceFreshness": {
+    "inputRevisionRole": "Supplied dispatch input_revision retained exactly; no claim that concurrent working tree equals a clean checkout of it.",
+    "wholeFileHashes": "Computed read-only with shasum -a 256 on concrete inspected files. All three scoped product source hashes match the normative baseline evidence; both spec hashes match the dispatch manifest.",
+    "staleness": "Evidence describes the inspected bytes only. Root wave0 and dependency integration may change these symbols/lines; do not apply the proposed requests blindly to that generation. Rehash/reinspect and issue refreshed implementation packet after accepted receipts. A validator hash mismatch means stale evidence, not permission to alter shared source or change dispatch lineage.",
+    "runtime": "None observed; every feature criterion remains NOT_IMPLEMENTED_NOT_VERIFIED."
+  },
+  "nextExecutableAction": {
+    "now": "Run only the packet-specified read-only report verifier, then return this report to the lead; no product implementation in this preflight.",
+    "implementationOwnerAction": "After lead wave0 commit, resolve immutable spec manifest and accepted LSX-WP-013/014 receipts including transitive schema/query/policy gates. Reinspect current owned/new-file presence and named shared seams, reconcile RS-DRV-01 and approve missing transport/UI/locale/write/event/export integration scope. Only then dispatch implementation of relation-computation.ts against exact accepted exports, followed by mounted inspector and behavioral proof lanes.",
+    "verificationArgv": ["python3", "plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/LSX-WP-015.json", "${ROX_COMPOUND_PACKET_ROOT}/LSX-WP-015/packet.json"]
+  },
+  "risks": [
+    "Current readonly source seams do not implement multiuser row/field authorization; granting read capability or passing readable IDs is insufficient.",
+    "Owner cache reuse, average denominator, count/list cardinality, contributor paging and errors can each leak hidden targets independently of sum correctness.",
+    "Current allowed shared symbols cannot alone complete transport registration, actual inspector mount, all locale keys and authoritative derived-write rejection; unapproved extra-path edits would violate packet scope.",
+    "parseNoteBaseView/isFormula and coercive readField/matchesFilter/compareUnknown can drop new definitions or turn denied/null/list/error into incorrect filters unless accepted prerequisite integration already replaces them.",
+    "Shared safe cache cohorts require proof; default actor-scoped keys are necessary but still require current policy/source/query revision fences on cache hits and in-flight responses.",
+    "The published Base spec depends on Drive and describes a distinct registered CustomRecord kind/Postgres implementation, whereas LSX design proposes Page content subtype projections. Lead must reconcile accepted canonical authority; this slice must not create a second store to satisfy contradictory historical wording.",
+    "Lookup may traverse cyclic graphs or high fanout; reuse bounded evaluator and relation semantics, never recursive unbounded browser traversal or silent truncated aggregate.",
+    "Changing checkbox counter meaning to native task relation counts breaks legacy views and can double count promoted tasks.",
+    "Remote revoke cannot be learned immediately offline; only accepted lease bounds can authorize cached private values, and reconnect must fence before reading/replay.",
+    "Source/spec generation can drift during root-owned uncommitted integration; preflight hashes are historical evidence and must be refreshed on material change.",
+    "JSON verifier success proves report lineage/hash integrity only, not actor security, durable native readback, UI, mutation sensitivity or feature completion."
+  ],
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

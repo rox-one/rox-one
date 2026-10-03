@@ -6,7 +6,7 @@ import {
   assembleContextShares,
   sessionMessagesToTranscript,
   type ContextShareKind,
-} from '@craft-agent/shared/agent'
+} from '@craft-agent/shared/agent/context-budget'
 import { featureWorkbenchHarnessAgentIntelV1Atom } from '@/atoms/unified-shell'
 import { useOptionalAppShellContext, useSession } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'

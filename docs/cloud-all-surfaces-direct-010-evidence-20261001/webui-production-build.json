@@ -1,0 +1,40 @@
+{
+  "label": "webui-production-build",
+  "command": [
+    "/workspace/.onboarding-tools/node_modules/.bin/bun",
+    "--no-env-file",
+    "run",
+    "webui:build"
+  ],
+  "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+  "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "exit": 0,
+  "seconds": 71.331,
+  "log": "webui-production-build.log",
+  "logSha256": "b0102977bfddeb20f653649435448ba8e164a3d300bff0ac5bbd5b8b8b4e8af2",
+  "envKeys": [
+    "BUN_INSTALL_CACHE_DIR",
+    "CRAFT_CONFIG_DIR",
+    "ELECTRON_SKIP_BINARY_DOWNLOAD",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LC_ALL",
+    "NODE_EXTRA_CA_CERTS",
+    "NODE_OPTIONS",
+    "NO_PROXY",
+    "PATH",
+    "REQUESTS_CA_BUNDLE",
+    "ROX_CONFIG_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "XDG_CACHE_HOME",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy",
+    "npm_config_cache"
+  ],
+  "dotenvDisabled": true,
+  "minimalChildEnvironment": true,
+  "HOMERepurposed": false
+}

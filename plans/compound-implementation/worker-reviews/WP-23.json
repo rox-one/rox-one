@@ -1,0 +1,481 @@
+{
+  "task_id": "WP-23-preflight",
+  "attempt_id": "18c288f79d7f75db511083bf92a37576",
+  "packet_hash": "04b57030c95f9ed4c98b108bcf2ceb9b80aacc9ad10ef92ea3c9d566bb228ea9",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-23",
+  "featureComplete": false,
+  "mode": "inspect-only; owned report is the sole authorized write",
+  "workTier": "bounded-workflow; one scoped preflight contribution to the lead-owned integration",
+  "dependencies": ["WP-22"],
+  "dependencyReceiptsRequired": {
+    "WP-22": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"]
+  },
+  "evidenceStatus": {
+    "basis": "Actual working-tree source inspection, not a clean HEAD checkout or runtime acceptance. Input revision is packet lineage; no Git command was run to assert live HEAD.",
+    "specManifest": "Inspected work-packages.json whole-file SHA256 matches the dispatch input manifest.",
+    "codegraph": "Tool reported no .codegraph index; scoped read/grep/glob used instead; no index created.",
+    "newArtifactPresence": "Scoped glob returned no matching normative CRM new files or WP-23 test files at inspection. This is not evidence of future dependency outputs.",
+    "staleness": "References bind to inspected whole-file hashes. Wave0/root integration can invalidate any reference; re-read changed files before implementation. No claim that uncommitted source belongs to this worker.",
+    "runtime": "Builds, product tests, UI and network operations deliberately not run under preflight scope. All behavior verification below is proposed, not passed. The dispatch --verify checks report lineage and source hashes only."
+  },
+  "foundationGates": [
+    {
+      "gate": "Lead wave0 commit and accepted WP-22 receipts",
+      "classification": "implementation-start gate; explicit WP-22 edge remains unchanged",
+      "evidence": "Dispatch implementation ordering; work-packages.json:20050-20058. WP-22 itself declares WP-17/WP-18/WP-02/WP-03 at 19059-19063.",
+      "required": "Lead supplies committed wave0 baseline plus the three accepted WP-22 artifacts; refresh this report against that source. No dependency receipt was inspected or inferred accepted."
+    },
+    {
+      "gate": "One authenticated domain authority, durable transactions and migrations",
+      "classification": "hidden foundation requirement, not another explicit WP-23 DAG edge",
+      "evidence": "WP-23 transport/permissions/migrations at 19959-19978, 20060-20068, 20456-20504; storage.ts:20-45 is localStorage only.",
+      "required": "Accepted workspace service composition, transport-derived actor, RoxCommand v2 receipts/request hash/CAS, entity FK and actor/workspace unique command key, selected migrator. These cannot be simulated by a renderer Map or localStorage writer."
+    },
+    {
+      "gate": "Canonical CRM kind and relationship vocabulary",
+      "classification": "hidden typed-model gate normally carried through WP-22/common entity foundation",
+      "evidence": "platform-contract.ts:17-38 has person and crm-company, not literal contact/company; member-of at 388 only links session/note/task to project. Rox2Relation at 125-129 has no edge revision or workspace field.",
+      "required": "Consume WP-22's accepted contact/company-to-kind mapping and common revisioned edge repository. Lead must settle explicit person-to-company association without widening member-of arbitrarily or conflating contact with login principal."
+    },
+    {
+      "gate": "Policy-aware merge projection and revocation fence",
+      "classification": "hidden security foundation, not permissionMode",
+      "evidence": "WP-23:19959-19962, 20001, 20494; authorizeRox2Action:597-609 warns entity permissions are not actor authority; test-plan:22-28, 90, 208-215.",
+      "required": "Field/source provenance, current source ACL and email-consent checks, policyEpoch/revoke fence, authorized DTOs and graph resolution shared by UI, search, mention, notification, agent and API. Public survivor must never publish a private predecessor field."
+    },
+    {
+      "gate": "Transaction outbox, replay/invalidation and shared consumer adapters",
+      "classification": "hidden foundation for per-slice completeness, not postponed to final release",
+      "evidence": "WP-23:19976-19978, 20024-20046, 20488-20489; test-plan:199-222, 247. subscribeWorkspaceJson:47-65 is browser-local, not durable domain delivery.",
+      "required": "Accepted outbox/inbox dedup, replay cursor, projection watermark and policy/tombstone fences; common search/mentions/notification/activity/agent adapters must process versioned redirects and inverse updates. Missing adapters remain missing, not N/A."
+    },
+    {
+      "gate": "Source-preserving migration and dependent-link reconciliation",
+      "classification": "hidden persistence/graph gate",
+      "evidence": "normalizeDossierData:118-156 is tolerant/lossy; DossierPage:375-394 uses text search; promise-to-task at 543-544 stores explanatory text only; WP-23:20493-20504,20820-20823.",
+      "required": "Capture exact raw dossier snapshot before normalization; receipt-linked import, immutable merge journal and revisioned edge pre/post-images. Detect post-merge task links through common relations, not text. Reconcile inverse or return typed conflict with compensating proposal."
+    },
+    {
+      "gate": "API/schema and proposed migration identifier reconciliation",
+      "classification": "published specification ambiguity needing lead integration decision",
+      "evidence": "WP-23 apiChanges:19953 names SuggestMerge/MergeEntities/UndoMerge; domainApiContracts:20792-20804 only type ImportDossier/MergeCrmEntities. mergeRecords uses survivor/candidate/expectedSourceRevisions whereas MergeCrmEntities uses winner/loser/baseRevisions. newFiles:19936-19946 lists two migration identifiers; 20458-20459 calls 23-domain-contract.sql proposed.",
+      "required": "One typed internal merge operation with explicit HTTP/native mapping, complete suggestion/undo DTOs and conflict proposal. Assign precise source revision constraints. Select actual migration filename through the lead's migrator; no duplicate table creation or fabricated timestamp."
+    },
+    {
+      "gate": "Conation source/license/live-write audit if external mutation is selected",
+      "classification": "conditional external-provider gate, separate from native CRM acceptance",
+      "evidence": "crm.ts:1-5,29-61; capabilities.ts:14,193-197,345-369; WP-23 licensePolicy:20048.",
+      "required": "Keep existing external write block. Native workspace merge can use common authority without enabling Conation; any proposed provider edit/send needs exact source SHA/license/schema/auth scope and independent readback. Fixture evidence is not that gate."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/crm/contracts.ts",
+    "apps/workspace-service/src/modules/crm/commands.ts",
+    "apps/workspace-service/src/modules/crm/repository.ts",
+    "tests/macro-integration/wp-23.test.ts",
+    "packages/shared/src/workspace-domain/crm/dossier-import.ts",
+    "apps/workspace-service/src/modules/crm/merge.ts",
+    "apps/workspace-service/src/modules/crm/aliases.ts",
+    "apps/workspace-service/migrations/023_crm_dossier_alias_merge_journal.sql",
+    "tests/macro-integration/dossier-identity-merge-rollback.test.ts",
+    "apps/workspace-service/migrations/23-domain-contract.sql"
+  ],
+  "newFileOwnershipNotes": {
+    "meaning": "Exact normative newFiles inventory, not permission for this preflight worker to create product files.",
+    "overlap": "contracts.ts, commands.ts and repository.ts are also WP-22 normative artifacts (19086-19089): extend accepted dependency files by shared patch request, never replace or create parallel CRM interfaces/repositories.",
+    "migration": "Both filenames are normative proposals. Lead must map them to the selected migrator's actual artifact(s); create no duplicate entity_alias/journal/import tables. Existing common alias infrastructure must be extended/reused.",
+    "contributions": {
+      "dossier-import.ts": "Versioned strict import boundary over raw source snapshot plus lossless validated card DTO; preserve source IDs/fields and quarantine ambiguity, never name-deduplicate.",
+      "merge.ts": "Authorized same-workspace compatible-kind merge and conflict-safe undo over canonical repository transactions, immutable journal, revisioned redirect and edge rewrites.",
+      "aliases.ts": "Scoped legacy namespace+card ID resolution/upsert using common alias table, collision quarantine and snapshot-linked batch receipts.",
+      "wp-23.test.ts": "Public command/readback and changed-surface integration, deny/privacy/CAS/idempotency/outbox/restart acceptance.",
+      "dossier-identity-merge-rollback.test.ts": "Full source/edge undo invariants, repeated import, same-name separation, principal stability and post-merge dependent-link conflict/preservation."
+    }
+  },
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+      "symbol": "DossierEntity / DossierPromise / normalizeDossierData (19-34,118-156)",
+      "change": "Retain complete local card fields. Add accepted scoped canonical ref/import provenance to the migrated representation without replacing source IDs or text aliases. Map person/company via WP-22 vocabulary; keep org an unverified display field. Do strict source validation and quarantine in dossier-import.ts, not by silently dropping input with the tolerant UI parser.",
+      "reason": "Existing parser preserves valid notes/promises/briefSessionId/timestamps but skips invalid rows and synthesizes promise IDs; it is not a reversible import format."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+      "symbol": "buildDossierSummary / entityTerms / suggestContacts (159-219,246-262)",
+      "change": "Keep name/alias text matches as discovery hints only, never canonical edges or merge keys. Migrated contextual DTO must distinguish verified linked sources from suggestions; key candidate selection by canonical identity, not lowercased channel name. Preserve display matching for explicit standalone mode.",
+      "reason": "Two same-name people currently share text matches and suggestions are collapsed by name; importing these as identity or relationships would violate acceptance."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+      "symbol": "NS / DossierPage / save / updateEntity / addEntity / selected / select (60,94-120,168-189)",
+      "change": "Import actual rox.dossier.v1:<workspaceId> once through raw snapshot hash/schema version; await durable import receipt and resolve legacy route ID through aliases. In shared mode query and mutate the accepted common CRM authority with expected revisions; do not retain a second writable renderer CRM store. Preserve explicit standalone path and reversible snapshot read before cutover. Never import a null/default workspace into a shared workspace implicitly.",
+      "reason": "Current mutations optimistically replace whole local payload and routes select a local dos-* ID; neither proves shared canonical state."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+      "symbol": "DossierDetail / generateBrief / addAlias / addPromise / promise task action / kind chips / notes editor (349-470,523-565,573-596,620-627)",
+      "change": "Reuse existing Company/Contact detail representation and notes/promises/brief controls. Add explicit merge candidate preview/confirm and undo/conflict handling tied to receipts and canonical refs; retain all predecessor field provenance without overwriting distinct notes/promises/brief references. Load brief session content only through current authorized resolver. Kind chips must not silently retype an imported canonical aggregate. Route promise-to-task through accepted task command and explicit canonical relation; show loading/denied/queued/retry/conflict/applied_verified honestly.",
+      "reason": "Brief is a retained session reference, not embedded text; current task action has no relationship and local kind flips lack compatibility checks. New UI strings require the lead's existing t()/10-locale integration, not hardcoded text."
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/extra-screens/storage.ts",
+      "symbol": "workspaceStorageKey / loadWorkspaceJson / saveWorkspaceJson / subscribeWorkspaceJson (8-65)",
+      "change": "Expose a non-normalizing raw snapshot read for dossier import and a checked source-restore seam; preserve original storage key/event behavior for other screens. Associate import receipt/hash with the canonical batch rather than adding an independent CRM store. After accepted shared cutover, local source is read-only import/rollback evidence; subscription is not a substitute for domain replay.",
+      "reason": "loadWorkspaceJson silently turns corruption into empty data and saveWorkspaceJson silently returns without storage; raw rollback cannot be recovered from normalized output."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_ENTITY_KINDS / Rox2EntityRef / registerExternalBinding / ROX2_RELATION_RULES / Rox2Receipt / Rox2Event / Rox2CanonicalResult (17-51,99-167,233-250,336-401)",
+      "change": "Consume accepted common CRM kind/association mapping and extend only missing typed contract slots for canonical domain command receipts, policy/revisioned events and redirects. Keep existing workspace/account refs, binding key semantics, collision quarantine and execution/lifecycle/verification triad. Represent legacy dossier ID aliases in common durable authority; do not persist the helper Map as a separate registry. Add mergeRecords transport DTO mapping without changing all legacy status consumers to the new wire status enum blindly.",
+      "reason": "Current Map supports source identity hints but not transactional persistence; spec contact/company and applied wire statuses do not directly match current kinds/triad. Common foundation integration is lead-owned."
+    },
+    {
+      "path": "packages/server-core/src/meetings/conation/crm.ts",
+      "symbol": "resolveCrmTarget / proposeCrmEdit / sendCrm (17-61)",
+      "change": "Preserve accountId+remoteType+remoteId resolution. If canonical CRM refs are exposed here, translate through accepted scoped aliases and common policy checks; do not resolve by displayName or unblock GraphqlSoupCrmCompany external edit/send as a way to implement native merge.",
+      "reason": "Correct source identity exists already; external writes remain blocked by the explicit Conation audit gate."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/crm/contracts.ts",
+      "symbol": "WP-22 accepted CRM contracts (proposed; file absent at inspection)",
+      "change": "Extend dependency-owned contract with strict ImportDossier, SuggestMerge, MergeEntities/MergeCrmEntities and UndoMerge DTOs. Public mergeRecords payload is survivor/candidate/expectedSourceRevisions inside RoxCommand v2; explicitly map winner/loser/baseRevisions naming once. Reject unknown/body actor fields; type import alias map, source provenance, journal ID and undo conflict/compensation DTO.",
+      "reason": "WP-22/WP-23 claim the same file; spec leaves suggestion/undo signatures and expectedSourceRevisions constraints underspecified."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/crm/commands.ts",
+      "symbol": "WP-22 accepted command handlers (proposed; file absent at inspection)",
+      "change": "Register mergeRecords/import/suggestion/undo on the dependency's common command dispatcher, using authenticated principal, both source ACLs/current policy epoch, source CAS and scoped idempotency receipts. Delegate to merge.ts/aliases.ts in one transaction with outbox. Bind declared HTTP POST and native domain.crm.mergeRecords through existing composition, never a renderer-only RPC implementation.",
+      "reason": "No handlers were found in normative path; shared command gateway wiring must be supplied by lead/common authority."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/crm/repository.ts",
+      "symbol": "WP-22 accepted repository (proposed; file absent at inspection)",
+      "change": "Extend canonical CRM repository transactions with raw import batches/hash uniqueness, scoped alias collision quarantine, field/source provenance, immutable merge predecessor and edge pre/post-images, versioned redirects and revision-checked inverse. Reconcile later edges or return conflict without deleting new writes; never mutate auth principal/login aliases.",
+      "reason": "Reuse dependency's common Contact/Company entities and relationship store rather than create a merge-specific CRM database."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/__tests__/dossier-model.test.ts",
+      "symbol": "dossier model normalize/suggestions/summary tests (64-149)",
+      "change": "Add behavior assertions preserving explicit duplicate-name cards, all imported valid notes/promises/directions/done/brief/timestamps and org-as-display-only. Keep useful summary matching coverage but never treat text matches as proof of canonical relations. Replace exact synthetic parser-default/object-layout assertions at 106-121 with consumer-visible preservation/quarantine behavior when contract changes; do not re-pin incidental defaults. Put transactional undo/privacy/restart assertions in the normative integration tests.",
+      "reason": "Current tests exercise pure local model only and exact parser defaults do not prove import or merge behavior."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-23 (446-466)",
+      "change": "After actual integration evidence, record accepted contract naming, canonical kind/relationship mapping, migration identifiers, shared ownership and receipt-linked import/undo/recovery limits without changing dependency array or claiming unobserved completion.",
+      "reason": "Published specification has overlapping artifacts and proposed migration/API shapes requiring integration resolution."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "CRM-INGEST-01 / ACCOUNT-01 / completeness / evidence gates (76-97,159-177,197-247)",
+      "change": "Add explicit dossier import/same-name/source snapshot/private-public merge/undo-after-task-link scenarios and exact implementation/schema/receipt evidence references; retain all cross-surface policy, negative-control and restart gates.",
+      "reason": "WP-23 cannot inherit a general fixture scenario as live migration/undo acceptance."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Dossier notes/promises/agent brief retained in Company view",
+      "currentEvidence": "DossierEntity:19-30 and normalizeDossierData:143-153 retain local fields; DossierDetail:401-428,573-593 loads the saved brief session. No canonical import or Company service artifact found.",
+      "requiredChange": "dossier-import.ts imports losslessly by legacy card ID and snapshot hash into WP-22 common Company/Contact fields with provenance; preserve distinct notes/promises/brief refs during merge; existing detail reads canonical authorized DTO.",
+      "verification": "Seed person and company cards with both promise directions/done states, notes, aliases, timestamps and completed brief session; import via UI/API; Company view/readback/reload must show exact retained content and same authorized brief ref, without a new brief run.",
+      "missingPrerequisite": "Accepted WP-22 field model/Company projection, shared command authority and authorized session resolution.",
+      "state": "missing"
+    },
+    {
+      "criterion": "same display name not merged",
+      "currentEvidence": "resolveCrmTarget:17-26 already keys source account/type/id. addEntity:171-185 creates separate dos-* IDs; suggestContacts:250-259 still deduplicates suggestions by name.",
+      "requiredChange": "Identity aliases keyed by workspace/source namespace/legacy ID or provider/account/type/remote ID only; name may rank suggestions but cannot choose winner or import uniqueness. Explicit candidate required.",
+      "verification": "Import two different card IDs and remote source IDs with identical names; assert distinct canonical refs, isolated fields and stable cardinality across repeated import/restart; name-only merge request rejected.",
+      "missingPrerequisite": "WP-22 canonical identity/alias schema and strict merge command DTO.",
+      "state": "missing"
+    },
+    {
+      "criterion": "undo restores relationships",
+      "currentEvidence": "Rox2Relation:125-129 and relation rules exist; buildDossierSummary:163-204 derives text touches rather than stored edges; no merge journal/inverse found.",
+      "requiredChange": "merge.ts journals exact predecessor/edge rewrites with revisions; undo atomically restores source refs/redirect versions and edges, validating both endpoint ACLs and dependent writes.",
+      "verification": "Create explicit canonical task/note/contact-company links, merge via command, inspect graph/backlinks, undo and reload; exact predecessor relations/notes/promises restored. Denied links remain denied.",
+      "missingPrerequisite": "Revisioned common edge repository and accepted Company membership relation kind.",
+      "state": "missing"
+    },
+    {
+      "criterion": "contact login identity unchanged",
+      "currentEvidence": "CrmTarget:10-15 is external CRM identity, not auth principal; platform kinds include person but no explicit Contact kind. test-plan:22-28 explicitly separates Contact-C from login principal.",
+      "requiredChange": "Use WP-22 contact-to-kind mapping and typed CRM aliases; import/merge/undo must not create, redirect or alter authenticated principals, auth aliases or workspace grants from email/name/org.",
+      "verification": "Snapshot auth principal/login alias/grant IDs and revisions; import and merge contact matching a login name/email, undo/restart; exact principal identity/grants unchanged and both contact/login remain separately addressable.",
+      "missingPrerequisite": "Accepted contact/principal separation contract and authorized auth-store readback fixture; auth source intentionally outside this scoped inspection.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Two people same display name never auto merge; org text alone never grants company membership.",
+      "currentEvidence": "DossierEntity.org is text at 23; kind chips/org blur at DossierPage:464-470 patch local fields; platform member-of:388 cannot express person-to-company membership.",
+      "requiredChange": "Preserve both people and org text as unverified provenance only. Company association requires explicit accepted typed link/policy; do not infer membership or access from org/name or kind toggle.",
+      "verification": "Two same-name people with org='Acme' import as distinct refs; no verified membership/grant edge until explicit authorized association. Forged membership and wrong-kind merge denied without changes.",
+      "missingPrerequisite": "WP-22 verified company association vocabulary and resource ACL policy.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Import twice produces same alias cardinality; rollback restores source snapshot and notes/promises.",
+      "currentEvidence": "storage.ts:20-32 normalizes/parses with empty fallback; normalizeDossierData:123-140 drops rows/trims text/synthesizes promise IDs. registerExternalBinding:336-370 is only an in-memory collision helper.",
+      "requiredChange": "Read/hash exact raw source before normalization; durable crm_import_batch scoped snapshot hash and unique legacy aliases; strict validation/quarantine. Before cutover restore exact source/writer; after shared writes verified inverse/forward repair that preserves newer writes.",
+      "verification": "Import identical snapshot twice and after server restart; alias entity targets/count and import receipt stable. Inject duplicate legacy IDs/corrupt/unknown schema snapshots and verify quarantine/no destructive overwrite. Roll back and compare source hash plus exact notes/promises/brief IDs; later accepted shared edits retained or conflict reported.",
+      "missingPrerequisite": "Raw snapshot seam, common alias migration/transaction and selected migrator rollback procedure.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Merge across private/public contexts does not leak private email; undo after later task link returns conflict or preserves link explicitly.",
+      "currentEvidence": "authorizeRox2Action:597-609 is actor-grant helper, not per-source field filtering; DossierPage:543-544 creates task with name text, no canonical link. WP-23:20001,20494-20495 require both constraints.",
+      "requiredChange": "Retain source ACL/provenance for private email and deny scope-widening serialization; common graph resolver checks every endpoint. Journal post-merge edge frontier and return typed conflict/compensating proposal or explicit preservation on undo after new task relation.",
+      "verification": "A merges private/public records, B/C query UI/API/search/mentions/events/agent; PRIVATE_WP-23 email/body absent including snippets/count leakage. Add later task link then undo; verify typed conflict leaves graph intact or explicit preservation retains new edge with correct backlinks after reload.",
+      "missingPrerequisite": "Source consent/current resource policy, common task links and cross-surface authorized consumers.",
+      "state": "missing"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "DossierPage:217-313 and DossierDetail already provide list/detail and fields, but no import/merge/undo UI.",
+      "requiredChange": "Extend this surface with explicit candidate preview, merge/undo receipt states and conflict proposal, preserving Company/Contact fields and existing compact components/t().",
+      "verification": "Actual Electron/web interactions and visual/ARIA evidence for import, Company view, merge and undo; verify focus/keyboard, hover help and reload on exact implementation SHA.",
+      "missingPrerequisite": "WP-22 Company projection, command bridge and lead-owned 10-locale translation integration.",
+      "state": "missing"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "DossierPage:168-169 selects by local ID; openTouch:328-345 uses existing destination routes.",
+      "requiredChange": "Resolve old dossier URLs via scoped aliases/versioned redirects to common Contact/Company context; undo updates resolution without a new navigation surface.",
+      "verification": "Open legacy and canonical links before/after import/merge/undo/reload; back/history and missing/denied refs behave correctly without leaking names.",
+      "missingPrerequisite": "Accepted canonical resolver and WP-22 destination mapping.",
+      "state": "missing"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "DossierEntity:19-30 is local; platform-contract:233-250 has scoped refs and external bindings.",
+      "requiredChange": "Reuse common entity/ref/alias types, strict CRM DTOs and field provenance; quarantine ambiguous identity; separate display aliases from identity aliases.",
+      "verification": "Same-name, cross-workspace/account, incompatible-kind, collision and unknown-schema cases preserve distinct refs or typed failures.",
+      "missingPrerequisite": "WP-22 typed model and common entity FK/alias contract.",
+      "state": "missing"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "saveWorkspaceJson:35-45 has no server transaction, revision or receipt.",
+      "requiredChange": "Common repository atomically commits import/merge/inverse, receipt/journal/alias/edge/outbox; no second authority. Preserve raw import asset.",
+      "verification": "Crash after transaction commit before reply; restart/readback/retry yields same canonical ID/receipt and complete graph, with no partial journal/edges or lost raw snapshot.",
+      "missingPrerequisite": "Accepted database/transaction runner and migrator from foundation/WP-22.",
+      "state": "missing"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "DossierPage.updateEntity:116-120 is local patch; crm.proposeCrmEdit/sendCrm return blocked.",
+      "requiredChange": "Dependency commands.ts exposes strict import/suggestion/merge/undo under common actor/policy/CAS/idempotency pipeline. Persist command/requestHash/receipt atomically.",
+      "verification": "Duplicate identical request returns same result; changed payload same key conflicts; stale/missing source revisions, spoofed actor, outsider/wrong-workspace and incompatible kinds rejected without mutation.",
+      "missingPrerequisite": "RoxCommand v2 dispatcher, accepted revision/policy and typed DTO resolution.",
+      "state": "missing"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "Local loadWorkspaceJson/filterEntities and source hooks are not authorized server queries.",
+      "requiredChange": "Common CRM repository supplies authorized bounded detail/candidate/journal views and alias-resolved canonical refs; filter private source fields before serialization and authorize cursor.",
+      "verification": "A/B/C detail and paginated suggestion readback exclude denied title/body/hidden totals; cursor cannot cross workspace or policy epoch.",
+      "missingPrerequisite": "WP-22 query DTO/pagination and common policy resolver.",
+      "state": "missing"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "subscribeWorkspaceJson:47-65 only dispatches DOM/storage events; brief uses polling at DossierPage:409-416.",
+      "requiredChange": "Emit crm.record_merged/entity.alias_registered from transaction outbox; inverse uses common revisioned invalidation; replay with cursor/dedup and current policy/tombstone fence.",
+      "verification": "Two authorized clients observe same revised refs after merge/undo; duplicate/reordered/dropped event and reconnect replay converge; revoked/outsider subscribers receive no private fields.",
+      "missingPrerequisite": "Outbox/replay transport, accepted inverse invalidation event shape and consumer watermarks.",
+      "state": "missing"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "authorizeRox2Action:601-609 requires actor/grant; local Dossier UI does not use server actor/policy.",
+      "requiredChange": "Transport actor only; current workspace and both source/resource write/read policy plus consent/revoke fence checked inside mutation and on serialization; allow-all never bypasses ACL.",
+      "verification": "Member/viewer/outsider/revoked actor and forged workspace/body actor/allow-all agent cases rejected as appropriate with no existence/content leak or writes.",
+      "missingPrerequisite": "Accepted shared resource policy and policyEpoch enforcement.",
+      "state": "missing"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "Rox2Entity.permissions:121 is capability catalog; test-plan:24,90 forbids relation-based private mail grants.",
+      "requiredChange": "Retain source permission provenance and shared/public link constraints through redirects/undo; merge must not union private grants into public survivor fields.",
+      "verification": "Compare authorized source fields before/after merge/undo for public/private contexts; expired/revoked grants denied despite survivor link and cached projection.",
+      "missingPrerequisite": "Common sharing/inheritance/public-link policy from lead/WP-22 foundations.",
+      "state": "missing"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "filterEntities:236-242 and DossierDetail.searchNotes:375-394 perform text matching, not common CRM indexing/ACL watermark.",
+      "requiredChange": "Common index consumes import/merge/undo revisions, aliases and deletion/redirect changes with source-field ACL; preserve discovery text without identity inference.",
+      "verification": "Search same-name records before/after merge/undo and wait watermark; each authorized canonical ref correct, no stale loser duplicate/private marker for B/C/revoked A.",
+      "missingPrerequisite": "Common search extractor/index consumer and current-policy result gate; not N/A.",
+      "state": "missing"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "Platform mentions relation:382 exists; inspected Dossier has no typed mention occurrence resolver.",
+      "requiredChange": "Integrate accepted mention target resolver with versioned alias redirects and source revisions; undo preserves occurrence provenance/target policy.",
+      "verification": "Same-name autocomplete returns distinct typed authorized refs; existing mention resolves after merge/undo without private title/email leakage or occurrence duplication.",
+      "missingPrerequisite": "Common mention extraction/resolver adapter supplied by lead; not N/A.",
+      "state": "missing"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "No notification consumer in inspected Dossier/CRM code; specification/test-plan:212 requires policy/dedup/recipient state.",
+      "requiredChange": "Use common notification rules for applicable CRM merge/link effects; revisioned redirect/inverse cannot duplicate attention or widen recipient access; preserve recipient seen/done/mute/snooze state.",
+      "verification": "Run accepted notification-triggering CRM action, replay event twice, merge/undo target; authorized recipient sees one canonical item, private recipients absent and prior state preserved.",
+      "missingPrerequisite": "Common CRM recipient/action policy and notification consumer; applicability must be resolved from accepted contracts, not assumed N/A.",
+      "state": "missing"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Rox2Event:131-140 and isAuditableRox2Event:618-619 provide cause/revision vocabulary only.",
+      "requiredChange": "Record authorized actor/cause/correlation/revisions for import/merge/undo through common audit/activity projection; payload/logs omit private email/body/transcript.",
+      "verification": "Read activity and audit after merge/undo and event replay; one effect per revision, correct lineage, no PRIVATE_WP-23 or raw sensitive fields.",
+      "missingPrerequisite": "Transaction outbox/activity audit integration and field redaction.",
+      "state": "missing"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "startAgentRun:14-22 uses safe session; buildBriefPrompt:281-304 carries local notes/promises/text touches. This is not shared-resource authorization.",
+      "requiredChange": "Keep original briefSessionId and authorized read-only brief; common agent CRM context/tools use acting-user policy, canonical refs/source revisions and provenance, not unfiltered renderer snapshots.",
+      "verification": "Agent A/V allow-all reads authorized Company context after import/merge/undo; brief retained and private emails/session output excluded when source denied; unauthorized merge tool denied.",
+      "missingPrerequisite": "Common agent context/tool dispatcher and authorized session source resolver.",
+      "state": "missing"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "WP-23:20065-20068 declares HTTP/native endpoints; no command module in normative path; crm.ts is blocked helper, not endpoint.",
+      "requiredChange": "Lead binds POST /v1/workspaces/{workspaceId}/commands/crm.mergeRecords and domain.crm.mergeRecords to same handler/contracts; agent/MCP domain route uses same authority. Resolve SuggestMerge/UndoMerge schemas explicitly.",
+      "verification": "HTTP/native/agent dispatch agree on canonical ref/receipt/error for identical scenarios; unknown fields/body actor, mismatched workspace and unauthorized cursor rejected across transports.",
+      "missingPrerequisite": "Accepted transport registry/composition and complete command/result DTOs.",
+      "state": "missing"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Rox2Event:138-140 has cause/correlation/revision but not all WP-23 fields; local storage has no command/projection telemetry.",
+      "requiredChange": "Carry commandId, causationId, correlationId, aggregateRevision, policyEpoch, projectionWatermark and retry/DLQ counters through common instrumentation without raw sensitive payloads.",
+      "verification": "Trace import/merge/undo/retry/crash through receipt/outbox/consumer/watermark; IDs join correctly, failure counters reflect injected failures and logs contain no email/body/transcript/token/private marker.",
+      "missingPrerequisite": "Lead common telemetry/outbox instrumentation schema.",
+      "state": "missing"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "dossier-model.test.ts:48-156 covers local matching/normalization; normative WP-23 integration tests absent at inspection; no tests run.",
+      "requiredChange": "Extend meaningful local preservation behavior tests and implement both normative integration suites for all seven criteria, authorization, event dedup, crash recovery and mutation-sensitive controls.",
+      "verification": "After dependencies accepted: bun test tests/macro-integration/wp-23.test.ts tests/macro-integration/dossier-identity-merge-rollback.test.ts plus relevant existing package tests; actual Electron/web/native command scenarios. Record seed 20260953, source/schema/dirty patch hashes and receipts.",
+      "missingPrerequisite": "Runnable accepted shared runtime, deterministic isolated fixtures and lead-authorized test phase.",
+      "state": "missing"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "Implementation plan:446-466 and test-plan:197-247 describe planned behavior, not verified implementation.",
+      "requiredChange": "Lead updates named documents with exact migration/contract/ownership, field retention, identity boundaries, conflict-safe rollback and provider limits; attach real revision-bound evidence only after execution.",
+      "verification": "Each criterion/doc recovery step links to actual code and observed receipt; no fixture/live or preflight/feature-complete confusion.",
+      "missingPrerequisite": "Final accepted implementation and scenario receipts; preflight owns no docs edits.",
+      "state": "missing"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "BriefError exists at DossierPage:429-431,587; import/merge/undo conflict/quarantine states absent.",
+      "requiredChange": "Expose denied/retryable/terminal/conflict/schema/quarantine/revoke-fence/provider-unknown states using common receipt model; retry only same persisted command identity and never mark unknown as applied.",
+      "verification": "Exercise malformed/corrupt snapshot, alias collision, CAS conflict, denied actor, lost reply and unavailable service; source intact, no false saved/applied state, retry returns correct receipt.",
+      "missingPrerequisite": "Typed error/result DTO and durable command bridge.",
+      "state": "missing"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "DossierPage initializes local data synchronously; brief has starting/processing state only.",
+      "requiredChange": "Distinguish initial CRM query/import pending, stale projection refresh and applied_verified watermark; do not present unloaded/failed data as empty.",
+      "verification": "Delay import/query/projection, observe loading/stale state, then verified detail after receipt+readback; denial/error never renders empty success.",
+      "missingPrerequisite": "Accepted query/receipt/watermark bridge.",
+      "state": "missing"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "DossierPage:289-310 has no-cards/pick-card states; storage load failure currently falls back to empty.",
+      "requiredChange": "Keep honest empty/pick states but distinguish no authorized data, permission denied, source corrupt/unconfigured/unavailable and quarantined import.",
+      "verification": "Empty workspace vs denied workspace vs corrupt source vs unavailable server render distinct states without hidden record titles/counts.",
+      "missingPrerequisite": "Typed query/import error state instead of normalized-empty fallback in shared path.",
+      "state": "missing"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "Local storage events are not durable server command queue; current optimistic save has no shared receipt.",
+      "requiredChange": "Reuse common durable command queue/projection. Keep imported snapshot and pending intent through reload; reconnect replays same idempotency key, rechecks policy/revisions and surfaces rejection/conflict instead of fake applied.",
+      "verification": "Disconnect before and after durable server commit, reload client, reconnect; one merge/import effect and stable receipt/ref; revoked actor and intervening edit reject without source/new-write loss.",
+      "missingPrerequisite": "Common client durable queue and server receipt reconciliation.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Migration constraints and reversible cutover",
+      "currentEvidence": "WP-23:20456-20504 requires entity_alias/crm_merge_journal/crm_import_batch, composite FK, uniques and immutable inverse journal; proposed SQL paths absent.",
+      "requiredChange": "Use selected migrator/common tables: workspace/entity FK, positive schema_version/nonnegative revision, legacy alias and provider/account scoped uniqueness, snapshot hash uniqueness, immutable predecessor/edge/receipt lineage, indexes and retained tombstones. Pre-cutover writer restore; post-cutover verified inverse or forward repair preserves recent writes.",
+      "verification": "Apply migration, repeat/backfill/quarantine imports, enforce constraints in real DB; perform rollback with and without later writes and recover from transaction interruption with exact source/graph readback.",
+      "missingPrerequisite": "Accepted common entity/alias/receipt schema, WP-22 migration receipt and lead-selected migrator filename reconciliation.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Negative control: unauthorized actor or dropped/duplicated event must fail acceptance; name-only merge mutant plus independent holdout",
+      "currentEvidence": "WP-23:19985-19987 and 20724-20727 specify controls; current model tests have no shared CRM controls.",
+      "requiredChange": "Provide a passing legitimate baseline, then separate mutants for merge-by-name, policy bypass, dropped event and duplicate delivery; independent evaluator supplies holdout variant. Assertions target identity/privacy/convergence, not infrastructure availability.",
+      "verification": "Name-only mutant fails distinct-ID assertion; ACL bypass fails denied/private assertion; dropped event fails two-client/watermark assertion; duplicated event fails logical effect/dedup assertion. Record caught mutation separately from timeout or missing runtime.",
+      "missingPrerequisite": "Real shared runtime/consumers, accepted baseline scenarios and independent holdout evaluator.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Persistence-recovery: restart between persisted command and reply keeps state/receipt/canonical ID consistent",
+      "currentEvidence": "WP-23:19989-19991 requires restart; local save/update has no durable command identity or server transaction.",
+      "requiredChange": "Persist command hash/result, aliases, journal, graph and outbox in one canonical transaction; reply may be lost but retry resolves existing receipt and projection catches up.",
+      "verification": "Kill/restart at commit-before-reply for import, merge and undo; retry same envelope and read back exact same canonical ref/receipt/revision with one logical event/effect and intact dependent links. Changed payload same key conflicts.",
+      "missingPrerequisite": "Accepted command/DB/outbox runtime and injectable crash point in authorized verification environment.",
+      "state": "missing"
+    },
+    {
+      "criterion": "License policy and live verification gate",
+      "currentEvidence": "WP-23:20048-20049 requires behavior reimplementation and actual surface/reload proof; Conation capabilities false at 14 and blocked module at 193-197.",
+      "requiredChange": "Reimplement native behavior using existing common authority; do not copy upstream source or enable blocked provider mutation. Treat fixture/simulated/queued as non-live; retain source/license audit if dependency/provider chosen.",
+      "verification": "Lead observes changed surface and failure/reload at exact delivered source/schema revision; verify triad/readback and license provenance, not screenshots or fixtures alone.",
+      "missingPrerequisite": "Implemented runtime and observed acceptance receipts; external source/schema/license/auth/readback gate only if Conation chosen.",
+      "state": "missing"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-23 normative record and explicit inputs; WP-22 prerequisites/shared artifacts","lineStart":19053,"lineEnd":20824,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-23","lineStart":446,"lineEnd":466,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"CRM-INGEST-01 / ACCOUNT-01 / feature completeness and evidence gates","lineStart":197,"lineEnd":247,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path":"apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts","symbol":"DossierEntity / DossierPromise / normalizeDossierData","lineStart":10,"lineEnd":156,"sha256":"7cb89ba6653d9dc79c1f610484260d3f68cd472d8d90ba26840d4e277f91e5cd"},
+    {"path":"apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts","symbol":"buildDossierSummary / suggestContacts / buildBriefPrompt","lineStart":159,"lineEnd":304,"sha256":"7cb89ba6653d9dc79c1f610484260d3f68cd472d8d90ba26840d4e277f91e5cd"},
+    {"path":"apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx","symbol":"DossierPage / save / updateEntity / selected / select / addEntity","lineStart":94,"lineEnd":189,"sha256":"fcc1db89139ac3a2eb207872ae7051e7cd31f1cd1c8f7c9cd75b52268edf77a9"},
+    {"path":"apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx","symbol":"DossierDetail / generateBrief / promise-to-task / notes","lineStart":349,"lineEnd":627,"sha256":"fcc1db89139ac3a2eb207872ae7051e7cd31f1cd1c8f7c9cd75b52268edf77a9"},
+    {"path":"apps/electron/src/renderer/lib/extra-screens/storage.ts","symbol":"workspaceStorageKey / loadWorkspaceJson / saveWorkspaceJson / subscribeWorkspaceJson","lineStart":8,"lineEnd":65,"sha256":"fa240f1c6737cfb526deb8a19817fc48e42e471b6664def2d2d5408bc25e51ba"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"ROX2_ENTITY_KINDS / ROX2_RELATION_KINDS / Rox2Receipt / Rox2CanonicalResult","lineStart":17,"lineEnd":167,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef / registerExternalBinding / ROX2_RELATION_RULES","lineStart":233,"lineEnd":401,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"authorizeRox2Action / isRevisionedEntityRef / isAuditableRox2Event","lineStart":592,"lineEnd":619,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/server-core/src/meetings/conation/crm.ts","symbol":"CrmTarget / resolveCrmTarget / proposeCrmEdit / sendCrm","lineStart":10,"lineEnd":61,"sha256":"de6b37c9358ee0932d31aa346f7cbd78183f339f06901e2fa1add10b3c919e3c"},
+    {"path":"packages/server-core/src/meetings/conation/capabilities.ts","symbol":"confirmWrite","lineStart":323,"lineEnd":371,"sha256":"33289bcf406de811d3717d801c72bb31a234060c838052fb6d1a04c82ed2748f"},
+    {"path":"apps/electron/src/renderer/pages/extra-screens/__tests__/dossier-model.test.ts","symbol":"dossier model behavior tests","lineStart":64,"lineEnd":149,"sha256":"77cce553b3982ca4ff8e2bde3c4a1af150e2c678d81dcca1d9e4e024523536ac"},
+    {"path":"apps/electron/src/renderer/lib/extra-screens/agent-run.ts","symbol":"startAgentRun / readAgentRun","lineStart":14,"lineEnd":61,"sha256":"74589220461ca04163fa273a3628ebd8170ef12d9d764f780c54fcab533929fc"},
+    {"path":"apps/electron/src/renderer/lib/extra-screens/personal-task-bridge.ts","symbol":"createPersonalTask / createPersonalTaskConfirmed","lineStart":18,"lineEnd":37,"sha256":"6ddefec884971bd335a68d090ca2f2d1bfe3034e60431dd46aa53b3532aff121"},
+    {"path":"apps/electron/src/renderer/lib/extra-screens/use-rox-sources.ts","symbol":"useWorkspaceSessions / usePersonalTasks","lineStart":14,"lineEnd":36,"sha256":"7fd3d7a1a4b5356c5d63a76d35f75a89a4de675a1eb5404b102c72bcdb8fba34"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead validates this owned report against dispatch and live whole-file hashes; no feature implementation starts in this preflight.",
+    "implementationStartCondition": "Lead wave0 committed and WP-22 accepted typed interface, migration receipt and scenario receipt available.",
+    "then": "Re-read changed hashed files; consume WP-22 shared contracts/repository/Company projection and resolve kind/relationship/API/migration overlap. Implement lossless dossier-import and durable alias/batch schema using the selected migrator, then transactional merge/undo over common graph, then lead-integrated existing UI/transport/consumer patches. Finally run all listed acceptance and seeded failure/reload scenarios and update named documentation.",
+    "owner": "Lead retains source/shared integration; this worker delivers only WP-23.json."
+  },
+  "risks": [
+    "Text touches, text aliases and org are discovery/display data, never authoritative links, login identity, source IDs or membership grants.",
+    "normalizeDossierData is deliberately tolerant and lossy; raw import snapshot cannot be reconstructed from its output. Invalid/missing promise IDs and duplicate legacy card IDs need quarantine/provenance, not silent deduplication.",
+    "Existing local IDs are dos-* via newLocalId, not necessarily UUIDs despite specification wording 'dossier card UUID aliases'; preserve actual persisted ID strings and namespace.",
+    "Two same-name people can currently share summary matches and one messenger suggestion; source identity must remain distinct without treating existing display behavior as canonical relationship evidence.",
+    "Imported briefSessionId refers to an existing session whose contents have their own access policy; retaining a link must not publish that session to Company viewers.",
+    "A merge with two different notes/promises/brief references must retain both provenances; choosing a scalar winner without retained predecessor fields loses required context.",
+    "Changing a local kind chip is not an authorized canonical Contact-to-Company conversion. Kind compatibility and explicit association must be resolved with WP-22.",
+    "Cross-private/public merge can leak email through title/snippet/count/search/mention/event/agent caches even if Company detail hides the field; source policy must survive redirects and undo.",
+    "Undo that replaces an old graph snapshot can delete later task links and writes; edge revision reconciliation or explicit typed conflict is mandatory.",
+    "contracts.ts/commands.ts/repository.ts are shared WP-22 artifacts; nominal newFiles ownership must not cause overwrite or a second CRM authority.",
+    "The two proposed migration names and API naming/status differences are integration ambiguities, not authorization to create duplicate tables or transport contracts.",
+    "No runtime acceptance is available from this preflight. Source hashes may go stale during root integration; validator must reject changed evidence and lead must re-inspect before applying patch requests."
+  ]
+}

@@ -35,7 +35,7 @@ export type MeetingSearchApi = {
 }
 
 export function resolveMeetingCatalogApi(injected?: MeetingCatalogApi | null): MeetingCatalogApi | null {
-  if (injected?.createMeeting && injected.listMeetings) return injected
+  if (typeof injected?.createMeeting === "function" && typeof injected?.listMeetings === "function") return injected
   if (typeof window === 'undefined') return null
   const api = window.electronAPI
   if (!api?.createMeeting || !api?.listMeetings) return null

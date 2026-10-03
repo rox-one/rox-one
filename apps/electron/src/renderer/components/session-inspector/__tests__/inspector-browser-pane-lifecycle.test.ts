@@ -15,12 +15,13 @@ describe('Issue 14 pane lifecycle and link routing', () => {
   const app = readFileSync(appPath, 'utf8')
   const mainPanel = readFileSync(mainPanelPath, 'utf8')
 
-  it('reuses the retained embedded pane and does not destroy siblings on mount', () => {
+  it('reuses the retained embedded pane and only destroys its imported-cookie pane on switch', () => {
     expect(inspector).toContain('planRetainedBrowserOpen')
     expect(inspector).toContain('window.electronAPI.browserPane.createEmbedded')
     expect(inspector).toContain('<BrowserPanelPage instanceId={instanceId} persist />')
     expect(inspector).not.toContain('.filter((item) => item.embedded)')
-    expect(inspector).not.toContain('browserPane.destroy')
+    expect(inspector).toContain('createdImportedRef.current')
+    expect(inspector).toContain('destroy(previous)')
   })
 
   it('hides on unmount and restores instead of leaving a dead pane', () => {

@@ -1,0 +1,34 @@
+{
+  "ours": "ff75a6421607efc18c165cac578216ef8808e449",
+  "theirs": "bac082301aed341fe078cb5bd539c4ba074560eb",
+  "conflicts": {
+    "docs/plan.md": {
+      "1": {
+        "mode": "100644",
+        "blob": "0e1633492d0a5da6dc76189e63fd6c7ee708f331"
+      },
+      "2": {
+        "mode": "100644",
+        "blob": "31ae88591de3741ecfefe96cb60d792ec30f4795"
+      },
+      "3": {
+        "mode": "100644",
+        "blob": "5ab2df07ef7fec91c6a993e18736e84fccfdd26b"
+      }
+    },
+    "docs/spec.md": {
+      "1": {
+        "mode": "100644",
+        "blob": "637fdb3d124f344b9bb769c1eefca2c6d725520e"
+      },
+      "2": {
+        "mode": "100644",
+        "blob": "1c9b06234c6c903cb2838e09ec6ba71d22e2cd68"
+      },
+      "3": {
+        "mode": "100644",
+        "blob": "05aba89a6d1c81cde0f75f39c35ac60d0b4285db"
+      }
+    }
+  }
+}

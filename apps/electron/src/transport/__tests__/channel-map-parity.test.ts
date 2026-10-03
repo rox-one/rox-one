@@ -20,6 +20,7 @@ type FunctionKeys<T> = {
 type BrowserPaneApi = ElectronAPI['browserPane']
 // Knowledge (P1 read-only) nests like browserPane via dotted CHANNEL_MAP keys.
 type KnowledgeApi = ElectronAPI['knowledge']
+type NativeDataApi = ElectronAPI['nativeData']
 type WorkgraphApi = ElectronAPI['workgraph']
 // SiYuan engine surfaces (P2) nest the same way.
 type SiyuanEngineApi = ElectronAPI['siyuanEngine']
@@ -27,6 +28,7 @@ type SiyuanEngineApi = ElectronAPI['siyuanEngine']
 type ExtensionSurfaceApi = ElectronAPI['extensionSurface']
 type BrowserPaneKeys = `browserPane.${FunctionKeys<BrowserPaneApi>}`
 type KnowledgeKeys = `knowledge.${FunctionKeys<KnowledgeApi>}`
+type NativeDataKeys = `nativeData.${FunctionKeys<NativeDataApi>}`
 type WorkgraphKeys = `workgraph.${FunctionKeys<WorkgraphApi>}`
 type SiyuanEngineKeys = `siyuanEngine.${FunctionKeys<SiyuanEngineApi>}`
 type ExtensionSurfaceKeys = `extensionSurface.${FunctionKeys<ExtensionSurfaceApi>}`
@@ -92,12 +94,21 @@ void _auditAcceptanceSignatureIsCanonical
 void _auditRevokeSignatureIsSafeWorkspaceInput
 
 
-// Methods excluded from CHANNEL_MAP because they are implemented directly in the preload
-// (no IPC round-trip to the main process). Each reads local state or orchestrates client-side.
+// Direct preload methods use local state or window-bound Electron IPC; they
+// must not enter the remote WS channel map and expose host-owned storage.
 type ApiToChannelMapKeys = Exclude<
   FunctionKeys<ElectronAPI>,
   | 'performOAuth'
   | 'getTransportConnectionState'
+  | 'getProjectAuthorityState' // direct preload authority state; no credential data
+  | 'onProjectAuthorityChanged' // local projection invalidation callback
+  | 'getProjectAuthorityConfiguration' // metadata-only direct IPC
+  | 'connectProjectAuthority' // main-owned credential exchange
+  | 'disconnectProjectAuthority' // main-owned encrypted credential deletion
+  | 'getSharedProjectCreateIntent' // window-bound encrypted intent read
+  | 'queueSharedProjectCreate' // main persists intent before remote delivery
+  | 'retrySharedProjectCreate' // main revalidates the stored session and command
+  | 'cancelSharedProjectCreate' // local intent deletion, no remote command
   | 'getRuntimeEnvironment'
   | 'onTransportConnectionStateChanged'
   | 'reconnectTransport'
@@ -126,8 +137,11 @@ type ApiToChannelMapKeys = Exclude<
   | 'onOmniboxOpen' // direct IPC listener — embedded BrowserView ⌘K bridge
   | 'remoteTlsInspect' // direct IPC — inspect peer cert before token handshake
   | 'remoteTlsDecide' // direct IPC — accept/reject/rollover enrollment
+  | 'exitMiniWindow' // direct IPC — native window lifecycle
+  | 'onPanelFocusDirection' // direct IPC — native directional focus shortcut
 > | BrowserPaneKeys
   | KnowledgeKeys
+  | NativeDataKeys
   | WorkgraphKeys
   | SiyuanEngineKeys
   | ExtensionSurfaceKeys

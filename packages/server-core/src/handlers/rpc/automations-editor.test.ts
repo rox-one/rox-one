@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
@@ -89,6 +90,57 @@ describe('automations editor RPC', () => {
     expect(m).toMatchObject({ id: 'aaa111', name: 'Новый план', cron: '30 8 * * *', timezone: 'Europe/Moscow', attributeAllowList: ['keep'] })
     expect(m.actions[0]).toEqual({ type: 'prompt', prompt: 'Новый', model: 'm1' })
     expect('labels' in m).toBe(false)
+  })
+
+  test('rejects stale editor saves without overwriting the newer matcher', async () => {
+    writeInitial()
+    const { invoke } = createHarness()
+    const expectedRevision = createHash('sha256').update(JSON.stringify(readConfig().automations.SchedulerTick[0])).digest('hex')
+    await invoke(RPC_CHANNELS.automations.UPDATE, 'ws1', 'SchedulerTick', 0, {
+      event: 'SchedulerTick',
+      expectedRevision,
+      matcher: { name: 'First tab', actions: [{ type: 'prompt', prompt: 'First' }] },
+    })
+    const saved = readFileSync(configPath(), 'utf-8')
+    await expect(invoke(RPC_CHANNELS.automations.UPDATE, 'ws1', 'SchedulerTick', 0, {
+      event: 'SchedulerTick',
+      expectedRevision,
+      matcher: { name: 'Stale second tab', actions: [{ type: 'prompt', prompt: 'Second' }] },
+    })).rejects.toThrow('Automation changed since it was loaded')
+    expect(readFileSync(configPath(), 'utf-8')).toBe(saved)
+  })
+
+  test('redacts saved webhook credentials on reads and retains them when editing other fields', async () => {
+    writeInitial()
+    const config = readConfig()
+    config.automations.SchedulerTick[0].actions = [{
+      type: 'webhook',
+      url: 'https://example.com/old',
+      method: 'POST',
+      auth: { type: 'bearer', token: 'not-returned-to-client' },
+    }]
+    writeFileSync(configPath(), JSON.stringify(config, null, 2))
+    const { invoke } = createHarness()
+    const rawMatcher = readConfig().automations.SchedulerTick[0]
+    const readResult = await invoke(RPC_CHANNELS.automations.GET, 'ws1') as typeof config
+    const returnedAction = readResult.automations.SchedulerTick[0].actions[0]
+    expect(returnedAction.auth).toBeUndefined()
+    expect(returnedAction).toMatchObject({ authConfigured: true, authType: 'bearer' })
+
+    await invoke(RPC_CHANNELS.automations.UPDATE, 'ws1', 'SchedulerTick', 0, {
+      event: 'SchedulerTick',
+      expectedRevision: createHash('sha256').update(JSON.stringify(rawMatcher)).digest('hex'),
+      matcher: {
+        name: 'Updated webhook',
+        webhookAuthMode: 'keep',
+        actions: [{ type: 'webhook', url: 'https://example.com/new', authConfigured: true }],
+      },
+    })
+    const savedAction = readConfig().automations.SchedulerTick[0].actions[0]
+    expect(savedAction).toMatchObject({
+      url: 'https://example.com/new',
+      auth: { type: 'bearer', token: 'not-returned-to-client' },
+    })
   })
 
   test('update moves a matcher across events and drops cron fields', async () => {

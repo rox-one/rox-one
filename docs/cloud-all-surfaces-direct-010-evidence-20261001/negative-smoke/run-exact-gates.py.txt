@@ -1,0 +1,115 @@
+import datetime, hashlib, json, os, pathlib, re, shutil, subprocess, time
+
+CHECKOUT = pathlib.Path('/tmp/rox-r15-exact-ui-20261001/checkout')
+ORIGINAL = pathlib.Path('/workspace/rox-one')
+EVIDENCE = pathlib.Path(__file__).resolve().parent
+PRIVATE = pathlib.Path('/tmp/rox-r15-negative-smoke-20261001')
+BUN = '/workspace/.onboarding-tools/node_modules/.bin/bun'
+EXPECTED = '010fa8c040e3a84cd40cd8195473f52d8582f159'
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+def save(name, value):
+    (EVIDENCE / name).write_text(json.dumps(value, indent=2, ensure_ascii=False) + '\n')
+
+def git(repo, *args):
+    return subprocess.check_output(['git', '-C', str(repo), *args]).decode().strip()
+
+def source(repo):
+    records = subprocess.check_output(['git', '-C', str(repo), 'ls-files', '-s', '-z']).decode().split('\0')
+    files, gitlinks, symlinks = {}, {}, {}
+    for record in filter(None, records):
+        meta, name = record.split('\t', 1)
+        mode, object_id, stage = meta.split()
+        if mode == '160000':
+            gitlinks[name] = object_id
+        elif mode == '120000':
+            symlinks[name] = {'target': os.readlink(repo / name), 'sha256': digest(os.readlink(repo / name).encode())}
+        else:
+            files[name] = digest((repo / name).read_bytes())
+    return {'head': git(repo, 'rev-parse', 'HEAD'), 'status': git(repo, 'status', '--porcelain'),
+            'regularFileCount': len(files), 'gitlinkCount': len(gitlinks), 'symlinkCount': len(symlinks),
+            'files': files, 'gitlinks': gitlinks, 'symlinks': symlinks}
+
+def artifacts():
+    files = {}
+    for folder in ['apps/webui/dist', 'dist-server']:
+        for file in sorted((CHECKOUT / folder).rglob('*')):
+            if file.is_file():
+                files[str(file.relative_to(CHECKOUT))] = {'sha256': digest(file.read_bytes()), 'bytes': file.stat().st_size}
+    return {'fileCount': len(files), 'files': files,
+            'manifestSha256': digest(json.dumps(files, sort_keys=True, separators=(',', ':')).encode())}
+
+EVIDENCE.mkdir(parents=True, exist_ok=True)
+PRIVATE.mkdir(parents=True, exist_ok=False)
+for folder in ['config', 'tmp', 'cache/bun', 'cache/npm', 'cache/xdg', 'cache/node']:
+    (PRIVATE / folder).mkdir(parents=True, exist_ok=True)
+env = {'PATH': str(pathlib.Path(BUN).parent) + ':' + os.environ.get('PATH', ''),
+       'LANG': 'C.UTF-8', 'LC_ALL': 'C.UTF-8', 'TZ': 'UTC',
+       'ROX_CONFIG_DIR': str(PRIVATE / 'config'), 'CRAFT_CONFIG_DIR': str(PRIVATE / 'config'),
+       'TMPDIR': str(PRIVATE / 'tmp'), 'BUN_INSTALL_CACHE_DIR': str(PRIVATE / 'cache/bun'),
+       'npm_config_cache': str(PRIVATE / 'cache/npm'), 'XDG_CACHE_HOME': str(PRIVATE / 'cache/xdg'),
+       'NODE_COMPILE_CACHE': str(PRIVATE / 'cache/node'), 'NO_COLOR': '1', 'FORCE_COLOR': '0'}
+before = source(CHECKOUT)
+assert before['head'] == EXPECTED, before['head']
+save('source-before.json', before)
+original_before = source(ORIGINAL)
+save('original-source-before.json', original_before)
+artifacts_before = artifacts()
+save('artifacts-before.json', artifacts_before)
+historical = json.loads(pathlib.Path('/workspace/rox-r15-evidence-20260930/final-delivery-receipt.json').read_text())
+integrated = next(item for item in historical['gates']['freshFinalBatch'] if item['label'] == 'r24-final-integrated-controls')['command']
+assert len(integrated[3:]) == 19
+version = subprocess.check_output([BUN, '--version'], env=env).decode().strip()
+node_version = subprocess.check_output(['node', '--version'], env=env).decode().strip()
+save('initial-provenance.json', {'candidate': EXPECTED, 'branch': git(CHECKOUT, 'branch', '--show-current'),
+    'bun': BUN, 'bunVersion': version, 'bunSha256': digest(pathlib.Path(BUN).read_bytes()),
+    'nodeVersion': node_version, 'safeEnvironmentKeys': sorted(env), 'privateRoot': str(PRIVATE),
+    'integratedExactHistoricalArgv': integrated, 'assertedInputPaths': len(integrated[3:])})
+
+results = []
+try:
+    for label, logical_argv, extra_env in [
+        ('integrated-controls', integrated, {}),
+        ('strict-built-smoke', ['bun', '--no-env-file', 'test', 'packages/server/src/__tests__/smoke.test.ts'],
+            {'ROX_SERVER_SMOKE_ENTRY': 'dist-server/index.js', 'ROX_SERVER_SMOKE_WEBUI_DIR': 'apps/webui/dist'}),
+    ]:
+        actual_argv = [BUN, *logical_argv[1:]]
+        started = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        start_head = git(CHECKOUT, 'rev-parse', 'HEAD')
+        start = time.monotonic()
+        log = EVIDENCE / (label + '.log')
+        with log.open('wb') as stream:
+            completed = subprocess.run(actual_argv, cwd=CHECKOUT, env={**env, **extra_env}, stdout=stream, stderr=subprocess.STDOUT)
+        elapsed = time.monotonic() - start
+        output = log.read_text()
+        result = {'label': label, 'candidate': EXPECTED, 'logicalArgv': logical_argv, 'actualArgv': actual_argv,
+                  'commandSha256': digest(json.dumps(actual_argv, separators=(',', ':')).encode()),
+                  'cwd': str(CHECKOUT), 'startedUtc': started, 'seconds': round(elapsed, 3), 'exit': completed.returncode,
+                  'headBefore': start_head, 'headAfter': git(CHECKOUT, 'rev-parse', 'HEAD'),
+                  'log': str(log), 'logSha256': digest(log.read_bytes()), 'safeEnvironmentKeys': sorted({**env, **extra_env}),
+                  'explicitEnvironmentOverrides': extra_env}
+        counts = re.search(r'\s+(\d+) pass\s+\n\s*(\d+) fail\s+\n\s*(\d+) expect\(\) calls\s+\nRan (\d+) tests across (\d+) files', output)
+        if counts:
+            result['actualBunCounts'] = dict(zip(['pass', 'fail', 'expect', 'tests', 'files'], map(int, counts.groups())))
+        results.append(result)
+        save(label + '.json', result)
+        print(json.dumps(result, ensure_ascii=False), flush=True)
+finally:
+    after, original_after, artifacts_after = source(CHECKOUT), source(ORIGINAL), artifacts()
+    save('source-after.json', after)
+    save('original-source-after.json', original_after)
+    save('artifacts-after.json', artifacts_after)
+    equal = {'sourcePreserved': before == after, 'originalPreserved': original_before == original_after,
+             'artifactsPreserved': artifacts_before == artifacts_after, 'artifactCountBefore': artifacts_before['fileCount'],
+             'artifactCountAfter': artifacts_after['fileCount'], 'sourceRegularFileCount': before['regularFileCount'],
+             'sourceGitlinkCount': before['gitlinkCount'], 'sourceSymlinkCount': before['symlinkCount'],
+             'artifactManifestSha256Before': artifacts_before['manifestSha256'],
+             'artifactManifestSha256After': artifacts_after['manifestSha256'],
+             'privateRootContentsBeforeDeletion': sorted(str(p.relative_to(PRIVATE)) for p in PRIVATE.rglob('*'))}
+    shutil.rmtree(PRIVATE)
+    equal['ownPrivateRootDeleted'] = not PRIVATE.exists()
+    save('immutability-cleanup.json', equal)
+    save('batch-receipt.json', {'candidate': EXPECTED, 'results': results, 'immutabilityAndCleanup': equal})
+    print(json.dumps(equal, ensure_ascii=False), flush=True)

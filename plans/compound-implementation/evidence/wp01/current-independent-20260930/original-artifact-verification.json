@@ -1,0 +1,238 @@
+{
+  "recordedAt": "2026-09-30T14:20:18.768Z",
+  "reportPath": "/Users/t/.agents/state/rox-compound-70/wp01-holdout-20260930T125031Z/work/report.json",
+  "reportSha256": "f7db97bcba07368dc143e6ef61428974c51fd0a10e0943c9ffb0ca76ec45bbdd",
+  "receiptPath": "/Users/t/.agents/state/rox-compound-70/wp01-holdout-20260930T125031Z/work/report.receipt.json",
+  "receiptSha256": "1d178c07e218c24422354272edefafb6f0b5c78140ffbc34aa6a4a75915bf674",
+  "artifacts": [
+    {
+      "path": "work/baseline-before-resolver-remedy.evidence.json",
+      "sha256": "9dbbe313bebcfd5d4c1b0a2ac51e338c259d10dc44cecf94ee07277a0786eeee",
+      "bytes": 8389
+    },
+    {
+      "path": "work/baseline-before-resolver-remedy.execution.json",
+      "sha256": "aed0d3195bfac38059eedf0d03b03df80c854590dcddd8f4d423ee76829c03d8",
+      "bytes": 1338
+    },
+    {
+      "path": "work/baseline-before-resolver-remedy.stderr.log",
+      "sha256": "805718f24d3fc2bf9513044ffe8290fd595eb8715c7a366107c0e8d631e2f638",
+      "bytes": 797
+    },
+    {
+      "path": "work/baseline-before-resolver-remedy.stdout.log",
+      "sha256": "0de168bf6b7525064a6a7cdb73fac22086d2e96a546280bf21d6c4d0f347ba8f",
+      "bytes": 28
+    },
+    {
+      "path": "work/baseline-preflight.evidence.json",
+      "sha256": "a0402a4f712b917b798b16c88d0e3d68f9df98e6f15ba41badb168f08769bd63",
+      "bytes": 5999
+    },
+    {
+      "path": "work/baseline-preflight.execution.json",
+      "sha256": "0201bb271104b28fca159484ab00ea2a571c2488b58d86b7b1df2c1af53f1c87",
+      "bytes": 1338
+    },
+    {
+      "path": "work/baseline-preflight.stderr.log",
+      "sha256": "aab222e4c164adb6ba8de70533be6dee477dcd8c8f0a581cee165d27391f7b4c",
+      "bytes": 1518
+    },
+    {
+      "path": "work/baseline-preflight.stdout.log",
+      "sha256": "0de168bf6b7525064a6a7cdb73fac22086d2e96a546280bf21d6c4d0f347ba8f",
+      "bytes": 28
+    },
+    {
+      "path": "work/baseline.evidence.json",
+      "sha256": "83895c1c90bafa10f6a4bfa85ef57025090267224f77eedfa87f1463cd758de3",
+      "bytes": 8389
+    },
+    {
+      "path": "work/baseline.execution.json",
+      "sha256": "57bc9f59efaa382921b815b0d846cce522ee85b923c7f53ac01aedeef00810b9",
+      "bytes": 1426
+    },
+    {
+      "path": "work/baseline.stderr.log",
+      "sha256": "ea8752d42d0eb3bd99b68510d3ec4f9f576bec55467915275e354b9d8a224f4b",
+      "bytes": 793
+    },
+    {
+      "path": "work/baseline.stdout.log",
+      "sha256": "0de168bf6b7525064a6a7cdb73fac22086d2e96a546280bf21d6c4d0f347ba8f",
+      "bytes": 28
+    },
+    {
+      "path": "work/baseline.tsconfig.json",
+      "sha256": "6aa9f56973bad9028c19c8b0464b9a69c7bf171741413413a8ebce5cf20b3225",
+      "bytes": 574
+    },
+    {
+      "path": "work/cleanup-verification.json",
+      "sha256": "a2d47ae6d40240c70a39793d0eada83eaea909b18222f4a75bc12c2278e49393",
+      "bytes": 2506
+    },
+    {
+      "path": "work/discovery-failure.json",
+      "sha256": "425792b08f9fc61f9704dc24dc65d8b4819da087f9a51eb5616ac68478cc79c0",
+      "bytes": 312
+    },
+    {
+      "path": "work/finalize.ts",
+      "sha256": "0b49c1d1ebc869546fe112bf8257bd9f0af0773a21298f821111a83d5230074d",
+      "bytes": 15815
+    },
+    {
+      "path": "work/holdout.test.ts",
+      "sha256": "b8222c7836463af8639e7f9a85475470ffb50effd5ac6a12918e1894803fe741",
+      "bytes": 18540
+    },
+    {
+      "path": "work/mutation-invocation-failure.execution.json",
+      "sha256": "588892c0691b7e042bdbc67cdd5f66ab682bdc28af84b4ec4e283efabb5804e0",
+      "bytes": 1469
+    },
+    {
+      "path": "work/mutation-invocation-failure.stderr.log",
+      "sha256": "bad9686041c6253b4a2fc0a1e554cca8a217662288020e2657bab5eb241575fb",
+      "bytes": 243
+    },
+    {
+      "path": "work/mutation-invocation-failure.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "work/mutation-with-override.evidence.json",
+      "sha256": "6210ec95dfe84b693576c8c53f486f7d9951d6367b2999da9a127d087e5eb8d1",
+      "bytes": 6893
+    },
+    {
+      "path": "work/mutation-with-override.execution.json",
+      "sha256": "e5bbb40f12c40cff7f1a1ce509283bc130fb6ce0183b01886be0db0a65c7a3b5",
+      "bytes": 1462
+    },
+    {
+      "path": "work/mutation-with-override.stderr.log",
+      "sha256": "3544c1e71450bc04557ea9e61953c047cf5a07a81c858214310112f90a617146",
+      "bytes": 2699
+    },
+    {
+      "path": "work/mutation-with-override.stdout.log",
+      "sha256": "0de168bf6b7525064a6a7cdb73fac22086d2e96a546280bf21d6c4d0f347ba8f",
+      "bytes": 28
+    },
+    {
+      "path": "work/mutation.evidence.json",
+      "sha256": "768fb8c43a4c24d6f5d7b640e7746db7b39aba61ee83ab8e361459b5e32b967f",
+      "bytes": 6893
+    },
+    {
+      "path": "work/mutation.execution.json",
+      "sha256": "06a3cf85fe3d420959685c7ca41ee8a4b546c6efc7694474284badc1c115fc84",
+      "bytes": 1426
+    },
+    {
+      "path": "work/mutation.stderr.log",
+      "sha256": "ff93e7819d061837fd338811b2aa829337865cb09273d3747f21f9ab45e2d7d8",
+      "bytes": 2484
+    },
+    {
+      "path": "work/mutation.stdout.log",
+      "sha256": "0de168bf6b7525064a6a7cdb73fac22086d2e96a546280bf21d6c4d0f347ba8f",
+      "bytes": 28
+    },
+    {
+      "path": "work/mutation.tsconfig.json",
+      "sha256": "b8611da6f2b43b8d9024767277edb9a05c8ac6c13632082200cd109c97fd6e74",
+      "bytes": 574
+    },
+    {
+      "path": "work/preparation.json",
+      "sha256": "f336baef0a3cdb82bc29a26095871b55d8b411f7d6a00cd5eeb6a3dd28871641",
+      "bytes": 1115
+    },
+    {
+      "path": "work/prepare.ts",
+      "sha256": "7efc91e06582ff6d937df8b4e632c04e88ae97889a17085b7a5a7a19e27979bd",
+      "bytes": 3084
+    },
+    {
+      "path": "work/run.ts",
+      "sha256": "92a21f26bdb90d6e748b6d5f4d58aa18fc8ac2c8448223dc24902ae4adbeab88",
+      "bytes": 2668
+    },
+    {
+      "path": "work/source-verification.json",
+      "sha256": "11e75133c70a7cf9e4c7dee14e0b8da93f56bfeb939ed025fe65f658279e220e",
+      "bytes": 643367
+    },
+    {
+      "path": "work/tsconfig.json",
+      "sha256": "6aa9f56973bad9028c19c8b0464b9a69c7bf171741413413a8ebce5cf20b3225",
+      "bytes": 574
+    }
+  ],
+  "sourceManifestSha256": "a4d68cd581172e9bd11d5398698c7b8fbc004d29a607443a8eb4b777f4e91835",
+  "originalSnapshotFilesVerified": 1802,
+  "originalOracleSha256": "b8222c7836463af8639e7f9a85475470ffb50effd5ac6a12918e1894803fe741",
+  "originalOutcomes": {
+    "accepted": true,
+    "evidence_path": "work/source-verification.json",
+    "testPath": "work/holdout.test.ts",
+    "identicalFinalTestSha256": "b8222c7836463af8639e7f9a85475470ffb50effd5ac6a12918e1894803fe741",
+    "productionUsesRealPostgreSQLIssuerAccountsHttpWs": true,
+    "mocks": false,
+    "baseline": {
+      "pass": 6,
+      "fail": 0,
+      "assertions": 64,
+      "exitCode": 0,
+      "executionPath": "work/baseline.execution.json"
+    },
+    "mutation": {
+      "pass": 4,
+      "fail": 2,
+      "assertions": 41,
+      "exitCode": 1,
+      "executionPath": "work/mutation.execution.json",
+      "failedLog": "work/mutation.stderr.log"
+    },
+    "finalEvidence": [
+      {
+        "variant": "baseline",
+        "seed": "wp01-independent-list-privacy-20260930-7c31e952",
+        "schema": "holdout_baseline_7ee5b5aa5db741ad",
+        "runId": "7ee5b5aa-5db7-41ad-8a74-227e0b970a40",
+        "counters": {
+          "http": 16,
+          "rpc": 15,
+          "accountsProvisioned": 3,
+          "projectsCreated": 4
+        },
+        "restarts": 1,
+        "scenarioInputSha256": "4fb9351a6edde3c1e837c87b7b331eac218a0f8a3846e34a884ee5cd0915fbbc",
+        "evidencePath": "work/baseline.evidence.json"
+      },
+      {
+        "variant": "mutation",
+        "seed": "wp01-independent-list-privacy-20260930-7c31e952",
+        "schema": "holdout_mutation_ced3a48ba5084fa5",
+        "runId": "ced3a48b-a508-4fa5-9cab-4648088ef799",
+        "counters": {
+          "http": 15,
+          "rpc": 14,
+          "accountsProvisioned": 3,
+          "projectsCreated": 4
+        },
+        "restarts": 1,
+        "scenarioInputSha256": "93f6ffaf6eb4d797508c982b4b066d7aecf81cd904c1e52f2d05b5c408801935",
+        "evidencePath": "work/mutation.evidence.json"
+      }
+    ]
+  },
+  "untouchedOriginal": true
+}

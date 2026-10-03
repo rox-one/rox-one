@@ -1,0 +1,13 @@
+{
+  "command": [
+    "python3",
+    "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/complete-verification.py"
+  ],
+  "failedLine": 38,
+  "error": "AssertionError at count parser",
+  "reason": "regex demanded extra whitespace before newline; Bun emits pass/fail lines without trailing whitespace and singular file",
+  "applicationFailure": false,
+  "buildOrSmokeRerun": false,
+  "smokeLogSha256": "62da46d877f7a1f6731311c5fc08b5b3c82ab5ae570fd8b4a103616c79693aaa",
+  "closureAlreadyPassed": true
+}

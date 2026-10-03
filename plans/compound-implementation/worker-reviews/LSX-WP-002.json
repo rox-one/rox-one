@@ -1,0 +1,301 @@
+{
+  "task_id": "LSX-WP-002-preflight",
+  "attempt_id": "06883bb0dc34e7c9665db7044115e235",
+  "packet_hash": "78bf636b2fb925d20d8cde2a725afe4602b58912abc19e89d7611a49d6e1b82b",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-002",
+  "featureComplete": false,
+  "state": "PREFLIGHT_ONLY_IMPLEMENTATION_BLOCKED_ON_FOUNDATION",
+  "scope": {
+    "mode": "inspect-and-write-owned-report",
+    "tier": "bounded-workflow",
+    "actualOwnedOutput": "plans/compound-implementation/worker-reviews/LSX-WP-002.json",
+    "productWrites": false,
+    "buildsTestsNativeUiNetwork": "NOT_RUN_BY_INSTRUCTION",
+    "codegraph": "Unavailable: tool reported no .codegraph index; used scoped reads and literal searches instead.",
+    "sourceDiscovery": "Scoped find failed with upstream 402; explicit packet paths and direct imports remained readable.",
+    "evidenceFreshness": "Whole-file digests identify inspected working-tree bytes, not a claim of runtime readiness or a clean committed checkout. The four normative product evidence hashes match the specification baseline. Root wave0 integration can invalidate any reference; rehash and re-read changed seams before implementation. input_revision is preserved from the dispatch packet, not independently asserted as current HEAD."
+  },
+  "dependencies": ["LSX-WP-001"],
+  "dependencyNote": "The preflight dispatch depends_on=[] means this inspection is runnable now; it does not remove the implementation dependency LSX-WP-001 in both normative records and the exact progress entry.",
+  "foundationGates": [
+    {
+      "gate": "WAVE0_COMMIT_AND_ACCEPTED_LSX_WP_001",
+      "classification": "implementation_launch_boundary",
+      "evidence": ["user dispatch: implementation starts after root wave0 commit and accepted dependency receipts", "plans/lark-suite-reference/work-packages.json:1413-1455,1927-1937"],
+      "requiredReceipt": "Root wave0 committed generation plus LSX-WP-001 artifact and authoritative readback acceptance. Reconcile its delivered EntityOrigin, durable origin/alias map and descriptor policy API with this package; its specification promises these but does not prove a durable source-binding CAS service exists.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "EG-IDENTITY",
+      "classification": "explicit_external_prerequisite_not_internal_DAG_edge",
+      "evidence": ["plans/lark-suite-reference/work-packages.json:74-82,1620-1622", "packages/server-core/src/transport/types.ts:7-13", "packages/server-core/src/transport/server.ts:111-120,787-795", "packages/server-core/src/handlers/handler-deps.ts:56-72"],
+      "requiredReceipt": "Macro WP-01/WP-03 authenticated actor/source grants and read-time revoke at exact implementation revision. Current RequestContext has only clientId/workspaceId/webContentsId, validators return booleans rather than principal claims, and HandlerDeps exposes no personal-source policy service. A server-owned principal resolver is necessary; neither payload owner nor ctx.workspaceId is ownership proof.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "gate": "RS-DRV-01",
+      "classification": "hidden_published_spec_foundation_dependency",
+      "evidence": ["docs/rox-suite/published/RS-BASE-01.md:95-109", "docs/rox-suite/published/RS-NOTE-01.md:61-64,79-82", "plans/lark-suite-reference/work-packages.json:1862-1890"],
+      "requiredReceipt": "Both linked published specifications require RS-DRV-01 (#1109). Obtain root's accepted Drive identity/projection/grant implementation receipt for the source picker context. This is not listed in LSX-WP-002's explicit dependency array; do not silently add an edge or treat issue publication as implementation readiness.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "RS-DOC-01",
+      "classification": "hidden_published_spec_foundation_dependency",
+      "evidence": ["docs/rox-suite/published/RS-NOTE-01.md:37,61-64,79-82"],
+      "requiredReceipt": "The linked RS-NOTE-01 specification requires RS-DOC-01 (#1110) for shared document authority/cutover. Root must establish the accepted prerequisite boundary for this task-source slice; do not implement Notes conversion or claim shared authority from the personal picker. Retain the published dependency as an unresolved foundation gate, separate from LSX-WP-001.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "DURABLE_BINDING_CAS_RECEIPT_OUTBOX",
+      "classification": "hidden_mechanism_prerequisite_not_explicit_EG_EFFECTS_edge",
+      "evidence": ["docs/lark-suite-reference/07-domain-entity-model.md:169-189,191-199", "docs/rox-suite/published/RS-BASE-01.md:48-56", "packages/server-core/src/tasks/personal-persist.ts:83-95,204-209,234-239", "plans/lark-suite-reference/work-packages.json:1770-1799,1847-1850"],
+      "requiredReceipt": "Accepted native binding authority supporting expectedBindingRevision, policyVersion, operationId/idempotencyKey, atomic mapping+receipt+outbox intent, journal recovery and exact readback hash. Existing tmp+rename task writes offer revision increments, not binding CAS, fsync durability or atomic receipt/event persistence. No second task or grant store may be created. EG-EFFECTS is defined elsewhere in the specification but is not an explicit LSX-WP-002 prerequisite; flag the mechanism gap for root rather than rewriting the DAG.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "RPC_ROUTING_CONTRADICTION_AND_MISSING_PRINCIPAL_WIRING_SCOPE",
+      "classification": "hidden_current_code_integration_gate",
+      "evidence": ["packages/server-core/src/handlers/rpc/personal-tasks.ts:1-5,38-68", "packages/shared/src/protocol/routing.ts:514,896-901", "packages/server-core/src/transport/server.ts:751-795"],
+      "requiredReceipt": "The handler comment calls personalTasks LOCAL_ONLY, but all five personalTasks channels are actually in REMOTE_ELIGIBLE_CHANNELS. Handlers also omit the available access:'localElectron' registration option. Preserve local personal functionality and close remote exposure through reviewed root integration, not by trusting the comment. Updating routing.ts or adding transport/HandlerDeps principal wiring exceeds the two authorized shared patch files and requires an amended reviewed packet or accepted foundation implementation.",
+      "scopeExpansionRequests": [
+        {"path": "packages/shared/src/protocol/routing.ts", "symbol": "LOCAL_ONLY_CHANNELS / REMOTE_ELIGIBLE_CHANNELS", "change": "Move legacy config-dir personalTasks LIST/PUT/DELETE/MIGRATE/CHANGED to LOCAL_ONLY; classify new binding operations only after their authority and schema are approved."},
+        {"path": "packages/server-core/src/transport/types.ts", "symbol": "RequestContext", "change": "Expose or support resolving verified server-held actor claims; do not synthesize principal from workspaceId/clientId."},
+        {"path": "packages/server-core/src/handlers/handler-deps.ts", "symbol": "HandlerDeps", "change": "Compose accepted principal/source-binding/policy authority if not already supplied by the foundation; no local surrogate ACL."}
+      ],
+      "state": "BLOCKED_PENDING_REVIEWED_SCOPE_OR_FOUNDATION"
+    },
+    {
+      "gate": "REAL_PICKER_PROTOCOL_AND_RENDERER_SCOPE",
+      "classification": "hidden_delivery_scope_gap",
+      "evidence": ["plans/lark-suite-reference/execution-packages.json:129-138", "plans/lark-suite-reference/work-packages.json:1770-1808,1851", "packages/shared/src/protocol/channels.ts:866-873", "packages/shared/src/protocol/events.ts:81", "docs/rox-suite/published/RS-BASE-01.md:58-67"],
+      "requiredReceipt": "Allowed product paths contain only two new TS domain modules and two shared source files; no renderer component, locale, preload/protocol boundary or composition root is writable. Existing personalTasks constants provide only list/put/delete/migrate/changed. Obtain a reviewed integration scope for the existing Base/Notes host's source picker, all ten i18n files, typed transport registration and event invalidation. A test-only isolated picker is not an acceptable surface. NotesViewHost is a published seam, not an inspected or authorized renderer patch in this preflight.",
+      "state": "BLOCKED_PENDING_REVIEWED_UI_PROTOCOL_SCOPE"
+    },
+    {
+      "gate": "REFERENCE_MANIFEST_AND_PATH_LEASES",
+      "classification": "explicit_execution_gate",
+      "evidence": ["plans/lark-suite-reference/work-packages.json:1605-1608,1927-1937", "plans/lark-suite-reference/execution-packages.json:142-145,174-184"],
+      "requiredReceipt": "Resolve reference_package_revision/digest from delivery manifest, verify spec_ref hashes, reconcile original product baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab with committed wave0/prerequisite generation, and acquire exclusive leases for platform-contract.ts and personal-tasks.ts. Current manifest input digests match the dispatch. No checkout or Git mutation was performed.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "ACTUAL_UI_AND_DOMAIN_PROOF_RUNNERS",
+      "classification": "required_proof_lane_prerequisite",
+      "evidence": ["plans/lark-suite-reference/work-packages.json:1810-1829,1844-1852", "docs/rox-suite/published/RS-NOTE-01.md:70-76"],
+      "requiredReceipt": "Discover supported actual Electron runner and native authoritative readback/restart environment after scope approval. No builds, tests, UI or network runs are authorized for this preflight. Do not fabricate a UI command, screenshot or runtime receipt.",
+      "state": "NOT_RUN"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/core/src/bases/source-binding.ts",
+    "packages/server-core/src/bases/personal-source-binding.ts",
+    "tests/lark-suite-extension/lsx-wp-002.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-002.spec.ts"
+  ],
+  "ownedNewFileContributions": [
+    {
+      "path": "packages/core/src/bases/source-binding.ts",
+      "currentEvidence": "Missing in scoped file-presence lookup; normative proposal only.",
+      "proposedChange": "Define SourceBinding, personal origin requiring sourceStoreId/ownerPrincipalId/nativeId, capability-bearing allowed source choice, bindPersonalSource request with mandatory expectedBindingRevision/policyVersion and operation identity, listAllowedSources request, committed receipt/ref/revision/hash result and a discriminated eight-error union. Reuse accepted EntityOrigin/Rox2EntityRef instead of parallel identity/grant contracts. Payload owner/workspace identify a requested target, never authorize it. Provide runtime boundary validators with denied results carrying no protected title/body/count.",
+      "proposedSymbols": ["SourceBinding", "PersonalSourceOrigin", "AllowedSourceChoice", "BindPersonalSourceRequest", "ListAllowedSourcesRequest", "SourceBindingResult"]
+    },
+    {
+      "path": "packages/server-core/src/bases/personal-source-binding.ts",
+      "currentEvidence": "Missing in scoped file-presence lookup; existing PersonalTaskPersistStore remains canonical.",
+      "proposedChange": "Implement an adapter over accepted principal/policy/binding authority and existing PersonalTaskPersistStore. Resolve store roots from server-approved sourceStoreId+owner, never payload filesystem paths. Authorize before enumeration/title/count, reread current binding/policy on resolve/query/write and replay, reject nativeId-only resolution. Commit binding revision+origin mapping+receipt/event through native authority; no second task database. Preserve native task IDs and existing migration marker semantics within each approved source. Revoke subscriptions/projections via existing event pipeline.",
+      "proposedSymbols": ["bindPersonalSource", "listAllowedSources", "resolvePersonalSourceTask"]
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-002.test.ts",
+      "currentEvidence": "Missing in scoped file-presence lookup; tests not executed.",
+      "proposedChange": "Use isolated real source roots and accepted authority implementation for identity collisions, wrong-principal/unbound denial with no title/count, binding CAS race, idempotent replay, restart migration privacy, revoke/current-policy recheck and all typed errors. Preserve generated-case seeds and exact fixture hashes. Seed omission of sourceStoreId/ownerPrincipalId in lookup and assert the two named semantic failures; do not accept a mock echo or infrastructure failure."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-002.spec.ts",
+      "currentEvidence": "Missing in scoped file-presence lookup; no authorized renderer production seam or actual runner established.",
+      "proposedChange": "After root integrates the real picker into the existing host, exercise provenance-distinguished same-title sources, owner/audience help, allowed capabilities, denied/conflict/offline/error states, revoke purge, reload and keyboard/pointer/IME/focus/zoom/reduced-motion/theme/locales/font assertions. Bind evidence to actual Electron and exact integrated bytes, not a synthetic fixture surface."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef",
+      "baseSha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5",
+      "change": "Integrate LSX-WP-001's accepted additive origin/ref representation so personal task refs preserve workspaceId/entityId/revisionId/accountNamespace and link to durable composite origin (sourceStoreId,ownerPrincipalId,nativeId). Do not change native task.id or infer owner from workspace. Re-read after prerequisite integration; no parallel EntityRef type.",
+      "reason": "Current ref has no explicit personal origin and accountNamespace alone is not owner/source authorization. Normative source-scoped identity must survive reload."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "registerExternalBinding",
+      "baseSha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5",
+      "change": "At the personal-source registration seam consume the new module's deterministic composite mapping with every identity slot present. Reuse encoded four-slot formatRox2ExternalBindingKey and existing collision/workspace quarantine; a concrete collision-safe mapping is provider='personal-task', account=JSON.stringify([sourceStoreId,ownerPrincipalId]), remoteType='task', remoteId=nativeId. Final format must align with accepted foundation contract. Register only after current policy allows the binding and persist through the accepted mapping authority, not this in-memory Map alone. Never fall back to nativeId-only or title-based lookup.",
+      "reason": "Current external binding mechanism already prevents delimiter collisions, but carries no intrinsic source-store/owner semantics and the Map is not a durable receipt. Encoding a complete origin reuses rather than replaces it."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "authorizeRox2Action",
+      "baseSha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5",
+      "change": "Wire source-binding authorization to the accepted common evaluator using authenticated actor, action, EntityRef/origin, current source/workspace binding and policyVersion. Retain deny on missing verified actor/grant; require current owner/source policy for personal read/query/write instead of treating an actorId+permission match or membership as sufficient. Migrate callers through root integration if the accepted evaluator changes the API; no parallel Base-only grant store.",
+      "reason": "Current function checks only actorId and permission against caller-supplied grants, with no resource/source/policy/revocation context."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/personal-tasks.ts",
+      "symbol": "personalTasksStore",
+      "baseSha256": "bfb9080767d6a349c5d09a0cbe29190bccf6b8d70a88b4dd1bbfa6c0932d758f",
+      "change": "Route adapter access through a server-approved sourceStoreId+owner-to-root resolution. Keep PersonalTaskPersistStore canonical and native ids unchanged; do not derive a root or owner from UI workspace or unvalidated payload. Reuse the existing root-aware cache behavior where suitable; it currently keeps only one root/store at a time and must not become a nativeId-only origin cache.",
+      "reason": "The existing default is resolveConfigDir() and the singleton has no principal provenance. Multiple approved sources need explicit resolution before any store access."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/personal-tasks.ts",
+      "symbol": "registerPersonalTasksHandlers",
+      "baseSha256": "bfb9080767d6a349c5d09a0cbe29190bccf6b8d70a88b4dd1bbfa6c0932d758f",
+      "change": "Use verified actor/source authority for LIST/PUT/DELETE/MIGRATE before invoking existing service functions; ensure the source-bound Base operations enter the same accepted command/policy boundary with typed requests and receipts. Register legacy config-dir channels with the existing access:'localElectron' restriction where appropriate to preserve desktop behavior and fail closed remotely; this restriction is not principal authorization. Replace changed() to:'all' publication with actor/source-authorized delivery and common durable sourceBindingChanged invalidation; clear revoked projections/subscriptions. Do not return migrated snapshots or task titles to an unbound actor. Missing identity/binding authority yields typed missingDependency/denied, not a simulated success. New protocol registration/event schema requires root-approved extra scope.",
+      "reason": "LIST is contextless; mutations use ctx only for exclude clientId; all-client events have only {at}. Handlers have no owner/binding checks and current routing contradicts the LOCAL_ONLY comment."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "No guessed UI-workspace ownership",
+      "currentEvidence": "registerPersonalTasksHandlers LIST ignores ctx; personalTasksStore defaults to configDir. RequestContext provides no principal. Rox2EntityRef.workspaceId scopes a ref but does not prove personal ownership.",
+      "seams": ["personalTasksStore", "registerPersonalTasksHandlers", "authorizeRox2Action", "RequestContext"],
+      "requiredChange": "Resolve verified actor and approved source ownership server-side, then explicit workspace binding and current policy; deny before reading title/body/count. Reject forged payload actor/owner/workspace and nativeId-only lookup.",
+      "verification": "Actual authenticated command/query calls: rightful owner allowed; second principal, workspace member without source grant, forged payload and unbound actor denied with no protected metadata; no store read before policy admission.",
+      "missingPrerequisite": "Accepted LSX-WP-001/EG-IDENTITY and reviewed transport composition scope.",
+      "state": "BLOCKED_NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "explicit binding receipt survives reload; personal tasks remain private",
+      "currentEvidence": "PersonalTaskPersistStore durably writes per-id JSON and migration marker, but has no source binding receipt. migratePersonalTasks deduplicates only within one store by task.id and returns the full snapshot; registerExternalBinding uses a Map.",
+      "seams": ["PersonalTaskPersistStore.put/get/readMigration", "migratePersonalTasks", "registerExternalBinding"],
+      "requiredChange": "Persist explicit binding/composite origin under existing authority with revision/hash/receipt and reversible migration mapping. Preserve native task bytes/IDs and private audience; do not auto-bind on import or workspace switch. Rebuild projections from authoritative mapping after restart.",
+      "verification": "Two real source roots with identical nativeId remain distinct; explicit bind then reload/full service restart reads same exact ref/revision/hash. Migrate each local source, replay and restart; unrelated workspace principal still sees no task title/count. Crash-before/after binding commit gives no phantom success.",
+      "missingPrerequisite": "Native binding authority with atomic receipt/mapping persistence and restart runner.",
+      "state": "BLOCKED_NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "HandlerFn args/results are any; RequestContext has no actor. PersonalTasks channels expose only legacy operations. source-binding.ts is absent. Required errors are validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat.",
+      "seams": ["HandlerFn", "RequestContext", "RPC_CHANNELS.personalTasks", "proposed source-binding.ts"],
+      "requiredChange": "Define validated bind/list contracts, mandatory expectedBindingRevision/policyVersion and typed committed result/error variants in core; integrate types/validators at accepted server and renderer transport boundaries. Trust only verified transport actor; identify targets separately from authorization.",
+      "verification": "Compile actual affected server/renderer contracts and run malformed request, missing actor, unsupported version, stale revision and denied-result redaction checks on the real boundary. Exercise all eight error discriminants without converting infrastructure failure to success.",
+      "missingPrerequisite": "Reviewed protocol/renderer scope and EG-IDENTITY claims contract; compile/tests prohibited in this preflight.",
+      "state": "BLOCKED_NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "PersonalTaskPersistStore.put returns numeric revision after rename, but RPC PUT returns only written/rejected and loses revision. No binding receipt or outbox commit exists in inspected seams; writeJsonAtomic/writeRecord do not fsync or transact receipt+events.",
+      "seams": ["PersonalTaskPersistStore.put", "writeRecord", "putPersonalTasks", "proposed bindPersonalSource"],
+      "requiredChange": "Commit expected binding revision, command identity, origin mapping, receipt and event intent through accepted native journal/transaction authority. Return committed only after authoritative durability and exact readback; queued/optimistic state never means bound/shared.",
+      "verification": "Read binding and origin at exact returned ref/revision/hash before and after full restart. Inject crash between data/receipt/event steps and prove recovery to one acknowledged result without lost receipt or duplicate event; hash inspected persisted authority bytes.",
+      "missingPrerequisite": "Native binding CAS/receipt/outbox recovery gate and approved integrated generation.",
+      "state": "BLOCKED_NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "Existing migration marker makes migration replay return already-migrated, but no expectedBindingRevision exists and task put performs read/increment/write without binding CAS. Tests for this package are absent.",
+      "seams": ["migratePersonalTasks", "PersonalTaskPersistStore.put", "proposed bindPersonalSource/listAllowedSources"],
+      "requiredChange": "Add behavior-driven source/authority tests: bind/list/resolve happy path; wrong principal and unbound denial; competing same-revision binds exactly one commit; same operation replay same receipt; changed payload under same operation rejected; restart recovery and revoke before replay. Preserve logs/input hashes/seeds, including failed attempts.",
+      "verification": "After authorized implementation run bun test tests/lark-suite-extension/lsx-wp-002.test.ts, plus actual server authoritative restart/replay scenarios. Observe exact expected/actual outcomes, not source assertions or mocked forwarding.",
+      "missingPrerequisite": "Implemented native source authority and runnable integrated service; test execution prohibited here.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "Normative mutant removes sourceStoreId/ownerPrincipalId from cache/key lookup; required assertions are 'two origins yield two refs' and 'unbound viewer receives no task title/count'. Existing key builder encodes four external slots, but no personal origin adapter test exists.",
+      "seams": ["formatRox2ExternalBindingKey/registerExternalBinding", "proposed resolvePersonalSourceTask/listAllowedSources", "tests/lark-suite-extension/lsx-wp-002.test.ts"],
+      "requiredChange": "Create deterministic isolated synthetic owners/stores with the same nativeId and different protected titles. Run green baseline, then exact key/lookup omission mutant; evaluate both named identity and privacy assertions and record exact semantic failure, seed and evaluated source/input hashes. If one mutant does not trigger both, improve the fixture or controls, not the acceptance.",
+      "verification": "Baseline passes; omission mutant returns one ref or discloses title/count and is rejected by named assertions. Separate syntax/runner/timeout failures from sensitivity. Retain before/after logs and exact mutated bytes.",
+      "missingPrerequisite": "Implemented origin-aware lookup and native policy path; mutation execution prohibited here.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "Package explicitly requires source picker with owner/audience/provenance. No renderer path is writable; the only UI path is a proposed test. Published Base specification names existing NotesViewHost, but this preflight did not inspect an out-of-scope renderer. No actual UI or computed font evidence exists.",
+      "seams": ["base.listAllowedSources(workspaceId)", "existing Base/Notes picker host pending root-scoped discovery"],
+      "requiredChange": "Integrate into the existing host, no second picker/store. Differentiate same-title source labels by owner and source provenance; show audience and capability/freshness before binding, with denied/conflict/retry/offline states and retained focus. Use t() with all ten locales, RU default, preserve theme, actual Rox Mono, keyboard and hover/focus/click help, reduced-motion support.",
+      "verification": "Supported actual Electron runner: pointer and keyboard choice/commit/cancel, IME composition, Escape focus return, revoke while open, 200% zoom, light/dark theme, RU and locale parity, loaded font via computed style/font readiness, reduced-motion. Screenshots/ARIA/viewport and revision hashes accompany semantic assertions; fixtures alone do not pass.",
+      "missingPrerequisite": "Reviewed UI/locale/protocol scope, real host integration and discovered native runner. This DoD is required, not N/A.",
+      "state": "BLOCKED_NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "Specification requires SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE, ACTUAL_ELECTRON_UI. Only source inspection and report validation are authorized now; featureComplete=false.",
+      "seams": ["source-binding contracts", "native personal-source authority", "real picker integration"],
+      "requiredChange": "Root integrates reviewed patch on exact committed generation; record independent receipts for every mandatory proof lane, original attempts, expected/observed results, source/artifact hashes and seeded control. Provider/collaboration receipts apply only if those lanes are actually exercised; they cannot substitute for native proof.",
+      "verification": "Acceptance review correlates each required lane to the integrated revision and authoritative readback; reject toast-only, queued-only or isolated UI evidence and reject stale source hashes. Preflight verifier confirms report lineage/hashes only, never feature completion.",
+      "missingPrerequisite": "Implementation plus all required observed proof lanes after root integration.",
+      "state": "PREFLIGHT_ONLY_ALL_FEATURE_LANES_NOT_RUN"
+    },
+    {
+      "criterion": "Two personal Tasks with the same nativeId from different stores remain distinct namespaced EntityRefs.",
+      "currentEvidence": "PersonalTask only has id/title/notes and optional semantic TaskLink source; that source is not owner/store identity. Persist paths key by id within root. External binding has robust encoded slots but no personal-store convention.",
+      "seams": ["PersonalTask", "PersonalTaskPersistStore.recordPath", "formatRox2ExternalBindingKey", "registerExternalBinding"],
+      "requiredChange": "Map the complete (sourceStoreId,ownerPrincipalId,nativeId) through accepted origin namespace, retaining each native id and monotonic revision. Key all ref/caches/lookups by origin and binding scope, not title/nativeId; use existing encoded external-binding mechanism and collision quarantine.",
+      "verification": "Same nativeId in two approved roots gives unequal entityIds; same origin replay yields identical ref after restart; owner changes do not alias; reserved delimiter/unicode values round-trip and never collapse origins. No duplicate native task copy is created in Base.",
+      "missingPrerequisite": "Accepted durable EntityOrigin map from LSX-WP-001 and approved identity encoding.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "base.bindPersonalSource(binding,expectedBindingRevision) and base.listAllowedSources(workspaceId) return allowed choices/capabilities or denied without title/body.",
+      "currentEvidence": "Neither operation is in inspected personalTasks protocol constants; LIST returns complete tasks/meta/migration without per-source authorization. Proposed source-binding files are absent.",
+      "seams": ["RPC_CHANNELS.personalTasks", "readPersonalTasks", "registerPersonalTasksHandlers", "proposed source-binding.ts/personal-source-binding.ts"],
+      "requiredChange": "Add typed operations through approved command registry and server actor policy. Filter sources before resolving labels, audience and capability details; authorize current binding on query and write. Mandatory binding CAS cannot be emulated with unguarded task put.",
+      "verification": "Owner sees only approved source choices and honest capabilities; unbound viewer sees no protected choice/title/body/count; forged source IDs denied; stale binding revision conflict; future format unknownFormat; unsupported offline path offlineUnsupported rather than fake success.",
+      "missingPrerequisite": "Identity/binding authority and protocol integration scope.",
+      "state": "BLOCKED_NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "Revoked binding closes source subscription and clears permitted projections; base.sourceBindingChanged has canonical envelope.",
+      "currentEvidence": "changed() broadcasts {at} to all clients excluding the writer. BroadcastEventMap declares only that payload; no sourceBindingChanged envelope, per-principal subscription or revoke hook is present in inspected personal handlers.",
+      "seams": ["registerPersonalTasksHandlers.changed", "pushTyped", "BroadcastEventMap[personalTasks.CHANGED]", "authorizeRox2Action"],
+      "requiredChange": "Emit accepted canonical binding event with eventId/workspaceId/entityRef/entityRevision/actorRef/occurredAt/schemaVersion/correlationId/causationId/sourceCommandId through common durable outbox and verified event alias. Authorize recipient and event replay, close revoked subscriptions and purge derived allowed rows/previews/selection/context; do not promise immediate erasure on disconnected devices.",
+      "verification": "Open picker/query under binding, revoke before next read/write and on reconnect; both fail closed, hidden title/count removed, subscriptions close and old buffered event replay cannot restore private content. Assert no cross-owner all-client event metadata leak and no duplicate event effect after restart.",
+      "missingPrerequisite": "Common policy/revoke/event pipeline, durable outbox and approved protocol/UI invalidation scope.",
+      "state": "BLOCKED_NOT_IMPLEMENTED_NOT_RUN"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "Rox2EntityRef / Rox2ExternalBinding / registerExternalBinding", "lineStart": 232, "lineEnd": 371, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "authorizeRox2Action", "lineStart": 592, "lineEnd": 610, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/server-core/src/tasks/personal-persist.ts", "symbol": "PersonalTaskPersistStore / parsePersonalTaskPersistFile", "lineStart": 57, "lineEnd": 254, "sha256": "024688ed60a4795ff0d25d080a98e45b47690abdb74077314734ce830443e49a"},
+    {"path": "packages/server-core/src/handlers/rpc/personal-tasks.ts", "symbol": "personalTasksStore / registerPersonalTasksHandlers", "lineStart": 27, "lineEnd": 69, "sha256": "bfb9080767d6a349c5d09a0cbe29190bccf6b8d70a88b4dd1bbfa6c0932d758f"},
+    {"path": "packages/core/src/tasks/personal/types.ts", "symbol": "TaskLink / PersonalTask", "lineStart": 17, "lineEnd": 75, "sha256": "4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"},
+    {"path": "packages/server-core/src/tasks/personal-tasks-service.ts", "symbol": "readPersonalTasks / putPersonalTasks / migratePersonalTasks", "lineStart": 25, "lineEnd": 105, "sha256": "a4b41cbdfaa663872b5a70f2c81a51ce81c761973c8dd955eb89285de3f2429e"},
+    {"path": "packages/server-core/src/transport/types.ts", "symbol": "RequestContext / HandlerFn / RpcHandlerOptions", "lineStart": 7, "lineEnd": 24, "sha256": "844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path": "packages/server-core/src/transport/server.ts", "symbol": "WsRpcServer.onRequest", "lineStart": 743, "lineEnd": 813, "sha256": "16d942fd168f2fb705db0a89ea6af27df08cdb2aa4492a0fe46520d6cd67e5a3"},
+    {"path": "packages/server-core/src/handlers/handler-deps.ts", "symbol": "HandlerDeps", "lineStart": 56, "lineEnd": 72, "sha256": "501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path": "packages/shared/src/protocol/routing.ts", "symbol": "REMOTE_ELIGIBLE_CHANNELS personalTasks entries", "lineStart": 896, "lineEnd": 901, "sha256": "c8fb48dde141d0ebcc20eec69e8386797d31a8b2b84dfbbd93afcad883b670c2"},
+    {"path": "packages/shared/src/protocol/channels.ts", "symbol": "RPC_CHANNELS.personalTasks", "lineStart": 866, "lineEnd": 873, "sha256": "89177712f430183f89657f08f985ea50861c8d774652dbb56471d5eb7cca0aaa"},
+    {"path": "packages/shared/src/protocol/events.ts", "symbol": "BroadcastEventMap personalTasks.CHANGED", "lineStart": 79, "lineEnd": 82, "sha256": "2c488ef99e2bf5e9600c20b9795dd70360901e8a378e478df2410728b44fee62"},
+    {"path": "plans/lark-suite-reference/work-packages.json", "symbol": "work_packages[1] LSX-WP-002", "lineStart": 1599, "lineEnd": 1939, "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "packages[1] LSX-WP-002", "lineStart": 100, "lineEnd": 186, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/rox-suite/published/RS-BASE-01.md", "symbol": "Commands / Permissions / Dependencies / GitHub dependency links", "lineStart": 48, "lineEnd": 109, "sha256": "78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"},
+    {"path": "docs/rox-suite/published/RS-NOTE-01.md", "symbol": "Domain authority / Dependencies / Общие quality gates", "lineStart": 35, "lineEnd": 84, "sha256": "48915bdf82194df2ade2c05b2b7db346e4f4f01be854b3aa0756da08fe24c002"},
+    {"path": "docs/lark-suite-reference/07-domain-entity-model.md", "symbol": "Personal Task source-scoped identity", "lineStart": 24, "lineEnd": 62, "sha256": "cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path": "docs/lark-suite-reference/07-domain-entity-model.md", "symbol": "Permissions / Events and consistency / Migration rules", "lineStart": 159, "lineEnd": 201, "sha256": "cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path": "docs/lark-suite-reference/05-rox-bases-design.md", "symbol": "Canonical границы / Proposed contracts / Native field mapping", "lineStart": 43, "lineEnd": 105, "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"}
+  ],
+  "nextExecutableAction": "Root first commits wave0 and accepts LSX-WP-001 plus EG-IDENTITY artifact/readback receipts; verifies hidden RS-DRV-01/RS-DOC-01 boundary and native binding CAS/receipt authority; reviews added routing/transport/protocol/real-picker integration scope; resolves manifest and acquires shared path leases. Rehash/re-read every changed source against the new committed generation before dispatching implementation of the four normative new files. No product implementation is authorized from this preflight report alone.",
+  "risks": [
+    "Critical source/spec contradiction: personalTasks handler comment says LOCAL_ONLY but actual routing classifies all five channels REMOTE_ELIGIBLE. The available localElectron access gate is not opted into; no owner check exists in handlers. This is source evidence, not a demonstrated remote exploit.",
+    "Authenticated transport connection is not authenticated principal identity: boolean token/cookie validation and clientId/workspaceId cannot authorize personal ownership.",
+    "The two normative new product modules and two shared files cannot by themselves deliver a mounted renderer picker, all-locale translations or complete typed transport/revoke wiring. Do not mark UI criteria N/A or substitute isolated fixtures.",
+    "Existing monotonic task revisions and tmp+rename are not binding CAS or an atomic command/receipt/outbox transaction; unguarded check/write can lose acknowledged changes and emit unrecoverable events.",
+    "PersonalTask.source is a semantic TaskLink, not sourceStoreId/ownerPrincipalId; treating it as authority would conflate provenance and permission.",
+    "Existing Map registration enforces workspace mismatch quarantine; cross-workspace source projections must follow explicit approved binding semantics rather than bypassing quarantine or sharing on import.",
+    "Migration deduplication and marker are root-local, while snapshots include tasks and meta; projecting the unchanged migration result to another principal leaks private content.",
+    "All-client changed events and buffered replay need recipient policy fencing; no protected title/count is acceptable even after revocation or in source picker summaries.",
+    "Linked published specs use historical baseline 249b3b44220bcfbd7d467de9cfc18f76e1c37807, package baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab, and dispatch input a21aeab1da5a67e56788384ff930945b0f487879. Publication, baseline citations and matching source digests are not accepted integrated/runtime receipts.",
+    "Evidence is a concurrent working-tree snapshot. Any root integration changing a referenced file invalidates its hash-bound conclusions and requires inspection at the new accepted generation."
+  ],
+  "verification": {
+    "featureLanes": "NOT_RUN_BY_INSTRUCTION",
+    "reportOnlyObservedResult": {"validPreflight": true, "featureComplete": false, "references": 19},
+    "reportOnlyExitCode": 0,
+    "reportOnlyCommand": ["python3", "plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/LSX-WP-002.json", "${ROX_COMPOUND_PACKET_ROOT}/LSX-WP-002/packet.json"],
+    "meaning": "Read-only report verification checks lineage, required fields, current source digests and featureComplete=false. It does not execute product tests or establish any DoD criterion."
+  },
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

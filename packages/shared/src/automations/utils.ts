@@ -149,16 +149,21 @@ export interface MatcherContext {
  * Do not call directly from feature code. Use matcherMatchesWithContext()/adapters
  * so condition gating is never bypassed.
  */
-function matchesBasePredicate(matcher: AutomationMatcher, event: AutomationEvent, matchValue: string): boolean {
+function matchesBasePredicate(matcher: AutomationMatcher, event: AutomationEvent, matchValue: string, payload: Record<string, unknown>): boolean {
   if (matcher.enabled === false) return false;
   if (event === 'SchedulerTick') {
-    return !!matcher.cron && matchesCron(matcher.cron, matcher.timezone);
+    const timestamp = payload.timestamp;
+    return !!matcher.cron && matchesCron(
+      matcher.cron,
+      matcher.timezone,
+      typeof timestamp === 'number' || typeof timestamp === 'string' ? timestamp : Date.now(),
+    );
   }
-  if (!matcher.matcher) return true; // No matcher means match all
+  if (!matcher.matcher) return true;
   try {
     return new RegExp(matcher.matcher).test(matchValue);
   } catch {
-    return false; // Invalid regex — skip
+    return false;
   }
 }
 
@@ -170,7 +175,7 @@ export function matcherMatchesWithContext(
   event: AutomationEvent,
   context: MatcherContext,
 ): boolean {
-  if (!matchesBasePredicate(matcher, event, context.matchValue)) return false;
+  if (!matchesBasePredicate(matcher, event, context.matchValue, context.payload)) return false;
 
   if (matcher.conditions?.length) {
     return evaluateConditions(matcher.conditions, {

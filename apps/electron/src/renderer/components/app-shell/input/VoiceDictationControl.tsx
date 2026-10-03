@@ -36,9 +36,11 @@ export function VoiceDictationControl({
   const { t } = useTranslation()
   const [prefs, setPrefs] = useState<VoicePrefs | null>(null)
   const [recording, setRecording] = useState(false)
+  const [modelEvidence, setModelEvidence] = useState<string | null>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
+  const captureIdRef = useRef(0)
 
   useEffect(() => {
     let cancelled = false
@@ -47,15 +49,15 @@ export function VoiceDictationControl({
     }).catch(() => {})
     const offChanged = window.electronAPI.onVoiceChanged?.((next) => setPrefs(next))
     const offJob = window.electronAPI.onVoiceJob?.((job) => {
-      if (job.job === 'ready') setRecording(false)
-      if (job.job === 'cancelled' || job.job === 'failed') setRecording(false)
+      if (job.job === 'ready' || job.job === 'cancelled' || job.job === 'failed') setRecording(false)
     })
     const offHotkey = window.electronAPI.onVoiceHotkey?.((payload) => {
       if (payload.command === 'toggle') toggleRef.current()
-      if (payload.command === 'cancel') void window.electronAPI.cancelVoiceCapture?.()
+      if (payload.command === 'cancel') cancelRecordingRef.current()
     })
     return () => {
       cancelled = true
+      captureIdRef.current += 1
       offChanged?.()
       offJob?.()
       offHotkey?.()
@@ -70,6 +72,7 @@ export function VoiceDictationControl({
   const finishRecording = useCallback(async () => {
     const recorder = recorderRef.current
     recorderRef.current = null
+    const captureId = captureIdRef.current
     setRecording(false)
     stopTracks()
     if (!recorder) return
@@ -77,50 +80,95 @@ export function VoiceDictationControl({
     chunksRef.current = []
     try {
       const audioBase64 = await blobToBase64(blob)
+      if (captureId !== captureIdRef.current) return
       await window.electronAPI.sendVoiceChunk?.({ audioBase64 })
       const job = await window.electronAPI.stopVoiceCapture?.()
       const result = await window.electronAPI.transcribeVoice({
         audioBase64,
         mimeType: blob.type || 'audio/webm',
       })
+      if (captureId !== captureIdRef.current) return
+      if (result.resolvedModelId && result.requestedModelId) {
+        setModelEvidence(t('settings.input.voiceActualModel', {
+          engine: result.engine,
+          requested: result.requestedModelId,
+          resolved: result.resolvedModelId,
+        }))
+      }
       const text = result.text.trim()
       if (text) onInputChange?.(inputValue ? `${inputValue} ${text}` : text)
+      else if (result.noSpeech) toast.error(t('settings.input.voiceNoSpeech'))
       void job
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('chat.dictate'))
+      if (captureId === captureIdRef.current) {
+        toast.error(error instanceof Error ? error.message : t('chat.dictate'))
+      }
     }
   }, [inputValue, onInputChange, stopTracks, t])
 
+  const cancelRecording = useCallback(() => {
+    captureIdRef.current += 1
+    const recorder = recorderRef.current
+    recorderRef.current = null
+    chunksRef.current = []
+    setRecording(false)
+    stopTracks()
+    if (recorder && recorder.state !== 'inactive') recorder.stop()
+    void window.electronAPI.cancelVoiceCapture?.()
+  }, [stopTracks])
+
+  const cancelRecordingRef = useRef(cancelRecording)
+  cancelRecordingRef.current = cancelRecording
+
   const startRecording = useCallback(async () => {
+    if (prefs?.sttEngine === 'cloud-rox' && !prefs.cloudAsrConsent) {
+      toast.error(t('settings.input.voiceAsrConsentDesc'))
+      return
+    }
     if (!navigator.mediaDevices?.getUserMedia) {
       toast.error(t('settings.input.voiceOffline'))
       return
     }
+    const captureId = ++captureIdRef.current
+    let pendingStream: MediaStream | null = null
     try {
       await window.electronAPI.startVoiceCapture?.()
-      const stream = await navigator.mediaDevices.getUserMedia({
+      pendingStream = await navigator.mediaDevices.getUserMedia({
         audio: prefs?.selectedInputDeviceId
           ? { deviceId: { exact: prefs.selectedInputDeviceId } }
           : true,
       })
+      const stream = pendingStream
+      if (captureId !== captureIdRef.current) {
+        stream.getTracks().forEach((track) => track.stop())
+        pendingStream = null
+        await window.electronAPI.cancelVoiceCapture?.()
+        return
+      }
       await window.electronAPI.grantVoicePermission?.()
       streamRef.current = stream
+      pendingStream = null
       const recorder = new MediaRecorder(stream)
       chunksRef.current = []
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) chunksRef.current.push(event.data)
       }
       recorder.onstop = () => {
+        if (recorderRef.current !== recorder) return
         void finishRecording()
       }
       recorderRef.current = recorder
       setRecording(true)
       recorder.start()
     } catch (error) {
-      await window.electronAPI.cancelVoiceCapture?.()
-      toast.error(error instanceof Error ? error.message : t('chat.dictate'))
+      pendingStream?.getTracks().forEach((track) => track.stop())
+      if (captureId === captureIdRef.current) {
+        captureIdRef.current += 1
+        await window.electronAPI.cancelVoiceCapture?.()
+        toast.error(error instanceof Error ? error.message : t('chat.dictate'))
+      }
     }
-  }, [finishRecording, prefs?.selectedInputDeviceId, t])
+  }, [finishRecording, prefs?.selectedInputDeviceId, prefs?.sttEngine, prefs?.cloudAsrConsent, t])
 
   const toggle = useCallback(() => {
     if (disabled) return
@@ -147,8 +195,13 @@ export function VoiceDictationControl({
   }, [toggle])
 
   useEffect(() => () => {
-    recorderRef.current?.stop()
+    captureIdRef.current += 1
+    const recorder = recorderRef.current
+    recorderRef.current = null
+    chunksRef.current = []
+    recorder?.stop()
     stopTracks()
+    void window.electronAPI.cancelVoiceCapture?.()
   }, [stopTracks])
 
   const label = recording ? t('chat.dictateStop') : t('chat.dictate')
@@ -162,7 +215,7 @@ export function VoiceDictationControl({
         hasSelection={recording}
         showChevron={false}
         onClick={toggle}
-        tooltip={t('chat.dictateTooltip')}
+        tooltip={modelEvidence ? `${t('chat.dictateTooltip')} · ${modelEvidence}` : t('chat.dictateTooltip')}
         disabled={disabled}
       />
     </div>

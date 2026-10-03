@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-30T14:13:31.380218+00:00",
+  "task": "WP-01 durable create-only offline intent",
+  "state": "EXACT_PROPOSALS_MECHANISM_VERIFIED_NATIVE_PENDING",
+  "checkoutWrites": false,
+  "gitBuildElectronInstallActions": false,
+  "manifest": {
+    "path": "/tmp/rox-wp01-offline-queue/patch-manifest.json",
+    "sha256": "2cfbf2943b2ce5fe567ffa7fdc6e31e32cabfe5565f8caafe47b427f530bd33e",
+    "bytes": 10829
+  },
+  "inputManifest": {
+    "path": "/tmp/rox-wp01-offline-queue/input-manifest.json",
+    "sha256": "e6f0d3992394d2a00fe1b02a870139801270653fbeb1c24f030b6cf6d2713c44",
+    "bytes": 593894
+  },
+  "sourceValidation": {
+    "path": "/tmp/rox-wp01-offline-queue/source-validation.json",
+    "sha256": "b78c7f603ebbcbeecd7dedafb5fdb58925626b42e9719effcbc184c69919dc0c",
+    "bytes": 4549
+  },
+  "styleValidation": {
+    "path": "/tmp/rox-wp01-offline-queue/style-validation.json",
+    "sha256": "925d99aaf784d4776126b629f4f37b0efd75a0070a907bed126585a93f73e482",
+    "bytes": 1111
+  },
+  "sourceGeneration": {
+    "rootCheckpointReportedByRoot": "51f0a0c7",
+    "identity": "per-file SHA256; 3445 input bytes unchanged; 24 proposed/base pairs verified; commit history advancement does not substitute byte validation",
+    "serverSha256": "b44b1de53867b6d46312e3f350b142ebaa5d1700cc6f7fce3d2e53c875c75621",
+    "repositorySha256": "9899ca80d645ea243e395debcec2fa9405f64e6e3c945ff706a5e533269e0a6d"
+  },
+  "testRuns": [
+    {
+      "artifact": {
+        "path": "/tmp/rox-wp01-offline-queue/authoritative-baseline-04.log",
+        "sha256": "40588bf7c86269ed1dc60894eac03639a261cc45bd2fc4d94e734c8b4d06589e",
+        "bytes": 12694
+      },
+      "pass": 137,
+      "fail": 0,
+      "assertions": 744
+    },
+    {
+      "artifact": {
+        "path": "/tmp/rox-wp01-offline-queue/authoritative-recovery-05.log",
+        "sha256": "0ce5f642299e5b09375307ffc8ca8624b718d687e75c39ffb7cd7fffc4fb615f",
+        "bytes": 3384
+      },
+      "pass": 20,
+      "fail": 0,
+      "assertions": 317
+    },
+    {
+      "artifact": {
+        "path": "/tmp/rox-wp01-offline-queue/authority-crash-06.log",
+        "sha256": "c58239c2d17d59fbe9ead8d02c115a911f20ac9665d945521c739a7ae42341a1",
+        "bytes": 2963
+      },
+      "pass": 15,
+      "fail": 0,
+      "assertions": 313
+    }
+  ],
+  "strictTypecheck": {
+    "mechanismExitCode": 0,
+    "artifact": {
+      "path": "/tmp/rox-wp01-offline-queue/typecheck-mechanism-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "uiProposedExitCode": 2,
+    "uiBaselineExitCode": 2,
+    "sameDiagnostics": true,
+    "diagnostic": "Existing unchanged packages/shared/src/voice/runtime.ts:177 fake fetch lacks Bun fetch.preconnect; no ignores/exemptions introduced",
+    "proposed": {
+      "path": "/tmp/rox-wp01-offline-queue/typecheck-06.log",
+      "sha256": "55c767a886ff8e7121935b7fb8352a80c57b6992b330289e6ea4bf4c7b2628a0",
+      "bytes": 208
+    },
+    "baseline": {
+      "path": "/tmp/rox-wp01-offline-queue/typecheck-ui-original-baseline.log",
+      "sha256": "55c767a886ff8e7121935b7fb8352a80c57b6992b330289e6ea4bf4c7b2628a0",
+      "bytes": 208
+    }
+  },
+  "negativeControls": {
+    "receipt": {
+      "path": "/tmp/rox-wp01-offline-queue/negative-controls.json",
+      "sha256": "b3e2f66d701470f8c9c5dd46b286525dc7d8a6a012d5637b7ee47fa25dc26971",
+      "bytes": 884
+    },
+    "behavioralFailures": [
+      {
+        "path": "/tmp/rox-wp01-offline-queue/durable-write-removed.log",
+        "sha256": "181df28b27da76d8e541a06d4cb96ba431dfb0db081e04eaace857145cb01c44",
+        "bytes": 1027
+      },
+      {
+        "path": "/tmp/rox-wp01-offline-queue/scope-binding-bypassed.log",
+        "sha256": "19e998e6977284291f9f401e55cf4080faa3e572cc5b7951d13987aae060629b",
+        "bytes": 1767
+      }
+    ],
+    "restoredProductionSha256": "86328212987fb1a5018371e0ac69508a53dba46140cb264e975be7ed52b8a6ad"
+  },
+  "failureHistory": [
+    {
+      "path": "/tmp/rox-wp01-offline-queue/authoritative-baseline-03.log",
+      "sha256": "98c27c4a5643321159fe1f75a22f3475948e1e3c50063573640439c77ef914a9",
+      "bytes": 5620
+    },
+    {
+      "path": "/tmp/rox-wp01-offline-queue/baseline-01.log",
+      "sha256": "8dfa68734ea52f464006eb16e6cc317029d3df98295ec9b15ffba127dc68c2b3",
+      "bytes": 1059
+    },
+    {
+      "path": "/tmp/rox-wp01-offline-queue/baseline-02.log",
+      "sha256": "d668809c407519f513047a3d75acfeacde4b7a55662bf7647567dfd5842a802a",
+      "bytes": 2045
+    },
+    {
+      "path": "/tmp/rox-wp01-offline-queue/typecheck-01.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/tmp/rox-wp01-offline-queue/typecheck-02.log",
+      "sha256": "06b6b2cc2430efd071301c2ae944f7678c3215be1b1f352905c90cfb11c1ee0b",
+      "bytes": 8601
+    },
+    {
+      "path": "/tmp/rox-wp01-offline-queue/typecheck-03.log",
+      "sha256": "0514386d751086363a20c3d3fbaadb859084ba66c0d7ad553264ffb02ab2c478",
+      "bytes": 11218
+    },
+    {
+      "path": "/tmp/rox-wp01-offline-queue/typecheck-04.log",
+      "sha256": "55c767a886ff8e7121935b7fb8352a80c57b6992b330289e6ea4bf4c7b2628a0",
+      "bytes": 208
+    },
+    {
+      "path": "/tmp/rox-wp01-offline-queue/typecheck-05.log",
+      "sha256": "55c767a886ff8e7121935b7fb8352a80c57b6992b330289e6ea4bf4c7b2628a0",
+      "bytes": 208
+    },
+    {
+      "path": "/tmp/rox-wp01-offline-queue/typecheck-06.log",
+      "sha256": "55c767a886ff8e7121935b7fb8352a80c57b6992b330289e6ea4bf4c7b2628a0",
+      "bytes": 208
+    }
+  ],
+  "actualEnvironment": [
+    "Bun 1.4.2 on this host",
+    "actual protected PostgreSQL environment, random owned schema, actual two migrations",
+    "actual local issuer Argon2/JWT/verified Actor HTTP and WS authority",
+    "canonical CredentialManager strict encrypted v3 in isolated profile without OS keychain CLI",
+    "actual Bun child processes SIGKILL after durable queued write and uncertain write following committed reply loss"
+  ],
+  "verifiedBehavior": [
+    "intent durable before first send, no SQL effects until explicit retry",
+    "same process profile restart preserves exact immutable commandId/idempotencyKey/payload and exact credential/session/workspace fingerprint",
+    "actual WS accepted-reply cut retains uncertain and replays original PostgreSQL receipt without duplicate project/event",
+    "offline cancel persists and conflicting draft cannot replace intent",
+    "live revoke/membership removal terminal block without outbound CREATE or private title",
+    "new same-principal session and other principal cannot view/replay still-queued prior private draft",
+    "foreign local workspace/body Actor injection denied",
+    "wrong-password current operation remains quiesced with exact durable canonical credential/configuration preserved",
+    "explicit disconnect removes recognized intent/proof and credential; unknown future intent/proof bytes preserved failclosed",
+    "existing native routing and all 15 existing canonical crash tests retained passing",
+    "seven UI keys mirrored in all 12 locale catalogs, sorted key and interpolation parity pass"
+  ],
+  "limits": [
+    "Root has not applied proposals; native Electron UI acceptance is pending ROOT GO and scout receipt",
+    "Full UI strict compiler has one demonstrated unchanged baseline error; mechanism strict compiler passes",
+    "cached scope cannot observe remote revoke while offline and never authorizes server effect; retry revalidates online",
+    "one intent per local workspace, exact session binding; no general queue, background retry, DLQ or provider side effect",
+    "cancel removes retry intent and cannot undo an already committed server Project",
+    "wrong-password live quiesce is operation/process state; retained valid canonical pair remains intentionally recoverable, not permanently revoked",
+    "SIGKILL proof is not physical power loss or simultaneous independent profile main-writer proof",
+    "Final143/program release gates remain separate and unclosed"
+  ]
+}

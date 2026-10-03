@@ -1,0 +1,1767 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-30T12:51:43.198162+00:00",
+  "package": "WP-01",
+  "decision": "NOT_COMPLETE",
+  "normative": {
+    "path": "plans/macro-integration/work-packages.json",
+    "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "bootstrapContract": {
+      "owns": [
+        "transport-authenticated Actor",
+        "workspace membership",
+        "minimal Project identity row",
+        "owner-only policy enforced server-side",
+        "Project create transaction+idempotent receipt",
+        "native Project RPC/list/detail"
+      ],
+      "laterGeneralization": [
+        "WP-02 registry kinds/aliases/relations",
+        "WP-03 full grant roles/inheritance/revoke",
+        "WP-04 generic outbox/inbox/revision command framework"
+      ],
+      "acceptanceScope": "minimal private Project feature; not complete Project cross-surface parity"
+    }
+  },
+  "checkoutWrites": false,
+  "sourceHashes": {
+    "packages/core/src/rox2/platform-contract.ts": "cd5c85783eabd35ec0b8963cce2e1ec4fcd87d4d3dce1225bca6a502e9d52ca4",
+    "apps/workspace-service/src/auth/verified-actor.ts": "637174c864da1e69732d3f33170f63054619721fd91a87a422f7b19f60f62cf4",
+    "packages/server-core/src/transport/server.ts": "f61389662c1b10024bb8773aaa09b2b6c78c21c3bb136f6b7ed05ffc47e14ea8",
+    "apps/workspace-service/src/auth/postgres-identity.ts": "8b8124e55e98d9ef29617e06b107db3643cca205e6af48f9c16cae95f9b2d146",
+    "apps/workspace-service/src/modules/identity/repository.ts": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0",
+    "packages/shared/src/workspace-domain/identity/contracts.ts": "7bbbae09fa49763bebddfc57f76b2d43a6c5ca7f32b31772c6c858933b82f265",
+    "apps/workspace-service/migrations/01-domain-contract.sql": "1e98bc23bdbf921f8e72e67194544666ffb33911f577b7581fa32ea9deeda900",
+    "apps/workspace-service/src/server.ts": "6b4b004b607687f9ecd712466c2971d8086a362366ab8fe05f38ed6e8d96ada0",
+    "apps/electron/src/transport/routed-client.ts": "033aece0e542d9f5462fd0258901b23748a34018a2bb005a8a8fd6b05d6641c3",
+    "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24",
+    "tests/macro-integration/ui/wp-01-electron.test.ts": "b6489291bd615f5b86e495445caa05ba65be9ac4cd653dc5cd729c7754a49955",
+    "apps/workspace-service/src/http.ts": "5ec7953dc652bba0cd0119922a38f039ed5554ccb391e795c24e87868cd9cd2c",
+    "apps/electron/src/main/project-authority-journal.ts": "7751125f2e6c6703d68bdb2d7b48dedf3fc8d68a51ebcd03336b336902d45960",
+    "apps/workspace-service/src/modules/identity/commands.ts": "992990c86d31b84cf32ee6b226b7b7b8a052485445622c51f2e5e6828cc718f4",
+    "tests/macro-integration/wp-01-service-crash.test.ts": "88775ff80f721d1becf24f8edf89c103ead84f9eb319c9c3417816bd7db065c6",
+    "tests/macro-integration/wp-01.test.ts": "14ea28d854f0c916ab74822cc6a5a41ec5bf3cdb2b36cdb3b0bf322555b5ba54",
+    "docs/macro-integration/wp-01-implementation.md": "38eb6ee587bed2d28193c12f2c521fddb78f61382c80bd881005ba21dbd82718",
+    "docs/macro-integration/wp-01-runtime.md": "4293bcd510b27888688aef91e14c840ed10f0858174edda76694c911e26365d4",
+    "apps/electron/src/main/project-authority.ts": "6f35b1b5bd76b7c8fecff5107e6bab72ad428f6858f6da0803e3c0d2b4f03540",
+    "docs/macro-integration/22-test-plan.md": "352907bb646f9c1dd35442259fb33f07f73597a730e553c40afc6ea228568152",
+    "apps/workspace-service/src/database/migrations.ts": "4970d00faab5c59246fb9a3f81a988b547a1ce4739f21574e95a5c6b97632de6",
+    "apps/workspace-service/package.json": "2ef3565e748c3f3917d4df258cc3c0da6dde1bda0769e1af122488f2eab92985"
+  },
+  "rows": [
+    {
+      "id": "WP01-01",
+      "normativeSection": "bootstrapContract.owns",
+      "criterion": "transport-authenticated Actor",
+      "status": "IMPLEMENTED_MECHANISM_PROOF",
+      "implementation": [
+        {
+          "path": "packages/core/src/rox2/platform-contract.ts",
+          "symbol": "export interface AuthenticatedActor",
+          "line": 18,
+          "sha256": "cd5c85783eabd35ec0b8963cce2e1ec4fcd87d4d3dce1225bca6a502e9d52ca4"
+        },
+        {
+          "path": "apps/workspace-service/src/auth/verified-actor.ts",
+          "symbol": "export function createVerifiedActorResolver",
+          "line": 58,
+          "sha256": "637174c864da1e69732d3f33170f63054619721fd91a87a422f7b19f60f62cf4"
+        },
+        {
+          "path": "packages/server-core/src/transport/server.ts",
+          "symbol": "workspaceAuthority",
+          "line": 121,
+          "sha256": "f61389662c1b10024bb8773aaa09b2b6c78c21c3bb136f6b7ed05ffc47e14ea8"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-final-composed-tests.log",
+          "sha256": "17d2eb3229b4f12670b2f9fe64026b916a9b655c062bcc297cfb80e82a4e50b5",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        }
+      ],
+      "scope": "minimal private Project feature; not complete Project cross-surface parity",
+      "remaining": "Final native proof and delivered current revision remain separate gates."
+    },
+    {
+      "id": "WP01-02",
+      "normativeSection": "bootstrapContract.owns",
+      "criterion": "workspace membership",
+      "status": "IMPLEMENTED_MECHANISM_PROOF",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/auth/postgres-identity.ts",
+          "symbol": "workspace_member",
+          "line": 145,
+          "sha256": "8b8124e55e98d9ef29617e06b107db3643cca205e6af48f9c16cae95f9b2d146"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "private async membership",
+          "line": 105,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-final-composed-tests.log",
+          "sha256": "17d2eb3229b4f12670b2f9fe64026b916a9b655c062bcc297cfb80e82a4e50b5",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-review-patches/verification-receipt.json",
+          "sha256": "4a8268c2a303a75ec1194e94f813c0427ac8aac1579da54fd7284660a50fdc47",
+          "available": true
+        }
+      ],
+      "scope": "minimal private Project feature; not complete Project cross-surface parity",
+      "remaining": "Final native proof and delivered current revision remain separate gates."
+    },
+    {
+      "id": "WP01-03",
+      "normativeSection": "bootstrapContract.owns",
+      "criterion": "minimal Project identity row",
+      "status": "IMPLEMENTED_MECHANISM_PROOF",
+      "implementation": [
+        {
+          "path": "packages/shared/src/workspace-domain/identity/contracts.ts",
+          "symbol": "export interface SharedProject",
+          "line": 23,
+          "sha256": "7bbbae09fa49763bebddfc57f76b2d43a6c5ca7f32b31772c6c858933b82f265"
+        },
+        {
+          "path": "apps/workspace-service/migrations/01-domain-contract.sql",
+          "symbol": "CREATE TABLE project (",
+          "line": 46,
+          "sha256": "1e98bc23bdbf921f8e72e67194544666ffb33911f577b7581fa32ea9deeda900"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-final-composed-tests.log",
+          "sha256": "17d2eb3229b4f12670b2f9fe64026b916a9b655c062bcc297cfb80e82a4e50b5",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        }
+      ],
+      "scope": "minimal private Project feature; not complete Project cross-surface parity",
+      "remaining": "Final native proof and delivered current revision remain separate gates."
+    },
+    {
+      "id": "WP01-04",
+      "normativeSection": "bootstrapContract.owns",
+      "criterion": "owner-only policy enforced server-side",
+      "status": "IMPLEMENTED_MECHANISM_PROOF",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "member.role !== 'owner'",
+          "line": 139,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "private async readProject",
+          "line": 195,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-final-composed-tests.log",
+          "sha256": "17d2eb3229b4f12670b2f9fe64026b916a9b655c062bcc297cfb80e82a4e50b5",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-review-patches/verification-receipt.json",
+          "sha256": "4a8268c2a303a75ec1194e94f813c0427ac8aac1579da54fd7284660a50fdc47",
+          "available": true
+        }
+      ],
+      "scope": "minimal private Project feature; not complete Project cross-surface parity",
+      "remaining": "Final native proof and delivered current revision remain separate gates."
+    },
+    {
+      "id": "WP01-05",
+      "normativeSection": "bootstrapContract.owns",
+      "criterion": "Project create transaction+idempotent receipt",
+      "status": "IMPLEMENTED_MECHANISM_PROOF",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "async createSharedProject",
+          "line": 132,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        },
+        {
+          "path": "apps/workspace-service/migrations/01-domain-contract.sql",
+          "symbol": "CREATE TABLE project_create_receipt",
+          "line": 62,
+          "sha256": "1e98bc23bdbf921f8e72e67194544666ffb33911f577b7581fa32ea9deeda900"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-service-crash/service-crash-receipt.json",
+          "sha256": "a1c3772639fee6ad8f0e6eae3ca5a08aa9f358454c8ee32c98f35fc3f7591b73",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-review-patches/verification-receipt.json",
+          "sha256": "4a8268c2a303a75ec1194e94f813c0427ac8aac1579da54fd7284660a50fdc47",
+          "available": true
+        }
+      ],
+      "scope": "minimal private Project feature; not complete Project cross-surface parity",
+      "remaining": "Final native proof and delivered current revision remain separate gates."
+    },
+    {
+      "id": "WP01-06",
+      "normativeSection": "bootstrapContract.owns",
+      "criterion": "native Project RPC/list/detail",
+      "status": "IMPLEMENTED_MECHANISM_PROOF",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/server.ts",
+          "symbol": "registerSharedProjectHandlers",
+          "line": 62,
+          "sha256": "6b4b004b607687f9ecd712466c2971d8086a362366ab8fe05f38ed6e8d96ada0"
+        },
+        {
+          "path": "apps/electron/src/transport/routed-client.ts",
+          "symbol": "invoke(",
+          "line": 67,
+          "sha256": "033aece0e542d9f5462fd0258901b23748a34018a2bb005a8a8fd6b05d6641c3"
+        },
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "SharedProjectDetails",
+          "line": 169,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "minimal private Project feature; not complete Project cross-surface parity",
+      "remaining": "Final native proof and delivered current revision remain separate gates."
+    },
+    {
+      "id": "WP01-07",
+      "normativeSection": "acceptanceCriteria",
+      "criterion": "A opens private Project in native ROX",
+      "status": "NATIVE_EVIDENCE_PENDING",
+      "implementation": [
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "SharedProjectDetails",
+          "line": 169,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        },
+        {
+          "path": "tests/macro-integration/ui/wp-01-electron.test.ts",
+          "symbol": "shared-project-create-submit",
+          "line": 641,
+          "sha256": "b6489291bd615f5b86e495445caa05ba65be9ac4cd653dc5cd729c7754a49955"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "",
+      "remaining": "Root/scout must attach current actual Electron A/B result and screenshot review."
+    },
+    {
+      "id": "WP01-08",
+      "normativeSection": "acceptanceCriteria",
+      "criterion": "B without membership gets 403 and no title through RPC/HTTP",
+      "status": "NATIVE_EVIDENCE_PENDING",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/http.ts",
+          "symbol": "createWorkspaceHttpHandler",
+          "line": 140,
+          "sha256": "5ec7953dc652bba0cd0119922a38f039ed5554ccb391e795c24e87868cd9cd2c"
+        },
+        {
+          "path": "packages/server-core/src/transport/server.ts",
+          "symbol": "workspaceAuthority",
+          "line": 121,
+          "sha256": "f61389662c1b10024bb8773aaa09b2b6c78c21c3bb136f6b7ed05ffc47e14ea8"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "private async readProject",
+          "line": 195,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "",
+      "remaining": "Root/scout must attach current actual Electron A/B result and screenshot review."
+    },
+    {
+      "id": "WP01-09",
+      "normativeSection": "acceptanceCriteria",
+      "criterion": "client cannot forge principal/workspace",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/http.ts",
+          "symbol": "createWorkspaceHttpHandler",
+          "line": 140,
+          "sha256": "5ec7953dc652bba0cd0119922a38f039ed5554ccb391e795c24e87868cd9cd2c"
+        },
+        {
+          "path": "packages/server-core/src/transport/server.ts",
+          "symbol": "workspaceAuthority",
+          "line": 121,
+          "sha256": "f61389662c1b10024bb8773aaa09b2b6c78c21c3bb136f6b7ed05ffc47e14ea8"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "private async readProject",
+          "line": 195,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "",
+      "remaining": "Bind passing evidence to final integrated source hashes."
+    },
+    {
+      "id": "WP01-10",
+      "normativeSection": "featureCompleteness",
+      "criterion": "UI",
+      "status": "NATIVE_EVIDENCE_PENDING",
+      "implementation": [
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "SharedProjectsSection",
+          "line": 24,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "Existing Projects and Connections; real native run pending.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-11",
+      "normativeSection": "featureCompleteness",
+      "criterion": "routing",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/electron/src/transport/routed-client.ts",
+          "symbol": "invoke(",
+          "line": 67,
+          "sha256": "033aece0e542d9f5462fd0258901b23748a34018a2bb005a8a8fd6b05d6641c3"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "Only explicit domain.project.* authority route; local host methods stay live.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-12",
+      "normativeSection": "featureCompleteness",
+      "criterion": "entity model",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "packages/shared/src/workspace-domain/identity/contracts.ts",
+          "symbol": "export interface SharedProject",
+          "line": 23,
+          "sha256": "7bbbae09fa49763bebddfc57f76b2d43a6c5ca7f32b31772c6c858933b82f265"
+        },
+        {
+          "path": "packages/core/src/rox2/platform-contract.ts",
+          "symbol": "formatRox2EntityId",
+          "line": 227,
+          "sha256": "cd5c85783eabd35ec0b8963cce2e1ec4fcd87d4d3dce1225bca6a502e9d52ca4"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        }
+      ],
+      "scope": "Minimal typed workspace/ref DTO; full registry WP02.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-13",
+      "normativeSection": "featureCompleteness",
+      "criterion": "persistence",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "async createSharedProject",
+          "line": 132,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        },
+        {
+          "path": "apps/electron/src/main/project-authority-journal.ts",
+          "symbol": "recoverUnlocked",
+          "line": 162,
+          "sha256": "7751125f2e6c6703d68bdb2d7b48dedf3fc8d68a51ebcd03336b336902d45960"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-service-crash/service-crash-receipt.json",
+          "sha256": "a1c3772639fee6ad8f0e6eae3ca5a08aa9f358454c8ee32c98f35fc3f7591b73",
+          "available": true
+        }
+      ],
+      "scope": "PG atomic receipt/event plus canonical encrypted journal; power-loss/competing main profiles not proved.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-14",
+      "normativeSection": "featureCompleteness",
+      "criterion": "commands",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/commands.ts",
+          "symbol": "parseCreateSharedProject",
+          "line": 42,
+          "sha256": "992990c86d31b84cf32ee6b226b7b7b8a052485445622c51f2e5e6828cc718f4"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "async createSharedProject",
+          "line": 132,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-review-patches/verification-receipt.json",
+          "sha256": "4a8268c2a303a75ec1194e94f813c0427ac8aac1579da54fd7284660a50fdc47",
+          "available": true
+        }
+      ],
+      "scope": "Create expectedRevision=0; later mutation revision framework WP04.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-15",
+      "normativeSection": "featureCompleteness",
+      "criterion": "queries",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "async listProjects",
+          "line": 230,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "async getProject",
+          "line": 204,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "private async cursor",
+          "line": 211,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        }
+      ],
+      "scope": "Current policy, bounded pages, opaque principal/workspace/epoch cursor; no hidden total.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-16",
+      "normativeSection": "featureCompleteness",
+      "criterion": "realtime where needed",
+      "status": "BOOTSTRAP_IMPLEMENTED_LIMITED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "async replayEvents",
+          "line": 266,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "lockEventAppend",
+          "line": 180,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        },
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "pendingIntent.current = null",
+          "line": 42,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        }
+      ],
+      "scope": "Durable commit-ordered replay and query refresh. Generic shared push forbidden; no automatic multi-client invalidation claim.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-17",
+      "normativeSection": "featureCompleteness",
+      "criterion": "permissions",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "private async membership",
+          "line": 105,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "member.role !== 'owner'",
+          "line": 139,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        },
+        {
+          "path": "apps/workspace-service/src/auth/verified-actor.ts",
+          "symbol": "revalidate",
+          "line": 144,
+          "sha256": "637174c864da1e69732d3f33170f63054619721fd91a87a422f7b19f60f62cf4"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-review-patches/verification-receipt.json",
+          "sha256": "4a8268c2a303a75ec1194e94f813c0427ac8aac1579da54fd7284660a50fdc47",
+          "available": true
+        }
+      ],
+      "scope": "Owner create/private read; member read only for members visibility; full roles/inheritance WP03.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-18",
+      "normativeSection": "featureCompleteness",
+      "criterion": "sharing",
+      "status": "BOOTSTRAP_IMPLEMENTED_LIMITED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "visibility = 'members'",
+          "line": 198,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        },
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "shared-project-visibility",
+          "line": 143,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        }
+      ],
+      "scope": "Private versus existing-members visibility only; public links/grants/expiry WP03+shared-link package.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-19",
+      "normativeSection": "featureCompleteness",
+      "criterion": "search",
+      "status": "LATER_PACKAGE",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "async listProjects",
+          "line": 230,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-final-composed-tests.log",
+          "sha256": "17d2eb3229b4f12670b2f9fe64026b916a9b655c062bcc297cfb80e82a4e50b5",
+          "available": true
+        }
+      ],
+      "scope": "No Project full-text/search surface claimed. Authorized search/index/deletion/watermark is WP06; bootstrap owns list/detail.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-20",
+      "normativeSection": "featureCompleteness",
+      "criterion": "mentions",
+      "status": "LATER_PACKAGE",
+      "implementation": [
+        {
+          "path": "packages/shared/src/workspace-domain/identity/contracts.ts",
+          "symbol": "export interface SharedProject",
+          "line": 23,
+          "sha256": "7bbbae09fa49763bebddfc57f76b2d43a6c5ca7f32b31772c6c858933b82f265"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-final-composed-tests.log",
+          "sha256": "17d2eb3229b4f12670b2f9fe64026b916a9b655c062bcc297cfb80e82a4e50b5",
+          "available": true
+        }
+      ],
+      "scope": "Minimal Project has no body/mention field. Extraction/occurrence/target ACL WP09.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-21",
+      "normativeSection": "featureCompleteness",
+      "criterion": "notifications",
+      "status": "LATER_PACKAGE",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "async consumeNextEvent",
+          "line": 285,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-final-composed-tests.log",
+          "sha256": "17d2eb3229b4f12670b2f9fe64026b916a9b655c062bcc297cfb80e82a4e50b5",
+          "available": true
+        }
+      ],
+      "scope": "No notification UI/provider promised by minimal Project. Recipients/dedup/delivery WP07.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-22",
+      "normativeSection": "featureCompleteness",
+      "criterion": "activity",
+      "status": "BOOTSTRAP_IMPLEMENTED_LIMITED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "private event(",
+          "line": 253,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        },
+        {
+          "path": "apps/workspace-service/migrations/01-domain-contract.sql",
+          "symbol": "CREATE TABLE project_event (",
+          "line": 79,
+          "sha256": "1e98bc23bdbf921f8e72e67194544666ffb33911f577b7581fa32ea9deeda900"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        }
+      ],
+      "scope": "Reference-only actor/cause/revision audit events; no activity feed implementation claimed.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-23",
+      "normativeSection": "featureCompleteness",
+      "criterion": "agent access",
+      "status": "LATER_PACKAGE",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/server.ts",
+          "symbol": "registerSharedProjectHandlers",
+          "line": 62,
+          "sha256": "6b4b004b607687f9ecd712466c2971d8086a362366ab8fe05f38ed6e8d96ada0"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        }
+      ],
+      "scope": "No new agent-facing tools registered. Common acting-user domain tools/provenance WP36/WP50; agent allow-all cannot bypass server ACL.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-24",
+      "normativeSection": "featureCompleteness",
+      "criterion": "API/MCP where applicable",
+      "status": "BOOTSTRAP_IMPLEMENTED_LIMITED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/http.ts",
+          "symbol": "createWorkspaceHttpHandler",
+          "line": 140,
+          "sha256": "5ec7953dc652bba0cd0119922a38f039ed5554ccb391e795c24e87868cd9cd2c"
+        },
+        {
+          "path": "apps/workspace-service/src/server.ts",
+          "symbol": "registerSharedProjectHandlers",
+          "line": 62,
+          "sha256": "6b4b004b607687f9ecd712466c2971d8086a362366ab8fe05f38ed6e8d96ada0"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        }
+      ],
+      "scope": "Real HTTP and native RPC same authority. Dedicated API/MCP/agent tool exposure WP36.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-25",
+      "normativeSection": "featureCompleteness",
+      "criterion": "observability",
+      "status": "PROPOSAL_VERIFIED_NOT_INTEGRATED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "private event(",
+          "line": 253,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        },
+        {
+          "path": "apps/workspace-service/migrations/01-domain-contract.sql",
+          "symbol": "CREATE TABLE project_projection_watermark",
+          "line": 105,
+          "sha256": "1e98bc23bdbf921f8e72e67194544666ffb33911f577b7581fa32ea9deeda900"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-observability/authoritative-baseline-03.log",
+          "sha256": "e705dfbfea5fc3e5f5368c6b4737f574478b803b4345d295fbb1d2d9fb22077f",
+          "available": true
+        }
+      ],
+      "scope": "Persisted correlation/revision/epoch/watermark; counters exact external proposal. Generic DLQ unavailable until WP04.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-26",
+      "normativeSection": "featureCompleteness",
+      "criterion": "tests",
+      "status": "PARTIAL_VERIFIED",
+      "implementation": [
+        {
+          "path": "tests/macro-integration/wp-01-service-crash.test.ts",
+          "symbol": "test('fresh process",
+          "line": 172,
+          "sha256": "88775ff80f721d1becf24f8edf89c103ead84f9eb319c9c3417816bd7db065c6"
+        },
+        {
+          "path": "tests/macro-integration/wp-01.test.ts",
+          "symbol": "test('seeded",
+          "line": 314,
+          "sha256": "14ea28d854f0c916ab74822cc6a5a41ec5bf3cdb2b36cdb3b0bf322555b5ba54"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-service-crash/service-crash-receipt.json",
+          "sha256": "a1c3772639fee6ad8f0e6eae3ca5a08aa9f358454c8ee32c98f35fc3f7591b73",
+          "available": true
+        }
+      ],
+      "scope": "Real postcommit pre-reply SIGKILL, current policy, mutants; blinded second-variant holdout not attested.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-27",
+      "normativeSection": "featureCompleteness",
+      "criterion": "documentation",
+      "status": "UPDATE_REQUIRED",
+      "implementation": [
+        {
+          "path": "docs/macro-integration/wp-01-implementation.md",
+          "symbol": "Что ещё требуется",
+          "line": 80,
+          "sha256": "38eb6ee587bed2d28193c12f2c521fddb78f61382c80bd881005ba21dbd82718"
+        },
+        {
+          "path": "docs/macro-integration/wp-01-runtime.md",
+          "symbol": "Trusted issuer",
+          "line": 59,
+          "sha256": "4293bcd510b27888688aef91e14c840ed10f0858174edda76694c911e26365d4"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-runtime-patches/verification-receipt.json",
+          "sha256": "cc482771976842df6456f8007ef74128576220408549378343128d2276618081",
+          "available": true
+        }
+      ],
+      "scope": "Existing docs still say journal not accepted. Preserve historical runs; refresh current closure/evidence after root acceptance.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-28",
+      "normativeSection": "featureCompleteness",
+      "criterion": "failure states",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/electron/src/main/project-authority.ts",
+          "symbol": "mutationFailure",
+          "line": 152,
+          "sha256": "6f35b1b5bd76b7c8fecff5107e6bab72ad428f6858f6da0803e3c0d2b4f03540"
+        },
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "projectAuthorityErrorMessageKey",
+          "line": 14,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "Coded reauth/scope/network/timeout/conflict; UI clears private projection on deny; current native receipt pending.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-29",
+      "normativeSection": "featureCompleteness",
+      "criterion": "loading states",
+      "status": "NATIVE_EVIDENCE_PENDING",
+      "implementation": [
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "useState<ProjectAuthorityState>",
+          "line": 173,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "Typed loading/ready/unconfigured/denied states; verify actual native perception/ARIA.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-30",
+      "normativeSection": "featureCompleteness",
+      "criterion": "empty states",
+      "status": "NATIVE_EVIDENCE_PENDING",
+      "implementation": [
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "messageKey",
+          "line": 121,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "Genuine empty distinct from permission denied/unconfigured; actual native acceptance pending.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-31",
+      "normativeSection": "featureCompleteness",
+      "criterion": "offline/reconnect where applicable",
+      "status": "LIMITED_WITH_LITERAL_STATE_GAP",
+      "implementation": [
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "pendingIntent = useRef",
+          "line": 39,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        },
+        {
+          "path": "packages/server-core/src/transport/server.ts",
+          "symbol": "workspaceAuthority",
+          "line": 121,
+          "sha256": "f61389662c1b10024bb8773aaa09b2b6c78c21c3bb136f6b7ed05ffc47e14ea8"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-service-crash/service-crash-receipt.json",
+          "sha256": "a1c3772639fee6ad8f0e6eae3ca5a08aa9f358454c8ee32c98f35fc3f7591b73",
+          "available": true
+        }
+      ],
+      "scope": "Same in-form command retry; shared reconnect stale with durable authorized replay. No durable offline command queue.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-32",
+      "normativeSection": "ui.states",
+      "criterion": "loading",
+      "status": "SOURCE_IMPLEMENTED_NATIVE_PENDING",
+      "implementation": [
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "SharedProjectsSection",
+          "line": 24,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        },
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "messageKey",
+          "line": 121,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "",
+      "remaining": "Attach observed UI state to current native receipt."
+    },
+    {
+      "id": "WP01-33",
+      "normativeSection": "ui.states",
+      "criterion": "empty",
+      "status": "SOURCE_IMPLEMENTED_NATIVE_PENDING",
+      "implementation": [
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "SharedProjectsSection",
+          "line": 24,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        },
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "messageKey",
+          "line": 121,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "",
+      "remaining": "Attach observed UI state to current native receipt."
+    },
+    {
+      "id": "WP01-34",
+      "normativeSection": "ui.states",
+      "criterion": "permission_denied",
+      "status": "SOURCE_IMPLEMENTED_NATIVE_PENDING",
+      "implementation": [
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "SharedProjectsSection",
+          "line": 24,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        },
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "messageKey",
+          "line": 121,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "",
+      "remaining": "Attach observed UI state to current native receipt."
+    },
+    {
+      "id": "WP01-35",
+      "normativeSection": "ui.states",
+      "criterion": "offline_queued",
+      "status": "GAP_LITERAL_NORMATIVE_REQUIREMENT",
+      "implementation": [
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "pendingIntent = useRef",
+          "line": 39,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "",
+      "remaining": "No persisted draft/queue across dialog close/reload. Root must implement a bounded canonical intent mechanism or explicitly resolve the bootstrap normative state before complete; future WP04 is not automatic proof."
+    },
+    {
+      "id": "WP01-36",
+      "normativeSection": "ui.states",
+      "criterion": "retryable_error",
+      "status": "SOURCE_IMPLEMENTED_NATIVE_PENDING",
+      "implementation": [
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "SharedProjectsSection",
+          "line": 24,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        },
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "messageKey",
+          "line": 121,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "",
+      "remaining": "Attach observed UI state to current native receipt."
+    },
+    {
+      "id": "WP01-37",
+      "normativeSection": "ui.states",
+      "criterion": "applied_verified",
+      "status": "SOURCE_IMPLEMENTED_NATIVE_PENDING",
+      "implementation": [
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "SharedProjectsSection",
+          "line": 24,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        },
+        {
+          "path": "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+          "symbol": "messageKey",
+          "line": 121,
+          "sha256": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "",
+      "remaining": "Attach observed UI state to current native receipt."
+    },
+    {
+      "id": "WP01-38",
+      "normativeSection": "observability.required",
+      "criterion": "commandId",
+      "status": "PERSISTED_AND_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "private event(",
+          "line": 253,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-service-crash/service-crash-receipt.json",
+          "sha256": "a1c3772639fee6ad8f0e6eae3ca5a08aa9f358454c8ee32c98f35fc3f7591b73",
+          "available": true
+        }
+      ],
+      "scope": "Columns selected/returned from actual PostgreSQL, not logger-created authority.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-39",
+      "normativeSection": "observability.required",
+      "criterion": "causationId",
+      "status": "PERSISTED_AND_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "private event(",
+          "line": 253,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-service-crash/service-crash-receipt.json",
+          "sha256": "a1c3772639fee6ad8f0e6eae3ca5a08aa9f358454c8ee32c98f35fc3f7591b73",
+          "available": true
+        }
+      ],
+      "scope": "Columns selected/returned from actual PostgreSQL, not logger-created authority.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-40",
+      "normativeSection": "observability.required",
+      "criterion": "correlationId",
+      "status": "PERSISTED_AND_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "private event(",
+          "line": 253,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-service-crash/service-crash-receipt.json",
+          "sha256": "a1c3772639fee6ad8f0e6eae3ca5a08aa9f358454c8ee32c98f35fc3f7591b73",
+          "available": true
+        }
+      ],
+      "scope": "Columns selected/returned from actual PostgreSQL, not logger-created authority.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-41",
+      "normativeSection": "observability.required",
+      "criterion": "aggregateRevision",
+      "status": "PERSISTED_AND_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "private event(",
+          "line": 253,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-service-crash/service-crash-receipt.json",
+          "sha256": "a1c3772639fee6ad8f0e6eae3ca5a08aa9f358454c8ee32c98f35fc3f7591b73",
+          "available": true
+        }
+      ],
+      "scope": "Columns selected/returned from actual PostgreSQL, not logger-created authority.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-42",
+      "normativeSection": "observability.required",
+      "criterion": "policyEpoch",
+      "status": "PERSISTED_AND_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "private event(",
+          "line": 253,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-service-crash/service-crash-receipt.json",
+          "sha256": "a1c3772639fee6ad8f0e6eae3ca5a08aa9f358454c8ee32c98f35fc3f7591b73",
+          "available": true
+        }
+      ],
+      "scope": "Columns selected/returned from actual PostgreSQL, not logger-created authority.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-43",
+      "normativeSection": "observability.required",
+      "criterion": "projectionWatermark",
+      "status": "PERSISTED_AND_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/migrations/01-domain-contract.sql",
+          "symbol": "CREATE TABLE project_projection_watermark",
+          "line": 105,
+          "sha256": "1e98bc23bdbf921f8e72e67194544666ffb33911f577b7581fa32ea9deeda900"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-service-crash/service-crash-receipt.json",
+          "sha256": "a1c3772639fee6ad8f0e6eae3ca5a08aa9f358454c8ee32c98f35fc3f7591b73",
+          "available": true
+        }
+      ],
+      "scope": "Columns selected/returned from actual PostgreSQL, not logger-created authority.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-44",
+      "normativeSection": "observability.required",
+      "criterion": "retry/DLQ counters",
+      "status": "PROPOSAL_PENDING_INTEGRATION",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "private event(",
+          "line": 253,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-observability/authoritative-baseline-03.log",
+          "sha256": "e705dfbfea5fc3e5f5368c6b4737f574478b803b4345d295fbb1d2d9fb22077f",
+          "available": true
+        }
+      ],
+      "scope": "Fixed process counters proposed; retry bounded and reset on restart; no DLQ machinery in bootstrap.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-45",
+      "normativeSection": "observability.privacy",
+      "criterion": "no raw email/body/transcript/tokens in logs",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/http.ts",
+          "symbol": "INTERNAL_ERROR",
+          "line": 219,
+          "sha256": "5ec7953dc652bba0cd0119922a38f039ed5554ccb391e795c24e87868cd9cd2c"
+        },
+        {
+          "path": "packages/shared/src/workspace-domain/identity/contracts.ts",
+          "symbol": "References only",
+          "line": 65,
+          "sha256": "7bbbae09fa49763bebddfc57f76b2d43a6c5ca7f32b31772c6c858933b82f265"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-observability/authoritative-baseline-03.log",
+          "sha256": "e705dfbfea5fc3e5f5368c6b4737f574478b803b4345d295fbb1d2d9fb22077f",
+          "available": true
+        }
+      ],
+      "scope": "Exact error shape, refs-only events, fixed numeric host aggregate logs; no raw payload or IDs in counters.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-46",
+      "normativeSection": "tests.integration",
+      "criterion": "A opens private Project in native ROX; B without membership gets 403 and no title through RPC/HTTP; client cannot forge principal/workspace",
+      "status": "PARTIAL_NATIVE_PENDING",
+      "implementation": [
+        {
+          "path": "tests/macro-integration/ui/wp-01-electron.test.ts",
+          "symbol": "shared-project-create-submit",
+          "line": 641,
+          "sha256": "b6489291bd615f5b86e495445caa05ba65be9ac4cd653dc5cd729c7754a49955"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-47",
+      "normativeSection": "tests.negative-control",
+      "criterion": "Seed broken identity boundary: unauthorized actor or dropped/duplicated event must fail WP-01 acceptance",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "tests/macro-integration/wp-01.test.ts",
+          "symbol": "test('seeded",
+          "line": 314,
+          "sha256": "14ea28d854f0c916ab74822cc6a5a41ec5bf3cdb2b36cdb3b0bf322555b5ba54"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/negative-control-receipt.json",
+          "sha256": "238bfc136c4233bc2947eceb00cc35c798faa863fde5a00d69a2b6216d31fb73",
+          "available": true
+        }
+      ],
+      "scope": "",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-48",
+      "normativeSection": "tests.persistence-recovery",
+      "criterion": "Restart between persisted command and reply while running Private shared Project: authenticated actor and workspace boundary; state/receipt/canonical ID remain consistent",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "tests/macro-integration/wp-01-service-crash.test.ts",
+          "symbol": "test('fresh process",
+          "line": 172,
+          "sha256": "88775ff80f721d1becf24f8edf89c103ead84f9eb319c9c3417816bd7db065c6"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-service-crash/service-crash-receipt.json",
+          "sha256": "a1c3772639fee6ad8f0e6eae3ca5a08aa9f358454c8ee32c98f35fc3f7591b73",
+          "available": true
+        }
+      ],
+      "scope": "",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-49",
+      "normativeSection": "verification.negativeControl.holdout",
+      "criterion": "independent evaluator injects second failure variant",
+      "status": "GAP_NO_BLINDED_PROVENANCE",
+      "implementation": [
+        {
+          "path": "docs/macro-integration/22-test-plan.md",
+          "symbol": "Independent evaluator receives",
+          "line": 241,
+          "sha256": "352907bb646f9c1dd35442259fb33f07f73597a730e553c40afc6ea228568152"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/negative-control-receipt.json",
+          "sha256": "238bfc136c4233bc2947eceb00cc35c798faa863fde5a00d69a2b6216d31fb73",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-review-patches/verification-receipt.json",
+          "sha256": "4a8268c2a303a75ec1194e94f813c0427ac8aac1579da54fd7284660a50fdc47",
+          "available": true
+        }
+      ],
+      "scope": "",
+      "remaining": "Existing independent reviews/mutants disclose mutation names. Custodian assigns opaque baseline/mutant artifacts, evaluator receives oracle without variant mapping, locks verdict before reveal. Do not count an infrastructure failure as caught control."
+    },
+    {
+      "id": "WP01-50",
+      "normativeSection": "operation/migration/authority",
+      "criterion": "strict request/body/actor/scope schema",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/commands.ts",
+          "symbol": "parseCreateSharedProject",
+          "line": 42,
+          "sha256": "992990c86d31b84cf32ee6b226b7b7b8a052485445622c51f2e5e6828cc718f4"
+        },
+        {
+          "path": "apps/workspace-service/src/http.ts",
+          "symbol": "createWorkspaceHttpHandler",
+          "line": 140,
+          "sha256": "5ec7953dc652bba0cd0119922a38f039ed5554ccb391e795c24e87868cd9cd2c"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        }
+      ],
+      "scope": "Create-only bootstrap does not expose provider side effects, links/backlinks, mutation revision conflicts or generic queue status; those union/template branches are not fabricated.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-51",
+      "normativeSection": "operation/migration/authority",
+      "criterion": "canonical result and original receipt",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/modules/identity/repository.ts",
+          "symbol": "function retainedReceipt",
+          "line": 69,
+          "sha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0"
+        },
+        {
+          "path": "packages/shared/src/workspace-domain/identity/contracts.ts",
+          "symbol": "export interface SharedProjectResult",
+          "line": 36,
+          "sha256": "7bbbae09fa49763bebddfc57f76b2d43a6c5ca7f32b31772c6c858933b82f265"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-review-patches/verification-receipt.json",
+          "sha256": "4a8268c2a303a75ec1194e94f813c0427ac8aac1579da54fd7284660a50fdc47",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-service-crash/service-crash-receipt.json",
+          "sha256": "a1c3772639fee6ad8f0e6eae3ca5a08aa9f358454c8ee32c98f35fc3f7591b73",
+          "available": true
+        }
+      ],
+      "scope": "Create-only bootstrap does not expose provider side effects, links/backlinks, mutation revision conflicts or generic queue status; those union/template branches are not fabricated.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-52",
+      "normativeSection": "operation/migration/authority",
+      "criterion": "unknown/unsafe provider error behavior",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/http.ts",
+          "symbol": "INTERNAL_ERROR",
+          "line": 219,
+          "sha256": "5ec7953dc652bba0cd0119922a38f039ed5554ccb391e795c24e87868cd9cd2c"
+        },
+        {
+          "path": "packages/shared/src/workspace-domain/identity/contracts.ts",
+          "symbol": "IdentityErrorCode",
+          "line": 74,
+          "sha256": "7bbbae09fa49763bebddfc57f76b2d43a6c5ca7f32b31772c6c858933b82f265"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        }
+      ],
+      "scope": "Create-only bootstrap does not expose provider side effects, links/backlinks, mutation revision conflicts or generic queue status; those union/template branches are not fabricated.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-53",
+      "normativeSection": "operation/migration/authority",
+      "criterion": "migration identity and ownership constraints",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/migrations/01-domain-contract.sql",
+          "symbol": "CREATE TABLE workspace_member",
+          "line": 34,
+          "sha256": "1e98bc23bdbf921f8e72e67194544666ffb33911f577b7581fa32ea9deeda900"
+        },
+        {
+          "path": "apps/workspace-service/migrations/01-domain-contract.sql",
+          "symbol": "CREATE TABLE project_create_receipt",
+          "line": 62,
+          "sha256": "1e98bc23bdbf921f8e72e67194544666ffb33911f577b7581fa32ea9deeda900"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-final-composed-tests.log",
+          "sha256": "17d2eb3229b4f12670b2f9fe64026b916a9b655c062bcc297cfb80e82a4e50b5",
+          "available": true
+        }
+      ],
+      "scope": "Create-only bootstrap does not expose provider side effects, links/backlinks, mutation revision conflicts or generic queue status; those union/template branches are not fabricated.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-54",
+      "normativeSection": "operation/migration/authority",
+      "criterion": "migration replay/rollback",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/src/database/migrations.ts",
+          "symbol": "applyWorkspaceMigrations",
+          "line": 42,
+          "sha256": "4970d00faab5c59246fb9a3f81a988b547a1ce4739f21574e95a5c6b97632de6"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-runtime-patches/verification-receipt.json",
+          "sha256": "cc482771976842df6456f8007ef74128576220408549378343128d2276618081",
+          "available": true
+        }
+      ],
+      "scope": "Create-only bootstrap does not expose provider side effects, links/backlinks, mutation revision conflicts or generic queue status; those union/template branches are not fabricated.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-55",
+      "normativeSection": "operation/migration/authority",
+      "criterion": "explicit transport and standalone separation",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "packages/server-core/src/transport/server.ts",
+          "symbol": "workspaceAuthority",
+          "line": 121,
+          "sha256": "f61389662c1b10024bb8773aaa09b2b6c78c21c3bb136f6b7ed05ffc47e14ea8"
+        },
+        {
+          "path": "apps/electron/src/transport/routed-client.ts",
+          "symbol": "invoke(",
+          "line": 67,
+          "sha256": "033aece0e542d9f5462fd0258901b23748a34018a2bb005a8a8fd6b05d6641c3"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-server-verification/verification-receipt.json",
+          "sha256": "5ffbe2f72b669ed99821a9b515dc3b84b177cc51a5ac6f59902d058582987cfc",
+          "available": true
+        }
+      ],
+      "scope": "Create-only bootstrap does not expose provider side effects, links/backlinks, mutation revision conflicts or generic queue status; those union/template branches are not fabricated.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-56",
+      "normativeSection": "operation/migration/authority",
+      "criterion": "cross-store process crash recovery",
+      "status": "MECHANISM_VERIFIED",
+      "implementation": [
+        {
+          "path": "apps/electron/src/main/project-authority.ts",
+          "symbol": "resolveStoredProjectAuthority",
+          "line": 247,
+          "sha256": "6f35b1b5bd76b7c8fecff5107e6bab72ad428f6858f6da0803e3c0d2b4f03540"
+        },
+        {
+          "path": "apps/electron/src/main/project-authority-journal.ts",
+          "symbol": "recoverUnlocked",
+          "line": 162,
+          "sha256": "7751125f2e6c6703d68bdb2d7b48dedf3fc8d68a51ebcd03336b336902d45960"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        }
+      ],
+      "scope": "Create-only bootstrap does not expose provider side effects, links/backlinks, mutation revision conflicts or generic queue status; those union/template branches are not fabricated.",
+      "remaining": ""
+    },
+    {
+      "id": "WP01-57",
+      "normativeSection": "runtime portability",
+      "criterion": "Relocatable executable with exact dependency/notice artifact readback",
+      "status": "DELIVERY_EVIDENCE_PENDING",
+      "implementation": [
+        {
+          "path": "apps/workspace-service/package.json",
+          "symbol": "--metafile",
+          "line": 6,
+          "sha256": "2ef3565e748c3f3917d4df258cc3c0da6dde1bda0769e1af122488f2eab92985"
+        },
+        {
+          "path": "docs/macro-integration/wp-01-runtime.md",
+          "symbol": "Trusted issuer",
+          "line": 59,
+          "sha256": "4293bcd510b27888688aef91e14c840ed10f0858174edda76694c911e26365d4"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-runtime-patches/revision-2/deployment-receipt.json",
+          "sha256": "d5872efca8151a2f0def390707e4f9f99bceee2ee7836456c00559c24b92a7da",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-runtime-patches/verification-receipt.json",
+          "sha256": "cc482771976842df6456f8007ef74128576220408549378343128d2276618081",
+          "available": true
+        }
+      ],
+      "scope": "",
+      "remaining": "Historical archive byteVerified but generated metafile/dependency attribution/legal publication clearance false. Current package build flag alone is not current cold archive proof. Actual cloud host deployment not evidenced; WP47/WP52 remain separate provider/release gates."
+    },
+    {
+      "id": "WP01-58",
+      "normativeSection": "verificationGate",
+      "criterion": "No complete status until real changed surface and relevant failure/reload path observed; fixture is not live receipt",
+      "status": "PACKAGE_CLOSURE_PENDING",
+      "implementation": [
+        {
+          "path": "tests/macro-integration/ui/wp-01-electron.test.ts",
+          "symbol": "shared-project-create-submit",
+          "line": 641,
+          "sha256": "b6489291bd615f5b86e495445caa05ba65be9ac4cd653dc5cd729c7754a49955"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "/tmp/rox-wp01-crash-recovery/main-integration/integration-receipt.json",
+          "sha256": "5ff33213191e6ae345f93627a14bb5358fde9d6e9069d8b76f3fcaaff0046363",
+          "available": true
+        },
+        {
+          "path": "/tmp/rox-wp01-service-crash/service-crash-receipt.json",
+          "sha256": "a1c3772639fee6ad8f0e6eae3ca5a08aa9f358454c8ee32c98f35fc3f7591b73",
+          "available": true
+        }
+      ],
+      "scope": "",
+      "remaining": "Native current generation, blinded holdout, counter integration, literal offline state decision, portable delivery receipt and commit/readback remain. No full package PASS claimed."
+    },
+    {
+      "id": "WP01-59",
+      "normativeSection": "program gate",
+      "criterion": "All 143 packages and final seven-scenario release acceptance",
+      "status": "SEPARATE_FUTURE_PROGRAM_GATE",
+      "implementation": [
+        {
+          "path": "docs/macro-integration/22-test-plan.md",
+          "symbol": "WP-41 собирает",
+          "line": 249,
+          "sha256": "352907bb646f9c1dd35442259fb33f07f73597a730e553c40afc6ea228568152"
+        }
+      ],
+      "evidence": [],
+      "scope": "Mandatory final program gate. It does not block WP01 dependency unlock after its own DoD, nor permits a WP01 feature-complete claim for future slices.",
+      "remaining": ""
+    }
+  ],
+  "counts": {
+    "criteria": 59,
+    "featureCompleteness": 22
+  },
+  "scopeRule": "Explicit bootstrapContract controls minimal feature applicability. Literal owned requirements are retained; laterGeneralization and final143 are separate."
+}

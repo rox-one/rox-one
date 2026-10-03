@@ -2,11 +2,27 @@ import { describe, it, expect } from 'bun:test'
 import { homedir, tmpdir } from 'os'
 import { join, sep } from 'path'
 import { validateFilePath } from '../utils'
+import { mkdtempSync, mkdirSync, realpathSync, rmSync, symlinkSync } from 'node:fs'
 
 const home = homedir()
 const tmp = tmpdir()
 
 describe('validateFilePath', () => {
+  it('canonicalizes missing descendants and denies a symlink escape', async () => {
+    const root = mkdtempSync(join(tmp, 'path-validation-'))
+    try {
+      const allowed = join(root, 'allowed')
+      const outside = join(root, 'outside')
+      mkdirSync(allowed)
+      mkdirSync(outside)
+      symlinkSync(outside, join(allowed, 'escape'), 'dir')
+      const draft = join(allowed, 'missing', 'draft.md')
+      expect(await validateFilePath(draft, [allowed], { includeTmp: false })).toBe(join(realpathSync(allowed), 'missing', 'draft.md'))
+      await expect(validateFilePath(join(allowed, 'escape', 'draft.md'), [allowed], { includeTmp: false })).rejects.toThrow('Access denied')
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
   it('allows paths inside home directory', async () => {
     const path = join(home, 'Documents', 'test.txt')
     const result = await validateFilePath(path)

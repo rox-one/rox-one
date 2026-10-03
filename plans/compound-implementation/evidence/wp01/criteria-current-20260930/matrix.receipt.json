@@ -1,0 +1,17 @@
+{
+  "path": "/tmp/rox-wp01-current-independent-ultra-20260930/closure-leaves-current/matrix.json",
+  "sha256": "004bbbf0ae52c155123e0dd8ce35a32dc275ab3cd4a238447bad110b41d59a14",
+  "bytes": 297052,
+  "recordedAt": "2026-09-30T15:02:30.944Z",
+  "summary": {
+    "criterionRows": 54,
+    "counts": {
+      "VERIFIED": 32,
+      "PENDING": 17,
+      "DEFERRED_BY_DECLARED_WP01_SCOPE": 5
+    },
+    "fullNativeAcceptance": false,
+    "fullWp01DoD": false,
+    "deliveryVerified": false
+  }
+}

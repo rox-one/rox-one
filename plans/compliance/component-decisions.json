@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "policy": "LICENSE_REVIEW_REQUIRED",
+  "reviewers": [],
+  "preservedNotices": [
+    {
+      "path": "LICENSE",
+      "sha256": "9a75ace1224f0f880ddfdd8442d14d5a0d865152c61a2fd363d8e2c351f94d2c"
+    },
+    {
+      "path": "NOTICE",
+      "sha256": "b4fe19519f12439760a575d5be66e437f865219c2b2c9a8adc95b7574b89deb0"
+    }
+  ],
+  "knownScopes": [
+    {
+      "repository": "macro-inc/macro",
+      "revision": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "",
+      "licenseExpression": "AGPL-3.0-only",
+      "evidencePath": "LICENSE.txt",
+      "evidenceSha256": "b1e2de6a24d704320f17b92555c0ee445f2b2af16dabfac6ec26d3fdb38588d5"
+    },
+    {
+      "repository": "macro-inc/macro",
+      "revision": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "apps/web",
+      "licenseExpression": "LicenseRef-CoParse-All-Rights-Reserved",
+      "evidencePath": "apps/web/LICENSE",
+      "evidenceSha256": "9c9c4860038ecab28f095ba86c562a7b1baba693e5a8c308dd8ca10b5e76095c"
+    }
+  ],
+  "decisions": []
+}

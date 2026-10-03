@@ -1,0 +1,28 @@
+{
+  "variant": "baseline",
+  "argv": [
+    "/opt/homebrew/bin/bun",
+    "test",
+    "/private/tmp/rox-wp01-current-independent-ultra-20260930/holdout.test.ts"
+  ],
+  "cwd": "/private/tmp",
+  "environment": {
+    "PATH": "/private/tmp/rox-wp01-current-independent-ultra-20260930/bun-only",
+    "HOME": "/private/tmp/rox-wp01-current-independent-ultra-20260930/sandbox-baseline",
+    "TMPDIR": "/private/tmp/rox-wp01-current-independent-ultra-20260930/sandbox-baseline/tmp",
+    "ROX_CONFIG_DIR": "/private/tmp/rox-wp01-current-independent-ultra-20260930/sandbox-baseline/config",
+    "CRAFT_CONFIG_DIR": "/private/tmp/rox-wp01-current-independent-ultra-20260930/sandbox-baseline/config",
+    "CRAFT_DEBUG": "0",
+    "CRAFT_PERF_RPC_TRACE": "0",
+    "HOLDOUT_VARIANT": "baseline",
+    "NO_COLOR": "1"
+  },
+  "pid": 17373,
+  "startedAt": "2026-09-30T14:21:05.068Z",
+  "finishedAt": "2026-09-30T14:21:07.452Z",
+  "exitCode": 0,
+  "testSha256": "b8222c7836463af8639e7f9a85475470ffb50effd5ac6a12918e1894803fe741",
+  "resolverSha256": "46b6d9e2a658daaa691bd082bf0fe7accd9e92b663ed2df5e8c67c93907636b3",
+  "stdoutSha256": "0de168bf6b7525064a6a7cdb73fac22086d2e96a546280bf21d6c4d0f347ba8f",
+  "stderrSha256": "69ebce79bb4346554d8ef9f3cecd3a229fc409b308159c645bad64f398001b9f"
+}

@@ -1,0 +1,240 @@
+{
+  "task_id": "LSX-WP-008-preflight",
+  "attempt_id": "00e7b6e447225d03e969dff6acd28079",
+  "packet_hash": "17c72e6234dee5c9ab60ca5d553b5193e3236e755082de17983c4a4a0befff7a",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-008",
+  "featureComplete": false,
+  "reviewMode": "READ_ONLY_PREFLIGHT_ARTIFACT_ONLY",
+  "workTier": "bounded-workflow: one owned report, dependent source/spec inspection; no implementation or nested delegation",
+  "dependencies": ["LSX-WP-006", "LSX-WP-007"],
+  "externalPrerequisitesExplicit": [],
+  "evidenceStatus": {
+    "kind": "SOURCE_INSPECTED_NOT_RUNTIME_VERIFIED",
+    "revisionBinding": "input_revision is the dispatch revision, not a claim that the dirty working tree equals that commit. Whole-file SHA256 values below identify the inspected working files.",
+    "specManifestMatches": true,
+    "workingSourceDivergence": "NotesViewHost.tsx hash a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a differs from the published baseline hash 2fc3fc07f0cfb84bb7e7e18cc6548a34417ec6c34508a796942d0a80a6e13358. Current code includes ListTreeProjection/blockTree/onOpenBlock; preserve these root changes.",
+    "stalenessRule": "All source line ranges and proposed patches must be reread/rehashed after wave0 and prerequisite integration; concurrent edits may invalidate this snapshot. No git inspection or mutation was performed.",
+    "proposedFilesPresence": "Scoped file discovery reported all four normative new files and prerequisite packages/core/src/bases/definition.ts absent at inspection time; this is not evidence about future dependency integration.",
+    "toolLimitations": ["Codegraph reported no project index; built-in read/grep were used instead, without initializing an index.", "find failed with upstream judgment API 402; no absence conclusion was taken from its empty hits; exact symbols and normative paths were inspected with grep/read."],
+    "runtimeTestsBuildsNativeUiNetwork": "NOT_RUN: prohibited by this preflight packet"
+  },
+  "foundationGates": [
+    {
+      "id": "WAVE0_AND_ACCEPTED_DEPENDENCY_BASE",
+      "source": "Dispatch instruction plus work-packages.json:3991-4001",
+      "requirement": "Lead wave0 commit followed by accepted LSX-WP-006 and LSX-WP-007 implementation/artifact/readback receipts, approved integrated base, and exclusive shared-path leases.",
+      "missingPrerequisite": "No accepted prerequisite implementation receipts were supplied; do not begin feature implementation against the root-owned dirty tree.",
+      "state": "BLOCKED_FOR_IMPLEMENTATION"
+    },
+    {
+      "id": "RESOLVED_REFERENCE_PACKAGE",
+      "source": "execution-packages.json:671-674,702-709; work-packages.json:3927-3935",
+      "requirement": "Resolve reference_package_revision/reference_package_digest from delivery manifest and verify each spec_ref hash; reconcile e953786 baseline with dispatch a21aeab plus approved wave0/prerequisite commits.",
+      "missingPrerequisite": "Normative records still contain RESOLVE_FROM_DELIVERY_MANIFEST; manifest resolution/readback receipt is not provided.",
+      "state": "UNRESOLVED_FAIL_CLOSED"
+    },
+    {
+      "id": "PUBLISHED_DRIVE_FOUNDATION",
+      "source": "docs/rox-suite/published/RS-BASE-01.md:95-113; docs/rox-suite/published/RS-NOTE-01.md:79-86",
+      "requirement": "Both linked published specifications require RS-DRV-01 (#1109). This is a published foundation gate separate from the exact LSX-WP-008 DAG edges, not authority to expand this worker's source scope.",
+      "missingPrerequisite": "Lead must provide affected-scope Drive/page identity, policy and canonical persistence readiness receipt or an explicitly reviewed specification reconciliation. Publication does not establish implementation.",
+      "state": "READINESS_NOT_ESTABLISHED"
+    },
+    {
+      "id": "PUBLISHED_DOCS_FOUNDATION",
+      "source": "docs/rox-suite/published/RS-NOTE-01.md:61-66,79-86",
+      "requirement": "Linked RS-NOTE-01 additionally requires RS-DOC-01 (#1110) and retains native #563/#570 regression gates. Legacy-view migration is personal and must not perform Note-to-shared-Doc conversion, but cannot silently erase the linked normative gate.",
+      "missingPrerequisite": "Lead supplies a scoped foundation/reconciliation receipt identifying what Docs authority/alias preservation is required for this bounded migration; shared CRDT conversion is not implemented by this package.",
+      "state": "READINESS_NOT_ESTABLISHED"
+    },
+    {
+      "id": "TRANSITIVE_IDENTITY_EFFECTS_AND_BASE_AUTHORITY",
+      "source": "work-packages.json:3348-3354,3495-3537; docs/lark-suite-reference/07-domain-entity-model.md:169-199",
+      "requirement": "LSX-WP-007 depends on LSX-WP-001 and external EG-IDENTITY/EG-EFFECTS; LSX-WP-006 depends on LSX-WP-005 (3005-3007). Reuse their canonical BaseDefinition, authenticated actor binding, revision/CAS, durable command receipt/outbox and source identity mechanisms; no second config or Task store.",
+      "missingPrerequisite": "Accepted definitions of BaseDefinition/private owner namespace/create/get operations and a recoverable native persistence/event transaction interface. Prerequisite definition.ts was absent when inspected.",
+      "state": "DEPENDENCY_INTERFACE_PENDING"
+    },
+    {
+      "id": "TRANSPORT_EXPORTS_AND_PACKET_SCOPE",
+      "source": "work-packages.json:3830-3871,4001; NotesViewHost.tsx:1-46,58-155",
+      "requirement": "The migration API must execute through authenticated server transport and be importable at both boundaries. Current allowed shared paths contain renderer view seams only, not server RPC registration, package exports or locale files. Current view props have workspaceId but no authenticated user/owner binding.",
+      "missingPrerequisite": "Lead/prerequisite must expose a reviewed existing registration/export/auth-context mechanism for base.previewLegacyViewMigration and base.applyLegacyViewMigration, or issue an amended reviewed packet for exact missing seams. No invented renderer-to-store shortcut.",
+      "state": "INTEGRATION_SCOPE_GAP"
+    },
+    {
+      "id": "I18N_AND_NESTED_HELPER_LEASES",
+      "source": "Repository AGENTS i18n contract; work-packages.json:3791-3813,3863-3866,4001; NotesViewHost.tsx:119-155; note-views.ts:108-126,470-472,534-543",
+      "requirement": "New migration states/help/export controls require t() keys in all ten existing locales. Actual persistence is in nested NotesTableView, and lossy restoration in helpers not named in the published shared symbol allowlist.",
+      "missingPrerequisite": "Reviewed scope extension/explicit integration approval for NotesTableView and any directly changed parse/load helpers, plus integration-owned locale edits. These are requests, not permission to write extra files.",
+      "state": "INTEGRATION_SCOPE_GAP"
+    },
+    {
+      "id": "AUTHORIZED_NOTES_QUERY_AND_UI_PROOF",
+      "source": "work-packages.json:3860-3870,3873-3917; docs/lark-suite-reference/07-domain-entity-model.md:153-167",
+      "requirement": "Legacy formulas use current authorized Notes checkbox/backlink/tag data, not an owner's unrestricted cached count. Actual Electron runner and supported native canonical readback/restart lane must be supplied/discovered after dependencies; fixture UI cannot substitute.",
+      "missingPrerequisite": "Authorized Notes adapter/value-state contract, synthetic actor/source fixtures, actual UI runner, and integrated runtime capable of durable readback. No runtime capability was probed under this packet.",
+      "state": "VERIFICATION_PREREQUISITES_PENDING"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/core/src/bases/legacy-view-migration.ts",
+    "packages/server-core/src/bases/view-migration-journal.ts",
+    "tests/lark-suite-extension/lsx-wp-008.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-008.spec.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "packages/core/src/bases/legacy-view-migration.ts",
+      "change": "Define typed preview/apply request/result/error schemas, LegacyViewMapping/MigrationReceipt and a pure strict v1 inventory/mapping builder against accepted BaseDefinition types. Input keeps exact raw payload/source SHA256 and explicitly resolved namespace; preview reports filter/sort/group/column/formula mappings and diagnostics without side effects. Bind apply digest to raw source hash, scope, mapped config and expected destination revision. Distinguish absent storage, valid empty array, malformed JSON, unsupported versions, and mixed supported/unsupported entries; never silently discard unknown entries or normalize away corrupt fields. Keep all original bytes exportable and block activation on unsupported/corrupt mappings. Use required eight error discriminants; actor is not a trusted request field. Proposed symbol names are design requests, not existing API claims."
+    },
+    {
+      "path": "packages/server-core/src/bases/view-migration-journal.ts",
+      "change": "Implement resumable migration journal on the accepted native authority transaction/recovery mechanism, not a second Base store. Persist original payload/hash, source key plus authenticated principal/workspace binding, mapping, operation identity/digest, destination ref/revision/hash and before/after verification receipts. Apply reauthorizes and checks source/destination conflicts, creates a personal BaseDefinition through the canonical owner, and records receipt/outbox intent recoverably. Resume/replay reuse the same destination ref; digest mismatch is conflict. Activate only following validated authoritative readback. Preserve rollback mapping and original payload; rollback may not delete newer acknowledged mutations. base.viewMigrated is personal/authorized with registered envelope and no automatic shared fanout."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-008.test.ts",
+      "change": "Add consumer-behavior tests for exact v1 row/order/group/formula parity, malformed/future/mixed payload byte preservation, preview effect-freedom, authenticated actor/scope denial, stale-source/config conflict, idempotent replay, failed readback, crash/restart journal recovery and rollback after later writes. Preserve deterministic seeds/input hashes. Canonical runtime readback and seeded mutation proof require separate receipts, not passing mocked forwarding assertions."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-008.spec.ts",
+      "change": "Use the project's actual supported Electron runner after lead discovery. Exercise existing Notes table migration preview/diff, cancel/export, corrupt/future read-only state, commit pending versus validated activation, readback failure/retry, reload, keyboard/IME/focus and layout/theme/localization/font scenarios. Do not construct an isolated lookalike surface or invent a runner command."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteBaseView",
+      "change": "Treat v:1 as immutable legacy input to the core migration decoder; import/reuse accepted BaseDefinition/ViewDefinition contracts for canonical config rather than widening v:1 in place. Preserve id/name/kind/filters/formulas/groupBy/sort/columns and retain raw unknown data in migration payload. Mapping must resolve both expression-key references and direct tasks/openTasks/backlinks aliases; custom formula.name is a label, because formulaForField currently matches expr rather than name. Strict migration must bypass lossy parseNoteBaseView normalization; direct changes to that helper require reviewed named-seam expansion.",
+      "reason": "Current parser drops invalid filters/formulas and unknown data. DEFAULT_VAULT_TABLE_VIEW uses name=open, expr=openTaskCount and column=openTasks; a naive expression-only rename changes saved view behavior."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "projectNoteRows",
+      "change": "Keep Markdown checkbox projection tasks/openTasks, authorized backlink length and supplied tag array length unchanged; map the accepted Notes source snapshot into canonical Base rows using durable identity from dependencies without modifying Note IDs or Markdown. Do not source these legacy fields from PersonalTask/native relation counts, deduplicate tags, or count restricted backlinks.",
+      "reason": "Lines 143-155 currently define the four formula inputs; preserving meaning and identity is the central migration invariant."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "formulaValue",
+      "change": "Route migrated built-ins to the accepted versioned formula registry/evaluator while preserving taskCount->legacy.markdownTaskCount.v1 and openTaskCount->legacy.markdownOpenTaskCount.v1 semantics. Keep backlinkCount and tagCount as versioned built-ins with IDs finalized in the accepted dependency registry, not invented as normative names here. The separate relation.nativeTaskCount.v1 never replaces a legacy expression. Preserve filter/sort/group parity via mapped stable field IDs and legacy comparator/operator semantics.",
+      "reason": "Lines 188-197 return row.tasks, row.openTasks, row.backlinks and row.tags.length; canonical count types do not authorize changing their meanings."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "notesViewsStorageKey",
+      "change": "Retain notes:views:<workspaceId> unchanged as the exact legacy source/rollback key. Resolve current authenticated principal explicitly when importing this workspace-only key; do not relabel it user-scoped or infer ownership from workspaceId. Destination personal preferences use LSX-WP-007 namespace. Source overwrite/removal is barred before validated canonical readback and original-payload durable retention; cleanup also checks source hash to avoid destroying intervening edits.",
+      "reason": "Existing key has no user identity; automatic sharing or key-renaming would lose privacy/provenance and rollback semantics."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewNote",
+      "change": "Preserve existing id/title/markdown/tags/properties/links/backlinks contract. If accepted Notes adapter requires ref/revision/capabilities or redacted value states, receive its existing canonical type or explicit additive metadata; no new Task array or copied record store. Keep Markdown tasks derived through parseNoteDocument and denied backlink sources out of projection.",
+      "reason": "Current props are source-note data without an authenticated owner or canonical Base receipt; native-task counts must remain separate. Extra caller edits, if necessary, need a reviewed packet."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewHost (nested NotesTableView requires explicit reviewed seam extension)",
+      "change": "Wire authenticated migration preview/apply/getDefinition via the accepted bridge into existing table surface. Replace nested view initialization with explicit absent/legacy-valid/future/corrupt/pending/readback-verified states; display diff for filters/sort/group/formulas/columns and original export/repair-copy. Block persistViews and initial seeding for unsupported/corrupt/pending data; maintain source bytes on all failed readbacks. Activate canonical personal config only on exact receipt/ref/revision/hash verification, then route config edits solely to canonical owner and preferences to LSX-WP-007. Reinitialize scoped state when workspace/principal changes; current initializer only runs once. Preserve canvas/graph/outline and root blockTree/onOpenBlock integration. Add t()-based help/status/actions and preserve focus/theme/reduced-motion without a second migration surface.",
+      "reason": "Actual persistence is at NotesTableView:133-155: default fallback can later overwrite unreadable source via localStorage.setItem, and changing storageKey does not reload useState. Current table edits are optimistic local writes without receipt/readback."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "same current meaning for all4 built-ins",
+      "currentEvidence": "note-views.ts:15-33,133-197,576-618; NotesViewHost.tsx:79-87; document-ia.ts:145,655-678. taskCount/openTaskCount are Markdown tasks length/unckecked length; backlinkCount is input backlink array length; tagCount is supplied tags length. Filters use every, eq String coercion, includes array membership or case-insensitive substring, exists non-null/non-empty, numeric gt/lt; numeric sort otherwise localeCompare; grouping uses String(value??'').",
+      "requiredChange": "Strict raw v1 migration into personal BaseDefinition with stable formula/field references and exact existing filter/sort/group/column semantics. Register the two specified Markdown IDs and preserve backlink/tag meanings; native count remains separate. Preserve duplicate supplied tags/count semantics and stable tie order. No Markdown rewriting.",
+      "verification": "Future bun test tests/lark-suite-extension/lsx-wp-008.test.ts plus canonical Notes adapter readback: note with 3 checkboxes/2 open and 1 linked native task yields 3/2 before and after; native relation count is separately 1. Assert all four formulas, exact ordered row IDs, group memberships/order, filters, columns and aliases on deterministic generated v1 inputs and the default view. Include authorized backlink fixture and assert denied is not coerced into an owner's count or fabricated zero.",
+      "missingPrerequisite": "Accepted LSX-WP-006 identity and LSX-WP-007 definition/Notes adapter/formula registry interfaces; permission-aware source values.",
+      "state": "CURRENT_LEGACY_MECHANISM_SOURCE_VERIFIED_MIGRATION_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "future/corrupt version exportable and not overwritten",
+      "currentEvidence": "parseNoteBaseView:108-126 rejects future v and drops invalid nested members; restoreSavedViews:534-543 catches parse failure/filters rejected entries; loadSavedViews:470-472 supplies default. NotesTableView:148-153 overwrites source on subsequent edit. No original export/read-only migration state is present in the inspected table surface.",
+      "requiredChange": "Retain raw source bytes/hash independently of parsed candidates; future/corrupt/mixed data must display read-only diagnosis and original export/repair-copy. Distinguish no key from present empty/malformed/future values. No writes/clears on preview, fallback render, rejected migration or failed readback.",
+      "verification": "Exact byte/hash assertions for malformed JSON, v2+, non-array, mixed v1/future arrays, unknown/invalid filter/formula fields, empty string and valid empty array; actual UI export returns original bytes and editing is blocked while protected. Restart/reload does not replace them with defaults.",
+      "missingPrerequisite": "Reviewed nested-helper scope and localized UI keys; supported original export mechanism through existing application surface.",
+      "state": "REQUIRED_BEHAVIOR_NOT_IMPLEMENTED_SOURCE_LOSS_RISK"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "work-packages.json:3831-3848 defines proposed base.previewLegacyViewMigration(input)/base.applyLegacyViewMigration(digest), not existing endpoints. NotesViewHost.tsx:58-78 has workspaceId but no authenticated actor; note-views.ts has plain renderer-local v1 types.",
+      "requiredChange": "Core schema contract imported at both boundaries; errors validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat; preview side-effect-free. Bind apply digest to authenticated namespace/source/config revisions and refuse forged actor/owner/workspace claims. Register through existing accepted authority bridge and package exports, not renderer-direct persistence.",
+      "verification": "Future boundary compile using project-supported commands after dependency integration; parse valid/invalid requests/results/errors; real authenticated transport rejects foreign workspace/owner/ref and forged actor. Capture compiled schema report and expected/observed typed errors.",
+      "missingPrerequisite": "LSX-WP-007 contracts/auth-context; reviewed server transport registration and package export scope missing from this package's shared patch list.",
+      "state": "API_CONTRACT_AND_INTEGRATION_PENDING"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "NotesTableView:148-154 sets React state before localStorage write and ignores quota errors; no durable canonical receipt or migration journal. Normative ownership requires resumable journal and preservation until canonical readback (work-packages.json:3850-3852,3870).",
+      "requiredChange": "Journal original payload/mapping/source namespace and operation/destination receipts on native authority; recoverably commit personal Base config and event intent; fetch base.getDefinition and validate exact ref/revision/hash before activating. Resume interrupted migration with same mapping/ref. Keep original key when readback fails; rollback is versioned and must not erase later acknowledged writes.",
+      "verification": "Native domain run captures before/after source/destination hashes and receipts, restarts the authority/app, rereads same ref/revision/hash and journal. Fail readback/hash mismatch; crash before config write, after config commit before receipt/activation, and after readback; original survives and resume does not duplicate Base.",
+      "missingPrerequisite": "Accepted canonical definition store, durable effects/journal transaction primitive and runnable native restart/readback environment.",
+      "state": "NATIVE_RECEIPT_READBACK_RECOVERY_NOT_IMPLEMENTED_OR_RUN"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "Specification work-packages.json:3879-3893,3914; existing Notes renderer has no server validation/CAS/replay path. Namespace key is workspace-only (note-views.ts:96-102).",
+      "requiredChange": "Authenticated private migration with source digest + destination revision conflicts, idempotent operation replay and recovery checkpoints. Retry must reauthorize current policy and distinguish transport failure from durable commit. Denied source/target/backlinks cannot leak via preview/export/events; no automatic sharing or shared fanout.",
+      "verification": "Happy path; different principal denied; revoked actor denied on apply/resume; forged workspace rejected; changed raw source/conflicting config rejected with no clear; same digest replay returns same ref/receipt, changed payload conflict; missing/deleted dependencies, offlineUnsupported and injected recovery failures retain source. Store seeds/attempt logs and exact hashes on tested implementation revision.",
+      "missingPrerequisite": "Authenticated actor/policy fixtures, CAS/idempotency contract, private namespace resolution and canonical runtime.",
+      "state": "SCENARIOS_REQUIRED_NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:3895-3903 explicitly mutates taskCount to relation.nativeTaskCount.v1; must-fail assertions include legacy3/2 parity, native count separately1 and preservation of old localStorage on failed readback.",
+      "requiredChange": "Build deterministic isolated owner/source fixture and preserve evaluated bytes/seed/input hash. Record green baseline and independently run the specified native-count substitution. Keep failed-readback source preservation as an invariant; add a narrowly isolated premature-clear negative control to demonstrate that assertion's sensitivity rather than falsely claiming the count substitution alone must alter key retention.",
+      "verification": "On integrated implementation, baseline yields legacy 3/2 and native1; requested count mutant fails legacy parity with explicit assertion trace. Native separation and old-key preservation are asserted in same suite; premature-clear mutant fails exact old-key assertion. Preserve attempts; timeout/build error cannot be counted as killed mutant.",
+      "missingPrerequisite": "Runnable accepted implementation, seeded real canonical fixtures and lead-supported mutation/proof procedure; tests prohibited in preflight.",
+      "state": "MUTATION_PROOF_NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "NotesViewHost.tsx:166-299 is existing Notes table with useTranslation, menu selectors, input and formula buttons. It lacks migration diff, pending/readback distinction, future/corrupt protection/export controls. Actual theme/font/accessibility/runtime not inspected in this preflight.",
+      "requiredChange": "Add migration flow only in existing Notes table: explicit diff, confirm/cancel, pending/verified/error states, protected original export and repair-copy. t() all strings and ten locale parity via integration owner. Hover/focus/click help describes formula/source/privacy/freshness with examples. Preserve mounted editor/outline callbacks and selected user theme; keyboard/IME/focus/Escape and reduced motion.",
+      "verification": "Supported actual Electron runner: pointer preview/apply/cancel/export; keyboard navigation and Escape focus return; IME tag/filter input without accidental commit; denied/conflict/readback-retry/future/corrupt states; restart persistence; 200% zoom, light/dark/user theme, Russian and locale parity, reduced motion. Retain screenshots/ARIA/viewport/locale and actual loaded Rox Mono computed-font proof on integrated revision; no fixture-only substitute.",
+      "missingPrerequisite": "Approved nested NotesTableView edits/locale key patches, actual Electron runtime/runner and accepted transport/readback implementation.",
+      "state": "UI_IMPLEMENTATION_AND_NATIVE_PROOF_PENDING"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:3886-3893 requires SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI; cloudPacket artifact/readback states are NOT_PRODUCED/NOT_RUN.",
+      "requiredChange": "Lead integrates reviewed patches under leases, records exact implementation commit/diff and input hashes, and binds each lane's independent evidence to that integrated artifact. Preflight remains featureComplete=false. Provider/collaboration evidence is additionally required if exercised, not simulated or inferred from this personal migration.",
+      "verification": "Acceptance review checks separate schema/property/native/restart/ACL/Electron receipts, seeded semantic failure and readback after integration; checks authorized personal event audience and rollback artifacts. Plans/JSON validation do not count as feature proof.",
+      "missingPrerequisite": "All implementation dependencies and exact revision-bound lane receipts; no such receipts were supplied or generated in this preflight.",
+      "state": "FULL_FEATURE_DOD_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"NoteBaseView / notesViewsStorageKey / parseNoteBaseView","lineStart":15,"lineEnd":126,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"projectNoteRows / applyNoteBaseView / groupNoteRows / formulaValue","lineStart":133,"lineEnd":202,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"DEFAULT_VAULT_TABLE_VIEW / loadSavedViews","lineStart":459,"lineEnd":473,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"restoreSavedViews / formulaForField / readField / matchesFilter / compareUnknown","lineStart":534,"lineEnd":618,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesViewHost.tsx","symbol":"NotesViewNote / NotesViewHost / NotesTableView persistence","lineStart":48,"lineEnd":155,"sha256":"a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesViewHost.tsx","symbol":"NotesTableView toolbar and formula display","lineStart":161,"lineEnd":299,"sha256":"a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path":"apps/electron/src/renderer/pages/notes/document-ia.ts","symbol":"TASK_RE","lineStart":145,"lineEnd":145,"sha256":"f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa"},
+    {"path":"apps/electron/src/renderer/pages/notes/document-ia.ts","symbol":"parseNoteDocument","lineStart":655,"lineEnd":699,"sha256":"f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[7]: LSX-WP-008 full specification","lineStart":3671,"lineEnd":4002,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-008 execution record","lineStart":628,"lineEnd":714,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"10. Schema migrations и совместимость","lineStart":218,"lineEnd":229,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path":"docs/lark-suite-reference/07-domain-entity-model.md","symbol":"6. Bases types and computation / 8-9 event and migration rules","lineStart":151,"lineEnd":201,"sha256":"cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path":"docs/rox-suite/published/RS-BASE-01.md","symbol":"Published dependency and normative handoff","lineStart":95,"lineEnd":113,"sha256":"78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"},
+    {"path":"docs/rox-suite/published/RS-NOTE-01.md","symbol":"Published dependencies, native quality gates and normative handoff","lineStart":50,"lineEnd":86,"sha256":"48915bdf82194df2ade2c05b2b7db346e4f4f01be854b3aa0756da08fe24c002"}
+  ],
+  "nextExecutableAction": "Lead can review this artifact now. Feature implementation starts only after lead wave0 commit and accepted LSX-WP-006/007 receipts: resolve delivery manifest/foundation readiness and shared leases, refresh all inspected hashes, obtain exact accepted BaseDefinition/authenticated transport/journal interfaces and reviewed nested-helper/locale scope, then implement pure strict migration contract in packages/core/src/bases/legacy-view-migration.ts followed by native journal, serial renderer wiring and all six proof lanes. Do not implement against this dirty preflight snapshot.",
+  "risks": [
+    "Permissive parse/filter/default fallback can hide future/corrupt entries and user edits can overwrite originals; preserving raw bytes is mandatory, not merely backing up normalized objects.",
+    "Workspace-only legacy key cannot establish private principal ownership; cross-user migration needs explicit authenticated binding, not current workspace inference.",
+    "Legacy field aliases tasks/openTasks/backlinks and formula labels differ from expression IDs; mechanical renaming can break filters/sort/group/columns, especially default column openTasks.",
+    "General typed comparator/filter semantics may differ from existing coercion/localeCompare and grouping order; deterministic parity needs an explicit legacy semantic mapping, not an unjustified engine rewrite.",
+    "Permission-aware backlinks may differ after policy changes; inaccessible values must not leak through preview/group/sort/export nor be silently coerced into a count. Define authorized current semantics through dependency contract.",
+    "Two required built-in IDs are normative; backlink/tag versioned IDs and migration schema field names require dependency alignment. Do not falsely claim a finalized registry exists.",
+    "Journal-only worker file cannot by itself register real server commands, package exports or ten-locale UI keys; reviewed root integration scope is a concrete prerequisite, not a reason to fabricate a completed API.",
+    "Current NotesTableView state initialization does not reload on namespace change; carrying old view state into a new storageKey risks cross-workspace writes. Fix inside approved migration integration seam.",
+    "Canonical commit/readback/activation and source cleanup must be recoverable and source-hash fenced; a late failure or concurrent source edit must not clear keys or create duplicate Base refs.",
+    "Rollback cannot erase canonical config mutations acknowledged after migration. Legacy adapter reactivation requires policy/revision validation and durable mapping.",
+    "Published RS-BASE-01 suggests CustomRecord kind/Postgres while reference design favors additive page contentKind and native authority; resolve at prerequisite/foundation contract rather than introducing a parallel store in LSX-WP-008.",
+    "Specified native-count mutation logically catches formula parity but does not inherently trigger source-clear failure; preserve all named assertions and independently demonstrate key-retention sensitivity without fabricating mutant results.",
+    "Inspected NotesViewHost differs from published baseline and may change under wave0; root blockTree/onOpenBlock changes are user-owned and must be retained. This preflight is not a revision-bound runtime proof."
+  ]
+}

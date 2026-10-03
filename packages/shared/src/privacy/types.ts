@@ -26,6 +26,19 @@ export type ConsentAction = 'grant' | 'revoke' | 'migrate-unset'
 
 export type DeletionStatus = 'none' | 'queued' | 'completed'
 
+/** Explicit provider authorization; accountRef must be an opaque stable identifier. */
+export interface ProviderAccessConsent {
+  id: string
+  provider: string
+  accountRef: string
+  domains: string[]
+  dataScopes: string[]
+  purposes: string[]
+  grantedAt: number
+  revokedAt: number | null
+  revision: number
+}
+
 export interface ConsentEvent {
   id: string
   at: number
@@ -66,6 +79,7 @@ export interface PrivacyState {
   schemaVersion: typeof CONSENT_SCHEMA_VERSION
   purposes: ConsentPurposes
   events: ConsentEvent[]
+  providerAccess: ProviderAccessConsent[]
   exports: ExportReceipt[]
   deletions: DeletionReceipt[]
   migratedAt: number
@@ -76,12 +90,14 @@ export interface PrivacyDto {
   schemaVersion: typeof CONSENT_SCHEMA_VERSION
   purposes: ConsentPurposes
   events: ConsentEvent[]
+  providerAccess: ProviderAccessConsent[]
   exports: ExportReceipt[]
   deletions: DeletionReceipt[]
   latestDeletion: DeletionReceipt | null
   migratedAt: number
   updatedAt: number
 }
+
 
 export function emptyPurposes(): ConsentPurposes {
   return {

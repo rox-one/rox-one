@@ -86,6 +86,9 @@ export interface WebhookAction {
   body?: unknown
   captureResponse?: boolean
   auth?: { type: 'basic'; username: string; password: string } | { type: 'bearer'; token: string }
+  /** Redacted server projection; never contains credential bytes. */
+  authConfigured?: boolean
+  authType?: 'basic' | 'bearer'
 }
 
 export type AutomationAction = PromptAction | WebhookAction
@@ -238,6 +241,8 @@ export interface AutomationListItem {
    * supergroup (created on first use).
    */
   telegramTopic?: string
+  /** Serialized source matcher used for optimistic compare-and-swap saves. */
+  revision: string
   /** Timestamp of last execution (ms since epoch) */
   lastExecutedAt?: number
   /** Whether the last execution succeeded (undefined = never ran / unknown) */
@@ -524,7 +529,7 @@ interface AutomationsConfigFile {
 
 type RawAction =
   | { type: 'prompt'; prompt: string; llmConnection?: string; model?: string; thinkingLevel?: ThinkingLevel }
-  | { type: 'webhook'; url: string; method?: string; headers?: Record<string, string>; bodyFormat?: 'json' | 'form' | 'raw'; body?: unknown; captureResponse?: boolean; auth?: WebhookAction['auth'] }
+  | { type: 'webhook'; url: string; method?: string; headers?: Record<string, string>; bodyFormat?: 'json' | 'form' | 'raw'; body?: unknown; captureResponse?: boolean; auth?: WebhookAction['auth']; authConfigured?: boolean; authType?: 'basic' | 'bearer' }
 
 interface AutomationsConfigMatcher {
   id?: string
@@ -537,6 +542,7 @@ interface AutomationsConfigMatcher {
   conditions?: AutomationConditionUI[]
   enabled?: boolean
   actions?: RawAction[]
+  _editorRevision?: string
 }
 
 /** Derive a human-readable name from task actions and event */
@@ -562,18 +568,18 @@ function deriveAutomationName(event: string, matcher: AutomationsConfigMatcher):
 /** Derive a summary line from the matcher/cron/event */
 function deriveAutomationSummary(event: string, matcher: AutomationsConfigMatcher): string {
   if (matcher.cron) {
-    const runs = computeNextRuns(matcher.cron, 1)
+    const timezone = matcher.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+    const runs = computeNextRuns(matcher.cron, 1, timezone)
     if (runs.length > 0) {
       const next = runs[0]!
-      const tz = matcher.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
-      const tzCity = tz.split('/').pop()?.replace(/_/g, ' ') ?? tz
+      const tz = timezone
       const formatted = next.toLocaleString('en-US', {
         weekday: 'short',
         hour: 'numeric',
         minute: '2-digit',
         timeZone: tz,
       })
-      return `Next run: ${formatted} (${tzCity})`
+      return `Next run: ${formatted} (${timezone})`
     }
     const tz = matcher.timezone ? ` (${matcher.timezone})` : ''
     return `Cron: ${matcher.cron}${tz}`
@@ -629,6 +635,7 @@ export function parseAutomationsConfig(json: unknown): AutomationListItem[] {
         labels: matcher.labels,
         conditions: matcher.conditions,
         actions,
+        revision: matcher._editorRevision ?? JSON.stringify(matcher),
         telegramTopic,
       })
       index++

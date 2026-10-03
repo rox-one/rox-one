@@ -215,6 +215,7 @@ export default function KnowledgeSettingsPage() {
       <SettingsSection title={t('knowledge.local.title')}>
         <SettingsCard>
           <SettingsRow label={t('knowledge.local.title')} description={t('knowledge.local.body')} />
+          <p className="px-4 pb-3 text-sm text-muted-foreground">{t('knowledge.local.engineOptional')}</p>
           <SettingsRow
             label={t('knowledge.local.aiPrompts')}
             description={t('notes.ai.defaultModel', { model: NOTES_AI_MODEL })}

@@ -1,0 +1,25 @@
+{
+  "checkedAtMoscow": "2026-10-01T07:30:39.484748+03:00",
+  "repository": "rox-one/rox-one",
+  "branch": "cloud/all-surfaces-20260930",
+  "sourceCandidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "publicationHead": "c31ba50793db9ef676e220054dc3211693a63f3e",
+  "pr": {
+    "number": 1322,
+    "state": "open",
+    "draft": true,
+    "merged": false,
+    "base": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "mergeable": true,
+    "mergeable_state": "unstable",
+    "html_url": "https://github.com/rox-one/rox-one/pull/1322"
+  },
+  "bodyReadbackMatchesPublishedDraft": true,
+  "bodySha256": "fda6c2a9168d76a375638a906ab32cd8bf5da1afa625527c2da34cce776a9a03",
+  "sourceChangesOrNewBuildsPerformedThisCheckpoint": false,
+  "originalHead": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+  "originalStatus": "",
+  "originalLockSha256": "b29cf0eb0eaa357069172fe728123d1bd56ab77ef18d90e426f1f42cf85fb79b",
+  "ownedOldTemporaryCheckoutAbsent": true,
+  "ownedOldDistributionAbsent": true
+}

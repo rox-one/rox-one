@@ -1,0 +1,316 @@
+{
+  "task_id": "WP-25-preflight",
+  "attempt_id": "120d2a8a547aa365ccd9606fb7e21f2d",
+  "packet_hash": "9748e8990b04fe1661d7b9f63a3c608e02108d4d65658369802b5b096608bd82",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-25",
+  "featureComplete": false,
+  "mode": "inspect; owned-artifact-only",
+  "workTier": "bounded-workflow",
+  "dependencies": ["WP-24", "WP-08", "WP-09", "WP-07"],
+  "inspectionBoundary": {
+    "scope": "WP-25 affected files, normative specifications, named direct imports and report verifier only",
+    "mutations": "Only this JSON report; no product source, tests, manifests, progress or Git changes",
+    "runtimeVerification": "Not performed or claimed; product tests, builds, UI and network operations prohibited",
+    "sourceVersion": "Working-tree whole-file hashes, not a claim that the inspected files equal input HEAD. Root-owned wave0 changes may coexist or arrive later.",
+    "freshness": "Hashes recorded after source inspection; supplied report verifier must compare current bytes. Any mismatch invalidates that reference and requires fresh inspection, not silently replacing a digest.",
+    "discoveryLimit": "Codegraph reported no index; find failed because its judging backend returned 402. Continued with scoped literal symbol searches and reads. No indexing or backend repair attempted."
+  },
+  "dependencyReceiptsRequired": [
+    {"producer": "WP-24", "artifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"], "neededInterface": "Canonical Company/Contact queries and refs, pipeline/read/comment policy, alias resolution; shared CRM files already owned by preceding CRM packages"},
+    {"producer": "WP-08", "artifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"], "neededInterface": "Common parent-scoped Discussion and Message post/query/edit/delete/reply service, revisions, tombstones and outbox events"},
+    {"producer": "WP-09", "artifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"], "neededInterface": "Canonical mention target resolution, occurrence identity, edit recipient deltas, no implicit sharing"},
+    {"producer": "WP-07", "artifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"], "neededInterface": "Durable attention consumer, recipient/reason dedup/coalescing, delivery-time ACL, activity and Company/thread deep-link payload"}
+  ],
+  "foundationGates": [
+    {
+      "gate": "Root wave0 commit and accepted dependency receipts",
+      "classification": "Start gate, not an extra explicit DAG edge",
+      "evidence": "Worker dispatch requires implementation only after lead wave0 commit and accepted dependency receipts; WP-25 inputs at work-packages.json:21827-21859 require three receipts from each explicit producer.",
+      "requiredBefore": "Any feature implementation or shared patch integration",
+      "missingPrerequisite": "No accepted predecessor or wave0 completion receipt inspected; this report does not substitute for them."
+    },
+    {
+      "gate": "WP-01/02/03/04 authenticated authority, registry, policy, receipts and transactional outbox",
+      "classification": "Transitive foundations through explicit producers; not new direct dependencies",
+      "evidence": "21-implementation-plan.md:9-82,125,144,163,470; WP-25 migration composite FK, request-hash uniqueness and consumer inbox at work-packages.json:22283-22303. Current authorizeRox2Action is an actor/grant predicate without resource scope; registerExternalBinding is an in-memory Map helper.",
+      "requiredBefore": "Shared commands, queries, mentions and replay",
+      "missingPrerequisite": "Accepted persistent registry/alias lookup, transport-derived actor, resource-policy epoch, transactional command gateway/outbox and migration runner contracts."
+    },
+    {
+      "gate": "WP-06 search/memory projection",
+      "classification": "Hidden acceptance foundation, also transitively present via WP-09; keep explicit dependency array unchanged",
+      "evidence": "WP-09 depends on WP-06 at 21-implementation-plan.md:163; WP-25 text indexing/tombstones at work-packages.json:21772-21778; WP-06 revision/ACL/watermark contract at 21-implementation-plan.md:104-121.",
+      "requiredBefore": "Search and agent context acceptance",
+      "missingPrerequisite": "Accepted common Message projection consumer, current-policy read filtering and revision/tombstone fencing; not a CRM-only index."
+    },
+    {
+      "gate": "WP-05 offline queue and replay",
+      "classification": "Not a named WP-25 direct edge; demanded by offline_queued and offline/reconnect completeness",
+      "evidence": "work-packages.json:21744-21750,21823; 21-implementation-plan.md:84-102. DossierPage.save uses saveWorkspaceJson; storage.ts:35-44 writes localStorage only, without server receipt/replay.",
+      "requiredBefore": "Durable draft reload/reconnect and honest queued UI",
+      "missingPrerequisite": "Accepted shared command queue/cursor/replay adapter with revoke rejection and private draft quarantine."
+    },
+    {
+      "gate": "WP-51 single-writer and revocation fence",
+      "classification": "Hidden shared-authority safety gate, not an explicit WP-25 edge",
+      "evidence": "22-test-plan.md:9 requires shared writes only through workspace service; 21-implementation-plan.md:1020-1036 specifies writer mode and fence. WP-25 operation errors include REVOKE_FENCE_PENDING at work-packages.json:22064. DossierPage:111-120 currently mutates local JSON directly.",
+      "requiredBefore": "Shared Company/Contact discussion writes and revoke acceptance",
+      "missingPrerequisite": "Writer-mode resolution for canonical CRM parents, current policy epoch at command/subscribe/delivery, and pending-fence semantics; preserve explicit standalone mode."
+    },
+    {
+      "gate": "WP-36 agent/MCP dispatch",
+      "classification": "Hidden execution-surface gate; CRM-DISCUSS-01 explicitly includes WP-36",
+      "evidence": "22-test-plan.md:101,106-107; 21-implementation-plan.md:736-752. DossierDetail.generateBrief passes a string prompt to startAgentRun; agent-run.ts:14-22 selects safe mode but performs no resource authorization itself.",
+      "requiredBefore": "Real agent Company context and agent reply-denial verification",
+      "missingPrerequisite": "Accepted actor/delegation-aware domain read/context dispatcher. A renderer-built prompt or safe permissionMode alone is not ACL proof."
+    },
+    {
+      "gate": "WP-26/WP-50 privacy and provenance; WP-38 context composition seam",
+      "classification": "Cross-package integration gates, not a backward dependency on downstream packages",
+      "evidence": "CRM-DISCUSS-01 lists WP-25/26 and WP-36/38 at 22-test-plan.md:101. WP-26 depends on WP-25 at 21-implementation-plan.md:515; WP-38 depends on WP-25 at :776. WP-50 source-ref/audience contract at :1002-1018. WP-25 itself requires source-policy intersection at work-packages.json:22303.",
+      "requiredBefore": "Mixed-source privacy acceptance and later aggregate context composition",
+      "missingPrerequisite": "Agree the source-provenance/consent and bounded discussion-context interface now; WP-25 must enforce private-source exclusion itself. Do not defer that criterion to WP-26 or create a WP-25→WP-38 cycle. Persisted/shared derived brief policy needs provenance-aware integration."
+    },
+    {
+      "gate": "WP-39 attachment authorization",
+      "classification": "Hidden API/scenario gate, not an explicit WP-25 edge",
+      "evidence": "PostEntityDiscussion includes attachmentRefs and attachment_denied at work-packages.json:22497-22510; CRM-DISCUSS-01 denies attachment URLs at 22-test-plan.md:107; WP-39 contract at 21-implementation-plan.md:791-808.",
+      "requiredBefore": "Attachment-bearing generic discussion contract and denied-URL acceptance",
+      "missingPrerequisite": "Accepted common attachment ref validation and current-policy download/signing. The Company operation currently has no attachment field; root must settle transport mapping without dropping generic attachment behavior."
+    },
+    {
+      "gate": "WP-52 actual workspace service/database runtime",
+      "classification": "Live-verification prerequisite, not a demand for media/provider setup for this text-only slice",
+      "evidence": "21-implementation-plan.md:1038-1055; work-packages.json:21826,22430 states real surface required and provider sandbox unnecessary unless outbound. Scoped glob found no normative CRM module/migration/test paths.",
+      "requiredBefore": "Changed Electron+RPC/HTTP, two-principal and restart scenario receipts",
+      "missingPrerequisite": "Lead-selected service boot/DB/migrations and native authenticated adapter capability receipts. No claim that unrelated media infrastructure is necessary for WP-25."
+    },
+    {
+      "gate": "API/schema reconciliation and shared-file ownership",
+      "classification": "Normative integration decision gate",
+      "evidence": "message.postCompanyDiscussion requires company, string body and explicit mentions at work-packages.json:21871-21898; PostEntityDiscussion instead requires parent, RichText and attachmentRefs at :22497-22510. Contact support is required by apiChanges and CRM-DISCUSS-01. WP-24 proposes the same CRM contracts/commands/repository paths at 21-implementation-plan.md:476.",
+      "requiredBefore": "Typed interfaces and handlers",
+      "missingPrerequisite": "Root-approved Company wrapper→common PostEntityDiscussion normalization preserving mention occurrences; accepted Contact posting/query path, RichText/plain-text and attachment mapping; one CRM file owner. Do not invent a contact endpoint or replace files already delivered by WP-24."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/crm/contracts.ts",
+    "apps/workspace-service/src/modules/crm/commands.ts",
+    "apps/workspace-service/src/modules/crm/repository.ts",
+    "tests/macro-integration/wp-25.test.ts",
+    "apps/workspace-service/src/modules/crm/discussion-context.ts",
+    "apps/electron/src/renderer/pages/extra-screens/dossier/CrmDiscussion.tsx",
+    "packages/shared/src/workspace-domain/crm/context-query.ts",
+    "tests/macro-integration/crm-discussion-mention-acl.test.ts",
+    "apps/workspace-service/migrations/25-domain-contract.sql"
+  ],
+  "ownedNewFilesQualification": "Exact normative newFiles, not authorization to create product files during preflight. contracts.ts/commands.ts/repository.ts overlap preceding CRM packages and become shared-owner extensions after accepted receipts. 25-domain-contract.sql is a proposed migration identifier; selected migrator determines actual filename, with no fabricated timestamp. No crm_comments, CRM notification table or parallel search/message store.",
+  "proposedContributionSeams": [
+    {"path": "apps/workspace-service/src/modules/crm/commands.ts", "symbol": "message.postCompanyDiscussion handler (proposed)", "change": "Validate exact Company wrapper schema and common envelope; authenticate actor from transport; resolve/authorize parent and threadRoot in same workspace; preserve explicit mentions during normalization; delegate common Message service transaction and return its canonical message ref/receipt. Use common edit/delete/reply commands, not CRM copies."},
+    {"path": "apps/workspace-service/src/modules/crm/repository.ts", "symbol": "CRM discussion parent/alias lookup (proposed extension)", "change": "Resolve Company/Contact to existing registry ref using workspace+provider+account+remote_type+remote_id; quarantine ambiguous IDs; query WP-08 discussion/messages with actor-authorized stable cursor. Store no bodies or notifications here."},
+    {"path": "apps/workspace-service/src/modules/crm/discussion-context.ts", "symbol": "bounded authorized discussion context query (proposed)", "change": "Return permitted root/replies, canonical parent/message refs, source revisions/provenance and projection watermark. Recheck parent, discussion, message and linked source permissions before serialization. Exclude private thread bodies, titles, counts and attachment URLs; bound depth/page/budget."},
+    {"path": "packages/shared/src/workspace-domain/crm/context-query.ts", "symbol": "typed CRM discussion context query/DTO (proposed)", "change": "Use existing Rox2EntityRef, common authorized cursor and actor-free request envelope; define parent filter, thread scope, bounded pagination and revision/provenance DTOs for native/agent callers. Final exported names must follow accepted producer interface rather than speculative imports."},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/CrmDiscussion.tsx", "symbol": "CrmDiscussion (proposed)", "change": "Contextual adapter over accepted WP-08 common timeline/composer, with parent ref and authorized query/command bindings, mention resolver and thread selection. Display six normative states, edit/delete and durable draft replay; use t() and existing UI. Do not make a second inbox or discussion state store."},
+    {"path": "apps/workspace-service/migrations/25-domain-contract.sql", "symbol": "CRM parent attachment migration (proposed)", "change": "Add only absent parent FK/index/alias/backfill constraints on accepted common discussion/message/mention tables; ensure workspace-scoped registry FK, revision/schema/deleted_at and existing command/event uniqueness. Snapshot/forward repair rules preserve accepted recent writes. If producers already deliver all constraints, require reviewed migration/N/A receipt, not an empty migration."}
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+      "symbol": "DossierEntity / normalizeDossierData / buildBriefPrompt",
+      "change": "Extend accepted WP-24 canonical CRM DTO binding with a validated Rox2EntityRef for Company or Contact and an explicit authority discriminator; preserve it through normalization (current parser drops unknown fields). Keep standalone dos-* cards separate from canonical shared identity; never resolve by name/org/aliases. Let shared brief formatting consume a typed, already-authorized discussion-context DTO with source refs/revisions; leave local brief behavior intact.",
+      "reason": "Current DossierEntity has local id/person|company only; normalizeDossierData constructs a fixed local shape at lines 143-154 and buildBriefPrompt has no shared discussion context. Contact must not be silently treated as login person."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+      "symbol": "DossierPage.save/updateEntity/select / DossierDetail/generateBrief",
+      "change": "On accepted canonical CRM selection mount CrmDiscussion inside DossierDetail before the touches section (gap after agent Card at line 597), pass parent ref, thread selection and shared-authority client; never send shared bodies through saveWorkspaceJson/onUpdate. Keep standalone loading/card editing and navigation behavior. Use authorized server discussion-context query before generating a shared brief, attach source provenance via accepted agent interface and surface permission/retry failures. Extend existing select/navigation integration to resolve authorized Company/contact+thread deep links, rather than a new CRM destination.",
+      "reason": "Current save is localStorage; selection uses local itemId; no discussion UI or server read is present. generateBrief currently builds a renderer string from local/name-matched sources."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_ENTITY_KINDS / Rox2EntityRef / ROX2_RELATION_RULES / Rox2Event / Rox2CanonicalResult",
+      "change": "Root registry owner must reconcile accepted WP-02/WP-08/WP-24 canonical Contact/Discussion/Message kinds additively; current enum has crm-company, person and channel-message but no contact/discussion. Reuse existing ref format/parse and parent/mentions relation semantics; distinguish Contact from principal. Keep status triad intact and consume the common RoxCommand-v2 receipt/envelope mapping for operation status, commandId/requestHash/receiptId; do not replace triad with a string status. Ensure shared event DTO supplies required revision/causation/correlation and policy fence metadata through the accepted common contract.",
+      "reason": "Regex-valid kind:id is not enough for parseRox2EntityId, which checks current enum. Generic parent/mention relations already exist, so no CRM-specific relation/store is needed. Current events have optional audit fields and canonical result is a triad, unlike the operation responseSchema string enum."
+    },
+    {
+      "path": "packages/server-core/src/meetings/conation/crm.ts",
+      "symbol": "CrmTarget / resolveCrmTarget / proposeCrmEdit / sendCrm",
+      "change": "Extend accepted CRM alias-resolution adapter to return/resolve a canonical workspace-scoped parent ref through the persistent registry after matching accountId+remoteType+remoteId; include verified provider namespace rather than deriving it from displayName. Route discussion-context reads through authenticated shared authority, not Conation write functions. Keep proposeCrmEdit/sendCrm and confirmWrite fail-closed for unconfirmed external mutations.",
+      "reason": "resolveCrmTarget returns a remote-only candidate, not a canonical ref or ACL decision. Native shared discussion posting is not a Conation CRM outbound mutation and must not toggle AUD #333 gates."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/crm/contracts.ts",
+      "symbol": "Accepted WP-24 CRM contracts plus GetCompanyDiscussion/PostEntityDiscussion bindings (export names pending receipt)",
+      "change": "CRM owner extends rather than overwrites contracts: exact strict Company operation payload, common parent-based Company/Contact DTO and query cursor, explicit mentions, threadRoot and errors; approved RichText/plain-text and attachment normalization. Preserve common EntityRef and command receipt definitions.",
+      "reason": "Normative new file is shared with WP-24 and earlier CRM work; packet contains incompatible-looking API shapes that cannot be silently narrowed."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/crm/commands.ts",
+      "symbol": "Accepted CRM command registration and message.postCompanyDiscussion adapter (names pending receipt)",
+      "change": "Single owner adds Company discussion wrapper registration to existing CRM commands; invoke WP-08 common handler using WP-09 mention contract and WP-07 attention events inside common gateway transaction. Request common edit/delete/reply exposure and Contact parent support if producer interface omits them.",
+      "reason": "Four packages touch shared CRM domain files; no independent worker replacement or private command path."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/crm/repository.ts",
+      "symbol": "Accepted CRM repository alias/parent query adapter (names pending receipt)",
+      "change": "Single owner adds authorized parent/alias lookup and delegates WP-08 common discussion query, preserving stable cursors and existing Company/Contact storage; no discussion body table here.",
+      "reason": "CRM persistence must reuse common Message service and authoritative alias registry."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-25",
+      "change": "After implementation integration document resolved typed API shapes, shared-file owners, hidden interface gates and actual receipt links; retain planned/not-verified until real accepted runtime evidence exists.",
+      "reason": "Normative documentation requirement; preflight is not feature implementation."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "CRM-DISCUSS-01",
+      "change": "Record exact implementation/environment/schema and observed Company+Contact, ACL, edit/delete, replay, restart and negative-control artifacts when lead executes scenarios; document mention delta, deleted-root navigation and deep-link policies.",
+      "reason": "Current document explicitly labels itself future checks, not PASS."
+    },
+    {"path": "packages/shared/src/i18n/locales/ru.json", "symbol": "extraScreens.dossier discussion keys (proposed)", "change": "Locale owner adds t()-backed labels/errors/status/help for CrmDiscussion with required plural forms and ASCII key order.", "reason": "Repository AGENTS i18n contract; file contents not inspected in this preflight."},
+    {"path": "packages/shared/src/i18n/locales/en.json", "symbol": "matching discussion keys", "change": "Add matching translated keys with parity and ASCII order.", "reason": "All ten locales required by repository AGENTS; no locale edits authorized here."},
+    {"path": "packages/shared/src/i18n/locales/de.json", "symbol": "matching discussion keys", "change": "Add matching translated keys with parity and ASCII order.", "reason": "Repository AGENTS parity requirement."},
+    {"path": "packages/shared/src/i18n/locales/es.json", "symbol": "matching discussion keys", "change": "Add matching translated keys with parity and ASCII order.", "reason": "Repository AGENTS parity requirement."},
+    {"path": "packages/shared/src/i18n/locales/fr.json", "symbol": "matching discussion keys", "change": "Add matching translated keys with parity and ASCII order.", "reason": "Repository AGENTS parity requirement."},
+    {"path": "packages/shared/src/i18n/locales/hu.json", "symbol": "matching discussion keys", "change": "Add matching translated keys with parity and ASCII order.", "reason": "Repository AGENTS parity requirement."},
+    {"path": "packages/shared/src/i18n/locales/ja.json", "symbol": "matching discussion keys", "change": "Add matching translated keys with parity and ASCII order.", "reason": "Repository AGENTS parity requirement."},
+    {"path": "packages/shared/src/i18n/locales/pl.json", "symbol": "matching discussion keys", "change": "Add matching translated keys and applicable plurals with parity and ASCII order.", "reason": "Repository AGENTS parity requirement."},
+    {"path": "packages/shared/src/i18n/locales/zh-Hans.json", "symbol": "matching discussion keys", "change": "Add matching translated keys with parity and ASCII order.", "reason": "Repository AGENTS parity requirement."},
+    {"path": "packages/shared/src/i18n/locales/zh-Hant.json", "symbol": "matching discussion keys", "change": "Add matching translated keys with parity and ASCII order.", "reason": "Repository AGENTS parity requirement."}
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Teammate mention in Company discussion notifies once",
+      "currentEvidence": "DossierDetail has no common discussion; DossierEntity contains notes/promises, not mention payload. WP-07/WP-09 contracts described at implementation plan:125-178.",
+      "seam": "CrmDiscussion → CRM Company wrapper → WP-08 Message post → WP-09 occurrence → WP-07 attention consumer",
+      "requiredChange": "Preserve explicit mentions in Company wrapper and common composer, resolve teammate principal (not Contact), apply common dedup and semantic reason policy without a CRM inbox.",
+      "verification": "A posts @B via Company UI in W1; B sees one notification and correct Company/thread deep link; retry same envelope and verify one canonical message/recipient effect via API and DB unique-key count.",
+      "missingPrerequisite": "Accepted WP-08/09/07 typed interfaces and migration/scenario receipts plus canonical parent from WP-24.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "text indexed",
+      "currentEvidence": "DossierDetail:375-394 searches local notes by entity name; not a shared Message projection. WP-25 requires common indexed messages.",
+      "seam": "WP-08 outbox message.created/edited/deleted → accepted WP-06 projection",
+      "requiredChange": "Register Company and Contact discussion messages in common projection with canonical parent context, message revision, source provenance and policy epoch.",
+      "verification": "Post a unique phrase through each parent UI/API; wait for recorded projection watermark; authorized search returns correct Message+parent refs, not just a Company title match.",
+      "missingPrerequisite": "Accepted search consumer and authorized query interfaces, transitively from WP-09/WP-06.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent Company context includes authorized discussion",
+      "currentEvidence": "buildBriefPrompt:281-304 includes local touches/promises/tasks only; generateBrief:418-428 sends this prompt to startAgentRun; safe mode is not resource ACL.",
+      "seam": "discussion-context.ts / context-query.ts → authenticated domain context dispatcher; DossierDetail.generateBrief",
+      "requiredChange": "Return bounded authorized root/replies with canonical refs/revisions/provenance; integrate accepted agent context dispatch and brief without exposing private/local sources to shared audience.",
+      "verification": "Real Agent-A requests Company context and cites posted root/reply; Agent-V can only read permitted material and cannot post despite allow-all; outsider denied, no title/count/snippet.",
+      "missingPrerequisite": "Accepted common query and agent/delegation interface; agreement with WP-36/WP-38 on composition, without introducing backward DAG cycle.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "deleting message tombstones result",
+      "currentEvidence": "DossierPage:303-306 removes a local card from JSON; no common Message tombstone path in inspected UI. Migration contract retains deleted_at and event tombstone fence.",
+      "seam": "WP-08 DeleteMessage → outbox → WP-06 projection/context invalidation",
+      "requiredChange": "Invoke common revisioned delete, retain message identity/root policy, remove searchable/context body and reject stale lower-revision projection events.",
+      "verification": "Delete posted root through UI; typed read-back shows tombstone policy; search/context omit body after watermark; replay older edit after deletion does not resurrect it; reload thread navigation holds.",
+      "missingPrerequisite": "Accepted delete/tombstone and stale-event fence contracts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Company discussion teammate mention yields one durable notification after outbox replay; unauthorized target no leaked title/snippet.",
+      "currentEvidence": "work-packages.json:22297-22303 requires inbox uniqueness and visibility intersection; CRM-DISCUSS-01:109 requires delivery-time ACL recheck. No notification machinery in current Dossier seam.",
+      "seam": "Common transaction/outbox/inbox and WP-07 recipient delivery",
+      "requiredChange": "Commit message/mention/receipt/events atomically, dedup effect on replay, choose one overlap semantic reason and reauthorize recipient before notification fetch/push serialization.",
+      "verification": "Restart/replay event repeatedly; B receives one durable notification; C/unauthorized target receives no Company title or snippet. Revoke B after enqueue but before push; delivery excludes excerpt and unauthorized link metadata.",
+      "missingPrerequisite": "Accepted transactional outbox/inbox, attention policy and current resource revocation epoch.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Search/agent context includes permitted CRM message; private source thread absent from shared company discussion.",
+      "currentEvidence": "WP-25 domainConstraints require visibility intersection; Dossier name-based touches and local note search do not establish source authorization.",
+      "seam": "Authorized common Message query/search + CRM discussion-context bounded traversal",
+      "requiredChange": "Apply parent/discussion/message/source intersection to every linked ref and current query, never use relation membership as read grant; preserve email account consent and provenance before serialization.",
+      "verification": "Seed PRIVATE_WP-25 in A-only source thread and a shared distinctive phrase; B search/context/discussion contains shared phrase and excludes private body/title/count; X forged refs/known root IDs denied via HTTP, RPC, subscription and attachment URL.",
+      "missingPrerequisite": "Common read ACL and source-consent/provenance contract; WP-26 integration cannot postpone WP-25 exclusion.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Edit/delete updates search and mention recipient deltas without repeat notification explosion.",
+      "currentEvidence": "WP-09 RemoveOccurrence and WP-07 coalescing described at plan:127-178; no common editing/mention state in Dossier.",
+      "seam": "WP-08 EditMessage/DeleteMessage + WP-09 occurrence deltas + WP-07 attention + WP-06 projection",
+      "requiredChange": "Diff structured mention occurrences by source revision/occurrence key; remove old backlinks/recipient effects, add permitted new ones and honor documented renotify policy, not notify-all on every edit.",
+      "verification": "Edit B→V, repeat identical and non-mention edits 100 times, replay events out of order; verify current recipients/backlinks, policy-bounded notification count and updated phrase search. Delete clears searchable text without replay resurrection.",
+      "missingPrerequisite": "Accepted mention occurrence/delta and attention coalescing policy, revision fences and common edit/delete handlers.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {"criterion": "UI", "currentEvidence": "DossierPage/DossierDetail is existing contextual surface; no CrmDiscussion file found by scoped glob.", "seam": "DossierDetail return after agent Card and proposed CrmDiscussion", "requiredChange": "Mount common Company/Contact discussion timeline/composer, replies, mentions, edit/delete and thread actions inside existing Dossier; translated accessible controls.", "verification": "Electron A/B Company and Contact interactions, keyboard/focus, screenshot+ARIA, hover/help and reload; no new destination or message store.", "missingPrerequisite": "Accepted common UI/client and canonical parent binding.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "routing", "currentEvidence": "DossierPage.select:169 uses routes.view.screen('dossier', local id); imported navigate dispatches existing route.", "seam": "DossierPage.select/itemId/DossierDetail thread selection", "requiredChange": "Resolve notification canonical Company/Contact+thread refs through existing authorized Dossier route/alias adapter, preserving standalone dos-* selection.", "verification": "B notification opens correct parent and reply thread; restart, rename and denied-parent links do not show stale title or a new surface.", "missingPrerequisite": "Accepted route payload and parent alias map from root/native and attention owners; shared route definition not inspected here.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "entity model", "currentEvidence": "DossierEntity:19-30 has no EntityRef; platform enum has crm-company/person/channel-message but not contact/discussion.", "seam": "DossierEntity/normalizeDossierData and root ROX2_ENTITY_KINDS", "requiredChange": "Bind canonical CRM parent refs and approved common Discussion/Message kinds; retain Contact versus principal distinction and legacy alias namespace.", "verification": "Read-back registry parent/message refs and revisions; cross-workspace/type mismatch and ambiguous alias rejected/quarantined; no name-based merge.", "missingPrerequisite": "WP-24 and WP-02/08 accepted kind/alias/parent interfaces.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "persistence", "currentEvidence": "storage.ts writes localStorage; normative migration reuses common tables and receipt/inbox uniqueness.", "seam": "Accepted WP-08 repository/common transaction plus 25-domain-contract migration", "requiredChange": "Reuse common discussion/message/mention persistence; additive parent FK/index/backfill only, retained tombstones and provenance, no crm_comments.", "verification": "DB common timeline count plus registry FK/unique constraints; restart service/client and confirm same root/reply/receipt/aliases; snapshot/replay restore retains accepted writes.", "missingPrerequisite": "Applied producer migrations and chosen migrator receipt.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "commands", "currentEvidence": "Operation strict schema at work-packages.json:21863-21898; no CRM commands file found.", "seam": "CRM commands extension → common command gateway/Message service", "requiredChange": "Implement wrapper with actor-free strict payload, body 1..10000, mentions max 1000, valid same-parent threadRoot, idempotency/request-hash and expectedRevision; keep generic parent command for Contact/edit/delete.", "verification": "Native/HTTP post read-back, forged actor/extra field/workspace mismatch/bad parent/thread/body/mentions rejected, stale revision conflict, same key altered payload conflict, retry returns identical ref/receipt.", "missingPrerequisite": "RoxCommand-v2 gateway and reconciled generic-vs-wrapper schema.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "queries", "currentEvidence": "apiChanges GetCompanyDiscussion/PostMessage; proposed discussion-context/context-query files absent from scoped glob.", "seam": "CRM authorized parent lookup → common GetTimeline/GetCompanyDiscussion/context DTO", "requiredChange": "Implement actor-filtered stable pagination/root-reply retrieval with scoped cursor and no hidden total/title; support Company and Contact.", "verification": "Page boundaries, cursor reuse after policy change, forged cursor/parent and outsider reads; every authorized message appears once with canonical parent/ref/revision.", "missingPrerequisite": "Accepted common Message query and authorized cursor contract.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "realtime where needed", "currentEvidence": "WP-25 requires revisioned invalidation/replay cursor, not local storage custom events alone.", "seam": "Common outbox → authorized subscription/client projection", "requiredChange": "Invalidate Company/Contact discussion by aggregate revision and replay durable cursor after disconnect; recheck subscription ACL and policy fence.", "verification": "A posts/edits while B disconnects; reconnect/restart converges once; dropped/duplicate events recovered; revoke B denies stale socket/rejoin without body/title.", "missingPrerequisite": "Accepted subscription/cursor/revoke transport interfaces.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "permissions", "currentEvidence": "authorizeRox2Action:601-610 only checks actor+grant; execution safe/allow-all is not resource authorization.", "seam": "Transport principal → parent/discussion/source policy at command/query/delivery", "requiredChange": "Use authenticated server actor, workspace/member/read/comment/write/admin/consent policy and current epochs; execution grants remain separate.", "verification": "Owner/member/viewer/outsider/agent matrix including forged actor, allow-all viewer, cross-workspace refs, revoke queued write and delivery; no metadata leakage.", "missingPrerequisite": "Accepted WP-03 policy vocabulary and WP-51 fence interface.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "sharing", "currentEvidence": "Common parent/mentions relations exist but contain no permission grant; domainConstraints explicitly forbid implicit CRM/mail read.", "seam": "Source audience intersection in discussion query/mention resolver/context", "requiredChange": "Company sharing or mention does not share source thread/mail/attachment; preserve explicit source consent and denied-target response behavior.", "verification": "B can read shared Company discussion but not A personal mail/private attached thread; unauthorized mention target and linked refs yield no copied snippet/title/count.", "missingPrerequisite": "Source ACL/provenance interface and agreed consent behavior.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "search", "currentEvidence": "Local searchNotes is not shared message search; WP-06 projection is named foundation.", "seam": "Common search projection registration for CRM-parent messages", "requiredChange": "Index canonical Company/Contact Message text with revision and ACL/tombstone fence; current-policy filter before rendering snippets.", "verification": "Phrase search before/after edit/delete, permission revoke before index catches up, stale edit after tombstone, actor-specific results and watermark.", "missingPrerequisite": "WP-06 accepted projection/query consumer.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "mentions", "currentEvidence": "Operation has explicit mentions array; platform relation mentions exists; Dossier aliases are name strings, not occurrences.", "seam": "Common composer/resolver and WP-09 occurrence extraction/delta", "requiredChange": "Maintain canonical principal/entity mention refs, occurrence/source revisions and bounded payload; Company mention does not ping whole team; no access grant.", "verification": "B teammate versus Contact distinction, duplicate occurrence and edit removal, unauthorized target, dropped legacy mentions mutation fails expected assertion.", "missingPrerequisite": "WP-09 accepted occurrence and extraction policy; approved RichText/string normalization.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "notifications", "currentEvidence": "WP-07 offers common ListNotifications/MarkSeen/MarkDone and recipient/reason uniqueness; no CRM inbox implementation inspected.", "seam": "Common attention consumer and existing notification UI binding via producer", "requiredChange": "Emit common durable attention events with one semantic reason and Company/thread link; recipient seen/done stays common and delivery is policy-filtered.", "verification": "One recipient row after replay/crash, B seen/done persists second client, B→V delta documented, revoke-before-push prevents excerpt.", "missingPrerequisite": "WP-07 accepted recipient/coalescing and delivery contract.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "activity", "currentEvidence": "WP-07 SubscribeActivity/activity.recorded at plan:129-140; WP-25 completeness explicitly includes activity.", "seam": "Message/mention common outbox → accepted activity consumer", "requiredChange": "Route permitted discussion changes into common activity with causation/revision and existing reason policy, no CRM-specific feed.", "verification": "Activity read/subscription sees one permitted event after replay; outsider/revoked actor sees no private title/body and revisions remain ordered.", "missingPrerequisite": "Accepted activity DTO/subscription from WP-07.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "agent access", "currentEvidence": "buildBriefPrompt uses local metadata and startAgentRun selects safe; no domain ACL lookup.", "seam": "discussion-context typed query → actor-aware agent dispatcher and Dossier brief", "requiredChange": "Provide authorized bounded root/reply context with refs/revisions/provenance; deny autonomous reply without comment/write capability, independent of runtime permissionMode.", "verification": "Real Agent-A read includes root/reply citations, Agent-V reply rejected, outsider known IDs denied; private marker never appears in B-readable derived context.", "missingPrerequisite": "WP-36 typed dispatch and source-provenance integration.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "API/MCP where applicable", "currentEvidence": "Exact HTTP/native RPC transport specified; CRM-DISCUSS-01 also requires agent surface, so not N/A.", "seam": "Accepted HTTP/native registration + common agent/MCP dispatcher", "requiredChange": "Register message.postCompanyDiscussion on both specified transports; expose permitted context/common parent commands to domain tools using same actor/envelope/receipt, not a private tool store.", "verification": "Exercise HTTP/native post and actual tool context/action with forged actor/ref, forbidden comment and stale revision; compare canonical refs/receipts.", "missingPrerequisite": "Root transport registration hooks and accepted WP-36 tool schema; hooks outside scoped inspected paths remain integration request, not invented symbols.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "observability", "currentEvidence": "Rox2Event audit fields are optional at platform-contract.ts:131-141; WP-25 requires commandId/causationId/correlationId/aggregateRevision/policyEpoch/projectionWatermark/retry-DLQ counters.", "seam": "Common gateway/outbox/consumer/query metadata", "requiredChange": "Carry required identifiers, policy epoch, watermark and retry/DLQ counts via common typed metadata; log no raw message/email/transcript/tokens.", "verification": "Trace one post→mention→notification→projection causal chain and deliberate consumer retry/DLQ; scan captured logs for fixture private marker/body/token absence.", "missingPrerequisite": "Common audit DTO, consumer metrics and redaction hooks accepted by lead.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "tests", "currentEvidence": "Two normative WP-25 test files absent in scoped glob; test plan is explicitly future checks, not PASS.", "seam": "tests/macro-integration/wp-25.test.ts and crm-discussion-mention-acl.test.ts", "requiredChange": "Add behavioral Company+Contact, mention replay/delta, search/agent privacy/tombstone, transport rejection and persisted-command/reply crash coverage using real common services.", "verification": "After dependency acceptance lead runs bun test tests/macro-integration/wp-25.test.ts tests/macro-integration/crm-discussion-mention-acl.test.ts plus relevant existing package tests; real changed-surface receipts and seeded controls remain required, not replaced by fixtures.", "missingPrerequisite": "Accepted runner/environment and typed producer interfaces; tests forbidden in this preflight.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "documentation", "currentEvidence": "21-implementation-plan.md#WP-25 and 22-test-plan.md CRM-DISCUSS-01 describe planned work.", "seam": "Existing WP-25/CRM-DISCUSS-01 sections", "requiredChange": "Document final schema mapping, mention edit/renotify policy, source ACL, deep links/deleted-root semantics, migration/rollback and real receipt versions through lead-owned patches.", "verification": "Every criterion links to exact implementation/environment/schema artifacts; implemented/verified/delivered/journalled distinguished; no preflight PASS claim.", "missingPrerequisite": "Observed integrated implementation receipts and root documentation ownership.", "state": "PLANNED_DOCUMENTATION_IMPLEMENTATION_NOT_VERIFIED"},
+    {"criterion": "failure states", "currentEvidence": "Normative permission_denied/retryable_error and ten operation error codes; generateBrief currently uses plain string error only.", "seam": "CrmDiscussion common client command/query state", "requiredChange": "Show typed permission_denied, retryable_error, unavailable/conflict/pending_fence/reconciling states without hidden metadata or false success; preserve draft and original idempotency envelope on retry.", "verification": "Denied actor, service stop, reply timeout after commit, stale revision, key collision and pending revoke fence via actual UI/API; retry reconciles receipt without ghost/duplicate message.", "missingPrerequisite": "Accepted common error/result mapping to existing Rox2 triad and client recovery API.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "loading states", "currentEvidence": "DossierPage initially synchronously loads local JSON; shared loading state required at work-packages.json:21745.", "seam": "CrmDiscussion authorized query lifecycle", "requiredChange": "Expose loading while resolving canonical parent/timeline, cancel stale workspace/parent reads and prevent posting until permitted parent/revision known.", "verification": "Delay timeline query and switch parent/workspace; observe loading and no stale body/parent target after response race.", "missingPrerequisite": "Accepted query lifecycle/client adapter.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "empty states", "currentEvidence": "Existing Dossier EmptyState handles no cards/selection, not empty authorized discussion.", "seam": "CrmDiscussion common timeline empty state", "requiredChange": "Distinguish authorized empty discussion from loading/denied/unavailable; allow first post only with comment grant.", "verification": "New Company and Contact show empty timeline; viewer sees read-only state; outsider denial not an empty count/title leak.", "missingPrerequisite": "Canonical parent lookup and authorized query result distinction.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "offline/reconnect where applicable", "currentEvidence": "offline_queued and applied_verified are normative states; storage.ts has no command replay/receipt. Not N/A.", "seam": "CrmDiscussion → common WP-05 durable draft/outbox/replay", "requiredChange": "Persist local draft/envelope and cursor using accepted shared adapter; show offline_queued not applied_verified until server receipt/readback; reject revoked replay into private quarantine.", "verification": "Offline post, reload client, reconnect/restart server before reply, one message/notification and same receipt; revoke while offline denies replay and never broadcasts draft.", "missingPrerequisite": "WP-05 queue/cursor and WP-51 writer/revoke fence interfaces.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "Negative-control: unauthorized actor or dropped/duplicated event must fail acceptance; legacy adapter drops mention payload", "currentEvidence": "work-packages.json:21764,22442-22445; CRM-DISCUSS-01 controls at test-plan:111.", "seam": "Normative WP-25 integration tests and independent evaluator", "requiredChange": "Keep baseline actor/privacy/notification/search assertions; inject drop-mentions variant and independent ACL/duplicate/drop-event variant, distinguish caught behavior from infrastructure failure.", "verification": "Healthy scenario passes first; controlled legacy mention drop fails exact notification/mention assertion; ACL bypass or effect dedup removal fails privacy/count assertion; retain reproduction seed 20260955 and failure trace.", "missingPrerequisite": "Real scenario runner, accepted adapter injection seam and independent holdout evaluator; no product tests run here.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "Persistence-recovery: restart between persisted command and reply; state/receipt/canonical ID consistent", "currentEvidence": "work-packages.json:21767-21768 requires restart boundary; Dossier local save has no receipt.", "seam": "Common gateway transaction commit → RPC/HTTP response boundary", "requiredChange": "Use atomic Message/mention/outbox/receipt transaction with actor/idempotency uniqueness and immutable request hash; recover read-back rather than allocate a new message after unknown response.", "verification": "Kill service after durable commit before response, restart and retry identical key/payload; assert same message ID/observedRevision/receiptId, one outbox causal event/effect and durable notification; altered payload conflicts.", "missingPrerequisite": "Accepted command receipt repository and controllable restart environment.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "CRM-DISCUSS-01 thread/reaction/delete navigation and attachment denial", "currentEvidence": "22-test-plan.md:103-109 additionally specifies replies, unique reaction, persisted thread resolve and denied attachment URLs.", "seam": "WP-08 common thread/reaction/resolve service and WP-39 attachment policy", "requiredChange": "Expose common root/reply/edit/delete/thread resolve/reaction behavior in contextual adapter; retain accepted deleted-root navigation policy; validate attachment read independent of parent share.", "verification": "B replies to A Company root, same common timeline/API; reaction replay leaves one actor/reaction; resolve survives reload; deleted root follows documented navigation; X known IDs cannot fetch attachment URL.", "missingPrerequisite": "Producer interface for reaction/resolve/delete-root policy and attachment authorization; do not discard extra published scenario requirements.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "Migration, identity and rollback domain constraints", "currentEvidence": "work-packages.json:22265-22312 requires common tables, composite entity FK, command/alias/event uniqueness and forward-safe repair.", "seam": "Accepted common schema plus proposed migration 25-domain-contract.sql", "requiredChange": "Use registry parent FK and source-policy intersection; verify workspace schema/revision/deletion fields, alias provider/account keys and separate lease-vs-processed inbox state. Backfill aliases/provenance; ambiguous IDs quarantine; no CRM comment/notification table.", "verification": "Apply selected migrator artifact on actual schema; cross-workspace parent/FK and alias collisions fail; inspect one common Message service timeline; crash lease/replay recovers; rollback/reverse replay preserves accepted newer writes.", "missingPrerequisite": "Accepted producer migrations, actual migrator and root snapshot/repair plan; proposed filename is not applied-migration evidence.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"},
+    {"criterion": "License policy and real changed-surface verification gate", "currentEvidence": "work-packages.json:21825-21826 mandates behavior reimplementation, exact license audit for upstream dependency and no complete without real surface/reload; Conation confirmWrite remains false/unconfirmed.", "seam": "Root integration/release receipts, native discussion UI and authenticated transports", "requiredChange": "Reimplement behavior using existing mechanisms; do not copy Macro code or enable unconfirmed Conation writers. Bind all observations to exact integrated revision/runtime/schema and source digest.", "verification": "Lead exercises actual Electron+RPC/HTTP and agent context, failure/reload/replay/negative controls and records screenshot/ARIA, typed read-back, ref+revision, DB counts/receipts/watermark; exact dependency/license evidence where used.", "missingPrerequisite": "Committed wave0/dependencies, live runner and authorized integration. This preflight supplies no runtime feature proof.", "state": "NOT_IMPLEMENTED_NOT_VERIFIED"}
+  ],
+  "sourceReferences": [
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts", "symbol": "DossierKind / DossierEntity / normalizeDossierData", "lineStart": 8, "lineEnd": 156, "sha256": "7cb89ba6653d9dc79c1f610484260d3f68cd472d8d90ba26840d4e277f91e5cd"},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts", "symbol": "buildBriefPrompt", "lineStart": 277, "lineEnd": 305, "sha256": "7cb89ba6653d9dc79c1f610484260d3f68cd472d8d90ba26840d4e277f91e5cd"},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx", "symbol": "DossierPage save/updateEntity/select/addEntity", "lineStart": 94, "lineEnd": 189, "sha256": "fcc1db89139ac3a2eb207872ae7051e7cd31f1cd1c8f7c9cd75b52268edf77a9"},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx", "symbol": "DossierDetail / generateBrief", "lineStart": 349, "lineEnd": 430, "sha256": "fcc1db89139ac3a2eb207872ae7051e7cd31f1cd1c8f7c9cd75b52268edf77a9"},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx", "symbol": "DossierDetail agent Card / touches insertion gap", "lineStart": 593, "lineEnd": 618, "sha256": "fcc1db89139ac3a2eb207872ae7051e7cd31f1cd1c8f7c9cd75b52268edf77a9"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "ROX2_ENTITY_KINDS / ROX2_RELATION_KINDS / Rox2Status / Rox2Event / Rox2CanonicalResult", "lineStart": 17, "lineEnd": 165, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "formatRox2EntityId / parseRox2EntityId / Rox2EntityRef", "lineStart": 218, "lineEnd": 250, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "entityRefFromBinding / registerExternalBinding / ROX2_RELATION_RULES", "lineStart": 316, "lineEnd": 389, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "authorizeRox2Action / isRevisionedEntityRef / isAuditableRox2Event", "lineStart": 601, "lineEnd": 620, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/server-core/src/meetings/conation/crm.ts", "symbol": "CrmTarget / resolveCrmTarget / proposeCrmEdit / sendCrm", "lineStart": 1, "lineEnd": 61, "sha256": "de6b37c9358ee0932d31aa346f7cbd78183f339f06901e2fa1add10b3c919e3c"},
+    {"path": "apps/electron/src/renderer/lib/extra-screens/storage.ts", "symbol": "loadWorkspaceJson / saveWorkspaceJson / subscribeWorkspaceJson", "lineStart": 20, "lineEnd": 65, "sha256": "fa240f1c6737cfb526deb8a19817fc48e42e471b6664def2d2d5408bc25e51ba"},
+    {"path": "apps/electron/src/renderer/lib/extra-screens/agent-run.ts", "symbol": "AgentRunRequest / startAgentRun", "lineStart": 7, "lineEnd": 22, "sha256": "74589220461ca04163fa273a3628ebd8170ef12d9d764f780c54fcab533929fc"},
+    {"path": "packages/server-core/src/meetings/conation/capabilities.ts", "symbol": "CONATION_LIVE_SCHEMA_CONFIRMED / confirmWrite", "lineStart": 345, "lineEnd": 371, "sha256": "33289bcf406de811d3717d801c72bb31a234060c838052fb6d1a04c82ed2748f"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "workPackages[WP-25] dependencies/newFiles/acceptance/completeness/inputs", "lineStart": 21678, "lineEnd": 21859, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-25 message.postCompanyDiscussion operation request/transport", "lineStart": 21861, "lineEnd": 21898, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-25 migrations/common table constraints and forward/rollback", "lineStart": 22265, "lineEnd": 22312, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-25 PostEntityDiscussion domainApiContracts", "lineStart": 22497, "lineEnd": 22510, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-25", "lineStart": 491, "lineEnd": 511, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/22-test-plan.md", "symbol": "CRM-DISCUSS-01", "lineStart": 99, "lineEnd": 113, "sha256": "55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead may consume and validate this owned preflight JSON; no product edits authorized for this worker.",
+    "implementationStart": "After lead wave0 commit and acceptance of WP-24/WP-08/WP-09/WP-07 typed interface, migration and scenario receipts, re-read any changed hashed source and reconcile shared CRM file ownership plus Company-wrapper/Contact/generic RichText/attachment API mapping.",
+    "firstCodeContribution": "Through CRM integration owner extend accepted contracts.ts/commands.ts/repository.ts with parent-resolved Company wrapper delegating the common Message transaction; then implement owned bounded discussion-context/context-query adapter and CrmDiscussion using producer interfaces. Root applies listed shared patches and transport/search/attention/agent integration through their owners.",
+    "verificationOrder": "Lead applies accepted migration or justified reviewed receipt, runs named WP-25 behavioral tests and relevant existing tests, then real Electron/RPC/HTTP+agent Company and Contact scenarios, replay/revoke/offline/restart and negative controls on exact integrated revision; retain all required artifacts before fullFeatureDoD changes."
+  },
+  "risks": [
+    "Shared CRM contracts/commands/repository are normative new files for multiple packages; creating independent versions before WP-24 receipts causes conflicting writers and lost integration.",
+    "Current local dos-* cards and name-matched touches are not canonical Company/Contact refs or authorization. Parser drops unknown fields, so an injected ref without parser update is lost after reload.",
+    "Company wrapper uses plain string+explicit mentions while generic parent contract uses RichText+attachments and no explicit mentions field; dropping mention payload or Contact support would silently narrow acceptance.",
+    "Current platform enum and canonical-result triad differ from broad operation schema; root must supply accepted common-kind and command result mapping, not invent WP-25-only aliases/status conventions.",
+    "Current Conation mutations are intentionally blocked. WP-25 must not use authPresent:true or fake schema evidence to enable outbound CRM write as a substitute for native shared discussion.",
+    "Mention is not sharing: stale index/snippet, push excerpt, attachment URL, hidden count and cached agent brief can leak private mail even if parent Company is shared.",
+    "WP-38/WP-26 consume WP-25; treating them as blocking direct predecessors creates a cycle. Agree interfaces while implementing required WP-25 privacy/context itself.",
+    "Claimed inbox lease must not equal processed effect; restart and replay must atomically preserve dedup and canonical command receipt.",
+    "Edit/delete must fence stale projection events and coalesce recipient attention; processing every event as a new notification yields an amplification bug.",
+    "Thread resolve/reaction/deleted-root policy, attachment denial and Contact discussion indexing appear in published CRM-DISCUSS-01 beyond the short seven criteria and cannot be omitted.",
+    "No runtime evidence exists in this preflight. Source hashes cover inspected working-tree bytes only; concurrent root integration invalidates affected references and demands reinspection.",
+    "Locale and common transport/tool registration implementations lie outside scoped inspected code; patch/interface requests are proposals from normative contracts, not verified existing exports."
+  ]
+}

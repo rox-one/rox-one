@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "auditedAt": "2026-09-30",
+  "snapshots": {
+    "macro": {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+    },
+    "rox": {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+    }
+  }
+}

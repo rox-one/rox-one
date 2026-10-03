@@ -1,0 +1,34 @@
+{
+  "manifestSha256": "fa4f31ac0a02f9ef32ec1b83d14bf32e55cd7d79fe067a470f297e6bac88ebdc",
+  "verifiedAppliedCount": 4,
+  "paths": [
+    {
+      "path": "scripts/compliance/generate-sbom.ts",
+      "baseSha256": "2b0d157cfa142e16fdedb6dfcfa7fe02211dd293e31599942436164a0c240c27",
+      "resultSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+      "patchSha256": "6ac5d1814e2646686ef26ce6a070d7df79ef6eb7908800d8237ef8fdc5ed4446",
+      "patch": "patches/scripts__compliance__generate-sbom.ts.patch"
+    },
+    {
+      "path": "tests/macro-integration/wp-48.test.ts",
+      "baseSha256": "a5dde21e73c3e8a2158f8bdc20fe6a0d592ad395251fa50ec2b1ce7b354dde13",
+      "resultSha256": "fcdadc5f4b23935573abc7a2c4109e2759f5aa77b71a1ee21ff3a036f21347fa",
+      "patchSha256": "0cf93b7313cae2f7d160ec7609e58df418f27a8e9947ad5c592e6a462c0ee671",
+      "patch": "patches/tests__macro-integration__wp-48.test.ts.patch"
+    },
+    {
+      "path": "tests/macro-integration/wp-48-bundle-linkage.test.ts",
+      "baseSha256": null,
+      "resultSha256": "74e83101997795e01be1708ab8a031c0a54cef2abe0143e76303a32968f0cb54",
+      "patchSha256": "1e403efb3340a54d73e9d075d64148b36eb474f3b4e8ab47ae7ef6ffb2a4b4ee",
+      "patch": "patches/tests__macro-integration__wp-48-bundle-linkage.test.ts.patch"
+    },
+    {
+      "path": "docs/macro-integration/wp-48-bundle-linkage.md",
+      "baseSha256": null,
+      "resultSha256": "19fc289bc28785ee6c821a8e146806ddfa41cbacba8fb8d3e6c7fdba3f0a37a5",
+      "patchSha256": "c1890cfbd02e4ccaf0274c99de435d49d96ce0792f1cc35f546479c61e18bbc9",
+      "patch": "patches/docs__macro-integration__wp-48-bundle-linkage.md.patch"
+    }
+  ]
+}

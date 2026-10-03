@@ -1,0 +1,468 @@
+{
+  "task_id": "WP-48-preflight",
+  "attempt_id": "10733044afa01d7235462e0018f6fe9c",
+  "packet_hash": "edd800d706d70e5f3db79b14b3becb261ae55d595217f977d89162221bbfb49c",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-48",
+  "featureComplete": false,
+  "dependencies": [],
+  "mode": "inspect-only; owned preflight artifact, not feature implementation",
+  "workTier": "bounded-workflow",
+  "inspectionBoundary": "Published WP-48 specifications, five affected files, release/build scripts directly named by package.json and their build/common.ts import, Electron packaging configuration and its afterPack hook. No product source, tests, manifests, progress or Git state changed. No builds, tests, native UI or network operations executed.",
+  "evidenceFreshness": {
+    "inputRevisionAuthority": "Dispatch packet; HEAD was not independently queried or changed.",
+    "specManifestSha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "specManifestMatchesPacket": true,
+    "sourceHashMeaning": "Whole working-tree file SHA-256 obtained with read-only shasum after inspection, not a claim that these bytes belong to clean input HEAD. Concurrent wave0 integration may invalidate them; re-read changed references after the lead commit before patching.",
+    "staleEvidence": "No source change detected by tool snapshot tags across inspected repeats; no atomic checkout snapshot was taken. Product behavior remains unverified.",
+    "discoveryLimits": ["Codegraph reported no .codegraph index; no indexing attempted.", "Descriptive find discovery failed with judge-provider 402 insufficient credits; literal searches and direct specification-named reads supplied evidence instead."]
+  },
+  "foundationGates": [
+    {
+      "gate": "Lead wave0 integration commit and accepted foundation interfaces",
+      "explicitDagEdge": false,
+      "evidence": "Worker instruction requires dependency-order implementation after wave0 commit and accepted receipts; WP-48 dependencies and inputs are both empty (work-packages.json:43581,43708).",
+      "requiredPrerequisite": "Lead publishes integration revision and ownership/interface receipts. Reconcile this report's hashes against that revision before starting product work.",
+      "blocks": "Implementation start, not this preflight."
+    },
+    {
+      "gate": "Authenticated domain command and resource authority",
+      "explicitDagEdge": false,
+      "evidence": "WP-48:43620-43623,43713-43717 requires transport-derived actor, workspace/resource ACL and explicit standalone mode. Published WP-01 owns authenticated boundary, WP-02 canonical registry and WP-03 grants/revocation. None is an explicit WP-48 dependency.",
+      "requiredPrerequisite": "Accepted WP-01/02/03 interfaces or equivalent lead-owned authority receipts for POST /v1/workspaces/{workspaceId}/commands/audit.releaseLicense and domain.audit.releaseLicense. Exact existing dispatcher symbols must be supplied/inspected under expanded lead scope; they are not exposed by this package's five affected files.",
+      "blocks": "Authenticated operation, canonical license_component ref, permissions/sharing and unauthorized field filtering. Do not implement a parallel authority in generate-sbom.ts."
+    },
+    {
+      "gate": "Durable command receipt, CAS and transaction outbox",
+      "explicitDagEdge": false,
+      "evidence": "WP-48:43637-43652,43892-43910 requires outbox/replay, persisted-command crash recovery, canonical receipt, revision and idempotency errors. WP-04:2589-2591 publishes this foundation.",
+      "requiredPrerequisite": "Accepted command/receipt/outbox seam with requestHash, idempotencyKey, expectedRevision, policy fence, unique event IDs and deduplicated consumption. Resolve release-component-manifest-only persistence against generic canonical entity/DB evidence requirements without mutating user DB or creating a second store.",
+      "blocks": "Persistence recovery, event replay, verified status and revisioned results."
+    },
+    {
+      "gate": "Existing native surface, shared projection and cross-cutting consumers",
+      "explicitDagEdge": false,
+      "evidence": "WP-48:43625-43639,43682-43704 lists Native Project/entity actions, six UI states and full completeness. Test-plan:197-222 forbids treating unwritten permissions/search/agent as N/A. WP-05/06/36/46 publish replay, search, agent and reconnect foundations.",
+      "requiredPrerequisite": "Lead-owned Project/entity action integration and accepted replay/search/agent consumer contracts; explicit participation contract for mentions, notifications and activity. Named renderer/RPC/search symbols are outside inspected WP-48 files and cannot honestly be claimed implemented here.",
+      "blocks": "Full product DoD; CLI-only compliance tooling is insufficient."
+    },
+    {
+      "gate": "Exact artifact producers and release closure order",
+      "explicitDagEdge": false,
+      "evidence": "Licensing audit:27-30 requires exact web/Electron/workspace/sync/media/transcriber/ffmpeg bytes, licenses, notices and build flags. Dockerfile.server:26-40 uses mutable base tag and apt/NodeSource resolution. common.ts:37,43 pins bundled Bun/uv independently of CI Bun 1.3.10.",
+      "requiredPrerequisite": "Producer receipts for actual platform-specific Electron packages, workspace/sync services, media/transcriber/model/codec artifacts and container image digests; WP-47 topology/build integration or equivalent accepted producer contracts. Never substitute a lock-only list for missing produced artifacts.",
+      "blocks": "Exact release certification; manifest schema and fail-closed audit can be developed once start gate is met, but completeness waits for actual artifacts."
+    },
+    {
+      "gate": "Qualified scoped licensing decisions",
+      "explicitDagEdge": false,
+      "evidence": "license-inventory.json:4-38 records Macro root AGPLv3 and web all-rights-reserved at the same upstream SHA. 18-licensing.md:23-39 leaves transitive/file/build clearance review-required.",
+      "requiredPrerequisite": "Authentic reviewer decision or rights grant scoped to exact artifact, source revision, destination file digest, modifications, license obligations, notices and build variant for literal copy. Independent behavior reimplementation remains the default, not a reason to weaken copy rejection.",
+      "blocks": "Approval of copied/conflicting/unknown components; implementing a gate that rejects them does not require blanket copying permission."
+    },
+    {
+      "gate": "Published ownership/contract inconsistency",
+      "explicitDagEdge": false,
+      "evidence": "architecture-review.md:107 says WP-48 owns lock/SBOM/license/notices/build-gate artifacts, not commands module, while normative work-packages.json assigns audit.releaseLicense and complete native command/UI/receipt behavior. decisionManifest and result data remain generic object schemas (43733-43735,43949-43951).",
+      "requiredPrerequisite": "Lead assigns shared integration owners and accepted strict decision/result DTO without removing normative command/UI acceptance. Five file-level entry points with empty declarations do not provide executable command handler seams.",
+      "blocks": "Exact command/UI integration patch scheduling; no silent conversion to CLI-only DoD."
+    }
+  ],
+  "ownedNewFiles": [
+    "scripts/compliance/generate-sbom.ts",
+    "plans/compliance/component-decisions.json",
+    "notices/THIRD-PARTY-NOTICES.txt",
+    ".github/workflows/license-gate.yml",
+    "tests/macro-integration/wp-48.test.ts"
+  ],
+  "proposedCodeContributions": [
+    {
+      "path": "scripts/compliance/generate-sbom.ts",
+      "symbols": ["ProduceSBOM", "AuditFileOrigin", "ValidateReleaseNotices"],
+      "change": "Implement the three normative interfaces in this one module using existing Bun/fs/path/crypto conventions. Read Bun JSONC lock workspaces and fully qualified package keys (including nested versions), resolved versions/integrities, actual artifact inventories and installed LICENSE/NOTICE texts. Output deterministic sorted component/dependency records and SBOM digest bound to external artifact digest, source revision, lock digest, platform/arch and nonsecret build configuration. Include bundled/native/external resources and service/model/codec producer receipts. Separate declared license from concluded reviewed license; unresolved transitive artifacts, origin, notices or flags remain LICENSE_REVIEW_REQUIRED. AuditFileOrigin matches exact destination file hash to repository/source SHA/path, modifications and scoped authenticated reviewer decision; missing/mismatched/overbroad decision denies. ValidateReleaseNotices checks shipped bytes, attribution and exact build variant. CLI consumes the same functions; it is not a new domain server or datastore."
+    },
+    {
+      "path": "plans/compliance/component-decisions.json",
+      "symbols": ["release component manifest"],
+      "change": "Version the manifest schema and constrain unknown fields. Key component decisions by exact artifact/build variant and component/file digest; record license expression, origin repository/SHA/path, modifications, notice hashes, root/web conflict evidence, reviewer identity, decision/proof and review status. Retain unresolved conflict and unknown transitive rows; never seed fabricated approval. Match Macro root/web records by scope, not root-license precedence. Source provenance inventory is evidence, not an accepted release receipt."
+    },
+    {
+      "path": "notices/THIRD-PARTY-NOTICES.txt",
+      "symbols": ["release-specific attribution text"],
+      "change": "Produce actual reviewed component attribution/license/notice texts from exact packaged inventory while preserving current NOTICE (Craft, Anthropic commercial SDK and Tencent MIT ports/vendor). Review output against exact artifact contents; no blanket package.json pointer in place of required notice text."
+    },
+    {
+      "path": ".github/workflows/license-gate.yml",
+      "symbols": ["exact-artifact compliance job"],
+      "change": "Use supported self-hosted runner/Bun conventions from ci.yml. Invoke generator validation against revision-bound artifact/producer receipts and component decisions; fail on unresolved copied origin, conflict, missing notice, altered artifact/SBOM digest, unknown component or unreviewed build flags. Retain digest-bound SBOM, decision and failure evidence. Release publication must depend on this result; a pull-request job alone is not release enforcement."
+    },
+    {
+      "path": "tests/macro-integration/wp-48.test.ts",
+      "symbols": ["exact-release behavioral acceptance and seeded controls"],
+      "change": "Deterministic temporary artifact fixtures for nested lock records, platform/native externals, root/web conflict preservation, scoped copy decisions, notice omission and flags/digest changes. Assert denial for seeded copied unreviewed web source; altered source/destination/build digest or unrelated reviewer scope must not satisfy approval. Use accepted foundation scenario harness for authorized command, altered-payload idempotency conflict, stale revision, crash-after-commit-before-reply, duplicate/dropped event and UI failure/reload checks. Fixture-only compliance tests do not replace live receipts."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "package.json",
+      "symbol": "scripts.validate:ci, scripts.release, scripts.electron:dist*, scripts.server:build*",
+      "change": "Add explicit compliance:generate and compliance:check commands pointing to scripts/compliance/generate-sbom.ts after its CLI arguments are finalized. Wire read-only manifest/schema checks into validation and exact-artifact checks after actual packaging, before release approval/publication. Cover all Electron dist and standalone server variants without certifying development builds as production. Preserve existing build pipelines and dependencies.",
+      "reason": "Current validation covers type/i18n/test contracts, not license clearance; release script only prints commands. Exact bytes do not exist at prebuild validation time."
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "symbol": "jobs.validate.steps (13-19)",
+      "change": "Preserve frozen install and self-hosted macos-toolchain. Add compliance manifest/negative-control validation; arrange license-gate workflow and artifact producers so release eligibility requires successful digest-bound audit, not only validate:ci. Do not assume GitHub-hosted/Linux lane is currently available.",
+      "reason": "Existing CI has setup, frozen install and validate:ci only. Actual release receipts require producer/runner integration."
+    },
+    {
+      "path": "Dockerfile.server",
+      "symbol": "FROM, ARG NODE_MAJOR, RUN install/build, COPY source (26-91), runtime image (103-119)",
+      "change": "Accept reviewed/pinned base image digest and capture exact apt/Node/Bun dependency inventory rather than treating NODE_MAJOR or frozen npm install as complete pinning. Run artifact audit after worker/WebUI production and include LICENSE, NOTICE and reviewed third-party notice bytes in image. Bind external final OCI image digest to SBOM/decision receipt after image assembly; do not embed a self-referential final-image digest. Match copied workspace manifests to current lock workspaces under lead integration.",
+      "reason": "Mutable oven/bun:1.3-slim, apt and NodeSource are outside bun.lock; COPY . . ships more than just manifest dependencies."
+    },
+    {
+      "path": "bun.lock",
+      "symbol": "workspaces, packages, nested qualified package keys (4-472,482-5063)",
+      "change": "Consume as read-only lock authority; retain exact version/integrity and os/cpu/optional/nested dependency edges. Only the lead regenerates the lock if accepted producer manifests or a necessary compliance dependency actually change. Do not manually add license metadata or perform gratuitous lock churn.",
+      "reason": "Ranges in package.json differ from resolved electron-builder@26.4.0; multiple sharp/libvips versions and target variants exist. Lock entries are not license clearance."
+    },
+    {
+      "path": "LICENSE",
+      "symbol": "Apache License 2.0 text (1-191)",
+      "change": "Preserve the existing Apache text unchanged; include its exact hash/text as ROX root component evidence and in shipped legal materials. Do not rewrite ROX root licensing to solve Macro scope conflict.",
+      "reason": "Normative affectedFiles lists LICENSE but the file is legal text, not a command implementation module. Macro root/web scopes belong in component decisions."
+    },
+    {
+      "path": "NOTICE",
+      "symbol": "Craft attribution, Claude commercial notice, Tencent port/vendor attribution (1-40)",
+      "change": "Preserve full existing content and require its hash/text in release-specific notice generation. Update this shared notice only for actual reviewed attribution additions and package the new THIRD-PARTY-NOTICES alongside it, not over it.",
+      "reason": "Existing imported-source and SDK obligations already exist; replacing them with a generic SBOM would lose attribution."
+    },
+    {
+      "path": "apps/electron/electron-builder.yml",
+      "symbol": "files, extraResources, per-platform extraResources, electronVersion, afterPack (12-15,21-68,96-166,218-241,259-278)",
+      "change": "Stage root LICENSE, NOTICE and notices/THIRD-PARTY-NOTICES.txt into legal resources using existing packaging rules for each platform. Audit actual assembled files/native externals, SDK binary alias, Bun/uv, libSQL, worker bundles and optional OEM kernel. Preserve all current exclusions and platform resources. Require final artifact digest validation after afterPack/signing/archive production, and feed license decisions/build variant to release gate.",
+      "reason": "node_modules is excluded from regular files but explicit resources ship native/commercial components. A lock scan misses these bytes; explicit root legal resources are not listed."
+    },
+    {
+      "path": "scripts/electron-build-main.ts",
+      "symbol": "getBuildDefines and main (61-74,352-450)",
+      "change": "Expose nonsecret build-variant evidence for CRAFT_DEV_RUNTIME, bundler target/format/alias/external selections and build tool version to the compliance artifact producer; record output digests. Do not dump loadEnvFile values or OAuth client secrets into SBOM/logs. Preserve current SDK/ONNX/sharp externals and compatibility shims.",
+      "reason": "Exact runtime composition depends on defines and externals; getBuildDefines includes secrets, so blindly recording command arguments is unsafe."
+    },
+    {
+      "path": "scripts/build/common.ts",
+      "symbol": "BuildConfig, BUN_VERSION, UV_VERSION, copyPiAgentServer, createManifest (22-43,509-563,684-697)",
+      "change": "Extend the existing artifact manifest producer with revision/lock/platform/arch, actual copied runtime/native file digests and compliance receipt references instead of introducing another version-only release store. Record koffi target versus all-platform fallback inventory as shipped. Reuse existing download checksum verification for Bun/uv while keeping actual artifact identities separate from CI toolchain.",
+      "reason": "createManifest currently emits only version; copyPiAgentServer can ship all native platforms on fallback, and bundled Bun 1.3.9 differs from CI 1.3.10."
+    },
+    {
+      "path": "scripts/build-server.ts",
+      "symbol": "assembleResources, downloadBunForServer, copyDependencyTree (115-163,219-249,260-309)",
+      "change": "Include reviewed legal resources in assembled server resources; pass inventory of copied dependency tree/native runtime and exact package/license bytes into the same compliance functions. Audit realized output, including nested node_modules; record missing/malformed unresolved packages as review-required rather than interpreting silent copy omission as clearance.",
+      "reason": "The existing copying path follows actual installed package trees and silently skips absent/malformed packages. Artifact inventory must prove its result independently of lock traversal."
+    },
+    {
+      "path": "scripts/release.ts",
+      "symbol": "version/tag and printed release steps (9-19)",
+      "change": "Include mandatory exact-artifact audit prerequisite in this existing helper's guidance and consume/verify accepted release receipt before any future publish implementation. Do not count this print-only helper as enforcement; lead must gate the actual publication lane and attest final signed/distributed bytes.",
+      "reason": "Current helper only prints check-version, unsigned packaging and gh release commands, so nothing blocks unreviewed publication."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-48 (965-982)",
+      "change": "Replace generic file-level integration wording with the three compliance function interfaces, exact artifact input contract, scoped reviewer decision rules and separately owned command/UI foundation integration, keeping all four acceptance criteria.",
+      "reason": "Published affected files do not identify an executable authenticated handler or renderer action."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "completeness and evidence record (197-247)",
+      "change": "Document WP-48 exact-release scenarios, digest/notice/build-flag negative controls, A/B/C ACL, restart/receipt/event assertions, actual native action and artifact readback evidence, and distinct fixture versus live release review states.",
+      "reason": "Generic suite requirements must map to observable package-specific proofs, not be satisfied by JSON/schema validation alone."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Lock-pinned workspace/sync/media/Electron SBOM",
+      "currentEvidence": "bun.lock workspaces/packages provide version/integrity and target restrictions; package.json scripts select Electron/server/web pipelines; Docker and Electron resource rules introduce non-lock/native bytes. No normative compliance artifacts were found in scoped glob. Existing version-only createManifest is not SBOM.",
+      "symbolOrSeam": "bun.lock:workspaces/packages; scripts/build/common.ts:createManifest; Dockerfile.server:RUN/COPY; electron-builder.yml:files/extraResources; proposed ProduceSBOM",
+      "requiredChange": "Generate exact produced-artifact inventory plus resolved transitive graph, source/build/lock digests, actual license evidence and service/model/codec producer receipts; unknown artifacts remain review-required. Distinguish targets, externals, nested package versions and build-only inputs from shipped components.",
+      "verification": "Future bun test tests/macro-integration/wp-48.test.ts checks deterministic nested/optional/platform fixtures and digest changes; real producer smoke audits final Electron and workspace/sync/media release artifacts, compares component/file inventory and digest, and denies absent producer receipts.",
+      "missingPrerequisite": "Lead wave0 commit; real exact workspace/sync/media/Electron producer artifacts and accepted schema/producer interfaces.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "root/web conflicts marked",
+      "currentEvidence": "license-inventory.json:4-38 records root AGPLv3 and web all-rights-reserved at Macro c966b79d40798c6c726a3b15fe90517941fc6e61; 18-licensing.md:9-10 explicitly prohibits inferring root overrides package notice. ROX current LICENSE/package.json remain Apache-2.0.",
+      "symbolOrSeam": "plans/macro-integration/license-inventory.json:files; LICENSE; package.json:license; proposed component-decisions and AuditFileOrigin",
+      "requiredChange": "Retain distinct root/web scope, evidence hashes and unresolved conflict status for every relevant copied component. A permissive subtree decision is limited to proven paths; no AGPL/proprietary blanket clearance and no root relicensing.",
+      "verification": "Seed web-origin file with root-only approval and require explicit scope-conflict denial; approved independently licensed subtree still does not approve a sibling web file. Real readback shows unresolved scope and reviewer evidence.",
+      "missingPrerequisite": "Scoped source history/reviewer rights evidence if any copy is to be approved; conflict detection/rejection itself does not wait for blanket permission.",
+      "state": "AUDIT_EVIDENCE_EXISTS_PRODUCT_GATE_MISSING"
+    },
+    {
+      "criterion": "copied file denied absent scoped decision",
+      "currentEvidence": "NOTICE:14-40 proves existing port/vendor attribution; 18-licensing.md:29-30 requires file history/source SHA/modifications/notices/reviewer. Scoped grep found no compliance/releaseLicense gate in inspected build/release manifests and scripts.",
+      "symbolOrSeam": "NOTICE; proposed AuditFileOrigin/component-decisions; package.json:release and scripts/release.ts",
+      "requiredChange": "Fail closed on copied file absent approved exact source/destination/artifact/reviewer decision, including unknown origin, digest drift, changed modifications, unrelated path and root/web scope conflict. Known NOTICE does not authorize new files. Enforce in actual release lane and authorized command.",
+      "verification": "Seed unreviewed Macro web file and assert release digest blocked; altered destination bytes, other origin SHA or broad unrelated decision stays denied. Disable copy denial and require specific assertion failure; independent holdout injects another scope variant.",
+      "missingPrerequisite": "Exact artifact/file provenance evidence, strict reviewer DTO and real release publication enforcement seam from lead.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "notices and exact build flags reviewed",
+      "currentEvidence": "NOTICE lists Craft/Anthropic/Tencent; main getBuildDefines includes secrets and CRAFT_DEV_RUNTIME; native SDK/ONNX/sharp externalized; Docker Node major/base tag do not pin final bytes; afterPack modifies Assets.car; packaging ships optional OEM/native resources.",
+      "symbolOrSeam": "NOTICE; electron-build-main.ts:getBuildDefines/main; common.ts:BUN_VERSION/UV_VERSION; afterPack.cjs:afterPack; proposed ValidateReleaseNotices",
+      "requiredChange": "Review actual release-specific attribution/license texts and nonsecret build composition; obtain binary/model/codec/ffmpeg flags and terms from exact producers. Package legal files; final digest attested after hooks/signing/archiving. Keep external final digest receipt separate to avoid a self-referential notice/image digest.",
+      "verification": "Delete one required notice or change reviewed flags/component bytes and assert rejection. Inspect final distribution legal resources and external digest-bound receipt; obtain ffmpeg buildconf/license and actual model/plugin terms from producers without assuming artifact presence from planned topology.",
+      "missingPrerequisite": "Actual built distributions and codec/model/plugin producer receipts plus qualified reviewer decisions; no such runtime was exercised in preflight.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "WP-48:43625-43634 declares Native Project/entity actions; owned build files do not expose its actual action handler.",
+      "symbolOrSeam": "Published Native Project/entity action seam; exact renderer symbol is a lead integration prerequisite, not invented here.",
+      "requiredChange": "Connect existing action to audit.releaseLicense and show exact component decisions and verified receipt in the same surface, not a second compliance dashboard.",
+      "verification": "Future actual Electron action/visual/ARIA proof and failure/reload interaction for exact release digest.",
+      "missingPrerequisite": "Accepted native action and foundation transport integration owner/symbol.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "Native RPC domain.audit.releaseLicense and HTTP route are specified at 43714-43715; no command router in WP-48 affectedFiles.",
+      "symbolOrSeam": "Specified POST /v1/workspaces/{workspaceId}/commands/audit.releaseLicense and domain.audit.releaseLicense; native Project/entity routing owned by lead.",
+      "requiredChange": "Register both routes against one domain handler, preserve existing navigation/deep link/history and canonical license_component reference.",
+      "verification": "Open action through existing Project/entity route and direct canonical link, back/reload; HTTP/RPC return same typed receipt under the same ACL.",
+      "missingPrerequisite": "Authenticated dispatcher/router and canonical route receipts.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "WP-48 declares license_component and Rox2EntityRef; component decision file and SBOM are proposed new, not existing entities.",
+      "symbolOrSeam": "work-packages.json:43612-43616,43892-43896; proposed component-decisions release manifest.",
+      "requiredChange": "Define strict component/decision/result DTO and stable workspace-scoped canonical identity through accepted registry. Resolve manifest-only storage identity without another registry or user DB mutation.",
+      "verification": "Duplicate exact audit reuses identity; different workspace/build/digest cannot collide; unknown mutation fields denied.",
+      "missingPrerequisite": "Lead accepted registry integration and decisionManifest/result schema; generic object is not a complete constrained DTO.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "WP-48:43616 says release component manifest only/no user DB mutation; 43650-43652 simultaneously requires persisted command crash recovery.",
+      "symbolOrSeam": "proposed component-decisions.json plus accepted command receipt storage (foundation-owned; not exposed by package build files).",
+      "requiredChange": "Persist immutable audit/decision revision and receipt through existing authority; map file manifest to foundation transactional receipt/outbox without competing stores.",
+      "verification": "Crash after durable command before reply, restart/retry returns identical receipt/entity/revision, unique logical audit count one.",
+      "missingPrerequisite": "Accepted manifest-to-authority persistence contract and WP-04/equivalent receipt transaction seam.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "43711-43741 and 43898-43910 specify audit.releaseLicense, required payload, errors and expectedRevision; scripts/release.ts is print-only.",
+      "symbolOrSeam": "proposed ProduceSBOM/AuditFileOrigin/ValidateReleaseNotices consumed by foundation audit.releaseLicense dispatcher.",
+      "requiredChange": "Strict artifactDigest/sbomDigest/decisionManifest validation, deny body actor, enforce idempotency/CAS/policy fence, verify supplied digests against trusted producer bytes rather than trusting client strings.",
+      "verification": "Owner succeeds only with actual reviewed bytes; outsider/forged actor/workspace denied; same key same request returns same receipt, changed payload conflicts; stale revision rejected.",
+      "missingPrerequisite": "Accepted authority dispatcher/receipt and DTO integration owner.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "43896 specifies authorized typed domain DTO/no hidden totals/titles; envelope requires pagination+authorized cursor.",
+      "symbolOrSeam": "Release manifest readback through accepted domain query seam; no query implementation symbol in WP-48 files.",
+      "requiredChange": "Read canonical digest-bound component/review state under current ACL, bounded pagination/cursor policy; never expose denied artifact metadata or raw provenance secrets.",
+      "verification": "Paginate reviewed/unreviewed components; denied actor sees no private marker/title/count; revoke invalidates cursor/readback.",
+      "missingPrerequisite": "Lead-owned authorized query adapter/current-policy cursor contract.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "43617-43618 requires audit.license_reviewed; 43637-43639 requires transaction outbox, revisioned invalidation/replay cursor.",
+      "symbolOrSeam": "Foundation outbox consumer for audit.license_reviewed; proposed reviewed manifest revision.",
+      "requiredChange": "Emit one durable authorized audit event from accepted transaction boundary, replay/dedup by event ID/aggregate revision and update projection watermark.",
+      "verification": "Drop event then replay; duplicate delivery yields one logical activity/decision; unauthorized listener denied; disconnect/rejoin retains review revision.",
+      "missingPrerequisite": "WP-04/05 equivalent durable event/projection seam.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "43620-43623 requires authenticated server actor/resource policy and explicitly says agent allow-all does not override ACL.",
+      "symbolOrSeam": "Accepted authority action grant/policy fence for audit.releaseLicense; not package.json license field.",
+      "requiredChange": "Apply read/action/review grants, workspace mismatch and linked-ref rechecks in one domain entry point with explicit local standalone adapter.",
+      "verification": "A/B/C matrix, viewer/editor/admin/guest and revoked actor; forged actor/workspace and allow-all agent bypass rejected without private data.",
+      "missingPrerequisite": "WP-01/03 or equivalent accepted authority/grants receipt.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "Full completeness includes sharing; specific permissions require rechecking linked refs. No sharing symbols in inspected compliance/build entrypoints.",
+      "symbolOrSeam": "Existing resource grant inheritance/Project relation policy supplied by foundation owner.",
+      "requiredChange": "Apply explicit access inheritance for release component/report refs; a Project link, source link or shared audit must not widen source/reviewer authority.",
+      "verification": "Shared Project member without required action grant denied; expired/revoked grant cannot read audit/source metadata via link.",
+      "missingPrerequisite": "Canonical linked-ref grants and explicit report sharing policy; not N/A merely because unwritten.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "work-packages.json:43692 and test-plan:210 require authorized search extractor/delete/watermark; no search seam in package affectedFiles.",
+      "symbolOrSeam": "Foundation search projection for canonical license_component/report refs; exact consumer symbol to be supplied by lead.",
+      "requiredChange": "Register permitted component/review metadata through existing projection with revision/upsert/delete/current ACL; never index secret build defines or denied provenance.",
+      "verification": "Authorized component search appears after watermark; outsider/revoked actor no snippet; tombstone/replacement removes obsolete reviewed artifact.",
+      "missingPrerequisite": "WP-06/equivalent search extractor and authorization receipt plus permitted metadata schema.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "FeatureCompleteness lists mentions; request decisionManifest is only a generic object and has no published mention field.",
+      "symbolOrSeam": "Published completeness contract (43693); no exact existing compliance mention symbol established within allowed paths.",
+      "requiredChange": "Lead must define whether existing linked Project audit context has mention-bearing content and bind that participation to existing occurrence/source-revision/target-policy mechanism. Do not add arbitrary mention fields or silently mark missing behavior N/A.",
+      "verification": "Exercise agreed mention-bearing source through existing surface; assert current target policy/source revision and no denied disclosure, or retain explicit missing contract until resolved.",
+      "missingPrerequisite": "Lead-owned precise mention participation/field contract and consumer seam.",
+      "state": "MISSING_CONTRACT_NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "FeatureCompleteness lists notifications and emits audit.license_reviewed, but no recipient/reason/dedup contract is defined in WP-48 payload.",
+      "symbolOrSeam": "audit.license_reviewed through existing foundation notification consumer, exact handler not exposed by scoped files.",
+      "requiredChange": "Define reviewer/owner recipient policy and integrate accepted event consumer with current ACL, dedup and existing recipient seen/done/mute/snooze state; no second notification store.",
+      "verification": "Duplicate/replayed audit event does not duplicate recipient attention; outsider/revoked recipient receives no metadata; persisted recipient states survive reload.",
+      "missingPrerequisite": "Lead-owned recipient participation contract and notification foundation receipt.",
+      "state": "MISSING_CONTRACT_NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "43618 defines audit.license_reviewed; 43666-43676 requires correlation/privacy fields.",
+      "symbolOrSeam": "Existing domain activity projection consuming audit.license_reviewed; proposed component decision revision.",
+      "requiredChange": "Project actor/cause/revision and scoped review result through existing activity consumer; redact raw body/transcript/tokens and build secrets.",
+      "verification": "One activity after restart/replay, correct actor/revision/digest; denied actor cannot read private review data.",
+      "missingPrerequisite": "Accepted durable event/activity consumer and privacy serialization schema.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "Execution policy explicitly preserves ACL under allow-all; completeness requires common agent domain access.",
+      "symbolOrSeam": "Foundation agent.invokeDomain/common domain dispatch of audit.releaseLicense; no direct agent implementation inspected beyond build integration.",
+      "requiredChange": "Expose same typed audit/query command through existing agent tools with transport-derived acting principal, provenance and explicit execution grants; no filesystem workaround for shared authority.",
+      "verification": "Authorized agent gets same receipt; allow-all viewer/outsider still denied; tool output excludes private marker and secret build configuration.",
+      "missingPrerequisite": "WP-36/equivalent domain tool dispatcher and acting-user policy receipt.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "HTTP and native RPC specified; generic response/error contract at 43892-43957; no concrete MCP mapping in affectedFiles.",
+      "symbolOrSeam": "Specified audit.releaseLicense HTTP/native routes; existing agent/MCP dispatch supplied by lead.",
+      "requiredChange": "Use one authorized domain implementation/result DTO and receipt across HTTP, native RPC and applicable common tool mapping. Reject unknown fields and unsupported schema version consistently.",
+      "verification": "Compare authorized readbacks/denials/errors for same operation across transports; malformed payload/body actor and cross-workspace ID never leak report data.",
+      "missingPrerequisite": "Accepted transport/domain adapter interfaces and precise MCP exposure contract.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "43667-43676 requires commandId/causationId/correlationId/aggregateRevision/policyEpoch/projectionWatermark/retry/DLQ, with privacy rule; build defines include OAuth secrets.",
+      "symbolOrSeam": "getBuildDefines; accepted command/event telemetry; compliance structured result.",
+      "requiredChange": "Emit required correlation/revision/fence/watermark/retry fields and digest/review error codes without raw credentials or command-line secrets. Differentiate review-required/rejected/unavailable from verified.",
+      "verification": "Audit success/denial/retry/replay records contain required IDs/watermark; scan captured evidence for private marker and seeded secret values; no stdout environment dump.",
+      "missingPrerequisite": "Foundation telemetry fields and safe build variant producer contract.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Normative test file absent in scoped glob; three test kinds, seed 20260978, copy-origin mutation and independent holdout are specified.",
+      "symbolOrSeam": "proposed tests/macro-integration/wp-48.test.ts; accepted native/HTTP scenario harness.",
+      "requiredChange": "Implement behavioral positive/negative/digest/scope/notice/flags tests and foundation-authorized crash/replay scenarios. Record baseline infrastructure failures separately from caught mutation; do not test source text/wiring instead of outcomes.",
+      "verification": "Future specified Bun runner plus relevant existing targeted suites and actual native scenario; copied-source negative control and independent scope holdout must fail specific oracle on broken boundary.",
+      "missingPrerequisite": "Implemented functions, accepted foundation harness and real producer/UI surfaces. No tests run by this preflight.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md:965-982 summarizes acceptance; 22-test-plan.md is future verification, not a product pass.",
+      "symbolOrSeam": "Published WP-48 section and evidence/receipt checklist.",
+      "requiredChange": "Document exact input/artifact/decision schema, scope conflict meaning, reviewer authority, ship/legal resources, native command states, fail-closed recovery and integration owners without promising blanket clearance.",
+      "verification": "Documentation examples use actual release receipt/CLI arguments and describe observed failure/reload path on tested revision.",
+      "missingPrerequisite": "Implemented interface and runtime evidence; shared docs integrated by lead.",
+      "state": "PLAN_EXISTS_IMPLEMENTATION_DOCS_MISSING"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "UI specifies permission_denied/retryable_error; response statuses and ten error codes are normative at 43898-43925.",
+      "symbolOrSeam": "AuditFileOrigin/ValidateReleaseNotices structured failure plus accepted domain result/UI adapter.",
+      "requiredChange": "Map conflict/unauthenticated/forbidden/workspace mismatch/invalid payload/stale revision/idempotency/schema/pending fence and unavailable/unknown effect to truthful domain/UI status. Unreviewed license or missing artifact is rejection/review-required, not fake success.",
+      "verification": "Exercise every relevant payload/policy/digest/notice/producer error and allowed result status; verify no verifiedAt on queued/unknown and no hidden error-detail metadata leakage.",
+      "missingPrerequisite": "Strict error/result DTO and actual native adapter; relevance of outbound-only errors must be explicitly resolved, not blanket N/A.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "43629 specifies loading; generator/build paths currently have no review UI integration.",
+      "symbolOrSeam": "Existing Native Project/entity action pending receipt state supplied by foundation UI owner.",
+      "requiredChange": "Show pending/stale refresh while audit/producer readback is outstanding; never replace previous review with false empty or prematurely verified status.",
+      "verification": "Delay actual audit response; observe loading and retained prior revision; command completion updates only after canonical receipt/readback.",
+      "missingPrerequisite": "Accepted native pending-state/receipt integration.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "43630 specifies empty; missing producer/artifact/permission cannot mean no license obligations.",
+      "symbolOrSeam": "ProduceSBOM inventory outcome and existing native result rendering.",
+      "requiredChange": "Distinguish genuine empty inventory from unconfigured producer, denied access, unavailable artifact and unresolved inventory. Empty required producer set must not approve a release.",
+      "verification": "Observe distinct genuine-empty, inaccessible and producer-missing cases; empty artifact evidence cannot receive applied_verified.",
+      "missingPrerequisite": "Strict inventory readiness/result DTO and actual native UI seam.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "43632 explicitly requires offline_queued, outbox/cursor replay at 43637-43639; thus this cannot be dismissed as N/A.",
+      "symbolOrSeam": "Accepted client projection/durable command queue for audit.releaseLicense and canonical review receipt.",
+      "requiredChange": "Use existing queue/projection for offline review request; persist queued state and recheck current artifact/decision hashes, actor grants/revision on reconnect. Never offline-approve release without authority readback.",
+      "verification": "Disconnect/request/reload/reconnect, accept once; revoke or change digest while offline results in rejection/quarantine and no verified status; replay cursor catches missed audit event.",
+      "missingPrerequisite": "WP-05/46 equivalent accepted queue/reconnect integration and native action.",
+      "state": "MISSING_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"LICENSE","symbol":"Apache License 2.0","lineStart":1,"lineEnd":55,"sha256":"9a75ace1224f0f880ddfdd8442d14d5a0d865152c61a2fd363d8e2c351f94d2c"},
+    {"path":"NOTICE","symbol":"Craft, Anthropic and Tencent notices","lineStart":1,"lineEnd":40,"sha256":"b4fe19519f12439760a575d5be66e437f865219c2b2c9a8adc95b7574b89deb0"},
+    {"path":"package.json","symbol":"license/workspaces/scripts","lineStart":1,"lineEnd":121,"sha256":"39320f80a67cfb0a13a2fcfc0fd0660ece99d167b1421d90c8e51be7668dcb3b"},
+    {"path":"bun.lock","symbol":"workspaces and resolved packages","lineStart":482,"lineEnd":485,"sha256":"946826020c591340ea4f2684ce5a9da7ff24c92420dbd2263792db26464ea729"},
+    {"path":"bun.lock","symbol":"electron/electron-builder resolved versions","lineStart":2201,"lineEnd":2203,"sha256":"946826020c591340ea4f2684ce5a9da7ff24c92420dbd2263792db26464ea729"},
+    {"path":".github/workflows/ci.yml","symbol":"jobs.validate.steps","lineStart":7,"lineEnd":19,"sha256":"745e0680abad0c6be8ed97c19aeffe6670051e1851ddabb06d4bb0c0114460b0"},
+    {"path":"Dockerfile.server","symbol":"image/system/lock/build inputs","lineStart":26,"lineEnd":91,"sha256":"26133b3ab010e8b26851e9031f1d2050f8f412451cc7823b12ec8cc6de9c820c"},
+    {"path":"scripts/release.ts","symbol":"version/tag and printed next steps","lineStart":9,"lineEnd":19,"sha256":"a1b77de38021c4ecb316c83ffd25d187dc0cf82b9c4eaa5d4a17a6d4d64b1846"},
+    {"path":"scripts/electron-build-main.ts","symbol":"getBuildDefines","lineStart":61,"lineEnd":74,"sha256":"72e2c4954d68cae246a543f54108353b1573b73731cecbd1756ebee9b7cde247"},
+    {"path":"scripts/electron-build-main.ts","symbol":"main bundler invocation/external aliases","lineStart":378,"lineEnd":419,"sha256":"72e2c4954d68cae246a543f54108353b1573b73731cecbd1756ebee9b7cde247"},
+    {"path":"scripts/electron-build-resources.ts","symbol":"resource recursive copy","lineStart":8,"lineEnd":19,"sha256":"d04a1c251c0f5f4e13ed69166573f6d68552f292d7c4420c34c24225c1c10b10"},
+    {"path":"scripts/electron-build-subprocess.ts","symbol":"BuildConfig and subprocess staging","lineStart":31,"lineEnd":70,"sha256":"b31d909ca922ccd2bb5fb50f4509df2dec272c8b17fee64764411787df7f789c"},
+    {"path":"scripts/build-server.ts","symbol":"copyDependencyTree","lineStart":260,"lineEnd":309,"sha256":"4af971974a41a509f1a3c4149e6c53f2d7bfd923bbb93266eaca1f5b4d9cd60e"},
+    {"path":"scripts/build/common.ts","symbol":"BUN_VERSION/UV_VERSION","lineStart":32,"lineEnd":43,"sha256":"746104626c8ea2c97f06dc57c0c69406d6eb40917782b4b1987b4ca5885df574"},
+    {"path":"scripts/build/common.ts","symbol":"copyPiAgentServer","lineStart":509,"lineEnd":563,"sha256":"746104626c8ea2c97f06dc57c0c69406d6eb40917782b4b1987b4ca5885df574"},
+    {"path":"scripts/build/common.ts","symbol":"createManifest","lineStart":684,"lineEnd":697,"sha256":"746104626c8ea2c97f06dc57c0c69406d6eb40917782b4b1987b4ca5885df574"},
+    {"path":"apps/electron/electron-builder.yml","symbol":"files/extraResources/native dependencies","lineStart":21,"lineEnd":166,"sha256":"190b987b7295ca56c4836d0ff1f9f0ba9d49143b484e357bfd991ed9f2983db6"},
+    {"path":"apps/electron/scripts/afterPack.cjs","symbol":"hasCurrentAssetProvenance/afterPack","lineStart":25,"lineEnd":74,"sha256":"ef4533f833b1f886b9084ea9fae4e4ded40a43321558068a89dfb9e3f0ccb6cb"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-48 normative acceptance and completeness","lineStart":43575,"lineEnd":43741,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-48 canonical result/error/revision contract","lineStart":43892,"lineEnd":43957,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"plans/macro-integration/license-inventory.json","symbol":"Macro root/web scoped license evidence","lineStart":4,"lineEnd":38,"sha256":"9bdf939512a1355c3a1ff7e9d17e20d70bd89e78f6e8fec3e64ab8e1aa7dd06a"},
+    {"path":"docs/macro-integration/18-licensing.md","symbol":"file-origin and exact-artifact audit gates","lineStart":9,"lineEnd":39,"sha256":"e433a3e9c6b4db406e39335382249a6a0b71f799f385ec3af5543845de926cf1"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-48","lineStart":965,"lineEnd":982,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"feature completeness checklist and evidence record","lineStart":197,"lineEnd":247,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path":"docs/macro-integration/architecture-review.md","symbol":"WP-48 ownership amendment","lineStart":107,"lineEnd":109,"sha256":"c702c772b95424328a1807e2804f1bda8195888bf23db6b54bd303f73df33564"}
+  ],
+  "nextExecutableAction": "Lead reads and validates this owned preflight report, commits wave0, publishes the integration revision and shared authority/receipt/UI/producer/decision DTO owners. After accepted prerequisite receipts and re-reading changed source hashes, implement the five normative compliance artifacts and submit listed shared patches to their integration owners. Start with fail-closed exact artifact/decision schema and the three compliance interfaces; do not claim feature complete until command/UI/reload/replay and actual final-artifact evidence pass.",
+  "risks": [
+    "Empty explicit dependencies do not make full audit.releaseLicense product DoD runnable before authority/receipt/projection foundations; prevent accidental DAG acceptance based on CLI fixtures.",
+    "Published architecture review says not commands module, but normative spec requires authenticated command and native surface. Resolve integration ownership, not acceptance removal.",
+    "decisionManifest/data generic object schemas lack a strict scoped reviewer DTO and trusted evidence rules. Client-provided reviewer or digest strings cannot manufacture approval.",
+    "No exact workspace/sync/media/transcriber/ffmpeg/model/plugin producer inputs are enumerated in WP-48 inputs; full SBOM cannot be cleared from current Bun lock alone.",
+    "Macro license inventory is historical baseline evidence, not current checked-out upstream legal/source clearance. Root AGPL does not override web all-rights-reserved or approve PDF.js fork origin.",
+    "Packaging excludes regular node_modules but ships explicit native SDK/ripgrep/libSQL/runtime/OEM resources and fallback native platforms; actual inventory must prevail over intended target filtering.",
+    "Build defines include OAuth secrets. Preserve only nonsecret composition/flag evidence; never serialize raw build command arguments or environment.",
+    "afterPack may mutate assets after staging; signing/archiving changes final bytes. Final artifact digest receipt must be external and post-assembly; avoid circular artifact/SBOM/notice hashing.",
+    "Docker base tag, apt packages and NodeSource are mutable and outside bun.lock. Bun toolchain, bundled runtime and Electron runtime are distinct artifacts.",
+    "scripts/build.ts is referenced by package.json but was missing in scoped inspection. This is evidence of incomplete legacy build routing, not authority to implement unrelated repair during preflight.",
+    "Concurrent root-owned wave0 work means working-tree source hashes are snapshots, not clean input-revision proof. Reconcile after lead integration and retain stale evidence rather than relabeling it verified.",
+    "Mentions/notification participation, release manifest versus canonical entity persistence and several generic error-state semantics need exact lead-owned contracts. Missing implementation is not N/A."
+  ],
+  "verification": {
+    "productBehavior": "NOT_RUN_BY_AUTHORIZATION",
+    "sourceEvidence": "Actual scoped read/grep/glob and read-only whole-file SHA-256; no runtime feature proof claimed.",
+    "reportVerification": "Owned JSON readback/structural inspection only; launch-worker-pool packet verifier and product runner remain for lead acceptance."
+  }
+}

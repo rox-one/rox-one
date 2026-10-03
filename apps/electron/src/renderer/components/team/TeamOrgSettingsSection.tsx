@@ -23,6 +23,14 @@ export function TeamOrgSettingsSection() {
             <div className="text-sm font-medium">{t('teamCollab.settings.sync')}</div>
             <div className="text-sm text-muted-foreground" role="status">{syncStatusText(roster.sync, state.outbox.length, t)}</div>
           </div>
+          {roster.org ? (
+            <div className="flex flex-col gap-0.5" data-authority={roster.identityAuthority}>
+              <div className="text-sm font-medium">{t('teamCollab.settings.memberUsageTitle')}</div>
+              <div className="text-sm text-muted-foreground" role="status">
+                {t('teamCollab.settings.memberUsageUnavailable')}
+              </div>
+            </div>
+          ) : null}
           {mentionsOn ? (
             <div className="flex flex-col gap-1">
               <div className="text-sm font-medium">{t('teamCollab.settings.inbox')}</div>

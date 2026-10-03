@@ -1,4 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync, statSync, readdirSync, unlinkSync } from 'fs';
+import { createHash } from 'crypto';
 import { join, dirname, basename } from 'path';
 import { getCredentialManager } from '../credentials/index.ts';
 import {
@@ -26,7 +27,7 @@ import { extractWorkspaceSlugFromPath } from '../utils/workspace-slug.ts';
 import { initializeDocs } from '../docs/index.ts';
 import { expandPath, toPortablePath, getBundledAssetsDir } from '../utils/paths.ts';
 import { debug } from '../utils/debug.ts';
-import { atomicWriteFileSync, readJsonFileSync } from '../utils/files.ts';
+import { atomicWriteFileSync, readJsonFileSync, safeJsonParse } from '../utils/files.ts';
 import { CONFIG_DIR, resolveConfigDir } from './paths.ts';
 import type { StoredAttachment, StoredMessage } from '@craft-agent/core/types';
 import type { Plan } from '../agent/plan-types.ts';
@@ -855,7 +856,9 @@ export function loadStoredConfig(): StoredConfig | null {
     if (!existsSync(CONFIG_FILE)) {
       return null;
     }
-    const config = readJsonFileSync<StoredConfig>(CONFIG_FILE);
+    const contents = readFileSync(CONFIG_FILE, 'utf-8');
+    const config = safeJsonParse(contents) as StoredConfig;
+    rememberConfigRevision(config, hashConfigContents(contents));
 
     // Must have workspaces array
     if (!Array.isArray(config.workspaces)) {
@@ -954,13 +957,106 @@ export function loadStoredConfig(): StoredConfig | null {
 // - getAnthropicApiKey() → credentialManager.getLlmApiKey(connectionSlug)
 // - getClaudeOAuthToken() → credentialManager.getLlmOAuth(connectionSlug)
 
-export function saveConfig(config: StoredConfig): void {
+// This private enumerable symbol follows config spreads but never enters JSON.
+const CONFIG_REVISION = Symbol('stored-config-revision');
+const CONFIG_REVISIONS = new WeakMap<StoredConfig, string>();
+// An interrupted exclusive-create may leave the lock empty before its PID is written.
+const CONFIG_LOCK_STALE_MS = 30_000;
+
+type VersionedStoredConfig = StoredConfig & { [CONFIG_REVISION]?: string };
+
+function hashConfigContents(contents: string): string {
+  return createHash('sha256').update(contents, 'utf8').digest('hex');
+}
+
+function rememberConfigRevision(config: StoredConfig, revision: string): void {
+  CONFIG_REVISIONS.set(config, revision);
+  if (!Object.isExtensible(config)) return;
+  Object.defineProperty(config, CONFIG_REVISION, {
+    value: revision,
+    writable: true,
+    configurable: true,
+    enumerable: true,
+  });
+}
+
+
+function withConfigWriteLock<T>(write: () => T): T {
+  const lockPath = `${CONFIG_FILE}.lock`;
+  let acquired = false;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      writeFileSync(lockPath, `${process.pid}\n`, {
+        encoding: 'utf-8',
+        flag: 'wx',
+        mode: 0o600,
+      });
+      acquired = true;
+      break;
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException | null)?.code;
+      if (code !== 'EEXIST') {
+        try { unlinkSync(lockPath); } catch {}
+        throw error;
+      }
+
+      let lockText = '';
+      let lockAge = 0;
+      try {
+        lockText = readFileSync(lockPath, 'utf-8');
+        lockAge = Date.now() - statSync(lockPath).mtimeMs;
+      } catch (readError) {
+        if ((readError as NodeJS.ErrnoException | null)?.code === 'ENOENT') continue;
+        throw readError;
+      }
+
+      const completeOwnerRecord = /^\d+\n$/.test(lockText);
+      const ownerPid = completeOwnerRecord ? Number.parseInt(lockText, 10) : Number.NaN;
+      let ownerAlive = false;
+      if (completeOwnerRecord && Number.isSafeInteger(ownerPid) && ownerPid > 0) {
+        ownerAlive = true;
+        try {
+          process.kill(ownerPid, 0);
+        } catch (processError) {
+          if ((processError as NodeJS.ErrnoException | null)?.code === 'ESRCH') {
+            ownerAlive = false;
+          } else {
+            throw new Error('Config save conflict: another writer holds the config lock');
+          }
+        }
+      }
+      if (!ownerAlive && (completeOwnerRecord || lockAge > CONFIG_LOCK_STALE_MS)) {
+        try {
+          unlinkSync(lockPath);
+        } catch (unlinkError) {
+          if ((unlinkError as NodeJS.ErrnoException | null)?.code !== 'ENOENT') throw unlinkError;
+        }
+        continue;
+      }
+      throw new Error('Config save conflict: another writer holds the config lock');
+    }
+  }
+
+  if (!acquired) {
+    throw new Error('Config save conflict: another writer holds the config lock');
+  }
+  try {
+    return write();
+  } finally {
+    try { unlinkSync(lockPath); } catch {}
+  }
+}
+export function saveConfig(config: StoredConfig, options?: { readonly durable?: boolean }): void {
   ensureConfigDir();
 
   // Convert paths to portable form for cross-machine compatibility and persist
   // the explicit authority discriminator on every registry write.
   const storageConfig: StoredConfig = {
     ...config,
+    activeWorkspaceId:
+      config.activeWorkspaceId === undefined
+        ? config.workspaces[0]?.id ?? null
+        : config.activeWorkspaceId,
     workspaces: config.workspaces.map((workspace) => {
       const normalized = normalizeWorkspaceRecord(workspace);
       return {
@@ -969,11 +1065,36 @@ export function saveConfig(config: StoredConfig): void {
       };
     }),
   };
+  const serialized = JSON.stringify(storageConfig, null, 2) + '\n';
+  const parsed: unknown = JSON.parse(serialized);
+  if (
+    typeof parsed !== 'object' ||
+    parsed === null ||
+    !Array.isArray((parsed as Partial<StoredConfig>).workspaces) ||
+    !(
+      (parsed as Partial<StoredConfig>).activeWorkspaceId === null ||
+      typeof (parsed as Partial<StoredConfig>).activeWorkspaceId === 'string'
+    )
+  ) {
+    throw new Error('Invalid config snapshot; refusing to replace the stored config');
+  }
 
-  atomicWriteFileSync(
-    CONFIG_FILE,
-    JSON.stringify(storageConfig, null, 2) + '\n',
-  );
+  const expectedRevision =
+    (config as VersionedStoredConfig)[CONFIG_REVISION] ?? CONFIG_REVISIONS.get(config);
+  withConfigWriteLock(() => {
+    const currentContents = existsSync(CONFIG_FILE)
+      ? readFileSync(CONFIG_FILE, 'utf-8')
+      : null;
+    if (
+      (expectedRevision === undefined && currentContents !== null) ||
+      (expectedRevision !== undefined &&
+        (currentContents === null || hashConfigContents(currentContents) !== expectedRevision))
+    ) {
+      throw new Error('Config save conflict: stored config changed; reload and retry');
+    }
+    atomicWriteFileSync(CONFIG_FILE, serialized, options);
+    rememberConfigRevision(config, hashConfigContents(serialized));
+  });
 }
 
 // Legacy updateApiKey() removed - use setupLlmConnection IPC handler instead.

@@ -1,0 +1,238 @@
+{
+  "task_id": "CI-010-preflight",
+  "attempt_id": "bd10a5fe0a1d2ad09577ef1a107f8966",
+  "packet_hash": "2a275812f9823aed9ca4d767c799fdf3c597b111c18a1b7b930d66c8372a2a77",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "CI-010",
+  "featureComplete": false,
+  "mode": "inspect-only; write owned preflight artifact",
+  "dependencies": ["CI-007", "CI-008", "CI-009"],
+  "evidenceScope": {
+    "basis": "Working-tree source inspected on 2026-09-30, not a checkout reconstructed from input_revision. Root-owned wave0 changes are permitted inputs to this inspection but are not accepted implementation receipts.",
+    "specificationManifest": "Both normative specification whole-file SHA256 values match the dispatch input_manifest.",
+    "freshness": "Hashes were obtained after inspection. No post-wave0 integrated revision has been verified. Any later root edit invalidates the affected reference; re-read and re-hash that file before implementation. The hashes do not prove that uncommitted foundations have been accepted.",
+    "exploration": "Codegraph reported no project index. Scoped find's internal judgment provider attempted a request and returned HTTP 402; literal grep/read and directory glob supplied the evidence instead. No indexing, product/provider execution or explicit network command was run. The failed tool-internal judging request is disclosed rather than claimed as an entirely network-free inspection.",
+    "absence": "The code-intelligence renderer directory listing contained RepositorySnapshotPanel.tsx, not the five CI-010 normative proposed files. The inspected Explainer component contains no search controls. Production mount absence is a published specification audit, not a fresh repository-wide mount search by this scoped worker.",
+    "execution": "No builds, product tests, native UI, product providers, Git commands or product mutations performed. Future verification below is a plan, not an observed pass. Owned report structure is checked separately by in-memory JSON/spec comparison."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-BASELINE-AND-RECEIPTS",
+      "kind": "dispatch and launch gate, not an additional DAG edge",
+      "evidence": "execution-packages.json:4923-4950 and dispatch user instruction",
+      "requirement": "Lead wave0 commit must exist; accept CI-007/008/009 artifact plus readback receipts in dependency order, resolve reference delivery revision/digest and spec artifact hashes, and reconcile the published e953786 baseline with dispatched a21aeab and actual approved prerequisite commits. Reject unexpected dirty/ancestor state in implementation checkout.",
+      "missingPrerequisite": "No wave0 integration commit or accepted dependency receipts were supplied or established by this preflight."
+    },
+    {
+      "id": "FG-SEARCH-DTO-AND-SYMBOL-SEMANTICS",
+      "kind": "transitive foundation and specification contract gap",
+      "evidence": "code-intelligence.json:2530-2597,4015-4023,4040-4046; provider.ts:17-29; refs.ts:125-135",
+      "requirement": "CI-001 FileSpan and CI-003 actual search/read/status/reindex results must be accepted through CI-009/008. CI-010 requires literal/regex/text/symbol, whereas CI-003 outputs explicitly name literal/regex/text only. Obtain an explicit typed symbol-search capability/unsupported outcome and declaration-regex coverage contract; do not relabel literal search as symbol semantics or claim compiler/callgraph completeness. provider.ts registers operation names but is not a CodeSearch DTO implementation.",
+      "missingPrerequisite": "Accepted CodeSearch query/result/error DTOs and exact semantics for symbol mode, query IDs, cancellation, match columns, truncation and FTS/rg availability."
+    },
+    {
+      "id": "FG-RPC-AND-AUTHORITY",
+      "kind": "transitive CI-002/004 foundation plus published external gate",
+      "evidence": "code-intelligence.json:148-156,2731-2799,4062-4076; refs.ts:570-596; execution-packages.json:4960-4964",
+      "requirement": "CI-004 must expose authorized search/read/graph/cancel and scoped monotonic events. Host resolves current actor/workspace/project/source policy for every preview/open/copy/export/context action. EG-IDENTITY and scoped repository/egress readiness cannot be supplied by renderer hiding. refs.ts explicitly does not discover actors or renew leases; remote-private offline default is denied, enabled leases expire fail-closed, reconnect revocation clears cached private state.",
+      "missingPrerequisite": "Authenticated current authorization/lease resolver and typed IPC DTO/events, with denied/revoked/offline receipts."
+    },
+    {
+      "id": "FG-GRAPH-PROJECTIONS-AND-SAFE-EXPORT",
+      "kind": "explicit CI-007/008 dependency with hidden transitive C4 foundation",
+      "evidence": "code-intelligence.json:1235-1263,3396-3419,3599-3631; docs/14:49-69; explainer.ts:3-22",
+      "requirement": "Consume CI-007 validated typed graph and sanitized export, CI-008 freshness and artifact identity, and CI-005 Groma authored C4 projection when exercising C4 through CI-008. CodeGraph contains only symbols/contains-or-imports; ExplainerNode lacks edge trust, artifact kind, hash and freshness. Do not coerce AI or C4 nodes into source symbols, promote endpoint existence to semantic verification, or render raw provider SVG/Mermaid directives.",
+      "missingPrerequisite": "Accepted graph node/edge trust/provenance DTO and safe-export API, distinct source/AI/C4 artifacts, freshness events and pinned upstream runtime/license receipts for exercised providers."
+    },
+    {
+      "id": "FG-LIVE-MOUNT-AND-SHARED-OWNERSHIP",
+      "kind": "integration gate omitted from CI-010 sharedPatchPaths",
+      "evidence": "code-intelligence.json:57,81,3851-3859,4046; execution-packages.json:4912-4920,4948",
+      "requirement": "CI-009 owns the future CodeIntelligencePage production host. Mount CI-010 panels there via its owner/integration lead; the only explicitly authorized CI-010 shared patch is RepoArchitectureExplainer.tsx. Host mount, source-only-test removal and locale additions require coordinated owner patches, not silent widening of CI-010 writes.",
+      "missingPrerequisite": "Accepted host export/props/RPC wiring and exclusive shared-file integration leases."
+    },
+    {
+      "id": "FG-VISUAL-I18N-AND-PROOF",
+      "kind": "published UI acceptance and repository policy",
+      "evidence": "docs/14:38,57-69; code-intelligence.json:4048-4053,4107-4185; execution-packages.json:4952-4958; loaded AGENTS.md i18n rules",
+      "requirement": "Russian/light/compact Rox surface, all user strings through t(), parity across ten locale files, keyboard semantic outline, reference help on hover/focus/click, reduced motion. Collect actual mounted UI happy/empty/invalidregex/cancel, keyboard, unsafe-SVG negative control, changed/deleted-source, screenshot/ARIA/computed-font and integrated restart readback evidence. All five published proof lanes remain required; source-string assertions cannot substitute.",
+      "missingPrerequisite": "Authorized implementation and actual native/UI verification surface after integration; none exercised in preflight."
+    },
+    {
+      "id": "FG-AGENT-CONTEXT",
+      "kind": "conditional external integration prerequisite, not an added explicit DAG edge",
+      "evidence": "docs/14:50,59 and execution-packages.json:4964",
+      "requirement": "RC-07 Cmd/Ctrl+Enter adds only currently authorized references to the existing Session context through the accepted host handoff. Native agent transport readiness is required when tools are actually used; no second session store or custom agent surface.",
+      "missingPrerequisite": "Existing host handoff contract and transport readiness receipt for exercised agent/tool lane."
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/code-intelligence/CodeSearchPanel.tsx",
+    "apps/electron/src/renderer/components/code-intelligence/SourceEvidencePanel.tsx",
+    "apps/electron/src/renderer/components/code-intelligence/ArchitecturePanel.tsx",
+    "apps/electron/src/renderer/components/code-intelligence/__tests__/search-evidence.test.ts",
+    "apps/electron/src/renderer/components/code-intelligence/__tests__/graph-accessibility.test.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "apps/electron/src/renderer/components/code-intelligence/CodeSearchPanel.tsx",
+      "symbol": "CodeSearchPanel (proposed)",
+      "change": "Consume host-provided typed scoped search/cancel/read callbacks and events. Provide literal/regex/text/symbol selector with precise capability help, repository/snapshot/path/language/case/result-limit controls, capped/truncated/coverage labels and loading/empty/invalid/denied/stale/offline/cancel states. Track request identity and scope to reject late results after cancellation, new query or workspace switch; no renderer path resolution or local source store. Arrow selection, Enter preview and authorized Cmd/Ctrl+Enter Session handoff operate on immutable refs."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/code-intelligence/SourceEvidencePanel.tsx",
+      "symbol": "SourceEvidencePanel (proposed)",
+      "change": "Render bounded FileSpan from current-authorized host read with 1-based lines, content hash, sourceVersion and freshness. Keep selected immutable snapshot after source change; show captured bytes when retained and still authorized or explicit unavailable/missing reason otherwise. Display dirty working-copy digest/local receipt instead of fabricated parent commit links. Copy/open/export invoke the same current authorization boundary. Clear private preview and context on policy/lease/scope loss; binary/large/truncated errors remain explicit."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/code-intelligence/ArchitecturePanel.tsx",
+      "symbol": "ArchitecturePanel (proposed), explainWithProvenance, RepoArchitectureExplainer",
+      "change": "Consume accepted structured graph/artifact DTOs. Reuse explainWithProvenance for actual source CodeGraph projections and mount the extended RepoArchitectureExplainer as evidence outline; do not apply that legacy projection to AI/C4 nodes. Present source, inferred/model and authored-C4 layers distinctly with trust/freshness/coverage legend, node/edge inspector, accessible fit/zoom and keyboard outline. Render validated AST as controlled primitives, never raw model HTML/SVG/directives. Use accepted safe-export boundary and artifact refs; reduced motion disables fly/pan/zoom transitions."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/code-intelligence/__tests__/search-evidence.test.ts",
+      "symbol": "behavioral search/evidence regression cases (proposed)",
+      "change": "Use accepted query/read APIs and deterministic known/absent-match corpus to assert mode semantics, invalid regex, truncation, cancellation/out-of-order results, scope revocation, snapshot-changed/deleted captured-source and dirty-receipt behavior. Avoid source-text assertions or mock forwarding echoes; keep actual mounted UI lanes separate from these tests."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/code-intelligence/__tests__/graph-accessibility.test.ts",
+      "symbol": "behavioral graph accessibility/security regression cases (proposed)",
+      "change": "Assert reachable keyboard node/edge selection and evidence actions, non-color trust distinction, reduced-motion behavior, and malicious script/config/link/SVG rejection at the consumer rendering/export boundary. Include deterministic source/inferred/authored-C4 and stale/missing graph fixtures from accepted schema; tests must not merely search component source strings."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/components/session-workbench/RepoArchitectureExplainer.tsx",
+      "symbol": "RepoArchitectureExplainer",
+      "change": "Extend the existing nodes prop with required view evidence metadata keyed by node ID and controlled select/open callbacks. Preserve t('codeIntel.title'), t('codeIntel.empty') and the existing localized citation-list role. Turn selectable entries into semantic focusable controls, expose selection/freshness/trust labels and source action, and render the authoritative display citation from immutable-ref metadata, not unconditional node.citation for dirty snapshots. Do not fetch files or resolve paths inside the component. ArchitecturePanel supplies source projection and current authorization outcomes.",
+      "reason": "Reuse the existing surface/provenance seam while fixing its currently static span-only evidence list. Legacy path:line@commit alone cannot express captured dirty bytes or stale evidence.",
+      "authorization": "Published sharedPatchPaths; integration-owner writes after dependency acceptance and lease acquisition."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/CodeIntelligencePage.tsx",
+      "symbol": "CodeIntelligencePage (CI-009 proposed host; not inspected as an existing implementation)",
+      "change": "CI-009 owner mounts CodeSearchPanel, SourceEvidencePanel and ArchitecturePanel inside the same Project-scoped Code Intelligence host. Bind accepted typed search/read/graph/cancel/freshness and current authorization callbacks, immutable route repo/snapshot/tab/ref, Session handoff, and workspace-change teardown. Preserve central navigation/focus behavior and do not introduce another store or rail destination.",
+      "reason": "AC-6 explicitly rejects unmounted component evidence. CI-010 allowed paths alone cannot deliver live integration.",
+      "authorization": "Integration request to CI-009 owner/lead, outside CI-010 sharedPatchPaths; requires assigned ownership, not a worker edit."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/session-workbench/__tests__/repo-architecture-explainer.test.ts",
+      "symbol": "SOURCE and describe('RepoArchitectureExplainer')",
+      "change": "Integration owner removes the source-only assertion test. Consumer-visible rendered outline/citation/security behavior is covered by the normative new CI-010 behavioral tests and actual UI lanes, not re-pinned implementation strings.",
+      "reason": "Lines 5-12 only read TSX and test substrings; they cannot prove a mounted UI or source navigation and would obstruct the justified component cutover.",
+      "authorization": "Existing test is outside published CI-010 sharedPatchPaths; request lead ownership before edit."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "symbol": "codeIntel translation namespace",
+      "change": "Integration owner adds ASCII-sorted keys for actual search mode/capability semantics, limits/states, evidence identity/freshness, trust/source/AI/C4 legends, help, keyboard actions and safe-export errors. Synchronize the same key set in de.json, en.json, es.json, fr.json, hu.json, ja.json, pl.json, zh-Hans.json and zh-Hant.json in this directory; use prescribed plural conventions where counts are displayed. Exact wording/key inventory follows accepted DTO error and capability enums, not invented provider semantics.",
+      "reason": "The component already imports useTranslation; repository policy requires all user-facing strings through t() and ten-locale parity. Locale files were not opened in this scoped preflight, so no current-key absence claim is made.",
+      "authorization": "Shared localization integration request outside package write paths; owner must be assigned for all ten concrete locale files."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "CI-010-AC-1",
+      "criterion": "Literal/regex/text/symbol semantics visible",
+      "currentEvidence": "RepoArchitectureExplainer:5-24 has only nodes, labels and citation text; provider.ts:17 exposes operation names but no query/result DTO. CI-003 specification:2545-2567 names literal/regex/text and declaration-regex limitations; symbol UI requirement is not resolved by that wording alone.",
+      "requiredChange": "CodeSearchPanel consumes accepted mode/capability DTO, provides explicit four-mode semantics and truthful unsupported/limited-symbol coverage, bounded filters/results and independent invalidregex/empty/cancel states; SourceEvidencePanel shows exact authorized result spans.",
+      "verification": ["Mounted RC-07 known-match and absent-match corpus across all four semantics", "Malformed regex displays actual host validation outcome", "Cancel and late-response race never repopulate cancelled/foreign scope", "Published proof suite: keyboard-only, seeded unsafe SVG, source changed/deleted, reduced-motion screenshot"],
+      "missingPrerequisite": "Accepted CI-003 semantics/result/error contract and CI-004 scoped search/cancel RPC via CI-009; explicit symbol capability decision.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-010-AC-2",
+      "criterion": "source and AI/C4 graph distinction visible",
+      "currentEvidence": "CodeGraph types.ts:12-30 has contains/imports edges without trust. ExplainerNode/explainWithProvenance:3-22 projects only symbol metadata. Published GraphNode/GraphEdge semantics distinguish source/AI/C4 and deterministic-supported/authored/model-proposed/unsupported.",
+      "requiredChange": "ArchitecturePanel renders distinct artifact kinds and trust layers with text/line-style legend, coverage/limitations and evidence inspector. Reuse source projection only for source graph; show C4 authored model and AI interpretations as distinct projections with mappings/unknowns rather than source facts.",
+      "verification": ["Actual UI shows seeded source, AI and authored C4 nodes/edges with distinct accessible labels", "Unsupported/inferred edges remain unverified even with valid endpoints", "Seeded unsafe SVG/script/config/link is inert/rejected in render and export", "Full published proof suite including search happy/empty/invalidregex/cancel, keyboard, changed/deleted source and reduced motion"],
+      "missingPrerequisite": "CI-007 graph-evidence/export DTO and receipts; CI-008 kind/freshness registry; CI-005 C4 importer readiness through CI-008 for C4 exercised scope.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-010-AC-3",
+      "criterion": "hover/focus/click reference help",
+      "currentEvidence": "RepoArchitectureExplainer:17-20 renders passive spans without help or click/focus actions. docs/14:63-67 requires reference freshness/uncertainty help and evidence drawer without a private-fetch bypass.",
+      "requiredChange": "Extend existing citation outline with focusable evidence actions and controlled help disclosure reachable by hover, keyboard focus and click. Owned panels explain mode, trust, snapshot/hash/freshness and limitations; click opens the same authorized inspector. Use t() and shared locale patch.",
+      "verification": ["Actual hover then keyboard focus then click expose equivalent reference help and the same immutable evidence", "No hover-only controls or bypass read on help activation", "Full published proof suite including happy/empty/invalidregex/cancel, keyboard-only, unsafe SVG, changed/deleted source and reduced-motion screenshot"],
+      "missingPrerequisite": "Accepted reference/freshness DTO, current-authorized inspector callback, localization owner and production mount.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-010-AC-4",
+      "criterion": "keyboard outline and reduced motion",
+      "currentEvidence": "Existing section/list is semantic static content but li/spans are not selectable controls. There is no graph outline navigation, inspector activation, fit/zoom or animation policy in RepoArchitectureExplainer:12-24.",
+      "requiredChange": "ArchitecturePanel and extended evidence list provide labelled outline/expansion/selection and focus management; arrows select, Enter opens exact source, fit/zoom buttons work by keyboard, labels supplement colors. Respect prefers-reduced-motion for graph fly/pan/zoom and disclosure transitions; no canvas-only navigation.",
+      "verification": ["Mounted graph explored entirely by keyboard with focus/selection/inspector assertions", "Reduced-motion actual screenshot and observed interaction confirm no fly/pan animation", "Full published proof suite including search happy/empty/invalidregex/cancel, unsafe SVG, changed/deleted source"],
+      "missingPrerequisite": "Accepted graph DTO and host focus integration from CI-009; actual native/UI proof capability after authorized implementation.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-010-AC-5",
+      "criterion": "stale citations open captured source or explain unavailable",
+      "currentEvidence": "refs.ts:125-135 already declares FileSpan with contentHash/sourceVersion; readFileSpan:504-517 reads bounded captured snapshot bytes. assessSnapshotFreshness:519-528 distinguishes current/stale/unavailable; current-policy resolution:570-596 is a host-supplied authority seam, not live actor discovery. Explainer:21 still formats raw path:line@commit.",
+      "requiredChange": "SourceEvidencePanel requests original immutable snapshot ref through current policy, displays retained captured bytes with stale badge or unavailable/missing reason, never silently follows working-tree path. Dirty sourceVersion shows local content receipt, not parent commit URL. CI-008 events update freshness without retargeting refs; denied/lease-loss clears protected content.",
+      "verification": ["Select citation then modify/delete/rename source: retained authorized capture remains byte/hash identical or explicit unavailable appears", "Dirty capture never exports parent commit as exact source", "Policy revoked/lease expired read/copy/export denied and preview cleared", "Full published proof suite including search happy/empty/invalidregex/cancel, keyboard-only, unsafe SVG and reduced-motion screenshot"],
+      "missingPrerequisite": "Committed/accepted immutable capture foundation and CI-008 freshness receipt; CI-004 read RPC resolves current actor/policy and retained snapshot access.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-010-AC-6",
+      "criterion": "Reuse existing RepoArchitectureExplainer/provenance projection; current source-only test and missing production mount are not live integration evidence",
+      "currentEvidence": "RepoArchitectureExplainer imports ExplainerNode from the canonical existing module; index.ts:17-22 exports explainWithProvenance and ExplainerNode. Existing test:5-12 checks source strings only. Specification audit:57,81 records missing production mount; this worker did not broaden scope to re-establish whole-repository mount absence.",
+      "requiredChange": "ArchitecturePanel uses canonical source provenance projection and extended existing evidence list. CI-009 owner mounts all three panels in the single Project host and binds scoped RPC/state. Lead removes source-text test, integrates actual behavioral tests and locale changes; no duplicate app/store or compatibility surface.",
+      "verification": ["Actual existing Project route reaches mounted search/graph/evidence panels and existing localized evidence outline", "Deep-link/reload/back/focus/workspace-switch exercise integrated host and clear foreign/private state", "All five published lanes: happy/empty/invalidregex/cancel, keyboard-only, unsafe SVG, source changed/deleted and reduced-motion screenshot", "Integrated revision-bound source/schema and restart ref/hash readback receipts plus screenshots/ARIA/computed Rox font"],
+      "missingPrerequisite": "Lead shared patches and CI-009 accepted production host wiring; source-only test removal and locale owner approval outside worker writes.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-010-CONTRACT-SAFE-EXPORT",
+      "criterion": "Safe export and all copy/export/open-source actions use the same current authorization resolver",
+      "currentEvidence": "Normative outputs include safe export; permissions code-intelligence.json:4068-4076 explicitly require current authorization. refs.ts:570-596 supplies pure current-binding policy checking, not live identity, lease resolution or a safe-export API.",
+      "requiredChange": "Route export/copy/open/context through host resolver and CI-007 sanitizer; preserve exact artifact/span provenance and dirty local receipt. Deny revoked/expired/foreign-scope exports even when content was previously displayed. No raw SVG, model directives, private public-link substitution or renderer filesystem reads.",
+      "verification": ["Seeded script/config/link/SVG never executes and exported artifact is sanitized", "Revocation between preview and export/copy/open denies action and clears protected state", "Authorized export retains snapshot/hash/source attribution; dirty evidence uses local receipt"],
+      "missingPrerequisite": "CI-007 sanitizer/export API plus host current-authorization resolver and scoped action DTOs.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-010-CONTRACT-REALTIME-OFFLINE",
+      "criterion": "Live search cancel/result and freshness events; permission/lease loss clears protected preview and context",
+      "currentEvidence": "Package events/realtimeOffline at 4065-4076 and policies at 146,155 are normative; no such subscriptions exist in the inspected static list. refs.ts:573 explicitly delegates actor/lease discovery to host.",
+      "requiredChange": "Panels consume scoped monotonic host events and reject stale request/scope updates; host clears source/graph/result/context memory on workspace/policy/lease loss. Local-owned offline access uses current local policy; remote-private offline remains disabled absent explicit valid bounded lease. Persist view preferences only, never source/graph authority or protected bodies in route/preferences.",
+      "verification": ["Cancellation and older-result/newer-query race", "Workspace switch and reconnect revocation immediately invalidate old private previews/context", "Lease expiry fails closed; offline provider unavailable remains explicit", "Restart reload preserves immutable identity/freshness without granting old authorization"],
+      "missingPrerequisite": "CI-004 scoped event/cancel DTOs, CI-008 freshness events and EG-IDENTITY offline policy/lease readiness receipts.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"apps/electron/src/renderer/components/session-workbench/RepoArchitectureExplainer.tsx","symbol":"RepoArchitectureExplainer","lineStart":1,"lineEnd":25,"sha256":"70b2a1fb568bd1716706c6680b7cdd8bece10c8919a67585b4d319c5f0511d0f"},
+    {"path":"apps/electron/src/renderer/components/session-workbench/__tests__/repo-architecture-explainer.test.ts","symbol":"SOURCE / source-only citation test","lineStart":1,"lineEnd":14,"sha256":"7076888d266d15f4f67b586aa96c22371b65cf115d6aac90a52e6fcfdef1753c"},
+    {"path":"packages/shared/src/code-intelligence/index.ts","symbol":"canonical exports","lineStart":1,"lineEnd":27,"sha256":"ba83e46a3fa8348701bddda97acefa176bdc4938a51c7a70338f9a376b464e39"},
+    {"path":"packages/shared/src/code-intelligence/types.ts","symbol":"CodeGraph / CodeEdge / CODE_INTEL_PACK","lineStart":1,"lineEnd":67,"sha256":"48b33cd382fb91825e79964724e102b7167d5f830e5a082432ec59ca3d9ca61e"},
+    {"path":"packages/shared/src/code-intelligence/explainer.ts","symbol":"ExplainerNode / explainWithProvenance / assertEveryNodeHasProvenance","lineStart":1,"lineEnd":49,"sha256":"d2d53f67c406be50c258396e392a77ef5a844ff98b744dd3c81aefa1a01eaeed"},
+    {"path":"packages/shared/src/code-intelligence/refs.ts","symbol":"RepositorySnapshot / FileSpan / RepositoryRef","lineStart":90,"lineEnd":146,"sha256":"432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path":"packages/shared/src/code-intelligence/refs.ts","symbol":"readFileSpan / assessSnapshotFreshness","lineStart":494,"lineEnd":530,"sha256":"432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path":"packages/shared/src/code-intelligence/refs.ts","symbol":"assertRepositoryCurrentReadPolicy / resolveRepositoryRefWithCurrentPolicy","lineStart":570,"lineEnd":596,"sha256":"432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path":"packages/shared/src/code-intelligence/provider.ts","symbol":"CodeIntelligenceProviderRegistry.resolve / provider decision","lineStart":16,"lineEnd":98,"sha256":"df76cab98d98e3562f28efe2aed1b86e47ef43f595b7d8ec96a7cc3a42afc404"},
+    {"path":"plans/lark-suite-reference/code-intelligence.json","symbol":"workPackages[9] CI-010 normative DoD","lineStart":4009,"lineEnd":4218,"sha256":"a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"CI-010 execution package and launch gates","lineStart":4883,"lineEnd":4967,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/14-code-intelligence-ui.md","symbol":"RC-06 / RC-07 / RC-09 and authority details","lineStart":38,"lineEnd":77,"sha256":"2c07a58511e385a7bef7d8630d333c685b924fb8e71819cf2215c097107b3c75"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead reads this owned preflight report, assigns the production-host/localization/test shared patch requests, and resolves the symbol-search DTO contract gap with CI-003/004 owners; no feature implementation is authorized for this worker.",
+    "implementationEntryGate": "After lead wave0 commit and accepted CI-007/008/009 dependency receipts, re-read/hash affected source and resolve delivery baseline/manifests, then create the five normative new files using accepted host DTOs and exclusive shared integration patches.",
+    "firstCodeContribution": "Implement CodeSearchPanel and SourceEvidencePanel against accepted typed scoped search/read/cancel/current-policy callbacks, followed by ArchitecturePanel reusing the existing source provenance/evidence outline. Lead mounts through CI-009 host; complete all DoD and proof lanes before any feature-complete claim."
+  },
+  "risks": [
+    "Working tree may change during root integration; source references are inspected whole-file hashes, not immutable evidence for a later commit.",
+    "Published baseline e953786 and dispatched a21aeab must be reconciled by approved prerequisite receipts, not a worker checkout or Git mutation.",
+    "Symbol-search mode is mandatory but CI-003 published outputs explicitly name only literal/regex/text; a labelled unsupported state does not by itself satisfy full mandatory symbol behavior.",
+    "Static component and source-only test can be mistaken for runtime integration; production-host ownership is outside CI-010 allowed writes.",
+    "Legacy path:line@commit citation can falsely identify dirty bytes; display/copy/export must use FileSpan.sourceVersion and exact captured hash.",
+    "Pure current-binding validation does not establish authenticated actor policy or offline leases; cached display permission cannot authorize later export/context actions.",
+    "Source CodeGraph and ExplainerNode lack trust/kind/freshness for AI/C4; forced conversion would turn interpretations into source facts.",
+    "Safe SVG/Mermaid/export boundary is a real prerequisite, not UI sanitization by hiding links or disabling one sample payload.",
+    "Cancel/complete, workspace switch, policy loss and stale freshness events can leak/repopulate private state without request/scope identity fencing.",
+    "No actual build/test/UI/provider/restart acceptance was run, by explicit preflight scope. All feature criteria remain GAP_BLOCKS_COMPLETION, not N/A or PASS."
+  ]
+}

@@ -1,0 +1,39 @@
+import hashlib,json,pathlib,re,subprocess
+CHECKOUT=pathlib.Path('/tmp/rox-r15-exact-ui-20261001/checkout')
+EVIDENCE=pathlib.Path('/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/electron-types')
+DIST=CHECKOUT/'apps/electron/dist'
+def sha(data):return hashlib.sha256(data).hexdigest()
+tracked=set(subprocess.check_output(['git','ls-files','-z'],cwd=CHECKOUT).decode().split('\0'))
+textual=[];wrappers=[];inventory=[];map_artifacts=[]
+required=json.loads(pathlib.Path('/workspace/rox-r15-evidence-20260930/union-validation/a4ca-electron-summary.json').read_text())['required_shell_sources_compiled']
+required={k:[] for k in required}
+maps=sorted(DIST.glob('renderer/**/*.map'))
+for p in maps:
+ d=json.loads(p.read_text());sources=d['sources'];contents=d.get('sourcesContent',[])
+ assert len(sources)==len(contents),p
+ map_artifacts.append({'path':str(p.relative_to(CHECKOUT)),'bytes':p.stat().st_size,'sha256':sha(p.read_bytes())})
+ for source,content in zip(sources,contents):
+  q=(p.parent/source.split('?',1)[0]).resolve()
+  if not q.is_relative_to(CHECKOUT):continue
+  relative=str(q.relative_to(CHECKOUT))
+  if relative not in tracked:continue
+  assert q.is_file(),relative
+  entry={'chunk':p.name[:-4],'source':source,'file':relative,'embeddedContentAvailable':content is not None,'embeddedSha256':sha(content.encode()) if content is not None else None,'sourceSha256':sha(q.read_bytes()),'exact':content is not None and content.encode()==q.read_bytes()}
+  if q.suffix in ('.svg','.png'):
+   entry['generatedExportDefaultWrapper']=content is not None and bool(re.fullmatch(r'export default "(?:data:image/[^\n]+|__VITE_ASSET__[A-Za-z0-9_$-]+__)";?',content))
+   wrappers.append(entry)
+  else:textual.append(entry)
+  suffix=relative.removeprefix('apps/electron/src/renderer/')
+  if suffix in required:required[suffix].append(entry['chunk'])
+  if '/pages/' in relative or '/platform/' in relative:inventory.append({'chunk':entry['chunk'],'source':relative})
+artifacts=[]
+for p in sorted(DIST.rglob('*')):
+ if p.is_file():artifacts.append({'path':str(p.relative_to(CHECKOUT)),'bytes':p.stat().st_size,'sha256':sha(p.read_bytes())})
+(EVIDENCE/'renderer-source-comparison.json').write_text(json.dumps({'textual':textual,'generatedAssetWrappers':wrappers},ensure_ascii=False,indent=2)+'\n')
+(EVIDENCE/'electron-artifact-manifest.json').write_text(json.dumps(artifacts,ensure_ascii=False,indent=2)+'\n')
+summary={'candidate':subprocess.check_output(['git','rev-parse','HEAD'],cwd=CHECKOUT,text=True).strip(),'rendererMapCount':len(maps),'textualSourceEntryCount':len(textual),'exactTextualMatches':sum(x['exact'] for x in textual),'textualMismatches':[x for x in textual if not x['exact']],'generatedAssetWrapperCount':len(wrappers),'allGeneratedAssetWrappers':all(x['generatedExportDefaultWrapper'] for x in wrappers),'wrapperExplanation':'Vite sourcesContent contains generated export-default JavaScript for 23 SVG/PNG imports; those are compared as wrappers, while all 1192 textual source entries must byte-match exact010 tracked source.','requiredShellSourcesCompiled':required,'allRequiredShellSourcesCompiled':all(required.values()),'compiledPagesAndPlatformInventory':inventory,'htmlEntries':[str(p.relative_to(CHECKOUT)) for p in sorted(DIST.glob('renderer/**/*.html'))],'artifactCount':len(artifacts),'sourceMapArtifacts':map_artifacts,'mainPreloadSourceMapScope':'No main/preload maps emitted by repository build scripts; their provenance is full6178/2gitlinks before-after integrity + built output hashes + actual compiled probes.','sqliteAdapterOwnerSha256':sha((CHECKOUT/'packages/shared/src/utils/sqlite-runtime.ts').read_bytes()),'sqliteAdapterOwnerBytesExpected':sha((CHECKOUT/'packages/shared/src/utils/sqlite-runtime.ts').read_bytes())=='8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831'}
+(EVIDENCE/'renderer-map-closure.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n')
+print(json.dumps({k:v for k,v in summary.items() if k not in ['compiledPagesAndPlatformInventory','sourceMapArtifacts','requiredShellSourcesCompiled']},ensure_ascii=False,indent=2))
+assert len(maps)==408 and len(textual)==1192 and all(x['exact'] for x in textual)
+assert len(wrappers)==23 and all(x['generatedExportDefaultWrapper'] for x in wrappers)
+assert all(required.values()) and summary['sqliteAdapterOwnerBytesExpected']

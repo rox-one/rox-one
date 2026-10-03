@@ -1,0 +1,261 @@
+import { afterAll, describe, expect, it } from 'bun:test'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import { join } from 'node:path'
+import type { Subprocess } from 'bun'
+
+const CHECKOUT = '/tmp/rox-r15-exact-ui-20261001/checkout'
+const DELIVERY = '/workspace/rox-r15-direct-server-dist-20261001'
+const PROFILE_PARENT = '/tmp/rox-r15-direct-delivery-private-20261001/profiles'
+const RESULT = join(import.meta.dir, 'canonical-delivery-phases.json')
+const LOG = join(import.meta.dir, 'canonical-delivery-child-redacted.log')
+const WebSocket = createRequire(join(CHECKOUT, 'package.json'))('ws')
+const { PROTOCOL_VERSION } = await import(join(CHECKOUT, 'packages/shared/src/protocol/types.ts'))
+const roots: string[] = []
+const servers: Server[] = []
+const sockets = new Set<InstanceType<typeof WebSocket>>()
+const phases: { name: string; pass: boolean }[] = []
+let assertions = 0
+let observedShippedBun: string | null = null
+
+function check(name: string, actual: boolean): void {
+  assertions++
+  phases.push({ name, pass: actual })
+  expect(actual, name).toBe(true)
+}
+
+async function bounded<T>(promise: Promise<T>, timeout: number, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([promise, new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), timeout)
+    })])
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+type Server = {
+  proc: Subprocess<'ignore', 'pipe', 'pipe'>
+  drains: Promise<unknown>
+  url: string
+  httpUrl: string
+  raw: () => string
+  tokenWasLogged: () => boolean
+  redacted: () => string
+  sigtermSent: boolean
+  sigkillFallback: boolean
+}
+
+function profile(): string {
+  const root = mkdtempSync(join(PROFILE_PARENT, 'canonical-delivery-'))
+  roots.push(root)
+  return root
+}
+
+async function spawn(root: string, token: string, waitForReadiness = true): Promise<Server> {
+  const reservation = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch: () => new Response() })
+  const port = reservation.port
+  reservation.stop(true)
+  const proc = Bun.spawn(['sh', join(DELIVERY, 'bin/craft-server')], {
+    cwd: DELIVERY,
+    env: {
+      PATH: process.env.PATH,
+      LANG: process.env.LANG,
+      TMPDIR: process.env.TMPDIR,
+      ROX_CONFIG_DIR: root,
+      CRAFT_CONFIG_DIR: root,
+      ROX_SERVER_TOKEN: token,
+      CRAFT_SERVER_TOKEN: token,
+      CRAFT_RPC_HOST: '127.0.0.1',
+      CRAFT_RPC_PORT: String(port),
+      CRAFT_HEALTH_PORT: '0',
+      CRAFT_WEBUI_DIR: join(DELIVERY, 'webui'),
+      CRAFT_BROWSER_BACKEND: 'none',
+    },
+    stdin: 'ignore',
+    stdout: 'pipe',
+    stderr: 'pipe',
+  })
+  let output = ''
+  let resolveReady: (url: string) => void = () => {}
+  const ready = new Promise<string>(resolve => { resolveReady = resolve })
+  async function drain(stream: ReadableStream<Uint8Array>): Promise<void> {
+    const reader = stream.getReader()
+    const decoder = new TextDecoder()
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      output += decoder.decode(value, { stream: true })
+      const match = output.match(/CRAFT_SERVER_URL=(ws:\/\/127\.0\.0\.1:\d+)/)
+      if (match?.[1]) resolveReady(match[1])
+    }
+    output += decoder.decode()
+  }
+  const server: Server = {
+    proc,
+    drains: Promise.all([drain(proc.stdout), drain(proc.stderr)]),
+    url: `ws://127.0.0.1:${port}`,
+    httpUrl: `http://127.0.0.1:${port}`,
+    raw: () => output,
+    redacted: () => output.replaceAll(token, '[test token redacted]'),
+    tokenWasLogged: () => output.includes(token),
+    sigtermSent: false,
+    sigkillFallback: false,
+  }
+  servers.push(server)
+  if (waitForReadiness) {
+    const url = await bounded(Promise.race([
+      ready,
+      proc.exited.then(async code => { await server.drains; throw new Error(`Shipped launcher exited before readiness (${code})\n${server.redacted()}`) }),
+    ]), 45_000, 'Shipped launcher startup timed out')
+    check('shipped launcher bound reserved loopback port', url === server.url)
+  }
+  return server
+}
+
+function request(server: Server, path: string, init: RequestInit = {}): Promise<Response> {
+  return fetch(server.httpUrl + path, { ...init, redirect: 'manual', signal: AbortSignal.timeout(5_000) })
+}
+
+function connect(server: Server, token: string): Promise<InstanceType<typeof WebSocket>> {
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(server.url)
+    sockets.add(ws)
+    const timer = setTimeout(() => { ws.terminate(); reject(new Error('Shipped launcher WebSocket handshake timed out')) }, 5_000)
+    ws.on('open', () => ws.send(JSON.stringify({ id: crypto.randomUUID(), type: 'handshake', protocolVersion: PROTOCOL_VERSION, token })))
+    ws.on('message', (data: Buffer) => {
+      const reply = JSON.parse(data.toString())
+      if (reply.type === 'handshake_ack') { clearTimeout(timer); resolve(ws) }
+      else if (reply.type === 'error') { clearTimeout(timer); ws.close(); reject(new Error('Shipped launcher handshake rejected')) }
+    })
+    ws.on('error', (error: Error) => { clearTimeout(timer); reject(error) })
+    ws.on('close', (code: number) => { clearTimeout(timer); sockets.delete(ws); reject(new Error(`Shipped launcher WebSocket closed (${code})`)) })
+  })
+}
+
+async function refuseRawWs(server: Server): Promise<boolean> {
+  return await new Promise<boolean>(resolve => {
+    const ws = new WebSocket(server.url)
+    sockets.add(ws)
+    const timer = setTimeout(() => { ws.terminate(); resolve(false) }, 5_000)
+    ws.on('open', () => { clearTimeout(timer); ws.terminate(); resolve(false) })
+    ws.on('error', () => { clearTimeout(timer); resolve(true) })
+    ws.on('close', () => { clearTimeout(timer); sockets.delete(ws) })
+  })
+}
+
+async function stoppedEndpoints(server: Server, label: string): Promise<void> {
+  for (const path of ['/health', '/login', '/api/config', '/']) {
+    let refused = false
+    try { await request(server, path) } catch { refused = true }
+    check(`${label}: stopped ${path} refused`, refused)
+  }
+  check(`${label}: stopped raw WebSocket refused`, await refuseRawWs(server))
+}
+
+async function stop(server: Server, ws: InstanceType<typeof WebSocket>, label: string): Promise<void> {
+  check(`${label}: child live before requested SIGTERM`, server.proc.exitCode === null)
+  check(`${label}: authenticated WebSocket open before SIGTERM`, ws.readyState === WebSocket.OPEN)
+  const closed = new Promise<void>(resolve => ws.once('close', resolve))
+  server.proc.kill('SIGTERM')
+  server.sigtermSent = true
+  try {
+    const code = await bounded(server.proc.exited, 10_000, 'Shipped launcher did not stop on SIGTERM')
+    await server.drains
+    await bounded(closed, 5_000, 'Shipped launcher did not close its live WebSocket')
+    check(`${label}: graceful exit code zero`, code === 0)
+    check(`${label}: SIGTERM sent without SIGKILL fallback`, server.sigtermSent && !server.sigkillFallback)
+    check(`${label}: authenticated WebSocket closed`, ws.readyState === WebSocket.CLOSED)
+  } catch (error) {
+    if (server.proc.exitCode === null) { server.proc.kill('SIGKILL'); server.sigkillFallback = true }
+    await server.proc.exited
+    await server.drains
+    throw error
+  }
+  await stoppedEndpoints(server, label)
+}
+
+async function authMatrix(server: Server, token: string, label: string): Promise<string> {
+  const health = await request(server, '/health')
+  check(`${label}: health 200/status ok`, health.status === 200 && (await health.json()).status === 'ok')
+  const login = await request(server, '/login')
+  check(`${label}: exact staged login HTML`, login.status === 200 && login.headers.get('content-type')!.includes('text/html') && await login.text() === readFileSync(join(DELIVERY, 'webui/login.html'), 'utf8'))
+  check(`${label}: unauthorized config rejected`, (await request(server, '/api/config')).status === 401)
+  const redirect = await request(server, '/')
+  check(`${label}: unauthorized HTML redirects to login`, redirect.status === 302 && redirect.headers.get('location') === '/login')
+  const authenticate = (password: string) => request(server, '/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) })
+  check(`${label}: bad authentication rejected`, (await authenticate('wrong-password')).status === 401)
+  const auth = await authenticate(token)
+  const setCookie = auth.headers.get('set-cookie')
+  check(`${label}: valid authentication and HttpOnly cookie`, auth.status === 200 && !!setCookie?.includes('craft_session=') && setCookie.includes('HttpOnly'))
+  const cookie = setCookie!.split(';')[0]!
+  const config = await request(server, '/api/config', { headers: { cookie } })
+  check(`${label}: authenticated config matches live WS URL`, config.status === 200 && (await config.json()).wsUrl === server.url)
+  const html = await request(server, '/', { headers: { cookie } })
+  check(`${label}: exact staged application HTML`, html.status === 200 && await html.text() === readFileSync(join(DELIVERY, 'webui/index.html'), 'utf8'))
+  let invalidRejected = false
+  try { const unexpected = await connect(server, 'wrong-token-that-is-long-enough'); unexpected.terminate() } catch { invalidRejected = true }
+  check(`${label}: invalid authenticated WebSocket rejected`, invalidRejected)
+  return cookie
+}
+
+function contains(actual: unknown, expected: unknown): boolean {
+  if (expected === null || typeof expected !== 'object') return actual === expected
+  if (actual === null || typeof actual !== 'object') return false
+  return Object.entries(expected).every(([key, value]) => contains((actual as Record<string, unknown>)[key], value))
+}
+
+afterAll(async () => {
+  try {
+    for (const ws of sockets) ws.terminate()
+    for (const server of servers) {
+      if (server.proc.exitCode === null) {
+        server.proc.kill('SIGTERM')
+        try { await bounded(server.proc.exited, 10_000, 'Cleanup SIGTERM timeout') }
+        catch { if (server.proc.exitCode === null) { server.proc.kill('SIGKILL'); server.sigkillFallback = true }; await server.proc.exited }
+      }
+      await server.drains
+    }
+    writeFileSync(LOG, servers.map((server, index) => `SERVER ${index + 1}\n${server.redacted()}`).join('\n'))
+  } finally {
+    for (const root of roots) rmSync(root, { recursive: true, force: true })
+    writeFileSync(RESULT, JSON.stringify({ compilerTestBun: Bun.version, observedShippedBun, delivery: DELIVERY, launcher: 'sh bin/craft-server', assertions, phases, servers: servers.map(server => ({ exit: server.proc.exitCode, sigtermSent: server.sigtermSent, sigkillFallback: server.sigkillFallback, tokenWasLogged: server.tokenWasLogged() })), profilesRemoved: roots.every(root => !existsSync(root)), nativeOrProviderAcceptance: false }, null, 2) + '\n')
+  }
+})
+
+describe('actual canonical standalone distribution', () => {
+  it('runs shipped source/runtime, enforces auth, and restarts the same isolated profile', async () => {
+    check('canonical launcher/runtime/UI artifacts present', ['bin/craft-server', 'vendor/bun/bun', 'webui/index.html', 'webui/login.html'].every(name => existsSync(join(DELIVERY, name))))
+    const version = Bun.spawnSync([join(DELIVERY, 'vendor/bun/bun'), '--version'], { cwd: DELIVERY, env: { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR } })
+    observedShippedBun = version.stdout.toString().trim()
+    check('shipped Bun runtime is source-pinned 1.3.9', version.exitCode === 0 && observedShippedBun === '1.3.9')
+    const root = profile()
+    const token = crypto.randomUUID() + crypto.randomUUID()
+    const first = await spawn(root, token)
+    const cookie = await authMatrix(first, token, 'first start')
+    const firstWs = await connect(first, token)
+    await stop(first, firstWs, 'first stop')
+    check('server created isolated persisted config', existsSync(join(root, 'config.json')))
+    const saved = JSON.parse(readFileSync(join(root, 'config.json'), 'utf8'))
+    const restarted = await spawn(root, token)
+    await authMatrix(restarted, token, 'restart')
+    check('restart accepts previous cookie for config', (await request(restarted, '/api/config', { headers: { cookie } })).status === 200)
+    check('restart accepts previous cookie for HTML', (await request(restarted, '/', { headers: { cookie } })).status === 200)
+    check('restart retains persisted config values', contains(JSON.parse(readFileSync(join(root, 'config.json'), 'utf8')), saved))
+    const restartWs = await connect(restarted, token)
+    await stop(restarted, restartWs, 'restart stop')
+    check('both complete child logs omit test token', !first.tokenWasLogged() && !restarted.tokenWasLogged())
+  }, 150_000)
+
+  it('refuses a short token before readiness without leaving listening endpoints', async () => {
+    const server = await spawn(profile(), 'tiny5', false)
+    const code = await bounded(server.proc.exited, 45_000, 'Shipped short-token launcher did not exit')
+    await server.drains
+    check('short-token launch exits exactly one', code === 1)
+    check('short-token diagnostic is exact', server.raw().includes('Token too short (5 chars, minimum 16). Use a cryptographically random value.'))
+    check('short-token launch never signals readiness', !server.raw().includes('CRAFT_SERVER_URL='))
+    check('short-token child log omits test token', !server.tokenWasLogged())
+    await stoppedEndpoints(server, 'short token')
+  }, 60_000)
+})

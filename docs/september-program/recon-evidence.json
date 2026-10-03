@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "status": "DISCOVERY_ONLY; PRODUCT_IMPLEMENTATION_AUTHORIZED_IN_PARALLEL; ACCEPTANCE_PENDING",
+  "observedAt": "2026-09-30T02:21:32.311Z",
+  "authorization": {
+    "program": "Implement all 109 published task contracts concurrently where dependency and immutable file bounds permit; use the existing task registry/DAG, do not create a second plan.",
+    "scope": "Preserve all 484 historical requirement rows plus 5 additive OKR rows (489 total), all 16 original Conation seq703 rows, U01-U31, and U25 as FALSE/decision-only pending reliable independent authority.",
+    "rights": "Reuse source findings and issue scopes; do not copy Macro/Conation donor code absent provenance and rights clearance (Macro root AGPL; web rights reserved). Proposals do not authorize implementation.",
+    "safety": "No production cloud provisioning, production DNS/MX changes, unauthorized external sends, auth bypass, unapproved provider writes, user-data migration, raw private conversation, secrets, credentials, personal data, or private local paths. Existing user worktrees remain untouched.",
+    "platforms": ["Linux/cloud", "macOS native", "Windows native", "Conation native iOS target/device/runner"],
+    "releaseGate": "RMA E3 remains a full gate: #385 actual product E3 evidence is required; #991 merge/harness is not acceptance; #387 stays gated by #385. Final release remains NOT_ACCEPTED until every mandatory row is proven on the exact required target."
+  },
+  "repository": {
+    "implementationRepo": "rox-one-september-implementation",
+    "branch": "feat/september-program-20260930",
+    "baseline": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
+    "sourceMapRepo": "rox-one-september-program",
+    "existingUserTrees": "Untouched per lead evidence",
+    "ownership": "Lead integrator; workers edit only explicit allowlisted paths; shared roots remain singleton-owned."
+  },
+  "currentEvidence": {
+    "programIssue": "https://github.com/rox-one/rox-one/issues/1157",
+    "sourceReports": "32 read-only reports: ProgramOwnership, SharedIdentity, ActualUiAudit, ChatArchitecture, TeamMembership, ConcurrentSync, CollabThreads, CollabOwnership, ProviderConsent, CalendarCalls, VoiceModels, TranscriptQueue, MeetingAnalysis, MailDelivery, UxNavigation, OnboardingProfile, LocalizationAccess, NativePlatforms, NotesKnowledge, CanvasViews, SkillsExtensions, ImportsSearch, DocumentTools, ProjectsOkr, TaskReminders, HomeAnalytics, InboxFeed, BusinessDecisions, AgentRuntime, AutomationRemote, ReleaseAcceptance, ConationOwnership. These establish code-source facts only; they do not establish end-to-end product acceptance.",
+    "nativeObservation": "Lead observed Rox 0.11.5 at Connections / Policies; visible legacy MORE label. This is an initial surface observation, not a screen audit. No private screenshot path is published.",
+    "sourceGraph": "Unavailable; direct source navigation used. Descriptive find backend also unavailable. Do not represent generated source graph or exhaustive source-map coverage as complete.",
+    "baselineBuild": "PASS: Electron build only, source revision a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2; build is not functional acceptance.",
+    "baselineNativeRun": "FAIL: isolated native launch did not start because Electron dependency installation lacked node_modules/electron path.txt or dist. This failure is not a product acceptance observation; dependency install and isolated-profile launch remain pending.",
+    "issueState": "DATA-01 #1212 and SHARED-01 #1160 are NOT_RUN in the contract packet. Documentation is not acceptance.",
+    "freshOwnership": "current-worktree-ownership.json observedAt 2026-09-30T02:50:39.572Z confirms implementation checkout HEAD a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2 on feat/september-program-20260930. Its dirty snapshot includes the owned docs in this record plus independent renderer/user changes; preserve all overlays. The separate rox-one-september-program docs checkout is at the identical HEAD on docs/september-program-20260930 and contains only three packages/server-core/src/feed files owned by FeedDurabilityResidual; this documentation worker made no changes in that checkout and must not touch those files. The earlier active-ownership snapshot is only a point-in-time record.",
+    "freshUiFinding": "Lead reports an actual Omnibox modal is offscreen (top 900px in a 900px viewport) because the platform source root is missing from the Tailwind scan. SharedUiScanResidual owns the repair; lead still owns real native proof. This is a confirmed finding awaiting repair/reverification, not full AUDIT-01 acceptance."
+  },
+  "sourceMap": {
+    "status": "DISCOVERY_ONLY; 32 static source reports are evidence inputs, not a complete live producer/store/consumer audit.",
+    "identityAndSync": [
+      {
+        "entityFlow": "Native Notes",
+        "producer": "packages/server-core/src/handlers/rpc/notes.ts READ/SAVE/CREATE (workspace note root; optional expectedRevision)",
+        "store": "Workspace filesystem; packages/core/src/rox2/notes-repository.ts is a separate Map keyed by entityId and is not the editor persistence store.",
+        "consumers": "Shared channel registry packages/shared/src/protocol/channels.ts; Electron apps/electron/src/transport/channel-map.ts. Electron is evidenced; a second independent authorized live consumer is not evidenced.",
+        "boundary": "Shown Notes handler ignores _ctx; hash precondition applies only when expectedRevision is supplied. Workspace path isolation does not prove entity-level tenant authorization."
+      },
+      {
+        "entityFlow": "Organization membership",
+        "producer": "packages/server-core/src/handlers/rpc/orgs.ts",
+        "store": "packages/shared/src/orgs/storage.ts; local CONFIG_DIR/orgs.json v1",
+        "consumers": "Shared org channel registry packages/shared/src/protocol/channels.ts and Electron channel-map.ts; operations are local-profile/local-store, not remote team sync.",
+        "boundary": "Local role/invite helpers do not prove cross-device collaboration or remote per-entity authorization."
+      },
+      {
+        "entityFlow": "Account replica",
+        "producer": "packages/shared/src/account-replica/replica.ts append/flush helpers",
+        "store": "In-memory Maps/arrays for membership, ops, and offline queue; encrypted-byte envelope types in types.ts.",
+        "consumers": "No deployed remote sync provider/endpoint or accepted live multi-consumer flow identified. Consent adapter is packages/shared/src/privacy/replica-consent.ts.",
+        "boundary": "WebSocket seq/ack is transport delivery, not entity synchronization receipt. Append/replay/restart idempotency is not established."
+      },
+      {
+        "entityFlow": "Rox2 external entity reference/provider binding",
+        "producer": "packages/core/src/rox2/platform-contract.ts type/parser helpers and packages/core/src/rox2/conation-api.ts read ingest",
+        "store": "Typed/helper seam; caller-provided Map binding index; no persistent binding/quarantine lifecycle demonstrated.",
+        "consumers": "Read-only Conation Soup/DSS ingest; writes are rejected. No live provider-account consumer or external write schema accepted.",
+        "boundary": "Rox2EntityRef carries workspaceId/entityId and optional revisionId/accountNamespace; provider binding key is provider/account/type/id with legacy dual-read. Not a frozen cross-device contract."
+      }
+    ],
+    "sharedProtocol": {
+      "registry": "packages/shared/src/protocol/channels.ts; Notes/Projects are remote eligible, org channels stay local.",
+      "routing": "packages/shared/src/protocol/routing.ts",
+      "wireEnvelope": "packages/shared/src/protocol/types.ts includes WS envelope, handshake capabilities, sequence/lastSeq and serverVersion; protocol version is 1.0.",
+      "compatibility": "packages/shared/src/protocol/version-policy.ts applies major compatibility; protocol/index.ts does not re-export that policy.",
+      "knownConsumers": "server-core handlers/transport and Electron channel-map; webui uses authenticated config and a WebSocket-backed ElectronAPI adapter but overrides/does not support some native actions. This is source mapping only; independently accepted live consumer pair is pending."
+    },
+    "additionalDomainMaps": "The other 28 source reports cover Chat, Team, sync, collaboration, provider consent, Calendar/Calls, voice/transcripts/Meetings, Mail, navigation/onboarding, localization/accessibility, platforms, Notes/Knowledge, Canvas, skills/extensions, imports/search, documents, projects/OKR, tasks/reminders, Home/analytics, Inbox/Feed, business decisions, agent runtime, automation/remote, release, and Conation ownership. Their source-level conclusions remain discovery-only and are preserved in the named source reports; no runtime behavior is promoted to accepted."
+  },
+  "pendingAcceptance": {
+    "AUDIT-01": {
+      "status": "NOT_RUN as actual screen audit",
+      "rows": [
+        "Reconcile live routes/navigation state, rail, 22 Settings IDs (20/21/22 visible status must be distinguished), feature-gated extra screens and mounted overlays; do not use the stale nine-settings navigation registry or equate 12 rail items with total routes.",
+        "Per actual surface: control census, expected/observed action, loading/empty/error/retry/permission/busy/saved states, keyboard/focus/hover, narrow/reduced motion, persistence/reopen and stable cross-surface entity identity.",
+        "Exactly 2-3 separately labeled, non-authorizing proposals for every audited screen; confirmed defects require version-specific reproduction.",
+        "Exercise unsupported web-native affordances separately; no-op/unavailable behavior is not parity. Capture sanitized, version-specific evidence."
+      ],
+      "sourceFacts": "Renderer-owned shared React surface; webui adapts it through WebSocket. Home widgets persist via workspace JSON; Notes, Tasks, Memory, Feed and Connections have identified RPC/store paths. Potential Memory list failure-to-empty behavior and web no-op affordances are hypotheses only until live reproduction."
+    },
+    "DATA-01": {
+      "issue": "https://github.com/rox-one/rox-one/issues/1212",
+      "status": "NOT_RUN; no accepted frozen revision",
+      "rows": [
+        "Observe source-of-truth, stable identity, actor/tenant/workspace authorization, persistence, and actual producer/store/consumer for required entities and live callsites.",
+        "Accept one versioned EntityRef/revision/provider binding and mutation envelope; define idempotency/replay, conflict/out-of-order, pending/delivered/verified state, migration/quarantine/export, tombstone and revocation semantics.",
+        "Same local entity ID in two workspaces remains isolated; cross-tenant read and write are explicitly denied rather than returning empty success.",
+        "Timeout/idempotency replay applies a mutation once; provider/account/object reimport binds stably, while a different account creates a distinct binding.",
+        "Unknown future schema version and unsupported fields survive quarantine/export without loss; old clients cannot silently write the future version.",
+        "Concurrent revisions preserve both versions, expose conflict, and resolution creates a successor revision; stale clients cannot overwrite newer state.",
+        "Offline edit survives restart as pending work; reconnect delivers once and reports true delivery/synchronization state without duplicate.",
+        "Revocation/deletion tombstones prevent later reimport; logs contain no credential/private payload. Test one real Notes store path and actual authorized consumers; delivery is distinct from sync, and no production endpoint/provider/data is evidenced."
+      ]
+    },
+    "SHARED-01": {
+      "issue": "https://github.com/rox-one/rox-one/issues/1160",
+      "status": "WAITING_FOR_DATA-01_ACCEPTANCE; NOT_RUN",
+      "rows": [
+        "After DATA-01 acceptance, record exact revision/signatures/errors/auth semantics, real producer plus two independently evidenced authorized consumers, cross-consumer stable-ID readback and reload.",
+        "Reject stale schema and unauthorized mutation without data change/leak; prove locale key resolution in each consumer; enumerate migration/rollback and one writer per shared root.",
+        "Freeze only the actual discovered registry/schema/locales/lockfile/common primitive roots with singleton ownership; no guessed RPC/endpoint and no acceptance by documentation alone."
+      ]
+    },
+    "environmentRows": [
+      "Linux/cloud: actual authorized target; no provisioning implied.",
+      "macOS native: current baseline build passed, isolated native launch failed before app start due missing Electron install artifact; rerun after approved dependency installation.",
+      "Windows native: required independent acceptance; POSIX evidence cannot substitute.",
+      "Conation native iOS: real supported target/device/runner, share action, controlled receiver and same-object return/deep-link plus cancel/revoke/stale/denied; no Mac/browser substitution."
+    ]
+  },
+  "immutableLeases": [
+    {
+      "issue": "https://github.com/rox-one/rox-one/issues/1212",
+      "owner": "SharedIntegrator",
+      "maxOwnedRoots": 5,
+      "exactCurrentPaths": ["packages/core/src/rox2/platform-contract.ts", "packages/core/src/rox2/notes-repository.ts", "packages/core/src/rox2/project-membership.ts"],
+      "excluded": ["route/entity registry", "RPC/API/schema", "localization catalog", "lockfile", "common UI primitives"],
+      "concurrency": 1,
+      "status": "DOCUMENTED_COORDINATION_BOUNDARIES; immutable lease; documentation here does not enlarge it."
+    },
+    {
+      "issue": "https://github.com/rox-one/rox-one/issues/1160",
+      "owner": "SharedIntegrator",
+      "maxOwnedRoots": 5,
+      "scope": "Only recon-discovered shared roots; reserved registry/schema slice is at most packages/shared/src/protocol/channels.ts, routing.ts, dto.ts, types.ts; locale catalog root is separately one ownership unit; lockfile only on discovery; common UI/route primitives only after discovery.",
+      "concurrency": 1,
+      "status": "DOCUMENTED_COORDINATION_BOUNDARIES; immutable lease; depends on DATA-01."
+    }
+  ],
+  "disposition": {
+    "historicalRequirementRows": 484,
+    "additiveOkrRows": 5,
+    "totalRequirementRows": 489,
+    "conationSeq703Rows": 16,
+    "u25": "FALSE; decision-reconciliation only; no behavior/default change authorized absent reliable independent authority.",
+    "macroProgram": "Reuse existing 52 work packages / 61 screens / 219 controls inventory as prior planning; do not create duplicate plan or infer code reuse rights.",
+    "release": "RMA E3 full gate retained; #385 actual product acceptance is still required."
+  },
+  "conflictsForLead": [
+    "The canonical task-registry.json still declares productStatus NOT_STARTED while current user authorization and implementation wave are active. This worker was not authorized to edit that registry; lead must reconcile status there without implying acceptance.",
+    "The source reports and contract packet are from a source-map baseline repository/revision, while this implementation worktree is pinned to a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2. Reconcile exact source-map revision relationship before claiming current interfaces beyond recorded baseline evidence.",
+    "Second independent authorized DATA/SHARED consumer, live provider/cloud endpoint and test credentials/data, and the supported iOS device/runner are not evidenced; keep the associated acceptance rows BLOCKED or UNVERIFIED with precise prerequisite rather than simulate PASS.",
+    "The historic Golden Gate locale denominator discrepancy (10 vs 12) remains unresolved; preserve original matrix and require authoritative resolution, not a reduced denominator."
+  ]
+}

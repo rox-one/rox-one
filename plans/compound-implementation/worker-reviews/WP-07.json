@@ -1,0 +1,515 @@
+{
+  "task_id": "WP-07-preflight",
+  "attempt_id": "7931d61f31694420312169893284242a",
+  "packet_hash": "b65751c93488a3769bf8e594ac1413aa45d0b105e6f1eb904d8fd410f140d242",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-07",
+  "featureComplete": false,
+  "mode": "inspect-only; owned preflight artifact, not feature implementation",
+  "dependencies": ["WP-04", "WP-03"],
+  "evidenceScope": {
+    "inspectionDate": "2026-09-30",
+    "tier": "bounded-workflow",
+    "source": "Inspected working-tree bytes, not asserted to equal input HEAD; root-owned wave0 changes were not touched.",
+    "manifestSha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "manifestMatchesPacket": true,
+    "freshness": "Whole-file hashes below were obtained after the principal source reads. Concurrent root integration can invalidate them; evidence is not certified fresh for a subsequent commit. Lead must rehash and re-read changed seams before applying requests.",
+    "inspectionLimits": "Only WP-07 affected paths, their directly imported helpers, the exact normative record and its published architecture/test documentation were inspected. Foundation implementation files and runtime availability were not inspected.",
+    "toolLimitations": ["Codegraph explicitly reported no project index; no indexing or upgrade performed.", "Descriptive find failed with upstream judge HTTP 402; named scoped files were read directly. That failure is not evidence of missing behavior."],
+    "notExecuted": ["product builds", "product tests", "native UI", "network operations", "Git operations", "packet verifier"],
+    "verificationStatus": "Source-backed preflight only. No runtime acceptance or dependency receipt is claimed."
+  },
+  "foundationGates": [
+    {
+      "id": "wave0-and-accepted-inputs",
+      "kind": "dispatch prerequisite, not added DAG edge",
+      "evidence": "Worker prompt requires lead wave0 commit and accepted dependency receipts. WP-07 inputs at work-packages.json:5392-5408 require typed interface, migration or N/A receipt, and scenario receipt from both WP-04 and WP-03.",
+      "required": "Lead supplies committed wave0 revision and accepted WP-03/WP-04 artifacts; resolve changed hashes before implementation. Existing receipt availability was not inspected and is not inferred from planned status."
+    },
+    {
+      "id": "canonical-registry-and-auth-bootstrap",
+      "kind": "transitive foundation, not new direct dependency",
+      "evidence": "Published plan: WP-03 depends on WP-01/WP-02 and WP-04 on WP-02/WP-03 (21-implementation-plan.md:48,67). WP-07 migration requires composite FK to entity (work-packages.json:5821-5828).",
+      "required": "Accepted dependency interfaces must expose authenticated principal/workspace identity, canonical notification and target refs, registry registration, policy epoch and shared transaction/receipt ports. Never map display name/email directly to a principal or make a second entity namespace."
+    },
+    {
+      "id": "single-writer-and-revoke-fence",
+      "kind": "hidden published coding gate; WP-51 is not an explicit WP-07 edge",
+      "evidence": "19-target-architecture.md:50-55,103,107,115-116,128 mandates one writer, legacy routing guard, current-ACL delivery and fenced revocation. WP-51 is explicitly named for the cross-surface guard; its dependencies include WP-05 (21-implementation-plan.md:1020-1036).",
+      "required": "Root must provide authority-mode routing for shared team writes and subscription/delivery fence behavior before claiming full permission/reconnect completion. Do not silently add WP-51 to dependencies or imply all WP-05 CRDT features are needed for an attention-only port. Separate implementable WP-07 work from this cross-surface acceptance gate."
+    },
+    {
+      "id": "kind-registration-conformance",
+      "kind": "hidden enablement gate beyond markDone",
+      "evidence": "19-target-architecture.md:154-160 requires create/read/update/delete contract, registry alias idempotency, denied test, search extractor, mention resolver, notification policy, event schema, agent actions, observability and migration before kind enablement; WP-07 featureCompleteness includes search, sharing and agent access.",
+      "required": "Lead supplies accepted registration/transport/search/agent interfaces and explicit lifecycle semantics for notification/read_state/activity. WP-07 contributes typed ports and policy-safe extractors through those interfaces; do not omit these criteria because the sole fully specified command is markDone. WP-06 integration readiness is a cross-package gate, not a new explicit edge."
+    },
+    {
+      "id": "event-producer-and-overlap-contract",
+      "kind": "cross-slice integration gate, not a reverse dependency",
+      "evidence": "19-target-architecture.md:152 names task.assigned and mention.created/deleted. 22-test-plan.md:62-74 requires Message-to-Task assignment with overlap mention/assignee/owner yielding one Notification. Plan WP-09 depends on WP-08/WP-07/WP-06 and WP-11 on WP-08/WP-09/WP-07/WP-04 (21-implementation-plan.md:163,203).",
+      "required": "Implement WP-07 consumer against accepted canonical event contracts without waiting on downstream WP-09/WP-11 as DAG inputs. Full CHAT-TASK-01 evidence requires those downstream producers. Existing addComment/assign are concrete initial adapter seams; general edited/deleted mention producers need root integration. Specify causal grouping/reason precedence to reconcile recipient/event/reason uniqueness with one ping for overlapping reasons."
+    },
+    {
+      "id": "runtime-and-migrator",
+      "kind": "verification environment gate, not unconditional provider dependency",
+      "evidence": "19-target-architecture.md:101,109 selects modular service, PostgreSQL and SSE/WS cursor. WP-07 migration identifier is proposed only (work-packages.json:5803-5806). WP-52 provides cold isolated authenticated deployment (21-implementation-plan.md:1038-1044).",
+      "required": "Use selected root migrator and live isolated service/client environment, including actual schema revision and authenticated second device. WP-52 supplies deployment evidence where used; attention does not require Google, LiveKit or an invented external provider receipt."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/attention/contracts.ts",
+    "apps/workspace-service/src/modules/attention/commands.ts",
+    "apps/workspace-service/src/modules/attention/repository.ts",
+    "tests/macro-integration/wp-07.test.ts",
+    "apps/workspace-service/migrations/07-domain-contract.sql"
+  ],
+  "ownershipNote": "These are normative future implementation artifacts, not permission for this preflight to create them. This attempt owns only its WP-07.json report. Exact glob lookup found none of the five artifacts at inspection. Migration name remains subject to the selected migrator; no fabricated timestamp.",
+  "newFileContributions": [
+    {
+      "path": "packages/shared/src/workspace-domain/attention/contracts.ts",
+      "change": "Pure request/result validation and ports for ListNotifications, MarkSeen, MarkDone, SubscribeActivity; strict markDone payload {notificationId:string(1..10000),done:boolean}, rejecting extra actor/workspace fields. Use accepted RoxCommand v2/canonical result/ref types; include recipient state revision, source event/reason, authorized target ref, seenAt/doneAt, cursor, policy epoch and projection watermark. Service I/O stays outside shared contracts.",
+      "prerequisite": "Accepted WP-03 identity/policy and WP-04 command/event/receipt interfaces; root settles incomplete ListNotifications/MarkSeen/SubscribeActivity wire schemas."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/attention/commands.ts",
+      "change": "Implement typed handlers and attention consumer using the common policy/idempotency/revision gateway. Actor comes from transport; recipient mutation may change only that actor's read state. Enforce workspace/target read and action grants and expectedRevision, reject same key with changed hash, return durable receipt. Authorize DTO fields and stable pagination before serialization; subscription checks current policy and replay cursor. Group assignment/mention overlap by canonical cause and recipient rather than separately pinging every reason.",
+      "prerequisite": "Common gateway/transport composition and producer event contracts; precise grouping contract accepted by lead."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/attention/repository.ts",
+      "change": "One authoritative notification/read_state/activity repository on accepted transaction port. Persist effect, consumer processed state and watermark atomically; claim lease is not processed. Unique recipient/event/reason and common consumer/event keys; store refs/reasons, not private source bodies. Revision/policy/tombstone fences reject stale replay. Persist coalescing/delivery state so burst suppression survives restart; use common external-effect reconciliation for uncertain native dispatch rather than claiming exactly-once OS delivery.",
+      "prerequisite": "Accepted WP-04 inbox/outbox leases, transaction/receipt primitives and root delivery adapter contract."
+    },
+    {
+      "path": "apps/workspace-service/migrations/07-domain-contract.sql",
+      "change": "Add notification, notification_read_state and activity with workspace-scoped canonical identity/FKs, positive schema version, nonnegative revision, timestamps and retained tombstones. Add recipient/event/reason uniqueness, actor-recipient read-state identity, seen/done timestamps, stable cursor lookup and required delivery indexes through root foundation tables. Reuse command_receipt and consumer inbox rather than create duplicate stores. Backfill only unambiguous provenance/aliases; quarantine ambiguous IDs. Preserve recent shared writes on rollback.",
+      "prerequisite": "Root selected migrator and accepted registry/principal/foundation table names; actual generated filename and applied migration receipt."
+    },
+    {
+      "path": "tests/macro-integration/wp-07.test.ts",
+      "change": "Integration tests for assignment replay/restart once, recipient-only seen/done and reopen on second device, private marker exclusion including cursor/total ordering, burst and overlapping-reason coalescing, stale revision/key conflict and crash between commit/reply. Seed insert-processed-before-effect mutant and independently injected second variant. Assertions require actual receipt/ref/revision/row counts/watermark, not only non-empty lists or mocks.",
+      "prerequisite": "Real isolated service/migrator/transport harness and accepted dependency fixtures; native Inbox scenario evidence supplements tests, not replaced by fixture pass."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/team/state.ts",
+      "symbol": "addComment / assign / push / selectInboxForUser / normalizeTeamState",
+      "change": "Preserve pure standalone reducers. In shared mode route comment/assignment writes through authenticated command authority and project canonical server events/notifications instead of deriving notifications from every local record. Extend selectors to consume recipient notification state from the canonical attention projection; do not generate a second inbox ID or treat locally queued state as delivered. Keep local legacy selection available only in explicit standalone mode.",
+      "reason": "assign creates fresh random IDs each call (82-94); selectInboxForUser derives raw records/snippets with no done/seen/revision policy (158-173)."
+    },
+    {
+      "path": "packages/shared/src/team/types.ts",
+      "symbol": "TeamTarget / TeamLocalState / TeamOutboxOp / TeamInboxItem",
+      "change": "Adapt existing types to accepted canonical refs and typed attention DTOs/recipient state, cursor and receipt-backed sync statuses for shared mode; preserve standalone compatibility via explicit authority mode. Add markDone/seen typed outbox operations only using common durable command envelope, not a new notification persistence layer.",
+      "reason": "Current target identity is kind/id/title, local state has no Notification/read_state, and op union has no seen/done mutation (14-22,112-146)."
+    },
+    {
+      "path": "packages/shared/src/team/sync.ts",
+      "symbol": "TeamSyncAdapter / TeamPullResult / createTeamSyncAdapter / applyPushResult",
+      "change": "Select authenticated shared adapter only for configured shared authority; keep LocalOnlyTeamSyncAdapter honest for standalone/no service. Add accepted attention query/replay ports with authorized workspace/principal/policy-scoped cursor and canonical revisions. Acknowledge queued writes only after matching durable receipt, retain retry/conflict/unavailable states and never trust client recipient/actor. Expose offline and permission-denied distinctly.",
+      "reason": "Factory always returns local-only, push accepts nothing, pull returns null, and acceptedIds otherwise directly removes queue entries (37-71)."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/team/team-store.ts",
+      "symbol": "TEAM_STATE_STORAGE_KEY / readTeamState / writeTeamState / dispatchTeam",
+      "change": "Use existing store as workspace/principal-scoped projection and common durable outbox cache in shared mode, not an independent writer. Partition/reset on workspace or identity change and policy revoke; surface persistence errors instead of reporting durable queued/applied while write fails. Leave explicit standalone behavior intact.",
+      "reason": "One global localStorage key and module cache hold all records; write failure is silently memory-only (18-50); dispatch applies reducers directly (69-70)."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/team/use-team-roster.ts",
+      "symbol": "useTeamRoster / pickActiveOrg",
+      "change": "Resolve shared recipient principal/workspace from authenticated runtime, not local org identity; select org for active workspace and pass actual authority/service capability to sync adapter. Expose auth/loading/denied/unavailable distinctly rather than collapsing lookup failures to an empty roster. Preserve real membership-only standalone roster.",
+      "reason": "Current hook uses local listOrganizations/getOrgIdentity and creates adapter with orgId only, while pickActiveOrg may fall back to unrelated first org (33-35,49-57,64-75)."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/inbox/inbox-model.ts",
+      "symbol": "InboxKind / InboxItem / InboxSources / buildInboxItems / isActive / filterInbox / inboxCounts / pruneInboxState",
+      "change": "Add discriminated canonical notification rows with namespaced stable ID, target ref, recipient seen/done state and observed revision. Join them once into existing aggregation and derive domain active/done/unread from server recipient state; keep renderer triage for legacy rows. Do not prune server done state based on a filtered, denied, unloaded or paginated list; local snooze must not overwrite canonical done. Preserve decision/agent/mail grouping.",
+      "reason": "Current model only covers agent/mail kinds and uses a local ID-to-timestamp done map for all filters/counts (8-35,216-269)."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/useInboxItems.ts",
+      "symbol": "InboxRemoteSource / load / useInboxItems / allLoaded / pruneInboxState",
+      "change": "Add attention source backed by accepted authenticated query/replay API, cursor gap recovery and revision/policy-scoped invalidation; clear old identity/workspace responses and cancel stale loads. Expose loading, denied, offline_queued, retryable_error and verified receipt state. Provide shared MarkSeen/MarkDone action ports. Join canonical notifications into items and counts without second local store; never clear authoritative done state on partial pagination or failed source load.",
+      "reason": "Only memory/skills/senders load today; finally sets loaded even on error and allLoaded triggers local pruning (26-38,47-83,106-112)."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/team/TeamInboxSection.tsx",
+      "symbol": "TeamInboxSection",
+      "change": "Reuse the canonical attention projection shared with useInboxItems, including canonical ID/state and loading/denied/error/offline indicators. Use existing Inbox navigation and shared seen/done actions where mounted; do not separately display/count the same record as another queue. Keep honest standalone server-required state.",
+      "reason": "Current selector renders local raw text/title and has no navigation or state mutation; roster.loading is ignored (15-35)."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/team/TeamInboxNavItem.tsx",
+      "symbol": "useTeamInboxNav",
+      "change": "Count active authorized canonical attention rows from the same projection as Inbox; show connected only from real authenticated capability/readiness. Preserve existing organization-settings fallback for unavailable standalone server.",
+      "reason": "Count currently comes from selectInboxForUser without recipient done state and connected from always-local adapter (17-24)."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/InboxPage.tsx",
+      "symbol": "InboxPage / done / commonActions / detailBody / KIND_GLYPH / KIND_TONE / KINDS / row",
+      "change": "Add canonical notification kind to existing row/detail/filter UI. Route domain done=true and reopen done=false through notification.markDone with idempotency/expectedRevision, MarkSeen on authorized open, and receipt/readback before applied_verified. Keyboard and button actions use the same busy/error/queued path. Navigate via existing Inbox canonical item route and authorized target resolver; never force task/mention target into sessionId. Derive notification unread/Done views from recipient state and retain existing mail/session semantics. Render all normative source/action states with t().",
+      "reason": "done sets renderer state immediately (183-197); reopen is local (338-346); row unread is inferred from local done (282); detail switch lacks attention; TeamInboxSection is not imported or mounted here."
+    },
+    {
+      "path": "apps/electron/src/renderer/atoms/inbox.ts",
+      "symbol": "inboxStateAtom",
+      "change": "Keep local-only triage for existing non-domain rows. Do not write server notification done timestamps into this atom as authority; scope any cached notification preferences by workspace/principal and purge revoked projection data through the accepted shared store.",
+      "reason": "atomWithStorage persists renderer-only done/snoozed maps, which cannot synchronize B1/B2 (1-11)."
+    },
+    {
+      "path": "apps/electron/src/main/notifications.ts",
+      "symbol": "showNotification / handleNotificationClick / setNotificationEventSink",
+      "change": "Preserve session-message delivery while adding canonical attention dispatch through the same native service. Consume only authorized durable attention projection with persistent per-recipient/cause coalescing/delivery receipt; replay does not re-ping old items. Navigate click to existing Inbox notification item then reauthorize target; keep single-client targeting. Do not log raw title/body for domain attention (current show log includes title). Treat native external-effect uncertainty explicitly; DB uniqueness alone is not proof of OS exactly-once delivery.",
+      "reason": "showNotification has no event identity or dedup, calls show each time, logs title and navigates session only (54-123)."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "ElectronAPI.showNotification / ElectronAPI.onNotificationNavigate",
+      "change": "Add typed canonical attention DTO/actions via root accepted domain bridge and discriminate notification navigation between existing session and canonical Inbox notification ID. Root migrates all dispatcher/preload/navigation consumers atomically; worker must not invent uninspected handler names or retain untyped duplicate APIs.",
+      "reason": "Existing signatures require a sessionId (1926,1980), which cannot represent all canonical task/mention attention targets. Concrete composition/dispatcher files are outside this scoped inspection and require lead-owned mapping."
+    },
+    {
+      "path": "packages/shared/src/team/mentions.ts",
+      "symbol": "resolveMentions / mentionHandle",
+      "change": "Reuse current real-roster parsing for explicit standalone text mentions. Shared adapter resolves handles to authenticated canonical principals under policy and emits stable occurrence/cause identity; no implicit resource grant. Root integrates edited/deleted mention semantics from downstream WP-09 without duplicating this parser or making display-name matching authorization.",
+      "reason": "Parser deduplicates handles/member IDs but does not supply canonical occurrence identity, policy or edit lifecycle (4-32)."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "symbol": "inbox.kind.notification / inbox.source.attention / existing teamCollab and inbox state keys",
+      "change": "Root i18n owner adds any new notification/source/state labels to each of the ten explicit locale files, using t() consumers, ASCII sorting and required plural forms; reuse existing labels when adequate.",
+      "reason": "Repo AGENTS requires all user-facing strings through i18n and parity across ten locales; current Inbox uses dynamic kind/source translation keys. Locale contents were not inspected; proposed key names are requests, not claims of existing keys."
+    },
+    {"path":"packages/shared/src/i18n/locales/de.json","symbol":"inbox.kind.notification / inbox.source.attention / attention state keys","change":"Add required translated keys with ASCII ordering and parity with ru; reuse existing labels when adequate.","reason":"AGENTS ten-locale parity; proposed keys, locale contents not inspected."},
+    {"path":"packages/shared/src/i18n/locales/en.json","symbol":"inbox.kind.notification / inbox.source.attention / attention state keys","change":"Add required translated keys with ASCII ordering and parity with ru; reuse existing labels when adequate.","reason":"AGENTS ten-locale parity; proposed keys, locale contents not inspected."},
+    {"path":"packages/shared/src/i18n/locales/es.json","symbol":"inbox.kind.notification / inbox.source.attention / attention state keys","change":"Add required translated keys with ASCII ordering and parity with ru; reuse existing labels when adequate.","reason":"AGENTS ten-locale parity; proposed keys, locale contents not inspected."},
+    {"path":"packages/shared/src/i18n/locales/fr.json","symbol":"inbox.kind.notification / inbox.source.attention / attention state keys","change":"Add required translated keys with ASCII ordering and parity with ru; reuse existing labels when adequate.","reason":"AGENTS ten-locale parity; proposed keys, locale contents not inspected."},
+    {"path":"packages/shared/src/i18n/locales/hu.json","symbol":"inbox.kind.notification / inbox.source.attention / attention state keys","change":"Add required translated keys with ASCII ordering and parity with ru; reuse existing labels when adequate.","reason":"AGENTS ten-locale parity; proposed keys, locale contents not inspected."},
+    {"path":"packages/shared/src/i18n/locales/ja.json","symbol":"inbox.kind.notification / inbox.source.attention / attention state keys","change":"Add required translated keys with ASCII ordering and parity with ru; reuse existing labels when adequate.","reason":"AGENTS ten-locale parity; proposed keys, locale contents not inspected."},
+    {"path":"packages/shared/src/i18n/locales/pl.json","symbol":"inbox.kind.notification / inbox.source.attention / attention state keys","change":"Add required translated keys with ASCII ordering and parity with ru, including required plural forms; reuse existing labels when adequate.","reason":"AGENTS ten-locale parity; proposed keys, locale contents not inspected."},
+    {"path":"packages/shared/src/i18n/locales/zh-Hans.json","symbol":"inbox.kind.notification / inbox.source.attention / attention state keys","change":"Add required translated keys with ASCII ordering and parity with ru; reuse existing labels when adequate.","reason":"AGENTS ten-locale parity; proposed keys, locale contents not inspected."},
+    {"path":"packages/shared/src/i18n/locales/zh-Hant.json","symbol":"inbox.kind.notification / inbox.source.attention / attention state keys","change":"Add required translated keys with ASCII ordering and parity with ru; reuse existing labels when adequate.","reason":"AGENTS ten-locale parity; proposed keys, locale contents not inspected."},
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-07 section (123-140)",
+      "change": "After implementation document actual ports/migrator name, canonical dedup/coalescing semantics, local/shared boundary and hidden gate receipts without claiming acceptance from fixtures.",
+      "reason": "Current text specifies goals and artifacts but not concrete overlap/burst behavior or applied interfaces."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "Common acceptance boundary / CHAT-TASK-01 (5-34,60-74)",
+      "change": "Attach exact delivered revision/environment/schema receipts and WP-07 scenario artifacts, distinguishing isolated attention tests from later Message-to-Task integration and actual native ping evidence.",
+      "reason": "Published plan is explicitly future verification and requires recipient-only seen/done, overlap suppression and restart evidence."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Assignment delivers once to assignee after restart/replay",
+      "seam": "state.ts:assign/push/selectInboxForUser; sync.ts:createTeamSyncAdapter; notifications.ts:showNotification; proposed attention repository/commands",
+      "currentEvidence": "assign creates fresh record/event/outbox IDs (82-94,43-54), inbox derives assignments (166-168), sync always local-only (37-59). Native show has no event dedup (54-81). Existing local persistence is not delivery proof.",
+      "requiredChange": "Persist canonical assignment event and recipient notification once through WP-04 transaction/inbox/outbox; replay claims do not mark processed before effect. Deliver B's authorized DTO via existing Inbox and bounded native delivery, preserving ID/revision/receipt on retry.",
+      "verification": "W1 A assigns B via actual product; kill service after effect commit before reply, retry same key/payload, restart consumer and reconnect B. Independent DB/readback proves one notification/entity/consumer receipt and canonical ID; UI proves one row and intended ping with watermark. Negative processed-before-effect mutation must fail notification delivery assertion.",
+      "missingPrerequisite": "Accepted WP-03/WP-04 receipts, wave0 commit, canonical assignment event, live B client and native delivery receipt semantics.",
+      "state": "NOT_IMPLEMENTED_IN_INSPECTED_SEAMS; NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "mark done survives second device",
+      "seam": "inbox-model.ts:markDone/reopen; InboxPage.tsx:done/commonActions; atoms/inbox.ts:inboxStateAtom; proposed MarkDone handler/read_state",
+      "currentEvidence": "markDone only changes local done map (245-256); page writes it directly (192) and reopen locally (344); atom persists localStorage (6-11). Team state has no seen/done fields.",
+      "requiredChange": "Authenticated notification.markDone mutates only actor-recipient state with expectedRevision/idempotency/receipt; done=false reopens. Persist done timestamp/revision, invalidate recipient subscription and query it on another device without local map authority.",
+      "verification": "B1 marks canonical notification done through Inbox, B2 observes Done view after replay/reload and server restart; B2 reopens and B1 converges. A's state unchanged, C denied, stale revision rejected, same key altered payload conflicts. Kill between commit/reply returns same receipt after retry; offline action remains queued until verified.",
+      "missingPrerequisite": "Accepted mutable-aggregate revision target, read_state schema, domain transport route and authenticated B1/B2.",
+      "state": "NOT_IMPLEMENTED_IN_INSPECTED_SEAMS; NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "permission-filtered payload",
+      "seam": "state.ts:selectInboxForUser; TeamInboxSection.tsx:item rendering; use-team-roster.ts:useTeamRoster; notifications.ts:showNotification; proposed ListNotifications/SubscribeActivity",
+      "currentEvidence": "Current selector copies c.body and h.summary (161,164), component displays raw text/title (32); client selfUserId is locally derived (use-team-roster.ts:49-54). Native logger includes title (notifications.ts:80). No per-resource ACL recheck is present in these seams.",
+      "requiredChange": "Transport injects actor, workspace and recipient are policy checked; references/reason persisted without copied private bodies. Recheck source/linked target ACL before query, total/order/cursor, snippet, native dispatch and click. Revocation fence purges subscriptions/projections and cached private content. Agent allow-all is never an ACL bypass.",
+      "verification": "Seed PRIVATE_WP-07 in private target; C forged actor/workspace/request fields denied with no title/body/hidden total via HTTP, native RPC, subscription, cursor or agent. Revoke B with queued event and open UI, then replay/reconnect; no future private content or native popup; logs contain no marker/title/body/token. Accessible mention/link does not grant source access.",
+      "missingPrerequisite": "WP-03 current-policy API; root single-writer/revoke-fence integration and scoped cursor validation.",
+      "state": "NOT_IMPLEMENTED_IN_INSPECTED_SEAMS; NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "100 edits coalesce without 100 pings",
+      "seam": "state.ts:push/addComment; mentions.ts:resolveMentions; notifications.ts:showNotification; proposed attention consumer/repository",
+      "currentEvidence": "Every push allocates new event IDs and outbox entry (43-54); addComment creates comment and mention events (67-79). resolveMentions deduplicates only within one body. showNotification always calls native show; no durable burst grouping is present. General edit producers are not in inspected team reducers.",
+      "requiredChange": "Define accepted burst group/cause/recipient and reason priority; persist coalescing/delivery state with replay/restart fences. Update activity/revisions/watermark for edits without new attention per edit. One assignment plus overlapping mention/owner reason must yield one visible recipient Notification, while genuinely new cause after completed burst can notify again.",
+      "verification": "Apply 100 real revisions to same source/burst, including duplicated and reordered replay and mid-burst restart. Assert last relevant revision/watermark observed, one intended coalesced attention row/ping for defined burst, not 100; activity is not silently dropped. Overlap assignment/mention/owner produces recipient count one. Independent new cause proves suppression is not permanent mute.",
+      "missingPrerequisite": "Root accepted coalescing window/group/reason contract and edited/deleted source event producers. Spec does not numerically define burst window or allowed ping count beyond prohibiting 100 pings; proposed stronger one-burst observation needs contract agreement, not silent weakening.",
+      "state": "NOT_IMPLEMENTED_IN_INSPECTED_SEAMS; NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "UI",
+      "seam": "InboxPage / TeamInboxSection / useInboxItems",
+      "currentEvidence": "Inbox has list/detail/actions, but no canonical notification kind; TeamInboxSection displays local raw records and is not mounted in inspected InboxPage.",
+      "requiredChange": "Join canonical attention into existing Inbox once, with authorized target navigation and recipient seen/done state; preserve legacy sections.",
+      "verification": "Native Electron Inbox interaction, keyboard/button parity, loading/error/done visuals and second-device/reload scenario with ARIA/screenshots at exact revision.",
+      "missingPrerequisite": "Domain DTO bridge and live desktop environment; no native UI permitted in this preflight.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "seam": "InboxPage:select/openSession; notifications:handleNotificationClick; ElectronAPI.onNotificationNavigate",
+      "currentEvidence": "Inbox already uses routes.view.inbox(itemId), while native notification navigation requires sessionId.",
+      "requiredChange": "Canonical notification clicks route to existing Inbox ID and policy-checked target; root migrates main/bridge/renderer navigation consumers.",
+      "verification": "Task/mention notification click and deep-link after restart open correct existing surface; denied target yields no title, no wrong-session fallback or cross-window navigation.",
+      "missingPrerequisite": "Root accepted canonical target resolver and navigation payload integration.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "seam": "TeamTarget/TeamInboxItem; normative attention contracts/migration",
+      "currentEvidence": "Legacy kind/id/title lacks workspace/ref revision; derived InboxItem is not a Notification aggregate.",
+      "requiredChange": "Register canonical notification/read_state/activity identities using existing registry and typed attention DTOs, with explicit lifecycle and schema/revision rules.",
+      "verification": "Create/retry/query return same canonical ref; cross-workspace/ambiguous alias rejected; schema validation and lifecycle contracts satisfied.",
+      "missingPrerequisite": "WP-02 registry through accepted dependencies and root kind-registration interface.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "seam": "team-store:writeTeamState; atoms/inbox:inboxStateAtom; proposed attention repository/migration",
+      "currentEvidence": "Device localStorage and memory-only fallback, not shared transaction authority.",
+      "requiredChange": "Apply additive tables and transactional row/event/receipt writes; retained tombstones, unambiguous backfill/quarantine, no loss of recent writes on rollback.",
+      "verification": "Fresh migration plus realistic legacy import, restart before reply, consumer recovery, backup/readback and safe pre-/post-cutover rollback/forward repair prove same identity/state.",
+      "missingPrerequisite": "Selected migrator, actual foundation schema and root isolated database/restore capability.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "seam": "InboxPage:done/commonActions; proposed attention contracts/commands",
+      "currentEvidence": "Only renderer markDone/reopen exists; strict operation schema is normative, not implemented in inspected seams.",
+      "requiredChange": "notification.markDone with strict payload, injected actor, common idempotency/revision gateway and canonical receipt; implement MarkSeen port without independent unsafe writer.",
+      "verification": "Actual HTTP/RPC mutation, done false, malformed/extra actor fields, stale revision, unsupported schema, same-key/different-hash, forbidden/workspace mismatch and fence-pending status.",
+      "missingPrerequisite": "WP-03/WP-04 typed accepted ports and root MarkSeen wire schema.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "seam": "useInboxItems:load; selectInboxForUser; proposed ListNotifications",
+      "currentEvidence": "Remote loads only memory/skills/senders; local select enumerates all derived recipient records without authorized paging.",
+      "requiredChange": "Typed ListNotifications/current recipient read-state with authorized stable cursor/order and no hidden titles/totals; activity query/replay bound by policy.",
+      "verification": "Authorized paginated readback across equal timestamps, workspace/actor changes, revoked target and forged/stale cursor; no duplicate/omitted allowed rows and no pruning done across pages.",
+      "missingPrerequisite": "Accepted cursor/query DTO and root query transport registration.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "seam": "TeamSyncAdapter.pull / useInboxItems effects; proposed SubscribeActivity",
+      "currentEvidence": "pull always null; current hook only existing source change callbacks and focus/poll memory refresh.",
+      "requiredChange": "Revisioned canonical invalidation/replay with scoped durable cursor, gap recovery, policy/tombstone fences and recipient read-state convergence; do not use lossy presence as attention transport.",
+      "verification": "Dropped/duplicated/reordered events, reconnect gap, server restart and revoke while subscribed converge without duplicate notification or stale overwrite.",
+      "missingPrerequisite": "WP-04 durable event port and root authorized SSE/WS replay bridge.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "seam": "TeamActionContext / selectInboxForUser / proposed command and query gateway",
+      "currentEvidence": "selfUserId and roster validation are client-side data, not authenticated action grants.",
+      "requiredChange": "Transport-derived actor, workspace and current resource/read/action policy for mutations, serialization, subscriptions and linked refs; execution permission separate.",
+      "verification": "A/B/C scenarios and viewer agent allow-all negative test; guessed ID and forged actor/workspace denied; another recipient cannot be marked done.",
+      "missingPrerequisite": "WP-03 grants/revoke interface and root writer-mode routing.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "seam": "state.ts:grantAccess/assign/addComment; TeamTarget refs; attention serialization",
+      "currentEvidence": "Local grantAccess queues a record, not shared policy; mentions/assignment do not demonstrate authorized resource access.",
+      "requiredChange": "Notification is recipient-owned attention to separately authorized refs; assignment/mention/link never implicitly shares private target. Reassignment after revoke obeys explicit share/assignment policy.",
+      "verification": "22-test-plan CHAT-TASK-01 reassignment after revoke and private linked target tests; shared target visible only under real grant, other recipient state unchanged.",
+      "missingPrerequisite": "WP-03 policy and downstream canonical assignment/share producer integration.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "seam": "Canonical kind conformance registration (19-target-architecture:154-156); attention DTO projection",
+      "currentEvidence": "No search extractor in scoped attention/team seams; global search implementation intentionally not inspected.",
+      "requiredChange": "Supply root registration owner a policy-safe extractor/target resolution contract for enabled attention kinds and authorized-only search semantics; no copied private snippet index. Do not declare N/A.",
+      "verification": "Real search through accepted surface includes allowed notification/ref and excludes PRIVATE_WP-07 for outsider/revoked actor, including count/order; rebuild respects policy epoch/tombstone.",
+      "missingPrerequisite": "Root accepted search registration/query port, WP-06 integration readiness and live index receipts.",
+      "state": "REQUIRED_INTERFACE_AND_INTEGRATION_GATE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "seam": "mentions.ts:resolveMentions / state.ts:addComment",
+      "currentEvidence": "Real roster handles dedup per body, self excluded in addComment; no canonical edited/deleted occurrence lifecycle.",
+      "requiredChange": "Reuse parser in standalone; shared resolver maps authorized real principals, emits stable mention cause and avoids implicit access or overlapping reason amplification. Integrate edit/delete producer contracts.",
+      "verification": "Existing comment mention delivers once, unknown/self/duplicate handles and hidden target do not ping improperly; edited occurrence/replay/delete and downstream WP-09 scenario reconcile without duplicate attention.",
+      "missingPrerequisite": "Root producer schemas and policy resolver; full cross-entity mention flow requires downstream WP-09, not a reverse DAG edge.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "seam": "TeamInboxSection / inbox-model / notifications:showNotification",
+      "currentEvidence": "Derived local rows and unrestricted per-call session OS notifications are separate, not one durable entity.",
+      "requiredChange": "One canonical durable recipient Notification projected into existing Inbox/system attention; persistent dedup/coalescing and privacy-safe click dispatch without second surface/store.",
+      "verification": "Observe actual recipient Inbox and native ping under restart/replay, overlapping reasons and burst; denied/offline/unavailable OS dispatch is honest and does not delete durable Inbox attention.",
+      "missingPrerequisite": "Accepted delivery adapter receipts and real permitted native scenario during later implementation verification.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "seam": "state.ts:push/TEAM_ACTIVITY_LIMIT; proposed activity table/SubscribeActivity",
+      "currentEvidence": "Activity capped to 500 local rows, random IDs, no durable cursor or read policy.",
+      "requiredChange": "Persist canonical activity.recorded from transactional outbox; bounded local Feed projection reads same authorized service/cursor, independent of coalesced ping count and 500-row UI cache.",
+      "verification": "Replay/rebuild across limit/restart shows authorized stable activity revisions without duplicate effect or missing watermark; burst attention suppression does not suppress required activity.",
+      "missingPrerequisite": "Accepted activity query/event/replay port and lead-owned existing Feed consumer mapping, outside scoped inspection.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "seam": "Normative attention domain ports; common gateway registration gate (19-target-architecture:103,156)",
+      "currentEvidence": "Inspected team/inbox paths contain no authenticated attention agent command/query registration; global agent registry not inspected.",
+      "requiredChange": "Root agent integration exposes same typed ListNotifications/MarkSeen/MarkDone/authorized activity ports under acting principal, not unsafe direct store calls.",
+      "verification": "Real native agent lists/marks only own authorized attention; viewer allow-all and forged actor/workspace fail, private marker absent in result/transcript paths.",
+      "missingPrerequisite": "Accepted root agent action registration and provenance/permission integration for derived results; no invented tool names.",
+      "state": "REQUIRED_INTERFACE_AND_INTEGRATION_GATE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "seam": "Normative POST /v1/workspaces/{workspaceId}/commands/notification.markDone and nativeRpc domain.notification.markDone; ElectronAPI bridge",
+      "currentEvidence": "Published transport names exist as specification; inspected ElectronAPI only shows legacy session notification signatures.",
+      "requiredChange": "Root registers HTTP and native RPC against same accepted command/query handlers; MCP/agent transport uses same authorized typed ports if exposed, with explicit capability contract rather than assuming N/A.",
+      "verification": "Actual HTTP/native RPC and root-exposed agent/MCP dispatcher readback yield identical canonical ID/revision/receipt and deny forged inputs; unavailable exposure reports typed capability failure.",
+      "missingPrerequisite": "Root transport/agent/MCP composition ownership and accepted exposure decision/interface.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "seam": "notifications.ts:mainLog; proposed attention commands/repository instrumentation",
+      "currentEvidence": "Native show logs title/sessionId, not required domain receipt/event metadata; local team events have only IDs/time/actor/target.",
+      "requiredChange": "Emit commandId, causationId, correlationId, aggregateRevision, policyEpoch, projectionWatermark and retry/DLQ counters through existing foundation telemetry; pseudonymize actor/resource IDs and exclude raw body/title/email/transcript/tokens.",
+      "verification": "Crash/replay/denied/burst trace ties receipt to event/projection, retry counters and fences; logs scanned for PRIVATE_WP-07 and raw private fields, independently of UI filtering.",
+      "missingPrerequisite": "WP-04 metadata and root telemetry/redaction conventions.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "seam": "Normative tests/macro-integration/wp-07.test.ts and test plan",
+      "currentEvidence": "Exact normative test path absent at inspection. No tests were run, as instructed.",
+      "requiredChange": "Behavioral integration/negative/recovery tests using seed 20260937, meaningful row/receipt/cursor/ref assertions and actual surface evidence; no mock echo or source-text test substitutes.",
+      "verification": "Later run bun test tests/macro-integration/wp-07.test.ts, relevant existing package tests and real Electron scenario harness; independent seeded controls must fail specific acceptance oracle, not setup.",
+      "missingPrerequisite": "Accepted root harness/live service and implementation dependency receipts.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "documentation",
+      "seam": "21-implementation-plan:WP-07; 22-test-plan:CHAT-TASK-01",
+      "currentEvidence": "Current docs explicitly describe future acceptance, not observed implementation.",
+      "requiredChange": "Document accepted ports, actual migration, coalescing/reason semantics, standalone/shared limits and verified revision/environment artifacts; retain implemented/verified/delivered distinctions.",
+      "verification": "Lead reviews docs against actual API/schema and captured native/failure/reload receipts; future or fixture evidence cannot become PASS prose.",
+      "missingPrerequisite": "Actual implementation and integrated runtime results; docs not changed by this worker.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "failure states",
+      "seam": "useInboxItems:errors/load; InboxPage:run/actionError; TeamSyncStatus",
+      "currentEvidence": "Source errors exist but no attention-specific denied/queued/conflict receipt handling; roster failures become empty and persistence failure is swallowed.",
+      "requiredChange": "Typed domain errors and UI permission_denied/offline_queued/retryable_error/fence-pending/unavailable/conflict states; retain rejected drafts/outbox honestly without applied success on failure.",
+      "verification": "Invalid payload/auth/workspace/revision/key, database write failure, network drop and revoke during action show correct state; retry same command avoids duplicate, no ghost done or private preview.",
+      "missingPrerequisite": "Accepted error/result/status contracts and injectable isolated failure harness.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "seam": "useInboxItems:loaded/allLoaded; TeamInboxSection; useTeamRoster:loading",
+      "currentEvidence": "loaded flag set even after source failure, InboxPage renders empty for zero visible items, TeamInboxSection ignores roster.loading.",
+      "requiredChange": "Attention loading is distinct from authorized empty/denied/unavailable; do not prune state or show empty success before authorized query completes.",
+      "verification": "Delay first/page/reconnect response and change workspace mid-load; ARIA/UI loading shown, stale response discarded, existing done records not pruned.",
+      "missingPrerequisite": "Attention query/source state integration and actual renderer verification.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "seam": "TeamInboxSection:items.length branch; InboxPage:listPanel EmptyState",
+      "currentEvidence": "Team has server-required/empty translations; Inbox empty is based solely on visible array.",
+      "requiredChange": "Retain honest standalone no-server state and distinguish true authorized empty, done-filter empty, loading, denied and failed queries in same existing Inbox.",
+      "verification": "Fresh authorized recipient, all-done recipient, standalone/no-service, denied and failed source each render correct nonmisleading state without content leakage.",
+      "missingPrerequisite": "Typed attention source states and ten-locale label parity.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "seam": "TeamSyncAdapter / TeamOutboxEntry / team-store / useInboxItems",
+      "currentEvidence": "Outbox is localStorage and cannot be sent; no canonical attention replay or receipt convergence; storage quota failure can be memory-only.",
+      "requiredChange": "Use accepted durable local projection/outbox with idempotency/revision envelope and workspace/principal scoping, queue seen/done honestly, replay after current authorization and quarantine denied operations. Clear revoked data and detect cursor gaps.",
+      "verification": "Disconnect B1, queue done, reload before send, reconnect with/without intervening revision/revoke; same receipt and state converge or correct conflict/denied state, no duplicate ping or false applied status.",
+      "missingPrerequisite": "Root durable projection/outbox and writer-mode/revoke fence ports.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Negative-control: insert processed inbox before effect; independent holdout",
+      "seam": "Proposed attention repository consumer transaction on WP-04 inbox/outbox",
+      "currentEvidence": "Exact control is published at work-packages.json:6178-6181 and 21-implementation-plan:140; no durable consumer exists in inspected seams.",
+      "requiredChange": "Seed fault that commits processed before notification effect, crash/replay, and require delivery assertion to detect lost attention. Independent evaluator injects second unauthorized/dropped/duplicated variant.",
+      "verification": "Passing baseline then failing precise recipient/row/receipt invariant under mutant with seed/failure trace; distinguish infrastructure failure from caught mutation and retain holdout receipt.",
+      "missingPrerequisite": "Real transactional consumer and independent evaluation harness.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Persistence recovery: restart between persisted command and reply",
+      "seam": "Proposed MarkDone/assignment command receipt and attention repository transaction",
+      "currentEvidence": "Normative requirement at work-packages.json:5334-5336; local markDone has no command receipt.",
+      "requiredChange": "Atomic effect/event/receipt, repeat hash checked, canonical entity/revision preserved; retry resolves committed result rather than mutating again.",
+      "verification": "Crash after DB commit and before HTTP/RPC reply for assignment and done, then retry/readback after restart from second device; same receipt/ref/revision and one recipient effect/event.",
+      "missingPrerequisite": "WP-04 accepted crash-safe receipt interface, real database and fault injection.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Verification gate: real changed surface plus relevant failure/reload path",
+      "seam": "Existing Inbox/system attention and normative verification artifact list",
+      "currentEvidence": "Only static source inspection and hashing performed; no product changes or runtime evidence.",
+      "requiredChange": "Lead captures screenshot/ARIA, typed API readback, canonical ID/revision, unique row count, receipt, projection watermark and seeded failure trace for exact tested artifact/environment.",
+      "verification": "Actual two-client native/HTTP/RPC scenario, restart/reload/reconnect and failure controls; fixture result or worker report alone never marks feature complete.",
+      "missingPrerequisite": "Authorized implementation/runtime stage after dependency acceptance.",
+      "state": "NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "License policy: behavior reimplementation; upstream dependency only after exact audit",
+      "seam": "WP-07 licensePolicy at work-packages.json:5390",
+      "currentEvidence": "ROX seams inspected; no upstream code copied or upstream dependency added.",
+      "requiredChange": "Implement behavior on existing ROX mechanisms; any later imported dependency needs exact license/source audit first, not reuse of undocumented Macro code.",
+      "verification": "Lead checks implemented artifacts and any dependency changes against audited license scope/provenance.",
+      "missingPrerequisite": "Implementation review; exact audit only if proposing upstream dependency, not a claimed exemption from review.",
+      "state": "POLICY_REQUIRED_IMPLEMENTATION_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/shared/src/team/state.ts","symbol":"push / addComment / assign / selectInboxForUser","lineStart":37,"lineEnd":173,"sha256":"37864b8f0feb2adedbb47ff1f1e947b5a9baaf4f32daea7cb096fb8e461c406c"},
+    {"path":"packages/shared/src/team/sync.ts","symbol":"TeamSyncAdapter / LocalOnlyTeamSyncAdapter / createTeamSyncAdapter / applyPushResult","lineStart":13,"lineEnd":72,"sha256":"4ffd18838571e5a910ea58f9872a3be943306755b2b91dbf7a2c64c333dac723"},
+    {"path":"packages/shared/src/team/types.ts","symbol":"TeamTarget / TeamLocalState / TeamOutboxOp / TeamInboxItem","lineStart":14,"lineEnd":146,"sha256":"4d3607bd25337bae0d8f81fbcb2619ef4c8d711c5009eb8419f71bbf2c0b9107"},
+    {"path":"packages/shared/src/team/mentions.ts","symbol":"mentionHandle / resolveMentions","lineStart":4,"lineEnd":33,"sha256":"5d8f5f132fe111950b684c7d83c000c577a8454d65745cf85069fa0dc1ca0a8f"},
+    {"path":"apps/electron/src/main/notifications.ts","symbol":"showNotification / handleNotificationClick","lineStart":54,"lineEnd":125,"sha256":"2f705093197b5f19ac18a870fb74c97677303a4941f8b7ec9f1c3d512c83c3d7"},
+    {"path":"apps/electron/src/renderer/pages/inbox/inbox-model.ts","symbol":"InboxItem / InboxState / filterInbox / markDone / pruneInboxState","lineStart":8,"lineEnd":271,"sha256":"e6834df3cd5881c81b4c92f512b9ed698a68e9311011c07ada9fe60caba8fda2"},
+    {"path":"apps/electron/src/renderer/hooks/useInboxItems.ts","symbol":"InboxRemoteSource / useInboxItems / load / allLoaded","lineStart":26,"lineEnd":117,"sha256":"6d19994bf049e6200f0005efd3e1da775979045f57f5d33c618f3b7116a6eca7"},
+    {"path":"apps/electron/src/renderer/components/team/TeamInboxSection.tsx","symbol":"TeamInboxSection","lineStart":13,"lineEnd":38,"sha256":"687ce52365a708165fdc673b55af0a90794bc44b82c5142490d2dd6b3cda42fe"},
+    {"path":"apps/electron/src/renderer/pages/InboxPage.tsx","symbol":"InboxPage / done / commonActions / detailBody","lineStart":91,"lineEnd":518,"sha256":"9e7b98fc482a3dca7a18042123f48e295d8c5a88d0f9cb48a2e6b464943209e3"},
+    {"path":"apps/electron/src/renderer/components/team/team-store.ts","symbol":"TEAM_STATE_STORAGE_KEY / writeTeamState / dispatchTeam","lineStart":18,"lineEnd":75,"sha256":"3507b8cf8237dfec776c999c6c145adb903fdafca763135445a625fad10f2f30"},
+    {"path":"apps/electron/src/renderer/components/team/use-team-roster.ts","symbol":"pickActiveOrg / useTeamRoster","lineStart":32,"lineEnd":77,"sha256":"656952f9e64b8f0cdcd02b23cbece9f276f201ab75358d65f46598c4fd14797c"},
+    {"path":"apps/electron/src/renderer/components/team/TeamInboxNavItem.tsx","symbol":"useTeamInboxNav","lineStart":17,"lineEnd":25,"sha256":"7d6310453c51d173c0808a5fbfc2a747caf70057cfd181b42c075c751e3f10fc"},
+    {"path":"apps/electron/src/renderer/atoms/inbox.ts","symbol":"inboxStateAtom","lineStart":1,"lineEnd":11,"sha256":"3534d27435384e6ef4d814a28e2a18420ff4ebc243e602e48a9d8653b5e85a75"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"ElectronAPI.showNotification / onNotificationNavigate","lineStart":1925,"lineEnd":1980,"sha256":"3c864407da637347a5359d39bbe30f211dd9d43812ce624edfcfb34438b3858c"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-07 normative record: dependencies / acceptance / operations / migrations / verification","lineStart":5250,"lineEnd":6217,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"docs/macro-integration/19-target-architecture.md","symbol":"Non-negotiable invariants / API contract / coding gates / registration gate","lineStart":50,"lineEnd":160,"sha256":"951c4bef1bb4146f9868b48f1c319f92b1369c30d534be29975f4743db5b17c3"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-07","lineStart":123,"lineEnd":140,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"CHAT-TASK-01","lineStart":60,"lineEnd":74,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": "Lead consumes this preflight and resolves patch ownership/hidden-gate interfaces now. Feature implementation starts only after lead wave0 commit and accepted WP-03 then WP-04 typed/migration/scenario receipts in actual dependency order; rehash inspected seams against that revision, settle recipient-state revision and burst/reason grouping contracts, then implement the five normative artifacts via accepted foundation ports and integrate shared patches through their owners. Run requested packet verifier at lead integration; later product acceptance follows real UI/API/recovery and seeded controls, not this report.",
+  "risks": [
+    "recipient/event/reason uniqueness alone permits separate reason rows for one causal assignment+mention; published one-Notification overlap criterion needs explicit cause grouping/reason precedence.",
+    "Spec leaves burst duration/grouping and ping-count bound unspecified. Exact coalescing contract must be accepted; fixed arbitrary debounce is not an evidenced product decision.",
+    "Database exactly-once notification creation is not exactly-once native OS side effect: crash between show and delivery receipt can duplicate or lose a popup. Root must reconcile external-effect uncertainty and separate durable Inbox guarantee from OS delivery proof.",
+    "Global team localStorage key/cache and local org fallback can leak records across workspace/principal changes unless projection scope is integrated.",
+    "pruneInboxState can erase local done marks after failed sources because loaded is set in finally; authoritative domain state must never be pruned by partial pagination or denied source results.",
+    "Raw comment/summary/title is currently rendered/logged without target-policy check in inspected seams; copies are forbidden in durable notification payload and redaction must include logs/native popups.",
+    "Adding a service only to Inbox leaves direct legacy reducer/store writers usable for shared targets; root single-writer fence is a real hidden gate.",
+    "General edited/deleted mentions and canonical task assignments belong to downstream producers; making them new WP-07 prerequisites would introduce a reverse dependency/cycle. Distinguish initial attention port proof from integrated CHAT-TASK-01 proof.",
+    "Mutable recipient read_state revision versus notification aggregate revision is not settled by the detailed markDone request; accepted contract must prevent B1/B2 conflict semantics from relying on arbitrary local timestamps.",
+    "No foundation implementation/runtime was inspected, so exact gateway/composition/Feed/search/agent registration symbol names are missing prerequisites, not fabricated patch evidence.",
+    "Working-tree hashes can become stale during root integration; report input_revision is dispatch metadata, not a claim that inspected bytes are committed at that HEAD.",
+    "Preflight intentionally performed no implementation, tests, native UI, network or Git operations. featureComplete remains false regardless of structural report validation."
+  ]
+}

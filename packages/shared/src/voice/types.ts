@@ -5,11 +5,11 @@
  * device. Cloud ASR, enhancement and web enrichment are three separate consents.
  */
 
-export const VOICE_PREFS_VERSION = 2 as const
+export const VOICE_PREFS_VERSION = 3 as const
 export const DEFAULT_WAKE_PHRASE = 'Так, Рокс!'
 
-export type SttEngine = 'local-whisper' | 'cloud-rox' | 'cloud-deepgram'
-export type TtsEngine = 'edge' | 'fish-speech'
+export type SttEngine = 'local-whisper' | 'cloud-rox'
+export type TtsEngine = 'system'
 export type AudioRetention = 'none' | 'session' | 'cloud-policy'
 export type LocalArchivePolicy = 'until-delete' | 'session' | 'none'
 export type ModelHealthStatus = 'missing' | 'downloading' | 'ready' | 'error' | 'unsupported'
@@ -19,13 +19,9 @@ export type OverlayPosition = 'top' | 'bottom'
 export type OverlayStyle = 'minimal' | 'live'
 export type RecognitionLanguage = 'auto' | 'en' | 'ru'
 
-export const STT_ENGINES: readonly SttEngine[] = [
-  'local-whisper',
-  'cloud-rox',
-  'cloud-deepgram',
-] as const
+export const STT_ENGINES: readonly SttEngine[] = ['local-whisper', 'cloud-rox'] as const
 
-export const TTS_ENGINES: readonly TtsEngine[] = ['edge', 'fish-speech'] as const
+export const TTS_ENGINES: readonly TtsEngine[] = ['system'] as const
 
 export const AUDIO_RETENTION_POLICIES: readonly AudioRetention[] = [
   'none',
@@ -95,22 +91,17 @@ export interface TranscribeInput {
   mimeType: string
   language?: string
 }
-
 export interface TranscribeResult {
   text: string
   engine: SttEngine
   uploaded: boolean
   noSpeech?: boolean
   requestId?: string
-}
-
-export interface SpeakInput {
-  text: string
-}
-
-export interface SpeakResult {
-  engine: TtsEngine
-  uploaded: false
+  requestedModelId?: string
+  resolvedModelId?: string
+  routeVersion?: string
+  detectedLanguage?: string
+  durationMs?: number
 }
 
 export interface TranscribeAdapter {
@@ -118,9 +109,12 @@ export interface TranscribeAdapter {
   transcribe(input: TranscribeInput): Promise<TranscribeResult>
 }
 
-export interface SpeakAdapter {
+export interface SpeakResult {
   engine: TtsEngine
-  speak(input: SpeakInput): Promise<SpeakResult>
+  uploaded: false
+  playback: 'native' | 'renderer' | 'none'
+  voice?: string
+  reason?: 'russian-system-voice-unavailable'
 }
 
 export function isSttEngine(value: unknown): value is SttEngine {
@@ -153,13 +147,13 @@ export function getDefaultVoicePrefs(now: number = Date.now()): VoicePrefs {
   return {
     version: VOICE_PREFS_VERSION,
     sttEngine: 'cloud-rox',
-    ttsEngine: 'edge',
+    ttsEngine: 'system',
     audioRetention: 'cloud-policy',
     localArchivePolicy: 'until-delete',
     asrModelId: 'rocks-t1',
     recognitionLanguage: 'auto',
     timestamps: 'segment',
-    cloudAsrConsent: true,
+    cloudAsrConsent: false,
     cloudEnhancementConsent: false,
     webEnrichmentConsent: false,
     privacyMigrationPending: false,

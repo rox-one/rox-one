@@ -71,6 +71,20 @@ describe('PersonalTaskPersistStore', () => {
     expect(updated.revision).not.toBe(1)
     expect(store.get('task-buy-milk')?.revision).toBe(updated.revision)
   })
+  it('rejects stale cross-store writes and deletes without losing the accepted task revision', () => {
+    const firstStore = new PersonalTaskPersistStore(root)
+    const initial = firstStore.put(makeTask({ id: 'cas', title: 'Original' }))
+    const otherStore = new PersonalTaskPersistStore(root)
+    const accepted = otherStore.putIfRevision({ task: makeTask({ id: 'cas', title: 'First editor' }), expectedRevision: initial.revision })
+    expect(accepted.status).toBe('accepted')
+    if (accepted.status !== 'accepted') throw new Error('expected the current revision to be accepted')
+
+    const stale = firstStore.putIfRevision({ task: makeTask({ id: 'cas', title: 'Stale editor' }), expectedRevision: initial.revision })
+    expect(stale).toEqual({ status: 'conflict', current: accepted.record })
+    expect(firstStore.deleteIfRevision('cas', initial.revision)).toEqual({ status: 'conflict', current: accepted.record })
+    expect(new PersonalTaskPersistStore(root).get('cas')).toEqual(accepted.record)
+  })
+
 
   it('list returns every put record with its current revision', () => {
     const store = new PersonalTaskPersistStore(root)
@@ -99,6 +113,30 @@ describe('PersonalTaskPersistStore', () => {
     expect(milkAgain?.task.title).toBe('Buy milk and bread')
     expect(milkAgain?.revision).toBeGreaterThan(milk.revision)
   })
+  it('restores a zoned recurrence occurrence and reminder retry receipt after reopening the store', () => {
+    const task = makeTask({
+      id: 'weekly',
+      recurrence: { rule: 'weekly', interval: 1, timeZone: 'America/New_York' },
+      reminderAt: Date.UTC(2026, 2, 8, 13, 30),
+      reminderTimeZone: 'America/New_York',
+      reminderError: 'presentation-failed',
+      reminderRetryAt: Date.UTC(2026, 2, 8, 13, 35),
+      repeatOccurrenceAt: Date.UTC(2026, 2, 8, 14),
+      repeatNextId: 'weekly.occ.abc',
+    })
+    new PersonalTaskPersistStore(root).put(task)
+    const reopened = new PersonalTaskPersistStore(root).get(task.id)
+    expect(reopened?.task).toMatchObject({
+      recurrence: { timeZone: 'America/New_York' },
+      reminderAt: task.reminderAt,
+      reminderTimeZone: 'America/New_York',
+      reminderError: 'presentation-failed',
+      reminderRetryAt: task.reminderRetryAt,
+      repeatOccurrenceAt: task.repeatOccurrenceAt,
+      repeatNextId: 'weekly.occ.abc',
+    })
+  })
+
 
   it('refuses path-unsafe ids and does not write outside the store dir', () => {
     const store = new PersonalTaskPersistStore(root)

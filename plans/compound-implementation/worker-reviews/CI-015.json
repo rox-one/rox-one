@@ -1,0 +1,330 @@
+{
+  "task_id": "CI-015-preflight",
+  "attempt_id": "327f2a66a12debc9757079c3d9ab624f",
+  "packet_hash": "243b11e571936371beef3c9ef7259593c1fc9fb59e266e0f6939be93287d1b97",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "CI-015",
+  "featureComplete": false,
+  "mode": "inspect-only preflight with one owned report",
+  "workTier": "bounded-workflow: specification, scoped source inspection, report",
+  "dependencies": ["CI-010", "CI-011", "CI-012", "CI-013"],
+  "dependencyInterpretation": "The dispatch packet's empty depends_on is for this independent preflight only. Implementation retains exactly the four published CI-015 dependencies above, accepted by artifact and authoritative readback receipts after the lead's wave0 commit.",
+  "specification": {
+    "path": "plans/lark-suite-reference/code-intelligence.json",
+    "jsonPointer": "/workPackages/14",
+    "lineStart": 5030,
+    "lineEnd": 5307,
+    "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7",
+    "executionPath": "plans/lark-suite-reference/execution-packages.json",
+    "executionLineStart": 5320,
+    "executionLineEnd": 5398,
+    "executionSha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b",
+    "inputManifestHashesMatch": true,
+    "sharedPatchPaths": []
+  },
+  "inspection": {
+    "sourceState": "Live working-tree source, including lead-owned uncommitted wave0 work; not a clean checkout or implementation receipt for input_revision.",
+    "freshness": "Hashes were obtained with read-only shasum after source reads. The inspection and hashing were not an atomic repository snapshot. No intervening change was observed in repeated reads of refs.ts or the RPC handler; concurrent integration can nevertheless invalidate any reference. Rehash and reread changed files before implementation.",
+    "codegraph": "Attempted the mounted explorer first; it reported no .codegraph index and instructed use of built-in tools. No index was created.",
+    "find": "The scoped find request failed because its judgment service returned HTTP 402. Its no-hits result is not absence evidence. Continued with specification-named files and their direct imports.",
+    "declaredPathObservation": "Scoped glob found packages/server-core/src/handlers/rpc/code-intelligence.ts. It reported missing tests/code-intelligence/**, docs/code-intelligence/**, packages/server-core/src/code-intelligence/**, packages/session-tools-core/src/code-intelligence/** and the proposed code-search/code-read/intelligence-propose handlers at inspection time. This is limited path evidence, not a claim that equivalent functionality cannot exist elsewhere.",
+    "executed": ["read", "grep", "find", "glob", "read-only whole-file SHA256", "write owned JSON report"],
+    "notExecuted": ["product edits", "tests", "builds", "native UI", "agent sessions", "provider/network operations", "Git operations", "launch-worker-pool verifier"]
+  },
+  "foundationGates": [
+    {
+      "id": "FG-WAVE0-ACCEPTED-BASE",
+      "kind": "implementation launch gate, not an added DAG edge",
+      "evidence": "User dispatch requires the lead's wave0 commit and accepted dependency receipts. execution-packages.json:5360-5382 still names product_baseline_sha e953786ba7e30fb5da5dca7e88e20e324d5aebab and unresolved reference revision/digest.",
+      "required": "Lead resolves the delivery manifest, verifies spec hashes, records the approved baseline plus wave0/prerequisite commits and issues an isolated implementation packet. Do not reuse dirty source as accepted input or silently substitute the preflight input_revision for the published product baseline.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-TRANSITIVE-FOUNDATION",
+      "kind": "transitive published edges, not additional direct dependencies",
+      "evidence": "CI-010 depends on CI-007/008/009 (4015-4018); CI-011 on CI-006/008/009 (4225-4228); CI-012 on CI-003/004/005/006/008 (4429-4434); CI-013 on CI-002/005/006/008 (4641-4645). CI-008 in turn requires CI-003 through CI-007 (3599-3604), and those require CI-001/002.",
+      "required": "Accepted top-level receipts must cover the actual CI-001 through CI-009 contracts they consume: binding/snapshot, scope/egress, search, durable jobs, C4 import, wiki claims, graph integrity, freshness/ownership and route host. Import accepted implementations; do not create a second store or parallel UI in CI-015.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-SEMANTIC-RECEIPTS",
+      "kind": "hidden semantic gate within published acceptance",
+      "evidence": "CI-015:5076 requires a false claim rejected despite a valid URL; refinementRequirements:145 and CI-006:3157 require semantic support assessment and VerificationReceipt. assertEveryNodeHasProvenance only checks nonempty source fields and citation symbol membership (explainer.ts:37-49).",
+      "required": "CI-006 supplies an implemented claim checker with exact authorized source version, method/checker version and supported/partial/contradicted/unresolved receipts. Unsupported claims must not be labeled verified merely because citation integrity passes.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-REMOTE-PRIVATE-AUTHORITY",
+      "kind": "hidden capability gate, not a local-only waiver",
+      "evidence": "CI-015:5073-5075 and 5125 require offline denial, lease expiry and reconnect invalidation; refinementRequirements:146 and contractPolicies:152-156 prescribe one resolver. repository-connection.ts:8-24 currently describes only local-owned readOnly=true, connectionRef=null. refs.ts:570-595 explicitly requires host-supplied current authority and does not discover actors or renew leases.",
+      "required": "EG-IDENTITY and CI-002/008 owners supply actor/workspace/source authority and remote-private disconnect/reconnect behavior across search/wiki/graph/agent caches. Default is offline denial. If bounded offline leases are enabled, signed actor/workspace/source binding, expiry, no offline renewal and exposure-window disclosure must be implemented and exercised. If no leases are supported, prove a supplied expired or forged lease cannot enable reads; do not replace remote-private verification with local-owned tests.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-DURABLE-JOBS-NOT-REQUEST-CANCEL",
+      "kind": "hidden recovery gate",
+      "evidence": "CI-004:2757-2799 proposes jobs.ts/job-store.ts, restart recovery and monotonic events. Existing registerCodeIntelligenceHandlers has a process-local requests Map (70-71), removes requests in finally (168), and CANCEL aborts an active client/project request only (277-285).",
+      "required": "CI-004/008 accepted implementations provide persistent run/checkpoint/output ownership, terminal-state arbitration, same-fingerprint resume and stale-run publish rejection. Request cancellation is not evidence of durable intelligence job recovery.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-REAL-UI-AND-TRANSPORT",
+      "kind": "hidden native execution gate",
+      "evidence": "CI-015:5044,5063,5072 requires actual Electron/native sessions and a11y/reduced-motion proof. Existing RepoArchitectureExplainer is a localized list (5-25), its test reads source text (5-13), and KnowledgeToolRuntime is process-local (67-81). CI-010:4046 explicitly rejects source-only tests as live integration evidence; CI-012:4463 requires subprocess compatibility.",
+      "required": "CI-009/010/011 supply a production-mounted Project/Source host; CI-012 supplies real native-session and supported subprocess transport. Lead owns an authorized desktop verification session and backend configuration. Test doubles cannot provide the native acceptance receipt.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-PROVIDER-POLICY-NOT-INVENTORY",
+      "kind": "published external readiness gate",
+      "evidence": "execution-packages.json:5392-5396 names EG-IDENTITY, scoped repository/egress policy, upstream version/license/runtime readiness and native agent transport. CodeIntelligenceProviderRegistry.resolve rejects unready/disabled/egress-denied providers (87-96); CODE_INTELLIGENCE_PROVIDER_DECISION says inventory is neither runtime nor upstream verification (40-48).",
+      "required": "Pin only adopted provider versions/artifact digests, license notices and approved source/model egress. Record unavailable provider/runtime as a failed or blocked lane, never zero findings or success. CI-014 is not a mandatory direct/transitive dependency here; an alternative provider requires its contract/readiness gate only if actually selected. Preserve local-fs-symbols/syft-sbom and rejected-daemon decisions.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-PROOF-AND-EVIDENCE-OWNERSHIP",
+      "kind": "published artifact/negative-control gate",
+      "evidence": "CI-015:5126-5129 warns about insensitive seeded tests and source audit mistaken for runtime; 5162 requires manifests with hashes and attempts. execution-packages.json:5384-5390 requires compiled schemas, semantic control receipts, restart readback, UI screenshots/ARIA/font and actor-redacted outputs. Only three tests and verification.md are normative owned new files (5350-5356).",
+      "required": "Lead supplies the existing evidence artifact destination/receipt mechanism and desktop lease. Keep fixtures isolated from the user workspace; record integrated commit, exact seed/input, expected/observed assertions, attempts, artifact hashes and authoritative before/after readback. Embed fixture construction in the owned tests rather than creating unlisted fixture files. Link runtime evidence in verification.md without inventing an extra report store or product endpoint.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "tests/code-intelligence/contracts.test.ts",
+    "tests/code-intelligence/scope-freshness.test.ts",
+    "tests/code-intelligence/jobs-recovery.test.ts",
+    "docs/code-intelligence/verification.md"
+  ],
+  "ownedFileContributions": [
+    {
+      "path": "tests/code-intelligence/contracts.test.ts",
+      "change": "Use accepted production search/wiki/graph/tool contracts. Build isolated known-match/absent-match source fixtures inline; assert exact scoped snapshot/hash/range values, honest empty/truncated/invalid/provider-unavailable outcomes, semantic support states, staged-not-applied proposals and nonexecuting malicious output. Exercise real handler results rather than copying DTOs or asserting registry/source text. Keep global runtime registration isolated and restored when any existing runtime seam is used."
+    },
+    {
+      "path": "tests/code-intelligence/scope-freshness.test.ts",
+      "change": "Use existing snapshot/read/current-policy functions and accepted shared authorization/freshness resolver. Cover workspace/project/repository forgery, traversal/symlink/excluded-secret sentinels, dirty-byte citations, changed/deleted/exclusion-drift evidence, alias/retry deduplication, current authorization over historical content, remote-private offline deny, expired/forged lease and reconnect cache invalidation."
+    },
+    {
+      "path": "tests/code-intelligence/jobs-recovery.test.ts",
+      "change": "Use CI-004's accepted persistent job journal/checkpoints and CI-008's artifact ownership. Embed a throwaway child-runner source in the test if actual process termination is needed; use deterministic barriers rather than sleeps to seed pre/mid/post completion cancellation, concurrent writers and stale/newer completion. Restart/reload from the same temporary store and assert semantic state/output hashes, not map size or merely no throw."
+    },
+    {
+      "path": "docs/code-intelligence/verification.md",
+      "change": "Publish a criterion-by-criterion verification manifest, separate static audit/schema/runtime/provider/native UI/native transport/negative-control lanes and exact commands/results/seeds/attempts. Bind artifact and screenshot hashes, actor-redacted receipts, integrated commit and runtime environment; show missing prerequisites and failed attempts explicitly. Include all RC-01 through RC-12 evidence mappings and record offline exposure limits. Do not fabricate executions in this preflight."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/components/session-workbench/__tests__/repo-architecture-explainer.test.ts",
+      "symbol": "SOURCE and describe('RepoArchitectureExplainer')",
+      "change": "Integration owner deletes the source-text-only test (lines 1-14), rather than repinning it after UI changes. CI-010's accepted behavioral tests and CI-015's actual mounted native evidence replace its claimed proof; no new test in this shared path is requested.",
+      "reason": "The test only searches t() strings and node.citation in source; it cannot prove rendering, mount, navigation, focus, a11y or reduced motion. It is explicitly identified as inadequate in CI-010 and the UI design audit.",
+      "owner": "integration-owner / CI-010",
+      "authorization": "Request only. CI-015 sharedPatchPaths is empty; no shared write is granted by this preflight."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/code-intelligence.ts",
+      "symbol": "registerCodeIntelligenceHandlers; operation; HANDLED_CHANNELS; CANCEL",
+      "change": "CI-004 integration extends this existing RPC registration with its approved search/read/start/status/cancel/resume contracts and scoped monotonic events, routing durable job status/checkpoints to the accepted job journal. Preserve authenticated caller/window/project policy checks and existing preview/bind/capture/history/read-span behavior. Keep requestId AbortController cancellation distinct from persistent jobId cancellation; do not treat the requests Map as a job store or add CI-015-only endpoints.",
+      "reason": "Current channels expose local repository receipts only. Process-local request deletion and active-request CANCEL cannot satisfy persistence/reload, concurrent job recovery, durable idempotent cancel or job event acceptance.",
+      "owner": "integration-owner / CI-004",
+      "authorization": "Dependency integration request only, after accepted contracts and an exclusive shared-path lease; CI-015 must not implement it."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/session-workbench/RepoArchitectureExplainer.tsx",
+      "symbol": "RepoArchitectureExplainer",
+      "change": "CI-010 integration reuses this localized evidence list within the accepted production ArchitecturePanel and passes the accepted exact evidence/freshness projection. Provide keyboard/click source activation and explicit unavailable/stale/support-state labels with semantic controls, while keeping captured snapshot navigation and existing empty/list behavior. All new user-facing strings use t() and the existing 10-locale parity convention; no new standalone Code Intelligence rail/surface.",
+      "reason": "Existing component only displays node label and citation text. It offers no interactive source control, freshness or claim support semantics and is not by itself native integration proof.",
+      "owner": "integration-owner / CI-010",
+      "authorization": "Dependency integration request only; exact DTO fields must come from accepted CI-001/007/008 receipts, not invented in CI-015."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "CI-015-AC-1",
+      "criterion": "Meaningful source-search/wiki/graph happy and error paths",
+      "currentEvidence": "indexSourceFiles/localFsSymbolsAdapter builds only regex declaration symbols and contains edges (local-adapter.ts:14-84). readFileSpan validates bounded snapshot ranges (refs.ts:504-517). CodeIntelligenceProviderRegistry.resolve exposes explicit unknown/disabled/unready/egress errors (provider.ts:87-96). handleKnowledgeSearch bounds queries/results and maps errors (knowledge-search.ts:43-102), but current knowledge-tools tests use a Siyuan runtime double, not code-search or RepoWiki/graph integration.",
+      "requiredChange": "In contracts.test.ts, invoke accepted CI-003/006/007/012 production seams through CI-004 RPC. Assert exact known match and absent match, literal/regex/text/symbol distinctions, bounds/truncation, invalid regex, canonical wiki section/backlink and graph edge/evidence results. Assert all declared failure DTOs, no private payload on denied/unavailable paths, unsupported semantic claim states, and staged content never applied to authored pages. Use the existing local adapter without claiming compiler/import/callgraph completeness.",
+      "verification": "Planned: bun test tests/code-intelligence/contracts.test.ts plus actual integrated Project search/wiki/graph happy, empty, invalid-input and unavailable-provider interactions; schema compilation and real RPC error readback. Cross-reference all V-01 through V-10 controls below, as the published AC proof array repeats them for every criterion.",
+      "missingPrerequisite": "Accepted CI-010/011/012/013 receipts and their transitive search/wiki/graph/RPC implementations, fixture corpus, adopted provider readiness and scoped egress authorization.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "CI-015-AC-2",
+      "criterion": "persistence/reload and concurrent job recovery",
+      "currentEvidence": "save/loadRepositoryBinding and save/loadRepositorySnapshot validate persisted receipts (refs.ts:639-665); RPC CAPTURE rereads a saved snapshot (code-intelligence.ts:204-223). The current requests Map/CANCEL is process-local, not a durable run journal. No files were found under the proposed server-core code-intelligence job-store path in the scoped glob.",
+      "requiredChange": "In jobs-recovery.test.ts, exercise CI-004 jobs/job-store and CI-008 output ownership across actual child-process termination and restart, holding deterministic stage barriers. Resume only the same fingerprint; mark drift stale. Race duplicate/concurrent run writers and pre/during/post cancel against completion; assert idempotent final state, one authorized output, preserved checkpoint/page queue and newer artifact not overwritten. In scope-freshness.test.ts, reread persisted snapshot/ref/current authorization after reload and source deletion.",
+      "verification": "Planned: bun test tests/code-intelligence/jobs-recovery.test.ts tests/code-intelligence/scope-freshness.test.ts; native RC-12 cancel/retry/resume and restart readback receipts with exact before/after run revision, snapshot and artifact hashes. Run the full published V-01 through V-10 proof set as shared acceptance evidence, not N/A.",
+      "missingPrerequisite": "CI-004 durable run/checkpoint/lock implementation, CI-008 freshness/ownership and accepted UI receipts; integrated restartable host and isolated store.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "CI-015-AC-3",
+      "criterion": "seeded forged/stale/injection result rejected",
+      "currentEvidence": "validateRepositorySnapshot verifies byte hashes, dirty identity, source versions and blob relationships (refs.ts:443-482); current policy recheck is separate (575-595). assertEveryNodeHasProvenance only tests required fields and citation membership (explainer.ts:37-49), not semantic claims or actual Git origin. Existing limited ingestion heuristic and adapter tests do not cover forged graph evidence, Markdown/Mermaid execution or expired remote leases.",
+      "requiredChange": "In contracts.test.ts and scope-freshness.test.ts, seed foreign scope/ref, path/hash/range/blob forgery, dirty-parent miscitations, valid URL with false proposition, stale completion and malicious Markdown/Mermaid/repository instructions. Assert rejection or explicit unresolved/contradicted status rather than verified, no execution/network/write and no secret/foreign bytes in results/events/logs. Use a positive permitted control paired with every denial and deterministic fault seed so a blanket unavailable result cannot pass.",
+      "verification": "Planned: both owned suites, CI-007 safe renderer/export in actual native UI and CI-012 injection in an actual tool session. Record exact malicious payload, expected/observed semantic rejection and a negative-control sensitivity receipt. All V-01 through V-10 remain required shared proof.",
+      "missingPrerequisite": "CI-002 shared authorization/lease resolver, CI-006 semantic claim receipts, CI-007 graph schema/evidence/sanitization, CI-008 stale publish boundary and CI-012 native tool authority.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "CI-015-AC-4",
+      "criterion": "actual native UI and agent transport observed",
+      "currentEvidence": "RepoArchitectureExplainer is a text list (5-25); its test reads source text, not rendered UI. KnowledgeToolRuntime is a module-global registration (67-81); its comments explicitly say subprocesses without the runtime return CONNECTION_UNAVAILABLE (runtime.ts:6-15). registerCodeIntelligenceHandlers currently registers localElectron-only operations (code-intelligence.ts:169,285). These are seams, not observed native execution.",
+      "requiredChange": "Use accepted CI-009/010/011 production host and CI-012 transport; record real Project/Source navigation, exact captured source open, wiki heading/backlink/review flow, keyboard-only graph/search, hover/focus/click help, reduced motion and denied/stale/offline/error states. Observe a real authorized native agent source read and staged proposal, mode denial for writer/application, and explicit missing-subprocess-transport error without treating an in-memory registry double as a bridge. Document RC-01 through RC-12 coverage in verification.md.",
+      "verification": "Planned: actual Electron and configured native agent session on the integrated commit, screenshots/ARIA/computed Rox Mono font and reduced-motion evidence, exact RPC/tool request-result-error receipts with scoped snapshot/line evidence. Link every V-01 through V-10 case to its native or authoritative backend proof; none is waived.",
+      "missingPrerequisite": "Production mount/route receipts, runnable integrated Electron, authorized desktop lease, actual native backend/transport and per-mode permissions. This preflight explicitly prohibits launching them.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "CI-015-AC-5",
+      "criterion": "runtime/provider tests reported separately from source audit",
+      "currentEvidence": "CODE_INTELLIGENCE_PROVIDER_DECISION.inventoryDeclarationIsRuntimeEvidence and inventoryDeclarationIsUpstreamVerification are false (provider.ts:40-48). runSyftSbom uses an injected runner and returns available=false on failure (sbom.ts:15-24); adapter.test.ts:60-66 uses a failing runner double. packs.test.ts:74-76 checks pin/hash shape, not an installed/runtime-verified provider. Published cloud fields remain unresolved and readback_state NOT_RUN.",
+      "requiredChange": "In verification.md, maintain distinct source-audit, compiled-schema, semantic/unit/integration negative-control, runtime/provider, native UI and native agent transport sections. Record command, environment, pinned provider version/license, approved egress, seed, expected/observed values, failure history, receipt/artifact digest and authoritative integrated-commit readback. A runtime-unready provider or unavailable desktop blocks its required acceptance; never mark it passed from declaration hashes or rename it N/A. Collaboration/provider lane only when exercised, without waiving required missing-provider negative cases.",
+      "verification": "Planned: lead's revision-bound readback of the verification manifest and hashed evidence for all AC rows and V-01 through V-10. Rerun authoritative readback after integration, not merely on a worker branch. Source audit remains labeled source audit even when all static checks pass.",
+      "missingPrerequisite": "Resolved delivery baseline/reference digest, accepted dependency artifacts, version/license/runtime receipts, source/egress policy, actual UI/transport sessions and approved evidence destination.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "V-01",
+      "criterion": "seeded foreign repo and secret span",
+      "currentEvidence": "assertCallerOwnsWorkspace rejects foreign workspace without echoing its ID (workspace-scope.ts:74-96); assertRepositorySnapshotScope/readSnapshotFile reject scope/exclusions (refs.ts:484-502). RPC assertWindow/projectContext resolve actual window/workspace/project (code-intelligence.ts:72-117). Existing tests only establish authored assertions for generic workspace denial, not CI end-to-end behavior.",
+      "requiredChange": "scope-freshness.test.ts seeds workspace A/B and different repositories/projects; requests valid-looking foreign refs, ../ and symlink targets plus excluded .env/key/oversized/binary sentinels through actual search/read/wiki/graph/tool boundaries. Assert typed denial and absence of exact secret/foreign content from output, event and audit channels; contrast an allowed local source read.",
+      "verification": "Planned isolated fixture RPC/tool calls, exact error/payload assertions and sanitized audit readback; include byte-limit Unicode boundary and 1-based span bounds.",
+      "missingPrerequisite": "CI-002 shared authorization used by every accepted boundary and CI-003/006/007/012 callers.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "V-02",
+      "criterion": "modified source after generation",
+      "currentEvidence": "assessSnapshotFreshness compares newly captured snapshot ID (refs.ts:519-529); sourceVersion distinguishes working-copy bytes from Git commit and validation rejects false-commit-citation (443-482). indexVerifiedSnapshotFiles deliberately omits files without commitSha (provider.ts:100-108). That omission is not coverage of dirty-byte source UI/wiki claims.",
+      "requiredChange": "scope-freshness.test.ts generates from snapshot S1, modifies/renames/deletes allowed source and changes excludes; assert S1 evidence stays captured but stale/missing, dirty bytes cite local receipt not parent URL, authorized historical span remains exact and current exclusions deny it. Complete an older run after S2 and assert it cannot publish over S2; verify alias/retry identity uses connection/canonical repo/snapshot/tool/artifact digests.",
+      "verification": "Planned exact content/hash/sourceVersion assertions before and after reload plus native citation navigation to captured source or explicit unavailable state.",
+      "missingPrerequisite": "CI-008 watcher/artifact/freshness implementation and CI-010/011 captured citation consumers.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "V-03",
+      "criterion": "crash/resume/cancel race",
+      "currentEvidence": "The only inspected cancellation is the RPC handler's transient requests Map and AbortController (70-71,153-169,277-285); CI-004:2764-2775 requires persistent cancellation/restart/lock/provider-failure behavior.",
+      "requiredChange": "jobs-recovery.test.ts kills an isolated runner after durable checkpoint acknowledgment; restart under unchanged and changed fingerprints. Use controlled barriers for cancel-before-start, mid-stage and simultaneous terminal completion; repeat cancel/resume and run two writers for the same artifact namespace. Assert legal monotonic terminal transitions, no phantom completion, one output owner and preserved draft-not-applied status.",
+      "verification": "Planned real restart/store readback and deterministic interleavings with exact checkpoint/run/output digests and bounded completion deadlines, no readiness sleeps that hide failure.",
+      "missingPrerequisite": "Accepted CI-004 durable jobs/atomic journal and CI-008 stale/output ownership contracts.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "V-04",
+      "criterion": "malicious Markdown/Mermaid/instructions",
+      "currentEvidence": "materializeArchitectureNote interpolates labels/citations into Markdown (explainer.ts:25-35); no sanitizer exists in that inspected function. RepoArchitectureExplainer renders React text, not raw Mermaid. CI-007:3414-3428 prescribes safe graph export; CI-012:4468-4473 prescribes ignored untrusted instruction injection.",
+      "requiredChange": "contracts.test.ts seeds script/raw HTML, unsafe URLs/SVG, Mermaid init/config/click directives and repository instructions requesting execution/exfiltration. Invoke accepted CI-007 graph/export/render path and CI-012 tools. Assert inert content or explicit rejection, unchanged user files/provider egress and no tool authority escalation; keep permitted text/source navigation usable.",
+      "verification": "Planned semantic safe-output assertions plus actual native rendering/click and native agent injection read. Record network/write sentinels without using real secrets or endpoints.",
+      "missingPrerequisite": "CI-007 graph-export sanitization, existing safe Docs renderer integration, CI-012 policy/transport and CI-013 staged instruction reconciliation.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "V-05",
+      "criterion": "missing provider/runtime",
+      "currentEvidence": "CodeIntelligenceProviderRegistry.resolve rejects unknown-provider/provider-runtime-unready/provider-disabled/provider-egress-denied (provider.ts:87-96). requireKnowledgeRuntime returns typed CONNECTION_UNAVAILABLE (format.ts:52-68). runSyftSbom reports available=false rather than installing (sbom.ts:15-24).",
+      "requiredChange": "contracts.test.ts pairs a ready approved local provider with absent/unready/disabled/egress-denied/provider-timeout cases and actual missing subprocess transport. Assert accepted typed error DTOs and no analyzed-success/verified-empty findings. Local retrieval must remain usable without a model where specified; no auto-install or undocumented Repogrep endpoint fallback.",
+      "verification": "Planned real integrated RPC/tool failure readback and native loading/error/retry state observation; provider runtime probes documented separately from injected semantic failure controls.",
+      "missingPrerequisite": "CI-004 failure DTOs, CI-006/007 providers, CI-012 transport and lead-owned adopted-provider/runtime readiness receipts.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "V-06",
+      "criterion": "UI keyboard/a11y/reduced motion",
+      "currentEvidence": "RepoArchitectureExplainer exposes section aria-label and a plain list only (13-22); its source-only test cannot observe keyboard or motion. UI design:63-67 specifies non-hover-only evidence access, labels and reduced-motion behavior; CI-010:4043-4053 requires keyboard-only and reduced-motion proof.",
+      "requiredChange": "Use CI-010/011 mounted components rather than creating a CI-015 UI. Exercise tab/arrow selection, Enter exact-source open, session-context shortcut, tree/graph outline and dialog focus; verify hover/focus/click help, denied/error announcements, reduced-motion disabling pan/fly transitions and actual computed Rox Mono font. Record evidence and Russian localized UI state in verification.md.",
+      "verification": "Planned actual native keyboard interaction, ARIA/focus readback, light compact UI screenshots and reduced-motion capture bound to the integrated revision.",
+      "missingPrerequisite": "Accepted CI-009/010/011 production host and a leased native desktop session.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "V-07",
+      "criterion": "offline remote-private denied without valid lease",
+      "currentEvidence": "Current RepositoryConnection sourceProvenance is local-owned and connectionRef=null (repository-connection.ts:8-37). refs.ts current policy resolver rechecks host-provided binding, not signed remote actor leases (570-595). Published default offline remote-private denial is explicit (spec:146; UI design:59).",
+      "requiredChange": "scope-freshness.test.ts uses the accepted remote-private authorization boundary with no lease, wrong actor/workspace/source and forged lease; disconnect and request protected bytes through search/wiki/graph and agent context. Assert consistent denial and cleared protected caches while permitted local-owned source remains available under local policy.",
+      "verification": "Planned disconnect behavior, exact typed denial and absence of protected source bytes in all consumers/events, with positive local-owned control and documented exposure window only if a bounded signed lease is enabled.",
+      "missingPrerequisite": "EG-IDENTITY and CI-002/008 remote-private authority/cache implementation; local-only receipts cannot substitute.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "V-08",
+      "criterion": "lease expiry fails closed",
+      "currentEvidence": "No lease/expiry field exists in inspected ProviderPolicy or RepositoryConnection contracts. The normative offlineAuthorization and CI-002/008 policies require default denial and fail-closed optional signed leases.",
+      "requiredChange": "scope-freshness.test.ts uses deterministic resolver time to exercise expiry boundary, expired/forged/wrong-scope/replayed lease and cache rereads after expiry, including restart. If leases are supported, a valid lease works only before expiry and never renews offline; otherwise show even an injected expired purported lease cannot enable protected reads. Unsupported lease support does not waive the expiry-denial criterion.",
+      "verification": "Planned exact t-before/t-at/t-after-expiry behavior through all shared consumers and after reload, no real waiting and no stale authorization retained in agent context.",
+      "missingPrerequisite": "CI-002/008 implemented lease rejection or validation boundary, actor authority and controllable time/expiry semantics.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "V-09",
+      "criterion": "reconnect invalidates authorization",
+      "currentEvidence": "assertRepositoryCurrentReadPolicy requires live binding resolved on every read (refs.ts:570-595); the local RPC rereads window/project/policy state (code-intelligence.ts:119-131). Neither inspected seam implements a remote reconnect invalidation receipt.",
+      "requiredChange": "scope-freshness.test.ts disconnects authorized remote-private access, changes/revokes actor policy on the authority, reconnects and requests cached and new search/wiki/graph/agent content. Assert old lease/cache cannot authorize bytes, current authority is rechecked and reconnect events expose no foreign refs; record local snapshot freshness separately from permission freshness.",
+      "verification": "Planned authority-revision before/after readback, cached protected-content denial and native reload/agent-context observation. Document that immediate remote revocation during disconnection is unobservable, rather than promising it.",
+      "missingPrerequisite": "EG-IDENTITY reconnect authority receipt plus CI-002/008 invalidation reaching CI-010/011/012 caches.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "V-10",
+      "criterion": "semantic false claim rejected despite valid URL",
+      "currentEvidence": "assertEveryNodeHasProvenance only checks path/startLine/commit and citation membership (37-49); readFileSpan proves exact bounded bytes (refs.ts:504-517), not whether a proposition follows. CI-006:3157,3167-3168 requires semantic assessment, unresolved unrelated statements and contradicted receipts.",
+      "requiredChange": "contracts.test.ts pairs an allowed existing exact-version URL/span with one true statement, an unrelated false claim, a partially supported claim and an explicitly contradicted claim. Invoke the accepted wiki-claims semantic checker and require exact-source/method/version receipts plus supported/partial/unresolved/contradicted outcomes. Unsupported must be rejected as verified, not necessarily erase the visible claim; display uncertainty through CI-011.",
+      "verification": "Planned semantic status/source-hash/checker assertions and real wiki ClaimsPanel navigation to the same authorized span, with a seeded insensitive-checker control that would fail if URL availability were the only oracle.",
+      "missingPrerequisite": "CI-006 semantic VerificationReceipt implementation and CI-011 visible claim statuses.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "C-TRANSPORT-EVENTS-MANIFEST",
+      "criterion": "Verify actual RPC/native transport and all declared failure DTOs; monotonic scoped index/run/proposal events with no foreign content; revision-bound manifest and isolated fixtures",
+      "currentEvidence": "CI-015:5102-5109,5125,5162 specifies these contracts. Existing RPC handles localElectron repository operations; knowledge runtime uses process-global registration; inspected code does not prove durable run/proposal event semantics.",
+      "requiredChange": "Across the three owned suites, assert accepted request/result/error schemas through production RPC/tool boundaries and authorized event subscriptions; record ordered revisions and reject foreign/secret payloads, terminal regressions and proposal claimed applied. verification.md links baseline/implementation/integrated revision, artifact hashes, attempts, seeds and exact before/after restart readback in the lead's existing artifact system. Isolate all temporary stores/repositories and restore process-global runtimes.",
+      "verification": "Planned compiled-schema receipt, real native transport trace, scoped event semantic assertions, negative controls and integrated manifest readback. Provider/collaboration lane evidence only for actually exercised providers/collaboration, not an excuse to skip native transport or unavailable-runtime acceptance.",
+      "missingPrerequisite": "CI-004 typed event/RPC contracts, CI-008 revision/ownership, CI-012 native bridge, lead-owned artifact destination and accepted integrated commit.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"plans/lark-suite-reference/code-intelligence.json","symbol":"workPackages[14] / CI-015 and observableAcceptance","lineStart":5030,"lineEnd":5307,"sha256":"a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"packages / CI-015 cloudPacket","lineStart":5320,"lineEnd":5398,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/14-code-intelligence-ui.md","symbol":"RC-01 through RC-12, offline policy and acceptance extensions","lineStart":40,"lineEnd":108,"sha256":"2c07a58511e385a7bef7d8630d333c685b924fb8e71819cf2215c097107b3c75"},
+    {"path":"packages/shared/src/code-intelligence/index.ts","symbol":"canonical public exports","lineStart":1,"lineEnd":27,"sha256":"ba83e46a3fa8348701bddda97acefa176bdc4938a51c7a70338f9a376b464e39"},
+    {"path":"packages/shared/src/code-intelligence/types.ts","symbol":"CodeGraph, CodeIntelAdapter, CODE_INTEL_PACK, REJECTED_CODE_INTEL_TOOLS","lineStart":1,"lineEnd":67,"sha256":"48b33cd382fb91825e79964724e102b7167d5f830e5a082432ec59ca3d9ca61e"},
+    {"path":"packages/shared/src/code-intelligence/local-adapter.ts","symbol":"isSafeToIngest, indexSourceFiles, localFsSymbolsAdapter","lineStart":3,"lineEnd":84,"sha256":"9d805685a6fc19e2487ed57e28550d4211339326157ef871febe2d7dd1b2fb35"},
+    {"path":"packages/shared/src/code-intelligence/explainer.ts","symbol":"explainWithProvenance, materializeArchitectureNote, assertEveryNodeHasProvenance","lineStart":13,"lineEnd":49,"sha256":"d2d53f67c406be50c258396e392a77ef5a844ff98b744dd3c81aefa1a01eaeed"},
+    {"path":"packages/shared/src/code-intelligence/provider.ts","symbol":"CODE_INTELLIGENCE_PROVIDER_DECISION, CodeIntelligenceProviderRegistry.resolve, indexVerifiedSnapshotFiles","lineStart":40,"lineEnd":109,"sha256":"df76cab98d98e3562f28efe2aed1b86e47ef43f595b7d8ec96a7cc3a42afc404"},
+    {"path":"packages/shared/src/code-intelligence/refs.ts","symbol":"validateRepositorySnapshot, readFileSpan, assessSnapshotFreshness","lineStart":443,"lineEnd":529,"sha256":"432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path":"packages/shared/src/code-intelligence/refs.ts","symbol":"assertRepositoryCurrentReadPolicy, resolveRepositoryRefWithCurrentPolicy","lineStart":570,"lineEnd":595,"sha256":"432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path":"packages/shared/src/code-intelligence/refs.ts","symbol":"save/loadRepositoryBinding, save/loadRepositorySnapshot","lineStart":639,"lineEnd":665,"sha256":"432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path":"packages/shared/src/code-intelligence/repository-connection.ts","symbol":"RepositoryConnectionConfiguration, RepositoryConnection, MANDATORY_REPOSITORY_EXCLUDES","lineStart":8,"lineEnd":46,"sha256":"fcabbdab22124e8641b0df4404ea780f56da603ec1d277658823a41583b7107c"},
+    {"path":"packages/shared/src/code-intelligence/sbom.ts","symbol":"runSyftSbom","lineStart":15,"lineEnd":24,"sha256":"ec59d14022dddf58bdbb481167974dadecc58103a066c326fed843786f924d54"},
+    {"path":"packages/shared/src/code-intelligence/__tests__/adapter.test.ts","symbol":"local repository index and injected syft SBOM tests","lineStart":28,"lineEnd":67,"sha256":"38d3c94c95a523cd6f9831306b5653038e368f471e8463609e81c41586365297"},
+    {"path":"packages/shared/src/capabilities/packs.test.ts","symbol":"capability packs declaration hash assertions","lineStart":40,"lineEnd":85,"sha256":"f5d751a2b89dc4f24f37b1ccf72d546b44d280835963cd43a5f5c6a3583282e7"},
+    {"path":"packages/server-core/src/security/workspace-scope.ts","symbol":"assertCallerOwnsWorkspace","lineStart":67,"lineEnd":96,"sha256":"1f12f9065f7938a1ff922b3bd2f10d515e746fbfdd4280dc0346c83fe66d89f9"},
+    {"path":"packages/server-core/src/security/workspace-scope.test.ts","symbol":"foreign workspace and safe audit assertions","lineStart":20,"lineEnd":49,"sha256":"a84c283fa625c45c10222bcabf09e9135b848ffdb2a47ce6dd1109e09e67b72b"},
+    {"path":"packages/server-core/src/handlers/rpc/code-intelligence.ts","symbol":"registerCodeIntelligenceHandlers, projectContext, operation","lineStart":68,"lineEnd":169,"sha256":"3c42bd55a1b724f42f95ae3fe2b26bab53cc53aea05b61cf624728f53addd6f5"},
+    {"path":"packages/server-core/src/handlers/rpc/code-intelligence.ts","symbol":"READ_SPAN, FRESHNESS, transient CANCEL handlers","lineStart":253,"lineEnd":286,"sha256":"3c42bd55a1b724f42f95ae3fe2b26bab53cc53aea05b61cf624728f53addd6f5"},
+    {"path":"packages/session-tools-core/src/knowledge/runtime.ts","symbol":"KnowledgeToolRuntime and process-local registration","lineStart":40,"lineEnd":82,"sha256":"fe52fd5e80775ee0af4c1c945988c44f561549788c8a65621ad8f5131ebf43da"},
+    {"path":"packages/session-tools-core/src/knowledge/format.ts","symbol":"knowledgeErrorResponse, knowledgeUnavailableResponse, requireKnowledgeRuntime","lineStart":43,"lineEnd":68,"sha256":"a6830be034b2dc8293e774e47303e2617e911795389664629a9b43e1946cb960"},
+    {"path":"packages/session-tools-core/src/handlers/knowledge-search.ts","symbol":"handleKnowledgeSearch","lineStart":43,"lineEnd":102,"sha256":"00cd0ccd8a05225cfa89e01088a550091a40e9f6df33cb6ae9260944aa9ea6e6"},
+    {"path":"packages/session-tools-core/src/handlers/knowledge-tools.test.ts","symbol":"registerRuntimeDouble and knowledge_search unavailable/provenance assertions","lineStart":98,"lineEnd":219,"sha256":"e530bc49036e3d7d6a1e185da49dd54eb6b51537405866c6182fba56e2bbad8d"},
+    {"path":"apps/electron/src/renderer/components/session-workbench/RepoArchitectureExplainer.tsx","symbol":"RepoArchitectureExplainer","lineStart":5,"lineEnd":25,"sha256":"70b2a1fb568bd1716706c6680b7cdd8bece10c8919a67585b4d319c5f0511d0f"},
+    {"path":"apps/electron/src/renderer/components/session-workbench/__tests__/repo-architecture-explainer.test.ts","symbol":"SOURCE and source-text-only describe","lineStart":1,"lineEnd":14,"sha256":"7076888d266d15f4f67b586aa96c22371b65cf115d6aac90a52e6fcfdef1753c"}
+  ],
+  "nextExecutableAction": "Lead reads this report and retains CI-015 as NOT_STARTED/NOT_VERIFIED. After its wave0 commit and accepted artifact+readback receipts for CI-010, CI-011, CI-012 and CI-013, resolve the published baseline/reference manifest, rehash/reread every changed inspected seam, obtain foundation readiness and evidence/desktop ownership, then dispatch implementation restricted to the four normative owned new files. First code contribution is contracts.test.ts using accepted production contracts; no CI-015 product endpoint, store or UI. Shared requests above remain integration-owner work, not worker authorization.",
+  "risks": [
+    "Concurrent lead-owned source edits can stale line ranges and whole-file hashes; working-tree inspection is not proof tied to a committed revision.",
+    "Published cloud baseline e953786 differs from supplied preflight input a21aeab; reference revision/digest remain placeholders. Lead must resolve rather than silently choose one.",
+    "Local-owned wave0 repository contracts cannot satisfy remote-private offline/reconnect acceptance or replace EG-IDENTITY readiness.",
+    "Pure snapshot structural validation and valid source URLs do not establish actual semantic support or authoritative upstream Git identity; require independent source and semantic receipts.",
+    "Legacy local adapter compares UTF-16 character count rather than UTF-8 bytes, recognizes declaration regexes only and creates contains edges; retain honest limitations and exercise authoritative byte-boundary policy.",
+    "Current indexVerifiedSnapshotFiles drops dirty files without commitSha; dirty evidence tests must exercise exact local-byte receipts without pretending coverage exists in this legacy graph projection.",
+    "Transient request CANCEL is not durable job cancellation; race tests must target accepted persistent job arbitration and output ownership.",
+    "Runtime doubles, registry presence, declaration hash format checks and source-text UI tests can all pass while native transport or mounted UI is absent.",
+    "Blanket denial, unavailable provider, insensitive seeded oracle or readiness retries can hide a real acceptance failure; pair negative controls with permitted semantic controls and record attempts.",
+    "CI-015 has no granted sharedPatchPaths. Integration requests require the lead's ownership/lease and dependency ordering; this report grants no product writes.",
+    "Actual native/provider/transport evidence and an evidence artifact destination are required beyond the four normative files; do not invent unlisted persistent stores, unapproved fixture files or cloud execution.",
+    "No runtime/test/native/provider verification was authorized or executed in this preflight; featureComplete remains false and all product acceptance rows remain NOT_VERIFIED."
+  ]
+}

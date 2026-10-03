@@ -1,0 +1,511 @@
+{
+  "task_id": "WP-24-preflight",
+  "attempt_id": "d7550f83021c399e9f7c283d139ea7ba",
+  "packet_hash": "6a6db1e88db262bd845d630872b837aa3848e9a56ddd5962b511bc4f1ca93481",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-24",
+  "featureComplete": false,
+  "mode": "inspect-only; owned preflight artifact, not feature implementation",
+  "workTier": "bounded-workflow",
+  "dependencies": ["WP-22", "WP-03"],
+  "evidenceBoundary": {
+    "revisionOrigin": "Input revision supplied by dispatch; no Git commands issued. Evidence describes inspected working-tree bytes, not a claim that those bytes are committed at input_revision.",
+    "specDigestMatchesPacket": true,
+    "wholeFileDigestMethod": "shasum -a 256 of concrete inspected paths",
+    "freshness": "References are snapshot evidence. Root-owned integration may change these files; validate all recorded whole-file hashes before applying any request and re-inspect changed symbols. No runtime acceptance is claimed.",
+    "discovery": "Codegraph explicitly reported no index; find could not judge candidates because its provider returned 402. Continued using literal-symbol grep and scoped reads of normative paths and direct imports; neither failure is treated as evidence of absent code.",
+    "observedMissingDirectories": ["apps/workspace-service", "packages/shared/src/workspace-domain", "tests/macro-integration"],
+    "prohibitedOperationsNotPerformed": ["product source edits", "test edits", "manifest edits", "progress edits", "Git mutations", "builds", "product tests", "native UI", "network operations"],
+    "verificationPlan": "Only the supplied read-only preflight --verify command is to run after artifact creation; all product scenarios below are proposed future verification."
+  },
+  "dependencyReceiptsRequired": [
+    {"producer": "WP-22", "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"], "need": "Canonical Company/Contact identity, provenance/source ACL, CRM repository authority and typed integration surface. Do not create a second Company store."},
+    {"producer": "WP-03", "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"], "need": "Transport actor, workspace membership, resource-scoped write/manage actions, current policy epoch and revocation semantics; business owner must not imply ACL ownership."}
+  ],
+  "foundationGates": [
+    {
+      "id": "wave0-integration",
+      "classification": "dispatch prerequisite, not an added package DAG edge",
+      "evidence": "Worker prompt requires lead wave0 commit and accepted dependency receipts before implementation; three proposed foundation directories were absent during scoped glob.",
+      "required": "Lead supplies committed wave0 bootstrap, accepted WP-22/WP-03 receipts, workspace-service authority/migrator interfaces, and single integration owner for repeated CRM file paths.",
+      "state": "NOT_ESTABLISHED_BY_PREFLIGHT"
+    },
+    {
+      "id": "common-command-outbox",
+      "classification": "hidden functional foundation; WP-04 is transitive through WP-22 -> WP-17",
+      "evidence": "WP-24 operations demand RoxCommand v2, expectedRevision and idempotency; migrations demand receipt uniqueness/request hash/inbox fencing; realtime demands transaction outbox. Published plan WP-17 depends on WP-04; WP-22 depends on WP-17. Current DossierPage.save writes one localStorage payload; proposeCrmEdit performs no transaction.",
+      "required": "Accepted reusable mutation+receipt+event transaction and revision-CAS interface with durable consumer inbox, lease/processed separation and replay cursor. WP-24 must register CRM operations into it rather than invent its own command/receipt/event store.",
+      "state": "RECEIPT_AND_INTERFACE_REQUIRED"
+    },
+    {
+      "id": "projection-offline",
+      "classification": "hidden UI/recovery foundation; WP-05 is transitive through WP-22 -> WP-18",
+      "evidence": "WP-24 requires offline_queued, restart before reply and revisioned replay; plan WP-18 depends on WP-05. storage.ts.subscribeWorkspaceJson listens only to DOM/storage events and saveWorkspaceJson has no durable command queue.",
+      "required": "Accepted common projection/outbox/replay interface: durable command ID/key, revision, receipt lookup, policy recheck, conflict draft/quarantine and cursor gap recovery; use explicit standalone mode separately.",
+      "state": "RECEIPT_AND_CRM_BINDING_REQUIRED"
+    },
+    {
+      "id": "search-attention-mentions-agent",
+      "classification": "completeness gate separate from explicit WP-24 dependencies",
+      "evidence": "WP-24 lists search, mentions, notifications, activity, agent access and API/MCP; test-plan sections 10/12 forbid deferring search/agent permission tests. Plan assigns common mechanisms to WP-06, WP-07, WP-09 and WP-36. WP-06 is transitive via WP-17; WP-07/WP-09/WP-36 are not WP-24's explicit edges. platform-contract.ts has mentions relations but no owner mention resolver; DossierDetail searches notes by names and startAgentRun only starts a safe local session.",
+      "required": "Lead obtains accepted authorized search, principal/mention resolution, attention and agent-domain adapter interfaces or integrates those common owners before full DoD. Implement owner selection/opening through canonical principal reference without private-email lookup or implicit sharing. Do not add CRM-specific search/notification/agent stores.",
+      "state": "INTERFACE_AND_INTEGRATION_RECEIPTS_REQUIRED"
+    },
+    {
+      "id": "dossier-identity-cutover",
+      "classification": "hidden integration compatibility gate; WP-23 is a sibling, not an explicit dependency",
+      "evidence": "DossierEntity.id is a plain string; DossierPage.addEntity generates dos-* local IDs and route selection uses that ID. WP-23 owns ImportDossier/aliases, notes/promises/brief retention and reversible merge. WP-22/23/24 repeat contracts.ts, commands.ts, repository.ts and both Dossier existing files.",
+      "required": "Coordinate canonical DTO/view adapter and existing ID deep-link resolution with WP-22/WP-23. Keep local standalone cards/notes/promises/brief reachable and do not silently upload or merge them by title/org; do not mark migration implemented in this package.",
+      "state": "SHARED_OWNER_DECISION_REQUIRED"
+    },
+    {
+      "id": "typed-money-and-result-contract",
+      "classification": "hidden published schema/compile gate",
+      "evidence": "Primary crm.updateCompany schema uses revenue.minorUnits integer and ownerPrincipalId string; domain UpdateCompanyPipeline uses revenue.amountMinor string and ownerRef EntityRef with baseRevision number. Rox2EntityRef.revisionId is string. Primary responseSchema.status is a string while response description names Rox2CanonicalResult, whose source definition uses the execution/lifecycle/verification triad. ISO regex validates shape only.",
+      "required": "Common contract owner must publish one deliberate boundary mapping, exact monetary range/encoding and ISO currency validation; retain exact decimal/integer database and arithmetic and never coerce an unbounded amountMinor through Number. Resolve unsafe integer transport without silently narrowing the published API. Map queued/rejected/applied receipts into the existing status triad without treating an ACK as verified. No second competing DTO convention.",
+      "state": "CONTRACT_RESOLUTION_REQUIRED"
+    },
+    {
+      "id": "migrator-stage-retirement",
+      "classification": "hidden persistence foundation",
+      "evidence": "Normative newFiles contains both 024_crm_stages_properties.sql and 24-domain-contract.sql; migration record explicitly calls the latter a proposed identifier to be generated by the selected migrator. Entity, actor and common receipt/inbox tables are prerequisites, not CRM-owned replacement tables.",
+      "required": "Selected migrator owns actual filename/order; establish whether the two listed identifiers are a single domain migration or distinct additive steps before writing SQL. Stage FK scoped workspace/pipeline; delete/replace serializes against moves, blocks or explicitly migrates referencing records; backfill/quarantine with provenance and forward repair after cutover.",
+      "state": "MIGRATOR_AND_SCHEMA_RECEIPTS_REQUIRED"
+    },
+    {
+      "id": "conation-live-boundary",
+      "classification": "existing fail-closed foundation, conditional on using external Conation writes",
+      "evidence": "crm.ts.proposeCrmEdit/sendCrm call confirmWrite without confirmed schema. capabilities.ts.CONATION_LIVE_SCHEMA_CONFIRMED=false and GraphqlSoupCrmCompany writer is unsupported. Revision comparison in proposeCrmEdit is downstream of the blocked gate and is not proof of executable CAS.",
+      "required": "Keep Conation edit/send blocked unless actual source/schema/license/authorization/readback audit opens that capability. Native workspace CRM authority can be implemented without unblocking Conation. Never flip the global gate or count fixture results as live receipts.",
+      "state": "PRESERVE_EXISTING_GATE"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/crm/contracts.ts",
+    "apps/workspace-service/src/modules/crm/commands.ts",
+    "apps/workspace-service/src/modules/crm/repository.ts",
+    "tests/macro-integration/wp-24.test.ts",
+    "apps/workspace-service/src/modules/crm/pipeline.ts",
+    "apps/workspace-service/src/modules/crm/queries.ts",
+    "packages/shared/src/workspace-domain/crm/property-schema.ts",
+    "apps/electron/src/renderer/pages/extra-screens/dossier/CrmBoard.tsx",
+    "apps/electron/src/renderer/pages/extra-screens/dossier/CrmFilters.tsx",
+    "apps/workspace-service/migrations/024_crm_stages_properties.sql",
+    "tests/macro-integration/crm-stage-revision-money.test.ts",
+    "apps/workspace-service/migrations/24-domain-contract.sql"
+  ],
+  "ownedNewFilesNote": "Exactly normative newFiles, not permission to write them in this preflight. contracts.ts/commands.ts/repository.ts are also WP-22/WP-23 proposed artifacts: after dependency integration they become shared extension requests, not new overwrite targets. Migration identifiers are proposals and require the selected migrator's resolution.",
+  "proposedCodeContributions": [
+    {"path": "apps/workspace-service/src/modules/crm/pipeline.ts", "symbols": "Proposed UpdatePipeline and retireStage", "change": "Admin-scoped catalog commands with expected pipeline revision, stable workspace/pipeline stage IDs and rank. Retire with explicit replacement in one locked transaction, validating replacement not deleted and migrating referencing company properties; reject missing replacement when references exist; audit through common grants/outbox."},
+    {"path": "apps/workspace-service/src/modules/crm/queries.ts", "symbols": "Proposed QueryCrm", "change": "One typed filter compiler/query over WP-22 canonical company/contact rows plus stage/owner/properties; apply current read policy before grouping/counting/pagination, bound page size and use stable scoped cursor bound to authorized query context. Board/list consume this result, not independent local filters."},
+    {"path": "packages/shared/src/workspace-domain/crm/property-schema.ts", "symbols": "Proposed CrmFilter and property validators", "change": "Versioned discriminated property/filter types, reject unknown fields/operators and invalid stage/owner/currency values; encode revenue exactly and prohibit floating cross-currency totals. Reject arbitrary unvalidated JSON."},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/CrmBoard.tsx", "symbols": "Proposed CrmBoard", "change": "Controlled board over shared QueryCrm result; accessible move action and drag/drop call same update command with captured base revision/idempotency key. Key by canonical ref; conflict retains draft, removes stale optimistic overlay and refetches; one card per canonical ID; no independent persistence."},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/CrmFilters.tsx", "symbols": "Proposed CrmFilters", "change": "Controlled typed stage/owner/property filters reused by board/list; owner selector consumes authorized principal resolver. Preserve t() convention and request all ten locale updates from shared integration owner."},
+    {"path": "tests/macro-integration/crm-stage-revision-money.test.ts", "symbols": "Proposed CRM boundary regressions", "change": "Consumer-visible CAS races, stage deletion/replacement vs concurrent move, exact monetary boundaries/currencies and pipeline-role denial, with deterministic seed 20260954. No source-text/wiring tests."},
+    {"path": "tests/macro-integration/wp-24.test.ts", "symbols": "Proposed WP-24 scenario suite", "change": "Real command/query readback, current actor policy and source-email isolation, persisted-command/reply crash recovery, duplicate/reordered/drop event controls, owner resolution and common projection/receipt identity. UI/native acceptance remains required independently."}
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+      "symbol": "DossierEntity / normalizeDossierData / filterEntities / buildDossierSummary / buildBriefPrompt",
+      "change": "With WP-22/WP-23 owner, attach typed canonical CRM view metadata (ref/revision/stage/owner/revenue/properties) using accepted CRM DTO; keep legacy standalone parser/cards intact. Shared branch uses QueryCrm, not filterEntities as a server authorization substitute. Pass only authorized source links/context into shared summaries and agent brief; do not manufacture links from matching display names.",
+      "reason": "Current parser reconstructs only local fields and would discard new persisted fields; name-based touch aggregation has no shared policy/provenance authority. Avoid duplicate entity definitions and preserve notes/promises/brief."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+      "symbol": "DossierPage data/save/updateEntity/rows/selected/select/addEntity; DossierDetail onUpdate/openTouch/generateBrief",
+      "change": "Select explicit standalone vs shared authority; keep current local functions only for standalone. In shared mode read one QueryCrm projection for list and CrmBoard, render CrmFilters, dispatch typed crm.updateCompany for stage/owner/revenue with expectedRevision/idempotency key, and use common replay/receipt lookup/invalidation. Use canonical refs through existing dossier destination and retained aliases; expose admin catalog actions only when server policy grants manage. Refetch on conflict/revoke, preserve unsynced draft, show six normative UI states and safe source-context links.",
+      "reason": "Current save optimistically writes localStorage; updateEntity replaces in-memory data without actor/CAS; addEntity generates dos IDs. Extending that writer to shared CRM would bypass authority and lose concurrent updates."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_ENTITY_KINDS / Rox2EntityRef / ROX2_RELATION_RULES / Rox2Event / Rox2CanonicalResult",
+      "change": "Reuse WP-02/WP-22 accepted company/contact kind mapping and canonical ref/alias machinery; do not introduce a second CRM identity. If business owner is represented by common assigned edges, extend its allowed domain to the accepted company kind through graph owner, retaining person/principal resolution and no ACL inheritance. Register typed crm.company_updated/crm.stage_changed domain payloads and policy/projection metadata through accepted event contract, and map command results to existing status triad with verified receipt/readback only.",
+      "reason": "Current assigned rule only permits task/session/note -> person; domain company/contact names differ from current crm-company/person enum; event causation/revision fields are optional and lack policyEpoch. Changes must compose with wave0/graph owners rather than overwrite shared contract."
+    },
+    {
+      "path": "packages/server-core/src/meetings/conation/crm.ts",
+      "symbol": "resolveCrmTarget / proposeCrmEdit / sendCrm",
+      "change": "Preserve account+remoteType+remoteId resolution and all Conation write blocks. Only integrate accepted authorized native-domain invocation at the verified command boundary if requested by common agent owner; map unknown/conflict/denied truthfully and never set live from a proposal. sendCrm remains blocked absent audited outbound integration.",
+      "reason": "Display name is not identity; existing hard-coded authPresent and caller-provided currentRevision are not transport actor authentication or database CAS. Native CRM feature acceptance does not authorize external CRM sending."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/crm/contracts.ts",
+      "symbol": "WP-22 accepted CRM contracts; proposed crm.updateCompany / UpdateCompanyPipeline / QueryCrm",
+      "change": "Ask dependency owner to add strict command/query/result/filter DTOs to its accepted file: transport-derived actor only, same workspace company/stage/owner checks, expectedRevision and immutable idempotency request hash, membership-validated business owner, authorized card DTO/cursor. Resolve minorUnits integer versus amountMinor string, ownerPrincipalId versus ownerRef and scalar status versus triad explicitly before code generation.",
+      "reason": "Normative new file is repeated across WP-22/WP-23/WP-24 and currently its parent directory is absent; this is an integration request against accepted future interface, not evidence of an existing symbol."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/crm/commands.ts",
+      "symbol": "WP-22 accepted command module; proposed crm.updateCompany / UpdatePipeline / SetOwner / SetRevenue",
+      "change": "Extend dependency-owned dispatch with common authorized command gateway; reject body actor/extra fields, validate membership/source permissions and resource manage grants, run CAS mutation+receipt+outbox atomically through accepted repository, return canonical readback and exact documented error/status mapping. Register documented HTTP and domain.crm.updateCompany RPC via lead-owned routing, not an alternate CRM endpoint.",
+      "reason": "Shared proposed file; do not overwrite ingestion commands or invent separate authority. Exact transport registration file/symbol is a missing wave0 interface, not guessed in this preflight."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/crm/repository.ts",
+      "symbol": "WP-22 accepted repository; proposed updateCompany/query and pipeline transaction seams",
+      "change": "Extend canonical rows with stage/property/owner/revenue joins and scoped FKs; update where expectedRevision matches, advance once and persist common receipt/outbox in same transaction. Lock stage retirement/move references compatibly; validate stage workspace/pipeline and live membership; return authorized DTOs before serialization and reuse common inbox/replay mechanisms.",
+      "reason": "This proposed file is dependency-owned and absent now. Required CAS/recovery must be database-enforced, not simulated by comparing two caller strings in proposeCrmEdit."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-24 section lines 468-489",
+      "change": "Lead updates actual accepted CRM interfaces, migration identifiers, standalone/shared cutover, exact money units/range/currency rules and admin/source visibility behavior after implementation. Keep current planned status until real receipts exist.",
+      "reason": "Normative documentation requirement; current section documents proposed behavior only."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "CRM-INGEST-01; completeness checklist; evidence/receipt record",
+      "change": "Add integrated WP-24 drag/list equivalence, same-revision race/refetch, stage-retirement replacement, currency boundaries, owner/private-source separation, receipt crash/replay and seeded role/event controls with version-bound UI/API/DB evidence and exact recovery procedure.",
+      "reason": "Existing broad CRM scenario and checklist are a future test plan, not WP-24 runtime receipts."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Board drag/list filter use same query",
+      "currentEvidence": "DossierPage.rows lines 157-161 calls filterEntities over local DossierData; no board appears in inspected page. filterEntities lines 236-243 supports text/kind only.",
+      "requiredChange": "Proposed queries.ts.QueryCrm is sole authorized typed source for board/list; DossierPage renders both from same canonical result, with CrmFilters controlling identical filter/cursor semantics.",
+      "verification": "In W1 seed stage/owner/property variants, switch board/list under same filters and assert identical canonical ID set, counts and authorized cursor across pages; move a card then both views read same resulting revision after watermark.",
+      "missingPrerequisite": "Accepted WP-22 DTO/query repository and WP-03 read policy plus projection adapter.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "concurrent move revision conflict",
+      "currentEvidence": "crm.ts.proposeCrmEdit lines 38-50 is gated blocked before its string-revision comparison; DossierPage.updateEntity lines 116-120 has no revision.",
+      "requiredChange": "Proposed commands.ts crm.updateCompany and repository CAS use expectedRevision in same atomic mutation/receipt/outbox transaction; map stale write to REVISION_CONFLICT.",
+      "verification": "Two authorized clients issue different moves against one base revision with distinct idempotency keys: one applies, the other conflicts; revision advances once, one accepted stage change, no duplicate receipt effect.",
+      "missingPrerequisite": "WP-04 common CAS/receipt transaction via accepted dependency chain; running service and migration.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "revenue currency precise",
+      "currentEvidence": "DossierEntity lines 19-30 has no revenue. Spec primary Money lines 21080-21095 is integer minorUnits; domain API lines 21643-21654 uses amountMinor string.",
+      "requiredChange": "property-schema.ts strict money validator and repository exact integer/numeric amount+ISO currency; common contract owner resolves transport range/encoding, exact formatting and same-currency aggregation without float conversion.",
+      "verification": "Round-trip minor amounts (including zero, currency-specific exponents and precision boundary values), edit/reload/API/DB exact equality; reject noninteger/nonfinite/invalid currency and unsupported range per accepted contract; mixed currencies stay separate, never one float sum.",
+      "missingPrerequisite": "Published exact money contract and selected database/migrator; range conflict must be resolved, not narrowed implicitly.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "nonadmin cannot edit pipeline",
+      "currentEvidence": "DossierPage local writer has no role gate; ROX2_PERMISSIONS lines 55-64 lacks pipeline-specific manage vocabulary. WP-03 plan supplies resource action grants.",
+      "requiredChange": "Proposed pipeline.ts.UpdatePipeline authorizes workspace/team catalog manage action server-side through common grants; ordinary company write must not confer catalog manage; UI reflects server capabilities.",
+      "verification": "A admin changes catalog; B member/V viewer/C outsider and Agent-V allow-all receive FORBIDDEN over HTTP/native/domain invocation; catalog revision/rows/events unchanged on denial.",
+      "missingPrerequisite": "Accepted WP-03 resource-action vocabulary, actor and policy epoch.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "owner mention resolves",
+      "currentEvidence": "DossierEntity has no owner field; platform-contract.ts mentions relation exists but assigned domain excludes crm-company. Names/aliases are local text match, not principal identity.",
+      "requiredChange": "SetOwner validates workspace principal membership; typed CrmCard exposes authorized owner ref/display DTO and uses common principal/mention resolver for selection and opening, distinct from CRM Contact/email identity.",
+      "verification": "Select B, persist/reload and open owner mention to canonical authorized principal; two equal display names remain distinct; removed member/foreign workspace ref denied; private source mail absent from resolver response.",
+      "missingPrerequisite": "Accepted WP-22 principal/contact separation and common mention/identity resolver (WP-09/WP-03 integration).",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Concurrent drag/drop against same base revision returns conflict and refetch; no duplicate board state.",
+      "currentEvidence": "DossierPage.save lines 111-120 immediately sets data; storage.ts lines 35-45 only stores JSON and dispatches DOM event, with no conflict/refetch flow.",
+      "requiredChange": "Controlled CrmBoard captures base revision and common command receipt; rejected optimistic move is removed, unsaved draft retained and QueryCrm refetched, deduplicating by canonical ID/revision.",
+      "verification": "Actual two-client concurrent drag/drop: one success and one conflict banner; losing client refetches winner stage, both converge to exactly one card for entity; reload and duplicate event replay do not resurrect stale placement.",
+      "missingPrerequisite": "CAS command, common projection invalidation/cursor and real Electron scenario harness.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Deleted stage cannot orphan records; replacement stage migration explicit.",
+      "currentEvidence": "No stage entity in DossierEntity; normative migration requires scoped stable IDs/FK/rank/revision and stage delete acceptance.",
+      "requiredChange": "pipeline.ts retireStage plus migration FK/repository transaction: reject in-use deletion without explicit replacement; validate replacement live/same pipeline/workspace, migrate affected records atomically and serialize against concurrent moves; preserve audit/tombstone.",
+      "verification": "Admin deletes in-use stage without replacement -> rejection and unchanged rows; explicit replacement -> every company points to live stage; race retire vs move/new reference cannot orphan; restart/replay yields same rows/receipts.",
+      "missingPrerequisite": "Accepted company schema, stage migrator and transaction locking strategy.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Non-admin cannot change team pipeline catalog; owner reassignment does not expose private source email.",
+      "currentEvidence": "DossierDetail.summary/generateBrief derives local text touches and notes; no team catalog or private mail reauthorization. crm.ts.relatedSourceDenied is caller option, not policy authority.",
+      "requiredChange": "Common manage policy guards catalog; SetOwner changes business metadata only, never grants/source consent; QueryCrm/context/resolver filter source mail title/body/count before DTO serialization at current policy epoch.",
+      "verification": "A reassigns company to B lacking M-private read; B can see authorized company/owner but not PRIVATE_WP-24 email body/title/count via list, context, search, mention or agent. Nonadmin catalog edit denied; subsequent revoke removes future reads/subscriptions.",
+      "missingPrerequisite": "WP-03 grants/source checks and WP-22 provenance interfaces; common search/context adapter.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "DossierPage already renders translated list/detail, TextField/Chip/EmptyState and local brief; proposed board/filter components are normative new artifacts.",
+      "requiredChange": "Extend this destination with controlled board/list, stage/owner/revenue/property controls, accessible move action, scoped admin panel and existing t()/UI primitives; all new keys translated in ten locales, no second CRM surface.",
+      "verification": "Actual Electron interaction and screenshots, drag and keyboard move, hover/focus/click help, reduced-motion and loaded font/compact layout evidence at delivered revision.",
+      "missingPrerequisite": "Accepted shared client adapter, translations from integration owner and authorized native UI verification after implementation.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "DossierPage.select lines 168-169 uses routes.view.screen('dossier', id); current id is local dos-* from addEntity.",
+      "requiredChange": "Keep dossier destination, resolve canonical Company/Contact and retained local aliases through accepted registry/view adapter, safely render missing/denied/stale target and retain selection/history/panel behavior.",
+      "verification": "Open canonical Company link and existing dossier alias after restart/rename; back/panel focus works; forged foreign-workspace or revoked link reveals no title.",
+      "missingPrerequisite": "WP-22/WP-02 canonical ref mapping and coordinated WP-23 alias cutover.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "DossierEntity.id is untyped string; platform-contract.ts Rox2EntityRef is scoped and parseRox2EntityId validates existing enum crm-company/person.",
+      "requiredChange": "Reuse accepted WP-22 company/contact refs; typed stage/property definitions and owner principal ID, schema/revision fields and scoped identity; do not introduce competing company/contact enum or infer principal from email/name.",
+      "verification": "Cross-workspace stage/company/owner refs rejected; repeated aliases stable; equal display names stay distinct; schema/unknown fields invalid rather than silently accepted.",
+      "missingPrerequisite": "WP-02/WP-22 accepted registry/DTO schema and strict property contract.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "storage.ts persists browser JSON only; normative crm_stage/crm_stage_policy/company_property tables require common entity FKs and exact revisions.",
+      "requiredChange": "Add selected-migrator stage/property schema to sole workspace authority; preserve standalone local data separately as explicit authority, not shared writer; atomic mutation+receipt+event and provenance backfill/quarantine.",
+      "verification": "Read command then DB/canonical API, restart service/client and compare entity ID/revision/money/stage/owner/receipt; schema enforces no orphan and scoped FK; accepted writes survive recovery.",
+      "missingPrerequisite": "Committed service bootstrap, applied WP-22/03/common migrations, selected CRM migration filenames.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "DossierPage.updateEntity has no authenticated envelope. Spec crm.updateCompany defines HTTP/native names and full errors; proposeCrmEdit is blocked proposal only.",
+      "requiredChange": "Strict native/shared crm.updateCompany and catalog commands through common actor gateway with required expectedRevision, idempotency key/request hash, source/owner/stage validation and canonical receipt; reject body actor and workspace mismatch.",
+      "verification": "Authorized update/readback; absent/forged actor, extra fields, mismatched workspace, missing revision and altered-payload same key denied; retry same key returns same effect/receipt; all documented statuses/errors have boundary mapping and exercised relevant paths.",
+      "missingPrerequisite": "Accepted command v2, WP-03 actor/policy and transport registry seam from wave0 lead.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "filterEntities is local unbounded text/kind filter; no owner/stage/revenue properties or authorized cursor.",
+      "requiredChange": "Proposed QueryCrm compiles typed grouped filters over accepted canonical repository; current ACL before items/count/grouping, deterministic stable cursor tied to workspace/query authorization and bounded page size.",
+      "verification": "Multi-page stage/owner/property filters and grouped readback, invalid filter/cursor denied, no hidden total/title, actor revoke during pagination prevents subsequent private rows.",
+      "missingPrerequisite": "Accepted WP-22 repository/read policy and common query cursor contract.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "subscribeWorkspaceJson handles storage/custom DOM events, not transactional domain delivery. Spec requires crm.company_updated/crm.stage_changed and revisioned invalidation/replay.",
+      "requiredChange": "Commit typed CRM events through common outbox; authorized subscribers invalidate canonical query with revision/policy fences, dedup inbox and durable cursor; detect gaps/refetch instead of accepting stale board overwrite.",
+      "verification": "Two clients see accepted move; disconnect/reconnect/restart replay catches up; reorder/duplicate/drop events and stale policy/tombstone revisions cannot duplicate or resurrect cards; revoked subscriber receives no sensitive payload.",
+      "missingPrerequisite": "WP-04/05 transaction outbox, authorized delivery and projection interfaces.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "ROX2 permission/status types exist, but local writer has no resource auth; Conation block is capability gate, not WP-24 workspace ACL proof.",
+      "requiredChange": "Use authenticated server actor + workspace/resource/source policy for every query/mutation/linked ref; pipeline manage separate from company edit; business owner not ACL owner; allow-all never bypasses grants; fence revoked policy.",
+      "verification": "A/B/V/C/guest/Agent-V actor matrix over HTTP/RPC/agent, open surface revoke and queued command replay; denied writes leave rows/events unchanged and denied reads hide body/title/count.",
+      "missingPrerequisite": "Accepted WP-03 authorization/revoke interface and actor fixtures.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "Spec permissions require team/source policy; test plan CRM sharing explicitly denies private M-private via Company relation. No sharing enforcement in local DossierEntity.",
+      "requiredChange": "Use common explicit grants/inheritance/public-link expiry for company representation; source/email refs reauthorize independently and SetOwner/mentions never confer access; reuse common share surface rather than adding CRM grants store.",
+      "verification": "Authorized company share does not reveal private email to B; expired public link and revoked grant deny canonical queries/deep links/context; ownership change leaves source grants unchanged.",
+      "missingPrerequisite": "WP-03 accepted sharing/source policy contract and lead-owned common share adapter.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "DossierDetail lines 375-394 searches notes by name/aliases; this is not CRM canonical indexing/ACL/watermark.",
+      "requiredChange": "Register CRM card fields with accepted common search extractor/upsert/delete and source provenance; current read policy at result serialization, delete/revoke fences and visible watermark.",
+      "verification": "Search changed company/stage/owner returns correct canonical ref after watermark; tombstone/revoke removes results/snippets even before index catches up; private mail marker absent for B/C.",
+      "missingPrerequisite": "WP-06 common projection/search integration via dependency chain, CRM extractor registration.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "ROX2 mentions relation accepts broad kinds but there is no Dossier owner/mention occurrence logic in inspected page/model.",
+      "requiredChange": "Integrate accepted resolver/occurrence/source-revision policy for canonical CRM/principal mentions; owner chip opens same authorized resolver, business assignment is distinct from textual occurrence; no auto-grant or team-wide ping.",
+      "verification": "Owner canonical opening, target policy denial and equal-name distinctions; relevant textual occurrence edit/removal updates backlink once through common resolver and does not grant mail access.",
+      "missingPrerequisite": "WP-09 common graph mention interface and WP-03 target policy; no new CRM mention store.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "WP-24 completeness requires notifications; page only exposes local promises/brief. Published WP-07 owns recipient dedup/read state.",
+      "requiredChange": "Route accepted owner-assignment/stage attention events to common attention policy with semantic recipient/event/reason dedup, current ACL and existing seen/done/mute/snooze behavior; do not create CRM inbox.",
+      "verification": "Eligible owner receives one policy-selected notification/deep link across restart/replay, overlap reasons coalesce, revoked/private recipients get no source snippet; read-state actions persist through common attention API.",
+      "missingPrerequisite": "WP-07 attention interface, approved CRM recipient policy and common UI adapter.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Rox2Event contains actor/causation/correlation/revision, optional; local saves emit only a storage key custom event.",
+      "requiredChange": "Emit crm.company_updated/crm.stage_changed with authenticated actor, cause/correlation/revision and policy epoch to common durable activity/audit pipeline; no source mail body/title in audit payload.",
+      "verification": "Admin catalog/owner/stage changes produce correct actor/ref/revision activity exactly once after retry; denied changes produce no applied activity; privacy marker absent from unauthorized activity/log output.",
+      "missingPrerequisite": "Common event/outbox/activity sink and WP-03 audit action grant interface.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "DossierDetail.generateBrief uses buildBriefPrompt and startAgentRun safe session; caller-supplied local summary is not shared-domain actor enforcement.",
+      "requiredChange": "Expose authorized canonical CRM read/search/update through accepted common agent tools/acting-user delegation, same command/query boundary and provenance. Shared brief must include only current authorized context and retain no-outbound read-only behavior.",
+      "verification": "Agent-A reads/updates permitted CRM with canonical receipt; Agent-V allow-all cannot change stage/catalog or read private source; revoked source excluded even if local summary/cache still contains names.",
+      "missingPrerequisite": "WP-36 common domain/agent adapter and context policy interfaces; keep Conation blocks unchanged.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Normative HTTP POST /v1/workspaces/{workspaceId}/commands/crm.updateCompany and nativeRpc domain.crm.updateCompany are proposed; workspace-service directory absent at inspection.",
+      "requiredChange": "Lead registers typed operation/QueryCrm and pipeline actions via accepted transport and common agent/MCP registry with identical schema, current actor policy, revision/idempotency and receipt/status mapping; no renderer-only writer or parallel endpoint.",
+      "verification": "Equivalent authorized and denied updates/readback through HTTP, native RPC and native agent/MCP dispatcher yield same canonical ID/revision/errors/receipt semantics; body actor injection rejected.",
+      "missingPrerequisite": "Wave0 transport registration path/symbol and accepted WP-36 registry interface; exact existing registration seam not inspected because outside package/direct-import scope.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Rox2Event has cause/correlation/revision but no policyEpoch/projectionWatermark field in inspected definition; spec requires commandId, cause/correlation, aggregateRevision, policyEpoch, projectionWatermark, retry/DLQ counters and privacy.",
+      "requiredChange": "Use common telemetry context for CRM command/outbox/projection lifecycle and admin audit; carry required IDs/epochs/watermarks and retry/DLQ status without raw email/body/transcript/tokens.",
+      "verification": "Trace one command across receipt/event/query watermark, induce retry/DLQ and observe counters/correlation; assert private marker and credentials absent from collected logs and denied DTOs.",
+      "missingPrerequisite": "Accepted common telemetry/outbox/consumer interfaces and running fixture stack.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Normative tests/macro-integration directory absent at inspection; spec names wp-24.test.ts and crm-stage-revision-money.test.ts plus integration/negative/recovery checks.",
+      "requiredChange": "Implement named consumer-visible command/query/CAS/money/stage-policy regressions and integrated scenario evidence with seed 20260954, private marker PRIVATE_WP-24, baseline controls and independent held-out mutation.",
+      "verification": "After implementation run normative bun test command plus relevant existing suites; exercise actual Dossier surface, not tests alone; positive baseline must pass and seeded permission/event mutations must fail specific assertions, not infrastructure.",
+      "missingPrerequisite": "Accepted runtime/migrations/fixtures and authorization to run tests/UI in implementation phase; prohibited during this preflight.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "Published implementation section and test plan are explicitly PROPOSED, with no runtime PASS.",
+      "requiredChange": "Lead updates normative WP-24 section and test plan with actual contracts/migration, board/list controls, units/range/currency examples, business owner vs grants, private source boundaries, conflict/retry/recovery and observed limitations/evidence.",
+      "verification": "Review docs against exact accepted API/receipt/UI and reproduction path; no unverified live/completion claims or fabricated migration timestamps.",
+      "missingPrerequisite": "Implemented version-bound behavior and root documentation ownership.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "DossierDetail has briefError only; no CRM revision/admin/permission/offline command states. Normative errors include REVISION_CONFLICT, IDEMPOTENCY_CONFLICT and REVOKE_FENCE_PENDING.",
+      "requiredChange": "DossierPage/controlled board show permission_denied, retryable_error and conflict/refetch; distinguish terminal schema/validation denial, reauth/provider unavailable, pending fence, reconciling/ambiguous external effect and quarantined draft from applied_verified.",
+      "verification": "Exercise stale move, malformed payload, nonadmin, revoke, network/service outage and retry same command key; draft preserved and retry neither duplicates nor reports verified on queued/unknown outcome.",
+      "missingPrerequisite": "Accepted error/status mapping, common queue/receipt adapter and real changed UI.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "Page data initializes synchronously from local JSON; starting state belongs to agent brief, not CRM query.",
+      "requiredChange": "Represent loading/stale-refresh/projection pending explicitly in shared query adapter and DossierPage; retain last authorized view only under valid policy and never present unresolved request as empty or verified.",
+      "verification": "Delay QueryCrm and watermark, switch workspace/filter during load; UI indicates correct loading state and cancels stale response, no cross-workspace stale card/title.",
+      "missingPrerequisite": "Accepted async query/projection state contract and UI fixture control.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "DossierPage lines 271-310 distinguishes local no-filter-results/no-data/no-selection using translated EmptyState, but no permission/configuration/service distinction.",
+      "requiredChange": "Preserve existing empty-state components and show truly empty pipeline/query separately from loading, denied, unconfigured, unavailable and offline; no hidden total/title in denied response.",
+      "verification": "Zero authorized companies, unmatched filter, denied actor, unloaded data and unavailable service produce distinct correct UI/ARIA states; no unauthorized create action for denied user.",
+      "missingPrerequisite": "Query/permission state adapter and localized state keys.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "saveWorkspaceJson persists a final local payload, not an intent, receipt or retry queue; normative offline_queued and persistence-recovery are mandatory here.",
+      "requiredChange": "Use common durable projection/outbox with expected revision/key and command receipt reconciliation; queue displays offline_queued, retry identical intent, quarantine rejected/conflicting draft after current-policy check and cursor replay.",
+      "verification": "Queue move offline, restart client, reconnect and apply once; crash after server commit before reply returns same receipt on retry; revoke during offline period denies/quarantines draft, board refetches and no rejected draft is marked synced.",
+      "missingPrerequisite": "WP-05 common offline replay interface and WP-03 current policy fence via accepted dependencies.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Integration test assertion: board/list, conflict, precise currency, nonadmin pipeline denial, owner mention",
+      "currentEvidence": "Spec tests[0] requires integrated behavior; existing seams provide local UI/model and blocked adapter only, not integrated acceptance.",
+      "requiredChange": "Named wp-24 suite ties real service command/readback to the actual dossier board/list, owner resolver and database invariants rather than echoing mocked DTOs.",
+      "verification": "W1 actors A owner/B member/C outsider, seed 20260954; save screenshot/ARIA, typed API readback, canonical ID+revision, DB unique counts, receipts and event/watermark for all eight explicit criteria.",
+      "missingPrerequisite": "Implementation, accepted dependency receipts and actual scenario runner.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Negative control: unauthorized actor or dropped/duplicated event must fail acceptance",
+      "currentEvidence": "Spec tests[1] and negativeControl require nonadmin stage-definition mutation and independent second failure variant; no baseline run performed.",
+      "requiredChange": "Oracles assert catalog unchanged for denied actor and canonical revision/card/event uniqueness/convergence after replay. Mutation harness bypasses manage policy or drops/duplicates delivery only in isolated evaluation.",
+      "verification": "Establish passing baseline, inject nonadmin catalog-write bypass -> specific authorization invariant fails; independent evaluator injects event drop/duplicate variant -> convergence/uniqueness invariant fails. Infrastructure timeout is not a caught mutation.",
+      "missingPrerequisite": "Real baseline plus isolated mutation/evaluator interface; no test authorization in preflight.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Persistence-recovery: restart between persisted command and reply; state/receipt/canonical ID consistent",
+      "currentEvidence": "Spec tests[2] mandates crash point; neither local save nor blocked proposeCrmEdit emits persistent server receipt.",
+      "requiredChange": "Common transaction commits company mutation/revision/receipt/outbox before acknowledgment; retry uses same workspace+actor+key/hash and returns same canonical outcome; consumers replay idempotently.",
+      "verification": "Kill/restart server after commit before reply, retry identical command, assert same receipt/ID/revision and one state change/event effect; changed payload same key rejected; query and UI converge after reload.",
+      "missingPrerequisite": "Accepted command repository/receipt lookup, crash-injection seam and running migrator/service.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Domain constraint: stable scoped stage ID/rank/revision and stage property FK",
+      "currentEvidence": "Spec migration/domainConstraints prescribe this; DossierData currently contains entities only, no stages.",
+      "requiredChange": "Selected CRM migration and pipeline/repository enforce workspace+pipeline scoped stage identity, ordered stable rank and revision, company/property FK and live/deleted-stage checks; use common entity composite FK where entity-owned.",
+      "verification": "Invalid foreign stage or deleted replacement cannot persist, equal names do not change IDs, reorder retains IDs and advances revision, retire/move race leaves no broken FK.",
+      "missingPrerequisite": "Accepted registry/company schema and selected migrator/locking contract.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Domain constraint: exact revenue amount and ISO currency; no float aggregate across currencies",
+      "currentEvidence": "Normative migration line 21433 and domain constraints line 21673 are stricter than mere three-letter regex in primary Money schema.",
+      "requiredChange": "Exact integer minor-unit/numeric storage and arithmetic, real ISO currency validation/exponent handling; grouped currency-specific totals. Resolve integer/string wire mismatch before accepting out-of-safe-range input.",
+      "verification": "Database/API/UI exact equality for boundary amounts, currencies with zero/two/three decimal exponents, reject malformed/unrecognized currency, mixed-currency query returns separate totals and no conversion fiction.",
+      "missingPrerequisite": "Common money contract/range/ISO source and migration type selection.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Domain constraint: business owner membership, not ACL owner; admin audit through common grants",
+      "currentEvidence": "Spec line 21434 explicitly separates owner from ACL; DossierEntity has no business owner and platform assigned relation alone grants no declared access.",
+      "requiredChange": "SetOwner checks live workspace membership in server transaction, stores principal identity without principal/contact merge, leaves grants/source consent unchanged; catalog management uses common action authorization/audit.",
+      "verification": "Assign B changes owner only; removed/foreign principal denied; B still denied private mail; grant row snapshot unchanged, correct admin audit with current actor/epoch and one accepted event.",
+      "missingPrerequisite": "WP-03 membership/grant/audit and WP-22 provenance contracts.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "License policy: behavior reimplementation; upstream dependency only after exact license audit",
+      "currentEvidence": "WP-24 licensePolicy is BEHAVIOR_REIMPLEMENTATION; capabilities.ts requires AUD#333 source/schema/license before live Conation write.",
+      "requiredChange": "Implement own behavior using existing ROX architecture; do not copy upstream code or add runtime dependency without exact audited license/version. Keep unconfirmed external capability blocked.",
+      "verification": "Implementation/dependency/license review against delivered source and lockfile; live Conation integration, if any, must have independent schema/license/auth/readback receipt.",
+      "missingPrerequisite": "No upstream dependency required for native CRM; if selected later, audit receipt is mandatory, not an N/A substitute for native DoD.",
+      "state": "IMPLEMENTATION_POLICY_GATE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Verification gate: real changed surface and relevant failure/reload observed; fixture is not live receipt",
+      "currentEvidence": "Spec verificationGate and test plan explicitly deny fixture-as-live/complete; this worker has run no product scenario and must not do so.",
+      "requiredChange": "Lead binds integration/negative/recovery/UI evidence to exact implementation revision, dirty hash/image/schema/fixture IDs, seed, receipt/event/policy/watermark and observed expected values; distinguish implemented, verified and delivered.",
+      "verification": "Observe actual Dossier drag/list/owner/admin behavior plus conflict, denied private-source, restart/reconnect and caught controls on integrated version; retain screenshots/ARIA/video where needed and readback receipts; validate fresh hashes after material source changes.",
+      "missingPrerequisite": "Lead wave0/dependency acceptance, completed implementation and authorized runtime verification phase.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts", "symbol": "DossierEntity / normalizeDossierData", "lineStart": 19, "lineEnd": 156, "sha256": "7cb89ba6653d9dc79c1f610484260d3f68cd472d8d90ba26840d4e277f91e5cd"},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts", "symbol": "filterEntities", "lineStart": 236, "lineEnd": 243, "sha256": "7cb89ba6653d9dc79c1f610484260d3f68cd472d8d90ba26840d4e277f91e5cd"},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx", "symbol": "DossierPage save/updateEntity/rows/select/addEntity", "lineStart": 94, "lineEnd": 189, "sha256": "fcc1db89139ac3a2eb207872ae7051e7cd31f1cd1c8f7c9cd75b52268edf77a9"},
+    {"path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx", "symbol": "DossierDetail note search/summary/generateBrief", "lineStart": 349, "lineEnd": 434, "sha256": "fcc1db89139ac3a2eb207872ae7051e7cd31f1cd1c8f7c9cd75b52268edf77a9"},
+    {"path": "apps/electron/src/renderer/lib/extra-screens/storage.ts", "symbol": "loadWorkspaceJson / saveWorkspaceJson / subscribeWorkspaceJson / newLocalId", "lineStart": 20, "lineEnd": 71, "sha256": "fa240f1c6737cfb526deb8a19817fc48e42e471b6664def2d2d5408bc25e51ba"},
+    {"path": "apps/electron/src/renderer/lib/extra-screens/agent-run.ts", "symbol": "startAgentRun", "lineStart": 14, "lineEnd": 23, "sha256": "74589220461ca04163fa273a3628ebd8170ef12d9d764f780c54fcab533929fc"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "ROX2_ENTITY_KINDS / ROX2_PERMISSIONS / Rox2Status / Rox2Event", "lineStart": 17, "lineEnd": 141, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "formatRox2EntityId / parseRox2EntityId / Rox2EntityRef", "lineStart": 218, "lineEnd": 239, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "ROX2_RELATION_RULES", "lineStart": 380, "lineEnd": 388, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/server-core/src/meetings/conation/crm.ts", "symbol": "resolveCrmTarget / proposeCrmEdit / sendCrm", "lineStart": 17, "lineEnd": 61, "sha256": "de6b37c9358ee0932d31aa346f7cbd78183f339f06901e2fa1add10b3c919e3c"},
+    {"path": "packages/server-core/src/meetings/conation/capabilities.ts", "symbol": "GraphqlSoupCrmCompany capability", "lineStart": 192, "lineEnd": 198, "sha256": "33289bcf406de811d3717d801c72bb31a234060c838052fb6d1a04c82ed2748f"},
+    {"path": "packages/server-core/src/meetings/conation/capabilities.ts", "symbol": "confirmWrite", "lineStart": 345, "lineEnd": 372, "sha256": "33289bcf406de811d3717d801c72bb31a234060c838052fb6d1a04c82ed2748f"},
+    {"path": "packages/server-core/src/meetings/types.ts", "symbol": "MeetingOpResult / blocked / denied / isLiveVerified", "lineStart": 20, "lineEnd": 59, "sha256": "aaaa4f8a81d270aa29889023e4e01d1c8fbdec109d622b00867024b667a61715"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "workPackages WP-24 dependencies/acceptance/completeness/operations", "lineStart": 20828, "lineEnd": 21004, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-24 Money request definition", "lineStart": 21080, "lineEnd": 21095, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-24 response/errors/revision policy", "lineStart": 21178, "lineEnd": 21242, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-24 migration constraints", "lineStart": 21395, "lineEnd": 21443, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-24 domainApiContracts / domainConstraints", "lineStart": 21643, "lineEnd": 21674, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-24", "lineStart": 468, "lineEnd": 489, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-22 / WP-23 shared CRM artifacts and migration", "lineStart": 423, "lineEnd": 466, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-17 / WP-18 transitive command/search/offline dependencies", "lineStart": 314, "lineEnd": 353, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/22-test-plan.md", "symbol": "CRM-INGEST-01", "lineStart": 76, "lineEnd": 97, "sha256": "55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path": "docs/macro-integration/22-test-plan.md", "symbol": "Feature completeness checklist / evidence decision", "lineStart": 197, "lineEnd": 247, "sha256": "55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": "Lead first validates this preflight against its packet and current source digests. Before implementation, receive the lead wave0 commit and accepted WP-22/WP-03 typed interface, migration and scenario receipts; re-inspect any changed hashes, assign the single CRM integration owner and resolve money/status/owner boundary plus migrator identifiers. Then extend accepted CRM contracts/commands/repository and implement stage/property migration + pipeline/query modules before binding Dossier board/list/owner controls; register common events/projections/search/attention/agent adapters and finally run version-bound API/UI/conflict/restart/negative controls. Preflight worker must not start any of those implementation steps.",
+  "risks": [
+    "Root-owned uncommitted integration can invalidate these whole-file hashes and line anchors; a verified preflight is a current snapshot, not a future patch application receipt.",
+    "contracts.ts, commands.ts, repository.ts and Dossier files repeat across WP-22/WP-23/WP-24; ownership collision or overwrite would destroy ingestion/alias work. Root remains integration owner.",
+    "Primary schema integer minorUnits versus string amountMinor can lose precision before validation; a silently added safe-integer cap would narrow published behavior. Resolve with common contract owner.",
+    "Response scalar status versus Rox2CanonicalResult triad can falsely label queued/persisted-but-unreconciled results as live verified; map explicitly and require readback/receipt policy.",
+    "OwnerPrincipalId, ownerRef, person and CRM Contact are distinct identities; email/display-name merge or assignment-grants coupling would leak private source mail.",
+    "ROX2 assigned relation excludes crm-company today; extending it without common graph/policy owner could introduce an invalid business-owner link or unintended ACL inheritance.",
+    "Textual title/name touch aggregation and local note search are not authorized shared graph/context; reusing them unfiltered in shared brief/search can leak private metadata.",
+    "Arbitrary property JSON, currency regex-only validation and free-form stage enum/rank drift violate typed query and precise revenue requirements.",
+    "Stage retirement and company moves must serialize atomically; a FK alone does not provide explicit replacement migration or safe deleted-stage behavior.",
+    "Both proposed CRM migration filenames appear in newFiles; do not apply duplicate DDL or fabricate timestamps before migrator resolution.",
+    "Local save-before-server-ACK or independent board state bypasses revision/idempotency and can falsely report success/duplicate cards; use common controlled projection/queue.",
+    "Search/mentions/attention/agent mechanisms are full DoD, not optional merely because WP-24 has only two direct DAG edges; unaccepted common adapters prevent feature-complete claim.",
+    "Current Conation gates intentionally block edits before revision comparison; removing the block, hard-coding authenticated actor or setting live:true from fixture/proposal would violate preserved mechanisms.",
+    "All product verification remains future work by instruction. Report validation proves lineage/source freshness only, not feature behavior."
+  ]
+}

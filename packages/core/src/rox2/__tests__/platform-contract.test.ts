@@ -696,6 +696,36 @@ describe('ROX2 platform contract', () => {
     expect(unsupported).toEqual({ ok: false, code: 'unsupported-version', preserved: future })
     expect(parseRox2TypedRecord({ schemaVersion: 1, kind: 'note', system: { id: 'n1', workspaceId: 'ws', displayName: 'x', updatedAt: Number.NaN } }).ok).toBe(false)
   })
+
+  test('unknown envelope fields survive parse and serialized reload', () => {
+    const parsed = parseRox2TypedRecord({
+      schemaVersion: 1, kind: 'note',
+      system: { id: 'note-1', workspaceId: 'workspace-a', displayName: 'Note', updatedAt: 1 },
+      properties: { body: 'native bytes' },
+      unknownFields: { providerExtension: { id: 'remote-1' } },
+      futurePolicy: { denyExport: true },
+    })
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) throw new Error('expected readable envelope')
+    const reloaded = parseRox2TypedRecord(JSON.parse(JSON.stringify(parsed.record)))
+    expect(reloaded.ok).toBe(true)
+    if (!reloaded.ok) throw new Error('expected reloaded envelope')
+    expect(reloaded.record.unknownFields).toEqual({
+      providerExtension: { id: 'remote-1' },
+      futurePolicy: { denyExport: true },
+    })
+  })
+
+  test('invalid structured fields are quarantined instead of silently replaced', () => {
+    for (const fields of [{ properties: ['do not erase'] }, { unknownFields: 42 }]) {
+      const raw = {
+        schemaVersion: 1, kind: 'note',
+        system: { id: 'note-1', workspaceId: 'workspace-a', displayName: 'Note', updatedAt: 1 },
+        ...fields,
+      }
+      expect(parseRox2TypedRecord(raw)).toEqual({ ok: false, code: 'invalid', preserved: raw })
+    }
+  })
 })
 
 describe('ROX2-078..080 GraphqlSoupDocument list/read/act', () => {
@@ -703,7 +733,7 @@ describe('ROX2-078..080 GraphqlSoupDocument list/read/act', () => {
     const nativeEmpty = soupDocumentListResult({ source: 'native' })
     expect(isClaimableLive(nativeEmpty.result)).toBe(true)
     expect(nativeEmpty.entities).toEqual([])
-    expect(nativeEmpty.result.verification).toBe('receipt_verified')
+    expect(normalizeRox2Result(nativeEmpty.result).verification).toBe('receipt_verified')
 
     const nativeRows = soupDocumentListResult({ source: 'native', nativeIds: ['daily'] })
     expect(isClaimableLive(nativeRows.result)).toBe(true)
@@ -749,7 +779,7 @@ describe('ROX2-081..083 GraphqlSoupChat list/read/act', () => {
     const nativeEmpty = soupChatListResult({ source: 'native' })
     expect(isClaimableLive(nativeEmpty.result)).toBe(true)
     expect(nativeEmpty.entities).toEqual([])
-    expect(nativeEmpty.result.verification).toBe('receipt_verified')
+    expect(normalizeRox2Result(nativeEmpty.result).verification).toBe('receipt_verified')
     expect(isClaimableLive(soupChatListResult({ source: 'native', nativeIds: ['s1'] }).result)).toBe(true)
     expect(isClaimableLive(soupChatListResult({ source: 'fixture' }).result)).toBe(false)
     expect(isClaimableLive(soupChatListResult({ source: 'conation' }).result)).toBe(false)
@@ -816,7 +846,7 @@ describe('ROX2-139 RPC auth.ts list/read/act', () => {
     const nativeEmpty = rpcAuthListResult({ source: 'native' })
     expect(isClaimableLive(nativeEmpty.result)).toBe(true)
     expect(nativeEmpty.entities).toEqual([])
-    expect(nativeEmpty.result.verification).toBe('receipt_verified')
+    expect(normalizeRox2Result(nativeEmpty.result).verification).toBe('receipt_verified')
     expect(isClaimableLive(rpcAuthListResult({ source: 'native', nativeIds: ['logout'] }).result)).toBe(true)
     expect(isClaimableLive(rpcAuthListResult({ source: 'fixture' }).result)).toBe(false)
     expect(isClaimableLive(rpcAuthListResult({ source: 'conation' }).result)).toBe(false)
@@ -917,7 +947,7 @@ describe('ROX2-142 RPC browser-profile-import.ts list/read/act', () => {
     const nativeEmpty = rpcBrowserProfileImportListResult({ source: 'native' })
     expect(isClaimableLive(nativeEmpty.result)).toBe(true)
     expect(nativeEmpty.entities).toEqual([])
-    expect(nativeEmpty.result.verification).toBe('receipt_verified')
+    expect(normalizeRox2Result(nativeEmpty.result).verification).toBe('receipt_verified')
     expect(isClaimableLive(rpcBrowserProfileImportListResult({ source: 'native', nativeIds: ['chromium'] }).result)).toBe(true)
     expect(isClaimableLive(rpcBrowserProfileImportListResult({ source: 'fixture' }).result)).toBe(false)
     expect(isClaimableLive(rpcBrowserProfileImportListResult({ source: 'conation' }).result)).toBe(false)
@@ -1044,7 +1074,7 @@ describe('ROX2-145 RPC collection.ts list/read/act', () => {
     const nativeEmpty = rpcCollectionListResult({ source: 'native' })
     expect(isClaimableLive(nativeEmpty.result)).toBe(true)
     expect(nativeEmpty.entities).toEqual([])
-    expect(nativeEmpty.result.verification).toBe('receipt_verified')
+    expect(normalizeRox2Result(nativeEmpty.result).verification).toBe('receipt_verified')
     expect(isClaimableLive(rpcCollectionListResult({ source: 'native', nativeIds: ['ws-1'] }).result)).toBe(true)
     expect(isClaimableLive(rpcCollectionListResult({ source: 'fixture' }).result)).toBe(false)
     expect(isClaimableLive(rpcCollectionListResult({ source: 'conation' }).result)).toBe(false)
@@ -1143,7 +1173,7 @@ describe('ROX2-148 RPC environment.ts list/read/act', () => {
     const nativeEmpty = rpcEnvironmentListResult({ source: 'native' })
     expect(isClaimableLive(nativeEmpty.result)).toBe(true)
     expect(nativeEmpty.entities).toEqual([])
-    expect(nativeEmpty.result.verification).toBe('receipt_verified')
+    expect(normalizeRox2Result(nativeEmpty.result).verification).toBe('receipt_verified')
     expect(isClaimableLive(rpcEnvironmentListResult({ source: 'native', nativeIds: ['prefs'] }).result)).toBe(true)
     expect(isClaimableLive(rpcEnvironmentListResult({ source: 'fixture' }).result)).toBe(false)
     expect(isClaimableLive(rpcEnvironmentListResult({ source: 'conation' }).result)).toBe(false)
@@ -1242,7 +1272,7 @@ describe('ROX2-151 RPC fabric.ts list/read/act', () => {
     const nativeEmpty = rpcFabricListResult({ source: 'native' })
     expect(isClaimableLive(nativeEmpty.result)).toBe(true)
     expect(nativeEmpty.entities).toEqual([])
-    expect(nativeEmpty.result.verification).toBe('receipt_verified')
+    expect(normalizeRox2Result(nativeEmpty.result).verification).toBe('receipt_verified')
     expect(isClaimableLive(rpcFabricListResult({ source: 'native', nativeIds: ['conn-1'] }).result)).toBe(true)
     expect(isClaimableLive(rpcFabricListResult({ source: 'fixture' }).result)).toBe(false)
     expect(isClaimableLive(rpcFabricListResult({ source: 'conation' }).result)).toBe(false)
@@ -1341,7 +1371,7 @@ describe('ROX2-154 RPC identity.ts list/read/act', () => {
     const nativeEmpty = rpcIdentityListResult({ source: 'native' })
     expect(isClaimableLive(nativeEmpty.result)).toBe(true)
     expect(nativeEmpty.entities).toEqual([])
-    expect(nativeEmpty.result.verification).toBe('receipt_verified')
+    expect(normalizeRox2Result(nativeEmpty.result).verification).toBe('receipt_verified')
     expect(isClaimableLive(rpcIdentityListResult({ source: 'native', nativeIds: ['profile'] }).result)).toBe(true)
     expect(isClaimableLive(rpcIdentityListResult({ source: 'fixture' }).result)).toBe(false)
     expect(isClaimableLive(rpcIdentityListResult({ source: 'conation' }).result)).toBe(false)
@@ -1444,7 +1474,7 @@ describe('ROX2-157 RPC labels.ts list/read/act', () => {
     const nativeEmpty = rpcLabelsListResult({ source: 'native' })
     expect(isClaimableLive(nativeEmpty.result)).toBe(true)
     expect(nativeEmpty.entities).toEqual([])
-    expect(nativeEmpty.result.verification).toBe('receipt_verified')
+    expect(normalizeRox2Result(nativeEmpty.result).verification).toBe('receipt_verified')
     expect(isClaimableLive(rpcLabelsListResult({ source: 'native', nativeIds: ['bug'] }).result)).toBe(true)
     expect(isClaimableLive(rpcLabelsListResult({ source: 'fixture' }).result)).toBe(false)
     expect(isClaimableLive(rpcLabelsListResult({ source: 'conation' }).result)).toBe(false)
@@ -1551,7 +1581,7 @@ describe('ROX2-160 RPC memory-insights.ts list/read/act', () => {
     const nativeEmpty = rpcMemoryInsightsListResult({ source: 'native' })
     expect(isClaimableLive(nativeEmpty.result)).toBe(true)
     expect(nativeEmpty.entities).toEqual([])
-    expect(nativeEmpty.result.verification).toBe('receipt_verified')
+    expect(normalizeRox2Result(nativeEmpty.result).verification).toBe('receipt_verified')
     expect(isClaimableLive(rpcMemoryInsightsListResult({ source: 'native', nativeIds: ['insights'] }).result)).toBe(true)
     expect(isClaimableLive(rpcMemoryInsightsListResult({ source: 'fixture' }).result)).toBe(false)
     expect(isClaimableLive(rpcMemoryInsightsListResult({ source: 'conation' }).result)).toBe(false)
@@ -1658,7 +1688,7 @@ describe('ROX2-163 RPC memory.ts list/read/act', () => {
     const nativeEmpty = rpcMemoryListResult({ source: 'native' })
     expect(isClaimableLive(nativeEmpty.result)).toBe(true)
     expect(nativeEmpty.entities).toEqual([])
-    expect(nativeEmpty.result.verification).toBe('receipt_verified')
+    expect(normalizeRox2Result(nativeEmpty.result).verification).toBe('receipt_verified')
     expect(isClaimableLive(rpcMemoryListResult({ source: 'native', nativeIds: ['lesson-1'] }).result)).toBe(true)
     expect(isClaimableLive(rpcMemoryListResult({ source: 'fixture' }).result)).toBe(false)
     expect(isClaimableLive(rpcMemoryListResult({ source: 'conation' }).result)).toBe(false)

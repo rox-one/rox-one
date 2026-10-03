@@ -1,0 +1,51 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const { pathToFileURL } = require('node:url');
+const crypto = require('node:crypto');
+const bundle = '/tmp/rox-r15-exact-ui-20261001/checkout/apps/electron/dist/main.cjs';
+const content = fs.readFileSync(bundle, 'utf8');
+const banner = content.split('\n')[0];
+assert.ok(banner.includes('pathToFileURL(__filename).href'));
+const marker = '// packages/shared/src/utils/sqlite-runtime.ts\n';
+const start = content.indexOf(marker);
+assert.ok(start >= 0);
+const end = content.indexOf('\n// ', start + marker.length);
+const initializer = content.slice(start, end);
+const context = { require, process, __filename: bundle, __esm: definition => () => Object.values(definition)[0]() };
+vm.runInNewContext(`${banner}\n${initializer}\ninit_sqlite_runtime();`, context);
+assert.equal(context.__roxElectronMainBundleFileUrl, pathToFileURL(bundle).href);
+assert.equal(typeof context.DatabaseSync, 'function');
+const profile = fs.mkdtempSync(path.join(process.env.TMPDIR, 'compiled-main-sqlite-'));
+const databasePath = path.join(profile, 'actual.sqlite');
+try {
+  const db = new context.DatabaseSync(databasePath);
+  db.exec('CREATE TABLE rows(id INTEGER PRIMARY KEY, content TEXT NOT NULL);');
+  assert.equal(Number(db.prepare('INSERT INTO rows VALUES(?, ?)').run(1, 'собранный main').changes), 1);
+  db.exec('BEGIN IMMEDIATE');
+  db.prepare('INSERT INTO rows VALUES(?, ?)').run(2, 'rollback');
+  db.exec('ROLLBACK');
+  const statement = db.prepare('SELECT content FROM rows WHERE id=?');
+  assert.equal(statement.get(1).content, 'собранный main');
+  assert.equal(statement.get(2), undefined);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM rows').get().n, 1);
+  const readonly = new context.DatabaseSync(databasePath, { readOnly: true });
+  assert.equal(readonly.prepare('SELECT content FROM rows WHERE id=1').get().content, 'собранный main');
+  assert.throws(() => readonly.exec("INSERT INTO rows VALUES(3, 'refused')"));
+  readonly.close();
+  db.close();
+  assert.throws(() => statement.get(1));
+  assert.throws(() => db.exec('SELECT 1'));
+  assert.throws(() => db.close());
+  const reopened = new context.DatabaseSync(databasePath);
+  assert.equal(reopened.prepare('SELECT content FROM rows WHERE id=1').get().content, 'собранный main');
+  reopened.close();
+  assert.throws(() => new context.DatabaseSync(databasePath + '.missing', { readOnly: true }));
+  assert.equal(process.versions.node, '24.19.0');
+  console.log(JSON.stringify({ actualNode: process.versions.node, builtInitializerLoaded: true, fileUrlExact: true,
+    rows: 1, rollback: true, readonlyRefusal: true, closedRefusal: true, restartPersistence: true, assertions: 16, runtimeAssertions: 14, extractionAssertions: 2,
+    bundleSha256: crypto.createHash('sha256').update(content).digest('hex'),
+    initializerSha256: crypto.createHash('sha256').update(initializer).digest('hex'),
+    compiledStartLine: content.slice(0, start).split('\n').length }));
+} finally { fs.rmSync(profile, { recursive: true, force: true }); }

@@ -67,6 +67,7 @@ export function registerLabelsHandlers(server: RpcServer, _deps: HandlerDeps): v
     const act = rpcLabelsActResult({ source: 'native', action: 'destroy', granted: true, nativeId: labelId })
     if (!isClaimableLive(act)) throw new Error('label destroy is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new Error('Workspace not found')
 
     const { deleteLabel } = await import('@craft-agent/shared/labels/crud')
     const result = deleteLabel(workspace.rootPath, labelId)
