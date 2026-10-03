@@ -63,8 +63,15 @@ function mountedStore(target: typeof targets[number]) {
   disposers.push(store.sub(target.atom, () => {}))
   return store
 }
-function emit(key: string | null, newValue: string | null, area: Storage = storage) {
+function emitQueued(key: string | null, newValue: string | null, area: Storage = storage) {
   for (const listener of [...listeners]) listener({ key, newValue, storageArea: area } as StorageEvent)
+}
+function emit(key: string | null, newValue: string | null, area: Storage = storage) {
+  // Browser storage events follow a committed mutation in another window.
+  if (key === null) area.clear()
+  else if (newValue === null) area.removeItem(key)
+  else area.setItem(key, newValue)
+  emitQueued(key, newValue, area)
 }
 
 describe('ROX UI-001 real Jotai layout storage behavior', () => {
@@ -126,9 +133,13 @@ describe('ROX UI-001 real Jotai layout storage behavior', () => {
       expect(() => store.set(target.atom, RESET)).not.toThrow()
       expect(store.get(target.atom)).toBe(target.fallback)
     })
-    it(`${target.name}: reads event snapshots through races, corrupt values and deletion`, () => {
+    it(`${target.name}: reads canonical storage through queued races, corrupt values, deletion and clear`, () => {
       const store = mountedStore(target)
       storage.setItem(target.key, String(target.max)) // Store advanced beyond queued snapshots.
+      emitQueued(target.key, String(target.fallback + 20.6))
+      expect(store.get(target.atom)).toBe(target.max)
+      emitQueued(null, null) // An older clear must not erase a later preference.
+      expect(store.get(target.atom)).toBe(target.max)
       emit(target.key, String(target.fallback + 20.6))
       expect(store.get(target.atom)).toBe(target.fallback + 21)
       emit(target.key, '-20')
@@ -138,12 +149,15 @@ describe('ROX UI-001 real Jotai layout storage behavior', () => {
       emit(target.key, 'malformed')
       expect(store.get(target.atom)).toBe(target.fallback)
       emit(target.key, String(target.min))
+      emitQueued(target.key, null) // An older deletion must not erase a later preference.
+      expect(store.get(target.atom)).toBe(target.min)
       emit(target.key, null)
       expect(store.get(target.atom)).toBe(target.fallback)
-      expect(storage.getItem(target.key)).toBe(String(target.max))
+      expect(storage.getItem(target.key)).toBeNull()
       emit(target.key, String(target.min))
       emit(null, null)
       expect(store.get(target.atom)).toBe(target.fallback)
+      expect(storage.getItem(target.key)).toBeNull()
     })
     it(`${target.name}: filters other keys/storage areas and releases subscriptions`, () => {
       const store = createStore()
