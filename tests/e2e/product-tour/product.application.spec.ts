@@ -107,16 +107,19 @@ test('T-NOTES-CREATE/T-NOTES-SAVE: the real Notes tour verifies canonical creati
   const popup = page.locator('[data-product-tour-popover]')
   await expect(popup).toHaveAttribute('data-product-tour-step', 'notes.create')
   await expect(popup.getByRole('heading', { name: 'Create a note', exact: true })).toBeVisible()
-  // Notes has several ordinary create buttons; act on the actual highlighted control.
-  const readHighlightedControl = () => page.locator('[data-product-tour-mask] rect').evaluate(rect => {
-    const x = Number(rect.getAttribute('x')) + Number(rect.getAttribute('width')) / 2
-    const y = Number(rect.getAttribute('y')) + Number(rect.getAttribute('height')) / 2
-    const button = document.elementFromPoint(x, y)?.closest('button')
-    return { x, y, label: button?.getAttribute('aria-label') ?? button?.getAttribute('title') }
+  // The production Focus action selects the registered control, among several create buttons.
+  await popup.getByRole('button', { name: 'Focus the control', exact: true }).click()
+  const focused = await page.evaluate(() => {
+    const element = document.activeElement as HTMLElement
+    const bounds = element.getBoundingClientRect()
+    const mask = document.querySelector('[data-product-tour-mask] rect')!
+    const x = Number(mask.getAttribute('x')) + Number(mask.getAttribute('width')) / 2
+    const y = Number(mask.getAttribute('y')) + Number(mask.getAttribute('height')) / 2
+    return { label: element.getAttribute('aria-label'), target: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }, mask: Object.fromEntries(['x', 'y', 'width', 'height'].map(key => [key, mask.getAttribute(key)])), hit: document.elementFromPoint(x, y)?.tagName, pointerEvents: getComputedStyle(element).pointerEvents }
   })
-  await expect.poll(async () => (await readHighlightedControl()).label).toBe('New note')
-  const point = await readHighlightedControl()
-  await page.mouse.click(point.x, point.y)
+  await info.attach('highlighted-control-layout', { body: Buffer.from(JSON.stringify(focused)), contentType: 'application/json' })
+  expect(focused.label).toBe('New note')
+  await page.keyboard.press('Enter')
   const dialog = page.getByRole('dialog').filter({ has: page.getByRole('textbox') })
   await dialog.getByRole('textbox').fill(`Guided canonical note ${Date.now()}`)
   await dialog.getByRole('textbox').press('Enter')
@@ -153,7 +156,7 @@ test('APP-03: ordinary navigation away from an active Learning step pauses its r
   await openApp(page, 'settings/learning', true)
   await page.getByTestId('learning-start-OBT-25').click()
   await expect(page.locator('[data-product-tour-popover]')).toHaveAttribute('data-product-tour-step', 'learning.library')
-  await page.getByRole('button', { name: /^Sources/ }).click({ timeout: 15_000 })
+  await page.getByRole('button', { name: /^Runtime/ }).click({ timeout: 15_000 })
   await expect(page.locator('[data-product-tour-popover]')).toHaveCount(0)
   await expect(page.getByTestId('product-tour-status')).toContainText(/changed|paused/i)
   await attachEvidence(page, info)
