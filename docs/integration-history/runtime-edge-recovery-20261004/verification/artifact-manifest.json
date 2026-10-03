@@ -1,0 +1,52 @@
+[
+  {
+    "path": "docs/integration-history/runtime-edge-recovery-20261004/verification/rpc-edges-cloud-types.log.gz",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "docs/integration-history/runtime-edge-recovery-20261004/verification/rpc-edges-codec-after.log.gz",
+    "sha256": "16911ac5a6eea7675bba0fb4bb98c29ad813b03d2dfd95d2462a6c6b39112760",
+    "bytes": 1724
+  },
+  {
+    "path": "docs/integration-history/runtime-edge-recovery-20261004/verification/rpc-edges-codec-before.log.gz",
+    "sha256": "7b2d6704acc00865cacc5b5cf22493938efa8906f0c23253594fbf58572881e3",
+    "bytes": 3043
+  },
+  {
+    "path": "docs/integration-history/runtime-edge-recovery-20261004/verification/rpc-edges-credential-regressions.log.gz",
+    "sha256": "dddac465c9f891bf950e00c506ee94e8bd9cbac43637991d5fefd68c0a58eb15",
+    "bytes": 2357
+  },
+  {
+    "path": "docs/integration-history/runtime-edge-recovery-20261004/verification/rpc-edges-local-conformance.log.gz",
+    "sha256": "c83e4f3069d2abf5285e37e208329520a30f53623d640998e66f5d0ac29e6ec3",
+    "bytes": 643
+  },
+  {
+    "path": "docs/integration-history/runtime-edge-recovery-20261004/verification/rpc-edges-provider-controls-first.log.gz",
+    "sha256": "f3ae37f8b1103d2cf9c7548f9bda1a89c0840cabb422a9d58cf66aebc165072e",
+    "bytes": 1148
+  },
+  {
+    "path": "docs/integration-history/runtime-edge-recovery-20261004/verification/rpc-edges-provider-controls-qualified.log.gz",
+    "sha256": "63ea32eff733857977defba22c6137c629bea3d9e66d7bd9e18755826d884643",
+    "bytes": 1458
+  },
+  {
+    "path": "docs/integration-history/runtime-edge-recovery-20261004/verification/rpc-edges-server-local-resolution.tsconfig.json.gz",
+    "sha256": "337f41461482fd0b69f158ed3541e32f48fdf7b69fa21cddde32359e46f6cf0c",
+    "bytes": 1623
+  },
+  {
+    "path": "docs/integration-history/runtime-edge-recovery-20261004/verification/rpc-edges-server-types.log.gz",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "docs/integration-history/runtime-edge-recovery-20261004/verification/rpc-edges-shared-types.log.gz",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  }
+]
