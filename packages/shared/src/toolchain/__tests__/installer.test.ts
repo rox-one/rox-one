@@ -2,10 +2,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 import { extractArtifact, generateNpmWrappers, installTool, npmInstallDeps } from '../installer';
 import { toolchainPaths } from '../manifest';
 import type { ToolchainPaths } from '../types';
+import { whichTool } from '../exec';
 
 const FIXTURES = path.join(import.meta.dir, 'fixtures');
 const isWindows = process.platform === 'win32';
@@ -266,6 +268,51 @@ describe('installer', () => {
         }),
       ).rejects.toThrow('managed toolchain Node');
       expect(calls).toEqual([]);
+    });
+
+    it.skipIf(!isWindows)('invokes npm-cli.js through sibling node.exe rather than spawning npm.cmd', async () => {
+      const { paths, toolDir } = prepPkg('windows-node');
+      const nodeDir = path.join(paths.toolchainDir, 'node', 'current', 'node-v22.23.2-win-x64');
+      const cli = path.join(nodeDir, 'node_modules', 'npm', 'bin', 'npm-cli.js');
+      fs.mkdirSync(path.dirname(cli), { recursive: true });
+      fs.writeFileSync(cli, '');
+      fs.writeFileSync(path.join(nodeDir, 'node.exe'), '');
+      fs.writeFileSync(path.join(nodeDir, 'npm.cmd'), '@echo off\r\n');
+      const calls: string[][] = [];
+      await npmInstallDeps(paths, toolDir, 'omp', '17.2.10', {
+        getLock: () => '{ "lockfileVersion": 3 }',
+        runCmd: async (args) => { calls.push(args); },
+      });
+      expect(calls[0]?.slice(0, 2)).toEqual([path.join(nodeDir, 'node.exe'), cli]);
+      expect(calls[0]).toContain('--ignore-scripts');
+    });
+
+    it.skipIf(!isWindows)('runs managed npm installation under plain Node without a shell', async () => {
+      const node = await whichTool('node');
+      expect(node).not.toBeNull();
+      const { paths, toolDir } = prepPkg('plain-node & spaces');
+      const nodeDir = path.join(paths.toolchainDir, 'node', 'current', 'node-fixture');
+      const cli = path.join(nodeDir, 'node_modules', 'npm', 'bin', 'npm-cli.js');
+      fs.mkdirSync(path.dirname(cli), { recursive: true });
+      fs.copyFileSync(node!, path.join(nodeDir, 'node.exe'));
+      fs.writeFileSync(path.join(nodeDir, 'npm.cmd'), '@echo off\r\nexit /b 99\r\n');
+      fs.writeFileSync(cli, `require('node:fs').writeFileSync('npm-argv.json', JSON.stringify(process.argv.slice(2)));`);
+      const bundle = await Bun.build({
+        entrypoints: [path.join(import.meta.dir, '..', 'installer.ts')],
+        target: 'node', format: 'esm',
+      });
+      expect(bundle.success).toBe(true);
+      const modulePath = path.join(tmpDir, 'plain-node-installer.mjs');
+      fs.writeFileSync(modulePath, await bundle.outputs[0]!.text());
+      const { pathToFileURL } = await import('node:url');
+      const program = `import { npmInstallDeps } from ${JSON.stringify(pathToFileURL(modulePath).href)};\n` +
+        `await npmInstallDeps(${JSON.stringify(paths)}, ${JSON.stringify(toolDir)}, 'omp', '17.2.10', ` +
+        `{ getLock: () => '{"lockfileVersion":3}' });`;
+      const child = spawnSync(node!, ['--input-type=module', '-e', program], { encoding: 'utf8' });
+      expect(child.stderr).toBe('');
+      expect(child.status).toBe(0);
+      expect(JSON.parse(fs.readFileSync(path.join(toolDir, 'package', 'npm-argv.json'), 'utf8')))
+        .toEqual(['ci', '--omit=dev', '--no-audit', '--no-fund', '--ignore-scripts']);
     });
   });
 });
