@@ -1,6 +1,9 @@
 import * as React from "react"
 import { followChatOutput } from "./chat-scroll"
 import { useChatOutputFollow } from "./useChatOutputFollow"
+import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { resolvePublishedToolSource } from '@/features/product-tour/adapters/connections'
+import { beginChatUserTurn, beginChatPermissionResponse, cancelChatUserTurn, deriveExecutionCapabilities, observeChatSessionReopened } from '@/features/product-tour/adapters/chat'
 import { createMessageTts } from '@/lib/message-tts'
 import { useAuthenticatedReactionActor } from '@/hooks/useMessageReactionActor'
 import { messageActionId } from '@/lib/message-action-id'
@@ -1388,6 +1391,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Backend handles interruption and queueing if currently processing
   const handleSubmit = (message: string, attachments?: FileAttachment[], skillSlugs?: string[]) => {
     const scrollOwner = captureScrollOwner()
+    if (session) beginChatUserTurn(tourSignals.capture(), session)
     const hasBaseMessage = message.trim().length > 0
     const followUpSection = formatFollowUpSection(pendingFollowUpAnnotations, {
       includeTopSeparator: hasBaseMessage,
@@ -1590,6 +1594,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // silent=true when redirecting (sending new message), silent=false when user clicks Stop button
   const handleStop = (silent = false) => {
     if (!session?.isProcessing) return
+    cancelChatUserTurn(session.id)
 
     // Explicit Stop (not a redirect/new-message send): put the in-flight prompt
     // back in the input so the user can tweak and resend. Append to any draft.
@@ -1621,6 +1626,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Handle structured input responses (permissions and credentials)
   const handleStructuredResponse = (response: StructuredResponse) => {
     if ((response.type === 'permission' || response.type === 'admin_approval') && pendingPermission && onRespondToPermission) {
+      beginChatPermissionResponse(tourSignals.capture(), pendingPermission.sessionId, pendingPermission.requestId)
       if (response.type === 'permission') {
         const permResponse = response as PermissionResponse
         onRespondToPermission(
@@ -1673,6 +1679,31 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     }
     return undefined
   }, [pendingPermission, pendingCredential])
+
+  const tourSignals = useTourSignals({ sessionId: session?.id, workspaceId: session?.workspaceId })
+  const tourVariant = compactMode ? 'compact' : 'regular'
+  const entryTarget = useTourTarget('session.entry', { sessionId: session?.id, variant: tourVariant })
+  const executionTarget = useTourTarget('session.execution', { sessionId: session?.id, variant: tourVariant })
+  const finalTarget = useTourTarget('session.final-result', { sessionId: session?.id, variant: tourVariant })
+  const toolResultTarget = useTourTarget('session.tool-result', { sessionId: session?.id, variant: tourVariant })
+  const tourFinalMessageId = useMemo(() => {
+    if (!session) return undefined
+    const userIndex = session.messages.findLastIndex(message => message.role === 'user' && !message.isPending && !message.isQueued && !message.hidden)
+    if (userIndex < 0) return undefined
+    return session.messages.slice(userIndex + 1).findLast(message => message.role === 'assistant' && !message.isIntermediate && !message.isPending && !message.isStreaming && !message.isError && !message.hidden && !message.parentToolUseId && message.content.trim())?.id
+  }, [session?.messages])
+  useEffect(() => {
+    const cleanups = Object.entries(deriveExecutionCapabilities(session, !!pendingPermission)).map(([id, capability]) => tourSignals.capability(id as 'sessions.available' | 'permissions.pending', capability!))
+    if (session && !messagesLoading && !messagesLoadError) {
+      const captured = tourSignals.capture()
+      tourSignals.emit(captured, 'session.ready', 'observed', 'ui-observation', `ready:${captured?.operationToken}`)
+      if (session.isProcessing || tourFinalMessageId) tourSignals.emit(captured, 'execution.state-visible', 'observed', 'ui-observation', `execution:${captured?.operationToken}`)
+      for (const evidence of observeChatSessionReopened(session)) {
+        tourSignals.emit({ binding: evidence.binding, operationToken: evidence.operationToken!, at: evidence.operationStartedAt! }, evidence.name, evidence.level, evidence.origin, evidence.eventToken)
+      }
+    }
+    return () => { cleanups.forEach(cleanup => cleanup()) }
+  }, [tourSignals, session?.id, session?.isProcessing, pendingPermission, messagesLoading, messagesLoadError, tourFinalMessageId])
 
   // Memoize turn grouping - avoids O(n) iteration on every render/keystroke
   const allTurns = React.useMemo(() => {
@@ -1853,7 +1884,7 @@ const handleFollowUpChipClick = useCallback((item: {
     <div ref={zoneRef} className="flex h-full flex-col min-w-0" data-focus-zone="chat">
       {session ? (
         <>
-        <div className="flex flex-1 flex-col min-h-0 min-w-0 relative">
+        <div ref={entryTarget} className="flex flex-1 flex-col min-h-0 min-w-0 relative">
           {session.branchFromSessionId ? (
             <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border/40 px-3 py-1.5 text-xs text-muted-foreground">
               <span>
@@ -1871,7 +1902,7 @@ const handleFollowUpChipClick = useCallback((item: {
           {/* Content layer */}
           <div className="flex flex-1 flex-col min-h-0 min-w-0 relative z-10">
           {/* === MESSAGES AREA: Scrollable list of message bubbles === */}
-          <div className="relative flex-1 min-h-0">
+          <div ref={executionTarget} className="relative flex-1 min-h-0">
             {/* Mask wrapper - fades content at top and bottom over transparent/image backgrounds */}
             <div
               className="h-full"
@@ -2084,10 +2115,12 @@ const handleFollowUpChipClick = useCallback((item: {
 
                     // Assistant turns - render with TurnCard (buffered streaming)
                     const assistantUiKey = getAssistantTurnUiKey(turn, index)
+                    const isNativeFinal = !!turn.response?.messageId && turn.response.messageId === tourFinalMessageId
+                    const hasNativeSourceResult = isLatestAssistantTurn && turn.activities.some(activity => activity.type === 'tool' && activity.status === 'completed' && !activity.error && !!activity.toolName && !!resolvePublishedToolSource(activity.toolName, session.enabledSourceSlugs ?? []))
                     return (
                       <div
                         key={turnKey}
-                        ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey) }}
+                        ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey); if (isNativeFinal) finalTarget(el); if (hasNativeSourceResult) toolResultTarget(el) }}
                         className={cn(
                           "pt-2",
                           "rounded-lg transition-all duration-200",
