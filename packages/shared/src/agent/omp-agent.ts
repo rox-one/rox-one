@@ -1717,9 +1717,11 @@ export class OmpAgent extends BaseAgent {
     const entry: { cancelled: boolean; onCancelled?: () => void } = { cancelled: false };
     const runtimeRunId = this.runtimeObservationRunId;
     const originatingChild = this.subprocess;
+    const previousEntry = this.pendingHostToolCalls.get(frameId);
+    if (previousEntry) this.cancelHostToolInvocation(previousEntry);
     this.pendingHostToolCalls.set(frameId, entry);
     const runtimeObserver = toolCallId
-      ? this.createHostBashObserver(toolCallId, runtimeRunId, () => !entry.cancelled && this.subprocess === originatingChild)
+      ? this.createHostBashObserver(toolCallId, runtimeRunId, () => this.pendingHostToolCalls.get(frameId) === entry && !entry.cancelled && this.subprocess === originatingChild)
       : undefined;
     let processStarted = false;
     let executionSettled = false;
@@ -1741,7 +1743,8 @@ export class OmpAgent extends BaseAgent {
     };
 
     const finish = (text: string, isError: boolean): void => {
-      if (this.pendingHostToolCalls.get(frameId) === entry) this.pendingHostToolCalls.delete(frameId);
+      if (this.pendingHostToolCalls.get(frameId) !== entry) return;
+      this.pendingHostToolCalls.delete(frameId);
       if (!originatingChild || entry.cancelled || this.subprocess !== originatingChild || this.runtimeObservationRunId !== runtimeRunId) return;
       this.send({
         type: 'host_tool_result',
@@ -1787,7 +1790,7 @@ export class OmpAgent extends BaseAgent {
         }
       }
 
-      if (!originatingChild || entry.cancelled || this.subprocess !== originatingChild || this.runtimeObservationRunId !== runtimeRunId) return;
+      if (!originatingChild || this.pendingHostToolCalls.get(frameId) !== entry || entry.cancelled || this.subprocess !== originatingChild || this.runtimeObservationRunId !== runtimeRunId) return;
       const execution = this.executeHostSessionTool(toolName, args, hostBashObserver);
       const timeout = new Promise<{ content: string; isError: boolean }>((resolve) => {
         setTimeout(
