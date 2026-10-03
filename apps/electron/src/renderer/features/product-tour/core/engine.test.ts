@@ -172,6 +172,37 @@ describe('prior evidence and replay', () => {
     expect(emit(state, signal('draft.nonempty', { level: 'observed', at: 90 })).state).toBe(state)
     expect(emit(state, signal('draft.nonempty', { level: 'observed', at: 110 })).state.phase).toBe('finished')
   })
+  test('a current UI observation can reach a future explanation without acknowledging it or replacing the native operation', () => {
+    const definition = tour([
+      step('first.send', { completion: signalPolicy('user-turn.accepted') }),
+      step('first.execution', { completion: signalPolicy('execution.state-visible', { evidence: 'observed', priorState: 'allow-current-state', requireAcknowledgementAfterEvidence: true }) }),
+      step('first.result', { completion: signalPolicy('user-turn.final-delivered', { priorState: 'same-attempt', requireAcknowledgementAfterEvidence: true }) }),
+    ])
+    let state = show(start(definition))
+    const observation = signal('execution.state-visible', { level: 'observed', origin: 'ui-observation', operationToken: 'visible-view', operationStartedAt: 105 })
+    for (const rejected of [
+      { ...observation, at: 99 },
+      { ...observation, operationStartedAt: 99 },
+      { ...observation, binding: { ...binding, panelId: 'other' } },
+      { ...observation, binding: { ...binding, runToken: 'old' } },
+      { ...observation, level: 'verified', origin: 'native-commit' },
+    ] as TourSignal[]) expect(emit(state, rejected).state).toBe(state)
+    state = emit(state, observation).state
+    expect(state.attempt?.stepId).toBe('first.send')
+    expect(state.attemptEvidence['first.execution']?.level).toBe('observed')
+    expect(state.attemptEvidence['first.execution']?.acknowledgedAt).toBeUndefined()
+    expect(state.attempt?.operationToken).toBeUndefined()
+    state = emit(state, signal('user-turn.accepted', { at: 115 })).state
+    expect(state.attempt?.operationToken).toBe('operation-1')
+    expect(click(state, 'ACK', 120).state).toBe(state) // The explanation must be shown first.
+    state = show(state)
+    expect(state.phase).toBe('presenting')
+    expect(emit(state, { ...observation, at: 118 }).state).toBe(state)
+    state = show(click(state, 'ACK', 120).state)
+    expect(state.attempt?.operationToken).toBe('operation-1')
+    expect(emit(state, signal('user-turn.final-delivered', { at: 125, operationToken: 'other-operation' })).state).toBe(state)
+    expect(emit(state, signal('user-turn.final-delivered', { at: 125 })).state.phase).toBe('presenting')
+  })
   test('CORE-09 replay preserves milestones but needs fresh acknowledgement', () => {
     const definition = tour([step('first.permissions')])
     const progress = durable(definition)

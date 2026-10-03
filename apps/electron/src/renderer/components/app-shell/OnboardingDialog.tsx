@@ -31,9 +31,10 @@ const SEEDS: SeedLesson[] = [
 
 export interface OnboardingDialogProps {
   workspaceId?: string
+  presentationAllowed?: boolean
 }
 
-export function OnboardingDialog({ workspaceId }: OnboardingDialogProps) {
+export function OnboardingDialog({ workspaceId, presentationAllowed = true }: OnboardingDialogProps) {
   const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
   const [checked, setChecked] = React.useState<boolean[]>(() => SEEDS.map(() => true))
@@ -43,6 +44,7 @@ export function OnboardingDialog({ workspaceId }: OnboardingDialogProps) {
   const finishingRef = React.useRef(false)
 
   React.useEffect(() => {
+    if (!presentationAllowed) return
     let cancelled = false
     window.electronAPI
       .listInsights(workspaceId)
@@ -53,7 +55,7 @@ export function OnboardingDialog({ workspaceId }: OnboardingDialogProps) {
         // Insights read is best-effort: offline/remote failures skip onboarding.
       })
     return () => { cancelled = true }
-  }, [workspaceId])
+  }, [workspaceId, presentationAllowed])
 
   const stampOnboarded = React.useCallback(() => {
     try {
@@ -95,7 +97,7 @@ export function OnboardingDialog({ workspaceId }: OnboardingDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(next) => { if (!next) finish() }}>
+    <Dialog open={open && presentationAllowed} onOpenChange={(next) => { if (!next && presentationAllowed) finish() }}>
       <DialogContent showCloseButton={false}>
         <DialogHeader>
           <DialogTitle>{t('memory.onboardingTitle')}</DialogTitle>

@@ -101,7 +101,7 @@ export function registerLicenseHandlers(server: WsRpcServer, authority: LicenseC
       if (context.workspaceId !== workspaceId) throw new IdentityDomainError('WORKSPACE_MISMATCH')
       return await operation(requireActor(context.actor, workspaceId), workspaceId, arguments_[1])
     } finally { lifecycle?.end() }
-  }, { access: 'authenticatedWorkspace', beforeResponse: async (context, arguments_, result) => {
+  }, { access: 'authenticatedWorkspace', beforeWorkspaceResponse: async (context, arguments_, result) => {
     if (lifecycle && !lifecycle.begin()) throw new IdentityDomainError('PROVIDER_UNAVAILABLE')
     try {
       if(arguments_.length!==2)throw new IdentityDomainError('INVALID_PAYLOAD')

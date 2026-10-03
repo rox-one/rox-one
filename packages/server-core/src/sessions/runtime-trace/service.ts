@@ -236,7 +236,8 @@ export class RuntimeTraceService {
       : this.nativeRuns.get(nativeKey) ?? { ...current, runId: `${current.runId}:native:${observation.agentId}`, agentId, parentAgentId: parentId }
     if (observation.agentId !== 'root') this.nativeRuns.set(nativeKey, run)
     const terminalTool = observation.agentId === 'root' && observation.kind.startsWith('terminal.') && observation.toolUseId
-    const toolRun = terminalTool ? this.tools.get(`${sessionId}:${observation.toolUseId}`)?.run : undefined
+    const toolEvidence = terminalTool || (observation.agentId === 'root' && observation.kind === 'trace.coverage' && observation.toolUseId)
+    const toolRun = toolEvidence ? this.tools.get(`${sessionId}:${observation.toolUseId}`)?.run : undefined
     const correlatedRun = toolRun ?? run
     const sourceKey = `${correlatedRun.rootRunId}:${observation.sourceId}:${observation.sourceEventId}`
     if (this.seen.has(sourceKey)) return
@@ -251,7 +252,7 @@ export class RuntimeTraceService {
       ? this.tools.get(`${sessionId}:${observation.parentSpanId.slice(5)}`)?.run : undefined
     if (terminalTool) this.preciseTerminals.add(`${sessionId}:${observation.toolUseId}`)
     try {
-      await this.record(correlatedRun, observation.kind, payload as never, { ...observation, ...(parentToolRun ? { parentSpanId: `${parentToolRun.runId}:${observation.parentSpanId}` } : {}), ...(terminalTool ? { spanId: `${correlatedRun.runId}:tool:${observation.toolUseId}` } : {}), agentId, parentAgentId: parentId, eventId: `${correlatedRun.rootRunId}:${observation.sourceId}:${observation.sourceEventId}` } as Partial<RuntimeEvent>)
+      await this.record(correlatedRun, observation.kind, payload as never, { ...observation, ...(parentToolRun ? { parentSpanId: `${parentToolRun.runId}:${observation.parentSpanId}` } : {}), ...(toolEvidence ? { spanId: `${correlatedRun.runId}:tool:${observation.toolUseId}` } : {}), agentId: toolRun?.agentId ?? agentId, parentAgentId: toolRun ? toolRun.parentAgentId : parentId, eventId: `${correlatedRun.rootRunId}:${observation.sourceId}:${observation.sourceEventId}` } as Partial<RuntimeEvent>)
     } catch (error) { this.seen.delete(sourceKey); throw error }
   }
 

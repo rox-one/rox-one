@@ -58,6 +58,22 @@ describe('runtime session collector', () => {
     expect(last?.rootRunId).not.toBe(next.rootRunId)
   })
 
+  it('keeps queued cancellation coverage attached to the genuine originating tool run', async () => {
+    const { service, emitted } = await setup()
+    const old = await service.begin('parent', 'old')
+    await service.agentEvent('parent', { type: 'tool_start', toolName: 'bash', toolUseId: 'old-host-call', input: { command: 'printf safe' } }, { structuredHostTerminals: true })
+    await service.finish('parent', 'interrupted')
+    const next = await service.begin('parent', 'successor')
+    await service.observe('parent', { kind: 'trace.coverage', payload: { coverage: { state: 'partial', source: 'runtime', missing: ['unconfirmed-host-process-termination'] } }, agentId: 'root', toolUseId: 'old-host-call', spanId: 'tool:old-host-call', sourceId: 'omp-host-cancellation:original', sourceEventId: 'original-cancellation', sourceSeq: 1, occurredAt: known(Date.now(), 'host invocation cancellation'), clockDomain: 'rox-host', origin: 'observed' })
+    expect(emitted.at(-1)?.rootRunId).toBe(old.rootRunId)
+    expect(emitted.at(-1)?.spanId).toBe(`${old.runId}:tool:old-host-call`)
+    const oldSnapshot = await service.getSnapshot({ sessionId: 'parent', workspaceId: 'ws', rootRunId: old.rootRunId })
+    const nextSnapshot = await service.getSnapshot({ sessionId: 'parent', workspaceId: 'ws', rootRunId: next.rootRunId })
+    expect(oldSnapshot.coverage.missing).toContain('unconfirmed-host-process-termination')
+    expect(nextSnapshot.coverage.missing).not.toContain('unconfirmed-host-process-termination')
+    expect(nextSnapshot.events.some(event => event.toolUseId === 'old-host-call')).toBe(false)
+  })
+
   it('deduplicates native child observations and maps nested native identities', async () => {
     const { service, emitted } = await setup()
     const run = await service.begin('parent', 'prompt')

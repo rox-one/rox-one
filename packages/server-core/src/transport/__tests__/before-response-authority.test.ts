@@ -119,6 +119,8 @@ async function workspaceResourceFixture() {
     principalId: actor.principalId, sessionId: actor.sessionId, deviceId: actor.deviceId, expiresAt } }
   let trackingRequest = false
   let arrivals = 0
+  let sessionActive = true
+  let membershipActive = true
   let canReadResource = true
   let guardCalls = 0
   let serializations = 0
@@ -135,9 +137,15 @@ async function workspaceResourceFixture() {
   cleanups.push(() => server.close())
   server.handle('domain.resource.guarded-read', () => ({
     toJSON() { serializations += 1; return { content: 'private Resource response bytes' } },
-  }), { access: 'authenticatedWorkspace', beforeResponse: async context => {
+  }), { access: 'authenticatedWorkspace', beforeWorkspaceResponse: async context => {
     guardCalls += 1
-    if (context.actor?.principalId !== actor.principalId || !canReadResource) throw new CodedError('FORBIDDEN', 'Resource read denied')
+    // This final trusted fixture operation checks live identity, membership and
+    // Resource policy together, just as the canonical SQL guard's transaction.
+    if (!sessionActive || context.actor?.sessionId !== actor.sessionId
+      || context.actor.principalId !== actor.principalId || context.actor.expiresAt <= Date.now()) {
+      throw new CodedError('AUTH_FAILED', 'Session denied')
+    }
+    if (!membershipActive || !canReadResource) throw new CodedError('FORBIDDEN', 'Resource read denied')
   } })
   await server.listen()
   const socket = new WebSocket(`ws://127.0.0.1:${server.port}`)
@@ -163,6 +171,7 @@ async function workspaceResourceFixture() {
   const response = message(id)
   socket.send(JSON.stringify({ id, type: 'request', channel: 'domain.resource.guarded-read', args: [] }))
   return { thirdArrival, releaseThirdArrival, response, revokeResource: () => { canReadResource = false },
+    revokeSession: () => { sessionActive = false }, revokeMembership: () => { membershipActive = false },
     guardCalls: () => guardCalls, serializations: () => serializations, arrivals: () => arrivals }
 }
 
@@ -189,6 +198,34 @@ test('Resource read revoke during third WorkspaceActor revalidation retracts pri
   f.releaseThirdArrival.resolve()
   const response = await f.response
   expect(response.error?.code).toBe('FORBIDDEN')
+  expect(response.result).toBeUndefined()
+  expect(JSON.stringify(response)).not.toContain('private Resource response bytes')
+  expect(f.guardCalls()).toBe(1)
+  expect(f.serializations()).toBe(0)
+  expect(f.arrivals()).toBe(3)
+})
+
+test('final joint WorkspaceActor and Resource admission independently rejects a revoked live session', async () => {
+  const f = await workspaceResourceFixture()
+  await f.thirdArrival.promise
+  f.revokeSession()
+  f.releaseThirdArrival.resolve()
+  const response = await f.response
+  expect(response.error).toEqual({ code: 'AUTH_FAILED', message: 'Request failed' })
+  expect(response.result).toBeUndefined()
+  expect(JSON.stringify(response)).not.toContain('private Resource response bytes')
+  expect(f.guardCalls()).toBe(1)
+  expect(f.serializations()).toBe(0)
+  expect(f.arrivals()).toBe(3)
+})
+
+test('final joint WorkspaceActor and Resource admission independently rejects lost live membership', async () => {
+  const f = await workspaceResourceFixture()
+  await f.thirdArrival.promise
+  f.revokeMembership()
+  f.releaseThirdArrival.resolve()
+  const response = await f.response
+  expect(response.error).toEqual({ code: 'FORBIDDEN', message: 'Request failed' })
   expect(response.result).toBeUndefined()
   expect(JSON.stringify(response)).not.toContain('private Resource response bytes')
   expect(f.guardCalls()).toBe(1)

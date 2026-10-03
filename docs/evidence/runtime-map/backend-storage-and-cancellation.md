@@ -22,6 +22,6 @@ Service fixtures inspect inline transport, persisted journal and content blobs f
 
 ## Executed checks
 
-All commands use the installed Bun binary. The last cancellation/service/session/startup/host-shell suite passed **63 tests, 277 Bun assertions**, exit **0**. The journal/service/delegation/RPC suite passed **33 tests, 173 assertions**, exit **0**. The host-shell/TaskRunner/Conductor suite passed **47 tests, 175 assertions**, exit **0**. Signed native authorization/transport/membership and renderer ingress checks passed **49 tests, 414 assertions**, exit **0**.
+All commands use the installed Bun binary. The cancellation/service/session/startup/host-shell suite passed **63 tests, 277 Bun assertions**, exit **0**. After adding originating-tool correlation, the focused cancellation/service/delegation/RPC suite passed **27 tests, 143 assertions**, exit **0**, including a deterministic queued cancellation arriving after a successor prompt. The earlier journal/service/delegation/RPC suite passed **33 tests, 173 assertions**, exit **0**. The host-shell/TaskRunner/Conductor suite passed **47 tests, 175 assertions**, exit **0**. Signed native authorization/transport/membership and renderer ingress checks passed **49 tests, 414 assertions**, exit **0**.
 
 These checks cover isolated Linux local execution, canonical storage, fake CLI transport and signed authority fixtures. They do not claim installed macOS/Windows smoke, live account access or live provider execution.
