@@ -1,0 +1,35 @@
+{
+  "source_sha": "5def9ffd36dc160fdc7c908784e0ef97ba6a732e",
+  "source_pr": 584,
+  "source_path": "apps/electron/src/renderer/pages/meetings/request-state.ts",
+  "source_sha256": "965e6571559679d65a685175852c807ed11ff84ba9697501ab8008ba52930d97",
+  "integrated_sha256": "f4d80d198482310aa294d8896a2ea4cb710c6a9be8e220b6d43f9a1633f62627",
+  "adapted_exports": [
+    "MeetingRequestTracker"
+  ],
+  "scope": "current routed local MeetingsPage consumers, no unused legacy meeting-draft/status exports",
+  "adaptations": [
+    "committed workspace ownership including unmount and A-to-B-to-A",
+    "foreign captured callbacks cannot cancel current reads",
+    "latest read per meeting, coalesced writes per action",
+    "snapshot retains newer pushed records/deletions",
+    "only unchanged submitted form fields are cleared",
+    "local global recorder operation may continue; obsolete UI receipt cannot navigate another workspace"
+  ],
+  "notes_equivalent": {
+    "copied": false,
+    "symbols": [
+      "NativeNotesPage useLayoutEffect read lease",
+      "refreshNotes/refreshAssets request generations",
+      "openNoteRequestRef + workspaceIdRef",
+      "saveCurrentNote isCurrentDocument and current-content equality"
+    ],
+    "behavior_evidence": "existing production callback notes-read-lifecycle tests exercise no-uncommitted-read, unavailable errors, A-to-B-to-A, dispose and latest request ownership; native single-writer tests preserve actual authority"
+  },
+  "preserved": [
+    "LocalMeetingDetail profile/analysis/transcript/citation consumers",
+    "recording singleton lifetime",
+    "IPC, native write authority and user consent",
+    "current route and selected detail projection"
+  ]
+}
