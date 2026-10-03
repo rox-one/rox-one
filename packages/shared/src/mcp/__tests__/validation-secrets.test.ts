@@ -75,3 +75,21 @@ test('an invalid remote URL produces a sanitized validation result', async () =>
   expect(result.success).toBe(false);
   expect(result.error).not.toContain('vault-invalid-url-secret');
 });
+
+
+test('actual stdio validation excludes inherited host credentials but retains explicit source env', async () => {
+  const original = process.env.ANTHROPIC_API_KEY;
+  process.env.ANTHROPIC_API_KEY = 'private-inherited-host-key';
+  try {
+    const script = 'if (process.env.ANTHROPIC_API_KEY !== "source-override" || process.env.SOURCE_MARKER !== "kept") { console.error("unexpected host env"); process.exit(1); }';
+    const { fileURLToPath } = await import('node:url');
+    const fixture = fileURLToPath(new URL('./fixtures/mcp-server-good.mjs', import.meta.url));
+    const absent = await validateStdioMcpConnection({ command:process.execPath, args:['--eval','if (process.env.ANTHROPIC_API_KEY) process.exit(1); import(' + JSON.stringify(fixture) + ')'], timeout:4000 });
+    expect(absent.success).toBe(true);
+    const explicit = await validateStdioMcpConnection({ command:process.execPath, args:['--eval',script+' import('+JSON.stringify(fixture)+')'], env:{ANTHROPIC_API_KEY:'source-override',SOURCE_MARKER:'kept'},timeout:4000 });
+    expect(explicit.success).toBe(true);
+  } finally {
+    if (original === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = original;
+  }
+});

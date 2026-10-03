@@ -44,54 +44,74 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
   const [editDescription, setEditDescription] = useState('')
   const [editContent, setEditContent] = useState('')
   const [saving, setSaving] = useState(false)
+  const loadedSkillRef = React.useRef<LoadedSkill | null>(null)
+  const scopeOwnerRef = React.useRef({ active: true })
+  const catalogRevisionRef = React.useRef(0)
+  React.useLayoutEffect(() => {
+    const owner = { active: true }
+    scopeOwnerRef.current.active = false
+    scopeOwnerRef.current = owner
+    loadedSkillRef.current = null
+    ++catalogRevisionRef.current
+    setSkill(null)
+    setLoading(true)
+    setError(null)
+    setSaving(false)
+    return () => { owner.active = false; ++catalogRevisionRef.current }
+  }, [workspaceId, skillSlug, workingDirectory])
 
   // Load skill data
   useEffect(() => {
     let cancelled = false
+    const owner = scopeOwnerRef.current
     setLoading(true)
     setError(null)
 
-    ;(async () => {
+    const load = async (background = false) => {
+      const request = ++catalogRevisionRef.current
       try {
         const skills = await window.electronAPI.getSkills(workspaceId, workingDirectory)
-        if (cancelled) return
+        if (cancelled || !owner.active || scopeOwnerRef.current !== owner || request !== catalogRevisionRef.current) return
         const found = skills.find((s) => s.slug === skillSlug) ?? null
         if (!found) {
           setError(t('skillInfo.notFound'))
           setSkill(null)
+          loadedSkillRef.current = null
           return
         }
+        const previous = loadedSkillRef.current
+        loadedSkillRef.current = found
         setSkill(found)
-        setEditName(found.metadata.name)
-        setEditDescription(found.metadata.description)
-        setEditContent(found.content || '')
+        setError(null)
+        // Refresh fields which still match the last canonical snapshot. Keep
+        // local edits when a watcher changes another field or reloads the file.
+        setEditName(value => previous && value !== previous.metadata.name ? value : found.metadata.name)
+        setEditDescription(value => previous && value !== previous.metadata.description ? value : found.metadata.description)
+        setEditContent(value => previous && value !== (previous.content || '') ? value : found.content || '')
       } catch (err) {
-        if (cancelled) return
-        setError(err instanceof Error ? err.message : t('skillInfo.failedToLoad'))
+        if (cancelled || !owner.active || scopeOwnerRef.current !== owner || request !== catalogRevisionRef.current) return
+        if (!background || !loadedSkillRef.current) {
+          setError(err instanceof Error ? err.message : t('skillInfo.failedToLoad'))
+        }
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled && owner.active && scopeOwnerRef.current === owner && request === catalogRevisionRef.current) setLoading(false)
       }
-    })()
+    }
+
+    const cleanup = window.electronAPI.onSkillsChanged?.((changedWorkspaceId) => {
+      if (cancelled || changedWorkspaceId !== workspaceId) return
+      // Watcher payloads only contain workspace skills. Resolve the complete
+      // project/global/OMP catalog with the same directory as the first read.
+      void load(true)
+    })
+    void load()
 
     return () => {
       cancelled = true
+      ++catalogRevisionRef.current
+      cleanup?.()
     }
   }, [workspaceId, skillSlug, workingDirectory, t])
-
-  // Live updates
-  useEffect(() => {
-    if (!window.electronAPI?.onSkillsChanged) return
-    return window.electronAPI.onSkillsChanged((changedWorkspaceId, skills) => {
-      if (changedWorkspaceId !== workspaceId) return
-      const found = skills.find((s) => s.slug === skillSlug)
-      if (found) {
-        setSkill(found)
-        setEditName(found.metadata.name)
-        setEditDescription(found.metadata.description)
-        setEditContent(found.content || '')
-      }
-    })
-  }, [workspaceId, skillSlug])
 
   const handleOpenInFinder = useCallback(async () => {
     if (!canRevealLocally || !skill) return
@@ -104,11 +124,14 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
 
   const handleDelete = useCallback(async () => {
     if (!skill) return
+    const owner = scopeOwnerRef.current
     try {
       await window.electronAPI.deleteSkill(workspaceId, skillSlug)
+      if (!owner.active || scopeOwnerRef.current !== owner) return
       toast.success(t('skillInfo.deletedSkill', { name: skill.metadata.name }))
       navigate(routes.view.skills())
     } catch (err) {
+      if (!owner.active || scopeOwnerRef.current !== owner) return
       toast.error(t('skillInfo.failedToDelete'), {
         description: err instanceof Error ? err.message : undefined,
       })
@@ -120,7 +143,10 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
   }, [skillSlug])
 
   const handleSave = useCallback(async () => {
-    if (!skill || skill.source !== 'workspace') return
+    if (!skill || skill.source !== 'workspace' || saving) return
+    const owner = scopeOwnerRef.current
+    const isCurrent = () => owner.active && scopeOwnerRef.current === owner
+    if (!isCurrent()) return
     const name = editName.trim()
     const description = editDescription.trim()
     if (!name || !description) {
@@ -134,16 +160,23 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
         description,
         content: editContent,
       })
+      if (!isCurrent()) return
+      ++catalogRevisionRef.current
+      loadedSkillRef.current = updated
       setSkill(updated)
+      setEditName(value => value === editName ? updated.metadata.name : value)
+      setEditDescription(value => value === editDescription ? updated.metadata.description : value)
+      setEditContent(value => value === editContent ? updated.content || '' : value)
       toast.success(t('skillInfo.saved'))
     } catch (err) {
+      if (!isCurrent()) return
       toast.error(t('skillInfo.saveFailed'), {
         description: err instanceof Error ? err.message : undefined,
       })
     } finally {
-      setSaving(false)
+      if (isCurrent()) setSaving(false)
     }
-  }, [skill, editName, editDescription, editContent, workspaceId, skillSlug, t])
+  }, [saving, skill, editName, editDescription, editContent, workspaceId, skillSlug, t])
 
   const skillName = skill?.metadata.name || skillSlug
   const canDeleteSkill = skill?.source === 'workspace'
