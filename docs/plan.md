@@ -1006,3 +1006,43 @@ Collection recovery qualification completed on current bb047:33/0/80 native-stor
 ### Golden per-task form draft recovery — 2026-10-04
 
 Owner recent_features; depends on current Tasks1456, strict date1470 and Product1454. Preserve old source and modern Things UI. Exercise actual two-task link/kind/tag retention, submitted-field-only clearing, actor/workspace ABA, unmount and stale pre-render button denial, plus all retained task import/responsive cases and current native commit controls. Retain the before-fix lost draft and fixture failure history; qualify current Electron types with own workspace dependency resolution, record exact source/log hashes, reconcile all current docs without deletions, publish separate PR for parent review/merge.
+
+
+### Knowledge availability recovery — 2026-10-03
+
+- [x] Freeze original #1436 and current consumers; reject its global singleton cache because actual A→B/connection and invalidation probes expose wrong reuse. Coordinate collection/AppShell ownership with historical worker.
+- [x] Restore scoped bounded availability through both current consumers, shared native-event invalidation, local-store retention, render scope ownership, and obsolete kernel-call fences.
+- [x] Verify actual mounted components: offline zero kernel reads, shared status/remount fast path, native-event recovery, workspace/event late-response negatives, missing channel and current Notes navigation. Qualify adjacent Knowledge logic, current consumers through Vite and Electron types; retain the whole renderer build as incomplete due to host load, plus failed fixture and real race history.
+- [x] Prepare separate qualified PR and update the exhaustive 137-path source/caller ledger. Root owns remote merge; source branches remain intact.
+
+### 2026-10-04 — Интеграция платформенных подсказок PR #1466
+
+- [x] Перенести только форматирование и локализованные параметры подсказок; сохранить текущие native/Task draft/Product Learning потребители.
+- [x] Подтвердить исходный дефект Windows/Linux и положительный macOS контроль настоящими кнопками Tasks.
+- [x] Квалифицировать свежий совмещенный source: 25 actual Chromium controls, 300 SSR/i18n tests и full strict Electron types без ошибок; сохранить точные хеши и журналы, подготовить отдельный integration PR без удаления исходной ветки.
+
+## Notes source-path classification recovery — 2026-10-04
+
+1. Freeze source1465/6f59 and its external merge2338; retain negative current-source evidence. After correcting only the fixture's canonical root, actual current controls reproduce35pass/2fail for a corrupt parent directory and its transport classification.
+2. Validate ancestors before the requested file, preserving exact ENOENT-path matching, canonical-root and symlink guards, unchanged current native ownership fences and positive missing-note behavior.
+3. Qualify the actual registered Notes/content handlers, real temporary files and loopback transport, current Notes page callbacks, relevant authority controls and server-core types. Retain prior failures, append documentation, push a separate narrow PR; parent owns review/merge.
+
+### OMP hidden Windows launch recovery — 2026-10-04
+
+- [x] Confirm both actual current spawn paths omit the flag; controlled real child invocation reproduces0pass/2fail after successful RPC/helper completion. Preserve current SSO/one-shot generation/native policy/host Bash ownership.
+- [x] Set two launch option lines; qualify actual RPC/helper launch and literal argv/no side effects, adjacent account/native policy/query/lifecycle controls and package types. Record native Windows limits and source-test portability exclusions.
+- [x] Publish separate PR #1483 and attach it; read back the exact head and update the original137 source/caller ledger. Root owns merge.
+
+
+
+
+### Native OMP launch cancellation recovery — 2026-10-04
+
+Owner recent_features; parent owns ordered integration. Retain held-prepare destroy baseline failure, execute all 27 pinned native controls and 317 current account/domain/helper/observer/i18n checks, and qualify full strict Electron types. Preserve all failure history, current SSO/RuntimeMap authority and original branches; reconcile current main without document deletion, publish a separate scoped PR. Installed Windows and full release acceptance stay separate.
+
+## Runtime trace origin recovery — 2026-10-04
+
+1. Historical worker freezes c2e8 source and separates seven collector/core/DTO files from pr_scout's actual producer ownership. Retain current authorization, descriptor privacy and every original branch.
+2. Reproduce origin/privacy/artifact/verdict negatives, including the explicitly pending TaskRunner producer fixture. Restore only the bounded collector layer, then qualify four independent suites (53/0/247), core and server-core Node22 types. Archive source failures and the initial dependent-fixture type diagnostics.
+3. Publish a separate collector PR with qualified hashes and pending producer/UI boundaries. pr_scout preserves current third suppliedExecution argument and spawn authority bind while implementing tagged actual producers in its separate PR. Root owns sequential merge.
+4. Historical worker recovers current renderer context/export/link/retry behavior from the same finite source head; end-to-end producer/UI acceptance needs its own actual consumers and refreshed scoped proof.

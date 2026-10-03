@@ -1924,6 +1924,7 @@ export interface ElectronAPI {
 
   // Skills
   getSkills(workspaceId: string, workingDirectory?: string): Promise<LoadedSkill[]>
+  getSkillDetails(workspaceId: string, skillSlug: string, workingDirectory?: string): Promise<LoadedSkill | null>
   getSkillFiles?(workspaceId: string, skillSlug: string): Promise<SkillFile[]>
   updateSkill(
     workspaceId: string,

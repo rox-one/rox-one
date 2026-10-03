@@ -2,11 +2,11 @@ import { useState, lazy, Suspense, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { useStore } from 'jotai'
-import { openAuxiliaryPanelAtom, panelStackAtom, updatePanelRouteByIdAtom, focusedPanelIdAtom } from '@/atoms/panel-stack'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { routes } from '@/lib/navigate'
 import { workspaceProjectContextsAtom } from '@/atoms/workspace-context'
+import { captureWorkspaceToolOpen, openWorkspaceTool } from '@/lib/open-workspace-tool'
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
 import { WorkspacePlanView } from './WorkspacePlanView'
 const Meetings = lazy(() => import('@/pages/MeetingsPage'))
@@ -31,10 +31,9 @@ export default function PlanWorkspacePage({ selectedId }: { selectedId?: string 
     </ShellSidebarPortal>
     <div className="min-h-0 flex-1">
       {section === 'calendar' ? <WorkspacePlanView workspaceId={activeWorkspaceId} projectId={projects[activeWorkspaceId] ?? undefined} onOpenTask={id => {
-        const route = routes.view.tasks(id)
-        const existing = store.get(panelStackAtom).find(panel => panel.tool === 'tasks')
-        if (existing) { store.set(updatePanelRouteByIdAtom, { id: existing.id, route }); store.set(focusedPanelIdAtom, existing.id) }
-        else store.set(openAuxiliaryPanelAtom, { tool: 'tasks', route, context: { workspaceId: activeWorkspaceId, projectId: projects[activeWorkspaceId] ?? undefined, route: routes.view.meetings() } })
+        const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId,
+          projectId: projects[activeWorkspaceId] ?? undefined, tool: 'tasks' })
+        if (intent) openWorkspaceTool(store, intent, routes.view.tasks(id))
       }} /> : <Suspense fallback={<div role="status">{t('common.loading')}</div>}><Meetings selectedId={selectedId} /></Suspense>}
     </div>
   </div>

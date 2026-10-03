@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils'
 import type { ViewConfig as KnowledgeViewConfig } from '@rox/shared/views'
 import { KnowledgeProposals } from './KnowledgeProposals'
 import { countActionableProposals, resolveKnowledgeMutationsApi } from './proposal-actions'
+import { getKernelAvailability, observeKernelAvailability } from './kernel-availability'
 
 /**
  * Which body KnowledgeHome renders. Module-level atom so other column hosts
@@ -318,13 +319,16 @@ export function KnowledgeHome() {
   const [hits, setHits] = useState<SearchHit[]>([])
   const [status, setStatus] = useState<SearchStatus>('idle')
   const [noConnections, setNoConnections] = useState(false)
-  const [kernelOffline, setKernelOffline] = useState(false)
+  const [kernelState, setKernelState] = useState<{ workspaceId: string | null; offline: boolean; noConnections: boolean } | null>(null)
+  const kernelOffline = kernelState?.workspaceId === workspaceId && kernelState.offline
+  const kernelHasNoConnections = kernelState?.workspaceId === workspaceId && kernelState.noConnections
   const [view, setView] = useAtom(knowledgeHomeViewAtom)
   const [activeViewId, setActiveViewId] = useAtom(knowledgeActiveViewIdAtom)
   const [actionableProposalCount, setActionableProposalCount] = useState(0)
   const [migrating, setMigrating] = useState(false)
   // Saved views list
-  const [savedViews, setSavedViews] = useState<KnowledgeViewConfig[]>([])
+  const [viewsSnapshot, setViewsSnapshot] = useState<{ workspaceId: string | null; views: KnowledgeViewConfig[] } | null>(null)
+  const savedViews = viewsSnapshot?.workspaceId === workspaceId ? viewsSnapshot.views : []
   const [viewsLoaded, setViewsLoaded] = useState(false)
 
   // Active view run state
@@ -360,53 +364,50 @@ export function KnowledgeHome() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     let cancelled = false
+    let request = 0
     const load = async () => {
+      const ticket = ++request
       const api = resolveKnowledgeViewsApi()
       try {
         const list = await listKnowledgeViews(api)
-        if (cancelled) return
-        setSavedViews(list ?? [])
+        if (cancelled || ticket !== request) return
+        setViewsSnapshot({ workspaceId, views: list ?? [] })
       } catch {
-        if (!cancelled) setSavedViews([])
+        if (!cancelled && ticket === request) setViewsSnapshot({ workspaceId, views: [] })
       } finally {
-        if (!cancelled) setViewsLoaded(true)
+        if (!cancelled && ticket === request) setViewsLoaded(true)
       }
     }
     void load()
-    return () => {
-      cancelled = true
-    }
+    const api = window.electronAPI?.knowledge
+    const unsubscribe = api ? observeKernelAvailability(api, () => void load()) : undefined
+    return () => { cancelled = true; ++request; unsubscribe?.() }
   }, [workspaceId])
 
   // Probe whether the legacy external knowledge engine is up. Empty state
   // Rox Notes only — no SiYuan install/start CTA and no SiYuan document routes.
   useEffect(() => {
     if (typeof window === 'undefined') return
+    const api = window.electronAPI?.knowledge
+    if (!api) return
     let cancelled = false
+    let request = 0
     const probe = async () => {
-      const api = window.electronAPI?.knowledge
-      if (!api?.engineStatus) {
-        if (!cancelled) setKernelOffline(true)
-        return
-      }
+      const ticket = ++request
       try {
         const connections = api.listConnections ? await api.listConnections() : []
+        if (cancelled || ticket !== request) return
         const connectionId = connections[0]?.id
-        const status = await api.engineStatus({
-          ...(workspaceId ? { workspaceId } : {}),
-          ...(connectionId ? { connectionId } : {}),
-        })
-        if (cancelled) return
-        setKernelOffline(!status.running)
-        if (connections.length === 0) setNoConnections(true)
+        const status = await getKernelAvailability(api, { workspaceId: workspaceId ?? undefined, connectionId })
+        if (cancelled || ticket !== request) return
+        setKernelState({ workspaceId, offline: !status.running, noConnections: connections.length === 0 })
       } catch {
-        if (!cancelled) setKernelOffline(true)
+        if (!cancelled && ticket === request) setKernelState({ workspaceId, offline: true, noConnections: false })
       }
     }
     void probe()
-    return () => {
-      cancelled = true
-    }
+    const unsubscribe = observeKernelAvailability(api, () => void probe())
+    return () => { cancelled = true; ++request; unsubscribe() }
   }, [workspaceId])
 
   // Deep-link / atom-driven view selection → run viewRun.
@@ -635,7 +636,7 @@ export function KnowledgeHome() {
   )
 
   const emptyState =
-    status === 'idle' && (noConnections || kernelOffline) ? (
+    status === 'idle' && (noConnections || kernelHasNoConnections || kernelOffline) ? (
       <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
         <p className="text-[13px] font-medium text-foreground">
           {t('knowledge.roxNotes.emptyTitle')}

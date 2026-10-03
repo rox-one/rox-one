@@ -66,6 +66,7 @@ import { derivePersonalTaskSignals, tasksProjectsCapabilities } from '@/features
 import { navigate, routes } from '@/lib/navigate'
 import { usePanelKeyboardGuard } from '@/lib/usePanelKeyboardGuard'
 import { cn } from '@/lib/utils'
+import { formatHotkeyDisplay } from '@/lib/platform'
 import {
   Badge,
   Button,
@@ -615,8 +616,8 @@ export default function TasksPage(props: TasksPageProps = {}) {
     const placeGroup = t('tasks.move.places')
     const out: MoveDestination[] = [
       { id: 'list:inbox', label: t('tasks.projection.inbox'), group: listGroup },
-      { id: 'when:today', label: t('tasks.when.today'), group: listGroup, hint: '⌘T' },
-      { id: 'when:evening', label: t('tasks.when.evening'), group: listGroup, hint: '⌘E' },
+      { id: 'when:today', label: t('tasks.when.today'), group: listGroup, hint: formatHotkeyDisplay('mod+t') },
+      { id: 'when:evening', label: t('tasks.when.evening'), group: listGroup, hint: formatHotkeyDisplay('mod+e') },
       { id: 'when:tomorrow', label: t('tasks.due.tomorrow'), group: listGroup },
       { id: 'when:anytime', label: t('tasks.when.anytime'), group: listGroup },
       { id: 'when:someday', label: t('tasks.when.someday'), group: listGroup },
@@ -1328,8 +1329,19 @@ export default function TasksPage(props: TasksPageProps = {}) {
   }
 
   const shortcuts: Array<[string, string]> = [
-    ['⌘N', 'quick'], ['Space', 'complete'], ['↑ ↓', 'navigate'], ['Enter', 'edit'], ['⌘K', 'move'],
-    ['⌘T', 'today'], ['⌘E', 'evening'], ['⌘S', 'when'], ['⇧⌘D', 'deadline'], ['⌘D', 'duplicate'], ['⌥↑ ↓', 'reorder'], ['⌘⌫', 'trash'], ['A–Я', 'search'],
+    [formatHotkeyDisplay('mod+n'), 'quick'],
+    [formatHotkeyDisplay('space'), 'complete'],
+    ['↑ ↓', 'navigate'],
+    [formatHotkeyDisplay('enter'), 'edit'],
+    [formatHotkeyDisplay('mod+k'), 'move'],
+    [formatHotkeyDisplay('mod+t'), 'today'],
+    [formatHotkeyDisplay('mod+e'), 'evening'],
+    [formatHotkeyDisplay('mod+s'), 'when'],
+    [formatHotkeyDisplay('shift+mod+d'), 'deadline'],
+    [formatHotkeyDisplay('mod+d'), 'duplicate'],
+    [`${formatHotkeyDisplay('alt+up')} / ${formatHotkeyDisplay('alt+down')}`, 'reorder'],
+    [formatHotkeyDisplay('mod+backspace'), 'trash'],
+    ['A–Я', 'search'],
   ]
 
   const detail = selected ? (
@@ -1442,7 +1454,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
                 />
               </label>
             </div>
-            <span className="hidden xl:inline">· {t('tasks.status.hint')}</span>
+            <span className="hidden xl:inline">· {t('tasks.status.hint', { new: formatHotkeyDisplay('mod+n'), move: formatHotkeyDisplay('mod+k') })}</span>
           </div>
         )}
       />

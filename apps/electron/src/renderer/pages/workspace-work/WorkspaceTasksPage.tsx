@@ -11,7 +11,7 @@ export default function WorkspaceTasksPage({ selectedId }: { selectedId?: string
   const { activeWorkspaceId } = useAppShellContext()
   const projectId = useWorkspaceProjectContext(activeWorkspaceId)
   const [scope, setScope] = useState<'personal' | 'workspace'>(selectedId?.startsWith('task_') ? 'workspace' : 'personal')
-  useEffect(() => { if (selectedId?.startsWith('task_')) setScope('workspace') }, [selectedId])
+  useEffect(() => { if (selectedId) setScope(selectedId.startsWith('task_') ? 'workspace' : 'personal') }, [selectedId])
   return <div className="flex h-full min-h-0 flex-col">
     <div role="tablist" className="flex shrink-0 gap-1 border-b border-foreground/5 px-3 py-2">
       {(['personal', 'workspace'] as const).map(value => <button role="tab" type="button" key={value} aria-selected={scope === value} onClick={() => setScope(value)} className={`rounded px-3 py-1.5 text-xs ${scope === value ? 'bg-accent/10 text-accent' : 'text-muted-foreground'}`}>{t(`navigation.taskScopes.${value}`)}</button>)}
