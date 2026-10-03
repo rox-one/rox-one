@@ -69,6 +69,12 @@ function notifyNativeCommit(record: VersionedPersonalTask): void {
 }
 
 export function personalTasksNativeAvailable(): boolean { return callerScope !== null && api() !== null }
+
+/** Read-only lifetime fence; no identity or grant is exposed to consumers. */
+export function capturePersonalTaskScope(): () => boolean {
+  const generation = scopeGeneration
+  return () => callerScope !== null && generation === scopeGeneration
+}
 export interface PersonalTaskCallerScope {
   authority: 'native' | 'local'
   userId: string
