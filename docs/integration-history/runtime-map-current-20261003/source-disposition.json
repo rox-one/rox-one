@@ -485,7 +485,7 @@
       "semantic_disposition": "genuine typed channels/contracts/UI links dependency; reconcile current unions and inventory",
       "consumer_evidence": "runtimeTrace snapshot/events/payload three reads, SessionEvent trace+health, TurnCard/UserMessageBubble scoped replay links; current transport inventory and native authority preserved",
       "integration_action": "source addition adapted on current main; current privacy/ownership/fixture repairs override unsafe legacy details",
-      "integrated_content_sha256": "3cb0750a748cdbc62e42c34b14c4ded506d7fdb9df7649fb3a3acee0109a1a20"
+      "integrated_content_sha256": "eec3e74933277a2e1b88b46192aaf49ab8e73786a846d3e9cfe8e80d5e85142d"
     },
     {
       "path": "apps/electron/src/transport/channel-map.ts",
@@ -562,7 +562,7 @@
       "semantic_disposition": "source historical evidence retained separately; no current acceptance claim",
       "consumer_evidence": "source R01-R30 explicitly partial/blocked/performancefail; native report and priorlogs dated; new implementation needs own revision-bound receipt",
       "integration_action": "retained historical source evidence, explicitly superseded by this current receipt",
-      "integrated_content_sha256": "7922b0c3bfa5064202dd340f1526e0a99056d616fe1ead801fc7567ec78eab24"
+      "integrated_content_sha256": "92479427146c92181f79305f362f9a75315ecae212a3e0920e1306a88c9857f0"
     },
     {
       "path": "docs/runtime-map/i18n-manifest.json",
@@ -1002,7 +1002,7 @@
       "semantic_disposition": "genuine 293 new user-facing keys per all12 locale files; preserve current key unions",
       "consumer_evidence": "all12source catalogues present, directgitJSON confirms Chinese as well; parity/sort gates required after integration",
       "integration_action": "source addition adapted on current main; current privacy/ownership/fixture repairs override unsafe legacy details",
-      "integrated_content_sha256": "0389e50a9b525a7621c9deb3190b28d282061b83201ccfa0fde34862f09d4787"
+      "integrated_content_sha256": "b10f15cda3189a53ce26b70539efd7f8f610af8b9dd4906839a2110b47889656"
     },
     {
       "path": "packages/shared/src/i18n/locales/de.json",
@@ -1013,7 +1013,7 @@
       "semantic_disposition": "genuine 293 new user-facing keys per all12 locale files; preserve current key unions",
       "consumer_evidence": "all12source catalogues present, directgitJSON confirms Chinese as well; parity/sort gates required after integration",
       "integration_action": "source addition adapted on current main; current privacy/ownership/fixture repairs override unsafe legacy details",
-      "integrated_content_sha256": "c1bdff691d98fd5aa0b14b85c78f46ea68fd922f51498c07f4e13941f4ff0b84"
+      "integrated_content_sha256": "04177b8952704f8299eb783d1714878a98d5b4debe2b8776abeaba24b59549f9"
     },
     {
       "path": "packages/shared/src/i18n/locales/en.json",
@@ -1024,7 +1024,7 @@
       "semantic_disposition": "genuine 293 new user-facing keys per all12 locale files; preserve current key unions",
       "consumer_evidence": "all12source catalogues present, directgitJSON confirms Chinese as well; parity/sort gates required after integration",
       "integration_action": "source addition adapted on current main; current privacy/ownership/fixture repairs override unsafe legacy details",
-      "integrated_content_sha256": "ffa0c6ca946fdcfcfac156345ff2fdc8f09445620f8fc71476a6a3fc6a8c7880"
+      "integrated_content_sha256": "e67ad38460b58c351b489a8684543af0a61f9130971354e6e79ae6691c966e85"
     },
     {
       "path": "packages/shared/src/i18n/locales/es.json",
@@ -1035,7 +1035,7 @@
       "semantic_disposition": "genuine 293 new user-facing keys per all12 locale files; preserve current key unions",
       "consumer_evidence": "all12source catalogues present, directgitJSON confirms Chinese as well; parity/sort gates required after integration",
       "integration_action": "source addition adapted on current main; current privacy/ownership/fixture repairs override unsafe legacy details",
-      "integrated_content_sha256": "35550f5294f630192c57905ee018326a86b6f4f544ab0f6dde13aafa6141a8a4"
+      "integrated_content_sha256": "ef6f884141b6470f4fc45e60e55f3c5eab4b7acf4f0db06085719228daeec9d3"
     },
     {
       "path": "packages/shared/src/i18n/locales/fr.json",
@@ -1046,7 +1046,7 @@
       "semantic_disposition": "genuine 293 new user-facing keys per all12 locale files; preserve current key unions",
       "consumer_evidence": "all12source catalogues present, directgitJSON confirms Chinese as well; parity/sort gates required after integration",
       "integration_action": "source addition adapted on current main; current privacy/ownership/fixture repairs override unsafe legacy details",
-      "integrated_content_sha256": "7c8650cf37ae041cf0c78a3b58329bb4cb71fe1ca1388626c1b4653c8f557c71"
+      "integrated_content_sha256": "33958878d62fd869e4dbc32f6fbe8b06419bd3c5e60a6a1d0ce113b6edbeb439"
     },
     {
       "path": "packages/shared/src/i18n/locales/hu.json",
@@ -1057,7 +1057,7 @@
       "semantic_disposition": "genuine 293 new user-facing keys per all12 locale files; preserve current key unions",
       "consumer_evidence": "all12source catalogues present, directgitJSON confirms Chinese as well; parity/sort gates required after integration",
       "integration_action": "source addition adapted on current main; current privacy/ownership/fixture repairs override unsafe legacy details",
-      "integrated_content_sha256": "40f411011e319983bd7ee37897f5dcbdc8c01d1934ad21553a9edb624bd1f0dd"
+      "integrated_content_sha256": "1af397f4a6198ea05f1d74b044a0b21cb00e867de2afeed6672eb3d9062ebd6c"
     },
     {
       "path": "packages/shared/src/i18n/locales/ja.json",
@@ -1068,7 +1068,7 @@
       "semantic_disposition": "genuine 293 new user-facing keys per all12 locale files; preserve current key unions",
       "consumer_evidence": "all12source catalogues present, directgitJSON confirms Chinese as well; parity/sort gates required after integration",
       "integration_action": "source addition adapted on current main; current privacy/ownership/fixture repairs override unsafe legacy details",
-      "integrated_content_sha256": "1368bde14467e85cbdfe014e4d93a7894209ba0978e1dffd92b2a64b33454840"
+      "integrated_content_sha256": "712ef540a7db079b081f90cd8e557406c023d2088325eea6b65fa0bf337611c0"
     },
     {
       "path": "packages/shared/src/i18n/locales/ko.json",
@@ -1079,7 +1079,7 @@
       "semantic_disposition": "genuine 293 new user-facing keys per all12 locale files; preserve current key unions",
       "consumer_evidence": "all12source catalogues present, directgitJSON confirms Chinese as well; parity/sort gates required after integration",
       "integration_action": "source addition adapted on current main; current privacy/ownership/fixture repairs override unsafe legacy details",
-      "integrated_content_sha256": "f9c04d41a8f6f06b9303fbea769c7c1645e0e04647d15492fee70cd427e151fc"
+      "integrated_content_sha256": "3a33df5ce0b2d29aed4b2c9e3dbaab5ccdafffa4e5aa1b33d0a52adc5497170e"
     },
     {
       "path": "packages/shared/src/i18n/locales/pl.json",
@@ -1090,7 +1090,7 @@
       "semantic_disposition": "genuine 293 new user-facing keys per all12 locale files; preserve current key unions",
       "consumer_evidence": "all12source catalogues present, directgitJSON confirms Chinese as well; parity/sort gates required after integration",
       "integration_action": "source addition adapted on current main; current privacy/ownership/fixture repairs override unsafe legacy details",
-      "integrated_content_sha256": "0b2dbba05ca8b9fb708209e3a2072b1289b9cf126ccfcf03a6bf395b5b82c3d6"
+      "integrated_content_sha256": "78c564559f5d86e51ae5713b823426a234d5f7b3b41d4854713c19bb38d2fab3"
     },
     {
       "path": "packages/shared/src/i18n/locales/ru.json",
@@ -1101,7 +1101,7 @@
       "semantic_disposition": "genuine 293 new user-facing keys per all12 locale files; preserve current key unions",
       "consumer_evidence": "all12source catalogues present, directgitJSON confirms Chinese as well; parity/sort gates required after integration",
       "integration_action": "source addition adapted on current main; current privacy/ownership/fixture repairs override unsafe legacy details",
-      "integrated_content_sha256": "62e8acc64f3cb1ea21f10a05ced75245ebdf995131bd7e6204e90f17e0aed168"
+      "integrated_content_sha256": "a14c84f94771ebd6d811af4e390f10246de3625eabebf9525a1c35966b482bd1"
     },
     {
       "path": "packages/shared/src/i18n/locales/zh-Hans.json",
@@ -1112,7 +1112,7 @@
       "semantic_disposition": "genuine 293 new user-facing keys per all12 locale files; preserve current key unions",
       "consumer_evidence": "all12source catalogues present, directgitJSON confirms Chinese as well; parity/sort gates required after integration",
       "integration_action": "source addition adapted on current main; current privacy/ownership/fixture repairs override unsafe legacy details",
-      "integrated_content_sha256": "873edc4de57768a405a9481c92518e3a26cea890f087cc5a6e0da017c33371bd"
+      "integrated_content_sha256": "5453e0fff18c1e940e206cf479ae46a76d7ddcd81561be96378e3cb9e192fc6e"
     },
     {
       "path": "packages/shared/src/i18n/locales/zh-Hant.json",
@@ -1123,7 +1123,7 @@
       "semantic_disposition": "genuine 293 new user-facing keys per all12 locale files; preserve current key unions",
       "consumer_evidence": "all12source catalogues present, directgitJSON confirms Chinese as well; parity/sort gates required after integration",
       "integration_action": "source addition adapted on current main; current privacy/ownership/fixture repairs override unsafe legacy details",
-      "integrated_content_sha256": "8526fb5514f23e24022ffc1c71e7467ee0b1ced09ce330efa80e6ec434796c41"
+      "integrated_content_sha256": "9bfbb2066c4db73921821f939946cd3b7aa0872d75aaed72a5aa0b28da8feac5"
     },
     {
       "path": "packages/shared/src/protocol/channels.ts",
@@ -1376,7 +1376,7 @@
       "semantic_disposition": "retain named source tests; existing source reports are not current proof",
       "consumer_evidence": "pure/host/auth/journal/OMP hook tests +actual renderer deterministic journal harness; unconsumed fixture does not prove installed app/native provider",
       "integration_action": "source addition adapted on current main; current privacy/ownership/fixture repairs override unsafe legacy details",
-      "integrated_content_sha256": "c64d70668f942e98c14996daa1661bdf3d082837567a76746cdcf9253832ed37"
+      "integrated_content_sha256": "382dae3e0a1a4abc19ea33eb9b5d90c7b1a9046ec4471e89020b86858ae55681"
     },
     {
       "path": "tests/e2e/runtime-map/vite.config.ts",
@@ -1424,6 +1424,6 @@
     "No realhostsecrets accessed; accessor/prototype proof uses synthetic controlled values",
     "Whole original branch is not merged; source127hunks are candidates for current-owner selective integration"
   ],
-  "integration_base": "89c12aec9524d6a7f5f98a07aa9d537ef134825c",
+  "integration_base": "2fae95823b5599cd9147b749332416760acd85bf",
   "qualification": "Current scoped implementation; all127source paths accounted, original branch unchanged; source historical reports are not current qualification."
 }
