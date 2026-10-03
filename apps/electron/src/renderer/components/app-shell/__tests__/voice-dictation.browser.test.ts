@@ -15,7 +15,9 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
   let page: Page
   const errors: string[] = []
   const stop = async () => {
-    const owned = server; server = undefined; owned?.kill()
+    // The ephemeral bundler owns no persistent state. Retire it deterministically
+    // even when another package build has saturated the host during teardown.
+    const owned = server; server = undefined; owned?.kill('SIGKILL')
     try { await browser?.close() } finally { await owned?.exited }
   }
   beforeAll(async () => {
