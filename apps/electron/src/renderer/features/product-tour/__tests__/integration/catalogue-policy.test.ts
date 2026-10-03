@@ -1,13 +1,10 @@
 /** Independent execution of all 56 production policies. Pure evidence, never domain/native success. */
 import { describe, expect, test } from 'bun:test'
 import { initialRuntimeState, transition } from '../../core'
-import * as catalogueExports from '../../catalogue'
+import { productTourCatalogue as catalogue } from '../../catalogue'
 import type { EngineSnapshot, RuntimeState, TourBinding, TourDefinition, TourInput, TourSignal, TourStep } from '../../contracts'
 import matrix from '../../../../../../../../tests/e2e/product-tour/step-matrix.json'
 
-const exports = catalogueExports as unknown as Record<string, unknown>
-const catalogue = (exports.tourCatalogue ?? exports.tours ?? exports.PRODUCT_TOURS ?? exports.TOUR_CATALOGUE) as readonly TourDefinition[]
-if (!Array.isArray(catalogue)) throw new Error('Production catalogue must export its declarative tour array; never silently substitute the expected fixture.')
 const binding: TourBinding = { workspaceId: 'workspace-a', panelId: 'panel-a', sessionId: 'session-a', clientProfileId: 'profile-a', runToken: 'run-a' }
 
 function activate(tour: TourDefinition, step: TourStep): RuntimeState {
