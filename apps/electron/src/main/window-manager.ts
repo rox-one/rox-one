@@ -55,6 +55,7 @@ export interface CreateWindowOptions {
 
 export class WindowManager {
   private windows: Map<number, ManagedWindow> = new Map()  // webContents.id → ManagedWindow
+  private readonly workspaceBindingGenerations = new Map<number, number>()
   private focusedModeWindows: Set<number> = new Set()  // webContents.id of windows in focused mode
   private lastActiveWindowId: number | null = null
   private eventSink: ((channel: string, target: import('@rox/shared/protocol').PushTarget, ...args: any[]) => void) | null = null
@@ -364,7 +365,18 @@ export class WindowManager {
     // Store the window mapping BEFORE loadURL — bootstrap preload uses
     // __get-workspace-id (via sendSync) which reads this map during eval.
     const webContentsId = window.webContents.id
+    this.workspaceBindingGenerations.set(webContentsId, (this.workspaceBindingGenerations.get(webContentsId) ?? 0) + 1)
     this.windows.set(webContentsId, { window, workspaceId })
+    // A reload/crashed renderer must not inherit asynchronous native work from
+    // its predecessor, even when the workspace ID remains identical.
+    window.webContents.on('render-process-gone', () => {
+      this.workspaceBindingGenerations.set(webContentsId, (this.workspaceBindingGenerations.get(webContentsId) ?? 0) + 1)
+    })
+    window.webContents.on('did-start-navigation', (_event, _url, isInPlace, isMainFrame) => {
+      if (isMainFrame && !isInPlace) {
+        this.workspaceBindingGenerations.set(webContentsId, (this.workspaceBindingGenerations.get(webContentsId) ?? 0) + 1)
+      }
+    })
     this.lastActiveWindowId = webContentsId
 
     // Apply window-title policy now that the map size reflects this window —
@@ -587,6 +599,7 @@ export class WindowManager {
       this.keyboardCloseIntents.delete(webContentsId)
 
       nativeTheme.removeListener('updated', themeHandler)
+      this.workspaceBindingGenerations.set(webContentsId, (this.workspaceBindingGenerations.get(webContentsId) ?? 0) + 1)
       this.windows.delete(webContentsId)
       if (this.lastActiveWindowId === webContentsId) this.lastActiveWindowId = null
       this.focusedModeWindows.delete(webContentsId)
@@ -707,6 +720,11 @@ export class WindowManager {
   /**
    * Get workspace ID for a window (by webContents.id)
    */
+  /** Monotonic window binding fence, including switches away and back. */
+  getWorkspaceGenerationForWindow(webContentsId: number): number | null {
+    return this.windows.has(webContentsId) ? this.workspaceBindingGenerations.get(webContentsId) ?? 0 : null
+  }
+
   getWorkspaceForWindow(webContentsId: number): string | null {
     const managed = this.windows.get(webContentsId)
     return managed?.workspaceId ?? null
@@ -782,6 +800,7 @@ export class WindowManager {
     const managed = this.windows.get(webContentsId)
     if (managed) {
       const oldWorkspaceId = managed.workspaceId
+      if (oldWorkspaceId !== workspaceId) this.workspaceBindingGenerations.set(webContentsId, (this.workspaceBindingGenerations.get(webContentsId) ?? 0) + 1)
       managed.workspaceId = workspaceId
       // Re-apply window-title policy so in-window workspace switches update
       // the titlebar immediately (relevant when ≥2 windows are open).
@@ -802,6 +821,7 @@ export class WindowManager {
    */
   registerWindow(window: BrowserWindow, workspaceId: string): void {
     const webContentsId = window.webContents.id
+    this.workspaceBindingGenerations.set(webContentsId, (this.workspaceBindingGenerations.get(webContentsId) ?? 0) + 1)
     this.windows.set(webContentsId, { window, workspaceId })
     if (window.isFocused()) this.lastActiveWindowId = webContentsId
     // Re-apply window-title policy after re-registration (e.g. post-refresh).

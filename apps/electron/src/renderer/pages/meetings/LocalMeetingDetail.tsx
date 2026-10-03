@@ -6,11 +6,11 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pause, Play } from 'lucide-react'
+import { Pause, Pencil, Play } from 'lucide-react'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
 import { Badge, Button, EmptyState, SectionLabel, Tabs, type Tone } from '@/components/mode-screen/ModeScreen'
-import { extractJsonBlock, readAgentRun, startAgentRun } from '@/lib/extra-screens/agent-run'
+import { extractionBusy, startMeetingExtraction } from '@/lib/meetings/auto-extraction'
 import { newLocalId, subscribeWorkspaceJson } from '@/lib/extra-screens/storage'
 import { createPersonalTask } from '@/lib/extra-screens/personal-task-bridge'
 import {
@@ -20,7 +20,7 @@ import {
   saveDecisions,
   syncDecisionLessons,
 } from '../extra-screens/decisions/decisions-store'
-import { candidateToDecision, type Decision, type DecisionCandidate, type DecisionsData } from '../extra-screens/decisions/decisions-model'
+import { candidateToDecision, type Decision, type DecisionsData } from '../extra-screens/decisions/decisions-model'
 import {
   pauseRecording,
   recordedMs,
@@ -35,13 +35,11 @@ import { MEETING_SOURCE_SEEK_SESSION_KEY } from '../../../shared/meetings-local'
 import type { LocalAsrEngine, LocalMeeting, LocalMeetingAction, LocalTranscript, LocalTranscriptSegmentPatch } from '../../../shared/meetings-local'
 import {
   activeSegmentIndex,
-  buildSummaryPrompt,
   filterSegments,
   formatBytes,
   formatDuration,
   meetingTime,
   openActionCount,
-  parseSummaryExtraction,
 } from './local-meetings-model'
 
 export type DetailTab = 'overview' | 'recording' | 'transcript' | 'decisions' | 'actions' | 'documents'
@@ -106,7 +104,7 @@ export function LocalMeetingDetail(props: {
   const update = useCallback(async (patch: Parameters<NonNullable<typeof api>['update']>[1]) => {
     if (!api) return null
     const next = await api.update(m.id, patch)
-    if (next) onChanged(next)
+    if (next && currentMeetingId.current === m.id) onChanged(next)
     return next
   }, [api, m.id, onChanged])
 
@@ -314,90 +312,17 @@ export function LocalMeetingDetail(props: {
     if (!workspaceId) return
     const syncedRules = await syncDecisionLessons(workspaceId, updated)
     const after = loadDecisions(workspaceId)
-    saveDecisionsData({ ...after, decisions: after.decisions.map((d) => (d.id === decision.id ? { ...d, syncedRules } : d)) })
+    saveDecisionsData({ ...after, decisions: after.decisions.map((d) => (d.id === decision.id && d.updatedAt === updated.updatedAt ? { ...d, syncedRules } : d)) })
   }, [saveDecisionsData, workspaceId])
 
-  // ── Generated summary via the app's agent (explicit, read-only session) ──
-  const runId = m.summaryRun?.sessionId
-  useEffect(() => {
-    if (!runId || !api) return
-    let cancelled = false
-    const poll = async () => {
-      const run = await readAgentRun(runId)
-      if (cancelled || (run.exists && (run.processing || !run.text))) return
-      const fresh = await api.get(m.id)
-      if (!fresh || fresh.summaryRun?.sessionId !== runId) return
-      const sourceTranscript = await api.readTranscript(m.id)
-      if (!sourceTranscript || sourceTranscript.revision !== fresh.summaryRun.transcriptRevision || sourceTranscript.revision !== m.summaryRun?.transcriptRevision) {
-        await api.update(m.id, { summaryRun: undefined })
-        onBanner('summary-failed')
-        return
-      }
-      const allowedIds = new Set(sourceTranscript.segments.map((segment) => segment.id))
-      const parsed = run.exists ? parseSummaryExtraction(extractJsonBlock(run.text), [...allowedIds]) : null
-      const validIds = (ids: readonly string[]) => [...new Set(ids)].filter((id) => allowedIds.has(id))
-      if (!parsed) {
-        await api.update(m.id, { summaryRun: undefined })
-        onBanner('summary-failed')
-        return
-      }
-      const now = Date.now()
-      const known = new Set(fresh.actions.map((a) => a.text.trim().toLocaleLowerCase()))
-      const newActions: LocalMeetingAction[] = parsed.actions.flatMap((action) => {
-        const sourceSegmentIds = validIds(action.sourceSegmentIds)
-        const key = action.text.trim().toLocaleLowerCase()
-        if (!action.text.trim() || !sourceSegmentIds.length || known.has(key)) return []
-        known.add(key)
-        return [{ id: newLocalId('act'), text: action.text.trim(), done: false, generated: true, sourceSegmentIds, sourceTranscriptRevision: sourceTranscript.revision, createdAt: now }]
-      })
-      const summarySourceSegmentIds = validIds(parsed.summarySourceSegmentIds)
-      const questions = parsed.questions.flatMap((question) => {
-        const sourceSegmentIds = validIds(question.sourceSegmentIds)
-        return question.text.trim() && sourceSegmentIds.length
-          ? [{ id: newLocalId('question'), text: question.text.trim(), sourceSegmentIds, createdAt: now }]
-          : []
-      })
-      await api.update(m.id, {
-        summaryRun: undefined,
-        summary: parsed.summary && summarySourceSegmentIds.length
-          ? { text: parsed.summary, generated: true, sessionId: runId, sourceSegmentIds: summarySourceSegmentIds, sourceTranscriptRevision: sourceTranscript.revision, questions, updatedAt: now }
-          : fresh.summary,
-        actions: [...fresh.actions, ...newActions],
-      })
-      if (parsed.decisions.length) {
-        const current = loadDecisions(workspaceId)
-        const extractionId = `mtg-${m.id}`
-        const next: DecisionCandidate[] = parsed.decisions.flatMap((d, i) => {
-          const sourceSegmentIds = validIds(d.sourceSegmentIds)
-          const sourceSegment = sourceTranscript.segments.find((segment) => segment.id === sourceSegmentIds[0])
-          if (!sourceSegment) return []
-          const source = { kind: 'meeting' as const, id: m.id, label: fresh.title, segmentId: sourceSegment.id, startMs: sourceSegment.startMs }
-          return [{ id: `${extractionId}-${i}`, title: d.title, why: d.why, who: d.who, rejected: [], source, extractionId }]
-        })
-        const previousGenerated = (candidate: DecisionCandidate) => candidate.source.kind === 'meeting' && candidate.source.id === m.id && candidate.extractionId.startsWith('mtg-')
-        saveDecisionsData({ ...current, candidates: [...next, ...current.candidates.filter((candidate) => !previousGenerated(candidate))] })
-      }
-    }
-    void poll()
-    const timer = setInterval(() => { void poll() }, 4000)
-    return () => { cancelled = true; clearInterval(timer) }
-  }, [runId, api, m, update, onBanner, workspaceId, saveDecisionsData])
-
   const generateSummary = async () => {
-    if (!workspaceId || !transcript?.segments.length) return
+    if (!api) return
     onBanner(null)
     try {
-      const prompt = buildSummaryPrompt({
-        title: m.title,
-        participants: m.participants,
-        segments: transcript.segments.map(({ id, startMs, endMs, text }) => ({ id, startMs, endMs, text })),
-        language,
-      })
-      const sessionId = await startAgentRun({ workspaceId, name: t('meetings.local.summaryRunName', { title: m.title }), prompt })
-      await update({ summaryRun: { sessionId, startedAt: Date.now(), transcriptRevision: transcript.revision } })
-    } catch {
-      onBanner('summary-failed')
-    }
+      await startMeetingExtraction(api, m, language)
+      const fresh = await api.get(m.id)
+      if (fresh) onChanged(fresh)
+    } catch { onBanner('summary-failed') }
   }
 
   // ── Tabs ──
@@ -481,21 +406,35 @@ export function LocalMeetingDetail(props: {
 
   // Overview
   const [participantDraft, setParticipantDraft] = useState('')
+  const [summaryDraft, setSummaryDraft] = useState(m.summary?.text ?? '')
+  const summaryDirty = useRef(false)
+  const summaryMeetingId = useRef(m.id)
+  useEffect(() => {
+    if (summaryMeetingId.current !== m.id) { summaryMeetingId.current = m.id; summaryDirty.current = false }
+    if (!summaryDirty.current) setSummaryDraft(m.summary?.text ?? '')
+  }, [m.id, m.summary?.updatedAt, m.summary?.text])
   const overview = (
     <div className="flex flex-col gap-1">
       <SectionLabel>{t('meetings.local.summary')}</SectionLabel>
-      {m.summaryRun ? (
+      {extractionBusy(m) ? (
         <p className="text-[12px] text-text-secondary" role="status">{t('meetings.local.summaryRunning')}</p>
       ) : null}
+      {m.extraction?.status === 'failed' || m.extraction?.status === 'superseded' ? (
+        <p className="rounded-lg bg-warning/10 px-3 py-2 text-[12px] text-text-secondary" role="status" data-testid="meeting-extraction-failure">
+          {t(m.extraction.status === 'superseded' ? 'meetings.local.extractionSuperseded' : 'meetings.local.extractionFailed')}
+        </p>
+      ) : null}
       <textarea
-        key={`${m.id}:${m.summary?.updatedAt ?? 0}`}
         data-testid="meeting-summary"
-        defaultValue={m.summary?.text ?? ''}
+        value={summaryDraft}
+        aria-label={t('meetings.local.summary')}
+        onChange={(e) => { summaryDirty.current = true; setSummaryDraft(e.target.value) }}
         placeholder={t('meetings.local.summaryPlaceholder')}
         onBlur={(e) => {
           const text = e.target.value
           if (text === (m.summary?.text ?? '')) return
-          void update({ summary: text.trim() ? { text, generated: false, updatedAt: Date.now() } : null })
+          const meetingId = m.id
+          void update({ summary: text.trim() ? { ...m.summary, text, generated: false, updatedAt: Date.now() } : null }).then(() => { if (currentMeetingId.current === meetingId) summaryDirty.current = false })
         }}
         rows={m.summary ? 5 : 3}
         className="w-full resize-y rounded-[6px] bg-foreground/[0.05] px-2 py-1 text-[13px] leading-5 outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]"
@@ -519,11 +458,11 @@ export function LocalMeetingDetail(props: {
         {m.summary?.generated ? <span className="text-[11px] text-text-muted">{t('meetings.local.generatedLabel')}</span> : null}
         <Button
           data-testid="meeting-generate-summary"
-          disabled={!workspaceId || !transcript?.segments.length || !!m.summaryRun}
+          disabled={!workspaceId || !transcript?.segments.length || extractionBusy(m)}
           title={!transcript?.segments.length ? t('meetings.local.summaryNeedsTranscript') : t('meetings.local.summaryAgentHint')}
           onClick={() => void generateSummary()}
         >
-          {m.summary?.generated ? t('meetings.local.regenerateSummary') : t('meetings.local.generateSummary')}
+          {m.extraction?.status === 'failed' || m.extraction?.status === 'superseded' ? t('common.retry') : m.summary?.generated ? t('meetings.local.regenerateSummary') : t('meetings.local.generateSummary')}
         </Button>
       </div>
 
@@ -639,6 +578,17 @@ export function LocalMeetingDetail(props: {
   // Transcript
   const transcriptTab = (
     <div className="flex flex-col gap-2">
+      {engine?.missing.includes('cloud-consent') ? <div className="rounded-xl bg-accent/10 p-4 text-sm">
+        <p>{t('meetings.local.deepgramConsent')}</p>
+        <Button onClick={() => { void (async () => {
+          try {
+            await window.electronAPI.saveVoicePrefs({ cloudAsrConsent: true, privacyMigrationPending: false, sttEngine: 'cloud-rox' })
+            const result = await api?.transcribe(m.id)
+            if (result?.ok) onChanged(result.value)
+            else onBanner(result?.code ?? 'unavailable')
+          } catch { onBanner('unavailable') }
+        })() }}>{t('meetings.local.enableDeepgram')}</Button>
+      </div> : null}
       {m.transcript.status === 'running' || m.transcript.status === 'queued' ? (
         <div role="status" data-testid="meeting-transcript-progress" className="flex flex-col gap-1">
           <div className="text-[12px] text-text-secondary">{t(m.transcript.status === 'queued' ? 'meetings.local.tr.queuedBody' : 'meetings.local.tr.runningBody', { progress: m.transcript.progress, model: m.transcript.model ?? engine?.model ?? '' })}</div>
@@ -729,7 +679,7 @@ export function LocalMeetingDetail(props: {
                     type="button"
                     onClick={() => seek(s.startMs)}
                     disabled={!audioUrl}
-                    className={cn('flex w-full items-start gap-2 rounded-[6px] px-2 py-1 text-left hover:bg-foreground/[0.04]', s.id === activeId && 'bg-accent/10 shadow-[inset_2px_0_0_var(--accent)]')}
+                    className={cn('flex w-full items-start gap-2 rounded-[6px] border-l-2 border-transparent px-2 py-1 text-left hover:bg-foreground/[0.04]', s.id === activeId && 'border-accent bg-accent/10')}
                   >
                     <span className="w-12 shrink-0 pt-px font-mono text-[11px] tabular-nums text-text-muted">{formatRecClock(s.startMs)}</span>
                     <span className="min-w-0 flex-1 text-[13px] leading-5">{s.speakerId ? `${s.speakerId}: ` : ''}{s.text}</span>
@@ -761,7 +711,25 @@ export function LocalMeetingDetail(props: {
   // Decisions
   const [decisionDraft, setDecisionDraft] = useState('')
   const [decisionWhy, setDecisionWhy] = useState('')
-  const [editingDecision, setEditingDecision] = useState<string | null>(null)
+  const [decisionEdit, setDecisionEdit] = useState<{ id: string; candidate: boolean; title: string; why: string } | null>(null)
+  const saveDecisionEdit = () => {
+    if (!decisionEdit?.title.trim()) return
+    const current = loadDecisions(workspaceId)
+    if (decisionEdit.candidate) {
+      saveDecisionsData({ ...current, candidates: current.candidates.map((candidate) => candidate.id === decisionEdit.id ? { ...candidate, title: decisionEdit.title.trim(), why: decisionEdit.why.trim() } : candidate) })
+    } else {
+      const decision = current.decisions.find((item) => item.id === decisionEdit.id)
+      if (decision) void commitDecision({ ...decision, title: decisionEdit.title.trim(), why: decisionEdit.why.trim() })
+    }
+    setDecisionEdit(null)
+  }
+  const decisionEditor = (id: string, candidate: boolean) => decisionEdit?.id === id && decisionEdit.candidate === candidate ? (
+    <form className="flex flex-col gap-2 py-1" onSubmit={(e) => { e.preventDefault(); saveDecisionEdit() }} data-testid="meeting-decision-editor">
+      <input autoFocus value={decisionEdit.title} aria-label={t('meetings.local.decisionTitle')} onChange={(e) => setDecisionEdit({ ...decisionEdit, title: e.target.value })} className={cn(input, 'w-full')} />
+      <textarea value={decisionEdit.why} aria-label={t('meetings.local.decisionWhy')} onChange={(e) => setDecisionEdit({ ...decisionEdit, why: e.target.value })} className="min-h-16 w-full resize-y rounded-lg bg-foreground/5 px-2 py-1 text-[13px] outline-none" />
+      <div className="flex gap-2"><Button type="submit" disabled={!decisionEdit.title.trim()}>{t('common.save')}</Button><Button variant="ghost" onClick={() => setDecisionEdit(null)}>{t('common.cancel')}</Button></div>
+    </form>
+  ) : null
   const addDecision = async () => {
     const title = decisionDraft.trim()
     if (!title) return
@@ -794,11 +762,11 @@ export function LocalMeetingDetail(props: {
           {candidates.map((c) => (
             <div key={c.id} className="flex items-start gap-2 rounded-[6px] bg-accent/[0.06] px-2 py-1">
               <span className="min-w-0 flex-1">
-                <span className="block text-[13px]">{c.title}</span>
-                {c.why ? <span className="block text-[12px] text-text-secondary">{c.why}</span> : null}
+                {decisionEdit?.id === c.id ? decisionEditor(c.id, true) : <><span className="block text-[13px]">{c.title}</span>{c.why ? <span className="block text-[12px] text-text-secondary">{c.why}</span> : null}</>}
                 {renderSourceLinks(c.source.segmentId ? [c.source.segmentId] : undefined)}
                 <span className="block text-[11px] text-text-muted">{t('meetings.local.generatedLabel')}</span>
               </span>
+              <Button variant="ghost" aria-label={t('meetings.local.editDecision')} onClick={() => setDecisionEdit({ id: c.id, candidate: true, title: c.title, why: c.why })}><Pencil className="size-3.5" aria-hidden /></Button>
               <Button onClick={() => {
                 const current = loadDecisions(workspaceId)
                 saveDecisionsData({ ...current, candidates: current.candidates.filter((x) => x.id !== c.id) })
@@ -807,7 +775,7 @@ export function LocalMeetingDetail(props: {
                   && d.source.id === m.id
                   && d.title.trim().toLocaleLowerCase() === c.title.trim().toLocaleLowerCase(),
                 )
-                if (!duplicate) void commitDecision(candidateToDecision(c, newLocalId('dec'), Date.now()))
+                if (!duplicate) void commitDecision(candidateToDecision(c, `dec-${c.id}`, Date.now()))
               }}>{t('meetings.local.accept')}</Button>
               <Button variant="ghost" onClick={() => {
                 const current = loadDecisions(workspaceId)
@@ -826,23 +794,12 @@ export function LocalMeetingDetail(props: {
           <li key={d.id} className="group flex items-start gap-2 rounded-[6px] px-2 py-1 hover:bg-foreground/[0.04]">
             <span aria-hidden className={cn('mt-2 size-1.5 shrink-0 rounded-full', d.status === 'accepted' ? 'bg-success' : 'bg-text-muted')} />
             <span className="min-w-0 flex-1">
-              {editingDecision === d.id ? (
-                <input
-                  autoFocus
-                  defaultValue={d.title}
-                  aria-label={t('meetings.local.decisionTitle')}
-                  onBlur={(e) => { const v = e.target.value.trim(); setEditingDecision(null); if (v && v !== d.title) void commitDecision({ ...d, title: v }) }}
-                  onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingDecision(null) }}
-                  className={cn(input, 'w-full')}
-                />
-              ) : (
-                <button type="button" className="block text-left text-[13px]" onClick={() => setEditingDecision(d.id)}>{d.title}</button>
-              )}
-              {d.why ? <span className="block text-[12px] text-text-secondary">{d.why}</span> : null}
+              {decisionEdit?.id === d.id ? decisionEditor(d.id, false) : <><button type="button" className="block text-left text-[13px]" onClick={() => setDecisionEdit({ id: d.id, candidate: false, title: d.title, why: d.why })}>{d.title}</button>{d.why ? <span className="block text-[12px] text-text-secondary">{d.why}</span> : null}</>}
               {renderSourceLinks(d.source.segmentId ? [d.source.segmentId] : undefined)}
               {d.status !== 'accepted' ? <span className="block text-[11px] text-text-muted">{t(`extraScreens.decisions.status.${d.status}`, { defaultValue: d.status })}</span> : null}
             </span>
             <span className="flex shrink-0 gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+              <Button variant="ghost" aria-label={t('meetings.local.editDecision')} onClick={() => setDecisionEdit({ id: d.id, candidate: false, title: d.title, why: d.why })}><Pencil className="size-3.5" aria-hidden /></Button>
               <Button variant="ghost" onClick={() => navigate(routes.view.screen('decisions', d.id))}>{t('meetings.local.openInDecisions')}</Button>
               <Button variant="ghost" aria-label={t('meetings.local.remove')} onClick={() => {
                 if (workspaceId) void removeDecisionLessons(workspaceId, d)
@@ -868,28 +825,43 @@ export function LocalMeetingDetail(props: {
 
   // Actions
   const [actionDraft, setActionDraft] = useState('')
-  const saveActions = (actions: LocalMeetingAction[]) => void update({ actions })
+  const [actionEdit, setActionEdit] = useState<{ id: string; text: string } | null>(null)
+  const saveAction = async (actionId: string, patch?: Partial<Pick<LocalMeetingAction, 'text' | 'done' | 'taskId'>>, remove = false, create = false) => {
+    if (!api) return
+    const meetingId = m.id
+    const result = await api.saveAction(meetingId, { actionId, patch, remove, create }).catch(() => null)
+    if (currentMeetingId.current !== meetingId) return
+    if (result?.ok) onChanged(result.value)
+    else onBanner(result?.code ?? 'unavailable')
+  }
+  useEffect(() => { setActionEdit(null); setDecisionEdit(null); setActionDraft(''); setDecisionDraft(''); setDecisionWhy('') }, [m.id])
   const actionsTab = (
     <div className="flex flex-col gap-1">
       {m.actions.length === 0 ? <EmptyState title={t('meetings.local.actionsEmptyTitle')} body={t('meetings.local.actionsEmptyBody')} /> : null}
       <ul className="flex flex-col" data-testid="meeting-actions">
         {m.actions.map((a) => (
           <li key={a.id} className="group flex flex-wrap items-center gap-2 rounded-[6px] px-2 py-1 hover:bg-foreground/[0.04]">
-            <input type="checkbox" className="accent-[var(--accent)]" checked={a.done} aria-label={a.text} onChange={(e) => saveActions(m.actions.map((x) => (x.id === a.id ? { ...x, done: e.target.checked } : x)))} />
-            <span className={cn('min-w-0 flex-1 text-[13px]', a.done && 'text-text-muted line-through')}>
-              {a.text}
+            <input type="checkbox" className="accent-[var(--accent)]" checked={a.done} aria-label={a.text} onChange={(e) => void saveAction(a.id, { done: e.target.checked })} />
+            <div className={cn('min-w-0 flex-1 text-[13px]', actionEdit?.id === a.id && 'basis-[calc(100%-32px)]', a.done && 'text-text-muted line-through')}>
+              {actionEdit?.id === a.id ? (
+                <form className="flex w-full flex-col gap-2" data-testid="meeting-action-editor" onSubmit={(e) => { e.preventDefault(); if (actionEdit.text.trim()) { void saveAction(a.id, { text: actionEdit.text }); setActionEdit(null) } }}>
+                  <input autoFocus value={actionEdit.text} onChange={(e) => setActionEdit({ ...actionEdit, text: e.target.value })} aria-label={t('meetings.local.actionText')} className={cn(input, 'w-full')} />
+                  <div className="flex gap-2"><Button type="submit" disabled={!actionEdit.text.trim()}>{t('common.save')}</Button><Button variant="ghost" onClick={() => setActionEdit(null)}>{t('common.cancel')}</Button></div>
+                </form>
+              ) : a.text}
               {a.generated ? <span className="pl-2 text-[11px] text-text-muted">{t('meetings.local.generatedShort')}</span> : null}
-            </span>
+            </div>
             {a.sourceTranscriptRevision === transcript?.revision ? renderSourceLinks(a.sourceSegmentIds) : null}
+            {actionEdit?.id !== a.id ? <Button variant="ghost" aria-label={t('meetings.local.editAction')} onClick={() => setActionEdit({ id: a.id, text: a.text })}><Pencil className="size-3.5" aria-hidden /></Button> : null}
             {a.taskId ? (
               <Button variant="ghost" onClick={() => navigate(routes.view.tasks(a.taskId))}>{t('meetings.local.openTask')}</Button>
             ) : (
               <Button data-testid="meeting-action-to-task" onClick={() => {
                 const task = createPersonalTask({ title: a.text, notes: t('meetings.local.taskNotes', { title: m.title }) })
-                saveActions(m.actions.map((x) => (x.id === a.id ? { ...x, taskId: task.id } : x)))
+                void saveAction(a.id, { taskId: task.id })
               }}>{t('meetings.local.toTask')}</Button>
             )}
-            <Button variant="ghost" aria-label={t('meetings.local.remove')} className="opacity-0 group-hover:opacity-100 focus:opacity-100" onClick={() => saveActions(m.actions.filter((x) => x.id !== a.id))}>×</Button>
+            <Button variant="ghost" aria-label={t('meetings.local.remove')} className="opacity-0 group-hover:opacity-100 focus:opacity-100" onClick={() => void saveAction(a.id, undefined, true)}>×</Button>
           </li>
         ))}
       </ul>
@@ -897,7 +869,7 @@ export function LocalMeetingDetail(props: {
         e.preventDefault()
         const text = actionDraft.trim()
         if (!text) return
-        saveActions([...m.actions, { id: newLocalId('act'), text, done: false, createdAt: Date.now() }])
+        void saveAction(newLocalId('act'), { text }, false, true)
         setActionDraft('')
       }}>
         <input data-testid="meeting-action-input" value={actionDraft} onChange={(e) => setActionDraft(e.target.value)} placeholder={t('meetings.screen.actionPlaceholder')} aria-label={t('meetings.screen.actionPlaceholder')} className={cn(input, 'flex-1')} />
@@ -915,7 +887,7 @@ export function LocalMeetingDetail(props: {
   }
   const documentsTab = (
     <div
-      className={cn('flex min-h-[160px] flex-col gap-1 rounded-[8px]', dragOver && 'bg-accent/[0.06] shadow-[inset_0_0_0_1px_var(--accent)]')}
+      className={cn('flex min-h-[160px] flex-col gap-1 rounded-[8px]', dragOver && 'bg-accent/[0.06] outline outline-1 outline-accent')}
       onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDragOver(true) } }}
       onDragLeave={() => setDragOver(false)}
       onDrop={(e) => {

@@ -8,6 +8,8 @@
  * store with owner and revision metadata; it is deliberately local, not team-synchronized state.
  */
 
+import { isWidgetAppearance, type WidgetAppearance } from './widget-appearance'
+
 export const HOME_WIDGET_IDS = [
   'summary',
   'quickActions',
@@ -38,6 +40,7 @@ export const HOME_WIDGET_SIZES: readonly HomeWidgetSize[] = ['S', 'M', 'L']
 export interface HomeWidgetPlacement {
   id: HomeWidgetId
   size: HomeWidgetSize
+  appearance?: WidgetAppearance
 }
 
 export interface HomeDashboardLayout {
@@ -137,8 +140,9 @@ export function isSupportedHomeLayout(raw: unknown): boolean {
   const seen = new Set<string>()
   for (const item of value.widgets) {
     if (!item || typeof item !== 'object') return false
-    const placement = item as { id?: unknown; size?: unknown }
-    if (Object.keys(placement).some((key) => key !== 'id' && key !== 'size')) return false
+    const placement = item as { id?: unknown; size?: unknown; appearance?: unknown }
+    if (Object.keys(placement).some((key) => key !== 'id' && key !== 'size' && key !== 'appearance')) return false
+    if (placement.appearance !== undefined && !isWidgetAppearance(placement.appearance)) return false
     if (!isHomeWidgetId(placement.id) || seen.has(placement.id)) return false
     if (placement.size !== undefined && !isSize(placement.size)) return false
     seen.add(placement.id)
@@ -157,7 +161,7 @@ export function persistHomeLayout(layout: HomeDashboardLayout, ownerId: string, 
 }
 
 export function cloneLayout(layout: HomeDashboardLayout): HomeDashboardLayout {
-  return { version: 2, widgets: layout.widgets.map((w) => ({ ...w })) }
+  return { version: 2, widgets: layout.widgets.map((w) => ({ ...w, ...(w.appearance ? { appearance: { ...w.appearance } } : {}) })) }
 }
 
 /** Corrupt/unknown payload → default; unknown ids and duplicates are dropped. */
@@ -169,10 +173,10 @@ export function normalizeHomeLayout(raw: unknown): HomeDashboardLayout {
   const widgets: HomeWidgetPlacement[] = []
   for (const item of list) {
     if (!item || typeof item !== 'object') continue
-    const { id, size } = item as { id?: unknown; size?: unknown }
+    const { id, size, appearance } = item as { id?: unknown; size?: unknown; appearance?: unknown }
     if (!isHomeWidgetId(id) || seen.has(id)) continue
     seen.add(id)
-    widgets.push({ id, size: isSize(size) ? size : HOME_WIDGET_DEFAULT_SIZE[id] })
+    widgets.push({ id, size: isSize(size) ? size : HOME_WIDGET_DEFAULT_SIZE[id], ...(isWidgetAppearance(appearance) ? { appearance: { ...appearance } } : {}) })
   }
   // v1 → v2: an untouched v1 default becomes the richer v2 default; a
   // customised v1 layout keeps the user's arrangement and gains the new widgets.
@@ -203,6 +207,19 @@ export function removeWidget(layout: HomeDashboardLayout, id: HomeWidgetId): Hom
 
 export function resizeWidget(layout: HomeDashboardLayout, id: HomeWidgetId, size: HomeWidgetSize): HomeDashboardLayout {
   return { version: 2, widgets: layout.widgets.map((w) => (w.id === id ? { ...w, size } : w)) }
+}
+
+/** Apply or reset one widget's design without changing any other placement. */
+export function setWidgetAppearance(layout: HomeDashboardLayout, id: HomeWidgetId, appearance?: WidgetAppearance): HomeDashboardLayout {
+  return {
+    version: 2,
+    widgets: layout.widgets.map((widget) => {
+      if (widget.id !== id) return widget
+      const placement = { ...widget }
+      delete placement.appearance
+      return appearance ? { ...placement, appearance: { ...appearance } } : placement
+    }),
+  }
 }
 
 /** Move `activeId` to the position of `overId` (drag-and-drop reorder). */

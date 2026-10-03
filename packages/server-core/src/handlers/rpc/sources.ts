@@ -7,6 +7,7 @@ import { getCredentialManager } from '@rox/shared/credentials'
 import { ensureRoxLayout, loadWorkspaceConfig, saveWorkspaceConfig } from '@rox/shared/workspaces'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import { assertNativeWorkspace, nativeSources } from './native-session-scope'
 import { KnowledgeConnectionsStore, credentialIdFromRef } from '../../knowledge'
 import {
   isClaimableLive,
@@ -50,7 +51,8 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
   }, { access: 'localElectron' })
 
   // Get all sources for a workspace
-  server.handle(RPC_CHANNELS.sources.GET, async (_ctx, workspaceId: string) => {
+  server.handle(RPC_CHANNELS.sources.GET, async (ctx, workspaceId: string) => {
+    assertNativeWorkspace(ctx, deps, workspaceId)
     const listed = rpcSourcesListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []
     const workspace = getWorkspaceByNameOrId(workspaceId)
@@ -58,9 +60,10 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
       log.error(`SOURCES_GET: Workspace not found: ${workspaceId}`)
       return []
     }
-    ensureWorkspaceSourceDefaults(workspace.rootPath)
-    return loadWorkspaceSources(workspace.rootPath)
-  })
+    if (!ctx.principal) ensureWorkspaceSourceDefaults(workspace.rootPath)
+    const sources = loadWorkspaceSources(workspace.rootPath)
+    return ctx.principal ? nativeSources(sources) : sources
+  }, { nativeAction: 'read' })
 
   // Create a new source
   server.handle(RPC_CHANNELS.sources.CREATE, async (_ctx, workspaceId: string, config: Partial<import('@rox/shared/sources').CreateSourceInput>) => {

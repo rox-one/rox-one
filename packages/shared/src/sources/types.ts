@@ -594,6 +594,8 @@ export interface CreateSourceInput {
 export interface ApiConfig {
   name: string;
   baseUrl: string;
+  /** Bundled backend credentials must stay on the provider's configured origin. */
+  rejectRedirects?: boolean;
   auth?: {
     type: 'none' | 'header' | 'bearer' | 'query' | 'basic';
     headerName?: string;

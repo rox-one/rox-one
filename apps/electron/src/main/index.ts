@@ -128,7 +128,8 @@ import { handleDeepLink } from './deep-link'
 import { BrowserPaneManager } from './browser-pane-manager'
 import { OAuthFlowStore } from '@rox/shared/auth'
 import { registerThumbnailScheme, registerThumbnailHandler } from './thumbnail-protocol'
-import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, messagingGatewayLog, autoUpdateLog } from './logger'
+import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, getAutoUpdateLogFilePath, messagingGatewayLog, autoUpdateLog } from './logger'
+import { registerDeviceDiagnosticsIpc } from './device-diagnostics-ipc'
 import { setPerfEnabled, enableDebug } from '@rox/shared/utils'
 import { registerPiModelResolver } from '@rox/shared/config'
 import { getPiModelsForAuthProvider, getAllPiModels } from '@rox/shared/config'
@@ -536,12 +537,27 @@ app.whenReady().then(async () => {
     browserPaneManager.registerToolbarIpc()
     browserPaneManager.registerCapabilityIpc()
 
-    const { registerVoiceHotkeys, showVoiceOverlay } = await import('./voice/overlay-window')
-    registerVoiceHotkeys(() => {
-      showVoiceOverlay()
-    })
+    const { registerVoiceHotkeys } = await import('./voice/overlay-window')
+    const { sendVoiceHotkeyToClient } = await import('./voice/command-input')
+    const disposeVoiceHotkeys = registerVoiceHotkeys((command, webContentsId) => {
+      const target = webContentsId === undefined
+        ? windowManager?.getLastActiveWindow()
+        : windowManager?.getWindowByWebContentsId(webContentsId)
+      if (!target || target.isDestroyed() || target.webContents.isDestroyed()) return false
+      return sendVoiceHotkeyToClient({
+        webContentsId: target.webContents.id,
+        isManagedWindow: id => Boolean(windowManager?.getWindowByWebContentsId(id)),
+        resolveClient: id => windowManager?.getClientIdForWindow(id),
+        push: windowManager?.getRpcEventSink(),
+        channel: RPC_CHANNELS.voice.HOTKEY,
+      }, command)
+    }, id => windowManager?.getFocusedWindow()?.webContents.id === id)
+    app.once('will-quit', disposeVoiceHotkeys)
     registerMeetingCaptureIpc()
-    registerLocalMeetingsIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)))
+    registerLocalMeetingsIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)), {
+      getWorkspaceForWindow: (id) => windowManager?.getWorkspaceForWindow(id) ?? null,
+      getWorkspaceGenerationForWindow: (id) => windowManager?.getWorkspaceGenerationForWindow(id) ?? null,
+    })
     registerMailIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)))
 
     // Build real PlatformServices from Electron APIs
@@ -554,6 +570,18 @@ app.whenReady().then(async () => {
       isDebugMode,
       getLogFilePath,
       captureError: (err) => Sentry.captureException(err),
+    })
+
+    registerDeviceDiagnosticsIpc({
+      ipcMain,
+      windowManager,
+      rendererFilePath: join(__dirname, 'renderer/index.html'),
+      devServerUrl: process.env.VITE_DEV_SERVER_URL,
+      getLogPaths: () => ({
+        main: getLogFilePath(),
+        messaging: getMessagingGatewayLogFilePath(),
+        updates: getAutoUpdateLogFilePath(),
+      }),
     })
 
     // Bootstrap IPC handlers — preload uses sendSync for window-local details

@@ -206,6 +206,8 @@ export function parseSummaryExtraction(parsed: unknown, allowedSegmentIds: reado
     : []
   const actions = citedTextItems(o.actions)
   const questions = citedTextItems(o.questions)
-  if (!summary && decisions.length === 0 && actions.length === 0 && questions.length === 0) return null
+  const explicitlyEmpty = o.summary === '' && Array.isArray(o.summarySourceSegmentIds) && o.summarySourceSegmentIds.length === 0
+    && Array.isArray(o.decisions) && o.decisions.length === 0 && Array.isArray(o.actions) && o.actions.length === 0 && Array.isArray(o.questions) && o.questions.length === 0
+  if (!summary && decisions.length === 0 && actions.length === 0 && questions.length === 0 && !explicitlyEmpty) return null
   return { summary, summarySourceSegmentIds, decisions, actions, questions }
 }

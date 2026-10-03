@@ -1093,6 +1093,86 @@ export interface ElectronAPI {
     importAdc(input: { credentialsPath: string; candidateId: string; workspaceId: string }): Promise<WorkGraphConnectionRecord>
     previewSshAgent(): Promise<Array<{ candidateId: string; label: string; maskedSummary: string }>>
     importSshAgent(input: { candidateId: string; workspaceId: string }): Promise<WorkGraphConnectionRecord>
+      listConnectionLeases(input: {
+      workspaceId: string
+      connectionId: string
+    }): Promise<Array<{
+      id: string
+      consumerId: string
+      purpose: string
+      action: string
+      status: string
+    }>>
+    inspectConnection(input: {
+      workspaceId: string
+      connectionId: string
+    }): Promise<{
+      connectionId: string
+      credentialRefId: string
+      health: string
+      expiry: string
+      provenance: string
+      fingerprint: string
+      kind: string
+      versionId: string
+    }>
+    moveConnection(input: {
+      workspaceId: string
+      connectionId: string
+      targetBackend: string
+    }): Promise<{
+      connectionId: string
+      credentialRefId: string
+      from: string
+      to: string
+      consumers: Array<{ consumerId: string; status: string }>
+      leases: Array<{ consumerId: string; status: string }>
+      inspect: {
+        connectionId: string
+        credentialRefId: string
+        health: string
+        expiry: string
+        provenance: string
+        fingerprint: string
+        kind: string
+        versionId: string
+      }
+    }>
+    startGithubDeviceLogin(): Promise<{
+      flowId: string
+      userCode: string
+      verificationUri: string
+      interval: number
+      expiresIn?: number
+    }>
+    pollGithubDeviceLogin(input: {
+      flowId: string
+      workspaceId: string
+    }): Promise<
+      | { status: 'pending'; interval?: number }
+      | { status: 'slow_down'; interval?: number }
+      | { status: 'denied' }
+      | { status: 'expired' }
+      | { status: 'imported'; connectionId: string }
+    >
+    cancelGithubDeviceLogin(input: { flowId: string }): Promise<{ cancelled: true }>
+    reconnectConnection(input: {
+      workspaceId: string
+      connectionId: string
+    }): Promise<{
+      consumers: Array<{ consumerId: string; status: string }>
+      leases: Array<{ consumerId: string; status: string }>
+      inspect: {
+        connectionId: string
+        credentialRefId: string
+        health: string
+        expiry: string
+        provenance: string
+        fingerprint: string
+        kind: string
+        versionId: string
+      }
+    }>
   }
 
   knowledge: {
@@ -1630,6 +1710,8 @@ export interface ElectronAPI {
     currentThreshold: number
     recentEvents?: Array<{ type: XpEventType; xp: number; at: number }>
     quests: QuestRecord[]
+    questRecords?: QuestRecord[]
+    weeklyXp?: { current: number; previous: number }
     ratings: SessionRating[]
     analyticsConsent: boolean
   }>
@@ -1671,6 +1753,8 @@ export interface ElectronAPI {
     currentThreshold?: number
     recentEvents?: Array<{ type: XpEventType; xp: number; at: number }>
     quests?: QuestRecord[]
+    questRecords?: QuestRecord[]
+    weeklyXp?: { current: number; previous: number }
     ratings?: SessionRating[]
     analyticsConsent?: boolean
   }) => void): () => void
@@ -1721,7 +1805,7 @@ export interface ElectronAPI {
   onVoiceChanged(callback: (prefs: VoicePrefs) => void): () => void
   bootstrapVoice(): Promise<{ installationId: string; expiresAt: number; scopes: string[] }>
   getVoiceCapabilities(): Promise<{ displayName: string; languageCount: number; show74Badge: boolean; modelId: string }>
-  startVoiceCapture(): Promise<import('@rox/shared/voice').VoiceJob>
+  startVoiceCapture(payload?: { mimeType?: string }): Promise<import('@rox/shared/voice').VoiceJob>
   stopVoiceCapture(): Promise<import('@rox/shared/voice').VoiceJob>
   cancelVoiceCapture(): Promise<import('@rox/shared/voice').VoiceJob | null>
   grantVoicePermission(): Promise<import('@rox/shared/voice').VoiceJob>

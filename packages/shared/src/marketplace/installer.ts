@@ -15,8 +15,7 @@
 
 import { execFile } from 'node:child_process'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync } from 'node:fs'
-import { homedir } from 'node:os'
+import { cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, realpathSync, renameSync, rmSync, statSync } from 'node:fs'
 import { basename, dirname, join, relative, sep } from 'node:path'
 import { promisify } from 'node:util'
 
@@ -34,6 +33,9 @@ import {
   type MarketplaceLockRecord,
 } from './lock.ts'
 import { resolveConfigDir } from "../config/paths.ts"
+import { GLOBAL_AGENT_SKILLS_DIR, invalidateSkillsCache } from '../skills/storage.ts'
+import { invalidateOmpSkillsCache } from '../skills/omp-discovery.ts'
+import { chooseManagedSkillName, isSafeSkillName, isSkillLinkTo, linkManagedSkill, pathEntryExists, unlinkManagedSkill } from '../skills/managed.ts'
 
 const execFileAsync = promisify(execFile)
 
@@ -58,8 +60,10 @@ export class MarketplaceIntegrityError extends Error {
 
 export interface InstallOptions {
   configDir?: string
-  /** Default ~/.agents/skills */
+  /** Default <configDir>/skills (application-owned, independent of global agent skills). */
   skillsDir?: string
+  /** Optional links for external agents; explicit skillsDir defaults to no links. */
+  linksRoot?: string | null
   /** Default <configDir>/context */
   contextDir?: string
   lockPath?: string
@@ -77,7 +81,7 @@ export type MarketplaceInstallResult =
       ref: string
       skills: string[]
       targets: string[]
-      /** Pre-existing unowned dirs, пропущенные гардой (не overwrite). */
+      /** Informational alias choices and preserved local edits; aliases install successfully. */
       collisions?: string[]
     }
   | { id: string; kind: 'context-doc'; status: 'installed'; ref: string; targets: string[]; collisions?: string[] }
@@ -105,7 +109,7 @@ function walkFiles(dir: string, base: string, out: string[]): void {
     if (entry.name === '.git' || entry.name === 'node_modules') continue
     const full = join(dir, entry.name)
     if (entry.isDirectory()) walkFiles(full, base, out)
-    else if (entry.isFile()) out.push(relative(base, full))
+    else if (entry.isFile() || entry.isSymbolicLink()) out.push(relative(base, full))
   }
 }
 
@@ -121,7 +125,8 @@ export function sha256Directory(dir: string): string {
   for (const rel of comparable) {
     hash.update(rel)
     hash.update('\0')
-    hash.update(readFileSync(join(dir, rel)))
+    const full = join(dir, rel)
+    hash.update(lstatSync(full).isSymbolicLink() ? `symlink:${readlinkSync(full)}` : readFileSync(full))
     hash.update('\0')
   }
   return hash.digest('hex')
@@ -267,7 +272,11 @@ function swapStagedIntoPlace(staged: string, target: string): StagedSwap {
 function copyCheckout(src: string, dest: string): void {
   cpSync(src, dest, {
     recursive: true,
-    filter: (source) => !source.split(sep).includes('.git'),
+    filter: (source) => {
+      if (source.split(sep).includes('.git')) return false
+      if (lstatSync(source).isSymbolicLink()) throw new MarketplaceIntegrityError('Skill checkout contains a symbolic link')
+      return true
+    },
   })
 }
 
@@ -323,9 +332,12 @@ async function installEntryUnlocked(entry: MarketplaceEntry, options: InstallOpt
 }
 
 async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions): Promise<MarketplaceInstallResult> {
+  if (!isSafeSkillName(entry.id)) throw new MarketplaceIntegrityError('Invalid skill pack identity')
   const configDir = options.configDir ?? resolveConfigDir()
   const paths = marketplacePaths(configDir)
-  const skillsDir = options.skillsDir ?? join(homedir(), '.agents', 'skills')
+  const skillsDir = options.skillsDir ?? join(configDir, 'skills')
+  const linksRoot = options.linksRoot === undefined ? (options.skillsDir ? null : GLOBAL_AGENT_SKILLS_DIR) : options.linksRoot
+  const previous = readLock(paths.lockFile).entries[entry.id]
   const execFileFn = options.execFileFn ?? defaultExecFile
   const now = () => (options.now ?? (() => Date.now()))()
   const progress = options.onProgress ?? (() => {})
@@ -345,6 +357,10 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
       status: 'installed',
       targets: [],
       skills: [],
+      skillAliases: {},
+      skillLinks: {},
+      skillsRoot: skillsDir,
+      ...(linksRoot ? { skillsLinkRoot: linksRoot } : {}),
       contentSha256: {},
     }
 
@@ -363,78 +379,51 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
     const collisions: string[] = []
     const swaps: StagedSwap[] = []
 
-    const installOne = (name: string, srcDir: string, allowRename: boolean): void => {
+    const installOne = (name: string, srcDir: string): void => {
       progress('install', name)
-      let finalName = name
-      let target = join(skillsDir, finalName)
-      // Защита чужого контента: существующая директория без нашего install-маркера
-      // и без записи в registry пропускается (не overwrite). Ошибку не бросаем —
-      // помечаем collision'ом.
+      const previousAlias = previous?.skillAliases?.[name] ?? previous?.skills?.find(candidate => candidate === name || candidate === `${entry.id}--${name}`)
+      const finalName = chooseManagedSkillName(entry.id, name, candidate => {
+        const candidateTarget = join(skillsDir, candidate)
+        if (record.skills!.includes(candidate)) return false
+        if (pathEntryExists(candidateTarget) && (lstatSync(candidateTarget).isSymbolicLink() || ownerOf(candidateTarget) !== entry.id)) return false
+        const link = linksRoot ? join(linksRoot, candidate) : null
+        return previousAlias === candidate || !link || !pathEntryExists(link) || isSkillLinkTo(link, candidateTarget)
+      }, previousAlias)
+      const target = join(skillsDir, finalName)
+      record.skillAliases![name] = finalName
+      if (finalName !== name) {
+        progress('collision', `${name} renamed to ${finalName}`)
+        collisions.push(`${join(skillsDir, name)} renamed to ${finalName} (existing content kept)`)
+      }
       if (existsSync(target)) {
-        const owner = ownerOf(target)
-        if (owner === null) {
-          progress('collision', `${finalName} — existing unowned directory kept`)
-          collisions.push(`${target} (unowned — existing user content kept)`)
+        // Reinstall/update preserves local edits; a missing hash also keeps existing content.
+        const recorded = previous?.contentSha256?.[target]
+        if (!recorded) {
+          progress('collision', `${finalName} — owned without hash, kept`)
+          collisions.push(`${target} (locally-modified — user edits kept)`)
+          record.targets.push(target)
+          record.skills!.push(finalName)
           return
         }
-        if (owner !== entry.id) {
-          if (!allowRename) {
-            // directory-mode: basename = entry.id, rename запрещён — fail-closed,
-            // иначе swap перетрёт чужой пакет/артефакт с тем же именем.
-            progress('collision', `${finalName} — owned by ${owner}, refuse overwrite`)
-            collisions.push(`${target} (owned by ${owner} — refuse overwrite)`)
-            return
-          }
-          // Cross-pack коллизия имён (skills-режим): basename занят ДРУГИМ
-          // пакетом (маркер и registry принадлежат ему). Политика: namespaced
-          // '<packid>--<skill>', чужой пакет не трогаем.
-          const occupied = target
-          finalName = `${entry.id}--${name}`
-          target = join(skillsDir, finalName)
-          progress('collision', `${name} renamed to ${finalName} (name in use by ${owner})`)
-          collisions.push(`${occupied} renamed to ${finalName} (name in use by ${owner})`)
-          if (existsSync(target)) {
-            const namespacedOwner = ownerOf(target)
-            if (namespacedOwner === null) {
-              progress('collision', `${finalName} — existing unowned directory kept`)
-              collisions.push(`${target} (unowned — existing user content kept)`)
-              return
-            }
-            if (namespacedOwner !== entry.id) {
-              progress('collision', `${finalName} — namespaced name in use by ${namespacedOwner}, skipped`)
-              collisions.push(`${target} (namespaced name in use by ${namespacedOwner} — skipped)`)
-              return
-            }
-          }
-        } else {
-          // owner === entry.id: reinstall/update. Soft-clean — keep user edits.
-          // Missing contentSha256 → fail-closed keep (same as removeEntry).
-          const prev = readLock(paths.lockFile).entries[entry.id]
-          const recorded = prev?.contentSha256?.[target]
-          if (!recorded) {
-            progress('collision', `${finalName} — owned without hash, kept`)
-            collisions.push(`${target} (locally-modified — user edits kept)`)
-            record.targets.push(target)
-            record.skills!.push(finalName)
-            return
-          }
-          const current = sha256Directory(target)
-          if (current !== recorded) {
-            progress('collision', `${finalName} — locally modified, kept`)
-            collisions.push(`${target} (locally-modified — user edits kept)`)
-            record.targets.push(target)
-            record.skills!.push(finalName)
-            record.contentSha256![target] = recorded
-            return
-          }
+        const current = sha256Directory(target)
+        if (current !== recorded) {
+          progress('collision', `${finalName} — locally modified, kept`)
+          collisions.push(`${target} (locally-modified — user edits kept)`)
+          record.targets.push(target)
+          record.skills!.push(finalName)
+          record.contentSha256![target] = recorded
+          return
         }
       }
       const staged = join(paths.tmpDir, `stage-${randomUUID()}`)
-      copyCheckout(srcDir, staged)
+      try { copyCheckout(srcDir, staged) } catch (error) {
+        rmSync(staged, { recursive: true, force: true })
+        throw error
+      }
       const swap = swapStagedIntoPlace(staged, target)
       swaps.push(swap)
       const contentSha = sha256Directory(target)
-      const pinKey = finalName // skills basename; directory mode uses entry.id as name
+      const pinKey = name // Integrity pins refer to the original checkout, never the local alias.
       const expected = entry.expectedContentSha256?.[pinKey]
       if (expected !== undefined && expected !== contentSha) {
         throw new MarketplaceIntegrityError(
@@ -450,29 +439,35 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
     try {
       if (entry.installMode === 'directory') {
         // Whole-repo pack (clone-only). Upstream install.sh is NEVER executed.
-        installOne(entry.id, staging, false)
-        // Fail only when nothing landed (unowned/foreign refuse). Locally-modified
-        // keep leaves targets non-empty and is a successful soft-clean update.
-        if (record.targets.length === 0) {
-          throw new MarketplaceIntegrityError(
-            `cannot install '${entry.id}': target exists and is not ours` +
-              (collisions[0] ? ` — ${collisions[0]}` : ''),
-          )
-        }
+        installOne(entry.id, staging)
       } else {
         const skills = scanSkillDirs(staging, entry)
         if (skills.length === 0) {
           throw new MarketplaceIntegrityError(`no SKILL.md found in ${entry.source.repo}@${entry.source.ref.slice(0, 8)} (subdir '${entry.skillsSubdir ?? '.'}')`)
         }
-        for (const skill of skills) installOne(skill.name, skill.dir, true)
-        // Mirror context-doc: all-collision install must not write a false
-        // 'installed' lock row with zero targets (UI would show Installed, remove no-ops).
-        if (record.targets.length === 0) {
-          throw new MarketplaceIntegrityError(
-            `cannot install '${entry.id}': no writable skills` +
-              (collisions[0] ? ` — ${collisions[0]}` : ''),
-          )
+        for (const skill of skills) installOne(skill.name, skill.dir)
+      }
+      // An update can remove a skill. Retire only untouched owned targets, with rollback.
+      for (const target of previous?.targets ?? []) {
+        if (record.targets.includes(target) || dirname(target) !== skillsDir || !isSafeSkillName(basename(target)) || !pathEntryExists(target)) continue
+        if (lstatSync(target).isSymbolicLink() || readInstallMarker(target)?.id !== entry.id) continue
+        const hash = previous?.contentSha256?.[target]
+        if (!hash || sha256Directory(target) !== hash) {
+          record.targets.push(target)
+          record.skills!.push(basename(target))
+          if (hash) record.contentSha256![target] = hash
+          for (const [original, installed] of Object.entries(previous?.skillAliases ?? {})) {
+            if (installed === basename(target)) record.skillAliases![original] = installed
+          }
+          collisions.push(`${target} (locally-modified — removed skill kept)`)
+          continue
         }
+        const backup = `${target}.craft-bak-${randomBytes(4).toString('hex')}`
+        renameSync(target, backup)
+        swaps.push({
+          rollback() { renameSync(backup, target) },
+          commit() { rmSync(backup, { recursive: true, force: true }) },
+        })
       }
     } catch (err) {
       for (const swap of swaps.reverse()) {
@@ -505,6 +500,22 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
       throw err
     }
     for (const swap of swaps) swap.commit()
+    for (const target of previous?.targets ?? []) {
+      if (record.targets.includes(target)) continue
+      const oldLink = previous?.skillLinks?.[target]
+      if (previous?.skillsLinkRoot) unlinkManagedSkill(target, previous.skillsLinkRoot)
+      else if (oldLink && isSkillLinkTo(oldLink, target)) unlinkManagedSkill(target, dirname(oldLink))
+    }
+    if (linksRoot) {
+      for (const target of record.targets) {
+        const link = linkManagedSkill(target, linksRoot, basename(target))
+        if (link) record.skillLinks![target] = link
+      }
+      // Links are optional; a failed link must not invalidate a successful app installation.
+      try { upsertLockRecord(paths.lockFile, record) } catch { /* Discovery reads the app store. */ }
+    }
+    invalidateSkillsCache()
+    invalidateOmpSkillsCache()
     if (collisions.length > 0 && result.kind === 'skillpack') result.collisions = collisions
     return result
   } finally {
@@ -684,6 +695,7 @@ async function installContextDoc(entry: MarketplaceEntry, options: InstallOption
 
 export function removeEntry(id: string, options: { configDir?: string; lockPath?: string } = {}): MarketplaceRemoveResult {
   if (installInProgress > 0) {
+    throw new MarketplaceIntegrityError('A marketplace installation is in progress')
   }
   const lockPath = options.lockPath ?? marketplacePaths(options.configDir).lockFile
   const record = readLock(lockPath).entries[id]
@@ -693,6 +705,18 @@ export function removeEntry(id: string, options: { configDir?: string; lockPath?
   const kept: RemovedKept[] = []
 
   for (const target of record.targets) {
+    if (record.kind === 'skillpack' && record.skillsRoot && (dirname(target) !== record.skillsRoot || !isSafeSkillName(basename(target)))) {
+      kept.push({ path: target, reason: 'not-owned' })
+      continue
+    }
+    const link = record.skillLinks?.[target]
+    if (record.skillsLinkRoot) unlinkManagedSkill(target, record.skillsLinkRoot)
+    else if (link && isSkillLinkTo(link, target)) unlinkManagedSkill(target, dirname(link))
+    const marker = pathEntryExists(target) && !lstatSync(target).isSymbolicLink() ? readInstallMarker(target) : null
+    if (pathEntryExists(target) && (lstatSync(target).isSymbolicLink() || marker?.id !== id)) {
+      kept.push({ path: target, reason: 'not-owned' })
+      continue
+    }
     if (!existsSync(target)) {
       removed.push(target) // already gone from disk; drop the registry reference
       removeInstallMarker(target)
@@ -718,6 +742,8 @@ export function removeEntry(id: string, options: { configDir?: string; lockPath?
   }
 
   removeLockRecord(lockPath, id)
+  invalidateSkillsCache()
+  invalidateOmpSkillsCache()
   return { id, status: kept.length > 0 ? 'partial' : 'removed', removed, kept }
 }
 

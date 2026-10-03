@@ -35,6 +35,7 @@ export function credentialRefFor(provider: CalendarProvider, accountId: string):
 export class CalendarStore {
   private bundle: CalendarBundle
   private seq: number
+  private readonly syncOwners = new Map<string, symbol>()
 
   constructor(bundle: CalendarBundle = emptyCalendarBundle()) {
     this.bundle = structuredClone(bundle)
@@ -131,6 +132,7 @@ export class CalendarStore {
   revoke(accountId: string): CalendarAccount {
     const account = this.requireAccount(accountId)
     account.status = 'revoked'
+    this.syncOwners.delete(accountId)
     return account
   }
 
@@ -149,8 +151,11 @@ export class CalendarStore {
     if (account.status !== 'connected') return
     const journal = this.bundle.journals.find((item) => item.accountId === accountId)
     if (!journal) return
+    // Only the latest request for this account may update events, conflicts or its cursor.
+    const owner = Symbol(accountId)
+    this.syncOwners.set(accountId, owner)
     const page = await adapter.listEvents(accountId, journal.cursor)
-    if (this.requireAccount(accountId).status !== 'connected') return
+    if (this.requireAccount(accountId).status !== 'connected' || this.syncOwners.get(accountId) !== owner) return
     for (const incoming of page.events) {
       const scoped: CalendarEvent = {
         ...incoming,
