@@ -1,0 +1,40 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts:
+14 |       expression = node.initializer.arguments[0]
+15 |     }
+16 |     ts.forEachChild(node, visit)
+17 |   }
+18 |   visit(source)
+19 |   if (!expression) throw new Error(`Actual callback ${name} missing`)
+                                  ^
+error: Actual callback runAi missing
+      at callback (/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts:19:30)
+      at <anonymous> (/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts:29:17)
+(fail) integrated project roadmap AI persistence gate > a refused native save stops AI before any provider request [3358.87ms]
+14 |       expression = node.initializer.arguments[0]
+15 |     }
+16 |     ts.forEachChild(node, visit)
+17 |   }
+18 |   visit(source)
+19 |   if (!expression) throw new Error(`Actual callback ${name} missing`)
+                                  ^
+error: Actual callback runAi missing
+      at callback (/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts:19:30)
+      at <anonymous> (/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts:41:17)
+(fail) integrated project roadmap AI persistence gate > AI waits for the current queued native receipt even when debounce has already fired [2158.03ms]
+14 |       expression = node.initializer.arguments[0]
+15 |     }
+16 |     ts.forEachChild(node, visit)
+17 |   }
+18 |   visit(source)
+19 |   if (!expression) throw new Error(`Actual callback ${name} missing`)
+                                  ^
+error: Actual callback acceptProposal missing
+      at callback (/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts:19:30)
+      at <anonymous> (/Users/t/Projects/rox-one-recheck-candidate-20261003/packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts:56:20)
+(fail) integrated project roadmap AI persistence gate > accepting a proposal remains pending until its native receipt and fails after refusal [496.81ms]
+
+ 0 pass
+ 3 fail
+Ran 3 tests across 1 file. [24.37s]

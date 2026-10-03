@@ -12,6 +12,7 @@ This audit accounts for accumulated ROX source beyond main: active branches, PRs
 4. [16 — Parallel launch plan, exact counts and unavoidable dependencies](16-parallel-launch-plan.md); [445 individually assigned executable leaves](parallel-work/launch-plan.json).
 5. [17 — Подробный план запуска по-русски](17-parallel-launch-plan.ru.md).
 6. [18 — Actual19-PR delivery, isolated first-wave branches and qualification](18-launch-status.md).
+7. [19 — Практический запуск работ по-русски](19-start-work.ru.md): первые16 задач, конкретные patches, границы параллелизма и проверки.
 
 **Historical de805 candidate findings:** root typecheck passed;16/18 workspace checks passed, with viewer and messaging gateway failing.69 durability/lifecycle tests and34 WebUI/bootstrap tests passed. Built-server lifecycle passed on Bun1.3.14 (4 tests) and failed at startup on Bun1.4.2. These results stay bound to de805; current source and remaining target/provider/hosted acceptance are tracked in [18](18-launch-status.md).
 
@@ -37,6 +38,7 @@ This audit accounts for accumulated ROX source beyond main: active branches, PRs
 | [16 — Parallel launch plan](16-parallel-launch-plan.md) | Exact445-leaf partition, all three target lanes now, shared file ownership, environment provisioning and unavoidable consumed-output gates. |
 | [17 — План запуска по-русски](17-parallel-launch-plan.ru.md) | Подсчёт, одновременные Windows/macOS/Web потоки, распределение модулей, неизбежные зависимости и формат приёмки. |
 | [18 — Launch status](18-launch-status.md) | Actual19-PR readback, current merged-source qualification and three isolated first-wave work packages. |
+| [19 — Практический запуск работ](19-start-work.ru.md) | Русские задания для Windows/macOS/Web, concrete patches и фазовые критерии выполнения. |
 
 ## [ROX-FINAL-COUNTS] Task scope
 

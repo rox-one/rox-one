@@ -1,0 +1,68 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts:
+(pass) integrated project roadmap AI persistence gate > a refused native save stops AI before any provider request [5966.03ms]
+(pass) integrated project roadmap AI persistence gate > AI waits for the current queued native receipt even when debounce has already fired [1212.31ms]
+(pass) integrated project roadmap AI persistence gate > accepting a proposal remains pending until its native receipt and fails after refusal [1331.83ms]
+(pass) integrated project roadmap AI persistence gate > missing current save queue refuses AI without a flush or provider call [2120.95ms]
+(pass) integrated project roadmap AI persistence gate > workspace change while native save is pending prevents a provider request [1002.21ms]
+(pass) integrated project roadmap AI persistence gate > a late AI response after workspace change cannot publish into the current project [926.86ms]
+(pass) integrated project roadmap AI persistence gate > writer change while native save is pending prevents a provider request [586.22ms]
+(pass) integrated project roadmap AI persistence gate > a late AI response after writer change cannot publish into the current project [447.29ms]
+(pass) integrated project roadmap AI persistence gate > accepting against a missing or stale revision refuses before editing or saving [2246.08ms]
+(pass) integrated project roadmap AI persistence gate > accepting a current proposal returns only the acknowledged native revision [1055.04ms]
+
+packages/shared/src/projects/__tests__/roadmap.test.ts:
+(pass) project roadmap > normalizes missing/garbled data without throwing [6.24ms]
+(pass) project roadmap > parses spec answers with fences and applies items one by one [16.21ms]
+(pass) project roadmap > parses clarify questions from JSON or bullet fallback [0.16ms]
+(pass) project roadmap > shifts milestones and computes a timeline window [0.51ms]
+(pass) project roadmap > persists roadmap.json + roadmap.md next to config.json and backs up corrupt files [247.42ms]
+(pass) project roadmap > renders markdown export [1.62ms]
+
+packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts:
+(pass) roadmap persistence recovery > rejects traversal and project symlinks outside the authorized workspace projects directory [216.15ms]
+(pass) roadmap persistence recovery > rejects a stale second writer and preserves the first canonical and derived bytes [302.68ms]
+(pass) roadmap persistence recovery > refuses an escaped projects-directory symlink and retains the external canonical and Markdown bytes [320.11ms]
+(pass) roadmap persistence recovery > permits only one of two real processes released with the same observed revision [4515.68ms]
+(pass) roadmap persistence recovery > detects an external edit even when updatedAt is unchanged [486.06ms]
+(pass) roadmap persistence recovery > does not overwrite corrupt bytes or an existing backup when backup creation fails [218.52ms]
+(pass) roadmap persistence recovery > refuses a busy writer lock without removing its bytes [75.22ms]
+(pass) roadmap persistence recovery > returns an exact revision through normal and corrupt reloads [205.25ms]
+(pass) roadmap persistence recovery > keeps unversioned callers compatible while rejecting an invalid observed token [185.89ms]
+
+packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts:
+(pass) actual settings save keeps the draft and never reports success after a rejected native update [1108.33ms]
+(pass) actual settings save reports success only after its native update receipt [736.93ms]
+(pass) actual settings save does not report success when native write authority is unavailable [630.94ms]
+(pass) actual renderer autosave waits for each receipt, retains a newer draft and persists it using the acknowledged revision [474.28ms]
+(pass) actual autosave keeps the draft after failure and ignores a late receipt after scope changes [782.19ms]
+(pass) actual load effect clears an old project and does not arm autosave after a failed read [1527.37ms]
+(pass) queue does not advance its observed revision after a refusal or missing receipt [506.79ms]
+(pass) actual route cleanup flushes the pending draft through the captured old project scope [643.05ms]
+(pass) actual merged AI caller refuses to send a draft without a successful save receipt [487.15ms]
+(pass) actual merged AI caller sends the acknowledged revision and preserves honest model provenance [603.45ms]
+(pass) actual merged AI caller discards a late result from a replaced writer in the same workspace [524.94ms]
+
+packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts:
+(pass) actual roadmap AI dispatch refuses a revoked and regranted native permission during shared import [3167.25ms]
+(pass) actual roadmap AI dispatch refuses a revoked and regranted native permission during project inputs [1791.76ms]
+(pass) actual roadmap AI preserves dispatch for an unchanged native read/write fence [1707.98ms]
+(pass) actual roadmap AI checks the read grant generation independently [1750.31ms]
+(pass) actual roadmap AI checks the write grant generation independently [1281.41ms]
+(pass) actual roadmap AI preserves the standalone caller path without granting native permissions [1567.41ms]
+(pass) actual roadmap AI refuses a replaced principal before provider dispatch [996.22ms]
+
+packages/server-core/src/handlers/rpc/__tests__/roadmap-boundary-runtime.test.ts:
+killed 1 dangling process
+(fail) roadmap RPCs fence workspace/local callers and preserve unknown effective model warnings [15312.48ms]
+  ^ this test timed out after 15000ms.
+
+1 tests failed:
+(fail) roadmap RPCs fence workspace/local callers and preserve unknown effective model warnings [15312.48ms]
+  ^ this test timed out after 15000ms.
+
+ 43 pass
+ 1 fail
+ 183 expect() calls
+Ran 44 tests across 6 files. [85.74s]

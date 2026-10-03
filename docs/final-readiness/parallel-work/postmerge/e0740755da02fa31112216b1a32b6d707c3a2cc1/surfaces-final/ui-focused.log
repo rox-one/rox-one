@@ -1,0 +1,171 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts:
+(pass) actual settings save keeps the draft and never reports success after a rejected native update [12328.57ms]
+(pass) actual settings save reports success only after its native update receipt [1924.62ms]
+(pass) actual settings save does not report success when native write authority is unavailable [1904.99ms]
+(pass) actual renderer autosave waits for each receipt, retains a newer draft and persists it using the acknowledged revision [2123.74ms]
+(pass) actual autosave keeps the draft after failure and ignores a late receipt after scope changes [591.41ms]
+(pass) actual load effect clears an old project and does not arm autosave after a failed read [825.96ms]
+(pass) queue does not advance its observed revision after a refusal or missing receipt [692.55ms]
+(pass) actual route cleanup flushes the pending draft through the captured old project scope [729.74ms]
+(pass) actual merged AI caller refuses to send a draft without a successful save receipt [527.81ms]
+(pass) actual merged AI caller sends the acknowledged revision and preserves honest model provenance [551.90ms]
+(pass) actual merged AI caller discards a late result from a replaced writer in the same workspace [235.76ms]
+
+apps/electron/src/renderer/platform/__tests__/activity-rail-labels.test.ts:
+(pass) activity rail: expanded with labels by default > expanded width is ~180–200px, collapsed = icon rail [3.51ms]
+(pass) activity rail: expanded with labels by default > preserves the existing preference key and current expanded default [74.45ms]
+(pass) activity rail: expanded with labels by default > rows are 28px, radius 6, label visible when expanded, tooltip when collapsed [22.62ms]
+(pass) activity rail: expanded with labels by default > extra screens continue the list: no visible «Ещё» header, shared row [0.05ms]
+(pass) activity rail: expanded with labels by default > keeps the collapse toggle at the bottom [0.04ms]
+(pass) activity rail: expanded with labels by default > sessions uses the chat glyph, not the «Входящие» inbox glyph [43.81ms]
+(pass) activity rail: expanded with labels by default > every rail label exists in all 12 locales [2676.02ms]
+(pass) activity rail: expanded with labels by default > auto-collapses on narrow windows without touching the persisted choice; user can override [0.14ms]
+(pass) activity rail: expanded with labels by default > AppShell reserves rail width only when the rail renders (same predicate as the host) [32.45ms]
+
+apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:
+(pass) useProjects workspace and load generations > clears A from the atom and returned view at B commit before B RPC completes [2128.58ms]
+(pass) useProjects workspace and load generations > late A success cannot overwrite an already loaded B [951.01ms]
+(pass) useProjects workspace and load generations > obsolete A failure neither clears B nor reports a current load error [917.70ms]
+(pass) useProjects workspace and load generations > the newest same-workspace refresh wins over an older load [917.28ms]
+(pass) useProjects workspace and load generations > same-workspace broadcast supersedes an older pending query [679.89ms]
+(pass) useProjects workspace and load generations > queued callback from a disposed A subscription cannot alter B [405.52ms]
+(pass) useProjects workspace and load generations > an obsolete refresh closure cannot start a request for the old scope [755.14ms]
+(pass) useProjects workspace and load generations > unmount cancels late RPC and queued broadcasts without atom writes [575.50ms]
+(pass) useProjects workspace and load generations > A-to-B-to-A does not revive the first A lease [338.18ms]
+(pass) useProjects workspace and load generations > effect replay does not revive callbacks from the disposed subscription [459.29ms]
+(pass) useProjects workspace and load generations > RPC and broadcast payloads retain only current-workspace LoadedProjects [599.14ms]
+(pass) useProjects workspace and load generations > null scope clears previous projects and invalidates pending load [519.70ms]
+(pass) useProjects workspace and load generations > same-workspace success, broadcast and current failure retain their supported behavior [366.29ms]
+(pass) useProjects workspace and load generations > actual projectCatalogAtom wrapper preserves shared metadata during local clear and load [373.67ms]
+(pass) useProjects workspace and load generations > retains complete current project metadata without mutating incoming DTO [321.72ms]
+
+apps/electron/src/renderer/lib/__tests__/startup-caller-boundary.test.ts:
+(pass) actual App startup caller boundary > cached profile completion cannot bypass an identity authorization refusal [139.50ms]
+(pass) actual App startup caller boundary > missing or unknown fresh identity is unavailable despite cached completion: null [6.49ms]
+(pass) actual App startup caller boundary > missing or unknown fresh identity is unavailable despite cached completion: {"userId":"actor-a","authority":"unknown","issuer":"issuer-a","name":"Current name"} [0.21ms]
+(pass) actual App startup caller boundary > confirmed native startup uses metadata only and current workspace readback [25.91ms]
+(pass) actual App startup caller boundary > a verified local identity without a display name still requires Welcome [0.63ms]
+(pass) actual App startup caller boundary > authoritative null workspace remains a picker result and never invokes transport recovery [1.02ms]
+(pass) actual App startup caller boundary > a failed workspace read is rechecked after recovery and is not synthesized from a cached workspace [378.47ms]
+(pass) actual App startup caller boundary > workspace authorization denial never becomes a picker or successful ready state [16.25ms]
+(pass) actual App startup caller boundary > an identity userId change during runtime read cannot publish old authority [12.65ms]
+(pass) actual App startup caller boundary > an identity authority change during runtime read cannot publish old authority [215.54ms]
+(pass) actual App startup caller boundary > an identity issuer change during runtime read cannot publish old authority [0.09ms]
+(pass) actual App startup caller boundary > a workspace switch during awaited runtime read cannot publish the old workspace [5.47ms]
+(pass) actual App startup caller boundary > same-actor cleared display name uses current Welcome routing, not cached completion [12.25ms]
+(pass) actual App startup caller boundary > a newly completed same-actor profile cannot skip runtime preparation during initial Welcome [66.76ms]
+(pass) actual App startup caller boundary > local setup information cannot publish after an actor switch during runtime setup [2.25ms]
+(pass) actual App startup caller boundary > cleanup fences a pending runtime result before any authority or config publication [1.45ms]
+(pass) actual App startup caller boundary > authenticated web startup keeps its acknowledged workspace path and never calls desktop reads [70.38ms]
+
+apps/electron/src/renderer/lib/__tests__/message-tts.test.ts:
+(pass) message TTS > plays Edge MP3, releases it on completion and only calls onEnd once [21.32ms]
+(pass) message TTS > stops audio and releases its resources [0.35ms]
+(pass) message TTS > releases rejected audio without silently selecting browser speech [2.17ms]
+(pass) message TTS > does not play a late synthesis response after stop [1.62ms]
+(pass) message TTS > honors cancellation from the host without starting Web Speech [0.10ms]
+(pass) message TTS > does not select browser speech for an incomplete or unspecified RPC result [0.17ms]
+(pass) message TTS > cancels pending client playback and ignores its late completion [0.14ms]
+(pass) message TTS > releases replaced audio once and an old event cannot finish the new turn [0.19ms]
+(pass) message TTS > revokes a Blob URL when constructing browser audio fails [11.90ms]
+(pass) message TTS > uses native playback when the host speaks and reports the end via polling [25.81ms]
+(pass) message TTS > falls back to Web Speech when the host cannot play audio [0.33ms]
+(pass) message TTS > does not start Web Speech when the local speech RPC fails [0.09ms]
+(pass) message TTS > does not hide unavailable local Russian speech behind browser fallback [27.33ms]
+(pass) message TTS > stop() cancels both native and Web Speech playback [4.77ms]
+(pass) message TTS > stops a late native start before allowing a newer message to speak [7.55ms]
+(pass) message TTS > ignores empty text [2.45ms]
+
+apps/electron/src/renderer/lib/__tests__/startup-setup-needs.test.ts:
+(pass) bounded startup readback > retries transient RPC failures within one probe budget [13.53ms]
+(pass) bounded startup readback > a hung request cannot extend a probe past its deadline [175.55ms]
+(pass) bounded startup readback > stops retrying when its overall budget is spent [24.13ms]
+(pass) bounded startup readback > terminal AUTH_FAILED denial is never retried [0.98ms]
+(pass) bounded startup readback > terminal FORBIDDEN denial is never retried [0.02ms]
+(pass) bounded startup readback > terminal UNAUTHENTICATED denial is never retried [80.36ms]
+(pass) bounded startup readback > terminal UNAUTHORIZED denial is never retried [0.03ms]
+(pass) bounded startup readback > requires a fresh identity and authoritative workspace rather than cached completion [0.88ms]
+(pass) bounded startup readback > requires the actual persisted display name and keeps provider readiness separate [0.16ms]
+(pass) bounded startup readback > a successful missing workspace is a real picker result [0.02ms]
+(pass) workspace readback after transport recovery > re-reads a failed workspace and requires the resulting current readback [0.88ms]
+(pass) workspace readback after transport recovery > does not turn authoritative null into a synthetic recovered workspace [0.18ms]
+(pass) workspace readback after transport recovery > does not claim recovery when both probes remain failed [0.10ms]
+
+packages/ui/src/components/chat/__tests__/turn-card-playback.test.ts:
+(pass) completed turn playback controls > updates completed cards when playback starts and stops [0.10ms]
+(pass) completed turn playback controls > retains the completed card session and turn identity fences [0.03ms]
+(pass) completed turn playback controls > allows synthesized Blob audio in the Electron content security policy [15.17ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/projects-home-loaded.test.ts:
+(pass) Projects home loaded DTO boundary > renders the loaded project store without the session-picker projection [833.29ms]
+(pass) Projects home loaded DTO boundary > renders an empty loaded store without inventing a project DTO [536.24ms]
+(pass) Projects home current workspace and explicit source > explicit loaded DTOs take precedence over the isolated atom source [76.63ms]
+(pass) Projects home current workspace and explicit source > an explicit empty result remains empty even when the atom has projects [304.14ms]
+(pass) Projects home current workspace and explicit source > atom fallback rejects another workspace before rendering the list [337.79ms]
+(pass) Projects home current workspace and explicit source > explicit input also rejects previous workspace rows [159.17ms]
+(pass) Projects home current workspace and explicit source > an absent active workspace renders no previously loaded project [38.35ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/sidebar-rail-preference.test.ts:
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on sessions [1046.67ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on meetings [353.20ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on settings [895.39ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on home [572.97ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on tasks [400.64ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on notes [572.62ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on projects [431.15ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on pages [393.65ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on knowledge [286.01ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on connections [813.63ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on search [657.16ms]
+(pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on screen [792.54ms]
+(pass) actual combined sidebar preference and rail geometry > explicit focus and automatic compact suppression preserve the saved sidebar choice [391.19ms]
+(pass) actual combined sidebar preference and rail geometry > actual shell offset agrees with the actual host chrome gate for every flag and collapse state [2665.67ms]
+
+apps/electron/src/renderer/pages/settings/__tests__/InputSettingsPage.voice.test.ts:
+(pass) InputSettingsPage voice section > renders the shared voice settings through i18n [132.84ms]
+(pass) InputSettingsPage voice section > offers Edge as an explicit saved choice and keeps its disclosure visible after selection [287.55ms]
+
+apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts:
+(pass) web and partial bridges never read, save, or subscribe to desktop settings [23.00ms]
+(pass) desktop read and save publish only the actual successful callback values [2.40ms]
+(pass) sync missing methods and async transport refusals are observed without advancing saved state [7.98ms]
+(pass) a newer reload or save supersedes both late successful and refused results [3.36ms]
+(pass) disposal suppresses pending success, pending refusal, and calls not yet dispatched [2.21ms]
+(pass) runtime changes block later saves and prevent pending desktop values from becoming browser state [5.31ms]
+(pass) runtime loss before queued dispatch prevents the host operation itself [20.30ms]
+(pass) desktop subscriptions dispatch only live events and unsubscribe exactly once on disposal [382.91ms]
+(pass) synchronous subscription refusal is reported and a disposed session cannot register another listener [0.87ms]
+(pass) renderer publication faults remain visible and are never reclassified as transport refusal [0.19ms]
+(pass) an unavailable callback fault remains visible without duplicate unavailable publication [0.11ms]
+(pass) a refused or absent optional history preserves actual voice prefs and health with honest unavailable history [100.20ms]
+(pass) voice history publishes actual rows and treats malformed rows as unavailable without inventing empty success [25.43ms]
+(pass) required voice read refusal is reported even when another getter throws synchronously [14.58ms]
+(pass) runtime getter errors are observed as capability refusal without dispatching any host callback [1.45ms]
+(pass) pending optional history cannot delay actual core prefs or a successful preference save [15.36ms]
+
+apps/electron/src/renderer/pages/meetings/__tests__/start-rpc.test.ts:
+(pass) meetings start RPC client > maps start fail-closed codes [0.21ms]
+(pass) meetings start RPC client > does not call createMeeting without api, workspace, or grant [8.54ms]
+(pass) meetings start RPC client > start and list go through RPC and stay planned, not live [4.24ms]
+(pass) meetings start RPC client > fail-closes search without api or workspace and does not call RPC [4.50ms]
+(pass) meetings start RPC client > search goes through RPC args and fail-closes on missing persist root [8.54ms]
+
+apps/electron/src/renderer/pages/meetings/__tests__/capture-rpc.test.ts:
+(pass) meetings capture RPC client > maps capture fail-closed codes [0.09ms]
+(pass) meetings capture RPC client > does not call startCapture without api, meeting, or grant [14.42ms]
+(pass) meetings capture RPC client > start goes through RPC and stays native-journal, not live SFU [29.71ms]
+(pass) meetings capture RPC client > rejects a live-looking binding from RPC [0.29ms]
+
+apps/electron/src/renderer/pages/meetings/__tests__/manual-rpc.test.ts:
+(pass) meetings manual note / correction RPC client > maps fail-closed codes without claiming mic [6.94ms]
+(pass) meetings manual note / correction RPC client > does not call RPCs without api, meeting, grant, or text [13.76ms]
+(pass) meetings manual note / correction RPC client > note and correction go through RPC and stay native-journal [2.13ms]
+(pass) meetings manual note / correction RPC client > rejects a live-looking SFU binding from RPC [18.37ms]
+(pass) meetings manual note / correction RPC client > MeetingsPage reads real local meetings, never browser speech APIs or fabricated segments [121.01ms]
+
+ 137 pass
+ 0 fail
+ 791 expect() calls
+Ran 137 tests across 14 files. [127.30s]

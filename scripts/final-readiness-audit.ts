@@ -9,6 +9,41 @@ const base = 'f63294ba4fffa7238b46b24e918925a313ad0b12'
 const github = `https://github.com/rox-one/rox-one/blob/${base}/`
 const files = spawnSync('git', ['ls-tree', '-r', '--name-only', base], { cwd: root, encoding: 'utf8' }).stdout.trim().split('\n')
 const sourceCache = new Map<string, string | null>()
+// Resolve repeated immutable references with one Git process. Keep non-blob
+// objects on the original `git show` path so directory references retain their
+// existing representation and line-count semantics.
+const primePinnedSources = () => {
+  const specs = new Set<string>()
+  for (const name of readdirSync(dir).filter(n => n.endsWith('.md'))) {
+    const text = readFileSync(join(dir, name), 'utf8')
+    for (const match of text.matchAll(/https:\/\/github\.com\/rox-one\/rox-one\/blob\/([a-f0-9]+)\/([^\s)]+?)(?:#L\d+(?:-L\d+)?)?(?=[\s)])/g)) {
+      specs.add(`${match[1]}:${decodeURIComponent(match[2])}`)
+    }
+  }
+  if (!specs.size) return
+  const ordered = [...specs]
+  const result = spawnSync('git', ['cat-file', '--batch'], {
+    cwd: root, input: ordered.join('\n') + '\n', maxBuffer: 256 * 1024 * 1024,
+  })
+  if (result.status !== 0) throw new Error(`Pinned-source batch failed: ${result.stderr?.toString() ?? result.error}`)
+  const output = result.stdout
+  let cursor = 0
+  for (const spec of ordered) {
+    const end = output.indexOf(10, cursor)
+    if (end < 0) throw new Error(`Missing Git object header for ${spec}`)
+    const header = output.subarray(cursor, end).toString('utf8')
+    cursor = end + 1
+    if (header.endsWith(' missing')) { sourceCache.set(spec, null); continue }
+    const fields = header.split(' ')
+    const size = Number(fields[2])
+    if (fields.length !== 3 || !Number.isSafeInteger(size) || size < 0 || cursor + size >= output.length || output[cursor + size] !== 10) {
+      throw new Error(`Invalid Git object response for ${spec}`)
+    }
+    if (fields[1] === 'blob') sourceCache.set(spec, output.subarray(cursor, cursor + size).toString('utf8'))
+    cursor += size + 1
+  }
+  if (cursor !== output.length) throw new Error('Unexpected trailing Git object data')
+}
 const pinnedSource = (commit: string, path: string) => {
   const key = `${commit}:${path}`
   if (!sourceCache.has(key)) {
@@ -59,6 +94,7 @@ if (process.argv.includes('--inventory')) {
 }
 
 if (process.argv.includes('--validate') || process.argv.includes('--export')) {
+  primePinnedSources()
   const errors: string[] = []
   const ids = new Set<string>()
   const totals: Record<string, { tasks: number; subtasks: number }> = {}

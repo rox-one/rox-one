@@ -1,19 +1,18 @@
 {
   "schemaVersion": 2,
-  "phase": "REQUESTED_19_PR_MERGES_VERIFIED_INDEPENDENT_RECONCILIATION_QUALIFYING",
-  "capturedAt": "2026-10-03T03:22:58.235Z",
+  "phase": "REQUESTED_19_MERGED_INDEPENDENT_SOURCE_AND_PLAN_FINAL_PROMOTION_PENDING",
+  "capturedAt": "2026-10-03T04:40:37.912Z",
   "repository": "rox-one/rox-one",
   "requestedPullRequestCount": 19,
   "allRequestedPullRequestsRemoteMerged": true,
-  "observedMainAtReadback": "980e88d7a024d43e507626e457e25af213152feb",
-  "independentReconciliationCandidate": "387edc1b1cfec361e2de2196a6963c27a98cbc67",
+  "observedMainAtReadback": "7e24a97cc8bef429d95c9f703420805f9153a99b",
+  "independentReconciliationCandidate": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
   "independentCandidateDefaultBranchPromotionVerified": false,
   "pullRequests": [
     {
       "number": 1323,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "3cc2483d61e587fa3e3b54331b1bf623206f16b1",
       "url": "https://github.com/rox-one/rox-one/pull/1323",
       "mergeCommit": {
@@ -28,7 +27,6 @@
       "number": 1322,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
       "url": "https://github.com/rox-one/rox-one/pull/1322",
       "mergeCommit": {
@@ -43,7 +41,6 @@
       "number": 1321,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "2c7a1fb01ec1d90d923a5e08a4cea60967347bbf",
       "url": "https://github.com/rox-one/rox-one/pull/1321",
       "mergeCommit": {
@@ -58,7 +55,6 @@
       "number": 1320,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "a69187c609898517658365fa80d5ab11270d4305",
       "url": "https://github.com/rox-one/rox-one/pull/1320",
       "mergeCommit": {
@@ -73,7 +69,6 @@
       "number": 1319,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "bdd28272856be5fdead6c7a93ca1b45eb13b17ed",
       "url": "https://github.com/rox-one/rox-one/pull/1319",
       "mergeCommit": {
@@ -88,7 +83,6 @@
       "number": 1318,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "8c1b8d95944cc21c4745484ba45edd0cf0afbb73",
       "url": "https://github.com/rox-one/rox-one/pull/1318",
       "mergeCommit": {
@@ -103,7 +97,6 @@
       "number": 1317,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "bbb30156a0758d1c00510e97eb6dc715c6b64fbe",
       "url": "https://github.com/rox-one/rox-one/pull/1317",
       "mergeCommit": {
@@ -118,7 +111,6 @@
       "number": 1316,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "8afd289ac9e7d0a07be98f33c98f7989c2bcb68d",
       "url": "https://github.com/rox-one/rox-one/pull/1316",
       "mergeCommit": {
@@ -133,7 +125,6 @@
       "number": 1315,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "4504549086016dc3b892d17e9855a71afc1925d8",
       "url": "https://github.com/rox-one/rox-one/pull/1315",
       "mergeCommit": {
@@ -148,7 +139,6 @@
       "number": 1314,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "8619f908bcdb7784b7b75fe0ae48f4f8902910bd",
       "url": "https://github.com/rox-one/rox-one/pull/1314",
       "mergeCommit": {
@@ -163,7 +153,6 @@
       "number": 1313,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "5a9bf9cafd7df367f6ac32102b80e777377da162",
       "url": "https://github.com/rox-one/rox-one/pull/1313",
       "mergeCommit": {
@@ -178,7 +167,6 @@
       "number": 1294,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "5f0df2522346b50bbb67f5eb718e30c1bdfcd157",
       "url": "https://github.com/rox-one/rox-one/pull/1294",
       "mergeCommit": {
@@ -193,7 +181,6 @@
       "number": 1293,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "8f43e92d2a27a98994573d081b85d0b4c51728de",
       "url": "https://github.com/rox-one/rox-one/pull/1293",
       "mergeCommit": {
@@ -208,7 +195,6 @@
       "number": 1292,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "01889b4a43a2ce4f730d3109b49750a0fbde4db8",
       "url": "https://github.com/rox-one/rox-one/pull/1292",
       "mergeCommit": {
@@ -223,7 +209,6 @@
       "number": 1230,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "f32863be2d22945163fe17d76fc893f17c005fd0",
       "url": "https://github.com/rox-one/rox-one/pull/1230",
       "mergeCommit": {
@@ -238,7 +223,6 @@
       "number": 1087,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "2e444a1e7fb6165f61c09210904b0e6ca912e9e2",
       "url": "https://github.com/rox-one/rox-one/pull/1087",
       "mergeCommit": {
@@ -253,7 +237,6 @@
       "number": 1082,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "518636a6cb6c7c7331c3cf614e4182d92cb240df",
       "url": "https://github.com/rox-one/rox-one/pull/1082",
       "mergeCommit": {
@@ -268,7 +251,6 @@
       "number": 1377,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "005eadcf8a7611e3376d628773247ad24158219e",
       "url": "https://github.com/rox-one/rox-one/pull/1377",
       "mergeCommit": {
@@ -283,7 +265,6 @@
       "number": 1384,
       "state": "MERGED",
       "mergedAt": "2026-10-03T02:08:50Z",
-      "baseRefName": "main",
       "headRefOid": "a9611300a87223d65bb343a00ef8e1c3e0111df6",
       "url": "https://github.com/rox-one/rox-one/pull/1384",
       "mergeCommit": {
@@ -296,13 +277,90 @@
     }
   ],
   "qualification": {
-    "phase": "RUNNING",
+    "phase": "BOUNDED_SOURCE_CI_PASSED_RELEASE_DOD_OPEN",
+    "applicationSourceCommit": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
     "qualifiedRuntime": "1.3.14",
-    "limits": "Full signed native, hosted, provider and whole-task DoD remain open. This interim receipt does not relabel historical/failed tests."
+    "remoteIndependentChecks": [
+      {
+        "runId": 37095251771,
+        "url": "https://github.com/rox-one/rox-one/actions/runs/37095251771",
+        "headSha": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+        "event": "pull_request",
+        "path": ".github/workflows/ci.yml",
+        "conclusion": "success",
+        "completedAt": "2026-10-03T04:08:41Z"
+      },
+      {
+        "runId": 37095251796,
+        "url": "https://github.com/rox-one/rox-one/actions/runs/37095251796",
+        "headSha": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+        "event": "pull_request",
+        "path": ".github/workflows/validate-server.yml",
+        "conclusion": "success",
+        "completedAt": "2026-10-03T04:05:40Z"
+      }
+    ],
+    "remoteBuiltServerSmoke": {
+      "pass": 4,
+      "fail": 0,
+      "assertions": 37,
+      "freshWebUI": true
+    },
+    "focusedUI": {
+      "pass": 137,
+      "fail": 0,
+      "assertions": 791
+    },
+    "platform": {
+      "pass": 42,
+      "fail": 0,
+      "assertions": 123
+    },
+    "correctedActualRoadmapCaller": {
+      "pass": 10,
+      "fail": 0,
+      "assertions": 31,
+      "testOnly": true,
+      "receipt": "postmerge/roadmap-ai-caller-fix/results.json"
+    },
+    "dependencyMetadata": {
+      "frozenLock": true,
+      "dependencyLifecycleScripts": false,
+      "nativeFreshInstallQualified": false,
+      "log": "postmerge/e0740755da02fa31112216b1a32b6d707c3a2cc1/frozen-install-metadata.log"
+    },
+    "localFailuresPreserved": {
+      "webuiTimeoutMs": 900430,
+      "serverFixtureFirst": {
+        "pass": 2,
+        "fail": 2
+      },
+      "serverFixtureRetry": {
+        "pass": 2,
+        "fail": 2
+      },
+      "roadmapBoundaryTimeoutAttempts": 2,
+      "cause": "UNESTABLISHED",
+      "releaseAcceptanceClosed": false
+    },
+    "finalWholeWorkspaceMatrix": "NOT_RUN_TO_COMPLETION; partial older0.11.6 evidence preserved",
+    "productionSourceDeltaSinceQualifiedCommit": [],
+    "productionCodeAndBuildLockUnchanged": "verified by final post-promotion readback",
+    "limits": "Source/unit/contract/general CI and built local server qualification do not certify signed installed Windows/macOS, Intel/minimum OS, live providers or hosted production. Local failures remain separate. Full445 leaf DoD remains unclosed."
   },
   "initialPreparation": {
     "leafTasks": 16,
     "lanes": 3,
     "fullDoDClosed": 0
-  }
+  },
+  "independentIntegrationPullRequest": {
+    "number": 1385,
+    "state": "OPEN",
+    "isDraft": true,
+    "mergedAt": null,
+    "headRefOid": "e0740755da02fa31112216b1a32b6d707c3a2cc1",
+    "url": "https://github.com/rox-one/rox-one/pull/1385",
+    "mergeCommit": null
+  },
+  "deliveredBaseline": null
 }

@@ -1,0 +1,54 @@
+sourceCommit=e0740755da02fa31112216b1a32b6d707c3a2cc1
+bun=/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun
+command=["/tmp/rox-merge-toolchain-20261003/bun-darwin-aarch64/bun","--no-env-file","test","apps/electron/src/main/__tests__/auto-update-suppress.test.ts","scripts/build/__tests__/electron-packaging-files.test.ts","scripts/build/__tests__/stage-servers.test.ts"]
+startedAt=2026-10-03T03:42:21.061Z
+
+bun test v1.3.14 (0d9b296a)
+Skipping session-mcp-server staging (unread; see docs/mcp-components.md)
+Copying Pi Agent Server...
+  Copied index.js (koffi not installed — not required by current Pi SDK)
+  • loaded configuration  file=/Users/t/Projects/rox-one-recheck-candidate-20261003/apps/electron/electron-builder.yml
+  • loaded configuration  file=/Users/t/Projects/rox-one-recheck-candidate-20261003/apps/electron/electron-builder.yml
+  • loaded configuration  file=/Users/t/Projects/rox-one-recheck-candidate-20261003/apps/electron/electron-builder.yml
+  • loaded configuration  file=/Users/t/Projects/rox-one-recheck-candidate-20261003/apps/electron/electron-builder.yml
+  • loaded configuration  file=/Users/t/Projects/rox-one-recheck-candidate-20261003/apps/electron/electron-builder.yml
+  • loaded configuration  file=/Users/t/Projects/rox-one-recheck-candidate-20261003/apps/electron/electron-builder.yml
+  • loaded configuration  file=/Users/t/Projects/rox-one-recheck-candidate-20261003/apps/electron/electron-builder.yml
+  • loaded configuration  file=/Users/t/Projects/rox-one-recheck-candidate-20261003/apps/electron/electron-builder.yml
+  • loaded configuration  file=/Users/t/Projects/rox-one-recheck-candidate-20261003/apps/electron/electron-builder.yml
+
+scripts/build/__tests__/stage-servers.test.ts:
+(pass) packaged subprocess staging (ticket 10) > does not copy session-mcp-server even when dist exists [98.89ms]
+(pass) packaged subprocess staging (ticket 10) > still copies pi-agent-server when dist exists [238.77ms]
+(pass) packaged subprocess staging (ticket 10) > does not copy session-mcp-server or bridge-mcp-server into the electron resource tree [206.39ms]
+(pass) packaged subprocess staging (ticket 10) > keeps pi-agent-server on the staged list and excludes unread MCP servers [11.49ms]
+(pass) electron-builder packaging globs (ticket 10) > does not include unread session/bridge MCP servers and still includes pi-agent-server [60.46ms]
+
+scripts/build/__tests__/electron-packaging-files.test.ts:
+(pass) electron-builder target application file selection > mac/arm64: excludes source, scripts, private config and old packaged framework symlinks [2292.77ms]
+(pass) electron-builder target application file selection > mac/arm64: includes built application and target runtime resources only [1358.91ms]
+(pass) electron-builder target application file selection > mac/x64: excludes source, scripts, private config and old packaged framework symlinks [1831.52ms]
+(pass) electron-builder target application file selection > mac/x64: includes built application and target runtime resources only [2025.12ms]
+(pass) electron-builder target application file selection > win/x64: excludes source, scripts, private config and old packaged framework symlinks [1116.55ms]
+(pass) electron-builder target application file selection > win/x64: includes built application and target runtime resources only [1526.65ms]
+(pass) electron-builder target application file selection > linux/x64: excludes source, scripts, private config and old packaged framework symlinks [816.77ms]
+(pass) electron-builder target application file selection > linux/x64: includes built application and target runtime resources only [1493.38ms]
+(pass) electron-builder target application file selection > preserves Windows executable extraResources source and destination [1178.62ms]
+
+apps/electron/src/main/__tests__/auto-update-suppress.test.ts:
+(pass) shouldSuppressUpdateFeed > suppresses when CRAFT_DEV_RUNTIME is set [0.32ms]
+(pass) shouldSuppressUpdateFeed > suppresses ~/Applications installs [0.19ms]
+(pass) shouldSuppressUpdateFeed > suppresses ad-hoc signed builds [0.02ms]
+(pass) shouldSuppressUpdateFeed > allows production /Applications without CRAFT_DEV_RUNTIME [0.01ms]
+(pass) shouldAcceptReadyUpdate > rejects when local already matches feed [0.61ms]
+(pass) shouldAcceptReadyUpdate > rejects when local is newer than feed [0.03ms]
+(pass) shouldAcceptReadyUpdate > rejects when cached version mismatches feed [0.29ms]
+(pass) shouldAcceptReadyUpdate > accepts when local behind feed and cache matches (or unknown) [0.12ms]
+(pass) compareSemver > orders versions [0.03ms]
+
+ 23 pass
+ 0 fail
+ 104 expect() calls
+Ran 23 tests across 3 files. [29.79s]
+
+exitCode=0

@@ -1,0 +1,18 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts:
+(pass) integrated project roadmap AI persistence gate > a refused native save stops AI before any provider request [5050.49ms]
+(pass) integrated project roadmap AI persistence gate > AI waits for the current queued native receipt even when debounce has already fired [808.53ms]
+(pass) integrated project roadmap AI persistence gate > accepting a proposal remains pending until its native receipt and fails after refusal [924.27ms]
+(pass) integrated project roadmap AI persistence gate > missing current save queue refuses AI without a flush or provider call [1841.40ms]
+(pass) integrated project roadmap AI persistence gate > workspace change while native save is pending prevents a provider request [996.89ms]
+(pass) integrated project roadmap AI persistence gate > a late AI response after workspace change cannot publish into the current project [750.07ms]
+(pass) integrated project roadmap AI persistence gate > writer change while native save is pending prevents a provider request [481.45ms]
+(pass) integrated project roadmap AI persistence gate > a late AI response after writer change cannot publish into the current project [817.32ms]
+(pass) integrated project roadmap AI persistence gate > accepting against a missing or stale revision refuses before editing or saving [1625.50ms]
+(pass) integrated project roadmap AI persistence gate > accepting a current proposal returns only the acknowledged native revision [386.81ms]
+
+ 10 pass
+ 0 fail
+ 31 expect() calls
+Ran 10 tests across 1 file. [27.84s]
