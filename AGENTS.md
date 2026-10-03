@@ -33,7 +33,7 @@ OmpAgent публикует craft-сессионные инструменты в
 OMP запускается с `--session-dir <workspace>/sessions/<craftSessionId>/omp` (БЕЗ `--no-session`): транскрипт OMP лежит рядом с craft-транскриптом — история дублируется в обоих сторах, без конфликтов. При перезапуске возобновляется нативный OMP-транскрипт. Для старых сессий без него выполняется явная реконструкция сохранённой ROX-истории; повреждённый транскрипт приводит к ошибке. Отмена истории сохраняет reset-маркер.
 
 ### Runtime-контекст агента
-При каждом spawn OMP получает `--append-system-prompt` с `OMP_CRAFT_CONTEXT_PROMPT` (в omp-agent.ts): агенту прямо сказано, что он работает внутри ROX, какие host tools доступны, что статусы/теги ведёт craft.
+При каждом spawn OMP получает `--append-system-prompt` с `OMP_ROX_CONTEXT_PROMPT` (в omp-agent.ts): агенту прямо сказано, что он работает внутри ROX, какие host tools доступны, что статусы/теги ведёт craft.
 
 ## Режимы и дефолты
 - `workspaceDefaults.permissionMode = 'allow-all'` («Выполнение») — дефолт новых сессий; восстановленные сессии без явного режима тоже default'ся в allow-all (SessionManager.defaultRestorePermissionMode).

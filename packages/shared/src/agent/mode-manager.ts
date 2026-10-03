@@ -1,4 +1,3 @@
-import { resolveConfigDir } from '../config/env.ts';
 /**
  * Centralized Permission Mode Manager
  *
@@ -12,6 +11,8 @@ import { resolveConfigDir } from '../config/env.ts';
  */
 
 /// <reference path="../types/incr-regex-package.d.ts" />
+
+import { resolveConfigDir } from '../config/env.ts';
 
 import { homedir } from 'os';
 import { existsSync, realpathSync } from 'fs';

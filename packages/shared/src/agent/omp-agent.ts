@@ -147,7 +147,7 @@ export class OmpStartupAbortedError extends Error {
  * NOTE: multi-line text is passed verbatim (OMP's resolvePromptInput treats
  * input containing '\n' as literal text, not a file path).
  */
-const OMP_CRAFT_CONTEXT_PROMPT = [
+const OMP_ROX_CONTEXT_PROMPT = [
   'You are running inside the ROX desktop app as an embedded agent backend.',
   'Public model IDs are rox/explore, rox/standard, rox/max, rox/vision, and rox/fast.',
   'Do not request raw provider or internal model names.',
@@ -184,7 +184,7 @@ export function composeOmpAppendSystemPrompt(input: {
   projectContextBlock?: string | null;
   memoryBlocks?: MemoryPromptBlocks | null;
 }): string {
-  const parts = [OMP_CRAFT_CONTEXT_PROMPT];
+  const parts = [OMP_ROX_CONTEXT_PROMPT];
   if (input.preferences) parts.push(input.preferences);
   if (input.projectContextBlock) parts.push(input.projectContextBlock);
   // Runtime context documents (rules.md, soul.md, user *.md from

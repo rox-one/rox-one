@@ -6,9 +6,14 @@ import { generateNpmWrappers } from '../installer';
 import { ACPX_NPM_PIN, getNpmLock } from '../npm-locks';
 import { MANIFEST_DATA, TOOL_PLATFORM_MATRIX } from '../manifest-data';
 import { ALL_TOOL_NAMES } from '../types';
+import { ACPX_NPM_PIN as RENDERER_ACPX_PIN, getNpmLock as getRendererNpmLock } from '../../../../../apps/electron/src/renderer/shims/npm-locks-stub';
 const roots: string[] = [];
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); });
 describe('managed acpx', () => {
+  it('exposes the same verified metadata to the renderer without dependency lock blobs', () => {
+    expect(RENDERER_ACPX_PIN).toEqual(ACPX_NPM_PIN);
+    expect(getRendererNpmLock('acpx', ACPX_NPM_PIN.version)).toBeNull();
+  });
   it('is default-on with verified artifacts, supported Node dependency and production integrity lock', () => {
     const entry = MANIFEST_DATA.acpx!;
     expect(entry).toMatchObject({ version: '0.19.4', kind: 'npm', tier: 'default-on', dependsOn: ['node'] });

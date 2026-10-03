@@ -194,7 +194,7 @@ function readSkillsLock(bundleRoot: string): Map<string, SkillsLockPack> {
 
 /**
  * A disposable OMP profile needs the shipped skills immediately, independently
- * of global installation or edited copies. Link read-only bundle directories
+ * of global installation or edited copies. Link pinned bundle directories
  * rather than copying every script/data file for every process restart.
  * OMP's other discovery tiers retain the user's authored skills and overrides.
  */
