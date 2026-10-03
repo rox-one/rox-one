@@ -1161,6 +1161,25 @@ async function moveNoteInFilesystem(notesRoot: string, noteId: string, targetFol
   return readNote(notesRoot, nextId)
 }
 
+/** Read-only Knowledge projection of the same authenticated canonical Notes. */
+export function nativeNotesKnowledgeAccess(deps: HandlerDeps, ctx: RequestContext) {
+  if (!ctx.workspaceId) throw new CodedError('AUTH_FAILED', 'Native Notes workspace is required')
+  const context = nativeNotesContext(deps, ctx, ctx.workspaceId, 'read')
+  return {
+    connectionId: `local-markdown:${context.workspaceId}`,
+    assertRead: () => assertNativeNotesFences(deps, context),
+    async list() {
+      assertNativeNotesFences(deps, context)
+      const entities = await nativeNoteEntities(deps, context)
+      const documents = await Promise.all(entities.flatMap(entity =>
+        entity.files.filter(file => file.path.startsWith(`${NOTES_DIR}/`) && file.path.endsWith('.md'))
+          .map(file => nativeNoteDocument(deps, context, entity, file, entities))))
+      assertNativeNotesFences(deps, context)
+      return documents
+    },
+  }
+}
+
 export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): void {
   const originalServer = server
   server = new Proxy(originalServer, { get(target, property) {
