@@ -39,7 +39,8 @@ export function decodePanelEntries(value: string): PanelUrlEntry[] {
   return value.split(',').filter(entry => entry.trim().length > 0).map(entry => {
     const colonIndex = entry.lastIndexOf(':')
     if (colonIndex > 0) {
-      const proportion = parseFloat(entry.slice(colonIndex + 1))
+      const text = entry.slice(colonIndex + 1)
+      const proportion = /^(?:\d+(?:\.\d*)?|\.\d+)$/.test(text) ? Number(text) : NaN
       if (!isNaN(proportion) && proportion > 0 && proportion < 1) {
         return { route: entry.slice(0, colonIndex), proportion }
       }

@@ -119,3 +119,10 @@ describe('normalizePanelRouteForReconcile', () => {
   })
 
 })
+
+// PR1412 also preserves query spelling for auto-selected collection roots.
+it('auto-selected collection retains opaque view parameters', () => {
+  const route = 'allSessions?keep=a%2Fb&next=%3F' as ViewRoute
+  const resolved = normalizePanelRouteForReconcile(route, state => ({ ...state, details: { type: 'session', sessionId: 'chosen' } }) as NavigationState)
+  expect(resolved).toBe('allSessions/session/chosen?keep=a%2Fb&next=%3F')
+})
