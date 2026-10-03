@@ -1,0 +1,17 @@
+{
+  "implementation": "/tmp/rox-branch-integration-20261003/knowledge-negative/original-kernel-availability.ts",
+  "crossScope": {
+    "A": false,
+    "B": false,
+    "connection": false,
+    "calls": 1
+  },
+  "invalidation": {
+    "beforeFresh": {
+      "returnedBeforeFresh": true,
+      "running": false
+    },
+    "final": true,
+    "calls": 2
+  }
+}
