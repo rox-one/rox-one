@@ -1,0 +1,59 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts:
+46 |     expect((await chatEvents(f.agent, 'public second', 30_000)).some(e => e.type === 'text_complete')).toBe(true)
+47 |     f.observeChild(); f.agent.setModel('kimi-k3')
+48 |     expect((await chatEvents(f.agent, 'private third', 30_000)).some(e => e.type === 'text_complete')).toBe(true)
+49 |     f.observeChild()
+50 |     const prompts = f.fake.readRpcLog().filter(frame => frame.type === 'prompt')
+51 |     expect(prompts.map(p => [p.personalCredentialMatches, p.privateCredentialMatches, p.canonicalBase, p.publicCatalog])).toEqual([
+                                                                                                                               ^
+error: expect(received).toEqual(expected)
+
+  [
+    [
+      false,
+      true,
+      false,
+      false,
+    ],
+    [
++     false,
+      true,
+      false,
+-     true,
+-     true,
++     false,
+    ],
+    [
+      false,
+      true,
+      false,
+      false,
+    ],
+  ]
+
+- Expected  - 2
++ Received  + 2
+
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts:51:123)
+(fail) actual OmpAgent respawns in both credential/catalog directions and preserves each domain key [658.78ms]
+64 |       if (Date.now() > deadline) throw Error('old prompt did not dispatch')
+65 |       await Bun.sleep(5)
+66 |     }
+67 |     f.observeChild(); f.agent.setModel('rox/standard')
+68 |     const oldEvents = await first
+69 |     expect(oldEvents.some(e => e.type === 'text_complete')).toBe(false)
+                                                                 ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts:69:61)
+(fail) actual in-flight credential-domain switch retires old child and ignores its delayed stream [873.46ms]
+
+ 0 pass
+ 2 fail
+ 5 expect() calls
+Ran 2 tests across 1 file. [2.38s]

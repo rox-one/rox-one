@@ -1,0 +1,20 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/main/__tests__/pocket-account-store.test.ts:
+(pass) Pocket OS protected vault > uses injected OS encryption on darwin and restores caller/account scope [15.78ms]
+(pass) Pocket OS protected vault > uses injected OS encryption on win32 and restores caller/account scope [2.25ms]
+(pass) Pocket OS protected vault > fails closed without OS encryption and on unsupported headless Linux [0.57ms]
+(pass) Pocket OS protected vault > rejects a substituted vault directory [0.35ms]
+
+packages/shared/src/auth/__tests__/rox-pocket-client.test.ts:
+(pass) Pocket v2 proof client > uses S256 proof and operation id exclusively in main requests [8.16ms]
+(pass) Pocket v2 proof client > rejects foreign broker redirect and malformed token envelopes [0.45ms]
+(pass) Pocket v2 proof client > cancels a late approval even when HTTP transport ignores its abort [0.16ms]
+(pass) Pocket v2 proof client > rejects foreign-account credential and a redirected inference base [1.19ms]
+(pass) Pocket v2 proof client > projects account snapshot without credential canaries even if the server sends accidental extra fields [0.67ms]
+(pass) Pocket v2 proof client > reuses the same redemption proof after a dropped approved response [2020.48ms]
+
+ 10 pass
+ 0 fail
+ 47 expect() calls
+Ran 10 tests across 2 files. [2.29s]

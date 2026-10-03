@@ -1,0 +1,22 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/sessions/pocket-session-resource-owner.test.ts:
+40 | console.log(JSON.stringify({pb,titleError:title.error,selected:selected?.cloudAccountId,bindingAccount:binding?.accountId,bothCurrent:true,count,queuedAccount:queuedContext?.cloudAccountId,replayAccount:replayContext?.cloudAccountId,restoreError:typeof restored==='string'?restored:null,currentOwner:sm.roxExecutions.get('s1')?.cloudAccountId}));
+41 | `], { cwd: root, env: { ...process.env, NODE_ENV: 'test', ROX_CONFIG_DIR: temp, CRAFT_CONFIG_DIR: temp }, stdout: 'pipe', stderr: 'pipe' })
+42 |   const [exit, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()])
+43 |   expect({ exit, stdout, stderr }).toMatchObject({ exit: 0 })
+44 |   const r = JSON.parse(stdout.trim().split(/\r?\n/).at(-1)!)
+45 |   expect(r.pb).toBe('ROX_SESSION_OWNER_CONFLICT')
+                    ^
+error: expect(received).toBe(expected)
+
+Expected: "ROX_SESSION_OWNER_CONFLICT"
+Received: "UNSAFE_B_REACHED_MESSAGES"
+
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/server-core/src/sessions/pocket-session-resource-owner.test.ts:45:16)
+(fail) actual SessionManager rejects foreign concurrent and title owners, freezes queue and fences restored bindings [2473.46ms]
+
+ 0 pass
+ 1 fail
+ 2 expect() calls
+Ran 1 test across 1 file. [3.30s]
