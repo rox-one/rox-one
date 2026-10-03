@@ -55,7 +55,10 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
     // flag, headless/WebUI clients re-enter onboarding on every reload.
     const { authState, setupNeeds } = await getOnboardingAuthPayload(isSetupDeferred())
     const cloud = await getRoxAccountAuthority().state(ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER)
-    if (cloud.connected) setupNeeds.needsOmpCredential = false
+    if (cloud.connected) {
+      setupNeeds.needsOmpCredential = false
+      setupNeeds.isFullyConfigured = true
+    }
     setupNeeds.needsRoxCloud = isRoxCloudRequired() && !cloud.connected
     setupNeeds.shouldShowOnboardingOnLaunch = setupNeeds.needsRoxCloud
     setupNeeds.isFullyConfigured &&= !setupNeeds.needsRoxCloud

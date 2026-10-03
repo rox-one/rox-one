@@ -115,5 +115,20 @@ describe('Pocket host account authority', () => {
   expect(invalidated).toBe(1)
   expect(() => f.authority.assertCurrent(context)).toThrow('ROX_ACCOUNT_CHANGED')
  })
+ it('keeps failed device revocation sealed for retry after process restart', async () => {
+  const f = createPocketFixture(); await connect(f)
+  const context = await f.authority.capture(LOCAL_ROX_CALLER)
+  f.client.logout = async () => { throw new TypeError('broker offline') }
+  await expect(f.authority.logout(LOCAL_ROX_CALLER)).rejects.toThrow('broker offline')
+  expect(() => f.authority.assertCurrent(context)).toThrow('ROX_ACCOUNT_CHANGED')
+  expect(f.records.size).toBe(0)
+  expect(f.pendingLogouts.size).toBe(1)
+  let revoked: string | undefined; f.client.logout = async token => { revoked = token }
+  const relaunched = new RoxAccountAuthority(f.store, f.client)
+  await relaunched.logout(LOCAL_ROX_CALLER)
+  expect(revoked).toBe('access-fixture')
+  expect(f.pendingLogouts.size).toBe(0)
+  expect((await relaunched.state(LOCAL_ROX_CALLER)).connected).toBe(false)
+ })
 
 })

@@ -1,4 +1,5 @@
 import { getRoxAccountAuthority } from '../auth/rox-account-authority.ts';
+import { redactRegisteredSecrets } from '../secrets/redact.ts';
 /**
  * OmpAgent — craft-agents backend driving the OMP CLI (`omp --mode rpc`).
  *
@@ -801,7 +802,8 @@ export class OmpAgent extends BaseAgent {
       try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
       throw error;
     }
-    if (this.config.roxExecutionContext) getRoxAccountAuthority().assertCurrent(this.config.roxExecutionContext);
+    try { if (this.config.roxExecutionContext) getRoxAccountAuthority().assertCurrent(this.config.roxExecutionContext); }
+    catch (error) { runtimeConfig.dispose(); nativeInvocation.dispose(); throw error; }
     env.OMP_APP_NAME = 'rox';
     let child: ChildProcess;
     try {
@@ -852,7 +854,7 @@ export class OmpAgent extends BaseAgent {
       const text = data.toString();
       // Evidence BEFORE ring eviction — a single chunk can exceed the ring
       // and wash away its own head (pipe reads are up to 64KB).
-      const evidence = childStderr + text;
+      const evidence = redactRegisteredSecrets(childStderr + text);
       childStderr = evidence.slice(-OMP_STDERR_RING_LIMIT);
       if (isCurrentChild()) {
         this.recentStderr = childStderr;
@@ -2343,7 +2345,8 @@ export class OmpAgent extends BaseAgent {
       try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
       throw error;
     }
-    if (this.config.roxExecutionContext) getRoxAccountAuthority().assertCurrent(this.config.roxExecutionContext);
+    try { if (this.config.roxExecutionContext) getRoxAccountAuthority().assertCurrent(this.config.roxExecutionContext); }
+    catch (error) { runtimeConfig.dispose(); nativeInvocation.dispose(); throw error; }
     env.OMP_APP_NAME = 'rox';
     this.debug('runOneShot: spawning -p child');
     return new Promise<string>((resolve, reject) => {
@@ -2376,7 +2379,7 @@ export class OmpAgent extends BaseAgent {
       child.on('close', (code) => {
         clearTimeout(timer);
         if (code !== 0) {
-          reject(new Error(`omp -p failed (exit ${code})${stderr ? ` (${stderr.trim().slice(0, 300)})` : ''}`));
+          reject(new Error(`omp -p failed (exit ${code})${stderr ? ` (${redactRegisteredSecrets(stderr).trim().slice(0, 300)})` : ''}`));
           return;
         }
         try { if (this.config.roxExecutionContext) getRoxAccountAuthority().assertCurrent(this.config.roxExecutionContext); } catch (error) { reject(error); return; }
@@ -2475,7 +2478,7 @@ export class OmpAgent extends BaseAgent {
   }
 
   protected override debug(message: string): void {
-    this.onDebug?.(`[omp] ${message}`);
+    this.onDebug?.(redactRegisteredSecrets(`[omp] ${message}`));
   }
 }
 

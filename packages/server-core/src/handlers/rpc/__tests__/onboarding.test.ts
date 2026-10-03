@@ -8,11 +8,13 @@ let setupDeferredReadCount = 0
 const setupDeferredCalls: boolean[] = []
 let oauthPreparationCalls = 0
 const welcomeWorkspaceCalls: string[] = []
+let cloudConnected = false
+let localOmpBlocked = false
 
 mock.module('@rox/shared/auth', () => ({
   LOCAL_ROX_CALLER: { issuer: 'rox:local-electron', subject: 'installation' },
   isRoxCloudRequired: () => true,
-  getRoxAccountAuthority: () => ({ state: async () => ({ connected: false, account: null }) }),
+  getRoxAccountAuthority: () => ({ state: async () => ({ connected: cloudConnected, account: null }) }),
   fetchRoxBalance: async () => ({ balanceRox: '0' }),
   getAuthState: async () => ({
     billing: {
@@ -43,7 +45,8 @@ mock.module('@rox/shared/auth', () => ({
     setupNeeds: {
       needsBillingConfig: true,
       needsCredentials: false,
-      isFullyConfigured: true,
+      needsOmpCredential: localOmpBlocked,
+      isFullyConfigured: !localOmpBlocked,
       isSetupDeferred: deferred === true,
       shouldShowOnboardingOnLaunch: false,
     },
@@ -128,6 +131,8 @@ async function createHarness() {
 }
 
 beforeEach(() => {
+  cloudConnected = false
+  localOmpBlocked = false
   setupDeferred = false
   setupDeferredReadCount = 0
   setupDeferredCalls.length = 0
@@ -136,6 +141,13 @@ beforeEach(() => {
 })
 
 describe('onboarding:getAuthState', () => {
+  it('treats a ready central inference account as configured when legacy local OMP auth is absent', async () => {
+    cloudConnected = true
+    localOmpBlocked = true
+    const { invoke } = await createHarness()
+    const result = await invoke(RPC_CHANNELS.onboarding.GET_AUTH_STATE) as { setupNeeds: Record<string, unknown> }
+    expect(result.setupNeeds).toMatchObject({ isFullyConfigured: true, needsOmpCredential: false, needsRoxCloud: false, shouldShowOnboardingOnLaunch: false })
+  })
   it('requires Pocket authentication even when provider setup is deferred', async () => {
     const { invoke } = await createHarness()
     const result = await invoke(RPC_CHANNELS.onboarding.GET_AUTH_STATE) as {

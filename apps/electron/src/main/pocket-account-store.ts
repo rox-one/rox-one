@@ -35,6 +35,9 @@ export function createPocketAccountStore(options: { directory: string; safeStora
     finally { sealed?.fill(0); rmSync(pending, { force: true }) }
   }
   return {
+    async readLogout(caller) { return read(hash(['logout', caller.issuer, caller.subject])) },
+    async writeLogout(caller, record) { write(hash(['logout', caller.issuer, caller.subject]), { accountId: record.accountId, accessToken: record.accessToken, refreshToken: record.refreshToken, refreshId: record.refreshId }) },
+    async clearLogout(caller) { ready(); rmSync(join(options.directory, `${hash(['logout', caller.issuer, caller.subject])}.enc`), { force: true }) },
     async readBinding(resource) { return read(hash(['resource', resource])) },
     async writeBinding(resource, binding) { write(hash(['resource', resource]), binding) },
     async read(caller) {

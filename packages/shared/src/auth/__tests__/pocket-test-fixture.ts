@@ -1,8 +1,9 @@
-import { RoxAccountAuthority, type PocketAccountRecord, type PocketClient, type PocketBinding } from '../rox-account-authority.ts'
+import { RoxAccountAuthority, type PocketAccountRecord, type PocketClient, type PocketBinding, type PocketLogoutRecord } from '../rox-account-authority.ts'
 import type { RoxAccountSnapshot } from '../rox-pocket-client.ts'
 export const pocketSnapshot = (id = 'account-a', amount = '500.000000'): RoxAccountSnapshot => ({ state: 'ready', user: { id, email: 'same@example.test', emailVerified: true, name: 'Cloud name', handle: 'fixture', profileUrl: 'https://rox.one/@fixture' }, organization: { id: 'org-' + id, name: 'Personal', slug: 'fixture', role: 'owner' }, balance: { currency: 'ROX', balanceRox: amount, availableRox: amount, heldRox: '0.000000', bonusStatus: 'granted' }, key: { id: 'key-' + id, prefix: 'fixture_', generation: 1, status: 'active' }, updatedAt: new Date().toISOString() })
 export function createPocketFixture(id = 'account-a', amount = '500.000000') {
   const records = new Map<string, PocketAccountRecord>(), bindings = new Map<string, PocketBinding>()
+  const pendingLogouts = new Map<string, PocketLogoutRecord>()
   const key = (caller: unknown) => JSON.stringify(caller)
   let snapshot = pocketSnapshot(id, amount)
   let refreshes: string[] = [], logouts = 0
@@ -15,6 +16,9 @@ export function createPocketFixture(id = 'account-a', amount = '500.000000') {
     credential: async (_token, state) => ({ accountId: state.user.id, keyId: state.key!.id, generation: state.key!.generation, apiKey: 'account-key-fixture', baseUrl: 'https://api.rox.one/v1' }),
   }
   const store = {
+    async readLogout(caller: unknown) { return pendingLogouts.get(key(caller)) ?? null },
+    async writeLogout(caller: unknown, record: PocketLogoutRecord) { pendingLogouts.set(key(caller), structuredClone(record)) },
+    async clearLogout(caller: unknown) { pendingLogouts.delete(key(caller)) },
     async read(caller: unknown) { return records.get(key(caller)) ?? null },
     async write(caller: unknown, record: PocketAccountRecord) { records.set(key(caller), structuredClone(record)) },
     async clear(caller: unknown) { records.delete(key(caller)) },
@@ -22,5 +26,5 @@ export function createPocketFixture(id = 'account-a', amount = '500.000000') {
     async writeBinding(resource: string, binding: PocketBinding) { bindings.set(resource, structuredClone(binding)) },
   }
   const authority = new RoxAccountAuthority(store, client)
-  return { authority, records, bindings, client, store, refreshes, get logouts() { return logouts }, setSnapshot(value: RoxAccountSnapshot) { snapshot = value } }
+  return { authority, records, bindings, pendingLogouts, client, store, refreshes, get logouts() { return logouts }, setSnapshot(value: RoxAccountSnapshot) { snapshot = value } }
 }

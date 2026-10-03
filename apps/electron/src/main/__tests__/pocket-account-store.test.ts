@@ -25,8 +25,12 @@ describe('Pocket OS protected vault', () => {
   expect(await f.store.read(callerB)).toBeNull()
   const restored = createPocketAccountStore({ directory:f.directory,safeStorage:f.safeStorage,platform })
   expect(await restored.read(callerA)).toEqual(record)
+  await f.store.writeLogout(callerA,record)
   for (const file of readdirSync(f.directory)) { expect(readFileSync(join(f.directory,file)).includes(Buffer.from(record.accessToken))).toBe(false); expect(readFileSync(join(f.directory,file)).includes(Buffer.from(record.refreshToken))).toBe(false) }
   await f.store.clear(callerA); expect(await restored.read(callerA)).toBeNull()
+  expect(await restored.readLogout(callerA)).toMatchObject({ accountId:record.accountId,accessToken:record.accessToken,refreshToken:record.refreshToken })
+  expect(await restored.readLogout(callerB)).toBeNull()
+  await restored.clearLogout(callerA); expect(await f.store.readLogout(callerA)).toBeNull()
  })
  it('fails closed without OS encryption and on unsupported headless Linux', async () => {
   await expect(fixture('darwin',false).store.write(callerA,record)).rejects.toThrow('ROX_OS_SECURE_STORAGE_UNAVAILABLE')

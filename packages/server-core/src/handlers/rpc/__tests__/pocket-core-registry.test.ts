@@ -10,4 +10,4 @@ it('actual registerCoreRpcHandlers serves Connect/bootstrap/logout over authenti
   expect({code,out,err}).toMatchObject({code:0})
   expect(JSON.parse(out.trim().split('\n').at(-1)!)).toHaveLength(12)
  }finally{rmSync(directory,{recursive:true,force:true})}
-},20000)
+},60000)

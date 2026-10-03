@@ -1,5 +1,6 @@
 /** Host-owned account authority. Native grants and cloud identity are independent. */
 import { randomUUID } from 'node:crypto'
+import { registerSecretValues } from '../secrets/redact.ts'
 import type { RoxCloudOwner } from '../credentials/manager.ts'
 import { RoxConnectFlow } from './rox-connect-flow.ts'
 import { getRoxAuthBaseUrl, isRoxCloudRequired } from './rox-cloud.ts'
@@ -12,7 +13,11 @@ export interface PocketAccountRecord {
   refreshId?: string; snapshot?: RoxAccountSnapshot; credential?: RoxInferenceCredential
 }
 export interface PocketBinding { caller: RoxCloudOwner; accountId: string }
+export type PocketLogoutRecord = Pick<PocketAccountRecord, 'accountId' | 'accessToken' | 'refreshToken' | 'refreshId'>
 export interface PocketAccountStore {
+  readLogout(caller: RoxCloudOwner): Promise<PocketLogoutRecord | null>
+  writeLogout(caller: RoxCloudOwner, record: PocketLogoutRecord): Promise<void>
+  clearLogout(caller: RoxCloudOwner): Promise<void>
   readBinding?(resource: string): Promise<PocketBinding | null>
   writeBinding?(resource: string, binding: PocketBinding): Promise<void>
   read(caller: RoxCloudOwner): Promise<PocketAccountRecord | null>
@@ -43,6 +48,7 @@ export class RoxAccountAuthority {
     const key = callerKey(caller)
     if (this.records.has(key)) return this.records.get(key)!
     if (!this.loads.has(key)) this.loads.set(key, this.store.read(caller).then(record => {
+      if (record) registerSecretValues([record.accessToken, record.refreshToken, record.credential?.apiKey ?? ''])
       this.records.set(key, record)
       if (!this.generations.has(key)) this.generations.set(key, record?.authGeneration ?? randomUUID())
       return record
@@ -66,6 +72,7 @@ export class RoxAccountAuthority {
         save: async result => this.serial(caller, async () => {
           const approved = result as PocketApproval
           if (!approved.refreshToken) throw new Error('ROX_AUTH_INVALID_RESPONSE')
+          registerSecretValues([approved.accessToken, approved.refreshToken])
           const generation = this.generations.get(key)!
           const record: PocketAccountRecord = { accountId: approved.user.id, authGeneration: generation, accessToken: approved.accessToken, refreshToken: approved.refreshToken, expiresAt: Date.now() + approved.expiresIn * 1000 }
           // Save authentication before remote provisioning. A provisioning outage
@@ -91,17 +98,22 @@ export class RoxAccountAuthority {
   async logout(caller: RoxCloudOwner): Promise<void> {
     const old = await this.record(caller)
     this.invalidate(caller)
+    // Retain a sealed revocation receipt until the broker acknowledges it.
+    // A network outage must not make a cleared device impossible to revoke.
+    if (old) await this.store.writeLogout(caller, old)
     await this.flow(caller).clear()
-    if (old) {
+    const pending = await this.store.readLogout(caller)
+    if (pending) {
       // An in-flight refresh may have rotated on the server before invalidation
       // fenced its response. Recover that exact result before revoking the device.
-      let token = old.accessToken
-      if (old.refreshId) {
-        const approved = await this.client.refresh(old.refreshToken, old.refreshId)
-        if (approved.user.id !== old.accountId) throw new Error('ROX_AUTH_INVALID_RESPONSE')
+      let token = pending.accessToken
+      if (pending.refreshId) {
+        const approved = await this.client.refresh(pending.refreshToken, pending.refreshId)
+        if (approved.user.id !== pending.accountId) throw new Error('ROX_AUTH_INVALID_RESPONSE')
         token = approved.accessToken
       }
       await this.client.logout(token)
+      await this.store.clearLogout(caller)
     }
   }
   private current(caller: RoxCloudOwner, record: PocketAccountRecord) {
@@ -116,6 +128,7 @@ export class RoxAccountAuthority {
       const approved = await this.client.refresh(record.refreshToken, record.refreshId)
       this.current(caller, record)
       if (approved.user.id !== record.accountId) throw new Error('ROX_AUTH_INVALID_RESPONSE')
+      registerSecretValues([approved.accessToken, approved.refreshToken])
       record = { ...record, accessToken: approved.accessToken, refreshToken: approved.refreshToken, expiresAt: Date.now() + approved.expiresIn * 1000, refreshId: undefined }
       await this.store.write(caller, record)
       this.current(caller, record)
@@ -126,6 +139,7 @@ export class RoxAccountAuthority {
     if (snapshot.user.id !== record.accountId) throw new Error('ROX_AUTH_INVALID_RESPONSE')
     let credential: RoxInferenceCredential | undefined
     if (snapshot.state === 'ready' && snapshot.key?.status === 'active') credential = await this.client.credential(record.accessToken, snapshot)
+    if (credential) registerSecretValues([credential.apiKey])
     this.current(caller, record)
     if (record.credential && (!credential || record.credential.keyId !== credential.keyId || record.credential.generation !== credential.generation)) {
       this.invalidate(caller)
