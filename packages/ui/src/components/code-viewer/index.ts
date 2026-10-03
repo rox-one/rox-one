@@ -8,3 +8,4 @@ export { UnifiedDiffViewer, type UnifiedDiffViewerProps, getUnifiedDiffStats } f
 export { DiffViewerControls, type DiffViewerControlsProps } from './DiffViewerControls'
 export { DiffSplitIcon, DiffUnifiedIcon, DiffBackgroundIcon } from './DiffIcons'
 export { LANGUAGE_MAP, getLanguageFromPath, formatFilePath, truncateFilePath } from './language-map'
+export { resolveShikiTheme, ZED_SHIKI_THEMES } from './zedShikiThemes'

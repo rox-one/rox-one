@@ -79,7 +79,7 @@ export function ProfileStrip({
       type="button"
       onClick={onClick}
       className={cn(
-        'group min-w-0 w-full flex items-center overflow-hidden rounded-xl border border-foreground/5',
+        'group min-w-0 w-full flex items-center overflow-hidden rounded-[var(--radius-control)] border border-foreground/5',
         'bg-background/35 text-left shadow-minimal backdrop-blur-xl',
         'hover:bg-background/65 hover:border-foreground/10 transition-[background-color,border-color,box-shadow] duration-200 motion-reduce:transition-none',
         compact ? 'justify-center p-0.5' : 'gap-2.5 p-2.5',
@@ -93,7 +93,7 @@ export function ProfileStrip({
       data-compact={compact || undefined}
     >
       <span id={detailsId} className="sr-only">{accountDetails}</span>
-      <Avatar className={cn('shrink-0 rounded-xl ring-1 ring-foreground/10', compact ? 'size-8' : 'size-9')}>
+      <Avatar className={cn('shrink-0 rounded-full ring-1 ring-foreground/10', compact ? 'size-8' : 'size-9')}>
         {data.avatar ? <AvatarImage src={data.avatar} alt="" /> : null}
         <AvatarFallback
           delayMs={0}

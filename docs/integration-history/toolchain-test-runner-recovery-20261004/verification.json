@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "scope": "Two production files only; late PR1448 toolchain current-copy and test runner recovery",
+  "source_sha": "e572bbdf0b6952b3a0274f1312f347157aee52d1",
+  "baseline_sha": "b91f9ef55405794f3f53bcc904066e3aaa06fe4a",
+  "reconciled_main_sha": "a199e039bbcdfde9d920e31d81e2e00f58d5e478",
+  "qualified_source_commit": "2ebfd68017bb820a6eaf7bc7ee7e58828bd68ad4",
+  "production_commit": "379200ab5",
+  "owned_blobs": [
+    {
+      "path": "packages/shared/src/toolchain/manager.ts",
+      "sha256": "da879676f615fe222224eae1dfde12863dce3f99d05aa296920ea2f45b76c551",
+      "git_blob": "9c37a02c38bd29a82fd68fd0b185b2aded81acff"
+    },
+    {
+      "path": "scripts/test-all.ts",
+      "sha256": "76aab6dd06e541726a168bc687e68b77900b282e9c35d58c707f2521d203078d",
+      "git_blob": "6858e07b24ca795e33a52f896fa9d6e49f3f52f7"
+    },
+    {
+      "path": "scripts/rox-readiness-ui-001.runner.test.ts",
+      "sha256": "7b56d56805ce2ba6648891c7fa94ee27f9aa9ed13489068a510cd43d9ef6d60c",
+      "git_blob": "394fe7e556f1cf18363001ededfeb8d808eaea16"
+    },
+    {
+      "path": "packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-recovery.test.ts",
+      "sha256": "0ce9998a5ad4e41141be0930bcf07abf1258258b7e2ce535398f4bedc167450c",
+      "git_blob": "78930df6d639e691c855458c8d925c3f99eb4800"
+    }
+  ],
+  "environment": {
+    "bun": "1.3.14",
+    "node": "22.23.3",
+    "platform": "darwin-arm64"
+  },
+  "before": {
+    "toolchain": {
+      "pass": 15,
+      "fail": 1,
+      "assertions": 63,
+      "failure": "Valid same-version Windows physical current copy incorrectly missing"
+    },
+    "runner": {
+      "pass": 0,
+      "fail": 3,
+      "assertions": 10,
+      "failures": [
+        "Discovery accepted a replacement inode at pathname read",
+        "Failure logger followed substituted symlink into owned protected dummy",
+        "Isolated executor shared caller HOME and deleted owned host sentinel"
+      ]
+    }
+  },
+  "qualified": {
+    "changed_controls": {
+      "pass": 42,
+      "fail": 0,
+      "assertions": 231,
+      "log": "logs/infra1448-worker-final-controls.log.gz"
+    },
+    "all_existing_toolchain_files": {
+      "files": 15,
+      "pass": 133,
+      "fail": 0,
+      "skip": 3,
+      "assertions": 2253,
+      "report": "scoped-toolchain-report.json",
+      "manifest": "scoped-toolchain-manifest.json"
+    },
+    "native_executable_prerequisite": {
+      "pass": 1,
+      "fail": 0,
+      "assertions": 5
+    },
+    "strict_types": {
+      "initial_full_electron_exit": 0,
+      "joined_full_electron_exit": 0,
+      "runner_and_manager_exit": 0
+    }
+  },
+  "controls": [
+    "Actual synchronously blocked child and grandchild terminated by whole-suite deadline; later suite executed",
+    "Each suite private HOME0700 preserves owned caller sentinel and explicit integration environment",
+    "Output flood bounded at8192 bytes in negative fixture; normal production cap64MiB; cleanup not a pass",
+    "Source16MiB+1 denied before any read",
+    "Discovery ancestor replaced at open denied before foreign bytes",
+    "Install version ancestor replaced at marker open denied before receipt bytes",
+    "Windows physical copy permits launcher link only into its same verified version; foreign version refused",
+    "Frozen source pin, bounded regular marker/HEAD, lock, partial install refusal, per-tool serialization/retry and current non-git-npm readiness retained"
+  ],
+  "limits": [
+    "Windows current-copy controls use a simulated win32-x64 platform with actual temporary filesystem and .cmd launcher; no installed Windows launch acceptance",
+    "Full repository test inventory and full release/native/provider acceptance are outside this two-file qualification",
+    "All original branches and installed runtime/credentials retained; tests use disposable profiles",
+    "Checked descriptor snapshot can retain its original renamed leaf; subsequent execution rechecks source hash. Ancestor replacement and writes are denied."
+  ],
+  "archives": [
+    {
+      "path": "logs/infra1448-toolchain-worker-before.log.gz",
+      "sha256": "9d7fe6de461b69b1175d12811589b9d3a3e2c3a2d8d9fbb6fa6680ac77da069e",
+      "uncompressed_sha256": "089e2771c47b14b2a5bc39643bfa2d54fbf53c81413aaa2ddc02538ae56e09c5",
+      "uncompressed_bytes": 3168
+    },
+    {
+      "path": "logs/infra1448-runner-worker-before.log.gz",
+      "sha256": "e88bbea5c6eebb36660b6fe8c2d20993bdd071359d05e4db4b3e42ac1deb32fe",
+      "uncompressed_sha256": "cfc941a1bb343f37b6fa1a9f0d772af7ff6bd264d6638bb7c7bffa661017223a",
+      "uncompressed_bytes": 3083
+    },
+    {
+      "path": "logs/infra1448-toolchain-worker-current.log.gz",
+      "sha256": "23a049b7ebd107f396c30aef8d149c427ed61176af5a083e7d4c881b6b0aabb6",
+      "uncompressed_sha256": "4a8f4bc5943181c56e8e3a8b8b38c6a7617cb68fe2b86a19db992f981d9052ac",
+      "uncompressed_bytes": 2407
+    },
+    {
+      "path": "logs/infra1448-runner-worker-current.log.gz",
+      "sha256": "5595564139ac545a8ae357b6187a41b88fee7ecc83c84b621446785c0cd874e0",
+      "uncompressed_sha256": "0eb5c2a83be2147b6d51c8c87a1c19036800d420a0cf4d19e4dbbd1de20d3ece",
+      "uncompressed_bytes": 3129
+    },
+    {
+      "path": "logs/infra1448-worker-final-controls.log.gz",
+      "sha256": "7af9e931ce715f5c862495247e4eef8e45b4a3b577b5cbb634b773039875a0cd",
+      "uncompressed_sha256": "e6ab872fc429686a65a173d33ce677dd8ca40c000713e0fa399eb482a044e9e0",
+      "uncompressed_bytes": 6094
+    },
+    {
+      "path": "logs/infra1448-toolchain-scoped-run.log.gz",
+      "sha256": "69ec591e5007bfbf250190b66a65ebb12616aaad82d12dec5f55fae31a9c272d",
+      "uncompressed_sha256": "1f23718bfbc6f899c1cf5cd980f1e65fc1e3d3f619117f8f62eb4f5c08643960",
+      "uncompressed_bytes": 2534
+    },
+    {
+      "path": "logs/infra1448-native-executable-controls.log.gz",
+      "sha256": "8c0e621950ac0824e01df9805bd086483098499bb7bb407b45d2808a2a9eb7b8",
+      "uncompressed_sha256": "65fc7d182e972c017573794a7681b90a4c0a78cc0401df57359ef478bce42e99",
+      "uncompressed_bytes": 274
+    },
+    {
+      "path": "logs/infra1448-current-electron-types.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/infra1448-joined-electron-types.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/infra1448-runner-types.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    }
+  ],
+  "final_reconciliation": {
+    "main_sha": "4053bfc6c03b2f677689f68177a91dc6d71e78db",
+    "commit": "53a80dca39fa85e363ea1ad41b27c5c24a465a28",
+    "all_owned_toolchain_dependencies_unchanged_since_qualified_source": true,
+    "doc_diff_against_main": {
+      "spec": {
+        "add": 6,
+        "delete": 0
+      },
+      "plan": {
+        "add": 6,
+        "delete": 0
+      }
+    },
+    "additional_gate_policy": "No repeat of passing source tests for independent runtime-view/docs-only dependency composition; exact qualified source and current dependency hashes retained."
+  }
+}

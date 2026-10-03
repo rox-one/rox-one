@@ -1,13 +1,24 @@
-import { buildRouteFromNavigationState, parseRouteToNavigationStateOrUnavailable } from '../../shared/route-parser'
+import { encodePanelEntries, decodePanelEntries } from '../lib/panel-url'
+import { buildRouteFromNavigationState, resolveViewRoute } from '../../shared/route-parser'
 import type { ViewRoute } from '../../shared/routes'
 import type { NavigationState } from '../../shared/types'
 
 export type AutoSelectionResolver = (state: NavigationState) => NavigationState
 
-/** Preserve raw view query bytes when automatic selection changes only its path. */
+/** Keep the full query spelling when selection changes only the route path. */
 export function preserveRouteQuery(originalRoute: string, resolvedRoute: string): ViewRoute {
-  const index = originalRoute.indexOf('?')
-  return (index < 0 ? resolvedRoute : resolvedRoute.split('?')[0] + originalRoute.slice(index)) as ViewRoute
+  const queryIndex = originalRoute.indexOf('?')
+  return (queryIndex < 0 ? resolvedRoute : resolvedRoute.split('?')[0] + originalRoute.slice(queryIndex)) as ViewRoute
+}
+
+type UrlPanelEntry = { route: ViewRoute; proportion: number }
+
+/** Compatibility exports share the current canonical panel URL codec. */
+export function serializePanelEntriesForUrl(entries: readonly UrlPanelEntry[]): string {
+  return encodePanelEntries(entries)
+}
+export function parsePanelEntriesFromUrl(value: string): UrlPanelEntry[] {
+  return decodePanelEntries(value).map(entry => ({ ...entry, route: entry.route as ViewRoute }))
 }
 
 /**
@@ -21,7 +32,7 @@ export function normalizePanelRouteForReconcile(
   route: ViewRoute,
   resolveAutoSelection: AutoSelectionResolver,
 ): ViewRoute {
-  const navState = parseRouteToNavigationStateOrUnavailable(route)
+  const navState = resolveViewRoute(route)
   if (navState.navigator === 'unavailable') return route
 
   // Preserve explicit detail routes exactly as encoded in URL.

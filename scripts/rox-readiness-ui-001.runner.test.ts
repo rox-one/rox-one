@@ -1,4 +1,7 @@
-import { afterEach, describe, expect, test } from 'bun:test'
+import { afterEach, describe, expect, spyOn, test } from 'bun:test'
+import { createHash } from 'node:crypto'
+import * as nativeFs from 'node:fs'
+import * as nativeFsPromises from 'node:fs/promises'
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -25,6 +28,109 @@ async function runner() {
 }
 
 describe('UI-001 repository test runner', () => {
+  test('discovery reads the checked inode when its pathname is replaced before reading', async () => {
+    const root = fixture(), api = await runner()
+    const source = "import {test} from 'bun:test'; test('original inode',()=>{});"
+    const replacement = "import {test} from '@playwright/test'; test('replacement pathname',()=>{});"
+    file(root, 'a.test.ts', source)
+    const path = join(root, 'a.test.ts')
+    let swapped = false
+    const swap = () => {
+      if (swapped) return
+      swapped = true
+      nativeFs.renameSync(path, join(root, 'original-inode'))
+      writeFileSync(path, replacement)
+    }
+    const actualLstat = nativeFsPromises.lstat, actualOpen = nativeFsPromises.open
+    const checkedPath = spyOn(nativeFsPromises, 'lstat').mockImplementation((async (pathToCheck: nativeFs.PathLike) => {
+      const result = await actualLstat(pathToCheck)
+      if (String(pathToCheck) === path) swap()
+      return result
+    }) as typeof nativeFsPromises.lstat)
+    const checkedHandle = spyOn(nativeFsPromises, 'open').mockImplementation(async (...args: Parameters<typeof actualOpen>) => {
+      const handle = await actualOpen(...args)
+      if (String(args[0]) === path) {
+        const actualStat = handle.stat.bind(handle)
+        handle.stat = (async (options?: any) => { const result = await actualStat(options); swap(); return result }) as typeof handle.stat
+      }
+      return handle
+    })
+    try {
+      const manifest = await api.discoverSuites(root)
+      expect(swapped).toBe(true)
+      expect(readFileSync(path, 'utf8')).toBe(replacement)
+      expect(manifest.suites).toMatchObject([{ path: 'a.test.ts', runner: 'bun', sha256: createHash('sha256').update(source).digest('hex') }])
+    } finally { checkedPath.mockRestore(); checkedHandle.mockRestore() }
+  }, 20_000)
+
+  test('failure logger keeps its checked inode and refuses a replacement symlink as execution evidence', async () => {
+    const root = fixture(), api = await runner()
+    file(root, 'embedded/package.json', '{"name":"embedded"}')
+    file(root, 'embedded/vitest.config.ts', 'export default {test:{}}')
+    file(root, 'embedded/src/required.test.ts', "import {test} from 'vitest'; test('required',()=>{});")
+    file(root, 'embedded/node_modules/vitest/vitest.mjs', '')
+    const protectedTarget = join(root, 'protected-target'), archivedLog = join(root, 'checked-log-inode')
+    writeFileSync(protectedTarget, 'protected-original\n')
+    const manifest = await api.discoverSuites(root)
+    let swapped = false
+    const swap = (path: string) => {
+      if (swapped) return
+      swapped = true
+      nativeFs.renameSync(path, archivedLog)
+      nativeFs.symlinkSync(protectedTarget, path)
+    }
+    const actualExists = nativeFs.existsSync, actualOpen = nativeFsPromises.open
+    const checkedPath = spyOn(nativeFs, 'existsSync').mockImplementation(path => {
+      const result = actualExists(path)
+      if (result && String(path).endsWith('output.log')) swap(String(path))
+      return result
+    })
+    const checkedHandle = spyOn(nativeFsPromises, 'open').mockImplementation(async (...args: Parameters<typeof actualOpen>) => {
+      const handle = await actualOpen(...args)
+      if (String(args[0]).endsWith('output.log') && typeof args[1] === 'number' && (args[1] & nativeFs.constants.O_APPEND)) {
+        const actualStat = handle.stat.bind(handle)
+        handle.stat = (async (options?: any) => { const result = await actualStat(options); swap(String(args[0])); return result }) as typeof handle.stat
+      }
+      return handle
+    })
+    try {
+      const outcome = await api.runSuites({ root, manifest, artifactDirectory: join(root, 'evidence') })
+        .then(report => ({ report }), error => ({ error }))
+      expect(swapped).toBe(true)
+      expect(readFileSync(protectedTarget, 'utf8')).toBe('protected-original\n')
+      expect(readFileSync(archivedLog, 'utf8')).toContain('without execution output')
+      expect(outcome).toMatchObject({ error: expect.objectContaining({ message: 'Execution log is not a regular file' }) })
+    } finally { checkedPath.mockRestore(); checkedHandle.mockRestore() }
+  }, 20_000)
+
+  test('discovery denies whole ancestor replacement at open before reading foreign bytes', async () => {
+    const outer=fixture(), root=join(outer,'source'), path=join(root,'a.test.ts');
+    file(root,'a.test.ts',"import {test} from 'bun:test';test('original',()=>{})")
+    const original=nativeFsPromises.open;let attacked=false,reads=0
+    const held=spyOn(nativeFsPromises,'open').mockImplementation(async (...args:Parameters<typeof original>)=>{
+      if(String(args[0])===path&&!attacked){attacked=true;nativeFs.renameSync(root,join(outer,'retired'));file(root,'a.test.ts',"import {test} from 'bun:test';test('FOREIGN',()=>{})")}
+      const handle=await original(...args)
+      if(String(args[0])===path){const read=handle.read.bind(handle);handle.read=((...parameters:any[])=>{reads++;return (read as any)(...parameters)}) as typeof handle.read}
+      return handle
+    })
+    try{await expect((await runner()).discoverSuites(root)).rejects.toThrow('ancestor changed');expect(attacked).toBe(true);expect(reads).toBe(0)}finally{held.mockRestore()}
+  },20_000)
+
+  test('oversized test sources fail discovery without reading any source bytes', async () => {
+    const root=fixture(),path=join(root,'large.test.ts');file(root,'large.test.ts',"import {test} from 'bun:test';test('never execute',()=>{})")
+    nativeFs.truncateSync(path,16*1024*1024+1)
+    const original=nativeFsPromises.open;let reads=0
+    const held=spyOn(nativeFsPromises,'open').mockImplementation(async(...args:Parameters<typeof original>)=>{const handle=await original(...args);if(String(args[0])===path){const read=handle.read.bind(handle);handle.read=((...parameters:any[])=>{reads++;return (read as any)(...parameters)}) as typeof handle.read}return handle})
+    try{await expect((await runner()).discoverSuites(root)).rejects.toThrow('bounded read limit');expect(reads).toBe(0)}finally{held.mockRestore()}
+  },20_000)
+
+  test('an actual child output flood is bounded and cannot be accepted as complete output', async () => {
+    const api=await runner(),root=fixture()
+    const result=await api.captureTestCommand(['node','--eval',"process.stdout.write('x'.repeat(50000));setInterval(()=>{},1000)"],{cwd:root,maxOutputBytes:8192,timeoutMs:3000})
+    expect(result.terminationReason).toBe('output-limit');expect(result.stdout.length+result.stderr.length).toBe(8192);expect(result.timedOut).toBe(false)
+    await expect(api.captureTestCommand(['node','--version'],{maxOutputBytes:0})).rejects.toThrow('Output limit')
+  },20_000)
+
   test('actual fast-exit Git, Node and Bun commands retain stdout, stderr and real failure codes', async () => {
     const root = fixture(), api = await runner()
     const git = await api.captureTestCommand(['git', '--version'], { cwd: root })
@@ -139,6 +245,53 @@ describe('UI-001 repository test runner', () => {
     expect(report.summary.blocked).toBe(1)
   })
 
+  test('the native product suite retains its dedicated configuration, command and platform prerequisite', async () => {
+    const root = fixture(), directory = 'tests/e2e/product-tour'
+    file(root, directory + '/playwright.config.ts', 'export default {testMatch: "*.application.spec.ts"}')
+    file(root, directory + '/native.config.ts', 'export default {testMatch: "*.native.spec.ts"}')
+    for (const kind of ['application', 'native']) file(root, `${directory}/product.${kind}.spec.ts`, "import {test} from '@playwright/test'; test('retained suite',()=>{});")
+    file(root, 'node_modules/@playwright/test/cli.js', `const assert=require('node:assert/strict');
+      const path=process.argv[3]; const config=process.argv[process.argv.indexOf('--config')+1];
+      assert.equal(config,path.endsWith('.native.spec.ts')?'tests/e2e/product-tour/native.config.ts':'tests/e2e/product-tour/playwright.config.ts');
+      console.log('actual-config-command:'+config);`)
+    const api = await runner(), manifest = await api.discoverSuites(root)
+    expect(manifest.suites).toMatchObject([
+      { path: `${directory}/product.application.spec.ts`, runner: 'playwright', config: `${directory}/playwright.config.ts` },
+      { path: `${directory}/product.native.spec.ts`, runner: 'playwright', config: `${directory}/native.config.ts` },
+    ])
+    const report = await api.runSuites({ root, manifest, artifactDirectory: join(root, 'evidence') })
+    expect(report.summary.expected).toBe(2)
+    expect(report.summary.completed).toBe(2)
+    const application = report.results[0]!, native = report.results[1]!
+    expect(application.status).toBe('passed')
+    expect(readFileSync(application.log, 'utf8')).toContain('actual-config-command:' + directory + '/playwright.config.ts')
+    if (process.platform === 'darwin' || process.platform === 'win32') {
+      expect(native.status).toBe('passed')
+      expect(native.command[native.command.indexOf('--config') + 1]).toBe(directory + '/native.config.ts')
+      expect(readFileSync(native.log, 'utf8')).toContain('actual-config-command:' + directory + '/native.config.ts')
+    } else {
+      expect(report.status).toBe('failed')
+      expect(report.summary).toMatchObject({ passed: 1, failed: 0, blocked: 1 })
+      expect(native).toMatchObject({ status: 'blocked', command: [], error: expect.stringContaining('macOS or Windows') })
+      expect(readFileSync(native.log, 'utf8')).toContain('macOS or Windows')
+    }
+  }, 20_000)
+
+  test('a missing native product configuration stays blocked even when the generic browser configuration exists', async () => {
+    const root = fixture(), directory = 'tests/e2e/product-tour'
+    file(root, directory + '/playwright.config.ts', 'export default {testMatch: "*.application.spec.ts"}')
+    file(root, directory + '/product.native.spec.ts', "import {test} from '@playwright/test'; test('required native coverage',()=>{});")
+    const api = await runner(), manifest = await api.discoverSuites(root)
+    expect(manifest.suites).toHaveLength(1)
+    expect(manifest.suites[0]).toMatchObject({ path: directory + '/product.native.spec.ts', runner: 'playwright' })
+    expect(manifest.suites[0]!.prerequisiteError).toContain('config not found')
+    expect(manifest.suites[0]!.config).toBeUndefined()
+    const report = await api.runSuites({ root, manifest, artifactDirectory: join(root, 'evidence') })
+    expect(report.status).toBe('failed')
+    expect(report.summary).toMatchObject({ expected: 1, completed: 1, passed: 0, failed: 0, blocked: 1 })
+    expect(report.results[0]).toMatchObject({ path: directory + '/product.native.spec.ts', status: 'blocked', command: [], error: expect.stringContaining('config not found') })
+  }, 20_000)
+
   test('runtime Bun imports using the Chromium library keep their Bun executor', async () => {
     const root = fixture()
     file(root, 'tests/library.test.ts', "const {test}=require('bun:test'); import {chromium} from '@playwright/test'; test('Bun owns this test',()=>{});")
@@ -226,6 +379,59 @@ describe('UI-001 repository test runner', () => {
     expect(report.results.every(result => existsSync(result.log))).toBe(true)
   }, 20_000)
 
+  test('direct isolated suites receive private home directories and preserve the caller filesystem and integration environment', async () => {
+    const root = fixture(), hostHome = join(root, 'host-home')
+    const hostSentinel = join(hostHome, 'bundle', 'host-sentinel')
+    file(root, 'host-home/bundle/host-sentinel', 'caller-owned-original')
+    const environment: NodeJS.ProcessEnv = { ...process.env, HOME: hostHome, USERPROFILE: hostHome,
+      ROX_WORKSPACE_TEST_CONFIG: 'owned-protected-database-path',
+      ROX_TEST_VITEST_NODE_EXECUTABLE: Bun.which('node')!,
+      PLAYWRIGHT_BROWSERS_PATH: join(root, 'owned-browser-cache') }
+    const source = `import {beforeEach,test,expect} from 'bun:test';
+      import {existsSync,mkdirSync,readFileSync,realpathSync,rmSync,writeFileSync} from 'node:fs';
+      import {homedir} from 'node:os'; import {join,relative,isAbsolute} from 'node:path';
+      const home=homedir();
+      beforeEach(()=>rmSync(join(home,'bundle'),{recursive:true,force:true}));
+      test('actual isolated filesystem cleanup',()=>{
+        expect(realpathSync(home)).not.toBe(realpathSync(${JSON.stringify(hostHome)}));
+        expect(realpathSync(process.env.HOME!)).toBe(realpathSync(home));
+        expect(realpathSync(process.env.USERPROFILE!)).toBe(realpathSync(home));
+        const directories=['XDG_CONFIG_HOME','XDG_CACHE_HOME','XDG_DATA_HOME','APPDATA','LOCALAPPDATA'];
+        for(const key of directories){
+          const directory=process.env[key]!;
+          expect(existsSync(directory)).toBe(true);
+          const child=relative(realpathSync(home),realpathSync(directory));
+          expect(isAbsolute(child)||child==='..'||child.startsWith('../')||child.startsWith('..\\\\')).toBe(false);
+        }
+        expect(process.env.ROX_CONFIG_DIR).toBe(process.env.CRAFT_CONFIG_DIR);
+        expect(process.env.ROX_WORKSPACE_TEST_CONFIG).toBe(${JSON.stringify(environment.ROX_WORKSPACE_TEST_CONFIG)});
+        expect(process.env.PATH).toBe(${JSON.stringify(environment.PATH)});
+        expect(process.env.ROX_TEST_VITEST_NODE_EXECUTABLE).toBe(${JSON.stringify(environment.ROX_TEST_VITEST_NODE_EXECUTABLE)});
+        expect(process.env.PLAYWRIGHT_BROWSERS_PATH).toBe(${JSON.stringify(environment.PLAYWRIGHT_BROWSERS_PATH)});
+        expect(readFileSync(${JSON.stringify(hostSentinel)},'utf8')).toBe('caller-owned-original');
+        expect(existsSync(join(home,'child-marker'))).toBe(false);
+        mkdirSync(join(home,'bundle'),{recursive:true});
+        writeFileSync(join(home,'bundle','child-data'),'owned-cleanup-fixture');
+        writeFileSync(join(home,'child-marker'),'child-only');
+        writeFileSync(join(process.env.ROX_CONFIG_DIR!,'home-witness.json'),JSON.stringify({home:realpathSync(home),directories:Object.fromEntries(directories.map(key=>[key,realpathSync(process.env[key]!)]))}));
+      });`
+    file(root, 'tests/a.isolated.ts', source)
+    file(root, 'tests/b.isolated.ts', source)
+    const api = await runner(), manifest = await api.discoverSuites(root)
+    expect(manifest.suites.map(suite => suite.path)).toEqual(['tests/a.isolated.ts', 'tests/b.isolated.ts'])
+    const report = await api.runSuites({ root, manifest, artifactDirectory: join(root, 'evidence'), environment })
+    expect(existsSync(hostSentinel)).toBe(true)
+    expect(readFileSync(hostSentinel, 'utf8')).toBe('caller-owned-original')
+    expect(report.status).toBe('passed')
+    expect(report.summary).toMatchObject({ expected: 2, completed: 2, passed: 2, failed: 0, blocked: 0 })
+    const witnesses = report.results.map(result => JSON.parse(readFileSync(join(result.configRoot, 'home-witness.json'), 'utf8')))
+    expect(new Set(witnesses.map(witness => witness.home)).size).toBe(2)
+    expect(report.results.every(result => result.homeRoot && nativeFs.realpathSync(result.homeRoot) === witnesses[report.results.indexOf(result)].home)).toBe(true)
+    expect(report.results.every(result => result.testCounts?.pass === 1 && result.testCounts?.fail === 0)).toBe(true)
+    expect(environment.HOME).toBe(hostHome)
+    expect(environment.USERPROFILE).toBe(hostHome)
+  }, 20_000)
+
   test('invalid global timeout values fail before any suite starts or evidence is created', async () => {
     const root = fixture()
     file(root, 'tests/never.test.ts', "import {test} from 'bun:test'; test('must not run',()=>{throw Error('invalid timeout executed a test')});")
@@ -234,8 +440,45 @@ describe('UI-001 repository test runner', () => {
     for (const value of ['0', '-1', '1.5', '300001', '1e3', '']) {
       await expect(api.runSuites({ root, manifest, artifactDirectory: join(root, 'evidence'), environment: { ...process.env, ROX_TEST_TIMEOUT_MS: value } })).rejects.toThrow('ROX_TEST_TIMEOUT_MS')
     }
+    for (const value of ['0', '-1', '1.5', '3600001', '1e3', '']) {
+      await expect(api.runSuites({ root, manifest, artifactDirectory: join(root, 'evidence'), environment: { ...process.env, ROX_TEST_SUITE_TIMEOUT_MS: value } })).rejects.toThrow('ROX_TEST_SUITE_TIMEOUT_MS')
+    }
     expect(existsSync(join(root, 'evidence'))).toBe(false)
   })
+
+  test('the whole-suite guard terminates a synchronously blocked child tree and retains later coverage', async () => {
+    const root = fixture(), witness = join(root, 'blocked-tree.json'), heartbeat = join(root, 'grandchild-heartbeat')
+    const grandchild = `const {writeFileSync}=require('node:fs'); process.on('SIGTERM',()=>{}); setInterval(()=>writeFileSync(${JSON.stringify(heartbeat)},String(Date.now())),40);`
+    const blockedChild = `const {spawn}=require('node:child_process'); const {writeFileSync}=require('node:fs');
+      const child=spawn(process.execPath,['-e',${JSON.stringify(grandchild)}],{stdio:'inherit'});
+      writeFileSync(${JSON.stringify(witness)},JSON.stringify({pid:process.pid,grandchild:child.pid}));
+      process.on('SIGTERM',()=>{}); setInterval(()=>{},1000);`
+    file(root, 'tests/a.isolated.ts', `import {test,expect} from 'bun:test'; import {spawnSync} from 'node:child_process';
+      test('actual synchronous native-style wait',()=>{console.log('whole-suite-blocked-started');spawnSync('node',['-e',${JSON.stringify(blockedChild)}],{stdio:'inherit'});expect('never reached').toBe('assertions are not waived')},5000);`)
+    file(root, 'tests/z.test.ts', "import {test,expect} from 'bun:test'; test('coverage after real supervisor failure',()=>expect(42).toBe(42));")
+    const api = await runner(), manifest = await api.discoverSuites(root)
+    const report = await api.runSuites({ root, manifest, artifactDirectory: join(root, 'evidence'),
+      environment: { ...process.env, ROX_TEST_TIMEOUT_MS: '5000', ROX_TEST_SUITE_TIMEOUT_MS: '1500' } })
+    expect(report.status).toBe('failed')
+    expect(report.wholeSuiteTimeoutMs).toBe(1500)
+    expect(report.bunTimeoutMs).toBe(5000)
+    expect(report.summary).toMatchObject({ expected: 2, completed: 2, passed: 1, failed: 1, blocked: 0 })
+    expect(report.results[0]).toMatchObject({ path: 'tests/a.isolated.ts', status: 'failed', timedOut: true, error: expect.stringContaining('Whole-suite process deadline exceeded after 1500ms') })
+    expect(readFileSync(report.results[0]!.log, 'utf8')).toContain('whole-suite-blocked-started')
+    expect(readFileSync(report.results[0]!.log, 'utf8')).toContain('Whole-suite process deadline exceeded')
+    expect(report.results[0]!.durationMs).toBeLessThan(10_000)
+    expect(report.results[1]).toMatchObject({ status: 'passed', timedOut: false, testCounts: { pass: 1, fail: 0 } })
+    const tree = JSON.parse(readFileSync(witness, 'utf8')) as { pid: number; grandchild: number }
+    expect(tree.pid).not.toBe(tree.grandchild)
+    const lastHeartbeat = readFileSync(heartbeat, 'utf8')
+    const deadline = Date.now() + 2000
+    const alive = (pid: number) => { try { process.kill(pid, 0); return true } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ESRCH') return false; throw error } }
+    while ((alive(tree.pid) || alive(tree.grandchild)) && Date.now() < deadline) await Bun.sleep(40)
+    expect(alive(tree.pid)).toBe(false)
+    expect(alive(tree.grandchild)).toBe(false)
+    expect(readFileSync(heartbeat, 'utf8')).toBe(lastHeartbeat)
+    expect(JSON.parse(readFileSync(report.reportPath, 'utf8')).results[0]).toMatchObject({ status: 'failed', timedOut: true })
+  }, 20_000)
 
   test('one failing file cannot stop later coverage or erase earlier failure history', async () => {
     const root = fixture()

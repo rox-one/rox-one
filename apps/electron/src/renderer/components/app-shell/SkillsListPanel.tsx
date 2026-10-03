@@ -58,6 +58,7 @@ export function SkillsListPanel({
   className,
 }: SkillsListPanelProps) {
   const { t } = useTranslation()
+  const { reset: resetCraftSelection } = skillSelection.useSelection()
   const activeWorkspace = useActiveWorkspace()
   const canRevealLocally = !activeWorkspace?.remoteServer
   const { workspaces, activeWorkspaceId } = useAppShellContext()
@@ -277,7 +278,7 @@ export function SkillsListPanel({
         <EditPopover
           align="center"
           trigger={
-            <button className="inline-flex items-center h-7 px-3 text-xs font-medium rounded-[6px] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors">
+            <button className="inline-flex items-center h-7 px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors">
               {t('skillsList.addSkill')}
             </button>
           }
@@ -308,7 +309,7 @@ export function SkillsListPanel({
               type="button"
               disabled={pruneBusy}
               onClick={() => void handlePrune()}
-              className="inline-flex items-center h-5 px-1.5 text-[10px] font-medium rounded-[6px] bg-destructive/15 text-destructive hover:bg-destructive/25 transition-colors disabled:opacity-50"
+              className="inline-flex items-center h-5 px-1.5 text-[10px] font-medium rounded-[var(--radius-control)] bg-destructive/15 text-destructive hover:bg-destructive/25 transition-colors disabled:opacity-50"
             >
               {t('skills.pruneButton')}
             </button>
@@ -316,7 +317,7 @@ export function SkillsListPanel({
               type="button"
               disabled={pruneBusy}
               onClick={() => setPruneConfirmOpen(false)}
-              className="inline-flex items-center h-5 px-1.5 text-[10px] font-medium rounded-[6px] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 transition-colors disabled:opacity-50"
+              className="inline-flex items-center h-5 px-1.5 text-[10px] font-medium rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 transition-colors disabled:opacity-50"
             >
               {t('common.cancel')}
             </button>
@@ -386,7 +387,7 @@ export function SkillsListPanel({
                   aria-label={t('skills.exportToProject')}
                   onMouseDown={(e) => e.stopPropagation()}
                   onClick={(e) => { e.stopPropagation(); void handleExportToProject(skill) }}
-                  className="inline-flex items-center justify-center size-5 rounded-[6px] text-muted-foreground hover:bg-foreground/10 hover:text-foreground transition-colors"
+                  className="inline-flex items-center justify-center size-5 rounded-[var(--radius-control)] text-muted-foreground hover:bg-foreground/10 hover:text-foreground transition-colors"
                 >
                   <FolderOutput className="size-3" />
                 </button>
@@ -438,7 +439,7 @@ export function SkillsListPanel({
           {pendingSkills.map((candidate) => {
             const expanded = expandedPendingSlug === candidate.slug
             return (
-              <li key={candidate.slug} style={SKILL_ROW_STYLE} className="mx-0 px-2 py-1.5 rounded-[8px] hover:bg-foreground/[0.03]">
+              <li key={candidate.slug} style={SKILL_ROW_STYLE} className="mx-0 px-2 py-1.5 rounded-[var(--radius-control)] hover:bg-foreground/[0.03]">
                 <button
                   type="button"
                   className="w-full text-left"
@@ -487,7 +488,7 @@ export function SkillsListPanel({
                     })()}
                     {/* S2: script-validation block reason */}
                     {violations.length > 0 && (
-                      <div className="flex items-start gap-1.5 rounded-[6px] bg-destructive/10 px-2 py-1.5 text-[11px] leading-snug text-destructive-foreground">
+                      <div className="flex items-start gap-1.5 rounded-[var(--radius-card)] bg-destructive/10 px-2 py-1.5 text-[11px] leading-snug text-destructive-foreground">
                         <TriangleAlert className="size-3 mt-0.5 shrink-0 text-destructive" />
                         <span>
                           <span className="font-medium">{t('pendingSkills.violationsBlock')}</span>{' '}
@@ -503,7 +504,7 @@ export function SkillsListPanel({
                             {t('pendingSkills.diffCurrent')} → {t('pendingSkills.diffProposed')}
                           </span>
                         </div>
-                        <pre className="max-h-56 overflow-auto rounded-[8px] bg-foreground/[0.03] p-2 text-[11px] leading-snug text-foreground/80">
+                        <pre className="max-h-56 overflow-auto rounded-[var(--radius-card)] bg-foreground/[0.03] p-2 text-[11px] leading-snug text-foreground/80">
                           {lineDiff(diff.base, diff.candidate).map((line, idx) => (
                             <span
                               key={idx}
@@ -522,7 +523,7 @@ export function SkillsListPanel({
                         </pre>
                       </div>
                     ) : (
-                      <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-[8px] bg-foreground/[0.03] p-2 text-[11px] leading-snug text-foreground/80">
+                      <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-[var(--radius-card)] bg-foreground/[0.03] p-2 text-[11px] leading-snug text-foreground/80">
                         {candidate.content}
                       </pre>
                     )}
@@ -534,7 +535,7 @@ export function SkillsListPanel({
                           ? t('pendingSkills.approveDisabledReason', { reasons: violationReasons.join(', ') })
                           : undefined}
                         onClick={() => void handlePendingAction(candidate.slug, 'approve')}
-                        className="inline-flex items-center gap-1 h-6 px-2 text-[11px] font-medium rounded-[6px] bg-accent/15 text-accent hover:bg-accent/25 transition-colors disabled:opacity-50 disabled:hover:bg-accent/15 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-1 h-6 px-2 text-[11px] font-medium rounded-[var(--radius-control)] bg-accent/15 text-accent hover:bg-accent/25 transition-colors disabled:opacity-50 disabled:hover:bg-accent/15 disabled:cursor-not-allowed"
                       >
                         <Check className="size-3" />
                         {t('pendingSkills.approve')}
@@ -551,7 +552,7 @@ export function SkillsListPanel({
                       <button
                         type="button"
                         onClick={() => void handlePendingAction(candidate.slug, 'dismiss', candidate.description)}
-                        className="inline-flex items-center gap-1 h-6 px-2 text-[11px] font-medium rounded-[6px] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 hover:text-foreground transition-colors"
+                        className="inline-flex items-center gap-1 h-6 px-2 text-[11px] font-medium rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 hover:text-foreground transition-colors"
                       >
                         <X className="size-3" />
                         {t('pendingSkills.dismiss')}
@@ -578,7 +579,7 @@ export function SkillsListPanel({
         </p>
         <ul>
           {bundledPacks.map((pack) => (
-            <li key={pack.slug} style={SKILL_ROW_STYLE} className="flex items-center gap-2 px-2 py-1.5 rounded-[8px] hover:bg-foreground/[0.03]">
+            <li key={pack.slug} style={SKILL_ROW_STYLE} className="flex items-center gap-2 px-2 py-1.5 rounded-[var(--radius-control)] hover:bg-foreground/[0.03]">
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm">{pack.slug}</span>
                 <span className="block truncate text-[11px] text-muted-foreground">
@@ -622,21 +623,29 @@ export function SkillsListPanel({
             <li
               key={skill.slug}
               title={skill.shadowedByCraft ? t('skillsList.ompShadowed') : skill.metadata.description}
-              className={`group flex min-w-0 items-center gap-2 px-2 py-1.5 rounded-[8px] hover:bg-foreground/[0.03] ${skill.shadowedByCraft ? 'opacity-50' : ''}`}
+              className={`group flex min-w-0 items-center gap-2 px-2 py-1.5 rounded-[var(--radius-control)] ${!skill.shadowedByCraft && selectedSkillSlug === skill.slug ? 'bg-foreground/5' : 'hover:bg-foreground/[0.03]'} ${skill.shadowedByCraft ? 'opacity-50' : ''}`}
               style={SKILL_ROW_STYLE}
             >
-              <SkillAvatar skill={skill} size="sm" workspaceId={workspaceId} />
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-1.5 min-w-0">
-                  <span className="truncate text-sm">{skill.metadata.name}</span>
-                  <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground">
-                    {t('skillsList.ompBadge')}
+              <button
+                type="button"
+                disabled={skill.shadowedByCraft}
+                aria-pressed={!skill.shadowedByCraft && selectedSkillSlug === skill.slug}
+                onClick={() => { resetCraftSelection(); onSkillClick(skill) }}
+                className="flex min-w-0 flex-1 items-center gap-2 text-left rounded-[var(--radius-control)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring disabled:cursor-default"
+              >
+                <SkillAvatar skill={skill} size="sm" workspaceId={workspaceId} />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1.5 min-w-0">
+                    <span className="truncate text-sm">{skill.metadata.name}</span>
+                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground">
+                      {t('skillsList.ompBadge')}
+                    </span>
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {skill.shadowedByCraft ? t('skillsList.ompShadowed') : skill.metadata.description}
                   </span>
                 </span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {skill.shadowedByCraft ? t('skillsList.ompShadowed') : skill.metadata.description}
-                </span>
-              </span>
+              </button>
               {/* Export lives in a hover «…» menu so the name keeps the row. */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -645,7 +654,7 @@ export function SkillsListPanel({
                     aria-label={t('common.more')}
                     title={t('common.more')}
                     disabled={exportingSlug !== null}
-                    className="shrink-0 inline-flex size-6 items-center justify-center rounded-[6px] text-muted-foreground opacity-0 transition-opacity hover:bg-foreground/10 hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 disabled:opacity-50"
+                    className="shrink-0 inline-flex size-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground opacity-0 transition-opacity hover:bg-foreground/10 hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 disabled:opacity-50"
                   >
                     <MoreHorizontal className="size-3.5" />
                   </button>

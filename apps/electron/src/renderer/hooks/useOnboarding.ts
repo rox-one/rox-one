@@ -276,7 +276,7 @@ export function useOnboarding({
   // explicitly request a launch gate.
   useEffect(() => {
     if (shouldApplyStartupGate && initialSetupNeeds?.needsRoxCloud) {
-      setState(s => (s.step === 'rox-connect' || s.step === 'welcome' ? s : { ...s, step: 'rox-connect' }))
+      setState(s => (s.step === 'rox-connect' ? s : { ...s, step: 'rox-connect' }))
     }
   }, [initialSetupNeeds?.needsRoxCloud, shouldApplyStartupGate])
 
@@ -753,6 +753,7 @@ export function useOnboarding({
           if (st?.authBaseUrl) setRoxAuthBaseUrl(st.authBaseUrl)
           if (roxPollGeneration.current !== generation || finished) return
           connected = Boolean(st?.connected)
+          if (st?.account && st.account.state !== 'ready') setRoxConnectError(t(`onboarding.roxConnect.${st.account.state}`))
           connectError = st?.connectError ?? undefined
         } catch (err) {
           stateReadFailed = true
@@ -785,6 +786,19 @@ export function useOnboarding({
       )
     }
   }, [stopRoxConnectPoll, t, isFirstRun, finishFirstRun])
+
+  const autoConnectStarted = useRef(false)
+  useEffect(() => {
+    if (!shouldApplyStartupGate || !initialSetupNeeds?.needsRoxCloud || state.step !== 'rox-connect' || autoConnectStarted.current) return
+    // Defer until effects settle: StrictMode's first setup/cleanup must not
+    // cancel a network attempt and leave the second setup permanently starting.
+    const timer = setTimeout(() => {
+      if (autoConnectStarted.current) return
+      autoConnectStarted.current = true
+      void handleStartRoxConnect()
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [shouldApplyStartupGate, initialSetupNeeds?.needsRoxCloud, state.step, handleStartRoxConnect])
 
   const handleOpenRoxConnectBrowser = useCallback(async () => {
     const uri = roxConnectCodes?.verificationUriComplete

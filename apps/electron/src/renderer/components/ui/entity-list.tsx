@@ -153,7 +153,7 @@ function CollapsibleGroupHeader({
           onClick={onToggle}
           className="sticky top-0 z-10 flex w-full cursor-pointer items-center gap-1.5 bg-background px-5 py-2 group/header relative"
         >
-          <div className="absolute inset-y-0.5 left-2 right-2 rounded-[6px] group-hover/header:bg-foreground/2 transition-colors pointer-events-none" />
+          <div className="absolute inset-y-0.5 left-2 right-2 rounded-[var(--radius-card)] group-hover/header:bg-foreground/2 transition-colors pointer-events-none" />
           <ChevronRight
             className={cn(
               "h-3 w-3 text-muted-foreground/60 transition-transform relative",
@@ -264,7 +264,7 @@ export function EntityList<T>({
                         <div
                           data-empty-group={group.key}
                           className={cn(
-                            'mx-3 mb-2 rounded-[6px] border border-dashed px-3 py-2 text-[11px] text-muted-foreground/70',
+                            'mx-3 mb-2 rounded-[var(--radius-card)] border border-dashed px-3 py-2 text-[11px] text-muted-foreground/70',
                             dropGroupKey === group.key
                               ? 'border-foreground/40 bg-foreground/5 text-foreground/80'
                               : 'border-foreground/[0.07]',

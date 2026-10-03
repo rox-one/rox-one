@@ -23,6 +23,7 @@ describe('canonical Conductor observations', () => {
     const sessions = new Map<string, RuntimeTraceSession>([['orchestrator', { id: 'orchestrator', workspaceId: 'ws', directory: join(root, 'sessions', 'orchestrator') }]])
     const events: RuntimeEvent[] = []
     const collector = new RuntimeTraceService(id => sessions.get(id), event => events.push(event))
+    await collector.begin('orchestrator', 'A concurrent channel request', { launch: { kind: 'channel', channel: { kind: 'channel-identity', id: 'channel-call', scope: 'workspace', label: 'Fixture channel' } } })
     const listeners = new Set<(event: SessionCompletionEvent) => void>()
     const sent: Array<{ sessionId: string; message: string }> = []
     const finalText = new Map<string, string>()
@@ -59,5 +60,9 @@ describe('canonical Conductor observations', () => {
     const plan = events.find(event => event.kind === 'plan.published')!
     expect(plan.kind === 'plan.published' && plan.payload.plan.tasks[1]?.dependsOn).toEqual(['task:task-run-1:read'])
     expect(events.filter(event => event.kind === 'agent.assigned')).toHaveLength(2)
+    const taskLaunch = events.find(event => event.kind === 'run.accepted' && event.payload.launch.triggerId === 'task:actual-task:task-run-1')
+    expect(taskLaunch?.kind === 'run.accepted' && taskLaunch.payload.launch.kind).toBe('unknown')
+    expect(taskLaunch?.kind === 'run.accepted' && taskLaunch.payload.launch.channel).toBeUndefined()
+    await until(() => events.some(event => event.kind === 'run.completed'))
   })
 })

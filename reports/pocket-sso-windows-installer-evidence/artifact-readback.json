@@ -1,0 +1,34 @@
+{
+  "runId": 37150994181,
+  "source": "aa80de1b44d12a3fbbf425ce5aca8709617972ca",
+  "artifacts": [
+    {
+      "id": 11284471220,
+      "name": "pocket-native-vault-win32-x64",
+      "size_in_bytes": 502,
+      "expired": false,
+      "digest": "sha256:d73e1393e5234a462f100b1a530bf47216c5f4757debbc765a28b00ea7de45f5",
+      "workflow_run": {
+        "id": 37150994181,
+        "repository_id": 1327416952,
+        "head_repository_id": 1327416952,
+        "head_branch": "codex/pocket-id-sso",
+        "head_sha": "aa80de1b44d12a3fbbf425ce5aca8709617972ca"
+      }
+    },
+    {
+      "id": 11284286811,
+      "name": "desktop-win32-x64",
+      "size_in_bytes": 283643284,
+      "expired": false,
+      "digest": "sha256:6fb802dd8aaaf9e8619cee4bd98063813f27afdd163c20d6435c074f55cb9ebf",
+      "workflow_run": {
+        "id": 37150994181,
+        "repository_id": 1327416952,
+        "head_repository_id": 1327416952,
+        "head_branch": "codex/pocket-id-sso",
+        "head_sha": "aa80de1b44d12a3fbbf425ce5aca8709617972ca"
+      }
+    }
+  ]
+}

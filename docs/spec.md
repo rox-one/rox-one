@@ -19,6 +19,10 @@ Owner: pr_scout; root owns main merge and historical_sweep adds dependent Produc
 
 Queued callbacks capture the committed session/viewport incarnation and are refused after unmount, replacement or A→B→A; current sticky/focus, reduced-motion and document visibility are checked when execution actually occurs. Disconnected or zero-height viewports cannot follow. Hidden documents do not auto-follow. Forward events belonging to our own output animation preserve stickiness; backwards scrolling, reader gestures and explicit navigation interrupt it before queued output can take ownership. New user intent reseeds the motion baseline. Lazy-load anchoring measures its original height formula only after added turns commit to DOM but an obsolete queue cannot move a replacement session. No focus, shell, consent or native authority changes. Acceptance is actual current ChatDisplay and real Radix/message DOM in a nested viewport with adverse history/hidden/motion/unfocused/late callbacks, source helper/current adjacent tests, complete Electron/WebUI types and renderer build. Explicit search jumps remain user-requested navigation; installed native/full chat acceptance remains separate.
 
+## Единый аккаунт ROX через Pocket ID — 2026-10-03
+
+Спецификация принятой SSO-интеграции сохранён отдельно в [docs/pocket-sso/spec.md](pocket-sso/spec.md). Существующая программа ниже сохранена; SSO-задачи и критерии приёмки дополняют её.
+
 ## Product Learning durable foundation recovery — 2026-10-03
 
 Owner: pr_scout; integration lead owns main merge, historical_sweep owns dependent current UI/runtime/consumer wiring. Recover final a6 `35f78fa2665e9f2e8a3ad20a07e2282bd7f0dde5` contracts/core/persistence/analytics as a coherent foundation, preserving all source branches. Current main has none of these feature modules. The transition engine has no domain-mutation, clock, DOM or storage port: acknowledged, observed and native verified evidence stay distinct, bindings/operation correlation and captured clocks reject stale callbacks; foreground/modal/capability/scope changes pause or block without automatic resumption.
@@ -580,6 +584,10 @@ Branch `codex/rox-ui-dev-loop-20260901` at `1f56af31d3658ee9880105361ad5312324f3
 The default legacy Markdown engine and official engine must preserve content across parse/edit/export/reopen. Recover the source's portable `:::rox-columns`/`:::rox-column` syntax with validated normalized widths, support the previous slash-menu `:::columns 2/3` aliases, and preserve Obsidian `[!spoiler]-`/`[!details]+` markers without escaping away their meaning. Fold preferences are scoped by workspace/document and separate from Markdown. Read-only callout/resize interactions cannot change document content. Preserve newer comments, mixed task-list handling, trailing nodes, controlled echoes and no-save authority flips. Labels exist in all 12 current locales. Source tests/builds establish bounded integration; native visual interaction acceptance remains separately verifiable.
 
 
+## UI-001: внешние ссылки и интеграция в main — 2026-10-03
+
+Владелец: `fix/ui-001-main-integration-20261003-7`. [UI-001 спецификация](final-readiness/execution/cloud/OWNER-UI-001/main-integration/spec.md) сохраняет исходную матрицу UI-001.1/UI-001.2 и явное разрешение пользователя на GitHub/merge. Другие разделы и рабочие копии сохраняются.
+
 # Credential locator boundary validation — 2026-10-03
 
 Owner: locator boundary-validation lead; independent reviewer: integration-status worker. User authorization includes source repair, GitHub delivery and merge into main. Initial reproduction base: `635fc495d02c3fe1380740444cb90cf4fbdb58d9`. PR #1407 independently delivered the same executable own-descriptor correction during this validation. PR #1408 preserves that production source and its 54 regressions, and adds 64 cases covering attachment, disk reload, persisted nonmutation, frozen records for all variants and ordinary Proxy get traps.
@@ -756,6 +764,9 @@ Owner: recent_features; dependency: current native Voice capture and Product Lea
 Owner: root integration. Recover #1448 at `1eb2c8289b68e9103880c3f2aee2c57e70c3409a`: packaged resources exclude development caches only under skills, retain required subprocess resources and reject ordinary vendored symlinks. Stale generated skill symlinks are removed without deleting their external target. A qualified native Electron path must exist, be absolute and be executable before a disposable meeting profile starts. Explicit developer protocol verification can avoid OS association changes; default and packaged aliases and the existing test-only gate remain intact. Windows startup/bootstrap/path resolution and thin-client native Notes custody remain authoritative.
 
 
+## Current UI-001 route/read recovery —2026-10-03
+Preserve actual107-path source program across separate infrastructure/native/UI PRs. Strict public routes retain unknown workspace URLs, current ProductTour/native authority and query bytes. Actual mounted workspace/history leases gate switch failures, focus changes, stale queued navigation and leaf readers. Root owns UI93 paths; historical_sweep owns narrow1457 history lease. Native release/full200-card acceptance remains separate.
+
 Confirmed Tasks import also drains native background work dispatched before the import lifetime. Its registered import barrier invalidates old sync/refresh continuations before a subsequent transport or publication; fresh canonical CAS starts after those existing acknowledgements settle. Two actual native negative controls reproduce the prior overlapping read/write race, and ten isolated native controls pass with the barrier. Current actor/workspace fences and queued local edits remain intact.
 
 ### Native overlay recording custody recovery (2026-10-03)
@@ -772,6 +783,10 @@ Each existing bounded connection attempt shares its 30-second budget across HTTP
 ## Workspace shortcut popover integration —2026-10-03
 Move the existing per-workspace shortcut editor to an accessible bounded Radix portal; preserve native storage, draft cancellation, keyboard submit and current TourTarget. Acceptance: real desktop/narrow320px DOM, all three kinds, reload/workspace isolation, validation, nested Escape and no-write cancellation; full installed native release remains open.
 
+
+## Current Pocket account integration recovery —2026-10-03
+Preserve source179-path account program and current native-memory/task/voice contracts. Reject blocking/nonregular credential descriptors, stale one-shot account domains and unresolved sealed queue owners. GET_AUTH_STATE may report absent vault without provisioning it. Root owns integration; recent_features owns scoped execution reconciliation. Current public rollout/native installed E2E remains unaccepted.
+
 ## Passive Runtime Map recovery — 2026-10-03
 
 Owner: historical_sweep; integration lead owns merge. Recover the complete 127-path source program from preserved PR #1444 at `28d1d7433a00743194d3a138dd2d0573c4872595`, adapted to current native, Product Learning, Tasks and Voice authorities. RuntimeTraceService, native observation and retained ChatPage runtime dock expose scoped, read-only journal/blob data. Observability never grants execution or credentials and cannot convert a successful durable operation into a failure. Native principals cannot read host payloads; revocation and workspace scope are checked around asynchronous reads. Privacy projections inspect own data descriptors without executing getters or accepting prototype pollution. A delayed native child must bind to its actual parent dispatch reservation or explicit native receipt; ambiguous provenance fails closed and reports partial coverage. Current route, chat draft, permissions and native recording ownership remain intact. Full installed desktop, live provider and R01–R30 acceptance remain outside this bounded verification. Exact source dispositions, failures, 121 focused controls, 43 protocol controls, 278 locale controls, actual Runtime Map Chromium cases, 63 native SDK observations and current build receipts are archived in `docs/integration-history/runtime-map-current-20261003`.
@@ -781,3 +796,83 @@ Owner: historical_sweep; integration lead owns merge. Recover the complete 127-p
 Owner: pr_scout; parent integration lead reviews/merges. Preserve source #1436 @384843bfc4cf7d4a1f34c902a66a9a3198043c9f. Local folder availability comes from current directory/read/search evidence, with workspace/source variables resolved at load and on every agent turn. Selected readable folders are active filesystem sources, explicit empty selection and disabled preferences remain authoritative, missing folders are filesystem setup issues rather than authentication or phantom MCP tools. Current managed stdio upstream credentials and untested/local-disabled setup guidance remain required. Ordinary local/no-auth sources do not revive obsolete vault entries; explicit remote bearer and catalog-managed account consumers still do.
 
 Native default paths use OS-specific locations without creating app-data folders. Migrate only the exact Windows obsolete default identity/path when the original is absent and replacement is a verified readable directory; preserve disabled state, creation identity and user-authored guide. Existing files are bounded regular single-link descriptors admitted inside the canonical workspace sources directory, with no-follow/nonblocking open, descriptor/path identity and content recheck before same-descriptor write. Linked/replaced/changed/malformed/oversized files are refused; only the exact original guide is eligible after successful config migration. Fresh defaults use private exclusive creation and preserve existing guides. This optimistic bounded migration does not claim crash-atomic config/guide transactions or exclusion of arbitrary writers after the final content check. Pure OS mapping and actual POSIX temporary-file adverse tests complement retained native Windows tests, which require a Windows host for acceptance.
+
+## Managed host Bash environment and bounded local lifetime (2026-10-03)
+
+Owner: pr_scout; parent reviews and merges. Recover the actual factory/context/registry environment and native Git Bash process behavior from #1436 @384843bfc4cf7d4a1f34c902a66a9a3198043c9f on current main, preserving OMP18.4.12 policy, native resource authority, the existing cwd jail and optional sandbox fail-closed behavior. Each real registry call prepares a fresh managed/bootstrap PATH without changing the parent, removes inherited credentials using the canonical shared blocklist (Windows names are case-insensitive), resolves native Git Bash rather than WSL, and supplies a managed python3 alias only for an actual managed Windows Python. The legacy native exec port has no per-call environment contract; provider-bearing calls use the existing local execution path, while no-provider callers retain that port and its existing fallback.
+
+Non-login/non-interactive host Bash does not load profiles, BASH_ENV, ENV or inherited exported functions that could overwrite prepared PATH or reintroduce removed credentials. Explicit commands can still source their requested configuration. Managed PATH stays first; native Git Bash coreutils are appended. Environment preparation shares the local command deadline, failure is private and fail-closed, a late provider never spawns a command. Output memory and displayed output are capped. Timeout kills the POSIX process group, then independently destroys inherited IO within a three-second cleanup grace, even if the original shell has exited. Windows scans native process ancestry using observed birth identities, root spawn bounds and exit cutoffs; helper environment is sanitized and helper lifetime bounded. Windows enumeration is best effort, not a Job Object guarantee. Retained native Windows shell/cmd/managed Python/Bun+Node/descendant tests require a Windows host; actual POSIX registry and orphan-pipe results do not claim installed Windows acceptance. Existing env-less native-port lifetime is outside this local deadline change.
+
+
+## Collection workspace preference recovery — 2026-10-03
+
+Owner: branch integration historical worker. Dependency: current native collection preference RPC and AppShell workspace lifecycle. Switching or initially opening a workspace loads its saved per-key filters and CollectionDisplay without writing defaults. Canonical groupBy preserves project grouping; local old-workspace preferences cannot be written into a new workspace while its read is pending. New input, live events and the latest workspace generation own state; a stale snapshot or ACK cannot replace them. No native authority changes. Source PR1436/384843bfc selectively adapted; evidence in integration-history/collection-workspace-recovery-20261003.
+
+### Golden task date validation recovery — 2026-10-03
+
+Recover the strict local calendar-day check from preserved Golden source5def9ffd into the current Tasks schedule form, through its existing parseDateExpression port. ISO dates must round-trip the exact year/month/day; impossible dates return no schedule change or native write. Valid leap days retain local midnight. Current native task actor/workspace custody, CAS/ACK/readback, import/background barriers and Product Learning producers remain canonical. Owner: recent_features; dependency: current Tasks1456 and runtime main; no legacy CatalogPanel or alternate store.
+
+
+## Zed appearance reconciliation —2026-10-04
+
+Recover geometry0/4/6, chrome-only material, opaque reading surfaces and three licensed UI/code/terminal themes from PR1469 on current main. Preserve current navigation, native authority, task conversion, Product Learning refs, keyboard access, resize and workspace source errors. Existing saved themes survive; only a physically missing config seeds Nordfox. Cookie theme grants remain scoped to the authenticated current workspace with post-await withdrawal checks. Historical source native/WebUI receipts are not acceptance of this combined revision.
+
+### Golden per-task form draft recovery — 2026-10-04
+
+Recover source5def9ffd per-task unsubmitted link/tag input through the existing modern TasksPage → TaskDetail consumer. Drafts remain ephemeral input only; canonical notes/task mutations, native actor/workspace CAS/ACK/readback, background import barriers and Product signals keep their owners. Input belongs to its captured caller generation and panel/workspace lifetime; scope ABA/unmount and obsolete rendered submissions cannot revive or write it. Clear only the submitted field value; keep other task drafts and link kind.
+
+
+Zed source addendum frozen at7379efcda6f5806b66672e236a1cc61bdffb4e00 includes compact fixed-content Home widgets, a flat mode switch and inspector tint matching the side panel. Adapt Home grid sizing while preserving current per-widget appearance and saved S/M/L layout ownership. Source release29e86 and installed/native reports remain historical.
+
+### Knowledge availability recovery — 2026-10-03
+
+- Owner: `pr_scout`; source #1436 `384843bfc4cf7d4a1f34c902a66a9a3198043c9f`. Recover its offline fast path through the current `KnowledgeNotebookTree` and `KnowledgeHome`, preserving native RPC authority, current Rox Notes routes, search, and saved-view operations.
+- Cache by API identity, explicit workspace and connection. Confirmed probes expire after 30 seconds; missing/error/timeout is unknown with at most one second of reuse. A three-second renderer budget does not cancel the native operation or certify a service is absent. Native changes invalidate once before mounted consumers refresh. Late invalidated responses cannot replace fresh entries.
+- Offline/unknown reads retain workspace-local views/envelopes and skip notebook/title calls. Render hides old-workspace rows immediately; request tickets prevent late event/workspace continuations from publishing rows or starting obsolete kernel reads. No new service, data store, installation CTA or authorization path is introduced.
+
+### 2026-10-04 — Подсказки клавиш по платформе (источник PR #1466)
+
+Tasks, Memory, Meetings, множественный выбор и домашние виджеты отображают Ctrl/Shift/Alt на Windows/Linux и символы Command/Option на macOS через единый форматтер. Реальные сочетания клавиш, нативная авторизация, подтверждения записи Tasks и черновики полей сохраняются. Владение: recent_features; зависимость: свежий main с Pocket SSO и Tasks drafts. Проверка: реальный компонент Tasks в Chromium на трех платформах, SSR Tasks/Memory/Meetings и паритет всех 12 локалей.
+
+## Notes source-path classification recovery — 2026-10-04
+
+Owner: historical branch worker; dependency: externally merged Notes1465 on2338adb95. Validate existing path components from the canonical Notes root toward the requested target before classifying absence. A file in place of a parent directory is a document authority change; a missing requested note remains NOT_FOUND only under a healthy authorized source. Symlinks, inaccessible sources, journal failures and permission revocation retain their existing refusal. This helper is read-only and creates no directory or credential. The temporary-file fixture uses the same canonical native root contract as NativeAuthority, including macOS temporary-directory aliases. Evidence: integration-history/note-read-parent-validation-20261004; bounded RPC/native-port/UI-callback checks do not claim installed Electron or OS identity acceptance.
+
+### OMP hidden Windows launch recovery — 2026-10-04
+
+- Owner: `pr_scout`; source #1436 `384843bfc4cf7d4a1f34c902a66a9a3198043c9f`. Set `windowsHide: true` at the current RPC and one-shot native OMP spawn boundaries, without restoring old external batch launchers or changing models, account generation, native policy, observer lifetime, stdin EOF or prompt argv.
+- Acceptance: both actual OmpAgent callers request hidden windows; literal prompt, private helper model/no-session and shell-free execution remain intact. Controlled protocol fixtures prove launch configuration, not native Windows console visibility or installed18.4.12 acceptance.
+
+
+
+
+### Native OMP launch cancellation recovery — 2026-10-04
+
+Owner recent_features. Recover source1464 through the current OmpAgent. Startup and helper preparation carry launch/account/model-domain generations before every asynchronous boundary; cancelled or destroyed work never spawns a late child. Preparation failures release ready ownership and allow a later valid retry. Managed Bun paths and literal native argv retain policy, source observers and Windows hidden-process options. Runtime guidance is translated in all twelve locales.
+
+## Runtime trace origin and privacy recovery — 2026-10-04
+
+Owner: historical_sweep; root reviews/merges. Preserve frozen #1444 c2e8f07b5cb8a1b1659781e1fe4dd4d0f0207727 and the current scoped read-only journal/own-descriptor privacy contract. Passive tool/provider/native/background observations bind to their captured run origin; reused IDs, late completions, failed begin and idle eviction cannot attribute old output to a successor. Ambiguity drops correlation and reports partial coverage. Persisted rows cannot widen workspace or ancestry scope. Secret redaction covers quoted and serialized environment/header credentials and masks secrets registered after storage during readback. Explicit artifact output refs project evidence without guessing completion from paths/text. Launch/output metadata is passive and grants no execution or credentials. Real SessionManager/gateway/TaskRunner/native producers are a separate pr_scout dependency; preserve current SSO suppliedExecution and captured authority binding. Renderer late additions are a separate historical dependency. This bounded collector qualification is 53 tests/247 assertions plus core/server-core Node22 types; installed/live provider/full runtime acceptance remains separate. Evidence: integration-history/runtime-trace-origin-recovery-20261004.
+
+## Late UI1448 runtime edges — 2026-10-04
+
+Owner root; source e572 frozen. Recover four production paths: own-property RPC serialization/admission, bounded OS credential-provider calls, conservative queued runner liveness and preservation of terminal outcomes during async probes, and static fingerprinted Product Learning CI build. Keep current account/immediateHistory/unavailable-workspace authority. Worker recent_features separately owns manager physical-copy and whole-suite runner custody; full native OS/cloud/CI DoD remains separate. Proof uses private synthetic providers/process probes plus actual local subprocess conformance.
+
+
+## Runtime Map context and navigation extension — 2026-10-04
+
+Owner historical_sweep; dependency merged collector1485 and current read-only Runtime RPC/ingress. Recover frozen #1444 c2e8 context groups using each observed agent/snapshot identity, safe public metadata export with scoped aliases, stable measured overview, lazy chunk retry without remounting chat, requested historic event selection and observed catalog lifecycle phases. Presentation and navigation never grant runtime actions or synthesize execution evidence. Preserve current SSO account/workspace ownership,1471 immediate-history lease release, Product Learning roots and all locale keys. Bounded qualification: actual renderer/journal19/0 including native Chromium200% zoom, mounted NavigationProvider39/0, projection/layout/catalog/link29/0, all12 locale/helper282/0, actual parser/routing34/0 (logger-only fixture), full Electron/WebUI types and current renderer build. Retain genuine grouped-context before failure and fixture/platform/browser failures. Evidence: integration-history/runtime-map-context-navigation-20261004. Actual producer custody and installed/live-provider acceptance remain separate.
+
+### Selected skill instructions custody recovery — 2026-10-04
+
+Owner recent_features; dependency: externally merged selected-detail1467 at89cb22c and current native request authority. Craft/OMP selected bodies and discovery metadata use one bounded opened-descriptor reader. File links stay inside the selected canonical directory; directory links retain their supported identity. Compare BigInt descriptor/leaf identity and every canonical ancestor before bytes and return. Refuse invalid selected reads and late revoked requests; preserve current SkillInfo ownership/read-only controls, managed tiers and metadata-only OMP lists.
+
+## Opaque route identity follow-up — 2026-10-04
+
+Owner root; depends on external1412/f058 runtime route recovery. Normalize published empty namespace aliases without folding repeated/trailing separators inside opaque Knowledge/run/terminal/diff/extension IDs. Keep the existing Notes filesystem alias, decode percent escapes once, preserve full panel query transport and view-only action denial. Current navigation/account/native authority stays intact; this is a focused identity repair to the newly merged shared boundary.
+
+### Управление runtime и изоляция тестов — 2026-10-04
+
+Владелец recent_features; источник поздних дополнений #1448 закреплён на e572bbdf0b6952b3a0274f1312f347157aee52d1. Физическая Windows-копия current признаётся готовой только вместе с проверенным каталогом той же версии, завершением установки, исходным commit, lock и разрешённым launcher. Остальные способы установки, managed18.4.12, SSO и native policy сохраняют текущих владельцев.
+
+Запускатель исполняет каждый тестовый файл в отдельном процессе и приватном HOME, сохраняет manifest/hash, журналы и дальнейшее покрытие после отказа. Независимый дедлайн ограничивает зависший процесс и его потомков; общий вывод ограничен 64MiB. Исходники до16MiB и журналы читаются через проверенный дескриптор с привязкой к canonical-предкам. Подмена предка и oversized source запрещены до чтения; переименование того же листового inode допускает исходный snapshot, который повторно проверяется перед исполнением. Квалификация ограничена изменёнными controls и всеми15 существующими toolchain-файлами; полный repository/native Windows release этим не принят.

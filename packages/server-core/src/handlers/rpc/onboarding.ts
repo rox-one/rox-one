@@ -3,7 +3,7 @@
  *
  * Handles workspace setup and configuration persistence.
  */
-import { fetchRoxBalance, getOnboardingAuthPayload, saveOmpRoxCredential } from '@rox/shared/auth'
+import { getRoxAccountAuthority, peekRoxAccountAuthority, LOCAL_ROX_CALLER, isRoxCloudRequired, getOnboardingAuthPayload, saveOmpRoxCredential } from '@rox/shared/auth'
 import { getCredentialManager } from '@rox/shared/credentials'
 import { isSetupDeferred, setSetupDeferred } from '@rox/shared/config'
 import { prepareClaudeOAuth, exchangeClaudeCode, hasValidOAuthState, clearOAuthState, prepareMcpOAuth } from '@rox/shared/auth'
@@ -24,6 +24,9 @@ import type { HandlerDeps } from '../handler-deps'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.onboarding.GET_AUTH_STATE,
+  RPC_CHANNELS.onboarding.START_ROX_CONNECT,
+  RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE,
+  RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD,
   RPC_CHANNELS.onboarding.ENSURE_FIRST_SESSION,
   RPC_CHANNELS.onboarding.VALIDATE_MCP,
   RPC_CHANNELS.onboarding.START_MCP_OAUTH,
@@ -45,12 +48,25 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
   })
 
   // Get current auth state
-  server.handle(RPC_CHANNELS.onboarding.GET_AUTH_STATE, async () => {
+  server.handle(RPC_CHANNELS.onboarding.GET_AUTH_STATE, async ctx => {
     const listed = rpcOnboardingListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) throw new Error('onboarding auth state is not live')
     // Honor "Setup later" like the Electron main handler does — without the
     // flag, headless/WebUI clients re-enter onboarding on every reload.
     const { authState, setupNeeds } = await getOnboardingAuthPayload(isSetupDeferred())
+    // Headless/read-only startup can report the missing native account vault.
+    // It must not turn a supported non-cloud startup probe into a rejected RPC.
+    const authority = peekRoxAccountAuthority()
+    const cloud = authority
+      ? await authority.state(ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER)
+      : { connected: false }
+    if (cloud.connected) {
+      setupNeeds.needsOmpCredential = false
+      setupNeeds.isFullyConfigured = true
+    }
+    setupNeeds.needsRoxCloud = isRoxCloudRequired() && !cloud.connected
+    setupNeeds.shouldShowOnboardingOnLaunch = setupNeeds.needsRoxCloud
+    setupNeeds.isFullyConfigured &&= !setupNeeds.needsRoxCloud
     // Redact raw credentials — renderer only needs boolean flags (hasCredentials, setupNeeds)
     return {
       authState: {
@@ -210,24 +226,24 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
     if (!isClaimableLive(act)) return { success: false, error: 'onboarding omp credential is not live' }
     return saveOmpRoxCredential(typeof apiKey === 'string' ? apiKey : '')
   })
-  // Real rox.one balance for the connected Rox cloud account (#1076 added this
-  // handler to the unregistered apps/electron/src/main/onboarding.ts, so every
-  // client got «No handler for: onboarding:getRoxBalance»). The token never
-  // leaves this process; without a live session the UI shows «—».
-  server.handle(RPC_CHANNELS.onboarding.GET_ROX_BALANCE, async () => {
-    const manager = getCredentialManager()
+  const caller = (ctx: import('@rox/server-core/transport').RequestContext) => ctx.principal
+    ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER
+  server.handle(RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE, ctx => getRoxAccountAuthority().state(caller(ctx)), { access: 'nativeOrLocalElectron', nativeAction: 'read' })
+  server.handle(RPC_CHANNELS.onboarding.START_ROX_CONNECT, async ctx => {
     try {
-      if (!(await manager.hasRoxCloudSession())) return { status: 'disconnected' as const }
-      const session = await manager.getRoxCloudSession()
-      if (!session?.accessToken) return { status: 'disconnected' as const }
-      const { balanceRox } = await fetchRoxBalance(session.accessToken)
-      const balance = Number.parseFloat(String(balanceRox))
-      if (!Number.isFinite(balance)) return { status: 'error' as const, message: 'invalid balance payload' }
-      return { status: 'ok' as const, balance }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      log?.warn('[Onboarding] Rox balance fetch failed:', message)
-      return { status: 'error' as const, message }
-    }
-  })
+      const started = await getRoxAccountAuthority().start(caller(ctx))
+      // The redemption proof and device_code stay in this process.
+      return { success: true, userCode: started.userCode, verificationUri: started.verificationUri, verificationUriComplete: started.verificationUriComplete, expiresIn: started.expiresIn }
+    } catch (error) { return { success: false, error: error instanceof Error ? error.message : 'ROX_CONNECT_FAILED' } }
+  }, { access: 'localElectron', nativeAction: 'read' })
+  server.handle(RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD, async ctx => {
+    await getRoxAccountAuthority().logout(caller(ctx))
+    return { success: true }
+  }, { access: 'localElectron', nativeAction: 'read' })
+  server.handle(RPC_CHANNELS.onboarding.GET_ROX_BALANCE, async ctx => {
+    const state = await getRoxAccountAuthority().state(caller(ctx))
+    if (state.connectError) return { status: 'error', message: state.connectError }
+    if (!state.account) return { status: 'disconnected' }
+    return { status: 'ok', balance: Number(state.account.balance.balanceRox) }
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 }

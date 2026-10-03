@@ -186,7 +186,7 @@ function AvatarStack({ avatars }: { avatars: React.ReactNode[] }) {
         <div
           key={i}
           className={cn(
-            'relative flex h-5 w-5 items-center justify-center rounded-[4px] bg-background shadow-minimal',
+            'relative flex h-5 w-5 items-center justify-center rounded-[var(--radius-control)] bg-background shadow-minimal',
             i > 0 && '-ml-1',
           )}
           style={{ zIndex: i + 1 }}
@@ -196,7 +196,7 @@ function AvatarStack({ avatars }: { avatars: React.ReactNode[] }) {
       ))}
       {remaining > 0 && (
         <div
-          className="-ml-1 flex h-5 w-5 items-center justify-center rounded-[4px] bg-background text-[8px] font-medium text-muted-foreground shadow-minimal"
+          className="-ml-1 flex h-5 w-5 items-center justify-center rounded-[var(--radius-control)] bg-background text-[8px] font-medium text-muted-foreground shadow-minimal"
           style={{ zIndex: display.length + 1 }}
         >
           +{remaining}
@@ -387,7 +387,7 @@ function SubtaskCard({
     (s) => !subtask.dependsOn.includes(s.uid) && canDependOn(allSubtasks, subtask.uid, s.uid),
   )
   return (
-    <div className="group rounded-[10px] border border-border/70 bg-foreground/[0.015] p-3">
+    <div className="group rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] p-3">
       <div className="flex items-start gap-2">
         <div className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-indigo-500/10 text-[12px] font-bold text-indigo-500 dark:text-indigo-300">
           {index + 1}
@@ -907,7 +907,7 @@ export function TaskEditor({
   return (
     <div className="flex h-full flex-col gap-3 bg-background p-3 text-foreground">
       {/* Header */}
-      <div className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2.5 shadow-minimal">
+      <div className="flex items-center gap-2.5 rounded-[var(--radius-control)] border border-border bg-card px-3 py-2.5 shadow-minimal">
         <Btn variant="ghost" className="px-2" onClick={onClose}>
           <ChevronLeft className="h-4 w-4" strokeWidth={2} /> {t('kanban.board')}
         </Btn>
@@ -916,13 +916,13 @@ export function TaskEditor({
 
         {/* Definition / Results tabs — edit mode only (results need a backing task to read). */}
         {isEdit && (
-          <div className="ml-3 inline-flex rounded-[8px] bg-foreground/[0.05] p-0.5">
+          <div className="ml-3 inline-flex rounded-[var(--radius-card)] bg-foreground/[0.05] p-0.5">
             {(['definition', 'results'] as Tab[]).map((tb) => (
               <button
                 key={tb}
                 onClick={() => setTab(tb)}
                 className={cn(
-                  'rounded-[6px] px-3 py-1 text-[12.5px] font-semibold transition-colors',
+                  'rounded-[var(--radius-card)] px-3 py-1 text-[12.5px] font-semibold transition-colors',
                   tab === tb ? 'bg-card text-foreground shadow-minimal' : 'text-foreground/55 hover:text-foreground/80',
                 )}
               >
@@ -970,16 +970,16 @@ export function TaskEditor({
       /* Body */
       <div className="grid min-h-0 flex-1 grid-cols-[minmax(360px,2fr)_3fr] gap-3">
         {/* Left — definition */}
-        <div className="flex min-h-0 flex-col gap-4 overflow-y-auto rounded-xl border border-border bg-card p-4 shadow-minimal">
+        <div className="flex min-h-0 flex-col gap-4 overflow-y-auto rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-minimal">
           <div className="text-[15px] font-bold">{t('tasks.definition')}</div>
 
-          <div className="inline-flex w-fit rounded-[8px] bg-foreground/[0.05] p-0.5">
+          <div className="inline-flex w-fit rounded-[var(--radius-card)] bg-foreground/[0.05] p-0.5">
             {(['manual', 'generate'] as Mode[]).map((m) => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
+                  'inline-flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
                   mode === m ? 'bg-card text-foreground shadow-minimal' : 'text-foreground/55 hover:text-foreground/80',
                 )}
               >
@@ -1142,7 +1142,7 @@ export function TaskEditor({
         </div>
 
         {/* Right — subtasks (Manual) / scaffold (Generate) */}
-        <div className="flex min-h-0 flex-col rounded-xl border border-border bg-card shadow-minimal">
+        <div className="flex min-h-0 flex-col rounded-[var(--radius-card)] border border-border bg-card shadow-minimal">
           {mode === 'manual' ? (
             <>
               <div className="flex shrink-0 items-center gap-2 px-4 pt-4">
@@ -1172,7 +1172,7 @@ export function TaskEditor({
                 {subtasks.length === 0 && (
                   <button
                     onClick={addSubtask}
-                    className="flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-dashed border-border py-2.5 text-[12.5px] font-semibold text-foreground/40 transition-colors hover:border-foreground/30 hover:text-foreground/60"
+                    className="flex w-full items-center justify-center gap-1.5 rounded-[var(--radius-control)] border border-dashed border-border py-2.5 text-[12.5px] font-semibold text-foreground/40 transition-colors hover:border-foreground/30 hover:text-foreground/60"
                   >
                     <Plus className="h-3.5 w-3.5" strokeWidth={2.5} /> {t('tasks.addFirstSubtask')}
                   </button>
@@ -1191,7 +1191,7 @@ export function TaskEditor({
               <p className="text-[12px] leading-relaxed text-foreground/50">{t('tasks.generatingBody')}</p>
               {/* Skeleton subtask cards: the long author wait reads as "drafting nodes", not frozen. */}
               {[0, 1, 2].map((i) => (
-                <div key={i} className="animate-pulse rounded-[10px] border border-border/70 bg-foreground/[0.015] p-3">
+                <div key={i} className="animate-pulse rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] p-3">
                   <div className="flex items-start gap-2">
                     <div className="mt-0.5 h-6 w-6 shrink-0 rounded-full bg-foreground/[0.06]" />
                     <div className="min-w-0 flex-1 space-y-2">
@@ -1242,7 +1242,7 @@ function ResultsPanel({
 
   if (loading && !results) {
     return (
-      <div className="flex min-h-0 flex-1 items-center justify-center rounded-xl border border-border bg-card text-foreground/50 shadow-minimal">
+      <div className="flex min-h-0 flex-1 items-center justify-center rounded-[var(--radius-control)] border border-border bg-card text-foreground/50 shadow-minimal">
         <Spinner className="text-lg" />
       </div>
     )
@@ -1250,7 +1250,7 @@ function ResultsPanel({
 
   if (!results || !results.runId || results.nodes.length === 0) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 text-center text-muted-foreground shadow-minimal">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 rounded-[var(--radius-control)] border border-border bg-card px-6 text-center text-muted-foreground shadow-minimal">
         <CircleSlash className="h-6 w-6 text-muted-foreground" strokeWidth={2} />
         <p className="text-[12.5px]">{t('tasks.resultsEmpty')}</p>
       </div>
@@ -1261,9 +1261,9 @@ function ResultsPanel({
   const verdicts = results.verdicts ?? (verdict ? [verdict] : [])
   const repair = results.repair
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto rounded-xl border border-border bg-card p-4 shadow-minimal">
+    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-minimal">
       {results.acceptanceCriteria && (
-        <div className="rounded-[10px] border border-border/70 bg-foreground/[0.015] px-3 py-2.5">
+        <div className="rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] px-3 py-2.5">
           <div className="text-[11px] font-bold uppercase tracking-wide text-foreground/45">{t('tasks.acceptanceCriteria')}</div>
           <p className="mt-1 text-[12px] leading-relaxed text-foreground/70">{results.acceptanceCriteria}</p>
         </div>
@@ -1272,7 +1272,7 @@ function ResultsPanel({
       {verdict && (
         <div
           className={cn(
-            'flex items-start gap-2.5 rounded-[10px] border px-3 py-2.5',
+            'flex items-start gap-2.5 rounded-[var(--radius-card)] border px-3 py-2.5',
             verdict.result === 'pass'
               ? 'border-emerald-500/30 bg-emerald-500/[0.06]'
               : verdict.result === 'fail'
@@ -1307,7 +1307,7 @@ function ResultsPanel({
       )}
 
       {verdicts.length > 1 && (
-        <div className="rounded-[10px] border border-border/70 bg-foreground/[0.015] px-3 py-2.5">
+        <div className="rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] px-3 py-2.5">
           <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-foreground/45">{t('tasks.verdictHistory')}</div>
           <div className="flex flex-col gap-1">
             {verdicts.map((v, i) => (
@@ -1331,7 +1331,7 @@ function ResultsPanel({
       {results.nodes.map((node) => {
         const pill = resolveNodeStatePill(node.state)
         return (
-        <div key={node.id} className="rounded-[10px] border border-border/70 bg-foreground/[0.015] p-3">
+        <div key={node.id} className="rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] p-3">
           <div className="flex items-center gap-2">
             <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{node.title}</span>
             <span className={cn('shrink-0 rounded-full border px-2 py-0.5 text-[10.5px] font-bold', pill.className)}>

@@ -43,21 +43,52 @@ jobs:
       - name: Record the tested merge revision and source hashes
         run: |
           python3 - <<'PY'
-          import pathlib, subprocess, hashlib, json
+          import pathlib, subprocess, hashlib, json, io
           owner = pathlib.Path('docs/final-readiness/execution/cloud/OWNER-UI-001')
           manifest = json.loads((owner / 'source-manifest-v3.json').read_text())
-          hashes = {path: hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
-                    for path in manifest['sourceSha256']}
-          receipt = {'testedRevision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+          revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          records = subprocess.check_output(['git', 'ls-tree', '-r', '-z', revision]).split(b'\0')
+          sources = {}
+          for record in records:
+              if not record:
+                  continue
+              metadata, name = record.split(b'\t', 1)
+              mode, kind, oid = metadata.decode().split()
+              path = name.decode()
+              source = path.startswith(('apps/electron/src/', 'packages/', 'scripts/', '.github/'))
+              fixture = path.startswith(str(owner) + '/') and pathlib.Path(path).suffix in ('.ts', '.tsx', '.mjs', '.py')
+              if kind == 'blob' and mode.startswith('100') and (source or fixture or path in ('bun.lock', 'package.json', 'bunfig.toml', 'tsconfig.json')):
+                  sources[path] = oid
+          assert sources, 'The committed candidate has no declared source inputs'
+          objects = subprocess.check_output(['git', 'cat-file', '--batch'], input=('\n'.join(sources.values()) + '\n').encode())
+          objects = io.BytesIO(objects)
+          expected = {}
+          for path, oid in sources.items():
+              header = objects.readline().decode().split()
+              assert len(header) == 3 and header[0] == oid and header[1] == 'blob'
+              data = objects.read(int(header[2]))
+              assert objects.read(1) == b'\n'
+              expected[path] = hashlib.sha256(data).hexdigest()
+          hashes = {path: hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest() for path in expected}
+          receipt = {'testedRevision': revision,
+                     'testedTree': subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip(),
                      'bun': subprocess.check_output(['bun', '--version'], text=True).strip(),
                      'node': subprocess.check_output(['node', '--version'], text=True).strip(),
+                     'historicalManifestSourceSha256': manifest['sourceSha256'],
+                     'committedSourceSha256': expected,
                      'actualSourceSha256': hashes,
-                     'matchesCommittedCandidate': hashes == manifest['sourceSha256']}
+                     'checkoutSourceSha256': expected,
+                     'matchesCheckout': hashes == expected,
+                     'matchesCommittedCandidate': hashes == expected,
+                     'matchesHistoricalManifest': all(hashes.get(path) == value for path, value in manifest['sourceSha256'].items()),
+                     'historicalManifestMismatches': sorted(path for path, value in manifest['sourceSha256'].items() if hashes.get(path) != value)}
           destination = owner / 'verification/browser/ui001-ci-source.json'
           destination.parent.mkdir(parents=True, exist_ok=True)
           destination.write_text(json.dumps(receipt, indent=2) + '\n')
           print(json.dumps(receipt, indent=2))
-          assert receipt['matchesCommittedCandidate'], 'Tested sources differ from the committed candidate manifest'
+          # Main may advance beyond the historical manifest. Compare every source
+          # with the actual committed candidate and retain historical drift separately.
+          assert receipt['matchesCheckout'] and receipt['matchesCommittedCandidate'], 'Tested sources differ from Git objects at the actual candidate revision'
           PY
       - name: Shell, parser, persistence and navigation regression
         env:

@@ -1,0 +1,404 @@
+$ bun run validate:dev && bun run lint:i18n:parity && bun run lint:i18n:sorted && bun run lint:i18n:coverage
+$ bun run typecheck:all && bun run test:shared:all && bun run test:connection-fabric && bun run test:config-isolation && bun run test:doc-tools
+$ cd packages/core && bun run tsc --noEmit && cd ../shared && bun run tsc --noEmit && cd ../server-core && bun run tsc --noEmit && cd ../server && bun run tsc --noEmit && cd ../session-tools-core && bun run tsc --noEmit && cd ../pi-agent-server && bun run typecheck && cd ../../apps/electron && bun run typecheck && cd ../../packages/ui && bun run tsc --noEmit && cd ../.. && bun run typecheck:pages-worker && bun run workspace-service:typecheck
+$ tsc --noEmit -p tsconfig.typecheck.json
+$ tsc --noEmit
+$ if [ -d workers/pages ]; then cd workers/pages && bun run typecheck; else echo 'workers/pages not present (OSS export) - skipping'; fi
+workers/pages not present (OSS export) - skipping
+$ bun run --cwd apps/workspace-service typecheck
+$ tsc --noEmit
+$ bun run test:shared:llm-connections && bun run test:shared:models-pi && bun run test:shared:config
+$ cd packages/shared && bun test tests/llm-connections.test.ts
+bun test v1.3.14 (0d9b296a)
+
+tests/llm-connections.test.ts:
+(pass) getMiniModel() > finds haiku for anthropic provider [0.90ms]
+(pass) getMiniModel() > finds mini for pi provider [0.15ms]
+(pass) getMiniModel() > skips denied codex-mini-latest alias for pi provider [0.02ms]
+(pass) getMiniModel() > skips denied pi/codex-mini-latest alias for pi provider [0.02ms]
+(pass) getMiniModel() > finds mini for pi_compat provider [0.11ms]
+(pass) getMiniModel() > finds mini for Pi list with mixed models [0.02ms]
+(pass) getMiniModel() > finds mini even when model name has "mini" in different position [0.01ms]
+(pass) getMiniModel() > falls back to last model when Pi list has no mini/flash model [0.03ms]
+(pass) getMiniModel() > returns undefined for empty model list [0.24ms]
+(pass) getMiniModel() > returns undefined for undefined models [0.03ms]
+(pass) getMiniModel() > falls back to last model when no keyword match [0.03ms]
+(pass) getMiniModel() > prefers rox/fast for omp public catalog [0.06ms]
+(pass) getMiniModel() > fallback ignores denied alias and returns last allowed model [5.47ms]
+(pass) getMiniModel() > handles single-model list [2.42ms]
+(pass) getSummarizationModel() > returns same result as getMiniModel (shared implementation) [0.17ms]
+(pass) getMiniModel() — auth-flavor awareness > skips *codex-mini* variants under openai-codex auth [0.21ms]
+(pass) getMiniModel() — auth-flavor awareness > still returns *codex-mini* variants under regular openai (API-key) auth [0.02ms]
+(pass) getMiniModel() — auth-flavor awareness > falls back to last allowed model when every mini candidate is denied [5.06ms]
+(pass) isDeniedMiniModelId() > always denies codex-mini-latest [15.22ms]
+(pass) isDeniedMiniModelId() > denies *codex-mini* variants only under openai-codex auth [0.74ms]
+(pass) isDeniedMiniModelId() > does not deny non-codex-mini models [0.03ms]
+
+ 21 pass
+ 0 fail
+ 28 expect() calls
+Ran 21 tests across 1 file. [1493.00ms]
+$ cd packages/shared && bun test tests/models-pi.test.ts
+bun test v1.3.14 (0d9b296a)
+
+tests/models-pi.test.ts:
+(pass) models-pi filtering > excludes codex-mini-latest for openai models [10.84ms]
+(pass) models-pi filtering > excludes all gpt-4* models for openai models [2.88ms]
+(pass) models-pi filtering > keeps Claude Opus 4.6 models in Anthropic catalogs [5.00ms]
+(pass) models-pi filtering > includes DeepSeek in the Pi API key provider list with a human-readable label [5.34ms]
+(pass) models-pi filtering > returns current DeepSeek models from the Pi SDK catalog [5.84ms]
+(pass) models-pi filtering > returns current Kimi Code models with K3 first-class metadata [0.65ms]
+(pass) models-pi filtering > includes Moonshot AI in the Pi API key provider list with human-readable labels [0.23ms]
+(pass) models-pi filtering > returns Claude Opus 5 from the Pi SDK catalog for Anthropic and Bedrock [0.22ms]
+(pass) models-pi filtering > returns the DeepSeek V4 Flash vision model from the Pi SDK catalog [0.03ms]
+(pass) models-pi filtering > returns GPT-6 Astra from the Pi SDK catalog for OpenAI API keys and ChatGPT accounts [0.05ms]
+(pass) models-pi filtering > returns Kimi K3 from the Pi SDK catalog for both Moonshot providers [0.04ms]
+
+ 11 pass
+ 0 fail
+ 22 expect() calls
+Ran 11 tests across 1 file. [2.25s]
+$ cd packages/shared && bun test --timeout 30000 src/config/__tests__/llm-connections.test.ts src/config/__tests__/storage-migrations.test.ts src/config/__tests__/storage-startup-migration.test.ts src/config/__tests__/default-thinking-level.test.ts
+bun test v1.3.14 (0d9b296a)
+
+src/config/__tests__/llm-connections.test.ts:
+(pass) getDefaultModelsForConnection > anthropic returns ANTHROPIC_MODELS (ModelDefinition[]) [0.49ms]
+(pass) getDefaultModelsForConnection > pi with piAuthProvider returns filtered models including Opus 4.6 [0.76ms]
+(pass) getDefaultModelsForConnection > pi without piAuthProvider returns all Pi models [272.43ms]
+(pass) provider registry fallback > uses R1 Max for Rox when a persisted catalog is missing [1.29ms]
+(pass) getDefaultModelForConnection > returns first model ID for anthropic [0.30ms]
+(pass) getDefaultModelForConnection > regression: Pi anthropic default is in its own model list [1.80ms]
+(pass) getDefaultModelForConnection > Pi anthropic keeps Opus 4.8 as default with Opus 5 ranked directly below it [15.23ms]
+(pass) getDefaultModelForConnection > never ranks a deprecated catalog entry as the Pi default [302.02ms]
+(pass) getDefaultModelForConnection > Pi openai default is in its own model list [0.37ms]
+(pass) getDefaultModelForConnection > Pi openai and openai-codex default to GPT-6 Astra with GPT-5.6 Sol ranked next [0.31ms]
+(pass) getDefaultModelForConnection > Pi deepseek default is in its own model list [27.06ms]
+(pass) getDefaultModelForConnection > Pi moonshotai defaults to Kimi K3 from its own model list [10.74ms]
+(pass) getDefaultModelForConnection > returns empty string for pi_compat (dynamic provider) [0.04ms]
+(pass) getDefaultModelForConnection > returns empty string for anthropic_compat (dynamic provider) [0.02ms]
+(pass) getDefaultModelForConnection > omp exposes one R1 Max model by default [0.05ms]
+(pass) isCompatProvider > returns true for pi_compat [0.01ms]
+(pass) isCompatProvider > returns true for anthropic_compat [0.01ms]
+(pass) isCompatProvider > returns false for anthropic
+(pass) isCompatProvider > returns false for pi [0.01ms]
+(pass) isAnthropicProvider > returns true for anthropic [16.58ms]
+(pass) isAnthropicProvider > returns true for anthropic_compat [0.03ms]
+(pass) isAnthropicProvider > returns false for pi [0.01ms]
+(pass) isPiProvider > returns true for pi [1.51ms]
+(pass) isPiProvider > returns true for pi_compat [0.09ms]
+(pass) isPiProvider > returns false for anthropic_compat [0.02ms]
+(pass) isPiProvider > returns false for anthropic [5.32ms]
+(pass) toBedrockNativeId > maps bare Anthropic IDs to US inference profile IDs [0.12ms]
+(pass) toBedrockNativeId > keeps Opus 4.7 mapped and selectable [0.02ms]
+(pass) toBedrockNativeId > maps Sonnet 5 forward and reverse across regions and base IDs [0.06ms]
+(pass) toBedrockNativeId > normalizes deprecated Opus IDs to Opus 4.8 before mapping, keeping Opus 4.6 [0.02ms]
+(pass) toBedrockNativeId > maps base Bedrock IDs to US inference profile IDs [0.01ms]
+(pass) toBedrockNativeId > passes through already US-prefixed IDs
+(pass) toBedrockNativeId > passes through unknown IDs [0.01ms]
+(pass) toBedrockNativeId > maps to EU inference profiles when regionPrefix is eu [0.02ms]
+(pass) toBedrockNativeId > defaults to US when regionPrefix is omitted or us
+(pass) toBedrockNativeId > passes through unknown IDs regardless of regionPrefix [0.01ms]
+(pass) deriveBedrockRegionPrefix > returns us for US regions [0.02ms]
+(pass) deriveBedrockRegionPrefix > returns eu for EU regions [0.01ms]
+(pass) deriveBedrockRegionPrefix > returns us for other regions (fallback) [0.01ms]
+(pass) deriveBedrockRegionPrefix > returns us when undefined
+(pass) Bedrock preferred defaults ordering > sorts preferred models first for amazon-bedrock [0.54ms]
+(pass) Kimi preferred defaults ordering > uses Kimi K3 as the default Kimi Code model [0.09ms]
+(pass) fromBedrockNativeId > maps US inference profile IDs back to bare Anthropic [0.02ms]
+(pass) fromBedrockNativeId > maps EU/Global inference profile IDs back to bare
+(pass) fromBedrockNativeId > maps base Bedrock IDs back to bare
+(pass) fromBedrockNativeId > passes through bare IDs
+(pass) fromBedrockNativeId > maps Opus 4.6 native IDs back to the bare ID
+(pass) normalizeBedrockModelId > strips pi/ prefix and maps to US inference profile [0.03ms]
+(pass) normalizeBedrockModelId > maps bare IDs to US inference profile
+(pass) normalizeBedrockModelId > maps Opus 4.6 IDs to their own native IDs [10.36ms]
+(pass) normalizeBedrockModelId > maps base Bedrock IDs to US inference profile [0.02ms]
+(pass) normalizeBedrockModelId > is idempotent for already US-prefixed IDs [0.01ms]
+(pass) normalizeBedrockModelId > handles empty/undefined [0.01ms]
+(pass) normalizeBedrockModelId > respects regionPrefix for EU [0.02ms]
+(pass) Bedrock-native model display > getModelDisplayName resolves US inference profile IDs [0.18ms]
+(pass) Bedrock-native model display > getModelDisplayName resolves EU/base Bedrock IDs [0.02ms]
+(pass) Bedrock-native model display > getModelShortName resolves Bedrock IDs [0.05ms]
+(pass) Bedrock-native model display > getModelContextWindow resolves Bedrock IDs [0.03ms]
+(pass) Bedrock-native model display > isClaudeModel recognizes Bedrock IDs [0.03ms]
+(pass) Claude Fable 5 > is registered as an Anthropic model with the expected metadata [19.24ms]
+(pass) Claude Fable 5 > resolves display/short name, context window, and Claude detection [1.19ms]
+(pass) Claude Fable 5 > does NOT become the Anthropic default (Opus 4.8 stays default) [0.04ms]
+(pass) Claude Fable 5 > round-trips through the Bedrock inference-profile mapping [0.05ms]
+(pass) Claude Fable 5.1 > is registered as an Anthropic model with the expected metadata [0.05ms]
+(pass) Claude Fable 5.1 > is listed before Fable 5 so the newest Fable wins shortName resolution [45.79ms]
+(pass) Claude Fable 5.1 > resolves display/short name, context window, and Claude detection [0.17ms]
+(pass) Claude Fable 5.1 > does NOT become the Anthropic default (Opus 4.8 stays default) [0.31ms]
+(pass) Claude Fable 5.1 > round-trips through the Bedrock inference-profile mapping [0.39ms]
+(pass) Claude Fable 5.1 > the 5.1 and 5.0 ids never cross-map through the Bedrock tables [0.31ms]
+
+src/config/__tests__/storage-startup-migration.test.ts:
+(pass) startup migration (integration) > migrates legacy anthropic_compat connections into anthropic_compat with endpoint metadata [5861.66ms]
+(pass) startup migration (integration) > upgrades temporary pi_compat anthropic-messages connections into anthropic_compat [8126.41ms]
+(pass) startup migration (integration) > repairs broken pi-api-key openai-codex provider on startup migration [6684.25ms]
+(pass) startup migration (integration) > preserves userDefined3Tier model subsets during startup migration [7097.80ms]
+(pass) startup migration (integration) > normalizes auto mode model set back to provider defaults [6686.67ms]
+(pass) startup migration (integration) > repairs userDefined3Tier lists by removing invalid IDs and fixing default model [6664.64ms]
+(pass) startup migration (integration) > falls back to provider defaults when userDefined3Tier becomes empty after filtering [6457.37ms]
+(pass) startup migration (integration) > normalizes legacy unprefixed userDefined3Tier model IDs instead of resetting [4820.95ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps direct Anthropic Opus 4.6 default/model entries intact [3118.16ms]
+(pass) legacy Opus migration to default Opus (integration) > restores Opus 4.6 once to direct Anthropic connections and respects a later removal [8022.14ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates direct Anthropic Opus 4.5 defaults straight to Opus 4.8 [5547.98ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates previous direct Anthropic Opus 4.7 defaults to Opus 4.8 while keeping 4.7 selectable [4200.66ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps workspace default Opus 4.6 unchanged [3860.94ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates workspace default Opus 4.7 to Opus 4.8 [4848.19ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps Pi Anthropic Opus 4.6 IDs unchanged [6483.44ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps Pi Bedrock Opus 4.6 native IDs unchanged [4602.02ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates legacy unprefixed Pi Anthropic Opus 4.6 IDs to pi-prefixed Opus 4.6 [4862.75ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates legacy Bedrock provider Opus 4.6 IDs to Pi Bedrock native Opus 4.6 IDs [5440.58ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates seeded rox-kimi kimi-K3 connections onto the public ROX plane [4358.95ms]
+(pass) legacy Opus migration to default Opus (integration) > upgrades installed ROX defaults while preserving sessions and other providers [10684.05ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps a custom runtime and a workspace using another provider unchanged [6827.71ms]
+(pass) legacy Opus migration to default Opus (integration) > preserves an explicit legacy Rox Max default across repeated startup [10980.41ms]
+(pass) legacy Opus migration to default Opus (integration) > upgrades old onboarding Rox defaults with a separate marker and preserves private catalogs [14222.98ms]
+(pass) legacy Opus migration to default Opus (integration) > preserves a seeded slug explicitly repointed to a private runtime [5454.32ms]
+
+src/config/__tests__/storage-migrations.test.ts:
+(pass) shouldMigratePiOpenAiProvider > migrates legacy Pi OAuth OpenAI connections to openai-codex [0.87ms]
+(pass) shouldMigratePiOpenAiProvider > does not migrate Pi API key OpenAI connections [0.02ms]
+(pass) shouldMigratePiOpenAiProvider > does not migrate Pi custom endpoint connections [0.02ms]
+(pass) shouldMigratePiOpenAiProvider > does not migrate already-correct openai-codex connections [0.01ms]
+(pass) shouldRepairPiApiKeyCodexProvider > repairs Pi API key connections that were incorrectly set to openai-codex [0.02ms]
+(pass) shouldRepairPiApiKeyCodexProvider > repairs Pi API key with endpoint connections that were incorrectly set to openai-codex [0.01ms]
+(pass) shouldRepairPiApiKeyCodexProvider > does not repair OAuth openai-codex connections [0.01ms]
+(pass) shouldRepairPiApiKeyCodexProvider > does not repair non-OpenAI-Codex providers [6.30ms]
+(pass) inferModelSelectionMode > infers automaticallySyncedFromProvider when model list equals provider defaults [5.08ms]
+(pass) inferModelSelectionMode > infers userDefined3Tier when model list is a custom subset [0.03ms]
+(pass) inferModelSelectionMode > infers automaticallySyncedFromProvider for empty model lists [0.08ms]
+
+src/config/__tests__/default-thinking-level.test.ts:
+(pass) default thinking level storage > falls back to bundled default when no app-level default is set [5827.30ms]
+(pass) default thinking level storage > persists defaultThinkingLevel to config.json [6958.67ms]
+(pass) default thinking level storage > round-trips persisted value across get/set in a fresh process [3507.52ms]
+(pass) default thinking level storage > supports every thinking level [6910.77ms]
+(pass) default thinking level storage > migrates legacy "think" value to "medium" [3770.96ms]
+
+ 109 pass
+ 0 fail
+ 291 expect() calls
+Ran 109 tests across 4 files. [192.00s]
+$ bun test packages/core/src/platform/identity/credential-types.test.ts packages/core/src/platform/identity/import-session.test.ts packages/core/src/platform/identity/import-service.test.ts packages/core/src/platform/identity/p0-adapters.test.ts packages/core/src/platform/identity/broker.test.ts packages/core/src/platform/identity/workgraph.test.ts packages/core/src/platform/identity/revalidation.test.ts packages/core/src/platform/identity/os-discovery-host.test.ts packages/core/src/platform/identity/github-vertical.test.ts packages/core/src/platform/identity/infisical-fabric-provider.test.ts packages/core/src/platform/identity/grants.test.ts packages/shared/src/credentials/__tests__/envelope.test.ts packages/shared/src/credentials/__tests__/secure-storage-recovery.test.ts
+bun test v1.3.14 (0d9b296a)
+
+packages/core/src/platform/identity/infisical-fabric-provider.test.ts:
+(pass) CF-8 InfisicalFabricProvider > write + inspect exposes hasMaterial without token material [1.19ms]
+(pass) CF-8 InfisicalFabricProvider > health fails closed on 401 [4.52ms]
+(pass) CF-8 InfisicalFabricProvider > discoverAccount reports connected without leaking the token [6.06ms]
+(pass) CF-8 InfisicalFabricProvider > rotate without fetch fails closed; revoke without fetch clears local metadata [9.14ms]
+(pass) CF-8 InfisicalFabricProvider > rotate with stub fetch succeeds and still returns no raw secret [3.26ms]
+(pass) createInfisicalImporter > discovers locator metadata from env and never returns the token [5.48ms]
+
+packages/core/src/platform/identity/import-service.test.ts:
+(pass) ImportService > denies renderer, remote, and headless before importer dispatch [0.48ms]
+(pass) ImportService > commits a copy import on main and stores metadata only [10.66ms]
+(pass) ImportService > reuses an existing same-fingerprint reference [0.47ms]
+(pass) ImportService > fails closed on a different fingerprint [7.13ms]
+(pass) ImportService > rolls back when the provider write fails [12.57ms]
+
+packages/core/src/platform/identity/workgraph.test.ts:
+(pass) CF-5 ConnectionWorkGraph > creates a metadata-only connection and rejects secret fields [58.90ms]
+(pass) CF-5 ConnectionWorkGraph > binds consumers and closes over one workspace only [0.93ms]
+(pass) CF-5 ConnectionWorkGraph > appends an immutable metadata-only audit ledger with readable fields [0.49ms]
+(pass) CF-5 ConnectionWorkGraph > rolls back a failed transaction [0.19ms]
+(pass) CF-5 ConnectionWorkGraph persistence > persists connections, bindings, and audit then reloads [8.34ms]
+(pass) CF-5 ConnectionWorkGraph persistence > rolls back persisted files when a transaction fails [7.95ms]
+(pass) CF-5 ConnectionWorkGraph persistence > keeps workspace isolation across reload [6.67ms]
+
+packages/core/src/platform/identity/os-discovery-host.test.ts:
+(pass) createOsDiscoveryHost > lists dotenv files from cwd and home without traversal [401.13ms]
+(pass) createOsDiscoveryHost > reads git/docker/aws config text from the fixture home only [391.47ms]
+(pass) createOsDiscoveryHost > returns GCP ADC metadata without private_key [216.27ms]
+(pass) createOsDiscoveryHost > prefers GOOGLE_APPLICATION_CREDENTIALS when set [120.29ms]
+(pass) createOsDiscoveryHost > fail-softs ssh identities without SSH_AUTH_SOCK [240.34ms]
+(pass) createOsDiscoveryHost > returns empty keychain unless items are injected [12.89ms]
+(pass) createOsDiscoveryHost > approveCopy seals dotenv values and never leaks them via inspect/preview [678.31ms]
+(pass) createOsDiscoveryHost > fail-softs missing home config files [225.10ms]
+
+packages/core/src/platform/identity/github-vertical.test.ts:
+(pass) CF-7 GitHub vertical > importGithubFromEnv commits dotenv candidate without storing the token [0.56ms]
+(pass) CF-7 GitHub vertical > importGithubFromEnv accepts injectedToken when no env candidate exists [0.12ms]
+(pass) CF-7 GitHub vertical > runGithubVertical sends Authorization Bearer and returns metadata only [42.03ms]
+(pass) CF-7 GitHub vertical > denies when AccessGrant is missing [2.91ms]
+(pass) CF-7 GitHub vertical > fails closed when GitHub returns 401 [1.02ms]
+
+packages/core/src/platform/identity/credential-types.test.ts:
+(pass) CredentialRefRegistry > creates opaque stable refs and stores metadata only [0.24ms]
+(pass) CredentialRefRegistry > keeps the ref identity while replacing provider metadata [0.33ms]
+(pass) CredentialRefRegistry > tracks versions as metadata and clears the current version on revoke [9.30ms]
+(pass) CredentialRefRegistry > rejects an invalid version status at runtime [0.18ms]
+(pass) CredentialRefRegistry > rejects malformed metadata instead of accepting a secret payload [0.18ms]
+(pass) CredentialRefRegistry > rejects locator prototype-derived fields before registration or provider replacement [0.36ms]
+(pass) CredentialRefRegistry > rejects locator non-enumerable fields before registration or provider replacement [0.55ms]
+(pass) CredentialRefRegistry > rejects locator symbol fields before registration or provider replacement [0.07ms]
+(pass) CredentialRefRegistry > rejects missing own local.type supplied by an inherited data [0.24ms]
+(pass) CredentialRefRegistry > rejects missing own local.type supplied by an inherited getter [0.05ms]
+(pass) CredentialRefRegistry > rejects missing own local.key supplied by an inherited data [0.04ms]
+(pass) CredentialRefRegistry > rejects missing own local.key supplied by an inherited getter [0.02ms]
+(pass) CredentialRefRegistry > rejects missing own keychain.type supplied by an inherited data [0.03ms]
+(pass) CredentialRefRegistry > rejects missing own keychain.type supplied by an inherited getter [0.04ms]
+(pass) CredentialRefRegistry > rejects missing own keychain.service supplied by an inherited data [0.03ms]
+(pass) CredentialRefRegistry > rejects missing own keychain.service supplied by an inherited getter [0.03ms]
+(pass) CredentialRefRegistry > rejects missing own keychain.account supplied by an inherited data [0.44ms]
+(pass) CredentialRefRegistry > rejects missing own keychain.account supplied by an inherited getter [0.08ms]
+(pass) CredentialRefRegistry > rejects missing own dotenv.type supplied by an inherited data [0.03ms]
+(pass) CredentialRefRegistry > rejects missing own dotenv.type supplied by an inherited getter [0.02ms]
+(pass) CredentialRefRegistry > rejects missing own dotenv.path supplied by an inherited data [0.02ms]
+(pass) CredentialRefRegistry > rejects missing own dotenv.path supplied by an inherited getter [0.01ms]
+(pass) CredentialRefRegistry > rejects missing own dotenv.key supplied by an inherited data [0.02ms]
+(pass) CredentialRefRegistry > rejects missing own dotenv.key supplied by an inherited getter [0.21ms]
+(pass) CredentialRefRegistry > rejects missing own git_helper.type supplied by an inherited data [0.03ms]
+(pass) CredentialRefRegistry > rejects missing own git_helper.type supplied by an inherited getter [0.02ms]
+(pass) CredentialRefRegistry > rejects missing own git_helper.host supplied by an inherited data [0.02ms]
+(pass) CredentialRefRegistry > rejects missing own git_helper.host supplied by an inherited getter [0.02ms]
+(pass) CredentialRefRegistry > rejects missing own docker_helper.type supplied by an inherited data [0.25ms]
+(pass) CredentialRefRegistry > rejects missing own docker_helper.type supplied by an inherited getter [0.09ms]
+(pass) CredentialRefRegistry > rejects missing own docker_helper.registry supplied by an inherited data [0.05ms]
+(pass) CredentialRefRegistry > rejects missing own docker_helper.registry supplied by an inherited getter [0.02ms]
+(pass) CredentialRefRegistry > rejects missing own aws_profile.type supplied by an inherited data [0.05ms]
+(pass) CredentialRefRegistry > rejects missing own aws_profile.type supplied by an inherited getter [0.04ms]
+(pass) CredentialRefRegistry > rejects missing own aws_profile.profile supplied by an inherited data [0.04ms]
+(pass) CredentialRefRegistry > rejects missing own aws_profile.profile supplied by an inherited getter [0.02ms]
+(pass) CredentialRefRegistry > rejects missing own gcp_adc.type supplied by an inherited data [0.02ms]
+(pass) CredentialRefRegistry > rejects missing own gcp_adc.type supplied by an inherited getter [0.01ms]
+(pass) CredentialRefRegistry > rejects missing own gcp_adc.source supplied by an inherited data [1.61ms]
+(pass) CredentialRefRegistry > rejects missing own gcp_adc.source supplied by an inherited getter [0.09ms]
+(pass) CredentialRefRegistry > rejects missing own ssh_agent.type supplied by an inherited data [0.51ms]
+(pass) CredentialRefRegistry > rejects missing own ssh_agent.type supplied by an inherited getter [0.19ms]
+(pass) CredentialRefRegistry > rejects missing own ssh_agent.fingerprint supplied by an inherited data [0.13ms]
+(pass) CredentialRefRegistry > rejects missing own ssh_agent.fingerprint supplied by an inherited getter [0.17ms]
+(pass) CredentialRefRegistry > rejects missing own infisical.type supplied by an inherited data [0.78ms]
+(pass) CredentialRefRegistry > rejects missing own infisical.type supplied by an inherited getter [0.05ms]
+(pass) CredentialRefRegistry > rejects missing own infisical.projectId supplied by an inherited data [0.08ms]
+(pass) CredentialRefRegistry > rejects missing own infisical.projectId supplied by an inherited getter [0.07ms]
+(pass) CredentialRefRegistry > rejects missing own infisical.environment supplied by an inherited data [0.03ms]
+(pass) CredentialRefRegistry > rejects missing own infisical.environment supplied by an inherited getter [0.04ms]
+(pass) CredentialRefRegistry > rejects missing own infisical.secretPath supplied by an inherited data [0.08ms]
+(pass) CredentialRefRegistry > rejects missing own infisical.secretPath supplied by an inherited getter [0.02ms]
+(pass) CredentialRefRegistry > rejects missing own infisical.secretKey supplied by an inherited data [0.27ms]
+(pass) CredentialRefRegistry > rejects missing own infisical.secretKey supplied by an inherited getter [0.05ms]
+(pass) CredentialRefRegistry > rejects missing own opaque.type supplied by an inherited data [0.04ms]
+(pass) CredentialRefRegistry > rejects missing own opaque.type supplied by an inherited getter [0.09ms]
+(pass) CredentialRefRegistry > rejects missing own opaque.provider supplied by an inherited data [0.05ms]
+(pass) CredentialRefRegistry > rejects missing own opaque.provider supplied by an inherited getter [0.40ms]
+(pass) CredentialRefRegistry > rejects missing own opaque.locator supplied by an inherited data [0.06ms]
+(pass) CredentialRefRegistry > rejects missing own opaque.locator supplied by an inherited getter [0.04ms]
+(pass) CredentialRefRegistry > rejects own locator type accessors when Object.prototype.value is present [0.31ms]
+(pass) CredentialRefRegistry > rejects own locator key accessors when Object.prototype.value is present [0.06ms]
+(pass) CredentialRefRegistry > rejects locator type accessors without executing them [0.12ms]
+(pass) CredentialRefRegistry > rejects locator key accessors without executing them [0.01ms]
+(pass) CredentialRefRegistry > accepts enumerable readonly and frozen locator data fields [0.07ms]
+(pass) CredentialRefRegistry > rejects hidden and nested secret fields at the registry boundary [0.59ms]
+(pass) CredentialRefRegistry > rejects a duplicate CredentialRef id and keeps the first record [0.70ms]
+(pass) CredentialRefRegistry > rejects register with an orphan currentVersionId [0.17ms]
+(pass) CredentialRefRegistry > rejects reviving a revoked version to active [0.21ms]
+(pass) CredentialRefRegistry > rejects reviving an invalid version to active [0.06ms]
+(pass) CredentialRefRegistry > keeps terminal version statuses irreversible [0.22ms]
+(pass) CredentialRefRegistry > makes a reactivated superseded version the sole current active version [0.15ms]
+(pass) CredentialRefRegistry > leaves version state unchanged when reactivation cannot read the clock [0.10ms]
+(pass) CredentialRefRegistry > rejects a version fingerprint that is not 64 hex characters [0.36ms]
+(pass) CredentialRefRegistry > rejects infisical locators with empty projectId or secretKey [0.33ms]
+(pass) CredentialRefRegistry > rejects unknown version payload fields [0.09ms]
+(pass) CredentialRefRegistry > generates browser-safe cred UUID identifiers [0.15ms]
+(pass) CredentialRefRegistry > returns clones instead of mutable registry state [0.05ms]
+(pass) CredentialRefRegistry > accepts P0 locators and still rejects unknown locator types [0.44ms]
+(pass) CredentialRefRegistry > rejects an expiry before creation [2.42ms]
+(pass) CredentialRefRegistry > does not silently replace the current version with an older active version [0.61ms]
+(pass) CredentialRefRegistry > keeps ref timestamps monotonic by clamping instead of blocking revocation [0.43ms]
+(pass) CredentialRefRegistry > revokes a version whose createdAt is far in the future [0.17ms]
+(pass) CredentialRefRegistry > moves ref updatedAt forward only when provider metadata changes [0.14ms]
+(pass) CredentialRefRegistry > does not let an untrimmed id overwrite an existing version [0.44ms]
+(pass) CredentialRefRegistry > treats credential ref ids as case-sensitive [0.06ms]
+(pass) CredentialRefRegistry > bounds caller-controlled text interpolated into errors [0.24ms]
+(pass) CredentialRefRegistry > lists versions deterministically by creation time and id [1.73ms]
+
+packages/core/src/platform/identity/grants.test.ts:
+(pass) JsonAccessGrantStore > lists grants for a consumer within one workspace [0.17ms]
+(pass) JsonAccessGrantStore > lists all grants without a workspace filter [0.07ms]
+(pass) JsonAccessGrantStore > lists all grants filtered by workspace [0.03ms]
+(pass) JsonAccessGrantStore persistence > persists grants as JSON and reloads them [4.39ms]
+(pass) JsonAccessGrantStore persistence > keeps workspace isolation after reload [0.87ms]
+
+packages/core/src/platform/identity/revalidation.test.ts:
+(pass) CF-5 revoke, closure, revalidate > invalidates leases, audits, and revalidates only the same workspace [12.68ms]
+(pass) CF-5 revoke, closure, revalidate > rejects an unknown connection without touching the broker [0.10ms]
+
+packages/core/src/platform/identity/import-session.test.ts:
+(pass) ImportSession > walks discover → access → preview → validate → commit [0.13ms]
+(pass) ImportSession > denies preview before OS/provider access [0.09ms]
+(pass) ImportSession > denies access from the access_requested phase [0.06ms]
+(pass) ImportSession > rejects unknown candidates and illegal transitions [0.20ms]
+(pass) ImportSession > fails closed on a different fingerprint without an explicit decision [0.06ms]
+(pass) ImportSession > keeps same-fingerprint conflicts and explicit decisions open [0.05ms]
+(pass) ImportSession > returns clones so callers cannot mutate session state [0.02ms]
+
+packages/core/src/platform/identity/p0-adapters.test.ts:
+(pass) P0 discovery parsers > extracts dotenv keys without values or shell expansion [0.07ms]
+(pass) P0 discovery parsers > parses git helpers from config text only [0.33ms]
+(pass) P0 discovery parsers > parses docker credsStore and per-registry helpers [0.71ms]
+(pass) P0 discovery parsers > parses named AWS profiles without inventing a default section [1.52ms]
+(pass) P0 discovery parsers > redacts ADC JSON so private_key never appears [0.08ms]
+(pass) P0 discovery parsers > builds stable metadata fingerprints [0.84ms]
+(pass) P0 importers > discovers metadata-only candidates for every P0 source [3.83ms]
+(pass) P0 importers > masks preview and never returns helper or env values [0.34ms]
+(pass) P0 importers > rejects dotenv traversal and ssh copy mode [0.41ms]
+(pass) P0 importers > commits copy material as a sealed handle and rolls it back [0.79ms]
+(pass) P0 importers > round-trips sealed secrets without exposing plaintext on the handle brand alone [0.05ms]
+
+packages/core/src/platform/identity/broker.test.ts:
+(pass) InProcessCredentialBroker > denies by default when no grant exists [0.91ms]
+(pass) InProcessCredentialBroker > denies wrong workspace, action, or resource even with a grant [0.39ms]
+(pass) InProcessCredentialBroker > issues a metadata-only lease and never returns payload [0.21ms]
+(pass) InProcessCredentialBroker > rejects env-legacy unless the consumer declares it [0.12ms]
+(pass) InProcessCredentialBroker > revokes an active lease so a later acquire cannot reuse it [7.57ms]
+(pass) InProcessCredentialBroker > executeTrustedHttp injects Authorization from sealed copy and never returns the secret [36.34ms]
+(pass) InProcessCredentialBroker > executeTrustedHttp denies a revoked lease before fetch [6.73ms]
+
+packages/shared/src/credentials/__tests__/secure-storage-recovery.test.ts:
+(pass) SecureStorageBackend CF-2 recovery > quarantines a corrupt store instead of deleting the evidence [796.53ms]
+(pass) SecureStorageBackend CF-2 recovery > blocks writes after repair_required and does not plant an empty store [383.30ms]
+(pass) SecureStorageBackend CF-2 recovery > keeps a last-good backup and restores it [383.72ms]
+(pass) SecureStorageBackend CF-2 recovery > does not rewrite the file when a legacy-key store is only read [604.81ms]
+(pass) SecureStorageBackend CF-2 recovery > writes a payload-free migration manifest on explicit cutover [1025.86ms]
+
+packages/shared/src/credentials/__tests__/envelope.test.ts:
+(pass) credential envelope v1 > round-trips a scalar credential payload and records a stable fingerprint [0.38ms]
+(pass) credential envelope v1 > fingerprints equivalent payload key order identically [0.04ms]
+(pass) credential envelope v1 > rejects mappings and lists where a scalar payload is required [0.05ms]
+(pass) credential envelope v1 > fails closed for tampering and malformed envelopes [0.04ms]
+(pass) credential envelope v1 > wraps a legacy payload in memory without rewriting it [0.04ms]
+(pass) credential envelope v1 > rejects an invalid kind for legacy wrapping [0.01ms]
+(pass) credential envelope v1 > rejects empty value and kind-illegal fields [0.11ms]
+(pass) credential envelope v1 > rejects unapproved GCP ADC metadata [0.04ms]
+(pass) credential envelope v1 > accepts oauth refresh metadata and requires aws access key id [0.12ms]
+(pass) credential envelope v1 > does not wrap a bare token string as legacy [0.03ms]
+
+ 166 pass
+ 0 fail
+ 880 expect() calls
+Ran 166 tests across 13 files. [8.41s]
+$ bun test packages/shared/src/config/__tests__/config-isolation.test.ts
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/config/__tests__/config-isolation.test.ts:
+(pass) test config isolation > resolves the config root outside the real ~/.craft-agent [0.16ms]
+
+ 1 pass
+ 0 fail
+ 2 expect() calls
+Ran 1 test across 1 file. [1.72s]
+$ python3 -m unittest apps.electron.resources.scripts.tests.test_pdf_tool_smoke apps.electron.resources.scripts.tests.test_xlsx_tool_smoke apps.electron.resources.scripts.tests.test_docx_tool_smoke apps.electron.resources.scripts.tests.test_pptx_tool_smoke apps.electron.resources.scripts.tests.test_img_tool_smoke apps.electron.resources.scripts.tests.test_ical_tool_smoke apps.electron.resources.scripts.tests.test_doc_diff_smoke apps.electron.resources.scripts.tests.test_markitdown_smoke
+...................
+----------------------------------------------------------------------
+Ran 19 tests in 56.633s
+
+OK
+$ bun run scripts/check-i18n-parity.ts
+i18n parity OK (11 locales, 7813 keys each)
+$ bun scripts/sort-locales.ts --check
+$ bun run scripts/check-i18n-coverage.ts
+i18n coverage OK (7538 literal references, 5453 unique keys, 7813 English keys)

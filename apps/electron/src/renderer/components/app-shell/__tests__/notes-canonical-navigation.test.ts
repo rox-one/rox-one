@@ -1,24 +1,16 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { APP_NAV_DESTINATIONS_BY_ID } from '../nav-destinations'
 import { routes } from '../../../../shared/routes'
+import { invokeShellNavigationCallback } from './rox-readiness-ui-001.shell-callback'
 
 const appShellPath = join(__dirname, '../AppShell.tsx')
 const chatPageSource = readFileSync(join(__dirname, '../../../pages/ChatPage.tsx'), 'utf8')
 
 describe('Notes shell navigation', () => {
-  const source = readFileSync(appShellPath, 'utf8')
-
   it('opens the workspace-local Notes surface instead of a knowledge provider', () => {
-    const handler = source.slice(
-      source.indexOf('const handleNotesClick'),
-      source.indexOf('// Handlers for automations view'),
-    )
-
-    expect(handler).toContain("handleServiceClick('notes')")
-    expect(APP_NAV_DESTINATIONS_BY_ID.notes.route?.()).toBe(routes.view.notes())
-    expect(handler).not.toContain('navigate(routes.view.knowledge())')
+    expect(invokeShellNavigationCallback(appShellPath, { name: 'handleNotesClick' }))
+      .toEqual([routes.view.notes()])
   })
 
   it('resolves imported chat notes to local Notes, not SiYuan', () => {

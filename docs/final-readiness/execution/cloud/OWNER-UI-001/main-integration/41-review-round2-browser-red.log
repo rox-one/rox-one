@@ -1,0 +1,75 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+259 |   it('additional query parameters survive list auto-selection, navigation, history and reload', async () => {
+260 |     const routes = ['tasks?view=calendar', 'search?q=ok&mode=future', 'allSessions?keep=a%2Cb']
+261 |     const expected = ['tasks?view=calendar', 'search?q=ok&mode=future', 'allSessions/session/s1?keep=a%2Cb']
+262 |     for (let i = 0; i < routes.length; i++) {
+263 |       await open(routes[i])
+264 |       expect((await snapshot()).panels[0].route).toBe(expected[i])
+                                                       ^
+error: expect(received).toBe(expected)
+
+Expected: "tasks?view=calendar"
+Received: "tasks"
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:264:50)
+(fail) UI-001 actual navigation in Chromium > additional query parameters survive list auto-selection, navigation, history and reload [5220.16ms]
+279 |     let state = await snapshot()
+280 |     expect(state.panels.map((p: any) => p.route)).toEqual(['allSessions/session/s1', route])
+281 |     await page.reload()
+282 |     await page.waitForFunction(() => Boolean((window as any).ui001))
+283 |     state = await snapshot()
+284 |     expect(state.panels.map((p: any) => p.route)).toEqual(['allSessions/session/s1', route])
+                                                        ^
+error: expect(received).toEqual(expected)
+
+  [
+-   "allSessions/session/s1",
+-   "notes/note/foo,bar?keep=one,two",
++   "allSessions/session/s1:1.0000",
++   "notes/note/foo",
++   "bar?keep=one",
++   "two:0.0000",
+  ]
+
+- Expected  - 2
++ Received  + 4
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:284:51)
+(fail) UI-001 actual navigation in Chromium > literal commas, percent encoding and unknown addresses retain separate panels after reload [5409.90ms]
+killed 2 dangling processes
+
+# Unhandled error between tests
+-------------------------------
+299 |     await page.locator('[data-compact-workspace-menu]').click()
+300 |     const entry = page.locator('[data-compact-panel-id]')
+301 |     expect(await entry.count()).toBe(1)
+302 |     expect(await entry.textContent()).not.toContain('rail.sessions')
+303 |     await page.locator('[data-service-id="sessions"]').click()
+304 |     await page.waitForFunction(() => (window as any).ui001.snapshot().session === 's1')
+                     ^
+error: forFunction: Target page, context or browser has been closed
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:304:16
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+-------------------------------
+
+147 |     await new Promise<void>(resolve => server.once('listening', resolve))
+148 |     base = `http://127.0.0.1:${(server.address() as any).port}`
+149 |     browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE })
+150 |   }, 60000)
+151 |   beforeEach(async () => { context = await browser.newContext(); page = await context.newPage() }, 15000)
+152 |   afterEach(async () => { await context?.close() }, 15000)
+                                               ^
+error: close: Target page, context or browser has been closed
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:152:42
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/native:7:39)
+(fail) UI-001 actual navigation in Chromium > compact menu labels unavailable panels consistently and Sessions opens its own service [30912.23ms]
+  ^ this test timed out after 30000ms.
+
+ 0 pass
+ 9 filtered out
+ 3 fail
+ 1 error
+ 11 expect() calls
+Ran 3 tests across 1 file. [58.94s]

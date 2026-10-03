@@ -1,0 +1,3 @@
+{"route":"future/session/private","focused":{"navigator":"sessions","filter":{"kind":"allSessions"},"details":null},"panel":"other","focusedSession":"private"}
+{"route":"knowledge/unknown/doc","focused":{"navigator":"sessions","filter":{"kind":"allSessions"},"details":null},"panel":"session","focusedSession":null}
+{"route":"notes/note/%ZZ","error":"URIError: URI error"}

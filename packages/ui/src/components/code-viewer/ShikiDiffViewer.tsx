@@ -15,6 +15,8 @@ import { parseDiffFromFile, DIFFS_TAG_NAME, type FileContents } from '@pierre/di
 import { cn } from '../../lib/utils'
 import { LANGUAGE_MAP } from './language-map'
 import { registerCraftShikiThemes } from './registerShikiThemes'
+import { useShikiTheme } from '../../context/ShikiThemeContext'
+import { getShikiThemeType } from './zedShikiThemes'
 
 // Register the diffs-container custom element if not already registered
 // This is necessary because the React component renders a custom element
@@ -100,6 +102,7 @@ export function ShikiDiffViewer({
 }: ShikiDiffViewerProps) {
   const hasCalledReady = useRef(false)
   const [isReady, setIsReady] = useState(false)
+  const contextShikiTheme = useShikiTheme()
 
   // Resolve language
   const resolvedLang = useMemo(() => {
@@ -126,7 +129,8 @@ export function ShikiDiffViewer({
 
   // Diff options - use the app's Shiki theme if available, otherwise fall back
   // to craft-dark/craft-light which have transparent bg for CSS variable theming
-  const resolvedThemeName = shikiTheme || (theme === 'dark' ? 'craft-dark' : 'craft-light')
+  const resolvedThemeName = shikiTheme || contextShikiTheme || (theme === 'dark' ? 'craft-dark' : 'craft-light')
+  const resolvedThemeType = getShikiThemeType(resolvedThemeName) ?? theme
   // When onFileHeaderClick is provided, inject CSS to make the header look clickable
   const unsafeCSS = onFileHeaderClick
     ? '[data-diffs-header] { cursor: pointer; } [data-diffs-header]:hover [data-title] { text-decoration: underline; }'
@@ -140,9 +144,9 @@ export function ShikiDiffViewer({
     lineDiffType: 'word',
     overflow: 'scroll',
     disableFileHeader,
-    themeType: theme === 'dark' ? 'dark' : 'light',
+    themeType: resolvedThemeType,
     unsafeCSS,
-  }), [resolvedThemeName, theme, diffStyle, disableBackground, disableFileHeader, unsafeCSS])
+  }), [resolvedThemeName, resolvedThemeType, diffStyle, disableBackground, disableFileHeader, unsafeCSS])
 
   // Call onReady after first render
   useEffect(() => {

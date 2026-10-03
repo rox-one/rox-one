@@ -15,7 +15,7 @@ let server: Server, browser: Browser, context: BrowserContext, page: Page, base:
 function productionFunctions(): string {
   const source = readFileSync(process.env.ROX_UI001_MAIN_SOURCE ?? join(import.meta.dir, '../MainContentPanel.tsx'), 'utf8')
   const file = ts.createSourceFile('MainContentPanel.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-  const names = new Set(['useSelectedResourceAvailability', 'MainContentPanel'])
+  const names = new Set(['useSelectedResourceAvailability', 'UnavailableAutomationTour', 'MainContentPanel'])
   return file.statements.filter((node) => (ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node)) ? names.has(node.name?.text ?? '') : ts.isVariableStatement(node) && node.declarationList.declarations.some(decl => names.has(decl.name.getText(file))))
     .map((node) => node.getText(file).replace(/^export /, '')).join('\n')
 }
@@ -43,6 +43,9 @@ async function fixtureBundle() {
     import { useCallback, useEffect, useMemo, useState } from 'react';
     import { createRoot } from 'react-dom/client';
     import { flushSync } from 'react-dom';
+    import { useNavigation } from '@/contexts/NavigationContext';
+    import { TourPanelScope, useTourSignals } from './apps/electron/src/renderer/features/product-tour/runtime/hooks';
+    import { navigationEntity } from './apps/electron/src/renderer/features/product-tour/runtime/routes';
     import { usePanelResize } from './apps/electron/src/renderer/hooks/usePanelResize';
     import * as storage from './apps/electron/src/renderer/lib/local-storage';
     import { loadShellLayout, commitShellLayout } from './apps/electron/src/renderer/lib/shell-layout-preferences';
@@ -88,7 +91,7 @@ async function fixtureBundle() {
     const SkillInfoPage = () => null, MemoryScreen = () => null, ProjectsHomeInMain = () => null,
       MultiSelectPanel = () => null, CollectionBulkBar = () => null, ChatPage = props => React.createElement('div',{'data-fixture-chat':props.sessionId},'Chat '+props.sessionId), HomeFrontPage = () => null,
       SettingsOverviewPage = () => null, PageView = () => null, SessionHeatmapHost = () => null, SearchPage = () => null,
-      NotesPage = () => null, ConnectionsPage = () => null, ExtraScreenHost = () => null, TasksPage = () => null,
+      NotesPage = () => null, ConnectionsPage = () => null, SkillsCatalogPage = () => null, IntegrationsCatalogPage = () => null, ExtraScreenHost = () => null, TasksPage = () => null,
       MeetingsPage = () => null, InboxPage = () => null, FeedPage = () => null, KnowledgeEntityPage = () => null,
       ProjectInfoPage = () => null, BrowserPanelPage = () => null,
       PagesHome = () => null, KanbanBoardContainer = () => null,
@@ -111,6 +114,7 @@ async function fixtureBundle() {
       const [sidebarWidth, setSidebarWidth] = React.useState(320);
       const [sessionListWidth, setSessionListWidth] = React.useState(300);
       const noop = () => {};
+      const loadCollectionDisplay = noop, loadCollectionFilters = noop;
       const setCollectionFilters = noop, DEFAULT_COLLECTION_FILTERS = {}, setSearchActive = noop,
         setSearchQuery = noop, setFocusedSidebarItemId = noop, setViewFiltersMap = noop,
         setExpandedFolders = noop, setCollapsedItems = noop;
@@ -198,7 +202,7 @@ describe.skipIf(!enabled)('UI-001 real Chromium component and persistence fixtur
     await page.evaluate(()=>{(window as any).ui001.sessions([{id:'a',workspaceId:'ws-a'},{id:'foreign',workspaceId:'ws-b'}]);(window as any).ui001.navigate('allSessions/session/a')})
     await page.locator('[data-fixture-chat="a"]').waitFor()
     await page.evaluate(()=>(window as any).ui001.sessions([{id:'foreign',workspaceId:'ws-b'}]))
-    await page.locator('[data-testid="route-session-unavailable"][data-session-id="a"]').waitFor()
+    await page.locator('[data-testid="route-session-missing"][data-route-entity="a"]').waitFor()
     expect(await page.locator('[data-fixture-chat]').count()).toBe(0)
     await page.evaluate(()=>(window as any).ui001.navigate('allSessions/session/foreign'))
     await page.locator('[data-testid="route-unavailable"]').waitFor()

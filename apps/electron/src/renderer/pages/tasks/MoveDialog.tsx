@@ -62,7 +62,7 @@ export function MoveDialog({
           }}
           placeholder={t('tasks.move.placeholder')}
           aria-label={t('tasks.move.placeholder')}
-          className="h-8 w-full rounded-[6px] bg-foreground/[0.05] px-2 text-[13px] outline-none placeholder:text-text-muted"
+          className="h-8 w-full rounded-[var(--radius-overlay)] bg-foreground/[0.05] px-2 text-[13px] outline-none placeholder:text-text-muted"
         />
       </div>
       <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2" role="listbox" aria-label={title}>
@@ -81,7 +81,7 @@ export function MoveDialog({
                 onMouseEnter={() => setActive(index)}
                 onClick={() => onPick(dest.id)}
                 className={cn(
-                  'flex h-7 w-full items-center gap-2 rounded-[6px] px-2 text-left text-[13px] outline-none',
+                  'flex h-7 w-full items-center gap-2 rounded-[var(--radius-control)] px-2 text-left text-[13px] outline-none',
                   dest.indent && 'pl-6',
                   index === active ? 'bg-accent/15 font-semibold ring-2 ring-inset ring-accent' : 'hover:bg-foreground/[0.05]',
                 )}

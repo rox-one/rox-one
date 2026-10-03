@@ -64,6 +64,7 @@ export const focusedPanelRouteAtom = atom((get) => {
 
 export function getPanelTypeFromRoute(route: ViewRoute): PanelType {
   const navState = parseRouteToNavigationStateOrUnavailable(route)
+  if (!navState) return 'other'
 
   switch (navState.navigator) {
     case 'sessions':

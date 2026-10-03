@@ -1,0 +1,21 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+(pass) UI-001 actual navigation in Chromium > unknown single link survives reload and never selects its nested session [897.00ms]
+(pass) UI-001 actual navigation in Chromium > malformed encoding and legacy lossy degradation retain their own unavailable surface [1164.45ms]
+(pass) UI-001 actual navigation in Chromium > multi-panel restore retains valid sibling, unavailable focus and proportions across reload [282.93ms]
+(pass) UI-001 actual navigation in Chromium > actual navigate and deep-link callbacks preserve unavailable route and browser back/forward [285.14ms]
+(pass) UI-001 actual navigation in Chromium > stored action address cannot execute, while explicit action callback still runs once [278.15ms]
+(pass) UI-001 actual navigation in Chromium > explicit navigation preserves spelling only after session workspace validation [395.83ms]
+(pass) UI-001 actual navigation in Chromium > pending search replay retains query and new-panel options [354.47ms]
+(pass) UI-001 actual navigation in Chromium > latest pending unknown address wins without selecting a previous valid session [447.86ms]
+(pass) UI-001 actual navigation in Chromium > workspace restoration and history keep each workspace address [388.05ms]
+UI001 teardown browser start 1791035569476
+UI001 teardown browser done 1791035569499
+UI001 teardown HTTP start 1791035569499
+UI001 teardown HTTP callback 1791035569501
+
+ 9 pass
+ 0 fail
+ 148 expect() calls
+Ran 9 tests across 1 file. [5.98s]

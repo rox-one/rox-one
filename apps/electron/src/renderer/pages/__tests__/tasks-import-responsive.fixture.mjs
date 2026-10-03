@@ -16,7 +16,7 @@ const mocks = {
 const result = await build({ entryPoints: [resolve(import.meta.dirname, 'tasks-import-responsive.fixture.tsx')], bundle: true, write: false, format: 'iife', platform: 'browser', tsconfig: root + '/apps/electron/tsconfig.json', plugins: [{ name: 'explicit-unchanged-fixture-leaves', setup(builder) {
   builder.onResolve({ filter: /.*/ }, args => mocks[args.path] ? { path: args.path, namespace: 'fixture' } : null)
   builder.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ contents: mocks[args.path], loader: 'js', resolveDir: root }))
-  for (const [file, variable] of [['TasksPage.tsx', 'ROX_TASKS_OLD_COMPONENT'], ['ModeScreen.tsx', 'ROX_TASKS_OLD_LAYOUT']]) {
+  for (const [file, variable] of [['TasksPage.tsx', 'ROX_TASKS_OLD_COMPONENT'], ['ModeScreen.tsx', 'ROX_TASKS_OLD_LAYOUT'], ['TaskDetail.tsx', 'ROX_TASKS_OLD_DETAIL']]) {
     if (process.env[variable]) builder.onLoad({ filter: new RegExp('/'+file.replace('.', '\\.')+'$') }, args => ({ contents: readFileSync(process.env[variable], 'utf8'), loader: 'tsx', resolveDir: dirname(args.path) }))
   }
 } }] })

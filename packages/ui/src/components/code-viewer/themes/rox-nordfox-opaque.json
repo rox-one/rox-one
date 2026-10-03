@@ -1,0 +1,534 @@
+{
+  "name": "rox-nordfox-opaque",
+  "displayName": "Nordfox - opaque",
+  "type": "dark",
+  "colors": {
+    "editor.background": "#2e3440",
+    "editor.foreground": "#cdcecf",
+    "editor.selectionBackground": "#5d4b4d"
+  },
+  "settings": [
+    {
+      "scope": [
+        "entity.other.attribute-name"
+      ],
+      "settings": {
+        "foreground": "#81a1c1",
+        "fontStyle": "italic"
+      },
+      "name": "Zed capture: attribute"
+    },
+    {
+      "scope": [
+        "support.type.property-name"
+      ],
+      "settings": {
+        "foreground": "#d89079",
+        "fontStyle": ""
+      },
+      "name": "Zed capture: attribute.builtin"
+    },
+    {
+      "scope": [
+        "constant.language.boolean"
+      ],
+      "settings": {
+        "foreground": "#d89079"
+      },
+      "name": "Zed capture: boolean"
+    },
+    {
+      "scope": [
+        "comment"
+      ],
+      "settings": {
+        "foreground": "#909dad"
+      },
+      "name": "Zed capture: comment"
+    },
+    {
+      "scope": [
+        "comment.block.documentation",
+        "comment.line.documentation"
+      ],
+      "settings": {
+        "foreground": "#909dad"
+      },
+      "name": "Zed capture: comment.doc"
+    },
+    {
+      "scope": [
+        "constant"
+      ],
+      "settings": {
+        "foreground": "#d89079"
+      },
+      "name": "Zed capture: constant"
+    },
+    {
+      "scope": [
+        "constant.language"
+      ],
+      "settings": {
+        "foreground": "#d89079"
+      },
+      "name": "Zed capture: constant.builtin"
+    },
+    {
+      "scope": [
+        "entity.name.function.constructor"
+      ],
+      "settings": {
+        "foreground": "#88c0d0"
+      },
+      "name": "Zed capture: constructor"
+    },
+    {
+      "scope": [
+        "meta.embedded"
+      ],
+      "settings": {
+        "foreground": "#cdcecf"
+      },
+      "name": "Zed capture: embedded"
+    },
+    {
+      "scope": [
+        "markup.italic"
+      ],
+      "settings": {
+        "foreground": "#cf888f",
+        "fontStyle": "italic"
+      },
+      "name": "Zed capture: emphasis"
+    },
+    {
+      "scope": [
+        "markup.bold"
+      ],
+      "settings": {
+        "foreground": "#cf888f",
+        "fontStyle": "bold"
+      },
+      "name": "Zed capture: emphasis.strong"
+    },
+    {
+      "scope": [
+        "entity.name.function",
+        "support.function"
+      ],
+      "settings": {
+        "foreground": "#8cafd2"
+      },
+      "name": "Zed capture: function"
+    },
+    {
+      "scope": [
+        "support.function.builtin"
+      ],
+      "settings": {
+        "foreground": "#cf888f"
+      },
+      "name": "Zed capture: function.builtin"
+    },
+    {
+      "scope": [
+        "entity.name.function.decorator",
+        "meta.decorator"
+      ],
+      "settings": {
+        "foreground": "#d89079"
+      },
+      "name": "Zed capture: function.decorator"
+    },
+    {
+      "scope": [
+        "variable.parameter.function.keyword"
+      ],
+      "settings": {
+        "foreground": "#88c0d0"
+      },
+      "name": "Zed capture: function.kwargs"
+    },
+    {
+      "scope": [
+        "entity.name.function.constructor"
+      ],
+      "settings": {
+        "foreground": "#88c0d0"
+      },
+      "name": "Zed capture: function.method.constructor"
+    },
+    {
+      "scope": [
+        "support.function.magic"
+      ],
+      "settings": {
+        "foreground": "#cf888f"
+      },
+      "name": "Zed capture: function.special"
+    },
+    {
+      "scope": [
+        "keyword",
+        "storage.type",
+        "storage.modifier"
+      ],
+      "settings": {
+        "foreground": "#b590af"
+      },
+      "name": "Zed capture: keyword"
+    },
+    {
+      "scope": [
+        "keyword.control.directive"
+      ],
+      "settings": {
+        "foreground": "#8cafd2"
+      },
+      "name": "Zed capture: keyword.directive"
+    },
+    {
+      "scope": [
+        "keyword.control.import",
+        "keyword.control.from"
+      ],
+      "settings": {
+        "foreground": "#d092ce"
+      },
+      "name": "Zed capture: keyword.import"
+    },
+    {
+      "scope": [
+        "keyword.operator"
+      ],
+      "settings": {
+        "foreground": "#abb1bb"
+      },
+      "name": "Zed capture: keyword.operator"
+    },
+    {
+      "scope": [
+        "keyword.operator.quantifier.regexp"
+      ],
+      "settings": {
+        "foreground": "#8cafd2"
+      },
+      "name": "Zed capture: keyword.operator.regex"
+    },
+    {
+      "scope": [
+        "entity.name.label.regexp"
+      ],
+      "settings": {
+        "foreground": "#f0d399"
+      },
+      "name": "Zed capture: label.regex"
+    },
+    {
+      "scope": [
+        "markup.underline.link",
+        "string.other.link.title"
+      ],
+      "settings": {
+        "foreground": "#8cafd2"
+      },
+      "name": "Zed capture: link_text"
+    },
+    {
+      "scope": [
+        "markup.underline.link.url",
+        "string.other.link"
+      ],
+      "settings": {
+        "foreground": "#d89079",
+        "fontStyle": "italic"
+      },
+      "name": "Zed capture: link_uri"
+    },
+    {
+      "scope": [
+        "entity.name.namespace"
+      ],
+      "settings": {
+        "foreground": "#93ccdc"
+      },
+      "name": "Zed capture: namespace"
+    },
+    {
+      "scope": [
+        "constant.numeric"
+      ],
+      "settings": {
+        "foreground": "#cd8c76"
+      },
+      "name": "Zed capture: number"
+    },
+    {
+      "scope": [
+        "keyword.operator"
+      ],
+      "settings": {
+        "foreground": "#abb1bb"
+      },
+      "name": "Zed capture: operator"
+    },
+    {
+      "scope": [
+        "meta.preprocessor",
+        "keyword.control.directive"
+      ],
+      "settings": {
+        "foreground": "#d092ce"
+      },
+      "name": "Zed capture: preproc"
+    },
+    {
+      "scope": [
+        "variable.other.property",
+        "support.variable.property",
+        "meta.object-literal.key"
+      ],
+      "settings": {
+        "foreground": "#81a1c1"
+      },
+      "name": "Zed capture: property"
+    },
+    {
+      "scope": [
+        "punctuation"
+      ],
+      "settings": {
+        "foreground": "#abb1bb"
+      },
+      "name": "Zed capture: punctuation"
+    },
+    {
+      "scope": [
+        "punctuation.section",
+        "punctuation.definition.parameters",
+        "punctuation.definition.arguments"
+      ],
+      "settings": {
+        "foreground": "#abb1bb"
+      },
+      "name": "Zed capture: punctuation.bracket"
+    },
+    {
+      "scope": [
+        "punctuation.definition.tag.begin",
+        "punctuation.definition.tag.end"
+      ],
+      "settings": {
+        "foreground": "#93ccdc"
+      },
+      "name": "Zed capture: punctuation.bracket.jsx"
+    },
+    {
+      "scope": [
+        "punctuation.section.embedded"
+      ],
+      "settings": {
+        "foreground": "#b590af"
+      },
+      "name": "Zed capture: punctuation.embedded.markup"
+    },
+    {
+      "scope": [
+        "punctuation.definition.list.begin.markdown"
+      ],
+      "settings": {
+        "foreground": "#93ccdc"
+      },
+      "name": "Zed capture: punctuation.list_marker"
+    },
+    {
+      "scope": [
+        "punctuation.definition.bold",
+        "punctuation.definition.italic"
+      ],
+      "settings": {
+        "foreground": "#b590af"
+      },
+      "name": "Zed capture: punctuation.markup"
+    },
+    {
+      "scope": [
+        "punctuation.separator"
+      ],
+      "settings": {
+        "foreground": "#93ccdc"
+      },
+      "name": "Zed capture: punctuation.special"
+    },
+    {
+      "scope": [
+        "entity.other.attribute-name.class.css",
+        "entity.other.attribute-name.id.css"
+      ],
+      "settings": {
+        "foreground": "#ebcb8b"
+      },
+      "name": "Zed capture: selector"
+    },
+    {
+      "scope": [
+        "entity.other.attribute-name.pseudo-class.css",
+        "entity.other.attribute-name.pseudo-element.css"
+      ],
+      "settings": {
+        "foreground": "#d89079"
+      },
+      "name": "Zed capture: selector.pseudo"
+    },
+    {
+      "scope": [
+        "markup.strikethrough"
+      ],
+      "settings": {
+        "foreground": "#93ccdc"
+      },
+      "name": "Zed capture: strikethrough.markup"
+    },
+    {
+      "scope": [
+        "string"
+      ],
+      "settings": {
+        "foreground": "#a3be8c"
+      },
+      "name": "Zed capture: string"
+    },
+    {
+      "scope": [
+        "constant.character.escape"
+      ],
+      "settings": {
+        "foreground": "#d89079"
+      },
+      "name": "Zed capture: string.escape"
+    },
+    {
+      "scope": [
+        "string.regexp"
+      ],
+      "settings": {
+        "foreground": "#f0d399"
+      },
+      "name": "Zed capture: string.regex"
+    },
+    {
+      "scope": [
+        "string.other"
+      ],
+      "settings": {
+        "foreground": "#93ccdc"
+      },
+      "name": "Zed capture: string.special"
+    },
+    {
+      "scope": [
+        "entity.name.tag"
+      ],
+      "settings": {
+        "foreground": "#b590af"
+      },
+      "name": "Zed capture: tag"
+    },
+    {
+      "scope": [
+        "support.class.component",
+        "entity.name.tag.component"
+      ],
+      "settings": {
+        "foreground": "#8cafd2"
+      },
+      "name": "Zed capture: tag.component.jsx"
+    },
+    {
+      "scope": [
+        "entity.name.tag.doctype"
+      ],
+      "settings": {
+        "foreground": "#d89079"
+      },
+      "name": "Zed capture: tag.doctype"
+    },
+    {
+      "scope": [
+        "markup.raw"
+      ],
+      "settings": {
+        "foreground": "#93ccdc"
+      },
+      "name": "Zed capture: text.literal.markup"
+    },
+    {
+      "scope": [
+        "entity.name.section",
+        "markup.heading"
+      ],
+      "settings": {
+        "foreground": "#8cafd2",
+        "fontStyle": "bold"
+      },
+      "name": "Zed capture: title"
+    },
+    {
+      "scope": [
+        "entity.name.type",
+        "support.type",
+        "support.class"
+      ],
+      "settings": {
+        "foreground": "#ebcb8b"
+      },
+      "name": "Zed capture: type"
+    },
+    {
+      "scope": [
+        "entity.name.type.class"
+      ],
+      "settings": {
+        "foreground": "#88c0d0"
+      },
+      "name": "Zed capture: type.class.call"
+    },
+    {
+      "scope": [
+        "entity.other.inherited-class"
+      ],
+      "settings": {
+        "foreground": "#88c0d0"
+      },
+      "name": "Zed capture: type.class.inheritance"
+    },
+    {
+      "scope": [
+        "variable"
+      ],
+      "settings": {
+        "foreground": "#e5e9f0"
+      },
+      "name": "Zed capture: variable"
+    },
+    {
+      "scope": [
+        "variable.parameter"
+      ],
+      "settings": {
+        "foreground": "#88c0d0"
+      },
+      "name": "Zed capture: variable.parameter"
+    },
+    {
+      "scope": [
+        "variable.language"
+      ],
+      "settings": {
+        "foreground": "#cf888f"
+      },
+      "name": "Zed capture: variable.special"
+    }
+  ]
+}

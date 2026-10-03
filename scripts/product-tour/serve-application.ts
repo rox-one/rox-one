@@ -121,6 +121,9 @@ registerSessionsHandlers(new Proxy(rpc, { get(target, property) {
 } }), deps)
 
 const shellReplies: Record<string, unknown> = {
+  // This fixture exercises the production app/native domain in explicit
+  // non-cloud mode. Account login and billing have separate authority tests.
+  getRoxCloudState: { required: false, connected: false },
   getWorkspaces: [{ id: workspaceId, name: 'Tour QA', rootPath: '', kind: 'personal', createdAt: Date.now() }],
   getWindowWorkspace: workspaceId, getOrgIdentity: { userId: issued.principal.subject, issuer: principal.issuer, name: 'Product Tour Test', authority: 'native' },
   getPreferences: { language: 'en', name: 'Product Tour Test' }, getAppVersion: 'acceptance-harness',

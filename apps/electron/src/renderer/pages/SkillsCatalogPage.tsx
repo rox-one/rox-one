@@ -97,7 +97,8 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
     finally { if ((currentWorkspace.current === capturedWorkspace && currentGuard.current === capturedGuard)) setBusy(null) }
   }
   return (
-    <div className="h-full overflow-auto min-w-0" data-testid="skills-catalog">
+    <div className="h-full overflow-auto min-w-0" data-testid="skills-catalog"
+      style={{ '--muted-foreground': 'color-mix(in oklch, var(--foreground) 78%, var(--background))' } as React.CSSProperties}>
       <div className="mx-auto w-full max-w-[1440px] space-y-6 p-4 md:p-6">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <div><h1 className="flex items-center gap-2 text-base font-semibold"><Zap className="size-4" />{t('capabilityCatalog.skillsTitle')}</h1><p className="mt-1 text-xs text-muted-foreground">{t('capabilityCatalog.skillsDescription')}</p></div>

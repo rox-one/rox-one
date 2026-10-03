@@ -210,7 +210,7 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
   if (spec?.src && (fileLoading || (fileDataSource !== spec.src && !fileError))) {
     const loadingLabel = [spec.filename, spec.sheetName].filter(Boolean).join(' — ') || t('spreadsheet.defaultTitle')
     return (
-      <div className={cn('rounded-[8px] overflow-hidden border bg-muted/10', className)}>
+      <div className={cn('rounded-[var(--radius-card)] overflow-hidden border bg-muted/10', className)}>
         <div className="px-3 py-2 bg-muted/50 border-b">
           <span className="text-[12px] text-muted-foreground font-medium">{loadingLabel}</span>
         </div>
@@ -223,7 +223,7 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
   if (spec?.src && fileError) {
     const errorLabel = [spec.filename, spec.sheetName].filter(Boolean).join(' — ') || t('spreadsheet.defaultTitle')
     return (
-      <div className={cn('rounded-[8px] overflow-hidden border bg-muted/10', className)}>
+      <div className={cn('rounded-[var(--radius-card)] overflow-hidden border bg-muted/10', className)}>
         <div className="px-3 py-2 bg-muted/50 border-b">
           <span className="text-[12px] text-muted-foreground font-medium">{errorLabel}</span>
         </div>
@@ -302,12 +302,12 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
 
   return (
     <SpreadsheetErrorBoundary fallback={fallback}>
-      <div className={cn('relative group rounded-[8px] overflow-hidden border bg-muted/10', className)}>
+      <div className={cn('relative group rounded-[var(--radius-card)] overflow-hidden border bg-muted/10', className)}>
         {/* Expand button */}
         <button
           onClick={() => setIsFullscreen(true)}
           className={cn(
-            "absolute top-[7px] right-2 p-1 rounded-[6px] transition-all z-10 select-none",
+            "absolute top-[7px] right-2 p-1 rounded-[var(--radius-control)] transition-all z-10 select-none",
             "opacity-0 group-hover:opacity-100",
             "bg-background shadow-minimal",
             "text-muted-foreground/50 hover:text-foreground",
@@ -336,7 +336,7 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
         headerActions={<TableExportDropdown columns={parsed.columns} rows={parsed.rows} filename={parsed.filename || parsed.sheetName || t('spreadsheet.defaultTitle')} />}
       >
         <div className="px-6">
-          <div className="bg-background shadow-minimal rounded-[12px] overflow-hidden">
+          <div className="bg-background shadow-minimal rounded-[var(--radius-overlay)] overflow-hidden">
             {tableContent(false)}
           </div>
         </div>

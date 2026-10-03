@@ -1,3 +1,4 @@
+import { useNavigation } from '@/contexts/NavigationContext'
 import * as React from 'react'
 import { NotesInspectorToggle, NotesRailTools, NotesResponsiveRail, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
 import { notesAuxiliaryFits } from './notes/notes-layout'
@@ -299,6 +300,35 @@ export default function NotesPage(props: NotesPageProps) {
   return <NativeNotesPage {...props} />
 }
 
+type SelectedNoteFailure = { workspaceId: string | null; noteId: string; kind: 'missing' | 'unavailable' }
+
+function SelectedNoteRecovery({ failure, address, onRetry }: {
+  failure: SelectedNoteFailure
+  address: string | null
+  onRetry: () => void
+}) {
+  const { t } = useTranslation()
+  const { navigate } = useNavigation()
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      data-testid={`note-surface-${failure.kind}`}
+      data-note-id={failure.noteId}
+      data-note-address={address ?? failure.noteId}
+      className="flex h-full flex-col items-center justify-center gap-3 p-4 text-center text-muted-foreground"
+    >
+      <p className="text-sm" data-testid={failure.kind === 'missing' ? 'route-note-missing' : 'route-note-unavailable'}
+        data-state={failure.kind === 'missing' ? 'not-found' : 'unavailable'}>{t(failure.kind === 'missing' ? 'notes.surface.notFound' : 'common.unavailable')}</p>
+      <p className="max-w-full break-all font-mono text-xs">{address ?? failure.noteId}</p>
+      <button type="button" data-testid="note-surface-retry" onClick={onRetry} className="rounded-md border border-border px-3 py-1 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        {t('common.retry')}
+      </button>
+      <Button variant="ghost" onClick={() => navigate(routes.view.notes())}>{t('common.backToList')}</Button>
+    </div>
+  )
+}
+
 function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const shellSidebarTarget = useShellSidebarTarget()
   const { t } = useTranslation()
@@ -351,7 +381,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [indexHealth, setIndexHealth] = React.useState<NoteIndexHealth>(EMPTY_NOTE_INDEX_HEALTH)
   const [indexRebuilding, setIndexRebuilding] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
-  const [noteOpenError, setNoteOpenError] = React.useState<{ workspaceId: string; noteId: string; code: string } | null>(null)
+  const [noteOpenError, setNoteOpenError] = React.useState<{ workspaceId: string | null; noteId: string; code: string } | null>(null)
+  const selectedReadError: SelectedNoteFailure | null = noteOpenError?.workspaceId === activeWorkspaceId
+    && selectedNoteId && parseNoteBlockAddress(selectedNoteId).noteId === noteOpenError.noteId
+    ? { workspaceId: noteOpenError.workspaceId, noteId: noteOpenError.noteId,
+        kind: ['NOT_FOUND', 'not_found', 'ENOENT'].includes(noteOpenError.code) ? 'missing' : 'unavailable' } : null
   const [saving, setSaving] = React.useState(false)
   const [dirty, setDirty] = React.useState(false)
   const [saveError, setSaveError] = React.useState<string | null>(null)
@@ -413,6 +447,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const saveTimerRef = React.useRef<number | null>(null)
   const saveQueueRef = React.useRef<Promise<boolean>>(Promise.resolve(true))
   const openNoteRequestRef = React.useRef(0)
+  const selectedNoteIdRef = React.useRef(selectedNoteId)
+  selectedNoteIdRef.current = selectedNoteId
   const searchRequestRef = React.useRef(0)
   const notesListRequestRef = React.useRef(0)
   const assetsRequestRef = React.useRef(0)
@@ -441,6 +477,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       ++assetsRequestRef.current
     }
   }, [activeWorkspaceId])
+  React.useLayoutEffect(() => {
+    // Selection/workspace commits retire old reads even across A → B → A.
+    ++openNoteRequestRef.current
+    return () => { ++openNoteRequestRef.current }
+  }, [activeWorkspaceId, selectedNoteId])
   const taskRequestRef = React.useRef(0)
   const taskCacheWorkspaceRef = React.useRef<string | null>(activeWorkspaceId ?? null)
   const taskCacheRef = React.useRef<Map<string, NoteTask[]>>(new Map())
@@ -724,22 +765,29 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const openNote = React.useCallback(async (noteId: string) => {
     if (!readsMountedRef.current || readWorkspaceRef.current !== activeWorkspaceId) return
     const request = ++openNoteRequestRef.current
-    const isCurrent = () => readsMountedRef.current && request === openNoteRequestRef.current
-      && workspaceIdRef.current === activeWorkspaceId && readWorkspaceRef.current === activeWorkspaceId
-    setNoteOpenError(null)
-    if (!activeWorkspaceId) {
+    const isCurrent = () => readsMountedRef.current && readWorkspaceRef.current === activeWorkspaceId
+      && request === openNoteRequestRef.current && workspaceIdRef.current === activeWorkspaceId
+    if (!isCurrent()) return
+    const clearNote = () => {
+      activeNoteIdRef.current = null
       setActiveNote(null)
       contentRef.current = ''
       dirtyRef.current = false
       setContent('')
       setDirty(false)
+      setSaving(false)
+    }
+    setNoteOpenError(null)
+    if (!activeWorkspaceId) {
+      clearNote()
+      setNoteOpenError({ workspaceId: activeWorkspaceId, noteId, code: 'CAPABILITY_UNAVAILABLE' })
       setLoading(false)
       return
     }
     const read = soupDocumentReadResult({ source: 'native', nativeId: noteId })
     if (!isClaimableLive(read.result)) {
+      clearNote()
       setNoteOpenError({ workspaceId: activeWorkspaceId, noteId, code: 'CAPABILITY_UNAVAILABLE' })
-      setActiveNote(null)
       setLoading(false)
       return
     }
@@ -780,15 +828,12 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       setTagDraft(note.tags.join(', '))
     } catch (error) {
       if (!isCurrent()) return
-      setNoteOpenError({ workspaceId: activeWorkspaceId, noteId, code: capabilityErrorCode(error) })
-      toast.error(error instanceof Error ? error.message : t('notes.toast.openFailed'))
-      activeNoteIdRef.current = null
-      setActiveNote(null)
-      contentRef.current = ''
-      dirtyRef.current = false
-      setContent('')
-      setDirty(false)
-      setSaving(false)
+      const code = capabilityErrorCode(error)
+      setNoteOpenError({ workspaceId: activeWorkspaceId, noteId, code })
+      if (code !== 'NOT_FOUND') toast.error(code === 'DOCUMENT_AUTHORITY_CHANGED'
+        ? t('notes.content.authorityChanged')
+        : error instanceof Error ? error.message : t('notes.toast.openFailed'))
+      clearNote()
     } finally {
       if (isCurrent()) setLoading(false)
     }
@@ -884,7 +929,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       refreshAssets()
       void refreshIndexHealth()
 
-      if (payload.noteId && payload.noteId === activeNoteIdRef.current) {
+      const selectedId = selectedNoteIdRef.current ? parseNoteBlockAddress(selectedNoteIdRef.current).noteId : null
+      if (payload.noteId && (payload.noteId === activeNoteIdRef.current || payload.noteId === selectedId)) {
         if (dirtyRef.current) {
           setExternalChange(payload)
         } else {
@@ -2103,7 +2149,7 @@ h1,h2,h3{margin-top:1.5em}
 
   const wikiMenu = showWikiMenu ? (
     <div
-      className="absolute z-20 w-80 rounded-[8px] border border-border/70 bg-popover p-1 shadow-strong"
+      className="absolute z-20 w-80 rounded-[var(--radius-overlay)] border border-border/70 bg-popover p-1 shadow-strong"
       data-testid="notes-wiki-menu"
       style={wikiAnchor
         ? { left: Math.max(4, wikiAnchor.x), top: wikiAnchor.y }
@@ -2115,7 +2161,7 @@ h1,h2,h3{margin-top:1.5em}
           key={note.id}
           onClick={() => completeWikiLink(note)}
           className={cn(
-            'w-full rounded-[6px] px-2 py-1.5 text-left hover:bg-foreground/[0.06]',
+            'w-full rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]',
             wikiMatches[wikiIndex]?.id === note.id && 'bg-foreground/[0.08]'
           )}
         >
@@ -2128,7 +2174,7 @@ h1,h2,h3{margin-top:1.5em}
           data-testid="notes-wiki-create"
           onClick={() => { void completeWikiCreate(wikiCreateLabel) }}
           className={cn(
-            'mt-1 flex w-full items-center gap-2 rounded-[6px] border-t border-border/60 px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
+            'mt-1 flex w-full items-center gap-2 rounded-[var(--radius-control)] border-t border-border/60 px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
             wikiCreateSelected && 'bg-foreground/[0.08]',
           )}
         >
@@ -2190,22 +2236,22 @@ h1,h2,h3{margin-top:1.5em}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t('notes.search.placeholder')}
                 aria-label={t('notes.search.placeholder')}
-                className="h-7 w-full rounded-[6px] border-0 bg-foreground/[0.06] pl-7 pr-2 text-xs outline-none placeholder:text-muted-foreground/70 focus:bg-foreground/[0.09]"
+                className="h-7 w-full rounded-[var(--radius-card)] border-0 bg-foreground/[0.06] pl-7 pr-2 text-xs outline-none placeholder:text-muted-foreground/70 focus:bg-foreground/[0.09]"
               />
             </div>
-            <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDaily()} title={t('notes.toolbar.daily')} aria-label={t('notes.toolbar.daily')}>
+            <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDaily()} title={t('notes.toolbar.daily')} aria-label={t('notes.toolbar.daily')}>
               <CalendarDays className="h-4 w-4 text-emerald-500" aria-hidden="true" />
             </button>
-            <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => setCreateFolderDialogOpen(true)} title={t('notes.toolbar.newFolder')} aria-label={t('notes.toolbar.newFolder')}>
+            <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => setCreateFolderDialogOpen(true)} title={t('notes.toolbar.newFolder')} aria-label={t('notes.toolbar.newFolder')}>
               <FolderPlus className="h-4 w-4 text-amber-500" aria-hidden="true" />
             </button>
-            <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}>
+            <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}>
               <FilePlus2 className="h-4 w-4 text-sky-500" aria-hidden="true" />
             </button>
           </div>
           {allTags.length > 0 && (
-            <details open className="group/notes-tags mt-2 rounded-[10px] bg-foreground/[0.03] p-1" data-notes-disclosure>
-              <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-[6px] px-2 py-1 text-[11px] font-medium text-muted-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+            <details open className="group/notes-tags mt-2 rounded-[var(--radius-card)] bg-foreground/[0.03] p-1" data-notes-disclosure>
+              <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-[var(--radius-control)] px-2 py-1 text-[11px] font-medium text-muted-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
                 <ChevronRight className="h-3 w-3 shrink-0 transition-transform duration-150 group-open/notes-tags:rotate-90 motion-reduce:transition-none" aria-hidden="true" />
                 <Tags className="h-3.5 w-3.5 shrink-0 text-violet-500" aria-hidden="true" />
                 <span className="flex-1">{t('notes.inspector.tags')}</span>
@@ -2215,7 +2261,7 @@ h1,h2,h3{margin-top:1.5em}
               <button
                 aria-pressed={!selectedTag}
                 className={cn(
-                  'flex w-full items-center rounded-[6px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
+                  'flex w-full items-center rounded-[var(--radius-control)] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
                   !selectedTag && 'bg-foreground/[0.08]'
                 )}
                 onClick={() => setSelectedTag(null)}
@@ -2227,7 +2273,7 @@ h1,h2,h3{margin-top:1.5em}
                   key={tag}
                   aria-pressed={selectedTag === tag}
                   className={cn(
-                    'flex w-full items-center rounded-[6px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
+                    'flex w-full items-center rounded-[var(--radius-control)] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
                     selectedTag === tag && 'bg-foreground/[0.08]'
                   )}
                   onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
@@ -2290,11 +2336,11 @@ h1,h2,h3{margin-top:1.5em}
           </div>
           {dailyDate && (
             <div className="mr-1 flex items-center gap-1">
-              <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(-1)} title={t('notes.toolbar.previousDaily')}>
+              <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(-1)} title={t('notes.toolbar.previousDaily')}>
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <span className="text-xs text-muted-foreground">{dailyDate}</span>
-              <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(1)} title={t('notes.toolbar.nextDaily')}>
+              <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(1)} title={t('notes.toolbar.nextDaily')}>
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
@@ -2304,7 +2350,7 @@ h1,h2,h3{margin-top:1.5em}
           {assetsUnavailable && <span role="status" data-testid="notes-assets-unavailable" data-error-code={assetsUnavailable.code} className="text-xs text-muted-foreground">{t('notes.toolbar.attachAsset')}: {t('common.unavailable')}</span>}
           <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} />
           <button
-            className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40"
+            className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40"
             onClick={() => void handleBoundChat()}
             disabled={!activeNote}
             title={t('notes.sideSession.newChat')}
@@ -2312,16 +2358,16 @@ h1,h2,h3{margin-top:1.5em}
           >
             <SquarePen className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote || Boolean(assetsUnavailable)} title={t('notes.toolbar.attachAsset')}>
+          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote || Boolean(assetsUnavailable)} title={t('notes.toolbar.attachAsset')}>
             <Paperclip className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title={t('notes.toolbar.exportPdf')}>
+          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title={t('notes.toolbar.exportPdf')}>
             <FileDown className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={openRenameDialog} disabled={!activeNote} title={t('notes.toolbar.rename')}>
+          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={openRenameDialog} disabled={!activeNote} title={t('notes.toolbar.rename')}>
             <Pencil className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[6px] hover:bg-destructive/10 hover:text-destructive text-muted-foreground grid place-items-center disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote} title={t('notes.toolbar.delete')}>
+          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-destructive/10 hover:text-destructive text-muted-foreground grid place-items-center disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote} title={t('notes.toolbar.delete')}>
             <Trash2 className="h-4 w-4" />
           </button>
           <span className={cn('w-20 text-right text-[11px]', saveError ? 'text-destructive' : 'text-muted-foreground')} title={t('notes.save.autosaveHint')}>
@@ -2406,14 +2452,8 @@ h1,h2,h3{margin-top:1.5em}
             <div className="h-full grid place-items-center">
               {loading ? (
                 <div className="text-sm text-muted-foreground">{t('notes.empty.loading')}</div>
-              ) : noteOpenError?.workspaceId === activeWorkspaceId && noteOpenError.noteId === (selectedNoteId ? parseNoteBlockAddress(selectedNoteId).noteId : null) ? (
-                <div className="flex max-w-md flex-col items-center gap-3 p-6 text-center text-sm text-muted-foreground"
-                  role="status" data-testid={noteOpenError.code === 'NOT_FOUND' ? 'route-note-missing' : 'route-note-unavailable'} data-error-code={noteOpenError.code}
-                  data-state={noteOpenError.code === 'NOT_FOUND' ? 'not-found' : 'unavailable'}>
-                  <p>{t(noteOpenError.code === 'NOT_FOUND' ? 'notes.route.notFound' : 'notes.route.unavailable')}</p>
-                  <Button variant="outline" onClick={() => void openNote(noteOpenError.noteId)}>{t('common.retry')}</Button>
-                  <Button variant="ghost" onClick={() => navigate(routes.view.notes())}>{t('common.backToList')}</Button>
-                </div>
+              ) : selectedReadError ? (
+                <SelectedNoteRecovery failure={selectedReadError} address={selectedNoteId} onRetry={() => void openNote(selectedReadError.noteId)} />
               ) : (
                 <div className="w-[420px] max-w-[calc(100%-48px)] p-4 text-center" data-notes-empty="">
                   <div className="text-sm font-medium">{t('notes.empty.noNote')}</div>
@@ -2744,7 +2784,7 @@ h1,h2,h3{margin-top:1.5em}
                 />
               ) : null}
               {richParts.frontmatter && (
-                <div className="mx-auto mt-4 max-w-[70ch] rounded-[6px] bg-foreground/[0.04] px-3 py-2 text-[11px] text-muted-foreground">
+                <div className="mx-auto mt-4 max-w-[70ch] rounded-[var(--radius-card)] bg-foreground/[0.04] px-3 py-2 text-[11px] text-muted-foreground">
                   {t('notes.frontmatterPreserved')}
                 </div>
               )}

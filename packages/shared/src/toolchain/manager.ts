@@ -273,56 +273,81 @@ export function createManager(
     return true;
   }
 
-  /** Inspect only bounded regular receipt files through their opened identity. */
-  function readInstallIdentity(file: string, maxBytes: number): string {
-    const fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW | fs.constants.O_NONBLOCK);
+  /** Bind bounded receipt bytes to their opened identity and canonical ancestors. */
+  function readInstallIdentity(logicalFile: string, maxBytes: number): string {
+    const directory = fs.realpathSync(path.dirname(logicalFile));
+    const file = path.join(directory, path.basename(logicalFile));
+    const ancestors: Array<{ path: string; dev: bigint; ino: bigint }> = [];
+    for (let parent = directory; ; parent = path.dirname(parent)) {
+      const stat = fs.lstatSync(parent, { bigint: true });
+      if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error('Invalid install identity');
+      ancestors.push({ path: parent, dev: stat.dev, ino: stat.ino });
+      if (parent === path.dirname(parent)) break;
+    }
+    const assertAncestors = () => {
+      if (fs.realpathSync(path.dirname(logicalFile)) !== directory) throw new Error('Install identity changed');
+      for (const ancestor of ancestors) {
+        const current = fs.lstatSync(ancestor.path, { bigint: true });
+        if (!current.isDirectory() || current.isSymbolicLink() || current.dev !== ancestor.dev || current.ino !== ancestor.ino
+          || fs.realpathSync(ancestor.path) !== ancestor.path) throw new Error('Install identity changed');
+      }
+    };
+    const fd = fs.openSync(file, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0) | (fs.constants.O_NONBLOCK ?? 0));
     try {
-      const opened = fs.fstatSync(fd);
-      const current = fs.lstatSync(file);
-      if (!opened.isFile() || !current.isFile() || opened.dev !== current.dev || opened.ino !== current.ino
-        || opened.size > maxBytes) throw new Error('Invalid install identity');
-      const bytes = Buffer.alloc(maxBytes + 1);
-      const length = fs.readSync(fd, bytes, 0, bytes.length, 0);
-      const after = fs.fstatSync(fd);
-      const leaf = fs.lstatSync(file);
-      if (length > maxBytes || after.size !== length || leaf.dev !== opened.dev || leaf.ino !== opened.ino)
-        throw new Error('Install identity changed');
-      return bytes.subarray(0, length).toString('utf8');
+      const opened = fs.fstatSync(fd, { bigint: true });
+      const same = (stat: typeof opened) => stat.isFile() && !stat.isSymbolicLink() && stat.dev === opened.dev && stat.ino === opened.ino
+        && stat.size === opened.size && stat.mtimeNs === opened.mtimeNs && stat.ctimeNs === opened.ctimeNs;
+      if (!opened.isFile() || opened.size > BigInt(maxBytes) || !same(fs.lstatSync(file, { bigint: true }))) throw new Error('Invalid install identity');
+      assertAncestors();
+      const bytes = Buffer.alloc(Number(opened.size)); let length = 0;
+      while (length < bytes.length) { const count = fs.readSync(fd, bytes, length, bytes.length - length, length); if (!count) break; length += count; }
+      if (length !== bytes.length || !same(fs.fstatSync(fd, { bigint: true })) || !same(fs.lstatSync(file, { bigint: true }))) throw new Error('Install identity changed');
+      assertAncestors();
+      return bytes.toString('utf8');
     } finally { fs.closeSync(fd); }
   }
 
-  /** A frozen git-npm version must retain its source pin and contained launcher. */
-  function hasUsableGitNpm(entry: ToolEntry, installedPath: string, installedVersion: string): boolean {
+  /** A frozen pin and each current layout must retain contained source and launcher. */
+  function hasUsableGitNpm(entry: ToolEntry, installedPath: string, installedVersion: string, requireCurrent = true): boolean {
     const lock = getGitLock(entry.name, installedVersion);
     if (!lock || path.resolve(installedPath) !== path.resolve(paths.toolchainDir, entry.name, installedVersion)) return false;
     const isWithin = (root: string, file: string): boolean => {
-      const relative = path.relative(root, file);
-      return !!relative && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
+      const rel = path.relative(root, file);
+      return !!rel && rel !== '..' && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel);
     };
     try {
-      const root = fs.realpathSync(paths.toolchainDir);
-      const versionRoot = fs.realpathSync(installedPath);
-      const sourceDir = path.join(installedPath, 'source');
-      const sourceRoot = fs.realpathSync(sourceDir);
-      if (!isWithin(root, versionRoot) || !isWithin(versionRoot, sourceRoot)) return false;
-      const marker = JSON.parse(readInstallIdentity(path.join(installedPath, TOOLCHAIN_INSTALL_COMPLETE_MARKER), 2048));
-      if (marker?.format !== 'git-npm-local-source-v1' || marker.repo !== lock.repo || marker.commit !== lock.commit) return false;
-      if (readInstallIdentity(path.join(sourceDir, '.git', 'HEAD'), 4096).trim() !== lock.commit) return false;
-      if (!['bun.lock', 'bun.lockb'].some((name) => {
-        try { return fs.lstatSync(path.join(sourceDir, name)).isFile(); } catch { return false; }
-      })) return false;
+      const root = fs.realpathSync(paths.toolchainDir), versionRoot = fs.realpathSync(installedPath);
+      if (!isWithin(root, versionRoot)) return false;
+      const layouts = [{ directory: installedPath, realRoot: versionRoot, allowVersionLinks: false }];
+      if (requireCurrent) {
+        const currentDir = path.join(paths.toolchainDir, entry.name, 'current');
+        const currentRoot = fs.realpathSync(currentDir), currentStat = fs.lstatSync(currentDir);
+        if (currentRoot !== versionRoot) {
+          if (platform !== 'win32-x64' || !currentStat.isDirectory() || currentStat.isSymbolicLink() || !isWithin(root, currentRoot)) return false;
+          layouts.push({ directory: currentDir, realRoot: currentRoot, allowVersionLinks: true });
+        }
+      }
       const win = platform === 'win32-x64';
-      return executableCandidates(entry.systemBinary ?? entry.name, win)
-        .filter((name) => !win || /\.(exe|com|cmd|bat)$/i.test(name))
-        .some((name) => {
+      const names = executableCandidates(entry.systemBinary ?? entry.name, win).filter(name => !win || /\.(exe|com|cmd|bat)$/i.test(name));
+      for (const layout of layouts) {
+        const layoutStat = fs.statSync(layout.directory, { bigint: true });
+        const sourceDir = path.join(layout.directory, 'source'), sourceRoot = fs.realpathSync(sourceDir);
+        if (!isWithin(layout.realRoot, sourceRoot)) return false;
+        const marker = JSON.parse(readInstallIdentity(path.join(layout.directory, TOOLCHAIN_INSTALL_COMPLETE_MARKER), 2048));
+        if (marker?.format !== 'git-npm-local-source-v1' || marker.repo !== lock.repo || marker.commit !== lock.commit) return false;
+        if (readInstallIdentity(path.join(sourceDir, '.git', 'HEAD'), 4096).trim() !== lock.commit) return false;
+        if (!['bun.lock', 'bun.lockb'].some(name => { try { return fs.lstatSync(path.join(sourceDir, name)).isFile(); } catch { return false; } })) return false;
+        if (!names.some(name => {
           try {
-            const launcher = path.join(installedPath, 'bin', name);
-            const realLauncher = fs.realpathSync(launcher);
-            if (!isWithin(versionRoot, realLauncher) || !fs.statSync(realLauncher).isFile()) return false;
-            fs.accessSync(launcher, win ? fs.constants.F_OK : fs.constants.X_OK);
-            return true;
+            const launcher = path.join(layout.directory, 'bin', name), realLauncher = fs.realpathSync(launcher);
+            if ((!isWithin(layout.realRoot, realLauncher) && !(layout.allowVersionLinks && isWithin(versionRoot, realLauncher))) || !fs.statSync(realLauncher).isFile()) return false;
+            fs.accessSync(launcher, win ? fs.constants.F_OK : fs.constants.X_OK); return true;
           } catch { return false; }
-        });
+        })) return false;
+        const after = fs.statSync(layout.directory, { bigint: true });
+        if (after.dev !== layoutStat.dev || after.ino !== layoutStat.ino || fs.realpathSync(layout.directory) !== layout.realRoot) return false;
+      }
+      return true;
     } catch { return false; }
   }
 
@@ -332,10 +357,6 @@ export function createManager(
     if (entry.kind === 'git-npm' && !hasUsableGitNpm(entry, installedPath, path.basename(installedPath))) return false;
     const currentDir = path.join(paths.toolchainDir, entry.name, 'current');
     if (!fs.existsSync(currentDir)) return false;
-    if (entry.kind === 'git-npm') {
-      try { if (fs.realpathSync(currentDir) !== fs.realpathSync(installedPath)) return false; }
-      catch { return false; }
-    }
     const win = platform === 'win32-x64';
     const filePresent = (binRel: string, executable = false): boolean => {
       try {
@@ -455,7 +476,7 @@ export function createManager(
         const git = await resolver.findExecutable('git');
         if (!git && !opts.gitNpmInstallImpl) throw new Error('git not found: git-npm tools require git (dependsOn git)');
         await (opts.gitNpmInstallImpl ?? defaultGitNpmInstall)({ entry, paths, versionDir, bun, git: git ?? undefined });
-        if (!hasUsableGitNpm(entry, versionDir, entry.version)) {
+        if (!hasUsableGitNpm(entry, versionDir, entry.version, false)) {
           throw new Error(`git-npm installation is incomplete: ${entry.name}@${entry.version}`);
         }
         await flipCurrent(toolRoot, entry.version, versionDir);

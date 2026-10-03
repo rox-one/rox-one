@@ -44,6 +44,6 @@ describe('Zen Shell visual tokens (ZS-02)', () => {
 
   it('stops scenic translucent --background from painting zen documents', () => {
     expect(rendererCss).toContain('html[data-shell-style="zen"][data-scenic] [data-shell-role="content"]')
-    expect(rendererCss).toContain('--background: var(--shell-content)')
+    expect(rendererCss).toContain('--background: rgb(from var(--canvas) r g b / 1)')
   })
 })

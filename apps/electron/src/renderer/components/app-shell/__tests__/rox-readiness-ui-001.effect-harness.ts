@@ -2,9 +2,14 @@ import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 import { pathToFileURL } from 'node:url'
 
+const compiledEffects = new Map<string, string>()
+
 /** Compile the production effect closure; no copy of its logic or module-wide mocks. */
 export function rendererEffect(path: URL, needle: string, bindings: Record<string, unknown>) {
   const source = readFileSync(path, 'utf8')
+  const cacheKey = `${source}\n${needle}`
+  const cached = compiledEffects.get(cacheKey)
+  if (cached) return Function(...Object.keys(bindings), cached)(...Object.values(bindings)) as undefined | (() => void)
   const file = ts.createSourceFile('AppShell.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
   const effects: ts.Expression[] = []
   function visit(node: ts.Node) {
@@ -19,6 +24,7 @@ export function rendererEffect(path: URL, needle: string, bindings: Record<strin
   const javascript = ts.transpileModule(`const effect = ${effects[0]!.getText(file)}; return effect()`, {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
   }).outputText
+  compiledEffects.set(cacheKey, javascript)
   return Function(...Object.keys(bindings), javascript)(...Object.values(bindings)) as undefined | (() => void)
 }
 

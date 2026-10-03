@@ -1,0 +1,1 @@
+2026-10-03: User authorizes complete source repair, any GitHub writes and merge into main. Prior file ownership and no-push/no-PR/no-main limits are superseded for UI-001 integration. Native/provider/full target acceptance remains evidence-bound. Preserve other worktrees and all prior failure history. No further delegation is retained.

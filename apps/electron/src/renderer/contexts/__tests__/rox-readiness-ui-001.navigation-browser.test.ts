@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { build } from 'esbuild'
 import { chromium, type Browser, type BrowserContext, type Page } from '@playwright/test'
+import { launchOwnedFixtureBrowser } from '../../components/app-shell/__tests__/rox-readiness-ui-001.browser-owner'
 
 // Mounted production NavigationProvider + real React/Jotai/history. Only backend
 // data and IPC transport are fixtures; native product proof lives in the separate
@@ -11,6 +12,7 @@ import { chromium, type Browser, type BrowserContext, type Page } from '@playwri
 const enabled = process.env.ROX_UI001_BROWSER_TEST === '1'
 const root = join(import.meta.dir, '../../../../../..')
 let server: Server, browser: Browser, context: BrowserContext, page: Page, base: string
+let closeBrowser: (() => Promise<void>) | undefined
 
 async function fixtureBundle() {
   // A separately bundled immutable fixture and external CDP endpoint keep
@@ -53,10 +55,10 @@ async function fixtureBundle() {
     const onSwitchWorkspaceBySlug=next=>{if(switchMode==='missing')return false;if(switchMode==='reject')return Promise.reject(new Error('fixture switch rejected'));if(switchMode==='hold')return new Promise((resolve,reject)=>switches.push({next,resolve,reject}));slug=next;ws='ws-'+next;remote=ws==='ws-a'?'remote-a':null;render();return true};
     const onCreateSession=workspaceId=>new Promise(resolve=>createRequests.push({workspaceId,resolve}));
     const onInputChange=(id,input)=>{inputs.push({id,input})};
-    function render() { root.render(React.createElement(Provider,{store},React.createElement(NavigationProvider,{
+    function render() { const tree=React.createElement(Provider,{store},React.createElement(NavigationProvider,{
       workspaceId:ws, workspaceSlug:slug, remoteWorkspaceId:remote,
       isReady:ready,isSessionsReady:sessionsReady,onSwitchWorkspaceBySlug,onCreateSession,onInputChange,
-    },React.createElement(Probe)))); }
+    },React.createElement(Probe)));root.render(new URLSearchParams(location.search).get('strict')==='1'?React.createElement(React.StrictMode,null,tree):tree); }
     window.ui001nav={
       navigate: (route,options)=>state.navigate(route,options),
       deep: view=>deepLink({view}),
@@ -122,17 +124,18 @@ async function focusedHistorySwitchFailure(outcome: 'false' | 'reject') {
     if(outcome==='reject')ui.rejectSwitch(0)
     else ui.resolveSwitch(0,false)
   },outcome)
-  await page.waitForFunction(()=>{
-    const params=new URL(location.href).searchParams
-    return params.get('ws')==='a'&&params.get('route')==='notes/note/a'
-  })
+  await page.waitForTimeout(100)
+  // Current unknown-workspace ownership intentionally retains the requested
+  // address. Recovery uses a real local history request, never a normal
+  // navigate() call that would independently clear the stuck switch flag.
+  expect(new URL(page.url()).searchParams.get('ws')).toBe('gone')
   const current=await snapshot()
   expect(current.ws).toBe('ws-a')
-  expect(current.nav.details.noteId).toBe('a')
+  expect(current.nav.navigator).toBe('unavailable')
   expect(current.panels.map((panel: {route: string})=>panel.route)).toEqual(['notes/note/a','home'])
-  // Resume another actual focus intent, without navigate() clearing the flags.
-  await page.evaluate(()=>(window as any).ui001nav.focus(1));await routeIs('home')
-  await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
+  await popCurrentWorkspacePanels('home');await routeIs('home')
+  await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('notes/note/a')
+  await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='notes/note/a')
   expect(new URL(page.url()).searchParams.get('ws')).toBe('a')
 }
 
@@ -147,13 +150,17 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     })
     await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve))
     base='http://127.0.0.1:'+(server.address() as any).port
-    browser=process.env.ROX_UI001_CHROMIUM_CDP_URL
-      ? await chromium.connectOverCDP(process.env.ROX_UI001_CHROMIUM_CDP_URL)
-      : await chromium.launch({executablePath:process.env.ROX_UI001_CHROMIUM_EXECUTABLE,channel:process.env.ROX_UI001_CHROMIUM_EXECUTABLE?undefined:'chrome',headless:true})
+    if (process.env.ROX_UI001_CHROMIUM_CDP_URL) {
+      browser=await chromium.connectOverCDP(process.env.ROX_UI001_CHROMIUM_CDP_URL)
+      closeBrowser=()=>browser.close()
+    } else {
+      const owned=await launchOwnedFixtureBrowser({executablePath:process.env.ROX_UI001_CHROMIUM_EXECUTABLE,headless:true,args:['--disable-gpu']})
+      browser=owned.browser;closeBrowser=owned.close
+    }
   },30000)
   beforeEach(async()=>{context=await browser.newContext();page=await context.newPage();page.setDefaultTimeout(3000)})
   afterEach(async()=>{await context?.close()},15000)
-  afterAll(async()=>{await browser?.close();server?.closeAllConnections();if(server)await new Promise<void>(resolve=>server.close(()=>resolve()))},15000)
+  afterAll(async()=>{try{await closeBrowser?.()}finally{server?.closeAllConnections();if(server)await new Promise<void>(resolve=>server.close(()=>resolve()))}},15000)
 
   browserTest('initial missing entity never auto-selects an existing chat and survives reload',async()=>{
     await page.goto(base+'/?ws=a&route=allSessions%2Fsession%2Fdeleted')
@@ -168,7 +175,7 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
   })
 
   browserTest('unknown and malformed routes preserve raw addresses on initial load/reload/deep link',async()=>{
-    for(const route of ['unknown/entity','allSessions/session/%E0%A4%A','notes/note/id/extra','action/copy?text=unsafe']){
+    for(const route of ['unknown/entity','allSessions/session/%E0%A4%A','action/copy?text=unsafe']){
       await page.goto(base+'/?ws=a&route='+encodeURIComponent(route));await routeIs(route)
       expect((await snapshot()).nav).toMatchObject({navigator:'unavailable',route})
       await page.reload();await routeIs(route)
@@ -177,6 +184,17 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.evaluate(()=>(window as any).ui001nav.deep('other/raw%ZZ'))
     await routeIs('other/raw%ZZ')
     expect(new URL(page.url()).searchParams.get('route')).toBe('other/raw%ZZ')
+  })
+
+  browserTest('nested note IDs retain their complete identity through reload and deep link',async()=>{
+    const route='notes/note/id/extra'
+    await page.goto(base+'/?ws=a&route='+encodeURIComponent(route));await routeIs(route)
+    expect((await snapshot()).nav.details.noteId).toBe('id/extra')
+    await page.reload();await routeIs(route)
+    expect((await snapshot()).nav.details.noteId).toBe('id/extra')
+    await page.evaluate(()=>(window as any).ui001nav.deep('notes/note/folder/other'))
+    await routeIs('notes/note/folder/other')
+    expect((await snapshot()).nav.details.noteId).toBe('folder/other')
   })
 
   browserTest('legacy known-root incomplete shapes remain unavailable through auto-selection effects',async()=>{
@@ -231,13 +249,14 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.evaluate(()=>(window as any).ui001nav.workspace('ws-a','a'));await routeIs('notes/note/note-a')
   })
 
-  browserTest('missing or rejected workspace history targets release suppression and retain current selection',async()=>{
+  browserTest('missing or rejected workspace history targets retain unavailable address until explicit local recovery',async()=>{
     await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
     for (const mode of ['missing','reject']) {
       await page.evaluate(mode=>{(window as any).ui001nav.switchMode(mode);(window as any).ui001nav.pop('?ws=gone&route=notes%2Fnote%2Fforeign')},mode)
-      await page.waitForFunction(()=>new URL(location.href).searchParams.get('ws')==='a')
+      await page.waitForFunction(()=>JSON.parse(document.querySelector('output')!.textContent!).nav.navigator==='unavailable')
+      expect(new URL(page.url()).searchParams.get('ws')).toBe('gone')
       expect((await snapshot()).ws).toBe('ws-a')
-      expect((await snapshot()).nav.details.noteId).toBe('a')
+      expect((await snapshot()).nav.navigator).toBe('unavailable')
       await page.evaluate(()=>(window as any).ui001nav.navigate('home'));await routeIs('home')
       await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
       await page.evaluate(()=>(window as any).ui001nav.navigate('notes/note/a'));await routeIs('notes/note/a')
@@ -261,6 +280,63 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await focusedHistorySwitchFailure('false')
   })
 
+  browserTest('explicit navigation before the workspace restore frame pushes its own history entry',async()=>{
+    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
+    // Finish the initial restore before withholding the actual workspace
+    // reconciliation frame. No timer or navigation callback is replaced.
+    await page.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))))
+    await page.evaluate(()=>{
+      const held={native:window.requestAnimationFrame,callbacks:[] as FrameRequestCallback[]}
+      ;(window as any).__ui001HeldRestoreFrames=held
+      window.requestAnimationFrame=callback=>held.callbacks.push(callback)
+    })
+    try {
+      await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'))
+      // Use timer polling while RAF is intentionally held, so the observation
+      // does not depend on the callback whose race is being exercised.
+      await page.waitForFunction(()=>document.querySelector('output')?.getAttribute('data-workspace')==='ws-b'
+        &&document.querySelector('output')?.getAttribute('data-route')==='allSessions/session/first-b',null,{polling:50})
+      const restored=await page.evaluate(()=>({
+        sequence:history.state.seq,route:new URL(location.href).searchParams.get('route'),
+        workspace:new URL(location.href).searchParams.get('ws'),
+        heldFrames:(window as any).__ui001HeldRestoreFrames.callbacks.length,
+      }))
+      expect(restored.workspace).toBe('b')
+      expect(restored.route).toBe('allSessions/session/first-b')
+      expect(restored.heldFrames).toBeGreaterThan(0)
+      await page.evaluate(async()=>{
+        await (window as any).ui001nav.navigate('sources/source/two')
+        await Promise.resolve()
+      })
+      await page.waitForFunction(()=>document.querySelector('output')?.getAttribute('data-route')==='sources/source/two',null,{polling:50})
+      // The old workspace frame is still withheld. Its release must not be
+      // required to claim an explicit user navigation in browser history.
+      expect(await page.evaluate(()=>history.state.seq)).toBe(restored.sequence+1)
+      expect(new URL(page.url()).searchParams.get('route')).toBe('sources/source/two')
+      expect(new URL(page.url()).searchParams.get('ws')).toBe('b')
+      expect((await snapshot()).nav.details.sourceSlug).toBe('two')
+      await page.goBack()
+      await page.waitForFunction(()=>document.querySelector('output')?.getAttribute('data-route')==='allSessions/session/first-b',null,{polling:50})
+      expect(new URL(page.url()).searchParams.get('ws')).toBe('b')
+      expect(new URL(page.url()).searchParams.get('route')).toBe(restored.route)
+      expect(await page.evaluate(()=>history.state.seq)).toBe(restored.sequence)
+      await page.goForward()
+      await page.waitForFunction(()=>document.querySelector('output')?.getAttribute('data-route')==='sources/source/two',null,{polling:50})
+      expect(new URL(page.url()).searchParams.get('ws')).toBe('b')
+      expect(new URL(page.url()).searchParams.get('route')).toBe('sources/source/two')
+      expect(await page.evaluate(()=>history.state.seq)).toBe(restored.sequence+1)
+      expect((await snapshot()).nav.details.sourceSlug).toBe('two')
+    } finally {
+      await page.evaluate(()=>{
+        const held=(window as any).__ui001HeldRestoreFrames
+        if(!held)return
+        window.requestAnimationFrame=held.native
+        delete (window as any).__ui001HeldRestoreFrames
+        held.callbacks.splice(0).forEach((callback:FrameRequestCallback)=>callback(performance.now()))
+      })
+    }
+  })
+
   browserTest('history-switch regression: rejected reply after focus-only change releases suppression',async()=>{
     await focusedHistorySwitchFailure('reject')
   })
@@ -277,12 +353,11 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.waitForTimeout(100)
     expect(new URL(page.url()).searchParams.get('ws')).toBe('newer')
     expect(new URL(page.url()).searchParams.get('route')).toBe('notes/note/new-target')
-    expect((await snapshot()).nav.details.noteId).toBe('a')
+    expect((await snapshot()).nav.navigator).toBe('unavailable')
     await page.evaluate(()=>(window as any).ui001nav.resolveSwitch(1,false))
-    await page.waitForFunction(()=>{
-      const params=new URL(location.href).searchParams
-      return params.get('ws')==='a'&&params.get('route')==='notes/note/a'
-    })
+    await page.waitForTimeout(100)
+    expect(new URL(page.url()).searchParams.get('ws')).toBe('newer')
+    expect(new URL(page.url()).searchParams.get('route')).toBe('notes/note/new-target')
     await page.evaluate(()=>(window as any).ui001nav.navigate('home'));await routeIs('home')
     await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
   })
@@ -346,12 +421,11 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.evaluate(()=>(window as any).ui001nav.remote('remote-new'))
     await page.waitForFunction(()=>(window as any).ui001nav.deepListeners().at(-1)?.remoteWorkspaceId==='remote-new')
     await page.evaluate(()=>(window as any).ui001nav.resolveSwitch(0,false))
-    await page.waitForFunction(()=>{
-      const params=new URL(location.href).searchParams
-      return params.get('ws')==='a'&&params.get('route')==='notes/note/a'
-    })
+    await page.waitForTimeout(100)
+    expect(new URL(page.url()).searchParams.get('ws')).toBe('gone')
+    expect(new URL(page.url()).searchParams.get('route')).toBe('notes/note/foreign')
     expect((await snapshot()).ws).toBe('ws-a')
-    expect((await snapshot()).nav.details.noteId).toBe('a')
+    expect((await snapshot()).nav.navigator).toBe('unavailable')
     await page.evaluate(()=>(window as any).ui001nav.navigate('home'));await routeIs('home')
     await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
   })
@@ -383,6 +457,30 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='notes/note/a')
     await page.evaluate(()=>(window as any).ui001nav.focus(1));await routeIs(target)
     await page.waitForFunction(route=>new URL(location.href).searchParams.get('route')===route,target)
+  })
+
+  browserTest('actual StrictMode mount releases restoration without losing later focus history',async()=>{
+    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa&strict=1');await routeIs('notes/note/a')
+    await page.evaluate(()=>(window as any).ui001nav.navigate('home',{newPanel:true}));await routeIs('home')
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
+    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('notes/note/a')
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='notes/note/a')
+    await page.goBack();await routeIs('home')
+    expect((await snapshot()).panels.map((panel:{route:string})=>panel.route)).toEqual(['notes/note/a','home'])
+  })
+
+  browserTest('actual StrictMode mount preserves a pending foreign history request through focus and late refusal',async()=>{
+    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa&strict=1');await routeIs('notes/note/a')
+    await page.evaluate(()=>(window as any).ui001nav.navigate('home',{newPanel:true}));await routeIs('home')
+    await page.evaluate(()=>{const ui=(window as any).ui001nav;ui.switchMode('hold');ui.pop('?ws=gone&route=notes%2Fnote%2Fforeign&strict=1')})
+    await page.waitForFunction(()=>(window as any).ui001nav.pendingSwitches().length===1)
+    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('notes/note/a')
+    await page.evaluate(()=>(window as any).ui001nav.resolveSwitch(0,false));await page.waitForTimeout(100)
+    expect(new URL(page.url()).searchParams.get('ws')).toBe('gone')
+    expect((await snapshot()).nav.navigator).toBe('unavailable')
+    await popCurrentWorkspacePanels('home');await routeIs('home')
+    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('notes/note/a')
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='notes/note/a')
   })
 
   browserTest('canonical page broadcasts beat stale list replies and former workspace replies are ignored',async()=>{

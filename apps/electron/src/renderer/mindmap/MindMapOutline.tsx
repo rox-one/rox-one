@@ -73,7 +73,7 @@ export function MindMapOutline({
               if (node.source) onNavigate?.(node.source)
             }}
             className={cn(
-              'min-w-0 flex-1 flex items-center gap-1 rounded-[8px] px-1 py-1 text-left text-sm transition-colors',
+              'min-w-0 flex-1 flex items-center gap-1 rounded-[var(--radius-control)] px-1 py-1 text-left text-sm transition-colors',
               selected
                 ? 'bg-foreground/10 text-foreground'
                 : 'text-foreground/90 hover:bg-foreground/5',

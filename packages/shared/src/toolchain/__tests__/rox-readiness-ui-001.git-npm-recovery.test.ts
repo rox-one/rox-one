@@ -1,11 +1,14 @@
-import { afterEach, describe, expect, it } from 'bun:test';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { afterEach, describe, expect, it, spyOn } from 'bun:test';
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import * as nativeFs from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { getGitLock } from '../git-locks';
 import { createManager, type GitNpmInstallContext } from '../manager';
+import { createResolver } from '../resolver';
 import { toolchainPaths } from '../manifest';
 import { TOOLCHAIN_INSTALL_COMPLETE_MARKER, type ToolEntry } from '../types';
+import { captureTestCommand } from '../../../../../scripts/test-all';
 
 const entry: ToolEntry = {
   name: 'gbrain', version: '15b9863d1363', kind: 'git-npm', tier: 'default-on',
@@ -13,7 +16,7 @@ const entry: ToolEntry = {
 };
 const lock = getGitLock(entry.name, entry.version)!;
 const fixtures: string[] = [];
-const launcherName = process.platform === 'win32' ? 'gbrain.cmd' : 'gbrain';
+const launcherName = process.platform === 'win32' ? 'gbrain.exe' : 'gbrain';
 
 afterEach(() => {
   for (const fixture of fixtures.splice(0)) rmSync(fixture, { recursive: true, force: true });
@@ -26,17 +29,16 @@ function makeFixture() {
   const versionDir = join(paths.toolchainDir, entry.name, entry.version);
   const bunBin = join(base, 'bunbin');
   mkdirSync(bunBin);
-  writeFileSync(join(bunBin, 'bun'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+  writeFileSync(join(bunBin, process.platform === 'win32' ? 'bun.exe' : 'bun'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
   return { base, paths, versionDir, bunBin };
 }
 
 function writeState(fixture: ReturnType<typeof makeFixture>, installedPath = fixture.versionDir) {
   mkdirSync(fixture.paths.toolchainDir, { recursive: true });
-  // These corruption controls have a real current pointer: missing source/pin
-  // must be detected independently of the existing launcher/current checks.
-  const current = join(fixture.paths.toolchainDir, entry.name, 'current');
-  if (existsSync(fixture.versionDir) && !existsSync(current))
-    symlinkSync(fixture.versionDir, current, process.platform === 'win32' ? 'junction' : 'dir');
+  // Keep generic launcher readiness satisfied so pin/marker corruption itself
+  // is what makes these same-version fixtures unavailable.
+  symlinkSync(installedPath, join(fixture.paths.toolchainDir, entry.name, 'current'),
+    process.platform === 'win32' ? 'junction' : 'dir');
   writeFileSync(fixture.paths.stateFile, JSON.stringify({ tools: {
     gbrain: { installedVersion: entry.version, installedPath },
   } }));
@@ -63,6 +65,85 @@ function makeManager(fixture: ReturnType<typeof makeFixture>, install: (ctx: Git
 }
 
 describe('UI-001 git-npm same-version recovery', () => {
+  it.skipIf(process.platform === 'win32')('repairs a current selector pointing at a different runtime before advertising the pinned version ready', async () => {
+    const fixture = makeFixture();
+    usableInstall(fixture.versionDir);
+    const previous = join(fixture.paths.toolchainDir, entry.name, 'previous-runtime');
+    usableInstall(previous);
+    writeFileSync(join(previous, 'bin', launcherName), '#!/bin/sh\nprintf "old-current-runtime\\n"\n', { mode: 0o755 });
+    writeState(fixture);
+    const current = join(fixture.paths.toolchainDir, entry.name, 'current');
+    rmSync(current);
+    symlinkSync(previous, current, 'dir');
+    const resolver = createResolver(fixture.paths, { manifest: [entry], pathEnv: '', windowsBootstrap: null });
+    const oldLauncher = (await resolver.findExecutable('gbrain'))!;
+    expect(realpathSync(oldLauncher)).toBe(realpathSync(join(previous, 'bin', launcherName)));
+    const oldResult = await captureTestCommand([oldLauncher]);
+    expect(oldResult.exitCode).toBe(0);
+    expect(oldResult.stdout).toBe('old-current-runtime\n');
+    let installs = 0;
+    const installer = async ({ versionDir }: GitNpmInstallContext) => {
+      installs++;
+      usableInstall(versionDir);
+      writeFileSync(join(versionDir, 'bin', launcherName), '#!/bin/sh\nprintf "new-pinned-runtime\\n"\n', { mode: 0o755 });
+    };
+    const manager = makeManager(fixture, installer);
+    expect((await manager.status())[0]?.phase).toBe('missing');
+    expect((await manager.ensureAll({ background: false }))[0]?.phase).toBe('ready');
+    expect(installs).toBe(1);
+    const selected = (await resolver.findExecutable('gbrain'))!;
+    expect(realpathSync(selected)).toBe(realpathSync(join(fixture.versionDir, 'bin', launcherName)));
+    const result = await captureTestCommand([selected]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe('new-pinned-runtime\n');
+    const reloaded = makeManager(fixture, installer);
+    expect((await reloaded.status())[0]?.phase).toBe('ready');
+    await reloaded.ensureAll({ background: false });
+    expect(installs).toBe(1);
+  });
+
+  it('accepts a completed Windows current copy only with the same retained source pin and completion marker', async () => {
+    const fixture = makeFixture();
+    usableInstall(fixture.versionDir);
+    renameSync(join(fixture.versionDir, 'bin', launcherName), join(fixture.versionDir, 'bin', 'gbrain.cmd'));
+    writeState(fixture);
+    const current = join(fixture.paths.toolchainDir, entry.name, 'current');
+    rmSync(current);
+    cpSync(fixture.versionDir, current, { recursive: true, dereference: true });
+    const manager = createManager(fixture.paths, { manifest: [entry], platform: 'win32-x64', pathEnv: '', windowsBootstrap: null });
+    expect((await manager.status())[0]?.phase).toBe('ready');
+    writeFileSync(join(current, TOOLCHAIN_INSTALL_COMPLETE_MARKER), JSON.stringify({
+      format: 'git-npm-local-source-v1', repo: lock.repo, commit: 'b'.repeat(40),
+    }));
+    expect((await manager.status())[0]?.phase).toBe('missing');
+    writeFileSync(join(current, TOOLCHAIN_INSTALL_COMPLETE_MARKER), JSON.stringify({
+      format: 'git-npm-local-source-v1', repo: lock.repo, commit: lock.commit,
+    }));
+    writeFileSync(join(current, 'source', '.git', 'HEAD'), `${'b'.repeat(40)}\n`);
+    expect((await manager.status())[0]?.phase).toBe('missing');
+  });
+
+  it('Windows current copy allows only launcher links into its same verified version', async () => {
+    const fixture=makeFixture();usableInstall(fixture.versionDir);
+    renameSync(join(fixture.versionDir,'bin',launcherName),join(fixture.versionDir,'bin','gbrain.cmd'));writeState(fixture);
+    const current=join(fixture.paths.toolchainDir,entry.name,'current');rmSync(current);cpSync(fixture.versionDir,current,{recursive:true,dereference:true});
+    const launcher=join(current,'bin','gbrain.cmd');rmSync(launcher);symlinkSync(join(fixture.versionDir,'bin','gbrain.cmd'),launcher);
+    const manager=createManager(fixture.paths,{manifest:[entry],platform:'win32-x64',pathEnv:'',windowsBootstrap:null});expect((await manager.status())[0]?.phase).toBe('ready');
+    const foreign=join(fixture.paths.toolchainDir,entry.name,'other-version');usableInstall(foreign);rmSync(launcher);symlinkSync(join(foreign,'bin',launcherName),launcher);expect((await manager.status())[0]?.phase).toBe('missing');
+  });
+
+  it('a replaced version ancestor cannot supply foreign pin receipts before any bytes', async () => {
+    const fixture=makeFixture();usableInstall(fixture.versionDir);writeState(fixture);
+    const marker=realpathSync(join(fixture.versionDir,TOOLCHAIN_INSTALL_COMPLETE_MARKER));
+    const original=nativeFs.openSync;let attacked=false;
+    const open=spyOn(nativeFs,'openSync').mockImplementation(((...args:Parameters<typeof nativeFs.openSync>)=>{
+      if(!attacked&&String(args[0]).endsWith(TOOLCHAIN_INSTALL_COMPLETE_MARKER)&&realpathSync(String(args[0]))===marker){attacked=true;renameSync(fixture.versionDir,fixture.versionDir+'-retired');usableInstall(fixture.versionDir)}
+      return original(...args);
+    }) as typeof nativeFs.openSync);
+    const read=spyOn(nativeFs,'readSync');
+    try{expect((await makeManager(fixture,async()=>{}).status())[0]?.phase).toBe('missing');expect(attacked).toBe(true);expect(read).toHaveBeenCalledTimes(0)}finally{open.mockRestore();read.mockRestore()}
+  });
+
   it('marks a dangling temporary launcher missing, reinstalls, and stays ready after manager reload', async () => {
     const fixture = makeFixture();
     mkdirSync(join(fixture.versionDir, 'bin'), { recursive: true });

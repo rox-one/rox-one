@@ -27,7 +27,7 @@ function fixture(panels: PanelStackEntry[], focused: string, compact = false) {
  const calls: ViewRoute[] = []
  const draftAtom = atom(new Map([['chat-a', 'unsent text']]))
  const args = { useCallback: (fn: unknown) => fn, focusServicePanel: (id: AppNavDestinationId) => store.set(focusServicePanelAtom, id),
-  APP_NAV_DESTINATIONS_BY_ID, routes, isAutoCompact: compact, navigate: (route: ViewRoute) => calls.push(route) }
+  APP_NAV_DESTINATIONS_BY_ID, routes, isAutoCompact: compact, navState: { navigator: 'sessions' }, navigate: (route: ViewRoute) => calls.push(route) }
  const callbacks = new Function(...Object.keys(args), program)(...Object.values(args)) as Record<string, (...args: any[]) => void>
  return { store, callbacks, calls, draftAtom }
 }
@@ -40,7 +40,7 @@ describe('actual AppShell service selection over current panel owner', () => {
  f.callbacks.handleAllSessionsClick!(); expect(f.store.get(focusedPanelIdAtom)).toBe('chat'); expect(f.calls).toEqual([])
  })
  test('malformed selected addresses cannot block the valid root fallback or hide a supported service panel', () => {
-  for (const raw of ['notes/note/a/extra', 'notes/note/%E0%A4%A', 'notes//a']) {
+  for (const raw of ['notes/note/a/%GG', 'notes/note/%E0%A4%A', 'notes//a']) {
    const invalid = panel('invalid', raw as ViewRoute)
    expect(findServicePanel([invalid], 'invalid', 'notes')).toBeUndefined()
    const unavailable = fixture([invalid], 'invalid')
@@ -74,4 +74,9 @@ describe('actual AppShell service selection over current panel owner', () => {
   expect(f.calls).toEqual([...ids.map(id => APP_NAV_DESTINATIONS_BY_ID[id].route!()), routes.view.connections()])
   expect(source).toContain("onClick: () => handleServiceClick('connections')")
  })
+ test('a complete legacy nested note ID focuses its own panel rather than a different note prefix', () => {
+  const nested = panel('nested', 'notes/note/folder/name' as ViewRoute)
+  expect(findServicePanel([nested], 'nested', 'notes')).toBe(nested)
+ })
+
 })

@@ -1,0 +1,12 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/sessions/pocket-session-resource-owner.test.ts:
+(pass) actual SessionManager rejects foreign concurrent and title owners, freezes queue and fences restored bindings [3786.53ms]
+
+packages/server-core/src/sessions/pocket-helper-owner.test.ts:
+(pass) actual draft helper selects the RPC caller before backend creation and rejects stale callers before query [5509.47ms]
+
+ 2 pass
+ 0 fail
+ 26 expect() calls
+Ran 2 tests across 2 files. [10.64s]

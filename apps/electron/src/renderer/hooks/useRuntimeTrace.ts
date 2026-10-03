@@ -24,8 +24,8 @@ export function useRuntimeTrace(query: RuntimeTraceQuery & { legacyMessages?: re
   useEffect(()=>{void refresh()},[refresh])
   useEffect(()=>{if(rootRunId&&!rootRunId.startsWith('legacy:')&&state.contiguousSeq<state.highestSeq)void recoverRuntimeTrace(store,{workspaceId:query.workspaceId,sessionId:query.sessionId,rootRunId},api).catch(()=>{})},[store,query.workspaceId,query.sessionId,rootRunId,state.contiguousSeq,state.highestSeq,api])
   const readPayload=useCallback((payloadQuery:RuntimePayloadQuery)=>{
-    if(payloadQuery.workspaceId!==query.workspaceId||payloadQuery.sessionId!==query.sessionId && payloadQuery.sessionId!==session.canonicalSessionId)throw new Error('runtimeMap.invalidResponse')
-    return api.readRuntimeTracePayload(payloadQuery).then(page=>{if(!isRuntimePayloadPage(page)||page.offset !== (payloadQuery.offset ?? 0)||page.nextOffset !== undefined && page.nextOffset<=page.offset)throw new Error('runtimeMap.invalidResponse');return page})
+    if(payloadQuery.workspaceId!==query.workspaceId||(payloadQuery.sessionId!==query.sessionId && payloadQuery.sessionId!==session.canonicalSessionId))throw new Error('runtimeMap.invalidResponse')
+    return api.readRuntimeTracePayload(payloadQuery).then(page=>{if(!isRuntimePayloadPage(page)||page.offset !== (payloadQuery.offset ?? 0)||(page.nextOffset !== undefined && page.nextOffset<=page.offset))throw new Error('runtimeMap.invalidResponse');return page})
   },[api,query.workspaceId,query.sessionId,session.canonicalSessionId])
   return {state,graph,events,runs:session.runs,coverage,rootRunId,loading:session.loading,error:session.error,refresh,reload:refresh,readPayload}
 }

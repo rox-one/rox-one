@@ -476,7 +476,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
           onChange={(event) => setQuery(event.currentTarget.value)}
           placeholder={t('inbox.searchPlaceholder', { defaultValue: 'Search inbox' })}
           aria-label={t('inbox.searchPlaceholder', { defaultValue: 'Search inbox' })}
-          className="min-w-[120px] flex-1 rounded-[5px] border border-foreground/10 bg-background px-2 py-1 text-[12px] outline-none focus:border-accent"
+          className="min-w-[120px] flex-1 rounded-[var(--radius-control)] border border-foreground/10 bg-background px-2 py-1 text-[12px] outline-none focus:border-accent"
         />
         <Button variant={preferences.signalFilter === 'all' ? 'primary' : 'ghost'} onClick={() => setPreferences((p) => ({ ...p, signalFilter: 'all' }))}>{t('inbox.view.all')}</Button>
         <Button variant={preferences.signalFilter === 'signal' ? 'primary' : 'ghost'} onClick={() => setPreferences((p) => ({ ...p, signalFilter: 'signal' }))}>{t('inbox.view.decisions')}</Button>
@@ -522,13 +522,13 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
       </div>
       ) : null}
       {Object.keys(bulkFailures).length > 0 ? (
-        <div role="alert" className="mx-3 mt-1 rounded-[6px] bg-destructive/10 px-2.5 py-1.5 text-[11px] text-destructive">
+        <div role="alert" className="mx-3 mt-1 rounded-[var(--radius-card)] bg-destructive/10 px-2.5 py-1.5 text-[11px] text-destructive">
           {t('inbox.failedIds', { items: Object.keys(bulkFailures).join(', '), defaultValue: `Failed items: ${Object.keys(bulkFailures).join(', ')}` })}
           {Object.entries(bulkFailures).map(([id, error]) => <div key={id}>{id}: {error}</div>)}
         </div>
       ) : null}
       {errorEntries.length ? (
-        <div role="alert" className="mx-3 mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-warning/10 px-3 py-2 text-[12px] text-text-secondary" data-testid="inbox-source-error">
+        <div role="alert" className="mx-3 mt-2 flex flex-wrap items-center gap-2 rounded-[var(--radius-control)] bg-warning/10 px-3 py-2 text-[12px] text-text-secondary" data-testid="inbox-source-error">
           <span className="min-w-0 flex-1">{t('inbox.sourceError', { sources: errorEntries.map(([key]) => t(key === 'mail' ? 'inbox.kind.mail' : `inbox.source.${key}`)).join(', ') })}</span>
           <Button variant="ghost" disabled={refreshing} onClick={() => void refreshInbox()}>{t('common.retry')}</Button>
         </div>
@@ -585,7 +585,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
         return (
           <>
             <p className="text-[13px] text-text-secondary">{req.reason || req.description}</p>
-            {req.command ? <pre className="mt-2 overflow-x-auto rounded-[6px] bg-foreground/[0.05] p-2.5 font-mono text-[12px]">{req.command}</pre> : null}
+            {req.command ? <pre className="mt-2 overflow-x-auto rounded-[var(--radius-card)] bg-foreground/[0.05] p-2.5 font-mono text-[12px]">{req.command}</pre> : null}
             <p className="pt-2 text-[12px] text-text-muted">{t('inbox.permission.tool', { tool: req.toolName })}</p>
             <div className="flex flex-wrap gap-1.5 pt-3">
               <Button variant="primary" data-testid="inbox-allow" disabled={!respond || isBusy} onClick={() => void run(item, () => respond?.(item.sessionId!, req.requestId, true, false))}>{t('inbox.permission.allow')}</Button>

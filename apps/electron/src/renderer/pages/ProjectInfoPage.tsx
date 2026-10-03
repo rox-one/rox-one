@@ -75,6 +75,8 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const projectSummaryRef = useRef<HTMLDivElement | null>(null)
+  const projectReadsMountedRef = projectMountedRef
+  const projectReadRevisionRef = projectRequestRef
   // The selected detail may load while the already-ready Projects API remains
   // usable. A missing reader or an actual failed read still blocks honestly.
   useEffect(() => typeof window.electronAPI?.getProject !== 'function' || error
@@ -119,6 +121,14 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const [newCycleStart, setNewCycleStart] = useState('')
   const [newCycleEnd, setNewCycleEnd] = useState('')
   const [newCycleTimezone, setNewCycleTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone)
+
+  React.useLayoutEffect(() => {
+    projectReadsMountedRef.current = true
+    return () => {
+      projectReadsMountedRef.current = false
+      projectReadRevisionRef.current += 1
+    }
+  }, [workspaceId, projectSlug])
 
   const selectedCycle = useMemo(
     () => okrCycles.find((cycle) => cycle.id === selectedCycleId) ?? null,
@@ -272,8 +282,9 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
 
   // Load project (and re-load on broadcast)
   const loadProject = useCallback(async () => {
-    if (!projectMountedRef.current) return
-    const request = ++projectRequestRef.current
+    const request = ++projectReadRevisionRef.current
+    const isCurrent = () => projectReadsMountedRef.current && request === projectReadRevisionRef.current
+    if (!isCurrent()) return
     if (!workspaceId) {
       setProject(null)
       setError(t('common.unavailable'))
@@ -292,7 +303,7 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
     setError(null)
     try {
       const result = await window.electronAPI.getProject(workspaceId, projectSlug)
-      if (request !== projectRequestRef.current) return
+      if (!isCurrent()) return
       if (!result) {
         setError(t('projectInfo.notFound'))
         setProject(null)
@@ -306,12 +317,12 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
       setEditDetails(loaded.config.details ?? '')
       setEditColor(loaded.config.color ?? '')
     } catch (err) {
-      if (request !== projectRequestRef.current) return
+      if (!isCurrent()) return
       console.error('[ProjectInfoPage] Failed to load project:', err)
       setProject(null)
-      setError(err instanceof Error ? err.message : String(err))
+      setError(t('common.unavailable'))
     } finally {
-      if (request === projectRequestRef.current) setLoading(false)
+      if (isCurrent()) setLoading(false)
     }
   }, [workspaceId, projectSlug, t])
 
@@ -540,6 +551,20 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
     }
   }, [workspaceId, project, loadProject, t])
 
+  if (!loading && error) {
+    return (
+      <Info_Page>
+        <Info_Page.Header title={projectSlug} />
+        <div role="status" aria-live="polite" data-testid="project-surface-unavailable" className="flex flex-1 flex-col items-center justify-center gap-3 p-4 text-center text-muted-foreground">
+          <p className="text-sm">{error}</p>
+          <button type="button" data-testid="project-surface-retry" onClick={() => void loadProject()} className="rounded-md border border-border px-3 py-1 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            {t('common.retry')}
+          </button>
+        </div>
+      </Info_Page>
+    )
+  }
+
   return (
     <Info_Page
       loading={loading}
@@ -633,7 +658,7 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
                     onChange={(event) => setNewTaskTitle(event.target.value)}
                     placeholder={t('tasks.quickEntryPlaceholder')}
                     aria-label={t('tasks.newTask')}
-                    className="h-7 w-40 rounded-[6px] border border-foreground/10 bg-transparent px-2 text-xs"
+                    className="h-7 w-40 rounded-[var(--radius-card)] border border-foreground/10 bg-transparent px-2 text-xs"
                   />
                   <Button size="sm" variant="ghost" type="submit" data-testid="project-new-task">
                     <Plus className="h-3.5 w-3.5 mr-1" />
@@ -997,7 +1022,7 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
               title={t('projectInfo.tabAssets')}
               actions={
                 <label
-                  className="inline-flex items-center gap-1 h-7 px-3 text-xs font-medium rounded-[6px] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 h-7 px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors cursor-pointer"
                 >
                   <Upload className="h-3.5 w-3.5" />
                   {t('projectInfo.uploadAssets')}
@@ -1080,7 +1105,7 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
                   hint={t('projectInfo.iconHint')}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-foreground/5 ring-1 ring-border/50">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-control)] bg-foreground/5 ring-1 ring-border/50">
                       <ProjectIcon
                         workspaceId={workspaceId}
                         projectSlug={project.config.slug}
@@ -1090,7 +1115,7 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
                         iconClassName="h-5 w-5 text-foreground/60"
                       />
                     </div>
-                    <label className="inline-flex items-center gap-1 h-7 px-3 text-xs font-medium rounded-[6px] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors cursor-pointer">
+                    <label className="inline-flex items-center gap-1 h-7 px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors cursor-pointer">
                       <ImagePlus className="h-3.5 w-3.5" />
                       {t('projectInfo.iconUpload')}
                       <input

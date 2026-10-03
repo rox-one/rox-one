@@ -1645,6 +1645,7 @@ export interface ElectronAPI {
     connected: boolean
     authBaseUrl: string
     user: { id?: string; email?: string; name?: string } | null
+    account?: import('@rox/shared/auth').RoxAccountSnapshot | null
     connectError?: string | null
     connectExpiresAt?: number | null
   }>
@@ -1918,6 +1919,7 @@ export interface ElectronAPI {
 
   // Skills
   getSkills(workspaceId: string, workingDirectory?: string): Promise<LoadedSkill[]>
+  getSkillDetails(workspaceId: string, skillSlug: string, workingDirectory?: string): Promise<LoadedSkill | null>
   getSkillFiles?(workspaceId: string, skillSlug: string): Promise<SkillFile[]>
   updateSkill(
     workspaceId: string,
@@ -3068,6 +3070,10 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
 }
 
 const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null => {
+  // Retain saved keys produced before versioned unavailable-route keys.
+  if (key.startsWith('unavailable/')) {
+    return { navigator: 'unavailable', route: decodeURIComponent(key.slice('unavailable/'.length)), details: null }
+  }
   if (key.startsWith('unavailable:')) {
     const legacy = /^unavailable:(unsupported-route|invalid-encoding|workspace-mismatch):(.*)$/.exec(key)
     if (legacy) return { navigator: 'unavailable', reason: legacy[1] as UnavailableNavigationState['reason'], route: decodeURIComponent(legacy[2]) }

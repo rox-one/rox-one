@@ -1,0 +1,7 @@
+# Runtime trace origin recovery — bounded collector acceptance
+
+Preserved source #1444 at c2e8f07b5cb8a1b1659781e1fe4dd4d0f0207727 contributes origin-pinned passive observation and explicit artifact evidence. The seven production files retain current own-data privacy projections and scoped read-only journal authority. Delayed or ambiguous untagged observations cannot be reassigned to a successor run. Later-registered secrets are masked on journal readback, including quoted/serialized credentials.
+
+Four independent suites pass 53 tests / 247 assertions. Core and server-core Node22 typechecks pass. The original 54-test source run fails 18 controls; one is intentionally dependent on the TaskRunner producer, whose fixture is retained outside this collector-only PR. Its initial four test-type diagnostics are archived. This PR does not claim end-to-end producer acceptance: pr_scout separately owns real SessionManager, gateway, TaskRunner and native observer wiring, preserving suppliedExecution as the third processEvent argument and current captured authority guards. Renderer extension is a separate historical-worker dependency.
+
+The adjacent log archives retain before and after results and type attempts. verification.json binds the qualified production bytes and limits. Original source branches remain intact. No execution authority, credentials, installed desktop, live provider, native Windows or full runtime program acceptance is inferred from these checks.

@@ -58,7 +58,7 @@ export function NotesAIMenu({ activeNote, onAction, disabled }: NotesAIMenuProps
   return (
     <div className="flex items-center">
       <button
-        className="flex h-7 items-center gap-1.5 rounded-l-[6px] bg-foreground/[0.04] px-2.5 text-xs hover:bg-foreground/[0.06] disabled:pointer-events-none disabled:opacity-40"
+        className="flex h-7 items-center gap-1.5 rounded-l-[var(--radius-control)] bg-foreground/[0.04] px-2.5 text-xs hover:bg-foreground/[0.06] disabled:pointer-events-none disabled:opacity-40"
         onClick={() => onAction(primary.mode)}
         disabled={isDisabled}
         title={t('notes.ai.extractTasksTitle')}
@@ -69,7 +69,7 @@ export function NotesAIMenu({ activeNote, onAction, disabled }: NotesAIMenuProps
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            className="ml-px flex h-7 items-center rounded-r-[6px] bg-foreground/[0.04] px-1.5 hover:bg-foreground/[0.06] disabled:pointer-events-none disabled:opacity-40"
+            className="ml-px flex h-7 items-center rounded-r-[var(--radius-control)] bg-foreground/[0.04] px-1.5 hover:bg-foreground/[0.06] disabled:pointer-events-none disabled:opacity-40"
             disabled={isDisabled}
             title={t('notes.ai.moreActions')}
           >

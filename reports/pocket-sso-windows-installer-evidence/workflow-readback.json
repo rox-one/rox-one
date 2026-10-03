@@ -1,0 +1,151 @@
+{
+  "conclusion": "",
+  "headSha": "aa80de1b44d12a3fbbf425ce5aca8709617972ca",
+  "jobs": [
+    {
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "databaseId": 111284688231,
+      "name": "validate",
+      "startedAt": "2026-10-03T20:17:16Z",
+      "status": "queued",
+      "steps": [],
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37150994181/job/111284688231"
+    },
+    {
+      "completedAt": "2026-10-03T20:27:56Z",
+      "conclusion": "success",
+      "databaseId": 111284688368,
+      "name": "package (windows-2025, win32, x64)",
+      "startedAt": "2026-10-03T20:20:31Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-03T20:20:33Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-03T20:20:32Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T20:20:45Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-10-03T20:20:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T20:20:50Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-node@v4",
+          "number": 3,
+          "startedAt": "2026-10-03T20:20:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T20:20:51Z",
+          "conclusion": "success",
+          "name": "Clear prior native proof receipt",
+          "number": 4,
+          "startedAt": "2026-10-03T20:20:50Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T20:20:53Z",
+          "conclusion": "success",
+          "name": "Run oven-sh/setup-bun@v2",
+          "number": 5,
+          "startedAt": "2026-10-03T20:20:51Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T20:24:22Z",
+          "conclusion": "success",
+          "name": "Run bun install --frozen-lockfile",
+          "number": 6,
+          "startedAt": "2026-10-03T20:20:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T20:27:42Z",
+          "conclusion": "success",
+          "name": "Run bun scripts/desktop-release.ts",
+          "number": 7,
+          "startedAt": "2026-10-03T20:24:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T20:27:43Z",
+          "conclusion": "success",
+          "name": "Actual Keychain or DPAPI store restart",
+          "number": 8,
+          "startedAt": "2026-10-03T20:27:42Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T20:27:44Z",
+          "conclusion": "success",
+          "name": "Native vault diagnostic receipt",
+          "number": 9,
+          "startedAt": "2026-10-03T20:27:43Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T20:27:53Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 10,
+          "startedAt": "2026-10-03T20:27:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T20:27:53Z",
+          "conclusion": "success",
+          "name": "Post Run oven-sh/setup-bun@v2",
+          "number": 18,
+          "startedAt": "2026-10-03T20:27:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T20:27:53Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-node@v4",
+          "number": 19,
+          "startedAt": "2026-10-03T20:27:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T20:27:55Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 20,
+          "startedAt": "2026-10-03T20:27:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T20:27:55Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 21,
+          "startedAt": "2026-10-03T20:27:55Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37150994181/job/111284688368"
+    },
+    {
+      "completedAt": "0001-01-01T00:00:00Z",
+      "conclusion": "",
+      "databaseId": 111284688372,
+      "name": "package (macos-15, darwin, arm64)",
+      "startedAt": "2026-10-03T20:17:16Z",
+      "status": "queued",
+      "steps": [],
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37150994181/job/111284688372"
+    }
+  ],
+  "status": "queued",
+  "url": "https://github.com/rox-one/rox-one/actions/runs/37150994181"
+}

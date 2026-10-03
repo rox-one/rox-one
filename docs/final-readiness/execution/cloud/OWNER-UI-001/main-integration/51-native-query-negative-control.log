@@ -1,0 +1,21 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/main/__tests__/deep-link-parse.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+error: Cannot find module '@rox/shared/identity' from '/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui001-original-deep-link.ts'
+-------------------------------
+
+
+apps/electron/src/main/__tests__/deep-link-routing.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+-------------------------------
+
+
+ 0 pass
+ 2 fail
+ 2 errors
+Ran 2 tests across 2 files. [273.00ms]
