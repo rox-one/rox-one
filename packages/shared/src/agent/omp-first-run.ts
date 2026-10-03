@@ -256,6 +256,7 @@ export function prepareOmpRoxRuntimeConfig(input: {
   bundleRoot?: string;
   homeDir?: string;
   configFiles?: string;
+  disabledPacks?: string[];
 }): { agentDir: string; env: Record<string, string>; dispose: () => void } {
   mkdirSync(input.runtimeRoot, { recursive: true, mode: 0o700 });
   const agentDir = mkdtempSync(join(input.runtimeRoot, 'rox-omp-'));
@@ -288,8 +289,8 @@ export function prepareOmpRoxRuntimeConfig(input: {
     config.providers = { ...config.providers, autoThinkingMaxEffort: 'max' };
     config.eval = { ...config.eval, js: true, tools: { ...config.eval?.tools, enabled: true } };
     config.skills = {
-      ...config.skills, enabled: true, enableSkillCommands: true, enablePiUser: true, enableAgentsUser: true,
-      customDirectories: [...new Set([...(Array.isArray(config.skills?.customDirectories) ? config.skills.customDirectories : []), join(sourceDir, 'skills')])],
+      ...config.skills, enabled: true, enableSkillCommands: true, enablePiUser: true, enableAgentsUser: false,
+      enableCodexUser: false, enableClaudeUser: false,
     };
     writeFileSync(join(agentDir, 'config.yml'), stringifyYaml(config), { mode: 0o600 });
     // Explicit overlays are evaluated after project settings by native OMP.
@@ -299,12 +300,15 @@ export function prepareOmpRoxRuntimeConfig(input: {
       magicKeywords: config.magicKeywords,
       providers: { autoThinkingMaxEffort: 'max' },
       eval: { js: true, tools: { enabled: true } },
-      skills: { enabled: true, enableSkillCommands: true, enablePiUser: true, enableAgentsUser: true },
+      skills: { enabled: true, enableSkillCommands: true, enablePiUser: true, enableAgentsUser: false, enableCodexUser: false, enableClaudeUser: false },
       // ROX supplies its host tools and pinned offline skill tier. Scanning
       // unrelated foreign plugin catalogs can block every process startup.
       disabledProviders: [...new Set([...(Array.isArray(config.disabledProviders) ? config.disabledProviders : []), 'claude-plugins', 'agent-plugins', 'omp-plugins'])],
     }), { mode: 0o600 });
-    linkBundledSkillsForOmp({ bundleRoot: input.bundleRoot, targetRoot: join(agentDir, 'skills') });
+    linkBundledSkillsForOmp({
+      bundleRoot: input.bundleRoot, targetRoot: join(agentDir, 'skills'), disabled: input.disabledPacks,
+      userSkillRoots: [join(sourceDir, 'skills'), join(input.homeDir ?? homedir(), '.agents', 'skills')],
+    });
     // OMP stores image/tool blobs relative to the agent profile. Keep that store
     // across process restarts so a restored transcript retains its attachments.
     const existingBlobs = join(sourceDir, 'blobs');

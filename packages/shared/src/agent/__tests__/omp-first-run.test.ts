@@ -236,6 +236,29 @@ describe('private public Rox runtime catalog', () => {
     expect(readFileSync(join(source, 'config.yaml'), 'utf8')).toBe(config);
     runtime.dispose();
   });
+
+  it('preserves authored skill priority and does not rediscover disabled global bundle copies', () => {
+    const home = tempHome();
+    const bundle = join(home, 'bundle');
+    for (const [pack, slug, description] of [['enabled', 'alpha', 'Bundled alpha'], ['disabled', 'beta', 'Bundled beta']]) {
+      mkdirSync(join(bundle, pack!, slug!), { recursive: true });
+      writeFileSync(join(bundle, pack!, slug!, 'SKILL.md'), `---\nname: ${slug}\ndescription: ${description}\n---\nBody`);
+    }
+    writeFileSync(join(bundle, 'SKILLS.lock'), JSON.stringify({ packs: [{ slug: 'enabled', skills: ['alpha'] }, { slug: 'disabled', skills: ['beta'] }] }));
+    const shared = join(home, '.agents', 'skills');
+    for (const slug of ['alpha', 'beta']) {
+      mkdirSync(join(shared, slug), { recursive: true });
+      writeFileSync(join(shared, slug, 'SKILL.md'), `---\nname: ${slug}\ndescription: User ${slug}\n---\nUser instructions`);
+    }
+    const runtime = prepareOmpRoxRuntimeConfig({ runtimeRoot: join(home, 'runs'), homeDir: home, bundleRoot: bundle, disabledPacks: ['disabled'] });
+    expect(readFileSync(join(runtime.agentDir, 'skills', 'alpha', 'SKILL.md'), 'utf8')).toContain('User instructions');
+    expect(existsSync(join(runtime.agentDir, 'skills', 'beta'))).toBe(false);
+    expect(readFileSync(join(shared, 'beta', 'SKILL.md'), 'utf8')).toContain('User instructions');
+    const policy = parseYaml(readFileSync(join(runtime.agentDir, 'rox-runtime-policy.yml'), 'utf8'));
+    expect(policy.skills.enableAgentsUser).toBe(false);
+    runtime.dispose();
+    expect(readFileSync(join(shared, 'alpha', 'SKILL.md'), 'utf8')).toContain('User instructions');
+  });
 });
 
 describe('credential step copy is shared by UI and CLI', () => {

@@ -422,7 +422,7 @@
         "ultragoal"
       ],
       "nativeOmpAvailable": true,
-      "prerequisites": "Goal workflow instructions are discovered; upstream Codex-specific hooks are not OMP extensions."
+      "prerequisites": "Upstream instructions require the omo ultragoal CLI and Codex create_goal/get_goal tooling. These are not native OMP tools or part of this managed runtime; the genuine skill is discoverable, but that external runner is not automatically operational."
     },
     {
       "request": "ultrathink skill",
@@ -860,6 +860,23 @@
     "missing": [],
     "skillMetadataBytes": 106756,
     "paidModelPromptSent": false,
-    "installationOrExternalServicesVerified": false
+    "installationOrExternalServicesVerified": false,
+    "policy": {
+      "nativeVersion": "18.4.12",
+      "rpc": "get_available_commands",
+      "success": true,
+      "userOverrideCommand": {
+        "name": "skill:alpha",
+        "description": "USER_OVERRIDE_SENTINEL_alpha",
+        "input": {
+          "hint": "arguments"
+        },
+        "source": "skill"
+      },
+      "disabledSkillCommandAbsent": true,
+      "disabledOriginalFilePreserved": true,
+      "noHostGlobalChanges": true,
+      "paidModelPromptSent": false
+    }
   }
 }

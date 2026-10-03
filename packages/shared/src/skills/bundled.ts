@@ -193,24 +193,39 @@ function readSkillsLock(bundleRoot: string): Map<string, SkillsLockPack> {
  * rather than copying every script/data file for every process restart.
  * OMP's other discovery tiers retain the user's authored skills and overrides.
  */
-export function linkBundledSkillsForOmp(options: EnsureBundledSkillsOptions & { targetRoot: string }): string[] {
+export function linkBundledSkillsForOmp(options: EnsureBundledSkillsOptions & { targetRoot: string; userSkillRoots?: string[] }): string[] {
   const bundleRoot = options.bundleRoot ?? getBundledAssetsDir('skills');
-  if (!bundleRoot || !existsSync(bundleRoot)) return [];
   const disabled = new Set(options.disabled ?? loadStoredConfig()?.bundledSkills?.disabled ?? []);
-  const lock = readSkillsLock(bundleRoot);
+  const lock = bundleRoot && existsSync(bundleRoot) ? readSkillsLock(bundleRoot) : new Map<string, SkillsLockPack>();
   mkdirSync(options.targetRoot, { recursive: true });
-  const linked: string[] = [];
+  const linked = new Set<string>();
+  const hidden = new Set([...lock.values()].filter(pack => disabled.has(pack.slug)).flatMap(pack => pack.skills ?? []));
   for (const pack of [...lock.keys()].sort()) {
     if (disabled.has(pack)) continue;
-    const packDir = join(bundleRoot, pack);
+    const packDir = join(bundleRoot!, pack);
     for (const skill of listPackSkillDirs(packDir)) {
       const target = join(options.targetRoot, skill);
       if (existsSync(target)) throw new Error(`Bundled OMP skill collision: ${skill}`);
       symlinkSync(join(packDir, skill), target, process.platform === 'win32' ? 'junction' : 'dir');
-      linked.push(skill);
+      linked.add(skill);
     }
   }
-  return linked;
+  // The profile is our disposable directory; replacing these links never
+  // writes to the user's global skill directories. Later authored tiers win,
+  // matching ROX's global OMP -> shared -> workspace discovery precedence.
+  for (const root of options.userSkillRoots ?? []) {
+    if (!existsSync(root)) continue;
+    for (const entry of readdirSync(root, { withFileTypes: true })) {
+      if (entry.name.startsWith('.') || hidden.has(entry.name)) continue;
+      const source = join(root, entry.name);
+      if (!existsSync(join(source, 'SKILL.md'))) continue;
+      const target = join(options.targetRoot, entry.name);
+      rmSync(target, { recursive: true, force: true });
+      symlinkSync(source, target, process.platform === 'win32' ? 'junction' : 'dir');
+      linked.add(entry.name);
+    }
+  }
+  return [...linked];
 }
 
 function readPackState(targetRoot: string, packSlug: string): BundledPackState | null {

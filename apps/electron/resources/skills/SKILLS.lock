@@ -30,8 +30,8 @@
       "origin": "https://github.com/vercel-labs/agent-skills",
       "commit": "7c180d9044c9ae2b442b567aad4e42a28dd5ed62",
       "license": "MIT",
-      "licenseFile": null,
-      "licenseNote": "Upstream repo has no LICENSE file; MIT stated in README License section.",
+      "licenseFile": "LICENSE",
+      "licenseNote": "MIT declared in immutable upstream README; upstream publishes no separate copyright notice/LICENSE. Standard MIT grant retained with attributed source.",
       "skills": [
         "composition-patterns",
         "deploy-to-vercel",

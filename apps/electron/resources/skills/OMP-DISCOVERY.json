@@ -4294,5 +4294,22 @@
       "sha256": "62abcd0934da29bb7c6793a8ee434010c73e994feba41c1a2a41321a73237fc2",
       "available": true
     }
-  ]
+  ],
+  "policy": {
+    "nativeVersion": "18.4.12",
+    "rpc": "get_available_commands",
+    "success": true,
+    "userOverrideCommand": {
+      "name": "skill:alpha",
+      "description": "USER_OVERRIDE_SENTINEL_alpha",
+      "input": {
+        "hint": "arguments"
+      },
+      "source": "skill"
+    },
+    "disabledSkillCommandAbsent": true,
+    "disabledOriginalFilePreserved": true,
+    "noHostGlobalChanges": true,
+    "paidModelPromptSent": false
+  }
 }
