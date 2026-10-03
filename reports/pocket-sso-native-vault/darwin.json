@@ -1,0 +1,21 @@
+{
+  "receipts": [
+    {
+      "phase": "write",
+      "platform": "darwin",
+      "electron": "39.2.7",
+      "encryptionAvailable": true,
+      "backend": "Keychain",
+      "passed": true
+    },
+    {
+      "phase": "read",
+      "platform": "darwin",
+      "electron": "39.2.7",
+      "encryptionAvailable": true,
+      "backend": "Keychain",
+      "passed": true
+    }
+  ],
+  "scope": "Actual OS encryption and store restart; no OAuth, provider or GUI acceptance."
+}

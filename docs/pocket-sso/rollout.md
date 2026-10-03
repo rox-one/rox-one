@@ -1,6 +1,6 @@
 # Pocket SSO rollout record
 
-This record distinguishes preparation, deployed services and platform acceptance. No production identity or monetary migration has been applied yet.
+This record distinguishes preparation, deployed services and platform acceptance. Public Pocket cutover and native end-to-end acceptance remain pending. The website owner is applying the compatible feature-disabled rollout; see its revision-bound rollout report for current production state.
 
 ## Infrastructure facts refreshed 2026-10-03
 
@@ -34,8 +34,14 @@ Pocket configuration and backups must preserve the encryption key used for signi
 
 ## Review and source integration gates
 
-Swiss initial independent review reproduced seven P1 defects in deployment packaging, accepted key transports, physical provider retries, auxiliary memory sends, rejected-reserve recovery, revoke operation replay and partial SSE usage. The original failure report is retained in the Swiss repository. F1/F2 repair `66d745c` passed 19 tests against a freshly applied maintained facade artifact; F3–F7 remain under repair and require revision-bound independent rechecks before build/deploy acceptance.
+Swiss initial independent review reproduced seven P1 defects. Subsequent negative controls exposed reserve error-shape, usage and truncated-SSE defects; final source `90d7ef20` has passed fresh bounded recheck, 53 Core/facade tests and 6 native boundary tests. Its Core image was built as `sha256:ff33c447ca178c89dac098ec2cd30b2d5ea3c5d1b715beef66b4d0c27f298513`; the full gateway image is still being built. No Swiss production replacement has occurred.
 
-Desktop implementation began at accepted `c9b7330`; current remote main readback is `a3754c9eaab274b2f99d6a931659b0cac91a9993`. Integrate its runtime/credential/native-content changes and rerun affected boundaries before delivery. Existing dirty/conflicted release checkouts remain untouched.
+Desktop merged remote main `a3754c9e` at `a37ad010`, preserving unrelated dirty checkouts. Independent review reproduced and then verified repair of four P1 ownership/logout/domain defects. Final repair source `354a483a` passed 54 targeted tests; the fresh independent recheck passed 30 tests. The real core registration path, trusted helper ownership and process/domain isolation are included in the release CI gate.
 
-Existing observability collector sources were frozen against live `core-20261003-reservation-r16`, source-only archive SHA256 `7ece6451a212297f526591a22f49163876475d324f2394793f700bc9c5938c73`. Candidate collector commit `2e7a97a` adds an independent operational audit migration and leased claim/commit/ACK pull worker; local PG tests pass on pinned Bun1.3.14. Production delivery and independent review remain pending.
+A real Electron 39.2.7 process on macOS encrypted an isolated synthetic account/logout receipt/binding through Keychain. A second process decrypted the persisted store, verified hashes and cleared it. Final probe scripts passed independent strict type/source/runner review. This proves the OS store boundary only; Pocket browser login, provider charge and Windows DPAPI still require their separate receipts. Release CI now runs this OS store probe on both packaging platforms and includes its metadata receipt with the candidate artifact.
+
+Website repair `6559588f` closes legacy API-key and device-v1 escape paths for Pocket identities. Fresh actual Better Auth/PostgreSQL review passed the namespace and billing wire negatives; its report is retained in the website checkout. The live feature-disabled rollout is pinned to documentation-equivalent `13ee25f`, with encrypted backup and full isolated restore before schema mutation.
+
+The isolated cross-backend runner passed 18 recorded acceptance cases with 11 physical local provider-fixture HTTP sends. Actual website PostgreSQL reserve/settle, Swiss Fastify/SQLite key authority, durable dispatch/outbox and native executors were exercised. Every socket read a committed positive hold before its response; an independent process reopened SQLite and recovered sent/unsent states without replay. Compiled Next routes, deployed ingress, real provider and native GUI remain separate acceptance gates.
+
+Existing observability collector sources were frozen against live `core-20261003-reservation-r16`, source-only archive SHA256 `7ece6451a212297f526591a22f49163876475d324f2394793f700bc9c5938c73`. Final source `55d1ab00` passed fresh producer→collector PostgreSQL commit→exact ACK proof with actual website and Swiss producers. Encrypted collector backup and full isolated restore passed; collector production delivery remains pending.
