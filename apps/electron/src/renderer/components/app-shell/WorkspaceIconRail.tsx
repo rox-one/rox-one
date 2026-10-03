@@ -19,7 +19,9 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { fullscreenOverlayOpenAtom } from "@/atoms/overlay";
 import { CrossfadeAvatar } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipTrigger, PremiumMenuSelect } from "@rox/ui";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@rox/ui";
 import { WorkspaceCreationScreen, type WorkspaceCreationSuccess } from "@/components/workspace";
 import { waitForTransportConnected } from "@/lib/transport-wait";
 import { useTransportConnectionState } from "@/hooks/useTransportConnectionState";
@@ -89,6 +91,8 @@ export function WorkspaceIconRail({
 	const [draftLabel, setDraftLabel] = React.useState("");
 	const [draftKind, setDraftKind] = React.useState<RailLinkKind>("knowledge");
 	const [draftTarget, setDraftTarget] = React.useState("");
+	const addLinkTitleId = React.useId();
+	const draftLabelRef = React.useRef<HTMLInputElement>(null);
 
 	React.useEffect(() => {
 		setRailLinks(loadRailLinks(activeWorkspaceId));
@@ -459,77 +463,96 @@ export function WorkspaceIconRail({
 							);
 						})}
 
-						{showAddLink ? (
-							<div className="w-full rounded-xl border border-border/50 bg-background/90 p-2 shadow-minimal">
-								<div className="mb-1.5 flex items-center justify-between gap-1">
-									<span className="text-[10px] font-medium text-muted-foreground">
-										{t("workspaceRail.addLink")}
-									</span>
-									<button
-										type="button"
-										onClick={() => setShowAddLink(false)}
-										className="rounded p-0.5 text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
-										aria-label={t("common.cancel")}
-									>
-										<X className="h-3 w-3" />
-									</button>
-								</div>
-								<input
-									value={draftLabel}
-									onChange={(e) => setDraftLabel(e.target.value)}
-									placeholder={t("workspaceRail.linkLabelPlaceholder")}
-									className="mb-1.5 w-full rounded-md border border-border/50 bg-background px-1.5 py-1 text-[11px] outline-none focus:border-accent/50"
-								/>
-								<PremiumMenuSelect
-									aria-label={t("workspaceRail.addLink")}
-									className="mb-1.5 h-7 w-full max-w-none text-[11px]"
-									items={[
-										{ id: "knowledge", label: t("workspaceRail.kindKnowledge") },
-										{ id: "notes", label: t("workspaceRail.kindNotes") },
-										{ id: "external", label: t("workspaceRail.kindExternal") },
-									]}
-									placeholder={t("workspaceRail.addLink")}
-									selectedId={draftKind}
-									onSelect={(item) => setDraftKind(item.id as RailLinkKind)}
-								/>
-								{(draftKind === "external" || draftKind === "notes") && (
-									<input
-										value={draftTarget}
-										onChange={(e) => setDraftTarget(e.target.value)}
-										placeholder={
-											draftKind === "external"
-												? t("workspaceRail.linkUrlPlaceholder")
-												: t("workspaceRail.notesPathPlaceholder")
-										}
-										className="mb-1.5 w-full rounded-md border border-border/50 bg-background px-1.5 py-1 text-[11px] outline-none focus:border-accent/50"
-									/>
-								)}
-								<button
-									type="button"
-									onClick={handleAddLink}
-									className="flex w-full items-center justify-center gap-1 rounded-md bg-accent/15 px-1.5 py-1 text-[11px] font-medium text-accent hover:bg-accent/25"
-								>
-									<Link2 className="h-3 w-3" />
-									{t("common.save")}
-								</button>
-							</div>
-						) : (
+						<Popover open={showAddLink} onOpenChange={setShowAddLink}>
 							<Tooltip>
-								<TooltipTrigger asChild>
-									<button
-										type="button"
-										aria-label={t("workspaceRail.addLink")}
-										onClick={() => setShowAddLink(true)}
-										className="flex h-10 w-10 items-center justify-center rounded-[12px] text-muted-foreground transition-colors duration-150 hover:bg-foreground/7 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-									>
-										<Plus className="h-4 w-4" />
-									</button>
-								</TooltipTrigger>
+								<PopoverTrigger asChild>
+									<TooltipTrigger asChild>
+										<button
+											type="button"
+											aria-label={t("workspaceRail.addLink")}
+											className="flex h-10 w-10 items-center justify-center rounded-[12px] text-muted-foreground transition-colors duration-150 hover:bg-foreground/7 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+										>
+											<Plus className="h-4 w-4" />
+										</button>
+									</TooltipTrigger>
+								</PopoverTrigger>
 								<TooltipContent side="right" sideOffset={8}>
 									{t("workspaceRail.addLink")}
 								</TooltipContent>
 							</Tooltip>
-						)}
+							<PopoverContent
+								side="right"
+								align="start"
+								sideOffset={8}
+								aria-labelledby={addLinkTitleId}
+								className="w-80 max-w-[min(calc(100vw-40px),var(--radix-popover-content-available-width))] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto p-3"
+								onOpenAutoFocus={(event) => {
+									event.preventDefault();
+									draftLabelRef.current?.focus();
+								}}
+							>
+								<form onSubmit={(event) => {
+									event.preventDefault();
+									handleAddLink();
+								}}>
+									<div className="mb-1.5 flex items-center justify-between gap-1">
+										<span id={addLinkTitleId} className="text-[10px] font-medium text-muted-foreground">
+											{t("workspaceRail.addLink")}
+										</span>
+										<button
+											type="button"
+											onClick={() => setShowAddLink(false)}
+											className="rounded p-0.5 text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+											aria-label={t("common.cancel")}
+										>
+											<X className="h-3 w-3" />
+										</button>
+									</div>
+									<input
+										ref={draftLabelRef}
+										aria-label={t("workspaceRail.linkLabelPlaceholder")}
+										value={draftLabel}
+										onChange={(e) => setDraftLabel(e.target.value)}
+										placeholder={t("workspaceRail.linkLabelPlaceholder")}
+										className="mb-1.5 w-full rounded-md border border-border/50 bg-background px-1.5 py-1 text-[11px] outline-none focus:border-accent/50"
+									/>
+									<Select value={draftKind} onValueChange={(value) => setDraftKind(value as RailLinkKind)}>
+										<SelectTrigger aria-label={t("workspaceRail.addLink")} className="mb-1.5 h-7 text-[11px]">
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="knowledge">{t("workspaceRail.kindKnowledge")}</SelectItem>
+											<SelectItem value="notes">{t("workspaceRail.kindNotes")}</SelectItem>
+											<SelectItem value="external">{t("workspaceRail.kindExternal")}</SelectItem>
+										</SelectContent>
+									</Select>
+									{(draftKind === "external" || draftKind === "notes") && (
+										<input
+											aria-label={
+												draftKind === "external"
+													? t("workspaceRail.linkUrlPlaceholder")
+													: t("workspaceRail.notesPathPlaceholder")
+											}
+											value={draftTarget}
+											onChange={(e) => setDraftTarget(e.target.value)}
+											placeholder={
+												draftKind === "external"
+													? t("workspaceRail.linkUrlPlaceholder")
+													: t("workspaceRail.notesPathPlaceholder")
+											}
+											className="mb-1.5 w-full rounded-md border border-border/50 bg-background px-1.5 py-1 text-[11px] outline-none focus:border-accent/50"
+										/>
+									)}
+									<button
+										type="submit"
+										className="flex w-full items-center justify-center gap-1 rounded-md bg-accent/15 px-1.5 py-1 text-[11px] font-medium text-accent hover:bg-accent/25"
+									>
+										<Link2 className="h-3 w-3" />
+										{t("common.save")}
+									</button>
+								</form>
+							</PopoverContent>
+						</Popover>
 					</div>
 				)}
 
