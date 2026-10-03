@@ -17,7 +17,7 @@ const setup = await fetch('/__fixture/bootstrap').then(response => response.json
 if (setup.marker !== 'rox-product-tour-application-test-only') throw new Error('Wrong application harness on loopback port')
 setupI18n([initReactI18next]).changeLanguage('en')
 const restricted = new URLSearchParams(location.search).get('mode') === 'web'
-const client = new WsRpcClient(setup.serverUrl, { token: setup.token, workspaceId: setup.workspaceId, autoReconnect: false, mode: restricted ? 'remote' : 'local', ...(restricted ? {} : { localClientProof: setup.proof, webContentsId: 101 }) })
+const client = new WsRpcClient(setup.serverUrl, { token: setup.token, workspaceId: setup.workspaceId, autoReconnect: false, mode: restricted ? 'remote' : 'local', ...(restricted ? {} : { localClientProof: setup.proof, webContentsId: setup.webContentsId }) })
 client.connect()
 await new Promise<void>((done, fail) => {
   const timer = setTimeout(() => fail(new Error('Harness transport handshake timed out')), 12_000)
@@ -27,7 +27,7 @@ await new Promise<void>((done, fail) => {
   })
 })
 const bridge = createNativeReplicaBridge({ client, invokeIpc: async (channel, input) => {
-  const reply = await fetch('/__fixture/ipc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channel, input }) }).then(response => response.json())
+  const reply = await fetch('/__fixture/ipc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channel, input, webContentsId: setup.webContentsId }) }).then(response => response.json())
   if (reply.error) throw new Error(reply.error)
   return reply.value
 } })
@@ -43,6 +43,7 @@ Object.assign(api, {
   onSystemThemeChange: () => () => {}, onWindowFocus: () => () => {}, onWindowBlur: () => () => {}, onFullscreenChanged: () => () => {}, onWindowCloseRequested: () => () => {},
   nativeReplica: bridge.nativeReplica, nativeData: { readEntity: bridge.readEntity, mutate: bridge.mutate }, readNote: bridge.readNote, createNote: bridge.createNote,
 })
+window.addEventListener('pagehide', () => { navigator.sendBeacon('/__fixture/window-close', JSON.stringify({ webContentsId: setup.webContentsId })) }, { once: true })
 window.electronAPI = api
 ;(window as any).__productTourApplication = { marker: setup.marker, client, api, restricted, workspaceId: setup.workspaceId }
 const { default: App } = await import('../../../../../apps/electron/src/renderer/App').catch(error => {
