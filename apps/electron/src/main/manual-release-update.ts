@@ -25,7 +25,7 @@ export async function checkPublishedManualUpdate(
     const version = release.tag_name.replace(/^v/, '')
     return Array.isArray(release.assets) && release.assets.some((asset: unknown) =>
       !!asset && typeof asset === 'object' && 'name' in asset &&
-      [`Rox-${version}-arm64.zip`, `Rox-${version}-arm64.dmg`].includes(String(asset.name)))
+      ['Rox-arm64.zip', 'Rox-arm64.dmg', `Rox-${version}-arm64.zip`, `Rox-${version}-arm64.dmg`].includes(String(asset.name)))
   }).sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at))
   const release = candidates[0]
   if (!release) throw new Error('No published macOS ARM64 ROX release is available')

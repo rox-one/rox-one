@@ -6,7 +6,7 @@ import { shouldOfferManualReleaseCheck } from '../auto-update-policy'
 
 const release = (version: string, date = '2026-10-03T00:00:00Z') => ({
   tag_name: `v${version}`, published_at: date, draft: false,
-  assets: [{ name: `Rox-${version}-arm64.zip` }],
+  assets: [{ name: 'Rox-arm64.zip' }, { name: 'Rox-arm64.dmg' }],
 })
 const fake = (data: unknown) => (async () => new Response(JSON.stringify(data))) as typeof fetch
 
@@ -38,6 +38,11 @@ test('manual check accepts newest published preview with compatible assets, no d
   expect(info.updateMode).toBe('manual')
   expect(info.downloadState).toBe('idle')
   expect(info.releaseUrl).toBe('https://github.com/rox-one/rox-one/releases/tag/v0.11.8')
+})
+
+test('manual check also recognizes legacy versioned artifact names', async () => {
+  const info = await checkPublishedManualUpdate('0.11.7', fake([{ ...release('0.11.8'), assets: [{ name: 'Rox-0.11.8-arm64.zip' }] }]))
+  expect(info.available).toBe(true)
 })
 
 test('manual metadata cannot suggest downgrade or nonexistent platform release', async () => {
