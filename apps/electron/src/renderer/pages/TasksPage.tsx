@@ -96,6 +96,7 @@ import { ConfirmDialog, Glyph, ProgressPie, TaskCheckbox, prefersReducedMotion }
 import { QuickEntry, type QuickEntryResult } from './tasks/QuickEntry'
 import { MoveDialog, type MoveDestination } from './tasks/MoveDialog'
 import { TaskDetail } from './tasks/TaskDetail'
+import { useTaskDetailDrafts } from './tasks/use-task-detail-drafts'
 import { TaskSidebar } from './tasks/TaskSidebar'
 import { getSessionTitle } from '@/utils/session'
 import { taskDelegationErrorKey, type TaskDelegationErrorKey } from './tasks/delegation-errors'
@@ -167,6 +168,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const { projects } = useProjects(workspace?.id)
   const sessionMap = useAtomValue(sessionMetaMapAtom) as ReadonlyMap<string, AgentSessionLike>
   const [store, setStore] = useState(loadPersonalTaskStore)
+  const detailDrafts = useTaskDetailDrafts(workspace?.id)
   const [view, setView] = useAtom(tasksViewAtom)
   const [sort, setSort] = useState<TaskSortId>('order')
   const [localSelectedId, setLocalSelectedId] = useState<string | null>(null)
@@ -1335,6 +1337,10 @@ export default function TasksPage(props: TasksPageProps = {}) {
     <TaskDetail
       key={selected.id}
       task={selected}
+      draft={detailDrafts.get(selected.id)}
+      isDraftCurrent={detailDrafts.current}
+      onDraftChange={(patch) => detailDrafts.patch(selected.id, patch)}
+      onDraftSubmit={(field, submitted) => detailDrafts.clearSubmitted(selected.id, field, submitted)}
       store={store}
       mutate={mutate}
       now={now}

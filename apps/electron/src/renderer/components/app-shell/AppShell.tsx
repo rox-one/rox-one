@@ -79,6 +79,7 @@ import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { enabledExtraScreenIdsAtom } from "@/atoms/extra-screens"
 import { visibleExtraScreens } from "@/pages/extra-screens/registry"
 import { ProfileStrip, type ProfileStripData } from "./ProfileStrip"
+import { accountProfileStrip } from "./profile-strip-account"
 import { SidebarChrome } from "./SidebarChrome"
 import { focusServicePanelAtom } from "./service-navigation"
 import type { AppNavDestinationId } from "./nav-destinations"
@@ -440,7 +441,6 @@ function AppShellContent({
             xpIntoLevel: gamification.value.xpIntoLevel,
             xpForNext: gamification.value.xpForNext,
             nextThreshold: gamification.value.nextThreshold,
-            balance: gamification.value.balance,
           } : {}),
         }))
       } catch (err) {
@@ -458,7 +458,6 @@ function AppShellContent({
         xpIntoLevel: payload.xpIntoLevel,
         xpForNext: payload.xpForNext,
         nextThreshold: payload.nextThreshold,
-        balance: payload.balance,
       }))
     })
     const offIdentity = window.electronAPI.onIdentityChanged?.(() => {
@@ -474,20 +473,20 @@ function AppShellContent({
 
 
   // Real rox.one balance for the connected Rox cloud account (null → «—»).
-  const [roxCloudBalance, setRoxCloudBalance] = React.useState<number | null>(null)
+  const [roxCloudAccount, setRoxCloudAccount] = React.useState<import('@rox/shared/auth').RoxAccountSnapshot | null>(null)
   useEffect(() => {
     let cancelled = false
     const load = async () => {
       try {
-        const res = await window.electronAPI.getRoxBalance?.()
+        const res = await window.electronAPI.getRoxCloudState()
         if (cancelled || !res) return
-        setRoxCloudBalance(res.status === 'ok' ? res.balance : null)
+        setRoxCloudAccount(res.account ?? null)
       } catch {
-        if (!cancelled) setRoxCloudBalance(null)
+        if (!cancelled) setRoxCloudAccount(null)
       }
     }
     void load()
-    const timer = window.setInterval(() => { void load() }, 5 * 60 * 1000)
+    const timer = window.setInterval(() => { void load() }, 30_000)
     return () => { cancelled = true; window.clearInterval(timer) }
   }, [])
 
@@ -1493,8 +1492,8 @@ function AppShellContent({
     return known ? total : null
   }, [workspaceSessionMetas])
   const profileStripWithSpend = useMemo(
-    () => ({ ...profileStrip, balance: roxCloudBalance ?? profileStrip.balance, spentUsd: workspaceSpentUsd }),
-    [profileStrip, roxCloudBalance, workspaceSpentUsd],
+    () => accountProfileStrip(profileStrip, roxCloudAccount, workspaceSpentUsd, t('profile.defaultName')),
+    [profileStrip, roxCloudAccount, workspaceSpentUsd, t],
   )
 
   // Active sessions exclude archived - use this for all counts and filters except archived view

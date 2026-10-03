@@ -24,6 +24,10 @@ Owner: branch audit lead; depends on merged Golden Gate controller/native/panels
 3. Exercise real production ChatDisplay/Radix/messages in nested DOM: outer/window position, reduced/normal motion, focused/unfocused history, document hidden, delayed commit, old ResizeObserver/queued frames A→B→A/unmount, history anchoring and explicit jump. Keep failure history and controlled fixture boundaries explicit; run types/build and current adjacent tests.
 4. Reconcile live main, freeze source/proof/log receipts, publish/attach separate PR, preserve every source branch. Notify dependent instrumentation owner of exact ChatDisplay source before parent merges.
 
+## Единый аккаунт ROX через Pocket ID — 2026-10-03
+
+План принятой SSO-интеграции сохранён отдельно в [docs/pocket-sso/plan.md](pocket-sso/plan.md). Существующая программа ниже сохранена; SSO-задачи и критерии приёмки дополняют её.
+
 ## Product Learning foundation recovery plan — 2026-10-03
 
 1. Freeze final a6 source and import only contracts/core/persistence/analytics; pr_scout owns these interfaces, historical_sweep integrates dependent UI/runtime/current consumers without copying old shell/pages.
@@ -955,6 +959,12 @@ Root recovers actual public parser/current route leaves and93 remaining source p
 ## Workspace shortcut popover integration —2026-10-03
 Owner root. Depends on existing rail-links/Popover/Select and current product-tour hooks. Import1447 selectively, repair viewport constraints, qualify nine actual DOM cases and old25px negative, run full Electron types; commit proof and merge a separate PR preserving source branch. Completed local checks in docs/integration-history/workspace-link-popover-20261003.
 
+
+## Pocket recovery integration graph —2026-10-03
+1. Root freezes1453 source26441 and reviews all179 paths; recent_features reconciles only existing execution/native-memory/OMP consumers.
+2. Root proves native FIFO refusal, auth/store/flow/startup/probe and absent-vault registered callbacks; worker proves held preparation/child and sealed queue failures. Preserve failed probes and exact blobs.
+3. Reconcile latest main through normal merge, retain RuntimeMap observers and current Tasks/A7 changes, recheck owned execution/type/build controls. Publish and merge one separate PR, preserve original branches. Public rollout and native release have separate prerequisites.
+
 ## Passive Runtime Map integration graph — 2026-10-03
 
 1. Owner historical_sweep audits all 127 exact PR #1444 source paths, retains current native/account/Product Learning authorities and recovers passive producers, canonical ingress, scoped reader and actual retained ChatPage consumers. Root reviews and merges a separate PR; original branches remain intact.
@@ -988,3 +998,36 @@ Owner root. Depends on existing rail-links/Popover/Select and current product-to
 Owner recent_features: restore exact ISO calendar-day validation in the current parser; verify impossible-date refusal and valid leap-day persistence through the actual TaskDetail form. Keep before-fix unit/browser failures, full personal-task regression checks and both timezone offsets; qualify current core types and production component/CSS bundle. Parent owns ordered PR merge; source branches stay preserved. Broader Golden/native release acceptance remains separate.
 
 Collection recovery qualification completed on current bb047:33/0/80 native-storage/current callbacks,5/0 mounted Chromium and full Electron Node22 types0. Prior test-type diagnostics were corrected by precise literal fixture types; all source failures remain in the archived evidence.
+
+
+### Golden per-task form draft recovery — 2026-10-04
+
+Owner recent_features; depends on current Tasks1456, strict date1470 and Product1454. Preserve old source and modern Things UI. Exercise actual two-task link/kind/tag retention, submitted-field-only clearing, actor/workspace ABA, unmount and stale pre-render button denial, plus all retained task import/responsive cases and current native commit controls. Retain the before-fix lost draft and fixture failure history; qualify current Electron types with own workspace dependency resolution, record exact source/log hashes, reconcile all current docs without deletions, publish separate PR for parent review/merge.
+
+
+### Knowledge availability recovery — 2026-10-03
+
+- [x] Freeze original #1436 and current consumers; reject its global singleton cache because actual A→B/connection and invalidation probes expose wrong reuse. Coordinate collection/AppShell ownership with historical worker.
+- [x] Restore scoped bounded availability through both current consumers, shared native-event invalidation, local-store retention, render scope ownership, and obsolete kernel-call fences.
+- [x] Verify actual mounted components: offline zero kernel reads, shared status/remount fast path, native-event recovery, workspace/event late-response negatives, missing channel and current Notes navigation. Qualify adjacent Knowledge logic, current consumers through Vite and Electron types; retain the whole renderer build as incomplete due to host load, plus failed fixture and real race history.
+- [x] Prepare separate qualified PR and update the exhaustive 137-path source/caller ledger. Root owns remote merge; source branches remain intact.
+
+### 2026-10-04 — Интеграция платформенных подсказок PR #1466
+
+- [x] Перенести только форматирование и локализованные параметры подсказок; сохранить текущие native/Task draft/Product Learning потребители.
+- [x] Подтвердить исходный дефект Windows/Linux и положительный macOS контроль настоящими кнопками Tasks.
+- [x] Квалифицировать свежий совмещенный source: 25 actual Chromium controls, 300 SSR/i18n tests и full strict Electron types без ошибок; сохранить точные хеши и журналы, подготовить отдельный integration PR без удаления исходной ветки.
+
+## Notes source-path classification recovery — 2026-10-04
+
+1. Freeze source1465/6f59 and its external merge2338; retain negative current-source evidence. After correcting only the fixture's canonical root, actual current controls reproduce35pass/2fail for a corrupt parent directory and its transport classification.
+2. Validate ancestors before the requested file, preserving exact ENOENT-path matching, canonical-root and symlink guards, unchanged current native ownership fences and positive missing-note behavior.
+3. Qualify the actual registered Notes/content handlers, real temporary files and loopback transport, current Notes page callbacks, relevant authority controls and server-core types. Retain prior failures, append documentation, push a separate narrow PR; parent owns review/merge.
+
+### OMP hidden Windows launch recovery — 2026-10-04
+
+- [x] Confirm both actual current spawn paths omit the flag; controlled real child invocation reproduces0pass/2fail after successful RPC/helper completion. Preserve current SSO/one-shot generation/native policy/host Bash ownership.
+- [x] Set two launch option lines; qualify actual RPC/helper launch and literal argv/no side effects, adjacent account/native policy/query/lifecycle controls and package types. Record native Windows limits and source-test portability exclusions.
+- [x] Publish separate PR #1483 and attach it; read back the exact head and update the original137 source/caller ledger. Root owns merge.
+
+

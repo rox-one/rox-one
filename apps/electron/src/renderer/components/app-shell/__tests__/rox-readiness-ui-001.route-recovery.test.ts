@@ -44,8 +44,8 @@ describe('ROX UI-001 actual MainContentPanel dispatch', () => {
       if (host === 'ChatPage') {
         // This fixture has no session metadata. Preserve the requested ID
         // without starting a chat load whose workspace cannot be verified.
-        expect(html).toContain('data-testid="route-session-unavailable"')
-        expect(html).toContain(`data-session-id="${value}"`)
+        expect(html).toContain('data-testid="route-session-missing"')
+        expect(html).toContain(`data-route-entity="${value}"`)
         expect(html).not.toContain('data-route-host="ChatPage"')
         return
       }

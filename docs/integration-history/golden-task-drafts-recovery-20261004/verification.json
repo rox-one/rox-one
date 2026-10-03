@@ -1,0 +1,206 @@
+{
+  "scope": "Golden source per-task unsubmitted form input recovery through current modern native-owned Tasks UI",
+  "source_branch": "codex/golden-gate-workspace",
+  "source_revision": "5def9ffd36dc160fdc7c908784e0ef97ba6a732e",
+  "source_paths": [
+    "apps/electron/src/renderer/pages/TasksPage.tsx",
+    "apps/electron/src/renderer/pages/tasks/drafts.ts"
+  ],
+  "source_behavior": "Per-task tag/link input and link kind survive selection changes; submitted input clears only when still matching. Legacy notes draft is superseded by current per-edit canonical task staging with preserved note markers. Current tags already split CSV and deduplicate.",
+  "qualified_source_revision": "b4c2638c3850f5cb67004bbd2951c05038376aa2",
+  "reconciled_revision": "652308ff9b6301c3ea4a96c6e9ccdf208ac6b6fb",
+  "reconciled_main": "bbba69ecb1f59973ff0f0f466054530f1dff947e",
+  "production_fingerprints": [
+    {
+      "path": "apps/electron/src/renderer/pages/TasksPage.tsx",
+      "sha256": "e6eae69604db6b6596280bcaf2b747bbc52c11175df2a5d88dfaa4835539c145",
+      "qualified_revision_bytes_unchanged": true
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+      "sha256": "d81270428da43c9b42b13dcd3edaaf311137677d0de3725932c8f25d26857fdd",
+      "qualified_revision_bytes_unchanged": true
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/tasks/use-task-detail-drafts.ts",
+      "sha256": "560c538c0c3f1db0be40d8ee5dc28691dd7ac6639ebbc7926effb83dedaaa70e",
+      "qualified_revision_bytes_unchanged": true
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/personal-tasks.ts",
+      "sha256": "a82e0a37d48275fcfd0a4edcbdef0b1b1335411b815197397b3c474fd45c9b5f",
+      "qualified_revision_bytes_unchanged": true
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/__tests__/tasks-import-responsive.fixture.tsx",
+      "sha256": "2fc13857c11aed3fe2018bbf8933b3b7e8129307b96d89aaa8a6400cf1f83f78",
+      "qualified_revision_bytes_unchanged": true
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/__tests__/tasks-import-responsive.fixture.mjs",
+      "sha256": "5e9c7b90ef5f85b51bde760d7bac7c462a91d71b4c51dc469693f694545a2072",
+      "qualified_revision_bytes_unchanged": true
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/__tests__/tasks-import-responsive.browser.node.ts",
+      "sha256": "6575c3295213e53050fa640ce254bc7a44305ba78e55ddfbd79c3ef446de50dd",
+      "qualified_revision_bytes_unchanged": true
+    },
+    {
+      "path": "packages/core/src/tasks/personal/quick-entry.ts",
+      "sha256": "8defab08850f61046bc170514b8c50863ed6014b437038bccccbfeb172ef9a55",
+      "qualified_revision_bytes_unchanged": true
+    },
+    {
+      "path": "apps/electron/src/renderer/components/mode-screen/ModeScreen.tsx",
+      "sha256": "94526a6469f1fdbf436fa6842c5b2848edb77f992a6efa8767117e51be5b206d",
+      "qualified_revision_bytes_unchanged": true
+    },
+    {
+      "path": "apps/electron/src/renderer/index.css",
+      "sha256": "2d7d864694e7ef21dd740c32f9438f12928427379c677e3343d1d1873ba3bacd",
+      "qualified_revision_bytes_unchanged": true
+    }
+  ],
+  "before": {
+    "actual_mounted_two_task_link_retention": {
+      "pass": 0,
+      "fail": 1,
+      "actual": "empty string",
+      "expected": "Unsubmitted session A"
+    }
+  },
+  "after": [
+    {
+      "scope": "actual modern task browser before strict-date merge, all case bodies and complete cleanup",
+      "pass": 20,
+      "fail": 0,
+      "exit": 0
+    },
+    {
+      "scope": "fresh rebuilt actual modern task browser on reconciled strict-date main, complete gate",
+      "pass": 22,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "exit": 0
+    },
+    {
+      "scope": "actual native confirmed-import fixture including earlier background refresh/write ACK fences",
+      "pass": 10,
+      "fail": 0,
+      "assertions": 34,
+      "exit": 0
+    },
+    {
+      "scope": "adjacent actual caller/sync/import and Product native commit/creation observations",
+      "pass": 23,
+      "fail": 0,
+      "assertions": 80,
+      "exit": 0
+    },
+    {
+      "scope": "full strict Electron types with this checkout workspace package resolution",
+      "exit": 0
+    }
+  ],
+  "typecheck_resolution": {
+    "actual_extended_config_sha256": "4410bf95f34ec257d822d29f00ee30e03494ee764b04153d1ffc27b638ba2cf1",
+    "portable_equivalent": "typecheck-config.json",
+    "unchanged_full_include_exclude_and_strict_flags": true,
+    "correction": "Existing shared node_modules links resolve pre-RuntimeMap UI/session-tools-core source. Bind only current UI package exported TypeScript entries and current session-tools-core, plus the same explicit node/bun types directory; no files excluded, diagnostics suppressed, or production configuration changed.",
+    "default_failure": "Four stale package-link diagnostics: onShowRuntimeMap absent from old UI props and HostBashObservation/hostBashObserver absent from old session-tools-core.",
+    "setup_failure_history": [
+      "Temporary config initially lacked explicit inherited typeRoots.",
+      "A premature type command during merge conflict setup reported parser markers; source merge was resolved before the accepted full typecheck."
+    ]
+  },
+  "fixture_history": [
+    "First replay19/1 assumed the Details tab resets across actor ABA; test now selects the actual Details tab explicitly and still asserts both private fields empty.",
+    "Second replay20 case bodies passed but after-hook failed despite process exit0; not accepted as a whole gate. Added cleanup diagnostics only, retained same30s teardown; complete20/0 and22/0 replays passed."
+  ],
+  "environment": {
+    "bun": "1.3.14",
+    "node": "22.23.3",
+    "chromium": "headless_shell-1243",
+    "native_data": "synthetic isolated scoped native CAS fixture only"
+  },
+  "current_main_docs_diff": {
+    "spec": {
+      "added": 5,
+      "deleted": 0
+    },
+    "plan": {
+      "added": 5,
+      "deleted": 0
+    }
+  },
+  "limits": [
+    "This accepts the exact task form/input/scope/import regression seam, not full app, OS account, native microphone/provider or all Golden program acceptance.",
+    "Type proof binds the qualified current source with matching exact input fingerprints after independent Collection main reconciliation; unrelated changed AppShell/collection code is covered by its own merged receipt, not re-labeled as this gate.",
+    "Unsubmitted input cache grants no authority and persists no canonical tasks, notes, credentials or permission state.",
+    "Every original branch is preserved."
+  ],
+  "logs": [
+    {
+      "path": "logs/golden-task-drafts-browser-before.log.gz",
+      "original_sha256": "28aba3ae7d9c4125d76848ec435b48cace71e9f8b483ab23ee574c2159ea48bb",
+      "gzip_sha256": "7447e2014fdc0b5a9448b5ec418a4ec06f010307672e74d61da5668a3f1f94c7"
+    },
+    {
+      "path": "logs/golden-task-drafts-browser-after.log.gz",
+      "original_sha256": "b2d2137ab6de192a042d9a2517741dfe9add73699a439c887367980484df1a46",
+      "gzip_sha256": "bf20c17de296eb103cdfb455bfafa75dfc82f6e4ec68e5984f930a8cc972f8f0"
+    },
+    {
+      "path": "logs/golden-task-drafts-browser-qualified.log.gz",
+      "original_sha256": "1b33daafb266234be8eacc3a4be3b81b2be932270fe2fd8ecfca6549edc9c622",
+      "gzip_sha256": "47e71a2566754efc7f057c6a140898e718f34efe5b258992a0b2e2c5f632410c"
+    },
+    {
+      "path": "logs/golden-task-drafts-browser-final.log.gz",
+      "original_sha256": "4a82bc80c59e56e5f1c50cfcaa6b144a692b815c1165505271e1c0b960635421",
+      "gzip_sha256": "e4aae44cac3240e727ac09d85eca260f3617f82d177b2b94028f9810c44aa25f"
+    },
+    {
+      "path": "logs/golden-task-drafts-browser-current.log.gz",
+      "original_sha256": "e1e04a934e906ea0528e6068e5ad0c21748931a79b55d3387e453c1591ddd3a2",
+      "gzip_sha256": "65f8567e6bc2d286b2fe321c29c8b79dd98a81f8b04c2542364e9ce11d2d330a"
+    },
+    {
+      "path": "logs/golden-task-drafts-browser-current-build.log.gz",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "path": "logs/golden-task-drafts-native-adjacent.log.gz",
+      "original_sha256": "64ac91a03d85bf33f4992369f22a409f39f0fceb8673865fc93f13b44f35028b",
+      "gzip_sha256": "7b119e118dc407811e107a79d9df3d0c93a11ce25114e036e65961c77794a4b5"
+    },
+    {
+      "path": "logs/golden-task-drafts-native-import-final.log.gz",
+      "original_sha256": "f6adbff51389c21d1f88245769054a2a0be99fa5b8b02cf71ac75a9285cb20d5",
+      "gzip_sha256": "c24d16056aba5b1ba38dc441c7641b558bfde25d29b3f87455a493e0377e2e1c"
+    },
+    {
+      "path": "logs/golden-task-drafts-electron-types.log.gz",
+      "original_sha256": "008614642428c675ce087a07c85ee29cf06660b37343f2776be65b54393199aa",
+      "gzip_sha256": "e5705398d10876256f60907d45118242172a843e93d1fd7edaf89e9f661e1700"
+    },
+    {
+      "path": "logs/golden-task-drafts-electron-local-types-before-merge-resolution.log.gz",
+      "original_sha256": "ea9073e4a6c1829514abcdf45de3fbff1e9c9dd179191a21ea856e8988da2694",
+      "gzip_sha256": "7b5a2c5c2dd093210fc2803e7a91af5dd501c5b60fa35803527b33af15924057"
+    },
+    {
+      "path": "logs/golden-task-drafts-electron-local-types-before-type-roots.log.gz",
+      "original_sha256": "cf690fee11b7b49b5dd9c8bb91f4dc734c3897012dc03c3f8ac61e502849bf78",
+      "gzip_sha256": "cdf19e19c9183108ea97cdb1e29017eebc84b7d86341621418fddf56ce1a9a86"
+    },
+    {
+      "path": "logs/golden-task-drafts-electron-local-types.log.gz",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    }
+  ]
+}

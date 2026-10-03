@@ -1,0 +1,16 @@
+{
+  "source": "aa80de1b44d12a3fbbf425ce5aca8709617972ca",
+  "installerSigned": false,
+  "artifacts": [
+    {
+      "name": "Rox-x64.exe",
+      "sha256": "cb36982e13c9caaaa92cc0ecf19864e8b0da02ec2ec0962c9cf73217f3f3b3eb",
+      "bytes": 283584315
+    }
+  ],
+  "actualWindowsNativeProofPassed": true,
+  "nativeReceiptMatchesSeparateDownloadedArtifact": true,
+  "releasePublished": false,
+  "actualInstalledGuiSsoAccepted": false,
+  "staleDarwinReceiptInCombinedArtifactIsNotMacJobAcceptance": true
+}

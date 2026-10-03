@@ -9,8 +9,8 @@ import { useTranslation } from 'react-i18next'
 import { PremiumMenuSelect } from '@rox/ui'
 import { parseTaskEntry, type ParsedTaskEntry, type TaskArea, type TaskProject } from '@rox/core/tasks/personal'
 import { Overlay } from './parts'
-import { formatHotkeyDisplay } from '@/lib/platform'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { formatHotkeyDisplay } from '@/lib/platform'
 
 export interface QuickEntryResult {
   parsed: ParsedTaskEntry
