@@ -23,6 +23,7 @@ const READY = { state: 'ready' } as const
 const UNAVAILABLE = { state: 'unavailable', reason: 'api-unavailable' } as const
 export interface LearningController {
   enabled: boolean
+  ready: boolean
   setEnabled(value: boolean): void
   state: RuntimeState
   progress: Readonly<Partial<Record<TourId, TourProgress>>>
@@ -80,7 +81,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const panelRoute = useAtomValue(focusedPanelRouteAtom)
   const modal = useModalRegistry()
   const layers = useDismissibleLayerRegistry()
-  const [enabled, updateEnabled] = useState(() => storage.get(storage.KEYS.featureProductTourV1, false))
+  const [enabled, updateEnabled] = useState(() => storage.get(storage.KEYS.featureProductTourV1, false) === true)
   const [state, updateState] = useState<RuntimeState>(initialRuntimeState)
   const stateRef = useRef(state)
   const context = { workspaceId: workspaceId ?? '', panelId, ...navigationEntity(nav.navigationState) }
@@ -93,6 +94,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const [storageStatus, setStorageStatus] = useState<'saved' | 'memory-only' | 'failed'>('saved')
   const [profileId, setProfileId] = useState<string | null>(null)
   const [pendingTour, setPendingTour] = useState<TourId | null>(null)
+  const [launchReason, setLaunchReason] = useState<SafeReason | null>(null)
   const pendingMode = useRef<'new' | 'resume' | 'replay'>('new')
   const [target, setTarget] = useState<TourTargetRegistration | null>(null)
   const [capRevision, setCapRevision] = useState(0)
@@ -104,6 +106,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const leaseRef = useRef<WindowLease | null>(null)
   const progressWrites = useRef(new Set<Promise<unknown>>())
   const leaseReleaseBarrier = useRef<Promise<void>>(Promise.resolve())
+  const leaseAcquisitionBarrier = useRef<Promise<void>>(Promise.resolve())
   const ownerWindowId = useRef(crypto.randomUUID())
   const lifetime = useRef(0)
   const launchSequence = useRef(0)
@@ -138,6 +141,18 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
       // Accepted writes commit before release; a new attempt waits for this barrier.
       leaseReleaseBarrier.current = Promise.allSettled([...progressWrites.current]).then(() => repositories.lease.release(profile, lease)).catch(() => {})
     }
+  }, [repositories])
+  const acquireLease = useCallback((profile: string, isCurrent: () => boolean) => {
+    // Serialize ownership changes so a cancelled request cannot release a later request's fence.
+    const acquiring = leaseAcquisitionBarrier.current.then(async () => {
+      await leaseReleaseBarrier.current
+      if (!repositories || !isCurrent()) return null
+      const lease = await repositories.lease.acquire(profile, ownerWindowId.current, Date.now())
+      if (lease && !isCurrent()) { await repositories.lease.release(profile, lease); return null }
+      return lease
+    })
+    leaseAcquisitionBarrier.current = acquiring.then(() => {}, () => {})
+    return acquiring
   }, [repositories])
   const sendRef = useRef<(input: TourInput) => void>(() => {})
   const valid = useCallback((binding: TourBinding) => enabledRef.current && !!leaseRef.current && leaseRef.current.expiresAt > Date.now() && stateRef.current.attempt?.binding.runToken === binding.runToken && contextRef.current.workspaceId === binding.workspaceId && contextRef.current.panelId === binding.panelId, [])
@@ -189,7 +204,15 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
             if (generation !== lifetime.current) return
             setStorageStatus(result.status)
             if (result.status !== 'failed' && effect.scopeKey === createLearningScopeKey(profileRef.current ?? '', contextRef.current.workspaceId)) setProgress(previous => ({ ...previous, [effect.tour.id]: result.value }))
-          }).catch(error => { if (error instanceof LearningLeaseLostError) { const attempt = stateRef.current.attempt; if (attempt) sendRef.current({ type: 'PAUSE', runToken: attempt.binding.runToken, reason: 'lease-lost' }) } else setStorageStatus('failed') })
+          }).catch(error => {
+            if (generation !== lifetime.current) return
+            if (error instanceof LearningLeaseLostError) {
+              // Dismiss/finish can already be inactive when its fenced write is rejected.
+              setLaunchReason('lease-lost')
+              const attempt = stateRef.current.attempt
+              if (attempt && !INACTIVE.includes(stateRef.current.phase)) sendRef.current({ type: 'PAUSE', runToken: attempt.binding.runToken, reason: 'lease-lost' })
+            } else setStorageStatus('failed')
+          })
           progressWrites.current.add(write)
           void write.finally(() => progressWrites.current.delete(write))
           break
@@ -331,6 +354,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const start = useCallback(async (id: TourId, mode: 'new' | 'resume' | 'replay' = 'new') => {
     const tour = productTourCatalogue.find(item => item.id === id)
     if (!tour || !enabledRef.current || !repositories || !profileRef.current || !shellReady) return
+    setLaunchReason(null)
     const prerequisite = prerequisiteRoute(tour, navRef.current.navigationState)
     if (prerequisite) {
       pendingMode.current = mode; setPendingTour(id)
@@ -339,23 +363,31 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
     }
     pause('user-paused')
     const sequence = ++launchSequence.current
-    const scope = { ...contextRef.current, entityId: ['OBT-16', 'OBT-23'].includes(id) ? contextRef.current.entityId : undefined }
-    const key = createLearningScopeKey(profileRef.current, scope.workspaceId)
+    const profile = profileRef.current
+    const scope = { ...contextRef.current, entityId: ['OBT-16', 'OBT-23'].includes(id) || (id === 'OBT-22' && navRef.current.navigationState.navigator === 'meetings') ? contextRef.current.entityId : undefined }
+    const key = createLearningScopeKey(profile, scope.workspaceId)
     const previous = await repositories.progress.read(key, id)
     if (sequence !== launchSequence.current || !enabledRef.current || scope.workspaceId !== contextRef.current.workspaceId || scope.panelId !== contextRef.current.panelId) return
-    await leaseReleaseBarrier.current
-    if (sequence !== launchSequence.current || !enabledRef.current || !profileRef.current) return
-    const lease = await repositories.lease.acquire(profileRef.current, ownerWindowId.current, Date.now())
-    if (sequence !== launchSequence.current || !enabledRef.current || scope.workspaceId !== contextRef.current.workspaceId || scope.panelId !== contextRef.current.panelId) { if (lease) await repositories.lease.release(profileRef.current, lease); return }
-    if (!lease || previous.status === 'failed') { setStorageStatus(repositories.lease.getStorageStatus()); return }
+    const isCurrent = () => sequence === launchSequence.current && enabledRef.current && profileRef.current === profile
+      && scope.workspaceId === contextRef.current.workspaceId && scope.panelId === contextRef.current.panelId
+      && (scope.entityId === undefined || scope.entityId === contextRef.current.entityId)
+      && (scope.sessionId === undefined || scope.sessionId === contextRef.current.sessionId)
+    const lease = await acquireLease(profile, isCurrent)
+    if (!isCurrent()) return
+    if (!lease || previous.status === 'failed') {
+      if (lease) await repositories.lease.release(profile, lease)
+      setStorageStatus(previous.status === 'failed' ? 'failed' : repositories.lease.getStorageStatus())
+      setLaunchReason(previous.status === 'failed' ? 'storage-unavailable' : 'lease-lost')
+      return
+    }
     leaseRef.current = lease
-    const binding: TourBinding = { ...scope, clientProfileId: profileRef.current, runToken: crypto.randomUUID() }
+    const binding: TourBinding = { ...scope, clientProfileId: profile, runToken: crypto.randomUUID() }
     navigationAnchor.current = { runToken: binding.runToken, navigator: navRef.current.navigationState.navigator }
     setPendingTour(null); setStorageStatus(previous.status === 'saved' ? repositories.lease.getStorageStatus() : previous.status)
     clearChatObservations()
     if (snapshotRef.current) sendRef.current({ type: 'SNAPSHOT', snapshot: snapshotRef.current })
     sendRef.current({ type: 'START', binding, tour, progress: previous.value, startMode: mode, at: Date.now() })
-  }, [repositories, shellReady, pause])
+  }, [repositories, shellReady, pause, acquireLease])
   useEffect(() => {
     if (pendingTour) {
       const tour = productTourCatalogue.find(item => item.id === pendingTour)
@@ -399,27 +431,70 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
     if (result.status !== 'failed') updatePreferences(result.value.preferences)
     if (value.diagnosticsEnabled === false) await repositories.diagnostics.clear()
   }, [repositories])
+  const dismiss = useCallback(async () => {
+    const current = stateRef.current
+    const binding = current.attempt?.binding
+    setPendingTour(null); setLaunchReason(null)
+    if (!binding || !repositories || !enabledRef.current || current.phase === 'finished') return
+    const profile = profileRef.current
+    if (!profile || profile !== binding.clientProfileId) return
+    const generation = lifetime.current
+    const sequence = ++launchSequence.current
+    const isCurrent = () => generation === lifetime.current && sequence === launchSequence.current
+      && enabledRef.current && profileRef.current === profile && contextRef.current.workspaceId === binding.workspaceId
+      && contextRef.current.panelId === binding.panelId && stateRef.current.attempt?.binding.runToken === binding.runToken
+    if (!isCurrent()) { setLaunchReason('scope-changed'); return }
+    let lease = leaseRef.current
+    if (!lease || lease.expiresAt <= Date.now()) lease = await acquireLease(profile, isCurrent)
+    if (!isCurrent()) return
+    if (!lease) { setLaunchReason('lease-lost'); return }
+    leaseRef.current = lease
+    sendRef.current({ type: 'DISMISS', runToken: binding.runToken })
+  }, [repositories, acquireLease])
   const reset = useCallback(async () => {
+    const profile = profileRef.current
+    const scope = { ...contextRef.current }
+    const generation = lifetime.current
     pause('user-paused')
-    if (!repositories || !profileRef.current || !workspaceId) return
-    const result = await repositories.progress.resetScope(createLearningScopeKey(profileRef.current, workspaceId))
-    setStorageStatus(result.status)
-    if (result.status !== 'failed') { setProgress({}); stateRef.current = initialRuntimeState; updateState(initialRuntimeState); setPendingTour(null) }
-  }, [pause, repositories, workspaceId])
-  const controller: LearningController = { enabled, setEnabled, state, progress, preferences, setPreferences, storageStatus, pendingTour, start, pause, reset, capabilities }
+    if (!repositories || !profile || !scope.workspaceId) return
+    const sequence = ++launchSequence.current
+    const isCurrent = () => generation === lifetime.current && sequence === launchSequence.current
+      && profileRef.current === profile && contextRef.current.workspaceId === scope.workspaceId && contextRef.current.panelId === scope.panelId
+    const lease = await acquireLease(profile, isCurrent)
+    if (!isCurrent()) return
+    if (!lease) { setLaunchReason('lease-lost'); return }
+    leaseRef.current = lease
+    const guard = { profileId: profile, lease, memoryOnly: repositories.lease.getStorageStatus() === 'memory-only' }
+    const write = repositories.progress.resetScope(createLearningScopeKey(profile, scope.workspaceId), guard)
+    progressWrites.current.add(write)
+    try {
+      const result = await write
+      if (!isCurrent()) return
+      setStorageStatus(result.status)
+      if (result.status !== 'failed') { setProgress({}); stateRef.current = initialRuntimeState; updateState(initialRuntimeState); setPendingTour(null); setLaunchReason(null) }
+    } catch (error) {
+      if (!isCurrent()) return
+      if (error instanceof LearningLeaseLostError) setLaunchReason('lease-lost')
+      else setStorageStatus('failed')
+    } finally {
+      progressWrites.current.delete(write)
+      if (leaseRef.current === lease) releaseLease()
+    }
+  }, [pause, repositories, acquireLease, releaseLease])
+  const controller: LearningController = { enabled, ready: !!profileId && !!workspaceId, setEnabled, state, progress, preferences, setPreferences, storageStatus, pendingTour, start, pause, reset, capabilities }
   const step = state.definition?.steps.find(item => item.id === state.attempt?.stepId)
   const evidence = step ? state.attemptEvidence[step.id] : undefined
   const canNext = step?.completion.kind === 'ack' || !!(evidence?.level && (step?.completion.evidence === 'observed' || evidence.level === 'verified'))
   const input = (type: 'ACK' | 'BACK' | 'SKIP' | 'RETRY') => { if (state.attempt) sendRef.current({ type, runToken: state.attempt.binding.runToken, stepId: state.attempt.stepId, at: Date.now() }) }
   const presentation = <>
       {enabled && welcomeSessionId && preferences.invitationsEnabled && !active && !progress['OBT-01'] && context.sessionId === welcomeSessionId && modal.getSnapshot().length === 0 && <aside data-testid="learning-welcome-invitation" className="fixed bottom-4 right-4 z-40 rounded-xl border bg-background p-3 shadow-modal-small"><button type="button" onClick={() => void start('OBT-01')}>{t('productTour.welcomeInvitation')}</button></aside>}
-      <TourErrorBoundary onError={() => pause('operation-failed')}>
-        {active && target && step && state.attempt && (state.phase === 'presenting' || state.phase === 'waiting-action') && <SpotlightOverlay target={target} step={step} binding={state.attempt.binding} onPause={pause} onNext={() => input('ACK')} onBack={() => input('BACK')} onSkip={() => input('SKIP')} onDismiss={() => { if (state.attempt) sendRef.current({ type: 'DISMISS', runToken: state.attempt.binding.runToken }) }} canNext={canNext} />}
+      <TourErrorBoundary key={enabled ? state.attempt?.binding.runToken ?? 'enabled' : 'disabled'} onError={() => pause('operation-failed')}>
+        {active && target && step && state.attempt && (state.phase === 'presenting' || state.phase === 'waiting-action') && <SpotlightOverlay target={target} step={step} binding={state.attempt.binding} onPause={pause} onNext={() => input('ACK')} onBack={() => input('BACK')} onSkip={() => input('SKIP')} onDismiss={() => void dismiss()} canNext={canNext} />}
       </TourErrorBoundary>
-      {enabled && (state.phase === 'paused' || state.phase === 'blocked' || pendingTour) && <aside data-testid="product-tour-status" role="status" className="fixed bottom-4 right-4 z-40 max-w-xs rounded-xl border bg-background p-3 text-sm shadow-modal-small">
-        <p>{t(pendingTour ? 'productTour.chooseEntity' : `productTour.reasons.${state.attempt?.reason ?? 'user-paused'}`)}</p>
+      {enabled && (state.phase === 'paused' || state.phase === 'blocked' || pendingTour || launchReason) && <aside data-testid="product-tour-status" role="status" className="fixed bottom-4 right-4 z-40 max-w-xs rounded-xl border bg-background p-3 text-sm shadow-modal-small">
+        <p>{t(pendingTour ? 'productTour.chooseEntity' : `productTour.reasons.${launchReason ?? state.attempt?.reason ?? 'user-paused'}`)}</p>
         {!pendingTour && state.definition && <button type="button" className="mr-3" onClick={() => void start(state.definition!.id, 'resume')}>{t('productTour.controls.resume')}</button>}
-        <button type="button" onClick={() => { setPendingTour(null); if (state.attempt) sendRef.current({ type: 'DISMISS', runToken: state.attempt.binding.runToken }) }}>{t('productTour.controls.dismiss')}</button>
+        <button type="button" onClick={() => void dismiss()}>{t('productTour.controls.dismiss')}</button>
       </aside>}
 </>
   return <LearningContext.Provider value={controller}><TourRuntimeContext.Provider value={port}>

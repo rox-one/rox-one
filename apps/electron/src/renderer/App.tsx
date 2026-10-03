@@ -1810,6 +1810,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     } catch (error) {
       console.error('Failed to send message:', error)
       if (sessionScopeRef.current !== scope) return
+      cancelChatUserTurn(sessionId)
       updateSessionById(sessionId, (s) => ({
         isProcessing: false,
         messages: [

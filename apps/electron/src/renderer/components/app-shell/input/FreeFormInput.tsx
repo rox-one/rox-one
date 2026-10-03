@@ -1,3 +1,5 @@
+import { useTourSignals, useTourTarget, type TourObservation } from '@/features/product-tour/runtime/hooks'
+import { beginChatCommit } from '@/features/product-tour/adapters/chat'
 import * as React from 'react'
 import { useTranslation } from "react-i18next"
 import { AnimatePresence, motion } from 'motion/react'
@@ -375,6 +377,18 @@ export function FreeFormInput({
   onRequestExpand,
 }: FreeFormInputProps) {
   const { t } = useTranslation()
+  const tourVariant = compactMode ? 'compact' : 'regular'
+  const tourSignals = useTourSignals({ sessionId, workspaceId })
+  const inputTarget = useTourTarget('composer.input', { sessionId, workspaceId, variant: tourVariant })
+  const sendTarget = useTourTarget('composer.send', { sessionId, workspaceId, variant: tourVariant })
+  const attachTarget = useTourTarget('composer.attach', { sessionId, workspaceId, variant: tourVariant })
+  const attachmentsTarget = useTourTarget('composer.attachments', { sessionId, workspaceId, variant: tourVariant })
+  const modelTarget = useTourTarget('composer.model', { sessionId, workspaceId })
+  const sourcesTarget = useTourTarget('composer.sources', { sessionId, workspaceId, variant: tourVariant })
+  const skillsTarget = useTourTarget('composer.skills', { sessionId, workspaceId, variant: tourVariant })
+  const compactDirectoryTarget = useTourTarget('composer.directory', { sessionId, workspaceId, variant: 'compact' })
+  const attachmentObservationRef = React.useRef<TourObservation | null>(null)
+  React.useEffect(() => tourSignals.capability('attachments.available', { state: 'ready' }), [tourSignals])
   const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
   const promptHistoryRef = React.useRef<PromptHistory>(EMPTY_PROMPT_HISTORY)
   React.useEffect(() => {
@@ -642,6 +656,20 @@ export function FreeFormInput({
   const [isFocused, setIsFocused] = React.useState(false)
   const [inputMaxHeight, setInputMaxHeight] = React.useState(540)
   const [modelDropdownOpen, setModelDropdownOpen] = React.useState(false)
+  const modelPickerObservation = React.useRef<{ observation: TourObservation | null; emitted: boolean } | null>(null)
+  React.useEffect(() => {
+    const pending = modelPickerObservation.current
+    if (!pending) return
+    if (modelDropdownOpen && !pending.emitted) {
+      // Native DropdownMenu registration commits before this parent effect publishes evidence.
+      tourSignals.handoff(pending.observation, true)
+      pending.emitted = true
+      tourSignals.emit(pending.observation, 'model-picker.opened', 'observed', 'ui-observation')
+    } else if (!modelDropdownOpen) {
+      modelPickerObservation.current = null
+      if (pending.emitted) tourSignals.handoff(pending.observation, false)
+    }
+  }, [modelDropdownOpen, tourSignals])
 
   // Input settings (loaded from config)
   const [autoCapitalisation, setAutoCapitalisation] = React.useState(true)
@@ -686,6 +714,12 @@ export function FreeFormInput({
   const containerRef = React.useRef<HTMLDivElement>(null)
   const sourceButtonRef = React.useRef<HTMLButtonElement>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
+  React.useEffect(() => {
+    const input = fileInputRef.current
+    const cancel = () => { tourSignals.handoff(attachmentObservationRef.current, false); attachmentObservationRef.current = null }
+    input?.addEventListener('cancel', cancel)
+    return () => input?.removeEventListener('cancel', cancel)
+  }, [tourSignals])
 
   // Merge refs for RichTextInput
   const internalInputRef = React.useRef<RichTextInputHandle>(null)
@@ -999,6 +1033,7 @@ export function FreeFormInput({
       const { files } = e.detail
       if (!files || files.length === 0) return
 
+      const observation = tourSignals.capture()
       setLoadingCount(prev => prev + files.length)
 
       // Pre-assign sequential names using ref to avoid race conditions
@@ -1016,6 +1051,7 @@ export function FreeFormInput({
           const attachment = await readFileAsAttachment(files[i], fileNames[i])
           if (attachment) {
             setAttachments(prev => [...prev, attachment])
+            tourSignals.emit(observation, 'attachment.ready', 'observed', 'ui-observation')
           }
         } catch (error) {
           console.error('[FreeFormInput] Failed to process pasted file:', error)
@@ -1029,7 +1065,7 @@ export function FreeFormInput({
 
     window.addEventListener('craft:paste-files', handlePasteFiles as unknown as EventListener)
     return () => window.removeEventListener('craft:paste-files', handlePasteFiles as unknown as EventListener)
-  }, [disabled, sessionId, isFocusedPanel, richInputRef])
+  }, [disabled, sessionId, isFocusedPanel, richInputRef, tourSignals])
 
   // Build active commands list for slash command menu
   const activeCommands = React.useMemo(() => {
@@ -1132,13 +1168,14 @@ export function FreeFormInput({
       if (!optimisticSourceSlugs.includes(slug)) {
         const newSlugs = [...optimisticSourceSlugs, slug]
         setOptimisticSourceSlugs(newSlugs)
+        beginChatCommit(tourSignals.capture(), 'session.sources-committed', newSlugs)
         onSourcesChange(newSlugs)
       }
     }
 
     // Files via @ mention in text are sufficient context for the agent.
     // Skills also don't need special handling beyond text insertion.
-  }, [optimisticSourceSlugs, onSourcesChange])
+  }, [optimisticSourceSlugs, onSourcesChange, tourSignals])
 
   // Knowledge search results feeding the mention menu's Knowledge section.
   // Empty unless a knowledge connection is configured (P1 read-only).
@@ -1215,8 +1252,9 @@ export function FreeFormInput({
 
   // Inline label menu hook (for #labels)
   const handleLabelSelect = React.useCallback((labelId: string) => {
+    if (!sessionLabels.includes(labelId)) beginChatCommit(tourSignals.capture(), 'session.labels-committed', [...sessionLabels, labelId])
     onLabelAdd?.(labelId)
-  }, [onLabelAdd])
+  }, [onLabelAdd, sessionLabels, tourSignals])
 
   const inlineLabel = useInlineLabelMenu({
     inputRef: richInputRef,
@@ -1284,11 +1322,12 @@ export function FreeFormInput({
   const hasElectronAPI = typeof window !== 'undefined' && !!window.electronAPI
 
   // Shared helper: read a File, add as attachment, decrement loading count
-  const processFileAttachment = async (file: File, overrideName?: string) => {
+  const processFileAttachment = async (file: File, overrideName?: string, observation: TourObservation | null = null) => {
     try {
       const attachment = await readFileAsAttachment(file, overrideName)
       if (attachment) {
         setAttachments(prev => [...prev, attachment])
+        tourSignals.emit(observation, 'attachment.ready', 'observed', 'ui-observation')
       }
     } catch (error) {
       console.error('[FreeFormInput] Failed to read file:', error)
@@ -1299,6 +1338,8 @@ export function FreeFormInput({
   // File attachment handlers
   const handleAttachClick = () => {
     if (disabled) return
+    attachmentObservationRef.current = tourSignals.capture()
+    tourSignals.handoff(attachmentObservationRef.current, true)
     fileInputRef.current?.click()
   }
 
@@ -1306,15 +1347,18 @@ export function FreeFormInput({
     const files = e.target.files
     if (!files || files.length === 0) return
 
+    const observation = attachmentObservationRef.current
+    attachmentObservationRef.current = null
     const fileList = Array.from(files)
     setLoadingCount(prev => prev + fileList.length)
 
     for (const file of fileList) {
-      await processFileAttachment(file)
+      await processFileAttachment(file, undefined, observation)
     }
 
     // Reset input so re-selecting the same file triggers onChange again
     e.target.value = ''
+    tourSignals.handoff(observation, false)
   }
 
   const handleRemoveAttachment = (index: number) => {
@@ -1417,6 +1461,7 @@ export function FreeFormInput({
     // We have files to process - prevent default text paste behavior
     e.preventDefault()
 
+    const observation = tourSignals.capture()
     const files = Array.from(clipboardItems)
     setLoadingCount(prev => prev + files.length)
 
@@ -1431,12 +1476,13 @@ export function FreeFormInput({
     })
 
     for (let i = 0; i < files.length; i++) {
-      await processFileAttachment(files[i], fileNames[i])
+      await processFileAttachment(files[i], fileNames[i], observation)
     }
   }
 
   // Handle long text paste - convert to file attachment
   const handleLongTextPaste = React.useCallback((text: string) => {
+    const observation = tourSignals.capture()
     const nextNum = getNextPastedNumber('text', attachmentsRef.current)
     const fileName = `pasted-text-${nextNum}.txt`
     const attachment: FileAttachment = {
@@ -1448,9 +1494,10 @@ export function FreeFormInput({
       size: new Blob([text]).size,
     }
     setAttachments(prev => [...prev, attachment])
+    tourSignals.emit(observation, 'attachment.ready', 'observed', 'ui-observation')
     // Focus input after adding attachment
     richInputRef.current?.focus()
-  }, []) // No deps needed - uses ref
+  }, [tourSignals])
 
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault()
@@ -1459,11 +1506,12 @@ export function FreeFormInput({
     setIsDraggingOver(false)
     if (disabled) return
 
+    const observation = tourSignals.capture()
     const files = Array.from(e.dataTransfer.files)
     setLoadingCount(files.length)
 
     for (const file of files) {
-      await processFileAttachment(file)
+      await processFileAttachment(file, undefined, observation)
     }
   }
 
@@ -1485,6 +1533,7 @@ export function FreeFormInput({
       const newSlugs = [...new Set([...optimisticSourceSlugs, ...mentions.sources])]
       if (newSlugs.length > optimisticSourceSlugs.length) {
         setOptimisticSourceSlugs(newSlugs)
+        beginChatCommit(tourSignals.capture(), 'session.sources-committed', newSlugs)
         onSourcesChange(newSlugs)
       }
     }
@@ -1521,7 +1570,7 @@ export function FreeFormInput({
     })
 
     return true
-  }, [input, attachments, followUpItems, disabled, disableSend, onInputChange, onAttachmentsChange, onSubmit, skills, sources, optimisticSourceSlugs, onSourcesChange, onWorkingDirectoryChange, homeDir, chatChromeEnabled, t])
+  }, [input, attachments, followUpItems, disabled, disableSend, onInputChange, onAttachmentsChange, onSubmit, skills, sources, optimisticSourceSlugs, onSourcesChange, onWorkingDirectoryChange, homeDir, chatChromeEnabled, t, tourSignals])
 
   // Listen for craft:submit-input events (simulate pressing the Send button)
   React.useEffect(() => {
@@ -1679,7 +1728,9 @@ export function FreeFormInput({
 
   // Handle input changes from RichTextInput
   const handleInputChange = React.useCallback((value: string) => {
+    const observation = tourSignals.capture()
     const nextValue = coerceInputText(value)
+    if (nextValue.trim()) tourSignals.emit(observation, 'draft.nonempty', 'observed', 'ui-observation')
     // Get previous input value before updating state
     const prevValue = inputRef.current
 
@@ -1699,10 +1750,11 @@ export function FreeFormInput({
       if (removedSources.length > 0) {
         const newSlugs = optimisticSourceSlugs.filter(slug => !removedSources.includes(slug))
         setOptimisticSourceSlugs(newSlugs)
+        beginChatCommit(tourSignals.capture(), 'session.sources-committed', newSlugs)
         onSourcesChange(newSlugs)
       }
     }
-  }, [syncToParent, sources, optimisticSourceSlugs, onSourcesChange])
+  }, [syncToParent, sources, optimisticSourceSlugs, onSourcesChange, tourSignals])
 
   // Handle input with cursor position (for menu detection)
   const handleRichInput = React.useCallback((value: string, cursorPosition: number) => {
@@ -1761,15 +1813,18 @@ export function FreeFormInput({
 
   // Handle inline mention selection (inserts appropriate mention text)
   const handleInlineMentionSelect = React.useCallback((item: MentionItem) => {
+    const observation = tourSignals.capture()
     const { value: newValue, cursorPosition } = inlineMention.handleSelect(item)
     setInput(newValue)
     syncToParent(newValue)
+    if (item.type === 'skill' && newValue.trim()) tourSignals.emit(observation, 'skill.selected', 'observed', 'ui-observation')
+    if (newValue.trim()) tourSignals.emit(observation, 'draft.nonempty', 'observed', 'ui-observation')
     // Focus input and restore cursor position after badge renders
     setTimeout(() => {
       richInputRef.current?.focus()
       richInputRef.current?.setSelectionRange(cursorPosition, cursorPosition)
     }, 0)
-  }, [inlineMention, syncToParent])
+  }, [inlineMention, syncToParent, tourSignals])
 
   // Handle inline label selection (removes the #label text from input)
   const handleInlineLabelSelect = React.useCallback((labelId: string) => {
@@ -1785,10 +1840,11 @@ export function FreeFormInput({
     setInput(newValue)
     syncToParent(newValue)
     if (sessionId) {
+      beginChatCommit(tourSignals.capture(), 'session.status-committed', stateId)
       onSessionStatusChange?.(sessionId, stateId)
     }
     richInputRef.current?.focus()
-  }, [inlineLabel, syncToParent, sessionId, onSessionStatusChange])
+  }, [inlineLabel, syncToParent, sessionId, onSessionStatusChange, tourSignals])
 
   const followUpLayoutKey = React.useMemo(
     () => followUpItems.map(item => [
@@ -1942,12 +1998,12 @@ export function FreeFormInput({
         )}
 
         {/* Attachment Preview */}
-        <AttachmentPreview
+        <div ref={attachments.length || loadingCount ? attachmentsTarget : undefined}><AttachmentPreview
           attachments={attachments}
           onRemove={handleRemoveAttachment}
           disabled={disabled}
           loadingCount={loadingCount}
-        />
+        /></div>
 
         {/* Follow-up context chips */}
         <AnimatePresence initial={false}>
@@ -2037,7 +2093,7 @@ export function FreeFormInput({
         {/* In compact mode, hide input while the agent is processing — until the
             user clicks / hovers the collapsed bar to expand it back. */}
         {!isCollapsedInCompact && (
-        <RichTextInput
+        <div ref={node => { inputTarget(node); skillsTarget(node) }}><RichTextInput
           ref={richInputRef}
           value={input}
           onChange={handleInputChange}
@@ -2066,7 +2122,7 @@ export function FreeFormInput({
           style={{ maxHeight: inputMaxHeight }}
           data-tutorial="chat-input"
           spellCheck={spellCheck}
-        />
+        /></div>
         )}
 
         {/* Bottom Row: Controls - wrapped in relative container for status slot overlay */}
@@ -2128,7 +2184,7 @@ export function FreeFormInput({
               )}
             </>
           )}
-          <FreeFormInputContextBadge
+          <span ref={attachTarget} className="inline-flex shrink-0"><FreeFormInputContextBadge
             icon={<Paperclip className="h-4 w-4" />}
             label={attachments.length > 0
               ? t("chat.filesCount", { count: attachments.length })
@@ -2140,7 +2196,7 @@ export function FreeFormInput({
             onClick={handleAttachClick}
             tooltip={t("chat.attachFilesTooltip")}
             disabled={disabled}
-          />
+          /></span>
           <VoiceDictationControl
             disabled={disabled}
             compactMode
@@ -2170,7 +2226,7 @@ export function FreeFormInput({
             disabled={disabled}
           />
           {onSourcesChange && (
-            <div className="relative shrink min-w-0">
+            <div ref={sourcesTarget} className="relative shrink min-w-0">
               <FreeFormInputContextBadge
                 buttonRef={sourceButtonRef}
                 icon={
@@ -2225,6 +2281,7 @@ export function FreeFormInput({
                 tooltip={t("chat.sourcesTooltip")}
               />
               <CompactSourceSelector
+                tourSessionSelection={true}
                 open={sourceDropdownOpen}
                 onOpenChange={setSourceDropdownOpen}
                 sources={sources}
@@ -2241,13 +2298,13 @@ export function FreeFormInput({
             </div>
           )}
           {onWorkingDirectoryChange && (
-            <CompactWorkingDirectorySelector
+            <span ref={compactDirectoryTarget} className="inline-flex shrink-0"><CompactWorkingDirectorySelector
               workingDirectory={workingDirectory}
               onWorkingDirectoryChange={onWorkingDirectoryChange}
               sessionFolderPath={sessionFolderPath}
               isEmptySession={false}
               workspaceId={workspaceId}
-            />
+            /></span>
           )}
           </div>
           )}
@@ -2256,7 +2313,7 @@ export function FreeFormInput({
           {!compactMode && (
           <div className="flex items-center gap-1 min-w-32 shrink overflow-hidden">
           {/* 1. Attach Files Badge */}
-          <FreeFormInputContextBadge
+          <span ref={attachTarget} className="inline-flex shrink-0"><FreeFormInputContextBadge
             icon={<Paperclip className="h-4 w-4" />}
             label={attachments.length > 0
               ? t("chat.filesCount", { count: attachments.length })
@@ -2268,7 +2325,7 @@ export function FreeFormInput({
             onClick={handleAttachClick}
             tooltip={t("chat.attachFilesTooltip")}
             disabled={disabled}
-          />
+          /></span>
           <VoiceDictationControl
             disabled={disabled}
             inputValue={input}
@@ -2300,7 +2357,7 @@ export function FreeFormInput({
 
           {/* 2. Source Selector Badge - only show if onSourcesChange is provided */}
           {onSourcesChange && (
-            <div className="relative shrink min-w-0 overflow-hidden">
+            <div ref={sourcesTarget} className="relative shrink min-w-0 overflow-hidden">
               <FreeFormInputContextBadge
                 buttonRef={sourceButtonRef}
                 icon={
@@ -2358,6 +2415,7 @@ export function FreeFormInput({
               />
 
               <SourceSelectorPopover
+                tourSessionSelection={true}
                 open={sourceDropdownOpen}
                 onOpenChange={setSourceDropdownOpen}
                 anchorRef={sourceButtonRef}
@@ -2429,11 +2487,15 @@ export function FreeFormInput({
           <div className="flex items-center shrink-0">
           {/* 5. Model/Connection Selector - Hidden in compact mode (EditPopover embedding) */}
           {!compactMode && (
-          <DropdownMenu open={modelDropdownOpen} onOpenChange={setModelDropdownOpen}>
+          <DropdownMenu open={modelDropdownOpen} onOpenChange={next => {
+            if (next) modelPickerObservation.current = { observation: tourSignals.capture(), emitted: false }
+            setModelDropdownOpen(next)
+          }}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
                   <button
+                    ref={modelTarget}
                     type="button"
                     className={cn(
                       "input-toolbar-btn inline-flex items-center h-6 px-1.5 gap-0.5 text-[9px] shrink-0 rounded-[6px] hover:bg-foreground/5 transition-colors select-none",
@@ -2856,6 +2918,7 @@ export function FreeFormInput({
             </Button>
           ) : (
             <Button
+              ref={sendTarget}
               type="submit"
               size="icon"
               aria-label={t('shortcuts.sendMessage')}

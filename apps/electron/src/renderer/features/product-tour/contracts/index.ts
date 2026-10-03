@@ -1,7 +1,6 @@
 /**
- * Recovered Product Learning foundation contract.
- * Source: final a6 35f78fa2665e9f2e8a3ad20a07e2282bd7f0dde5.
- * Renderer UI/runtime consumers are integrated in a dependent recovery PR.
+ * Product Learning contract recovered from final a6 and PR1437 source5069ea530.
+ * Current renderer/runtime consumers compose it without domain mutation authority.
  * No domain mutation port is intentionally exposed to the learning engine.
  */
 export type TourId = "OBT-01" | "OBT-02" | "OBT-03" | "OBT-04" | "OBT-05" | "OBT-06" | "OBT-07" | "OBT-08" | "OBT-09" | "OBT-10" | "OBT-11" | "OBT-12" | "OBT-13" | "OBT-14" | "OBT-15" | "OBT-16" | "OBT-17" | "OBT-18" | "OBT-19" | "OBT-20" | "OBT-21" | "OBT-22" | "OBT-23" | "OBT-24" | "OBT-25";
