@@ -24,5 +24,8 @@
     "No new auth/credential/grant/write; NativeAuthority and journal CAS remain unchanged",
     "No installed Electron, live external provider or OS bootstrap claim"
   ],
-  "branches_deleted": false
+  "branches_deleted": false,
+  "reconciled_main": "47b5fcd270ff7abff163533b60f4d9fa5d5f8f27",
+  "qualification_runtime_blobs_unchanged_after_merge": true,
+  "deleted_paths_against_current_main": []
 }
