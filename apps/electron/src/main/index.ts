@@ -1,3 +1,4 @@
+import { validateConfigurationCliEntries } from './configuration-cli-compat'
 import { resolveNumberedUserDataDir } from './numbered-user-data'
 // Load user's shell environment first (before other imports that may use env)
 // This ensures tools like Homebrew, nvm, etc. are available to the agent
@@ -195,13 +196,7 @@ if (isDebugMode) {
   process.env.CRAFT_SCRIPTS = scriptsDir
   // Configuration CLI packages are not included in this app. Preserve only
   // explicitly supplied working entries for the legacy compatibility wrapper.
-  for (const variable of ['CRAFT_COMMANDS_ENTRY', 'CRAFT_CLI_ENTRY'] as const) {
-    const entry = process.env[variable]
-    if (entry && !existsSync(entry)) delete process.env[variable]
-  }
-  if (!process.env.CRAFT_COMMANDS_ENTRY && !process.env.CRAFT_CLI_ENTRY) {
-    process.env.CRAFT_FEATURE_CRAFT_AGENTS_CLI = '0'
-  }
+  validateConfigurationCliEntries(process.env)
   process.env.CRAFT_COMMANDS_DOC_PATH = app.isPackaged
     ? join(resourcesBase, 'resources', 'docs', 'craft-cli.md')
     : join(process.cwd(), 'apps', 'electron', 'resources', 'docs', 'craft-cli.md')
