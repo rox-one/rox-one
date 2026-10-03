@@ -5,7 +5,7 @@
  * Only packaged resources and an isolated temporary home are read. No UI/network.
  */
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { constants, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync, openSync, closeSync, fstatSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, relative, resolve, win32 } from 'node:path';
 import { extractFile } from '@electron/asar';
@@ -36,6 +36,26 @@ function safeFile(root: string, key: string): string {
   if (isAbsolute(rel) || rel.split(/[\\/]/).includes('..')) throw new Error('Resource link escapes package');
   return file;
 }
+function readResource(root: string, key: string): Buffer {
+  const file = safeFile(root, key);
+  const canonicalRoot = realpathSync(root);
+  const canonical = realpathSync(file);
+  const rel = relative(canonicalRoot, canonical);
+  if (isAbsolute(rel) || rel.split(/[\\/]/).includes('..')) throw new Error('Resource link escapes package');
+  const parent = realpathSync(dirname(canonical));
+  const before = statSync(canonical);
+  const fd = openSync(canonical, constants.O_RDONLY | constants.O_NOFOLLOW);
+  try {
+    const opened = fstatSync(fd);
+    if (!opened.isFile() || before.dev !== opened.dev || before.ino !== opened.ino
+      || realpathSync(root) !== canonicalRoot || realpathSync(dirname(canonical)) !== parent
+      || realpathSync(file) !== canonical) {
+      throw new Error('Resource identity changed while opening package');
+    }
+    // Consume the validated descriptor, never reopen the checked pathname.
+    return readFileSync(fd);
+  } finally { closeSync(fd); }
+}
 function expectedManifest(): Manifest {
   const files: Record<string, string> = {};
   const walk = (dir: string): void => {
@@ -45,7 +65,7 @@ function expectedManifest(): Manifest {
       const key = relative(trustedSkills, file).split(/[\\/]/).join('/');
       safeFile(trustedSkills, key);
       if (statSync(file).isDirectory()) walk(file);
-      else files[key] = sha(readFileSync(file));
+      else files[key] = sha(readResource(trustedSkills, key));
     }
   };
   walk(trustedSkills);
@@ -69,16 +89,16 @@ const layout = [target, join(target, 'Contents', 'Resources'), join(target, 'res
 if (!layout?.skills) throw new Error('Installed app archive or unpacked app and packaged skills were not found');
 const { resources, skills } = layout;
 for (const [key, hash] of Object.entries(expected.files)) {
-  if (sha(readFileSync(safeFile(skills, key))) !== hash) throw new Error(`Packaged resource hash mismatch: ${key}`);
+  if (sha(readResource(skills, key)) !== hash) throw new Error(`Packaged resource hash mismatch: ${key}`);
 }
-const requested = JSON.parse(readFileSync(safeFile(skills, 'REQUESTED-SKILLS.json'), 'utf8'));
-const lock = JSON.parse(readFileSync(safeFile(skills, 'SKILLS.lock'), 'utf8'));
+const requested = JSON.parse(readResource(skills, 'REQUESTED-SKILLS.json').toString('utf8'));
+const lock = JSON.parse(readResource(skills, 'SKILLS.lock').toString('utf8'));
 const slugs = lock.packs.flatMap((pack: { skills: string[] }) => pack.skills);
 if (requested.skillCount !== 330 || new Set(slugs).size !== 330 || slugs.length !== 330) throw new Error('Packaged skill catalog is incomplete or colliding');
 const asar = join(resources, 'app.asar');
 const packagedLayout = layout.archive ? 'app.asar' : 'app-directory';
 const app = join(resources, 'app');
-const readAppFile = (key: string): Buffer => layout.archive ? extractFile(asar, key) : readFileSync(safeFile(app, key));
+const readAppFile = (key: string): Buffer => layout.archive ? extractFile(asar, key) : readResource(app, key);
 const pkg = JSON.parse(readAppFile('package.json').toString('utf8'));
 if (pkg.version !== '0.11.8') throw new Error('Installed app version is not final 0.11.8');
 const main = readAppFile('dist/main.cjs').toString('utf8');
