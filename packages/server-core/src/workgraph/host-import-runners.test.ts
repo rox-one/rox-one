@@ -92,6 +92,22 @@ describe('explicit local Connection host imports', () => {
     expect(lists).toBe(2); expect(gets).toEqual([{ service: 'fixture-service', account: 'fixture-account' }])
     expect(f.backend.store.size).toBe(1); expect(record.integrationId).toBe('keychain'); expect(JSON.stringify(record)).not.toContain(SECRET)
   })
+  it('Keychain password lookup uses exact discovered service/account even when the service includes slashes', async () => {
+    const f = fixture(); const gets: unknown[] = []
+    const runners: HostImportRunners = { keychainList: async () => 'class: genp\n "svce"<blob>="https://api.fixture.example/path"\n "acct"<blob>="account/with/slash"\n', keychainGet: async item => { gets.push(item); return SECRET } }
+    const preview = await previewKeychainImport({ provider: f.provider, runners })
+    expect(gets).toEqual([])
+    await commitKeychainImport({ ...f, ...owner, candidateId: preview[0]!.candidateId, runners })
+    expect(gets).toEqual([{ service: 'https://api.fixture.example/path', account: 'account/with/slash' }])
+  })
+  it('ambiguous colon-joined Keychain candidate identities refuse discovery before any password read', async () => {
+    const f = fixture(); let gets = 0
+    const list = () => [{ service: 'a:b', account: 'c' }, { service: 'a', account: 'b:c' }]
+    const get = () => { gets++; return { password: SECRET } }
+    await expect(previewKeychainImport({ provider: f.provider, list, get })).rejects.toThrow('ambiguous_keychain_candidate')
+    await expect(commitKeychainImport({ ...f, ...owner, candidateId: 'keychain:a:b:c', list, get })).rejects.toThrow('ambiguous_keychain_candidate')
+    expect(gets).toBe(0); expect(f.backend.store.size).toBe(0); expect(f.records).toEqual([])
+  })
   it('SSH-agent preview/commit parses only public identities and creates a reference without copying a private key', async () => {
     const f = fixture(); let lists = 0
     const runners: HostImportRunners = { sshAgentList: async () => { lists++; return '-----BEGIN OPENSSH PRIVATE KEY-----\nfixture-private\n-----END OPENSSH PRIVATE KEY-----\nssh-ed25519 Zml4dHVyZQ== fixture-key\n' } }
