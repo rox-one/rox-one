@@ -23,6 +23,7 @@ const READY = { state: 'ready' } as const
 const UNAVAILABLE = { state: 'unavailable', reason: 'api-unavailable' } as const
 export interface LearningController {
   enabled: boolean
+  ready: boolean
   setEnabled(value: boolean): void
   state: RuntimeState
   progress: Readonly<Partial<Record<TourId, TourProgress>>>
@@ -93,6 +94,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const [storageStatus, setStorageStatus] = useState<'saved' | 'memory-only' | 'failed'>('saved')
   const [profileId, setProfileId] = useState<string | null>(null)
   const [pendingTour, setPendingTour] = useState<TourId | null>(null)
+  const [launchReason, setLaunchReason] = useState<SafeReason | null>(null)
   const pendingMode = useRef<'new' | 'resume' | 'replay'>('new')
   const [target, setTarget] = useState<TourTargetRegistration | null>(null)
   const [capRevision, setCapRevision] = useState(0)
@@ -331,6 +333,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const start = useCallback(async (id: TourId, mode: 'new' | 'resume' | 'replay' = 'new') => {
     const tour = productTourCatalogue.find(item => item.id === id)
     if (!tour || !enabledRef.current || !repositories || !profileRef.current || !shellReady) return
+    setLaunchReason(null)
     const prerequisite = prerequisiteRoute(tour, navRef.current.navigationState)
     if (prerequisite) {
       pendingMode.current = mode; setPendingTour(id)
@@ -347,7 +350,12 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
     if (sequence !== launchSequence.current || !enabledRef.current || !profileRef.current) return
     const lease = await repositories.lease.acquire(profileRef.current, ownerWindowId.current, Date.now())
     if (sequence !== launchSequence.current || !enabledRef.current || scope.workspaceId !== contextRef.current.workspaceId || scope.panelId !== contextRef.current.panelId) { if (lease) await repositories.lease.release(profileRef.current, lease); return }
-    if (!lease || previous.status === 'failed') { setStorageStatus(repositories.lease.getStorageStatus()); return }
+    if (!lease || previous.status === 'failed') {
+      if (lease) await repositories.lease.release(profileRef.current, lease)
+      setStorageStatus(previous.status === 'failed' ? 'failed' : repositories.lease.getStorageStatus())
+      setLaunchReason(previous.status === 'failed' ? 'storage-unavailable' : 'lease-lost')
+      return
+    }
     leaseRef.current = lease
     const binding: TourBinding = { ...scope, clientProfileId: profileRef.current, runToken: crypto.randomUUID() }
     navigationAnchor.current = { runToken: binding.runToken, navigator: navRef.current.navigationState.navigator }
@@ -406,7 +414,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
     setStorageStatus(result.status)
     if (result.status !== 'failed') { setProgress({}); stateRef.current = initialRuntimeState; updateState(initialRuntimeState); setPendingTour(null) }
   }, [pause, repositories, workspaceId])
-  const controller: LearningController = { enabled, setEnabled, state, progress, preferences, setPreferences, storageStatus, pendingTour, start, pause, reset, capabilities }
+  const controller: LearningController = { enabled, ready: !!profileId && !!workspaceId, setEnabled, state, progress, preferences, setPreferences, storageStatus, pendingTour, start, pause, reset, capabilities }
   const step = state.definition?.steps.find(item => item.id === state.attempt?.stepId)
   const evidence = step ? state.attemptEvidence[step.id] : undefined
   const canNext = step?.completion.kind === 'ack' || !!(evidence?.level && (step?.completion.evidence === 'observed' || evidence.level === 'verified'))
@@ -416,10 +424,10 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
       <TourErrorBoundary onError={() => pause('operation-failed')}>
         {active && target && step && state.attempt && (state.phase === 'presenting' || state.phase === 'waiting-action') && <SpotlightOverlay target={target} step={step} binding={state.attempt.binding} onPause={pause} onNext={() => input('ACK')} onBack={() => input('BACK')} onSkip={() => input('SKIP')} onDismiss={() => { if (state.attempt) sendRef.current({ type: 'DISMISS', runToken: state.attempt.binding.runToken }) }} canNext={canNext} />}
       </TourErrorBoundary>
-      {enabled && (state.phase === 'paused' || state.phase === 'blocked' || pendingTour) && <aside data-testid="product-tour-status" role="status" className="fixed bottom-4 right-4 z-40 max-w-xs rounded-xl border bg-background p-3 text-sm shadow-modal-small">
-        <p>{t(pendingTour ? 'productTour.chooseEntity' : `productTour.reasons.${state.attempt?.reason ?? 'user-paused'}`)}</p>
+      {enabled && (state.phase === 'paused' || state.phase === 'blocked' || pendingTour || launchReason) && <aside data-testid="product-tour-status" role="status" className="fixed bottom-4 right-4 z-40 max-w-xs rounded-xl border bg-background p-3 text-sm shadow-modal-small">
+        <p>{t(pendingTour ? 'productTour.chooseEntity' : `productTour.reasons.${launchReason ?? state.attempt?.reason ?? 'user-paused'}`)}</p>
         {!pendingTour && state.definition && <button type="button" className="mr-3" onClick={() => void start(state.definition!.id, 'resume')}>{t('productTour.controls.resume')}</button>}
-        <button type="button" onClick={() => { setPendingTour(null); if (state.attempt) sendRef.current({ type: 'DISMISS', runToken: state.attempt.binding.runToken }) }}>{t('productTour.controls.dismiss')}</button>
+        <button type="button" onClick={() => { setPendingTour(null); setLaunchReason(null); if (state.attempt) sendRef.current({ type: 'DISMISS', runToken: state.attempt.binding.runToken }) }}>{t('productTour.controls.dismiss')}</button>
       </aside>}
 </>
   return <LearningContext.Provider value={controller}><TourRuntimeContext.Provider value={port}>
