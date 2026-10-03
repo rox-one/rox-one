@@ -265,6 +265,26 @@ api.cancelSharedProjectCreate = async workspaceId => {
   const result: import('../shared/project-create-intent').ProjectCreateIntentView = await ipcRenderer.invoke('__project-create-intent', workspaceId, 'cancel')
   return result
 }
+api.getLicenseAuditIntent = async workspaceId => {
+  if (!projectAuthority) return { state: 'none', eligible: false }
+  const result: import('../shared/license-audit-intent').LicenseAuditIntentView = await ipcRenderer.invoke('__license-audit-intent', workspaceId, 'get')
+  return result
+}
+api.queueLicenseAudit = async (workspaceId, body) => {
+  if (!projectAuthority || projectAuthority.getState() === 'unconfigured') return { state: 'blocked', eligible: false, code: 'AUTH_FAILED' }
+  const result: import('../shared/license-audit-intent').LicenseAuditIntentView = await ipcRenderer.invoke('__license-audit-intent', workspaceId, 'queue', body)
+  return result
+}
+api.retryLicenseAudit = async workspaceId => {
+  if (!projectAuthority || projectAuthority.getState() === 'unconfigured') return { state: 'blocked', eligible: false, code: 'AUTH_FAILED' }
+  const result: import('../shared/license-audit-intent').LicenseAuditAttempt = await ipcRenderer.invoke('__license-audit-intent', workspaceId, 'retry')
+  return result
+}
+api.cancelLicenseAudit = async workspaceId => {
+  if (!projectAuthority) return { state: 'blocked', eligible: false, code: 'CAPABILITY_UNAVAILABLE' }
+  const result: import('../shared/license-audit-intent').LicenseAuditIntentView = await ipcRenderer.invoke('__license-audit-intent', workspaceId, 'cancel')
+  return result
+}
 api.connectProjectAuthority = async (workspaceId, input) => {
   if (!projectAuthority) return { ok: false, error: { code: 'CAPABILITY_UNAVAILABLE', status: 503 } }
   const generation = ++projectAuthorityMutationGeneration

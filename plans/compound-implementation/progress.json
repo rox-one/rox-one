@@ -5,7 +5,7 @@
   "sourceBase": "b922e52ed96425732776ff771fdb4fec09fc99b6",
   "specRevision": "242492868a11b4d9af1c1011f20b31a346875f0a",
   "branch": "feat/rox-compound-workspace-20260930",
-  "updatedAt": "2026-09-30T16:07:02.630408+00:00",
+  "updatedAt": "2026-09-30T17:21:11.099709+00:00",
   "packageCount": 143,
   "packages": [
     {
@@ -59,6 +59,11 @@
           "kind": "CURRENT54CRITERIA32VERIFIED17NATIVE_PENDING5DECLARED_DOWNSTREAM",
           "artifact": "plans/compound-implementation/evidence/wp01/criteria-current-20260930/matrix.json",
           "featureImplemented": false
+        },
+        {
+          "kind": "ACTUAL_PRIMARY383_AND_INDEPENDENT_PIXEL_MATRIX_NO_FULL_DOD",
+          "artifact": "plans/compound-implementation/evidence/wp01/primary-native-20260930/root-readback.json",
+          "featureImplemented": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
@@ -70,10 +75,10 @@
       "preflightReport": "plans/compound-implementation/worker-reviews/WP-01.json",
       "preflightRunId": "rox-compound-20260930T083916Z",
       "remainingAcceptance": [
-        "Fresh actual primary native two-profile IME/privacy/restart/revocation/theme/200-percent/narrow + viewed pixel/DOM receipts",
-        "Fresh actual offline native queue/uncertain/retry/cancel/revoke/new-session + immutable original receipt",
-        "All own54normative criteria mapping after native evidence; five explicitly downstream capabilities remain program gates",
-        "Source-bound Git delivery and remote exact readback; full143final acceptance remains"
+        "Resolve native200% capture mapping and real offline queued hit-target failure, then rerun and personally evaluate all required screenshots",
+        "Fresh actual offline native queue/uncertain/retry/cancel/revoke/new-session with original immutable receipt",
+        "Own54row normative matrix; six new primary native leaves verified, eleven broad/native pending, five explicit downstream capabilities remain program gates",
+        "Source-bound Git delivery/readback and full143/109/297 final acceptance"
       ]
     },
     {
@@ -1072,18 +1077,24 @@
           "kind": "ROOT_PG_HTTP_WS17_146_AND_INDEPENDENT_ADVERSE3_51",
           "artifact": "plans/compound-implementation/evidence/wp48/backend-v3-root-applied.json",
           "featureImplemented": false
+        },
+        {
+          "kind": "ROOT_EXACT_NATIVE_V2_32_PATHS_APPLIED_PENDING_NATIVE_GATE",
+          "artifact": "plans/compound-implementation/evidence/wp48/native-v2-root-applied.json",
+          "featureImplemented": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "CLI_AND_CANONICAL_DOMAIN_SCOPED_VERIFIED_NATIVE_OPEN",
+        "mechanism": "CLI_DOMAIN_NATIVE_INTENT_SCOPED_VERIFIED_PACKAGE_ADVERSE_OPEN",
         "interface": "NOT_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
       "preflightReport": "plans/compound-implementation/worker-reviews/WP-48.json",
       "preflightRunId": "rox-compound-20260930T083916Z",
       "remainingAcceptance": [
-        "Native-v2 receipt hash/current-policy/matching-event/privacy-fence corrections and actual Settings UI acceptance",
+        "Actual native Settings receipt/evidence/activity/privacy and held-event/GET before intent-deletion acceptance",
+        "Packaging ancestor ABA race and strict new TypeScript errors: independent adverse gate found real defects; correction required before delivery",
         "Final source-bound archive/migrations including optional48 migration; fresh final artifact SBOM/linkage/notices and scoped publisher proof",
         "Protected trusted reviewer legal decisions remain review_required; no fabricated approval",
         "Generic durable DLQ and full cross-capability feature completion remain declared program gates"
@@ -1344,6 +1355,11 @@
           "sessionId": "01a0f1cc-49af-7415-8126-9930e2ced986",
           "sourceRevision": "a21aeab1da5a67e56788384ff930945b0f487879",
           "featureImplemented": false
+        },
+        {
+          "kind": "RECOVERY_SEMANTIC_REVIEW_QUEUE_ACK_REPAIRS_NOT_FEATURE_ACCEPTANCE",
+          "artifact": "plans/compound-implementation/recovery-semantic-review-20260930-ack.json",
+          "featureImplemented": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
@@ -1462,6 +1478,11 @@
           "sessionId": "01a0f1cc-494e-7689-903c-dcaef13a4c13",
           "sourceRevision": "a21aeab1da5a67e56788384ff930945b0f487879",
           "featureImplemented": false
+        },
+        {
+          "kind": "RECOVERY_SEMANTIC_REVIEW_QUEUE_ACK_REPAIRS_NOT_FEATURE_ACCEPTANCE",
+          "artifact": "plans/compound-implementation/recovery-semantic-review-20260930-ack.json",
+          "featureImplemented": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
@@ -1575,6 +1596,11 @@
           "sessionId": "01a0f1cc-4b93-758e-8a56-b51c2b60ed6d",
           "sourceRevision": "a21aeab1da5a67e56788384ff930945b0f487879",
           "featureImplemented": false
+        },
+        {
+          "kind": "RECOVERY_SEMANTIC_REVIEW_QUEUE_ACK_REPAIRS_NOT_FEATURE_ACCEPTANCE",
+          "artifact": "plans/compound-implementation/recovery-semantic-review-20260930-ack.json",
+          "featureImplemented": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
@@ -1646,6 +1672,11 @@
           "runId": "rox-compound-implementation-20260930T101129262210Z",
           "sessionId": "01a0f1cc-49a4-73b2-9b1f-f3e33b22bd80",
           "sourceRevision": "a21aeab1da5a67e56788384ff930945b0f487879",
+          "featureImplemented": false
+        },
+        {
+          "kind": "RECOVERY_SEMANTIC_REVIEW_QUEUE_ACK_REPAIRS_NOT_FEATURE_ACCEPTANCE",
+          "artifact": "plans/compound-implementation/recovery-semantic-review-20260930-ack.json",
           "featureImplemented": false
         }
       ],
@@ -1754,6 +1785,11 @@
           "runId": "rox-compound-implementation-20260930T101129262210Z",
           "sessionId": "01a0f1cc-49d9-7546-b98f-ea893a3e6009",
           "sourceRevision": "a21aeab1da5a67e56788384ff930945b0f487879",
+          "featureImplemented": false
+        },
+        {
+          "kind": "RECOVERY_SEMANTIC_REVIEW_QUEUE_ACK_REPAIRS_NOT_FEATURE_ACCEPTANCE",
+          "artifact": "plans/compound-implementation/recovery-semantic-review-20260930-ack.json",
           "featureImplemented": false
         }
       ],
@@ -3198,6 +3234,34 @@
       "notStarted": 130,
       "fullDoDClosed": 0,
       "historicalLaunchesAreNotCompletion": true
+    },
+    "currentWorkerSnapshot": {
+      "recordedAt": "2026-09-30T16:39:27.924793+00:00",
+      "sourceRevision": "3027028c6c8cb420efe3ea4b255ac725747de9e5",
+      "preflightIsCompletion": false,
+      "actualWorkers": [
+        {
+          "id": "/root/wp48_package_ultra",
+          "task": "frozen service seven-member packaging helper",
+          "reasoning": "ultra",
+          "model": "gpt-6.1-sol"
+        },
+        {
+          "id": "/root/wp01_closure_ultra",
+          "task": "actual native WP48 acceptance proposal outside",
+          "reasoning": "ultra",
+          "model": "gpt-6.1-sol"
+        },
+        {
+          "id": "/root/recovery_core_gate_ultra",
+          "task": "frozen theme fixture diagnosis",
+          "reasoning": "ultra",
+          "model": "gpt-6.1-sol"
+        }
+      ],
+      "rootNativeLease": null,
+      "endedNativeReceipt": "rox-wp01-electron-1790785142532",
+      "endedLegacyProducer": "sealed native-v2 delivered; no active writer"
     }
   }
 }

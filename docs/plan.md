@@ -534,6 +534,18 @@ The [original plan](integration-history/pr1321/plan.md) remains preserved. Curre
 
 The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 is reconciled with this independent integration. Its original [plan](integration-history/remote-main-3dd1f98b7/plan.md) and release archive preserve all historical scope. Desktop0.11.6, native staging and dedicated GitHub/CircleCI packaging pipelines are retained; their presence does not establish signed installed Windows10/11/macOS or hosted acceptance. The current [445-leaf parallel allocation](final-readiness/parallel-work/launch-plan.json) governs development dispatch.
 
+
+## Compound native license recovery — 2026-10-03
+
+| Task | Owner | Dependency | Verification / delivery |
+|---|---|---|---|
+| Classify all nine assigned recent branches | recent_features | Frozen origin/main and full remote inventory | Patch equivalence, merged PR history and current source; eight already integrated |
+| Recover the absent WP48 native slice | recent_features | Original d141e962 and canonical backend already in main | Isolated codex/recover-compound-native-license-20261003; clean cherry-pick, original proof/history preserved |
+| Exercise native intent and affected contracts | recent_features | Own frozen dependencies and Bun1.3.14 | Strict DTO/negative cases, real PostgreSQL HTTP/WS, encrypted SIGKILL/restart/replay, Project neighbor, locale/channel parity, consumed package types |
+| Review and deliver the separate recovery PR | recent_features / root | Focused checks and exact remote head readback | Worker publishes PR; root serially reviews/merges and verifies resulting main |
+| Full native Settings and release acceptance | Existing program owners | Actual Electron interaction and native/license/release prerequisites | Original full acceptance remains pending; recovered source tests do not close it |
+
+
 ## Cursor Cloud headless server setup (2026-10-03)
 
 Owner: historical-branch integration worker; integration owner: branch audit lead.

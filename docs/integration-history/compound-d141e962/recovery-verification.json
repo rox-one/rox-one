@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "recoveredSourceCommit": "d141e962185fd808f177a2d01760b211f47f0832",
+  "mainBase": "76228cc33e44518e5fab5e59f5c754f4051d1e8c",
+  "productionVerificationCommit": "91e34b985",
+  "runtime": {
+    "bunVersion": "1.3.14",
+    "bunExecutableSha256": "e0c90ec15d33363e6b70713d56bc3b2c7585c17f40a0fe0f8fd9305901d4e233",
+    "bunLockSha256": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7",
+    "postgresql": "17 task-owned isolated instance; original protected configuration untouched"
+  },
+  "checks": {
+    "nativeDomainRoutingLocales": {
+      "pass": 307,
+      "fail": 0,
+      "assertions": 9447,
+      "files": 92
+    },
+    "existingProjectOffline": {
+      "pass": 9,
+      "fail": 0
+    },
+    "existingAuthorityCrashIsolated": {
+      "pass": 15,
+      "fail": 0,
+      "assertions": 313,
+      "frameworkTimeoutMs": 120000,
+      "originalInternalCrashTimeoutMs": 5000
+    },
+    "electronTypecheckExitCode": 0,
+    "workspaceServiceTypecheckExitCode": 0,
+    "mainBuildExitCode": 0,
+    "preloadBuildExitCode": 0,
+    "rendererBuildExitCode": 0,
+    "diffWhitespaceExitCode": 0
+  },
+  "failureHistory": [
+    {
+      "attempt": "original protected PostgreSQL target",
+      "pass": 288,
+      "fail": 19,
+      "cause": "Instance stopped; TCP connection refused. Recovered with own PostgreSQL/config, no original configuration change."
+    },
+    {
+      "attempt": "Project and authority neighbor suite concurrent with renderer build",
+      "pass": 20,
+      "fail": 4,
+      "errors": 4,
+      "cause": "Four unchanged authority crash cases exceeded framework default 5000ms under concurrent build; rerun alone with framework120000ms passed15/15, original internal5000ms crash deadline preserved."
+    }
+  ],
+  "logSha256": {
+    "compound-focused-tests.log": "6cf4619ff3ee4aba66cf04d2dfb13028549073ef5f75897768dafa42712b4bf0",
+    "compound-focused-tests-owned-postgres.log": "a6a7221fc0bd71652c82998ed6bd267664387ce80812b4d51e88a599343ec8d1",
+    "compound-project-neighbor-tests.log": "fe3f5dd1d343fccd51f3d1c56f5e4295e97138f67b6ed103ecd4534c2114b0d1",
+    "compound-authority-crash-isolated-tests.log": "453ea412a2651e324e77ad70ab1f3ff7e05bfac6eabc776da22c2292376e585b",
+    "compound-electron-tsc.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "compound-service-tsc.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "compound-main-build.log": "3ecffb9b41828e7820a8a2a8fb5ffb09d2ca23c042d7d13211673bbbe7c42604",
+    "compound-preload-build.log": "5f2b572850839749bdb24be6b069d694b7bab19297e8ea3aa797a1e34e5a2618",
+    "compound-renderer-build.log": "e8c32e873ddd80b20641dc0f50bd18bf16cd360958e429a5a847fa124cbd59f4"
+  },
+  "acceptanceLimits": [
+    "Historical source/proof records remain bound to original September revisions.",
+    "No actual native Settings product/pixel/keyboard acceptance performed by this integration.",
+    "No legal release approval or full WP48/Compound program DoD established."
+  ],
+  "branchAuditSummary": {
+    "ownedBranches": 9,
+    "alreadyIntegrated": 8,
+    "genuineUnmergedSlices": 1,
+    "originalBranchesPreserved": true
+  }
+}
