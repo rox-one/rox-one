@@ -1,0 +1,132 @@
+{
+  "source_pr": 1436,
+  "source_head": "384843bfc4cf7d4a1f34c902a66a9a3198043c9f",
+  "implementation": "1e31748b563ee40f067107f6285134fd86063f0b",
+  "qualified_integrated_source": "ff1d6e588f805d7b1ffc93bcc8c2a4d7a084037d",
+  "main": "2fae95823b5599cd9147b749332416760acd85bf",
+  "updated_at_utc": "2026-10-03T20:03:13.325353+00:00",
+  "gates": {
+    "current_sources_and_source_manager": {
+      "exit": 0,
+      "pass": 275,
+      "skip_native_windows": 16,
+      "fail": 0,
+      "assertions": 939,
+      "files": 28,
+      "seconds": 3.49
+    },
+    "shared_types": {
+      "exit": 0,
+      "config": "packages/shared/tsconfig.json"
+    },
+    "electron_types": {
+      "exit": 0,
+      "config": "apps/electron/tsconfig.json"
+    },
+    "incoming_main_electron_types": {
+      "exit": 0
+    },
+    "baseline_main_source_manager": {
+      "pass": 0,
+      "fail": 3,
+      "exit": 1
+    },
+    "restored_source_manager": {
+      "pass": 3,
+      "fail": 0,
+      "assertions": 30,
+      "exit": 0
+    },
+    "original_1436_migrator_link_adverse_probe": {
+      "exit": 1,
+      "result": "outside fixture bytes mutated by original path-based migration; original private helper exposed through sole test-export wrapper"
+    },
+    "restored_fd_migrator_link_adverse_probe": {
+      "exit": 0,
+      "result": "outside bytes unchanged"
+    }
+  },
+  "hashes": {
+    "packages/shared/src/agent/core/source-manager.ts": "6f373b76a4ea6a9c150d186f3c8cf3485ddb5f39045f2d062dc3fc32247aaefd",
+    "packages/shared/src/sources/credential-manager.ts": "516c938ab1f8560c7a218e8a22b9235959d2819aff95c7fc7b5fcc1c256d32df",
+    "packages/shared/src/sources/default-microservices.ts": "d01befa32e06bccee2fb909a0d137dbeed9449de99c56834a8e0c5218ff3c7bc",
+    "packages/shared/src/sources/local-default-migration.ts": "edd068175331f6285b63daae8bb006c6379cce1ea23819682e21df58b161fbbf",
+    "packages/shared/src/sources/server-builder.ts": "a0ba06f22d962d5bc300890b981d3171ad2d77d00d8f5e948edc32feba697383",
+    "packages/shared/src/sources/storage.ts": "0b4e8e18f604a5984721fe9390218f336887e9a56121e5917bdf8451a0deded0",
+    "packages/shared/src/sources/__tests__/local-default-migration.test.ts": "3acf8810fb53a12b1b9450e92df934075f082f31886b28e39118ed27b4f99aca",
+    "packages/shared/src/sources/__tests__/local-source-state.test.ts": "70957a87af784171e3bde787ea57ba827f1a339ec271a7d4b22bb82cf995281a",
+    "packages/shared/src/sources/__tests__/native-default-migration.test.ts": "b49acd75c47ccbd97974dede5114afd00b2c731d4027dbcbd4e7148983b20fcd"
+  },
+  "environment": {
+    "platform": "darwin-arm64",
+    "bun": "1.3.14",
+    "node": "22.23.3",
+    "package_bindings": "all workspace @rox/@craft-agent package links point to this exact checkout; thirdparty dependencies shared from existing cache"
+  },
+  "behavior": [
+    "actualBaseAgent sync retains selected readable localfolders through emptyliveMCP snapshot; explicitempty/disabling authoritative",
+    "workspace/source directory expansion and everyturnfilesystemcontext; staleMCP/APIauth metadata doesnot classifylocalfolderauth",
+    "credential skip only for true local/noauth unusedconsumers; catalogmanagedstdio upstream vault identity and remoteexplicitBearer preserved",
+    "OSspecific nativefolderdefaults and readonlydirectoryhealth; exactobsoleteWindowsdefault onlymigrateswithabsentlegacy+verifiednewfolder",
+    "boundedregular singlelink sameFD read/recheck/write refuses linked/replaced/malformed/oversize/changedfiles; exactoldguide only; freshconfig/guidewx0600 preservecustom",
+    "incoming2faeTasks changes do notchange any of these source/fixtureblobs; integratedElectron types0"
+  ],
+  "limits": [
+    "NativeWindows16controls explicitly skipped onMac; no nativeWindows or externalprovider acceptance",
+    "Optimistic FD migration refuses observed changes; not a crash-atomic config/guide transaction or a lock for arbitrary writers after finalcheck",
+    "Original hostBash/collection knowledge and other137path source disposition are still separate unfinished obligations",
+    "Source/test evidence proves bounded consumer behavior; full installed UI/release acceptance is not claimed"
+  ],
+  "logs": {
+    "first": {
+      "bytes": 7238,
+      "sha256": "8893793e7918fb642f54e8fd19a57bfe831aef017afb59a1b7d09710271cb8a8",
+      "path": "docs/integration-history/local-source-health-20261003/first.log.gz"
+    },
+    "aggregate": {
+      "bytes": 35813,
+      "sha256": "cc6c845a55007c7ed299da080758bf5debedbdf77dd5aa1c17ac1f22cb457ac7",
+      "path": "docs/integration-history/local-source-health-20261003/aggregate.log.gz"
+    },
+    "final-aggregate": {
+      "bytes": 36058,
+      "sha256": "b3ec70e99b515181988e4a053e38eca4d86bac8130ab71407f9ad756e2ace856",
+      "path": "docs/integration-history/local-source-health-20261003/final-aggregate.log.gz"
+    },
+    "final-shared-types": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "path": "docs/integration-history/local-source-health-20261003/final-shared-types.log.gz"
+    },
+    "final-electron-types": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "path": "docs/integration-history/local-source-health-20261003/final-electron-types.log.gz"
+    },
+    "integrated-electron-types": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "path": "docs/integration-history/local-source-health-20261003/integrated-electron-types.log.gz"
+    },
+    "manager-baseline-negative": {
+      "bytes": 2638,
+      "sha256": "80420b86e1637e140c25d375cc370ab9baea61c346224fe858c3bb68f98583bc",
+      "path": "docs/integration-history/local-source-health-20261003/manager-baseline-negative.log.gz"
+    },
+    "manager-restored-positive": {
+      "bytes": 690,
+      "sha256": "618cab4f9a95764a5041626f2c1b46d7dc3eb96e77707041dd7a35723c71da0f",
+      "path": "docs/integration-history/local-source-health-20261003/manager-restored-positive.log.gz"
+    },
+    "migration-original-source-negative": {
+      "bytes": 5193,
+      "sha256": "6916dbe1eb41cde8393e7daaaa3f6913e0784ab20c154f653acd03bf32f37cf7",
+      "path": "docs/integration-history/local-source-health-20261003/migration-original-source-negative.log.gz"
+    },
+    "migration-restored-positive": {
+      "bytes": 70,
+      "sha256": "91f21e1c1e82b0a86be6591062337245d7f3452db533cde785ebb69c79a5cea3",
+      "path": "docs/integration-history/local-source-health-20261003/migration-restored-positive.log.gz"
+    }
+  }
+}

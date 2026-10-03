@@ -8,7 +8,7 @@
  * NOT a workspace slug. The `LoadedSource.workspaceId` is derived via basename().
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, rmSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, rmSync, statSync, accessSync, constants } from 'fs';
 import { join, basename } from 'path';
 import { randomUUID } from 'crypto';
 import type {
@@ -61,6 +61,26 @@ export function ensureSourcesDir(workspaceRootPath: string): void {
 // Config Operations
 // ============================================================
 
+/** Live folder evidence; never changes persisted health or creates paths. */
+export function getLocalSourceFolderState(source: LoadedSource): { path?: string; available: boolean; error?: string } {
+  if (source.config.type !== 'local' || !source.config.local?.path) return { available: false, error: 'Local folder path is not configured.' };
+  const path = expandPath(source.config.local.path, source.workspaceRootPath, {
+    WORKSPACE: source.workspaceRootPath,
+    SOURCE_DIR: source.folderPath,
+  });
+  return isReadableDirectory(path)
+    ? { path, available: true }
+    : { path, available: false, error: 'Local folder is missing, is not a directory, or is not readable.' };
+}
+
+export function isReadableDirectory(path: string): boolean {
+  try {
+    if (!statSync(path).isDirectory()) return false;
+    accessSync(path, constants.R_OK | (process.platform === 'win32' ? 0 : constants.X_OK));
+    return true;
+  } catch { return false; }
+}
+
 /**
  * Load source config.json
  */
@@ -80,7 +100,10 @@ export function loadSourceConfig(
     // MCP field expansion happens at build time in server-builder.ts to avoid
     // persisting expanded values back to config.json.
     if (config.type === 'local' && config.local?.path) {
-      config.local.path = expandPath(config.local.path);
+      config.local.path = expandPath(config.local.path, workspaceRootPath, {
+        WORKSPACE: workspaceRootPath,
+        SOURCE_DIR: getSourcePath(workspaceRootPath, sourceSlug),
+      });
     }
 
     return applyBuiltinSourceAvailability(config);
@@ -407,8 +430,10 @@ export function getEnabledSources(workspaceRootPath: string): LoadedSource[] {
 export function isSourceUsable(source: LoadedSource): boolean {
   if (!source.config.enabled) return false;
 
-  // Get auth type from MCP or API config
-  const authType = source.config.mcp?.authType || source.config.api?.authType;
+  if (source.config.type === 'local') return getLocalSourceFolderState(source).available;
+  if (source.config.type === 'mcp' && source.config.mcp?.transport === 'stdio' && !isManagedBuiltinMcpSource(source.config)) return true;
+  // The active type alone owns auth; stale fields from a prior type do not.
+  const authType = source.config.type === 'mcp' ? source.config.mcp?.authType : source.config.api?.authType;
 
   // Sources with no auth requirement are always usable when enabled
   if (authType === 'none' || authType === undefined) return true;
