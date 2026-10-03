@@ -1036,3 +1036,10 @@ Owner recent_features; depends on current Tasks1456, strict date1470 and Product
 2. Reproduce origin/privacy/artifact/verdict negatives, including the explicitly pending TaskRunner producer fixture. Restore only the bounded collector layer, then qualify four independent suites (53/0/247), core and server-core Node22 types. Archive source failures and the initial dependent-fixture type diagnostics.
 3. Publish a separate collector PR with qualified hashes and pending producer/UI boundaries. pr_scout preserves current third suppliedExecution argument and spawn authority bind while implementing tagged actual producers in its separate PR. Root owns sequential merge.
 4. Historical worker recovers current renderer context/export/link/retry behavior from the same finite source head; end-to-end producer/UI acceptance needs its own actual consumers and refreshed scoped proof.
+
+
+## Runtime Map renderer late recovery — 2026-10-04
+
+1. Freeze latest c2e8 and compare current actual consumers. Reproduce missing grouped-context UI with real current renderer and production journal behind an explicitly synthetic executor; retain source fixture failures (missing build manifest and required clockDomain), then the valid-context negative.
+2. Restore only scoped renderer components/helpers/actual ChatPage/MainContentPanel ports. Add read-only runtime link intent to current NavigationContext while preserving its immediate-history release; union the20 runtimeMap keys in all12 current locales.
+3. Qualify focused projection/export/layout/catalog/link behavior, actual mounted context/provenance and lazy retry, retained chat/editor continuities, current package types and renderer build. Preserve every failure and byte-bound receipts; merge latest main normally. Root owns separate PR merge, pr_scout separately owns actual origin-tagged producers.

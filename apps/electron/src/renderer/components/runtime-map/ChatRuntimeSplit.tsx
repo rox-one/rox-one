@@ -4,6 +4,22 @@ import { Maximize2, RotateCcw } from 'lucide-react'
 import { clampChatRatio, splitStorageKey } from './layout/viewport-policy'
 import './runtime-map.css'
 
+const RuntimeMapLoadAttemptContext = React.createContext<object>({})
+
+/** Each boundary remount owns a fresh lazy attempt; a rejected global lazy is sticky. */
+export function createRetryableRuntimeMapLazy<Props extends object>(load: () => Promise<{ default: React.ComponentType<Props> }>): React.ComponentType<Props> {
+  // A suspended initial mount discards hook memoization. The boundary token keeps
+  // one pending lazy instance alive until Retry creates a fresh scoped attempt.
+  const attempts = new WeakMap<object, React.LazyExoticComponent<React.ComponentType<Props>>>()
+  function RuntimeMapLoadAttempt(props: Props) {
+    const attempt = React.useContext(RuntimeMapLoadAttemptContext)
+    let Component = attempts.get(attempt)
+    if (!Component) { Component = React.lazy(load); attempts.set(attempt, Component) }
+    return React.createElement(Component, props as React.Attributes & React.ComponentProps<typeof Component>)
+  }
+  return RuntimeMapLoadAttempt
+}
+
 export interface ChatRuntimeSplitProps {
   chat: React.ReactNode
   map?: React.ReactNode
@@ -13,11 +29,11 @@ export interface ChatRuntimeSplitProps {
   onCloseMap?: () => void
 }
 
-class RuntimeMapBoundary extends React.Component<{ children: React.ReactNode; fallback: (retry: () => void) => React.ReactNode }, { failed: boolean }> {
-  state = { failed: false }
+class RuntimeMapBoundary extends React.Component<{ children: React.ReactNode; fallback: (retry: () => void) => React.ReactNode }, { failed: boolean; attempt: object }> {
+  state = { failed: false, attempt: {} }
   static getDerivedStateFromError() { return { failed: true } }
   render() {
-    return this.state.failed ? this.props.fallback(() => this.setState({ failed: false })) : this.props.children
+    return this.state.failed ? this.props.fallback(() => this.setState({ failed: false, attempt: {} })) : <RuntimeMapLoadAttemptContext.Provider value={this.state.attempt}>{this.props.children}</RuntimeMapLoadAttemptContext.Provider>
   }
 }
 

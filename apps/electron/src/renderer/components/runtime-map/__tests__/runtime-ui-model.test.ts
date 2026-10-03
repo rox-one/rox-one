@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { contextFill, measurementText, runtimeNodeDuration, safeDisplayText } from '../measurements'
-import { clampChatRatio, inspectCamera, receiveCameraEvents, resumeCamera, splitStorageKey } from '../layout/viewport-policy'
+import { clampChatRatio, inspectCamera, overviewMinimumZoom, receiveCameraEvents, resumeCamera, splitStorageKey } from '../layout/viewport-policy'
+import { getViewportForBounds } from '@xyflow/system'
 
 describe('honest runtime measurements and inert content', () => {
   it('never turns a missing token/time measurement into zero', () => {
@@ -31,6 +32,15 @@ describe('honest runtime measurements and inert content', () => {
 })
 
 describe('map attention and independent split scope', () => {
+  it('explicit overview permits a dense bounded window to fit while ordinary cards keep normal scale', () => {
+    const bounds = { x: 6_040, y: 0, width: 60_000, height: 5_000 }
+    const minimum = overviewMinimumZoom(bounds, { width: 836, height: 650 })
+    const fitted = getViewportForBounds(bounds, 836, 650, minimum, 1, 0.18)
+    expect(fitted.zoom).toBeLessThan(0.25)
+    expect(bounds.width * fitted.zoom).toBeLessThan(836)
+    expect(bounds.height * fitted.zoom).toBeLessThan(650)
+    expect(overviewMinimumZoom({ width: 268, height: 128 }, { width: 836, height: 650 })).toBe(0.25)
+  })
   it('manual inspection stops follow until explicit resume', () => {
     const initial = { mode: 'following' as const, pending: 0, lastSeenSeq: 3 }
     const updated = receiveCameraEvents(inspectCamera(initial), 8)

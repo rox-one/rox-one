@@ -98,7 +98,7 @@ const server = Bun.serve({ hostname: '127.0.0.1', port: 4177, idleTimeout: 0, as
         return assignment.payload.assignment.agentId
       }
       return json({ rootSnapshotId: rootSnapshot.id, childSnapshotId: childSnapshot.id,
-        agents: { child: assignedAgent(1), missing: assignedAgent(3) } })
+        agents: { root: run.agentId, child: assignedAgent(1), missing: assignedAgent(3) } })
     }
     if (path === '/large' && request.method === 'POST') {
       if (!run) return json({ error: 'No active test run' }, 409)
