@@ -38,19 +38,6 @@ function captureError(run: () => unknown): unknown {
   }
 }
 
-const validLocators: readonly ProviderLocator[] = [
-  { type: 'local', key: 'github/default' },
-  { type: 'keychain', service: 'github', account: 'default' },
-  { type: 'dotenv', path: '/tmp/credentials.env', key: 'GITHUB_TOKEN' },
-  { type: 'git_helper', host: 'github.com' },
-  { type: 'docker_helper', registry: 'docker.io' },
-  { type: 'aws_profile', profile: 'default' },
-  { type: 'gcp_adc', source: 'default' },
-  { type: 'ssh_agent', fingerprint: 'SHA256:identity' },
-  { type: 'infisical', projectId: 'project', environment: 'prod', secretPath: '/github', secretKey: 'token' },
-  { type: 'opaque', provider: 'custom', locator: 'reference' },
-];
-
 describe('CredentialRefRegistry', () => {
   it('creates opaque stable refs and stores metadata only', () => {
     const registry = createRegistry();
@@ -193,6 +180,144 @@ describe('CredentialRefRegistry', () => {
     });
   }
 
+  const validLocators = [
+    { type: 'local', key: 'github/default' },
+    { type: 'keychain', service: 'github', account: 'default' },
+    { type: 'dotenv', path: '/tmp/.env', key: 'GITHUB_TOKEN' },
+    { type: 'git_helper', host: 'github.com' },
+    { type: 'docker_helper', registry: 'registry.example.com' },
+    { type: 'aws_profile', profile: 'default' },
+    { type: 'gcp_adc', source: 'application-default' },
+    { type: 'ssh_agent', fingerprint: 'SHA256:abcd' },
+    { type: 'infisical', projectId: 'project', environment: 'prod', secretPath: '/github', secretKey: 'token' },
+    { type: 'opaque', provider: 'custom', locator: 'github/default' },
+  ] as const satisfies readonly ProviderLocator[];
+
+  for (const validLocator of validLocators) {
+    for (const field of Object.keys(validLocator)) {
+      for (const inheritedKind of ['data', 'getter'] as const) {
+        it(`rejects missing own ${validLocator.type}.${field} supplied by an inherited ${inheritedKind}`, () => {
+          const registrationRegistry = createRegistry();
+          const replacementRegistry = createRegistry();
+          const original = replacementRegistry.register({
+            kind: 'api_key',
+            providerId: 'local',
+            locator: { type: 'local', key: 'github/default' },
+            now: 100,
+          });
+          const locator: Record<string, unknown> = { ...validLocator };
+          const inheritedValue = locator[field];
+          delete locator[field];
+          const originalDescriptor = Object.getOwnPropertyDescriptor(Object.prototype, field);
+          let reads = 0;
+          let registrationResult: unknown;
+          let registrationError: unknown;
+          let replacementResult: unknown;
+          let replacementError: unknown;
+
+          try {
+            Object.defineProperty(Object.prototype, field, inheritedKind === 'data'
+              ? { configurable: true, value: inheritedValue }
+              : {
+                  configurable: true,
+                  get: () => {
+                    reads += 1;
+                    return inheritedValue;
+                  },
+                });
+            try {
+              registrationResult = registrationRegistry.register({
+                kind: 'api_key',
+                providerId: validLocator.type,
+                locator: locator as never,
+                now: 100,
+              });
+            } catch (error) {
+              registrationError = error;
+            }
+            try {
+              replacementResult = replacementRegistry.updateProvider(original.id, 'other', locator as never, 200);
+            } catch (error) {
+              replacementError = error;
+            }
+          } finally {
+            if (originalDescriptor) {
+              Object.defineProperty(Object.prototype, field, originalDescriptor);
+            } else {
+              Reflect.deleteProperty(Object.prototype, field);
+            }
+          }
+
+          // Assertions run after cleanup so the test framework sees a clean prototype.
+          expect(registrationError).toBeInstanceOf(Error);
+          expect((registrationError as Error).message).toMatch(/^Invalid credential metadata: locator(?:\.|$)/);
+          expect(replacementError).toBeInstanceOf(Error);
+          expect((replacementError as Error).message).toMatch(/^Invalid credential metadata: locator(?:\.|$)/);
+          expect(registrationResult).toBeUndefined();
+          expect(replacementResult).toBeUndefined();
+          expect(reads).toBe(0);
+          expect(registrationRegistry.list()).toEqual([]);
+          expect(replacementRegistry.get(original.id)).toEqual(original);
+        });
+      }
+    }
+  }
+
+  for (const field of ['type', 'key'] as const) {
+    it(`rejects own locator ${field} accessors when Object.prototype.value is present`, () => {
+      const registrationRegistry = createRegistry();
+      const replacementRegistry = createRegistry();
+      const original = replacementRegistry.register({
+        kind: 'api_key',
+        providerId: 'local',
+        locator: { type: 'local', key: 'github/default' },
+        now: 100,
+      });
+      let reads = 0;
+      const locator = { type: 'local', key: 'github/default' };
+      Object.defineProperty(locator, field, {
+        enumerable: true,
+        get: () => {
+          reads += 1;
+          return field === 'type' ? 'local' : 'github/default';
+        },
+      });
+      const originalDescriptor = Object.getOwnPropertyDescriptor(Object.prototype, 'value');
+      let registrationResult: unknown;
+      let registrationError: unknown;
+      let replacementResult: unknown;
+      let replacementError: unknown;
+
+      try {
+        Object.defineProperty(Object.prototype, 'value', { configurable: true, value: 'inherited-value' });
+        try {
+          registrationResult = registrationRegistry.register({ kind: 'api_key', providerId: 'local', locator: locator as never, now: 100 });
+        } catch (error) {
+          registrationError = error;
+        }
+        try {
+          replacementResult = replacementRegistry.updateProvider(original.id, 'other', locator as never, 200);
+        } catch (error) {
+          replacementError = error;
+        }
+      } finally {
+        // Remove the inherited value before restoring a possible accessor descriptor.
+        Reflect.deleteProperty(Object.prototype, 'value');
+        if (originalDescriptor) Object.defineProperty(Object.prototype, 'value', originalDescriptor);
+      }
+
+      expect(registrationError).toBeInstanceOf(Error);
+      expect((registrationError as Error).message).toBe('Invalid credential metadata: locator');
+      expect(replacementError).toBeInstanceOf(Error);
+      expect((replacementError as Error).message).toBe('Invalid credential metadata: locator');
+      expect(registrationResult).toBeUndefined();
+      expect(replacementResult).toBeUndefined();
+      expect(reads).toBe(0);
+      expect(registrationRegistry.list()).toEqual([]);
+      expect(replacementRegistry.get(original.id)).toEqual(original);
+    });
+  }
+
   for (const field of ['type', 'key'] as const) {
     it(`rejects locator ${field} accessors without executing them`, () => {
       const registry = createRegistry();
@@ -222,35 +347,6 @@ describe('CredentialRefRegistry', () => {
   });
 
   for (const validLocator of validLocators) {
-    for (const [field, inheritedValue] of Object.entries(validLocator)) {
-      for (const propertyKind of ['data', 'getter'] as const) {
-        it(`rejects inherited ${validLocator.type}.${field} ${propertyKind} fields before registration or replacement`, () => {
-          const registry = createRegistry();
-          const updateRegistry = createRegistry();
-          const original = updateRegistry.register({ kind: 'api_key', providerId: 'local', locator: validLocator, now: 100 });
-          const locator = { ...validLocator } as Record<string, string>;
-          delete locator[field];
-          let reads = 0;
-          let registerError: unknown;
-          let updateError: unknown;
-          const descriptor: PropertyDescriptor = propertyKind === 'data'
-            ? { configurable: true, enumerable: true, value: inheritedValue }
-            : { configurable: true, enumerable: true, get: () => { reads += 1; return inheritedValue; } };
-
-          withPrototypeProperty(field, descriptor, () => {
-            registerError = captureError(() => registry.register({ kind: 'api_key', providerId: 'other', locator: locator as never, now: 200 }));
-            updateError = captureError(() => updateRegistry.updateProvider(original.id, 'other', locator as never, 200));
-          });
-
-          expect(reads).toBe(0);
-          expect(registerError).toBeInstanceOf(Error);
-          expect(updateError).toBeInstanceOf(Error);
-          expect(registry.list()).toEqual([]);
-          expect(updateRegistry.get(original.id)).toEqual(original);
-        });
-      }
-    }
-
     it(`keeps frozen ${validLocator.type} locator data valid despite inherited getters`, () => {
       const registry = createRegistry();
       let reads = 0;

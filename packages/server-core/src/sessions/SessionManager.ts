@@ -28,6 +28,7 @@ import {
   resolveSessionConnection,
   createOmpSessionBackendFromConnection as createBackendFromConnection,
   resolveOmpSessionContext as resolveBackendContext,
+  resolveBackendContext as resolveOfflineSessionContext,
   createOmpSessionBackendFromResolvedContext as createBackendFromResolvedContext,
   cleanupSourceRuntimeArtifacts,
   providerTypeToAgentProvider,
@@ -1750,16 +1751,17 @@ export class SessionManager implements ISessionManager {
     // watching, then download/probe in the background without blocking the UI.
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (workspace && !workspace.remoteServer) {
-      const { created } = ensureBuiltinMcpSources(workspaceRootPath)
+      ensureBuiltinMcpSources(workspaceRootPath)
       const config = loadWorkspaceConfig(workspaceRootPath)
-      const newDefaults = getEnabledBuiltinMcpSourceSlugs(workspaceRootPath).filter(slug => created.includes(slug))
-      if (config && newDefaults.length > 0) {
+      // An explicit workspace selection, including [], belongs to the user.
+      // Only seed automatic defaults when no selection has ever been saved.
+      if (config && config.defaults?.enabledSourceSlugs === undefined) {
         saveWorkspaceConfig(workspaceRootPath, {
           ...config,
           defaults: {
             ...config.defaults,
             enabledSourceSlugs: [...new Set([
-              ...(config.defaults?.enabledSourceSlugs ?? collectDefaultEnabledSourceSlugs()), ...newDefaults,
+              ...collectDefaultEnabledSourceSlugs(), ...getEnabledBuiltinMcpSourceSlugs(workspaceRootPath),
             ])],
           },
         })
@@ -2426,7 +2428,7 @@ export class SessionManager implements ISessionManager {
     // Pass session path so large API responses can be saved to session folder
     const sessionPath = getSessionStoragePath(workspaceRootPath, managed.id)
     const { mcpServers, apiServers } = await buildServersFromSources(enabledSources, sessionPath, managed.tokenRefreshManager, managed.agent?.getSummarizeCallback())
-    const intendedSlugs = enabledSources.map(s => s.config.slug)
+    const intendedSlugs = allSources.filter(s => enabledSlugs.includes(s.config.slug)).map(s => s.config.slug)
 
     // Update bridge-mcp-server config/credentials for backends that need it
     await applyBridgeUpdates(managed.agent, sessionPath, enabledSources, mcpServers, managed.id, workspaceRootPath, 'source reload', managed.poolServer?.url)
@@ -3347,7 +3349,12 @@ export class SessionManager implements ISessionManager {
     }
 
     // Resolve backend target early for branching policy checks.
-    const targetBackendContext = resolveBackendContext({
+    // The persisted first greeting runs without a provider or configured OMP
+    // connection. The first user turn still goes through the strict OMP gate.
+    const resolveCreationContext = internal?.initialAssistantMessage
+      && !options?.branchFromSessionId && !options?.branchFromMessageId
+      ? resolveOfflineSessionContext : resolveBackendContext
+    const targetBackendContext = resolveCreationContext({
       sessionConnectionSlug: options?.llmConnection,
       workspaceDefaultConnectionSlug: wsConfig?.defaults?.defaultLlmConnection,
       managedModel: resolvedModelOption,
@@ -5483,9 +5490,7 @@ export class SessionManager implements ISessionManager {
         }
 
         // Apply source servers to the agent
-        const intendedSlugs = allEnabledSources
-          .filter(isSourceUsable)
-          .map(s => s.config.slug)
+        const intendedSlugs = allEnabledSources.map(s => s.config.slug)
 
         // Update bridge-mcp-server config/credentials for backends that need it
         await applyBridgeUpdates(managed.agent!, sessionPath, allEnabledSources, mcpServers, managed.id, workspaceRootPath, 'source enable', managed.poolServer?.url)
@@ -5879,7 +5884,7 @@ export class SessionManager implements ISessionManager {
       managed.agent.setAllSources(allSources)
 
       // Set active source servers (tools are only available from these)
-      const intendedSlugs = sources.filter(isSourceUsable).map(s => s.config.slug)
+      const intendedSlugs = sources.map(s => s.config.slug)
 
       // Update bridge-mcp-server config/credentials for backends that need it
       const usableSources = sources.filter(isSourceUsable)
@@ -7223,7 +7228,7 @@ export class SessionManager implements ISessionManager {
       const apiCount = Object.keys(apiServers).length
       if (mcpCount > 0 || apiCount > 0 || enabledSlugs.length > 0) {
         const usableSources = sources.filter(isSourceUsable)
-        const intendedSlugs = usableSources.map(s => s.config.slug)
+        const intendedSlugs = sources.map(s => s.config.slug)
         await agent.setSourceServers(mcpServers, apiServers, intendedSlugs)
         await applyBridgeUpdates(agent, sessionPath, usableSources, mcpServers, sessionId, workspaceRootPath, 'send message', managed.poolServer?.url)
         sessionLog.info(`Applied ${mcpCount} MCP + ${apiCount} API sources to session ${sessionId} (${allSources.length} total)`)

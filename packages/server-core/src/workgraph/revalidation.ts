@@ -1,5 +1,5 @@
-import type { CredentialRefId } from '@rox/core/platform'
-import type { InProcessCredentialBroker, SecretProvider } from '@rox/shared/credentials'
+import type { CredentialRef, CredentialRefId } from '@rox/core/platform'
+import type { CredentialBackend, InProcessCredentialBroker, SecretProvider } from '@rox/shared/credentials'
 
 import type { WorkGraphKernel } from './index'
 
@@ -41,6 +41,19 @@ export interface RevalidatedConsumer {
   readonly status: 'ok' | 'denied' | 'repair_required'
 }
 
+export interface RevokedLeaseView {
+  readonly consumerId: string
+  readonly status: 'revoked'
+}
+
+export interface ActiveLeaseView {
+  readonly id: string
+  readonly consumerId: string
+  readonly purpose: string
+  readonly action: string
+  readonly status: 'active'
+}
+
 async function revalidateAffected(
   input: RepairConnectionInput,
 ): Promise<{ readonly consumers: readonly RevalidatedConsumer[] }> {
@@ -58,7 +71,7 @@ async function revalidateAffected(
 }
 
 async function requireConnection(
-  kernel: WorkGraphRevokeSurface,
+  kernel: Pick<WorkGraphKernel, 'getConnection'>,
   workspaceId: string,
   connectionId: string,
 ) {
@@ -67,12 +80,46 @@ async function requireConnection(
   return connection
 }
 
+function revokedLeaseViews(
+  revoked: readonly { readonly consumerId: string }[],
+): readonly RevokedLeaseView[] {
+  return revoked.map((row) => ({ consumerId: row.consumerId, status: 'revoked' as const }))
+}
+
+function assertSafeCredentialJson(out: unknown, label: string): void {
+  if (JSON.stringify(out).match(/"token"|"secret"|"payload"|"value"/i)) {
+    throw new Error(`${label} leaked a forbidden field`)
+  }
+}
+
+export async function listConnectionLeases(input: {
+  readonly kernel: Pick<WorkGraphKernel, 'getConnection'>
+  readonly broker: InProcessCredentialBroker
+  readonly workspaceId: string
+  readonly connectionId: string
+}): Promise<readonly ActiveLeaseView[]> {
+  const connection = await requireConnection(input.kernel, input.workspaceId, input.connectionId)
+  const listed = await input.broker.listActiveLeasesForRef(connection.credentialRefId as CredentialRefId)
+  const leases = listed.map((row) => ({
+    id: row.id,
+    consumerId: row.consumerId,
+    purpose: row.purpose,
+    action: row.action,
+    status: 'active' as const,
+  }))
+  assertSafeCredentialJson(leases, 'Lease list')
+  return leases
+}
+
 export async function revokeConnectionAndRevalidate(
   input: RevokeConnectionInput,
-): Promise<{ readonly consumers: readonly RevalidatedConsumer[] }> {
+): Promise<{
+  readonly consumers: readonly RevalidatedConsumer[]
+  readonly leases: readonly RevokedLeaseView[]
+}> {
   const connection = await requireConnection(input.kernel, input.workspaceId, input.connectionId)
   const credentialRefId = connection.credentialRefId as CredentialRefId
-  await input.broker.revokeLeasesForRef(credentialRefId, input.reason)
+  const revoked = await input.broker.revokeLeaseMetadataForRef(credentialRefId, input.reason)
   await input.provider.revoke({
     credentialRef: {
       id: credentialRefId,
@@ -91,15 +138,21 @@ export async function revokeConnectionAndRevalidate(
     decision: 'allow',
     eventType: 'connection-revoked',
   })
-  return revalidateAffected(input)
+  const { consumers } = await revalidateAffected(input)
+  const out = { consumers, leases: revokedLeaseViews(revoked) }
+  assertSafeCredentialJson(out, 'Revoke')
+  return out
 }
 
 export async function rotateConnectionAndRevalidate(
   input: RotateConnectionInput,
-): Promise<{ readonly consumers: readonly RevalidatedConsumer[] }> {
+): Promise<{
+  readonly consumers: readonly RevalidatedConsumer[]
+  readonly leases: readonly RevokedLeaseView[]
+}> {
   const connection = await requireConnection(input.kernel, input.workspaceId, input.connectionId)
   const credentialRefId = connection.credentialRefId as CredentialRefId
-  await input.broker.revokeLeasesForRef(credentialRefId, input.reason)
+  const revoked = await input.broker.revokeLeaseMetadataForRef(credentialRefId, input.reason)
   await input.kernel.appendConnectionAudit({
     workspaceId: input.workspaceId,
     connectionId: input.connectionId,
@@ -108,7 +161,10 @@ export async function rotateConnectionAndRevalidate(
     decision: 'allow',
     eventType: 'connection-rotated',
   })
-  return revalidateAffected(input)
+  const { consumers } = await revalidateAffected(input)
+  const out = { consumers, leases: revokedLeaseViews(revoked) }
+  assertSafeCredentialJson(out, 'Rotate')
+  return out
 }
 
 export async function repairConnectionAndRevalidate(
@@ -126,6 +182,31 @@ export async function repairConnectionAndRevalidate(
   return revalidateAffected(input)
 }
 
+export type ReconnectConnectionInput = RotateConnectionInput
+
+export async function reconnectConnectionAndRevalidate(
+  input: ReconnectConnectionInput,
+): Promise<{
+  readonly consumers: readonly RevalidatedConsumer[]
+  readonly leases: readonly RevokedLeaseView[]
+}> {
+  const connection = await requireConnection(input.kernel, input.workspaceId, input.connectionId)
+  const credentialRefId = connection.credentialRefId as CredentialRefId
+  const revoked = await input.broker.revokeLeaseMetadataForRef(credentialRefId, input.reason)
+  await input.kernel.appendConnectionAudit({
+    workspaceId: input.workspaceId,
+    connectionId: input.connectionId,
+    credentialRefId,
+    action: 'connection.reconnect',
+    decision: 'allow',
+    eventType: 'connection-reconnected',
+  })
+  const { consumers } = await revalidateAffected(input)
+  const out = { consumers, leases: revokedLeaseViews(revoked) }
+  assertSafeCredentialJson(out, 'Reconnect')
+  return out
+}
+
 export interface ConvertConnectionInput {
   readonly kernel: WorkGraphConvertSurface
   readonly broker: InProcessCredentialBroker
@@ -137,11 +218,15 @@ export interface ConvertConnectionInput {
 
 export async function convertCopyToReferenceAndRevalidate(
   input: ConvertConnectionInput,
-): Promise<{ readonly storageMode: 'reference'; readonly consumers: readonly RevalidatedConsumer[] }> {
+): Promise<{
+  readonly storageMode: 'reference'
+  readonly consumers: readonly RevalidatedConsumer[]
+  readonly leases: readonly RevokedLeaseView[]
+}> {
   const connection = await requireConnection(input.kernel, input.workspaceId, input.connectionId)
   await input.kernel.convertConnectionToReference(input.workspaceId, input.connectionId)
   const credentialRefId = connection.credentialRefId as CredentialRefId
-  await input.broker.revokeLeasesForRef(credentialRefId, input.reason)
+  const revoked = await input.broker.revokeLeaseMetadataForRef(credentialRefId, input.reason)
   if (typeof input.provider.dropCopy === 'function') {
     await input.provider.dropCopy({
       id: credentialRefId,
@@ -153,7 +238,64 @@ export async function convertCopyToReferenceAndRevalidate(
     })
   }
   const { consumers } = await revalidateAffected(input)
-  return { storageMode: 'reference', consumers }
+  const out = { storageMode: 'reference' as const, consumers, leases: revokedLeaseViews(revoked) }
+  assertSafeCredentialJson(out, 'Convert')
+  return out
+}
+
+export interface MoveConnectionInput {
+  readonly kernel: WorkGraphRevokeSurface
+  readonly broker: InProcessCredentialBroker
+  readonly provider: SecretProvider & {
+    moveCopy?(ref: CredentialRef, target: CredentialBackend): Promise<{ from: string; to: string }>
+  }
+  readonly target: CredentialBackend
+  readonly workspaceId: string
+  readonly connectionId: string
+  readonly reason: string
+}
+
+export async function moveConnectionBackendAndRevalidate(
+  input: MoveConnectionInput,
+): Promise<{
+  readonly connectionId: string
+  readonly credentialRefId: string
+  readonly from: string
+  readonly to: string
+  readonly consumers: readonly RevalidatedConsumer[]
+  readonly leases: readonly RevokedLeaseView[]
+}> {
+  const connection = await requireConnection(input.kernel, input.workspaceId, input.connectionId)
+  if (typeof input.provider.moveCopy !== 'function') throw new Error('move_unavailable')
+  const credentialRefId = connection.credentialRefId as CredentialRefId
+  const revoked = await input.broker.revokeLeaseMetadataForRef(credentialRefId, input.reason)
+  const moved = await input.provider.moveCopy({
+    id: credentialRefId,
+    kind: 'bearer_token',
+    providerId: input.provider.id,
+    locator: { type: 'local', key: credentialRefId },
+    createdAt: 0,
+    updatedAt: 0,
+  }, input.target)
+  await input.kernel.appendConnectionAudit({
+    workspaceId: input.workspaceId,
+    connectionId: input.connectionId,
+    credentialRefId,
+    action: 'connection.move',
+    decision: 'allow',
+    eventType: 'connection-moved',
+  })
+  const { consumers } = await revalidateAffected(input)
+  const out = {
+    connectionId: connection.id,
+    credentialRefId,
+    from: moved.from,
+    to: moved.to,
+    consumers,
+    leases: revokedLeaseViews(revoked),
+  }
+  assertSafeCredentialJson(out, 'Move')
+  return out
 }
 
 export interface RevokeBindingInput {

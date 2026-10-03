@@ -37,8 +37,19 @@ describe('isolated QMD collection provisioning', () => {
     expect(document.collections.documents.update).toBeUndefined();
     expect(Object.keys(document.collections)).toEqual(['documents']);
     expect(existsSync(join(root, 'sources', 'qmd', 'cache'))).toBe(true);
+    expect(existsSync(join(root, 'sources', 'qmd', 'cache', 'qmd'))).toBe(true);
     expect(existsSync(join(root, 'sources', 'qmd', 'cache', 'qmd', 'models'))).toBe(false);
     expect(ensureBuiltinQmdCollection(root, config())).toMatchObject({ created: false, canUpdate: true });
+  });
+
+  it('recreates the explicit SQLite index parent after cache cleanup while preserving existing YAML', () => {
+    const initial = ensureBuiltinQmdCollection(root, config());
+    const original = readFileSync(initial.configPath!, 'utf-8');
+    const cachePath = join(root, 'sources', 'qmd', 'cache');
+    rmSync(cachePath, { recursive: true });
+    expect(ensureBuiltinQmdCollection(root, config())).toMatchObject({ created: false, canUpdate: true });
+    expect(existsSync(join(cachePath, 'qmd'))).toBe(true);
+    expect(readFileSync(initial.configPath!, 'utf-8')).toBe(original);
   });
 
   it('uses only the enabled existing Notes vault and resolves its portable path', () => {

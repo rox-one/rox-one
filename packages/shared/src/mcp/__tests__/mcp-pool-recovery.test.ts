@@ -214,6 +214,37 @@ describe('McpClientPool transport recovery', () => {
     await pool.disconnectAll();
   });
 
+  test.each(['before the request', 'after an ambiguous failure'])('caller cancellation settles during recovery %s while another caller can recover', async phase => {
+    const original = new FakeClient();
+    const replacement = new FakeClient();
+    const listing = deferred<Tool[]>();
+    const started = deferred<void>();
+    replacement.onList = () => { started.resolve(); return listing.promise; };
+    const pool = new QueuePool([original, replacement]);
+    await pool.connect('source', config);
+    if (phase === 'before the request') original.connected = false;
+    else original.callFailure = new Error('Connection reset after write');
+    const controller = new AbortController();
+    const request = pool.callTool('mcp__source__write', {}, {signal:controller.signal});
+    try {
+      await started.promise;
+      controller.abort(new Error('User cancelled'));
+      const cancelled = await Promise.race([request, new Promise(resolve => setTimeout(() => resolve('still waiting'), 100))]);
+      expect(cancelled).toMatchObject({isError:true, sourceSlug:'source'});
+      expect(replacement.calls).toHaveLength(0);
+      const remainingCaller = pool.callTool('mcp__source__write', {});
+      listing.resolve(replacement.tools);
+      expect(await remainingCaller).toEqual({content:'done', isError:false});
+      expect(original.calls).toHaveLength(phase === 'before the request' ? 0 : 1);
+      expect(replacement.calls).toHaveLength(1);
+      expect(pool.created).toBe(2);
+    } finally {
+      listing.resolve(replacement.tools);
+      await request;
+      await pool.disconnectAll();
+    }
+  });
+
   test('recovery respects the local MCP gate after it changes', async () => {
     const originalFlag = process.env.CRAFT_LOCAL_MCP_ENABLED;
     process.env.CRAFT_LOCAL_MCP_ENABLED = 'true';
