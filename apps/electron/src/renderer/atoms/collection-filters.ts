@@ -43,6 +43,10 @@ export const collectionFiltersMapAtom = atom<Record<string, CollectionFilters>>(
 /** True while a workspace filters load is in flight. */
 export const collectionFiltersLoadingAtom = atom(false)
 
+// A store-local lease prevents a former load from replacing later input or live data.
+const collectionFiltersLoadRevisionAtom = atom(0)
+const collectionFiltersWorkspaceIdAtom = atom<string | null | undefined>(undefined)
+
 const collectionFiltersUpdateChains = new Map<string, Promise<void>>()
 const collectionFiltersUpdateVersions = new Map<string, number>()
 
@@ -52,7 +56,10 @@ const collectionFiltersUpdateVersions = new Map<string, number>()
  */
 export const replaceCollectionFiltersMapAtom = atom(
   null,
-  (_get, set, map: Record<string, CollectionFilters>) => {
+  (get, set, map: Record<string, CollectionFilters>) => {
+    set(collectionFiltersLoadRevisionAtom, get(collectionFiltersLoadRevisionAtom) + 1)
+    set(collectionFiltersLoadingAtom, false)
+    set(collectionFiltersWorkspaceIdAtom, get(windowWorkspaceIdAtom))
     set(collectionFiltersMapAtom, cloneFiltersMap(map))
   },
 )
@@ -70,6 +77,9 @@ export const collectionFiltersAtom = atom(
     set,
     update: CollectionFilters | ((prev: CollectionFilters) => CollectionFilters),
   ): Promise<CollectionFilters> => {
+    const revision = get(collectionFiltersLoadRevisionAtom) + 1
+    set(collectionFiltersLoadRevisionAtom, revision)
+    set(collectionFiltersLoadingAtom, false)
     const key = get(collectionFilterKeyAtom)
     const prevMap = get(collectionFiltersMapAtom)
     const prev = prevMap[key] ?? EMPTY_COLLECTION_FILTERS
@@ -91,6 +101,7 @@ export const collectionFiltersAtom = atom(
         const activeWorkspaceId = get(windowWorkspaceIdAtom)
         if (
           collectionFiltersUpdateVersions.get(workspaceId) === version &&
+          get(collectionFiltersLoadRevisionAtom) === revision &&
           (activeWorkspaceId == null || activeWorkspaceId === workspaceId)
         ) {
           set(collectionFiltersMapAtom, cloneFiltersMap(saved))
@@ -102,7 +113,11 @@ export const collectionFiltersAtom = atom(
         return nextMap
       }
     })
-    collectionFiltersUpdateChains.set(workspaceId, persist.then(() => undefined))
+    const chain = persist.then(() => undefined)
+    collectionFiltersUpdateChains.set(workspaceId, chain)
+    void chain.then(() => {
+      if (collectionFiltersUpdateChains.get(workspaceId) === chain) collectionFiltersUpdateChains.delete(workspaceId)
+    })
     await persist
     return next
   },
@@ -116,6 +131,14 @@ export const loadCollectionFiltersAtom = atom(
   null,
   async (get, set, workspaceId?: string | null): Promise<Record<string, CollectionFilters>> => {
     const id = workspaceId === undefined ? get(windowWorkspaceIdAtom) : workspaceId
+    const revision = get(collectionFiltersLoadRevisionAtom) + 1
+    set(collectionFiltersLoadRevisionAtom, revision)
+    if (get(collectionFiltersWorkspaceIdAtom) !== id) {
+      set(collectionFiltersWorkspaceIdAtom, id)
+      set(collectionFiltersMapAtom, {})
+    }
+    const ownsLoad = () => get(collectionFiltersLoadRevisionAtom) === revision
+      && (get(windowWorkspaceIdAtom) == null || get(windowWorkspaceIdAtom) === id)
     if (!id || typeof window === 'undefined' || !window.electronAPI?.getCollectionFilters) {
       const fallback: Record<string, CollectionFilters> = {}
       set(collectionFiltersMapAtom, fallback)
@@ -125,10 +148,13 @@ export const loadCollectionFiltersAtom = atom(
 
     set(collectionFiltersLoadingAtom, true)
     try {
+      // A reload follows already dispatched native writes for this workspace.
+      const pendingWrite = collectionFiltersUpdateChains.get(id)
+      if (pendingWrite) await pendingWrite.catch(() => undefined)
+      if (!ownsLoad()) return get(collectionFiltersMapAtom)
       const loaded = await window.electronAPI.getCollectionFilters(id)
       // Drop stale responses after a workspace switch.
-      const active = get(windowWorkspaceIdAtom)
-      if (active != null && active !== id) {
+      if (!ownsLoad()) {
         return get(collectionFiltersMapAtom)
       }
       const next = cloneFiltersMap(loaded)
@@ -136,16 +162,14 @@ export const loadCollectionFiltersAtom = atom(
       return next
     } catch (err) {
       console.warn('[collection-filters] getCollectionFilters failed', err)
-      const active = get(windowWorkspaceIdAtom)
-      if (active != null && active !== id) {
+      if (!ownsLoad()) {
         return get(collectionFiltersMapAtom)
       }
       const fallback: Record<string, CollectionFilters> = {}
       set(collectionFiltersMapAtom, fallback)
       return fallback
     } finally {
-      const active = get(windowWorkspaceIdAtom)
-      if (active == null || active === id) {
+      if (ownsLoad()) {
         set(collectionFiltersLoadingAtom, false)
       }
     }
