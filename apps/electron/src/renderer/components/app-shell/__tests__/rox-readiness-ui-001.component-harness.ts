@@ -114,6 +114,8 @@ window.ui001.render({});` : ''}
         if (options.realNavigation && /\/contexts\/NavigationContext\.tsx$/.test(args.importer)
           && ['react-i18next', 'sonner'].includes(args.path)) return { path: 'bindings', namespace: 'ui001' }
         if (options.realEntityPages && /\/pages\/(SourceInfoPage|SkillInfoPage)\.tsx$/.test(args.importer)) {
+          // Keep the shipped connection-status derivation and its indicator.
+          if (args.path === '@/components/ui/source-status-indicator') return
           if (['react-i18next', '@/contexts/NavigationContext', '@/context/AppShellContext'].includes(args.path)) {
             return { path: 'bindings', namespace: 'ui001' }
           }
