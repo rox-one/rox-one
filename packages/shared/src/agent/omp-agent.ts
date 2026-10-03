@@ -2211,6 +2211,15 @@ export class OmpAgent extends BaseAgent {
   }
 
   async queryLlm(request: LLMQueryRequest): Promise<LLMQueryResult> {
+    // `omp -p` exposes no verified --max-tokens/--temperature flags (`omp
+    // --help` lists only --model for shaping a one-shot), so these MAY-honored
+    // contract fields are intentionally NOT forwarded — never silently folded
+    // into the prompt. Logged for observability ([MOD-AGENT-04]).
+    if (request.maxTokens !== undefined || request.temperature !== undefined) {
+      this.debug(
+        `queryLlm: ignoring unsupported one-shot fields (maxTokens=${String(request.maxTokens)}, temperature=${String(request.temperature)})`,
+      );
+    }
     const prompt = request.systemPrompt
       ? `${request.systemPrompt}\n\n${request.prompt}`
       : request.prompt;
