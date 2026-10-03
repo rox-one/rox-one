@@ -1,0 +1,14 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts:
+(pass) ROX UI-001 real persisted layout atoms > bounds live writes before consumers read them and saves the same value [2.30ms]
+(pass) ROX UI-001 real persisted layout atoms > retains the inspector host range instead of narrowing valid saved widths [0.54ms]
+(pass) ROX UI-001 real persisted layout atoms > rounds updater callbacks and reloads canonical values in a fresh store [0.66ms]
+(pass) ROX UI-001 real persisted layout atoms > recovers malformed JSON, wrong types and non-finite JSON on reload [0.61ms]
+(pass) ROX UI-001 real persisted layout atoms > keeps valid live sizes usable when persistence or reset is denied [0.49ms]
+(pass) ROX UI-001 real persisted layout atoms > normalizes cross-window storage events and unsubscribes on unmount [0.29ms]
+
+ 6 pass
+ 0 fail
+ 26 expect() calls
+Ran 6 tests across 1 file. [65.00ms]

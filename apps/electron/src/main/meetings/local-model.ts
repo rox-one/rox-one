@@ -17,7 +17,7 @@ import {
   type LocalTranscriptRevision,
   type TranscriptStatus,
 } from '../../shared/meetings-local'
-import { recipeById } from '@rox/shared/meeting-agents'
+import { recipeById } from '@rox/shared/meeting-agents/browser'
 
 export const MEETING_ID_RE = /^m-[0-9a-z-]{4,64}$/
 

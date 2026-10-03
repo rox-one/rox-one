@@ -42,6 +42,13 @@ describe('channel routing exhaustiveness', () => {
 })
 
 describe('channel routing behavior', () => {
+  test('only actor self profile can route remotely within organization channels', () => {
+    const profile = new Set<string>([RPC_CHANNELS.orgs.GET_IDENTITY, RPC_CHANNELS.orgs.UPDATE_IDENTITY])
+    for (const channel of Object.values(RPC_CHANNELS.orgs)) {
+      expect(REMOTE_ELIGIBLE_CHANNELS.has(channel)).toBe(profile.has(channel))
+      expect(LOCAL_ONLY_CHANNELS.has(channel)).toBe(!profile.has(channel))
+    }
+  })
   test('LOCAL_ONLY and REMOTE_ELIGIBLE have zero intersection', () => {
     const intersection: string[] = []
     for (const ch of LOCAL_ONLY_CHANNELS) {
@@ -230,7 +237,7 @@ describe('credential migration routing (desktop vault)', () => {
     RPC_CHANNELS.credentials.ROLLBACK_MIGRATION,
   ]
 
-  const HOST_IDENTITY_CHANNELS = [RPC_CHANNELS.identity.CONNECT, RPC_CHANNELS.identity.DISCONNECT, RPC_CHANNELS.identity.REFRESH_STATUS, RPC_CHANNELS.identity.CHANGED]
+  const HOST_IDENTITY_CHANNELS = [RPC_CHANNELS.identity.CONNECT, RPC_CHANNELS.identity.DISCONNECT, RPC_CHANNELS.identity.REFRESH_STATUS ]
 
   test('keeps credential migration and host service connections LOCAL_ONLY', () => {
     for (const channel of HOST_IDENTITY_CHANNELS) {

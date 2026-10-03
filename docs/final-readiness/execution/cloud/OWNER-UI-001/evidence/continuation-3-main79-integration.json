@@ -1,0 +1,20 @@
+{
+  "observedAt": "2026-10-03T18:05:55.062690+00:00",
+  "incomingMain": "79fa5274315941f66ea26975551c66580e6036cd",
+  "retainedChanges": [
+    "main4fec native session/runtime/personal task scope",
+    "main79 opaque view queries and compact unavailable content",
+    "Windows source bootstrap and fixed canonical Notes lease fixture"
+  ],
+  "conflict": "canonical panel-url retained v2/json and strict zero-one compatibility without reverting main opaque-query changes",
+  "proofLabels": [
+    "continuation-3-main79-regression",
+    "continuation-3-main79-navigation",
+    "continuation-3-main79-resources",
+    "continuation-3-main79-owner-navigation",
+    "continuation-3-main79-behavior",
+    "continuation-3-main79-native-owners"
+  ],
+  "sourceHashCount": 24,
+  "fullDoDClosed": false
+}

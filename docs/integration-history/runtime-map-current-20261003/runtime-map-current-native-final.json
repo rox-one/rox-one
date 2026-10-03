@@ -1,0 +1,1901 @@
+{
+  "assertionsPassed": true,
+  "scope": "Actual native SDK two-level task worker and eval-agent loops, fixture provider, private observer transport. No installed-app or remote provider claim.",
+  "ompVersion": "18.4.12",
+  "networkAttempts": 0,
+  "paidProviderRequests": 0,
+  "supportedMaximum": "high",
+  "requests": [
+    {
+      "kind": "parent",
+      "tools": [
+        "task",
+        "read",
+        "eval"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "task-label",
+      "tools": []
+    },
+    {
+      "kind": "child",
+      "tools": [
+        "task",
+        "read",
+        "wait",
+        "yield"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "task-label",
+      "tools": []
+    },
+    {
+      "kind": "restricted-grandchild",
+      "tools": [
+        "read",
+        "yield"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "restricted-grandchild",
+      "tools": [
+        "read",
+        "yield"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "child",
+      "tools": [
+        "task",
+        "read",
+        "wait",
+        "yield"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "parent",
+      "tools": [
+        "task",
+        "read",
+        "eval"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "restricted-eval-child",
+      "tools": [
+        "read",
+        "yield"
+      ],
+      "reasoning": "high"
+    },
+    {
+      "kind": "parent",
+      "tools": [
+        "task",
+        "read",
+        "eval"
+      ],
+      "reasoning": "high"
+    }
+  ],
+  "rawHooks": [
+    {
+      "hook": "before_agent_start",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 1
+    },
+    {
+      "hook": "agent_start",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 2
+    },
+    {
+      "hook": "context",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 3
+    },
+    {
+      "hook": "turn_start",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 4
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 5
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 6
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 7
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 8
+    },
+    {
+      "hook": "tool_call",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 9
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 10
+    },
+    {
+      "hook": "tool_execution_start",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 11
+    },
+    {
+      "hook": "before_subagent_spawn",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 12
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 13
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 14
+    },
+    {
+      "hook": "before_agent_start",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 1
+    },
+    {
+      "hook": "agent_start",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 2
+    },
+    {
+      "hook": "context",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 3
+    },
+    {
+      "hook": "turn_start",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 4
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 5
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 6
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 7
+    },
+    {
+      "hook": "tool_call",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 8
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 9
+    },
+    {
+      "hook": "tool_execution_start",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 10
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 15
+    },
+    {
+      "hook": "before_subagent_spawn",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 11
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 12
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 16
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 13
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 17
+    },
+    {
+      "hook": "before_agent_start",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 1
+    },
+    {
+      "hook": "agent_start",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 2
+    },
+    {
+      "hook": "context",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 3
+    },
+    {
+      "hook": "turn_start",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 4
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 5
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 6
+    },
+    {
+      "hook": "message_update",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 7
+    },
+    {
+      "hook": "message_update",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 8
+    },
+    {
+      "hook": "tool_call",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 9
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 10
+    },
+    {
+      "hook": "tool_execution_start",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 11
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 14
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 18
+    },
+    {
+      "hook": "tool_execution_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 12
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 15
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 13
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 19
+    },
+    {
+      "hook": "turn_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 14
+    },
+    {
+      "hook": "context",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 15
+    },
+    {
+      "hook": "turn_start",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 16
+    },
+    {
+      "hook": "tool_call",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 17
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 18
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 16
+    },
+    {
+      "hook": "tool_execution_start",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 19
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 20
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 17
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 21
+    },
+    {
+      "hook": "tool_execution_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 20
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 18
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 21
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 22
+    },
+    {
+      "hook": "turn_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 22
+    },
+    {
+      "hook": "agent_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass.FlakyWombat",
+        "name": "fixture-restricted",
+        "depth": 2,
+        "parentId": "CleanBass"
+      },
+      "nativeSessionId": "01a10345-f52b-7000-9cc5-7889f6424eb1",
+      "sourceSeq": 23
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 19
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 23
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 20
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 24
+    },
+    {
+      "hook": "tool_execution_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 21
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 25
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 22
+    },
+    {
+      "hook": "turn_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 23
+    },
+    {
+      "hook": "context",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 24
+    },
+    {
+      "hook": "turn_start",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 25
+    },
+    {
+      "hook": "tool_call",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 26
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 27
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 26
+    },
+    {
+      "hook": "tool_execution_start",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 28
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 27
+    },
+    {
+      "hook": "tool_execution_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 29
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 28
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 30
+    },
+    {
+      "hook": "turn_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 31
+    },
+    {
+      "hook": "agent_end",
+      "agent": {
+        "kind": "sub",
+        "id": "CleanBass",
+        "name": "fixture-worker",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f4dc-7000-a71f-26e9f37a9334",
+      "sourceSeq": 32
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 29
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 30
+    },
+    {
+      "hook": "tool_execution_end",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 31
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 32
+    },
+    {
+      "hook": "turn_end",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 33
+    },
+    {
+      "hook": "context",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 34
+    },
+    {
+      "hook": "turn_start",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 35
+    },
+    {
+      "hook": "tool_call",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 36
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 37
+    },
+    {
+      "hook": "tool_execution_start",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 38
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 39
+    },
+    {
+      "hook": "before_subagent_spawn",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 40
+    },
+    {
+      "hook": "before_agent_start",
+      "agent": {
+        "kind": "sub",
+        "id": "eval-worker-fixture",
+        "name": "fixture-restricted",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f5f8-7000-84ca-a58b293db46d",
+      "sourceSeq": 1
+    },
+    {
+      "hook": "agent_start",
+      "agent": {
+        "kind": "sub",
+        "id": "eval-worker-fixture",
+        "name": "fixture-restricted",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f5f8-7000-84ca-a58b293db46d",
+      "sourceSeq": 2
+    },
+    {
+      "hook": "context",
+      "agent": {
+        "kind": "sub",
+        "id": "eval-worker-fixture",
+        "name": "fixture-restricted",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f5f8-7000-84ca-a58b293db46d",
+      "sourceSeq": 3
+    },
+    {
+      "hook": "turn_start",
+      "agent": {
+        "kind": "sub",
+        "id": "eval-worker-fixture",
+        "name": "fixture-restricted",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f5f8-7000-84ca-a58b293db46d",
+      "sourceSeq": 4
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "sub",
+        "id": "eval-worker-fixture",
+        "name": "fixture-restricted",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f5f8-7000-84ca-a58b293db46d",
+      "sourceSeq": 5
+    },
+    {
+      "hook": "tool_call",
+      "agent": {
+        "kind": "sub",
+        "id": "eval-worker-fixture",
+        "name": "fixture-restricted",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f5f8-7000-84ca-a58b293db46d",
+      "sourceSeq": 6
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "sub",
+        "id": "eval-worker-fixture",
+        "name": "fixture-restricted",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f5f8-7000-84ca-a58b293db46d",
+      "sourceSeq": 7
+    },
+    {
+      "hook": "tool_execution_start",
+      "agent": {
+        "kind": "sub",
+        "id": "eval-worker-fixture",
+        "name": "fixture-restricted",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f5f8-7000-84ca-a58b293db46d",
+      "sourceSeq": 8
+    },
+    {
+      "hook": "tool_execution_end",
+      "agent": {
+        "kind": "sub",
+        "id": "eval-worker-fixture",
+        "name": "fixture-restricted",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f5f8-7000-84ca-a58b293db46d",
+      "sourceSeq": 9
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "sub",
+        "id": "eval-worker-fixture",
+        "name": "fixture-restricted",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f5f8-7000-84ca-a58b293db46d",
+      "sourceSeq": 10
+    },
+    {
+      "hook": "turn_end",
+      "agent": {
+        "kind": "sub",
+        "id": "eval-worker-fixture",
+        "name": "fixture-restricted",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f5f8-7000-84ca-a58b293db46d",
+      "sourceSeq": 11
+    },
+    {
+      "hook": "agent_end",
+      "agent": {
+        "kind": "sub",
+        "id": "eval-worker-fixture",
+        "name": "fixture-restricted",
+        "depth": 1,
+        "parentId": "Main"
+      },
+      "nativeSessionId": "01a10345-f5f8-7000-84ca-a58b293db46d",
+      "sourceSeq": 12
+    },
+    {
+      "hook": "tool_execution_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 41
+    },
+    {
+      "hook": "tool_execution_end",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 42
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 43
+    },
+    {
+      "hook": "turn_end",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 44
+    },
+    {
+      "hook": "context",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 45
+    },
+    {
+      "hook": "turn_start",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 46
+    },
+    {
+      "hook": "message_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 47
+    },
+    {
+      "hook": "message_update",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 48
+    },
+    {
+      "hook": "message_end",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 49
+    },
+    {
+      "hook": "turn_end",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 50
+    },
+    {
+      "hook": "agent_end",
+      "agent": {
+        "kind": "main",
+        "id": "Main",
+        "name": "main",
+        "depth": 0
+      },
+      "nativeSessionId": "01a10345-f40b-7000-8f92-78596fe4da5b",
+      "sourceSeq": 51
+    }
+  ],
+  "observations_count": 63,
+  "observations_summary": [
+    {
+      "kind": "model.confirmed",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 1
+    },
+    {
+      "kind": "context.captured",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 2
+    },
+    {
+      "kind": "context.changed",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 3
+    },
+    {
+      "kind": "agent.assigned",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 1
+    },
+    {
+      "kind": "model.confirmed",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 2
+    },
+    {
+      "kind": "context.captured",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 3
+    },
+    {
+      "kind": "agent.started",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 4
+    },
+    {
+      "kind": "context.changed",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 5
+    },
+    {
+      "kind": "usage.reported",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 6
+    },
+    {
+      "kind": "tool.started",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 7
+    },
+    {
+      "kind": "tool.output",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 8
+    },
+    {
+      "kind": "tool.output",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 9
+    },
+    {
+      "kind": "agent.assigned",
+      "agentId": "CleanBass.FlakyWombat",
+      "parentAgentId": "CleanBass",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f52b-7000-9cc5-7889f6424eb1:06b56250-9bb7-46a7-b5bc-2731441d6aea",
+      "sourceSeq": 1
+    },
+    {
+      "kind": "model.confirmed",
+      "agentId": "CleanBass.FlakyWombat",
+      "parentAgentId": "CleanBass",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f52b-7000-9cc5-7889f6424eb1:06b56250-9bb7-46a7-b5bc-2731441d6aea",
+      "sourceSeq": 2
+    },
+    {
+      "kind": "context.captured",
+      "agentId": "CleanBass.FlakyWombat",
+      "parentAgentId": "CleanBass",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f52b-7000-9cc5-7889f6424eb1:06b56250-9bb7-46a7-b5bc-2731441d6aea",
+      "sourceSeq": 3
+    },
+    {
+      "kind": "agent.started",
+      "agentId": "CleanBass.FlakyWombat",
+      "parentAgentId": "CleanBass",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f52b-7000-9cc5-7889f6424eb1:06b56250-9bb7-46a7-b5bc-2731441d6aea",
+      "sourceSeq": 4
+    },
+    {
+      "kind": "context.changed",
+      "agentId": "CleanBass.FlakyWombat",
+      "parentAgentId": "CleanBass",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f52b-7000-9cc5-7889f6424eb1:06b56250-9bb7-46a7-b5bc-2731441d6aea",
+      "sourceSeq": 5
+    },
+    {
+      "kind": "reasoning.output",
+      "agentId": "CleanBass.FlakyWombat",
+      "parentAgentId": "CleanBass",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f52b-7000-9cc5-7889f6424eb1:06b56250-9bb7-46a7-b5bc-2731441d6aea",
+      "sourceSeq": 6
+    },
+    {
+      "kind": "reasoning.output",
+      "agentId": "CleanBass.FlakyWombat",
+      "parentAgentId": "CleanBass",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f52b-7000-9cc5-7889f6424eb1:06b56250-9bb7-46a7-b5bc-2731441d6aea",
+      "sourceSeq": 7
+    },
+    {
+      "kind": "usage.reported",
+      "agentId": "CleanBass.FlakyWombat",
+      "parentAgentId": "CleanBass",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f52b-7000-9cc5-7889f6424eb1:06b56250-9bb7-46a7-b5bc-2731441d6aea",
+      "sourceSeq": 8
+    },
+    {
+      "kind": "tool.started",
+      "agentId": "CleanBass.FlakyWombat",
+      "parentAgentId": "CleanBass",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f52b-7000-9cc5-7889f6424eb1:06b56250-9bb7-46a7-b5bc-2731441d6aea",
+      "sourceSeq": 9
+    },
+    {
+      "kind": "tool.output",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 10
+    },
+    {
+      "kind": "tool.completed",
+      "agentId": "CleanBass.FlakyWombat",
+      "parentAgentId": "CleanBass",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f52b-7000-9cc5-7889f6424eb1:06b56250-9bb7-46a7-b5bc-2731441d6aea",
+      "sourceSeq": 10
+    },
+    {
+      "kind": "tool.output",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 11
+    },
+    {
+      "kind": "context.changed",
+      "agentId": "CleanBass.FlakyWombat",
+      "parentAgentId": "CleanBass",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f52b-7000-9cc5-7889f6424eb1:06b56250-9bb7-46a7-b5bc-2731441d6aea",
+      "sourceSeq": 11
+    },
+    {
+      "kind": "usage.reported",
+      "agentId": "CleanBass.FlakyWombat",
+      "parentAgentId": "CleanBass",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f52b-7000-9cc5-7889f6424eb1:06b56250-9bb7-46a7-b5bc-2731441d6aea",
+      "sourceSeq": 12
+    },
+    {
+      "kind": "tool.output",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 12
+    },
+    {
+      "kind": "tool.started",
+      "agentId": "CleanBass.FlakyWombat",
+      "parentAgentId": "CleanBass",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f52b-7000-9cc5-7889f6424eb1:06b56250-9bb7-46a7-b5bc-2731441d6aea",
+      "sourceSeq": 13
+    },
+    {
+      "kind": "tool.output",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 13
+    },
+    {
+      "kind": "tool.completed",
+      "agentId": "CleanBass.FlakyWombat",
+      "parentAgentId": "CleanBass",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f52b-7000-9cc5-7889f6424eb1:06b56250-9bb7-46a7-b5bc-2731441d6aea",
+      "sourceSeq": 14
+    },
+    {
+      "kind": "tool.output",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 14
+    },
+    {
+      "kind": "agent.completed",
+      "agentId": "CleanBass.FlakyWombat",
+      "parentAgentId": "CleanBass",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f52b-7000-9cc5-7889f6424eb1:06b56250-9bb7-46a7-b5bc-2731441d6aea",
+      "sourceSeq": 15
+    },
+    {
+      "kind": "tool.output",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 15
+    },
+    {
+      "kind": "tool.output",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 16
+    },
+    {
+      "kind": "tool.completed",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 17
+    },
+    {
+      "kind": "trace.coverage",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 4
+    },
+    {
+      "kind": "context.changed",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 18
+    },
+    {
+      "kind": "usage.reported",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 19
+    },
+    {
+      "kind": "trace.coverage",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 5
+    },
+    {
+      "kind": "tool.started",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 20
+    },
+    {
+      "kind": "trace.coverage",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 6
+    },
+    {
+      "kind": "tool.completed",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 21
+    },
+    {
+      "kind": "trace.coverage",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 7
+    },
+    {
+      "kind": "agent.completed",
+      "agentId": "CleanBass",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f4dc-7000-a71f-26e9f37a9334:d2542627-3960-42ed-9664-445549c017e2",
+      "sourceSeq": 22
+    },
+    {
+      "kind": "trace.coverage",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 8
+    },
+    {
+      "kind": "trace.coverage",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 9
+    },
+    {
+      "kind": "trace.coverage",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 10
+    },
+    {
+      "kind": "trace.coverage",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 11
+    },
+    {
+      "kind": "trace.coverage",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 12
+    },
+    {
+      "kind": "trace.coverage",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 13
+    },
+    {
+      "kind": "context.changed",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 14
+    },
+    {
+      "kind": "agent.assigned",
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f5f8-7000-84ca-a58b293db46d:6dd663fd-2a11-430e-9cdf-783e593e4c82",
+      "sourceSeq": 1
+    },
+    {
+      "kind": "model.confirmed",
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f5f8-7000-84ca-a58b293db46d:6dd663fd-2a11-430e-9cdf-783e593e4c82",
+      "sourceSeq": 2
+    },
+    {
+      "kind": "context.captured",
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f5f8-7000-84ca-a58b293db46d:6dd663fd-2a11-430e-9cdf-783e593e4c82",
+      "sourceSeq": 3
+    },
+    {
+      "kind": "agent.started",
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f5f8-7000-84ca-a58b293db46d:6dd663fd-2a11-430e-9cdf-783e593e4c82",
+      "sourceSeq": 4
+    },
+    {
+      "kind": "context.changed",
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f5f8-7000-84ca-a58b293db46d:6dd663fd-2a11-430e-9cdf-783e593e4c82",
+      "sourceSeq": 5
+    },
+    {
+      "kind": "usage.reported",
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f5f8-7000-84ca-a58b293db46d:6dd663fd-2a11-430e-9cdf-783e593e4c82",
+      "sourceSeq": 6
+    },
+    {
+      "kind": "tool.started",
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f5f8-7000-84ca-a58b293db46d:6dd663fd-2a11-430e-9cdf-783e593e4c82",
+      "sourceSeq": 7
+    },
+    {
+      "kind": "tool.completed",
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f5f8-7000-84ca-a58b293db46d:6dd663fd-2a11-430e-9cdf-783e593e4c82",
+      "sourceSeq": 8
+    },
+    {
+      "kind": "agent.completed",
+      "agentId": "eval-worker-fixture",
+      "parentAgentId": "root",
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f5f8-7000-84ca-a58b293db46d:6dd663fd-2a11-430e-9cdf-783e593e4c82",
+      "sourceSeq": 9
+    },
+    {
+      "kind": "trace.coverage",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 15
+    },
+    {
+      "kind": "context.changed",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 16
+    },
+    {
+      "kind": "trace.coverage",
+      "agentId": "root",
+      "parentAgentId": null,
+      "sourceId": "omp-native:native-fixture-turn:01a10345-f40b-7000-8f92-78596fe4da5b:013e6caa-c41c-45a1-81f8-f73c4ac5d48f",
+      "sourceSeq": 17
+    }
+  ],
+  "raw_receipt": "logs/runtime-map-current-native-final.json.gz"
+}

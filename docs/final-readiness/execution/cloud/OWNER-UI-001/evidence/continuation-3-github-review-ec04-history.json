@@ -1,0 +1,191 @@
+{
+  "observedAt": "2026-10-03T15:38:34.353627+00:00",
+  "pullRequest": {
+    "baseRefOid": "1c9c8fb3d7f2a8a9f2744f15fdadb062ab3da55f",
+    "headRefOid": "ec04d7401abe6f7c39ac18526c69a0e448b009bc",
+    "mergeStateStatus": "UNKNOWN",
+    "mergeable": "UNKNOWN",
+    "number": 1417,
+    "state": "OPEN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T15:23:52Z",
+        "conclusion": "FAILURE",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37132990008/job/111231666007",
+        "name": "component-recovery",
+        "startedAt": "2026-10-03T15:22:08Z",
+        "status": "COMPLETED",
+        "workflowName": "UI-001 Recovery"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "0001-01-01T00:00:00Z",
+        "conclusion": "",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37132990062/job/111231665887",
+        "name": "validate",
+        "startedAt": "2026-10-03T15:22:03Z",
+        "status": "QUEUED",
+        "workflowName": "CI Validate Alias"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T15:28:04Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37132986875/job/111231659506",
+        "name": "Analyze (javascript-typescript)",
+        "startedAt": "2026-10-03T15:22:04Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL - Code Quality"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T15:22:53Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37132986863/job/111231660390",
+        "name": "Analyze (actions)",
+        "startedAt": "2026-10-03T15:22:05Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T15:23:22Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37132986875/job/111231659753",
+        "name": "Analyze (python)",
+        "startedAt": "2026-10-03T15:22:04Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL - Code Quality"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T15:29:32Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37132986863/job/111231660659",
+        "name": "Analyze (javascript-typescript)",
+        "startedAt": "2026-10-03T15:22:04Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T15:23:27Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37132986863/job/111231660572",
+        "name": "Analyze (python)",
+        "startedAt": "2026-10-03T15:22:05Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T15:25:26Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37132986863/job/111231660609",
+        "name": "Analyze (rust)",
+        "startedAt": "2026-10-03T15:22:05Z",
+        "status": "COMPLETED",
+        "workflowName": "CodeQL"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "0001-01-01T00:00:00Z",
+        "conclusion": "",
+        "detailsUrl": "https://github.com/rox-one/rox-one/actions/runs/37132986863/job/111231660681",
+        "name": "Analyze (swift)",
+        "startedAt": "2026-10-03T15:22:02Z",
+        "status": "QUEUED",
+        "workflowName": "CodeQL"
+      },
+      {
+        "__typename": "StatusContext",
+        "context": "Vercel",
+        "startedAt": "2026-10-03T15:22:00Z",
+        "state": "FAILURE",
+        "targetUrl": "https://vercel.com/knowledge/why-is-my-account-deployment-blocked"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T15:22:45Z",
+        "conclusion": "NEUTRAL",
+        "detailsUrl": "https://github.com/rox-one/rox-one/runs/111231779107",
+        "name": "CodeQL",
+        "startedAt": "2026-10-03T15:22:43Z",
+        "status": "COMPLETED",
+        "workflowName": ""
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T15:27:06Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "external signed URL omitted",
+        "name": "[code]smith",
+        "startedAt": "2026-10-03T15:27:06Z",
+        "status": "COMPLETED",
+        "workflowName": ""
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-03T15:26:00Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://vercel.com/github",
+        "name": "Vercel Agent Review",
+        "startedAt": "2026-10-03T15:22:06Z",
+        "status": "COMPLETED",
+        "workflowName": ""
+      }
+    ],
+    "url": "https://github.com/rox-one/rox-one/pull/1417"
+  },
+  "reviewFindings": [
+    {
+      "id": 4173446230,
+      "path": ".github/workflows/ui-001-recovery.yml",
+      "line": null,
+      "commit": "6190965f724fd8c9b2296e394e2c7dfe82275a11",
+      "url": "https://github.com/rox-one/rox-one/pull/1417#discussion_r4173446230",
+      "body": "## CodeQL / Unpinned tag for a non-immutable Action or reusable workflow\n\nUnpinned 3rd party Action 'UI-001 Recovery' step [Uses Step](1) uses 'oven-sh/setup-bun' with ref 'v2', not a pinned commit hash\n\n[Show more details](https://github.com/rox-one/rox-one/security/code-scanning/1031)"
+    },
+    {
+      "id": 4173458955,
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "line": 219,
+      "commit": "ec04d7401abe6f7c39ac18526c69a0e448b009bc",
+      "url": "https://github.com/rox-one/rox-one/pull/1417#discussion_r4173458955",
+      "body": "**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  Enforce workspace mismatch in panel overrides**\n\nWhen a stored/deep-linked session belongs to another workspace, this changes only the `NavigationContext` state to `unavailable`, but the rendered content does not consume that state: `PanelSlot` independently parses `entry.route` and always passes it as `navStateOverride`, and `MainContentPanel` prefers that override over the context value. Consequently, restoring or switching to a workspace while a foreign session route remains selected still mounts `ChatPage` for that session instead of the intended unavailable surface. Apply the workspace check to each panel's parsed state (or ensure the focused panel uses the checked context state).\n\nUseful? React with \ud83d\udc4d\u00a0/ \ud83d\udc4e."
+    },
+    {
+      "id": 4173573441,
+      "path": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "line": 244,
+      "commit": "ec04d7401abe6f7c39ac18526c69a0e448b009bc",
+      "url": "https://github.com/rox-one/rox-one/pull/1417#discussion_r4173573441",
+      "body": "**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  Block foreign chats when metadata is absent**\n\nWhen a workspace switch retains the previous panel route, this check only rejects it if `selectedSession` exists. Fresh evidence in the current code is that `handleSelectWorkspace` explicitly clears `sessionMetaMapAtom` in `App.tsx:2203-2206` before `NavigationContext` reconciles the panels, so the old route renders `ChatPage` with an undefined lookup and can start loading that foreign session during the intervening render. Treat unresolved session metadata as pending/unavailable during a workspace transition rather than allowing it through.\n\nUseful? React with \ud83d\udc4d\u00a0/ \ud83d\udc4e."
+    },
+    {
+      "id": 4173573444,
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "line": 986,
+      "commit": "ec04d7401abe6f7c39ac18526c69a0e448b009bc",
+      "url": "https://github.com/rox-one/rox-one/pull/1417#discussion_r4173573444",
+      "body": "**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  Release history suppression when workspace lookup fails**\n\nIf Back/Forward reaches an entry for a workspace that has since been deleted, `handleSwitchWorkspaceBySlug` in `App.tsx:2216-2221` finds no target and returns without changing `workspaceSlug`. No workspace-switch effect then runs to call `finishHistoryReconcile`, leaving both `suppressPushRef` and `isPopstateSwitchRef` set indefinitely; subsequent navigation stops creating history entries and a later UI workspace switch can be mistaken for that stale popstate. Only enter suppression after confirming the switch, or provide a failure path that clears these flags.\n\nUseful? React with \ud83d\udc4d\u00a0/ \ud83d\udc4e."
+    },
+    {
+      "id": 4173657621,
+      "path": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "line": 243,
+      "commit": "ec04d7401abe6f7c39ac18526c69a0e448b009bc",
+      "url": "https://github.com/rox-one/rox-one/pull/1417#discussion_r4173657621",
+      "body": "During a workspace switch\\, the workspace\\-mismatch guard fails to block a retained session route whose metadata was just cleared\\, letting ChatPage mount and load the previous workspace\\'s session\\.\n\n<!-- VADE-CATEGORY: concurrency -->\n<!-- VADE-GITHUB-SUGGESTION-ID:94cd160bc0d227b85c12f0e65a69074c5b9c76c86b326b34ad5bf4d287c95e4c -->\n\n<!-- VADE-RECOMMENDATION: FIX -->\n<a href=\"https://vercel.com/0xdx/~/agent/tasks/364a5fae-963b-4c42-9df7-87db846a67a9#suggestion-94cd160bc0d227b85c12f0e65a69074c5b9c76c86b326b34ad5bf4d287c95e4c\" rel=\"noreferrer\"><picture>\n    <source media=\"(prefers-color-scheme: dark)\" srcset=\"https://vercel.com/vercel-agent-view-suggestion-dark\">\n    <source media=\"(prefers-color-scheme: light)\" srcset=\"https://vercel.com/vercel-agent-view-suggestion-light\">\n    <img src=\"https://vercel.com/vercel-agent-view-suggestion-light\" alt=\"Fix on Vercel\" width=\"127\" height=\"28\" />\n  </picture></a>"
+    },
+    {
+      "id": 4173657624,
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "line": 985,
+      "commit": "ec04d7401abe6f7c39ac18526c69a0e448b009bc",
+      "url": "https://github.com/rox-one/rox-one/pull/1417#discussion_r4173657624",
+      "body": "In the popstate handler\\, `suppressPushRef`\\/`isPopstateSwitchRef` are set to `true` before confirming the target workspace exists\\, so a slug for a deleted\\/unknown workspace leaves both flags stuck at true forever\\, silently disabling history pushes\\.\n\n<!-- VADE-CATEGORY: logic -->\n<!-- VADE-GITHUB-SUGGESTION-ID:369cf6e52d96410cfbbce98e1e67cf7b0cafa385809a1b9e3b4aca97adf08952 -->\n\n<!-- VADE-RECOMMENDATION: FIX -->\n<a href=\"https://vercel.com/0xdx/~/agent/tasks/364a5fae-963b-4c42-9df7-87db846a67a9#suggestion-369cf6e52d96410cfbbce98e1e67cf7b0cafa385809a1b9e3b4aca97adf08952\" rel=\"noreferrer\"><picture>\n    <source media=\"(prefers-color-scheme: dark)\" srcset=\"https://vercel.com/vercel-agent-view-suggestion-dark\">\n    <source media=\"(prefers-color-scheme: light)\" srcset=\"https://vercel.com/vercel-agent-view-suggestion-light\">\n    <img src=\"https://vercel.com/vercel-agent-view-suggestion-light\" alt=\"Fix on Vercel\" width=\"127\" height=\"28\" />\n  </picture></a>"
+    }
+  ]
+}

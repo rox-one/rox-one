@@ -17,6 +17,9 @@ function listener(channel: string) {
 }
 
 export const CHANNEL_MAP = {
+  getRuntimeTraceSnapshot: invoke(RPC_CHANNELS.runtimeTrace.GET_SNAPSHOT),
+  readRuntimeTraceEvents: invoke(RPC_CHANNELS.runtimeTrace.READ_EVENTS),
+  readRuntimeTracePayload: invoke(RPC_CHANNELS.runtimeTrace.READ_PAYLOAD),
   // Cloud Runs (PRD docs/cloud-runs-prd.md, phase G3)
   getCloudRunsConfig: invoke(RPC_CHANNELS.cloudRuns.GET_CONFIG),
   setCloudRunsConfig: invoke(RPC_CHANNELS.cloudRuns.SET_CONFIG),
@@ -331,6 +334,7 @@ export const CHANNEL_MAP = {
 
   // Session-specific model
   getSessionModel: invoke(RPC_CHANNELS.sessions.GET_MODEL),
+  getSessionModelCatalog: invoke(RPC_CHANNELS.sessions.GET_MODEL_CATALOG),
   setSessionModel: invoke(RPC_CHANNELS.sessions.SET_MODEL),
 
   // Workspace Settings

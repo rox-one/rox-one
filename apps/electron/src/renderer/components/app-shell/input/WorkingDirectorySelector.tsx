@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { useTourSignals, useTourTarget, type TourObservation } from '@/features/product-tour/runtime/hooks'
+
 import { useTranslation } from 'react-i18next'
 import { Command as CommandPrimitive } from 'cmdk'
 import { Check, X } from 'lucide-react'
@@ -80,6 +82,9 @@ export function WorkingDirectorySelector({
   sideOffset = 8,
 }: WorkingDirectorySelectorProps) {
   const { t } = useTranslation()
+  const directoryTarget = useTourTarget('composer.directory', { workspaceId })
+  const tourSignals = useTourSignals({ workspaceId })
+  React.useEffect(() => tourSignals.capability('filesystem.selector', { state: 'ready' }), [tourSignals])
   const [popoverOpen, setPopoverOpen] = React.useState(false)
   const inputRef = React.useRef<HTMLInputElement>(null)
   const closePopover = React.useCallback(() => setPopoverOpen(false), [])
@@ -131,7 +136,7 @@ export function WorkingDirectorySelector({
 
   return (
     <>
-      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+      <span ref={directoryTarget} className="inline-flex"><Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger asChild>
           {renderTrigger({ open: popoverOpen, hasFolder, folderName, workingDirectory, homeDir, gitBranch })}
         </PopoverTrigger>
@@ -228,7 +233,7 @@ export function WorkingDirectorySelector({
             </div>
           </CommandPrimitive>
         </PopoverContent>
-      </Popover>
+      </Popover></span>
       <ServerDirectoryBrowser
         open={showServerBrowser}
         mode={serverBrowserMode}

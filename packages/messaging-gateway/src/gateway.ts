@@ -15,10 +15,11 @@ import {
 } from './access-control'
 import { BindingStore } from './binding-store'
 import { Router } from './router'
-import { Commands, type AccessControlDeps, type PairingCodeConsumer } from './commands'
+import { Commands, parseCommand, type AccessControlDeps, type PairingCodeConsumer } from './commands'
 import { Renderer, type SessionEvent } from './renderer'
 import { PendingSendersStore } from './pending-senders'
 import { PlanTokenRegistry } from './plan-tokens'
+import { nativeSessionEvent } from '@rox/server-core/handlers/rpc/native-session-scope'
 import type {
   PlatformAdapter,
   PlatformType,
@@ -27,7 +28,10 @@ import type {
   MessagingConfig,
   MessagingLogger,
   PlatformOwner,
+  NativeMessagingContext,
+  ChannelBinding,
 } from './types'
+import { normalizeMessagingAccessMode } from './types'
 
 const consoleLogger: MessagingLogger = {
   info: (message, meta) => console.log('[MessagingGateway]', message, meta ?? ''),
@@ -44,6 +48,7 @@ const consoleLogger: MessagingLogger = {
 }
 
 export interface GatewayOptions {
+  resolveNativeBindingContext?: (binding: ChannelBinding) => NativeMessagingContext | undefined
   sessionManager: ISessionManager
   workspaceId: string
   /** Absolute path to the messaging storage directory. */
@@ -131,6 +136,8 @@ export class MessagingGateway {
   private readonly workspaceId: string
   private readonly bindingStore: BindingStore
   private readonly pendingStore: PendingSendersStore
+  private readonly nativeBindings = new Map<string, NativeMessagingContext>()
+  private readonly resolveNativeBindingContext?: GatewayOptions['resolveNativeBindingContext']
   private readonly router: Router
   private readonly commands: Commands
   private readonly renderer: Renderer
@@ -154,6 +161,7 @@ export class MessagingGateway {
   private readonly buttonRecentRejectReplies = new Map<string, number>()
 
   constructor(opts: GatewayOptions) {
+    this.resolveNativeBindingContext = opts.resolveNativeBindingContext
     this.sessionManager = opts.sessionManager
     this.workspaceId = opts.workspaceId
     this.log = (opts.logger ?? consoleLogger).child({
@@ -172,6 +180,14 @@ export class MessagingGateway {
     this.pendingStore = new PendingSendersStore(
       opts.storageDir,
       this.log.child({ component: 'pending-senders' }),
+      input => {
+        if (!input.bindingId) return
+        const binding = this.bindingStore.getAll().find(value => value.id === input.bindingId)
+        if (!binding?.nativeOwner) return
+        if (binding.platform !== input.platform || binding.channelId !== input.channelId
+          || (binding.threadId ?? null) !== (input.threadId ?? null) || binding.sessionId !== input.sessionId) throw new Error('Native binding mismatch')
+        return this.nativeBindingContext(binding)?.owner
+      },
     )
     if (opts.onPendingChanged) {
       this.pendingStore.onChange(opts.onPendingChanged)
@@ -183,6 +199,11 @@ export class MessagingGateway {
       seedOwnerOnFirstPair:
         opts.seedOwnerOnFirstPair ?? (async () => []),
       pendingStore: this.pendingStore,
+      onNativeBinding: (bindingId, context) => {
+        this.nativeBindings.set(bindingId, context)
+        opts.onPendingChanged?.()
+      },
+      getNativeContext: binding => this.nativeBindingContext(binding),
     }
 
     this.commands = new Commands(
@@ -201,6 +222,7 @@ export class MessagingGateway {
       {
         getWorkspaceConfig: this.accessDeps.getWorkspaceConfig,
         pendingStore: this.pendingStore,
+        getNativeContext: binding => this.nativeBindingContext(binding),
       },
     )
     this.planTokens = new PlanTokenRegistry()
@@ -316,6 +338,14 @@ export class MessagingGateway {
 
   private wireAdapter(adapter: PlatformAdapter): void {
     adapter.onMessage(async (msg: IncomingMessage) => {
+      const binding = this.bindingStore.findByChannel(msg.platform, msg.channelId, msg.threadId)
+      if (binding?.nativeOwner) {
+        const cmd = parseCommand(msg.text).cmd
+        // Only fresh pairing may recover a quarantined receipt. Its new
+        // context must prove the original private owner before replacement.
+        if (cmd !== '/pair') try { this.nativeBindingContext(binding) } catch { return }
+        if (cmd === '/new' || cmd === '/bind') return
+      }
       const isCommand = msg.text.trim().startsWith('/')
       if (isCommand) {
         const handled = await this.commands.handleCommand(adapter, msg)
@@ -333,6 +363,20 @@ export class MessagingGateway {
       platform: adapter.platform,
       capabilities: adapter.capabilities,
     })
+  }
+
+  private nativeBindingContext(binding: ChannelBinding): NativeMessagingContext | undefined {
+    if (!binding.nativeOwner) return
+    const config = this.accessDeps.getWorkspaceConfig()
+    const platform = config.platforms[binding.platform]
+    if (!config.enabled || !platform?.enabled || normalizeMessagingAccessMode(platform.accessMode) === 'disabled') throw new Error('Native connector disabled')
+    if (!binding.enabled || !this.bindingStore.getAll().some(current => current.id === binding.id
+      && current.channelId === binding.channelId && current.sessionId === binding.sessionId
+      && current.platform === binding.platform && (current.threadId ?? null) === (binding.threadId ?? null))) throw new Error('Native binding changed')
+    const context = this.resolveNativeBindingContext ? this.resolveNativeBindingContext(binding) : this.nativeBindings.get(binding.id)
+    if (!context || context.owner.issuer !== binding.nativeOwner.issuer || context.owner.subject !== binding.nativeOwner.subject) throw new Error('Native binding requires pairing')
+    context.assertAuthorized()
+    return context
   }
 
   // -------------------------------------------------------------------------
@@ -367,6 +411,10 @@ export class MessagingGateway {
     if (bindings.length === 0) return
 
     for (const binding of bindings) {
+      try { this.nativeBindingContext(binding) } catch { continue }
+      const safeEvent = binding.nativeOwner ? nativeSessionEvent((event.type === 'typed_error'
+        ? { type: 'error', sessionId: event.sessionId, error: '' } : event) as Parameters<typeof nativeSessionEvent>[0]) as SessionEvent | null : event
+      if (!safeEvent) continue
       const adapter = this.adapters.get(binding.platform)
       if (!adapter || !adapter.isConnected()) {
         this.log.warn('dropping session event — adapter not connected', {
@@ -377,7 +425,15 @@ export class MessagingGateway {
         })
         continue
       }
-      this.renderer.handle(event, binding, adapter).catch((err) => {
+      const outbound = binding.nativeOwner ? new Proxy(adapter, { get: (target, property) => {
+        const value = Reflect.get(target, property)
+        if (typeof value !== 'function') return value
+        if (['sendText', 'sendButtons', 'sendFile', 'sendTyping', 'editMessage', 'clearButtons'].includes(String(property))) {
+          return (...callArgs: unknown[]) => { this.nativeBindingContext(binding); return Reflect.apply(value, target, callArgs) }
+        }
+        return value.bind(target)
+      } }) : adapter
+      this.renderer.handle(safeEvent, binding, outbound).catch((err) => {
         this.log.error('renderer failed to emit event to chat', {
           event: 'renderer_failed',
           sessionId: event.sessionId,
@@ -673,6 +729,11 @@ export class MessagingGateway {
     adapter: PlatformAdapter,
     press: ButtonPress,
   ): Promise<boolean> {
+    const currentBinding = this.bindingStore.findByChannel(press.platform, press.channelId, press.threadId)
+    if (currentBinding?.nativeOwner) {
+      try { this.nativeBindingContext(currentBinding) } catch { return false }
+      if (press.buttonId.startsWith('bind:')) return false
+    }
     const senderShape: import('./access-control').RejectableSender = {
       platform: press.platform,
       channelId: press.channelId,
@@ -710,6 +771,7 @@ export class MessagingGateway {
         // for perm/plan since they require a binding lookup anyway).
         return true
       }
+      try { this.nativeBindingContext(binding) } catch { return false }
       extra = { bindingId: binding.id, sessionId: binding.sessionId }
       verdict = evaluateBindingAccess({
         msg: this.synthesizeMsgForGate(press),

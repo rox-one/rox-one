@@ -1,0 +1,47 @@
+{
+  "objective": "Verify improve UI-001 and merge qualified bounded patch to rox-one/rox-one main",
+  "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001",
+  "acceptance": [
+    "Actual owned source behavior and failure tests; truthful unchanged full acceptance",
+    "Exact PR head merge and remote ancestry/readback"
+  ],
+  "tasks": [
+    {
+      "id": "scout",
+      "status": "complete"
+    },
+    {
+      "id": "recovery",
+      "status": "complete"
+    },
+    {
+      "id": "geometry",
+      "status": "complete",
+      "owner": "geometry"
+    },
+    {
+      "id": "verification",
+      "status": "complete"
+    },
+    {
+      "id": "delivery",
+      "status": "running"
+    }
+  ],
+  "decisions": [
+    "Original cloud commit unavailable; preserved gzip patch recovered without claiming commit retrieval",
+    "Only three owned existing product files; lead parser/context gaps recorded",
+    "No deployment or native/hosted full DoD claim"
+  ],
+  "evidence": [
+    "main 4f91d8e28f6d42e08b1639005614a94916100c3a",
+    "Bun 1.3.14 observed",
+    "Frozen install 1817 packages; first source typecheck exit0; baseline regression235pass1preexistingfail; browser6pass1temporarygeometryfail",
+    "Integrated source536eaa14:40pass0fail237assertions;tsc0;renderer build0;independent review clean within owned scope"
+  ],
+  "active_ids": {
+    "geometry": "/root/geometry",
+    "review": "/root/patch_scout"
+  },
+  "next_action": "Commit evidence, push branch, create and attach PR, inspect actionable CI, merge expected head and verify remote main"
+}

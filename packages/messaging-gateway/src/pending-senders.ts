@@ -56,7 +56,8 @@ export class PendingSendersStore {
   private readonly log: MessagingLogger
   private changeListener?: () => void
 
-  constructor(storageDir: string, logger: MessagingLogger = NOOP_LOGGER) {
+  constructor(storageDir: string, logger: MessagingLogger = NOOP_LOGGER,
+    private readonly resolveNativeOwner?: (input: RecordRejectionInput) => PendingSender['nativeOwner']) {
     this.dirPath = storageDir
     this.filePath = join(storageDir, 'pending.json')
     this.log = logger
@@ -101,13 +102,15 @@ export class PendingSendersStore {
 
     const reason: PendingRejectReason = input.reason ?? 'not-owner'
     const bindingId = input.bindingId
+    const nativeOwner = this.resolveNativeOwner?.(input)
 
     const idx = this.entries.findIndex(
       (e) =>
         e.platform === input.platform &&
         e.userId === input.senderId &&
         (e.reason ?? 'not-owner') === reason &&
-        (e.bindingId ?? null) === (bindingId ?? null),
+        (e.bindingId ?? null) === (bindingId ?? null) &&
+        e.nativeOwner?.issuer === nativeOwner?.issuer && e.nativeOwner?.subject === nativeOwner?.subject,
     )
     let merged: PendingSender
     if (idx >= 0) {
@@ -120,6 +123,7 @@ export class PendingSendersStore {
         lastAttemptAt: now,
         attemptCount: existing.attemptCount + 1,
         reason,
+        ...(nativeOwner ? { nativeOwner: { ...nativeOwner } } : {}),
         ...(input.bindingId ? { bindingId: input.bindingId } : {}),
         ...(input.sessionId ? { sessionId: input.sessionId } : {}),
         ...(input.channelId ? { channelId: input.channelId } : {}),
@@ -136,6 +140,7 @@ export class PendingSendersStore {
         lastAttemptAt: now,
         attemptCount: 1,
         reason,
+        ...(nativeOwner ? { nativeOwner: { ...nativeOwner } } : {}),
         ...(input.bindingId ? { bindingId: input.bindingId } : {}),
         ...(input.sessionId ? { sessionId: input.sessionId } : {}),
         ...(input.channelId ? { channelId: input.channelId } : {}),

@@ -1,0 +1,15 @@
+{
+  "packages/session-tools-core/src/context.ts": "6afd518e55c4a0d3f57f484bc5b4a92d9b1d9008",
+  "packages/session-tools-core/src/handlers/host-bash.test.ts": "68d7f207dd56626e4d4fde1ca00e31506dbbe628",
+  "packages/session-tools-core/src/handlers/host-bash.ts": "15bb69d4b8ee67b4b9d9d6dfb635aa044390e67d",
+  "packages/session-tools-core/src/runtime/host-bash-process.test.ts": "59080978ae584231bd9bd2ccffdee5a2774221c8",
+  "packages/session-tools-core/src/runtime/host-bash-process.ts": "e20b52a9d322d9b6d475d72d2d0e63887439ecc0",
+  "packages/session-tools-core/src/runtime/sandbox-env.test.ts": "41edbd667c6f85c8a209eeeae4749d16335594b4",
+  "packages/session-tools-core/src/runtime/sandbox-env.ts": "150e9f392e3f9e5ec14d5b3b6d58f9cada6b2418",
+  "packages/shared/src/agent/__tests__/host-bash-registry.fixture.ts": "b217c30f700432a623d03f36437f8306d0e2e7f7",
+  "packages/shared/src/agent/__tests__/host-bash-registry.test.ts": "5dde3b4bf65f1e6f46cc0e0bfe595a1093e8d76a",
+  "packages/shared/src/agent/__tests__/host-bash-runtime.fixture.ts": "52cfe5ef8ca3b854d800173a416a6d88a47acf47",
+  "packages/shared/src/agent/__tests__/host-bash-runtime.test.ts": "9f5d7a6f85ad37b4b997eccfc59fe19cebb7122d",
+  "packages/shared/src/agent/claude-context.ts": "f79df5fb1049905cacaad84f9a117c22b4c8354f",
+  "packages/shared/src/toolchain-runtime.ts": "dc572b5202e6e297e34b4471be23f9e36e1e3b6f"
+}

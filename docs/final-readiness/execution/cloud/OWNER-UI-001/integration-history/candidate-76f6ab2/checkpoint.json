@@ -1,0 +1,24 @@
+{
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "inputRevision": "76228cc33e44518e5fab5e59f5c754f4051d1e8c",
+  "integrationBase": "ae19683e69f079893cd09065487cfa7653d01154",
+  "phase": "candidate-source-verified-awaiting-merge",
+  "owner": "OWNER-UI-001",
+  "taskRuntimeIdentity": "01a10147-44c4-7381-a97b-1215f700717b",
+  "authorization": {
+    "sourceRepair": "Full task-related source repair authorized by user",
+    "githubWrites": true,
+    "mergeMain": true,
+    "exactUserInstruction": "разрешаю тебе полный ремонт исходников и любые записи в github доделывай автономно end-to-end + делай merge main"
+  },
+  "nextActions": [
+    "GitHub exact-head checks",
+    "authorized merge main and readback",
+    "outputs delivery"
+  ],
+  "fullDoDClosed": false,
+  "updatedAt": "2026-10-03T16:52:51.802873+00:00"
+}

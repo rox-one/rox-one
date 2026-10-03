@@ -3,6 +3,7 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useTourNativeLayer } from '@/features/product-tour/runtime/native-layer'
 
 const SUPPORTED_HOVER_PREFIXES = ["bg-", "text-", "border-", "ring-", "opacity-"]
 
@@ -30,7 +31,8 @@ function mirrorHoverToOpenStateClasses(className?: string): string | undefined {
 function DropdownMenu({
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
-  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+  const state = useTourNativeLayer(props, props.modal ?? true)
+  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} {...state} />
 }
 
 function DropdownMenuPortal({

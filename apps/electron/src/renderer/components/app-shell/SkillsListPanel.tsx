@@ -1,4 +1,7 @@
 import * as React from 'react'
+import { focusedPanelIdAtom } from '@/atoms/panel-stack'
+import { useTourTarget, useTourSignals } from '@/features/product-tour/runtime/hooks'
+import { connectionCapabilities } from '@/features/product-tour/adapters/connections'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { Zap, PackageOpen, Check, ChevronDown, ChevronRight, X, Network, FolderX, KeyRound, TriangleAlert, RefreshCw, Archive, FolderOutput, MoreHorizontal } from 'lucide-react'
@@ -60,6 +63,11 @@ export function SkillsListPanel({
   const canRevealLocally = !activeWorkspace?.remoteServer
   const { workspaces, activeWorkspaceId } = useAppShellContext()
   const hasOtherWorkspaces = workspaces.length > 1
+  const focusedPanelId = useAtomValue(focusedPanelIdAtom)
+  const tourScope = { workspaceId: workspaceId ?? activeWorkspaceId ?? undefined, panelId: focusedPanelId ?? undefined }
+  const skillsTarget = useTourTarget('skills.list', tourScope)
+  const tour = useTourSignals(tourScope)
+  React.useEffect(() => tour.capability('skills.available', connectionCapabilities({ skills })['skills.available']!), [tour, skills])
 
   // OMP skills (~/.omp/agent/skills, {workspace}/.omp/skills) render as a
   // separate read-only group with an "Export to craft skills" action.
@@ -281,7 +289,7 @@ export function SkillsListPanel({
   )
 
   return (
-    <>
+    <div ref={skillsTarget} className="min-h-0" data-product-tour-target="skills.list">
     <style>{`
       [data-list-role="skills"] [data-skill-row] {
         content-visibility: auto;
@@ -676,6 +684,6 @@ export function SkillsListPanel({
         activeWorkspaceId={activeWorkspaceId}
       />
     )}
-    </>
+    </div>
   )
 }

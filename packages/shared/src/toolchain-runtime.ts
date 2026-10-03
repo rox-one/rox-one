@@ -8,7 +8,9 @@
  * Spec: docs/superpowers/specs/2026-08-06-toolchain-download-manager-design.md
  */
 
-import { delimiter } from 'node:path';
+import { isAbsolute, relative, sep } from 'node:path';
+import { pathEnvKey, prependPath } from './toolchain/exec.ts';
+import { getWindowsBootstrapRuntime } from './toolchain/windows-bootstrap.ts';
 
 import { getToolchainDisabled, setToolchainDisabled } from './config/storage.ts';
 import { createManager, createResolver, toolchainPaths } from './toolchain/index.ts';
@@ -93,14 +95,42 @@ export async function resolveOmpExecutableOrExplain(): Promise<string> {
  * toolchain впереди существующего PATH. Без установленных инструментов
  * возвращает env без изменений.
  */
-export async function withToolchainPathPrefix<T extends NodeJS.ProcessEnv>(env: T): Promise<T> {
+export async function withToolchainPathPrefix<T extends NodeJS.ProcessEnv>(env: T, resolver?: ToolchainResolver): Promise<T> {
+  const native = process.platform === 'win32' ? getWindowsBootstrapRuntime() : null;
+  if (native) {
+    const key = pathEnvKey(env);
+    env = { ...env, [key]: await native.filterPath(env[key] ?? '') };
+  }
   let prefix: string;
   try {
-    prefix = await getToolchain().resolver.toolchainPathPrefix();
+    prefix = await (resolver ?? getToolchain().resolver).toolchainPathPrefix();
   } catch {
     return env;
   }
   if (!prefix) return env;
-  const existing = env.PATH ?? '';
-  return { ...env, PATH: existing ? `${prefix}${delimiter}${existing}` : prefix };
+  return prependPath(env, prefix);
+}
+
+/** Host tools execute in the registry process, not the agent subprocess. */
+export async function createHostBashEnv(
+  baseEnv: NodeJS.ProcessEnv = process.env,
+  resolver: ToolchainResolver = getToolchain().resolver,
+): Promise<NodeJS.ProcessEnv> {
+  const env = await withToolchainPathPrefix({ ...baseEnv }, resolver);
+  // Refresh per call: never retain a Python alias after its managed install is removed.
+  delete env.CRAFT_HOST_BASH_PYTHON;
+  if (process.platform === 'win32') {
+    // Git Bash's login profile may restore ORIGINAL_PATH over PATH. Keep its
+    // saved path in sync with the prepared host PATH, never the parent env.
+    env.ORIGINAL_PATH = env[pathEnvKey(env)] ?? '';
+    const python = await resolver.findExecutable('python3');
+    if (python) {
+      const withinManaged = relative(resolver.toolchainDir(), python);
+      if (withinManaged && withinManaged !== '..' && !withinManaged.startsWith(`..${sep}`) && !isAbsolute(withinManaged)) {
+        env.CRAFT_HOST_BASH_PYTHON = python.replace(/\\/g, '/');
+        env.UV_PYTHON = python;
+      }
+    }
+  }
+  return env;
 }

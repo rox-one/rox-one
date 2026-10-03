@@ -63,12 +63,19 @@ mock.module('../local-asr', () => ({ detectEngine: () => noEngine, probeDuration
 mock.module('../../handlers/workspace', () => ({ async connectToRemote() { connectionCalls++; return new Promise(() => {}) } }))
 
 const { WindowManager } = await import('../../window-manager')
+const { readBoundWindowWorkspace } = await import('../../bootstrap-window-workspace')
 const manager = new WindowManager()
 const first = manager.createWindow({ workspaceId: 'workspace-a' })
 const second = manager.createWindow({ workspaceId: 'workspace-b' })
 const firstId = first.webContents.id, secondId = second.webContents.id
+const bootstrapEvent = { sender: first.webContents, senderFrame: first.webContents.mainFrame } as unknown as Electron.IpcMainEvent
+assert.equal(readBoundWindowWorkspace(bootstrapEvent, manager), 'workspace-a')
+assert.equal(readBoundWindowWorkspace({ ...bootstrapEvent, senderFrame: null } as unknown as Electron.IpcMainEvent, manager), '')
+manager.updateWindowWorkspace(firstId, 'workspace-b')
+assert.equal(readBoundWindowWorkspace(bootstrapEvent, manager), 'workspace-b')
+manager.updateWindowWorkspace(firstId, 'workspace-a')
 const firstGeneration = manager.getWorkspaceGenerationForWindow(firstId)!
-assert.equal(firstGeneration, 1)
+assert.equal(firstGeneration, 3)
 manager.updateWindowWorkspace(firstId, 'workspace-a')
 assert.equal(manager.getWorkspaceGenerationForWindow(firstId), firstGeneration)
 manager.updateWindowWorkspace(firstId, 'workspace-b'); manager.updateWindowWorkspace(firstId, 'workspace-a')

@@ -1,0 +1,79 @@
+{
+  "reason": "Root independent source review identified background sync/read started before import token",
+  "implementation": "aa92975e3",
+  "qualified_source_head": "8a5fa2461f71ead04fd49c9cdeff974e7423e945",
+  "previous_source_proof": "verification.json preserves original306/0 and15DOM proof tuple; no relabelling of old evidence",
+  "checks": {
+    "real_native_before": {
+      "pass": 8,
+      "fail": 2,
+      "expected": [
+        "Held earlier native refresh must drain before import PUT",
+        "Held earlier native write ACK must drain before import PUT"
+      ]
+    },
+    "real_native_after": {
+      "pass": 10,
+      "fail": 0,
+      "assertions": 34
+    },
+    "caller_sync_product_observer": {
+      "pass": 28,
+      "fail": 0,
+      "assertions": 102,
+      "files": 6
+    },
+    "actual_tasks_dom": {
+      "pass": 15,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "full_electron_types_node22": {
+      "exit": 0
+    },
+    "actual_components_and_production_tailwind_bundle": {
+      "exit": 0
+    }
+  },
+  "scope": "Existing actor/workspace generation; import invalidates background epoch and drains already dispatched same-owner work. Every later background transport/publish fenced, no parallel store or fake authority. Actual OS file chooser not exercised.",
+  "files": {
+    "apps/electron/src/renderer/lib/personal-tasks.ts": "a82e0a37d48275fcfd0a4edcbdef0b1b1335411b815197397b3c474fd45c9b5f",
+    "apps/electron/src/renderer/lib/__tests__/personal-tasks-import.fixture.ts": "a529c65a0b7862fb4dcf81573e8dc23685c98105c459ea6fe0379429e4d3613b",
+    "apps/electron/src/renderer/lib/__tests__/personal-tasks-import.test.ts": "30d185b1c4e9dc5191345372b1a951e97d1b6b13f3283af8c3e0c057feb0aa5f",
+    "apps/electron/src/renderer/pages/TasksPage.tsx": "352d4f621bce1480f494c0e379b985ebb7852d4e62795c4319ef93b6e47c318c",
+    "apps/electron/src/renderer/components/mode-screen/ResponsiveModeScreen.tsx": "71ffbcefc01e9e79ce273e0c8e0016f87bfd6045cd043dac0500457f0f5d4a53"
+  },
+  "logs": {
+    "golden-tasks-preexisting-work-before.log": {
+      "sha256": "2c2c77ca8b10666189352578440f0f538165440bb193ceb6a5ac256bfd656d9a",
+      "gzip_sha256": "5e4224e34a4360d50a25f5ed944fba29417170ca07ac1b97ad59fe0f1b7b921b",
+      "bytes": 2613
+    },
+    "golden-tasks-preexisting-work-after.log": {
+      "sha256": "82933ae551aba1e5d28864ba6cbefb490205601df1998ccf2cfbb7b8098eec4c",
+      "gzip_sha256": "78cd32455ccc78b03286d728d22729e0ec26dabb5fdf386561304e43657323c3",
+      "bytes": 1149
+    },
+    "golden-tasks-background-current-focused.log": {
+      "sha256": "ca4c922ac7de60dc899190e613f137f0138f921985affdd2b624060da0841b20",
+      "gzip_sha256": "edc7aead4534ee4662f757b30ce806b08d6d0e4fc38448bf764ce8bac3800e81",
+      "bytes": 3665
+    },
+    "golden-tasks-background-browser-build.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 0
+    },
+    "golden-tasks-background-browser.log": {
+      "sha256": "0397206c2a6a37dd8098ad21761e9881136d8646c1ecbf8f87db6260cb57643b",
+      "gzip_sha256": "aa373e04a8150508a1d531b76651b1ee77dcefabd72a8793f54778956a268362",
+      "bytes": 4246
+    },
+    "golden-tasks-background-electron-types.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 0
+    }
+  }
+}

@@ -1,0 +1,533 @@
+{
+  "qualified_production_revision": "a32ace658102e4ab14e3c66b4bc79b29eb79db9b",
+  "integrated_main": "14cf6c561a4c39c47658ab1566e61c200041f649",
+  "source_family": [
+    {
+      "branch": "codex/baseline-release-blockers-20261003",
+      "sha": "1933748a020a141ee182640cb78b0d49be038704",
+      "disposition": "selective recovery on current canonical owners; original branch retained"
+    },
+    {
+      "branch": "codex/product-learning-a1-20261003",
+      "sha": "a11e351c82f14dfc718dc47724a504713d30c9f4",
+      "disposition": "selective recovery on current canonical owners; original branch retained"
+    },
+    {
+      "branch": "codex/product-learning-a2-20261003",
+      "sha": "941a20ea03ac5c401da3c9601b95b9a13aa3c52c",
+      "disposition": "selective recovery on current canonical owners; original branch retained"
+    },
+    {
+      "branch": "codex/product-learning-a3-20261003",
+      "sha": "cb711eb5f238232b28907b4caf91263408b32699",
+      "disposition": "selective recovery on current canonical owners; original branch retained"
+    },
+    {
+      "branch": "codex/product-learning-a6-20261003",
+      "sha": "35f78fa2665e9f2e8a3ad20a07e2282bd7f0dde5",
+      "disposition": "selective recovery on current canonical owners; original branch retained"
+    },
+    {
+      "branch": "codex/product-learning-a7-20261003",
+      "sha": "b90560bd045ba5d567797b1a42106c73941df579",
+      "disposition": "selective recovery on current canonical owners; original branch retained"
+    },
+    {
+      "branch": "codex/product-learning-a8-20261003",
+      "sha": "75e32d07166c395df842fbeb9be3b497eef719c6",
+      "disposition": "selective recovery on current canonical owners; original branch retained"
+    },
+    {
+      "branch": "codex/product-learning-a9-20261003",
+      "sha": "934bc60d7a17e0745bc4c7e66d95b999c6cb8b2a",
+      "disposition": "selective recovery on current canonical owners; original branch retained"
+    },
+    {
+      "branch": "codex/product-learning-a10-20261003",
+      "sha": "cfe45001d9b2ffa39c149267650988f7d91d3462",
+      "disposition": "selective recovery on current canonical owners; original branch retained"
+    }
+  ],
+  "latest_source": {
+    "branch": "codex/product-learning-20261003",
+    "pr": 1437,
+    "sha": "5069ea530af9634fc345b629a9679c068f79ebda",
+    "disposition": "frozen learning deltas integrated selectively; unrelated earlier integration paths retain current main"
+  },
+  "foundation_dependency": {
+    "pr": 1434,
+    "source_head": "49607594593d87b20cf7f908610105235a2d9b46",
+    "preserved_guards": [
+      "own enumerable data descriptors only in diagnostic projection",
+      "unknown signal origin/evidence rejection"
+    ]
+  },
+  "checks": [
+    {
+      "name": "pure-core-catalogue-policy-process",
+      "passed": 214,
+      "failed": 0,
+      "assertions": 14489,
+      "log_sha256": "9aa3a26fb9e9b7844294dc9eebc0cefa6b67361f4c255227e1d55289558360f4",
+      "local_log": "product-tour-current-pure-process-replay.log"
+    },
+    {
+      "name": "real-chromium-indexeddb",
+      "passed": 17,
+      "failed": 0,
+      "assertions": 59,
+      "log_sha256": "d398119498130f1ba8bacbc7aaf5215663e6a2d3496bbefcd1f957cf43dcf8c0",
+      "local_log": "product-tour-current-real-idb-replay.log"
+    },
+    {
+      "name": "twelve-locale-parity",
+      "passed": 278,
+      "failed": 0,
+      "assertions": 6487,
+      "log_sha256": "9deb1eea1754c52565451a13949c637c537a0b89fe434c900839f00403958bb3",
+      "local_log": "product-tour-current-final-i18n.log"
+    },
+    {
+      "name": "native-domain-and-custody-controls",
+      "passed": 110,
+      "failed": 0,
+      "assertions": 781,
+      "log_sha256": "0bd62a37e56b45fbef5318ee4fa65228121a89c3922c64321079fe6a9844718c",
+      "local_log": "product-native-current-focused.log"
+    },
+    {
+      "name": "actual-current-voice-dom",
+      "passed": 25,
+      "failed": 0,
+      "assertions": 104,
+      "log_sha256": "16f57716642fff4705c66f79fa14a8f28d90e88fc0c22dbc596663ad92d6a6b2",
+      "local_log": "product-native-voice-whitespace-after.log"
+    },
+    {
+      "name": "actual-provider-and-geometry-dom",
+      "passed": 10,
+      "failed": 0,
+      "assertions": 14,
+      "log_sha256": "230e3e540cfa4c0728040e74aa6946e075b8f4115deb19654b149d81466a4068",
+      "local_log": "product-tour-current-provider-geometry-dom-final.log"
+    },
+    {
+      "name": "actual-input-model-permission-dom",
+      "passed": 8,
+      "failed": 0,
+      "assertions": null,
+      "log_sha256": "f155db956ea07d8297e6d0cb6b1f28222d21540628beeb45063755690a2d7578",
+      "local_log": "product-tour-current-node-input-continuity.log"
+    },
+    {
+      "name": "actual-voice-source-continuity-dom",
+      "passed": 7,
+      "failed": 0,
+      "assertions": null,
+      "log_sha256": "6d523355ee203f168ef80b135a9b27b861b38ba845aadf8cefecafc87737fea5",
+      "local_log": "product-tour-current-node-isolated-actual-final.log"
+    },
+    {
+      "name": "actual-source-picker-dom",
+      "passed": 4,
+      "failed": 0,
+      "assertions": null,
+      "log_sha256": "6d523355ee203f168ef80b135a9b27b861b38ba845aadf8cefecafc87737fea5",
+      "local_log": "product-tour-current-node-isolated-actual-final.log"
+    },
+    {
+      "name": "actual-meetings-and-automations-dom",
+      "passed": 7,
+      "failed": 0,
+      "assertions": null,
+      "log_sha256": "eb86540c369d4389209c8992dce2e2bd3ad30fe37c17a57bb004e90b13e407fd",
+      "local_log": "product-tour-current-node-meetings-final.log"
+    },
+    {
+      "name": "built-real-app-and-spotlight",
+      "passed": 14,
+      "failed": 0,
+      "assertions": null,
+      "log_sha256": "ff437b2383e0abfecae4f004520f96ad210625f64192d5309347add195cb18f4",
+      "local_log": "product-tour-current-14cf-actual-app-ui.log"
+    },
+    {
+      "name": "actual-current-navigation-provider",
+      "passed": 28,
+      "failed": 0,
+      "assertions": null,
+      "local_log": "product-tour-current-14cf-navigation-browser-qualified.log",
+      "log_sha256": "ea0cc4545138ddf5a9f3d143b823a261ffae5b833a07111d9da289d1d0a49aad",
+      "runner": "unchanged28browserbodies+temporaryNode lifecycle adapter with literal toStartWith equivalent"
+    }
+  ],
+  "typecheck": {
+    "electron": {
+      "exit": 0,
+      "revision": "a32ace658102e4ab14e3c66b4bc79b29eb79db9b",
+      "log": "product-tour-current-14cf-electron-types.log"
+    },
+    "webui_all_renderer": {
+      "exit": 0,
+      "revision": "a32ace658102e4ab14e3c66b4bc79b29eb79db9b",
+      "log": "product-tour-current-14cf-webui-types.log"
+    }
+  },
+  "build": {
+    "actual_app_and_spotlight": {
+      "exit": 0,
+      "revision": "a32ace658102e4ab14e3c66b4bc79b29eb79db9b",
+      "fingerprint": "b56d3b2840184a28e88fcfe763d37161921bbb781229cbd4ddb115078dae760d",
+      "log": "product-tour-current-14cf-app-build.log"
+    },
+    "native_main_preloads": {
+      "exit": 0,
+      "revision": "f4d9e0377e45602e3d2af6182426352a1205736d",
+      "scope": "unchanged native Product framework; newer inherited main qualifies independently"
+    }
+  },
+  "original_branches_deleted": false,
+  "deleted_paths_against_main": [],
+  "source_manifest_sha256": {
+    ".github/workflows/product-tour-native.yml": "3e46559b64ef5839922dc087653ec45f05abfbb2a2475334b3500ab71b4985fb",
+    ".github/workflows/sqlite-runtime-recovery.yml": "051449f9943c52bc815c884deb0a8ff49684956deb56a97130d46d71c21140b5",
+    "apps/electron/src/main/index.ts": "8acf5975c74a8a338264a15aa76116504a71c49a1853bdade18987da7c396247",
+    "apps/electron/src/preload/native-replica.ts": "ec108be16c35c5f97c466229e9ef9159ce68d64978d6f0a39173d29b5c7c2219",
+    "apps/electron/src/renderer/App.tsx": "3e289d656d2b62afcb7fccfd321f5d329d6a6fc4464f04615a337ebeacffdb5a",
+    "apps/electron/src/renderer/components/app-shell/AccountMenu.tsx": "36c2e41f8c95c089587108d5603509926aca5567ffd58e600e6ac77f4fcd026e",
+    "apps/electron/src/renderer/components/app-shell/ActiveOptionBadges.tsx": "8fbedcd765df6567d5f59b7d3231da27a069ccd913bcbc26cb998d7ba46d4e16",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "64b5c35cfa8feb03b6e6ba9eb6ee1f6641e3342ef13d3ee6c80a946e5d25f4f4",
+    "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx": "165378cec4b2cb7b30a7ad797791160b7cd03d4b4572a01b2b5fd3d14db7bd47",
+    "apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu.tsx": "d8155ede4aeca1eb91c2499019b0cf62caab984e26353d8a8114a59bd307f7be",
+    "apps/electron/src/renderer/components/app-shell/FabNewChat.tsx": "9a1d7b39e7b68424a3ef65a6f81fa8dbf05d5e582bed56376704bf889a9c9890",
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "7eeb3b03a8079cf51f1481e6e3ea0b989f3b9d3e925b3509e67dadab2a98eb03",
+    "apps/electron/src/renderer/components/app-shell/OnboardingDialog.tsx": "44b2bc1b123baea33da41ba20e55180a7d79710fc5aaabe1ac486308426ee41f",
+    "apps/electron/src/renderer/components/app-shell/ProjectsListPanel.tsx": "e1ea1f2e1cd5f1a3c2d9887786fc3c7c8ddc732cd769ac06e7051b40623c456d",
+    "apps/electron/src/renderer/components/app-shell/QuestProgressCard.tsx": "e6bfd63ad65ff01dbc43fbdb015f2af14e3a924073b14d20ab2db8661699246f",
+    "apps/electron/src/renderer/components/app-shell/SessionList.tsx": "3c32dae909f0d5421b8e311d25309540298d0090d3f1d0c833e1b85294101882",
+    "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx": "d53836ea0bb2dae92a1fd7a2a7bd266e7afe601fc3e8f3b9bd7970bff5abda97",
+    "apps/electron/src/renderer/components/app-shell/SourcesListPanel.tsx": "007a374a9b069a03f12c9ee3f1031ce35386eeb8b5929236ff6f6ae7bf59fc0e",
+    "apps/electron/src/renderer/components/app-shell/WorkspaceIconRail.tsx": "d039a44a945b71b4f7f9636df51a021636558c373ed1f2a11d13178bab167fba",
+    "apps/electron/src/renderer/components/app-shell/__tests__/fixtures/voice-dictation/main.tsx": "d48fd5dbb0e9965edc723771c0026010484bffaa693661d679dceaf2201390e0",
+    "apps/electron/src/renderer/components/app-shell/__tests__/voice-dictation.browser.test.ts": "de8296d914aaed730738c3867d81d6f94cdee552ce4c49cf3a1a51409e92bf48",
+    "apps/electron/src/renderer/components/app-shell/collection/CollectionViewCycleButton.tsx": "9fe986211b3f0e9a582b94e2f2bbfff2bf361d32386c58ff6ac1e950c9fe4591",
+    "apps/electron/src/renderer/components/app-shell/input/CompactModelSelector.tsx": "3c53b41a8911cb54a815d8480ce3d93c2456e75957e7baa7e4f7111abd33ca88",
+    "apps/electron/src/renderer/components/app-shell/input/CompactPermissionModeSelector.tsx": "a3797499e67a8fc1ccffc7b26b2ed91a9d7403a5f777cccbae97c94fd7a0afd0",
+    "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx": "e11c24ba8e1bb8345a0a237654938d7125abb3567fe78dcd4848e34455a25f6e",
+    "apps/electron/src/renderer/components/app-shell/input/InputContainer.tsx": "7bff6acf2076ee8d0d1e82f40c3858e6e46d78f1b54d081e7f4a1ede0b5b4ac4",
+    "apps/electron/src/renderer/components/app-shell/input/StructuredInput.tsx": "3e1365489bad4595a1577624673cda55617452712e7c1f4cdacfd83ac3e27320",
+    "apps/electron/src/renderer/components/app-shell/input/VoiceDictationControl.tsx": "1f78951c4bc7afbe8cf602891bf6b38474b4b3bbf6814a2f3eb5e4ed092e77de",
+    "apps/electron/src/renderer/components/app-shell/input/WorkingDirectorySelector.tsx": "e8a87607a1b59c2669065f32dc5799c8c0c1011763f545c84adb5cd0063b75c1",
+    "apps/electron/src/renderer/components/app-shell/input/__tests__/fixtures/product-learning-input/main.tsx": "559bfbc31f3371e63aac99a5f51f8b222ccd2ee3362aed4032d6ea1b6da15651",
+    "apps/electron/src/renderer/components/app-shell/input/__tests__/product-learning-input.browser.test.ts": "0c7bad9090d1ca23097d797fd622b34a494f858691a8d8cfcb585ce405dc1f37",
+    "apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx": "7d2c916f03c04b48a9a4f0ab477f7c5af0524e08cc0a52bb7b1e887c6cfd09bb",
+    "apps/electron/src/renderer/components/automations/AutomationEditor.tsx": "c9ccfa351bf450abd285fe7028ffbb40bfffdbbf08d2b97ca1354f6651896b24",
+    "apps/electron/src/renderer/components/icons/SettingsIcons.tsx": "60f89bdae9924c54bbb7c3bbc20ce73dc434b51519c4b06188339ec2c51eb7ea",
+    "apps/electron/src/renderer/components/memory/MemoryScreen.tsx": "b3e458bf81369abc7636d9a71b62c7bd3a1e9e3ef6a2cdff7dd181531de3682f",
+    "apps/electron/src/renderer/components/pages/PageFrame.tsx": "a8b03a9aaf9a15fd8fabc6c736b66f16fe320844d5b16b6edca2cd15917f4641",
+    "apps/electron/src/renderer/components/pages/PageView.tsx": "cb570415990e80845b733110badfcf2ca399c80d78c80fd520b681edf659b5f8",
+    "apps/electron/src/renderer/components/pages/PagesHome.tsx": "35167b1214865329729399ce0fa581bd75ec550853546daf97cd0dfcdbb110fa",
+    "apps/electron/src/renderer/components/team/TeamSessionButton.tsx": "4b3c332298edc8b88c9c33de2e14999e889c276b3516d8c3a4dea426845d0e21",
+    "apps/electron/src/renderer/components/ui/CompactSourceSelector.tsx": "b563c629eff58eff7c996232af00bb6e5fd78c1e257fecff4ffc87a7dfe40185",
+    "apps/electron/src/renderer/components/ui/SourceSelectorPopover.tsx": "22c5f383f115994a956225fd94d73eb3b052d2a161b780b5c486a8d81e72f95a",
+    "apps/electron/src/renderer/components/ui/dialog.tsx": "9586538a1d11c627d76344b54051a554dd5d158d6551347f09b6f8fb544c30c7",
+    "apps/electron/src/renderer/components/ui/drawer.tsx": "25d1107773bcae6e38998e7b6e6a1c708ff4d6f8a0134ad91b1a13dbfe2fd657",
+    "apps/electron/src/renderer/components/ui/dropdown-menu.tsx": "4bfd12f45421039e6e5ecec7cca6faf76130d01651bf5aa4df2bb35ef9418926",
+    "apps/electron/src/renderer/components/ui/popover.tsx": "e356ddf3bcc6a7f642d8144d6f16ab475aae7b489c617ca784437732419eb9eb",
+    "apps/electron/src/renderer/context/DismissibleLayerContext.tsx": "d18918feffea942b883715598bcb971162a218f4c740afdeceb9f46ced90fc51",
+    "apps/electron/src/renderer/context/ModalContext.tsx": "877f194b806d02217717cd76bfdd9221b541edbb603ba4b0ea97e60f415ce035",
+    "apps/electron/src/renderer/context/__tests__/product-tour-layers.test.ts": "6dff288cbe80dcf33ae6005d24c1c5b6a14f2de98998a0a88907e516367a1c8f",
+    "apps/electron/src/renderer/features/product-tour/__tests__/integration/catalogue-policy.test.ts": "dcacf1b670e2f36b1aa2ce4905886f26d4433db12bc0af50e43a7f06cd910fa5",
+    "apps/electron/src/renderer/features/product-tour/__tests__/integration/first-response.test.ts": "9ecafe35214afd59e122902d2ff417574c9bc93f0a37ee0ae53d66d1c9b36a23",
+    "apps/electron/src/renderer/features/product-tour/adapters/chat/chat-signals.test.ts": "e1d98f1350813a277115efcb3aa6dc2481a9243a25f08b9b2d5255c74cb29c25",
+    "apps/electron/src/renderer/features/product-tour/adapters/chat/index.ts": "35e956984d5a968b9fc94bea7da2eadf85f0f8966d99d3f85582d6da258af23f",
+    "apps/electron/src/renderer/features/product-tour/adapters/connections/connections.test.ts": "436f406870d638ccb329261967bc50bdb03aebf6102aa6e4795c4c8a9cc22a5d",
+    "apps/electron/src/renderer/features/product-tour/adapters/connections/index.ts": "a89d0a244069dbd0e3f4f6386ae6e45a8401d1b39a245ad3c31ddde0a17a4ef3",
+    "apps/electron/src/renderer/features/product-tour/adapters/connections/source-picker.browser.test.ts": "acbc158948d931bc6e58ed29789fa65f92a940132eb9c5239a1f950bd75145f5",
+    "apps/electron/src/renderer/features/product-tour/adapters/connections/source-picker.browser.tsx": "a8d472d976247ef9b4abea9adb257817e87ade2f2b1fcc74219483dc75d55ba5",
+    "apps/electron/src/renderer/features/product-tour/adapters/knowledge/__tests__/knowledge.test.ts": "e8ea3e0d295a76945a2bf43544e5d5674b755866449925c4dd0ffefe18d54d8a",
+    "apps/electron/src/renderer/features/product-tour/adapters/knowledge/__tests__/memory-storage.test.ts": "8b2fcb7e5efe9dba6d39666cb1afc8db12920e28926aff02bd4eda44247afa4a",
+    "apps/electron/src/renderer/features/product-tour/adapters/knowledge/__tests__/native-lifecycle.test.ts": "122bf126a327eb9b2ab94875b9f58fd06f15277962d7916f9c2a0d297444a2e5",
+    "apps/electron/src/renderer/features/product-tour/adapters/knowledge/hooks.ts": "5ac3e8ca702e93ae698e6bf5a7ae3b5fa4d704d5ec355a58cec78d17cae211ab",
+    "apps/electron/src/renderer/features/product-tour/adapters/knowledge/index.ts": "6c5d7534b367fbc4a900e53329153f99f15804bdf7fa8ac12128e01d8c0cdb55",
+    "apps/electron/src/renderer/features/product-tour/adapters/work/inbox-feed/inbox-feed.test.ts": "d6f1fee308d91ea04913fc5bb9efeab487d301eee4c1f438fe9946f6e194edb6",
+    "apps/electron/src/renderer/features/product-tour/adapters/work/inbox-feed/index.ts": "c20c0dfa8b54c9ef6522a3ffc3980d44b8f7aa5ba1417273ec0b5fe969758ea9",
+    "apps/electron/src/renderer/features/product-tour/adapters/work/inbox-feed/reader-dom.test.ts": "baaa140c4e58ba02ba7e799a651c3ce0751760d24906ed18689d2e5d5da5a3e2",
+    "apps/electron/src/renderer/features/product-tour/adapters/work/inbox-feed/reader-harness.fixture.tsx": "4fd8b442d4915d11d3b5959d5959dfd9c4ffadcd7e01a1d773ee70aa760348aa",
+    "apps/electron/src/renderer/features/product-tour/adapters/work/inbox-feed/use-feed-reader-tour.ts": "53e6469a5627a8a2edecabac46ed56a97cdc4ddfd7bede7eddc2bf959803f3ff",
+    "apps/electron/src/renderer/features/product-tour/adapters/work/meetings-automations/index.test.ts": "6a7c7f2eb2fcc73e1a1d8b2d542859a0a78107d7500a0f5c33ca37d0f71e436d",
+    "apps/electron/src/renderer/features/product-tour/adapters/work/meetings-automations/index.ts": "b20286f4dd4d87c1870dde250be6cf50d7c5396540273b395eba6da90d9ebe2c",
+    "apps/electron/src/renderer/features/product-tour/adapters/work/meetings-automations/native-browser-process.test.ts": "ad44409d32dbd62506cfcf57c9a299772c3728886a591c025bf0bdfcda564726",
+    "apps/electron/src/renderer/features/product-tour/adapters/work/meetings-automations/native-browser-process.ts": "3462f42eb89d0ffc83ccd2c072a12ba0958494e6d811f5b4a14383337a819d4c",
+    "apps/electron/src/renderer/features/product-tour/adapters/work/meetings-automations/native-ui.browser.test.ts": "a75c436e6a5c02eee58aa05ab9982baf1ffd4116d68d727a34a9876bbbb93366",
+    "apps/electron/src/renderer/features/product-tour/adapters/work/meetings-automations/useMeetingArtifactTour.ts": "ccd452b47941b5b15437d129242da930ae7337c491d4c0b44aa754f0dd42020b",
+    "apps/electron/src/renderer/features/product-tour/adapters/work/tasks-projects/__tests__/creation-observer.integration.test.ts": "d4a46250c3f67eb5ef70b37b93d576b65f6e9abb46588e0829c5ffa2e29d469c",
+    "apps/electron/src/renderer/features/product-tour/adapters/work/tasks-projects/__tests__/native-commit.integration.test.ts": "39ce0693a4017e61d91639b7e5eff0ea7831fba36ec1b8c3b5a84e7a2667002f",
+    "apps/electron/src/renderer/features/product-tour/adapters/work/tasks-projects/__tests__/signals.test.ts": "46f589df613940625d3235df5a5a08f345e0e6cb8af671033a2989afd360126d",
+    "apps/electron/src/renderer/features/product-tour/adapters/work/tasks-projects/index.ts": "f265186d429586b684536bec8309f5e28948d3b2ed494b38e131e8b4c0726f27",
+    "apps/electron/src/renderer/features/product-tour/adapters/work/tasks-projects/native-commit.ts": "294fa2a1b82eb9322c46344fea9b91229c0cc8d829b7964c3ae83fb4b82bd210",
+    "apps/electron/src/renderer/features/product-tour/catalogue/catalogue.test.ts": "5672fb9bb03453e2a4a66aab60f975212bbd067788c127e73e4c25b211003868",
+    "apps/electron/src/renderer/features/product-tour/catalogue/index.ts": "23eb787b63aca0e3552c9b0819c7454106d6901113350ce29fcaa299341fd431",
+    "apps/electron/src/renderer/features/product-tour/catalogue/locale-copy.test.ts": "6456d8fbddb6f195ff94e0d1dffa8256967e48b946292944b5fbfc17d8cd4e83",
+    "apps/electron/src/renderer/features/product-tour/catalogue/product-tour-catalogue.ts": "3db233eee7d394d05010071c6f2bb419c3772e87809ff25378d57ba80d26d6b1",
+    "apps/electron/src/renderer/features/product-tour/catalogue/validate.ts": "d8ea3a6f822ae2506428eb91b296573a9b54ec7c07e666f2dec0559024a29781",
+    "apps/electron/src/renderer/features/product-tour/contracts/index.ts": "699512ceecbe011f7a4c5995ef9ead3c9fb63935b567398663b12bbe463ee0b7",
+    "apps/electron/src/renderer/features/product-tour/core/continuity.test.ts": "1867147b0847fd8e1a86b5c08d85ec8ea70ba745b77b322da7e383f078acb8c3",
+    "apps/electron/src/renderer/features/product-tour/core/engine.test.ts": "dd42bd71d4dca6a463b02f909f059774d87b3513e7b1d623f495097a591017ab",
+    "apps/electron/src/renderer/features/product-tour/core/index.ts": "901e8f0497c5c404724bbb8e0a43c3cf0f99dc5a7c9549c7083950481decd7fa",
+    "apps/electron/src/renderer/features/product-tour/core/native-continuity.browser.test.ts": "22977973085500cf60105b112b11dc1002dd7a87e5ae3f7828ea9e597078e230",
+    "apps/electron/src/renderer/features/product-tour/core/native-continuity.browser.tsx": "cc230425bc9cbfb3a5a753f27e4aee5cb34bec8fa3d74862e497fd12e6fe5eb8",
+    "apps/electron/src/renderer/features/product-tour/persistence/progress.test.ts": "1b4d66cbb08034edf868e4fb62ef7ef49aab23d9fbcdb6f375d057ee7ac3ffdc",
+    "apps/electron/src/renderer/features/product-tour/persistence/progress.ts": "8eee8d35631a27e09e58d971a996fb1f8f9e703b6a6a3ddd3e8f7fbc6fca698e",
+    "apps/electron/src/renderer/features/product-tour/runtime/ProductTourProvider.tsx": "a40e37c9bc223e8e049f1a3fb242c60f3c4afff88ab4a598782f073048e80fc9",
+    "apps/electron/src/renderer/features/product-tour/runtime/__tests__/bridge.test.ts": "48d60e62d2a49f5d878d6f1c48e1b345a738a3670ae6391375c7a4be36fcac15",
+    "apps/electron/src/renderer/features/product-tour/runtime/__tests__/fixtures/provider.browser.tsx": "1102cab65e0769de345a57cb94dd67737309b1a27a428b431c47c229846c1a38",
+    "apps/electron/src/renderer/features/product-tour/runtime/__tests__/provider.browser.test.ts": "9af0c99079465927dcebebe20aa4d3948a62f0d4ba783752bc8f2a4f69583d49",
+    "apps/electron/src/renderer/features/product-tour/runtime/bridge.ts": "71e1039ecd210934d91ba9f3100f8da756fc0ccc36e7f69b656e85422ac60724",
+    "apps/electron/src/renderer/features/product-tour/runtime/hooks.tsx": "eb0551b997ed6410bcfe9da5c65c063b59637ca683e762e969f5a871d15d6d84",
+    "apps/electron/src/renderer/features/product-tour/runtime/index.ts": "8161818f3fc3ab9714195f209146bf8884c7d296b7e9ab1e62daba52eb84cdc5",
+    "apps/electron/src/renderer/features/product-tour/runtime/native-layer.ts": "7a7847b3a275302853db177f01a0eb4f8dfd954e8f4159b89f62cc8d3da01acb",
+    "apps/electron/src/renderer/features/product-tour/runtime/routes.ts": "fe13c830d7602d27631ed3c54ffbcc6c9493f65140b27ad2c7a20c52ccd7df43",
+    "apps/electron/src/renderer/features/product-tour/ui/SpotlightOverlay.tsx": "a587b173ee8394b29286ef9a1c494b63659687febbb213c719c627da8ec297a7",
+    "apps/electron/src/renderer/features/product-tour/ui/TourErrorBoundary.tsx": "1ddf67b6a9bb4613648253ebfff86904cc578ad7d28aacbf7b033cdd8ff16bbb",
+    "apps/electron/src/renderer/features/product-tour/ui/TourPopover.tsx": "d59eb035171ad5d7c38e3731b770bb51c1021fc0722d1aea851acdd000f6ffb5",
+    "apps/electron/src/renderer/features/product-tour/ui/__tests__/fixtures/geometry-observer.browser.ts": "17cf0e2d133edef6344d8aec4cc67990ef8bdeb0373f29372a0497355011047b",
+    "apps/electron/src/renderer/features/product-tour/ui/__tests__/geometry-observer.browser.test.ts": "228923ae8661b77e6b4454fdbb684f06ab849cd668fc1875326938c6d08148ae",
+    "apps/electron/src/renderer/features/product-tour/ui/__tests__/geometry-observer.test.ts": "e5a87efee6ab2f753e99bed9774ce10619d5f250d419f726aa9b8cf53eb0ebbd",
+    "apps/electron/src/renderer/features/product-tour/ui/__tests__/target-registry.test.ts": "48bddc46cfebf9fd02149d3e263bc81ed7c4a52b07a2c4710368486436a47115",
+    "apps/electron/src/renderer/features/product-tour/ui/geometry-observer.ts": "6d9ff2be5af06cc0713ab48e6e66f0c01d0f1cf0075fc4c83b6f55ff573e235f",
+    "apps/electron/src/renderer/features/product-tour/ui/geometry.ts": "230d5a2519694d4c76eb29bb8310b9364d14b4f857e6fe64f30ffbb20c705a81",
+    "apps/electron/src/renderer/features/product-tour/ui/index.ts": "85ebf4218e6273eccdfb7b25f1dbc8de46046a69358f077ebc7fb681096cebe8",
+    "apps/electron/src/renderer/features/product-tour/ui/target-registry.ts": "32d3745cbb127715df5058c47cfb7dd3234c519c13eb69c700c2bf1906d727f9",
+    "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts": "2ecde01961b4765e434ac0f05212007698feeacbaa31a3e47b59cf2e0e423722",
+    "apps/electron/src/renderer/lib/__tests__/personal-task-commit-observer.isolated.ts": "1eff6b59a2a2e06e6bfc61f570e1b744fa6985f3d8e41b3fd78d642fa2a538b8",
+    "apps/electron/src/renderer/lib/__tests__/personal-task-commit-observer.test.ts": "f7249cea8c23df7ed596bad278692cdde242355a26488491be00be6c078872ad",
+    "apps/electron/src/renderer/lib/dismissible-layer-bridge.ts": "31651df3bc6b0d11c49e439944194a8e2dd6074111ba6f89f7af4283eb066302",
+    "apps/electron/src/renderer/lib/local-storage.ts": "0686d0e67d1cf5c29bfc424d7c9d6b6dbbd7034b5ed8d18dff862bb355244230",
+    "apps/electron/src/renderer/lib/native-notes-sync.ts": "5acd29ee7137b7d8882c7af075acf3c403869ebeca3868e7ee7892b3c7b5e5af",
+    "apps/electron/src/renderer/lib/personal-tasks.ts": "92011607b78d59c864e98015c41fab802d07a472243e1645d04f1e894d9fbf22",
+    "apps/electron/src/renderer/pages/ConnectionsPage.tsx": "114c67e38e6da60a395e5535545baf7982ca2f661291fbdaa16cc01d219089f8",
+    "apps/electron/src/renderer/pages/FeedPage.tsx": "1b09a30db56d93e32d71a13541a2f447208b886ccf9dee5ad5e72aa8425d92dc",
+    "apps/electron/src/renderer/pages/InboxPage.tsx": "c88f617b0da15d198fa80994db87f6e2a281bf3d0c6bcfad61cfd4ef74ac49b3",
+    "apps/electron/src/renderer/pages/MeetingsPage.tsx": "3e5df9234ff718d709bf3080204601a181e2ead5fe6b2a80019b31cdf2907ec4",
+    "apps/electron/src/renderer/pages/NotesPage.tsx": "9efd3707b0057ceb4c69949a617d1ef810ab5d61f2500940663230fc15eb4939",
+    "apps/electron/src/renderer/pages/ProjectInfoPage.tsx": "24f8dbaf94e20bc90fcac4aed6aeab8d30259c0637ee4058a3f00248c946f0c7",
+    "apps/electron/src/renderer/pages/SearchPage.tsx": "078632cfb9c3eac0fc2d1a7d920e9702e42cb23242582e150b581a971e1d2b60",
+    "apps/electron/src/renderer/pages/SourceInfoPage.tsx": "0d8f5fec1b3b4aa2afcee68176bc7221c0e9bcf2a3bf443b77b56e541ee13b34",
+    "apps/electron/src/renderer/pages/TasksPage.tsx": "a251766166c787ef444fa3a6265a391c4e2736313e71aaa4044f20a2f793bbb7",
+    "apps/electron/src/renderer/pages/__tests__/meetings-request-lifecycle.test.ts": "dd93c53fa5360379a2780af6999aebc8d764d835a39fa906fc2ee031807a45f9",
+    "apps/electron/src/renderer/pages/__tests__/native-domain-tour-producers.test.ts": "5a55927636de590465a0dbe97685b0d367faaaf0aaba433b4886068b4d438151",
+    "apps/electron/src/renderer/pages/extra-screens/agents/AgentCenterPage.tsx": "0d35b6476d5653332c9688c2a6ca830a817937145e72692960f15c93202a5baa",
+    "apps/electron/src/renderer/pages/feed/FeedSources.tsx": "c97cdb0f69d9864433531bb98d0de17a888f0e5ea6a875ca8ce1a355d5ec4f0d",
+    "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx": "36681055a546d848ce64a3d3172ad9a9dae7c0f44e11566406347250459e290f",
+    "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx": "36aaf3d3ac1c35059ac51c0d3479e63ae7e45a94838e36e2510947ca432d8ea6",
+    "apps/electron/src/renderer/pages/settings/LearningSettingsPage.tsx": "29c90b264c465e20660a4a70a03d4c81b0acb6ca169b4e19d65e5eb02c48fbf5",
+    "apps/electron/src/renderer/pages/settings/settings-pages.ts": "d8227c01cd945cd9702476e5b5a75a3241d3ad2a1c788c5ac521552f5878a184",
+    "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx": "4644cdf59f84672796b3c371213fee3fee143596e7888e728d7004b054641014",
+    "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx": "1d0f10bfa89a4c5c602d0db82e30f4d52228e33a8510df4c1aa45afe2461ecc2",
+    "apps/electron/src/renderer/pages/tasks/__tests__/delegation-errors.test.ts": "2553c5c878d0f55a9bc33977de41041e59ffb310fd9427bc68f67f1e8b5a3e89",
+    "apps/electron/src/renderer/pages/tasks/delegation-errors.ts": "11902c42a9882a6afa07d6435dc194d85791f5c68d2720405fb2f898ad4fcada",
+    "apps/electron/src/shared/menu-schema.ts": "6939868cabb7d0713ccdafb4a12b1e91386757f48ca49024ea89372d9440b2f3",
+    "apps/electron/src/shared/settings-presentation.ts": "6e2e77ccd8aa11d348f732316cb1b5735c97567c3b9692df26a2eda3dbe0fe36",
+    "apps/electron/src/shared/settings-registry.ts": "abf502ecc15d15b826907254868e0f9c03a88dd1fe74f7576367261b15fd1a8c",
+    "package.json": "5f85b5d2e5e077b9c8ac6a9c64deba067f34036918182e3d923dcad6e55d2403",
+    "packages/shared/src/i18n/locales/ar.json": "90c937bce928ef4533eca4553c5e094e4c06941202afab5e2b1a7710d25f6b67",
+    "packages/shared/src/i18n/locales/de.json": "157384152a9e7952eb5631903c5e1b848c643fa6bd55270b2a40fae23a1b4b81",
+    "packages/shared/src/i18n/locales/en.json": "38d3ee74fd293b1768f4b18fb6ca2481514c37f16f1bf5acd4aeec79b44da137",
+    "packages/shared/src/i18n/locales/es.json": "abe7b02b9af7b2c5a31fd214ddf4388dc225b2dc04bdc62308b8443df9bccf81",
+    "packages/shared/src/i18n/locales/fr.json": "4940f7e6156ffee3e6528e4181671f54867f6bb0920bbdc9dc4f845de59c2812",
+    "packages/shared/src/i18n/locales/hu.json": "cf881647d8f423e25f155a57bed5ddce0002c640f900cb1bf5a231aa5e7ea01d",
+    "packages/shared/src/i18n/locales/ja.json": "de2e1e3498ddd5688f572b0844246f45535f6aafdcabaaa3b2a00257e890210c",
+    "packages/shared/src/i18n/locales/ko.json": "f813ca861c24554b1c069090d947c70cd5c9c8896e0a36c2ec964d512b6e22fc",
+    "packages/shared/src/i18n/locales/pl.json": "37a9ea36ab31ad7fd2a23ff2505f9f5699d5d34e51f70db6106fa5d3d525ab9f",
+    "packages/shared/src/i18n/locales/ru.json": "3bbaed072d49062fcefc8b4c5aaf381de7d40cd4b7e4b1174b6dd955e77ab243",
+    "packages/shared/src/i18n/locales/zh-Hans.json": "cc2175b289f1ae94d4ad026d3ebaed998264e99890c1ef16731256b18e29d87e",
+    "packages/shared/src/i18n/locales/zh-Hant.json": "ca01a1941952acf100468e00f0705dfa8b17308fa02b0e5eba0ee641c98acd0f",
+    "scripts/electron-main-cjs.test.ts": "54905a247baff5fb8600e4ccd51fbc22b9138756da99ea6ae3aa0d4408de8294",
+    "scripts/product-tour/application-build.ts": "7e0198f30d06c49752e99b2458a439eef9564d64f4798254722f7a5c355c0f9e",
+    "scripts/product-tour/browser-node-adapter.mjs": "ee36c4419de2ccb6943391f8ccb21f40b2bd903b48baddca6ff827a15a16da09",
+    "scripts/product-tour/bundle-report.ts": "8b56f26fdcb8be043b89abeafbbbb37568c6d002f8ba5cc18a4a1c4f637b254e",
+    "scripts/product-tour/native-process.test.ts": "67563d8618341fabe6b9fb8722bf534d35c7ecb49eaeb21d9b5a9f45f8539b38",
+    "scripts/product-tour/native-process.ts": "5cd003c572042c1b062d316723974d7be695b0e65f68ff5005845ffa740f0e90",
+    "scripts/product-tour/run-browser-node.mjs": "f1e072f3cdc271616c9680702e232e804495a9b00e09b3ccaf6920931eac97b8",
+    "scripts/product-tour/run-native.ts": "a3069658928ceb69d0a961e34bfc2de5091613abd6dc6aa49175286ed76bd115",
+    "scripts/product-tour/serve-application.ts": "ebd573cd857f9007d2c3fed508cf6092f00d9b3d4b524c8dfca81e0c69fa72bf",
+    "tests/e2e/product-tour/acceptance-matrix.json": "d3889df9f2ea8e56dc579649c151581a0a0bb5547ec9018c9451a797dbb2dccf",
+    "tests/e2e/product-tour/acceptance-report.md": "a237c746ac297676a28cdfa72ce2c0f0acb6dc9c1f2da2fe715bc46597fd6c64",
+    "tests/e2e/product-tour/fixtures/application/index.html": "c339946f234ed17aeab641a70f88db654c637e70a5b0571954bc4f22c807fa5f",
+    "tests/e2e/product-tour/fixtures/application/main.tsx": "c6cb30a1f4e5336b27df5d2359d1ab05a9ba15336e7ac373a0af461df54ed2fe",
+    "tests/e2e/product-tour/fixtures/application/ui.html": "2e10619e3eed69306d97c13c8dc81adc6a0204c968ed38f737911588c028f9d9",
+    "tests/e2e/product-tour/fixtures/application/ui.tsx": "8d18403ad6f79962dea2673cf4574decbad1e05ebfe797478eb7bf66c3ad7ec4",
+    "tests/e2e/product-tour/fixtures/application/vite.config.ts": "f59a1697d99e79ad88497d7fa51776a1d3720a9573f1a2b5aed005124bf60a15",
+    "tests/e2e/product-tour/native-harness.ts": "c649805cb11efc05ac5cf997d49f20c3159940f01ef1d065161a4f68ddf52e79",
+    "tests/e2e/product-tour/native.config.ts": "675d6dc5607ad7e5acf13765736f3fa140ab11467b8eba2df67f9889b3213f9e",
+    "tests/e2e/product-tour/playwright.config.ts": "b26d09bc810c063d2c47f63c96cab55ddb09b03837ad9a753bbcfa70716b147b",
+    "tests/e2e/product-tour/product.application.spec.ts": "ed6df3c1c8b5fa92d14bcfb48331f7137211551a90f03c2bfd9ef409fde6602f",
+    "tests/e2e/product-tour/product.native.spec.ts": "fa76d97f36d783ac5feeb7277366f5efd16eff9ef2be6d3c8bf3bfb613c71dff",
+    "tests/e2e/product-tour/spotlight.ui.spec.ts": "338bf7dff43dff7456b31129c1230b386b02316e918d6fe18351a515d2213342",
+    "tests/e2e/product-tour/step-matrix.json": "ca5befe5de8c9259701d47e082eaae8c24a6160a4fc32600eca72026dd36914c"
+  },
+  "boundaries": [
+    "Opt-in feature flag remains false by default",
+    "Learning has no domain write/grant/credential authority; existing ordinary actions are observed after scoped canonical receipts",
+    "Actual App fixture uses real authenticated Notes journal with controlled bootstrap/IPC/custody; it is not installed Electron/OS acceptance",
+    "Restricted WebUI workspace selector remains unavailable; no synthetic target",
+    "25 tours and56 independent policies are source/catalogue coverage, not25 installed native end-to-end receipts",
+    "OS microphone/clipboard, billed providers, deployment and hosted workflow were not exercised"
+  ],
+  "retained_failures": [
+    "Old inherited branch was not published; clean current-main reconstruction has zero deleted files",
+    "Voice merge interleaved finally blocks; fixed337635 and25-case current DOM passed",
+    "Temporary current-main ancestor removed App/Quest owned hooks; restored7a66, then actual App14-case qualification",
+    "Bun/Playwright startup/shutdown stalled and child budgets omitted lifecycle phases; unchanged bodies validated via Node22; case/production deadlines retained",
+    "Inherited Node test IPC initially exited without executing selected child; invalidated those runs and require exactly one executed passing case per child",
+    "Source native fixture lacked new confirmed-task import; read-only fixture now throws on an unexpected task mutation",
+    "Built fixture omitted ui.html, then inherited parent login HTML entry; explicit owned two-entry map repaired",
+    "Earlier positive workspace expectation contradicted current restricted WebUI; restored frozen5069 blocked-capability expectation",
+    "Latest dictation whitespace separator gap reproduced old0/1 and recovered25/0 without trimming existing draft/trailing preference",
+    "14cf actualNav Node adapter initially omitted Bun toStartWith matcher:27/28; source assertions unchanged, exact literal startsWith matcher supplied in evidence adapter, then28/28."
+  ],
+  "reconciled_main": "14cf6c561a4c39c47658ab1566e61c200041f649",
+  "post_qualification_merge": {
+    "main": "14cf6c561a4c39c47658ab1566e61c200041f649",
+    "scope": "External1417 UI route recovery reconciled; TourPanelScope retained outside current workspace/detail/query-keyed StoplightProvider and RouteErrorBoundary; current native/workspace/session guards retained. Full actualApp/UI14 +actualNav28 +bothfulltypes refreshed.",
+    "deleted_paths": []
+  },
+  "evidence_artifacts": [
+    {
+      "path": "logs/product-native-current-focused.log.gz",
+      "raw_sha256": "0bd62a37e56b45fbef5318ee4fa65228121a89c3922c64321079fe6a9844718c",
+      "gzip_sha256": "d7a8205529272b249f5e4c25eee6e77f7240e2e76c46bfabca5fe3ff6fe153b2"
+    },
+    {
+      "path": "logs/product-native-final-main-build.log.gz",
+      "raw_sha256": "1a86387599a8ee7a886eb283a112012056bc130a48b8fb36a7468ecc141c394c",
+      "gzip_sha256": "7e8d151c7abd9619ff1518726d5bc7713a0f77c93ae12b5a1ee6d66aff3942c1"
+    },
+    {
+      "path": "logs/product-native-final-preload-build.log.gz",
+      "raw_sha256": "5f2b572850839749bdb24be6b069d694b7bab19297e8ea3aa797a1e34e5a2618",
+      "gzip_sha256": "f04252b054ac3c6b560a75a62b573a823ec0fdfb4b19762d9138a4190320debf"
+    },
+    {
+      "path": "logs/product-native-voice-whitespace-after.log.gz",
+      "raw_sha256": "16f57716642fff4705c66f79fa14a8f28d90e88fc0c22dbc596663ad92d6a6b2",
+      "gzip_sha256": "e4d92ca8129646d22b11f833dbdb7c2c9251983f0edd77380ac8018061afc67a"
+    },
+    {
+      "path": "logs/product-native-voice-whitespace-before.log.gz",
+      "raw_sha256": "cd8542fd8842ce839ad6fd949725db17b68665b3c196d716aca36025669d0f59",
+      "gzip_sha256": "c6c30f5f0021d3cab7609315152cdfc91aebe7f5248ad51a519e724c35c462de"
+    },
+    {
+      "path": "logs/product-tour-current-actual-app-ui-final.log.gz",
+      "raw_sha256": "28620b6938b8586cf7e205bf3b0ba5a2c142df1b89fdeee59bdb1d2d989a6614",
+      "gzip_sha256": "8bc3f45ea9d8d9a33a0b701ba78614337a441c13e518a19b7b0b6860e064a3bf"
+    },
+    {
+      "path": "logs/product-tour-current-actual-app-ui-qualified.log.gz",
+      "raw_sha256": "6fe5101c7c527ad692c7691bfbd1abf54d6107db2008b093c527f5f6776ea5fd",
+      "gzip_sha256": "ea7db87c9869e8165231bbb90b79f161441b524928b55cf956b0846b50ee9f8e"
+    },
+    {
+      "path": "logs/product-tour-current-app-build-final.log.gz",
+      "raw_sha256": "977a006908e78ab794860159fbdccde744651657a4c68a5b9c6a5c4a8f992ace",
+      "gzip_sha256": "a8379aa2c49ad1a40945ae4dc6d13ac6908ac248652eae73e5feeacf8889a63c"
+    },
+    {
+      "path": "logs/product-tour-current-app-build-qualified.log.gz",
+      "raw_sha256": "dd3ffcedeb3b7dc68ac90738a727ae039b35f4db19ef345d9f23f42eee57a9f0",
+      "gzip_sha256": "dc80928f1392afd8a8db2a202d4aa4abca1d33972155a491ba0353c63ef8a86f"
+    },
+    {
+      "path": "logs/product-tour-current-final-i18n.log.gz",
+      "raw_sha256": "9deb1eea1754c52565451a13949c637c537a0b89fe434c900839f00403958bb3",
+      "gzip_sha256": "f48f1ab4628b2af4a577887954d425f687a019b28fe16533eb103d91d3bc9743"
+    },
+    {
+      "path": "logs/product-tour-current-input-continuity-dom-final.log.gz",
+      "raw_sha256": "e1d20de9e39c0c501bfa2aeb5b27598832c1ca9744b4b9db030d99c1998f718b",
+      "gzip_sha256": "0612d91e238dbaf5f9504c754b624c28e78fdda32e389f75a141c21ce795eebf"
+    },
+    {
+      "path": "logs/product-tour-current-input-dom-replay.log.gz",
+      "raw_sha256": "f0ebb0653097c12e423e9fdb9f7acd53cafa58bdba1260d0d1cd5dcbec70559b",
+      "gzip_sha256": "1da5f946f9dff826b34a2660ab9fcdc4217ddaf23ca4c05870437694fafa13b5"
+    },
+    {
+      "path": "logs/product-tour-current-joined-electron-types-qualified.log.gz",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "path": "logs/product-tour-current-joined-webui-types-qualified.log.gz",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzip_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "path": "logs/product-tour-current-node-input-continuity.log.gz",
+      "raw_sha256": "f155db956ea07d8297e6d0cb6b1f28222d21540628beeb45063755690a2d7578",
+      "gzip_sha256": "166f4a5635a95dc62add4ab729f6718c00cee8e96df2ae0cb9bd7dd5b9af85af"
+    },
+    {
+      "path": "logs/product-tour-current-node-isolated-actual-final.log.gz",
+      "raw_sha256": "6d523355ee203f168ef80b135a9b27b861b38ba845aadf8cefecafc87737fea5",
+      "gzip_sha256": "a4fa658bcbf4b17c6020173bd421b7aec8b5e86799cbe9023d180080aa2eb374"
+    },
+    {
+      "path": "logs/product-tour-current-node-meetings-final.log.gz",
+      "raw_sha256": "eb86540c369d4389209c8992dce2e2bd3ad30fe37c17a57bb004e90b13e407fd",
+      "gzip_sha256": "20d8c0d31eb47d99dc5da316c7fe9c073c6612cf10322a686b2a63c03781454d"
+    },
+    {
+      "path": "logs/product-tour-current-provider-geometry-dom-final.log.gz",
+      "raw_sha256": "230e3e540cfa4c0728040e74aa6946e075b8f4115deb19654b149d81466a4068",
+      "gzip_sha256": "89cf1cc46c321db51831356f8cab3a654b17872f2217a9670f0ffc7ae35943a6"
+    },
+    {
+      "path": "logs/product-tour-current-provider-geometry-dom-replay.log.gz",
+      "raw_sha256": "2ea5bbf1e4e2a9322f6510b54940964fe716d35cb62d84062df869b82b6fd1fe",
+      "gzip_sha256": "e67530f378531e0cd85d05c4a0ffabec475a6896e1398534be4419f167a56541"
+    },
+    {
+      "path": "logs/product-tour-current-pure-process-replay.log.gz",
+      "raw_sha256": "9aa3a26fb9e9b7844294dc9eebc0cefa6b67361f4c255227e1d55289558360f4",
+      "gzip_sha256": "a4091bb42cc121d14cd7cdc93cd51e32c3a6f6d7c40b101a36a438f5424b5281"
+    },
+    {
+      "path": "logs/product-tour-current-real-idb-replay.log.gz",
+      "raw_sha256": "d398119498130f1ba8bacbc7aaf5215663e6a2d3496bbefcd1f957cf43dcf8c0",
+      "gzip_sha256": "9bbeed02e2919b06448f96886364a4f1f3ce8a54ddce8c552d45c6cf3051a352"
+    },
+    {
+      "path": "logs/product-tour-current-14cf-actual-app-ui.log.gz",
+      "compressed_sha256": "7cebef090709bbdbee4f8b57aea209921f996e1e99511383e3b695d8e2fe9490",
+      "uncompressed_sha256": "ff437b2383e0abfecae4f004520f96ad210625f64192d5309347add195cb18f4"
+    },
+    {
+      "path": "logs/product-tour-current-14cf-navigation-browser.log.gz",
+      "compressed_sha256": "93c20f7f2a63ef89bc1e9f24d092ba80b30bd7c78235f86fdee8666b6b72ff9e",
+      "uncompressed_sha256": "2ef3813c9b5586fdc40f351cf17740f20fc45905df06312d6bcab036a67d69ce"
+    },
+    {
+      "path": "logs/product-tour-current-14cf-navigation-browser-qualified.log.gz",
+      "compressed_sha256": "63edcb3be6ffc8ee062ed2ad95ce1a7867f291ae1c1d17ea24fd6a25c9b4d10f",
+      "uncompressed_sha256": "ea0cc4545138ddf5a9f3d143b823a261ffae5b833a07111d9da289d1d0a49aad"
+    },
+    {
+      "path": "logs/product-tour-current-14cf-app-build.log.gz",
+      "compressed_sha256": "a12e0fb697747eca1d144877d0a1dc52aea5b125c2224686316446d60d01afa3",
+      "uncompressed_sha256": "72e98479de34d242c9c46f7bfbf5255485bc8b15a22e67900e6cc27589559007"
+    },
+    {
+      "path": "logs/product-tour-current-14cf-electron-types.log.gz",
+      "compressed_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/product-tour-current-14cf-webui-types.log.gz",
+      "compressed_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

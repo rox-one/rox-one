@@ -1,0 +1,153 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/capabilities/packs.test.ts:
+(pass) capability packs > groups the requested tools into the six packs [0.49ms]
+(pass) capability packs > does not auto-enable high-risk tools [0.07ms]
+(pass) install/uninstall idempotency > installs once and reports already-installed on repeat [11.53ms]
+(pass) install/uninstall idempotency > skips high-risk tools unless allowHighRisk is set [0.27ms]
+(pass) install/uninstall idempotency > uninstall is idempotent [1.69ms]
+(pass) provenance and selection fixtures > builds a provenance manifest with pins and enabled flags [0.65ms]
+(pass) provenance and selection fixtures > selects the smallest installed code-intelligence tool for a repository task [0.26ms]
+(pass) provenance and selection fixtures > does not select high-risk research tools for a URL task [0.07ms]
+(pass) AGENTS.md heuristics and offline report > writes when-to-activate, expected output, permission, and unusual-use [0.40ms]
+(pass) AGENTS.md heuristics and offline report > emits an offline capability report with checksums [0.15ms]
+(pass) provider-aware tokenizer > matches the shared heuristic for Rox/OpenAI and reconciles actual usage [0.20ms]
+
+packages/core/src/runtime-trace/projector.test.ts:
+(pass) runtime projection > validates canonical typed fixture; rejects malformed nested payload and schema [1.40ms]
+(pass) runtime projection > batch, incremental, reversed delivery and duplicate delivery match [14.14ms]
+(pass) runtime projection > workspace/root identities are scoped; source duplicate uses stable emitter identity [1.03ms]
+(pass) runtime projection > only explicit causal/data/parent edges; no temporal arrows [1.31ms]
+(pass) runtime projection > terminal cancellation sticks after late output; retry keeps previous attempt [0.88ms]
+(pass) runtime projection > missing parent and delivery gap explicit; gaps repair on catch-up [0.29ms]
+(pass) runtime projection > delta updates retain topology and authoritative complete replaces reasoning [0.34ms]
+(pass) runtime projection > different clock domains and negative elapsed are never exact duration [0.20ms]
+(pass) runtime projection > immutable previous state retains normalized entities and event pages [0.08ms]
+(pass) usage > dedup final replaces interim; aggregate is separate; unknown optional caches stay unknown [0.42ms]
+(pass) usage > unknown values remain unknown; missing usage does not become zero [0.07ms]
+(pass) legacy reconstruction > persisted transcript exposes only messages/tools and incomplete coverage [4.96ms]
+(pass) terminal stdout and stderr chunks accumulate independently; exact chunk tokens are not aggregate tokens [0.36ms]
+(pass) provider reasoning and a summary never become one fabricated chain [0.27ms]
+(pass) evidence references to old streamed output resolve to its correlated operation node [0.33ms]
+(pass) parentage and causal edges survive correlated lifecycle completion [1.66ms]
+(pass) out-of-order earlier phase invalidates geometry token without text delta relayout [0.49ms]
+(pass) explicit cumulative output snapshots replace prior text without duplication [0.62ms]
+(pass) attempt lifecycle uses explicit attempt identity; retries retain failed attempt [0.38ms]
+
+packages/session-tools-core/src/handlers/host-bash.test.ts:
+(pass) host-tool bash > rejects a working directory outside the workspace [2.28ms]
+(pass) host-tool bash > allows a subdirectory of the workspace as cwd [16.12ms]
+(pass) host-tool bash > rejects a blank command [0.43ms]
+(pass) host-tool bash > runs in the workspace cwd and captures stdout [10.66ms]
+(pass) host-tool bash > publishes real stdout, stderr, exit code, cwd and monotonic executor evidence [9.58ms]
+(pass) host-tool bash > observer failures cannot rerun a successful sidecar command through fallback [0.65ms]
+(pass) host-tool bash > reports an actual sidecar failure separately from the following local execution [11.18ms]
+(pass) host-tool bash > strips blocked credential env vars from the child [12.90ms]
+(pass) host-tool bash > times out a hung command and reports timedOut [256.79ms]
+(pass) host-tool bash > truncates oversized stdout [163.34ms]
+(pass) host-tool bash > uses the craft-exec port when installed [1.86ms]
+(pass) host-tool bash > falls back to local spawn when the port throws [11.32ms]
+(pass) host-tool bash > does not mention isolation when the sandbox flag is off [7.36ms]
+(pass) host-tool bash > skips the native port and fail-closes when sandbox is on without a backend [72.10ms]
+
+apps/electron/src/renderer/lib/capability-catalog.test.ts:
+(pass) capability catalog identity, status and filters > keeps same-name sources and skill scopes separate; missing usage stays unknown [1.24ms]
+(pass) capability catalog identity, status and filters > never turns saved/anonymous credentials into a tested connection [0.18ms]
+(pass) capability catalog identity, status and filters > intersects semantic category, transport and status without losing unknown resources [0.29ms]
+(pass) capability catalog identity, status and filters > uses verified bundled membership for skill aliases without categorizing display-name lookalikes [0.48ms]
+(pass) capability catalog identity, status and filters > retains recorded prompt hits without inventing assigned agents or runtime usage [0.09ms]
+(pass) capability catalog identity, status and filters > expired model credentials and disabled native tools do not appear connected [0.11ms]
+(pass) capability catalog identity, status and filters > model credentials remain distinct from MCP transport and source identities [0.09ms]
+(pass) catalog store mutations with actual readback > enables a real bundled pack and reads the installed files back [6.29ms]
+(pass) catalog store mutations with actual readback > reports partial install and mismatched readback without claiming success [0.35ms]
+(pass) catalog store mutations with actual readback > source config write/readback preserves failed/revoked state and workspace identity [6.26ms]
+
+apps/electron/src/renderer/lib/starter-prompts.test.ts:
+(pass) starter prompts are local draft preparation > offers general prompts and only available, enabled skill/source dependencies [1.65ms]
+(pass) starter prompts are local draft preparation > preserves every draft character and only appends a prompt once [0.33ms]
+(pass) starter prompts are local draft preparation > suppresses starter advice during streaming, permissions, loading and old conversations [0.19ms]
+(pass) starter prompts are local draft preparation > uses shared dismissal history scoped by workspace/session and skips shadowed skills [0.37ms]
+
+packages/shared/src/agent/__tests__/omp-runtime-observer.test.ts:
+(pass) OMP native runtime observation transport > binds real hook payloads without mutating tools, permissions or prompt [24.17ms]
+(pass) OMP native runtime observation transport > accepts an incomplete final frame exactly once and rejects oversized frames [19.71ms]
+(pass) OMP native runtime observation transport > bounds captured context and marks the actual loss [21.48ms]
+(pass) OMP typed native runtime bridge > uses actual child identities and exact delivered prompt, with unknown/estimated measurements [3.18ms]
+(pass) OMP typed native runtime bridge > does not duplicate root tool/reasoning/usage and drops stale cancelled turns [17.63ms]
+(pass) OMP typed native runtime bridge > keeps child terminal identity and does not invent zero exit code or separated streams [0.57ms]
+(pass) OMP typed native runtime bridge > publishes only committed structured todo authority state, preserves blocked and immutable versions [0.38ms]
+(pass) OMP typed native runtime bridge > marks cumulative native reasoning snapshots and read-confirmed skills explicitly [0.31ms]
+(pass) OMP typed native runtime bridge > retains a single OMP user stream through native scheduled continuations [2.37ms]
+(pass) OMP typed native runtime bridge > keeps original user text apart from actual BaseAgent skill-read directives [172.91ms]
+(pass) OMP typed native runtime bridge > reports a native emitter sequence gap without calling it a root journal gap [0.24ms]
+(pass) OMP typed native runtime bridge > forwards native host toolCallId without substituting the RPC frame id [0.75ms]
+(pass) OMP typed native runtime bridge > delivers actual host stdout/stderr and rejects late evidence from an older run [13.32ms]
+
+packages/server-core/src/sessions/runtime-trace/journal.test.ts:
+(pass) portable runtime trace journal > orders concurrent delivery, reloads, and resumes a bounded cursor without duplicating rows [51.00ms]
+(pass) portable runtime trace journal > marks torn/corrupt history partial and recovers before appending [4.66ms]
+(pass) portable runtime trace journal > caps blobs, uses opaque hashes and rejects traversal or tampering [32.31ms]
+(pass) portable runtime trace journal > enforces aggregate run blob quota atomically and restores it after restart [5.90ms]
+(pass) portable runtime trace journal > never writes a journal or reads a blob through a symlink [4.37ms]
+(pass) runtime trace privacy > scrubs registered credentials and nested/inline credentials before storage while retaining measurements [1.10ms]
+
+packages/server-core/src/sessions/runtime-trace/service.test.ts:
+(pass) runtime session collector > records real tool inputs/results and usage, restores cursor and preserves parent child identity [81.23ms]
+(pass) runtime session collector > keeps late tool output in its originating run after a new prompt starts [37.36ms]
+(pass) runtime session collector > deduplicates native child observations and maps nested native identities [7.00ms]
+(pass) runtime session collector > stores redacted large content and authorizes references by actual session/run ownership [27.19ms]
+(pass) runtime session collector > rejects malformed payloads before writing and prevents metadata from replacing collector scope [16.41ms]
+(pass) runtime session collector > reports failed disk recording through passive health, snapshots and recovered source gaps [17.07ms]
+(pass) runtime session collector > keeps precise executor exit status after the ordinary tool result arrives [21.78ms]
+(pass) runtime session collector > uses a fresh native generation for repeated child ids and preserves executor retry attempts [37.88ms]
+
+packages/server-core/src/sessions/runtime-trace/conductor.test.ts:
+[task] "actual-task" permission mode: allow-all
+(pass) canonical Conductor observations > publishes actual DAG dependencies and durable verification verdict, separately from node completion [88.54ms]
+
+apps/electron/src/renderer/lib/__tests__/runtime-trace-navigation.test.ts:
+(pass) runtime/chat navigation preserves mounted optimistic identity [3.31ms]
+(pass) tool identity resolves without message text heuristics [0.06ms]
+
+apps/electron/src/renderer/event-processor/__tests__/runtime-trace-ingress.test.ts:
+(pass) canonical trace ingress > snapshot response merges events received while snapshot was in flight [8.61ms]
+(pass) canonical trace ingress > single live source runs with map closed, duplicate dedup and gap catch-up [3.84ms]
+(pass) canonical trace ingress > wrong workspace or malformed event never reaches another session [0.22ms]
+(pass) canonical trace ingress > deletion invalidates outstanding snapshot generation [1.33ms]
+(pass) canonical trace ingress > concurrent readers share RPC and do not attach live subscriptions [2.95ms]
+(pass) canonical trace ingress > untrusted RPC response fails closed and retains explicit partial coverage [1.24ms]
+(pass) authorized child alias merges live root race and receives future rooted events [2.11ms]
+(pass) deleted identity can reload without waiting for stale reader, no active run resurrection [2.40ms]
+(pass) passive recorder health marks coverage without synthetic events or journal sequence [0.91ms]
+(pass) health boundary rejects malformed coverage and wrong workspace [0.31ms]
+
+packages/server-core/src/handlers/rpc/__tests__/runtime-trace.test.ts:
+(pass) runtime trace RPC > registers scoped read-only channels and returns the authoritative snapshot/cursor [5.85ms]
+(pass) runtime trace RPC > rejects other workspaces/sessions and malformed references before accessing a trace [0.54ms]
+(pass) runtime trace RPC > keeps native signed-scope projections valid without host commands, arguments, outputs or blob pointers [2.30ms]
+(pass) runtime trace RPC > exposes recording health without granting native host diagnostic contents [0.13ms]
+(pass) runtime trace RPC > redacts selected skill instructions and actual native child prompt contents [0.37ms]
+
+apps/electron/src/renderer/components/runtime-map/__tests__/flow-reconciliation.test.ts:
+(pass) controlled canvas local updates > retains every unchanged flow object while replacing only the changed operation [5.43ms]
+(pass) controlled canvas local updates > does not retain removed nodes after switching runs or filtered windows [1.51ms]
+
+apps/electron/src/renderer/components/runtime-map/__tests__/stable-layout.test.ts:
+(pass) runtime canvas real-observation layout > places actual workers below parent and gives each assignment a lane [15.58ms]
+(pass) runtime canvas real-observation layout > token deltas update one correlated node without changing topology or old positions [1.72ms]
+(pass) runtime canvas real-observation layout > true time uses source timestamps only within a single known clock domain [2.55ms]
+(pass) runtime canvas real-observation layout > bounds rendered cards while retaining navigation to every page [16.43ms]
+(pass) runtime canvas real-observation layout > filters observations without turning terminal output into actions [4.68ms]
+
+apps/electron/src/renderer/components/runtime-map/__tests__/runtime-ui-model.test.ts:
+(pass) honest runtime measurements and inert content > never turns a missing token/time measurement into zero [4.48ms]
+(pass) honest runtime measurements and inert content > context occupancy uses the particular input and model window [0.13ms]
+(pass) honest runtime measurements and inert content > removes active terminal controls and obvious credentials from every viewer/copy [0.41ms]
+(pass) honest runtime measurements and inert content > also redacts quoted JSON credential keys and authorization scheme values [0.12ms]
+(pass) map attention and independent split scope > manual inspection stops follow until explicit resume [0.18ms]
+(pass) map attention and independent split scope > keeps both 360px sides and never transfers widths between panels [0.14ms]
+
+ 116 pass
+ 0 fail
+ 457 expect() calls
+Ran 116 tests across 15 files. [3.39s]

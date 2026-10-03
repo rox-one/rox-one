@@ -46,6 +46,7 @@ function bindingOpts(binding: ChannelBinding): SendOptions {
   return binding.threadId !== undefined ? { threadId: binding.threadId } : {}
 }
 import type { PlanTokenRegistry } from './plan-tokens'
+import { setupI18n } from '@rox/shared/i18n'
 
 /** Session event shape (subset of the full SessionEvent from server-core). */
 export interface SessionEvent {
@@ -745,7 +746,7 @@ Approve in the desktop app to continue.`,
     adapter: PlatformAdapter,
     state: RenderState,
   ): Promise<void> {
-    const errorMsg = extractErrorMessage(event.error)
+    const errorMsg = binding.nativeOwner ? setupI18n().t('chat.sessionRequestFailed') : extractErrorMessage(event.error)
     this.cancelEditTimer(state)
     await adapter.sendText(binding.channelId, `❌ ${errorMsg}`, bindingOpts(binding))
     this.resetRun(state)

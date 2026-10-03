@@ -1,0 +1,42 @@
+{
+  "label": "continuation-3-final-candidate-build",
+  "command": [
+    "env",
+    "PATH=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/homebrew/bin:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/t/.codex/tmp/arg0/codex-arg0zADpNw:/Users/t/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/t/.cap/bin:/Users/t/.grok/bin:/Users/t/.opencode/bin:/Users/t/.local/bin:/Users/t/.cargo/bin:/Users/t/.orbstack/bin:/Users/t/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS:/Users/t/.orbstack/bin",
+    "NODE_OPTIONS=--max-old-space-size=4096",
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+    "run",
+    "electron:build:renderer"
+  ],
+  "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+  "inputHead": "638f0b8d1cc74528508c76ffeea5838466f57c5c",
+  "integrationBase": "c8754130535e8810819f3eefd4d837eeea011039",
+  "startedAt": "2026-10-03T14:09:03.278931+00:00",
+  "finishedAt": "2026-10-03T14:20:43.280593+00:00",
+  "exitCode": 0,
+  "sourceSha256": {
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "303be05da4d64532a4f0c602a2f5d31afca1aec2a1f2b699f87086a567bb2312",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+    "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+    "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+    "apps/electron/src/shared/types.ts": "6217a93b21662765b4783978892098f48df28ebbd2c8015d9117f971e531ee4a",
+    "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+    "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+    "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+  },
+  "sourceAfterSha256": {
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "50c3d04c9801426b49436716c110f7e89cec52641fdc6f0abf31f72b48803103",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+    "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "3139b43eaf3dea66e10aa9ad64948abba3c12c379e4639618a95e2cab8b4ffcb",
+    "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+    "apps/electron/src/shared/types.ts": "6217a93b21662765b4783978892098f48df28ebbd2c8015d9117f971e531ee4a",
+    "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+    "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+    "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+  },
+  "sourcesStable": false,
+  "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-final-candidate-build.log",
+  "logSha256": "ea0b1265cdc0f497107c06dcb7d109d577b6a00838fda120fa03b927df25ef6f"
+}

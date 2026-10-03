@@ -1,0 +1,339 @@
+{
+  "inputRevision": "76228cc33e44518e5fab5e59f5c754f4051d1e8c",
+  "tasks": [
+    {
+      "id": "UI-001.1",
+      "family": "UI",
+      "parentId": "UI-001",
+      "title": "[UI-001.1] Route recovery and deep links",
+      "backlogDocument": "02-surface-backlog.md",
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx#L175-L492",
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/src/renderer/components/app-shell/AppShell.tsx#L246-L271",
+        "https://github.com/rox-one/rox-one/blob/2c7a1fb01ec1d90d923a5e08a4cea60967347bbf/apps/electron/src/renderer/atoms/unified-shell.ts#L1-L90",
+        "https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx#L175-L492"
+      ],
+      "existingProgress": "partially-evidenced-progress",
+      "existingFullDoDClosed": false,
+      "dispatchState": "ALLOCATED_NOT_YET_FULLY_EXECUTED",
+      "allocation": {
+        "workPackage": "PW-UI-001.1",
+        "owner": "OWNER-UI-001",
+        "writePaths": [
+          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+          "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+          "apps/electron/src/renderer/atoms/unified-shell.ts"
+        ],
+        "startNow": [
+          "Read exact current committed source and preserved WIP without changing another checkout; classify already-implemented behavior and concrete gaps.",
+          "Build independent positive/negative/race/availability fixtures from existing contract, preserving exact task acceptance.",
+          "Implement missing component behavior and contract-safe adapters in isolated branch; if a real provider/OS runner is already available, run its bounded baseline now.",
+          "Prepare independent Win10,Win11,macOS,hosted browser workflows and exact canonical readback probes."
+        ],
+        "dependencies": {
+          "actualAcceptanceOutputs": [
+            {
+              "phase": "actual functional acceptance",
+              "producerTaskId": "SVC-003",
+              "consumedOutput": "reconnect/capability/current-workspace transport callbacks",
+              "requiresWholeProducerTaskCompletion": false,
+              "hardCondition": "The advertised owner operation must actually succeed or reject correctly and emit independently readable state/receipt on this actor/target; a fake successful adapter cannot satisfy it.",
+              "canStartIndependentWorkBeforeOutput": true,
+              "availability": "Probe existing implementation first; source already exists for many outputs. Not a new global waiting barrier."
+            }
+          ],
+          "uiIntegrationOutputs": [],
+          "immutableReleaseBinding": [
+            {
+              "producerTaskId": "INT-016",
+              "consumedOutput": "Feature-preserving integrated candidate SHA/source manifest and lockfile, only for joint final release replay",
+              "requiresWholeProducerTaskCompletion": false,
+              "canStartIndependentWorkBeforeOutput": true
+            }
+          ]
+        },
+        "targetActivities": [
+          {
+            "activityId": "PW-UI-001.1-WIN10",
+            "taskIds": [
+              "UI-001.1"
+            ],
+            "target": "WIN10",
+            "status": "READY_FOR_SOURCE_AND_TEST_PREPARATION",
+            "canStartNow": [
+              "design/fixture/runner bootstrap",
+              "existing runtime baseline where provisioned; otherwise runner and fixture preparation",
+              "synthetic component/platform capability negatives"
+            ],
+            "independentOfOtherTargets": true,
+            "sharedSourceEditing": "Shared UI implementation stays with this package; target lane owns target-specific test/evidence and reports needed adapter patch.",
+            "realExecutionOutput": {
+              "producerTaskId": "WIN-002",
+              "consumedOutput": "runnable native Electron/build artifact for this Windows version; source/UI fixture work and existing installed build baseline do not wait",
+              "wholeTaskRequired": false
+            },
+            "completionRequires": [
+              "reconnect/capability/current-workspace transport callbacks",
+              "actual target route/actions and original task readback/restart/negative controls",
+              "final evidence rebound to integrated immutable source; source existence/mock screenshot alone is insufficient"
+            ],
+            "evidencePath": "${TASK_ARTIFACT_ROOT}/UI-001.1/WIN10/"
+          },
+          {
+            "activityId": "PW-UI-001.1-WIN11",
+            "taskIds": [
+              "UI-001.1"
+            ],
+            "target": "WIN11",
+            "status": "READY_FOR_SOURCE_AND_TEST_PREPARATION",
+            "canStartNow": [
+              "design/fixture/runner bootstrap",
+              "existing runtime baseline where provisioned; otherwise runner and fixture preparation",
+              "synthetic component/platform capability negatives"
+            ],
+            "independentOfOtherTargets": true,
+            "sharedSourceEditing": "Shared UI implementation stays with this package; target lane owns target-specific test/evidence and reports needed adapter patch.",
+            "realExecutionOutput": {
+              "producerTaskId": "WIN-002",
+              "consumedOutput": "runnable native Electron/build artifact for this Windows version; source/UI fixture work and existing installed build baseline do not wait",
+              "wholeTaskRequired": false
+            },
+            "completionRequires": [
+              "reconnect/capability/current-workspace transport callbacks",
+              "actual target route/actions and original task readback/restart/negative controls",
+              "final evidence rebound to integrated immutable source; source existence/mock screenshot alone is insufficient"
+            ],
+            "evidencePath": "${TASK_ARTIFACT_ROOT}/UI-001.1/WIN11/"
+          },
+          {
+            "activityId": "PW-UI-001.1-MAC",
+            "taskIds": [
+              "UI-001.1"
+            ],
+            "target": "MAC",
+            "status": "READY_FOR_SOURCE_AND_TEST_PREPARATION",
+            "canStartNow": [
+              "design/fixture/runner bootstrap",
+              "existing runtime baseline where provisioned; otherwise runner and fixture preparation",
+              "synthetic component/platform capability negatives"
+            ],
+            "independentOfOtherTargets": true,
+            "sharedSourceEditing": "Shared UI implementation stays with this package; target lane owns target-specific test/evidence and reports needed adapter patch.",
+            "realExecutionOutput": {
+              "producerTaskId": "MAC-002",
+              "consumedOutput": "runnable native Electron artifact of the tested architecture; existing local native baseline can start independently of release signing",
+              "wholeTaskRequired": false
+            },
+            "completionRequires": [
+              "reconnect/capability/current-workspace transport callbacks",
+              "actual target route/actions and original task readback/restart/negative controls",
+              "final evidence rebound to integrated immutable source; source existence/mock screenshot alone is insufficient"
+            ],
+            "evidencePath": "${TASK_ARTIFACT_ROOT}/UI-001.1/MAC/"
+          },
+          {
+            "activityId": "PW-UI-001.1-WEB",
+            "taskIds": [
+              "UI-001.1"
+            ],
+            "target": "WEB",
+            "status": "READY_FOR_SOURCE_AND_TEST_PREPARATION",
+            "canStartNow": [
+              "design/fixture/runner bootstrap",
+              "existing runtime baseline where provisioned; otherwise runner and fixture preparation",
+              "synthetic component/platform capability negatives"
+            ],
+            "independentOfOtherTargets": true,
+            "sharedSourceEditing": "Shared UI implementation stays with this package; target lane owns target-specific test/evidence and reports needed adapter patch.",
+            "realExecutionOutput": {
+              "producerTaskIds": [
+                "WEB-001",
+                "WEB-003"
+              ],
+              "consumedOutput": "runnable browser/server transport with authorized task fixture; deployable shared code/server build or isolated local WebUI can be tested now, public-hosted proof needs actual ingress/deployment",
+              "wholeTasksRequired": false
+            },
+            "completionRequires": [
+              "reconnect/capability/current-workspace transport callbacks",
+              "actual target route/actions and original task readback/restart/negative controls",
+              "final evidence rebound to integrated immutable source; source existence/mock screenshot alone is insufficient"
+            ],
+            "evidencePath": "${TASK_ARTIFACT_ROOT}/UI-001.1/WEB/"
+          }
+        ],
+        "allocationFile": "surface-plan.json"
+      },
+      "Requirements": "Preserve workspace and entity selection through direct links, restart, browser history and missing/deleted entities. Target coverage: A Windows 10/11; B macOS; C hosted web, following the explicit platform contract in the parent task.",
+      "DoD": "Every link resolves to its own surface or a specific missing/unavailable state; no unrelated chat fallback.",
+      "Full functional verification": "Open direct links for session, source, skill, project, note, page, knowledge, extension, terminal, cloud-run and all extra screens; remove each entity while selected.",
+      "Test method": "Regression entry point: `bun test apps/electron/src/renderer/components/app-shell/__tests__`. Add behavior coverage for the changed contract; automate the full workflow above with Playwright/Electron or supported native UI automation on A/B and actual hosted browser C. Assert canonical persistence and backend results, retaining redacted evidence."
+    },
+    {
+      "id": "UI-001.2",
+      "family": "UI",
+      "parentId": "UI-001",
+      "title": "[UI-001.2] Panel geometry and platform chrome",
+      "backlogDocument": "02-surface-backlog.md",
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx#L175-L492",
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/src/renderer/components/app-shell/AppShell.tsx#L246-L271",
+        "https://github.com/rox-one/rox-one/blob/2c7a1fb01ec1d90d923a5e08a4cea60967347bbf/apps/electron/src/renderer/atoms/unified-shell.ts#L1-L90",
+        "https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx#L175-L492"
+      ],
+      "existingProgress": "partially-evidenced-progress",
+      "existingFullDoDClosed": false,
+      "dispatchState": "ALLOCATED_NOT_YET_FULLY_EXECUTED",
+      "allocation": {
+        "workPackage": "PW-UI-001.2",
+        "owner": "OWNER-UI-001",
+        "writePaths": [
+          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+          "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+          "apps/electron/src/renderer/atoms/unified-shell.ts"
+        ],
+        "startNow": [
+          "Read exact current committed source and preserved WIP without changing another checkout; classify already-implemented behavior and concrete gaps.",
+          "Build independent positive/negative/race/availability fixtures from existing contract, preserving exact task acceptance.",
+          "Implement missing component behavior and contract-safe adapters in isolated branch; if a real provider/OS runner is already available, run its bounded baseline now.",
+          "Prepare independent Win10,Win11,macOS,hosted browser workflows and exact canonical readback probes."
+        ],
+        "dependencies": {
+          "actualAcceptanceOutputs": [
+            {
+              "phase": "actual functional acceptance",
+              "producerTaskId": "SVC-003",
+              "consumedOutput": "reconnect/capability/current-workspace transport callbacks",
+              "requiresWholeProducerTaskCompletion": false,
+              "hardCondition": "The advertised owner operation must actually succeed or reject correctly and emit independently readable state/receipt on this actor/target; a fake successful adapter cannot satisfy it.",
+              "canStartIndependentWorkBeforeOutput": true,
+              "availability": "Probe existing implementation first; source already exists for many outputs. Not a new global waiting barrier."
+            }
+          ],
+          "uiIntegrationOutputs": [],
+          "immutableReleaseBinding": [
+            {
+              "producerTaskId": "INT-016",
+              "consumedOutput": "Feature-preserving integrated candidate SHA/source manifest and lockfile, only for joint final release replay",
+              "requiresWholeProducerTaskCompletion": false,
+              "canStartIndependentWorkBeforeOutput": true
+            }
+          ]
+        },
+        "targetActivities": [
+          {
+            "activityId": "PW-UI-001.2-WIN10",
+            "taskIds": [
+              "UI-001.2"
+            ],
+            "target": "WIN10",
+            "status": "READY_FOR_SOURCE_AND_TEST_PREPARATION",
+            "canStartNow": [
+              "design/fixture/runner bootstrap",
+              "existing runtime baseline where provisioned; otherwise runner and fixture preparation",
+              "synthetic component/platform capability negatives"
+            ],
+            "independentOfOtherTargets": true,
+            "sharedSourceEditing": "Shared UI implementation stays with this package; target lane owns target-specific test/evidence and reports needed adapter patch.",
+            "realExecutionOutput": {
+              "producerTaskId": "WIN-002",
+              "consumedOutput": "runnable native Electron/build artifact for this Windows version; source/UI fixture work and existing installed build baseline do not wait",
+              "wholeTaskRequired": false
+            },
+            "completionRequires": [
+              "reconnect/capability/current-workspace transport callbacks",
+              "actual target route/actions and original task readback/restart/negative controls",
+              "final evidence rebound to integrated immutable source; source existence/mock screenshot alone is insufficient"
+            ],
+            "evidencePath": "${TASK_ARTIFACT_ROOT}/UI-001.2/WIN10/"
+          },
+          {
+            "activityId": "PW-UI-001.2-WIN11",
+            "taskIds": [
+              "UI-001.2"
+            ],
+            "target": "WIN11",
+            "status": "READY_FOR_SOURCE_AND_TEST_PREPARATION",
+            "canStartNow": [
+              "design/fixture/runner bootstrap",
+              "existing runtime baseline where provisioned; otherwise runner and fixture preparation",
+              "synthetic component/platform capability negatives"
+            ],
+            "independentOfOtherTargets": true,
+            "sharedSourceEditing": "Shared UI implementation stays with this package; target lane owns target-specific test/evidence and reports needed adapter patch.",
+            "realExecutionOutput": {
+              "producerTaskId": "WIN-002",
+              "consumedOutput": "runnable native Electron/build artifact for this Windows version; source/UI fixture work and existing installed build baseline do not wait",
+              "wholeTaskRequired": false
+            },
+            "completionRequires": [
+              "reconnect/capability/current-workspace transport callbacks",
+              "actual target route/actions and original task readback/restart/negative controls",
+              "final evidence rebound to integrated immutable source; source existence/mock screenshot alone is insufficient"
+            ],
+            "evidencePath": "${TASK_ARTIFACT_ROOT}/UI-001.2/WIN11/"
+          },
+          {
+            "activityId": "PW-UI-001.2-MAC",
+            "taskIds": [
+              "UI-001.2"
+            ],
+            "target": "MAC",
+            "status": "READY_FOR_SOURCE_AND_TEST_PREPARATION",
+            "canStartNow": [
+              "design/fixture/runner bootstrap",
+              "existing runtime baseline where provisioned; otherwise runner and fixture preparation",
+              "synthetic component/platform capability negatives"
+            ],
+            "independentOfOtherTargets": true,
+            "sharedSourceEditing": "Shared UI implementation stays with this package; target lane owns target-specific test/evidence and reports needed adapter patch.",
+            "realExecutionOutput": {
+              "producerTaskId": "MAC-002",
+              "consumedOutput": "runnable native Electron artifact of the tested architecture; existing local native baseline can start independently of release signing",
+              "wholeTaskRequired": false
+            },
+            "completionRequires": [
+              "reconnect/capability/current-workspace transport callbacks",
+              "actual target route/actions and original task readback/restart/negative controls",
+              "final evidence rebound to integrated immutable source; source existence/mock screenshot alone is insufficient"
+            ],
+            "evidencePath": "${TASK_ARTIFACT_ROOT}/UI-001.2/MAC/"
+          },
+          {
+            "activityId": "PW-UI-001.2-WEB",
+            "taskIds": [
+              "UI-001.2"
+            ],
+            "target": "WEB",
+            "status": "READY_FOR_SOURCE_AND_TEST_PREPARATION",
+            "canStartNow": [
+              "design/fixture/runner bootstrap",
+              "existing runtime baseline where provisioned; otherwise runner and fixture preparation",
+              "synthetic component/platform capability negatives"
+            ],
+            "independentOfOtherTargets": true,
+            "sharedSourceEditing": "Shared UI implementation stays with this package; target lane owns target-specific test/evidence and reports needed adapter patch.",
+            "realExecutionOutput": {
+              "producerTaskIds": [
+                "WEB-001",
+                "WEB-003"
+              ],
+              "consumedOutput": "runnable browser/server transport with authorized task fixture; deployable shared code/server build or isolated local WebUI can be tested now, public-hosted proof needs actual ingress/deployment",
+              "wholeTasksRequired": false
+            },
+            "completionRequires": [
+              "reconnect/capability/current-workspace transport callbacks",
+              "actual target route/actions and original task readback/restart/negative controls",
+              "final evidence rebound to integrated immutable source; source existence/mock screenshot alone is insufficient"
+            ],
+            "evidencePath": "${TASK_ARTIFACT_ROOT}/UI-001.2/WEB/"
+          }
+        ],
+        "allocationFile": "surface-plan.json"
+      },
+      "Requirements": "Verify all shell variants, native overlays and modal focus at supported DPI/zoom; persist only valid layout sizes. Target coverage: A Windows 10/11; B macOS; C hosted web, following the explicit platform contract in the parent task.",
+      "DoD": "Content remains usable without clipped actions, native view overlap or inaccessible resize handles.",
+      "Full functional verification": "Resize panels while opening dialogs, browser and extension hosts; repeat Windows 100/150/200% scaling and macOS Retina plus browser zoom.",
+      "Test method": "Regression entry point: `bun test apps/electron/src/renderer/components/app-shell/__tests__`. Add behavior coverage for the changed contract; automate the full workflow above with Playwright/Electron or supported native UI automation on A/B and actual hosted browser C. Assert canonical persistence and backend results, retaining redacted evidence."
+    }
+  ]
+}

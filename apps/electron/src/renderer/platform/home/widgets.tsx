@@ -39,6 +39,7 @@ import {
 import type { LocalMeeting } from '../../../shared/meetings-local'
 import type { NoteSummary } from '@rox/shared/protocol'
 import { isInternalAgentSession } from '@rox/shared/sessions/internal-prompts'
+import { ROX_VISIBLE_TERMS } from '@rox/shared/identity'
 import { omniboxOpenAtom } from '@/atoms/omnibox'
 import type { AgentBudgetSnapshot } from '@rox/shared/agent'
 import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
@@ -506,7 +507,7 @@ function ModelsWidget({ edit, width, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const now = useNow(5 * 60_000)
   const { all } = useHomeSessions()
-  const { llmConnections, workspaceDefaultLlmConnection } = useAppShellContext()
+  const { llmConnections, workspaceDefaultLlmConnection, runtimeSummary } = useAppShellContext()
   const since = startOfLocalDay(now) - 6 * 86_400_000
   const connections = useMemo(() => connectionUsage(llmConnections, all, since, workspaceDefaultLlmConnection), [llmConnections, all, since, workspaceDefaultLlmConnection])
   const models = useMemo(() => usageByModel(all, since).slice(0, rowsFor(size, 3)), [all, since, size])
@@ -515,7 +516,20 @@ function ModelsWidget({ edit, width, size = 'S' }: WidgetProps) {
   const open = () => navigate(routes.view.settings('ai'))
   return (
     <WidgetFrame testId="models" title={t('workbench.home.w.models')} onOpen={open} edit={edit} meta={t('workbench.home.usage.window')}>
-      {connections.length === 0 ? (
+      {runtimeSummary ? (
+        <div data-home-runtime-configuration="native">
+          <WidgetList>
+            <WidgetRow
+              onClick={open}
+              leading={<Cpu className="h-3.5 w-3.5" />}
+              title={runtimeSummary.providerType === 'omp' ? ROX_VISIBLE_TERMS.product : runtimeSummary.providerType}
+              sub={runtimeSummary.defaultModel
+                ? t('workbench.home.models.default', { model: runtimeSummary.models?.find(model => model.id === runtimeSummary.defaultModel)?.name ?? runtimeSummary.defaultModel })
+                : t('common.unavailable')}
+            />
+          </WidgetList>
+        </div>
+      ) : connections.length === 0 ? (
         <WidgetEmpty text={t('workbench.home.models.empty')} hint={t('workbench.home.models.emptyHint')} action={{ label: t('workbench.home.models.connect'), onClick: open }} />
       ) : (
         <div className={cn('grid h-full min-h-0 gap-x-4', widgetContentLayout(width).splitPanels && models.length > 0 ? 'grid-cols-2' : 'grid-cols-1')}>

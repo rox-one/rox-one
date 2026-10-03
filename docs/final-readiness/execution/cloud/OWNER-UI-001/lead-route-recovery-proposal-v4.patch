@@ -1,0 +1,337 @@
+--- a/apps/electron/src/shared/route-parser.ts
++++ b/apps/electron/src/shared/route-parser.ts
+@@ -425,8 +425,8 @@
+         details: { type: 'knowledge', id, kind: kind as KnowledgeRefKind },
+       }
+     }
+-    // Unknown ref kind / missing id — degrade to nearest existing view
+-    return { navigator: 'sessions', sessionFilter: { kind: 'allSessions' }, details: null }
++    // Unknown ref kind / missing id remains unavailable to the navigation adapter
++    return null
+   }
+ 
+   // Cloud run surface — cloud-run/{runId}
+@@ -436,7 +436,7 @@
+     }
+     const runId = decodeURIComponent(segments.slice(1).join('/'))
+     if (!runId) {
+-      return { navigator: 'sessions', sessionFilter: { kind: 'allSessions' }, details: null }
++      return null
+     }
+     return { navigator: 'cloud-run', details: { type: 'cloud-run', id: runId } }
+   }
+@@ -461,7 +461,7 @@
+     }
+     const proposalId = decodeURIComponent(segments.slice(1).join('/'))
+     if (!proposalId) {
+-      return { navigator: 'sessions', sessionFilter: { kind: 'allSessions' }, details: null }
++      return null
+     }
+     return { navigator: 'diff', details: { type: 'diff', id: proposalId } }
+   }
+@@ -761,7 +761,7 @@
+ /**
+  * Convert a parsed compound route to ParsedRoute format (type: 'view')
+  */
+-function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute {
++function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute | null {
+   if (compound.navigator === 'search') {
+     return { type: 'view', name: 'search', params: compound.query ? { q: compound.query } : {} }
+   }
+@@ -903,7 +903,7 @@
+     }
+   }
+ 
+-  return { type: 'view', name: 'allSessions', params: {} }
++  return null
+ }
+ 
+ // =============================================================================
+@@ -926,37 +926,42 @@
+   route: string,
+   sidebarParam?: string
+ ): NavigationState | null {
+-  // Parse compound routes
+-  if (isCompoundRoute(route)) {
+-    const compound = parseCompoundRoute(route)
+-    if (compound) {
+-      const state = convertCompoundToNavigationState(compound)
++  try {
++    // Parse compound routes
++    if (isCompoundRoute(route)) {
++      const compound = parseCompoundRoute(route)
++      if (compound) {
++        const state = convertCompoundToNavigationState(compound)
++        // Add rightSidebar if param provided
++        const rightSidebar = parseRightSidebarParam(sidebarParam)
++        if (rightSidebar) {
++          return { ...state, rightSidebar }
++        }
++        return state
++      }
++    }
++
++    // Parse as route (may be action or view)
++    const parsed = parseRoute(route)
++    if (!parsed) return { navigator: 'unavailable', route, reason: 'unsupported-route' }
++
++    // Actions don't map to navigation state
++    if (parsed.type === 'action') return null
++
++    // Convert view routes to NavigationState
++    const state = convertParsedRouteToNavigationState(parsed)
++    if (state) {
+       // Add rightSidebar if param provided
+       const rightSidebar = parseRightSidebarParam(sidebarParam)
+       if (rightSidebar) {
+         return { ...state, rightSidebar }
+       }
+-      return state
+-    }
+-  }
+-
+-  // Parse as route (may be action or view)
+-  const parsed = parseRoute(route)
+-  if (!parsed) return null
+-
+-  // Actions don't map to navigation state
+-  if (parsed.type === 'action') return null
+-
+-  // Convert view routes to NavigationState
+-  const state = convertParsedRouteToNavigationState(parsed)
+-  if (state) {
+-    // Add rightSidebar if param provided
+-    const rightSidebar = parseRightSidebarParam(sidebarParam)
+-    if (rightSidebar) {
+-      return { ...state, rightSidebar }
+-    }
+-  }
+-  return state
++    }
++    return state ?? { navigator: 'unavailable', route, reason: 'unsupported-route' }
++  } catch (error) {
++    if (error instanceof URIError) return { navigator: 'unavailable', route, reason: 'invalid-encoding' }
++    throw error
++  }
+ }
+ 
+ /**
+@@ -1428,7 +1433,7 @@
+ /**
+  * Convert NavigationState to ParsedCompoundRoute
+  */
+-function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundRoute {
++function navigationStateToCompoundRoute(state: Exclude<NavigationState, { navigator: 'unavailable' }>): ParsedCompoundRoute {
+   if (state.navigator === 'search') {
+     return { navigator: 'search', query: state.query, details: null }
+   }
+@@ -1616,6 +1621,7 @@
+  * Build a route string from NavigationState
+  */
+ export function buildRouteFromNavigationState(state: NavigationState): string {
++  if (state.navigator === 'unavailable') return state.route
+   return buildCompoundRoute(navigationStateToCompoundRoute(state))
+ }
+ 
+--- a/apps/electron/src/shared/types.ts
++++ b/apps/electron/src/shared/types.ts
+@@ -2690,7 +2690,15 @@
+ /**
+  * Unified navigation state
+  */
++export interface UnavailableNavigationState {
++  navigator: 'unavailable'
++  route: string
++  reason: 'unsupported-route' | 'invalid-encoding' | 'workspace-mismatch'
++  rightSidebar?: RightSidebarPanel
++}
++
+ export type NavigationState =
++  | UnavailableNavigationState
+   | SessionsNavigationState
+   | SourcesNavigationState
+   | SettingsNavigationState
+@@ -2813,6 +2821,9 @@
+ }
+ 
+ export const getNavigationStateKey = (state: NavigationState): string => {
++  if (state.navigator === 'unavailable') {
++    return `unavailable:${state.reason}:${encodeURIComponent(state.route)}`
++  }
+   if (state.navigator === 'search') {
+     return `search${state.query ? `?q=${encodeURIComponent(state.query)}` : ''}`
+   }
+@@ -2935,6 +2946,18 @@
+ }
+ 
+ export const parseNavigationStateKey = (key: string): NavigationState | null => {
++  const unavailable = /^unavailable:(unsupported-route|invalid-encoding|workspace-mismatch):(.*)$/.exec(key)
++  if (unavailable) {
++    try {
++      return {
++        navigator: 'unavailable',
++        reason: unavailable[1] as UnavailableNavigationState['reason'],
++        route: decodeURIComponent(unavailable[2]),
++      }
++    } catch {
++      return null
++    }
++  }
+   // Handle sources
+   if (key === 'sources') return { navigator: 'sources', details: null }
+   if (key.startsWith('sources/source/')) {
+@@ -3148,10 +3171,11 @@
+     }
+   }
+ 
+-  // Check for session details
+-  if (key.includes('/session/')) {
+-    const [filterPart, , sessionId] = key.split('/')
+-    return parseSessionsKey(filterPart, sessionId)
++  // Preserve legacy /chat/ keys as well as canonical /session/ keys.
++  const sessionMarker = key.includes('/session/') ? '/session/' : key.includes('/chat/') ? '/chat/' : null
++  if (sessionMarker) {
++    const index = key.indexOf(sessionMarker)
++    return parseSessionsKey(key.slice(0, index), key.slice(index + sessionMarker.length))
+   }
+ 
+   // Simple filter key
+--- a/apps/electron/src/renderer/lib/nav-helpers.ts
++++ b/apps/electron/src/renderer/lib/nav-helpers.ts
+@@ -29,6 +29,7 @@
+     case 'sessions':
+       return navState.details !== null
+     case 'settings':
++    case 'unavailable':
+       return true
+     case 'sources':
+     case 'skills':
+--- a/apps/electron/src/renderer/contexts/NavigationContext.tsx
++++ b/apps/electron/src/renderer/contexts/NavigationContext.tsx
+@@ -209,8 +209,18 @@
+     const base = focusedRoute
+       ? parseRouteToNavigationState(focusedRoute) ?? DEFAULT_NAVIGATION_STATE
+       : DEFAULT_NAVIGATION_STATE
+-    return rightSidebar ? { ...base, rightSidebar } : base
+-  }, [focusedRoute, rightSidebar])
++    let state = base
++    if (isSessionsNavigation(base) && base.details) {
++      const meta = sessionMetaMap.get(base.details.sessionId)
++      const matchesWorkspace = !workspaceId
++        || meta?.workspaceId === workspaceId
++        || (remoteWorkspaceId && meta?.workspaceId === remoteWorkspaceId)
++      if (meta && !matchesWorkspace) {
++        state = { navigator: 'unavailable', route: focusedRoute!, reason: 'workspace-mismatch' }
++      }
++    }
++    return rightSidebar ? { ...state, rightSidebar } : state
++  }, [focusedRoute, rightSidebar, sessionMetaMap, workspaceId, remoteWorkspaceId])
+ 
+   // =========================================================================
+   // BROWSER HISTORY TRACKING
+@@ -235,7 +245,7 @@
+   const isPopstateSwitchRef = useRef(false)
+ 
+   // Queue navigation if not ready yet
+-  const pendingNavigationRef = useRef<ParsedRoute | null>(null)
++  const pendingNavigationRef = useRef<{ route: Route; options?: NavigateOptions } | null>(null)
+ 
+   // Suppress auto-select for one cycle (used by skipAutoSelect to prevent the effect from re-selecting)
+   const suppressAutoSelectRef = useRef(false)
+@@ -620,9 +630,17 @@
+         const matchesWorkspace = !workspaceId
+           || meta?.workspaceId === workspaceId
+           || (remoteWorkspaceId && meta?.workspaceId === remoteWorkspaceId)
+-        if (!meta || !matchesWorkspace) {
+-          nextState = { ...nextState, details: null }
+-        }
++        if (meta && !matchesWorkspace) {
++          return {
++            navigator: 'unavailable',
++            route: buildRouteFromNavigationState(nextState),
++            reason: 'workspace-mismatch',
++            ...(nextState.rightSidebar ? { rightSidebar: nextState.rightSidebar } : {}),
++          }
++        }
++        // Explicit identity survives metadata loading and deletion. ChatPage
++        // handles its missing state; auto-selection belongs to list-only routes.
++        return nextState
+       }
+ 
+       // Sessions: auto-select last/first session.
+@@ -844,19 +862,23 @@
+         suppressAutoSelectRef.current = false
+       }
+ 
+-      const parsed = parseRoute(route)
+-      if (!parsed) {
++      // Resolve view failures before parsing actions: unavailable links still
++      // select their own surface, including invalid percent encodings.
++      const newNavState = parseRouteToNavigationState(route)
++      const parsed = newNavState ? null : parseRoute(route)
++      if (!newNavState && (!parsed || parsed.type !== 'action')) {
+         console.warn('[Navigation] Invalid route:', route)
+         return
+       }
+ 
+       if (!isReady) {
+-        pendingNavigationRef.current = parsed
++        // Preserve the complete address and options until navigation is ready.
++        pendingNavigationRef.current = { route, options }
+         return
+       }
+ 
+       // Handle actions (side effects)
+-      if (parsed.type === 'action') {
++      if (parsed?.type === 'action') {
+         await handleActionNavigation(parsed, options)
+         return
+       }
+@@ -880,8 +902,6 @@
+       // navigator-only view in compact mode, App-page fallback on desktop. We
+       // intentionally do NOT auto-redirect to the last-visited subpage; doing so
+       // would defeat the compact-mode drill-in UX.
+-      const newNavState = parseRouteToNavigationState(route)
+-
+       // Suppress auto-select effect
+       if (options?.skipAutoSelect) {
+         suppressAutoSelectRef.current = true
+@@ -1071,20 +1091,9 @@
+       const pending = pendingNavigationRef.current
+       pendingNavigationRef.current = null
+ 
+-      if (pending.type === 'action') {
+-        handleActionNavigation(pending)
+-        return
+-      }
+-
+-      const routeStr = `${pending.name}${pending.id ? `/${pending.id}` : ''}`
+-      const navState = parseRouteToNavigationState(routeStr)
+-      if (navState) {
+-        const resolved = resolveAutoSelection(navState)
+-        const finalRoute = buildRouteFromNavigationState(resolved) as ViewRoute
+-        store.set(updateFocusedPanelRouteAtom, finalRoute)
+-      }
+-    }
+-  }, [isReady, handleActionNavigation, resolveAutoSelection, store])
++      void navigate(pending.route, pending.options)
++    }
++  }, [isReady, navigate])
+ 
+   // =========================================================================
+   // DEEP LINK LISTENER
+--- a/apps/electron/src/shared/__tests__/route-parser-notes-legacy.test.ts
++++ b/apps/electron/src/shared/__tests__/route-parser-notes-legacy.test.ts
+@@ -34,7 +34,11 @@
+   it('does not expose retired legacy Notes routes', () => {
+     expect(isCompoundRoute('notes-legacy')).toBe(false)
+     expect(parseCompoundRoute('notes-legacy/note/foo')).toBeNull()
+-    expect(parseRouteToNavigationState('notes-legacy/note/foo')).toBeNull()
++    expect(parseRouteToNavigationState('notes-legacy/note/foo')).toEqual({
++      navigator: 'unavailable',
++      route: 'notes-legacy/note/foo',
++      reason: 'unsupported-route',
++    })
+     expect(parseNavigationStateKey('notes-legacy/note/foo')).toBeNull()
+   })
+ 

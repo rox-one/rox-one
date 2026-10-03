@@ -1,0 +1,11 @@
+{
+  "runId": 37131473401,
+  "headSha": "69f6c4d2101a3f82c1885efddcb35d4b58c0dd83",
+  "url": "https://github.com/rox-one/rox-one/actions/runs/37131473401",
+  "conclusion": "failure",
+  "exitCode": 1,
+  "label": "continuation-3-github-strictmode-red",
+  "observedAt": "2026-10-03T15:06:10.906135+00:00",
+  "logSha256": "075f120fe4d187987026db66446210ce327c7ec485a082fab7503d64ddcfa199",
+  "reason": "Matching Chromium 131 on Ubuntu confirmed the superseded restored-sidebar StrictMode history duplicate; corrected locally in the next product commit."
+}
