@@ -1,8 +1,8 @@
 /**
- * Workspace-scoped OS browser windows (shared by BrowserTabStrip and SurfaceTabs).
+ * Workspace-scoped OS browser windows (shared by BrowserTabStrip and the shell registry).
  *
- * Listing and IPC subscribe live here so hiding the TopBar strip under
- * `workbench.browser-surface.v2` does not drop the instance registry.
+ * AppShell mounts a nonvisual registry when `workbench.browser-surface.v2`
+ * hides the TopBar strip; the visible strip owns subscriptions otherwise.
  */
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
