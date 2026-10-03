@@ -1007,9 +1007,26 @@ export function resolveViewRoute(route: string, sidebarParam?: string): Navigati
     // Some legacy routes retain encoded slugs, but malformed encoding is never
     // a valid entity address, even when that parser branch does not decode it.
     const path = route.split('?')[0]
-    // Empty separators are legacy aliases. Normalize before decoding so encoded
-    // slashes inside entity identifiers remain data, and preserve the full query.
-    const normalizedPath = path.split('/').filter(Boolean).join('/')
+    // Empty namespace separators are legacy aliases. Opaque rest-of-path IDs
+    // retain every separator after their first byte; folding them could select
+    // a different document/run/terminal. Notes keeps its filesystem alias.
+    const rawSegments = path.split('/')
+    const namespaceSegments = rawSegments.filter(Boolean)
+    const opaquePrefixLength = ['knowledge', 'extension'].includes(namespaceSegments[0] ?? '')
+      && namespaceSegments.length >= 3 ? 2
+      : ['cloud-run', 'terminal', 'diff'].includes(namespaceSegments[0] ?? '')
+        && namespaceSegments.length >= 2 ? 1 : null
+    let normalizedPath = namespaceSegments.join('/')
+    if (opaquePrefixLength !== null) {
+      let namespaceCount = 0
+      let idStart = 0
+      for (; idStart < rawSegments.length; idStart++) {
+        if (rawSegments[idStart] && ++namespaceCount === opaquePrefixLength) { idStart++; break }
+      }
+      while (idStart < rawSegments.length && rawSegments[idStart] === '') idStart++
+      normalizedPath = namespaceSegments.slice(0, opaquePrefixLength).join('/')
+        + '/' + rawSegments.slice(idStart).join('/')
+    }
     const decodedPath = decodeURIComponent(normalizedPath)
     const query = route.slice(path.length)
     // Keep published rest-of-path entity addresses through the strict raw

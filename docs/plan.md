@@ -1061,3 +1061,9 @@ Zed final bounded qualification on current991c8b80b: 122 focused +323 Home/token
 ### Selected skill instructions custody recovery — 2026-10-04
 
 Owner recent_features; parent reviews and merges. Preserve merged1467 UI/API exactly, retain merged-source ancestor failure0/1 and legacy outside-link failure. Qualify48 storage/managed/custody cases,4 registered native RPC/workspace cases including zero body opens after revoke,7 actual SkillInfo owner/draft/OMP cases and runtime row keyboard/reset control plus full strict Electron types. Retain original fixture/default-timeout failures and exact hashes; reconcile docs additively, preserve all source branches. Installed platform/full release acceptance stays separate.
+
+## Opaque route identity follow-up — 2026-10-04
+
+1. Retain actual unchanged boundary1pass/8fail for opaque repeated/trailing slashes and encoded-percent identifiers, plus panel restore/query controls.
+2. Normalize only namespace grammar; preserve each remaining opaque ID byte, current Notes alias and unavailable/action policy.
+3. Qualify517 route/parser/panel/navigation cases0fail and current strict Electron, archive raw logs/hashes and publish separate PR after current-main union; retain branches.
