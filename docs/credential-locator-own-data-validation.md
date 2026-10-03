@@ -17,3 +17,5 @@ The corrected full core run exits 0: 971 pass / 0 fail, 4465 assertions, 81 file
 ## Scope
 
 The functional change is limited to locator validation and its regression tests. Existing CI commands and assertions are preserved. Hosted validation and built server lifecycle are required for this candidate's delivery; deployment account state and native UI/provider acceptance are separate from this correction.
+
+During final validation, main `74b8de9554c34b383b6254b30479c877435bb1db` incorporated PR #1407 with the identical executable validator correction and 54 inherited-field regressions. PR #1408 preserves that production code and all upstream cases, adding its 64 boundary/persistence/frozen/Proxy cases. Proof for initial candidate `bd0c76feaa254bca0d254f99538d0fa80a109e8a` remains scoped to that commit; the combined candidate must receive fresh full core, TypeScript, comprehensive CI and built lifecycle evidence before delivery.

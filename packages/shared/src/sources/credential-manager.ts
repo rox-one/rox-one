@@ -266,10 +266,21 @@ export class SourceCredentialManager {
       try {
         const parsed = JSON.parse(cred.value);
         debug(`[SourceCredentialManager] Parsed JSON keys: ${Object.keys(parsed).join(', ')}`);
+        // Telegram's account credential can contain a pool or named session
+        // instead of the catalog's singular session field. Launch readiness
+        // validates the real combination with source/environment settings.
+        const telegramAccount = source.config.slug === 'telegram-mcp'
+          && source.config.mcp?.transport === 'stdio' && isManagedBuiltinMcpSource(source.config)
+          && parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+          && Object.values(parsed).every(value => typeof value === 'string')
+          && Object.keys(parsed).some(key => key === 'TELEGRAM_API_ID' || key === 'TELEGRAM_API_HASH'
+            || key === 'TELEGRAM_SESSION_STRINGS' || key === 'TELEGRAM_SESSION_STRING'
+            || key === 'TELEGRAM_SESSION_NAME' || key.startsWith('TELEGRAM_SESSION_STRING_')
+            || key.startsWith('TELEGRAM_SESSION_NAME_'));
         // Validate all required headers are present
         const hasAllHeaders = headerNames.every((h) => h in parsed);
         debug(`[SourceCredentialManager] hasAllHeaders=${hasAllHeaders}`);
-        if (hasAllHeaders) {
+        if (hasAllHeaders || telegramAccount) {
           return parsed as MultiHeaderCredential;
         }
       } catch (e) {
@@ -1353,7 +1364,10 @@ export function sourceNeedsAuthentication(source: LoadedSource): boolean {
         // Local transport can still require upstream account credentials.
         // A successful authentication may have used the encrypted vault;
         // actual values are checked again by the server builder at launch.
-        return !source.config.isAuthenticated && getBuiltinMcpReadiness(source.config).status === 'needs_auth';
+        return !source.config.isAuthenticated && getBuiltinMcpReadiness(source.config, {
+          workspaceRootPath: source.workspaceRootPath,
+          sourceFolderPath: source.folderPath,
+        }).status === 'needs_auth';
       }
       // Stdio sources run locally and don't need authentication
       return false;

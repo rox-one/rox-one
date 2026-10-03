@@ -234,8 +234,7 @@ function validateLocator(locator: ProviderLocator): ProviderLocator {
     throw new Error('Invalid credential metadata: locator');
   }
 
-  // Snapshot only own data values. Missing fields must not fall through to
-  // Object.prototype, and normalization must not invoke ordinary get traps.
+  // Capture only own data values so prototype fields and getters stay inert.
   // Readonly/frozen data properties remain valid metadata.
   const record: Record<string, unknown> = Object.create(null);
   for (const key of Reflect.ownKeys(locator)) {
