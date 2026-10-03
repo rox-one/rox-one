@@ -50,13 +50,15 @@ import { useAction } from '@/actions'
 import {
   loadPersonalTaskStore,
   persistPersonalTaskStore,
+  capturePersonalTaskScope,
+  importPersonalTasksConfirmed,
   personalTasksLoadStatus,
   personalTasksSyncState,
   personalTasksSyncConflicts,
   resolvePersonalTaskConflict,
   subscribePersonalTasks,
   subscribePersonalTaskCommits,
-  personalTasksNativeAvailable, capturePersonalTaskScope,
+  personalTasksNativeAvailable,
   persistPersonalTaskSessionLink,
 } from '@/lib/personal-tasks'
 import { useTourSignals, useTourTarget, type TourObservation } from '@/features/product-tour/runtime/hooks'
@@ -168,6 +170,12 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const [sort, setSort] = useState<TaskSortId>('order')
   const [localSelectedId, setLocalSelectedId] = useState<string | null>(null)
   const [delegating, setDelegating] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const importRef = useRef(false)
+  const mountedRef = useRef(true)
+  const importScopeRef = useRef({ id: workspace?.id, generation: 0 })
+  if (importScopeRef.current.id !== workspace?.id) importScopeRef.current = { id: workspace?.id, generation: importScopeRef.current.generation + 1 }
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false } }, [])
   const [delegateError, setDelegateError] = useState<TaskDelegationErrorKey | null>(null)
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState<string | null>(null)
@@ -1279,13 +1287,31 @@ export default function TasksPage(props: TasksPageProps = {}) {
     URL.revokeObjectURL(url)
   }
   const onImport = async (file: File) => {
-    const text = await file.text()
-    const incoming = PersonalTaskStore.tryFromJson(text)
-    if (incoming.status !== 'ok') { toast.error(t('tasks.toast.importFailed')); return }
-    const next = PersonalTaskStore.fromJson(store.exportJson())
-    next.importBundle(incoming.store.snapshot(), 'merge')
-    persist(next)
-    toast(t('tasks.toast.imported'))
+    if (importRef.current) return
+    const owner = importScopeRef.current
+    const actorCurrent = capturePersonalTaskScope()
+    const current = () => mountedRef.current && owner === importScopeRef.current && actorCurrent()
+    importRef.current = true
+    setImporting(true)
+    try {
+      const text = await file.text()
+      if (!current()) return
+      const incoming = PersonalTaskStore.tryFromJson(text)
+      if (incoming.status !== 'ok') throw new Error('Invalid task import')
+      await importPersonalTasksConfirmed(incoming.store.snapshot(), current)
+      if (!current()) return
+      // The shared store publishes the canonical receipt plus any edits made
+      // during file reading/commit, rather than the captured render's store.
+      const next = loadPersonalTaskStore()
+      storeRef.current = next
+      setStore(next)
+      toast(t('tasks.toast.imported'))
+    } catch {
+      if (current()) toast.error(t('tasks.toast.importFailed'))
+    } finally {
+      importRef.current = false
+      if (mountedRef.current) setImporting(false)
+    }
   }
 
   const shortcuts: Array<[string, string]> = [
@@ -1372,6 +1398,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
       ) : null}
       <ModeScreenLayout
         testId="tasks-page"
+        responsive={{ selectedId, onBack: () => selectTask(null), backLabel: t('common.backToList'), navigationLabel: t('tasks.navigation'), detailLabel: t('tasks.details') }}
         navigator={navigator}
         list={list}
         detail={detail}
@@ -1386,6 +1413,8 @@ export default function TasksPage(props: TasksPageProps = {}) {
               {t('tasks.import')}
               <input
                 type="file"
+                disabled={importing}
+                aria-label={t('tasks.import')}
                 accept="application/json"
                 className="hidden"
                 onChange={(event) => {
