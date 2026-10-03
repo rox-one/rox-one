@@ -26,7 +26,7 @@ beforeAll(async()=>{
  fs.mkdirSync(project,{recursive:true});
  createSkill(join(root,'.omp','skills',slug),'Native selected 日本語 🔒');
  createSkill(join(project,'.agents','skills',slug),'Project canonical');
- saveConfig({workspaces:[{id:'selected-workspace',name:'Selected',rootPath:root,createdAt:Date.now()}],activeWorkspaceId:'selected-workspace'});
+ saveConfig({workspaces:[{id:'selected-workspace',slug:'selected-workspace',name:'Selected',rootPath:root,createdAt:Date.now()}],activeWorkspaceId:'selected-workspace'});
  authority=new NativeAuthority({stateDir:join(sandbox,'authority')});
  const tty=Object.getOwnPropertyDescriptor(process.stdin,'isTTY');
  try{Object.defineProperty(process.stdin,'isTTY',{configurable:true,value:true});admin=authority.bootstrapLocalAdministrator('selected fixture');}finally{if(tty)Object.defineProperty(process.stdin,'isTTY',tty);else Reflect.deleteProperty(process.stdin,'isTTY');}
