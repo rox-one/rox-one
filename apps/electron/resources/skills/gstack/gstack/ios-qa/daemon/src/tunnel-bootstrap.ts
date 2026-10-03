@@ -16,6 +16,7 @@
 // live token, which it scopes per-tailnet-session via /auth/mint.
 
 import { randomBytes } from 'crypto';
+import { isIP } from 'net';
 import { spawnSync } from 'child_process';
 import type { DeviceTunnel } from './proxy';
 import {
@@ -143,6 +144,7 @@ function relaunchApp(
  */
 export async function bootstrapTunnel(opts: BootstrapOptions): Promise<BootstrapResult> {
   const port = opts.port ?? 9999;
+  if (!Number.isInteger(port) || port < 1 || port > 65535) return { ok: false, error: 'resolve_failed', detail: 'Invalid StateServer port' };
   const tokenPath = opts.bootTokenPath ?? 'tmp/gstack-ios-qa.token';
   const startupTimeoutMs = opts.startupTimeoutMs ?? 5_000;
   const spawn = opts.spawnImpl;
@@ -228,7 +230,7 @@ export async function bootstrapTunnel(opts: BootstrapOptions): Promise<Bootstrap
     resolve,
     legacyResolve: resolve,
   });
-  if (!ipv6) {
+  if (!ipv6 || isIP(ipv6) !== 6) {
     return { ok: false, error: 'resolve_failed', detail: target.name };
   }
 
@@ -240,6 +242,7 @@ export async function bootstrapTunnel(opts: BootstrapOptions): Promise<Bootstrap
       try {
         const r = await fetchFn(`http://[${ipv6}]:${port}/healthz`, {
           signal: AbortSignal.timeout(2_000),
+          redirect: 'manual',
         });
         if (r.ok) {
           const health = await r.json().catch(() => null) as { bundle_id?: string } | null;
@@ -312,6 +315,7 @@ export async function bootstrapTunnel(opts: BootstrapOptions): Promise<Bootstrap
   try {
     const r = await fetchFn(`http://[${ipv6}]:${port}/auth/rotate`, {
       method: 'POST',
+      redirect: 'manual',
       headers: {
         'Authorization': `Bearer ${bootToken}`,
         'Content-Type': 'application/json',

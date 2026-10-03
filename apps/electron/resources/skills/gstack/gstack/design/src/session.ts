@@ -1,10 +1,13 @@
 /**
  * Session state management for multi-turn design iteration.
- * Session files are JSON in /tmp, keyed by PID + timestamp.
+ * Session files are private JSON in the platform temporary directory.
  */
 
-import fs from "fs";
 import path from "path";
+import { tmpdir } from "os";
+import { randomUUID } from "crypto";
+import { atomicWriteSync } from "../../lib/fs-atomic";
+import { readBoundedStable } from "../../lib/cso/bounded-file";
 
 export interface DesignSession {
   id: string;
@@ -17,17 +20,18 @@ export interface DesignSession {
 }
 
 /**
- * Generate a unique session ID from PID + timestamp.
+ * Generate an unpredictable session ID; legacy PID-timestamp IDs remain readable.
  */
 export function createSessionId(): string {
-  return `${process.pid}-${Date.now()}`;
+  return randomUUID();
 }
 
 /**
  * Get the file path for a session.
  */
 export function sessionPath(sessionId: string): string {
-  return path.join("/tmp", `design-session-${sessionId}.json`);
+  if (!/^(?:[0-9]+-[0-9]+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.test(sessionId)) throw new Error("Invalid design session ID");
+  return path.join(tmpdir(), `design-session-${sessionId}.json`);
 }
 
 /**
@@ -49,7 +53,7 @@ export function createSession(
     updatedAt: new Date().toISOString(),
   };
 
-  fs.writeFileSync(sessionPath(id), JSON.stringify(session, null, 2), { mode: 0o600 });
+  atomicWriteSync(sessionPath(id), JSON.stringify(session, null, 2), { mode: 0o600, noReplace: true });
   return session;
 }
 
@@ -57,7 +61,7 @@ export function createSession(
  * Read an existing session from disk.
  */
 export function readSession(sessionFilePath: string): DesignSession {
-  const content = fs.readFileSync(sessionFilePath, "utf-8");
+  const content = readBoundedStable(sessionFilePath, 16 * 1024 * 1024, "design session").toString("utf8");
   return JSON.parse(content);
 }
 
@@ -75,5 +79,5 @@ export function updateSession(
   session.outputPaths.push(outputPath);
   session.updatedAt = new Date().toISOString();
 
-  fs.writeFileSync(sessionPath(session.id), JSON.stringify(session, null, 2));
+  atomicWriteSync(sessionPath(session.id), JSON.stringify(session, null, 2), { mode: 0o600 });
 }

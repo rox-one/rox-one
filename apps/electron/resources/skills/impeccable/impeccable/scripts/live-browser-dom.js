@@ -1,3 +1,5 @@
+// Modified by ROX on 2026-10-03: secure identity and message-origin handling.
+// Upstream Apache-2.0 notices retained; see ROX-SECURITY-NOTICE.json.
 /**
  * Browser-side DOM helpers for Impeccable live mode.
  *

@@ -1,11 +1,13 @@
 // Audit + attempts logging. Reuses the same rotation primitives as
 // browse/src/tunnel-denial-log.ts (10MB rotation, 5 generations).
 
-import { mkdir, appendFile, stat, rename, readFile } from 'fs/promises';
+import { mkdir, lstat, rename } from 'fs/promises';
 import { join, dirname } from 'path';
 import { createHash } from 'crypto';
 import type { AuditRow, AttemptRow } from './types';
 import { resolveStateRoot } from '../../../lib/state-root';
+import { readBoundedStable } from '../../../lib/cso/bounded-file';
+import { appendSecureFile } from '../../../browse/src/file-permissions';
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_GENS = 5;
@@ -26,7 +28,8 @@ async function loadDeviceSalt(): Promise<string> {
   if (_saltCache) return _saltCache;
   const path = join(resolveStateRoot(), 'security', 'device-salt');
   try {
-    _saltCache = (await readFile(path, 'utf-8')).trim();
+    _saltCache = readBoundedStable(path, 4096, 'device salt').toString('utf8').trim();
+    if (!_saltCache) throw new Error('Empty device salt');
   } catch {
     // No salt; generate ephemeral. Real install writes one via /setup.
     const { randomBytes } = await import('crypto');
@@ -37,7 +40,8 @@ async function loadDeviceSalt(): Promise<string> {
 
 async function rotateIfNeeded(path: string): Promise<void> {
   try {
-    const s = await stat(path);
+    const s = await lstat(path);
+    if (!s.isFile() || s.isSymbolicLink() || s.nlink !== 1) throw new Error("Audit log must be one regular file");
     if (s.size < MAX_BYTES) return;
   } catch {
     return; // file doesn't exist yet
@@ -57,7 +61,7 @@ async function rotateIfNeeded(path: string): Promise<void> {
 export async function writeAudit(row: AuditRow, path: string = defaultAuditPath()): Promise<void> {
   await mkdir(dirname(path), { recursive: true, mode: 0o700 });
   await rotateIfNeeded(path);
-  await appendFile(path, JSON.stringify(row) + '\n', { mode: 0o600 });
+  appendSecureFile(path, JSON.stringify(row) + '\n');
 }
 
 // Non-reversible identifier for tokens/identities in logs and API responses.
@@ -83,7 +87,7 @@ export async function writeAttempt(opts: {
   const path = opts.path ?? defaultAttemptsPath();
   await mkdir(dirname(path), { recursive: true, mode: 0o700 });
   await rotateIfNeeded(path);
-  await appendFile(path, JSON.stringify(row) + '\n', { mode: 0o600 });
+  appendSecureFile(path, JSON.stringify(row) + '\n');
 }
 
 // Sanitize-replacer for JSON responses — mirrors browse's sanitize-replacer.ts.

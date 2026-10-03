@@ -8,6 +8,7 @@ import { spawnSync, type SpawnSyncReturns } from 'child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import { readBoundedStable } from '../../../gstack/lib/cso/bounded-file';
 
 export interface DeviceEntry {
   identifier: string;
@@ -70,11 +71,12 @@ const legacyResolve6: ResolveImpl = async (hostname) => {
  * and pairing-in-progress devices.
  */
 export function listDevices(spawn: SpawnImpl = defaultSpawn): DeviceEntry[] {
-  const tmp = join(tmpdir(), `devicectl-list-${process.pid}-${Date.now()}.json`);
+  const dir = mkdtempSync(join(tmpdir(), 'devicectl-list-'));
+  const tmp = join(dir, 'result.json');
   try {
     const r = spawn('xcrun', ['devicectl', 'list', 'devices', '--json-output', tmp]);
     if (r.status !== 0) return [];
-    const raw = readFileSync(tmp, 'utf-8');
+    const raw = readBoundedStable(tmp, 16 * 1024 * 1024, 'devicectl result').toString('utf8');
     const obj = JSON.parse(raw);
     const list = (obj.result?.devices ?? []) as Array<Record<string, unknown>>;
     return list.map((d) => {
@@ -96,7 +98,7 @@ export function listDevices(spawn: SpawnImpl = defaultSpawn): DeviceEntry[] {
   } catch {
     return [];
   } finally {
-    try { rmSync(tmp, { force: true }); } catch { /* ignore */ }
+    try { rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }
   }
 }
 
@@ -117,11 +119,12 @@ export function getDeviceTunnelIPv6FromDevicectl(
   udid: string,
   spawn: SpawnImpl = defaultSpawn,
 ): string | null {
-  const tmp = join(tmpdir(), `devicectl-details-${process.pid}-${Date.now()}.json`);
+  const dir = mkdtempSync(join(tmpdir(), 'devicectl-details-'));
+  const tmp = join(dir, 'result.json');
   try {
     const r = spawn('xcrun', ['devicectl', 'device', 'info', 'details', '--device', udid, '--json-output', tmp]);
     if (r.status !== 0) return null;
-    const raw = readFileSync(tmp, 'utf-8');
+    const raw = readBoundedStable(tmp, 16 * 1024 * 1024, 'devicectl result').toString('utf8');
     const obj = JSON.parse(raw);
     // `result.connectionProperties.tunnelIPAddress` is the canonical location.
     // Some Xcode/CoreDevice versions also surface it under `result.tunnel.ipAddress`
@@ -134,7 +137,7 @@ export function getDeviceTunnelIPv6FromDevicectl(
   } catch {
     return null;
   } finally {
-    try { rmSync(tmp, { force: true }); } catch { /* ignore */ }
+    try { rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }
   }
 }
 
@@ -166,9 +169,10 @@ export function startTunnelKeepalive(
     // Fire-and-forget: ignore result, the side-effect of the spawn is what
     // keeps the tunnel up. We deliberately do not use the JSON output here.
     try {
-      const tmp = join(tmpdir(), `devicectl-keepalive-${process.pid}-${Date.now()}.json`);
-      spawn('xcrun', ['devicectl', 'device', 'info', 'details', '--device', udid, '--json-output', tmp]);
-      try { rmSync(tmp, { force: true }); } catch { /* ignore */ }
+      const dir = mkdtempSync(join(tmpdir(), 'devicectl-keepalive-'));
+      const tmp = join(dir, 'result.json');
+      try { spawn('xcrun', ['devicectl', 'device', 'info', 'details', '--device', udid, '--json-output', tmp]); }
+      finally { try { rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ } }
     } catch { /* ignore — next tick will retry */ }
   };
   const handle = setInterval(tick, intervalMs);
@@ -254,16 +258,17 @@ export function isAppRunning(
   bundleId: string,
   spawn: SpawnImpl = defaultSpawn,
 ): boolean {
-  const tmp = join(tmpdir(), `devicectl-procs-${process.pid}-${Date.now()}.json`);
+  const dir = mkdtempSync(join(tmpdir(), 'devicectl-procs-'));
+  const tmp = join(dir, 'result.json');
   try {
     const r = spawn('xcrun', ['devicectl', 'device', 'info', 'processes', '-d', udid, '--json-output', tmp]);
     if (r.status !== 0) return false;
-    const raw = readFileSync(tmp, 'utf-8');
+    const raw = readBoundedStable(tmp, 16 * 1024 * 1024, 'devicectl result').toString('utf8');
     return raw.includes(`/${bundleId}/`) || raw.includes(`/${bundleId}.app/`);
   } catch {
     return false;
   } finally {
-    try { rmSync(tmp, { force: true }); } catch { /* ignore */ }
+    try { rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }
   }
 }
 
@@ -312,7 +317,7 @@ export function copyFileFromAppContainer(opts: {
       '--destination', dest,
     ]);
     if (r.status !== 0) return null;
-    return readFileSync(dest, 'utf-8').replace(/[\r\n]+$/, '');
+    return readBoundedStable(dest, 64 * 1024, 'device container token').toString('utf8').replace(/[\r\n]+$/, '');
   } catch {
     return null;
   } finally {

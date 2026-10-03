@@ -11,6 +11,9 @@
 import { execFileSync } from "child_process";
 import fs from "fs";
 import path from "path";
+import { atomicWriteSync } from "../../lib/fs-atomic";
+import { readBoundedStable } from "../../lib/cso/bounded-file";
+import { isLoopbackPort } from "../../browse/src/loopback-auth";
 import { resolveStateRoot } from "../../lib/state-root";
 
 export interface DaemonState {
@@ -77,7 +80,7 @@ export function readVersionString(): string {
   ];
   for (const p of candidates) {
     try {
-      const v = fs.readFileSync(p, "utf-8").trim();
+      const v = readBoundedStable(p, 4096, "design version").toString("utf8").trim();
       if (v) return v;
     } catch {
       // try next
@@ -86,9 +89,18 @@ export function readVersionString(): string {
   return "unknown";
 }
 
+export function isDaemonState(value: unknown): value is DaemonState {
+  if (!value || typeof value !== "object") return false;
+  const s = value as Partial<DaemonState>;
+  return Number.isSafeInteger(s.pid) && (s.pid as number) > 0 && isLoopbackPort(s.port)
+    && typeof s.startedAt === "string" && Number.isFinite(Date.parse(s.startedAt))
+    && [s.version, s.serverPath, s.cmdlineMarker].every(v => typeof v === "string" && v.length > 0 && v.length <= 4096 && !/[\r\n\0]/.test(v));
+}
+
 export function readStateFile(stateFile: string = resolveStateFilePath()): DaemonState | null {
   try {
-    return JSON.parse(fs.readFileSync(stateFile, "utf-8")) as DaemonState;
+    const state: unknown = JSON.parse(readBoundedStable(stateFile, 64 * 1024, "design daemon state").toString("utf8"));
+    return isDaemonState(state) ? state : null;
   } catch {
     return null;
   }
@@ -99,9 +111,8 @@ export function writeStateFile(
   stateFile: string = resolveStateFilePath(),
 ): void {
   fs.mkdirSync(path.dirname(stateFile), { recursive: true });
-  const tmp = `${stateFile}.tmp.${process.pid}.${Math.random().toString(36).slice(2)}`;
-  fs.writeFileSync(tmp, JSON.stringify(state, null, 2), { mode: 0o600 });
-  fs.renameSync(tmp, stateFile);
+  if (!isDaemonState(state)) throw new Error("Invalid design daemon state");
+  atomicWriteSync(stateFile, JSON.stringify(state, null, 2), { mode: 0o600 });
 }
 
 export function removeStateFile(stateFile: string = resolveStateFilePath()): void {
@@ -124,8 +135,10 @@ export async function healthCheck(
   port: number,
   timeoutMs: number = 2000,
 ): Promise<HealthOk | null> {
+  if (!isLoopbackPort(port)) return null;
   try {
     const resp = await fetch(`http://127.0.0.1:${port}/health`, {
+      redirect: "manual",
       signal: AbortSignal.timeout(timeoutMs),
     });
     if (!resp.ok) return null;
