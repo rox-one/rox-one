@@ -22,6 +22,10 @@ export const RADIUS_INNER = 8
 /** Minimum width for any content panel */
 export const PANEL_MIN_WIDTH = 440
 
+/** Grid minimums remain usable while overflowing small windows. */
+export const PANEL_GRID_MIN_WIDTH = 320
+export const PANEL_GRID_MIN_HEIGHT = 240
+
 /**
  * Minimum width the single session/center column keeps before the shell
  * collapses the right inspector panel and then narrows the restored list and
