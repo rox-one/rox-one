@@ -1,3 +1,7 @@
+# Golden Gate surface tab recovery — 2026-10-03
+
+Recover Golden Gate title-loader success-only bounded caching, shared pending requests, failed/offline retry on navigation, and actual SurfaceTabs roving keyboard navigation/close focus. Preserve the current route registries, compact top-bar portal, embedded browser exclusion, authenticated Knowledge API and native authority. No source connection or filesystem authority is added.
+
 ## Connections production consumer recovery — 2026-10-03
 
 Owner: pr_scout; merge owner: branch audit lead. Source `86154e8c812746261282bb4c517b16ad7becc0ec` contains absent inspect, reconnect, move and GitHub device-flow consumers; backend dependency #1414 is already merged. Recover those actual controls through the current ConnectionsPage and the inspector connection info section, preserving current overview/import/policy/audit behavior, shell, geometry, retained surfaces and consent. Metadata includes public connection/credential IDs, health, expiry, provenance, fingerprint, credential kind/version and affected consumers/leases; no credential bytes enter UI. Explicit reconnect/move confirmations name the actual active leases and fixed source backend target. Failures stay visible and retryable with sanitized messages.
