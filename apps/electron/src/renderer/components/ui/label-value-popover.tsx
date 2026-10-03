@@ -224,7 +224,7 @@ export function LabelValuePopover({
                       type="button"
                       aria-label={t('labels.selectDate')}
                       className={cn(
-                        'flex items-center justify-center w-7 h-7 rounded-[6px]',
+                        'flex items-center justify-center w-7 h-7 rounded-[var(--radius-control)]',
                         'hover:bg-foreground/5 transition-colors cursor-pointer',
                         'outline-none',
                         calendarOpen && 'bg-foreground/5'
@@ -303,7 +303,7 @@ export function LabelValuePopover({
                 onOpenChange(false)
               }}
               className={cn(
-                'w-full flex items-center gap-2 px-2 py-1.5 rounded-[4px]',
+                'w-full flex items-center gap-2 px-2 py-1.5 rounded-[var(--radius-control)]',
                 'text-[13px] text-foreground',
                 'hover:bg-foreground/[0.03] focus:bg-foreground/[0.03]',
                 'transition-colors cursor-pointer outline-none'
@@ -321,7 +321,7 @@ export function LabelValuePopover({
               onOpenChange(false)
             }}
             className={cn(
-              'w-full flex items-center gap-2 px-2 py-1.5 rounded-[4px]',
+              'w-full flex items-center gap-2 px-2 py-1.5 rounded-[var(--radius-control)]',
               'text-[13px] text-destructive',
               'hover:bg-foreground/[0.03] focus:bg-foreground/[0.03]',
               'transition-colors cursor-pointer outline-none'

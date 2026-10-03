@@ -58,6 +58,7 @@
     "./config": "./src/config/index.ts",
     "./config/paths": "./src/config/paths.ts",
     "./config/rox-public-models": "./src/config/rox-public-models.ts",
+    "./config/theme-id": "./src/config/theme-id.ts",
     "./config/types": "./src/config/types.ts",
     "./connections": "./src/connections/index.ts",
     "./context-docs": "./src/context-docs/index.ts",

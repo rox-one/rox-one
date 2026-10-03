@@ -18,7 +18,8 @@
       "@webui/*": ["./src/*"],
       "@config/*": ["../../packages/shared/src/config/*"],
       "@rox/shared": ["../../packages/shared/src/index.ts"],
-      "@rox/shared/*": ["../../packages/shared/src/*"]
+      "@rox/shared/*": ["../../packages/shared/src/*"],
+      "@rox/server-core/tasks/personal-persist": ["../../packages/server-core/src/tasks/personal-persist.ts"]
     },
     "baseUrl": "."
   },

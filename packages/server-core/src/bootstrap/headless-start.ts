@@ -8,7 +8,7 @@ import { CollaborationSyncService } from '../collaboration/sync-service.ts'
 import { join, basename } from 'node:path'
 import { lockHolderMatchesLock, parseTasklistImageName, type LockIdentity } from './lock-identity.ts'
 import { OAuthFlowStore } from '@rox/shared/auth'
-import { ensureConfigDir, getEnv, loadStoredConfig, saveConfig } from '@rox/shared/config'
+import { ensureConfigDir, getEnv, loadStoredConfig, saveConfig, getConfigPath, createInitialStoredConfig } from '@rox/shared/config'
 import { ensureContextDocs } from '@rox/shared/context-docs'
 import { ensureBundledSkills } from '@rox/shared/skills'
 import { setBundledAssetsRoot } from '@rox/shared/utils'
@@ -79,6 +79,7 @@ export interface ServerBootstrapOptions<TSessionManager, THandlerDeps> {
   tls?: WsRpcTlsOptions
   /** Cookie-based session validator for web UI auth on WebSocket upgrade. */
   validateSessionCookie?: (cookieHeader: string | null) => Promise<boolean>
+  webUiAppearanceWorkspaceId?: () => string | null
   /** Electron main resolves an ephemeral renderer proof into trusted scope. */
   resolveLocalClientBinding?: (candidate: LocalClientBindingCandidate) => TrustedLocalClientBinding | null
   /**
@@ -400,11 +401,8 @@ function ensureGlobalConfigExists(platform: PlatformServices): void {
     return
   }
 
-  saveConfig({
-    workspaces: [],
-    activeWorkspaceId: null,
-    activeSessionId: null,
-  })
+  if (existsSync(getConfigPath())) throw new Error('Unable to load existing global config')
+  saveConfig(createInitialStoredConfig())
   platform.logger.info('[bootstrap] Initialized missing global config')
 }
 
@@ -501,6 +499,7 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     },
     validateToken: async (t) => secureTokenCompare(t, serverToken),
     validateSessionCookie: options.validateSessionCookie,
+    webUiAppearanceWorkspaceId: options.webUiAppearanceWorkspaceId,
     serverId: options.serverId ?? 'headless',
     serverVersion: options.serverVersion,
     tls: options.tls,

@@ -44,7 +44,7 @@ export function CollectionGroupByMenu({
         ref={triggerRef}
         type="button"
         className={cn(
-          'header-icon-btn inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-muted-foreground transition-colors hover:bg-foreground/3 hover:text-foreground data-[state=open]:bg-foreground/3 data-[state=open]:text-foreground',
+          'header-icon-btn inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground transition-colors hover:bg-foreground/3 hover:text-foreground data-[state=open]:bg-foreground/3 data-[state=open]:text-foreground',
           grouped && 'text-foreground',
           className,
         )}

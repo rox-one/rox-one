@@ -102,7 +102,7 @@ export function SessionTableEmptyDropLane({
       <div
         data-empty-group={bucketKey}
         className={cn(
-          'w-full rounded-[6px] border border-dashed px-3 py-2 text-[11px] text-muted-foreground/70',
+          'w-full rounded-[var(--radius-card)] border border-dashed px-3 py-2 text-[11px] text-muted-foreground/70',
           active ? 'border-foreground/40 bg-foreground/5 text-foreground/80' : 'border-foreground/[0.07]',
         )}
         onDragOver={(event) => onDragOver(bucketKey, event)}

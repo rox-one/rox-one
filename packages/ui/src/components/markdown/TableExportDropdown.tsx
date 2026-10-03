@@ -47,7 +47,7 @@ export function TableExportDropdown({ columns, rows, filename }: TableExportDrop
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            'flex items-center gap-1 px-2 py-1.5 rounded-[6px] cursor-pointer select-none',
+            'flex items-center gap-1 px-2 py-1.5 rounded-[var(--radius-control)] cursor-pointer select-none',
             'bg-background shadow-minimal',
             'opacity-70 hover:opacity-100 transition-opacity',
             'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',

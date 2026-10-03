@@ -592,7 +592,7 @@ function ColumnHeader({
         align="start"
         sideOffset={4}
         className="dark w-64 space-y-3 border-border/50 bg-background/80 p-3 shadow-modal-small backdrop-blur-xl backdrop-saturate-150"
-        style={{ borderRadius: '8px' }}
+        style={{ borderRadius: 'var(--radius-card)' }}
         data-no-dnd="true"
       >
         {onRename && (

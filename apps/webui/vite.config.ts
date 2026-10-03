@@ -100,7 +100,9 @@ export default defineConfig({
         ],
       },
     }),
-    tailwindcss(),
+    // Preserve both backdrop-filter declarations; Tailwind's optimizer
+    // otherwise leaves only the WebKit form, which Chromium ignores.
+    tailwindcss({ optimize: false }),
     worktreeCraftPackagePlugin(),
     stubNpmLocksPlugin(),
     nodeBuiltinShimPlugin(),
