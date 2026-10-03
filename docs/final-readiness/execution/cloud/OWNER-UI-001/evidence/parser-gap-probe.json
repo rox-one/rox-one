@@ -1,0 +1,19 @@
+{
+  "label": "parser-gap-probe",
+  "command": [
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.parser-probe.ts"
+  ],
+  "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+  "startedAt": "2026-10-03T10:53:32.553942+00:00",
+  "finishedAt": "2026-10-03T10:53:32.949894+00:00",
+  "exitCode": 0,
+  "sourceSha256": {
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "5a319396c87dc50d0427231623aa497ad67d1df06f542b2e898efdef83f35b72",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+    "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+    "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+  },
+  "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/parser-gap-probe.log",
+  "logSha256": "ec1e9684ff087383a63e8267b3669f434e86922d3b9b74db61e56c86ec54fa86"
+}

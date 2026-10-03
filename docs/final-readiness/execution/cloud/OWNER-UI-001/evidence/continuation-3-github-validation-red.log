@@ -1,0 +1,630 @@
+component-recovery	Project validation and types	﻿2026-10-03T15:59:59.4730004Z ##[group]Run bun run validate:ci
+component-recovery	Project validation and types	2026-10-03T15:59:59.4730362Z ^[[36;1mbun run validate:ci^[[0m
+component-recovery	Project validation and types	2026-10-03T15:59:59.4800534Z shell: /usr/bin/bash -e {0}
+component-recovery	Project validation and types	2026-10-03T15:59:59.4800821Z env:
+component-recovery	Project validation and types	2026-10-03T15:59:59.4801074Z   NODE_OPTIONS: --max-old-space-size=4096
+component-recovery	Project validation and types	2026-10-03T15:59:59.4801370Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T15:59:59.5217099Z $ bun run validate:dev && bun run lint:i18n:parity && bun run lint:i18n:sorted && bun run lint:i18n:coverage
+component-recovery	Project validation and types	2026-10-03T15:59:59.5256898Z $ bun run typecheck:all && bun run test:shared:all && bun run test:connection-fabric && bun run test:config-isolation && bun run test:doc-tools
+component-recovery	Project validation and types	2026-10-03T15:59:59.5298919Z $ cd packages/core && bun run tsc --noEmit && cd ../shared && bun run tsc --noEmit && cd ../server-core && bun run tsc --noEmit && cd ../server && bun run tsc --noEmit && cd ../session-tools-core && bun run tsc --noEmit && cd ../pi-agent-server && bun run typecheck && cd ../../apps/electron && bun run typecheck && cd ../../packages/ui && bun run tsc --noEmit && cd ../.. && bun run typecheck:pages-worker && bun run workspace-service:typecheck
+component-recovery	Project validation and types	2026-10-03T16:00:53.3513588Z $ tsc --noEmit -p tsconfig.typecheck.json
+component-recovery	Project validation and types	2026-10-03T16:01:05.3954357Z $ tsc --noEmit
+component-recovery	Project validation and types	2026-10-03T16:02:08.2386776Z $ if [ -d workers/pages ]; then cd workers/pages && bun run typecheck; else echo 'workers/pages not present (OSS export) - skipping'; fi
+component-recovery	Project validation and types	2026-10-03T16:02:08.2402293Z workers/pages not present (OSS export) - skipping
+component-recovery	Project validation and types	2026-10-03T16:02:08.2441065Z $ bun run --cwd apps/workspace-service typecheck
+component-recovery	Project validation and types	2026-10-03T16:02:08.2485308Z $ tsc --noEmit
+component-recovery	Project validation and types	2026-10-03T16:02:18.0675764Z $ bun run test:shared:llm-connections && bun run test:shared:models-pi && bun run test:shared:config
+component-recovery	Project validation and types	2026-10-03T16:02:18.0704356Z $ cd packages/shared && bun test tests/llm-connections.test.ts
+component-recovery	Project validation and types	2026-10-03T16:02:18.0737828Z bun test v1.3.14 (0d9b296a)
+component-recovery	Project validation and types	2026-10-03T16:02:18.1011494Z 
+component-recovery	Project validation and types	2026-10-03T16:02:18.1012630Z ##[group]tests/llm-connections.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:18.1277413Z (pass) getMiniModel() > finds haiku for anthropic provider [0.28ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1278592Z (pass) getMiniModel() > finds mini for pi provider [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1279676Z (pass) getMiniModel() > skips denied codex-mini-latest alias for pi provider [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1280825Z (pass) getMiniModel() > skips denied pi/codex-mini-latest alias for pi provider [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1285642Z (pass) getMiniModel() > finds mini for pi_compat provider [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1286925Z (pass) getMiniModel() > finds mini for Pi list with mixed models [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1288411Z (pass) getMiniModel() > finds mini even when model name has "mini" in different position [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1290443Z (pass) getMiniModel() > falls back to last model when Pi list has no mini/flash model [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1291345Z (pass) getMiniModel() > returns undefined for empty model list [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1291928Z (pass) getMiniModel() > returns undefined for undefined models [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1292789Z (pass) getMiniModel() > falls back to last model when no keyword match [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1294536Z (pass) getMiniModel() > prefers rox/fast for omp public catalog [0.08ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1295602Z (pass) getMiniModel() > fallback ignores denied alias and returns last allowed model [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1296536Z (pass) getMiniModel() > handles single-model list [0.52ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1297585Z (pass) getSummarizationModel() > returns same result as getMiniModel (shared implementation) [0.10ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1298855Z (pass) getMiniModel() — auth-flavor awareness > skips *codex-mini* variants under openai-codex auth [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1299914Z (pass) getMiniModel() — auth-flavor awareness > still returns *codex-mini* variants under regular openai (API-key) auth [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1300963Z (pass) getMiniModel() — auth-flavor awareness > falls back to last allowed model when every mini candidate is denied [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1301701Z (pass) isDeniedMiniModelId() > always denies codex-mini-latest [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1302712Z (pass) isDeniedMiniModelId() > denies *codex-mini* variants only under openai-codex auth [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1303620Z (pass) isDeniedMiniModelId() > does not deny non-codex-mini models [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1303939Z 
+component-recovery	Project validation and types	2026-10-03T16:02:18.1304372Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1304501Z 
+component-recovery	Project validation and types	2026-10-03T16:02:18.1304596Z  21 pass
+component-recovery	Project validation and types	2026-10-03T16:02:18.1304796Z  0 fail
+component-recovery	Project validation and types	2026-10-03T16:02:18.1305006Z  28 expect() calls
+component-recovery	Project validation and types	2026-10-03T16:02:18.1305286Z Ran 21 tests across 1 file. [55.00ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.1375141Z $ cd packages/shared && bun test tests/models-pi.test.ts
+component-recovery	Project validation and types	2026-10-03T16:02:18.1428016Z bun test v1.3.14 (0d9b296a)
+component-recovery	Project validation and types	2026-10-03T16:02:18.1721057Z 
+component-recovery	Project validation and types	2026-10-03T16:02:18.1722048Z ##[group]tests/models-pi.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:18.3168143Z (pass) models-pi filtering > excludes codex-mini-latest for openai models [0.91ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.3170237Z (pass) models-pi filtering > excludes all gpt-4* models for openai models [0.35ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.3180359Z (pass) models-pi filtering > keeps Claude Opus 4.6 models in Anthropic catalogs [0.92ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.3189951Z (pass) models-pi filtering > includes DeepSeek in the Pi API key provider list with a human-readable label [0.98ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.3191332Z (pass) models-pi filtering > returns current DeepSeek models from the Pi SDK catalog [0.14ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.3193122Z (pass) models-pi filtering > returns current Kimi Code models with K3 first-class metadata [0.21ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.3195951Z (pass) models-pi filtering > includes Moonshot AI in the Pi API key provider list with human-readable labels [0.26ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.3200191Z (pass) models-pi filtering > returns Claude Opus 5 from the Pi SDK catalog for Anthropic and Bedrock [0.40ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.3201555Z (pass) models-pi filtering > returns the DeepSeek V4 Flash vision model from the Pi SDK catalog [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.3203824Z (pass) models-pi filtering > returns GPT-6 Astra from the Pi SDK catalog for OpenAI API keys and ChatGPT accounts [0.10ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.3205263Z (pass) models-pi filtering > returns Kimi K3 from the Pi SDK catalog for both Moonshot providers [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.3205893Z 
+component-recovery	Project validation and types	2026-10-03T16:02:18.3206360Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:18.3206539Z 
+component-recovery	Project validation and types	2026-10-03T16:02:18.3206680Z  11 pass
+component-recovery	Project validation and types	2026-10-03T16:02:18.3206968Z  0 fail
+component-recovery	Project validation and types	2026-10-03T16:02:18.3207272Z  22 expect() calls
+component-recovery	Project validation and types	2026-10-03T16:02:18.3207698Z Ran 11 tests across 1 file. [178.00ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.3301318Z $ cd packages/shared && bun test src/config/__tests__/llm-connections.test.ts src/config/__tests__/storage-migrations.test.ts src/config/__tests__/storage-startup-migration.test.ts src/config/__tests__/default-thinking-level.test.ts
+component-recovery	Project validation and types	2026-10-03T16:02:18.3338571Z bun test v1.3.14 (0d9b296a)
+component-recovery	Project validation and types	2026-10-03T16:02:18.3580877Z 
+component-recovery	Project validation and types	2026-10-03T16:02:18.3582086Z ##[group]src/config/__tests__/llm-connections.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:18.5244223Z (pass) getDefaultModelsForConnection > anthropic returns ANTHROPIC_MODELS (ModelDefinition[]) [0.75ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5263335Z (pass) getDefaultModelsForConnection > pi with piAuthProvider returns filtered models including Opus 4.6 [2.34ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5298834Z (pass) getDefaultModelsForConnection > pi without piAuthProvider returns all Pi models [3.58ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5300597Z (pass) provider registry fallback > uses R1 Max for Rox when a persisted catalog is missing [0.17ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5302186Z (pass) getDefaultModelForConnection > returns first model ID for anthropic [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5305682Z (pass) getDefaultModelForConnection > regression: Pi anthropic default is in its own model list [0.46ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5309621Z (pass) getDefaultModelForConnection > Pi anthropic keeps Opus 4.8 as default with Opus 5 ranked directly below it [0.38ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5342276Z (pass) getDefaultModelForConnection > never ranks a deprecated catalog entry as the Pi default [3.19ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5349827Z (pass) getDefaultModelForConnection > Pi openai default is in its own model list [0.79ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5356074Z (pass) getDefaultModelForConnection > Pi openai and openai-codex default to GPT-6 Astra with GPT-5.6 Sol ranked next [0.61ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5357500Z (pass) getDefaultModelForConnection > Pi deepseek default is in its own model list [0.09ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5358859Z (pass) getDefaultModelForConnection > Pi moonshotai defaults to Kimi K3 from its own model list [0.21ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5360198Z (pass) getDefaultModelForConnection > returns empty string for pi_compat (dynamic provider) [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5361590Z (pass) getDefaultModelForConnection > returns empty string for anthropic_compat (dynamic provider) [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5362872Z (pass) getDefaultModelForConnection > omp exposes one R1 Max model by default [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5363978Z (pass) isCompatProvider > returns true for pi_compat [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5364810Z (pass) isCompatProvider > returns true for anthropic_compat [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5365639Z (pass) isCompatProvider > returns false for anthropic [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5366378Z (pass) isCompatProvider > returns false for pi [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5367134Z (pass) isAnthropicProvider > returns true for anthropic [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5367993Z (pass) isAnthropicProvider > returns true for anthropic_compat [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5368802Z (pass) isAnthropicProvider > returns false for pi [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5369478Z (pass) isPiProvider > returns true for pi [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5370150Z (pass) isPiProvider > returns true for pi_compat [0.01ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5370918Z (pass) isPiProvider > returns false for anthropic_compat [0.01ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5371677Z (pass) isPiProvider > returns false for anthropic [0.01ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5372384Z (pass) toBedrockNativeId > maps bare Anthropic IDs to US inference profile IDs [0.09ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5373156Z (pass) toBedrockNativeId > keeps Opus 4.7 mapped and selectable [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5373840Z (pass) toBedrockNativeId > maps Sonnet 5 forward and reverse across regions and base IDs [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5374650Z (pass) toBedrockNativeId > normalizes deprecated Opus IDs to Opus 4.8 before mapping, keeping Opus 4.6 [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5375402Z (pass) toBedrockNativeId > maps base Bedrock IDs to US inference profile IDs [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5376066Z (pass) toBedrockNativeId > passes through already US-prefixed IDs [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5376626Z (pass) toBedrockNativeId > passes through unknown IDs [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5377233Z (pass) toBedrockNativeId > maps to EU inference profiles when regionPrefix is eu [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5377893Z (pass) toBedrockNativeId > defaults to US when regionPrefix is omitted or us [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5378546Z (pass) toBedrockNativeId > passes through unknown IDs regardless of regionPrefix [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5379149Z (pass) deriveBedrockRegionPrefix > returns us for US regions [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5379691Z (pass) deriveBedrockRegionPrefix > returns eu for EU regions [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5380509Z (pass) deriveBedrockRegionPrefix > returns us for other regions (fallback) [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5381103Z (pass) deriveBedrockRegionPrefix > returns us when undefined [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5385418Z (pass) Bedrock preferred defaults ordering > sorts preferred models first for amazon-bedrock [1.23ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5386648Z (pass) Kimi preferred defaults ordering > uses Kimi K3 as the default Kimi Code model [0.14ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5387785Z (pass) fromBedrockNativeId > maps US inference profile IDs back to bare Anthropic [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5388906Z (pass) fromBedrockNativeId > maps EU/Global inference profile IDs back to bare [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5389904Z (pass) fromBedrockNativeId > maps base Bedrock IDs back to bare [0.01ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5390761Z (pass) fromBedrockNativeId > passes through bare IDs [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5391943Z (pass) fromBedrockNativeId > maps Opus 4.6 native IDs back to the bare ID [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5393309Z (pass) normalizeBedrockModelId > strips pi/ prefix and maps to US inference profile [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5394501Z (pass) normalizeBedrockModelId > maps bare IDs to US inference profile [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5395557Z (pass) normalizeBedrockModelId > maps Opus 4.6 IDs to their own native IDs [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5396646Z (pass) normalizeBedrockModelId > maps base Bedrock IDs to US inference profile [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5397778Z (pass) normalizeBedrockModelId > is idempotent for already US-prefixed IDs [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5398716Z (pass) normalizeBedrockModelId > handles empty/undefined [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5399621Z (pass) normalizeBedrockModelId > respects regionPrefix for EU [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5400764Z (pass) Bedrock-native model display > getModelDisplayName resolves US inference profile IDs [0.20ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5401950Z (pass) Bedrock-native model display > getModelDisplayName resolves EU/base Bedrock IDs [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5402726Z (pass) Bedrock-native model display > getModelShortName resolves Bedrock IDs [0.11ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5403979Z (pass) Bedrock-native model display > getModelContextWindow resolves Bedrock IDs [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5405063Z (pass) Bedrock-native model display > isClaudeModel recognizes Bedrock IDs [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5406174Z (pass) Claude Fable 5 > is registered as an Anthropic model with the expected metadata [0.09ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5406913Z (pass) Claude Fable 5 > resolves display/short name, context window, and Claude detection [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5407607Z (pass) Claude Fable 5 > does NOT become the Anthropic default (Opus 4.8 stays default) [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5408271Z (pass) Claude Fable 5 > round-trips through the Bedrock inference-profile mapping [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5408959Z (pass) Claude Fable 5.1 > is registered as an Anthropic model with the expected metadata [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5409689Z (pass) Claude Fable 5.1 > is listed before Fable 5 so the newest Fable wins shortName resolution [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5410469Z (pass) Claude Fable 5.1 > resolves display/short name, context window, and Claude detection [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5411610Z (pass) Claude Fable 5.1 > does NOT become the Anthropic default (Opus 4.8 stays default) [0.01ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5412745Z (pass) Claude Fable 5.1 > round-trips through the Bedrock inference-profile mapping [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5414064Z (pass) Claude Fable 5.1 > the 5.1 and 5.0 ids never cross-map through the Bedrock tables [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5414630Z 
+component-recovery	Project validation and types	2026-10-03T16:02:18.5415289Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:18.5415475Z 
+component-recovery	Project validation and types	2026-10-03T16:02:18.5415947Z ##[group]src/config/__tests__/storage-migrations.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:19.0285048Z (pass) shouldMigratePiOpenAiProvider > migrates legacy Pi OAuth OpenAI connections to openai-codex [0.88ms]
+component-recovery	Project validation and types	2026-10-03T16:02:19.0287692Z (pass) shouldMigratePiOpenAiProvider > does not migrate Pi API key OpenAI connections [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:19.0307721Z (pass) shouldMigratePiOpenAiProvider > does not migrate Pi custom endpoint connections [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:19.0308903Z (pass) shouldMigratePiOpenAiProvider > does not migrate already-correct openai-codex connections [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:19.0310255Z (pass) shouldRepairPiApiKeyCodexProvider > repairs Pi API key connections that were incorrectly set to openai-codex [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:19.0312113Z (pass) shouldRepairPiApiKeyCodexProvider > repairs Pi API key with endpoint connections that were incorrectly set to openai-codex [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:19.0314498Z (pass) shouldRepairPiApiKeyCodexProvider > does not repair OAuth openai-codex connections [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:19.0315971Z (pass) shouldRepairPiApiKeyCodexProvider > does not repair non-OpenAI-Codex providers [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:19.0317629Z (pass) inferModelSelectionMode > infers automaticallySyncedFromProvider when model list equals provider defaults [0.19ms]
+component-recovery	Project validation and types	2026-10-03T16:02:19.0319549Z (pass) inferModelSelectionMode > infers userDefined3Tier when model list is a custom subset [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:19.0321019Z (pass) inferModelSelectionMode > infers automaticallySyncedFromProvider for empty model lists [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:19.0321807Z 
+component-recovery	Project validation and types	2026-10-03T16:02:19.0322364Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:19.0322644Z 
+component-recovery	Project validation and types	2026-10-03T16:02:19.0323486Z ##[group]src/config/__tests__/storage-startup-migration.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:19.5260476Z (pass) startup migration (integration) > migrates legacy anthropic_compat connections into anthropic_compat with endpoint metadata [496.60ms]
+component-recovery	Project validation and types	2026-10-03T16:02:20.0258477Z (pass) startup migration (integration) > upgrades temporary pi_compat anthropic-messages connections into anthropic_compat [499.76ms]
+component-recovery	Project validation and types	2026-10-03T16:02:20.5350356Z (pass) startup migration (integration) > repairs broken pi-api-key openai-codex provider on startup migration [509.20ms]
+component-recovery	Project validation and types	2026-10-03T16:02:21.0459229Z (pass) startup migration (integration) > preserves userDefined3Tier model subsets during startup migration [510.85ms]
+component-recovery	Project validation and types	2026-10-03T16:02:21.5599280Z (pass) startup migration (integration) > normalizes auto mode model set back to provider defaults [513.96ms]
+component-recovery	Project validation and types	2026-10-03T16:02:22.0573720Z (pass) startup migration (integration) > repairs userDefined3Tier lists by removing invalid IDs and fixing default model [496.81ms]
+component-recovery	Project validation and types	2026-10-03T16:02:22.5714294Z (pass) startup migration (integration) > falls back to provider defaults when userDefined3Tier becomes empty after filtering [514.65ms]
+component-recovery	Project validation and types	2026-10-03T16:02:23.0818506Z (pass) startup migration (integration) > normalizes legacy unprefixed userDefined3Tier model IDs instead of resetting [510.42ms]
+component-recovery	Project validation and types	2026-10-03T16:02:23.5796126Z (pass) legacy Opus migration to default Opus (integration) > keeps direct Anthropic Opus 4.6 default/model entries intact [497.78ms]
+component-recovery	Project validation and types	2026-10-03T16:02:24.5646117Z (pass) legacy Opus migration to default Opus (integration) > restores Opus 4.6 once to direct Anthropic connections and respects a later removal [985.00ms]
+component-recovery	Project validation and types	2026-10-03T16:02:25.0689699Z (pass) legacy Opus migration to default Opus (integration) > migrates direct Anthropic Opus 4.5 defaults straight to Opus 4.8 [504.27ms]
+component-recovery	Project validation and types	2026-10-03T16:02:25.5859031Z (pass) legacy Opus migration to default Opus (integration) > migrates previous direct Anthropic Opus 4.7 defaults to Opus 4.8 while keeping 4.7 selectable [516.87ms]
+component-recovery	Project validation and types	2026-10-03T16:02:26.1110704Z (pass) legacy Opus migration to default Opus (integration) > keeps workspace default Opus 4.6 unchanged [525.21ms]
+component-recovery	Project validation and types	2026-10-03T16:02:26.6165131Z (pass) legacy Opus migration to default Opus (integration) > migrates workspace default Opus 4.7 to Opus 4.8 [505.48ms]
+component-recovery	Project validation and types	2026-10-03T16:02:27.1310309Z (pass) legacy Opus migration to default Opus (integration) > keeps Pi Anthropic Opus 4.6 IDs unchanged [514.50ms]
+component-recovery	Project validation and types	2026-10-03T16:02:27.6747665Z (pass) legacy Opus migration to default Opus (integration) > keeps Pi Bedrock Opus 4.6 native IDs unchanged [543.67ms]
+component-recovery	Project validation and types	2026-10-03T16:02:28.1796196Z (pass) legacy Opus migration to default Opus (integration) > migrates legacy unprefixed Pi Anthropic Opus 4.6 IDs to pi-prefixed Opus 4.6 [504.81ms]
+component-recovery	Project validation and types	2026-10-03T16:02:28.6879104Z (pass) legacy Opus migration to default Opus (integration) > migrates legacy Bedrock provider Opus 4.6 IDs to Pi Bedrock native Opus 4.6 IDs [508.27ms]
+component-recovery	Project validation and types	2026-10-03T16:02:29.1931170Z (pass) legacy Opus migration to default Opus (integration) > migrates seeded rox-kimi kimi-K3 connections onto the public ROX plane [505.26ms]
+component-recovery	Project validation and types	2026-10-03T16:02:30.1937818Z (pass) legacy Opus migration to default Opus (integration) > upgrades installed ROX defaults while preserving sessions and other providers [1000.58ms]
+component-recovery	Project validation and types	2026-10-03T16:02:30.6907543Z (pass) legacy Opus migration to default Opus (integration) > keeps a custom runtime and a workspace using another provider unchanged [496.98ms]
+component-recovery	Project validation and types	2026-10-03T16:02:31.6770872Z (pass) legacy Opus migration to default Opus (integration) > preserves an explicit legacy Rox Max default across repeated startup [986.31ms]
+component-recovery	Project validation and types	2026-10-03T16:02:32.6672390Z (pass) legacy Opus migration to default Opus (integration) > upgrades old onboarding Rox defaults with a separate marker and preserves private catalogs [990.12ms]
+component-recovery	Project validation and types	2026-10-03T16:02:33.1728629Z (pass) legacy Opus migration to default Opus (integration) > preserves a seeded slug explicitly repointed to a private runtime [505.62ms]
+component-recovery	Project validation and types	2026-10-03T16:02:33.1763718Z 
+component-recovery	Project validation and types	2026-10-03T16:02:33.1784718Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:33.1796376Z 
+component-recovery	Project validation and types	2026-10-03T16:02:33.1797428Z ##[group]src/config/__tests__/default-thinking-level.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:33.5716342Z (pass) default thinking level storage > falls back to bundled default when no app-level default is set [395.28ms]
+component-recovery	Project validation and types	2026-10-03T16:02:33.9606788Z (pass) default thinking level storage > persists defaultThinkingLevel to config.json [388.86ms]
+component-recovery	Project validation and types	2026-10-03T16:02:34.3385583Z (pass) default thinking level storage > round-trips persisted value across get/set in a fresh process [378.08ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.0957206Z (pass) default thinking level storage > supports every thinking level [757.11ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.4767739Z (pass) default thinking level storage > migrates legacy "think" value to "medium" [381.01ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.4768289Z 
+component-recovery	Project validation and types	2026-10-03T16:02:35.4768644Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:35.4768774Z 
+component-recovery	Project validation and types	2026-10-03T16:02:35.4768879Z  109 pass
+component-recovery	Project validation and types	2026-10-03T16:02:35.4769077Z  0 fail
+component-recovery	Project validation and types	2026-10-03T16:02:35.4769302Z  291 expect() calls
+component-recovery	Project validation and types	2026-10-03T16:02:35.4769596Z Ran 109 tests across 4 files. [17.14s]
+component-recovery	Project validation and types	2026-10-03T16:02:35.4971199Z $ bun test packages/core/src/platform/identity/credential-types.test.ts packages/core/src/platform/identity/import-session.test.ts packages/core/src/platform/identity/import-service.test.ts packages/core/src/platform/identity/p0-adapters.test.ts packages/core/src/platform/identity/broker.test.ts packages/core/src/platform/identity/workgraph.test.ts packages/core/src/platform/identity/revalidation.test.ts packages/core/src/platform/identity/os-discovery-host.test.ts packages/core/src/platform/identity/github-vertical.test.ts packages/core/src/platform/identity/infisical-fabric-provider.test.ts packages/core/src/platform/identity/grants.test.ts packages/shared/src/credentials/__tests__/envelope.test.ts packages/shared/src/credentials/__tests__/secure-storage-recovery.test.ts
+component-recovery	Project validation and types	2026-10-03T16:02:35.4999829Z bun test v1.3.14 (0d9b296a)
+component-recovery	Project validation and types	2026-10-03T16:02:35.5997800Z 
+component-recovery	Project validation and types	2026-10-03T16:02:35.5998684Z ##[group]packages/shared/src/credentials/__tests__/envelope.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:35.6364672Z (pass) credential envelope v1 > round-trips a scalar credential payload and records a stable fingerprint [0.59ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.6365788Z (pass) credential envelope v1 > fingerprints equivalent payload key order identically [0.13ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.6366728Z (pass) credential envelope v1 > rejects mappings and lists where a scalar payload is required [0.13ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.6367501Z (pass) credential envelope v1 > fails closed for tampering and malformed envelopes [0.10ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.6368476Z (pass) credential envelope v1 > wraps a legacy payload in memory without rewriting it [0.11ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.6369589Z (pass) credential envelope v1 > rejects an invalid kind for legacy wrapping [0.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.6370389Z (pass) credential envelope v1 > rejects empty value and kind-illegal fields [0.20ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.6371362Z (pass) credential envelope v1 > rejects unapproved GCP ADC metadata [0.09ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.6382733Z (pass) credential envelope v1 > accepts oauth refresh metadata and requires aws access key id [0.27ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.6388080Z (pass) credential envelope v1 > does not wrap a bare token string as legacy [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.6388455Z 
+component-recovery	Project validation and types	2026-10-03T16:02:35.6388790Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:35.6388923Z 
+component-recovery	Project validation and types	2026-10-03T16:02:35.6389338Z ##[group]packages/shared/src/credentials/__tests__/secure-storage-recovery.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:35.7067160Z (pass) SecureStorageBackend CF-2 recovery > quarantines a corrupt store instead of deleting the evidence [64.62ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.7235643Z (pass) SecureStorageBackend CF-2 recovery > blocks writes after repair_required and does not plant an empty store [16.83ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.7555993Z (pass) SecureStorageBackend CF-2 recovery > keeps a last-good backup and restores it [32.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.8269145Z (pass) SecureStorageBackend CF-2 recovery > does not rewrite the file when a legacy-key store is only read [71.25ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9220817Z (pass) SecureStorageBackend CF-2 recovery > writes a payload-free migration manifest on explicit cutover [95.19ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9221689Z 
+component-recovery	Project validation and types	2026-10-03T16:02:35.9222207Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9222391Z 
+component-recovery	Project validation and types	2026-10-03T16:02:35.9222861Z ##[group]packages/core/src/platform/identity/workgraph.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:35.9248146Z (pass) CF-5 ConnectionWorkGraph > creates a metadata-only connection and rejects secret fields [0.75ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9254014Z (pass) CF-5 ConnectionWorkGraph > binds consumers and closes over one workspace only [0.59ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9260969Z (pass) CF-5 ConnectionWorkGraph > appends an immutable metadata-only audit ledger with readable fields [0.69ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9264779Z (pass) CF-5 ConnectionWorkGraph > rolls back a failed transaction [0.40ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9286726Z (pass) CF-5 ConnectionWorkGraph persistence > persists connections, bindings, and audit then reloads [2.15ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9304087Z (pass) CF-5 ConnectionWorkGraph persistence > rolls back persisted files when a transaction fails [1.76ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9324303Z (pass) CF-5 ConnectionWorkGraph persistence > keeps workspace isolation across reload [2.01ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9324752Z 
+component-recovery	Project validation and types	2026-10-03T16:02:35.9325072Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9325204Z 
+component-recovery	Project validation and types	2026-10-03T16:02:35.9325602Z ##[group]packages/core/src/platform/identity/infisical-fabric-provider.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:35.9344833Z (pass) CF-8 InfisicalFabricProvider > write + inspect exposes hasMaterial without token material [0.68ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9350548Z (pass) CF-8 InfisicalFabricProvider > health fails closed on 401 [0.57ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9353332Z (pass) CF-8 InfisicalFabricProvider > discoverAccount reports connected without leaking the token [0.27ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9360306Z (pass) CF-8 InfisicalFabricProvider > rotate without fetch fails closed; revoke without fetch clears local metadata [0.66ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9365312Z (pass) CF-8 InfisicalFabricProvider > rotate with stub fetch succeeds and still returns no raw secret [0.51ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9371227Z (pass) createInfisicalImporter > discovers locator metadata from env and never returns the token [0.58ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9371973Z 
+component-recovery	Project validation and types	2026-10-03T16:02:35.9372464Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9372641Z 
+component-recovery	Project validation and types	2026-10-03T16:02:35.9373621Z ##[group]packages/core/src/platform/identity/import-service.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:35.9389643Z (pass) ImportService > denies renderer, remote, and headless before importer dispatch [0.65ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9423388Z (pass) ImportService > commits a copy import on main and stores metadata only [3.35ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9429293Z (pass) ImportService > reuses an existing same-fingerprint reference [0.61ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9435661Z (pass) ImportService > fails closed on a different fingerprint [0.64ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9442411Z (pass) ImportService > rolls back when the provider write fails [0.66ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9443055Z 
+component-recovery	Project validation and types	2026-10-03T16:02:35.9443451Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9443606Z 
+component-recovery	Project validation and types	2026-10-03T16:02:35.9443975Z ##[group]packages/core/src/platform/identity/credential-types.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:35.9488762Z (pass) CredentialRefRegistry > creates opaque stable refs and stores metadata only [0.12ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9490271Z (pass) CredentialRefRegistry > keeps the ref identity while replacing provider metadata [0.18ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9493225Z (pass) CredentialRefRegistry > tracks versions as metadata and clears the current version on revoke [0.24ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9494480Z (pass) CredentialRefRegistry > rejects an invalid version status at runtime [0.14ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9496581Z (pass) CredentialRefRegistry > rejects malformed metadata instead of accepting a secret payload [0.20ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9498292Z (pass) CredentialRefRegistry > rejects locator prototype-derived fields before registration or provider replacement [0.16ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9500330Z (pass) CredentialRefRegistry > rejects locator non-enumerable fields before registration or provider replacement [0.17ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9501866Z (pass) CredentialRefRegistry > rejects locator symbol fields before registration or provider replacement [0.10ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9505307Z (pass) CredentialRefRegistry > rejects missing own local.type supplied by an inherited data [0.37ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9506212Z (pass) CredentialRefRegistry > rejects missing own local.type supplied by an inherited getter [0.08ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9507448Z (pass) CredentialRefRegistry > rejects missing own local.key supplied by an inherited data [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9508940Z (pass) CredentialRefRegistry > rejects missing own local.key supplied by an inherited getter [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9510080Z (pass) CredentialRefRegistry > rejects missing own keychain.type supplied by an inherited data [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9511405Z (pass) CredentialRefRegistry > rejects missing own keychain.type supplied by an inherited getter [0.09ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9512750Z (pass) CredentialRefRegistry > rejects missing own keychain.service supplied by an inherited data [0.08ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9514294Z (pass) CredentialRefRegistry > rejects missing own keychain.service supplied by an inherited getter [0.09ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9515475Z (pass) CredentialRefRegistry > rejects missing own keychain.account supplied by an inherited data [0.10ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9516380Z (pass) CredentialRefRegistry > rejects missing own keychain.account supplied by an inherited getter [0.08ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9517185Z (pass) CredentialRefRegistry > rejects missing own dotenv.type supplied by an inherited data [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9517990Z (pass) CredentialRefRegistry > rejects missing own dotenv.type supplied by an inherited getter [0.11ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9541401Z (pass) CredentialRefRegistry > rejects missing own dotenv.path supplied by an inherited data [0.08ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9542810Z (pass) CredentialRefRegistry > rejects missing own dotenv.path supplied by an inherited getter [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9544379Z (pass) CredentialRefRegistry > rejects missing own dotenv.key supplied by an inherited data [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9545706Z (pass) CredentialRefRegistry > rejects missing own dotenv.key supplied by an inherited getter [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9547094Z (pass) CredentialRefRegistry > rejects missing own git_helper.type supplied by an inherited data [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9548578Z (pass) CredentialRefRegistry > rejects missing own git_helper.type supplied by an inherited getter [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9550061Z (pass) CredentialRefRegistry > rejects missing own git_helper.host supplied by an inherited data [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9551838Z (pass) CredentialRefRegistry > rejects missing own git_helper.host supplied by an inherited getter [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9553463Z (pass) CredentialRefRegistry > rejects missing own docker_helper.type supplied by an inherited data [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9554979Z (pass) CredentialRefRegistry > rejects missing own docker_helper.type supplied by an inherited getter [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9556496Z (pass) CredentialRefRegistry > rejects missing own docker_helper.registry supplied by an inherited data [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9558065Z (pass) CredentialRefRegistry > rejects missing own docker_helper.registry supplied by an inherited getter [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9559577Z (pass) CredentialRefRegistry > rejects missing own aws_profile.type supplied by an inherited data [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9561038Z (pass) CredentialRefRegistry > rejects missing own aws_profile.type supplied by an inherited getter [0.13ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9563535Z (pass) CredentialRefRegistry > rejects missing own aws_profile.profile supplied by an inherited data [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9565020Z (pass) CredentialRefRegistry > rejects missing own aws_profile.profile supplied by an inherited getter [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9566473Z (pass) CredentialRefRegistry > rejects missing own gcp_adc.type supplied by an inherited data [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9568014Z (pass) CredentialRefRegistry > rejects missing own gcp_adc.type supplied by an inherited getter [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9569291Z (pass) CredentialRefRegistry > rejects missing own gcp_adc.source supplied by an inherited data [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9570119Z (pass) CredentialRefRegistry > rejects missing own gcp_adc.source supplied by an inherited getter [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9570930Z (pass) CredentialRefRegistry > rejects missing own ssh_agent.type supplied by an inherited data [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9571706Z (pass) CredentialRefRegistry > rejects missing own ssh_agent.type supplied by an inherited getter [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9572545Z (pass) CredentialRefRegistry > rejects missing own ssh_agent.fingerprint supplied by an inherited data [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9573861Z (pass) CredentialRefRegistry > rejects missing own ssh_agent.fingerprint supplied by an inherited getter [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9575275Z (pass) CredentialRefRegistry > rejects missing own infisical.type supplied by an inherited data [0.09ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9576429Z (pass) CredentialRefRegistry > rejects missing own infisical.type supplied by an inherited getter [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9577265Z (pass) CredentialRefRegistry > rejects missing own infisical.projectId supplied by an inherited data [0.13ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9578134Z (pass) CredentialRefRegistry > rejects missing own infisical.projectId supplied by an inherited getter [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9578974Z (pass) CredentialRefRegistry > rejects missing own infisical.environment supplied by an inherited data [0.08ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9579924Z (pass) CredentialRefRegistry > rejects missing own infisical.environment supplied by an inherited getter [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9581394Z (pass) CredentialRefRegistry > rejects missing own infisical.secretPath supplied by an inherited data [0.09ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9582482Z (pass) CredentialRefRegistry > rejects missing own infisical.secretPath supplied by an inherited getter [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9583651Z (pass) CredentialRefRegistry > rejects missing own infisical.secretKey supplied by an inherited data [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9585083Z (pass) CredentialRefRegistry > rejects missing own infisical.secretKey supplied by an inherited getter [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9586507Z (pass) CredentialRefRegistry > rejects missing own opaque.type supplied by an inherited data [0.09ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9587662Z (pass) CredentialRefRegistry > rejects missing own opaque.type supplied by an inherited getter [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9589069Z (pass) CredentialRefRegistry > rejects missing own opaque.provider supplied by an inherited data [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9590731Z (pass) CredentialRefRegistry > rejects missing own opaque.provider supplied by an inherited getter [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9592014Z (pass) CredentialRefRegistry > rejects missing own opaque.locator supplied by an inherited data [0.06ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9593293Z (pass) CredentialRefRegistry > rejects missing own opaque.locator supplied by an inherited getter [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9594467Z (pass) CredentialRefRegistry > rejects own locator type accessors when Object.prototype.value is present [0.31ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9595851Z (pass) CredentialRefRegistry > rejects own locator key accessors when Object.prototype.value is present [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9597055Z (pass) CredentialRefRegistry > rejects locator type accessors without executing them [0.13ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9598271Z (pass) CredentialRefRegistry > rejects locator key accessors without executing them [0.01ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9600061Z (pass) CredentialRefRegistry > rejects own type accessors when descriptor value is an inherited getter [0.21ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9601637Z (pass) CredentialRefRegistry > rejects own key accessors when descriptor value is an inherited getter [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9602791Z (pass) CredentialRefRegistry > does not persist rejected inherited locator fields [1.87ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9604412Z (pass) CredentialRefRegistry > skips persisted locators missing their own type without invoking an inherited getter [0.92ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9606040Z (pass) CredentialRefRegistry > skips persisted locators missing their own key without invoking an inherited getter [0.48ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9607191Z (pass) CredentialRefRegistry > accepts enumerable readonly and frozen locator data fields [0.10ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9608525Z (pass) CredentialRefRegistry > rejects hidden and nested secret fields at the registry boundary [0.21ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9609600Z (pass) CredentialRefRegistry > rejects a duplicate CredentialRef id and keeps the first record [0.14ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9610356Z (pass) CredentialRefRegistry > rejects register with an orphan currentVersionId [0.08ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9611030Z (pass) CredentialRefRegistry > rejects reviving a revoked version to active [0.14ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9611788Z (pass) CredentialRefRegistry > rejects reviving an invalid version to active [0.11ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9612858Z (pass) CredentialRefRegistry > keeps terminal version statuses irreversible [0.12ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9614262Z (pass) CredentialRefRegistry > makes a reactivated superseded version the sole current active version [0.11ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9615418Z (pass) CredentialRefRegistry > leaves version state unchanged when reactivation cannot read the clock [0.16ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9616221Z (pass) CredentialRefRegistry > rejects a version fingerprint that is not 64 hex characters [0.20ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9616995Z (pass) CredentialRefRegistry > rejects infisical locators with empty projectId or secretKey [0.20ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9617696Z (pass) CredentialRefRegistry > rejects unknown version payload fields [0.13ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9618351Z (pass) CredentialRefRegistry > generates browser-safe cred UUID identifiers [0.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9619018Z (pass) CredentialRefRegistry > returns clones instead of mutable registry state [0.05ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9619782Z (pass) CredentialRefRegistry > accepts P0 locators and still rejects unknown locator types [0.13ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9620445Z (pass) CredentialRefRegistry > rejects an expiry before creation [0.09ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9621180Z (pass) CredentialRefRegistry > does not silently replace the current version with an older active version [0.12ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9622062Z (pass) CredentialRefRegistry > keeps ref timestamps monotonic by clamping instead of blocking revocation [0.12ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9622842Z (pass) CredentialRefRegistry > revokes a version whose createdAt is far in the future [0.08ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9623944Z (pass) CredentialRefRegistry > moves ref updatedAt forward only when provider metadata changes [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9624715Z (pass) CredentialRefRegistry > does not let an untrimmed id overwrite an existing version [0.16ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9625397Z (pass) CredentialRefRegistry > treats credential ref ids as case-sensitive [0.08ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9626092Z (pass) CredentialRefRegistry > bounds caller-controlled text interpolated into errors [0.34ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9626820Z (pass) CredentialRefRegistry > lists versions deterministically by creation time and id [0.18ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9629328Z (pass) credential locator own-data boundary > rejects local.type inherited data across registry boundaries [1.50ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9638909Z (pass) credential locator own-data boundary > rejects local.type inherited getter across registry boundaries [0.95ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9647452Z (pass) credential locator own-data boundary > rejects local.key inherited data across registry boundaries [0.85ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9655479Z (pass) credential locator own-data boundary > rejects local.key inherited getter across registry boundaries [0.79ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9669555Z (pass) credential locator own-data boundary > preserves frozen local data through registration, replacement and restart [1.39ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9677914Z (pass) credential locator own-data boundary > rejects keychain.type inherited data across registry boundaries [0.83ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9685935Z (pass) credential locator own-data boundary > rejects keychain.type inherited getter across registry boundaries [0.79ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9694790Z (pass) credential locator own-data boundary > rejects keychain.service inherited data across registry boundaries [0.87ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9705087Z (pass) credential locator own-data boundary > rejects keychain.service inherited getter across registry boundaries [0.93ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9713119Z (pass) credential locator own-data boundary > rejects keychain.account inherited data across registry boundaries [0.82ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9722245Z (pass) credential locator own-data boundary > rejects keychain.account inherited getter across registry boundaries [0.95ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9733700Z (pass) credential locator own-data boundary > preserves frozen keychain data through registration, replacement and restart [1.12ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9741425Z (pass) credential locator own-data boundary > rejects dotenv.type inherited data across registry boundaries [0.79ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9751646Z (pass) credential locator own-data boundary > rejects dotenv.type inherited getter across registry boundaries [1.00ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9759500Z (pass) credential locator own-data boundary > rejects dotenv.path inherited data across registry boundaries [0.79ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9767204Z (pass) credential locator own-data boundary > rejects dotenv.path inherited getter across registry boundaries [0.76ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9774892Z (pass) credential locator own-data boundary > rejects dotenv.key inherited data across registry boundaries [0.76ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9782163Z (pass) credential locator own-data boundary > rejects dotenv.key inherited getter across registry boundaries [0.72ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9792395Z (pass) credential locator own-data boundary > preserves frozen dotenv data through registration, replacement and restart [1.00ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9801112Z (pass) credential locator own-data boundary > rejects git_helper.type inherited data across registry boundaries [0.86ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9808812Z (pass) credential locator own-data boundary > rejects git_helper.type inherited getter across registry boundaries [0.76ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9816920Z (pass) credential locator own-data boundary > rejects git_helper.host inherited data across registry boundaries [0.81ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9825587Z (pass) credential locator own-data boundary > rejects git_helper.host inherited getter across registry boundaries [0.86ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9836931Z (pass) credential locator own-data boundary > preserves frozen git_helper data through registration, replacement and restart [1.11ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9844618Z (pass) credential locator own-data boundary > rejects docker_helper.type inherited data across registry boundaries [0.77ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9851881Z (pass) credential locator own-data boundary > rejects docker_helper.type inherited getter across registry boundaries [0.71ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9859416Z (pass) credential locator own-data boundary > rejects docker_helper.registry inherited data across registry boundaries [0.74ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9866858Z (pass) credential locator own-data boundary > rejects docker_helper.registry inherited getter across registry boundaries [0.73ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9876951Z (pass) credential locator own-data boundary > preserves frozen docker_helper data through registration, replacement and restart [1.00ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9884894Z (pass) credential locator own-data boundary > rejects aws_profile.type inherited data across registry boundaries [0.79ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9892137Z (pass) credential locator own-data boundary > rejects aws_profile.type inherited getter across registry boundaries [0.71ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9901803Z (pass) credential locator own-data boundary > rejects aws_profile.profile inherited data across registry boundaries [0.96ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9909931Z (pass) credential locator own-data boundary > rejects aws_profile.profile inherited getter across registry boundaries [0.77ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9920789Z (pass) credential locator own-data boundary > preserves frozen aws_profile data through registration, replacement and restart [1.10ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9928502Z (pass) credential locator own-data boundary > rejects gcp_adc.type inherited data across registry boundaries [0.77ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9938265Z (pass) credential locator own-data boundary > rejects gcp_adc.type inherited getter across registry boundaries [0.96ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9951196Z (pass) credential locator own-data boundary > rejects gcp_adc.source inherited data across registry boundaries [0.95ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9957797Z (pass) credential locator own-data boundary > rejects gcp_adc.source inherited getter across registry boundaries [0.91ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9968574Z (pass) credential locator own-data boundary > preserves frozen gcp_adc data through registration, replacement and restart [1.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9977044Z (pass) credential locator own-data boundary > rejects ssh_agent.type inherited data across registry boundaries [0.85ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9986650Z (pass) credential locator own-data boundary > rejects ssh_agent.type inherited getter across registry boundaries [0.89ms]
+component-recovery	Project validation and types	2026-10-03T16:02:35.9995494Z (pass) credential locator own-data boundary > rejects ssh_agent.fingerprint inherited data across registry boundaries [0.86ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0002852Z (pass) credential locator own-data boundary > rejects ssh_agent.fingerprint inherited getter across registry boundaries [0.75ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0013183Z (pass) credential locator own-data boundary > preserves frozen ssh_agent data through registration, replacement and restart [1.00ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0022451Z (pass) credential locator own-data boundary > rejects infisical.type inherited data across registry boundaries [0.96ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0030470Z (pass) credential locator own-data boundary > rejects infisical.type inherited getter across registry boundaries [0.81ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0038032Z (pass) credential locator own-data boundary > rejects infisical.projectId inherited data across registry boundaries [0.75ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0046087Z (pass) credential locator own-data boundary > rejects infisical.projectId inherited getter across registry boundaries [0.80ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0053494Z (pass) credential locator own-data boundary > rejects infisical.environment inherited data across registry boundaries [0.71ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0060582Z (pass) credential locator own-data boundary > rejects infisical.environment inherited getter across registry boundaries [0.71ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0081655Z (pass) credential locator own-data boundary > rejects infisical.secretPath inherited data across registry boundaries [0.75ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0083629Z (pass) credential locator own-data boundary > rejects infisical.secretPath inherited getter across registry boundaries [0.72ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0085287Z (pass) credential locator own-data boundary > rejects infisical.secretKey inherited data across registry boundaries [0.73ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0092710Z (pass) credential locator own-data boundary > rejects infisical.secretKey inherited getter across registry boundaries [0.96ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0103100Z (pass) credential locator own-data boundary > preserves frozen infisical data through registration, replacement and restart [1.02ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0110671Z (pass) credential locator own-data boundary > rejects opaque.type inherited data across registry boundaries [0.77ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0118765Z (pass) credential locator own-data boundary > rejects opaque.type inherited getter across registry boundaries [0.79ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0126267Z (pass) credential locator own-data boundary > rejects opaque.provider inherited data across registry boundaries [0.74ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0133325Z (pass) credential locator own-data boundary > rejects opaque.provider inherited getter across registry boundaries [0.67ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0140363Z (pass) credential locator own-data boundary > rejects opaque.locator inherited data across registry boundaries [0.71ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0147654Z (pass) credential locator own-data boundary > rejects opaque.locator inherited getter across registry boundaries [0.72ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0158595Z (pass) credential locator own-data boundary > preserves frozen opaque data through registration, replacement and restart [1.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0161473Z (pass) credential locator own-data boundary > rejects an own accessor even when its descriptor inherits value [0.28ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0163120Z (pass) credential locator own-data boundary > normalizes own data without ordinary locator property reads [0.16ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0163828Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.0164278Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0164466Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.0164948Z ##[group]packages/core/src/platform/identity/broker.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:36.0193321Z (pass) InProcessCredentialBroker > denies by default when no grant exists [1.00ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0200439Z (pass) InProcessCredentialBroker > denies wrong workspace, action, or resource even with a grant [0.73ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0205994Z (pass) InProcessCredentialBroker > issues a metadata-only lease and never returns payload [0.55ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0209508Z (pass) InProcessCredentialBroker > rejects env-legacy unless the consumer declares it [0.37ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0214518Z (pass) InProcessCredentialBroker > revokes an active lease so a later acquire cannot reuse it [0.49ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0223716Z (pass) InProcessCredentialBroker > executeTrustedHttp injects Authorization from sealed copy and never returns the secret [0.89ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0227992Z (pass) InProcessCredentialBroker > executeTrustedHttp denies a revoked lease before fetch [0.41ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0228855Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.0229414Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0229624Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.0230206Z ##[group]packages/core/src/platform/identity/grants.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:36.0243575Z (pass) JsonAccessGrantStore > lists grants for a consumer within one workspace [0.80ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0245015Z (pass) JsonAccessGrantStore > lists all grants without a workspace filter [0.20ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0246074Z (pass) JsonAccessGrantStore > lists all grants filtered by workspace [0.10ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0253910Z (pass) JsonAccessGrantStore persistence > persists grants as JSON and reloads them [0.69ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0260029Z (pass) JsonAccessGrantStore persistence > keeps workspace isolation after reload [0.65ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0260835Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.0261131Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0261271Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.0261620Z ##[group]packages/core/src/platform/identity/p0-adapters.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:36.0274768Z (pass) P0 discovery parsers > extracts dotenv keys without values or shell expansion [0.18ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0277822Z (pass) P0 discovery parsers > parses git helpers from config text only [0.31ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0280869Z (pass) P0 discovery parsers > parses docker credsStore and per-registry helpers [0.29ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0283983Z (pass) P0 discovery parsers > parses named AWS profiles without inventing a default section [0.27ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0285167Z (pass) P0 discovery parsers > redacts ADC JSON so private_key never appears [0.10ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0286152Z (pass) P0 discovery parsers > builds stable metadata fingerprints [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0300311Z (pass) P0 importers > discovers metadata-only candidates for every P0 source [1.44ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0304542Z (pass) P0 importers > masks preview and never returns helper or env values [0.30ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0306742Z (pass) P0 importers > rejects dotenv traversal and ssh copy mode [0.37ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0313854Z (pass) P0 importers > commits copy material as a sealed handle and rolls it back [0.65ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0315143Z (pass) P0 importers > round-trips sealed secrets without exposing plaintext on the handle brand alone [0.08ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0315826Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.0316239Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0316420Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.0316954Z ##[group]packages/core/src/platform/identity/github-vertical.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:36.0333240Z (pass) CF-7 GitHub vertical > importGithubFromEnv commits dotenv candidate without storing the token [0.61ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0335265Z (pass) CF-7 GitHub vertical > importGithubFromEnv accepts injectedToken when no env candidate exists [0.27ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0349448Z (pass) CF-7 GitHub vertical > runGithubVertical sends Authorization *** returns metadata only [1.33ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0352237Z (pass) CF-7 GitHub vertical > denies when AccessGrant is missing [0.35ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0356569Z (pass) CF-7 GitHub vertical > fails closed when GitHub returns 401 [0.42ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0356884Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.0357203Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0357538Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.0358070Z ##[group]packages/core/src/platform/identity/os-discovery-host.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:36.0404075Z (pass) createOsDiscoveryHost > lists dotenv files from cwd and home without traversal [3.25ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0420677Z (pass) createOsDiscoveryHost > reads git/docker/aws config text from the fixture home only [1.67ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0440871Z (pass) createOsDiscoveryHost > returns GCP ADC metadata without private_key [2.03ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0457902Z (pass) createOsDiscoveryHost > prefers GOOGLE_APPLICATION_CREDENTIALS when set [1.70ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0473973Z (pass) createOsDiscoveryHost > fail-softs ssh identities without SSH_AUTH_SOCK [1.60ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0488510Z (pass) createOsDiscoveryHost > returns empty keychain unless items are injected [1.45ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0524093Z (pass) createOsDiscoveryHost > approveCopy seals dotenv values and never leaks them via inspect/preview [3.50ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0533218Z (pass) createOsDiscoveryHost > fail-softs missing home config files [0.96ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0533813Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.0534270Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0534466Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.0534991Z ##[group]packages/core/src/platform/identity/import-session.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:36.0549477Z (pass) ImportSession > walks discover → access → preview → validate → commit [0.10ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0550566Z (pass) ImportSession > denies preview before OS/provider access [0.12ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0551569Z (pass) ImportSession > denies access from the access_requested phase [0.10ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0552648Z (pass) ImportSession > rejects unknown candidates and illegal transitions [0.15ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0554505Z (pass) ImportSession > fails closed on a different fingerprint without an explicit decision [0.10ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0555792Z (pass) ImportSession > keeps same-fingerprint conflicts and explicit decisions open [0.14ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0556971Z (pass) ImportSession > returns clones so callers cannot mutate session state [0.04ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0557549Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.0557960Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0558144Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.0558658Z ##[group]packages/core/src/platform/identity/revalidation.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:36.0583429Z (pass) CF-5 revoke, closure, revalidate > invalidates leases, audits, and revalidates only the same workspace [1.60ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0584953Z (pass) CF-5 revoke, closure, revalidate > rejects an unknown connection without touching the broker [0.22ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0585410Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.0585691Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0585828Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.0586184Z  235 pass
+component-recovery	Project validation and types	2026-10-03T16:02:36.0586384Z  0 fail
+component-recovery	Project validation and types	2026-10-03T16:02:36.0586610Z  1858 expect() calls
+component-recovery	Project validation and types	2026-10-03T16:02:36.0586913Z Ran 235 tests across 13 files. [558.00ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.0734921Z $ bun test packages/shared/src/config/__tests__/config-isolation.test.ts
+component-recovery	Project validation and types	2026-10-03T16:02:36.0766784Z bun test v1.3.14 (0d9b296a)
+component-recovery	Project validation and types	2026-10-03T16:02:36.1705110Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.1706310Z ##[group]packages/shared/src/config/__tests__/config-isolation.test.ts:
+component-recovery	Project validation and types	2026-10-03T16:02:36.1945958Z (pass) test config isolation > resolves the config root outside the real ~/.craft-agent [0.07ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.1946663Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.1953896Z ##[endgroup]
+component-recovery	Project validation and types	2026-10-03T16:02:36.1954102Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.1954259Z  1 pass
+component-recovery	Project validation and types	2026-10-03T16:02:36.1954562Z  0 fail
+component-recovery	Project validation and types	2026-10-03T16:02:36.1954889Z  2 expect() calls
+component-recovery	Project validation and types	2026-10-03T16:02:36.1955325Z Ran 1 test across 1 file. [118.00ms]
+component-recovery	Project validation and types	2026-10-03T16:02:36.2063780Z $ python3 -m unittest apps.electron.resources.scripts.tests.test_pdf_tool_smoke apps.electron.resources.scripts.tests.test_xlsx_tool_smoke apps.electron.resources.scripts.tests.test_docx_tool_smoke apps.electron.resources.scripts.tests.test_pptx_tool_smoke apps.electron.resources.scripts.tests.test_img_tool_smoke apps.electron.resources.scripts.tests.test_ical_tool_smoke apps.electron.resources.scripts.tests.test_doc_diff_smoke apps.electron.resources.scripts.tests.test_markitdown_smoke
+component-recovery	Project validation and types	2026-10-03T16:02:36.2738094Z EEEEEEEE
+component-recovery	Project validation and types	2026-10-03T16:02:36.2738785Z ======================================================================
+component-recovery	Project validation and types	2026-10-03T16:02:36.2739824Z ERROR: setUpClass (apps.electron.resources.scripts.tests.test_pdf_tool_smoke.PdfToolSmokeTests)
+component-recovery	Project validation and types	2026-10-03T16:02:36.2740848Z ----------------------------------------------------------------------
+component-recovery	Project validation and types	2026-10-03T16:02:36.2741453Z Traceback (most recent call last):
+component-recovery	Project validation and types	2026-10-03T16:02:36.2742423Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/test_pdf_tool_smoke.py", line 21, in setUpClass
+component-recovery	Project validation and types	2026-10-03T16:02:36.2743559Z     cls.env = build_env()
+component-recovery	Project validation and types	2026-10-03T16:02:36.2743952Z               ^^^^^^^^^^^
+component-recovery	Project validation and types	2026-10-03T16:02:36.2744860Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 59, in build_env
+component-recovery	Project validation and types	2026-10-03T16:02:36.2745725Z     uv = resolve_uv_binary()
+component-recovery	Project validation and types	2026-10-03T16:02:36.2746071Z          ^^^^^^^^^^^^^^^^^^^
+component-recovery	Project validation and types	2026-10-03T16:02:36.2746987Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 48, in resolve_uv_binary
+component-recovery	Project validation and types	2026-10-03T16:02:36.2748126Z     raise FileNotFoundError(f"No bundled uv at {bundled} and no uv on PATH")
+component-recovery	Project validation and types	2026-10-03T16:02:36.2749391Z FileNotFoundError: No bundled uv at /home/runner/work/rox-one/rox-one/apps/electron/resources/bin/linux-x64/uv and no uv on PATH
+component-recovery	Project validation and types	2026-10-03T16:02:36.2750129Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.2750421Z ======================================================================
+component-recovery	Project validation and types	2026-10-03T16:02:36.2751370Z ERROR: setUpClass (apps.electron.resources.scripts.tests.test_xlsx_tool_smoke.XlsxToolSmokeTests)
+component-recovery	Project validation and types	2026-10-03T16:02:36.2752327Z ----------------------------------------------------------------------
+component-recovery	Project validation and types	2026-10-03T16:02:36.2753415Z Traceback (most recent call last):
+component-recovery	Project validation and types	2026-10-03T16:02:36.2754374Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/test_xlsx_tool_smoke.py", line 14, in setUpClass
+component-recovery	Project validation and types	2026-10-03T16:02:36.2755337Z     cls.env = build_env()
+component-recovery	Project validation and types	2026-10-03T16:02:36.2755720Z               ^^^^^^^^^^^
+component-recovery	Project validation and types	2026-10-03T16:02:36.2756675Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 59, in build_env
+component-recovery	Project validation and types	2026-10-03T16:02:36.2757628Z     uv = resolve_uv_binary()
+component-recovery	Project validation and types	2026-10-03T16:02:36.2758014Z          ^^^^^^^^^^^^^^^^^^^
+component-recovery	Project validation and types	2026-10-03T16:02:36.2759062Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 48, in resolve_uv_binary
+component-recovery	Project validation and types	2026-10-03T16:02:36.2760335Z     raise FileNotFoundError(f"No bundled uv at {bundled} and no uv on PATH")
+component-recovery	Project validation and types	2026-10-03T16:02:36.2761751Z FileNotFoundError: No bundled uv at /home/runner/work/rox-one/rox-one/apps/electron/resources/bin/linux-x64/uv and no uv on PATH
+component-recovery	Project validation and types	2026-10-03T16:02:36.2762740Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.2763209Z ======================================================================
+component-recovery	Project validation and types	2026-10-03T16:02:36.2764233Z ERROR: setUpClass (apps.electron.resources.scripts.tests.test_docx_tool_smoke.DocxToolSmokeTests)
+component-recovery	Project validation and types	2026-10-03T16:02:36.2765232Z ----------------------------------------------------------------------
+component-recovery	Project validation and types	2026-10-03T16:02:36.2765767Z Traceback (most recent call last):
+component-recovery	Project validation and types	2026-10-03T16:02:36.2766701Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/test_docx_tool_smoke.py", line 13, in setUpClass
+component-recovery	Project validation and types	2026-10-03T16:02:36.2767651Z     cls.env = build_env()
+component-recovery	Project validation and types	2026-10-03T16:02:36.2767996Z               ^^^^^^^^^^^
+component-recovery	Project validation and types	2026-10-03T16:02:36.2768908Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 59, in build_env
+component-recovery	Project validation and types	2026-10-03T16:02:36.2769893Z     uv = resolve_uv_binary()
+component-recovery	Project validation and types	2026-10-03T16:02:36.2770291Z          ^^^^^^^^^^^^^^^^^^^
+component-recovery	Project validation and types	2026-10-03T16:02:36.2771364Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 48, in resolve_uv_binary
+component-recovery	Project validation and types	2026-10-03T16:02:36.2772687Z     raise FileNotFoundError(f"No bundled uv at {bundled} and no uv on PATH")
+component-recovery	Project validation and types	2026-10-03T16:02:36.2774276Z FileNotFoundError: No bundled uv at /home/runner/work/rox-one/rox-one/apps/electron/resources/bin/linux-x64/uv and no uv on PATH
+component-recovery	Project validation and types	2026-10-03T16:02:36.2775104Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.2775423Z ======================================================================
+component-recovery	Project validation and types	2026-10-03T16:02:36.2776477Z ERROR: setUpClass (apps.electron.resources.scripts.tests.test_pptx_tool_smoke.PptxToolSmokeTests)
+component-recovery	Project validation and types	2026-10-03T16:02:36.2777575Z ----------------------------------------------------------------------
+component-recovery	Project validation and types	2026-10-03T16:02:36.2778239Z Traceback (most recent call last):
+component-recovery	Project validation and types	2026-10-03T16:02:36.2779284Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/test_pptx_tool_smoke.py", line 14, in setUpClass
+component-recovery	Project validation and types	2026-10-03T16:02:36.2780282Z     cls.env = build_env()
+component-recovery	Project validation and types	2026-10-03T16:02:36.2780612Z               ^^^^^^^^^^^
+component-recovery	Project validation and types	2026-10-03T16:02:36.2781484Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 59, in build_env
+component-recovery	Project validation and types	2026-10-03T16:02:36.2782494Z     uv = resolve_uv_binary()
+component-recovery	Project validation and types	2026-10-03T16:02:36.2782846Z          ^^^^^^^^^^^^^^^^^^^
+component-recovery	Project validation and types	2026-10-03T16:02:36.2784064Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 48, in resolve_uv_binary
+component-recovery	Project validation and types	2026-10-03T16:02:36.2785372Z     raise FileNotFoundError(f"No bundled uv at {bundled} and no uv on PATH")
+component-recovery	Project validation and types	2026-10-03T16:02:36.2786697Z FileNotFoundError: No bundled uv at /home/runner/work/rox-one/rox-one/apps/electron/resources/bin/linux-x64/uv and no uv on PATH
+component-recovery	Project validation and types	2026-10-03T16:02:36.2787450Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.2787776Z ======================================================================
+component-recovery	Project validation and types	2026-10-03T16:02:36.2788793Z ERROR: setUpClass (apps.electron.resources.scripts.tests.test_img_tool_smoke.ImgToolSmokeTests)
+component-recovery	Project validation and types	2026-10-03T16:02:36.2790018Z ----------------------------------------------------------------------
+component-recovery	Project validation and types	2026-10-03T16:02:36.2790618Z Traceback (most recent call last):
+component-recovery	Project validation and types	2026-10-03T16:02:36.2791652Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/test_img_tool_smoke.py", line 15, in setUpClass
+component-recovery	Project validation and types	2026-10-03T16:02:36.2792589Z     cls.env = build_env()
+component-recovery	Project validation and types	2026-10-03T16:02:36.2793081Z               ^^^^^^^^^^^
+component-recovery	Project validation and types	2026-10-03T16:02:36.2794005Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 59, in build_env
+component-recovery	Project validation and types	2026-10-03T16:02:36.2794925Z     uv = resolve_uv_binary()
+component-recovery	Project validation and types	2026-10-03T16:02:36.2795301Z          ^^^^^^^^^^^^^^^^^^^
+component-recovery	Project validation and types	2026-10-03T16:02:36.2796291Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 48, in resolve_uv_binary
+component-recovery	Project validation and types	2026-10-03T16:02:36.2797531Z     raise FileNotFoundError(f"No bundled uv at {bundled} and no uv on PATH")
+component-recovery	Project validation and types	2026-10-03T16:02:36.2799114Z FileNotFoundError: No bundled uv at /home/runner/work/rox-one/rox-one/apps/electron/resources/bin/linux-x64/uv and no uv on PATH
+component-recovery	Project validation and types	2026-10-03T16:02:36.2799927Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.2800249Z ======================================================================
+component-recovery	Project validation and types	2026-10-03T16:02:36.2801271Z ERROR: setUpClass (apps.electron.resources.scripts.tests.test_ical_tool_smoke.IcalToolSmokeTests)
+component-recovery	Project validation and types	2026-10-03T16:02:36.2802294Z ----------------------------------------------------------------------
+component-recovery	Project validation and types	2026-10-03T16:02:36.2803080Z Traceback (most recent call last):
+component-recovery	Project validation and types	2026-10-03T16:02:36.2804101Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/test_ical_tool_smoke.py", line 14, in setUpClass
+component-recovery	Project validation and types	2026-10-03T16:02:36.2805128Z     cls.env = build_env()
+component-recovery	Project validation and types	2026-10-03T16:02:36.2805506Z               ^^^^^^^^^^^
+component-recovery	Project validation and types	2026-10-03T16:02:36.2806478Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 59, in build_env
+component-recovery	Project validation and types	2026-10-03T16:02:36.2807459Z     uv = resolve_uv_binary()
+component-recovery	Project validation and types	2026-10-03T16:02:36.2807875Z          ^^^^^^^^^^^^^^^^^^^
+component-recovery	Project validation and types	2026-10-03T16:02:36.2808911Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 48, in resolve_uv_binary
+component-recovery	Project validation and types	2026-10-03T16:02:36.2810105Z     raise FileNotFoundError(f"No bundled uv at {bundled} and no uv on PATH")
+component-recovery	Project validation and types	2026-10-03T16:02:36.2811516Z FileNotFoundError: No bundled uv at /home/runner/work/rox-one/rox-one/apps/electron/resources/bin/linux-x64/uv and no uv on PATH
+component-recovery	Project validation and types	2026-10-03T16:02:36.2812311Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.2812641Z ======================================================================
+component-recovery	Project validation and types	2026-10-03T16:02:36.2813821Z ERROR: setUpClass (apps.electron.resources.scripts.tests.test_doc_diff_smoke.DocDiffSmokeTests)
+component-recovery	Project validation and types	2026-10-03T16:02:36.2814929Z ----------------------------------------------------------------------
+component-recovery	Project validation and types	2026-10-03T16:02:36.2815594Z Traceback (most recent call last):
+component-recovery	Project validation and types	2026-10-03T16:02:36.2816681Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/test_doc_diff_smoke.py", line 13, in setUpClass
+component-recovery	Project validation and types	2026-10-03T16:02:36.2817619Z     cls.env = build_env()
+component-recovery	Project validation and types	2026-10-03T16:02:36.2818018Z               ^^^^^^^^^^^
+component-recovery	Project validation and types	2026-10-03T16:02:36.2819058Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 59, in build_env
+component-recovery	Project validation and types	2026-10-03T16:02:36.2819956Z     uv = resolve_uv_binary()
+component-recovery	Project validation and types	2026-10-03T16:02:36.2820341Z          ^^^^^^^^^^^^^^^^^^^
+component-recovery	Project validation and types	2026-10-03T16:02:36.2821358Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 48, in resolve_uv_binary
+component-recovery	Project validation and types	2026-10-03T16:02:36.2822590Z     raise FileNotFoundError(f"No bundled uv at {bundled} and no uv on PATH")
+component-recovery	Project validation and types	2026-10-03T16:02:36.2824135Z FileNotFoundError: No bundled uv at /home/runner/work/rox-one/rox-one/apps/electron/resources/bin/linux-x64/uv and no uv on PATH
+component-recovery	Project validation and types	2026-10-03T16:02:36.2824958Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.2825281Z ======================================================================
+component-recovery	Project validation and types	2026-10-03T16:02:36.2826353Z ERROR: setUpClass (apps.electron.resources.scripts.tests.test_markitdown_smoke.MarkitdownSmokeTests)
+component-recovery	Project validation and types	2026-10-03T16:02:36.2827597Z ----------------------------------------------------------------------
+component-recovery	Project validation and types	2026-10-03T16:02:36.2828225Z Traceback (most recent call last):
+component-recovery	Project validation and types	2026-10-03T16:02:36.2829265Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/test_markitdown_smoke.py", line 13, in setUpClass
+component-recovery	Project validation and types	2026-10-03T16:02:36.2830209Z     cls.env = build_env()
+component-recovery	Project validation and types	2026-10-03T16:02:36.2830544Z               ^^^^^^^^^^^
+component-recovery	Project validation and types	2026-10-03T16:02:36.2831386Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 59, in build_env
+component-recovery	Project validation and types	2026-10-03T16:02:36.2832277Z     uv = resolve_uv_binary()
+component-recovery	Project validation and types	2026-10-03T16:02:36.2832663Z          ^^^^^^^^^^^^^^^^^^^
+component-recovery	Project validation and types	2026-10-03T16:02:36.2833777Z   File "/home/runner/work/rox-one/rox-one/apps/electron/resources/scripts/tests/_tool_test_harness.py", line 48, in resolve_uv_binary
+component-recovery	Project validation and types	2026-10-03T16:02:36.2834962Z     raise FileNotFoundError(f"No bundled uv at {bundled} and no uv on PATH")
+component-recovery	Project validation and types	2026-10-03T16:02:36.2836413Z FileNotFoundError: No bundled uv at /home/runner/work/rox-one/rox-one/apps/electron/resources/bin/linux-x64/uv and no uv on PATH
+component-recovery	Project validation and types	2026-10-03T16:02:36.2837124Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.2837463Z ----------------------------------------------------------------------
+component-recovery	Project validation and types	2026-10-03T16:02:36.2837961Z Ran 0 tests in 0.003s
+component-recovery	Project validation and types	2026-10-03T16:02:36.2838161Z 
+component-recovery	Project validation and types	2026-10-03T16:02:36.2838304Z FAILED (errors=8)
+component-recovery	Project validation and types	2026-10-03T16:02:36.2847339Z error: script "test:doc-tools" exited with code 5
+component-recovery	Project validation and types	2026-10-03T16:02:36.2854386Z error: script "validate:dev" exited with code 5
+component-recovery	Project validation and types	2026-10-03T16:02:36.2864196Z error: script "validate:ci" exited with code 5
+component-recovery	Project validation and types	2026-10-03T16:02:36.2888606Z ##[error]Process completed with exit code 5.

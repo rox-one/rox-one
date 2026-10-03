@@ -1,0 +1,26 @@
+docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/baseline-regression.log:43: trailing whitespace.
++ 8 | 
+docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/final-app-shell-regression.log:26: trailing whitespace.
++ 8 | 
+docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/final-regression.log:73: trailing whitespace.
++ 8 | 
+docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/geometry-red.log:4: trailing whitespace.
++50 | 
+docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/geometry-red.log:19: trailing whitespace.
++61 | 
+docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/geometry-red.log:32: trailing whitespace.
++71 | 
+docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/geometry-red.log:48: trailing whitespace.
++88 | 
+docs/final-readiness/execution/cloud/OWNER-UI-001/lead-layout-test-proposal.patch:15: trailing whitespace.
++ 
+docs/final-readiness/execution/cloud/OWNER-UI-001/lead-route-parser-proposal.patch:10: trailing whitespace.
++ 
+docs/final-readiness/execution/cloud/OWNER-UI-001/lead-route-parser-proposal.patch:33: trailing whitespace.
++ 
+docs/final-readiness/execution/cloud/OWNER-UI-001/lead-route-parser-proposal.patch:37: trailing whitespace.
++ 
+docs/final-readiness/execution/cloud/OWNER-UI-001/lead-route-parser-proposal.patch:106: trailing whitespace.
++ 
+docs/final-readiness/execution/cloud/OWNER-UI-001/lead-route-parser-proposal.patch:115: trailing whitespace.
++ 

@@ -1,0 +1,9 @@
+{
+  "runId": 37135191633,
+  "headSha": "136c6c70fb93d80409a19ac8a14c64f63de2ceec",
+  "status": "completed",
+  "conclusion": "failure",
+  "htmlUrl": "https://github.com/rox-one/rox-one/actions/runs/37135191633",
+  "observedAt": "2026-10-03T16:07:19.201905+00:00",
+  "logSha256": "ef3b2940551cb63137fac0b9e7833173a8e98bef9dc2e7df374dfcab65c5042e"
+}

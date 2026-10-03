@@ -1,0 +1,13 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts:
+(pass) production native surface renderer ownership > hidden/released duplicate hosts cannot hide their visible sibling, while clipping hides the selected host [10814.91ms]
+(pass) production native surface renderer ownership > retains a typed draft through responsive hiding, restores geometry and suppresses overlays [3911.20ms]
+(pass) production native surface renderer ownership > releases an inspector attachment arriving after close without hiding a sibling surface [3816.76ms]
+(pass) production native surface renderer ownership > ignores an obsolete attachment failure after a newer open succeeds [2533.70ms]
+(pass) production native surface renderer ownership > preserves imported-cookie consent controls and routes explicit opt-in to a private instance [1785.51ms]
+
+ 5 pass
+ 0 fail
+ 9 expect() calls
+Ran 5 tests across 1 file. [54.31s]

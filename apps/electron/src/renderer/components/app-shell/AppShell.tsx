@@ -1718,10 +1718,13 @@ function AppShellContent({
 
   // Ensure session messages are loaded when selected
   React.useEffect(() => {
-    if (session.selected) {
-      ensureMessagesLoaded(session.selected)
-    }
-  }, [session.selected, ensureMessagesLoaded])
+    if (!session.selected || !activeWorkspaceId) return
+    // Read current ownership at the side-effect boundary: another selection
+    // writer or a workspace transition may have invalidated the rendered map.
+    const meta = store.get(sessionMetaMapAtom).get(session.selected)
+    if (!meta || (meta.workspaceId !== activeWorkspaceId && meta.workspaceId !== remoteWorkspaceId)) return
+    ensureMessagesLoaded(session.selected)
+  }, [session.selected, activeWorkspaceId, remoteWorkspaceId, sessionMetaMap, ensureMessagesLoaded, store])
 
   // Wrap delete handler to clear selection when deleting the currently selected session
   // This prevents stale state during re-renders that could cause crashes
