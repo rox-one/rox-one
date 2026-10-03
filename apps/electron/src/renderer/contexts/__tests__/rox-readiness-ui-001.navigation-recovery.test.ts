@@ -20,7 +20,7 @@ const file = ts.createSourceFile('NavigationContext.tsx', source, ts.ScriptTarge
 const callbacks = new Map<string, string>()
 
 // Supply the merged production lifecycle/codec boundaries without changing any callback body.
-function mergedBindings(bindings: Record<string, any>) {
+function mergedBindings(bindings: Record<string, any>): Record<string, any> {
   const owner = bindings.pendingNavigationRef?.current?.owner ?? { active: true, revision: 0 }
   return { navigationOwnerRef: { current: owner }, decodePanelEntries, encodePanelEntries,
     parseRouteToNavigationStateOrUnavailable: resolveRouteNavigationState,
