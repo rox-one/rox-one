@@ -9,7 +9,7 @@ import ProjectRoadmapPage from './ProjectRoadmapPage'
 import { SharedProjectDetails } from '@/components/projects/SharedProjectProjection'
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useAtomValue } from 'jotai'
 import { ArrowDown, ArrowUp, FolderOpen, Plus, Trash2, Upload, ImagePlus } from 'lucide-react'
 import { ProjectIcon, invalidateProjectIconCache } from '@/components/projects/ProjectIcon'
@@ -68,6 +68,8 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const { onCreateSession, onOpenFile } = useAppShellContext()
 
   const [project, setProject] = useState<LoadedProject | null>(null)
+  const projectRequestRef = useRef(0)
+  const projectMountedRef = useRef(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   useEffect(() => tour.capability('projects.available', loading
@@ -254,14 +256,27 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
 
   // Load project (and re-load on broadcast)
   const loadProject = useCallback(async () => {
-    if (!workspaceId) return
+    if (!projectMountedRef.current) return
+    const request = ++projectRequestRef.current
+    if (!workspaceId) {
+      setProject(null)
+      setError(t('common.unavailable'))
+      setLoading(false)
+      return
+    }
     const listed = soupProjectListResult({ source: 'native', nativeIds: projectSlug ? [projectSlug] : [] })
     const read = soupProjectReadResult({ source: 'native', nativeId: projectSlug })
-    if (!isClaimableLive(listed.result) || !isClaimableLive(read.result)) return
+    if (!isClaimableLive(listed.result) || !isClaimableLive(read.result)) {
+      setProject(null)
+      setError(t('common.unavailable'))
+      setLoading(false)
+      return
+    }
     setLoading(true)
     setError(null)
     try {
       const result = await window.electronAPI.getProject(workspaceId, projectSlug)
+      if (request !== projectRequestRef.current) return
       if (!result) {
         setError(t('projectInfo.notFound'))
         setProject(null)
@@ -275,15 +290,22 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
       setEditDetails(loaded.config.details ?? '')
       setEditColor(loaded.config.color ?? '')
     } catch (err) {
+      if (request !== projectRequestRef.current) return
       console.error('[ProjectInfoPage] Failed to load project:', err)
+      setProject(null)
       setError(err instanceof Error ? err.message : String(err))
     } finally {
-      setLoading(false)
+      if (request === projectRequestRef.current) setLoading(false)
     }
   }, [workspaceId, projectSlug, t])
 
   useEffect(() => {
-    loadProject()
+    projectMountedRef.current = true
+    void loadProject()
+    return () => {
+      projectMountedRef.current = false
+      ++projectRequestRef.current
+    }
   }, [loadProject])
 
   useEffect(() => {
@@ -404,8 +426,13 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
     if (!isClaimableLive(act)) return
     try {
       await window.electronAPI.deleteProject(workspaceId, project.config.slug)
+      if (!projectMountedRef.current) return
+      ++projectRequestRef.current
+      setProject(null)
+      setLoading(false)
       navigate(routes.view.projects())
     } catch (err) {
+      if (!projectMountedRef.current) return
       console.error('[ProjectInfoPage] Delete failed:', err)
       toast.error(t('projectInfo.deleteFailed'))
     }

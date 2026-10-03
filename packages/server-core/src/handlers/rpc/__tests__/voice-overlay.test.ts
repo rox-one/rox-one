@@ -19,7 +19,8 @@ test('actual capture handlers publish only the current server context and retire
     onClientDisconnect(callback: typeof disconnect) { disconnect = callback; return () => {} },
     onShutdown(callback: typeof shutdown) { shutdown = callback; return () => {} },
   } as unknown as RpcServer
-  registerVoiceHandlers(server, { voiceOverlay: { publish: value => published.push(value), retire: id => retired.push(id) } } as unknown as HandlerDeps,
+  const voiceOverlay: NativeVoiceOverlayHost = { publish: value => { published.push(value) }, retire: id => { retired.push(id) } }
+  registerVoiceHandlers(server, { voiceOverlay } as unknown as HandlerDeps,
     { configDir: directory, loadPrefs: () => ({ ...getDefaultVoicePrefs(), overlayPosition: 'top' }) })
   const context: RequestContext = { clientId: 'verified-original', workspaceId: 'workspace', webContentsId: 19 }
   try {

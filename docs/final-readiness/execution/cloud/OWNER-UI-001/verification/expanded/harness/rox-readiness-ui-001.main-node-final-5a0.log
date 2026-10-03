@@ -1,0 +1,13 @@
+Actual test callbacks via task-local Node adapter; Node v26.8.2; external Chromium; no Bun pass claim
+[PASS] selected source deletion and recreation preserve workspace and entity address 8027ms
+[PASS] deletion and foreign-workspace session metadata cannot mount another chat 8369ms
+[PASS] malformed and unsupported terminal addresses show specific unavailable surfaces 9524ms
+[PASS] cloud-run lookup failure retries and deletion refreshes the selected address 5745ms
+[PASS] retry recovers an unavailable selected source through the actual click handler 4600ms
+[PASS] late resource load cannot replace a new missing address 2890ms
+[PASS] cloud run switch clears previous content while the new callback is pending 4813ms
+[PASS] retries rejected lazy imports and keeps the selected route 2984ms
+[PASS] retries rendering failure and a new route clears a previous error 7151ms
+[PASS] workspace switch cancels a real pending resize timer before it can persist old geometry 3545ms
+[PASS] actual localStorage persists valid sizes across reload and other windows 6743ms
+{"runtime":"Node actual source callbacks adapter","pass":11,"fail":0,"assertions":23,"cases":11,"registeredCases":11,"elapsedMs":65915}

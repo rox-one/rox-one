@@ -1,0 +1,43 @@
+bun test v1.3.14 (0d9b296a)
+
+tests/final-readiness/rox-readiness-ui-001.product.test.ts:
+UI-001 native stage: boot-native-product
+2026-10-03T13:26:57.870Z pw:browser <launching> /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-TPAagC/bin/electron-launcher --inspect=0 --remote-debugging-port=0 --disable-gpu /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/apps/electron
+2026-10-03T13:26:57.915Z pw:browser <launched> pid=19569
+2026-10-03T13:26:58.659Z pw:browser [pid=19569][err] Debugger listening on ws://127.0.0.1:62086/3e63743d-b15e-4054-b057-21220a5436da
+2026-10-03T13:26:58.659Z pw:browser [pid=19569][err] For help, see: https://nodejs.org/en/docs/inspector
+2026-10-03T13:26:58.660Z pw:browser <ws connecting> ws://127.0.0.1:62086/3e63743d-b15e-4054-b057-21220a5436da
+2026-10-03T13:26:58.665Z pw:browser [pid=19569][err] Debugger attached.
+2026-10-03T13:27:00.205Z pw:browser [pid=19569][out] 2026-10-03T13:27:00.201Z INFO  [main] [shell-env] Loading environment from /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-TPAagC/bin/isolated-shell
+2026-10-03T13:27:00.416Z pw:browser [pid=19569][out] 2026-10-03T13:27:00.416Z INFO  [main] [shell-env] Loaded 11 environment variables
+2026-10-03T13:27:00.417Z pw:browser [pid=19569][out] 2026-10-03T13:27:00.416Z INFO  [main] [shell-env] PATH has 1 entries
+2026-10-03T13:27:00.425Z pw:browser [pid=19569][out] 2026-10-03T13:27:00.424Z INFO  [main] [i18n] startup hydration {"persistedUiLanguage":"ru","resolvedLanguageAfterHydration":"ru"}
+2026-10-03T13:27:00.427Z pw:browser [pid=19569][err] 2026-10-03T13:27:00.425Z WARN  [main] Bundled uv binary missing, CLI document tools may fail unless uv is available on PATH. {"expectedUvPath":"/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/apps/electron/resources/bin/darwin-arm64/uv","usingCraftUv":"uv"}
+2026-10-03T13:27:00.427Z pw:browser [pid=19569][out] 2026-10-03T13:27:00.425Z INFO  [main] CLI tools configured: {"uvBinary":"uv","binDir":"/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/apps/electron/resources/bin","scriptsDir":"/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/apps/electron/resources/scripts","bundledUvExists":false}
+2026-10-03T13:27:00.427Z pw:browser [pid=19569][out] 2026-10-03T13:27:00.427Z INFO   [proxy] Applying proxy settings: {"enabled":false,"source":"system","hasHttpProxy":false,"hasHttpsProxy":false,"hasNoProxy":false}
+2026-10-03T13:27:00.443Z pw:browser [pid=19569][err] 
+2026-10-03T13:27:00.443Z pw:browser [pid=19569][err] DevTools listening on ws://127.0.0.1:62093/devtools/browser/911e42c5-9bae-4dfe-810f-27280aac1357
+2026-10-03T13:28:57.859Z pw:browser <ws disconnecting> ws://127.0.0.1:62086/3e63743d-b15e-4054-b057-21220a5436da
+2026-10-03T13:28:57.864Z pw:browser <ws error> ws://127.0.0.1:62086/3e63743d-b15e-4054-b057-21220a5436da error WebSocket was closed before the connection was established
+2026-10-03T13:28:57.864Z pw:browser <ws connect error> ws://127.0.0.1:62086/3e63743d-b15e-4054-b057-21220a5436da WebSocket was closed before the connection was established
+2026-10-03T13:28:57.864Z pw:browser <ws disconnected> ws://127.0.0.1:62086/3e63743d-b15e-4054-b057-21220a5436da code=1006 reason=
+2026-10-03T13:28:57.864Z pw:browser <ws unexpected response> ws://127.0.0.1:62086/3e63743d-b15e-4054-b057-21220a5436da 101 Switching Protocols
+2026-10-03T13:28:57.877Z pw:browser [pid=19569][err] Debugger ending on ws://127.0.0.1:62086/3e63743d-b15e-4054-b057-21220a5436da
+2026-10-03T13:28:57.877Z pw:browser [pid=19569][err] For help, see: https://nodejs.org/en/docs/inspector
+UI-001 native evidence: /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791033957961
+112 |       const skip = page.getByRole('button', { name: 'Пропустить', exact: true })
+113 |       if (await skip.isVisible()) await skip.click()
+114 |       await page.locator('[data-shell-role="chrome"]').waitFor({ timeout: 40_000 })
+115 |     }
+116 |     const launch = async () => {
+117 |       app = await _electron.launch({ executablePath: electronLauncher, args: ['--disable-gpu', join(root, 'apps/electron')], env: environment, timeout: 120_000 })
+                                  ^
+TimeoutError: launch: Timeout 120000ms exceeded.
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/tests/final-readiness/rox-readiness-ui-001.product.test.ts:117:29
+      at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/tests/final-readiness/rox-readiness-ui-001.product.test.ts:127:39
+      at processTicksAndRejections (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/native:7:39)
+(fail) UI-001 actual Electron → NavigationProvider → RPC → canonical storage > links, history, reload, selected deletion, resize, modal focus and native restart [180288.65ms]
+
+ 0 pass
+ 1 fail
+Ran 1 test across 1 file. [183.31s]

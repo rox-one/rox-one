@@ -1,0 +1,187 @@
+Устройство
+Сессии
+3
+Проекты
+1
+Страницы
+1
+Задачи
+Память
+Встречи
+Источники
+25
+API
+4
+MCP
+13
+Локальные папки
+8
+Навыки
+731
+Заметки
+Автоматизации
+30
+Соединения
+Настройки
+ЭКСПЕРИМЕНТАЛЬНЫЕ ФУНКЦИИ
+Досье
+Радар
+Решения
+Центр агентов
+Фокус
+Стандарт · Баланс —
+UI-001 acceptance
+Стандарт
+Баланс —
+Источники
+0 в индексе · JS
+Переиндексировать
+МИКРОСЕРВИСЫ ПРИЛОЖЕНИЯ
+🧩
+Applications
+Локальный
+≈48 ток.
+Applications and ~/Library/Applications
+🧠
+Memory
+Локальный
+≈49 ток.
+Self-learning memory files
+📓
+Notes vault
+Локальный
+≈310 ток.
+Markdown notes, backlinks, tags, properties, daily notes, and assets
+📁
+Projects
+Локальный
+≈49 ток.
+Workspace projects
+💬
+Last sessions
+Локальный
+≈54 ток.
+Imported and archived session transcripts
+✅
+Tasks
+Локальный
+≈46 ток.
+Workspace task specs
+✈️
+Telegram Application Support
+Локальный
+≈39 ток.
+Telegram Application Support folder
+🗂️
+Folder tree
+Локальный
+≈45 ток.
+Workspace folder tree
+MCP
+🕸️
+CodeGraphContext
+MCP
+Не проверен
+≈208 ток.
+Index the selected project, inspect symbols, call chains and dependencies, and assess the impact of changes.
+📖
+Context7
+MCP
+Не проверен
+≈206 ток.
+Resolve library IDs and fetch current, version-specific API documentation before writing integrations, configuration, or library-dependent code.
+📚
+DeepWiki
+MCP
+Не проверен
+≈179 ток.
+Read repository architecture and ask questions about public GitHub repositories before changing unfamiliar code.
+🔎
+Everything MCP
+MCP
+Выключен
+≈207 ток.
+Search Windows files and folders by name or pattern and obtain metadata for known paths.
+🔥
+Firecrawl MCP
+MCP
+Требуется авторизация
+≈201 ток.
+Search, map, scrape and crawl websites when research needs page content and evidence.
+🧠
+Mem0
+MCP
+Требуется авторизация
+≈276 ток.
+Retrieve and maintain useful long-term preferences, decisions and context for the current user. Respect the user's memory preferences and avoid storing the same facts in every connected memory system.
+🌐
+Playwright
+MCP
+Не проверен
+≈191 ток.
+Use a real browser to navigate, inspect pages, reproduce UI issues and verify user-facing behavior.
+🧭
+Qdrant
+MCP
+Не проверен
+≈332 ток.
+Store and retrieve task-relevant knowledge in the selected Qdrant vector collection. Keep records scoped to the user or project and use the collection chosen for the task.
+📝
+QMD
+MCP
+Не проверен
+≈294 ток.
+Find relevant local Markdown notes and documents using keyword or semantic retrieval, then read the matching documents before answering.
+✈️
+Telegram MCP
+MCP
+Требуется авторизация
+≈316 ток.
+Read Telegram context when the task calls for it. Send or change messages only when the user authorizes those actions.
+🔍
+Weaviate
+MCP
+Не проверен
+≈315 ток.
+Retrieve relevant objects from the configured Weaviate knowledge collections. Store or change objects only when the task calls for it and the server exposes write tools.
+🪟
+Windows Commander MCP
+MCP
+Выключен
+≈226 ток.
+Inspect and control Windows desktop applications, windows and system state for tasks involving the local machine.
+🖥️
+Windows MCP
+MCP
+Выключен
+≈215 ток.
+Inspect and automate Windows desktop UI, files and system state when the task requires native Windows tools.
+API
+🌐
+Brave Search
+API
+Требуется авторизация
+≈52 ток.
+Web search with cited results
+🧪
+E2B
+API
+Требуется авторизация
+≈115 ток.
+Isolated code execution sandboxes
+🔎
+Exa
+API
+Требуется авторизация
+≈142 ток.
+Neural web search & research (Exa)
+🔥
+Firecrawl
+API
+Требуется авторизация
+≈137 ток.
+Crawl & extract clean page content (Firecrawl)
+
+Источник не найден
+
+Повторить

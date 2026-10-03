@@ -60,33 +60,47 @@ export function normalizeMeetingList(listed: unknown): MeetingRow[] {
   return out
 }
 
-export function useMeetings(workspaceId: string | null | undefined): { meetings: MeetingRow[]; available: boolean } {
-  const [state, setState] = useState<{ meetings: MeetingRow[]; available: boolean }>({ meetings: [], available: false })
+export interface MeetingSourceState {
+  meetings: MeetingRow[]
+  available: boolean
+  loaded: boolean
+  workspaceId: string | null
+}
+
+export function useMeetings(workspaceId: string | null | undefined): MeetingSourceState {
+  const scope = workspaceId ?? null
+  const [state, setState] = useState<MeetingSourceState>({ meetings: [], available: false, loaded: false, workspaceId: scope })
   useEffect(() => {
     let cancelled = false
+    let latestRequest = 0
     const api = window.electronAPI
+    const empty = { meetings: [], available: false, loaded: false, workspaceId: scope }
+    setState(current => current.workspaceId === scope ? current : empty)
     // Local recordings (Встречи) are the source of real meetings on this device.
     const local = api?.meetingsLocal
-    if (local) {
-      const load = () => local.list(workspaceId ?? null).then(
-        (listed) => { if (!cancelled) setState({ meetings: normalizeMeetingList(listed), available: true }) },
-        () => { if (!cancelled) setState({ meetings: [], available: false }) },
+    const load = () => {
+      if (cancelled) return
+      const request = ++latestRequest
+      setState(current => ({ ...(current.workspaceId === scope ? current : empty), loaded: false }))
+      const read = local ? local.list(scope) : api.listMeetings(scope!)
+      void read.then(
+        (listed) => { if (!cancelled && request === latestRequest) setState({ meetings: normalizeMeetingList(listed), available: true, loaded: true, workspaceId: scope }) },
+        () => { if (!cancelled && request === latestRequest) setState({ meetings: [], available: false, loaded: true, workspaceId: scope }) },
       )
-      void load()
-      const off = local.onChanged(() => { void load() })
-      return () => { cancelled = true; off() }
     }
-    if (!workspaceId || typeof api?.listMeetings !== 'function') {
-      setState({ meetings: [], available: false })
+    if (local) {
+      load()
+      const off = local.onChanged(load)
+      return () => { cancelled = true; latestRequest += 1; off() }
+    }
+    if (!scope || typeof api?.listMeetings !== 'function') {
+      setState({ ...empty, loaded: true })
       return
     }
-    api.listMeetings(workspaceId).then(
-      (listed) => { if (!cancelled) setState({ meetings: normalizeMeetingList(listed), available: true }) },
-      () => { if (!cancelled) setState({ meetings: [], available: false }) },
-    )
-    return () => { cancelled = true }
-  }, [workspaceId])
-  return state
+    load()
+    return () => { cancelled = true; latestRequest += 1 }
+  }, [scope])
+  return state.workspaceId === scope ? state : { meetings: [], available: false, loaded: false, workspaceId: scope }
 }
 
 export interface MessengerBinding {

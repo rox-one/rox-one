@@ -1,0 +1,201 @@
+{
+  "profile": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-OIluWP",
+  "workspaceId": "158fad30-076e-43f4-af98-4b1e6485e638",
+  "workspaceSlug": "ui-001",
+  "workspaceRoot": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-OIluWP/workspaces/ui-001",
+  "noteRoot": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-OIluWP/notes",
+  "sessionA": "261003-prime-olive",
+  "sessionB": "261003-fresh-holly",
+  "projectSlug": "ui001-project",
+  "pageSlug": "ui001-page",
+  "sourceSlug": "ui001-local-source",
+  "skillSlug": "ui001-workspace-skill",
+  "noteId": "ui001-note",
+  "runtime": [
+    {
+      "name": "omp",
+      "version": "18.4.12",
+      "source": "/Users/t/.rox/toolchain/omp/18.4.12",
+      "destination": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-OIluWP/toolchain/omp/18.4.12",
+      "genuineMarker": "omp@18.4.12\n",
+      "executables": [
+        {
+          "bin": "bin/rox",
+          "sha256": "33cb0fd5258b711ff161d8778f993242b00a4315dfa087a777e22306800b9ff3"
+        },
+        {
+          "bin": "bin/omp",
+          "sha256": "33cb0fd5258b711ff161d8778f993242b00a4315dfa087a777e22306800b9ff3"
+        }
+      ],
+      "relocatedInternalLinks": []
+    },
+    {
+      "name": "python",
+      "version": "3.12",
+      "source": "/Users/t/.rox/toolchain/python/3.12",
+      "destination": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-OIluWP/toolchain/python/3.12",
+      "genuineMarker": null,
+      "executables": [
+        {
+          "bin": ".pyinstall/bin/python3",
+          "sha256": "b3be4099b63da4865986a3a9f2fedf15486bcd07f7bee7df8a0c32756800ced7"
+        },
+        {
+          "bin": ".pyinstall/bin/python3.12",
+          "sha256": "b3be4099b63da4865986a3a9f2fedf15486bcd07f7bee7df8a0c32756800ced7"
+        }
+      ],
+      "relocatedInternalLinks": [
+        {
+          "path": "cpython-3.12-macos-aarch64-none",
+          "previous": "/Users/t/.rox/toolchain/python/3.12/cpython-3.12.13-macos-aarch64-none",
+          "current": "cpython-3.12.13-macos-aarch64-none"
+        }
+      ]
+    },
+    {
+      "name": "node",
+      "version": "22.23.2",
+      "source": "/Users/t/.rox/toolchain/node/22.23.2",
+      "destination": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-OIluWP/toolchain/node/22.23.2",
+      "genuineMarker": "node@22.23.2\n",
+      "executables": [
+        {
+          "bin": "node-v22.23.2-darwin-arm64/bin/node",
+          "sha256": "18e387c90ab8a8400183e8bdd396376e1e875b91b4c874b894dcade7b35bf572"
+        },
+        {
+          "bin": "node-v22.23.2-darwin-arm64/bin/npx",
+          "sha256": "237adf8f3747cad8b9b62fcfd0d9c8d509a64e550337707f55100afcb79e8900"
+        }
+      ],
+      "relocatedInternalLinks": []
+    },
+    {
+      "name": "jq",
+      "version": "1.8.1",
+      "source": "/Users/t/.rox/toolchain/jq/1.8.1",
+      "destination": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-OIluWP/toolchain/jq/1.8.1",
+      "genuineMarker": "jq@1.8.1\n",
+      "executables": [
+        {
+          "bin": "bin/jq",
+          "sha256": "a9fe3ea2f86dfc72f6728417521ec9067b343277152b114f4e98d8cb0e263603"
+        }
+      ],
+      "relocatedInternalLinks": []
+    },
+    {
+      "name": "yq",
+      "version": "4.53.3",
+      "source": "/Users/t/.rox/toolchain/yq/4.53.3",
+      "destination": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-OIluWP/toolchain/yq/4.53.3",
+      "genuineMarker": "yq@4.53.3\n",
+      "executables": [
+        {
+          "bin": "bin/yq",
+          "sha256": "877de31753a4dd2401aa048937aa9a7fc4d5f6ce858cf31508c5802954297213"
+        }
+      ],
+      "relocatedInternalLinks": []
+    },
+    {
+      "name": "gh",
+      "version": "2.97.0",
+      "source": "/Users/t/.rox/toolchain/gh/2.97.0",
+      "destination": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-OIluWP/toolchain/gh/2.97.0",
+      "genuineMarker": "gh@2.97.0\n",
+      "executables": [
+        {
+          "bin": "gh_2.97.0_macOS_arm64/bin/gh",
+          "sha256": "0d17dddf96bcc1dc50f3420a064d593d64016b0be16286a6c26121f2a5cb8316"
+        }
+      ],
+      "relocatedInternalLinks": []
+    },
+    {
+      "name": "pandoc",
+      "version": "3.10.1",
+      "source": "/Users/t/.rox/toolchain/pandoc/3.10.1",
+      "destination": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-OIluWP/toolchain/pandoc/3.10.1",
+      "genuineMarker": "pandoc@3.10.1\n",
+      "executables": [
+        {
+          "bin": "pandoc-3.10.1-arm64/bin/pandoc",
+          "sha256": "e4688048ef1782760376ed20c422dfe26d3d257cbe382fea2f2394cf11ffeb0f"
+        }
+      ],
+      "relocatedInternalLinks": []
+    },
+    {
+      "name": "ffmpeg",
+      "version": "9.0",
+      "source": "/Users/t/.rox/toolchain/ffmpeg/9.0",
+      "destination": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-OIluWP/toolchain/ffmpeg/9.0",
+      "genuineMarker": "ffmpeg@9.0\n",
+      "executables": [
+        {
+          "bin": "ffmpeg",
+          "sha256": "f54ec33409c78f54564c80afa16213b0970065100a87f4129516be0c8660c493"
+        }
+      ],
+      "relocatedInternalLinks": []
+    },
+    {
+      "name": "bun",
+      "version": "1.3.14",
+      "source": "/Users/t/.rox/toolchain/bun/1.3.14",
+      "destination": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-OIluWP/toolchain/bun/1.3.14",
+      "genuineMarker": "bun@1.3.14\n",
+      "executables": [
+        {
+          "bin": "bun-darwin-aarch64/bun",
+          "sha256": "e0c90ec15d33363e6b70713d56bc3b2c7585c17f40a0fe0f8fd9305901d4e233"
+        }
+      ],
+      "relocatedInternalLinks": []
+    },
+    {
+      "name": "uv",
+      "version": "0.12.2",
+      "source": "/Users/t/.rox/toolchain/uv/0.12.2",
+      "destination": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-OIluWP/toolchain/uv/0.12.2",
+      "genuineMarker": "uv@0.12.2\n",
+      "executables": [
+        {
+          "bin": "uv-aarch64-apple-darwin/uv",
+          "sha256": "1fb9a1083a299ec9dee6d44af22959741b808e1ae308c13c9afb5c330d48279a"
+        }
+      ],
+      "relocatedInternalLinks": []
+    }
+  ],
+  "disabledSeedSources": [
+    "deepwiki",
+    "tasks",
+    "qmd",
+    "windows-mcp",
+    "memory",
+    "context7",
+    "firecrawl",
+    "projects",
+    "exa",
+    "playwright",
+    "brave",
+    "telegram-support",
+    "everything-mcp",
+    "firecrawl-mcp",
+    "codegraph",
+    "workspace-tree",
+    "sessions",
+    "notes",
+    "windows-commander",
+    "applications",
+    "qdrant",
+    "mem0",
+    "e2b",
+    "weaviate",
+    "telegram-mcp"
+  ]
+}

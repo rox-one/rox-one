@@ -2788,6 +2788,14 @@ export interface TerminalNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+/** A view address that cannot be resolved; retain it for recovery and history. */
+export interface UnavailableNavigationState {
+  navigator: 'unavailable'
+  route: string
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
 /**
  * Unified navigation state
  */
@@ -2815,6 +2823,11 @@ export type NavigationState =
   | ConnectionsNavigationState
   | HomeNavigationState
   | ScreenNavigationState
+  | UnavailableNavigationState
+
+export const isUnavailableNavigation = (
+  state: NavigationState
+): state is UnavailableNavigationState => state.navigator === 'unavailable'
 
 export const isSessionsNavigation = (
   state: NavigationState
@@ -2914,6 +2927,10 @@ export const DEFAULT_NAVIGATION_STATE: NavigationState = {
 }
 
 export const getNavigationStateKey = (state: NavigationState): string => {
+  if (state.navigator === 'unavailable') {
+    // JSON also preserves invalid percent escapes and lone surrogates safely.
+    return `unavailable:${JSON.stringify(state.route)}`
+  }
   if (state.navigator === 'search') {
     return `search${state.query ? `?q=${encodeURIComponent(state.query)}` : ''}`
   }
@@ -3036,6 +3053,18 @@ export const getNavigationStateKey = (state: NavigationState): string => {
 }
 
 export const parseNavigationStateKey = (key: string): NavigationState | null => {
+  try {
+    return parseNavigationStateKeyUnchecked(key)
+  } catch {
+    return null
+  }
+}
+
+const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null => {
+  if (key.startsWith('unavailable:')) {
+    const route: unknown = JSON.parse(key.slice('unavailable:'.length))
+    return typeof route === 'string' ? { navigator: 'unavailable', route, details: null } : null
+  }
   // Handle sources
   if (key === 'sources') return { navigator: 'sources', details: null }
   if (key.startsWith('sources/source/')) {

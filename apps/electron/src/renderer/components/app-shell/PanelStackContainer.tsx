@@ -9,7 +9,7 @@ import { useRef, useEffect, useMemo, useCallback } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { motion, useReducedMotion } from 'motion/react'
 import { panelStackAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, type PanelSpatialDirection } from '@/atoms/panel-stack'
-import { parseRouteToNavigationState } from '../../../shared/route-parser'
+import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-parser'
 import { isDetailNavState } from '@/lib/nav-helpers'
 import { compactPanelShowsContent, panelGridFocusTarget, panelGridKey, panelGridShape, resolvePanelGridTracks } from '@/lib/panel-workspace-layout'
 import { usePanelWorkspaceLayout } from '@/hooks/usePanelWorkspaceLayout'
@@ -79,7 +79,7 @@ export function PanelStackContainer({
   const hasNavigator = navigatorWidth > 0
   const expandedNavigator = navigatorExpanded && hasNavigator && !isCompact
   const isLeftEdge = !hasSidebar && !hasNavigator
-  const focusedNavState = focusedRoute ? parseRouteToNavigationState(focusedRoute) : null
+  const focusedNavState = focusedRoute ? parseRouteToNavigationStateOrUnavailable(focusedRoute) : null
   const hasSelectedContent = isCompact && compactPanelShowsContent(panels.length, hasNavigator, isDetailNavState(focusedNavState))
   const transition = isResizing || reduceMotion ? { duration: 0 } : PANEL_TRANSITION
   const gridMinWidth = singlePanel ? 0 : shape.columns * PANEL_GRID_MIN_WIDTH + (shape.columns - 1) * PANEL_GAP

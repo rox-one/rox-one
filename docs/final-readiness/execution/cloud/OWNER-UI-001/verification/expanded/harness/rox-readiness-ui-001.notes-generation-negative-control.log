@@ -1,0 +1,111 @@
+bun test v1.3.14 (0d9b296a)
+
+work/ui001-extension-repair/rox-readiness-ui-001.note-route-lifecycle.negative.test.ts:
+(pass) UI-001 actual selected note read and deletion callbacks > missing selected note persists explicit state and successful Retry clears it with real body [26.00ms]
+(pass) UI-001 actual selected note read and deletion callbacks > denied selected note remains explicit unavailable instead of a generic pick state [0.89ms]
+(pass) UI-001 actual selected note read and deletion callbacks > older success and refusal cannot replace the latest opened note [0.40ms]
+(pass) UI-001 actual selected note read and deletion callbacks > uncommitted calls do no RPC; actual committed lease cleanup fences late replies [0.14ms]
+(pass) UI-001 actual selected note read and deletion callbacks > delete event for a pending selected target fences late body and shows persistent missing state [0.24ms]
+(pass) UI-001 actual selected note read and deletion callbacks > external deletion retains the dirty body and blocks replacing the deleted source [0.06ms]
+(pass) UI-001 actual selected note read and deletion callbacks > foreign workspace and disposed subscriptions cannot delete the visible draft [0.04ms]
+149 |     const f = fixture({}, true), queued = f.retainedCallback()
+150 |     f.disposeSubscription!(); await flush(); expect(f.events).toContain('unsubscribe')
+151 |     f.events.length = 0
+152 |     queued({ workspaceId: 'workspace', reason: 'delete', noteId: 'selected' })
+153 |     queued({ workspaceId: 'workspace', reason: 'external', noteId: 'selected' })
+154 |     expect(f.events).toEqual([])
+                           ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   "Loading",
++   "Saving",
++   "NoteOpenError",
++   "ContentResolution",
++   "SaveNeedsReload",
++   "refreshNotes",
++   "refreshAssets",
++   "SaveError",
++   "refreshNotes",
++   "refreshAssets",
++   "ExternalChange",
++ ]
+
+- Expected  - 1
++ Received  + 13
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/ui001-extension-repair/rox-readiness-ui-001.note-route-lifecycle.negative.test.ts:154:22)
+(fail) UI-001 actual selected note read and deletion callbacks > retained listener after actual unsubscribe cannot mutate the current draft [8.11ms]
+163 |     const a = f.render(), disposeA = a.commit(), offA = a.subscribe()
+164 |     await flush(); f.events.length = 0
+165 |     // Deliberately retain the original subscription until after the ABA event:
+166 |     // committed generation alone must reject the old listener.
+167 |     queued({ workspaceId: 'workspace', reason: 'delete', noteId: 'selected' })
+168 |     expect(f.events).toEqual([])
+                           ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   "Loading",
++   "Saving",
++   "NoteOpenError",
++   "ContentResolution",
++   "SaveNeedsReload",
++   "refreshNotes",
++   "refreshAssets",
++   "SaveError",
++ ]
+
+- Expected  - 1
++ Received  + 10
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/ui001-extension-repair/rox-readiness-ui-001.note-route-lifecycle.negative.test.ts:168:22)
+(fail) UI-001 actual selected note read and deletion callbacks > workspace A→B→A rejects retained A callbacks while the new A subscription still works [0.48ms]
+178 |     f.onChanged({ workspaceId: 'workspace', reason: 'descriptor', noteId: 'selected' })
+179 |     await f.openNote('selected')
+180 |     const currentResolution = f.states.ContentResolution
+181 |     f.events.length = 0
+182 |     descriptor.reject(new Error('old descriptor refused')); await flush()
+183 |     expect(f.events).toEqual([])
+                           ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   "ContentResolution",
++   "SaveNeedsReload",
++ ]
+
+- Expected  - 1
++ Received  + 4
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/ui001-extension-repair/rox-readiness-ui-001.note-route-lifecycle.negative.test.ts:183:22)
+(fail) UI-001 actual selected note read and deletion callbacks > late descriptor rejection after same-note reopen cannot deny the newer document [4.99ms]
+197 |       f.states.SaveNeedsReload = false
+198 |       await flush(); f.events.length = 0
+199 |       if (rejected) descriptor.reject(new Error('old owner refused'))
+200 |       else descriptor.resolve({ status: 'ok', revision: 'old-owner', capabilities: { write: false } })
+201 |       await flush()
+202 |       expect(f.events).toEqual([])
+                             ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   "ContentResolution",
++   "SaveNeedsReload",
++ ]
+
+- Expected  - 1
++ Received  + 4
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/ui001-extension-repair/rox-readiness-ui-001.note-route-lifecycle.negative.test.ts:202:24)
+(fail) UI-001 actual selected note read and deletion callbacks > late descriptor success and rejection cannot publish into a new workspace owner [8.63ms]
+(pass) UI-001 actual selected note read and deletion callbacks > owned descriptor failures still deny and require source reload [2.52ms]
+
+ 8 pass
+ 4 fail
+ 39 expect() calls
+Ran 12 tests across 1 file. [11.09s]

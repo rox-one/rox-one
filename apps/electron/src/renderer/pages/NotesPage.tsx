@@ -2,7 +2,8 @@ import * as React from 'react'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/hooks'
 import { matchesNoteReceipt, notesReadCapability } from '@/features/product-tour/adapters/knowledge'
-import { NotesRailTools, NotesResponsiveRail, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
+import { NotesInspectorToggle, NotesRailTools, NotesResponsiveRail, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
+import { notesAuxiliaryFits } from './notes/notes-layout'
 import { EMPTY_COMMENT_DRAFT, noteCommentDraftKey, updateCommentDraft, type NoteCommentDraft } from './notes/comment-drafts'
 import { capabilityErrorCode, readScopedCapability } from '@/lib/scoped-capability-read'
 import { hasNativeNotesTransport } from '@/lib/notes-capability'
@@ -322,6 +323,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [sideNoteChip, setSideNoteChip] = React.useState<{ title: string; path: string } | null>(null)
   const [rightSessionFocusToken, setRightSessionFocusToken] = React.useState(0)
   const sideSessionId = rightSessionContext?.sessionId ?? null
+  React.useEffect(() => {
+    if (rightSessionContext && rightSessionContext.workspaceId !== activeWorkspaceId) {
+      setRightSessionContext(null); setSideSessionPrompt(''); setSideNoteChip(null)
+    }
+  }, [activeWorkspaceId, rightSessionContext])
   const [notes, setNotes] = React.useState<NoteSummary[]>([])
   // Stable insertion order for sidebar — only updated on full refreshes, not optimistic saves
   const [sidebarOrder, setSidebarOrder] = React.useState<string[]>([])
@@ -345,6 +351,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [indexHealth, setIndexHealth] = React.useState<NoteIndexHealth>(EMPTY_NOTE_INDEX_HEALTH)
   const [indexRebuilding, setIndexRebuilding] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
+  const [noteOpenError, setNoteOpenError] = React.useState<{ workspaceId: string; noteId: string; code: string } | null>(null)
   const [saving, setSaving] = React.useState(false)
   const [dirty, setDirty] = React.useState(false)
   const [saveError, setSaveError] = React.useState<string | null>(null)
@@ -396,6 +403,9 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   // Width of the document row (СОДЕРЖАНИЕ | note | КОММЕНТАРИИ) so the side
   // rails can yield before the note column gets unreadably narrow.
   const [setDocRowEl, docRowWidth] = useNotesPanelWidth<HTMLDivElement>()
+  const [setShellEl, shellWidth] = useNotesPanelWidth<HTMLDivElement>()
+  const [inspectorSheetOpen, setInspectorSheetOpen] = React.useState(false)
+  const inlineAuxiliary = notesAuxiliaryFits(shellWidth, inspectorCollapsed, Boolean(rightSessionContext))
   const [railSheet, setRailSheet] = React.useState<'toc' | 'comments' | null>(null)
   const [foldedHeadingIds, setFoldedHeadingIds] = React.useState<string[]>([])
   const [commandQuery, setCommandQuery] = React.useState<string | null>(null)
@@ -408,6 +418,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const assetsRequestRef = React.useRef(0)
   const readsMountedRef = React.useRef(false)
   const readWorkspaceRef = React.useRef(activeWorkspaceId)
+  const readWorkspaceGenerationRef = React.useRef(0)
   const [notesReadError, setNotesReadError] = React.useState<{ workspaceId: string; code: string } | null>(null)
   const [assetsReadError, setAssetsReadError] = React.useState<{ workspaceId: string; code: string } | null>(null)
   const readUnavailable = notesReadError?.workspaceId === activeWorkspaceId ? notesReadError : null
@@ -420,10 +431,12 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     // A committed workspace lease invalidates A requests even across A → B → A.
     readWorkspaceRef.current = activeWorkspaceId
     readsMountedRef.current = true
+    ++readWorkspaceGenerationRef.current
     ++notesListRequestRef.current
     ++assetsRequestRef.current
     return () => {
       readsMountedRef.current = false
+      ++readWorkspaceGenerationRef.current
       ++notesListRequestRef.current
       ++assetsRequestRef.current
     }
@@ -446,6 +459,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const revisionsRef = React.useRef(new Map<string, string>())
   const pendingCommitsRef = React.useRef(new Map<string, MarkdownCommitCommand>())
   const workspaceIdRef = React.useRef(activeWorkspaceId)
+  React.useLayoutEffect(() => {
+    workspaceIdRef.current = activeWorkspaceId
+    ++openNoteRequestRef.current
+    return () => { ++openNoteRequestRef.current }
+  }, [activeWorkspaceId])
   const [contentResolution, setContentResolution] = React.useState<ContentResolution | ContentFailure | null>(null)
   const [sourceInfoOpen, setSourceInfoOpen] = React.useState(false)
   const [committedBlockTree, setCommittedBlockTree] = React.useState<BlockTreeResult | null>(null)
@@ -577,7 +595,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     noteViewCapabilities,
     'standard',
   )
-  React.useEffect(() => { setRailSheet(null) }, [activeWorkspaceId, activeNote?.id, noteView])
+  React.useEffect(() => { setRailSheet(null); setInspectorSheetOpen(false) }, [activeWorkspaceId, activeNote?.id, noteView])
   const noteMindMapGraph = React.useMemo((): MindMapGraph | null => {
     if (!activeNote) return null
     if (noteView !== 'map' || !visibleBlockTree) return null
@@ -704,7 +722,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeWorkspaceId, notes])
 
   const openNote = React.useCallback(async (noteId: string) => {
+    if (!readsMountedRef.current || readWorkspaceRef.current !== activeWorkspaceId) return
     const request = ++openNoteRequestRef.current
+    const isCurrent = () => readsMountedRef.current && request === openNoteRequestRef.current
+      && workspaceIdRef.current === activeWorkspaceId && readWorkspaceRef.current === activeWorkspaceId
+    setNoteOpenError(null)
     if (!activeWorkspaceId) {
       setActiveNote(null)
       contentRef.current = ''
@@ -716,6 +738,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     }
     const read = soupDocumentReadResult({ source: 'native', nativeId: noteId })
     if (!isClaimableLive(read.result)) {
+      setNoteOpenError({ workspaceId: activeWorkspaceId, noteId, code: 'CAPABILITY_UNAVAILABLE' })
+      setActiveNote(null)
       setLoading(false)
       return
     }
@@ -723,11 +747,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     setContentResolution(null)
     try {
       const note = await window.electronAPI.readNote(activeWorkspaceId, noteId)
-      if (request !== openNoteRequestRef.current || workspaceIdRef.current !== activeWorkspaceId) return
+      if (!isCurrent()) return
       const resolution = window.electronAPI.isChannelAvailable(RPC_CHANNELS.content.RESOLVE)
         ? await window.electronAPI.resolveContent({ workspaceId: activeWorkspaceId, entityId: `note:${note.nativeId ?? note.id}` })
         : { status: 'error' as const, code: 'missingDependency' as const }
-      if (request !== openNoteRequestRef.current || workspaceIdRef.current !== activeWorkspaceId) return
+      if (!isCurrent()) return
       // Projection metadata never grants a path-based alias a native write authority.
       if (resolution.status !== 'error' && resolution.origin.nativeId !== (note.nativeId ?? note.id)) {
         throw Object.assign(new Error(t('notes.content.authorityChanged')), { code: 'DOCUMENT_AUTHORITY_CHANGED' })
@@ -755,8 +779,10 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       setExternalChange(null)
       setTagDraft(note.tags.join(', '))
     } catch (error) {
-      if (request !== openNoteRequestRef.current || workspaceIdRef.current !== activeWorkspaceId) return
+      if (!isCurrent()) return
+      setNoteOpenError({ workspaceId: activeWorkspaceId, noteId, code: capabilityErrorCode(error) })
       toast.error(error instanceof Error ? error.message : t('notes.toast.openFailed'))
+      activeNoteIdRef.current = null
       setActiveNote(null)
       contentRef.current = ''
       dirtyRef.current = false
@@ -764,7 +790,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       setDirty(false)
       setSaving(false)
     } finally {
-      if (request === openNoteRequestRef.current && workspaceIdRef.current === activeWorkspaceId) setLoading(false)
+      if (isCurrent()) setLoading(false)
     }
   }, [activeWorkspaceId, t])
 
@@ -793,6 +819,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     refreshAssets()
     void refreshIndexHealth()
     if (!activeWorkspaceId) return
+    const workspaceGeneration = readWorkspaceGenerationRef.current
+    let subscribed = true
+    const isCurrentSubscription = () => subscribed && readsMountedRef.current
+      && readWorkspaceGenerationRef.current === workspaceGeneration
+      && readWorkspaceRef.current === activeWorkspaceId
     void nativeNotesSync.start(activeWorkspaceId)
       .then(() => nativeNotesSync.flush())
       .catch(error => {
@@ -803,7 +834,30 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     }).then(() => { void refreshIndexHealth() })
     const unsubscribe = window.electronAPI.onNotesChanged((rawPayload) => {
       const payload = normalizeChangedPayload(rawPayload)
-      if (payload.workspaceId !== activeWorkspaceId) return
+      if (!isCurrentSubscription() || payload.workspaceId !== activeWorkspaceId) return
+
+      const selectedTarget = selectedNoteId ? parseNoteBlockAddress(selectedNoteId).noteId : null
+      if (payload.reason === 'delete' && payload.noteId && (payload.noteId === activeNoteIdRef.current || payload.noteId === selectedTarget)) {
+        ++openNoteRequestRef.current
+        setLoading(false)
+        setSaving(false)
+        setNoteOpenError({ workspaceId: activeWorkspaceId, noteId: payload.noteId, code: 'NOT_FOUND' })
+        setContentResolution({ status: 'error', code: 'deleted' })
+        saveBlockedRef.current = true
+        setSaveNeedsReload(true)
+        refreshNotes()
+        refreshAssets()
+        if (dirtyRef.current && payload.noteId === activeNoteIdRef.current) {
+          setSaveError(t('notes.content.deleted'))
+          return
+        }
+        activeNoteIdRef.current = null
+        setActiveNote(null)
+        contentRef.current = ''
+        setContent('')
+        setDirty(false)
+        return
+      }
 
       if (payload.reason === 'descriptor' && payload.noteId === activeNoteIdRef.current) {
         const noteId = payload.noteId
@@ -811,11 +865,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
         const opening = openNoteRequestRef.current
         setContentResolution(null)
         void window.electronAPI.resolveContent({ workspaceId: activeWorkspaceId, entityId: `note:${nativeId}` }).then(resolution => {
-          if (workspaceIdRef.current !== activeWorkspaceId || activeNoteIdRef.current !== noteId || openNoteRequestRef.current !== opening) return
+          if (!isCurrentSubscription() || workspaceIdRef.current !== activeWorkspaceId || activeNoteIdRef.current !== noteId || openNoteRequestRef.current !== opening) return
           setContentResolution(resolution)
           if (resolution.status !== 'ok' || !resolution.capabilities.write) setSaveNeedsReload(true)
         }).catch(() => {
-          if (workspaceIdRef.current === activeWorkspaceId && activeNoteIdRef.current === noteId) {
+          if (isCurrentSubscription() && workspaceIdRef.current === activeWorkspaceId && activeNoteIdRef.current === noteId && openNoteRequestRef.current === opening) {
             setContentResolution({ status: 'error', code: 'denied' })
             setSaveNeedsReload(true)
           }
@@ -840,13 +894,14 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     })
 
     return () => {
+      subscribed = false
       unsubscribe()
       void nativeNotesSync.stop().catch(error => {
         toast.error(error instanceof Error ? error.message : t('notes.toast.watchFailed'))
       })
       window.electronAPI.unwatchNotes(activeWorkspaceId).catch(() => {})
     }
-  }, [activeWorkspaceId, openNote, refreshAssets, refreshIndexHealth, refreshNotes, nativeNotesSync, t])
+  }, [activeWorkspaceId, selectedNoteId, openNote, refreshAssets, refreshIndexHealth, refreshNotes, nativeNotesSync, t])
 
   React.useEffect(() => {
     if (selectedNoteId) {
@@ -854,6 +909,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       return
     }
     setActiveNote(null)
+    setNoteOpenError(null)
     contentRef.current = ''
     dirtyRef.current = false
     setContent('')
@@ -1972,12 +2028,13 @@ h1,h2,h3{margin-top:1.5em}
   }
 
   const toggleInspector = React.useCallback(() => {
+    if (!inlineAuxiliary) { setInspectorSheetOpen(open => !open); return }
     setInspectorCollapsed(prev => {
       const next = !prev
       localStorage.setItem('notes:inspector-collapsed', JSON.stringify(next))
       return next
     })
-  }, [])
+  }, [inlineAuxiliary])
 
   const handleRichEditorReady = React.useCallback((editor: TiptapEditorHandle | null) => {
     richEditorRef.current = editor
@@ -2108,7 +2165,7 @@ h1,h2,h3{margin-top:1.5em}
   return (
     <>
     <NotesEditorHeadlineStyles />
-    <div className="notes-shell flex h-full min-w-0">
+    <div ref={setShellEl} className="notes-shell flex h-full min-w-0">
       <ShellSidebarPortal
         className="notes-side-surface shrink-0 flex flex-col min-h-0"
         style={{ width: railLayout.vaultCollapsed ? 0 : railLayout.vault }}
@@ -2236,6 +2293,7 @@ h1,h2,h3{margin-top:1.5em}
           )}
           <button ref={noteCreateTarget} type="button" className="h-7 w-7 shrink-0 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><FilePlus2 className="h-4 w-4 text-sky-500" aria-hidden="true" /></button>
           {assetsUnavailable && <span role="status" data-testid="notes-assets-unavailable" data-error-code={assetsUnavailable.code} className="text-xs text-muted-foreground">{t('notes.toolbar.attachAsset')}: {t('common.unavailable')}</span>}
+          <NotesInspectorToggle inline={inlineAuxiliary} open={inspectorSheetOpen} onToggle={toggleInspector} />
           <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} />
           <button
             className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40"
@@ -2332,6 +2390,14 @@ h1,h2,h3{margin-top:1.5em}
             <div className="h-full grid place-items-center">
               {loading ? (
                 <div className="text-sm text-muted-foreground">{t('notes.empty.loading')}</div>
+              ) : noteOpenError?.workspaceId === activeWorkspaceId && noteOpenError.noteId === (selectedNoteId ? parseNoteBlockAddress(selectedNoteId).noteId : null) ? (
+                <div className="flex max-w-md flex-col items-center gap-3 p-6 text-center text-sm text-muted-foreground"
+                  role="status" data-testid={noteOpenError.code === 'NOT_FOUND' ? 'route-note-missing' : 'route-note-unavailable'} data-error-code={noteOpenError.code}
+                  data-state={noteOpenError.code === 'NOT_FOUND' ? 'not-found' : 'unavailable'}>
+                  <p>{t(noteOpenError.code === 'NOT_FOUND' ? 'notes.route.notFound' : 'notes.route.unavailable')}</p>
+                  <Button variant="outline" onClick={() => void openNote(noteOpenError.noteId)}>{t('common.retry')}</Button>
+                  <Button variant="ghost" onClick={() => navigate(routes.view.notes())}>{t('common.backToList')}</Button>
+                </div>
               ) : (
                 <div className="w-[420px] max-w-[calc(100%-48px)] p-4 text-center" data-notes-empty="">
                   <div className="text-sm font-medium">{t('notes.empty.noNote')}</div>
@@ -2718,6 +2784,7 @@ h1,h2,h3{margin-top:1.5em}
       </main>
 
       {rightSessionContext && (
+        <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, rightSessionContext.sessionId])} inline={inlineAuxiliary} open={!inlineAuxiliary} title={t('notes.sideSession.title')} onClose={closeSideSession}>
         <RightSessionShell
           context={rightSessionContext}
           prompt={sideSessionPrompt}
@@ -2730,8 +2797,10 @@ h1,h2,h3{margin-top:1.5em}
           onSend={sendSideSession}
           onClose={closeSideSession}
         />
+        </NotesResponsiveRail>
       )}
 
+      <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView])} inline={inlineAuxiliary} open={!inlineAuxiliary && inspectorSheetOpen} title={t('notes.inspector.title')} onClose={() => setInspectorSheetOpen(false)}>
       <NoteInspector
         activeNote={activeNote}
         content={content}
@@ -2804,9 +2873,10 @@ h1,h2,h3{margin-top:1.5em}
             }
           }
         }}
-        collapsed={inspectorCollapsed}
+        collapsed={inlineAuxiliary && inspectorCollapsed}
         onToggleCollapsed={toggleInspector}
       />
+      </NotesResponsiveRail>
     </div>
     <Dialog open={Boolean(markerPreview)} onOpenChange={(open) => { if (!open && !markerBusy) { setMarkerPreview(null); setMarkerError(null) } }}>
       <DialogContent>
