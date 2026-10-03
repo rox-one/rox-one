@@ -166,7 +166,10 @@ export class Router {
           resolved?.fileAttachments,
           resolved?.storedAttachments,
           undefined, // SendMessageOptions
-          undefined, undefined, undefined, { nativeMemoryContext: nativeContext },
+          undefined, // existing canonical message id
+          undefined, // auth retry
+          undefined, // persisted acknowledgement
+          { nativeMemoryContext: nativeContext, runtimeLaunch: { kind: 'channel', triggerId: msg.messageId, channel: { kind: 'channel-identity', id: binding.id, scope: 'workspace', label: `${msg.platform}: ${binding.channelName ?? msg.channelId}` } } },
         )
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Unknown error'
