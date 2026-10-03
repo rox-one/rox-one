@@ -73,5 +73,24 @@
   "full_native_or_installed_platform_acceptance": false,
   "windows_native_acceptance": false,
   "real_cloud_issuer_or_provider_cutover": false,
-  "production_or_whole_feature_DoD": false
+  "production_or_whole_feature_DoD": false,
+  "current_main_followup": {
+    "qualified_revision": "991c8b80b1620bf3bb4ea56c62c2d4bfe459824e",
+    "base_main": "439b9d4f141fe8d484f57f0fa55681de7b7af966",
+    "radius_and_12_locales": {
+      "pass": 284,
+      "fail": 0,
+      "assertions": 6524
+    },
+    "native_policy": {
+      "pass": 13,
+      "fail": 0
+    },
+    "full_strict_electron_exit": 0,
+    "source344_blobs_refreshed": true,
+    "production_after_actual_app_build": [
+      "current Skills OMP selection/reset controls retained with4px theme tokens",
+      "current Runtime collector, Notes parent classification and native launch fixes integrated"
+    ]
+  }
 }

@@ -128,5 +128,20 @@
     "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-current-real-components-qualified.log.gz",
     "original_bytes": 3000,
     "sha256": "fac9d93d77b797362bae404855b9b8d01f20fd4ea2de856fe29d72f4c1d9162a"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-final-merged-controls.log.gz",
+    "original_bytes": 42754,
+    "sha256": "4aefa2bae175b0617d2b19d198c3d005435910c2535f3730cab07ed8a256a178"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-final-merged-native-policy.log.gz",
+    "original_bytes": 263,
+    "sha256": "fe4b27f2dfbd41f15614919c2589b782c25a70a78db9b3a3038d30122a915a68"
+  },
+  {
+    "path": "docs/integration-history/zed-appearance-current-20261004/verification/zed-final-merged-electron-types.log.gz",
+    "original_bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   }
 ]
