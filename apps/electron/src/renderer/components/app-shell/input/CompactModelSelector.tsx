@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { useTourSignals, useTourTarget, type TourObservation } from '@/features/product-tour/runtime/hooks'
 
 import { useTranslation } from 'react-i18next'
 import {
@@ -90,6 +90,20 @@ export function CompactModelSelector({
   const tourSignals = useTourSignals()
   const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
   const [open, setOpen] = React.useState(false)
+  const pickerObservation = React.useRef<{ observation: TourObservation | null; emitted: boolean } | null>(null)
+  React.useEffect(() => {
+    const pending = pickerObservation.current
+    if (!pending) return
+    if (open && !pending.emitted) {
+      // The native Drawer child has committed and registered its real layer before this parent effect.
+      tourSignals.handoff(pending.observation, true)
+      pending.emitted = true
+      tourSignals.emit(pending.observation, 'model-picker.opened', 'observed', 'ui-observation')
+    } else if (!open) {
+      pickerObservation.current = null
+      if (pending.emitted) tourSignals.handoff(pending.observation, false)
+    }
+  }, [open, tourSignals])
   const [expandedConnection, setExpandedConnection] = React.useState<string | null>(null)
 
   const appShellCtx = useOptionalAppShellContext()
@@ -183,7 +197,10 @@ export function CompactModelSelector({
   )
 
   return (
-    <Drawer open={open} onOpenChange={next => { const captured = next ? tourSignals.capture() : null; setOpen(next); if (next) tourSignals.emit(captured, 'model-picker.opened', 'observed', 'ui-observation') }}>
+    <Drawer open={open} onOpenChange={next => {
+      if (next) pickerObservation.current = { observation: tourSignals.capture(), emitted: false }
+      setOpen(next)
+    }}>
       <DrawerTrigger asChild>
         <button
           ref={modelTarget}

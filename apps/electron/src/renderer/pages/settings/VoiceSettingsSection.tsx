@@ -18,38 +18,29 @@ import {
   type VoiceHealth,
   type VoicePrefs,
 } from '@rox/shared/voice'
-import { createDesktopSettingsSession, readVoiceSettingsSnapshot, readVoiceSettingsHistory, type VoiceSettingsSnapshot, type VoiceSettingsHistory } from './desktop-settings-session'
+import { createDesktopSettingsSession, readVoiceSettingsSnapshot, type VoiceSettingsSnapshot } from './desktop-settings-session'
+import { VoiceHistorySettings } from './VoiceHistorySettings'
 
 export function VoiceSettingsSection() {
   const { t } = useTranslation()
   const [prefs, setPrefs] = useState<VoicePrefs | null>(null)
   const [health, setHealth] = useState<VoiceHealth | null>(null)
-  const [history, setHistory] = useState<VoiceSettingsHistory>(null)
-  const [historyState, setHistoryState] = useState<'loading' | 'ready' | 'unavailable'>('loading')
   const [state, setState] = useState<'loading' | 'ready' | 'unavailable' | 'error'>('loading')
   const session = useRef<ReturnType<typeof createDesktopSettingsSession<VoiceSettingsSnapshot>> | null>(null)
-  const historySession = useRef<ReturnType<typeof createDesktopSettingsSession<VoiceSettingsHistory>> | null>(null)
 
   useEffect(() => {
     const current = createDesktopSettingsSession<VoiceSettingsSnapshot>(window.electronAPI,
       value => { setPrefs(value.prefs); setHealth(value.health); setState('ready') },
       error => { setState(error ? 'error' : 'unavailable') })
-    const currentHistory = createDesktopSettingsSession<VoiceSettingsHistory>(window.electronAPI,
-      value => { setHistory(value); setHistoryState(value === null ? 'unavailable' : 'ready') },
-      () => { setHistory(null); setHistoryState('unavailable') })
     session.current = current
-    historySession.current = currentHistory
     const reload = () => {
       void current.run(() => readVoiceSettingsSnapshot(window.electronAPI))
-      setHistoryState('loading')
-      void currentHistory.run(() => readVoiceSettingsHistory(window.electronAPI))
     }
     reload()
     current.subscribe(onChange => window.electronAPI.onVoiceChanged?.(onChange), reload)
     return () => {
-      current.dispose(); currentHistory.dispose()
+      current.dispose()
       if (session.current === current) session.current = null
-      if (historySession.current === currentHistory) historySession.current = null
     }
   }, [])
 
@@ -57,15 +48,6 @@ export function VoiceSettingsSection() {
     if (state !== 'ready') return
     await session.current?.run(async () => ({ prefs: await window.electronAPI.saveVoicePrefs(patch), health: health! }))
   }, [state, health])
-
-  const favorite = useCallback(async (id: string, value: boolean) => {
-    if (state !== 'ready' || historyState !== 'ready' || !history) return
-    await historySession.current?.run(async isCurrent => {
-      await window.electronAPI.favoriteVoiceRecording({ id, favorite: value })
-      if (!isCurrent()) return null
-      return readVoiceSettingsHistory(window.electronAPI)
-    })
-  }, [state, historyState, history])
 
   if (state !== 'ready' || !prefs) return (
     <SettingsSection title={t('settings.input.voiceGroupGeneral')} description={t('settings.input.voiceDesc')}>
@@ -124,6 +106,16 @@ export function VoiceSettingsSection() {
             options={[
               { value: 'toggle', label: t('settings.input.voiceHotkeyToggle') },
               { value: 'ptt', label: t('settings.input.voiceHotkeyPtt') },
+            ]}
+          />
+          <SettingsMenuSelectRow
+            label={t('voice.hotkey.modifier')}
+            value={prefs.pttModifier ?? 'AltRight'}
+            onValueChange={value => void save({ pttModifier: value === 'ControlRight' || value === 'none' ? value : 'AltRight' })}
+            options={[
+              { value: 'AltRight', label: t('voice.hotkey.rightAlt') },
+              { value: 'ControlRight', label: t('voice.hotkey.rightControl') },
+              { value: 'none', label: t('voice.hotkey.disabled') },
             ]}
           />
           <SettingsMenuSelectRow
@@ -195,28 +187,16 @@ export function VoiceSettingsSection() {
         </SettingsCard>
       </SettingsSection>
 
-      <SettingsSection title={t('settings.input.voiceGroupHistory')} description={t('settings.input.voiceHistoryDesc')}>
+      <SettingsSection title={t('voice.delivery.title')}>
         <SettingsCard>
-          {historyState === 'loading' ? (
-            <p role="status" className="px-4 py-3 text-xs text-muted-foreground">{t('common.loading')}</p>
-          ) : history === null ? (
-            <p role="status" className="px-4 py-3 text-xs text-muted-foreground">{t('common.unavailable')}</p>
-          ) : history.length === 0 ? (
-            <p className="px-4 py-3 text-xs text-muted-foreground">{t('settings.input.voiceHistoryEmpty')}</p>
-          ) : history.map((item) => (
-            <div key={item.id} className="flex items-center justify-between px-4 py-2 text-sm">
-              <span className="truncate">{item.id}</span>
-              <button
-                type="button"
-                className="text-xs text-muted-foreground"
-                onClick={() => void favorite(item.id, !item.favorite)}
-              >
-                {item.favorite ? t('voice.history.unfavorite') : t('voice.history.favorite')}
-              </button>
-            </div>
-          ))}
+          <SettingsMenuSelectRow label={t('voice.delivery.title')} value={prefs.delivery ?? 'draft'} options={[
+            { value: 'draft', label: t('voice.delivery.draft') },
+            { value: 'clipboard', label: t('voice.delivery.clipboard') },
+          ]} onValueChange={value => void save({ delivery: value === 'clipboard' ? 'clipboard' : 'draft' })} />
+          <SettingsToggle label={t('voice.delivery.trailingSpace')} checked={prefs.trailingSpace === true} onCheckedChange={trailingSpace => void save({ trailingSpace })} />
         </SettingsCard>
       </SettingsSection>
+      <VoiceHistorySettings />
 
       <SettingsSection title={t('settings.input.voiceGroupProcessing')}>
         <SettingsCard>

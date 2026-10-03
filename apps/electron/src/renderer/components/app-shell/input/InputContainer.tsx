@@ -248,6 +248,7 @@ export function InputContainer({
     return (
       <StructuredInput
         state={structuredInput!}
+        tourVariant={compactMode ? 'compact' : 'regular'}
         onResponse={forMeasuring ? () => {} : handleStructuredResponse}
         unstyled
       />

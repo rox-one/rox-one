@@ -40,19 +40,22 @@ test('T-TASKS-DELEGATE: real isolated store persists exact task→session link a
 test('a stale task revision cannot overwrite another writer while adding a delegation link', async () => {
   const { store, task, record, api } = setup()
   store.put({ ...task, title: 'Foreign edit' })
-  await expect(commitPersonalTaskLink(api, task, 'session-a', record.revision)).rejects.toThrow('changed before delegation')
+  await expect(commitPersonalTaskLink(api, task, 'session-a', record.revision)).rejects.toMatchObject({ name: 'PersonalTaskLinkError', code: 'revision-conflict' })
   expect(store.get(task.id)?.task.title).toBe('Foreign edit')
   expect(store.get(task.id)?.task.links).toEqual([])
 })
 
 test('failed delegation write and failed read-back cannot produce verified evidence', async () => {
-  const { task, record, api } = setup()
-  await expect(commitPersonalTaskLink({ ...api, personalTasksPut: async () => ({ accepted: [], conflicts: [], rejected: [task.id] }) }, task, 'session-a', record.revision)).rejects.toThrow('not confirmed')
+  const { store, task, record, api } = setup()
+  await expect(commitPersonalTaskLink({ ...api, personalTasksPut: async () => ({ accepted: [], conflicts: [], rejected: [task.id] }) }, task, 'session-a', record.revision)).rejects.toMatchObject({ name: 'PersonalTaskLinkError', code: 'write-unconfirmed' })
+  expect(store.get(task.id)?.task.links).toEqual([])
   let reads = 0
   await expect(commitPersonalTaskLink({ ...api, personalTasksList: async () => {
     const snapshot = await api.personalTasksList()
     return ++reads === 1 ? snapshot : { ...snapshot, tasks: [] }
-  } }, task, 'session-a', record.revision)).rejects.toThrow('read-back failed')
+  } }, task, 'session-a', record.revision)).rejects.toMatchObject({ name: 'PersonalTaskLinkError', code: 'readback-failed' })
+  // The link may have been saved, but a failed read-back still rejects completion.
+  expect(store.get(task.id)?.task.links).toContainEqual({ kind: 'session', id: 'session-a' })
 })
 
 test('delegating an unsynced user task can create the real saved task and link in one native commit', async () => {
