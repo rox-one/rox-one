@@ -381,6 +381,7 @@ describe('CredentialRefRegistry', () => {
       const original = registry.register({ kind: 'api_key', providerId: 'local', locator: { type: 'local', key: 'original' }, now: 100 });
       const version = registry.registerVersion({ id: 'ver_before_rejection', credentialRefId: original.id, codec: 'stored-credential/v1', fingerprint: HEX_A, createdAt: 110 });
       const current = registry.get(original.id);
+      if (!current) throw new Error('Registered credential ref is missing');
       const refsPath = join(directory, 'credential-refs.json');
       const versionsPath = join(directory, 'credential-versions.json');
       const before = readFileSync(refsPath, 'utf8');
