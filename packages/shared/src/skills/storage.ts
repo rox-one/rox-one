@@ -198,9 +198,13 @@ function loadSkillsFromDir(skillsDir: string, source: SkillSource): LoadedSkill[
       // state, never real skills.
       if (entry.name.startsWith('.')) continue;
 
-      const skill = loadSkillFromDir(skillsDir, entry.name, source);
-      if (skill) {
-        skills.push(skill);
+      try {
+        const skill = loadSkillFromDir(skillsDir, entry.name, source);
+        if (skill) {
+          skills.push(skill);
+        }
+      } catch {
+        // Isolate this entry; selected-detail reads still propagate real errors.
       }
     }
   } catch {

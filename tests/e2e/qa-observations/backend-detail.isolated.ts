@@ -9,6 +9,51 @@ const detailChannel = 'skills:getDetails'
 const read = (slug: string, workingDirectory?: string) => fixture.invoke(detailChannel, 'fixture', slug, workingDirectory)
 
 describe('selected skill details through the registered RPC with real disposable files', () => {
+  for (const position of ['first', 'middle']) for (const failure of ['denial', 'EACCES']) {
+    test(`listing isolates ${failure} in a ${position} craft entry without concealing selected-read errors`, async () => {
+      const skillsRoot = join(fixture.workspace, 'skills')
+      const badSlug = position === 'first' ? 'aa-list-bad' : 'bb-list-bad'
+      const healthy = position === 'first' ? ['bb-list-good', 'cc-list-good'] : ['aa-list-good', 'cc-list-good']
+      const created = [fixture.skill(skillsRoot, badSlug, '# Unsafe candidate')]
+      for (const slug of healthy) created.push(fixture.skill(skillsRoot, slug, `# Healthy ${slug}`))
+      // A lower-priority candidate must not conceal the selected craft denial.
+      created.push(fixture.skill(fixture.runtimeRoot, badSlug, '# Lower runtime fallback'))
+      const outside = fixture.skill(join(fixture.root, 'listing-outside'), badSlug, '# Synthetic external body')
+      const fs = await import('fs')
+      const asyncFs = await import('fs/promises')
+      const originalPath = fs.realpathSync
+      const originalDirectory = fs.readdirSync
+      const badFile = join(originalPath(created[0]!), 'SKILL.md')
+      const outsideFile = join(originalPath(outside), 'SKILL.md')
+      const canonical = spyOn(fs, 'realpathSync').mockImplementation(((path: any) => {
+        if (resolve(String(path)) === resolve(badFile)) {
+          if (failure === 'EACCES') throw Object.assign(new Error('Controlled access denied'), { code: 'EACCES' })
+          return outsideFile
+        }
+        return originalPath(path)
+      }) as typeof fs.realpathSync)
+      const enumeration = spyOn(fs, 'readdirSync').mockImplementation(((path: any, options: any) => {
+        const entries = originalDirectory(path, options)
+        return resolve(String(path)) === resolve(skillsRoot)
+          ? entries.sort((a: any, b: any) => a.name.localeCompare(b.name)) : entries
+      }) as typeof fs.readdirSync)
+      const syncRead = spyOn(fs, 'readFileSync')
+      const asyncRead = spyOn(asyncFs, 'readFile')
+      try {
+        fixture.skillsApi.invalidateSkillsCache(); fixture.skillsApi.invalidateOmpSkillsCache()
+        const list = await fixture.invoke(fixture.RPC_CHANNELS.skills.GET, 'fixture')
+        expect(syncRead.mock.calls.filter(call => [badFile, outsideFile].includes(String(call[0])))).toHaveLength(0)
+        for (const slug of healthy) expect(list.some((skill: any) => skill.source === 'workspace' && skill.slug === slug)).toBe(true)
+        await expect(read(badSlug)).rejects.toThrow(failure === 'denial' ? 'Skill instructions path denied' : 'Controlled access denied')
+        expect(syncRead.mock.calls.filter(call => [badFile, outsideFile].includes(String(call[0])))).toHaveLength(0)
+        expect(asyncRead.mock.calls).toHaveLength(0)
+      } finally {
+        canonical.mockRestore(); enumeration.mockRestore(); syncRead.mockRestore(); asyncRead.mockRestore()
+        for (const directory of created) rmSync(directory, { recursive: true, force: true })
+        fixture.skillsApi.invalidateSkillsCache(); fixture.skillsApi.invalidateOmpSkillsCache()
+      }
+    })
+  }
   // Real files and filesystem calls; one canonical target is redirected to a
   // real regular file outside the selected directory. Windows may deny creation
   // of a file symlink (EPERM); this probe does not pretend the OS created one.
