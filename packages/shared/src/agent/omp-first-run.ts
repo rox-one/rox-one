@@ -19,6 +19,7 @@ import { homedir } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { linkBundledSkillsForOmp } from '../skills/bundled.ts';
+import { OMP_WORKER_POLICY_SOURCE } from './omp-worker-policy.ts';
 import type { OmpStartupErrorCode } from './errors.ts';
 import { ROX_DEFAULT_PARENT_MODEL, ROX_PUBLIC_MODEL_CATALOG } from '../config/rox-public-models.ts';
 
@@ -287,6 +288,10 @@ export function prepareOmpRoxRuntimeConfig(input: {
     }
     config.magicKeywords = { ...config.magicKeywords, enabled: true, ultrathink: true, orchestrate: true, workflow: true };
     config.providers = { ...config.providers, autoThinkingMaxEffort: 'max' };
+    const workerPolicyPath = join(agentDir, 'rox-worker-policy.js');
+    writeFileSync(workerPolicyPath, OMP_WORKER_POLICY_SOURCE, { mode: 0o600 });
+    config.extensions = [...(Array.isArray(config.extensions) ? config.extensions : []), workerPolicyPath];
+    config.task = { ...config.task, maxEffort: 'max' };
     config.eval = { ...config.eval, js: true, tools: { ...config.eval?.tools, enabled: true } };
     config.skills = {
       ...config.skills, enabled: true, enableSkillCommands: true, enablePiUser: true, enableAgentsUser: false,
@@ -299,6 +304,8 @@ export function prepareOmpRoxRuntimeConfig(input: {
     writeFileSync(join(agentDir, 'rox-runtime-policy.yml'), stringifyYaml({
       magicKeywords: config.magicKeywords,
       providers: { autoThinkingMaxEffort: 'max' },
+      task: { maxEffort: 'max' },
+      extensions: config.extensions,
       eval: { js: true, tools: { enabled: true } },
       skills: { enabled: true, enableSkillCommands: true, enablePiUser: true, enableAgentsUser: false, enableCodexUser: false, enableClaudeUser: false },
       // ROX supplies its host tools and pinned offline skill tier. Scanning
