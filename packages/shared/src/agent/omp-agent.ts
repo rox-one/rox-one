@@ -20,19 +20,17 @@
  * - Session mirror: OMP persists its own transcript with `--session-dir
  *   <workspace>/sessions/<craftSessionId>/omp` (per-craft-session isolation).
  *   History is thus stored in BOTH stores without conflict; craft remains the
- *   owner of conversation history — resuming from the OMP store is
- *   intentionally NOT implemented.
+ *   owner of conversation history. The exact native transcript is resumed
+ *   on process restart; legacy ROX history receives an explicit one-time migration.
  * - Branching: supported. Anchor model — every final assistant reply is
  *   anchored to its OMP transcript entry id (8-hex `id` in the session JSONL,
  *   see docs/omp-rpc-notes.md §Branching); SessionManager persists the
  *   craft-message-id → entry-id mapping in `omp-turn-anchors.json` (same
  *   pattern as pi-turn-anchors.json). A branch child spawns its own omp
- *   process in the branch session-dir, `switch_session`s onto the parent
- *   transcript and issues `branch {entryId}` where entryId is the USER entry
- *   following the anchor (OMP's branch cuts at that entry's parentId —
- *   assistant entries are rejected per VERIFIED probe). For a branch at the
- *   tail (no following user entry) the parent transcript is copied into the
- *   branch session-dir and switched to directly (full-history fork).
+ *   process in the branch session-dir and switches to a private parent copy.
+ *   OMP 18.4.12 fork(entryId) keeps the exact root-to-assistant-anchor path,
+ *   including tool results/artifacts, and allocates a fresh native identity.
+ *   Restored children resume their own transcript, never fork the parent again.
  * - Host tools bridge: after `ready` craft registers its session-scoped tools
  *   (spawn_session, call_llm, browser_tool, mcp__session__*; see
  *   getSessionToolProxyDefs) via the `set_host_tools` RPC. When the OMP model
@@ -49,7 +47,7 @@ import type { LoadAllSkillsOptions } from '../skills/storage.ts';
 import { createInterface, type Interface as ReadlineInterface } from 'node:readline';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { mkdirSync, readFileSync, readdirSync, copyFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, copyFileSync, cpSync, existsSync } from 'node:fs';
 import { getSessionPath } from '../sessions/storage.ts';
 import { loadProjectById, getProjectAssetsPath, listProjectAssets, getProjectMemoryPath, loadProjectMemory } from '../projects/storage.ts';
 import { loadProjectRoadmapPromptText } from '../projects/roadmap-storage.ts';
@@ -58,7 +56,7 @@ import { formatProjectContextForPrompt } from '../prompts/system.ts';
 import type { MemoryPromptBlocks } from '../memory/types.ts';
 import { getContextDocsPromptBlock } from '../context-docs/index.ts';
 import { formatPreferencesForPrompt } from '../config/preferences.ts';
-import type { AgentEvent, AgentEventUsage } from '@craft-agent/core/types';
+import type { AgentEvent, AgentEventUsage } from '@rox/core/types';
 import type { FileAttachment } from '../utils/files.ts';
 import { getProxyEnvVars } from '../config/proxy-env.ts';
 import { resolveOmpExecutableOrExplain, withToolchainPathPrefix } from '../toolchain-runtime.ts';
@@ -76,6 +74,7 @@ import type { PermissionMode } from './mode-manager.ts';
 import type { LLMQueryRequest, LLMQueryResult } from './llm-tool.ts';
 
 import { BaseAgent } from './base-agent.ts';
+import { readOmpResumeFile, writeOmpIdentity, seedOmpHistory, withOmpRequiredModes, resetOmpHistory, isOmpHistoryReset } from './omp-history.ts';
 import { getLlmConnection, getRuntimeEnvOverrides, ROX_DEFAULT_CONNECTION_SLUG, type Workspace } from '../config/storage.ts';
 import { getCredentialManager } from '../credentials/index.ts';
 import { buildOmpSpawnCredentialEnv, ensureOmpRoxFirstRun, prepareOmpRoxRuntimeConfig } from './omp-first-run.ts';
@@ -96,7 +95,7 @@ import type { SdkMcpServerConfig } from './backend/types.ts';
 import {
   SESSION_TOOL_REGISTRY,
   type ToolResult as SessionToolResult,
-} from '@craft-agent/session-tools-core';
+} from '@rox/session-tools-core';
 import { createClaudeContext, type SessionToolContext } from './claude-context.ts';
 import { attachSessionSelfManagementBindings } from './session-self-management-bindings.ts';
 import {
@@ -125,7 +124,7 @@ const OMP_COMMAND_TIMEOUT_MS = 15_000;
 const OMP_HOST_TOOL_TIMEOUT_MS = 120_000;
 
 /** Timeout awaiting the RPC `ready` frame after spawn (notes §Lifecycle.2). */
-export const OMP_READY_TIMEOUT_MS = 20_000;
+export const OMP_READY_TIMEOUT_MS = 90_000;
 
 /** Bounded ring buffer of recent subprocess stderr (classification evidence). */
 const OMP_STDERR_RING_LIMIT = 8 * 1024;
@@ -149,7 +148,7 @@ export class OmpStartupAbortedError extends Error {
  * input containing '\n' as literal text, not a file path).
  */
 const OMP_CRAFT_CONTEXT_PROMPT = [
-  'You are running inside the Craft Agents desktop app as an embedded agent backend.',
+  'You are running inside the ROX desktop app as an embedded agent backend.',
   'Public model IDs are rox/explore, rox/standard, rox/max, rox/vision, and rox/fast.',
   'Do not request raw provider or internal model names.',
   'In addition to your built-in tools, Craft exposes host tools (mcp__session__*):',
@@ -215,7 +214,7 @@ function mapBrowserToolErrorCode(code: string): string | null {
     case 'BROWSER_NO_CAPABLE_CLIENT':
     case 'CAPABILITY_UNAVAILABLE':
       return 'No connected desktop client supports browser tools, or no client is currently connected. ' +
-        'Ask the user to open this workspace from the Craft Agent desktop app.';
+        'Ask the user to open this workspace from the ROX desktop app.';
     case 'CLIENT_DISCONNECTED':
       return 'The desktop client that owned this browser session disconnected. ' +
         'Ask the user to reconnect and retry.';
@@ -232,18 +231,6 @@ function mapBrowserToolErrorCode(code: string): string | null {
         'Ask the user to enable it in settings.';
     default:
       return null;
-  }
-}
-
-/** Craft ThinkingLevel → OMP thinking level string (cwd `--thinking` whitelist). */
-function mapThinkingLevel(level: ThinkingLevel): string {
-  switch (level) {
-    case 'off': return 'off';
-    case 'low': return 'low';
-    case 'medium': return 'medium';
-    case 'high': return 'high';
-    case 'max': return 'max';
-    default: return 'high'; // unknown craft level → safe OMP default
   }
 }
 
@@ -444,6 +431,7 @@ export class OmpAgent extends BaseAgent {
   private pendingAnchorTurnId: string | null = null;
   /** Whether the branch-fork handshake already ran for this agent instance. */
   private branchHandshakeApplied = false;
+  private historyCleared = false;
 
   constructor(config: BackendConfig) {
     super(config, config.model || '');
@@ -467,7 +455,7 @@ export class OmpAgent extends BaseAgent {
    */
   override get supportsBranching(): boolean {
     return this._supportsBranching
-      && (this.emittedAnchorCount > 0 || !!this.ompSessionId || !!this.config.session?.branchFromMessageId);
+      && (this.emittedAnchorCount > 0 || !!this.ompSessionId || !!this.config.session?.branchFromMessageId || !!this.config.getResumeMessages?.().length);
   }
 
   // ============================================================
@@ -500,7 +488,8 @@ export class OmpAgent extends BaseAgent {
     }
     // Branch fork: after spawn, attach to the parent OMP transcript and cut
     // it at the persisted anchor. Runs exactly once per agent instance.
-    await this.applyOmpBranchHandshake();
+    try { await this.applyOmpBranchHandshake(); }
+    catch (error) { this.killSubprocessSync(); throw error; }
     // A new child (or restored branch) inherits OMP's configured model. Pin
     // the session's requested model and verify it before any provider prompt.
     // Repeat if a runtime update arrived while the RPC handshake was running.
@@ -593,91 +582,56 @@ export class OmpAgent extends BaseAgent {
     await this.ensureSubprocess(); // includes applyOmpBranchHandshake
   }
 
-  /**
-   * Fork the branch session from the parent OMP transcript at the persisted
-   * anchor (branchFromSdkTurnId = assistant transcript entry id).
-   *
-   * OMP's `branch` RPC accepts only a USER message entry id and cuts the new
-   * session at that entry's parentId (VERIFIED probes, docs/omp-rpc-notes.md
-   * §Branching):
-   * - mid-history branch: the cut entry is the user entry directly after the
-   *   anchor; we `switch_session` to the parent transcript then `branch` —
-   *   OMP writes a NEW file into OUR session-dir (parent file untouched).
-   * - tail branch (no user entry after the anchor): copy the parent
-   *   transcript into our session-dir and `switch_session` to the copy
-   *   (full-history fork; new turns append to the copy only).
-   */
+  /** Fork an exact native anchor in a private child copy, or explicitly migrate legacy ROX history. */
   private async applyOmpBranchHandshake(): Promise<void> {
     if (this.branchHandshakeApplied) return;
     const session = this.config.session;
     if (!session?.branchFromMessageId) return;
 
+    const ownDir = this.getOmpSessionDir(session.id);
     const parentSessionPath = session.branchFromSessionPath;
     const anchorId = session.branchFromSdkTurnId;
-    if (!parentSessionPath) {
-      throw new Error('OMP branch preflight failed: missing branchFromSessionPath metadata');
+    if (!this.subprocess) throw new Error('OMP branch preflight failed: subprocess unavailable');
+    let parentFile: string | null = null;
+    if (parentSessionPath && anchorId) {
+      parentFile = readOmpResumeFile(join(parentSessionPath, 'omp'), session.branchFromSdkSessionId);
+      // Legacy native mirrors had no active identity sidecar; anchor lookup remains exact.
+      parentFile ??= this.resolveOmpTranscriptFile(join(parentSessionPath, 'omp'), session.branchFromSdkSessionId);
     }
-    if (!anchorId) {
-      throw new Error('OMP branch preflight failed: missing branchFromSdkTurnId metadata (no OMP transcript anchor for the branch message)');
-    }
-    if (!this.subprocess) {
-      throw new Error('OMP branch preflight failed: subprocess unavailable for fork handshake');
-    }
-
-    const parentFile = this.resolveOmpTranscriptFile(
-      join(parentSessionPath, 'omp'),
-      session.branchFromSdkSessionId,
-    );
-    if (!parentFile) {
-      throw new Error(`OMP branch preflight failed: parent OMP transcript not found under ${join(parentSessionPath, 'omp')}`);
-    }
-
-    const entries = this.parseOmpTranscript(parentFile);
-    const anchorIdx = entries.findIndex((e) => e.type === 'message' && e.id === anchorId);
-    if (anchorIdx === -1) {
-      throw new Error(`OMP branch preflight failed: anchor entry ${anchorId} not found in parent transcript (rewritten by compaction?)`);
-    }
-    const cutUserEntry = entries
-      .slice(anchorIdx + 1)
-      .find((e) => e.type === 'message' && e.message?.role === 'user' && e.id);
-
-    if (cutUserEntry) {
-      await this.sendCommand('switch_session', { sessionPath: parentFile });
-      const result = (await this.sendCommand('branch', { entryId: cutUserEntry.id }, 30_000)) as
-        | { text?: string; cancelled?: boolean }
-        | null;
-      if (result?.cancelled) {
-        throw new Error('OMP branch preflight failed: branch request was cancelled');
-      }
-      this.debug(
-        `OMP branch applied: forked at entry ${anchorId} (cut before user entry ${cutUserEntry.id})`,
-      );
-    } else {
-      const ownDir = this.getOmpSessionDir(session.id);
+    if (parentFile && anchorId && this.parseOmpTranscript(parentFile).some(e => e.type === 'message' && e.id === anchorId)) {
+      // Never attach the child to the writable parent. Native fork(entryId)
+      // retains exactly the root-to-anchor path and complete tool batches.
       const copyPath = join(ownDir, `branched-${Date.now()}.jsonl`);
-      try {
-        copyFileSync(parentFile, copyPath);
-      } catch (error) {
-        throw new Error(`OMP branch preflight failed: cannot copy parent transcript: ${error}`);
-      }
-      await this.sendCommand('switch_session', { sessionPath: copyPath });
-      this.debug(`OMP branch applied: tail fork via transcript copy (anchor ${anchorId} is the last message entry)`);
+      copyFileSync(parentFile, copyPath);
+      const artifacts = parentFile.slice(0, -'.jsonl'.length);
+      if (existsSync(artifacts)) cpSync(artifacts, copyPath.slice(0, -'.jsonl'.length), { recursive: true, errorOnExist: true });
+      await this.switchOmpTranscript(copyPath);
+      const result = await this.sendCommand('fork', { entryId: anchorId }, 30_000) as { cancelled?: boolean } | null;
+      if (result?.cancelled) throw new Error('OMP branch preflight failed: fork was cancelled');
+    } else {
+      const seed = seedOmpHistory(ownDir, this.resolvedCwd(), this.config.getBranchResumeMessages?.() ?? [], 'branch');
+      if (!seed) throw new Error(`OMP branch preflight failed: no native anchor ${anchorId ?? '(missing)'} or stored ROX history available`);
+      await this.switchOmpTranscript(seed);
+      this.debug('Branch restored by explicit ROX history reconstruction (native provider metadata unavailable)');
     }
-
-    // Capture the forked session identity (branch() allocates a fresh sessionId).
-    try {
-      const state = (await this.sendCommand('get_state', {})) as
-        | { sessionId?: string; sessionFile?: string }
-        | null;
-      if (state?.sessionFile) this.ompSessionFile = state.sessionFile;
-      if (state?.sessionId && state.sessionId !== this.ompSessionId) {
-        this.ompSessionId = state.sessionId;
-        this.config.onSdkSessionIdUpdate?.(state.sessionId);
-      }
-    } catch (error) {
-      this.debug(`get_state after branch handshake failed: ${error}`);
-    }
+    await this.captureOmpIdentity();
     this.branchHandshakeApplied = true;
+  }
+
+  private async switchOmpTranscript(sessionPath: string): Promise<void> {
+    const result = await this.sendCommand('switch_session', { sessionPath }, 30_000) as { cancelled?: boolean } | null;
+    if (result?.cancelled) throw new Error('OMP transcript restoration was cancelled');
+  }
+
+  private async captureOmpIdentity(): Promise<void> {
+    const state = await this.sendCommand('get_state', {}) as { sessionId?: string; sessionFile?: string } | null;
+    if (!state?.sessionId || !state.sessionFile) throw new Error('OMP did not return a persistent session identity');
+    const dir = this.config.session?.id ? this.getOmpSessionDir(this.config.session.id) : null;
+    if (dir) writeOmpIdentity(dir, state.sessionId, state.sessionFile);
+    this.historyCleared = false;
+    this.ompSessionFile = state.sessionFile;
+    this.ompSessionId = state.sessionId;
+    this.config.onSdkSessionIdUpdate?.(state.sessionId);
   }
 
   // ============================================================
@@ -718,6 +672,16 @@ export class OmpAgent extends BaseAgent {
       });
     }
     const cwd = this.resolvedCwd();
+    const resumeDir = this.config.session?.id ? this.getOmpSessionDir(this.config.session.id) : null;
+    const reset = this.historyCleared || !!(resumeDir && isOmpHistoryReset(resumeDir));
+    if (reset) this.branchHandshakeApplied = true;
+    const branchCommitted = !this.config.session?.branchFromMessageId || (resumeDir && existsSync(join(resumeDir, 'active-session.json')));
+    const resumeFile = resumeDir && !this.historyCleared && branchCommitted ? readOmpResumeFile(resumeDir, this.ompSessionId) : null;
+    const resumeHistory = !resumeFile && (reset || !this.config.session?.branchFromMessageId) ? this.config.getResumeMessages?.() ?? [] : [];
+    const reconstructedFile = resumeDir && resumeHistory.length ? seedOmpHistory(resumeDir, cwd, resumeHistory, 'resume') : null;
+    if (!resumeFile && !reconstructedFile && !reset && this.ompSessionId && !this.config.session?.branchFromMessageId) {
+      throw new Error('Saved OMP transcript is unavailable and no ROX history was supplied for reconstruction');
+    }
 
     this.autoApproveAtSpawn = this.permissionManager.getPermissionMode() === 'allow-all';
 
@@ -795,11 +759,14 @@ export class OmpAgent extends BaseAgent {
     // Public Rox routes have their own canonical catalog. User/named OMP
     // profiles remain untouched, and inherited env overrides cannot redirect
     // this child to a different profile or provider.
-    const runtimeConfig = usesPublicRoxCatalog ? prepareOmpRoxRuntimeConfig({
+    const runtimeConfig = prepareOmpRoxRuntimeConfig({
       runtimeRoot: join(resolveConfigDir(), 'runtime', 'omp'),
       apiKey: env.ROX_API_KEY,
       baseUrl: getLlmConnection(connectionSlug)?.baseUrl,
-    }) : null;
+      publicRoxCatalog: usesPublicRoxCatalog,
+      sourceAgentDir: env.PI_CODING_AGENT_DIR,
+      configFiles: env.PI_CONFIG_FILES,
+    });
     if (runtimeConfig) Object.assign(env, runtimeConfig.env);
     let child: ChildProcess;
     try {
@@ -955,20 +922,18 @@ export class OmpAgent extends BaseAgent {
       }
     }
 
-    // Capture the OMP session id / transcript path before the first prompt
-    // so turn anchors can resolve (G3). Fire-and-forget raced set_host_tools
-    // and dropped get_state under isolated tests.
     try {
-      const data = await this.sendCommand('get_state', {});
-      const state = (data as { sessionId?: string; sessionFile?: string } | null);
-      const sid = state?.sessionId;
-      if (sid && sid !== this.ompSessionId) {
-        this.ompSessionId = sid;
-        this.config.onSdkSessionIdUpdate?.(sid);
-      }
-      if (state?.sessionFile) this.ompSessionFile = state.sessionFile;
-    } catch (err) {
-      this.debug(`get_state after ready failed: ${err instanceof Error ? err.message : err}`);
+    // Restore BEFORE observing/persisting the new child's initially empty identity.
+    if (resumeFile || reconstructedFile) {
+      await this.switchOmpTranscript((resumeFile || reconstructedFile)!);
+      // A persisted child branch is resumed rather than re-forked on every launch.
+      if (this.config.session?.branchFromMessageId) this.branchHandshakeApplied = true;
+    }
+    if (!this.config.session?.branchFromMessageId || this.branchHandshakeApplied) await this.captureOmpIdentity();
+
+    } catch (error) {
+      this.killSubprocessSync();
+      throw error;
     }
 
     // Bridge craft session tools (spawn_session, call_llm, browser_tool, …)
@@ -2020,14 +1985,14 @@ export class OmpAgent extends BaseAgent {
 
     // Attachments: append textual references (OMP RPC prompt accepts images but
     // the wire contract for them is not part of the verified notes — keep to text).
-    let effectiveMessage = message;
+    let effectiveMessage = withOmpRequiredModes(message);
     if (attachments && attachments.length > 0) {
       const parts = attachments.map((a) =>
         a.text
           ? `[Attached file: ${a.name}]\n${a.text}`
           : `[Attached file: ${a.name} at ${a.path}]`,
       );
-      effectiveMessage = `${message}\n\n${parts.join('\n\n')}`;
+      effectiveMessage = `${effectiveMessage}\n\n${parts.join('\n\n')}`;
     }
 
     this.emitAutomationEvent('UserPromptSubmit', {
@@ -2038,6 +2003,7 @@ export class OmpAgent extends BaseAgent {
     try {
       await this.ensureSubprocess();
 
+      await this.sendCommand('set_thinking_level', { level: 'max' });
       this.sendCommand('prompt', { message: effectiveMessage }).catch((error) => {
         // prompt is async — failure response = turn failed. When the failure
         // is the subprocess crashing mid-turn, handleSubprocessExit already
@@ -2223,7 +2189,7 @@ export class OmpAgent extends BaseAgent {
   override setThinkingLevel(level: ThinkingLevel): void {
     super.setThinkingLevel(level);
     if (!this.subprocess) return;
-    const ompLevel = mapThinkingLevel(level);
+    const ompLevel = 'max'; // Every ROX user turn requires the strongest native effort.
     this.sendCommand('set_thinking_level', { level: ompLevel })
       .then(() => this.debug(`OMP thinking level set to ${ompLevel}`))
       .catch((error) => this.debug(`set_thinking_level(${ompLevel}) failed: ${error}`));
@@ -2262,6 +2228,10 @@ export class OmpAgent extends BaseAgent {
   }
 
   override clearHistory(): void {
+    if (this.config.session?.id) resetOmpHistory(this.getOmpSessionDir(this.config.session.id));
+    this.historyCleared = true;
+    this.branchHandshakeApplied = true;
+    this.ompSessionFile = null;
     this.ompSessionId = null;
     this.killSubprocessSync();
     super.clearHistory();
@@ -2276,12 +2246,30 @@ export class OmpAgent extends BaseAgent {
     const bin = await resolveOmpExecutableOrExplain();
     this.debug(`runOneShot: bin=${bin}`);
     const cwd = this.resolvedCwd();
+    const connectionSlug = this.config.connectionSlug || ROX_DEFAULT_CONNECTION_SLUG;
+    let storedApiKey: string | null = null;
+    try { storedApiKey = await getCredentialManager().getLlmApiKey(connectionSlug); } catch {}
+    const invocationModel = model || (isRoxPublicModelId(this._model ?? '') ? this._model : undefined);
+    const publicRoxCatalog = isRoxPublicModelId(invocationModel ?? '');
+    if (!publicRoxCatalog) ensureOmpRoxFirstRun({ homeDir: homedir(), env: process.env, storedApiKey });
+    const credentialEnv = buildOmpSpawnCredentialEnv({ env: process.env, storedApiKey });
     const env = await withToolchainPathPrefix({
       ...process.env,
       ...getProxyEnvVars(),
       ...getRuntimeEnvOverrides(),
+      ...credentialEnv,
       ...(this.config.envOverrides ?? {}),
     });
+
+    const runtimeConfig = prepareOmpRoxRuntimeConfig({
+      runtimeRoot: join(resolveConfigDir(), 'runtime', 'omp'),
+      publicRoxCatalog,
+      apiKey: env.ROX_API_KEY,
+      baseUrl: getLlmConnection(connectionSlug)?.baseUrl,
+      sourceAgentDir: env.PI_CODING_AGENT_DIR,
+      configFiles: env.PI_CONFIG_FILES,
+    });
+    Object.assign(env, runtimeConfig.env);
 
     // spawn, not execFile: under Bun execFile ignores stdio overrides, and a
     // default piped stdin makes omp read the prompt from stdin and wait for
@@ -2290,10 +2278,14 @@ export class OmpAgent extends BaseAgent {
     // --no-session: one-shots (titles, memory distillation, summaries) are
     // internal — never persist them as OMP sessions, or the foreign auto
     // importer brings them back as Rox sessions (Лента noise).
-    const args = model ? ['--no-session', '--model', model, '-p', prompt] : ['--no-session', '-p', prompt];
+    const effectivePrompt = withOmpRequiredModes(prompt);
+    const args = ['--no-session', '--thinking', 'max', ...(invocationModel ? ['--model', invocationModel] : []), '-p', effectivePrompt];
     this.debug('runOneShot: spawning -p child');
     return new Promise<string>((resolve, reject) => {
-      const child = spawn(bin, args, { cwd, env });
+      let child: ChildProcess;
+      try { child = spawn(bin, args, { cwd, env }); }
+      catch (error) { runtimeConfig.dispose(); reject(error); return; }
+      child.once('close', () => runtimeConfig.dispose());
       this.debug(`runOneShot: spawned pid=${child.pid}`);
       const timer = setTimeout(() => {
         child.kill('SIGKILL');
@@ -2321,7 +2313,10 @@ export class OmpAgent extends BaseAgent {
 
   async runMiniCompletion(prompt: string): Promise<string | null> {
     try {
-      const out = await this.runOneShot(prompt);
+      const miniModel = isRoxPublicModelId(this._model ?? '')
+        ? (isRoxPublicModelId(this.config.miniModel ?? '') ? this.config.miniModel : 'rox/fast')
+        : this.config.miniModel;
+      const out = await this.runOneShot(prompt, miniModel);
       return out || null;
     } catch (error) {
       this.debug(`runMiniCompletion failed: ${error}`);

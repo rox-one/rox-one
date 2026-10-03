@@ -8,7 +8,7 @@
 import { afterEach, describe, expect, it } from 'bun:test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { AgentEvent } from '@craft-agent/core/types';
+import type { AgentEvent } from '@rox/core/types';
 import { OmpAgent } from '../omp-agent.ts';
 import {
   createFakeOmp,
@@ -215,6 +215,7 @@ describe('OmpAgent branch handshake', () => {
     mkdirSync(parentOmpDir, { recursive: true });
     const parentFile = join(parentOmpDir, '2026-08-12_parent.jsonl');
     const entries = [
+      { type:'session',version:3,id:'parent-omp-session',cwd:fake.workspaceRoot },
       { type: 'message', id: 'user0001', parentId: null, message: { role: 'user' } },
       { type: 'message', id: 'asst0001', parentId: 'user0001', message: { role: 'assistant' } },
       { type: 'message', id: 'user0002', parentId: 'asst0001', message: { role: 'user' } },
@@ -224,7 +225,7 @@ describe('OmpAgent branch handshake', () => {
     return { parentSessionPath, parentFile };
   }
 
-  it('mid-history branch: switch_session to the parent transcript, then branch at the user entry after the anchor', async () => {
+  it('mid-history branch: switch to a private parent copy and fork the assistant anchor', async () => {
     const { agent, fake } = setup('healthy');
     const { parentSessionPath, parentFile } = writeParentTranscript(fake);
     (agent as any).config.session.branchFromMessageId = 'craft-msg-1';
@@ -236,10 +237,11 @@ describe('OmpAgent branch handshake', () => {
 
     const log = fake.readRpcLog();
     const switchFrame = log.find((f) => f.type === 'switch_session');
-    expect(switchFrame?.sessionPath).toBe(parentFile);
-    const branchFrame = log.find((f) => f.type === 'branch');
+    expect(switchFrame?.sessionPath).not.toBe(parentFile);
+    expect(String(switchFrame?.sessionPath)).toContain(join('session-test', 'omp'));
+    const branchFrame = log.find((f) => f.type === 'fork');
     // OMP's branch cuts at the USER entry following the anchor.
-    expect(branchFrame?.entryId).toBe('user0002');
+    expect(branchFrame?.entryId).toBe('asst0001');
     expect(events.at(-1)?.type).toBe('complete');
   });
 
@@ -250,6 +252,7 @@ describe('OmpAgent branch handshake', () => {
     mkdirSync(parentOmpDir, { recursive: true });
     const parentFile = join(parentOmpDir, '2026-08-12_parent.jsonl');
     const entries = [
+      { type:'session',version:3,id:'parent-omp-session',cwd:fake.workspaceRoot },
       { type: 'message', id: 'user0001', parentId: null, message: { role: 'user' } },
       { type: 'message', id: 'asst0001', parentId: 'user0001', message: { role: 'assistant' } },
     ];
@@ -265,7 +268,7 @@ describe('OmpAgent branch handshake', () => {
     // Tail fork: switched to a COPY inside the child's own session dir.
     expect(String(switchFrame?.sessionPath)).toContain(join('sessions', 'session-test', 'omp'));
     expect(String(switchFrame?.sessionPath)).toContain('branched-');
-    expect(log.some((f) => f.type === 'branch')).toBe(false);
+    expect(log.find((f) => f.type === 'fork')?.entryId).toBe('asst0001');
     expect(events.at(-1)?.type).toBe('complete');
   });
 
