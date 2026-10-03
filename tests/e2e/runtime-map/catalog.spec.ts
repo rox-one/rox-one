@@ -1,9 +1,10 @@
 import { test, expect, type Page } from '@playwright/test'
-import ru from '../../../packages/shared/src/i18n/locales/ru.json'
+import { readFileSync } from 'node:fs'
 import { routes } from '../../../apps/electron/src/shared/routes'
 
 const server = 'http://127.0.0.1:4177'
-const copy = (key: string) => (ru as Record<string, string>)[key]!
+const ru = JSON.parse(readFileSync(new URL('../../../packages/shared/src/i18n/locales/ru.json', import.meta.url), 'utf8')) as Record<string, string>
+const copy = (key: string) => ru[key]!
 const skills = ['Fixture code review', 'Fixture design review', 'Fixture planning', 'Fixture workspace note']
 async function openCatalog(page: Page, mode: 'skills' | 'integrations', options: { theme?: 'light' | 'dark'; sourceList?: boolean } = {}) {
   await page.goto(`/?catalog=${mode}&theme=${options.theme ?? 'light'}${options.sourceList ? '&sourceList=1' : ''}`, { waitUntil: 'domcontentloaded' })

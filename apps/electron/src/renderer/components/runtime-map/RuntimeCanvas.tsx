@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Background, BackgroundVariant, ReactFlow, ReactFlowProvider, type Node, type Edge, type ReactFlowInstance, type Viewport } from '@xyflow/react'
+import { Background, BackgroundVariant, ReactFlow, ReactFlowProvider, getViewportForBounds, type Node, type Edge, type ReactFlowInstance, type Viewport } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useTranslation } from 'react-i18next'
 import type { RuntimeGraph, RuntimeNode } from '@rox/core/runtime-trace'
@@ -67,7 +67,10 @@ function RuntimeCanvasInner({ graph, nodes, layout, scopeKey, selectedId, onSele
     const bounds = instance.getNodesBounds(ids)
     const minimum = overviewMinimumZoom(bounds, { width: element.clientWidth, height: element.clientHeight })
     setMinimumZoom(minimum)
-    void instance.fitView({ nodes: ids.map(id => ({ id })), padding: 0.18, minZoom: minimum, maxZoom: 1, duration: animationDuration() })
+    // fitView excludes unmeasured offscreen nodes; public bounds include their
+    // initial geometry so the whole current window participates in overview.
+    const viewport = getViewportForBounds(bounds, element.clientWidth, element.clientHeight, minimum, 1, 0.18)
+    void instance.setViewport(viewport, { duration: animationDuration() })
   }
   React.useImperativeHandle(apiRef, () => ({ fit, focusLatest: () => { if (latest) focusNode(latest.id) }, focusNode }), [layout, latest?.id, visibleIds])
   React.useEffect(() => {

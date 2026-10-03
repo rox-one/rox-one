@@ -54,6 +54,7 @@ export class RuntimeTraceService {
     const sourceSequences = new Map<string, number>()
     for (const row of rows) {
       if (!isRuntimeEvent(row)) continue
+      if (row.kind === 'trace.coverage') for (const gap of row.payload.coverage.missing) missing.add(gap)
       const previous = sourceSequences.get(row.sourceId)
       if (previous !== undefined && row.sourceSeq > previous + 1) missing.add('recording-failure')
       sourceSequences.set(row.sourceId, Math.max(previous ?? 0, row.sourceSeq))
@@ -70,7 +71,7 @@ export class RuntimeTraceService {
     if (!isRuntimeEvent(event) || event.workspaceId !== workspaceId || event.rootSessionId !== rootSessionId || event.rootRunId !== rootRunId) return false
     // A recovered row cannot enlarge the query's authority. Deleted child sessions retain their
     // historical observations; existing sessions must still have the same authorized lineage.
-    let session = this.resolveSession(event.sessionId)
+    let session = this.resolveSession(event.sessionId ?? rootSessionId)
     if (!session) return true
     for (let index = 0; session && index < 100; index++) {
       if (session.workspaceId !== workspaceId) return false

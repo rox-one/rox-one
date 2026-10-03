@@ -386,7 +386,7 @@ export class OmpAgent extends BaseAgent {
   private pendingPermissions = new Map<string, PendingPermission>();
 
   // Host-tool bridge state
-  private pendingHostToolCalls = new Map<string, { cancelled: boolean }>();
+  private pendingHostToolCalls = new Map<string, { cancelled: boolean; onCancelled?: () => void }>();
   private pendingHostToolPermissions = new Map<string, (allowed: boolean) => void>();
   /**
    * Fingerprint of complete host tool definitions last acknowledged by
@@ -1394,7 +1394,7 @@ export class OmpAgent extends BaseAgent {
       case 'host_tool_cancel': {
         const targetId = String(msg.targetId ?? '');
         const entry = this.pendingHostToolCalls.get(targetId);
-        if (entry) entry.cancelled = true;
+        if (entry) this.cancelHostToolInvocation(entry);
         break;
       }
 
@@ -1638,17 +1638,35 @@ export class OmpAgent extends BaseAgent {
     args: Record<string, unknown>,
     toolCallId?: string,
   ): Promise<void> {
-    const entry = { cancelled: false };
+    const entry: { cancelled: boolean; onCancelled?: () => void } = { cancelled: false };
     const runtimeRunId = this.runtimeObservationRunId;
     const originatingChild = this.subprocess;
     this.pendingHostToolCalls.set(frameId, entry);
-    const hostBashObserver = toolCallId
+    const runtimeObserver = toolCallId
       ? this.createHostBashObserver(toolCallId, runtimeRunId, () => !entry.cancelled && this.subprocess === originatingChild)
       : undefined;
+    let processStarted = false;
+    let executionSettled = false;
+    const hostBashObserver = runtimeObserver ? (evidence: HostBashObservation): void => {
+      if (evidence.phase === 'started') { processStarted = true; executionSettled = false; }
+      if (evidence.phase === 'completed' || evidence.phase === 'failed') executionSettled = true;
+      runtimeObserver(evidence);
+    } : undefined;
+    entry.onCancelled = () => {
+      // A transport cancellation stops delivery, not the separately executing host process.
+      // Only actual executor evidence may report termination, exit code or final duration.
+      if (!processStarted || executionSettled || this.subprocess !== originatingChild || this.runtimeObservationRunId !== runtimeRunId || !this._isProcessing || this.eventQueue.isComplete) return;
+      this.eventQueue.enqueue({ type: 'runtime_observation', observation: {
+        sourceEventId: randomUUID(), sourceId: `omp-host-cancellation:${runtimeRunId}:${frameId}`, sourceSeq: 1,
+        agentId: 'root', toolUseId: toolCallId, spanId: toolCallId ? `tool:${toolCallId}` : undefined,
+        occurredAt: known(Date.now(), 'OMP host invocation cancellation'), clockDomain: 'rox-host', origin: 'observed',
+        kind: 'trace.coverage', payload: { coverage: { state: 'partial', source: 'runtime', missing: ['unconfirmed-host-process-termination'] } },
+      } });
+    };
 
     const finish = (text: string, isError: boolean): void => {
-      this.pendingHostToolCalls.delete(frameId);
-      if (entry.cancelled) return; // OMP already moved on (host_tool_cancel)
+      if (this.pendingHostToolCalls.get(frameId) === entry) this.pendingHostToolCalls.delete(frameId);
+      if (entry.cancelled || this.subprocess !== originatingChild || this.runtimeObservationRunId !== runtimeRunId) return;
       this.send({
         type: 'host_tool_result',
         id: frameId,
@@ -1693,6 +1711,7 @@ export class OmpAgent extends BaseAgent {
         }
       }
 
+      if (entry.cancelled || this.subprocess !== originatingChild || this.runtimeObservationRunId !== runtimeRunId) return;
       const execution = this.executeHostSessionTool(toolName, args, hostBashObserver);
       const timeout = new Promise<{ content: string; isError: boolean }>((resolve) => {
         setTimeout(
@@ -1705,6 +1724,16 @@ export class OmpAgent extends BaseAgent {
     } catch (error) {
       finish(error instanceof Error ? error.message : String(error), true);
     }
+  }
+
+  private cancelHostToolInvocation(entry: { cancelled: boolean; onCancelled?: () => void }): void {
+    if (entry.cancelled) return;
+    entry.cancelled = true;
+    entry.onCancelled?.();
+  }
+
+  private cancelPendingHostToolInvocations(): void {
+    for (const entry of this.pendingHostToolCalls.values()) this.cancelHostToolInvocation(entry);
   }
 
   /** Execution evidence is scoped to this invocation, never to a cached context. */
@@ -2223,6 +2252,7 @@ export class OmpAgent extends BaseAgent {
   async abort(reason?: string): Promise<void> {
     this.debug(`abort(${reason ?? 'no reason'})`);
     this.emitAutomationEvent('Stop', { hook_event_name: 'Stop' });
+    this.cancelPendingHostToolInvocations();
 
     // Deny all pending permissions so the UI unblocks
     for (const [requestId, pending] of this.pendingPermissions) {
@@ -2252,6 +2282,7 @@ export class OmpAgent extends BaseAgent {
   forceAbort(reason: AbortReason): void {
     this.debug(`forceAbort(${reason})`);
     this.emitAutomationEvent('Stop', { hook_event_name: 'Stop' });
+    this.cancelPendingHostToolInvocations();
 
     this.abortReason = reason;
     this._isProcessing = false;

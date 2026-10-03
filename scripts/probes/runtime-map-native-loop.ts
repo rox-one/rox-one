@@ -47,6 +47,7 @@ async function main(): Promise<void> {
     const { initializeExtensions } = await import(base + '/src/modes/runtime-init.ts');
     const { SessionManager } = await import(base + '/src/session/session-manager.ts');
     const { loadExtensions } = await import(base + '/src/extensibility/extensions/loader.ts');
+    const { EventBus } = await import(base + '/src/utils/event-bus.ts');
     const { createMockModel } = await import(base + '/node_modules/@oh-my-pi/pi-ai/src/providers/mock.ts');
     const { getSupportedEfforts } = await import(base + '/node_modules/@oh-my-pi/pi-catalog/src/model-thinking.ts');
     writeFileSync(join(root, 'worker-policy.js'), OMP_WORKER_POLICY_SOURCE, { mode: 0o600 });
@@ -111,12 +112,16 @@ async function main(): Promise<void> {
       ],
     });
     const supportedMaximum = getSupportedEfforts(registry.find('fixture', 'worker')).at(-1);
-    const extensions = await loadExtensions([join(root, 'worker-policy.js'), observer.extensionPath], root);
+    // Preloaded ExtensionAPI instances retain their eventBus. The SDK must
+    // receive that same native bus, as the CLI's early-loading path does.
+    const eventBus = new EventBus();
+    const extensions = await loadExtensions([join(root, 'worker-policy.js'), observer.extensionPath], root, eventBus);
     if (extensions.errors.length) throw new Error(JSON.stringify(extensions.errors));
     const result = await createAgentSession({
       cwd: root, agentDir: process.env.PI_CODING_AGENT_DIR, settings, authStorage: auth, modelRegistry: registry,
       model: registry.find('fixture', 'worker'), getApiKey: () => 'fixture-only', thinkingLevel: 'auto', toolNames: ['task', 'read', 'eval'],
       enableMCP: false, enableLsp: false, enableIrc: false, disableExtensionDiscovery: true, preloadedExtensions: extensions,
+      eventBus,
       sessionManager: SessionManager.inMemory(root), skills: [], rules: [], contextFiles: [], promptTemplates: [], slashCommands: [],
       systemPrompt: 'Fixture parent: dispatch exact native child and report its result.', autoApprove: true,
       inheritedSessionAgents: [
@@ -165,7 +170,8 @@ async function main(): Promise<void> {
       assertionsPassed: true, scope: 'Actual native SDK two-level task worker and eval-agent loops, fixture provider, private observer transport. No installed-app or remote provider claim.',
       ompVersion: '18.4.12', networkAttempts, paidProviderRequests: 0, supportedMaximum,
       requests: requests.map(({ kind, tools, reasoning }) => ({ kind, tools, reasoning })),
-      rawHooks: raw.map(event => ({ hook: event.hook, agent: event.agent, nativeSessionId: event.nativeSessionId, sourceSeq: event.sourceSeq })),
+      rawHooks: raw.map(event => ({ hook: event.hook, agent: event.agent, nativeSessionId: event.nativeSessionId, sourceSeq: event.sourceSeq,
+        dispatch: ['before_subagent_spawn', 'subagent_identity'].includes(event.hook) ? event.payload : undefined })),
       observations, taskResult, evalResult, providerRequests,
     });
     console.log(JSON.stringify({ assertionsPassed: true, networkAttempts, requests: requests.map(({ kind, tools }) => ({ kind, tools })), observations: observations.length }));
@@ -175,6 +181,8 @@ async function main(): Promise<void> {
       error: error instanceof Error ? error.message : String(error),
       requests: requests.map(({ kind, tools, reasoning }) => ({ kind, tools, reasoning })),
       observations, taskResult, evalResult, providerRequests, transportErrors,
+      rawHooks: raw.map(event => ({ hook: event.hook, agent: event.agent, nativeSessionId: event.nativeSessionId, sourceSeq: event.sourceSeq,
+        dispatch: ['before_subagent_spawn', 'subagent_identity'].includes(event.hook) ? event.payload : undefined })),
       boundary: 'An unsuccessful native task loop is not acceptance evidence. Native file locks and integrity checks remain enabled.',
     });
     throw error;
