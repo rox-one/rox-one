@@ -28,13 +28,13 @@ async function fixtureBundle() {
     const store = createStore();
     let ready=true, sessionsReady=true, ws='ws-a', slug='a', deepLink;
     let state, pagesChanged;
-    const pageRequests=[], pageSubscriptions=[], createRequests=[], commands=[], inputs=[], messages=[], scheduled=[];
+    const pageRequests=[], pageSubscriptions=[], deepSubscriptions=[], createRequests=[], commands=[], inputs=[], messages=[], scheduled=[];
     const nativeSetTimeout=window.setTimeout;
     window.electronAPI = {
       getPages: workspaceId=>new Promise(resolve=>pageRequests.push({workspaceId,resolve})),
       onPagesChanged: callback=>{pagesChanged=callback;pageSubscriptions.push(callback);return()=>{if(pagesChanged===callback)pagesChanged=undefined}},
       listLabels: async()=>[], onLabelsChanged: ()=>()=>{},
-      onDeepLinkNavigate: callback=>{ deepLink=callback; return()=>{deepLink=undefined}; },
+      onDeepLinkNavigate: callback=>{ deepLink=callback; deepSubscriptions.push({callback,workspaceId:ws}); return()=>{deepLink=undefined}; },
       sessionCommand: async(id,command)=>{commands.push({id,command})},
       sendMessage: async(id,input)=>{messages.push({id,input})},
     };
@@ -57,6 +57,9 @@ async function fixtureBundle() {
     window.ui001nav={
       navigate: (route,options)=>state.navigate(route,options),
       deep: view=>deepLink({view}),
+      deepPayload: payload=>deepLink(payload),
+      deepRetained: (index,payload)=>deepSubscriptions[index].callback(payload),
+      deepListeners: ()=>deepSubscriptions.map((entry,index)=>({index,workspaceId:entry.workspaceId})),
       ready(value,sessions=value){ready=value;sessionsReady=sessions;render()},
       workspace(id, nextSlug){ws=id;slug=nextSlug;render()},
       delete(id){const next=new Map(store.get(sessionMetaMapAtom));next.delete(id);store.set(sessionMetaMapAtom,next)},
@@ -395,4 +398,58 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.evaluate(()=>(window as any).ui001nav.fireActionTimers())
     expect(await page.evaluate(()=>(window as any).ui001nav.actionCalls())).toEqual({commands:[],inputs:[{id:'created-list',input:'from-list'}],messages:[]})
   })
+
+  browserTest('retained deep-link listener cannot create or send in a former workspace',async()=>{
+    await page.goto(base+'/?ws=a&route=home');await routeIs('home')
+    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('allSessions/session/first-b')
+    await page.waitForFunction(()=>(window as any).ui001nav.deepListeners().at(-1)?.workspaceId==='ws-b')
+    const formerB=await page.evaluate(()=>(window as any).ui001nav.deepListeners().at(-1).index)
+    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-a','a'));await routeIs('home')
+    await page.evaluate(index=>(window as any).ui001nav.deepRetained(index,{action:'new-session',actionParams:{input:'stale-b',send:'true'}}),formerB)
+    await page.waitForTimeout(100)
+    expect((await snapshot()).panels[0].route).toBe('home')
+    expect(await page.evaluate(()=>(window as any).ui001nav.creations())).toEqual([])
+    expect(await page.evaluate(()=>(window as any).ui001nav.actionCalls())).toEqual({commands:[],inputs:[],messages:[]})
+  })
+
+  browserTest('retained deep-link listeners stay disposed after workspace ABA and same-workspace readiness reinstall',async()=>{
+    await page.goto(base+'/?ws=a&route=home');await routeIs('home')
+    const formerA=await page.evaluate(()=>(window as any).ui001nav.deepListeners().at(-1).index)
+    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('allSessions/session/first-b')
+    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-a','a'));await routeIs('home')
+    await page.evaluate(index=>(window as any).ui001nav.deepRetained(index,{view:'notes/note/stale-a'}),formerA)
+    await page.waitForTimeout(100)
+    expect((await snapshot()).panels[0].route).toBe('home')
+    const before=await page.evaluate(()=>(window as any).ui001nav.deepListeners().at(-1).index)
+    await page.evaluate(()=>(window as any).ui001nav.ready(true,false))
+    await page.waitForFunction(index=>(window as any).ui001nav.deepListeners().at(-1).index>index,before)
+    await page.evaluate(()=>(window as any).ui001nav.ready(true,true))
+    await page.waitForFunction(index=>(window as any).ui001nav.deepListeners().at(-1).index>index+1,before)
+    await page.evaluate(index=>(window as any).ui001nav.deepRetained(index,{view:'notes/note/stale-same-owner'}),before)
+    await page.waitForTimeout(100)
+    expect((await snapshot()).panels[0].route).toBe('home')
+    expect(await page.evaluate(()=>(window as any).ui001nav.creations())).toEqual([])
+  })
+
+  browserTest('current deep-link listener retains raw query views and executes current action parameters',async()=>{
+    await page.goto(base+'/?ws=a&route=home');await routeIs('home')
+    const raw='unknown/leaf?x=%ZZ&nested=a%2Fb'
+    await page.evaluate(view=>(window as any).ui001nav.deepPayload({view}),raw);await routeIs(raw)
+    expect((await snapshot()).nav).toMatchObject({navigator:'unavailable',route:raw})
+    expect(new URL(page.url()).searchParams.get('route')).toBe(raw)
+    await page.evaluate(()=>{
+      (window as any).ui001nav.holdActionTimers()
+      ;(window as any).ui001nav.deepPayload({action:'new-chat',actionParams:{name:'deep name',input:'hello &/%ZZ'}})
+    })
+    await page.waitForFunction(()=>(window as any).ui001nav.creations().length===1)
+    expect(await page.evaluate(()=>(window as any).ui001nav.creations())).toEqual([{workspaceId:'ws-a'}])
+    await page.evaluate(()=>(window as any).ui001nav.resolveCreate(0,'current-deep'))
+    await page.waitForFunction(()=>(window as any).ui001nav.timers()===1)
+    await routeIs('allSessions/session/current-deep')
+    await page.evaluate(()=>(window as any).ui001nav.fireActionTimers())
+    expect(await page.evaluate(()=>(window as any).ui001nav.actionCalls())).toEqual({
+      commands:[{id:'current-deep',command:{type:'rename',name:'deep name'}}],inputs:[{id:'current-deep',input:'hello &/%ZZ'}],messages:[],
+    })
+  })
+
 })

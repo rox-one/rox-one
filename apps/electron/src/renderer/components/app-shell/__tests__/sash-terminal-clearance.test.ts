@@ -23,9 +23,9 @@ describe('sash terminal clearance', () => {
     expect(appShell).toContain('bottom: terminalClearance')
     expect(appShell).not.toMatch(/bottom:\s*PANEL_STACK_VERTICAL_OVERFLOW/)
 
-    const desktop = panelStack.slice(panelStack.indexOf('DESKTOP BRANCH'))
-    expect(desktop).toContain('paddingTop: PANEL_STACK_TOP_INSET')
-    expect(desktop).not.toContain('marginTop: -PANEL_STACK_TOP_INSET')
+    // The unified container applies the top inset only to desktop layouts.
+    expect(panelStack).toContain('paddingTop: isCompact ? undefined : PANEL_STACK_TOP_INSET')
+    expect(panelStack).not.toContain('marginTop: -PANEL_STACK_TOP_INSET')
   })
 
   it('bounds both shell resize hit areas to the content column and terminal clearance', () => {

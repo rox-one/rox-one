@@ -124,7 +124,9 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       const bytes = await page.screenshot({ path })
       const address = await page.evaluate(() => ({ url: location.href, route: new URL(location.href).searchParams.get('route'),
         panels: new URL(location.href).searchParams.get('panels'), focusedIndex: new URL(location.href).searchParams.get('fi'),
-        compact: Boolean(document.querySelector('[data-compact-profile]')) }))
+        compact: Boolean(document.querySelector('[data-compact-profile]')),
+        noteStatuses: [...document.querySelectorAll('[data-testid="route-note-missing"], [data-testid="route-note-unavailable"]')]
+          .map(node => ({ testId: node.getAttribute('data-testid'), state: node.getAttribute('data-state'), code: node.getAttribute('data-error-code') })) }))
       screenshots.push({ name, path, sha256: sha256(bytes), address })
       await writeFile(join(evidence, `rox-readiness-ui-001.${name}.txt`), await page.locator('body').innerText())
     }
@@ -185,7 +187,12 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       } else if (type === 'session') {
         const surface = page.getByTestId('route-session-missing'); await surface.waitFor({ timeout: 30_000 })
         expect(await surface.getAttribute('data-route-entity')).toBe(entity)
-      } else if (type === 'note') await page.getByTestId('route-note-missing').waitFor({ timeout: 30_000 })
+      } else if (type === 'note') {
+        const surface = page.locator('[data-testid="route-note-missing"], [data-testid="route-note-unavailable"]')
+        await surface.waitFor({ timeout: 30_000 })
+        expect(['not-found', 'unavailable']).toContain(await surface.getAttribute('data-state'))
+        expect(await surface.getAttribute('data-error-code')).toBeTruthy()
+      }
       else if (type === 'project') await page.getByText(russian['projectInfo.notFound'], { exact: true }).waitFor({ timeout: 30_000 })
       else if (type === 'page') await page.getByText(russian['pages.notFound'], { exact: true }).waitFor({ timeout: 30_000 })
       else if (type === 'item') {
@@ -438,7 +445,19 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       const noteDeleteReceipt = await page.evaluate(seed => window.electronAPI.deleteNote(seed.workspaceId, seed.noteId), seed)
       expect(noteDeleteReceipt).toBe(true)
       expect(await stat(join(seed.noteRoot, seed.noteId + '.md')).then(() => true).catch(() => false)).toBe(false)
+      await page.getByTestId('route-note-missing').waitFor({ timeout: 30_000 })
       await missing(noteRoute); observations.noteDeleteReceipt = noteDeleteReceipt; await capture('note-deleted')
+      const negativeRead = await page.evaluate(async seed => {
+        try { await window.electronAPI.readNote(seed.workspaceId, seed.noteId); return { unexpectedlyReadDeletedNote: true } }
+        catch (error) {
+          const failure = error as { name?: unknown; code?: unknown; message?: unknown }
+          return { unexpectedlyReadDeletedNote: false, name: typeof failure.name === 'string' ? failure.name : null,
+            code: typeof failure.code === 'string' || typeof failure.code === 'number' ? failure.code : null,
+            message: typeof failure.message === 'string' ? failure.message : String(error) }
+        }
+      }, seed)
+      expect(negativeRead.unexpectedlyReadDeletedNote).toBe(false)
+      observations.deletedNoteRpcError = { ...negativeRead, message: 'message' in negativeRead ? redactLog(negativeRead.message!) : null }
       stage('deleted-note-retry')
       await page.getByTestId('route-note-missing').getByRole('button', { name: russian['common.retry'], exact: true }).click()
       await missing(noteRoute); await capture('note-retried')

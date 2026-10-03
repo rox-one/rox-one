@@ -1124,7 +1124,10 @@ export function NavigationProvider({
   useEffect(() => {
     if (!workspaceId) return
 
+    const owner = navigationOwnerRef.current
+    let active = true
     const cleanup = window.electronAPI.onDeepLinkNavigate((nav: DeepLinkNavigation) => {
+      if (!active || !owner.active || navigationOwnerRef.current !== owner) return
       let route: string | null = null
 
       if (nav.view) {
@@ -1154,7 +1157,10 @@ export function NavigationProvider({
       }
     })
 
-    return cleanup
+    return () => {
+      active = false
+      cleanup()
+    }
   }, [workspaceId, navigate])
 
   // =========================================================================
