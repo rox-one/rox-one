@@ -932,3 +932,14 @@ Root owns the resource-copy/main-protocol/native-harness subset of #1448; pr_sco
 - Carry recording ID only for authenticated overlay stop/cancel, validate command/ID and managed native client, retain current private child sender/phase/owner checks.
 - Bind queued START/permission commands to the current native recording and capture generation; clear on completion/cancel/failure; cancellation wins. Preserve current learning observation and native consent/PTT paths.
 - Verify actual two-composer/browser owner pipeline with before/after negative proof, delayed START and grant, idle/foreign/retired packets, current 25 dictation regressions, native command/owner and authority/protocol suites, full Electron types and main/preload bundles. Retain failure history; controlled browser/native ports do not establish OS microphone or clipboard acceptance. Parent owns remote merge; delivery receipt remains separate from implementation.
+
+## Legacy MCP SSE recovery graph (2026-10-03)
+
+1. Scout adapts only the missing #1436 pool negotiation onto current #1450 deadlines/privacy and #1455 infrastructure, preserving all modern recovery/config/source ownership. Root reviews and merges a separate qualified PR; source branches stay intact.
+2. Exercise real SDK legacy-SSE servers with HTTP initialize 400/404/405, header retention, mapped tool call and unchanged-config resync. Exercise actual HTTP401/403/429/500/503, health/discovery405 and both-failure credential scrub; preserve current transient retry and no-replay controls.
+3. Exercise deterministic lifecycle cancellation during HTTP cleanup and SSE initialization, shrinking connection budget, expired-budget cleanup. Run all current MCP controls and shared/Electron types with pinned Bun and exact owned workspace dependency bindings. Retain initial failed fixture/cancellation observations, source regression proof and exact revision receipt.
+4. Publish/attach the bounded PR, record exact remote head and parent merge readback, then continue local-source health/migration, host Bash and performance residuals. No whole137-path completion claim.
+
+
+## Workspace shortcut popover integration —2026-10-03
+Owner root. Depends on existing rail-links/Popover/Select and current product-tour hooks. Import1447 selectively, repair viewport constraints, qualify nine actual DOM cases and old25px negative, run full Electron types; commit proof and merge a separate PR preserving source branch. Completed local checks in docs/integration-history/workspace-link-popover-20261003.
