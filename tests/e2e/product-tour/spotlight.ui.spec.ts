@@ -115,3 +115,12 @@ test('UI-02/UI-04/UI-10: visible variant selection rejects hidden, clipped and i
   })
   expect(result).toEqual({ preferred: 'Second panel draft', fallback: 'First panel draft', hidden: 'blocked', clipped: 'blocked', iframe: 'blocked' })
 })
+
+
+test('UI-04: clipping the active control pauses for target occlusion before any ordinary action', async ({ page }) => {
+  await open(page); await start(page)
+  await page.getByRole('textbox', { name: 'First panel draft' }).evaluate(element => { element.style.transform = 'translate(-2000px, -2000px)'; window.dispatchEvent(new Event('resize')) })
+  await expect(page.getByTestId('pause-reason')).toHaveText('target-occluded')
+  await expect(page.getByTestId('ordinary-count')).toHaveText('0')
+  await expect(page.locator('[data-product-tour-popover]')).toHaveCount(0)
+})
