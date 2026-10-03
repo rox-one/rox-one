@@ -24,8 +24,11 @@ const source: LoadedSource = { config: { id: 'source', slug: 'source', name: 'Na
 let state: RuntimeState = initialRuntimeState
 const signals: TourSignal[] = []
 const targets = new Map<string, TourTargetRegistration>()
-const calls = { startVoiceCapture: 0, stopVoiceCapture: 0, getSources: 0 }
+const calls = { startVoiceCapture: 0, stopVoiceCapture: 0, copyVoiceText: 0, getSources: 0 }
 let transcript = 'Private fixture transcript'
+let delivery: 'draft' | 'clipboard' = 'draft'
+let trailingSpace = false
+let clipboardText = ''
 const stream = { getTracks: () => [{ stop() {} }] }
 Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia: async () => stream } })
 class FixtureRecorder {
@@ -39,11 +42,12 @@ class FixtureRecorder {
 }
 Object.defineProperty(window, 'MediaRecorder', { configurable: true, value: FixtureRecorder })
 const api = {
-  getVoicePrefs: async () => ({ sttEngine: 'cloud-rox', cloudAsrConsent: true, privacyMigrationPending: false, selectedInputDeviceId: null }),
+  getVoicePrefs: async () => ({ sttEngine: 'cloud-rox', cloudAsrConsent: true, privacyMigrationPending: false, selectedInputDeviceId: null, delivery, trailingSpace }),
   startVoiceCapture: async () => { calls.startVoiceCapture++; return { recordingId: 'fixture-recording', job: 'queued' } },
   grantVoicePermission: async () => {},
   sendVoiceChunk: async () => {},
   stopVoiceCapture: async () => { calls.stopVoiceCapture++; return { job: 'ready', transcript: { text: transcript, noSpeech: !transcript } } },
+  copyVoiceText: async ({ text }: { text: string }) => { calls.copyVoiceText++; clipboardText = text; return { ok: true } },
   getSources: async () => { calls.getSources++; return [source] },
   getSourcePermissionsConfig: async () => null,
   getWorkspaceSettings: async () => ({ localMcpEnabled: true }),
@@ -84,15 +88,17 @@ function Providers({ kind }: { kind: 'voice' | 'source' }) {
 await i18n.use(initReactI18next).init({ lng: 'en', fallbackLng: 'en', resources: { en: { translation: en } }, keySeparator: false, interpolation: { escapeValue: false } })
 const root = createRoot(document.getElementById('root')!)
 Object.assign(window, { nativeContinuity: {
-  start(kind: 'voice' | 'source', emptyTranscript = false) {
-    signals.length = 0; targets.clear(); calls.startVoiceCapture = 0; calls.stopVoiceCapture = 0; calls.getSources = 0
+  start(kind: 'voice' | 'source', emptyTranscript = false, deliveryPreference: 'draft' | 'clipboard' = 'draft', trailingSpacePreference = false) {
+    signals.length = 0; targets.clear(); calls.startVoiceCapture = 0; calls.stopVoiceCapture = 0; calls.copyVoiceText = 0; calls.getSources = 0
     transcript = emptyTranscript ? '' : 'Private fixture transcript'
+    delivery = deliveryPreference; trailingSpace = trailingSpacePreference; clipboardText = ''
     const tour = productTourCatalogue.find(tour => tour.id === (kind === 'voice' ? 'OBT-06' : 'OBT-07'))!
     state = transition(initialRuntimeState, { type: 'SNAPSHOT', snapshot: { enabled: true, shellReady: true, navigationReady: true, navigationRevision: 1, foreground: true, blockers: [], capabilities: Object.fromEntries(tour.requires.map(id => [id, { state: 'ready' }])) } }).state
     send({ type: 'START', tour, binding, progress: null, startMode: 'new', at: Date.now() })
-    root.render(<Providers key={kind + String(emptyTranscript)} kind={kind} />)
+    root.render(<Providers key={kind + String(emptyTranscript) + delivery + String(trailingSpace)} kind={kind} />)
   },
   show,
   acknowledge() { send({ type: 'ACK', runToken: binding.runToken, stepId: state.attempt!.stepId, at: Date.now() }) },
   snapshot: () => ({ phase: state.phase, stepId: state.attempt?.stepId, evidence: state.attemptEvidence, progress: state.progress, signals, calls }),
+  clipboard: () => clipboardText,
 } })
