@@ -107,13 +107,14 @@ test('T-NOTES-CREATE/T-NOTES-SAVE: the real Notes tour verifies canonical creati
   const popup = page.locator('[data-product-tour-popover]')
   await expect(popup).toHaveAttribute('data-product-tour-step', 'notes.create')
   // Notes has several ordinary create buttons; act on the actual highlighted control.
-  const point = await page.locator('[data-product-tour-mask] rect').evaluate(rect => {
+  const readHighlightedControl = () => page.locator('[data-product-tour-mask] rect').evaluate(rect => {
     const x = Number(rect.getAttribute('x')) + Number(rect.getAttribute('width')) / 2
     const y = Number(rect.getAttribute('y')) + Number(rect.getAttribute('height')) / 2
     const button = document.elementFromPoint(x, y)?.closest('button')
     return { x, y, label: button?.getAttribute('aria-label') ?? button?.getAttribute('title') }
   })
-  expect(point.label).toBe('New note')
+  await expect.poll(async () => (await readHighlightedControl()).label).toBe('New note')
+  const point = await readHighlightedControl()
   await page.mouse.click(point.x, point.y)
   const dialog = page.getByRole('dialog').filter({ has: page.getByRole('textbox') })
   await dialog.getByRole('textbox').fill(`Guided canonical note ${Date.now()}`)
