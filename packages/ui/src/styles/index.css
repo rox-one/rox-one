@@ -167,6 +167,8 @@
   --rox-mint: oklch(0.72 0.08 165);
   --rox-radius-sm: 6px;
   --rox-radius-md: 8px;
+  /* Shell panels (sidebar, navigator, content, inspector, rails). */
+  --rox-radius-panel: 10px;
   --rox-gutter: 8px;
   /* Panels sit on a same-colour canvas: keep a half-strength hairline for the
      edge plus a soft lift, instead of the full-strength inset ring. */
@@ -542,11 +544,22 @@ html[data-contrast="high"] :focus-visible {
     background: var(--surface-elevated);
   }
 
-  /* One-surface shell pane: flush, no radius, no outline, no shadow. */
+  /* Shell pane: flat borderless rounded box (radius token), no shadow. Panes
+     are separated by PANEL_GAP, so pane-side hairlines are dropped. */
   .rox-shell-pane {
     background: var(--background);
-    border-radius: 0;
+    border-radius: var(--rox-radius-panel);
     box-shadow: none;
+  }
+  .rox-shell-pane.rox-shell-divider-r,
+  .rox-shell-pane.rox-shell-divider-l {
+    border-left: 0;
+    border-right: 0;
+  }
+  /* High contrast: a 1px inner ring keeps pane edges legible without
+     changing layout (box-shadow, not border). */
+  html[data-contrast="high"] .rox-shell-pane {
+    box-shadow: inset 0 0 0 1px var(--rox-shell-divider);
   }
 
   .rox-shell-divider-r {

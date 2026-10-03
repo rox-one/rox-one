@@ -1,6 +1,6 @@
 /**
- * ActivityRail (W1 unified shell, spec S-03 §3.1/§3.2) — compact vertical icon
- * rail for top-level navigation (design-compact density).
+ * ActivityRail (W1 unified shell, spec S-03 §3.1/§3.2) — vertical navigation
+ * rail for top-level destinations (design-compact density).
  *
  * The destinations list mirrors AppShell's `links[]` via the shared
  * `APP_NAV_DESTINATIONS` config (no divergent copy); navigation goes through
@@ -8,16 +8,20 @@
  * Wave-gated destinations (`route: null`) render disabled-with-tooltip;
  * Knowledge navigates since W2 (flag-off state lives in the surface).
  *
- * Collapse state persists via `activityRailCollapsedAtom` (KEYS.activityRailCollapsed).
- * Collapsed = destinations hidden, only the expand chevron stays (atom contract).
+ * Two states, persisted via `activityRailCollapsedAtom`
+ * (KEYS.activityRailCollapsedV2):
+ * - expanded (default): icon + text label on every row, «Ещё» group header
+ *   visible — flat 28px rows on the 4px grid, no borders.
+ * - collapsed: icons only, each row keeps a right-side tooltip.
+ * The toggle («/») sits at the bottom in both states.
  * Mounted by `WorkspaceSurfaceHost` (platform/index.tsx) — rendered only when
  * the two-key Workbench rollout is enabled, so there is no flag check here.
  */
+import { useSyncExternalStore, type ReactNode } from 'react'
 import { useAtom } from 'jotai'
 import { ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
-import { activityRailCollapsedAtom } from '@/atoms/unified-shell'
+import { activityRailCollapsedAtom, activityRailNarrowOverrideAtom } from '@/atoms/unified-shell'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
 import {
@@ -26,105 +30,121 @@ import {
 } from '../components/app-shell/nav-destinations'
 import { CHROME_DENSITY } from './chrome-density'
 import { ExtraScreensRailGroup } from '../pages/extra-screens/ExtraScreensRailGroup'
+import { RailRow } from './RailRow'
 
-/** Expanded rail width — AppShell uses it to offset the absolute resize sashes. */
-export const ACTIVITY_RAIL_WIDTH = CHROME_DENSITY.railWidth
-/** Collapsed rail keeps a usable hit target so the expand chevron stays clickable. */
+export { RailRow } from './RailRow'
+
+/** Expanded rail width (icon + label) — AppShell offsets the resize sashes by it. */
+export const ACTIVITY_RAIL_WIDTH = CHROME_DENSITY.railExpandedWidth
+/** Collapsed rail = icons only (same width as the inspector section rail). */
 export const ACTIVITY_RAIL_COLLAPSED_WIDTH = CHROME_DENSITY.railWidth
 
-function RailItem({ dest }: { dest: AppNavDestination }) {
+export function activityRailWidth(collapsed: boolean): number {
+  return collapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH
+}
+
+/**
+ * Below this window width the expanded rail would push sidebar (180) +
+ * navigator (240) + centre (420) + workspace/inspector rails past the edge,
+ * so the rail auto-collapses to icons (display-only; persisted state kept).
+ */
+export const RAIL_AUTO_COLLAPSE_BELOW = 1140
+
+function subscribeResize(cb: () => void): () => void {
+  window.addEventListener('resize', cb)
+  return () => window.removeEventListener('resize', cb)
+}
+
+export function useNarrowWindow(threshold = RAIL_AUTO_COLLAPSE_BELOW): boolean {
+  return useSyncExternalStore(
+    subscribeResize,
+    () => window.innerWidth < threshold,
+    () => false,
+  )
+}
+
+export function resolveRailCollapsed(input: { persisted: boolean; narrow: boolean; override: boolean }): boolean {
+  return input.persisted || (input.narrow && !input.override)
+}
+
+/** Effective rail state shared by the rail and AppShell's sash offset. */
+export function useEffectiveRailCollapsed(): {
+  collapsed: boolean
+  toggle: () => void
+} {
+  const [persisted, setPersisted] = useAtom(activityRailCollapsedAtom)
+  const [override, setOverride] = useAtom(activityRailNarrowOverrideAtom)
+  const narrow = useNarrowWindow()
+  const collapsed = resolveRailCollapsed({ persisted, narrow, override })
+  const toggle = () => {
+    if (collapsed) {
+      setPersisted(false)
+      setOverride(narrow)
+    } else {
+      setPersisted(true)
+      setOverride(false)
+    }
+  }
+  return { collapsed, toggle }
+}
+
+function RailItem({ dest, collapsed }: { dest: AppNavDestination; collapsed: boolean }) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const navState = useNavigationState()
-  const Icon = dest.icon
   const label = t(dest.labelKey)
   const disabled = dest.route === null
-
-  const button = (
-    <button
-      type="button"
-      aria-label={label}
-      aria-disabled={disabled || undefined}
-      onClick={disabled ? undefined : () => void navigate(dest.route!())}
-      className={cn(
-        'flex h-8 w-8 items-center justify-center rounded-[6px] transition-colors',
-        disabled
-          ? 'cursor-not-allowed text-muted-foreground/40'
-          : dest.isActive(navState)
-            ? 'bg-accent/10 text-accent'
-            : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
-      )}
-    >
-      <Icon className="h-4 w-4" />
-    </button>
-  )
-
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>{button}</TooltipTrigger>
-      <TooltipContent side="right" className="max-w-[240px]">
-        {disabled && dest.disabledTooltipKey ? t(dest.disabledTooltipKey) : label}
-      </TooltipContent>
-    </Tooltip>
+    <RailRow
+      icon={dest.icon}
+      label={label}
+      tooltip={disabled && dest.disabledTooltipKey ? t(dest.disabledTooltipKey) : label}
+      collapsed={collapsed}
+      disabled={disabled}
+      active={!disabled && dest.isActive(navState)}
+      onClick={() => void navigate(dest.route!())}
+      testId={`rail-item-${dest.id}`}
+    />
+  )
+}
+
+function RailSection({ collapsed, children }: { collapsed: boolean; children: ReactNode }) {
+  return (
+    <div className={cn('flex flex-col gap-[4px]', collapsed ? 'items-center' : 'items-stretch')}>{children}</div>
   )
 }
 
 export function ActivityRail() {
   const { t } = useTranslation()
-  const [collapsed, setCollapsed] = useAtom(activityRailCollapsedAtom)
-
-  if (collapsed) {
-    return (
-      <nav
-        aria-label={t('rail.title')}
-        className="chrome-rail rox-shell-pane rox-shell-divider-r flex h-full shrink-0 flex-col items-center overflow-hidden py-1.5"
-        style={{ width: ACTIVITY_RAIL_COLLAPSED_WIDTH }}
-        data-shell-role="activity-rail"
-      >
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label={t('rail.expand')}
-              onClick={() => setCollapsed(false)}
-              className="flex h-8 w-8 items-center justify-center rounded-[6px] text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
-            >
-              <ChevronsRight className="h-4 w-4" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right">{t('rail.expand')}</TooltipContent>
-        </Tooltip>
-      </nav>
-    )
-  }
+  const { collapsed, toggle } = useEffectiveRailCollapsed()
+  const toggleLabel = collapsed ? t('rail.expand') : t('rail.collapse')
 
   return (
     <nav
       aria-label={t('rail.title')}
-      className="chrome-rail rox-shell-pane rox-shell-divider-r flex h-full shrink-0 flex-col items-center overflow-y-auto overflow-x-hidden py-1.5"
-      style={{ width: ACTIVITY_RAIL_WIDTH }}
+      className={cn(
+        'chrome-rail rox-shell-pane rox-shell-divider-r flex h-full shrink-0 flex-col overflow-y-auto overflow-x-hidden py-[8px] font-sans',
+        collapsed ? 'items-center' : 'items-stretch px-[8px]',
+      )}
+      style={{ width: activityRailWidth(collapsed) }}
       data-shell-role="activity-rail"
+      data-rail-state={collapsed ? 'collapsed' : 'expanded'}
     >
-      <div className="flex flex-col items-center gap-0.5">
+      <RailSection collapsed={collapsed}>
         {APP_NAV_DESTINATIONS.map((dest) => (
-          <RailItem key={dest.id} dest={dest} />
+          <RailItem key={dest.id} dest={dest} collapsed={collapsed} />
         ))}
-      </div>
-      <ExtraScreensRailGroup />
-      <div className="mt-auto">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label={t('rail.collapse')}
-              onClick={() => setCollapsed(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-[6px] text-muted-foreground/50 transition-colors hover:bg-foreground/5 hover:text-foreground"
-            >
-              <ChevronsLeft className="h-4 w-4" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right">{t('rail.collapse')}</TooltipContent>
-        </Tooltip>
+      </RailSection>
+      <ExtraScreensRailGroup collapsed={collapsed} />
+      <div className={cn('mt-auto pt-[8px]', collapsed ? '' : 'flex')}>
+        <RailRow
+          icon={collapsed ? ChevronsRight : ChevronsLeft}
+          label={toggleLabel}
+          collapsed
+          muted
+          onClick={toggle}
+          testId="rail-toggle"
+        />
       </div>
     </nav>
   )

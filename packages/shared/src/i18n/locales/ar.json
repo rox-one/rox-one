@@ -1801,7 +1801,7 @@
   "extraScreens.dossier.suggestions": "Possible contacts · from messengers",
   "extraScreens.dossier.taskNote": "Promise from the “{{name}}” dossier",
   "extraScreens.dossier.theyPromised": "→ me",
-  "extraScreens.dossier.title": "Dossier",
+  "extraScreens.dossier.title": "الملف",
   "extraScreens.dossier.touches30d": "{{count}} touches in 30 days",
   "extraScreens.dossier.touchesTitle": "Touches · {{count}}",
   "extraScreens.dossier.touchKind.feed": "Feed",

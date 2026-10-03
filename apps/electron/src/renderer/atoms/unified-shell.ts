@@ -160,13 +160,23 @@ export const featureWorkbenchConationSessionApplyAtom = atomWithStorage<boolean>
   { getOnInit: true },
 )
 
-/** Activity rail collapsed (destinations hidden, expand chevron stays). */
+/**
+ * Activity rail collapsed to icons only (tooltips carry the labels).
+ * Default false = expanded with icon + text labels. Existing saved preferences
+ * remain authoritative; this upgrade does not reset an explicit collapse.
+ */
 export const activityRailCollapsedAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.activityRailCollapsed),
   false,
   undefined,
   { getOnInit: true },
 )
+
+/**
+ * Not persisted: the user expanded the rail while the window is narrow enough
+ * to auto-collapse it (see `useEffectiveRailCollapsed`).
+ */
+export const activityRailNarrowOverrideAtom = atom<boolean>(false)
 
 /** Inspector panel visibility (the 48px section rail itself always renders). */
 export const inspectorVisibleAtom = atomWithStorage<boolean>(

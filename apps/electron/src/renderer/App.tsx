@@ -1,3 +1,5 @@
+import { waitForTransportConnected } from './lib/transport-wait'
+import { probeWithRetry } from './lib/startup-setup-needs'
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/useTheme'
@@ -732,7 +734,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     // Cookie-authenticated web transport conveys no desktop/native identity
     // and cannot read host provider credentials or seed a runtime default.
     if (webTransportBootstrap) return
-    const identity = await window.electronAPI.getOrgIdentity()
+    const identity = await retryStartup(() => window.electronAPI.getOrgIdentity())
     if (!identity || identity.authority !== 'native' && identity.authority !== 'local') {
       throw new Error('runtime-identity-unavailable')
     }
@@ -848,7 +850,16 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           return
         }
         // Get this window's workspace ID (passed via URL query param from main process)
-        const wsId = await window.electronAPI.getWindowWorkspace()
+        const retryStartup = async <T,>(read: () => Promise<T>): Promise<T> => {
+          let probe = await probeWithRetry(read)
+          if (!probe.ok) {
+            await waitForTransportConnected(window.electronAPI, { timeoutMs: 60_000 })
+            probe = await probeWithRetry(read)
+          }
+          if (!probe.ok) throw probe.error
+          return probe.value
+        }
+        const wsId = await retryStartup(() => window.electronAPI.getWindowWorkspace())
         setWindowWorkspaceId(wsId)
 
         const identity = await window.electronAPI.getOrgIdentity()

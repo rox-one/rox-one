@@ -10,6 +10,8 @@ export const CHROME_DENSITY = {
   topbarHeight: 40,
   /** Activity + inspector section rail width. */
   railWidth: 44,
+  /** Expanded activity rail (icon + label rows). */
+  railExpandedWidth: 188,
   /** Primary icon control hit target in TopBar / rails. */
   control: 24,
   /** Slightly larger control used for TopBar utility actions. */
