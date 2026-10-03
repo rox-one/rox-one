@@ -1,0 +1,21 @@
+{
+  "label": "docs-whitespace-raw",
+  "command": [
+    "git",
+    "diff",
+    "--cached",
+    "--check"
+  ],
+  "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+  "startedAt": "2026-10-03T11:11:43.241451+00:00",
+  "finishedAt": "2026-10-03T11:11:43.307504+00:00",
+  "exitCode": 2,
+  "sourceSha256": {
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "5a319396c87dc50d0427231623aa497ad67d1df06f542b2e898efdef83f35b72",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+    "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+    "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+  },
+  "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/docs-whitespace-raw.log",
+  "logSha256": "fc9212069dee5850f5aabb793f638d7a5548505070ba49054bad3f868bb41d97"
+}

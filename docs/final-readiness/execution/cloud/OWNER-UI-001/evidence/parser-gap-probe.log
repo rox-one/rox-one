@@ -1,0 +1,33 @@
+{
+  "scope": "Read-only characterization of lead-owned code; these gaps are not repaired by OWNER-UI-001",
+  "routes": [
+    {
+      "route": "unknown-surface/one",
+      "observed": null
+    },
+    {
+      "route": "knowledge/unknown-kind/one",
+      "observed": {
+        "navigator": "sessions",
+        "filter": {
+          "kind": "allSessions"
+        },
+        "details": null
+      }
+    },
+    {
+      "route": "knowledge/document/%E0%A4%A",
+      "thrown": "URIError: URI error"
+    }
+  ],
+  "deletedSessionSelection": {
+    "navigator": "sessions",
+    "filter": {
+      "kind": "allSessions"
+    },
+    "details": {
+      "type": "session",
+      "sessionId": "unrelated-session"
+    }
+  }
+}

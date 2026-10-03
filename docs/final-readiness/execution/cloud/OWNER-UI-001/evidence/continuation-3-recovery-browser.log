@@ -1,0 +1,90 @@
+{
+  "environment": "isolated local headless Chromium; actual MainContentPanel, SourceInfoPage, SkillInfoPage, route parser and Jotai atoms; presentation and IPC fixtures; history adapter is a fixture, not NavigationProvider; no installed/native/hosted/backend acceptance",
+  "browserVersion": "153.0.8010.12",
+  "results": [
+    {
+      "name": "A direct missing skill recovers when it is created without changing route",
+      "pass": true
+    },
+    {
+      "name": "An initial source load failure recovers after an authoritative live update",
+      "pass": true
+    },
+    {
+      "name": "An initial skill load failure recovers after an authoritative live update",
+      "pass": true
+    },
+    {
+      "name": "A live skill creation outranks an older missing initial snapshot",
+      "pass": true
+    },
+    {
+      "name": "A direct missing source remains specific after reload and recovers on creation",
+      "pass": true
+    },
+    {
+      "name": "Browser back/forward and reload keep the selected source and workspace through actual parsing",
+      "pass": true
+    },
+    {
+      "name": "A source read from the previous workspace cannot replace the current source",
+      "pass": true
+    },
+    {
+      "name": "A live source deletion wins over a pending initial existing-source snapshot",
+      "pass": true
+    },
+    {
+      "name": "Changing the selected skill directory cancels its old pending lookup",
+      "pass": true
+    },
+    {
+      "name": "Ordinary selected-source updates keep the mounted editor and focused input",
+      "pass": true
+    },
+    {
+      "name": "A workspace-only skill event cannot mark a selected project skill as missing",
+      "pass": true
+    },
+    {
+      "name": "A lower-priority workspace snapshot cannot overwrite the selected project skill",
+      "pass": true
+    },
+    {
+      "name": "A workspace-only snapshot cannot remove an OMP skill from a selected route",
+      "pass": true
+    },
+    {
+      "name": "A failed background skill refresh retains the mounted workspace editor and its draft",
+      "pass": true
+    },
+    {
+      "name": "Real browser atom writes persist rounded bounded values through reload",
+      "pass": true
+    },
+    {
+      "name": "Actual cross-window storage events normalize corrupt and non-finite values",
+      "pass": true
+    },
+    {
+      "name": "Removing a persisted key in another window restores its default",
+      "pass": true
+    },
+    {
+      "name": "A real clear event restores both geometry defaults",
+      "pass": true
+    },
+    {
+      "name": "The same preference keys in sessionStorage cannot change local layout",
+      "pass": true
+    },
+    {
+      "name": "Denied browser localStorage keeps live resize and RESET usable",
+      "pass": true
+    },
+    {
+      "name": "Unmounted atom subscriptions ignore later native storage events",
+      "pass": true
+    }
+  ]
+}
