@@ -24,6 +24,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
       - run: bun test apps/electron/src/main/__tests__/auto-update-suppress.test.ts apps/electron/src/main/__tests__/manual-release-update.test.ts
+      - name: Pocket account and execution ownership regressions
+        run: >-
+          bun test --timeout 180000
+          packages/shared/src/auth/__tests__/rox-account-authority.test.ts
+          packages/shared/src/auth/__tests__/rox-pocket-client.test.ts
+          apps/electron/src/main/__tests__/pocket-account-store.test.ts
+          apps/electron/src/main/__tests__/pocket-account-store-durable-write.test.ts
+          scripts/probes/pocket-vault-diagnostics.test.ts
+          packages/server-core/src/handlers/rpc/__tests__/pocket-core-registry.test.ts
+          packages/server-core/src/sessions/pocket-helper-owner.test.ts
+          packages/server-core/src/sessions/pocket-session-resource-owner.test.ts
+          packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts
+          packages/shared/src/agent/__tests__/omp-public-runtime.test.ts
       - name: Runtime restoration, mandatory OMP policy, clean skill install and migration regressions
         run: >-
           bun test --timeout 180000
@@ -87,6 +100,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '24' }
+      - name: Clear prior native proof receipt
+        run: node -e "require('node:fs').rmSync('reports/pocket-sso-native-vault/'+process.platform+'.json',{force:true})"
       - uses: oven-sh/setup-bun@v2
         with: { bun-version: '1.3.14' }
       - run: bun install --frozen-lockfile
@@ -100,6 +115,16 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      - name: Actual Keychain or DPAPI store restart
+        run: bun scripts/probes/run-pocket-vault-native.ts
+      - name: Native vault diagnostic receipt
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pocket-native-vault-${{ matrix.platform }}-${{ matrix.arch }}
+          path: reports/pocket-sso-native-vault/${{ matrix.platform }}.json
+          if-no-files-found: warn
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.platform }}-${{ matrix.arch }}
@@ -110,5 +135,6 @@ jobs:
             apps/electron/release/*.blockmap
             apps/electron/release/manifest-*.json
             apps/electron/release/latest*.yml
+            reports/pocket-sso-native-vault/*.json
           if-no-files-found: error
           retention-days: 14

@@ -1,0 +1,68 @@
+{
+  "extends": "../../../apps/electron/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "../../../apps/electron",
+    "paths": {
+      "@/*": [
+        "src/renderer/*"
+      ],
+      "@config/*": [
+        "../../packages/shared/src/config/*"
+      ],
+      "@rox/shared": [
+        "../../packages/shared/src/index.ts"
+      ],
+      "@rox/shared/*": [
+        "../../packages/shared/src/*"
+      ],
+      "@rox/core": [
+        "../../packages/core/src/index.ts"
+      ],
+      "@rox/core/*": [
+        "../../packages/core/src/*"
+      ],
+      "@rox/cloud-runner": [
+        "../../packages/cloud-runner/src/index.ts"
+      ],
+      "@rox/server-core": [
+        "../../packages/server-core/src/index.ts"
+      ],
+      "@rox/server-core/*": [
+        "../../packages/server-core/src/*"
+      ],
+      "@rox/ui": [
+        "../../packages/ui/./src/index.ts"
+      ],
+      "@rox/ui/chat": [
+        "../../packages/ui/./src/components/chat/index.ts"
+      ],
+      "@rox/ui/chat/SessionViewer": [
+        "../../packages/ui/./src/components/chat/SessionViewer.tsx"
+      ],
+      "@rox/ui/chat/TurnCard": [
+        "../../packages/ui/./src/components/chat/TurnCard.tsx"
+      ],
+      "@rox/ui/chat/turn-utils": [
+        "../../packages/ui/./src/components/chat/turn-utils.ts"
+      ],
+      "@rox/ui/markdown": [
+        "../../packages/ui/./src/components/markdown/index.ts"
+      ],
+      "@rox/ui/annotations/follow-up-state": [
+        "../../packages/ui/./src/components/annotations/follow-up-state.ts"
+      ],
+      "@rox/ui/ui/drawer": [
+        "../../packages/ui/./src/components/ui/drawer.tsx"
+      ],
+      "@rox/ui/context": [
+        "../../packages/ui/./src/context/index.ts"
+      ],
+      "@rox/session-tools-core": [
+        "../../packages/session-tools-core/src/index.ts"
+      ]
+    },
+    "typeRoots": [
+      "../../../node_modules/@types"
+    ]
+  }
+}

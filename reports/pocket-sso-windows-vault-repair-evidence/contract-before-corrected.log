@@ -1,0 +1,21 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/main/__tests__/pocket-account-store-durable-write.test.ts:
+18 | console.log(JSON.stringify({error,writableFlushes,readonlyFlushAttempts,restored,failedFlushRejected,priorRecordUnchanged,pendingFiles:fs.existsSync(directory)?fs.readdirSync(directory).filter(n=>n.startsWith('.pending-')).length:0}));
+19 | `], { cwd: root, env: { ...process.env, REVIEW_VAULT_ROOT: temp }, stdout: 'pipe', stderr: 'pipe' })
+20 |     const [exit, stdout] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()])
+21 |     expect(exit).toBe(0)
+22 |     const result = JSON.parse(stdout.trim())
+23 |     expect(result.error).toBeNull()
+                              ^
+error: expect(received).toBeNull()
+
+Received: "ROX_SECURE_STORE_WRITE_FAILED"
+
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/apps/electron/src/main/__tests__/pocket-account-store-durable-write.test.ts:23:26)
+(fail) actual Pocket store flushes pending records through Windows-write-capable handles and preserves sealed recovery [33.92ms]
+
+ 0 pass
+ 1 fail
+ 2 expect() calls
+Ran 1 test across 1 file. [297.00ms]

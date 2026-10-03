@@ -1,3 +1,4 @@
+import { peekRoxAccountAuthority, LOCAL_ROX_CALLER } from '@rox/shared/auth'
 import { mkdirSync } from 'fs'
 import { join } from 'path'
 import { loadWorkspaceConfig } from '@rox/shared/workspaces'
@@ -357,7 +358,7 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
         prompt: prompt.prompt,
         temperature: mode === 'improve' ? 0.3 : 0.2,
         maxTokens: mode === 'spec' ? 8000 : 2000,
-      })
+      }, { roxExecutionContext: await peekRoxAccountAuthority()?.capture(ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : LOCAL_ROX_CALLER) })
       const effectiveModel = result.effectiveModel === undefined ? result.model ?? null : result.effectiveModel
       const provenance = { requestedModel: result.requestedModel, effectiveModel, model: effectiveModel ?? undefined, warning: result.warning }
       log.info(`PROJECTS_AI_ROADMAP: ${mode} for ${projectSlug} answered by ${result.model ?? 'unknown model'} (${result.text.length} chars)`)

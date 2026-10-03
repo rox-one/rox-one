@@ -35,11 +35,15 @@ export function RoxConnectStep({
 }: RoxConnectStepProps) {
   const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
+  const [cancelled, setCancelled] = useState(false)
+  const [cancelError, setCancelError] = useState(false)
 
   useEffect(() => {
     let cancelled = false
     let timer: ReturnType<typeof setTimeout> | undefined
     setCopied(false)
+    setCancelled(false)
+    setCancelError(false)
     if (codes?.userCode && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
       void navigator.clipboard.writeText(codes.userCode).then(() => {
         if (cancelled) return
@@ -69,9 +73,9 @@ export function RoxConnectStep({
       }
       actions={
         <div className="flex flex-col gap-3 w-full max-w-[360px]">
-          {status === 'idle' || status === 'error' || status === 'starting' ? (
+          {status === 'idle' || status === 'error' || status === 'starting' || cancelled ? (
             <Button
-              onClick={onStart}
+              onClick={() => { setCancelled(false); onStart() }}
               disabled={status === 'starting'}
               className="w-full"
               size="lg"
@@ -87,7 +91,7 @@ export function RoxConnectStep({
             </Button>
           ) : null}
 
-          {codes && status === 'waiting' ? (
+          {codes && status === 'waiting' && !cancelled ? (
             <>
               <div className="rounded-lg border bg-background p-4 text-center">
                 <p className="text-xs text-muted-foreground mb-2">
@@ -116,6 +120,9 @@ export function RoxConnectStep({
             </>
           ) : null}
 
+          {codes && status === 'waiting' && !cancelled ? <Button variant="ghost" onClick={() => { setCancelled(true); setCancelError(false); void window.electronAPI.clearRoxCloud().catch(() => setCancelError(true)) }}>{t('common.cancel')}</Button> : null}
+          {cancelError ? <p className="text-sm text-destructive">{t('settings.account.cloud.logoutFailed')}</p> : null}
+          {cancelled ? <p className="text-sm text-muted-foreground">{t('onboarding.roxConnect.cancelled')}</p> : null}
           {status === 'success' ? (
             <div className="text-sm text-emerald-600 text-center">{t('onboarding.roxConnect.success')}</div>
           ) : null}

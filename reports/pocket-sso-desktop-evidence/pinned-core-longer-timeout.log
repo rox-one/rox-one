@@ -1,0 +1,10 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/handlers/rpc/__tests__/pocket-core-registry.test.ts:
+killed 1 dangling process
+(fail) actual registerCoreRpcHandlers serves Connect/bootstrap/logout over authenticated local RPC [60014.47ms]
+  ^ this test timed out after 60000ms.
+
+ 0 pass
+ 1 fail
+Ran 1 test across 1 file. [66.24s]

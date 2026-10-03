@@ -1,0 +1,52 @@
+{
+  "checkedAtUtc": "2026-10-03T20:58:27.762210+00:00",
+  "changedPath": "apps/electron/src/renderer/lib/__tests__/personal-tasks-import.fixture.ts",
+  "repair": "Replace non-exported package subpath with exact internal test source import; actual native class and all assertions retained.",
+  "rows": [
+    {
+      "phase": "red",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "run",
+        "--bun",
+        "webui:typecheck"
+      ],
+      "observedExitCode": 143,
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-immediate-history-webui-red.log",
+      "sha256": "56aefaddee7de6dae679af68b91f512785a04b20f7b19b709243175f704e2f56"
+    },
+    {
+      "phase": "green",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "run",
+        "--bun",
+        "webui:typecheck"
+      ],
+      "observedExitCode": 0,
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-immediate-history-webui-green.log",
+      "sha256": "2f81eb99ff92fd33b68966d34e38497fde1c57e3efbc3c0a364442498bc88092"
+    }
+  ],
+  "fullDoDClosed": false,
+  "qualification": "The local baseline exited143 after a scoped SIGTERM and did not reproduce a compiler error. The actual negative compiler control is preserved remote SQLite job111284679471 on checkout8bc9ccda80a7e6d46bd19645bf10a4daceb6a176. The green WebUI typecheck completed exit0 after the fixture import repair; all current tracked bytes match commit68b267f. It is a local source check, not a full remote SQLite proof.",
+  "rawReceiptSha256": "d23586d94dd3635d9b81e674790037425ab1219a896c27d20b40a6a29d45c30f",
+  "stopReceipt": {
+    "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/outputs/UI-001-expanded-immediate-history-redundant-local-baseline-stop.json",
+    "sha256": "93cd5812d8f03ba339be51b36634f35b04d191c21192ed299a5c0577f4663158"
+  },
+  "observedRevisionAfter": "68b267f6486d25d45fa25178bcc537e246e98921",
+  "fixturePath": "apps/electron/src/renderer/lib/__tests__/personal-tasks-import.fixture.ts",
+  "fixtureSha256": "37eaf175dd4f61b41f3de203823926d75028d05531dfc6b6ef3740cdd020ff21",
+  "sourcePinQualification": "The command began before the source commit was written; it consumed the repaired fixture bytes later committed68b. No whole-repository before/after manifest was collected for this command.",
+  "originalTasksFixture": {
+    "command": "bun test ./apps/electron/src/renderer/lib/__tests__/personal-tasks-import.test.ts",
+    "observedExitCode": 0,
+    "passed": 1,
+    "failed": 0,
+    "assertions": 2,
+    "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-immediate-history-personal-tasks-fixture.log",
+    "logSha256": "d5fc8369afdc60bbf913ec768402f676e6fae3c0da4beaae11179269b7532155",
+    "qualification": "Wrapper asserts two child process receipts; actual native-store callbacks are exercised by its unchanged fixture."
+  }
+}
