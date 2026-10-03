@@ -132,6 +132,30 @@
         "simplify",
         "agent-teams"
       ]
+    },
+    {
+      "slug": "understand-anything",
+      "origin": "https://github.com/Egonex-AI/Understand-Anything",
+      "commit": "1d7418b8abfa543744ae029e63a482aee03f9022",
+      "license": "MIT",
+      "licenseFile": "LICENSE",
+      "upstream": {
+        "origin": "https://github.com/Egonex-AI/Understand-Anything",
+        "path": "understand-anything-plugin",
+        "commit": "1d7418b8abfa543744ae029e63a482aee03f9022",
+        "note": "Rox discovery entries resolve the original skill/helper paths in understand/plugin. Includes plugin sources, lockfile, grammars and agent prompts; excludes tests, dot metadata and node_modules. Core/dashboard dependency setup remains the upstream first-use preflight."
+      },
+      "skills": [
+        "understand",
+        "understand-chat",
+        "understand-dashboard",
+        "understand-diff",
+        "understand-domain",
+        "understand-explain",
+        "understand-figma",
+        "understand-knowledge",
+        "understand-onboard"
+      ]
     }
   ]
 }

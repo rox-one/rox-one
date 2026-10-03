@@ -263,6 +263,16 @@ export interface SessionToolContext {
   // MCP Connection Validation (for source_test)
   // ============================================================
 
+  /** Resolve host-managed paths and encrypted credentials in memory for a stdio probe. */
+  resolveStdioMcpSourceConfig?(source: SourceConfig): Promise<{ config: StdioMcpConfig | null; error?: string }>;
+
+  /**
+   * Resolve a managed remote endpoint and credentials in memory for a probe.
+   * Return undefined for nonmanaged sources to use ordinary credential handling.
+   * Runtime URLs and secrets must never be written into the source config.
+   */
+  resolveHttpMcpSourceConfig?(source: SourceConfig): Promise<{ config: HttpMcpConfig | null; error?: string } | undefined>;
+
   /**
    * Validate a stdio MCP connection by spawning the command.
    */

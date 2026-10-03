@@ -55,6 +55,7 @@ import { loadProjectById, getProjectAssetsPath, listProjectAssets, getProjectMem
 import { loadProjectRoadmapPromptText } from '../projects/roadmap-storage.ts';
 import type { ProjectPromptContext } from '../projects/types.ts';
 import { formatProjectContextForPrompt } from '../prompts/system.ts';
+import { MCP_USAGE_GUIDANCE } from '../prompts/mcp-guidance.ts';
 import type { MemoryPromptBlocks } from '../memory/types.ts';
 import { getContextDocsPromptBlock } from '../context-docs/index.ts';
 import { formatPreferencesForPrompt } from '../config/preferences.ts';
@@ -172,6 +173,7 @@ const OMP_CRAFT_CONTEXT_PROMPT = [
   'Safe http/https links belong in the host browser pane via mcp__session__browser_tool.',
   'Do not force every URL open. Auth callbacks, deep links, file: URLs and unsafe',
   'schemes stay outside that pane (OS handler or blocked).',
+  MCP_USAGE_GUIDANCE,
 ].join('\n');
 
 /**
@@ -2037,6 +2039,11 @@ export class OmpAgent extends BaseAgent {
 
     try {
       await this.ensureSubprocess();
+
+      // Refresh source state on every turn, just as Claude/Pi do. The static
+      // system briefing routes tasks, while this block reports which sources
+      // actually have tools, which need authentication, and where guides live.
+      effectiveMessage = `${this.sourceManager.formatSourceState()}\n\n${effectiveMessage}`;
 
       this.sendCommand('prompt', { message: effectiveMessage }).catch((error) => {
         // prompt is async — failure response = turn failed. When the failure

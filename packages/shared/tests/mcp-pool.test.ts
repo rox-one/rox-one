@@ -50,7 +50,7 @@ class TestablePool extends McpClientPool {
   public connectCalls: Array<{ slug: string; config: SdkMcpServerConfig }> = [];
   public disconnectCalls: string[] = [];
 
-  async connect(slug: string, config: SdkMcpServerConfig): Promise<void> {
+  protected override async connectSource(slug: string, config: SdkMcpServerConfig): Promise<void> {
     this.connectCalls.push({ slug, config });
     await this.registerClient(slug, makeMockClient());
     this.activeConfigs.set(slug, config);
@@ -64,9 +64,9 @@ class TestablePool extends McpClientPool {
     await this.registerClient(slug, makeMockClient(tools, onCallTool));
   }
 
-  async disconnect(slug: string): Promise<void> {
-    this.disconnectCalls.push(slug);
-    await super.disconnect(slug);
+  protected override async removeClient(slug: string, preserveTools = false): Promise<void> {
+    if (this.isConnected(slug)) this.disconnectCalls.push(slug);
+    await super.removeClient(slug, preserveTools);
   }
 
   /** Reset tracking arrays between sync phases within a single test */
@@ -121,9 +121,8 @@ describe('McpClientPool.sync — config change detection', () => {
     expect(pool.connectCalls).toHaveLength(1);
   });
 
-  it('does not reconnect when only non-auth headers change', async () => {
-    // Only Authorization and URL should trigger reconnect — other header
-    // changes (tracing, versioning) should not cause connection churn.
+  it('reconnects when a non-Authorization header changes', async () => {
+    // Providers may put API keys in custom headers instead of Authorization.
     const config1: SdkMcpServerConfig = {
       type: 'http',
       url: 'https://mcp.example.com',
@@ -140,8 +139,8 @@ describe('McpClientPool.sync — config change detection', () => {
 
     await pool.sync({ craft: config2 });
 
-    expect(pool.connectCalls).toHaveLength(0);
-    expect(pool.disconnectCalls).toHaveLength(0);
+    expect(pool.connectCalls).toHaveLength(1);
+    expect(pool.disconnectCalls).toEqual(['craft']);
   });
 
   it('disconnects sources removed from config', async () => {
@@ -180,13 +179,13 @@ describe('McpClientPool.sync — config change detection', () => {
 
   it('reports failure when reconnect fails after token refresh', async () => {
     let connectAttempts = 0;
-    const failPool = new TestablePool();
-    const origConnect = failPool.connect.bind(failPool);
-    failPool.connect = async (slug: string, config: SdkMcpServerConfig) => {
-      connectAttempts++;
-      if (connectAttempts > 1) throw new Error('Server unavailable');
-      return origConnect(slug, config);
-    };
+    const failPool = new class extends TestablePool {
+      protected override async connectSource(slug: string, config: SdkMcpServerConfig): Promise<void> {
+        connectAttempts++;
+        if (connectAttempts > 1) throw new Error('Server unavailable');
+        return super.connectSource(slug, config);
+      }
+    }();
 
     await failPool.sync({ craft: httpConfig('old-token') });
     expect(failPool.isConnected('craft')).toBe(true);

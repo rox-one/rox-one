@@ -6,10 +6,11 @@
  * by Electron's macOS sandbox — see issue #697).
  */
 
-import { CraftMcpClient } from './client.js';
+import { CraftMcpClient, formatMcpUrlForLog, isManagedLocalQdrantConfig } from './client.js';
 import { debug } from '../utils/debug.ts';
 import { normalizeMcpUrl } from '../sources/server-builder.ts';
 import type { McpTransport } from '../sources/types.ts';
+import { isSensitiveKeyName, REDACTED_VALUE } from '../utils/redaction.ts';
 
 export interface InvalidProperty {
   toolName: string;
@@ -137,6 +138,30 @@ function classifyConnectionError(err: unknown): McpValidationResult {
   };
 }
 
+/** Remote servers can echo credentials in response bodies and SDK errors. */
+function remoteDiagnosticRedactor(config: McpValidationConfig): (message: string) => string {
+  const secrets = new Set<string>([
+    ...Object.values(config.mcpHeaders ?? {}),
+    config.mcpAccessToken ?? '',
+  ]);
+  try {
+    const url = new URL(config.mcpUrl);
+    for (const value of [url.username, url.password, url.hash.slice(1), ...url.searchParams.values()]) {
+      if (value) secrets.add(value);
+      try { secrets.add(decodeURIComponent(value)); } catch { /* Preserve malformed encodings for exact redaction. */ }
+    }
+  } catch { /* Invalid URLs are replaced wholesale below. */ }
+  const encoded = [...secrets].filter(Boolean).flatMap(value => {
+    try { return [value, encodeURIComponent(value)]; } catch { return [value]; }
+  });
+  const values = [...new Set(encoded)].sort((a, b) => b.length - a.length);
+  return message => {
+    let safe = config.mcpUrl ? message.replaceAll(config.mcpUrl, formatMcpUrlForLog(config.mcpUrl)) : message;
+    for (const value of values) safe = safe.replaceAll(value, REDACTED_VALUE);
+    return safe;
+  };
+}
+
 /**
  * Validates an HTTP/SSE MCP connection by connecting via CraftMcpClient and
  * listing tools. The internal `connect()` call performs a `listTools()` health
@@ -145,26 +170,25 @@ function classifyConnectionError(err: unknown): McpValidationResult {
 export async function validateMcpConnection(
   config: McpValidationConfig
 ): Promise<McpValidationResult> {
-  debug('Validating MCP connection to', config.mcpUrl);
-
-  const mcpUrl = normalizeMcpUrl(config.mcpUrl);
-
-  // Custom headers first, auth header overrides.
-  const headers = {
-    ...config.mcpHeaders,
-    ...(config.mcpAccessToken ? { Authorization: `Bearer ${config.mcpAccessToken}` } : {}),
-  };
-
-  // Honor the declared transport: CraftMcpClient supports both Streamable
-  // HTTP and legacy SSE. Coercing sse → http fails deterministically against
-  // SSE-only servers.
-  const mcpClient = new CraftMcpClient({
-    transport: config.mcpTransport === 'sse' ? 'sse' : 'http',
-    url: mcpUrl,
-    headers: Object.keys(headers).length > 0 ? headers : undefined,
-  });
+  const redact = remoteDiagnosticRedactor(config);
+  debug('Validating MCP connection to', redact(formatMcpUrlForLog(config.mcpUrl)));
+  let mcpClient: CraftMcpClient | undefined;
 
   try {
+    const mcpUrl = normalizeMcpUrl(config.mcpUrl);
+
+    // Custom headers first, auth header overrides.
+    const headers = {
+      ...config.mcpHeaders,
+      ...(config.mcpAccessToken ? { Authorization: `Bearer ${config.mcpAccessToken}` } : {}),
+    };
+
+    // Honor the declared transport: HTTP and legacy SSE have separate handshakes.
+    mcpClient = new CraftMcpClient({
+      transport: config.mcpTransport === 'sse' ? 'sse' : 'http',
+      url: mcpUrl,
+      headers: Object.keys(headers).length > 0 ? headers : undefined,
+    });
     await mcpClient.connect();
     const serverInfo = mcpClient.getServerInfo();
 
@@ -209,10 +233,12 @@ export async function validateMcpConnection(
       tools: toolNames,
     };
   } catch (err) {
-    debug('[mcp-validation] error:', err instanceof Error ? err.message : err);
-    return classifyConnectionError(err);
+    const result = classifyConnectionError(err);
+    result.error = redact(result.error ?? 'Validation failed');
+    debug('[mcp-validation] error:', result.error);
+    return result;
   } finally {
-    await mcpClient.close().catch(() => {});
+    await mcpClient?.close().catch(() => {});
   }
 }
 
@@ -318,6 +344,15 @@ export async function validateStdioMcpConnection(
   config: StdioValidationConfig
 ): Promise<McpValidationResult> {
   const { command, args = [], env = {}, cwd, timeout = 30000 } = config;
+  const secrets = Object.entries(env).filter(([key]) => isSensitiveKeyName(key) || /session|hash|api_id/i.test(key))
+    .map(([, value]) => value).filter(Boolean).sort((a, b) => b.length - a.length);
+  const redact = (text: string) => secrets.reduce((safe, value) => safe.split(value).join(REDACTED_VALUE), text);
+  const localConfig = { transport: 'stdio' as const, command, args, env, cwd };
+  if (isManagedLocalQdrantConfig(localConfig)) {
+    // Embedded Qdrant takes an exclusive lock on its storage directory.
+    // Source tests must lease the same process used by startup and sessions.
+    return validateSharedLocalQdrantConnection(localConfig, timeout, redact);
+  }
 
   // Two-watchdog connect phase. Most "MCP doesn't work" failures never
   // complete the `initialize` handshake, so we want fast diagnostics — but
@@ -331,7 +366,7 @@ export async function validateStdioMcpConnection(
   const connectCeilingMs = Math.max(connectIdleMs, timeout - listToolsFloor);
   let listToolsTimeoutResolved = listToolsFloor;
 
-  debug(`[stdio-validation] Spawning: ${command} ${args.join(' ')}`);
+  debug(redact(`[stdio-validation] Spawning: ${command} ${args.join(' ')}`));
 
   const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
   const { StdioClientTransport } = await import(
@@ -472,15 +507,15 @@ export async function validateStdioMcpConnection(
       success: true,
       tools: toolNames,
       serverInfo: {
-        name: command,
-        version: args.join(' '),
+        name: redact(command),
+        version: redact(args.join(' ')),
       },
     };
   } catch (err) {
-    const error = err as Error;
+    const error = new Error(redact(err instanceof Error ? err.message : 'MCP validation failed'));
     debug(`[stdio-validation] Error in phase=${phase}: ${error.message}`);
 
-    const stderrSnippet = stderrOutput.trim().slice(-500);
+    const stderrSnippet = redact(stderrOutput).trim().slice(-500);
     const errorType: McpValidationResult['errorType'] = 'failed';
     let errorMessage: string;
 
@@ -543,11 +578,40 @@ export async function validateStdioMcpConnection(
 
     return {
       success: false,
-      error: errorMessage,
+      error: redact(errorMessage),
       errorType,
     };
   } finally {
     await cleanup();
+  }
+}
+
+async function validateSharedLocalQdrantConnection(
+  config: Extract<ConstructorParameters<typeof CraftMcpClient>[0], { transport: 'stdio' }>,
+  timeoutMs: number,
+  redact: (text: string) => string,
+): Promise<McpValidationResult> {
+  const client = new CraftMcpClient(config);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const tools = await Promise.race([
+      client.listTools(),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('Local Qdrant connection timed out')), timeoutMs);
+        timer.unref?.();
+      }),
+    ]);
+    const invalidProperties = tools.flatMap(tool => findInvalidProperties(tool.inputSchema as Record<string, unknown>)
+      .map(property => ({ toolName: tool.name, propertyPath: property.path, propertyKey: property.key })));
+    if (invalidProperties.length) {
+      return { success: false, error: 'Server tools contain invalid input property names.', errorType: 'invalid-schema', invalidProperties, tools: tools.map(tool => tool.name) };
+    }
+    return { success: true, tools: tools.map(tool => tool.name), serverInfo: client.getServerInfo() };
+  } catch (error) {
+    return { success: false, error: redact(error instanceof Error ? error.message : 'Local Qdrant validation failed'), errorType: 'failed' };
+  } finally {
+    if (timer) clearTimeout(timer);
+    await client.close().catch(() => {});
   }
 }
 

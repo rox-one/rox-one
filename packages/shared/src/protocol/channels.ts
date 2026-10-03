@@ -460,6 +460,7 @@ export const RPC_CHANNELS = {
   },
 
   onboarding: {
+    ENSURE_FIRST_SESSION: 'onboarding:ensureFirstSession',
     GET_AUTH_STATE: 'onboarding:getAuthState',
     VALIDATE_MCP: 'onboarding:validateMcp',
     START_MCP_OAUTH: 'onboarding:startMcpOAuth',

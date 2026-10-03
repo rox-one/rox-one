@@ -14,6 +14,7 @@ export type {
 
 // Storage functions
 export {
+  isLocalMcpEnabled,
   // Path utilities
   getDefaultWorkspacesDir,
   ensureDefaultWorkspacesDir,

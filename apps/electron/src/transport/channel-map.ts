@@ -289,6 +289,7 @@ export const CHANNEL_MAP = {
   getRoxCloudState: invoke(RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE),
   clearRoxCloud: invoke(RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD),
   getRoxBalance: invoke(RPC_CHANNELS.onboarding.GET_ROX_BALANCE),
+  ensureFirstSessionWelcome: invoke(RPC_CHANNELS.onboarding.ENSURE_FIRST_SESSION),
 
   // ChatGPT OAuth
   startChatGptOAuth: invoke(RPC_CHANNELS.chatgpt.START_OAUTH),
