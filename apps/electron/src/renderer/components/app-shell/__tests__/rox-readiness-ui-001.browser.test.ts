@@ -46,7 +46,7 @@ async function fixtureBundle() {
     import { loadShellLayout, commitShellLayout } from './apps/electron/src/renderer/lib/shell-layout-preferences';
     import { createStore } from 'jotai/vanilla';
     import * as guards from './apps/electron/src/shared/types';
-    import { parseRouteToNavigationState } from './apps/electron/src/shared/route-parser';
+    import { parseRouteToNavigationState, buildRouteFromNavigationState } from './apps/electron/src/shared/route-parser';
     import { inspectorPanelWidthAtom, bottomDockHeightAtom } from './apps/electron/src/renderer/atoms/unified-shell';
     import CloudRunSurfacePage from './apps/electron/src/renderer/pages/CloudRunSurfacePage';
     const { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isMemoryNavigation,

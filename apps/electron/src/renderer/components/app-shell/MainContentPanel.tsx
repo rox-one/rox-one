@@ -36,6 +36,7 @@ import {
 } from '@/contexts/NavigationContext'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
 import { isScreenNavigation, type LoadedSource, type LoadedSkill } from '../../../shared/types'
+import { buildRouteFromNavigationState } from '../../../shared/route-parser'
 import ChatPage from '@/pages/ChatPage'
 import { HomeFrontPage } from '@/platform/HomeFrontPage'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
@@ -223,7 +224,7 @@ export function MainContentPanel({
 }: MainContentPanelProps) {
   const { t } = useTranslation()
   const globalNavState = useNavigationState()
-  const navState = navStateOverride ?? globalNavState
+  const requestedNavState = navStateOverride ?? globalNavState
   const {
     activeWorkspaceId,
     workspaces,
@@ -233,6 +234,17 @@ export function MainContentPanel({
     labels,
     activeSessionWorkingDirectory,
   } = useAppShellContext()
+  const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const selectedSession = isSessionsNavigation(requestedNavState) && requestedNavState.details
+    ? sessionMetaMap.get(requestedNavState.details.sessionId) : undefined
+  const remoteWorkspaceId = workspaces.find(workspace => workspace.id === activeWorkspaceId)?.remoteServer?.remoteWorkspaceId
+  // PanelSlot supplies its own route state, including for unfocused panels.
+  // Validate that state here before a foreign session can mount its ChatPage.
+  const navState: import('../../../shared/types').NavigationState = selectedSession && activeWorkspaceId
+    && selectedSession.workspaceId !== activeWorkspaceId && (!remoteWorkspaceId || selectedSession.workspaceId !== remoteWorkspaceId)
+    ? { navigator: 'unavailable', route: buildRouteFromNavigationState(requestedNavState), reason: 'workspace-mismatch',
+        ...(requestedNavState.rightSidebar ? { rightSidebar: requestedNavState.rightSidebar } : {}) }
+    : requestedNavState
 
   // Detail state belongs to its workspace and entity, including project-level skills.
   const routeKey = JSON.stringify([
@@ -246,7 +258,6 @@ export function MainContentPanel({
     navState.navigator === 'unavailable' ? [navState.route, navState.reason] : null,
     isSkillsNavigation(navState) ? activeSessionWorkingDirectory : null,
   ])
-  const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const visibleSessionIds = useMemo(
     () =>
       [...sessionMetaMap.values()]

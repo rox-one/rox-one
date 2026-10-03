@@ -48,6 +48,7 @@ jobs:
           apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts
           apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts
           apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts
+          apps/electron/src/renderer/atoms/rox-readiness-ui-001.panels.test.ts
       - name: Install isolated Chromium
         run: bunx playwright install chromium
       - name: Mounted NavigationProvider and browser history

@@ -211,7 +211,9 @@ export const pushPanelAtom = atom(
       insertAt = afterIndex + 1
     }
 
-    const newEntry = createEntry(route, 0)
+    // Allocate a visible share before normalizing; zero leaves the new panel
+    // collapsed and writes a zero-width entry into browser history.
+    const newEntry = createEntry(route, stack.length > 0 ? 1 / stack.length : 1)
     const newStack = [
       ...stack.slice(0, insertAt),
       newEntry,

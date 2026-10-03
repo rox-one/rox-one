@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { build as bundle } from 'esbuild'
 
 const main = resolve(import.meta.dir, '../MainContentPanel.tsx')
+const panelSlot = resolve(import.meta.dir, '../PanelSlot.tsx')
 const types = resolve(import.meta.dir, '../../../../shared/types.ts')
 const parser = resolve(import.meta.dir, '../../../../shared/route-parser.ts')
 const leafSource = `import * as React from 'react';
@@ -24,6 +25,7 @@ export const getSettingsPageComponent=(subpage)=>leaf('Settings:'+subpage);
 `
 const bindings = `import * as React from 'react'; import {atom} from 'jotai';
 export const ShellContext=React.createContext(null); export const NavContext=React.createContext(null);
+export const AppShellProvider=ShellContext.Provider;
 export const useAppShellContext=()=>React.useContext(ShellContext);
 export const useNavigationState=()=>React.useContext(NavContext);
 export const useNavigation=()=>({navigateToSource:()=>{}});
@@ -55,6 +57,7 @@ Info_Table.Row=({label,value,children})=><div>{label}{value}{children}</div>;
 export const PermissionsDataTable=()=>null,ToolsDataTable=()=>null;
 export const EditPopover=({trigger})=>trigger??null,getEditConfig=()=>({});
 export const Button=({children,...props})=><button {...props}>{children}</button>;
+export const PanelHeaderCenterButton=({icon,tooltip,...props})=><button aria-label={tooltip} {...props}>{icon}</button>;
 export const Input=(props)=><input {...props}/>;
 export const Textarea=(props)=><textarea {...props}/>;
 export const Switch=()=>null,SourceAvatar=()=>null,SkillAvatar=()=>null,SourceMenu=()=>null,SkillMenu=()=>null;
@@ -114,6 +117,10 @@ window.ui001.render({});` : ''}
           if (args.path.startsWith('@/components/') || args.path === 'sonner' || args.path === '@/lib/navigate') {
             return { path: 'entity-ui', namespace: 'ui001' }
           }
+        }
+        if (args.importer === panelSlot) {
+          if (bindingImports.has(args.path)) return { path: 'bindings', namespace: 'ui001' }
+          if (args.path === '@/components/ui/PanelHeaderCenterButton') return { path: 'entity-ui', namespace: 'ui001' }
         }
         if (args.importer !== main) return
         if (options.realNavigation && ['@/contexts/NavigationContext', '@/atoms/sessions'].includes(args.path)) return

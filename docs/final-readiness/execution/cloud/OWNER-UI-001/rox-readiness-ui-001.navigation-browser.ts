@@ -12,6 +12,7 @@ import {Provider,createStore,useAtomValue} from 'jotai';
 import {NavigationProvider,useNavigation} from ${JSON.stringify(join(renderer, 'contexts/NavigationContext.tsx'))};
 import {sessionMetaMapAtom} from ${JSON.stringify(join(renderer, 'atoms/sessions.ts'))};
 import {panelStackAtom} from ${JSON.stringify(join(renderer, 'atoms/panel-stack.ts'))};
+import {PanelSlot} from ${JSON.stringify(join(renderer, 'components/app-shell/PanelSlot.tsx'))};
 const store=createStore();
 const sourceListeners=new Set(),skillListeners=new Set(),deepLinkListeners=new Set();
 const requests=[],actions=[];
@@ -35,8 +36,8 @@ const createSession=async(workspace,options)=>{actions.push(['create',workspace,
  store.set(sessionMetaMapAtom,new Map([...store.get(sessionMetaMapAtom),[row.id,row]]));return row};
 const switchWorkspace=workspace=>{props={...props,workspace};render()};
 function Probe(){const nav=useNavigation();const panels=useAtomValue(panelStackAtom);window.ui001.navigation=nav;
- return <><pre id="navigation-state">{JSON.stringify(nav.navigationState)}</pre><pre id="panel-stack">{JSON.stringify(panels)}</pre><MainContentPanel/></>}
-function FullFixture(){return <Provider store={store}><ShellContext.Provider value={{activeWorkspaceId:props.workspace,workspaces:[],sessionStatuses:[],projects:[],loadedProjects:[],labels:[]}}>
+ return <><pre id="navigation-state">{JSON.stringify(nav.navigationState)}</pre><pre id="panel-stack">{JSON.stringify(panels)}</pre>{panels.map((entry,index)=><PanelSlot key={entry.id} entry={entry} isOnly={panels.length===1} isFocusedPanel={index===panels.length-1} isSidebarAndNavigatorHidden={false} isAtLeftEdge={true} isAtRightEdge={true} proportion={1}/>)}</>}
+function FullFixture(){return <Provider store={store}><ShellContext.Provider value={{activeWorkspaceId:props.workspace,workspaces:[{id:props.workspace,remoteServer:{remoteWorkspaceId:props.remoteWorkspaceId}}],sessionStatuses:[],projects:[],loadedProjects:[],labels:[]}}>
  <NavigationProvider workspaceId={props.workspace} workspaceSlug={props.workspace} isReady={props.ready} isSessionsReady={props.sessionsReady}
   remoteWorkspaceId={props.remoteWorkspaceId} onCreateSession={createSession} onSwitchWorkspaceBySlug={switchWorkspace}>
   <Probe/>
@@ -79,16 +80,18 @@ async function selected(navigator: string, id?: string) {
 }
 try {
   await check('The mounted NavigationProvider restores a source deep link, back/forward and reload', async () => {
-    await page.goto(`${origin}?ws=workspace-a&route=sources/source/one`)
+    await page.goto(`${origin}?ws=workspace-a&route=sources/source/one&sidebar=files/src/main.ts`)
     await selected('sources', 'one')
     await page.locator('[data-route-host="SourceInfoPage"]').waitFor()
     await page.evaluate(() => (window as any).ui001.navigate('sources/source/two'))
     await selected('sources', 'two')
     await page.waitForFunction(() => new URL(location.href).searchParams.get('route') === 'sources/source/two')
+    assert.equal(await page.evaluate(() => history.state.seq), 1)
     await page.goBack(); await selected('sources', 'one')
     await page.goForward(); await selected('sources', 'two')
     await page.reload(); await selected('sources', 'two')
     assert.equal(new URL(page.url()).searchParams.get('ws'), 'workspace-a')
+    assert.deepEqual((await state()).rightSidebar, { type: 'files', path: 'src/main.ts' })
   })
   await check('A deleted selected source retains its URL and specific missing surface', async () => {
     await page.evaluate(() => (window as any).ui001.removeSource())
@@ -110,11 +113,47 @@ try {
     await page.evaluate(() => (window as any).ui001.navigate('allSessions/session/foreign'))
     await selected('unavailable')
     assert.equal((await state()).reason, 'workspace-mismatch')
+    assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 0)
     await page.locator('[data-testid="route-unavailable"]').waitFor()
     await page.evaluate(() => (window as any).ui001.navigate('allSessions/session/remote'))
     await selected('sessions', 'remote')
+    await page.locator('[data-route-host="ChatPage"]').waitFor()
+    assert.equal(await page.locator('[data-route-host="ChatPage"]').getAttribute('data-props'), '{"sessionId":"remote"}')
+  })
+  await check('Restoring a foreign session address checks the actual PanelSlot override through reload', async () => {
+    await page.goto(`${origin}?ws=workspace-a&route=allSessions/session/foreign`)
+    await selected('unavailable')
+    assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 0)
+    await page.locator('[data-testid="route-unavailable"]').waitFor()
+    await page.reload(); await selected('unavailable')
+    assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 0)
+    assert.equal(new URL(page.url()).searchParams.get('route'), 'allSessions/session/foreign')
+  })
+  await check('An unfocused foreign-session panel stays unavailable beside a valid local panel', async () => {
+    await page.evaluate(() => (window as any).ui001.navigate('allSessions/session/local', { newPanel: true }))
+    await selected('sessions', 'local')
+    assert.equal(await page.locator('[data-panel-role="content"]').count(), 2)
+    assert.equal(await page.locator('[data-testid="route-unavailable"]').count(), 1)
+    assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 1)
+    assert.equal(await page.locator('[data-route-host="ChatPage"]').getAttribute('data-props'), '{"sessionId":"local"}')
+    await page.reload(); await selected('sessions', 'local')
+    assert.equal(await page.locator('[data-testid="route-unavailable"]').count(), 1)
+    assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 1)
+  })
+  await check('Legacy zero/one panel proportions recover without becoming part of an entity address', async () => {
+    const panels = 'allSessions/session/local:1.0000,retired/surface:0.0000'
+    await page.goto(`${origin}?ws=workspace-a&route=retired/surface&panels=${encodeURIComponent(panels)}&fi=1`)
+    await selected('unavailable')
+    assert.equal((await state()).route, 'retired/surface')
+    const restored = JSON.parse((await page.locator('#panel-stack').textContent())!)
+    assert.deepEqual(restored.map((panel: any) => panel.route), ['allSessions/session/local', 'retired/surface'])
+    assert.deepEqual(restored.map((panel: any) => panel.proportion), [0.5, 0.5])
+    await page.reload(); await selected('unavailable')
+    assert.equal((await state()).route, 'retired/surface')
   })
   await check('Unknown and malformed incoming deep links retain an unavailable surface through reload', async () => {
+    await page.goto(`${origin}?ws=workspace-a&route=home`)
+    await selected('home')
     for (const route of ['retired/surface', 'knowledge/unknown/id', 'sources/source/%']) {
       await page.waitForFunction(() => (window as any).ui001.listeners() === 1)
       await page.evaluate(route => (window as any).ui001.deepLink(route), route)
@@ -135,6 +174,11 @@ try {
     assert.equal(panels.length, 2)
     assert.equal(panels[1].route, 'sources/source/two')
     assert.equal(panels[1].laneId, 'main')
+    assert.ok(panels.every((panel: any) => panel.proportion > 0))
+    await page.reload(); await page.waitForFunction(() => !!(window as any).ui001?.navigation)
+    await page.evaluate(() => (window as any).ui001.ready()); await selected('sources', 'two')
+    const restored = JSON.parse((await page.locator('#panel-stack').textContent())!)
+    assert.deepEqual(restored.map((panel: any) => panel.route), ['home', 'sources/source/two'])
   })
   await check('A queued deep-link action retains query parameters and executes once after readiness', async () => {
     await page.goto(`${origin}?ws=workspace-a&route=home&delayed=1`)
@@ -155,6 +199,7 @@ try {
     await page.waitForFunction(() => new URL(location.href).searchParams.get('ws') === 'workspace-b')
     await page.evaluate(() => (window as any).ui001.navigate('sources/source/two'))
     await selected('sources', 'two')
+    await page.waitForFunction(() => new URL(location.href).searchParams.get('route') === 'sources/source/two')
     await page.goBack(); await page.goBack()
     await selected('sources', 'one')
     assert.equal(new URL(page.url()).searchParams.get('ws'), 'workspace-a')
@@ -167,6 +212,6 @@ try {
     assert.equal(await page.evaluate(() => (window as any).ui001.listeners()), 0)
   })
   assert.deepEqual(errors, [])
-  console.log(JSON.stringify({ environment: 'Actual mounted NavigationProvider, MainContentPanel, session-selection hooks and panel/session atoms in isolated Chromium; leaf presentation and IPC boundary fixtures; no hosted/native service acceptance', browserVersion: browser.version(), results }, null, 2))
+  console.log(JSON.stringify({ environment: 'Actual mounted NavigationProvider, PanelSlot, MainContentPanel, session-selection hooks and panel/session atoms in isolated Chromium; leaf presentation and IPC boundary fixtures; no hosted/native service acceptance', browserVersion: browser.version(), results }, null, 2))
   if (results.some(result => !result.pass)) process.exitCode = 1
 } finally { await browser.close(); server.stop(); rmSync(temporary, { recursive: true, force: true }) }

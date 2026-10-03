@@ -256,6 +256,7 @@ export function NavigationProvider({
   // Semantic key for the last history entry we intentionally pushed/reconciled.
   // Excludes layout-only values (like panel proportions) so resize does not create history entries.
   const lastSemanticHistoryKeyRef = useRef('')
+  const historyReconcileRevisionRef = useRef(0)
 
   const updateCanGoBackForward = useCallback(() => {
     setCanGoBack(historySeqRef.current > 0)
@@ -354,6 +355,20 @@ export function NavigationProvider({
     lastSemanticHistoryKeyRef.current = currentSemanticKey
   }, [getSemanticHistoryKey])
 
+  const finishHistoryReconcile = useCallback(() => {
+    const revision = ++historyReconcileRevisionRef.current
+    lastSemanticHistoryKeyRef.current = getSemanticHistoryKey()
+    requestAnimationFrame(() => {
+      if (revision !== historyReconcileRevisionRef.current) return
+      suppressPushRef.current = false
+      // Explicit navigation can arrive before this frame. Preserve that change
+      // as history rather than replacing the restored workspace's address.
+      maybePushHistoryForSemanticChange()
+    })
+  }, [getSemanticHistoryKey, maybePushHistoryForSemanticChange])
+
+  useEffect(() => () => { historyReconcileRevisionRef.current += 1 }, [])
+
   // replaceState sync when panel stack, focus, or sidebar changes (catches resize, etc.)
   const panelStack = useAtomValue(panelStackAtom)
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
@@ -429,11 +444,14 @@ export function NavigationProvider({
       if (sidebarParam) {
         const parsed = parseRouteToNavigationState('allSessions', sidebarParam)
         if (parsed?.rightSidebar) {
+          rightSidebarRef.current = parsed.rightSidebar
           setRightSidebar(parsed.rightSidebar)
         } else {
+          rightSidebarRef.current = undefined
           setRightSidebar(undefined)
         }
       } else {
+        rightSidebarRef.current = undefined
         setRightSidebar(undefined)
       }
 
@@ -447,8 +465,8 @@ export function NavigationProvider({
         entries = panelsParam.split(',').filter(Boolean).map(entry => {
           const colonIdx = entry.lastIndexOf(':')
           if (colonIdx > 0) {
-            const proportion = parseFloat(entry.slice(colonIdx + 1))
-            if (!isNaN(proportion) && proportion > 0 && proportion < 1) {
+            const proportion = Number(entry.slice(colonIdx + 1))
+            if (Number.isFinite(proportion) && proportion >= 0 && proportion <= 1) {
               const rawRoute = entry.slice(0, colonIdx) as ViewRoute
               const route = normalizePanelRouteForReconcile(rawRoute, (state) => resolveAutoSelectionRef.current(state))
               return { route, proportion }
@@ -459,8 +477,8 @@ export function NavigationProvider({
           return { route, proportion: 0 }
         })
 
-        const hasProportions = entries.some(e => e.proportion > 0)
-        if (!hasProportions) {
+        const hasUsableProportions = entries.every(e => e.proportion > 0)
+        if (!hasUsableProportions) {
           const equal = 1 / entries.length
           entries.forEach(e => { e.proportion = equal })
         } else {
@@ -958,6 +976,8 @@ export function NavigationProvider({
         // Workspace boundary crossed — trigger workspace switch
         // The workspace switch effect will handle reconciliation
         isPopstateSwitchRef.current = true
+        historyReconcileRevisionRef.current += 1
+        suppressPushRef.current = true
         onSwitchWorkspaceBySlug(wsSlug)
         return
       }
@@ -971,15 +991,12 @@ export function NavigationProvider({
       // Same workspace — reconcile panels from the URL
       suppressPushRef.current = true
       reconcileFromUrlParamsRef.current(params)
-      lastSemanticHistoryKeyRef.current = getSemanticHistoryKey()
-      requestAnimationFrame(() => {
-        suppressPushRef.current = false
-      })
+      finishHistoryReconcile()
     }
 
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
-  }, [workspaceSlug, onSwitchWorkspaceBySlug, updateCanGoBackForward, getSemanticHistoryKey, isSessionsReady])
+  }, [workspaceSlug, onSwitchWorkspaceBySlug, updateCanGoBackForward, finishHistoryReconcile, isSessionsReady])
 
   // =========================================================================
   // WORKSPACE SWITCH
@@ -1038,11 +1055,8 @@ export function NavigationProvider({
 
     initialRouteRestoredRef.current = true
 
-    requestAnimationFrame(() => {
-      suppressPushRef.current = false
-      lastSemanticHistoryKeyRef.current = getSemanticHistoryKey()
-    })
-  }, [workspaceId, workspaceSlug, store, updateCanGoBackForward, getSemanticHistoryKey, isSessionsReady])
+    finishHistoryReconcile()
+  }, [workspaceId, workspaceSlug, store, updateCanGoBackForward, getSemanticHistoryKey, finishHistoryReconcile, isSessionsReady])
 
   // =========================================================================
   // INITIAL ROUTE RESTORATION (CMD+R reload)
@@ -1076,11 +1090,8 @@ export function NavigationProvider({
     historySeqRef.current = 0
     historyMaxSeqRef.current = 0
 
-    requestAnimationFrame(() => {
-      suppressPushRef.current = false
-      lastSemanticHistoryKeyRef.current = getSemanticHistoryKey()
-    })
-  }, [isReady, isSessionsReady, workspaceId, navigate, store, getSemanticHistoryKey])
+    finishHistoryReconcile()
+  }, [isReady, isSessionsReady, workspaceId, navigate, store, getSemanticHistoryKey, finishHistoryReconcile])
 
   // =========================================================================
   // PENDING NAVIGATION
