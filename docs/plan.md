@@ -1,3 +1,11 @@
+## Current architecture and container repair — local dependency graph
+
+1. Lead: fetch canonical main, freeze source SHA and merged PR ancestry, create isolated branch. Preserve unrelated dirty worktrees, especially `rox-release-20261003`; no force push, no Cloud dispatch.
+2. Local read-only scout + lead: compare delivered audit to current entrypoints, product policy, auth planes, passive trace and package inventory. Dependencies: frozen current source; no worker edits or external tasks.
+3. Lead: repair proven Docker manifest closure and canonical helper recipes; qualify actual BuildKit COPY/context with original-failure and missing-manifest negative controls. Full application image execution is a separate remaining gate.
+4. Lead: publish Russian current architecture, source-bound inventory and precise verification receipt; prepend cancellation correction without rewriting historical backlog. Validate immutable references and unchanged backlog, run diff checks. Read-only scout reviews claims independently.
+5. Lead: refresh main, resolve relevant integration drift, commit/push only this branch, open/update canonical PR and read back head/status. Report implemented, bounded verified and remaining installed/hosted acceptance separately.
+
 ## MCP connection deadline/privacy recovery plan — 2026-10-03
 
 1. Freeze source1436 and current4fec, compare actual symbols. Retain current Qdrant storage ownership, local resolver authority, pool config/generation/recovery semantics; recover only proven missing budgets/diagnostic filtering.

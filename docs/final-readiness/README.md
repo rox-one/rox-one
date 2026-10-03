@@ -1,10 +1,16 @@
 # [ROX-FINAL] Reconciled final-readiness audit — Windows, macOS and hosted web
 
+**Актуальный source-bound обзор:** [20 — Архитектура текущего main по-русски](20-current-main-architecture.ru.md), pinned `57871f492d1b21177ab767454d90395d72496b4e` / root 0.11.8. Он учитывает уже слитые #1400/#1420/#1424/#1461, OMP product policy, отдельные identity-контуры и оставшиеся platform gates. Документы 01/14/18 сохраняют исторические snapshots.
+
+**Execution correction:** массовый Cloud dispatch 169 пакетов / 445 задач отменён пользователем. Исторические launch plans ниже не являются текущим разрешением на запуск. Продолжение этого прохода — только локальная актуализация архитектуры и bounded Docker context fix; новые Codex Cloud задачи не создаются. Существующие 625 descriptions и их acceptance fields сохранены.
+
 **Canonical repository:** [rox-one/rox-one](https://github.com/rox-one/rox-one). **Audit branch:** `audit/reconciled-readiness-2026-10-03`, originally created from canonical main `f63294ba4fffa7238b46b24e918925a313ad0b12`. **Historical independently rechecked candidate:** PR1322 `de805e0dc7103b49d4c7f0a092d88c8b4222367a`. **Current integration/delivery:** [18 — Launch status](18-launch-status.md) and [PR receipt](parallel-work/pr-integration-receipt.json). **Language:** English, with a Russian launch plan.
 
 This audit accounts for accumulated ROX source beyond main: active branches, PRs, registered worktrees and uncommitted progress. The earlier main-only report is preserved as historical baseline evidence. Each original task now separates branch implementation, integration, bounded verification and remaining work. 625 independently described tasks/subtasks cover A Windows10/11, B macOS and C hosted authenticated web.
 
 ## [ROX-FINAL-START] Read the current source and evidence first
+
+Начните с [20 — Current main architecture](20-current-main-architecture.ru.md); перечисленные ниже candidate/launch receipts относятся к своим исходным ревизиям.
 
 1. [09 — Canonical source, all branches/PRs and reconciliation](09-source-reconciliation.md).
 2. [15 — Fresh candidate compiler/build/runtime checks](15-candidate-verification.md).
@@ -20,6 +26,7 @@ This audit accounts for accumulated ROX source beyond main: active branches, PRs
 
 | Document | Scope |
 | --- | --- |
+| [20 — Архитектура текущего main](20-current-main-architecture.ru.md) | Current 18-workspace source inventory, OMP policy, WebUI/workspace-service auth boundaries, passive runtime map, merged PR disposition and bounded Docker controls; remaining target DoD. |
 | [01 — Main architecture](01-architecture.md) | Historical pinned main topology, desktop/WebUI/viewer, dependencies and service boundaries. |
 | [02 — Surfaces](02-surface-backlog.md) | Every original screen/settings/widget/function task, now with reconciled progress and remaining work. |
 | [03 — Runtime/services](03-runtime-services-backlog.md) | Every original service/runtime/module task with branch progress and remaining work. |
