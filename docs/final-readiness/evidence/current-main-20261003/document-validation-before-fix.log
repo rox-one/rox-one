@@ -1,0 +1,47 @@
+{
+  "base": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+  "documentationFiles": 21,
+  "tasks": {
+    "UI": {
+      "tasks": 81,
+      "subtasks": 237
+    },
+    "SVC": {
+      "tasks": 42,
+      "subtasks": 84
+    },
+    "WIN": {
+      "tasks": 7,
+      "subtasks": 14
+    },
+    "MAC": {
+      "tasks": 6,
+      "subtasks": 12
+    },
+    "WEB": {
+      "tasks": 9,
+      "subtasks": 18
+    },
+    "INT": {
+      "tasks": 18,
+      "subtasks": 36
+    },
+    "QA": {
+      "tasks": 13,
+      "subtasks": 30
+    },
+    "REL": {
+      "tasks": 2,
+      "subtasks": 4
+    },
+    "RECHECK": {
+      "tasks": 4,
+      "subtasks": 8
+    }
+  },
+  "totalTaskBlocks": 625,
+  "pinnedReferences": 3179,
+  "errors": [
+    "20-current-main-architecture.ru.md: nonexistent pinned source 57871f492d1b21177ab767454d90395d72496b4e:packages/shared/src/agent/backend/common.ts"
+  ]
+}

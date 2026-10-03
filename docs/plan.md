@@ -1,3 +1,11 @@
+## Current architecture and container repair — local dependency graph
+
+1. Lead: fetch canonical main, freeze source SHA and merged PR ancestry, create isolated branch. Preserve unrelated dirty worktrees, especially `rox-release-20261003`; no force push, no Cloud dispatch.
+2. Local read-only scout + lead: compare delivered audit to current entrypoints, product policy, auth planes, passive trace and package inventory. Dependencies: frozen current source; no worker edits or external tasks.
+3. Lead: repair proven Docker manifest closure and canonical helper recipes; qualify actual BuildKit COPY/context with original-failure and missing-manifest negative controls. Full application image execution is a separate remaining gate.
+4. Lead: publish Russian current architecture, source-bound inventory and precise verification receipt; prepend cancellation correction without rewriting historical backlog. Validate immutable references and unchanged backlog, run diff checks. Read-only scout reviews claims independently.
+5. Lead: refresh main, resolve relevant integration drift, commit/push only this branch, open/update canonical PR and read back head/status. Report implemented, bounded verified and remaining installed/hosted acceptance separately.
+
 ## MCP connection deadline/privacy recovery plan — 2026-10-03
 
 1. Freeze source1436 and current4fec, compare actual symbols. Retain current Qdrant storage ownership, local resolver authority, pool config/generation/recovery semantics; recover only proven missing budgets/diagnostic filtering.
@@ -1083,6 +1091,12 @@ Runtime renderer bounded qualification complete: actual19 browser cases and39 mo
 1. Retain actual unchanged boundary1pass/8fail for opaque repeated/trailing slashes and encoded-percent identifiers, plus panel restore/query controls.
 2. Normalize only namespace grammar; preserve each remaining opaque ID byte, current Notes alias and unavailable/action policy.
 3. Qualify517 route/parser/panel/navigation cases0fail and current strict Electron, archive raw logs/hashes and publish separate PR after current-main union; retain branches.
+
+### Управление runtime и изоляция тестов — 2026-10-04
+
+1. recent_features фиксирует источник e572 и текущие установочные guards. Сохранить воспроизведение Windows current-copy15/1 и трёх отказов старого runner: snapshot, logger и caller HOME; не изменять установленный runtime пользователя.
+2. Восстановить только два production-файла: manager и test-all. Подтвердить реальными child processes зависание/cleanup/дальнейшее покрытие, private HOME, output quota, descriptor/ancestor custody, ошибочную и неполную установку.
+3. Сохранить42/0 changed controls,133/0/3 skipped из15 отдельно исполненных toolchain-файлов,1/0 native-executable prerequisite, строгие проверки типов и хеши в integration-history/toolchain-test-runner-recovery-20261004. Нормально согласовать свежий main, сохранить все существующие разделы документации, опубликовать отдельный PR; root проверяет и вливает, исходные ветки не удаляются.
 
 ## Runtime actual producer custody recovery — 2026-10-04
 

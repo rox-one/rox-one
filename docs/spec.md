@@ -1,3 +1,11 @@
+## Current architecture and server-container recheck — resumed local scope
+
+Owner: architecture audit lead; source baseline `57871f492d1b21177ab767454d90395d72496b4e` (root 0.11.8). The user cancelled the 169-package / 445-leaf Cloud dispatch: no new Codex Cloud tasks or retries. Preserve historical plans as evidence, with this scope correction taking precedence.
+
+Deliver a Russian current-main architecture overview and exact 18-workspace dependency inventory; distinguish OMP product policy from retained drivers, PostgreSQL workspace identity from shared-subject headless WebUI auth, and passive runtime map from execution authority. Do not repeat merged #1400/#1420/#1424/#1461. Repair only proven Docker context/manifest/helper recipe gaps in an isolated branch; preserve all other worktrees and existing 625-task acceptance records.
+
+Acceptance: baseline absent-docs-site failure reproduced by actual BuildKit; all 18 workspace manifests and three root inputs copied byte-for-byte; synthetic private/stale markers excluded; missing required manifest rejected; documentation immutable references/acceptance fields validated. Full image build, modified helper execution inside that image, installed Windows/macOS and hosted provider/identity/recovery acceptance remain explicit pending gates.
+
 ## MCP connection deadline/privacy selective recovery — 2026-10-03
 
 Owner: pr_scout; integration lead owns merge. Adapt original PR1436 startup/health/list budgets and secret-free transport diagnostics through current McpConnection/CraftMcpClient, preserving embedded Qdrant shared leases, current config/cwd/env authority, per-source pool serialization and no tool replay. One total30s default budget covers local resolution, transport startup, initialization and health; caller budgets cancel only that lease. HTTP/SSE guarded fetch and pending SSE start observe lifetime/attempt cancellation; failed startup awaits actual child/socket teardown. Later discovery uses its remaining overall budget, never a fresh allowance. Retain HTTP status and redirect type for retry/auth classification, scrub configured credentials and all URL userinfo/query/fragment without retaining raw causes, bound diagnostics and replace source quadratic trailing punctuation regex with a linear scan. Actual validation subprocesses drop inherited blocked host credentials but allow explicit source env. Acceptance: real loopback HTTP/SSE sockets and real stdio children, total deadline clocks, EOF/stubborn teardown, current Qdrant other-lease continuity, pool no-replay/config/recovery controls, privacy adversarial cases, Shared/Electron types and main/preload build. Native Windows filesystem/install and real external providers remain separate.
@@ -870,6 +878,12 @@ Owner recent_features; dependency: externally merged selected-detail1467 at89cb2
 ## Opaque route identity follow-up — 2026-10-04
 
 Owner root; depends on external1412/f058 runtime route recovery. Normalize published empty namespace aliases without folding repeated/trailing separators inside opaque Knowledge/run/terminal/diff/extension IDs. Keep the existing Notes filesystem alias, decode percent escapes once, preserve full panel query transport and view-only action denial. Current navigation/account/native authority stays intact; this is a focused identity repair to the newly merged shared boundary.
+
+### Управление runtime и изоляция тестов — 2026-10-04
+
+Владелец recent_features; источник поздних дополнений #1448 закреплён на e572bbdf0b6952b3a0274f1312f347157aee52d1. Физическая Windows-копия current признаётся готовой только вместе с проверенным каталогом той же версии, завершением установки, исходным commit, lock и разрешённым launcher. Остальные способы установки, managed18.4.12, SSO и native policy сохраняют текущих владельцев.
+
+Запускатель исполняет каждый тестовый файл в отдельном процессе и приватном HOME, сохраняет manifest/hash, журналы и дальнейшее покрытие после отказа. Независимый дедлайн ограничивает зависший процесс и его потомков; общий вывод ограничен 64MiB. Исходники до16MiB и журналы читаются через проверенный дескриптор с привязкой к canonical-предкам. Подмена предка и oversized source запрещены до чтения; переименование того же листового inode допускает исходный snapshot, который повторно проверяется перед исполнением. Квалификация ограничена изменёнными controls и всеми15 существующими toolchain-файлами; полный repository/native Windows release этим не принят.
 
 ## Runtime actual producer custody recovery — 2026-10-04
 
