@@ -128,7 +128,8 @@ import { handleDeepLink } from './deep-link'
 import { BrowserPaneManager } from './browser-pane-manager'
 import { OAuthFlowStore } from '@rox/shared/auth'
 import { registerThumbnailScheme, registerThumbnailHandler } from './thumbnail-protocol'
-import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, messagingGatewayLog, autoUpdateLog } from './logger'
+import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, getAutoUpdateLogFilePath, messagingGatewayLog, autoUpdateLog } from './logger'
+import { registerDeviceDiagnosticsIpc } from './device-diagnostics-ipc'
 import { setPerfEnabled, enableDebug } from '@rox/shared/utils'
 import { registerPiModelResolver } from '@rox/shared/config'
 import { getPiModelsForAuthProvider, getAllPiModels } from '@rox/shared/config'
@@ -557,6 +558,18 @@ app.whenReady().then(async () => {
       isDebugMode,
       getLogFilePath,
       captureError: (err) => Sentry.captureException(err),
+    })
+
+    registerDeviceDiagnosticsIpc({
+      ipcMain,
+      windowManager,
+      rendererFilePath: join(__dirname, 'renderer/index.html'),
+      devServerUrl: process.env.VITE_DEV_SERVER_URL,
+      getLogPaths: () => ({
+        main: getLogFilePath(),
+        messaging: getMessagingGatewayLogFilePath(),
+        updates: getAutoUpdateLogFilePath(),
+      }),
     })
 
     // Bootstrap IPC handlers — preload uses sendSync for window-local details
