@@ -1,0 +1,503 @@
+{
+  "schemaVersion": 1,
+  "owner": "OWNER-UI-001",
+  "fullDoDClosed": false,
+  "updatedAtUtc": "2026-10-03T15:56:42.118512+00:00",
+  "nativeFailureReferences": [
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791033632172/rox-readiness-ui-001.result.json",
+      "resultSha256": "e9c318423a4a4cab72398705013c1bc269a915b5d7684f53c1cd0523168836c9",
+      "inputRevision": "9fa0dea8b7667fd472fe651849ca0d093bf0a006",
+      "status": "failed",
+      "stage": "boot-native-product",
+      "error": "launch: Timeout 60000ms exceeded.",
+      "errors": [],
+      "acceptanceLevel": "actual local macOS Electron with shipped RPC and disposable canonical backend",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    },
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791033957961/rox-readiness-ui-001.result.json",
+      "resultSha256": "21326efa49474b632fe9e3c69c90ac77a82dfcc9d6ed38940ec66dbf83f1ce68",
+      "inputRevision": "9fa0dea8b7667fd472fe651849ca0d093bf0a006",
+      "status": "failed",
+      "stage": "boot-native-product",
+      "error": "launch: Timeout 120000ms exceeded.",
+      "errors": [],
+      "buildProvenanceQualified": false,
+      "buildQualifier": "provisional product replay; current source snapshot does not bind the earlier generated build",
+      "acceptanceLevel": "actual local macOS Electron with shipped RPC and disposable canonical backend",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    },
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791034261424/rox-readiness-ui-001.result.json",
+      "resultSha256": "dd5a5e4d7247924ef4d4ad523e916c2ab9fba076dde13925d2c49af688fd9d34",
+      "inputRevision": "9fa0dea8b7667fd472fe651849ca0d093bf0a006",
+      "status": "failed",
+      "stage": "boot-native-product",
+      "error": "locator.waitFor: Error: strict mode violation: locator('[data-shell-role=\"chrome\"]') resolved to 3 elements:\n    1) <div data-shell-role=\"chrome\" class=\"chrome-topbar fixed top-0 right-0 z-panel titlebar-drag-region\">…</div> aka locator('#root div').filter({ hasText: 'ГлавнаяСессииВстречиЗадачиЗаметкиЛентаВходящиеГлавнаяСессииВстречиЗадачиЗаметкиЛ' }).nth(3)\n    2) <div tabindex=\"-1\" data-shell-role=\"chrome\" data-focus-zone=\"sidebar\" class=\"h-full font-sans relative chrome-rail\">…</div> aka locator('.relative > div > div > div > div > div > div > div > div').first()\n    3) <div data-shell-role=\"chrome\" class=\"h-full flex flex-col min-w-0 relative z-panel chrome-strip\">…</div> aka getByText('СессииСегодня · 2 UI001')\n\nCall log:\n\u001b[2m  - waiting for locator('[data-shell-role=\"chrome\"]') to be visible\u001b[22m\n",
+      "errors": [],
+      "buildProvenanceQualified": false,
+      "buildQualifier": "provisional product replay; current source snapshot does not bind the earlier generated build",
+      "acceptanceLevel": "actual local macOS Electron with shipped RPC and disposable canonical backend",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    },
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791037356225/rox-readiness-ui-001.result.json",
+      "resultSha256": "270771004af91111d68e394c13506fe29f728d2447c7dec6da28b8ffe5b81dde",
+      "inputRevision": "463168addc5efbbd74ebae3ffc8ea36c2e039e13",
+      "status": "failed",
+      "stage": "unavailable-capability-routes",
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"browser-surface-missing\"], [data-testid=\"browser-surface-unavailable\"]') to be visible\u001b[22m\n",
+      "errors": [],
+      "buildProvenanceQualified": true,
+      "buildQualifier": "frozen source manifest checked before and after main/renderer builds",
+      "acceptanceLevel": "actual local macOS Electron with shipped RPC and disposable canonical backend",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    },
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791037843427/rox-readiness-ui-001.result.json",
+      "resultSha256": "b1a9410aa1809f0556d9f05177421be7e04016eae317f076ed732b1d113234c8",
+      "inputRevision": "463168addc5efbbd74ebae3ffc8ea36c2e039e13",
+      "status": "failed",
+      "stage": "unavailable-capability-routes",
+      "error": "page.waitForFunction: Timeout 30000ms exceeded.",
+      "errors": [],
+      "buildProvenanceQualified": true,
+      "buildQualifier": "frozen source manifest checked before and after main/renderer builds",
+      "acceptanceLevel": "actual local macOS Electron with shipped RPC and disposable canonical backend",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    },
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791038195365/rox-readiness-ui-001.result.json",
+      "resultSha256": "82c6c56ba7d256e9a5a35da95fea39967f98b672e912c0084749e95c3fab502c",
+      "inputRevision": "463168addc5efbbd74ebae3ffc8ea36c2e039e13",
+      "status": "failed",
+      "stage": "unavailable-capability-routes",
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"extension-surface-unavailable\"]') to be visible\u001b[22m\n",
+      "errors": [],
+      "buildProvenanceQualified": true,
+      "buildQualifier": "frozen source manifest checked before and after main/renderer builds",
+      "acceptanceLevel": "diagnostic continuation with known knowledge redirect excluded; no readiness acceptance",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    },
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791038554362/rox-readiness-ui-001.result.json",
+      "resultSha256": "24c3964a80460e45e3c0bda6e8adf233fddec0b03bb9e2ae57f7e3b101d72031",
+      "inputRevision": "463168addc5efbbd74ebae3ffc8ea36c2e039e13",
+      "status": "failed",
+      "stage": "unavailable-capability-routes",
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('extra-screen-item-unavailable') to be visible\u001b[22m\n\u001b[2m    64 × locator resolved to hidden <div class=\"h-full\" data-screen=\"radar\" data-item-id=\"ui001-absent-item\" data-testid=\"extra-screen-item-unavailable\">…</div>\u001b[22m\n",
+      "errors": [],
+      "buildProvenanceQualified": true,
+      "buildQualifier": "frozen source manifest checked before and after main/renderer builds",
+      "acceptanceLevel": "diagnostic continuation with explicitly listed known gaps excluded; no readiness acceptance",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    },
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791038809376/rox-readiness-ui-001.result.json",
+      "resultSha256": "1e1bb32089b083cef3e3a52c56f924562a36ab04ec546923950387049b6d5fcf",
+      "inputRevision": "463168addc5efbbd74ebae3ffc8ea36c2e039e13",
+      "status": "failed",
+      "stage": "unknown-raw-link-unavailable",
+      "error": "Diagnostic continuation found 4 additional failures; see diagnosticFailures",
+      "errors": [
+        "Paper Shaders: WebGL is not supported in this browser"
+      ],
+      "diagnosticFailures": [
+        {
+          "name": "radar-missing",
+          "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('extra-screen-item-unavailable') to be visible\u001b[22m\n\u001b[2m    27 × locator resolved to hidden <div class=\"h-full\" data-screen=\"radar\" data-item-id=\"ui001-absent-item\" data-testid=\"extra-screen-item-unavailable\">…</div>\u001b[22m\n"
+        },
+        {
+          "name": "zoom-layout",
+          "error": "expect(received).toBeGreaterThan(expected)\n\nExpected: > 0\nReceived:   0"
+        },
+        {
+          "name": "skill-deletion",
+          "error": "expect(received).toBe(expected) // Object.is equality\n\nExpected: false\nReceived: true"
+        },
+        {
+          "name": "note-deletion",
+          "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('route-note-missing') to be visible\u001b[22m\n"
+        }
+      ],
+      "buildProvenanceQualified": true,
+      "buildQualifier": "frozen source manifest checked before and after main/renderer builds",
+      "acceptanceLevel": "diagnostic continuation with explicitly listed known gaps excluded; no readiness acceptance",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    },
+    {
+      "result": "native-e2e/rox-readiness-ui-001-1791040637580/rox-readiness-ui-001.result.json",
+      "resultSha256": "00401bfbd45b3a8db29433d43eb415ed2557d8b70bb95c1764214d1f1e879c39",
+      "inputRevision": "5a0b769b894aed2ed09ba8bcbe01a41cf8149d76",
+      "status": "failed",
+      "stage": "deleted-note-retry",
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('route-note-missing') to be visible\u001b[22m\n",
+      "errors": [],
+      "diagnosticFailures": [],
+      "buildProvenanceQualified": true,
+      "buildQualifier": "frozen source manifest checked before and after main/renderer builds",
+      "acceptanceLevel": "actual local macOS unpackaged Electron with shipped RPC and disposable canonical backend",
+      "fullDoDClosed": false,
+      "qualification": "Public result JSON only; private profile/database/log artifacts excluded. Older failed native attempts are retained as diagnostics, not current frozen-source acceptance."
+    }
+  ],
+  "incomingMainBoundedRegression": {
+    "log": "verification/expanded/logs/patch-scout-incoming-main-frozen-5a0b769b.log.gz",
+    "pass": 93,
+    "fail": 0,
+    "assertions": 361,
+    "files": 13,
+    "exitStatus": 0,
+    "sourceRevision": "5a0b769b894aed2ed09ba8bcbe01a41cf8149d76",
+    "runtime": "Bun1.3.14",
+    "scope": "Meetings lifecycle/recipe, calendar ownership, panel workspace/layout/resize, Notes comment drafts, task import and own-field connection inspection."
+  },
+  "preparedStaticTestPatch": {
+    "path": "work/ui001-static-tests-prepared.patch",
+    "sha256": "e3452aabee231464992c319553de391717ee60f365b22e12d7de5128419af7f5",
+    "appliedToProduction": true,
+    "candidateLog": "verification/expanded/logs/patch-scout-static-tests-candidate-green.log.gz",
+    "pass": 8,
+    "fail": 0,
+    "assertions": 59,
+    "reason": "Update two preexisting comment-slicing assertions after upstream unified-grid source reshaping; no product rewrite.",
+    "appliedByThisWorker": false,
+    "applicationBasis": "Read-only comparison of current production test bytes with the prepared candidate; the coordinator owns application.",
+    "upstreamNegativeControl": {
+      "log": "verification/expanded/logs/patch-scout-static-upstream-negative-control-ae196.log.gz",
+      "pass": 5,
+      "fail": 2,
+      "assertions": 33,
+      "exitStatus": 1,
+      "provenance": {
+        "sourceRevision": "ae19683e69f079893cd09065487cfa7653d01154",
+        "copiedInputs": [
+          {
+            "path": "apps/electron/src/renderer/components/app-shell/__tests__/sash-terminal-clearance.test.ts",
+            "sha256": "460ccd6e3f35784851041342e04ee16efc67910ed007a5cac071e8e6ba1f3629"
+          },
+          {
+            "path": "apps/electron/src/renderer/components/app-shell/__tests__/radius-everywhere.test.ts",
+            "sha256": "5c53a7af9e1c5eabd5df80e173eacd41a7cfcaf85cab3b9310eace7b09ce5830"
+          },
+          {
+            "path": "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+            "sha256": "5ad7e50d2349a68d03de0402810925cca760a580efe1747383d61e679691052b"
+          },
+          {
+            "path": "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx",
+            "sha256": "f2d00aa4520f55e252e9cc12f3be21e93ed50d0b9ca34737c95f93bf2efdac22"
+          },
+          {
+            "path": "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx",
+            "sha256": "5066215fe939a922d3eb6c39d17adffaecdee5d4a88ed0b0f41b28e7d24df501"
+          },
+          {
+            "path": "apps/electron/src/renderer/components/app-shell/panel-constants.ts",
+            "sha256": "6166298674f6ea0d50c69223d366aba54f443f4d1262a0483a4b3331c3902fc9"
+          },
+          {
+            "path": "apps/electron/src/renderer/components/app-shell/SidebarChrome.tsx",
+            "sha256": "b0009b0e5dcf628b97ae94e9e50fbd4612cb4ba3b8de84f12e54e59c9e3060ea"
+          },
+          {
+            "path": "apps/electron/src/renderer/platform/ActivityRail.tsx",
+            "sha256": "02297067acb6bbff3181eef70bec4fd37495734986bd178d42ffc1ee281a5c4d"
+          },
+          {
+            "path": "apps/electron/src/renderer/platform/InspectorHost.tsx",
+            "sha256": "4efa8f1fb052d7cdefb65d9fb24a9a5d4ce7cd2bb989c1b67fd9b79bcc0ebcbb"
+          },
+          {
+            "path": "apps/electron/src/renderer/index.css",
+            "sha256": "2d7d864694e7ef21dd740c32f9438f12928427379c677e3343d1d1873ba3bacd"
+          },
+          {
+            "path": "packages/ui/src/styles/index.css",
+            "sha256": "2c6d117077075d45de9b3db27425f66dde45d7b475e35661855c298d46a31c1e"
+          }
+        ],
+        "description": "Exact unmodified upstream tests and all source/CSS inputs they read; no runtime product mount.",
+        "fullDoDClosed": false
+      }
+    }
+  },
+  "codeqlRepairReceipt": {
+    "sourceRevision": "5a0b769b894aed2ed09ba8bcbe01a41cf8149d76",
+    "basis": "Coordinator supplied completed check receipts and the actual downloaded aggregate annotations JSON.",
+    "priorHighFinding": {
+      "checkId": 111221096606,
+      "sourceLabel": "463 prior candidate",
+      "description": "Seed-file time-of-check/time-of-use high finding; repaired with one open handle, fstat, handle.readFile and O_NOFOLLOW according to coordinator source receipt. Prior failed analysis is retained separately.",
+      "annotationReceipt": "verification/expanded/codeql-463-prior-annotations.json",
+      "annotationReceiptSha256": "056c6537377ddb6e72426501401b34720f58b6aeeb38ebce0efd9b926104ce66",
+      "annotationCount": 1
+    },
+    "currentSecurityJavaScript": {
+      "checkId": 111228740183,
+      "conclusion": "success",
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37131985138/job/111228740183"
+    },
+    "currentQualityJavaScript": {
+      "checkId": 111228741058,
+      "conclusion": "success",
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37131985466/job/111228741058"
+    },
+    "currentAggregate": {
+      "checkId": 111229480997,
+      "conclusion": "neutral",
+      "annotations": [],
+      "annotationReceipt": "verification/expanded/codeql-5a0b769b8-annotations.json",
+      "annotationReceiptSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "fullDoDClosed": false,
+    "sourceRepairReadback": {
+      "path": "tests/final-readiness/rox-readiness-ui-001.seed.ts",
+      "sha256": "67392804b4afadb1e9b572748bc206fc925d62c05af4400112819931d91bab86",
+      "observation": "The copied executable is opened once with O_NOFOLLOW; file type and executable bits come from handle.stat(), hashing uses handle.readFile(), and finally closes the same handle. This independently confirms the coordinator-described repair shape."
+    }
+  },
+  "incomingSurfaceTabsMainAddition": {
+    "incomingRevision": "2f03faa5dcc075d4acbd364dd7bdb3ba14993596",
+    "review": "No actionable route ownership/API/order regression observed. The change updates tab focus/close behavior and workspace-keyed knowledge titles; route parsing/URL serialization stays authoritative. Cancelled effects suppress old title publication, pending title reads remain shareable and keyboard targets follow visible strip order.",
+    "log": "verification/expanded/logs/patch-scout-incoming-surface-tabs-2f03.log.gz",
+    "pass": 7,
+    "fail": 0,
+    "assertions": 34,
+    "exitStatus": 0,
+    "runtime": "Bun1.3.14",
+    "provenance": {
+      "sourceRevision": "2f03faa5dcc075d4acbd364dd7bdb3ba14993596",
+      "copiedSourceAndTests": [
+        {
+          "path": "apps/electron/src/renderer/platform/knowledge-tab-titles.ts",
+          "sha256": "b4bd8570c3b950bf7a4c7df020fc738ab912fddd3a3f3ed624a28bd4f8f4a021"
+        },
+        {
+          "path": "apps/electron/src/renderer/platform/surface-tab-navigation.ts",
+          "sha256": "9863d175b3655f4f5bb304a6b259f9b129fb26e82a52ecd708b0d39436ea058d"
+        },
+        {
+          "path": "apps/electron/src/renderer/platform/__tests__/knowledge-tab-titles.test.ts",
+          "sha256": "f03c430bdd8ea93b375447ef3a8a3dfb110b06da631c6bc5349b8cd9ed32bbc7"
+        },
+        {
+          "path": "apps/electron/src/renderer/platform/__tests__/surface-tab-navigation.test.ts",
+          "sha256": "fa961898ec436c50b54ad17e60019ead06e39c52f752822ca6675f6a6c5ceb59"
+        }
+      ],
+      "testRuntimeDependency": "Current frozen surface-tab-model runtime import; only knowledgeRefKey is exercised. Its exact three-line implementation matches incoming main. Route/atom helpers imported transitively are not exercised by these pure title/navigation tests.",
+      "fullDoDClosed": false
+    },
+    "nativeFrozenSourceUnchanged": true,
+    "mergedIntoCheckoutByWorker": false,
+    "fullDoDClosed": false
+  },
+  "priorNativeFrozenRevision": "5a0b769b894aed2ed09ba8bcbe01a41cf8149d76",
+  "currentProductFreezePending": false,
+  "incomingServiceSettingsIntegration": {
+    "integratedParent": "ae19683e69f079893cd09065487cfa7653d01154",
+    "mergeRevision": "2247242d557442976422d40217cf43fc74e7ebfe",
+    "review": "Settings menu APIs are additive; guidance persistence is workspace-keyed. Existing route callbacks and recovery ownership are retained. One new service-matching permissive-parser defect was found and repaired separately below.",
+    "log": "verification/expanded/logs/patch-scout-incoming-delivered-2247242d5.log.gz",
+    "pass": 29,
+    "fail": 0,
+    "assertions": 109,
+    "files": 6,
+    "exitStatus": 0,
+    "fullDoDClosed": false
+  },
+  "strictServiceMatchingRepair": {
+    "baseRevision": "2247242d557442976422d40217cf43fc74e7ebfe",
+    "frozenRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+    "changedSourceFiles": [
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/service-navigation.ts",
+        "sha256": "c70de20413482f2873923d92a7582336b6ff29bb7e77038b6b37eff5867decfd"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/__tests__/service-panel-navigation.test.ts",
+        "sha256": "06b746ccc0a9da997533aaac843a7d28077c1cae9d7c90ee4473e538e1a0298d"
+      }
+    ],
+    "negativeControl": "verification/expanded/logs/patch-scout-service-strict-red.log.gz",
+    "scope": "Strict route boundary prevents malformed selected addresses counting as concrete services; valid selected panel focus and valid root fallback remain intact.",
+    "sourcePatchProof": "verification/expanded/logs/patch-scout-service-strict-green.log.gz",
+    "pass": 30,
+    "fail": 0,
+    "assertions": 127,
+    "exitStatus": 0,
+    "finalDeliveredRevisionBindingPending": false,
+    "bindingBasis": "Coordinator committed and froze the same stable source/test bytes at the supplied revision. Root owns final remote delivery/readback.",
+    "fullDoDClosed": false
+  },
+  "currentFrozenRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+  "preparedServiceSourceAssertionPatch": {
+    "sourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+    "changes": [
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/__tests__/notes-canonical-navigation.test.ts",
+        "originalSha256": "149449e96188c9f69c50061506ec272d858b4c631a0f166019da9bef5b479d82",
+        "preparedSha256": "0697996560c0e08cb960c47250fd134eff18e215ed4ae32d0d0758ef0902d808"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/__tests__/connections-nav.test.ts",
+        "originalSha256": "731d764164ae37b7bce618ebadb84cc74e600ec0a27a31ca1a3a10bac5bc96ff",
+        "preparedSha256": "73850f89d6b93688adc4710dbfc47543001a83822e4775c6feed8b946a6f3f50"
+      }
+    ],
+    "appliedToProduction": true,
+    "description": "Test-only source assertions follow new service focus helper while independently binding the Notes destination to its canonical local route. Actual positive/fallback callbacks are already covered by service-panel-navigation tests.",
+    "patch": "work/ui001-service-static-tests-prepared.patch",
+    "patchSha256": "2424922c0c2d56091534d12b58eec4a6ea5192710978238edb9522b5b2005812",
+    "log": "verification/expanded/logs/patch-scout-service-static-candidate-green.log.gz",
+    "pass": 5,
+    "fail": 0,
+    "assertions": 17,
+    "exitStatus": 0,
+    "appliedByThisWorker": false
+  },
+  "finalLocalCI": {
+    "sourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+    "integrationBaseRevision": "ae19683e69f079893cd09065487cfa7653d01154",
+    "command": "PATH=<qualified Bun1.3.14> NODE_OPTIONS=--max-old-space-size=4096 bun run --bun validate:ci",
+    "observedExitCode": 0,
+    "logSha256": "7c273f3f781f45a76ff831f6ec5425fcc62d6fc96c4170bad8339a91dc7da509",
+    "timeoutsChanged": false,
+    "testAndProductFilesChangedDuringRun": false,
+    "fullDoDClosed": false,
+    "receipt": "verification/expanded/rox-readiness-ui-001.ci-final-receipt.json",
+    "receiptSha256": "47422d068173e8409b6e5f4b67b3a1c1bcdccd9df4e292b322123afc93d4a2f4",
+    "log": "verification/expanded/logs/expanded-validate-ci-5e5493b4e.snapshot-7c273f3f781f.log.gz"
+  },
+  "finalNarrowProductReview": {
+    "sourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+    "reviewedFiles": [
+      {
+        "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+        "sha256": "f9849afff8791539720582497d0fbf9c9b62bad33598a864ff28970b03d98829"
+      },
+      {
+        "path": "apps/electron/src/main/deep-link.ts",
+        "sha256": "4bc5762d28f14fb03980980662a5beeb9832fe3f6d7caf1f4616ad4a55e0521a"
+      },
+      {
+        "path": "apps/electron/src/shared/route-parser.ts",
+        "sha256": "613068e6cc643848b45f9ee3a4fb8a991cbb80873bd31bbf1f40d48f2bfe8ad5"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/service-navigation.ts",
+        "sha256": "c70de20413482f2873923d92a7582336b6ff29bb7e77038b6b37eff5867decfd"
+      }
+    ],
+    "conclusion": "No new actionable severe race/data-loss issue observed in the reviewed ownership, suppression, raw transport and service matching paths.",
+    "findings": "Workspace changes invalidate former callbacks. Focus changes increment the intent revision before history suppression. Deferred create/input/send check current owner, revision and focused target; legitimate own pushes recapture the committed revision. Finally cleanup cannot restore suppression into a newer intent. Retained deep-link listeners require an active subscription and current owner. Strict service matching excludes unavailable addresses.",
+    "limits": "Bounded static review of these paths only; no new mounted/native/platform acceptance was performed by this worker. Root native proof, hosted browser, Windows and full original acceptance remain separate.",
+    "fullDoDClosed": false
+  },
+  "finalNativeVerification": {
+    "sourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+    "result": "native-e2e/rox-readiness-ui-001-1791041783025/rox-readiness-ui-001.result.json",
+    "resultSha256": "723b75375edb8753c8f2a96816f4ac9e0258b953d9ac6b3fceedbbb321373607",
+    "status": "passed",
+    "coordinatorObservedProcessExitStatus": 0,
+    "stages": 19,
+    "screenshots": 32,
+    "buildProvenanceQualified": true,
+    "sourceManifestFiles": 2776,
+    "sourceManifestSha256": "9135605f00553e0fc97cebc36e48b826cd2e6ac13117dc21e397cf7fea077b6a",
+    "currentProductSourceReadback": "verification/expanded/native-final-source-readback.json",
+    "currentProductSourceReadbackSha256": "97e1d3ef612df4cbc604873acc34a66c093d49d590455fe8dba32f098ac0cdd3",
+    "acceptanceLevel": "actual local macOS unpackaged Electron with shipped RPC and disposable canonical backend",
+    "platformLimits": [
+      "Windows 10/11 DPI and installed native acceptance not run",
+      "macOS packaged installed-app acceptance not run",
+      "Hosted web ingress/transport acceptance not run"
+    ],
+    "errors": [],
+    "diagnosticFailures": [],
+    "diagnosticSkippedRoutes": [],
+    "fullDoDClosed": false
+  },
+  "finalBroadRegression": {
+    "sourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+    "log": "verification/expanded/logs/expanded-regression-final-delivery.log.gz",
+    "pass": 709,
+    "skip": 78,
+    "fail": 0,
+    "assertions": 2888,
+    "files": 108,
+    "tests": 787,
+    "coordinatorObservedProcessExitStatus": 0,
+    "pathFilters": "Explicit ./ production directories exclude intentional scratch negative controls.",
+    "testOnlyChangesAfterNative": true,
+    "shippedSourceManifestUnchanged": true,
+    "fullDoDClosed": false
+  },
+  "currentCodeQLReadback": {
+    "sourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+    "basis": "Direct authenticated GitHub read-only API on the exact frozen commit.",
+    "checksReceipt": "verification/expanded/codeql-5e5493-current-checks.json",
+    "checksReceiptSha256": "2a974b630433e3607723f639655b27c49a905917cec66159872346cb8551a74c",
+    "aggregateAnnotationsReceipt": "verification/expanded/codeql-5e5493-current-annotations.json",
+    "aggregateAnnotationsReceiptSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "securityJavaScript": {
+      "annotations_url": "https://api.github.com/repos/rox-one/rox-one/check-runs/111233352313/annotations",
+      "completed_at": "2026-10-03T15:45:25Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/rox-one/rox-one/actions/runs/37133559185/job/111233352313",
+      "id": 111233352313,
+      "name": "Analyze (javascript-typescript)",
+      "started_at": "2026-10-03T15:38:16Z",
+      "status": "completed"
+    },
+    "qualityJavaScript": {
+      "annotations_url": "https://api.github.com/repos/rox-one/rox-one/check-runs/111233351400/annotations",
+      "completed_at": "2026-10-03T15:43:51Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/rox-one/rox-one/actions/runs/37133559022/job/111233351400",
+      "id": 111233351400,
+      "name": "Analyze (javascript-typescript)",
+      "started_at": "2026-10-03T15:39:55Z",
+      "status": "completed"
+    },
+    "aggregate": {
+      "annotations_url": "https://api.github.com/repos/rox-one/rox-one/check-runs/111234245066/annotations",
+      "completed_at": "2026-10-03T15:36:54Z",
+      "conclusion": "neutral",
+      "html_url": "https://github.com/rox-one/rox-one/runs/111234245066",
+      "id": 111234245066,
+      "name": "CodeQL",
+      "started_at": "2026-10-03T15:36:52Z",
+      "status": "completed"
+    },
+    "aggregateAnnotations": [],
+    "swift": {
+      "annotations_url": "https://api.github.com/repos/rox-one/rox-one/check-runs/111233352355/annotations",
+      "completed_at": null,
+      "conclusion": null,
+      "html_url": "https://github.com/rox-one/rox-one/actions/runs/37133559185/job/111233352355",
+      "id": 111233352355,
+      "name": "Analyze (swift)",
+      "started_at": "2026-10-03T15:31:47Z",
+      "status": "queued"
+    },
+    "fullDoDClosed": false
+  },
+  "laterUpstreamScopeReview": {
+    "baseRevision": "ae19683e69f079893cd09065487cfa7653d01154",
+    "laterMainRevision": "fd6e2f2cebafeb5bbf464aef45604ce4e7fcaca1",
+    "observation": "Only new product-tour foundation modules, a credential-types test and docs changed. Existing route/navigation/panel/workspace contracts are untouched. New core transitions import local contracts; persistence uses separate rox-product-tour IndexedDB storage and JSON profile/workspace scope keys. No existing shell production wiring is introduced in this diff.",
+    "acceptanceBoundary": "Native proof applies to frozen5e before these later upstream tour files; this bounded scope review does not claim native acceptance of the later addition.",
+    "fullDoDClosed": false
+  }
+}

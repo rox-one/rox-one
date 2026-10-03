@@ -1,0 +1,17 @@
+{
+  "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+  "command": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun run --bun validate:ci",
+  "observedExitCode": 0,
+  "startedAtUtc": "2026-10-03T16:10:59.383569+00:00",
+  "finishedAtUtc": "2026-10-03T16:32:29.119766+00:00",
+  "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-validate-ci-8e3f6d841.log",
+  "logSha256": "d1a775343e55fb88cb978c3701bc0563bbc053dc3c9fc307c49f00341ffc19dd",
+  "sourceAndTestFileHashesUnchanged": true,
+  "sourceAndTestFileHashMismatches": [],
+  "timeoutsChanged": false,
+  "runtime": {
+    "bun": "1.3.14",
+    "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+    "sha256": "e0c90ec15d33363e6b70713d56bc3b2c7585c17f40a0fe0f8fd9305901d4e233"
+  }
+}

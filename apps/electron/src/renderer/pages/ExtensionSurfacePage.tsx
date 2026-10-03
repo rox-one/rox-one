@@ -26,7 +26,7 @@ export interface ExtensionSurfacePageProps {
   viewId: string
   /** Owning panel id in the panel stack (used to hide when unfocused) */
   panelId?: string
-  /** Extension UI URL; defaults to about:blank (shows load hint) */
+  /** Explicit extension UI URL; absent URLs render an unavailable surface. */
   url?: string
 }
 
@@ -42,6 +42,7 @@ export default function ExtensionSurfacePage({
   const [instanceId, setInstanceId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [removed, setRemoved] = useState(false)
+  const [surfaceAttempt, setSurfaceAttempt] = useState(0)
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
   const { activeWorkspaceId, isFocusedPanel } = useAppShellContext()
   const isFocused = isFocusedPanel ?? (panelId === undefined || focusedPanelId === panelId)
@@ -60,61 +61,135 @@ export default function ExtensionSurfacePage({
         : '_default'
     return `ext:${ws}:${extensionId}:${viewId}`
   }, [activeWorkspaceId, extensionId, viewId])
-  const surfaceUrl = (url?.trim() || 'about:blank')
-  const isBlank = surfaceUrl === 'about:blank'
+  const surfaceUrl = url?.trim() ?? ''
 
   useEffect(() => {
     let cancelled = false
+    let revoked = false
+    let revision = 0
     let createdId: string | null = null
+    let creation: Promise<void> | null = null
+    let release: Promise<void> | null = null
     const previousRelease = releaseRef.current
+    const api = window.electronAPI
+    const nativeApi = api.extensionSurface
     setInstanceId(null)
     setError(null)
     setRemoved(false)
-    const acquire = (async () => {
-      await previousRelease
-      if (cancelled) return
-      try {
-        createdId = await window.electronAPI.extensionSurface.createEmbedded({
-          durableKey,
-          url: surfaceUrl,
-          extensionId,
-          viewId,
-          workspaceId: activeWorkspaceId,
+
+    // Catalog requests hold no native resource. Cleanup waits only for this
+    // owner's creation so an unanswered lookup cannot block the next route.
+    const releaseOwner = () => {
+      if (!release) {
+        release = previousRelease.then(async () => {
+          await creation
+          if (createdId === null) return
+          try {
+            await releaseNativeSurface(createdId, (nativeId, rect) => nativeApi.syncBounds({ instanceId: nativeId, rect }))
+          } catch {
+            // Best-effort hide
+          }
+          try {
+            await nativeApi.destroy({ instanceId: createdId })
+          } catch {
+            // Instance may already be gone
+          }
         })
-        if (!cancelled) setInstanceId(createdId)
-      } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : String(err))
+        releaseRef.current = release
       }
-    })()
+      return release
+    }
+    const unavailable = (reason: string) => {
+      if (cancelled || revoked) return
+      revoked = true
+      revision += 1
+      setInstanceId(null)
+      setError(reason)
+      void releaseOwner()
+    }
+    const validate = async () => {
+      const request = ++revision
+      await previousRelease
+      if (cancelled || revoked || request !== revision) return
+      if (typeof api.extensionsListInstalled !== 'function'
+        || typeof nativeApi?.createEmbedded !== 'function'
+        || typeof nativeApi?.syncBounds !== 'function'
+        || typeof nativeApi?.destroy !== 'function'
+        || typeof nativeApi?.onRemoved !== 'function') {
+        unavailable('extension-capability-unavailable')
+        return
+      }
+      try {
+        const installed = await api.extensionsListInstalled({ workspaceId: activeWorkspaceId ?? undefined })
+        if (cancelled || revoked || request !== revision) return
+        const record = installed.records?.find(candidate => candidate.id === extensionId)
+        if (!record) {
+          unavailable('extension-missing')
+          return
+        }
+        if (record.status === 'disabled' || record.sourceEnabled === false
+          || installed.state?.enabled?.[extensionId] === false) {
+          unavailable('extension-disabled')
+          return
+        }
+        if (record.manifest?.runtime !== 'craft-sandbox' && record.manifest?.runtime !== 'web-widget') {
+          unavailable('extension-unsupported')
+          return
+        }
+        try {
+          const address = new URL(surfaceUrl)
+          if (address.protocol === 'about:' && address.pathname === 'blank') throw new Error('Blank surface')
+        } catch {
+          unavailable('url-unavailable')
+          return
+        }
+        if (!viewId.trim()) {
+          unavailable('extension-view-missing')
+          return
+        }
+        if (creation || createdId !== null) return
+        creation = (async () => {
+          try {
+            createdId = await nativeApi.createEmbedded({ durableKey, url: surfaceUrl, extensionId, viewId, workspaceId: activeWorkspaceId })
+            if (!cancelled && !revoked) setInstanceId(createdId)
+          } catch (err) {
+            if (!cancelled && !revoked) {
+              revoked = true
+              setError(err instanceof Error ? err.message : String(err))
+            }
+          }
+        })()
+      } catch (err) {
+        if (!cancelled && !revoked && request === revision) {
+          unavailable(err instanceof Error ? err.message : String(err))
+        }
+      }
+    }
+    const offChanged = api.onExtensionsChanged?.((payload) => {
+      if (cancelled || revoked) return
+      if (payload.workspaceId && payload.workspaceId !== activeWorkspaceId) return
+      void validate()
+    })
+    void validate()
     return () => {
       cancelled = true
-      releaseRef.current = acquire.then(async () => {
-        if (createdId === null) return
-        try {
-          await releaseNativeSurface(createdId, (nativeId, rect) => window.electronAPI.extensionSurface.syncBounds({ instanceId: nativeId, rect }))
-        } catch {
-          // Best-effort hide
-        }
-        try {
-          await window.electronAPI.extensionSurface.destroy({ instanceId: createdId })
-        } catch {
-          // Instance may already be gone
-        }
-      })
+      revision += 1
+      offChanged?.()
+      void releaseOwner()
     }
-  }, [durableKey, surfaceUrl, extensionId, viewId, activeWorkspaceId])
+  }, [durableKey, surfaceUrl, extensionId, viewId, activeWorkspaceId, surfaceAttempt])
 
   useEffect(() => {
     if (!instanceId) return
+    let active = true
     const offRemoved = window.electronAPI.extensionSurface.onRemoved((removedId) => {
-      if (removedId === instanceId) setRemoved(true)
-    })
-    const offStateChanged = window.electronAPI.extensionSurface.onStateChanged((state) => {
-      if (state.instanceId === instanceId) setRemoved(false)
+      // Removal is terminal for this owner. A queued state broadcast must not
+      // revive a closed native view; Retry acquires a fresh instance instead.
+      if (active && removedId === instanceId) setRemoved(true)
     })
     return () => {
+      active = false
       offRemoved()
-      offStateChanged()
     }
   }, [instanceId])
 
@@ -126,20 +201,26 @@ export default function ExtensionSurfacePage({
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full w-full bg-background text-muted-foreground">
+      <div className="flex flex-col gap-3 items-center justify-center h-full w-full bg-background text-muted-foreground" data-testid="extension-surface-unavailable" data-reason={error} role="status">
         <p className="text-sm">
-          {t('extensions.surface.error')}
+          {error === 'url-unavailable' ? t('extensions.surface.loadUrlHint') : t('extensions.surface.error')}
         </p>
+        <button type="button" className="rounded-md border border-border px-3 py-1 text-sm" onClick={() => setSurfaceAttempt(attempt => attempt + 1)}>
+          {t('common.retry')}
+        </button>
       </div>
     )
   }
 
   if (removed) {
     return (
-      <div className="flex items-center justify-center h-full w-full bg-background text-muted-foreground">
+      <div className="flex flex-col gap-3 items-center justify-center h-full w-full bg-background text-muted-foreground" data-testid="extension-surface-removed" role="status">
         <p className="text-sm">
           {t('extensions.surface.removed')}
         </p>
+        <button type="button" className="rounded-md border border-border px-3 py-1 text-sm" onClick={() => setSurfaceAttempt(attempt => attempt + 1)}>
+          {t('common.retry')}
+        </button>
       </div>
     )
   }
@@ -154,16 +235,6 @@ export default function ExtensionSurfacePage({
     )
   }
 
-  if (isBlank) {
-    return (
-      <div className="flex h-full w-full flex-col bg-background">
-        <div className="border-b border-border px-3 py-2 text-xs text-muted-foreground">
-          {t('extensions.surface.loadUrlHint')}
-        </div>
-        <div className="relative min-h-0 flex-1">{fullSurface}</div>
-      </div>
-    )
-  }
 
   return fullSurface
 }

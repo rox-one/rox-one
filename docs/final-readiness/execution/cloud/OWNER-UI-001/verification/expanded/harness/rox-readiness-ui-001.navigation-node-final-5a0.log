@@ -1,0 +1,23 @@
+Actual test callbacks via task-local Node adapter; Node v26.8.2; external Chromium; no Bun pass claim
+[PASS] initial missing entity never auto-selects an existing chat and survives reload 6514ms
+[PASS] unknown and malformed routes preserve raw addresses on initial load/reload/deep link 14776ms
+[PASS] legacy known-root incomplete shapes remain unavailable through auto-selection effects 9418ms
+[PASS] raw commas, colon suffixes and malformed escapes round-trip within a multi-panel URL 5075ms
+[PASS] queued nested/encoded raw view and new-panel option are replayed after readiness 4324ms
+[PASS] queued malformed view survives a session-readiness-only race 4188ms
+[PASS] actual back/forward, deletion and workspace restoration preserve explicit selection 3770ms
+[PASS] canonical page broadcasts beat stale list replies and former workspace replies are ignored 6177ms
+[PASS] popstate received before metadata readiness is reconciled when readiness returns 3062ms
+[PASS] queued page broadcast from the former A owner cannot publish after A to B to A 3590ms
+[PASS] blocked popstate retains its exact target through an actual panel resize 4224ms
+[PASS] workspace restoration waits for full readiness and resize cannot overwrite stored selection 3775ms
+[PASS] late create replies from former A ownership cannot navigate, prefill or send after A to B to A 4187ms
+[PASS] already scheduled input and send callbacks retain the original committed owner 2743ms
+[PASS] new navigation in the same workspace cancels an older deferred create response 2536ms
+[PASS] actual same-workspace Back cancels an older deferred create response 5213ms
+[PASS] focusing another existing panel cancels the former panel deferred create response 2836ms
+[PASS] focus away and back cannot regain an old deferred-create continuation 4645ms
+[PASS] the current new-panel create retains its own committed focus and delayed prefill 3368ms
+[PASS] current create actions still navigate, rename, prefill and send using actual callbacks 3551ms
+[PASS] session-created metadata cannot steal a pending list-route new-chat action and its prefill 3420ms
+{"runtime":"Node actual source callbacks adapter","pass":21,"fail":0,"assertions":59,"cases":21,"registeredCases":21,"elapsedMs":103169}

@@ -1,0 +1,274 @@
+{
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "inputRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+  "attempt": "rox-readiness-ui-001-1791045258553",
+  "recordedAtUtc": "2026-10-03T16:40:35.088948+00:00",
+  "nativeResultStatus": "passed",
+  "sourceManifest": {
+    "sourceCount": 2776,
+    "trackedSourcesCheckedAgainstCommit": 2776,
+    "untrackedSourcePaths": [],
+    "diskMismatches": [],
+    "commitMismatches": [],
+    "mainAndRendererReceiptSourcesEqual": true,
+    "sha256": "bc5d5ab42efec5de666561f71e717b8a54684e218ed0d2816052a1e93f7e3a97"
+  },
+  "buildArtifactReadback": {
+    "count": 395,
+    "mismatches": []
+  },
+  "harnessReadback": {
+    "count": 5,
+    "mismatches": [],
+    "hashes": {
+      "tests/final-readiness/rox-readiness-ui-001.product.test.ts": "1f41b6b50669fa51f3025d0a22d92f727c368fbb4d3b9dd22997e51a8d791941",
+      "tests/final-readiness/rox-readiness-ui-001.seed.ts": "67392804b4afadb1e9b572748bc206fc925d62c05af4400112819931d91bab86",
+      "tests/final-readiness/rox-readiness-ui-001.node-driver.ts": "c84ba4b82c326e8e22ab4dd24476b976281bc744e492279b89848c3c43696abf",
+      "tests/final-readiness/rox-readiness-ui-001.build.ts": "09622fb6a63d66431e26a95d51171b22e72f39edc36e600c682337f79634c522",
+      "work/rox-readiness-ui-001.native-driver.cjs": "09397836ee85f2bb52fd6ac789b785fb523e1a861f7daee6142f5189109b2895"
+    },
+    "currentNativeDriverSha256": "09397836ee85f2bb52fd6ac789b785fb523e1a861f7daee6142f5189109b2895"
+  },
+  "screenshots": {
+    "count": 32,
+    "allMatch": true,
+    "readback": [
+      {
+        "name": "boot",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.boot.png",
+        "sha256": "f5751511100ea09dd91e143983890f9e90572dae02d96498b4db96febd6853a5",
+        "match": true
+      },
+      {
+        "name": "native-open-url-query",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.native-open-url-query.png",
+        "sha256": "6b5fa7b95846b31a4bf7dedc693af167a58e4bb171b8e0800847e533296b1acf",
+        "match": true
+      },
+      {
+        "name": "session-direct-reload",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.session-direct-reload.png",
+        "sha256": "ee83bb82a131cb384a8f31b15b1ee88639ad47ac046da99f2e4dc9ecb5540574",
+        "match": true
+      },
+      {
+        "name": "new-panel-reloaded",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.new-panel-reloaded.png",
+        "sha256": "f79a6275803448c4d3ec8c6597be6266153fe277b4e778aa4fc68e6289681860",
+        "match": true
+      },
+      {
+        "name": "history-forward-project",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.history-forward-project.png",
+        "sha256": "cefbb1e2d7716666ff84812f3352efc835effa44f1e47e66dab4850dd0ecdddf",
+        "match": true
+      },
+      {
+        "name": "canonical-page",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.canonical-page.png",
+        "sha256": "c7ed4175c67f2bb5465e0dd8e096f1f6725e77bfa033b4f4dacd8555cbb94482",
+        "match": true
+      },
+      {
+        "name": "pending-create-note-retained",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.pending-create-note-retained.png",
+        "sha256": "5dc62881b68d4ff41d1f4ce23b7eff1782e639ca0565d057e46ecda99484b613",
+        "match": true
+      },
+      {
+        "name": "terminal-unavailable",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.terminal-unavailable.png",
+        "sha256": "e47c78b7c4c4cf62a35d86e513a6c202010b7e68cbb2833bfdfad5a20286ea2e",
+        "match": true
+      },
+      {
+        "name": "browser-unavailable",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.browser-unavailable.png",
+        "sha256": "4cf82403a057be0d8f748ca99fe96c5eed41ff1fe4abc33e6600920cf5d2cdd9",
+        "match": true
+      },
+      {
+        "name": "cloud-run-unavailable",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.cloud-run-unavailable.png",
+        "sha256": "dc0313caf96d5ad3101627c87de61769bc5091f777b361b8656d142b5265c1ef",
+        "match": true
+      },
+      {
+        "name": "knowledge-unavailable",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.knowledge-unavailable.png",
+        "sha256": "3a34c154cf068871ede1c20155f118ba225d52863999b84560d21ed6df4c3950",
+        "match": true
+      },
+      {
+        "name": "extension-unavailable",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.extension-unavailable.png",
+        "sha256": "98b591eaf4701f6e29c338e72c26d254b9c296dfa66dca2ce3da0a310f47a8b5",
+        "match": true
+      },
+      {
+        "name": "dossier-missing",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.dossier-missing.png",
+        "sha256": "c7631800ae135d3e8618c15e3ec5dc28c22391d5217cb7dc41d06ba049f31ee0",
+        "match": true
+      },
+      {
+        "name": "radar-missing",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.radar-missing.png",
+        "sha256": "b596d9f108242e2c547d1b5d70bbd9819a3c5028eb86b0b4951145212d9d8c69",
+        "match": true
+      },
+      {
+        "name": "decisions-missing",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.decisions-missing.png",
+        "sha256": "0c7998ba93705fa6248690d0b158ef632169f20543bb90087d8817940933f47a",
+        "match": true
+      },
+      {
+        "name": "agents-missing",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.agents-missing.png",
+        "sha256": "f2ccf29937473eea88ea20782d9505b014f6ded91775637bae6d4c8598d04d89",
+        "match": true
+      },
+      {
+        "name": "focus-missing",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.focus-missing.png",
+        "sha256": "9c7549f629669c81ea90000cc29a0c41a99fa06b9c973599a374ac4b0dc8ce75",
+        "match": true
+      },
+      {
+        "name": "geometry-persisted",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.geometry-persisted.png",
+        "sha256": "cf2f2d5e55ffa4ba9fa52c972ac5c6a48baf9f80b90bc7b061e21d4add7be7cf",
+        "match": true
+      },
+      {
+        "name": "modal-after-native-resize",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.modal-after-native-resize.png",
+        "sha256": "55b30e7167f948e6d761ef9bacbb1bc0a5a08e0437f05c45985a2de00ae5d4e5",
+        "match": true
+      },
+      {
+        "name": "zoom-1",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.zoom-1.png",
+        "sha256": "d0470ceb997a7672ad7fa2922f5dd36a8a8a72a0c58b83b41521437f36fbb81d",
+        "match": true
+      },
+      {
+        "name": "zoom-1.5",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.zoom-1.5.png",
+        "sha256": "d172fc91dd9b22f86428a52275e779964cc805d85eddf1f76d91460aa4bcfd2f",
+        "match": true
+      },
+      {
+        "name": "zoom-2",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.zoom-2.png",
+        "sha256": "0e4bb42eb2a2a4fa6624234d279d5235b4a5134f92c172c1a8b0dd3f9e8dc1ec",
+        "match": true
+      },
+      {
+        "name": "source-deleted",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.source-deleted.png",
+        "sha256": "3b4f3072190fdbf51ff65ac20f9632ede954a07f084f2b9c0c3d1664b9764230",
+        "match": true
+      },
+      {
+        "name": "skill-deleted",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.skill-deleted.png",
+        "sha256": "5767cc0ac428888c8f409ce9dc9b618507ca0e88a93fe67496cc0651425b2aed",
+        "match": true
+      },
+      {
+        "name": "project-deleted",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.project-deleted.png",
+        "sha256": "ac5d8e5357e6931202102e36d219e3730f41f637ff0df879a20b95c128ddbc88",
+        "match": true
+      },
+      {
+        "name": "page-deleted",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.page-deleted.png",
+        "sha256": "ec5edb57ffecb8b406905eea71653d615ce3f8f06c76be006c1bb718e23c70f3",
+        "match": true
+      },
+      {
+        "name": "note-deleted",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.note-deleted.png",
+        "sha256": "e37362432c2aaa798f46f96c02f3c8a863e32acd8372f6a746697a725a229565",
+        "match": true
+      },
+      {
+        "name": "note-retried",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.note-retried.png",
+        "sha256": "69dd876c50d201edbfb16197b5dbfbf398477982c1004f098ace5cab6aa127c3",
+        "match": true
+      },
+      {
+        "name": "note-reloaded",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.note-reloaded.png",
+        "sha256": "1f34f3e964139cb09d74e6243655b833e20d4c9d34d1765b720113cc789f51cb",
+        "match": true
+      },
+      {
+        "name": "session-deleted",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.session-deleted.png",
+        "sha256": "f0962bf0cb5358a067b570118a50b22fbf03eb08df577e9e3f9485070c91c132",
+        "match": true
+      },
+      {
+        "name": "native-restart-deleted-session",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.native-restart-deleted-session.png",
+        "sha256": "14a15d48cfb5ed9ceefae15f0fae5672214ee5f7e541a2c487e70a77752c5354",
+        "match": true
+      },
+      {
+        "name": "unknown-link-unavailable",
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791045258553/rox-readiness-ui-001.unknown-link-unavailable.png",
+        "sha256": "30bd8f9455b64597f3abbff470a6a6ee22dac2486d25fc52bdc4d5d44f21ac93",
+        "match": true
+      }
+    ]
+  },
+  "rendererErrors": [],
+  "diagnosticFailures": [],
+  "diagnosticSkippedRoutes": [],
+  "ownedProcessCleanupReadback": [
+    {
+      "attempt": "rox-readiness-ui-001-1791044832057",
+      "profile": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-x15wBH",
+      "pidFile": "work/rox-readiness-ui-001-x15wBH/electron.pid",
+      "recordedPid": 56352,
+      "recordedPidProcessReadback": "",
+      "exactProfileProcessMatches": [],
+      "recordedPidAbsent": true,
+      "exactProfileProcessesAbsent": true,
+      "signalsSentByThisWorker": []
+    },
+    {
+      "attempt": "rox-readiness-ui-001-1791045258553",
+      "profile": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-dKdEEO",
+      "pidFile": "work/rox-readiness-ui-001-dKdEEO/electron.pid",
+      "recordedPid": 68099,
+      "recordedPidProcessReadback": "",
+      "exactProfileProcessMatches": [],
+      "recordedPidAbsent": true,
+      "exactProfileProcessesAbsent": true,
+      "signalsSentByThisWorker": []
+    }
+  ],
+  "processActions": "No signals needed: both recorded PIDs and both exact unique profile process matches absent. No unrelated/native retry/foreground process touched.",
+  "failedStartupReceipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e/rox-readiness-ui-001-1791044832057/rox-readiness-ui-001.startup-failure-cleanup.json",
+  "originalEvidenceSha256": {
+    "result": "d44e1f5c18bd8e1c29ffb74a496aa19d4cab0557f09d03dd573cffed0fe278ac",
+    "harness": "afc5bb68e86da1cfaf519624bbce2dbab4add409d1b3828284dd446cc6e6d592",
+    "nativeLog": "cf5fdf304e595b97392f11c6f502a6911a91d9ca2d113d0badbdc48d1f67ec7b"
+  },
+  "acceptanceLevel": "actual local macOS unpackaged Electron with shipped RPC and disposable canonical backend",
+  "platformLimits": [
+    "Windows 10/11 DPI and installed native acceptance not run",
+    "macOS packaged installed-app acceptance not run",
+    "Hosted web ingress/transport acceptance not run"
+  ],
+  "fullDoDClosed": false
+}

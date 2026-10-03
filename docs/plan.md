@@ -1,6 +1,13 @@
 ## Inspector resize recovery task graph — 2026-10-03
 
 Owner: branch audit lead; depends on merged Golden Gate controller/native/panels and Connections consumers. Source audit → adapt sash into current InspectorHost with transient preview/current bounds → exercise actual host pointer/keyboard/cancel/unmount/reload and old-consumer negative → package type/build/locale gates → separate reviewed PR, exact merge/readback. Shared files: currentInspectorHost and12locale keys only; original source branches remain intact. No old layout widths or section ownership are restored.
+## Golden Gate chat output recovery plan — 2026-10-03
+
+1. Freeze source helper/current auto-scroll sites and coordinate ChatDisplay regions with Product Learning worker. pr_scout owns output scroll only; root owns merge and Inspector/credential integration.
+2. Restore private viewport follow and committed incarnation ownership through real initial/ResizeObserver/submit/user-commit consumers; retain unfocused follow, user-up history, suppression and lazy height anchor, and all explicit search jumps.
+3. Exercise real production ChatDisplay/Radix/messages in nested DOM: outer/window position, reduced/normal motion, focused/unfocused history, document hidden, delayed commit, old ResizeObserver/queued frames A→B→A/unmount, history anchoring and explicit jump. Keep failure history and controlled fixture boundaries explicit; run types/build and current adjacent tests.
+4. Reconcile live main, freeze source/proof/log receipts, publish/attach separate PR, preserve every source branch. Notify dependent instrumentation owner of exact ChatDisplay source before parent merges.
+
 ## Product Learning foundation recovery plan — 2026-10-03
 
 1. Freeze final a6 source and import only contracts/core/persistence/analytics; pr_scout owns these interfaces, historical_sweep integrates dependent UI/runtime/current consumers without copying old shell/pages.

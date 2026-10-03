@@ -3864,6 +3864,8 @@
   "notes.palette.session": "Sesiones",
   "notes.palette.task": "Tareas",
   "notes.palette.title": "Menciones y comandos",
+  "notes.route.notFound": "Esta nota ya no está disponible",
+  "notes.route.unavailable": "No se pudo abrir esta nota",
   "notes.save.autosaveHint": "Las notas se guardan al escribir",
   "notes.save.autosaving": "Autoguardando",
   "notes.save.failed": "Error al guardar",

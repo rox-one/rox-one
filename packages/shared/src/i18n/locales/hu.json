@@ -3864,6 +3864,8 @@
   "notes.palette.session": "Munkamenetek",
   "notes.palette.task": "Feladatok",
   "notes.palette.title": "Említések és parancsok",
+  "notes.route.notFound": "Ez a jegyzet már nem érhető el",
+  "notes.route.unavailable": "Ezt a jegyzetet nem sikerült megnyitni",
   "notes.save.autosaveHint": "A jegyzetek gépelés közben mentődnek",
   "notes.save.autosaving": "Automatikus mentés",
   "notes.save.failed": "Mentés sikertelen",

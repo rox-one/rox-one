@@ -135,7 +135,7 @@ describe('layout-snapshot: snapshot ↔ URL encoding', () => {
     const double = snapshotToUrlSearch(makeSnapshot([sessionTab, knowledgeTab], 1, [0.5, 0.5]))
     const params = new URLSearchParams(double)
     expect(params.get('route')).toBe('knowledge/document/doc-1')
-    expect(params.get('panels')).toBe('allSessions/session/session-1:0.5000,knowledge/document/doc-1:0.5000')
+    expect(params.get('panels')).toBe('v2:[{"route":"allSessions/session/session-1","proportion":0.5},{"route":"knowledge/document/doc-1","proportion":0.5}]')
     expect(params.get('fi')).toBe('1')
   })
 

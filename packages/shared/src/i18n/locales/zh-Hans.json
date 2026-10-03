@@ -3864,6 +3864,8 @@
   "notes.palette.session": "会话",
   "notes.palette.task": "任务",
   "notes.palette.title": "提及与命令",
+  "notes.route.notFound": "此笔记已不可用",
+  "notes.route.unavailable": "无法打开此笔记",
   "notes.save.autosaveHint": "输入时会自动保存笔记",
   "notes.save.autosaving": "自动保存中",
   "notes.save.failed": "保存失败",

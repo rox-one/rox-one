@@ -1,0 +1,26 @@
+Actual test callbacks via task-local Node adapter; Node v26.8.2; external Chromium; no Bun pass claim
+[PASS] initial missing entity never auto-selects an existing chat and survives reload 1238ms
+[PASS] unknown and malformed routes preserve raw addresses on initial load/reload/deep link 1797ms
+[PASS] legacy known-root incomplete shapes remain unavailable through auto-selection effects 1478ms
+[PASS] raw commas, colon suffixes and malformed escapes round-trip within a multi-panel URL 1203ms
+[PASS] queued nested/encoded raw view and new-panel option are replayed after readiness 1117ms
+[PASS] queued malformed view survives a session-readiness-only race 1071ms
+[PASS] actual back/forward, deletion and workspace restoration preserve explicit selection 1031ms
+[PASS] canonical page broadcasts beat stale list replies and former workspace replies are ignored 795ms
+[PASS] popstate received before metadata readiness is reconciled when readiness returns 1126ms
+[PASS] queued page broadcast from the former A owner cannot publish after A to B to A 1011ms
+[PASS] blocked popstate retains its exact target through an actual panel resize 1042ms
+[PASS] workspace restoration waits for full readiness and resize cannot overwrite stored selection 773ms
+[PASS] late create replies from former A ownership cannot navigate, prefill or send after A to B to A 1010ms
+[PASS] already scheduled input and send callbacks retain the original committed owner 1117ms
+[PASS] new navigation in the same workspace cancels an older deferred create response 815ms
+[PASS] actual same-workspace Back cancels an older deferred create response 647ms
+[PASS] focusing another existing panel cancels the former panel deferred create response 657ms
+[PASS] focus away and back cannot regain an old deferred-create continuation 703ms
+[PASS] the current new-panel create retains its own committed focus and delayed prefill 442ms
+[PASS] current create actions still navigate, rename, prefill and send using actual callbacks 490ms
+[PASS] session-created metadata cannot steal a pending list-route new-chat action and its prefill 643ms
+[PASS] retained deep-link listener cannot create or send in a former workspace 618ms
+[PASS] retained deep-link listeners stay disposed after workspace ABA and same-workspace readiness reinstall 595ms
+[PASS] current deep-link listener retains raw query views and executes current action parameters 399ms
+{"runtime":"Node actual source callbacks adapter","pass":24,"fail":0,"assertions":69,"cases":24,"registeredCases":24,"elapsedMs":21977}

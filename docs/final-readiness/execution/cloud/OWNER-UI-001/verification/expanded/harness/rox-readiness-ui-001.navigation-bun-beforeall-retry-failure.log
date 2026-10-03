@@ -1,0 +1,21 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+944 |           sendResponse(id, response);
+945 |           resolve();
+946 |         });
+947 |       });
+948 |     sendRequest(refs, request, (error, response) => {
+949 |       if (error) return callback(new Error(error), null);
+                                           ^
+error: The service was stopped
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/node_modules/esbuild/lib/main.js:949:38)
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/node_modules/esbuild/lib/main.js:603:9)
+      at afterClose (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/node_modules/esbuild/lib/main.js:594:25)
+      at emit (node:events:92:22)
+      at endReadableNT (internal:streams/readable:865:50)
+(fail) UI-001 mounted NavigationProvider raw URL/readiness/history > (unnamed) [119.64ms]
+
+ 0 pass
+ 1 fail
+Ran 1 test across 1 file. [4.12s]
