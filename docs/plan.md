@@ -988,3 +988,11 @@ Owner root. Depends on existing rail-links/Popover/Select and current product-to
 Owner recent_features: restore exact ISO calendar-day validation in the current parser; verify impossible-date refusal and valid leap-day persistence through the actual TaskDetail form. Keep before-fix unit/browser failures, full personal-task regression checks and both timezone offsets; qualify current core types and production component/CSS bundle. Parent owns ordered PR merge; source branches stay preserved. Broader Golden/native release acceptance remains separate.
 
 Collection recovery qualification completed on current bb047:33/0/80 native-storage/current callbacks,5/0 mounted Chromium and full Electron Node22 types0. Prior test-type diagnostics were corrected by precise literal fixture types; all source failures remain in the archived evidence.
+
+
+### Knowledge availability recovery — 2026-10-03
+
+- [x] Freeze original #1436 and current consumers; reject its global singleton cache because actual A→B/connection and invalidation probes expose wrong reuse. Coordinate collection/AppShell ownership with historical worker.
+- [x] Restore scoped bounded availability through both current consumers, shared native-event invalidation, local-store retention, render scope ownership, and obsolete kernel-call fences.
+- [ ] Verify actual mounted components: offline zero kernel reads, shared status/remount fast path, native-event recovery, workspace/event late-response negatives, missing channel and current Notes navigation. Qualify adjacent Knowledge logic, Electron types and renderer build; retain failed fixture and real race history.
+- [ ] Publish a separate qualified PR and update the exhaustive 137-path source/caller ledger. Root owns remote merge; source branches remain intact.

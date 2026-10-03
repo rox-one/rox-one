@@ -799,3 +799,10 @@ Owner: branch integration historical worker. Dependency: current native collecti
 ### Golden task date validation recovery — 2026-10-03
 
 Recover the strict local calendar-day check from preserved Golden source5def9ffd into the current Tasks schedule form, through its existing parseDateExpression port. ISO dates must round-trip the exact year/month/day; impossible dates return no schedule change or native write. Valid leap days retain local midnight. Current native task actor/workspace custody, CAS/ACK/readback, import/background barriers and Product Learning producers remain canonical. Owner: recent_features; dependency: current Tasks1456 and runtime main; no legacy CatalogPanel or alternate store.
+
+
+### Knowledge availability recovery — 2026-10-03
+
+- Owner: `pr_scout`; source #1436 `384843bfc4cf7d4a1f34c902a66a9a3198043c9f`. Recover its offline fast path through the current `KnowledgeNotebookTree` and `KnowledgeHome`, preserving native RPC authority, current Rox Notes routes, search, and saved-view operations.
+- Cache by API identity, explicit workspace and connection. Confirmed probes expire after 30 seconds; missing/error/timeout is unknown with at most one second of reuse. A three-second renderer budget does not cancel the native operation or certify a service is absent. Native changes invalidate once before mounted consumers refresh. Late invalidated responses cannot replace fresh entries.
+- Offline/unknown reads retain workspace-local views/envelopes and skip notebook/title calls. Render hides old-workspace rows immediately; request tickets prevent late event/workspace continuations from publishing rows or starting obsolete kernel reads. No new service, data store, installation CTA or authorization path is introduced.
