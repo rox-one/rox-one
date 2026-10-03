@@ -854,6 +854,10 @@ Owner recent_features. Recover source1464 through the current OmpAgent. Startup 
 
 Owner: historical_sweep; root reviews/merges. Preserve frozen #1444 c2e8f07b5cb8a1b1659781e1fe4dd4d0f0207727 and the current scoped read-only journal/own-descriptor privacy contract. Passive tool/provider/native/background observations bind to their captured run origin; reused IDs, late completions, failed begin and idle eviction cannot attribute old output to a successor. Ambiguity drops correlation and reports partial coverage. Persisted rows cannot widen workspace or ancestry scope. Secret redaction covers quoted and serialized environment/header credentials and masks secrets registered after storage during readback. Explicit artifact output refs project evidence without guessing completion from paths/text. Launch/output metadata is passive and grants no execution or credentials. Real SessionManager/gateway/TaskRunner/native producers are a separate pr_scout dependency; preserve current SSO suppliedExecution and captured authority binding. Renderer late additions are a separate historical dependency. This bounded collector qualification is 53 tests/247 assertions plus core/server-core Node22 types; installed/live provider/full runtime acceptance remains separate. Evidence: integration-history/runtime-trace-origin-recovery-20261004.
 
+## Late UI1448 runtime edges — 2026-10-04
+
+Owner root; source e572 frozen. Recover four production paths: own-property RPC serialization/admission, bounded OS credential-provider calls, conservative queued runner liveness and preservation of terminal outcomes during async probes, and static fingerprinted Product Learning CI build. Keep current account/immediateHistory/unavailable-workspace authority. Worker recent_features separately owns manager physical-copy and whole-suite runner custody; full native OS/cloud/CI DoD remains separate. Proof uses private synthetic providers/process probes plus actual local subprocess conformance.
+
 
 ## Runtime Map context and navigation extension — 2026-10-04
 
