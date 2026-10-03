@@ -55,6 +55,30 @@ function shellNavigatorExpressions() {
   }`
 }
 
+// Execute the actual desktop title callback and shared model. Strip chrome,
+// keyboard controls and title-loading transport remain explicit fixture seams.
+function desktopTabTitleExpressions() {
+  const source = readFileSync(process.env.ROX_UI001_TABS_SOURCE ?? join(root, 'apps/electron/src/renderer/platform/SurfaceTabs.tsx'), 'utf8')
+  const file = ts.createSourceFile('SurfaceTabs.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+  const declarations = new Map<string, string>()
+  function visit(node: ts.Node) {
+    if (ts.isVariableDeclaration(node) && ['routeTitleKeys', 'resolveRouteTitle'].includes(node.name.getText(file))) {
+      declarations.set(node.name.getText(file), `const ${node.getText(file)};`)
+    }
+    ts.forEachChild(node, visit)
+  }
+  visit(file)
+  if (declarations.size !== 2) throw new Error('Actual desktop route title callback was not found')
+  return `function DesktopTabsProbe(){
+    const entries=useAtomValue(panelStackAtom),focusedPanelId=useAtomValue(focusedPanelIdAtom),{t}=useTranslation();
+    ${declarations.get('routeTitleKeys')} ${declarations.get('resolveRouteTitle')}
+    const tabs=buildSurfaceTabViews({entries,focusedPanelId,resolveRouteTitle,resolveSessionTitle:id=>id,
+      labels:{untitled:'surfaceTabs.untitled',browser:'surfaceTabs.browser',panel:'surfaceTabs.panel',source:'surfaceTabs.source',
+        settings:'surfaceTabs.settings',skills:'surfaceTabs.skills',knowledge:'knowledge.nav.title',knowledgeDiff:'knowledge.proposals.title',home:'nav.home'}});
+    return <div>{tabs.map(tab=><span key={tab.panelId} data-desktop-panel-id={tab.panelId} data-focused-tab={tab.focused}>{tab.title}</span>)}</div>;
+  }`
+}
+
 async function bundle() {
   const contents = `
     import * as React from 'react';
@@ -64,6 +88,10 @@ async function bundle() {
     import {Provider,atom,createStore,useAtomValue,useSetAtom} from 'jotai';
     import {NavigationProvider,useNavigation,useNavigationState} from './apps/electron/src/renderer/contexts/NavigationContext';
     import {CompactWorkspaceMenu} from './apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu';
+    import {APP_NAV_DESTINATIONS} from './apps/electron/src/renderer/components/app-shell/nav-destinations';
+    import {EXTRA_SCREENS} from './apps/electron/src/renderer/pages/extra-screens/registry';
+    import {getModeRegistry} from './apps/electron/src/renderer/platform/mode-registry-bootstrap';
+    import {buildSurfaceTabViews} from './apps/electron/src/renderer/platform/surface-tab-model';
     import {panelStackAtom,focusedPanelIdAtom,focusedSessionIdAtom} from './apps/electron/src/renderer/atoms/panel-stack';
     import {sessionMetaMapAtom} from './apps/electron/src/renderer/atoms/sessions';
     import {useSession} from './apps/electron/src/renderer/hooks/useSession';
@@ -108,6 +136,7 @@ async function bundle() {
     const getSettingsPageComponent=()=>leaf('settings'),recordRecentSetting=()=>{};
     ${mainFunctions()}
     ${shellNavigatorExpressions()}
+    ${desktopTabTitleExpressions()}
     let setReady,setWorkspace;
     const createSession=async(ws,options)=>{calls.push(['createSession',ws,options]);return {id:'created',workspaceId:ws}};
     function View(){
@@ -117,7 +146,7 @@ async function bundle() {
         snapshot:()=>({state:nav.navigationState,panels:store.get(panelStackAtom),focused:store.get(focusedPanelIdAtom),session:store.get(focusedSessionIdAtom),
           selected:selected.selected,workspace,calls,search:location.search,back:nav.canGoBack,forward:nav.canGoForward,
           saved:storage.get(storage.KEYS.workspaceUrl,'',workspace),listeners:events.size,detail:isDetailNavState(nav.navigationState)})};
-      return <><ShellNavigatorProbe/><CompactWorkspaceMenu onOpenBrowser={()=>calls.push(['openBrowser'])}/><output data-state={nav.navigationState.navigator} data-ready={nav.isReady}/>{panels.map(entry=><div key={entry.id} data-panel={entry.id} data-focused={entry.id===focused}>
+      return <><ShellNavigatorProbe/><DesktopTabsProbe/><CompactWorkspaceMenu onOpenBrowser={()=>calls.push(['openBrowser'])}/><output data-state={nav.navigationState.navigator} data-ready={nav.isReady}/>{panels.map(entry=><div key={entry.id} data-panel={entry.id} data-focused={entry.id===focused}>
         <MainContentPanel navStateOverride={resolveViewRoute(entry.route)} isSidebarAndNavigatorHidden={false}/></div>)}</>;
     }
     function App(){
@@ -375,6 +404,22 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
     await page.locator('[data-service-id="sessions"]').click()
     await page.waitForFunction(() => (window as any).ui001.snapshot().session === 's1')
     expect((await snapshot()).panels[0].route).toBe('allSessions/session/s1')
+  }, 30000)
+
+  it('desktop tab labels match unavailable panels through reload and Back', async () => {
+    await open('tasks/calendar')
+    await unavailable('tasks/calendar')
+    const title = page.locator('[data-focused-tab="true"]')
+    expect(await title.textContent()).toBe('common.unavailable')
+    await page.reload()
+    await unavailable('tasks/calendar')
+    expect(await title.textContent()).toBe('common.unavailable')
+    await page.evaluate(() => (window as any).ui001.navigate('tasks'))
+    await page.waitForFunction(() => (window as any).ui001.snapshot().panels[0].route === 'tasks')
+    expect(await title.textContent()).toBe('sidebar.tasks')
+    await page.evaluate(() => (window as any).ui001.back())
+    await unavailable('tasks/calendar')
+    expect(await title.textContent()).toBe('common.unavailable')
   }, 30000)
 
   it('desktop unavailable links remove the unrelated navigator and resize boundary', async () => {
