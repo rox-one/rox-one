@@ -8,7 +8,19 @@ import { getPanelTypeFromRoute, parseSessionIdFromRoute, panelStackAtom, reconci
 import { isDetailNavState } from '../../renderer/lib/nav-helpers'
 
 describe('UI-001 external route recovery', () => {
-  const rejected = ['future/session/private', 'settings/future', 'knowledge/unknown/doc', 'notes/note/%E0%A4%A', 'cloud-run/%ZZ', 'extension/%', 'action/delete-session/s1']
+  const rejected = [
+    'future/session/private', 'settings/future', 'knowledge/unknown/doc',
+    'notes/note/%E0%A4%A', 'cloud-run/%ZZ', 'extension/%', 'action/delete-session/s1',
+    'tasks/calendar', 'connections/v2', 'allSessions/future/private',
+    'flagged/future/private', 'archived/future/private', 'state/todo/future/private',
+    'label/work/future/private', 'view/custom/future/private', 'board/future/private',
+    'table/session/s1', 'heatmap/session/s1', 'memory/future', 'inbox/future',
+    'feed/future', 'meetings/future', 'home/future', 'dossier/future/private',
+    'sources/api/future/private', 'automations/event/future/private',
+    'skills/skill/s/extra', 'projects/project/p/extra', 'pages/page/p/extra',
+    'browser/instance/b/extra', 'settings/app/extra', 'knowledge/view',
+    'allSessions/session/s1/extra', 'tasks/task/t/extra',
+  ]
 
   for (const route of rejected) {
     it(`retains unavailable address ${route} without session selection`, () => {
@@ -40,7 +52,7 @@ describe('UI-001 external route recovery', () => {
   })
 
   it('preserves established parsing, query and explicit entity addresses', () => {
-    for (const route of ['allSessions/session/s1', 'sources/source/s', 'skills/skill/s', 'projects/project/p', 'notes/note/n', 'pages/page/p', 'knowledge/document/d', 'extension/e/v', 'terminal/t', 'cloud-run/r', 'search?q=two%20words']) {
+    for (const route of ['allSessions/session/s1', 'sources/source/s', 'skills/skill/s', 'projects/project/p', 'notes/note/n', 'pages/page/p', 'knowledge/document/d', 'extension/e/v', 'terminal/t', 'cloud-run/r', 'search?q=two%20words', 'settings/toolchain', 'settings/preferences', 'notes/note/folder/name', 'knowledge/document/folder/name', 'extension/e/folder/view', 'tasks/task/a%2Fb', 'label/work%20items/session/s1', 'board/session/s1', 'dossier/item/a%2Fb']) {
       expect(resolveViewRoute(route)).toEqual(parseRouteToNavigationState(route)!)
     }
     expect(parseSessionIdFromRoute('allSessions/session/s1?x=y' as ViewRoute)).toBe('s1')

@@ -1,0 +1,84 @@
+{
+  "pr": "https://github.com/rox-one/rox-one/pull/1412",
+  "inputHead": "9a88cbb6fb25c11798418af5ae51daef87eec025",
+  "reviewThreads": [
+    {
+      "id": "PRRT_kwDOTx7GeM6ooFID",
+      "verdict": "fixed",
+      "invariant": "ci.actions.immutable",
+      "fix": "All three newly added workflow actions use GitHub-verified immutable commit SHAs."
+    },
+    {
+      "id": "PRRT_kwDOTx7GeM6ooHm1",
+      "verdict": "fixed",
+      "invariant": "navigation.session.workspace",
+      "fix": "Original explicit detail route is preserved only when workspace validation leaves the same resolved state."
+    },
+    {
+      "id": "PRRT_kwDOTx7GeM6ooHm4",
+      "verdict": "fixed",
+      "invariant": "navigation.route.lossless",
+      "fix": "All navigators compare their complete decoded canonical path; established settings aliases and equivalent entity encoding remain valid."
+    }
+  ],
+  "additionalRepair": {
+    "path": "package.json",
+    "reason": "Five fresh migration subprocess tests exceeded the default 5-second runner budget under host load. Set the config integration test command to 30 seconds; all test files and assertions are unchanged."
+  },
+  "files": {
+    ".github/workflows/ui-route-recovery.yml": "33997f841d00f0582310c62f2275d84c6c4b8c9cc7e7f15d973a7b96bf657974",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "59d4cfbe808f16103587163ee246dca34baf025a8dbae39a198876cfe625824e",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "f932e4aec4574128ac7b0dd78ff06cccd5aac8bae3f7661ed737a030d360cc1d",
+    "apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts": "b2126832e4d4da67d416a2b9721cfee084f5df09dfbbfb5cc0cea7ad2cd271fa",
+    "apps/electron/src/shared/route-parser.ts": "49c5001ca769ceb0b9beebc30a42f33d5f12fc2dba6bd498df5abefaccafb741",
+    "package.json": "8bace1fd0d700005432d5caa6a6cfc095a1f11e06723e200aab6ed411aefa891"
+  },
+  "evidence": [
+    {
+      "path": "18-validate-ci.log",
+      "originalCaptureSha256": "fcf5b438ac4c4a57447c81ad24ec5933baed1226d9b5fb719d6d5c4a21c63fe8",
+      "documentationFormatting": "trailing whitespace normalized; original retained in task work directory"
+    },
+    {
+      "path": "27-config-retry.log",
+      "originalCaptureSha256": "753b000601848df080438ebd294e5cf9a8941002441a42d649dee41824009d2c",
+      "documentationFormatting": "trailing whitespace normalized; original retained in task work directory"
+    },
+    {
+      "path": "28-review-red.log",
+      "originalCaptureSha256": "b76163a22c651382b72b1ed2685f1fd185b09e696f7c453cf35a4bc8d48c3b7a",
+      "documentationFormatting": "trailing whitespace normalized; original retained in task work directory"
+    },
+    {
+      "path": "29-review-session-red.log",
+      "originalCaptureSha256": "a8075610ddef63ed509e05da79070939c4df2d48a40e822b5624420dec337fd6",
+      "documentationFormatting": "trailing whitespace normalized; original retained in task work directory"
+    },
+    {
+      "path": "31-review-regression.log",
+      "originalCaptureSha256": "ad2f3489b5e7b04aa24409062936829110f7d6d28284bcc775ade2cb7c353c21",
+      "documentationFormatting": "trailing whitespace normalized; original retained in task work directory"
+    },
+    {
+      "path": "32-review-browser-green.log",
+      "originalCaptureSha256": "71b4637e0192aec83312b2092122333ee286722efa98b2745854b65dbebf845b",
+      "documentationFormatting": "trailing whitespace normalized; original retained in task work directory"
+    },
+    {
+      "path": "33-navigation-teardown-probe.log",
+      "originalCaptureSha256": "1275f33a4617bd949fc5d4496553633670272c3f35161fbd301040d3d996353c",
+      "documentationFormatting": "trailing whitespace normalized; original retained in task work directory"
+    },
+    {
+      "path": "34-review-browser-clean.log",
+      "originalCaptureSha256": "919ffef43d88f07599c29ce4d55b65ce044cfbd94b7fff6a458c5fc7812cdd73",
+      "documentationFormatting": "trailing whitespace normalized; original retained in task work directory"
+    },
+    {
+      "path": "30-validate-ci-retry.log",
+      "originalCaptureSha256": "737591ec236b9e8d18fe037b2668bc10fa163402aa1f947cd1eca662007588b2",
+      "result": "validate:ci exit 0: complete typecheck graph, shared tests, connection fabric, config isolation, document tools and i18n checks"
+    }
+  ],
+  "fullDoDClosed": false
+}

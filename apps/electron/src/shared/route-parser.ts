@@ -964,7 +964,7 @@ export function parseRouteToNavigationState(
  * Resolve a panel/deep-link view without discarding its original address.
  * Stored action routes are views here and must never execute during restore.
  * The nullable parser retains its legacy degradation contract; mounted runtime
- * consumers use this boundary to reject lossy surface-to-chat degradation.
+ * consumers use this boundary to reject lossy parsing across all navigators.
  */
 export function resolveViewRoute(route: string, sidebarParam?: string): NavigationState {
   const unavailable: UnavailableNavigationState = { navigator: 'unavailable', route, details: null }
@@ -973,12 +973,16 @@ export function resolveViewRoute(route: string, sidebarParam?: string): Navigati
   try {
     // Some legacy routes retain encoded slugs, but malformed encoding is never
     // a valid entity address, even when that parser branch does not decode it.
-    decodeURIComponent(route.split('?')[0])
+    const path = route.split('?')[0]
+    const decodedPath = decodeURIComponent(path)
     const state = parseRouteToNavigationState(route, sidebarParam)
     if (!state) return unavailable
-    const prefix = route.split('?')[0].split('/')[0]
-    if (['knowledge', 'cloud-run', 'extension', 'diff', 'terminal'].includes(prefix)
-      && state.navigator !== prefix) return unavailable
+    // Compare the full address, allowing equivalent entity encoding and the
+    // established settings aliases. A parser fallback must not drop a suffix.
+    const canonicalPath = decodeURIComponent(buildRouteFromNavigationState(state).split('?')[0])
+    const aliasedPath = decodedPath === 'settings/toolchain' ? 'settings/runtime'
+      : decodedPath === 'settings/preferences' ? 'settings/context' : decodedPath
+    if (canonicalPath !== aliasedPath) return unavailable
     return state
   } catch {
     return unavailable

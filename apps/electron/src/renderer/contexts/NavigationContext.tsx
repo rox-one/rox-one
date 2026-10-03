@@ -880,7 +880,7 @@ export function NavigationProvider({
 
       // Resolve auto-selection (pure — no side effects)
       const resolvedState = resolveAutoSelection(newNavState, options)
-      const finalRoute = ('details' in newNavState && newNavState.details)
+      const finalRoute = (resolvedState === newNavState && 'details' in resolvedState && resolvedState.details)
         ? route as ViewRoute
         : buildRouteFromNavigationState(resolvedState) as ViewRoute
 

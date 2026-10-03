@@ -163,7 +163,7 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
   }, 30000)
 
   it('malformed encoding and legacy lossy degradation retain their own unavailable surface', async () => {
-    for (const route of ['notes/note/%ZZ', 'knowledge/unknown/doc', 'extension/%']) {
+    for (const route of ['notes/note/%ZZ', 'knowledge/unknown/doc', 'extension/%', 'tasks/calendar', 'connections/v2', 'allSessions/future/private']) {
       await open(route)
       await unavailable(route)
     }
@@ -207,6 +207,24 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
     expect((await snapshot()).calls).toEqual([])
     await page.evaluate(() => (window as any).ui001.deepLink({ action: 'delete-session', actionParams: { id: 's1' } }))
     expect((await snapshot()).calls).toEqual([['deleteSession', 's1']])
+  }, 30000)
+
+  it('explicit navigation preserves spelling only after session workspace validation', async () => {
+    await open('allSessions/session/s1')
+    for (const invalidId of ['missing', 's2']) {
+      await page.evaluate(id => (window as any).ui001.navigate(`allSessions/session/${id}?keep=1`, { skipAutoSelect: true }), invalidId)
+      await page.waitForFunction(() => !(window as any).ui001.snapshot().state.details)
+      const state = await snapshot()
+      expect(state.session).toBeNull()
+      expect(new URLSearchParams(state.search).get('route')).toBe('allSessions')
+      expect(await page.locator(`[data-entity="${invalidId}"]`).count()).toBe(0)
+    }
+    await page.evaluate(() => (window as any).ui001.navigate('allSessions/session/s1?keep=1'))
+    expect(new URLSearchParams((await snapshot()).search).get('route')).toBe('allSessions/session/s1?keep=1')
+    await page.evaluate(() => (window as any).ui001.deepLink({ view: 'allSessions/session/s2?keep=1' }))
+    await page.waitForFunction(() => (window as any).ui001.snapshot().session === 's1')
+    expect(new URLSearchParams((await snapshot()).search).get('route')).toBe('allSessions/session/s1')
+    expect(await page.locator('[data-entity="s2"]').count()).toBe(0)
   }, 30000)
 
   it('pending search replay retains query and new-panel options', async () => {

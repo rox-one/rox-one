@@ -11,3 +11,10 @@
 Исправлены устаревшие проверки уже принятого main: добавлены две существующие RPC строки в точный snapshot; native visibility wiring учитывает общий bounds hook; inspector сохраняет скрытый/inert draft через RetainedSurface. Поведение native bridge проверяется существующими fixtures и owner/DOM unit tests. Старые падения/таймауты сохранены в отдельных логах, а не заменены итоговым PASS.
 
 Source manifest и result.json содержат точные файлы, runtime и команды. Исходный acceptance-contract.json остаётся без изменений. Win10/11 installed, macOS installed Retina, actual hosted product и canonical backend readback не заменяются этими fixtures. `fullDoDClosed:false`.
+
+
+Ревью PR #1412 выявило два воспроизводимых дефекта исходного продолжения: сохранение explicit session route до завершения workspace validation и потерю неизвестных суффиксов на других известных префиксах. Оба исправлены. Отрицательный прогон расширенной матрицы: 9 pass / 27 fail; после исправления: 232 pass / 0 fail / 912 assertions. Реальные NavigationProvider callbacks в Chromium: 9 pass / 0 fail / 148 assertions, включая nonexistent/cross-workspace sessions, legacy settings aliases, reload, history и deferred navigation.
+
+Actions нового workflow закреплены точными SHA, проверенными через GitHub git/ref API. Общий validate:ci первоначально остановился на пяти migration integration tests по лимиту 5 секунд. Без изменения ожиданий тестов бюджет этой команды увеличен до 30 секунд: отдельный повтор 109 pass / 0 fail / 291 assertions. Полный повтор записывается отдельно. Нестабильное завершение тестового browser fixture (все 9 behavior cases уже pass, afterAll timeout) сохранено в 32-review-browser-green.log; диагностический и чистый повтор завершились без ошибок. Нативная и hosted-product приёмка остаются внешними предпосылками.
+
+Полный повтор `bun run validate:ci` завершился с exit 0: весь typecheck graph, shared/config/connection tests, 19 document-tool smoke tests, i18n parity/sorted/coverage. История пяти исходных timeout сохранена.
