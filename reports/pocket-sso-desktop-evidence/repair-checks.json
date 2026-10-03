@@ -1,0 +1,259 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-03",
+  "sourceRevision": "354a483acc708d8130104e39525fdd0e8681058f",
+  "branch": "codex/pocket-id-sso",
+  "baselineRevision": "080e20aad",
+  "reviewRevision": "a37ad010cb998c5aeb95db9aa640e6af071d5eb7",
+  "runtime": {
+    "path": "/Users/t/Projects/rox-release-20261003/apps/electron/vendor/bun/bun",
+    "version": "1.3.14"
+  },
+  "checks": [
+    {
+      "name": "delivered targeted plus related actual modules",
+      "cwd": "/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003",
+      "command": "NODE_ENV=test /Users/t/Projects/rox-release-20261003/apps/electron/vendor/bun/bun test packages/server-core/src/sessions/pocket-session-resource-owner.test.ts packages/server-core/src/sessions/pocket-helper-owner.test.ts packages/shared/src/auth/__tests__/rox-account-authority.test.ts packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts packages/shared/src/agent/__tests__/omp-public-runtime.test.ts packages/server-core/src/sessions/midstream-queue.test.ts packages/server-core/src/sessions/sendmessage-durability.test.ts packages/server-core/src/sessions/sendmessage-oauth-refresh.test.ts packages/server-core/src/sessions/improve-draft.test.ts packages/server-core/src/sessions/execute-prompt-automation-test-mode.test.ts packages/server-core/src/sessions/create-managed-session.test.ts packages/shared/src/auth/__tests__/rox-pocket-client.test.ts apps/electron/src/main/__tests__/pocket-account-store.test.ts",
+      "exitCode": 0,
+      "pass": 54,
+      "fail": 0,
+      "assertions": 228,
+      "durationSeconds": 94.48,
+      "log": "repair-delivered-tests.log",
+      "sourceRevision": "354a483acc708d8130104e39525fdd0e8681058f"
+    },
+    {
+      "name": "server-core typecheck",
+      "cwd": "/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/server-core",
+      "command": "/Users/t/Projects/rox-release-20261003/apps/electron/vendor/bun/bun run tsc --noEmit",
+      "exitCode": 0,
+      "log": "repair-owner-final-core-tsc.log",
+      "scopeNote": "Final component bytes match this source commit."
+    },
+    {
+      "name": "shared typecheck",
+      "cwd": "/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/shared",
+      "command": "/Users/t/Projects/rox-release-20261003/apps/electron/vendor/bun/bun run tsc --noEmit",
+      "exitCode": 0,
+      "log": "repair-verified-shared-tsc.log",
+      "scopeNote": "Final component bytes match this source commit."
+    },
+    {
+      "name": "electron typecheck",
+      "cwd": "/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/apps/electron",
+      "command": "/Users/t/Projects/rox-release-20261003/apps/electron/vendor/bun/bun run tsc --noEmit",
+      "exitCode": 0,
+      "log": "repair-verified-electron-tsc.log",
+      "scopeNote": "Latest final guard checked in server-core; shared/OMP bytes match this source commit. Electron check completed after final guard edit, unchanged public signatures."
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "packages/server-core/src/sessions/SessionManager.ts",
+      "sha256": "f0088801a49cae531d4d866c5d78d3d65bfba2f47bbc10af0d41f15a5838a1d3"
+    },
+    {
+      "path": "packages/server-core/src/sessions/pocket-session-resource-owner.test.ts",
+      "sha256": "05fa8e65bad725225855db6a29158803c7659ed9bc56b77664943af3a778c0b6"
+    },
+    {
+      "path": "packages/server-core/src/sessions/pocket-helper-owner.test.ts",
+      "sha256": "ef7366d11901096fb3ec9582498fada62d90c1831de15750d31db0db0e6c3319"
+    },
+    {
+      "path": "packages/shared/src/agent/omp-agent.ts",
+      "sha256": "84f039c05dc4d4081e0d8f164c9fcc7f84136c911d978bc3130a94e0fb9d62a2"
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/omp-model-account-domain.test.ts",
+      "sha256": "291e55e5000eac5cb5dc17075ddf17d5439b83f4a70d446a9b2ba55ff68e70f1"
+    },
+    {
+      "path": "packages/shared/src/auth/rox-account-authority.ts",
+      "sha256": "5a0366ae799c760451c1005afc1523531b342c48995b593985afa3dcb778b357"
+    },
+    {
+      "path": "packages/shared/src/auth/__tests__/rox-account-authority.test.ts",
+      "sha256": "ee59c00565faa098ae53cd800f64af33b73abb42198a04f45ed62c12d656f181"
+    },
+    {
+      "path": "packages/shared/src/auth/__tests__/rox-pocket-client.test.ts",
+      "sha256": "4104610acb5ab6a5e45897c02cb30614d056c4880a5597757553770e098bbbc7"
+    }
+  ],
+  "evidenceFiles": [
+    {
+      "path": "reports/pocket-sso-desktop-evidence/logout-recovery-after.log",
+      "sha256": "6d0f7ff4f51dcbe255cfa2690d42cbc2b750af42e34eb11404d5bdd5b1820253",
+      "bytes": 1924
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/logout-recovery-before.log",
+      "sha256": "15889c0240d68b48d03e316e892d3593544f1d9e43ae918fb9f3343068fc7e32",
+      "bytes": 3412
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/model-domain-after.log",
+      "sha256": "6da04fe0cdce601d4db885711d37a188f4ddb240234d4f0844cfc9eb692a6da4",
+      "bytes": 391
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/model-domain-before.log",
+      "sha256": "b83d62b0cabf6afc1a11a8c6992a258c5441437293b4340df1f186e7fb6b42f2",
+      "bytes": 2117
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/model-domain-related-after.log",
+      "sha256": "be53c0cbe2d4fe66fde1a3e39d92008bc48a51838a3500a6ba293cf478dbe852",
+      "bytes": 1538
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/model-domain-related.log",
+      "sha256": "a850daa9089fcfdfa80ebb004b3837f48a2448f22f9e9ff9dbfc9c20b956adb6",
+      "bytes": 4612
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-auth-related.log",
+      "sha256": "bbf574254f530e542cb3db64ea30fdd9f26d5b5cd88603eac67eae7681d401ab",
+      "bytes": 1333
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-core-tsc.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-delivered-tests.log",
+      "sha256": "ab1d94d1a49825ae0dddb2f920807789ded3514e132fb50733eb277b30f97cea",
+      "bytes": 9155
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-final-core-tsc.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-final-durable-queue.log",
+      "sha256": "9e22ac15d3b630e42c25f8dd629fdf0badaa9d3cf7887682c0be2483ab652c1d",
+      "bytes": 4428
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-final-electron-tsc.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-final-related.log",
+      "sha256": "bbd506f9bd4f184e57d3df7166622e5cb166a9448c724c8efd2e74def313d686",
+      "bytes": 4805
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-final-shared-tsc.log",
+      "sha256": "7843aa0f98ab287e3fdda4178e5e9d4d28d252eeeef239a9c07ac2aa3fbb92a6",
+      "bytes": 493
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-final.log",
+      "sha256": "4df77932b2124f2b41e41c162964e462d63feeafbfc405a8e3eaa3b2229c8050",
+      "bytes": 4300
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-integrated-after.log",
+      "sha256": "ff76590fc6c594b96dc264b7d7489407710e354c5e020c150b2f8045425f0bd4",
+      "bytes": 4185
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-owner-final-core-tsc.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-owner-final.log",
+      "sha256": "32ee6efb95eaa7f09b066d671bc3953161d50734a45970e30b42e63c2ce44883",
+      "bytes": 493
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-session-related.log",
+      "sha256": "e9badb4f400a41dbdf39a59e59326d51b083edc806903661d81601cb034e2459",
+      "bytes": 3577
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-shared-tsc.log",
+      "sha256": "e3d964ebec9342521299844675249dafefa96fd408c95c1da9ec86ad87c32ec8",
+      "bytes": 2727
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-verified-core-tsc.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-verified-electron-tsc.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-verified-shared-tsc.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/repair-verified-tests.log",
+      "sha256": "83d327253d07f44b98f78a0bc9b148a1056bbb9639d2b163ee34f1b2a64ac7bc",
+      "bytes": 9140
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/resource-core-tsc.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/session-resource-after-asserted.log",
+      "sha256": "703de12539f3be438b4939aae4c9a16e32abebc14f1f7023e1af32e5cfde4ee9",
+      "bytes": 493
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/session-resource-after.log",
+      "sha256": "6d2e123c1183fb46f730e9963829c0d5c39ec5fb05dd141a78e57f59059a4919",
+      "bytes": 1492
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/session-resource-before-asserted.log",
+      "sha256": "91554ee61523a5602ea85b05a1e54f4068355497fd9c2847cd24a9e756849e56",
+      "bytes": 1429
+    },
+    {
+      "path": "reports/pocket-sso-desktop-evidence/session-resource-before.log",
+      "sha256": "d9bf2a1a2e705359682e98fd2c03dcf1ab11713e2277ca006371a171f717cf56",
+      "bytes": 1492
+    }
+  ],
+  "negativeControls": [
+    {
+      "finding": "F4",
+      "log": "logout-recovery-before.log",
+      "result": "12 pass /2 fail: connected true after crash and clear-failure restart"
+    },
+    {
+      "finding": "F2",
+      "log": "model-domain-before.log",
+      "result": "0 pass /2 fail: wrong public process key/catalog and accepted old delayed stream"
+    },
+    {
+      "finding": "F3",
+      "log": "session-resource-before-asserted.log",
+      "result": "0 pass /1 fail against committed pre-repair SessionManager: B reaches messages"
+    }
+  ],
+  "processes": {
+    "allWorkerCommandsCompleted": true,
+    "temporaryNegativeControlRemoved": true,
+    "fakeCliFixturesCleaned": true
+  },
+  "limits": [
+    "No deployment, push, live provider request or native UI execution by this worker.",
+    "Actual SessionManager regression isolates persistence/event/backend-selection seams; actual authority and subprocess fake CLI are exercised.",
+    "Native Mac/Windows storage/UI/relaunch and live broker/Swiss settlement remain independent lead acceptance.",
+    "Task7 not claimed fully accepted."
+  ]
+}

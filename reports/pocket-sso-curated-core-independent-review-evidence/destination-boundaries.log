@@ -1,0 +1,3 @@
+{"baselineFiles": 62, "overlayFiles": 9, "modifiedExistingFiles": 3, "unrelatedBaselinePreserved": true, "sourceRevision": "897cf0bcaa59f7a2683ac246dc39a03798b419bb", "archiveSha256": "d277728699a4350353fc6a2a36a40cba6fa287825faac6329dbd1d80af538d1e"}
+{"case": "destination-created-at-publication", "replacedExistingEmptyDestination": true, "scope": "Owned scratch-only deterministic race; no deployment or source change."}
+{"case": "dangling-destination-symlink", "acceptedAndWroteResolvedTarget": true, "scope": "Owned scratch-only path contract control; no deployment or source change."}

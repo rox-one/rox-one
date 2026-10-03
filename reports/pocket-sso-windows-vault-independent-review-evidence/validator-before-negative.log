@@ -1,0 +1,45 @@
+bun test v1.3.14 (0d9b296a)
+
+reports/pocket-sso-windows-vault-independent-review-evidence/validator-before/pocket-vault-diagnostics.test.ts:
+(pass) native fixture records actual descriptor flush outcomes and removes fixture data [1.15ms]
+(pass) failure projection retains known phase/stage/code and strips secret canaries [0.36ms]
+33 |     { fsync: [] }, { fsync: undefined },
+34 |     { fsync: [{ access: 'readonly', opened: true, flushed: true, code: null }] },
+35 |     { fsync: [{ access: 'writable', opened: false, flushed: true, code: null }] },
+36 |     { fsync: [{ access: 'writable', opened: true, flushed: false, code: 'EPERM' }] },
+37 |     { fsync: [{ access: 'writable', opened: true, flushed: true, code: 'EIO' }] },
+38 |   ]) expect(projectNativeVaultReceipt({ ...good, ...patch }, 'write', 'win32')).toBeNull()
+                                                                                     ^
+error: expect(received).toBeNull()
+
+Received: {
+  phase: "write",
+  platform: "darwin",
+  electron: "39.2.7",
+  encryptionAvailable: true,
+  backend: "Keychain",
+  stage: "complete",
+  passed: true,
+  code: null,
+  fsync: [
+    {
+      access: "readonly",
+      opened: true,
+      flushed: false,
+      code: "EPERM",
+    }, {
+      access: "writable",
+      opened: true,
+      flushed: true,
+      code: null,
+    }
+  ],
+}
+
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/reports/pocket-sso-windows-vault-independent-review-evidence/validator-before/pocket-vault-diagnostics.test.ts:38:81)
+(fail) success proof requires matching native platform and completed OS encryption plus writable flush [2.79ms]
+
+ 2 pass
+ 1 fail
+ 13 expect() calls
+Ran 3 tests across 1 file. [128.00ms]

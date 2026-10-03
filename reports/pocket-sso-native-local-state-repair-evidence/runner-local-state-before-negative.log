@@ -1,0 +1,1 @@
+{"mode":"missing","controlPassed":false,"code":"synthetic_acceptance_gate_failed","actualExit":0,"actualNativeStoreRestartPassed":true,"expectedCode":"native_local_state_key_missing","scope":"Frozen synthetic runner acceptance control; no native proof."}
