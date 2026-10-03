@@ -19,8 +19,10 @@ import {
 } from '@rox/core/tasks/personal'
 import { cn } from '@/lib/utils'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { formatHotkeyDisplay } from '@/lib/platform'
 import { Badge, Button, Card, SectionLabel, Tabs } from '@/components/mode-screen/ModeScreen'
 import { ConfirmDialog, Glyph, MiniCalendar, TaskCheckbox } from './parts'
+import type { TaskDetailDraft } from './use-task-detail-drafts'
 import { checklistProgress, daysUntil, deriveTaskSource, mergeNotesMarkers, visibleNotes, type AgentChip, type AgentSessionLike } from './task-model'
 
 const LINK_KINDS: TaskLinkKind[] = ['note', 'session', 'message', 'meeting', 'feed', 'mail', 'workflowRun']
@@ -33,6 +35,10 @@ type Popover = 'when' | 'deadline' | null
 
 export interface TaskDetailProps {
   task: PersonalTask
+  draft: TaskDetailDraft | undefined
+  isDraftCurrent: () => boolean
+  onDraftChange: (patch: Partial<TaskDetailDraft>) => void
+  onDraftSubmit: <K extends keyof TaskDetailDraft>(field: K, submitted: TaskDetailDraft[K]) => void
   store: PersonalTaskStore
   mutate: (fn: (store: PersonalTaskStore) => void) => void
   now: number
@@ -64,11 +70,12 @@ export function TaskDetail(props: TaskDetailProps) {
   const [tab, setTab] = React.useState<DetailTab>('details')
   const [editingNotes, setEditingNotes] = React.useState(false)
   const [checkDraft, setCheckDraft] = React.useState('')
-  const [tagDraft, setTagDraft] = React.useState('')
+  const { tagDraft = '', linkKind = 'note', linkId = '' } = props.draft ?? {}
+  const setTagDraft = (tagDraft: string) => props.onDraftChange({ tagDraft })
   const [nlDate, setNlDate] = React.useState('')
   const [subDraft, setSubDraft] = React.useState('')
-  const [linkKind, setLinkKind] = React.useState<TaskLinkKind>('note')
-  const [linkId, setLinkId] = React.useState('')
+  const setLinkKind = (linkKind: TaskLinkKind) => props.onDraftChange({ linkKind })
+  const setLinkId = (linkId: string) => props.onDraftChange({ linkId })
   const [confirmPurge, setConfirmPurge] = React.useState(false)
   const notesRef = React.useRef<HTMLTextAreaElement>(null)
   const dateFmt = React.useMemo(() => new Intl.DateTimeFormat(i18n.language, { weekday: 'short', day: 'numeric', month: 'short' }), [i18n.language])
@@ -123,10 +130,11 @@ export function TaskDetail(props: TaskDetailProps) {
   }
 
   const addTag = (raw: string) => {
+    if (!props.isDraftCurrent()) return
     const tags = raw.split(',').map((tag) => tag.trim().replace(/^#/, '')).filter(Boolean)
     if (!tags.length) return
     update({ tags: [...new Set([...task.tags, ...tags])] })
-    setTagDraft('')
+    props.onDraftSubmit('tagDraft', tagDraft)
   }
   const tagSuggestions = tagDraft.trim()
     ? props.allTags.filter((tag) => tag.toLowerCase().startsWith(tagDraft.trim().replace(/^#/, '').toLowerCase()) && !task.tags.includes(tag)).slice(0, 6)
@@ -329,15 +337,15 @@ export function TaskDetail(props: TaskDetailProps) {
               <>
                 <Button className="min-w-0 max-w-full shrink" onClick={() => props.setPopover(props.popover === 'when' ? null : 'when')} data-testid="task-when" aria-expanded={props.popover === 'when'}>
                   {task.evening ? Glyph.moon : task.list === 'today' ? Glyph.star : null}
-                  <span className="min-w-0 truncate">{whenLabel}</span> <span className="shrink-0 opacity-60">⌘S</span>
+                  <span className="min-w-0 truncate">{whenLabel}</span> <span className="shrink-0 opacity-60">{formatHotkeyDisplay('mod+s')}</span>
                 </Button>
               </>
             ), 'task-field-when')}
             {props.popover === 'when' ? (
               <div className="mt-1 w-[260px] max-w-full rounded-[8px] sm:ml-[120px] bg-foreground/[0.04] p-2" data-testid="task-when-popover">
                 <div className="flex flex-col gap-0.5">
-                  <button type="button" className="flex h-7 items-center gap-2 rounded-[6px] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'today' })}>{Glyph.star}{t('tasks.when.today')}<span className="ml-auto text-[11px] text-text-muted">⌘T</span></button>
-                  <button type="button" className="flex h-7 items-center gap-2 rounded-[6px] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'evening' })}>{Glyph.moon}{t('tasks.when.evening')}<span className="ml-auto text-[11px] text-text-muted">⌘E</span></button>
+                  <button type="button" className="flex h-7 items-center gap-2 rounded-[6px] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'today' })}>{Glyph.star}{t('tasks.when.today')}<span className="ml-auto text-[11px] text-text-muted">{formatHotkeyDisplay('mod+t')}</span></button>
+                  <button type="button" className="flex h-7 items-center gap-2 rounded-[6px] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'evening' })}>{Glyph.moon}{t('tasks.when.evening')}<span className="ml-auto text-[11px] text-text-muted">{formatHotkeyDisplay('mod+e')}</span></button>
                 </div>
                 <div className="mt-1.5"><MiniCalendar value={task.startAt} now={now} locale={i18n.language} onPick={(at) => setWhen({ kind: 'date', at })} /></div>
                 <form className="mt-1.5" onSubmit={(event) => {
@@ -357,7 +365,7 @@ export function TaskDetail(props: TaskDetailProps) {
             {fieldRow(t('tasks.field.deadline'), (
               <>
                 <Button onClick={() => props.setPopover(props.popover === 'deadline' ? null : 'deadline')} data-testid="task-deadline" className={cn('min-w-0 max-w-full shrink', deadlineDays != null && deadlineDays <= 0 && 'text-destructive')}>
-                  {Glyph.flag}<span className="min-w-0 truncate">{deadlineLabel ?? t('tasks.deadline.add')}</span> <span className="shrink-0 opacity-60">⇧⌘D</span>
+                  {Glyph.flag}<span className="min-w-0 truncate">{deadlineLabel ?? t('tasks.deadline.add')}</span> <span className="shrink-0 opacity-60">{formatHotkeyDisplay('shift+mod+d')}</span>
                 </Button>
                 {task.dueAt != null ? <Button variant="ghost" onClick={() => mutate((current) => { current.setDeadline(task.id, undefined) })}>{t('tasks.clearDate')}</Button> : null}
               </>
@@ -458,7 +466,7 @@ export function TaskDetail(props: TaskDetailProps) {
           <SectionLabel>{t('tasks.section.organize')}</SectionLabel>
           <div className="flex flex-col gap-0.5">
             {fieldRow(t('tasks.field.place'), (
-              <Button onClick={props.onOpenMove} data-testid="task-move">{props.placeLabel} <span className="opacity-60">⌘K</span></Button>
+              <Button onClick={props.onOpenMove} data-testid="task-move">{props.placeLabel} <span className="opacity-60">{formatHotkeyDisplay('mod+k')}</span></Button>
             ))}
             {fieldRow(t('tasks.tags'), (
               <>
@@ -473,6 +481,7 @@ export function TaskDetail(props: TaskDetailProps) {
                     value={tagDraft}
                     onChange={(event) => setTagDraft(event.target.value)}
                     onKeyDown={(event) => {
+                      if (!props.isDraftCurrent()) return
                       if (event.key === 'Enter' || event.key === ',') {
                         event.preventDefault()
                         addTag(tagDraft)
@@ -525,7 +534,7 @@ export function TaskDetail(props: TaskDetailProps) {
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               <span ref={delegateTarget} className="inline-flex" data-tour="tasks.delegate">
                 <Button variant="primary" data-testid="task-delegate" disabled={props.delegating || !props.canDelegate || trashed} onClick={props.onDelegate}>
-                  {props.delegating ? t('tasks.delegate.running') : t('tasks.delegate.action')} <span className="opacity-70">⌘↵</span>
+                  {props.delegating ? t('tasks.delegate.running') : t('tasks.delegate.action')} <span className="opacity-70">{formatHotkeyDisplay('mod+enter')}</span>
                 </Button>
               </span>
               {props.agentChip ? (
@@ -541,7 +550,7 @@ export function TaskDetail(props: TaskDetailProps) {
 
           {!trashed ? (
             <div className="mt-6 flex gap-1.5">
-              <Button variant="danger" onClick={props.onTrash} data-testid="task-trash">{t('tasks.trash.move')} <span className="opacity-60">⌘⌫</span></Button>
+              <Button variant="danger" onClick={props.onTrash} data-testid="task-trash">{t('tasks.trash.move')} <span className="opacity-60">{formatHotkeyDisplay('mod+backspace')}</span></Button>
             </div>
           ) : null}
         </>
@@ -561,7 +570,7 @@ export function TaskDetail(props: TaskDetailProps) {
           </div>
           <div className="mt-1.5 flex gap-1">
             <input className="h-7 min-w-0 flex-1 rounded-[6px] bg-foreground/[0.04] px-2 text-[12px] outline-none" value={linkId} onChange={(event) => setLinkId(event.target.value)} placeholder={t('tasks.linkIdPlaceholder')} aria-label={t('tasks.linkIdPlaceholder')} />
-            <Button onClick={() => { if (!linkId.trim()) return; const id = linkId.trim(); mutate((current) => { current.link(task.id, { kind: linkKind, id }) }); setLinkId('') }}>{t('tasks.addLink')}</Button>
+            <Button onClick={() => { if (!props.isDraftCurrent() || !linkId.trim()) return; const id = linkId.trim(); mutate((current) => { current.link(task.id, { kind: linkKind, id }) }); props.onDraftSubmit('linkId', linkId) }}>{t('tasks.addLink')}</Button>
           </div>
         </>
       ) : null}

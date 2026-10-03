@@ -1,0 +1,23 @@
+{
+  "reports/pocket-sso-native-local-state-repair-evidence/electron-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "reports/pocket-sso-native-local-state-repair-evidence/frozen-runner-before.ts": "259a5cff7c5bee804cc107f3eaedf8a6ce626af326266a3d17ca932e954962dc",
+  "reports/pocket-sso-native-local-state-repair-evidence/native-mac-after.json": "e2ed80b41288935c284c028c5e81160977363b34ff29f44c0244f281e154ed76",
+  "reports/pocket-sso-native-local-state-repair-evidence/native-mac-after.log": "823ea8dfd1293a897b49a2a39a5df2d1c1f66cc2a4d65eb9e0bbbb32dbde9c6b",
+  "reports/pocket-sso-native-local-state-repair-evidence/prior-run-after-cancel.json": "9fca3f60d1e1ccab212ebfa5b20059ae3aa47e6929f90b1b8eca98f15e1d238d",
+  "reports/pocket-sso-native-local-state-repair-evidence/prior-run-before-cancel.json": "af77abeeda47449bd81587247468370b011ccee44af943b4c28cd13fef540aa3",
+  "reports/pocket-sso-native-local-state-repair-evidence/prior-run-cancel.log": "ac054f0b2a08814768793dc9ca1ad451ca7eb9d4e0e45290ee61d2421fd0b644",
+  "reports/pocket-sso-native-local-state-repair-evidence/proof-strict-types-initial.log": "4c68addc62c64e40cd1227b3477a960431c3ee7604dd6a77c556c9443dccffc2",
+  "reports/pocket-sso-native-local-state-repair-evidence/proof-strict-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "reports/pocket-sso-native-local-state-repair-evidence/repair-run-status.json": "fbd5289e637c69be30cf1837aac76fc8e5ff9e906251f268aa7d7007a5c12b0b",
+  "reports/pocket-sso-native-local-state-repair-evidence/runner-controls.log": "3e2d2dc326e208ee08fe4f6f90f13df2a852579ede6e74260595134524c9060f",
+  "reports/pocket-sso-native-local-state-repair-evidence/runner-local-state-before-negative.log": "aa1eab90dd5ee26c5d1a0eb903462c4273c40ac1532a04527dd90b74e53856ca",
+  "reports/pocket-sso-native-local-state-repair-evidence/runner-local-state-control.ts": "988eb72b7b1d316e547e9f293a5803c59ba3e438538e657a8c14b9629241fb67",
+  "reports/pocket-sso-native-local-state-repair-evidence/runner-local-state-controls.log": "f6cc1a27f7508a665c524df4867a70dcfbe57a0105e7ee99231608b7856bd33b",
+  "reports/pocket-sso-native-local-state-repair-evidence/targeted.log": "3fd4b101fc1b96d1018e5a51a8f598f233001d8c9fcab2a4e9ccb6d9b0b55979",
+  "reports/pocket-sso-native-local-state-repair-evidence/windows-aa80-native/win32.json": "ee0fac98a4c809d62e9967d5e4d123314b2271b38864d20b6174adf301f409ea",
+  "reports/pocket-sso-native-local-state-repair.md": "954d615b465ceb5b0e9456bf5c417c4b5b22fb05c40537de03670502fd3650e4",
+  "scripts/probes/pocket-vault-diagnostics.test.ts": "325ca376e11f9dc3fd8d87da1aaae203a8659985630726575b1dd152693ad7df",
+  "scripts/probes/pocket-vault-diagnostics.ts": "4849aa412ae57a755fce4579d47aa7cee244153b3a35408926c521f735535287",
+  "scripts/probes/pocket-vault-native.ts": "844cf5f7a3d76dd77dac0807e4b4a120049207384cf11e2c015648ffec3e0794",
+  "scripts/probes/run-pocket-vault-native.ts": "1c6fc90ea2a37a4f82f206e307d75076e48d23d55733eeb034fd4a22168f9620"
+}

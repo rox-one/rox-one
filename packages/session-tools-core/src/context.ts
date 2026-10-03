@@ -172,6 +172,9 @@ export interface SessionToolContext {
   /** Working directory (project root) for the session, if set */
   workingDirectory?: string;
 
+  /** Refresh managed host-tool PATH per call; never mutate the parent environment. */
+  getHostBashEnv?: () => Promise<NodeJS.ProcessEnv>;
+
   // ============================================================
   // Callbacks (transport-agnostic)
   // ============================================================

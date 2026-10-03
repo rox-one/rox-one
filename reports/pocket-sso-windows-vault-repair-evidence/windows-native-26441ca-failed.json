@@ -1,0 +1,60 @@
+{
+  "receipts": [
+    {
+      "phase": "write",
+      "platform": "win32",
+      "electron": "39.2.7",
+      "encryptionAvailable": true,
+      "backend": "DPAPI",
+      "stage": "complete",
+      "passed": true,
+      "code": null,
+      "fsync": [
+        {
+          "access": "readonly",
+          "opened": true,
+          "flushed": false,
+          "code": "EPERM"
+        },
+        {
+          "access": "writable",
+          "opened": true,
+          "flushed": true,
+          "code": null
+        }
+      ]
+    },
+    {
+      "phase": "read",
+      "platform": "win32",
+      "electron": "39.2.7",
+      "encryptionAvailable": true,
+      "backend": "DPAPI",
+      "stage": "account_read",
+      "passed": false,
+      "code": "ROX_SECURE_STORE_READ_FAILED",
+      "fsync": [
+        {
+          "access": "readonly",
+          "opened": true,
+          "flushed": false,
+          "code": "EPERM"
+        },
+        {
+          "access": "writable",
+          "opened": true,
+          "flushed": true,
+          "code": null
+        }
+      ]
+    }
+  ],
+  "platform": "win32",
+  "nativeStoreRestartPassed": false,
+  "failure": {
+    "phase": "read",
+    "code": "ROX_SECURE_STORE_READ_FAILED",
+    "exitCode": 1
+  },
+  "scope": "Actual OS encryption and store restart; no OAuth, provider or GUI acceptance."
+}

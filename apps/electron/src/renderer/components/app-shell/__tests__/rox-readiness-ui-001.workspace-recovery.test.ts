@@ -167,7 +167,7 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
       loadShellLayout: (workspace: string) => realLoadShellLayout(workspace, store),
       setSidebarWidth: (value: number) => { sidebar = value; order.push('load-sidebar') },
       setSessionListWidth: (value: number) => { navigator = value; order.push('load-navigator') },
-      setCollectionFilters: () => {}, DEFAULT_COLLECTION_FILTERS: {}, setSearchActive: () => {},
+      setCollectionFilters: () => {}, DEFAULT_COLLECTION_FILTERS: {}, loadCollectionDisplay: () => {}, loadCollectionFilters: () => {}, setSearchActive: () => {},
       setSearchQuery: () => {}, setFocusedSidebarItemId: () => {}, setViewFiltersMap: () => {},
       setExpandedFolders: () => {}, setCollapsedItems: () => {}, storage: { KEYS: realStorage.KEYS, get: store.get },
       setWorkspaceUiStateId: () => {},

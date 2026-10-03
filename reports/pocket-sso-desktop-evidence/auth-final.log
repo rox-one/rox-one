@@ -1,0 +1,34 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/main/__tests__/pocket-account-store.test.ts:
+(pass) Pocket OS protected vault > uses injected OS encryption on darwin and restores caller/account scope [5.10ms]
+(pass) Pocket OS protected vault > uses injected OS encryption on win32 and restores caller/account scope [31.90ms]
+(pass) Pocket OS protected vault > fails closed without OS encryption and on unsupported headless Linux [1.11ms]
+(pass) Pocket OS protected vault > rejects a substituted vault directory [2.10ms]
+
+packages/shared/src/auth/__tests__/rox-pocket-client.test.ts:
+(pass) Pocket v2 proof client > uses S256 proof and operation id exclusively in main requests [1.09ms]
+(pass) Pocket v2 proof client > rejects foreign broker redirect and malformed token envelopes [15.49ms]
+(pass) Pocket v2 proof client > cancels a late approval even when HTTP transport ignores its abort [0.39ms]
+(pass) Pocket v2 proof client > rejects foreign-account credential and a redirected inference base [1.77ms]
+(pass) Pocket v2 proof client > projects account snapshot without credential canaries even if the server sends accidental extra fields [0.95ms]
+(pass) Pocket v2 proof client > reuses the same redemption proof after a dropped approved response [2006.57ms]
+
+packages/shared/src/auth/__tests__/rox-account-authority.test.ts:
+(pass) Pocket host account authority > does not share native/local account credentials and never projects tokens/key [9.34ms]
+(pass) Pocket host account authority > keeps zero balance authenticated and ready but rejects paid dispatch [1.63ms]
+(pass) Pocket host account authority > fences old executor and durable session/automation bindings on account switch [0.79ms]
+(pass) Pocket host account authority > restores exact owned resources after restart without ambient fallback [0.20ms]
+(pass) Pocket host account authority > persists refresh operation proof before dispatch, retries same id after dropped response [0.39ms]
+(pass) Pocket host account authority > refreshes expired access and durably clears pending proof before inference without a UI poll [0.35ms]
+(pass) Pocket host account authority > ignores a late bootstrap response after logout and removes persisted secrets [3.24ms]
+(pass) Pocket host account authority > uses sealed prior access proof to revoke a device after an in-flight refresh rotation [45.80ms]
+(pass) Pocket host account authority > fences a running executor when account key generation changes [1.85ms]
+(pass) Pocket host account authority > invalidates the running executor when the active key is revoked [0.22ms]
+(pass) Pocket host account authority > keeps failed device revocation sealed for retry after process restart [0.36ms]
+(pass) Pocket host account authority > revokes via logout-only prior access proof without an expired refresh replay [0.23ms]
+
+ 22 pass
+ 0 fail
+ 91 expect() calls
+Ran 22 tests across 3 files. [3.13s]

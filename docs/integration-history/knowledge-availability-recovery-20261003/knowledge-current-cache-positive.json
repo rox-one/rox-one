@@ -1,0 +1,16 @@
+{
+  "implementation": "/tmp/rox-branch-integration-20261003/knowledge-worktree/apps/electron/src/renderer/knowledge/kernel-availability.ts",
+  "crossScope": {
+    "A": false,
+    "B": true,
+    "connection": true,
+    "calls": 3
+  },
+  "invalidation": {
+    "beforeFresh": {
+      "returnedBeforeFresh": false
+    },
+    "final": true,
+    "calls": 2
+  }
+}

@@ -1,0 +1,5 @@
+src/auth/__tests__/rox-pocket-client.test.ts(12,30): error TS7006: Parameter 'url' implicitly has an 'any' type.
+src/auth/__tests__/rox-pocket-client.test.ts(12,35): error TS7006: Parameter 'options' implicitly has an 'any' type.
+src/auth/__tests__/rox-pocket-client.test.ts(52,30): error TS7006: Parameter '_url' implicitly has an 'any' type.
+src/auth/__tests__/rox-pocket-client.test.ts(52,36): error TS7006: Parameter 'options' implicitly has an 'any' type.
+error: "tsc" exited with code 2

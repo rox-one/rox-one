@@ -1,0 +1,68 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/hooks/__tests__/useOnboarding.test.ts:
+(pass) shouldApplyOnboardingLaunchGate > keeps fresh incomplete setup non-blocking [0.05ms]
+(pass) shouldApplyOnboardingLaunchGate > requires both an explicit startup caller and a server launch gate [0.02ms]
+(pass) shouldApplyOnboardingLaunchGate > treats older setup payloads without the new flag as non-blocking
+(pass) resolveSlugForMethod > returns the base slug when it is available [0.03ms]
+(pass) resolveSlugForMethod > reuses editingSlug when editing an existing connection [0.02ms]
+(pass) resolveSlugForMethod > appends -2 when base slug is taken [0.02ms]
+(pass) resolveSlugForMethod > appends -3 when both base and -2 are taken [0.02ms]
+(pass) resolveSlugForMethod > works for all setup methods [0.04ms]
+(pass) apiSetupMethodToConnectionSetup > anthropic_api_key includes credential, baseUrl, defaultModel, models [0.06ms]
+(pass) apiSetupMethodToConnectionSetup > claude_oauth includes only credential [0.02ms]
+(pass) apiSetupMethodToConnectionSetup > pi_chatgpt_oauth maps to chatgpt-plus slug [0.01ms]
+(pass) apiSetupMethodToConnectionSetup > pi_copilot_oauth maps to github-copilot slug
+(pass) apiSetupMethodToConnectionSetup > pi_api_key includes piAuthProvider and modelSelectionMode [0.02ms]
+(pass) apiSetupMethodToConnectionSetup > uses editingSlug when editing [0.01ms]
+(pass) apiSetupMethodToConnectionSetup > generates unique slug when base is taken [0.01ms]
+(pass) reauth slug resolution > slug override wins over null editingSlug (stale closure scenario) [0.02ms]
+(pass) reauth slug resolution > apiSetupMethodToConnectionSetup uses override slug for reauth [0.01ms]
+(pass) reauth slug resolution > new connection flow still generates unique slugs when base is taken
+(pass) reauth slug resolution > copilot new connection flow generates unique slugs when base is taken [0.01ms]
+(pass) reauth slug resolution > copilot reauth uses override slug
+
+apps/electron/src/renderer/lib/__tests__/startup-caller-boundary.test.ts:
+(pass) actual App startup caller boundary > cached profile completion cannot bypass an identity authorization refusal [9.77ms]
+(pass) actual App startup caller boundary > missing or unknown fresh identity is unavailable despite cached completion: null [0.20ms]
+(pass) actual App startup caller boundary > missing or unknown fresh identity is unavailable despite cached completion: {"userId":"actor-a","authority":"unknown","issuer":"issuer-a","name":"Current name"} [0.04ms]
+(pass) actual App startup caller boundary > confirmed native startup uses metadata only and current workspace readback [0.50ms]
+(pass) actual App startup caller boundary > a ready Pocket account allows local startup without a local display name [0.32ms]
+(pass) actual App startup caller boundary > authoritative null workspace remains a picker result and never invokes transport recovery [0.12ms]
+(pass) actual App startup caller boundary > a failed workspace read is rechecked after recovery and is not synthesized from a cached workspace [75.67ms]
+(pass) actual App startup caller boundary > workspace authorization denial never becomes a picker or successful ready state [0.22ms]
+(pass) actual App startup caller boundary > an identity userId change during runtime read cannot publish old authority [0.15ms]
+(pass) actual App startup caller boundary > an identity authority change during runtime read cannot publish old authority [0.04ms]
+(pass) actual App startup caller boundary > an identity issuer change during runtime read cannot publish old authority [0.04ms]
+(pass) actual App startup caller boundary > a workspace switch during awaited runtime read cannot publish the old workspace [0.10ms]
+(pass) actual App startup caller boundary > clearing a local display name cannot revoke a ready central account [0.12ms]
+(pass) actual App startup caller boundary > a central account still requires runtime preparation when the local profile changes [0.09ms]
+(pass) actual App startup caller boundary > local setup information cannot publish after an actor switch during runtime setup [0.10ms]
+(pass) actual App startup caller boundary > cleanup fences a pending runtime result before any authority or config publication [0.13ms]
+(pass) actual App startup caller boundary > authenticated web startup keeps its acknowledged workspace path and never calls desktop reads [0.08ms]
+(pass) actual App startup caller boundary > an upgraded named local profile cannot bypass the mandatory cloud gate [0.16ms]
+(pass) actual App startup caller boundary > a failed cloud read is unavailable even with a named local profile and existing workspace [36.50ms]
+(pass) actual App startup caller boundary > changing the cloud account during runtime setup requires fresh startup readback [20.69ms]
+
+apps/electron/src/renderer/lib/__tests__/startup-setup-needs.test.ts:
+(pass) bounded startup readback > retries transient RPC failures within one probe budget [0.23ms]
+(pass) bounded startup readback > a hung request cannot extend a probe past its deadline [155.42ms]
+(pass) bounded startup readback > stops retrying when its overall budget is spent [53.15ms]
+(pass) bounded startup readback > terminal AUTH_FAILED denial is never retried [0.30ms]
+(pass) bounded startup readback > terminal FORBIDDEN denial is never retried [0.02ms]
+(pass) bounded startup readback > terminal UNAUTHENTICATED denial is never retried [0.01ms]
+(pass) bounded startup readback > terminal UNAUTHORIZED denial is never retried
+(pass) bounded startup readback > requires a fresh identity and authoritative workspace rather than cached completion [0.04ms]
+(pass) bounded startup readback > requires the actual persisted display name and keeps provider readiness separate [0.08ms]
+(pass) bounded startup readback > a successful missing workspace is a real picker result [0.02ms]
+(pass) workspace readback after transport recovery > re-reads a failed workspace and requires the resulting current readback [0.15ms]
+(pass) workspace readback after transport recovery > does not turn authoritative null into a synthetic recovered workspace [0.08ms]
+(pass) workspace readback after transport recovery > does not claim recovery when both probes remain failed [0.04ms]
+(pass) mandatory Pocket startup gate > gates an upgraded installation with a persisted local name but no central account [0.08ms]
+(pass) mandatory Pocket startup gate > accepts a ready central account without a local display name [0.04ms]
+(pass) mandatory Pocket startup gate > cannot substitute local state for a failed account read [0.02ms]
+
+ 56 pass
+ 0 fail
+ 142 expect() calls
+Ran 56 tests across 3 files. [10.86s]

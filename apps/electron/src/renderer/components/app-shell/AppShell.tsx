@@ -79,6 +79,7 @@ import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { enabledExtraScreenIdsAtom } from "@/atoms/extra-screens"
 import { visibleExtraScreens } from "@/pages/extra-screens/registry"
 import { ProfileStrip, type ProfileStripData } from "./ProfileStrip"
+import { accountProfileStrip } from "./profile-strip-account"
 import { SidebarChrome } from "./SidebarChrome"
 import { focusServicePanelAtom } from "./service-navigation"
 import type { AppNavDestinationId } from "./nav-destinations"
@@ -121,11 +122,11 @@ import { getSessionTitle } from "@/utils/session"
 import { useSetAtom } from "jotai"
 import type { Session, Workspace, FileAttachment, PermissionRequest, LoadedSource, LoadedSkill, PermissionMode, SourceFilter, AutomationFilter } from "../../../shared/types"
 import { sessionMetaMapAtom, sendToWorkspaceAtom, type SessionMeta } from "@/atoms/sessions"
-import { collectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
+import { collectionDisplayAtom, loadCollectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
 import { CompactSessionListFilter } from "./CompactSessionListFilter"
-import { collectionFiltersAtom, collectionFilterKeyAtom } from "@/atoms/collection-filters"
+import { collectionFiltersAtom, collectionFilterKeyAtom, loadCollectionFiltersAtom } from "@/atoms/collection-filters"
 import { chipsAfterRailChange, railViewNavigation, skipRailChipClearOnce, userSliceNavigation } from "./collection/collection-rail-filters"
-import { compareSessions, DEFAULT_COLLECTION_FILTERS, filterSessionMeta } from "@rox/shared/sessions/collection"
+import { compareSessions, filterSessionMeta } from "@rox/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
 import { skillsAtom } from "@/atoms/skills"
 import { panelStackAtom, panelCountAtom, focusedPanelIdAtom, focusedSessionIdAtom, focusNextPanelAtom, focusPrevPanelAtom, parseSessionIdFromRoute } from "@/atoms/panel-stack"
@@ -440,7 +441,6 @@ function AppShellContent({
             xpIntoLevel: gamification.value.xpIntoLevel,
             xpForNext: gamification.value.xpForNext,
             nextThreshold: gamification.value.nextThreshold,
-            balance: gamification.value.balance,
           } : {}),
         }))
       } catch (err) {
@@ -458,7 +458,6 @@ function AppShellContent({
         xpIntoLevel: payload.xpIntoLevel,
         xpForNext: payload.xpForNext,
         nextThreshold: payload.nextThreshold,
-        balance: payload.balance,
       }))
     })
     const offIdentity = window.electronAPI.onIdentityChanged?.(() => {
@@ -474,20 +473,20 @@ function AppShellContent({
 
 
   // Real rox.one balance for the connected Rox cloud account (null → «—»).
-  const [roxCloudBalance, setRoxCloudBalance] = React.useState<number | null>(null)
+  const [roxCloudAccount, setRoxCloudAccount] = React.useState<import('@rox/shared/auth').RoxAccountSnapshot | null>(null)
   useEffect(() => {
     let cancelled = false
     const load = async () => {
       try {
-        const res = await window.electronAPI.getRoxBalance?.()
+        const res = await window.electronAPI.getRoxCloudState()
         if (cancelled || !res) return
-        setRoxCloudBalance(res.status === 'ok' ? res.balance : null)
+        setRoxCloudAccount(res.account ?? null)
       } catch {
-        if (!cancelled) setRoxCloudBalance(null)
+        if (!cancelled) setRoxCloudAccount(null)
       }
     }
     void load()
-    const timer = window.setInterval(() => { void load() }, 5 * 60 * 1000)
+    const timer = window.setInterval(() => { void load() }, 30_000)
     return () => { cancelled = true; window.clearInterval(timer) }
   }, [])
 
@@ -655,6 +654,8 @@ function AppShellContent({
 
   const collectionDisplay = useAtomValue(collectionDisplayAtom)
   const setCollectionDisplay = useSetAtom(setCollectionDisplayAtom)
+  const loadCollectionDisplay = useSetAtom(loadCollectionDisplayAtom)
+  const loadCollectionFilters = useSetAtom(loadCollectionFiltersAtom)
   const collectionFilters = useAtomValue(collectionFiltersAtom)
   const setCollectionFilters = useSetAtom(collectionFiltersAtom)
   const setCollectionFilterKey = useSetAtom(collectionFilterKeyAtom)
@@ -743,31 +744,23 @@ function AppShellContent({
   const [searchActive, setSearchActive] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState('')
 
-  // Grouping mode for chat list: CollectionDisplay.groupBy is live; viewFiltersMap
-  // groupingMode is leftover compact cycle chrome when groupBy is none.
+  // CollectionDisplay is the workspace-persisted grouping owner. A legacy
+  // per-view grouping preference must not override the current groupBy.
   const isStateSubView = sessionFilter?.kind === 'state'
 
   const chatGroupingMode: ChatGroupingMode = isStateSubView
     ? 'date'
     : collectionDisplay.groupBy === 'status'
       ? 'status'
-      : collectionDisplay.groupBy === 'none'
-        ? (viewFiltersMap[sessionFilterKey ?? '']?.groupingMode ?? 'date')
+      : collectionDisplay.groupBy === 'project'
+        ? 'project'
         : 'date'
 
   const setChatGroupingMode = useCallback((mode: ChatGroupingMode) => {
-    setViewFiltersMap(prev => {
-      if (!sessionFilterKey) return prev
-      const existing = prev[sessionFilterKey] ?? { statuses: {}, labels: {} }
-      return {
-        ...prev,
-        [sessionFilterKey]: { ...existing, groupingMode: mode }
-      }
-    })
     void setCollectionDisplay({
-      groupBy: mode === 'status' ? 'status' : 'none',
+      groupBy: mode === 'status' ? 'status' : mode === 'project' ? 'project' : 'none',
     })
-  }, [sessionFilterKey, setCollectionDisplay])
+  }, [setCollectionDisplay])
 
   const compactViewFilters = sessionFilterKey ? viewFiltersMap[sessionFilterKey] : undefined
 
@@ -1018,8 +1011,6 @@ function AppShellContent({
 
     // Clear transient UI state only on workspace SWITCH (not initial mount)
     if (previousWorkspaceId !== null && previousWorkspaceId !== activeWorkspaceId) {
-      setCollectionFilters({ ...DEFAULT_COLLECTION_FILTERS })
-
       // Clear search state
       setSearchActive(false)
       setSearchQuery('')
@@ -1029,6 +1020,10 @@ function AppShellContent({
     // Load workspace-scoped state on BOTH initial mount AND workspace switch
     // This fixes CMD+R losing filters - previously only ran on workspace switch
     if (previousWorkspaceId !== activeWorkspaceId) {
+      // Loading preferences must never persist a default filter reset over the
+      // newly selected workspace. Atom request leases fence stale snapshots.
+      void loadCollectionDisplay(activeWorkspaceId)
+      void loadCollectionFilters(activeWorkspaceId)
       // Cancel pointer/keyboard previews before restoring the next workspace,
       // so a delayed commit cannot save old dimensions under the new id.
       sidebarResize.handleKeyCancel()
@@ -1049,7 +1044,7 @@ function AppShellContent({
 
     setWorkspaceUiStateId(activeWorkspaceId)
     previousWorkspaceRef.current = activeWorkspaceId
-  }, [activeWorkspaceId, sidebarResize.handleKeyCancel, navigatorResize.handleKeyCancel])
+  }, [activeWorkspaceId, loadCollectionDisplay, loadCollectionFilters, sidebarResize.handleKeyCancel, navigatorResize.handleKeyCancel])
 
   // A live update is newer than the initial snapshot; obsolete loads must not
   // resurrect deleted entities or cross a workspace boundary.
@@ -1498,8 +1493,8 @@ function AppShellContent({
     return known ? total : null
   }, [workspaceSessionMetas])
   const profileStripWithSpend = useMemo(
-    () => ({ ...profileStrip, balance: roxCloudBalance ?? profileStrip.balance, spentUsd: workspaceSpentUsd }),
-    [profileStrip, roxCloudBalance, workspaceSpentUsd],
+    () => accountProfileStrip(profileStrip, roxCloudAccount, workspaceSpentUsd, t('profile.defaultName')),
+    [profileStrip, roxCloudAccount, workspaceSpentUsd, t],
   )
 
   // Active sessions exclude archived - use this for all counts and filters except archived view

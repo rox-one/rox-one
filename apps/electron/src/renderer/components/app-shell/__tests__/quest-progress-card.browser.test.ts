@@ -93,7 +93,12 @@ describe.skipIf(!existsSync(executablePath))('production quest cards in Chromium
   it('does not refresh or repaint after a pending action resolves following unmount', async () => {
     await load('deferredAction=true'); await doneNote().click()
     const before = await page.evaluate(() => (window as any).__questFixture.calls.filter((call: any) => call.method === 'get').length)
-    await page.evaluate(() => (window as any).__questFixture.unmount()); await page.evaluate(() => (window as any).__questFixture.resolveAction()); await page.waitForTimeout(30)
+    await page.evaluate(() => (window as any).__questFixture.unmount())
+    // The fixture requests removal through React state. Confirm that removal
+    // committed before resolving the reply whose lifetime is being tested.
+    await expectDOM(page.getByTestId('quest-progress-card')).toHaveCount(0)
+    await page.evaluate(() => (window as any).__questFixture.resolveAction()); await page.waitForTimeout(30)
     expect(await page.evaluate(() => (window as any).__questFixture.calls.filter((call: any) => call.method === 'get').length)).toBe(before)
+    await expectDOM(page.getByTestId('quest-progress-card')).toHaveCount(0)
   }, timeout)
 })

@@ -1,0 +1,27 @@
+Archived source HEAD: 6942a56aad1b37187af5b76365e5c006e77a08ef
+
+working-settings
+(fail) SecuritySettingsPage source contracts > uses only the safe data surface, retains a stale snapshot on refresh failure, and clears a known-empty latest result [4.20ms]
+(fail) SecuritySettingsPage source contracts > renders truthful loading, unavailable, partial, and deep-not-requested states through current i18n key patterns [1.10ms]
+(fail) SecuritySettingsPage source contracts > puts every mutation behind a pending confirmation before it can invoke an API [0.72ms]
+(fail) H4 Extension Center > ships P35-06 i18n for developer/registries hints and grouped permissions [3.52ms]
+(fail) ROX2-041..052 leftover English chrome > has no native select and no leftover English string defaultValue [2.13ms]
+(fail) SecuritySettingsPage source contracts > uses only the safe data surface, retains a stale snapshot on refresh failure, and clears a known-empty latest result [4.20ms]
+(fail) SecuritySettingsPage source contracts > renders truthful loading, unavailable, partial, and deep-not-requested states through current i18n key patterns [1.10ms]
+(fail) SecuritySettingsPage source contracts > puts every mutation behind a pending confirmation before it can invoke an API [0.72ms]
+(fail) H4 Extension Center > ships P35-06 i18n for developer/registries hints and grouped permissions [3.52ms]
+(fail) ROX2-041..052 leftover English chrome > has no native select and no leftover English string defaultValue [2.13ms]
+ 190 pass
+ 14 skip
+ 5 fail
+ 1488 expect() calls
+
+baseline-settings
+(fail) SecuritySettingsPage source contracts > uses only the safe data surface, retains a stale snapshot on refresh failure, and clears a known-empty latest result [1.25ms]
+(fail) SecuritySettingsPage source contracts > renders truthful loading, unavailable, partial, and deep-not-requested states through current i18n key patterns [6.27ms]
+(fail) SecuritySettingsPage source contracts > puts every mutation behind a pending confirmation before it can invoke an API [0.46ms]
+(fail) H4 Extension Center > ships P35-06 i18n for developer/registries hints and grouped permissions [5.53ms]
+(fail) ROX2-041..052 leftover English chrome > has no native select and no leftover English string defaultValue [3.12ms]
+ 10 pass
+ 5 fail
+ 97 expect() calls

@@ -41,8 +41,10 @@ jobs:
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile --ignore-scripts
       - name: Route and shell regression
+        env:
+          CHROMIUM_EXECUTABLE: ${{ runner.temp }}/ui001-separate-browser-phase
         run: >-
-          bun test apps/electron/src/shared/__tests__
+          bun test --timeout 30000 apps/electron/src/shared/__tests__
           apps/electron/src/renderer/contexts/__tests__
           apps/electron/src/renderer/components/app-shell/__tests__
           apps/electron/src/renderer/atoms/__tests__/panel-stack-knowledge.test.ts
@@ -57,6 +59,10 @@ jobs:
         run: bun run typecheck:electron
       - name: Install isolated Chromium
         run: bunx playwright install --with-deps chromium
+      - name: Quest card async lifetime regression
+        run: |
+          export CHROMIUM_EXECUTABLE="$(bun -e 'import {chromium} from "@playwright/test"; process.stdout.write(chromium.executablePath())')"
+          bun test --timeout 30000 apps/electron/src/renderer/components/app-shell/__tests__/quest-progress-card.browser.test.ts
       - name: Main-process protocol callbacks with synthetic windows and transport
         run: >-
           bun test --preload ./apps/electron/src/main/__tests__/rox-readiness-ui-001.native-preload.ts
