@@ -1,5 +1,5 @@
 import { useAtom } from 'jotai'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { RefreshCw } from 'lucide-react'
@@ -27,11 +27,13 @@ import {
   type ConnectSource,
   type PreviewSource,
 } from './connections-ui'
+import { ConnectionLifecyclePanel } from './ConnectionLifecyclePanel'
+import { GithubDeviceLoginPanel } from './GithubDeviceLoginPanel'
 import { ConnectionsOverview, OverviewGroup, OverviewRow, type OverviewStatus } from './connections-overview'
 import { ProjectAuthorityConnectionPanel } from '@/components/projects/ProjectAuthorityConnectionPanel'
 
 const TABS = ['services', 'credentials', 'imports', 'policies', 'audit'] as const
-const CONNECT_SOURCES = ['github-env', 'git-helper', 'docker', 'aws', 'keychain', 'adc', 'ssh-agent'] as const
+const CONNECT_SOURCES = ['github-env', 'git-helper', 'docker', 'aws', 'keychain', 'adc', 'ssh-agent', 'github-oauth'] as const
 type ConnectionsTab = (typeof TABS)[number]
 type PreviewRow = {
   candidateId: string
@@ -98,6 +100,14 @@ export default function ConnectionsPage() {
   const [rowStatus, setRowStatus] = useState<Record<string, OverviewStatus>>({})
   const [rowNote, setRowNote] = useState<Record<string, string>>({})
   const [showCreate, setShowCreate] = useState(false)
+  const currentWorkspace = useRef<string | undefined>(undefined)
+  const listGeneration = useRef(0)
+  useLayoutEffect(() => {
+    const id = workspace?.id
+    currentWorkspace.current = id; listGeneration.current++
+    setRows(null); setSelected(null)
+    return () => { if (currentWorkspace.current === id) currentWorkspace.current = undefined; listGeneration.current++ }
+  }, [workspace?.id, setSelected])
 
   useEffect(() => {
     const workspaceId = workspace?.id
@@ -108,14 +118,15 @@ export default function ConnectionsPage() {
       return
     }
     let stale = false
+    const request = ++listGeneration.current
     listConnections(workspaceId)
       .then((raw) => {
-        if (stale) return
-        setRows(sanitizeConnectionRows(raw))
+        if (stale || currentWorkspace.current !== workspaceId || request !== listGeneration.current) return
+        setRows(sanitizeConnectionRows(raw).filter(row => row.workspaceId === workspaceId))
         setSurface('ready')
       })
       .catch((error) => {
-        if (stale) return
+        if (stale || currentWorkspace.current !== workspaceId || request !== listGeneration.current) return
         setRows([])
         setSurface(classifyFailClosed(error))
       })
@@ -172,15 +183,20 @@ export default function ConnectionsPage() {
   }, [tab, workspace?.id])
 
   const refreshRows = async (workspaceId: string) => {
+    if (currentWorkspace.current !== workspaceId) return
+    const request = ++listGeneration.current
     const listConnections = window.electronAPI?.workgraph?.listConnections
     if (typeof listConnections !== 'function') {
       setSurface('unavailable')
       return
     }
     try {
-      setRows(sanitizeConnectionRows(await listConnections(workspaceId)))
+      const next = sanitizeConnectionRows(await listConnections(workspaceId)).filter(row => row.workspaceId === workspaceId)
+      if (currentWorkspace.current !== workspaceId || request !== listGeneration.current) return
+      setRows(next)
       setSurface('ready')
     } catch (error) {
+      if (currentWorkspace.current !== workspaceId || request !== listGeneration.current) return
       setRows([])
       setSurface(classifyFailClosed(error))
     }
@@ -506,6 +522,9 @@ export default function ConnectionsPage() {
                 </li>
               ))}
             </ul>
+            <ImportPanel source="github-oauth" active={activeSource}>
+              {workspace?.id && <GithubDeviceLoginPanel workspaceId={workspace.id} onImported={() => void refreshRows(workspace.id)} />}
+            </ImportPanel>
             <ImportPanel source="env" active={activeSource}>
               {pathField('connections.import.envPath', envPath, setEnvPath, IMPORT_PLACEHOLDERS.env)}
               <button
@@ -746,6 +765,7 @@ export default function ConnectionsPage() {
                 <li className="px-4 py-3 text-sm text-muted-foreground">{t('connections.overview.noCredentials')}</li>
               )}
             </OverviewGroup>
+            {selected && workspace?.id && selected.workspaceId === workspace.id && <ConnectionLifecyclePanel connection={selected} workspaceId={workspace.id} />}
             {showCreate ? (
               <div data-testid="connections-create-form" className="grid gap-3 rounded-[10px] bg-foreground/[0.02] p-4 sm:grid-cols-3">
                 <label className="block">
