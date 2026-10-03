@@ -16,6 +16,13 @@ The first catalog did not contain the exact requested `rox/standard` route. The 
 
 ## Lifecycle
 
+Managed Windows launches use the verified native-policy overlay's `src/cli.ts`
+under native Bun; `rox.cmd`/`omp.cmd` and the original package CLI are not spawned.
+Relative managed-launcher and Bun override paths are anchored to the child cwd;
+batch Bun overrides are rejected. Cancellation invalidates pending launches
+before spawning and disposes their private profile and native overlay, preserving
+the persistent blob store. Runtime startup errors identify the actual Bun command.
+
 1. Spawn: `omp --mode rpc` (optional flags: `--approval-mode <mode>`, `--auto-approve` yolo, `--model`, `--session <dir>`…). cwd = workspace root; OMP session files live in its own session dir (under `~/.omp`), keyed by cwd.
 2. Server immediately sends `{"type":"ready","protocolVersion":1,"supportedProtocolVersions":[1,2],"maxFrameBytes":1048576,"maxReassembledFrameBytes":67108864}` followed by `extension_ui_request` (e.g. `setWidget`) and `available_commands_update`.
 3. **CRITICAL (the turn-stall blocker): the host MUST answer every `extension_ui_request`.** An unanswered request blocks extension init / the prompt pipeline: after `{"type":"prompt"}` you get `success` + `agent_start` and then nothing (no `message_start`, >170 s stall). Respond with `{"id":<request id>,"type":"extension_ui_response","approved":true,"value":true}` (id as string). Once answered, the full event stream flows.
