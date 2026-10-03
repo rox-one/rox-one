@@ -42,10 +42,11 @@ function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspac
   const store = createStore()
   const requestedWorkspaceSlugRef = { current: initialRequestedWorkspace }
   let requestedWorkspaceSlug = requestedWorkspaceSlugRef.current
+  const rightSidebarRef = { current: undefined as unknown }
   const writes: unknown[] = [], historyWrites: unknown[] = [], persisted: unknown[] = []
   const reconcile = productionClosure(navURL, 'reconcileFromUrlParams', {
     store, reconcilePanelStackAtom, parseRouteToNavigationState, normalizePanelRouteForReconcile, decodePanelEntries,
-    resolveAutoSelectionRef: { current: (state: unknown) => state }, setRightSidebar: () => {},
+    resolveAutoSelectionRef: { current: (state: unknown) => state }, rightSidebarRef, setRightSidebar: () => {},
   })
   const params = new URLSearchParams({ ws: 'deleted-workspace', route: 'notes/note/retained' })
   if (multiple) { params.set('panels', 'home:0.5,notes/note/retained:0.5'); params.set('fi', '0') }
@@ -56,6 +57,7 @@ function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspac
     workspaceSlug: 'a', requestedWorkspaceSlugRef, setRequestedWorkspaceSlug: (value: string) => { requestedWorkspaceSlug = value },
     isReady: true, isSessionsReady: true, initialRouteRestoredRef: { current: true }, isPopstateSwitchRef: { current: false },
     pendingNavigationRef: { current: null }, suppressAutoSelectRef: { current: false }, actionEpochRef: { current: 0 },
+    suppressPushRef: { current: false }, historyReconcileRevisionRef: { current: 0 },
     handleActionNavigation: () => { throw new Error('Unexpected action') }, pushPanel: () => { throw new Error('Unexpected panel') },
     resolveAutoSelection: (state: unknown) => state, setNavigationRevision: () => {},
     storage: { KEYS: { lastSelectedSessionId: 'last' }, set: (...args: unknown[]) => persisted.push(args) },
@@ -63,7 +65,7 @@ function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspac
   const readNavigation = () => productionClosure(navURL, 'navigationState', {
     unavailableWorkspaceSlug: requestedWorkspaceSlug !== 'a' ? requestedWorkspaceSlug : null,
     focusedRoute: store.get(focusedPanelRouteAtom), resolveRouteNavigationState, DEFAULT_NAVIGATION_STATE,
-    rightSidebar: undefined,
+    rightSidebar: rightSidebarRef.current,
   })()
   const focusServicePanel = (id: any) => store.set(focusServicePanelAtom, id)
   const serviceNavigate = (route: string) => { writes.push(route); return navigate(route) }
@@ -85,8 +87,9 @@ function fixture(multiple = false, initialRequestedWorkspace = 'deleted-workspac
   const syncUrl = productionClosure(navURL, 'syncUrl', {
     requestedWorkspaceSlugRef, workspaceSlug: 'a', store, panelStackAtom, focusedPanelIndexAtom, encodePanelEntries,
     isReady: true, isSessionsReady: true, pendingUrlRestoreRef: { current: null }, previousWorkspaceSlugRef: { current: null },
+    historyMountedRef: { current: true }, isPopstateSwitchRef: { current: false },
     window: { location: { href: 'https://fixture.invalid/?ws=deleted-workspace&route=notes%2Fnote%2Fretained' } },
-    rightSidebarRef: { current: undefined }, buildRightSidebarParam,
+    rightSidebarRef, buildRightSidebarParam,
     nextHistorySeqRef: { current: 1 }, historySeqRef: { current: 0 }, historyMaxSeqRef: { current: 0 },
     updateCanGoBackForward: () => {}, history: { state: {}, pushState: (...args: unknown[]) => historyWrites.push(args), replaceState: (...args: unknown[]) => historyWrites.push(args) },
     storage: { KEYS: { workspaceUrl: 'url' }, set: (...args: unknown[]) => persisted.push(args) },

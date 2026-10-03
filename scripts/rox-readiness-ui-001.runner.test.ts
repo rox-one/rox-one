@@ -304,6 +304,59 @@ describe('UI-001 repository test runner', () => {
     expect(report.results.every(result => existsSync(result.log))).toBe(true)
   }, 20_000)
 
+  test('direct isolated suites receive private home directories and preserve the caller filesystem and integration environment', async () => {
+    const root = fixture(), hostHome = join(root, 'host-home')
+    const hostSentinel = join(hostHome, 'bundle', 'host-sentinel')
+    file(root, 'host-home/bundle/host-sentinel', 'caller-owned-original')
+    const environment: NodeJS.ProcessEnv = { ...process.env, HOME: hostHome, USERPROFILE: hostHome,
+      ROX_WORKSPACE_TEST_CONFIG: 'owned-protected-database-path',
+      ROX_TEST_VITEST_NODE_EXECUTABLE: Bun.which('node')!,
+      PLAYWRIGHT_BROWSERS_PATH: join(root, 'owned-browser-cache') }
+    const source = `import {beforeEach,test,expect} from 'bun:test';
+      import {existsSync,mkdirSync,readFileSync,realpathSync,rmSync,writeFileSync} from 'node:fs';
+      import {homedir} from 'node:os'; import {join,relative,isAbsolute} from 'node:path';
+      const home=homedir();
+      beforeEach(()=>rmSync(join(home,'bundle'),{recursive:true,force:true}));
+      test('actual isolated filesystem cleanup',()=>{
+        expect(realpathSync(home)).not.toBe(realpathSync(${JSON.stringify(hostHome)}));
+        expect(realpathSync(process.env.HOME!)).toBe(realpathSync(home));
+        expect(realpathSync(process.env.USERPROFILE!)).toBe(realpathSync(home));
+        const directories=['XDG_CONFIG_HOME','XDG_CACHE_HOME','XDG_DATA_HOME','APPDATA','LOCALAPPDATA'];
+        for(const key of directories){
+          const directory=process.env[key]!;
+          expect(existsSync(directory)).toBe(true);
+          const child=relative(realpathSync(home),realpathSync(directory));
+          expect(isAbsolute(child)||child==='..'||child.startsWith('../')||child.startsWith('..\\\\')).toBe(false);
+        }
+        expect(process.env.ROX_CONFIG_DIR).toBe(process.env.CRAFT_CONFIG_DIR);
+        expect(process.env.ROX_WORKSPACE_TEST_CONFIG).toBe(${JSON.stringify(environment.ROX_WORKSPACE_TEST_CONFIG)});
+        expect(process.env.PATH).toBe(${JSON.stringify(environment.PATH)});
+        expect(process.env.ROX_TEST_VITEST_NODE_EXECUTABLE).toBe(${JSON.stringify(environment.ROX_TEST_VITEST_NODE_EXECUTABLE)});
+        expect(process.env.PLAYWRIGHT_BROWSERS_PATH).toBe(${JSON.stringify(environment.PLAYWRIGHT_BROWSERS_PATH)});
+        expect(readFileSync(${JSON.stringify(hostSentinel)},'utf8')).toBe('caller-owned-original');
+        expect(existsSync(join(home,'child-marker'))).toBe(false);
+        mkdirSync(join(home,'bundle'),{recursive:true});
+        writeFileSync(join(home,'bundle','child-data'),'owned-cleanup-fixture');
+        writeFileSync(join(home,'child-marker'),'child-only');
+        writeFileSync(join(process.env.ROX_CONFIG_DIR!,'home-witness.json'),JSON.stringify({home:realpathSync(home),directories:Object.fromEntries(directories.map(key=>[key,realpathSync(process.env[key]!)]))}));
+      });`
+    file(root, 'tests/a.isolated.ts', source)
+    file(root, 'tests/b.isolated.ts', source)
+    const api = await runner(), manifest = await api.discoverSuites(root)
+    expect(manifest.suites.map(suite => suite.path)).toEqual(['tests/a.isolated.ts', 'tests/b.isolated.ts'])
+    const report = await api.runSuites({ root, manifest, artifactDirectory: join(root, 'evidence'), environment })
+    expect(existsSync(hostSentinel)).toBe(true)
+    expect(readFileSync(hostSentinel, 'utf8')).toBe('caller-owned-original')
+    expect(report.status).toBe('passed')
+    expect(report.summary).toMatchObject({ expected: 2, completed: 2, passed: 2, failed: 0, blocked: 0 })
+    const witnesses = report.results.map(result => JSON.parse(readFileSync(join(result.configRoot, 'home-witness.json'), 'utf8')))
+    expect(new Set(witnesses.map(witness => witness.home)).size).toBe(2)
+    expect(report.results.every(result => result.homeRoot && nativeFs.realpathSync(result.homeRoot) === witnesses[report.results.indexOf(result)].home)).toBe(true)
+    expect(report.results.every(result => result.testCounts?.pass === 1 && result.testCounts?.fail === 0)).toBe(true)
+    expect(environment.HOME).toBe(hostHome)
+    expect(environment.USERPROFILE).toBe(hostHome)
+  }, 20_000)
+
   test('invalid global timeout values fail before any suite starts or evidence is created', async () => {
     const root = fixture()
     file(root, 'tests/never.test.ts', "import {test} from 'bun:test'; test('must not run',()=>{throw Error('invalid timeout executed a test')});")

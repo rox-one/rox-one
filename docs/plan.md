@@ -1,9 +1,17 @@
+## MCP connection deadline/privacy recovery plan — 2026-10-03
+
+1. Freeze source1436 and current4fec, compare actual symbols. Retain current Qdrant storage ownership, local resolver authority, pool config/generation/recovery semantics; recover only proven missing budgets/diagnostic filtering.
+2. Add per-lease total startup/discovery budgets and physical startup deadline, observe fetch/start cancellation, and await SDK shutdown. Preserve another Qdrant lease and never replay failed tools. Redact SDK diagnostic credentials with linear URL handling; filter inherited validation host credentials.
+3. Exercise actual transports/children with held initialize/list responses, stale/terminal close, explicit cancellation, stubborn EOF, hostile URL/error bodies and Qdrant shared continuity, alongside current pool/source/redirect/no-replay tests. Retain failure history; run inherited strict types and actual main/preload build.
+4. Reconcile current main, freeze source/log receipt and publish/attach separate candidate. Root reviews/merges; original branches remain intact, native Windows/provider acceptance is bounded explicitly.
+
 ## Windows dependency/bootstrap selective recovery plan — 2026-10-03
 
 1. Freeze source1436, enumerate137 actual diff paths and CodeQL annotations; compare current OMP/native/MCP consumers before selecting dependencies. Preserve all original branches and dirty user checkout.
 2. Recover coherent dependency/bootstrap/packaging/toolchain slice; adapt only current Electron startup and config. Preserve current upgrade identity/CJS flags/pinned OMP/native policy and current shell consumers. Remaining MCP/local-source/host Bash/perf scopes remain owned follow-ups.
 3. Fix receipt descriptor/size/replacement race with actual adversarial filesystem checks; qualify explicit modes, real private/system exclusions, companion removal, re-probes, damaged generated launcher repair/rollback, pinned payload corruption and production OEM refusal. Run inherited relevant tests/types/current builds, retaining source mismatch history and native Windows skips.
 4. Reconcile latest main, freeze revision/proof hashes, commit/push a separate attached PR. Root reviews/merges. Actual installed Windows execution, NSIS provisioning and OEM release payload remain external platform/release gates, distinct from bounded source acceptance.
+
 
 ## Inspector resize recovery task graph — 2026-10-03
 
@@ -868,3 +876,7 @@ Overlay qualification: archive dependency PR1430 is merged into main d4846751fe9
 ## Route recovery integration graph —2026-10-03
 
 Integration lead owns current isolatedmain plus source1420 merge, comparative1412/1417 semantic review, meaningful raw-query delta and current route/native resource consumers. Review source → execute canonical entity/source callback adverse controls → real mounted NavigationProvider/history/readiness/ABA Chromium → native query isolated callbacks → type/build/12locale gates → immutable source/qualification receipt → separate PR/merge/readback. Source execution archives remain on preserved original branches. Source1417 distinct SkillInfo watch/draft repair is delivered separately after this source owner is stable. Workers independently own ChatScroll, ProductLearning and Windows runtime.
+
+## Skill and history recovery integration (2026-10-03)
+
+Owner: root branch integration. Dependency: route recovery #1446, current Windows bootstrap #1443 and fixture repair #1445. Adapt the remaining #1417 skill catalog/draft behavior and history switch failure signal onto current owner/revision guards; preserve newer main. Verify actual mounted callbacks and real native inputs with controlled backends, restore old source in isolated fixture bundles as negative controls, then run Electron types and renderer build. Browser fixtures compile with Node before launch. The Skill lane uses Node's test runner because the Bun host repeatedly stalled while closing Chromium; all behavior assertions and failure history are retained. Commit and merge a separate PR while retaining both source and integration branches.

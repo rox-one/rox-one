@@ -25,13 +25,21 @@ function mergedBindings(bindings: Record<string, any>): Record<string, any> {
   return { navigationOwnerRef: { current: owner }, decodePanelEntries, encodePanelEntries, preserveRouteQuery,
     parseRouteToNavigationStateOrUnavailable: resolveRouteNavigationState,
     isReady: true, isSessionsReady: true, pendingUrlRestoreRef: { current: null },
+    historyMountedRef: { current: true }, historyReconcileRevisionRef: { current: 0 },
+    isPopstateSwitchRef: { current: false }, suppressPushRef: { current: false },
+    lastSemanticHistoryKeyRef: { current: '' }, getSemanticHistoryKey: () => '',
+    requestAnimationFrame: (run: () => void) => run(), maybePushHistoryForSemanticChange: () => {},
+    rightSidebarRef: { current: undefined },
     previousWorkspaceSlugRef: { current: null }, requestedWorkspaceSlugRef: { current: bindings.workspaceSlug ?? bindings.workspaceId },
     setRequestedWorkspaceSlug: () => {}, suppressAutoSelectRef: { current: false },
     setNavigationRevision: () => {}, focusedPanelIdAtom, focusedPanelRouteAtom,
     ...bindings }
 }
 function rendererEffect(path: URL, text: string, bindings: Record<string, any>) {
-  return productionRendererEffect(path, text, mergedBindings(bindings))
+  const scope = mergedBindings(bindings)
+  // Bind the actual merged lifecycle callback, with fixture scheduling/store boundaries.
+  scope.finishHistoryReconcile = callback('finishHistoryReconcile', scope)
+  return productionRendererEffect(path, text, scope)
 }
 
 // Execute production callbacks, replacing only their transport/store boundaries.
@@ -87,7 +95,7 @@ function pendingEffect(bindings: Record<string, any>) {
   if (bindings.pendingNavigationRef?.current && !bindings.pendingNavigationRef.current.owner) {
     bindings.pendingNavigationRef.current.owner = { active: true, revision: 0 }
   }
-  return rendererEffect(sourcePath, 'pendingNavigationRef.current = null', {
+  return rendererEffect(sourcePath, 'const pending = pendingNavigationRef.current', {
     isSessionsReady: true, initialRouteRestoredRef: { current: true }, isPopstateSwitchRef: { current: false },
     requestedWorkspaceSlugRef: { current: bindings.workspaceId }, workspaceSlug: bindings.workspaceId,
     ...bindings,

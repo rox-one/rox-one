@@ -1,0 +1,116 @@
+{
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "baseRevision": "79fa5274315941f66ea26975551c66580e6036cd",
+  "createdAtUtc": "2026-10-03T18:07:36.186714+00:00",
+  "finding": "Windows/Linux second-instance protocol URL was dropped before WindowManager exists. Windows bootstrap extends this existing startup interval.",
+  "implementation": "Retain URL in existing pendingDeepLink; existing last-link coalescing and startup replay execute unchanged. Add this actual-callback regression to existing SQLite integration workflow.",
+  "changedPaths": [
+    "apps/electron/src/main/index.ts",
+    "apps/electron/src/main/__tests__/rox-readiness-ui-001.second-instance-startup.test.ts",
+    ".github/workflows/sqlite-runtime-recovery.yml",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup"
+  ],
+  "sourceHashes": {
+    "apps/electron/src/main/index.ts": "7e47b20f627a05932b8a5b339ec49ad57c1d0031530fa4358f6f1bce1aa7b0bf",
+    "apps/electron/src/main/__tests__/rox-readiness-ui-001.second-instance-startup.test.ts": "a601116da4efeceb1248b9cdbc38cda8cd4508c65872a8ce543fb08769ec6002",
+    ".github/workflows/sqlite-runtime-recovery.yml": "f4d4ce59ab86115d49bcabe9d7bc0fb8a3919e9576a48454175bb670ef7564b5"
+  },
+  "verification": {
+    "beforeRepairCanonicalAliases": {
+      "pass": 2,
+      "fail": 4,
+      "assertions": 11,
+      "exitCode": 1
+    },
+    "afterRepair": {
+      "pass": 6,
+      "fail": 0,
+      "assertions": 22,
+      "exitCode": 0
+    },
+    "callbackScope": "AST-extracted actual second-instance/open-url callbacks and pending replay block; controlled manager and dispatch promise only. Native Windows, OS protocol registration and provider acceptance not claimed.",
+    "sameCallbacksAssertionsAndTimeoutsBeforeAfter": true,
+    "unitCommand": "bun test ./apps/electron/src/main/__tests__/rox-readiness-ui-001.second-instance-startup.test.ts",
+    "qualifiedBun": "1.3.14",
+    "cases": [
+      "both canonical protocol aliases while manager absent",
+      "latest startup link across both ingress callbacks",
+      "single successful replay with actual sink/resolver args",
+      "ready dispatch and actual rejection logging",
+      "rejected replay retains URL until successful re-invocation",
+      "normal launch restores and focuses existing window"
+    ]
+  },
+  "postMerge79faRegression": {
+    "pass": 710,
+    "skip": 100,
+    "fail": 2,
+    "assertions": 2901,
+    "exitCode": 1,
+    "failedCases": "Two desktop Overview permission-mode cases timed out at unchanged5s; preserved."
+  },
+  "isolatedPostMergeControls": {
+    "pass": 44,
+    "fail": 0,
+    "assertions": 187,
+    "files": 3,
+    "exitCode": 0,
+    "cases": "Unchanged permission-mode cases, Notes route lifecycle, panel URL transport pass when selected directly; full regression red not relabeled."
+  },
+  "focusedPostMergeAttempt": {
+    "pass": 15,
+    "fail": 0,
+    "assertions": 30,
+    "files": 2,
+    "exitCode": 0,
+    "qualification": "Only Notes read lifecycle7 and navigation-reconcile8 executed. Two mistyped extra file arguments were ignored by Bun; omitted scopes were subsequently run with correct exact paths in isolated controls."
+  },
+  "logs": [
+    {
+      "name": "expanded-second-instance-79fa-red.log",
+      "sha256": "b96f41424ba4de74c57ccb12a34501222a9ee9b961adeab401b508c9a6f6a790",
+      "gzipSha256": "79355532cc55ae9b309184b574b6fd45dc8206d48c64af65429a006f354c128d",
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-second-instance-79fa-red.log.gz"
+    },
+    {
+      "name": "expanded-second-instance-79fa-red-canonical.log",
+      "sha256": "441c40f3b64de5639242913b15ae1735b71445b223e009ac8a0fc635f6891e70",
+      "gzipSha256": "c4d6bb1a4d7461ba61f685c46167090ab2f648f166160551e2dd551313db4b2c",
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-second-instance-79fa-red-canonical.log.gz"
+    },
+    {
+      "name": "expanded-second-instance-79fa-green.log",
+      "sha256": "d54f1c9e8450d22759966aa74a47d6df74e2b259b1a9b1ba911340953745f3a1",
+      "gzipSha256": "d6624d460acbbd36d476f091efa2927ddeca346bac10d81058573ab973dfb56e",
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-second-instance-79fa-green.log.gz"
+    },
+    {
+      "name": "expanded-regression-79fa52743-final.log",
+      "sha256": "d700d0bbf89d11c3f7c9c4a6e02ae1126b2e7447e017a5c5d363b1f337930dfc",
+      "gzipSha256": "7f8129c0bf98b1bf5c83cb6af49b94a26e0bd685ef8907b8e29e9a583990a4be",
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-regression-79fa52743-final.log.gz"
+    },
+    {
+      "name": "expanded-final-integration-focused-79fa.log",
+      "sha256": "f724201cf46e7d95d0c4177163df374af3edfd4baabf675e18cf9e61a01a6b7e",
+      "gzipSha256": "7c430ff6f228d75c71dfde02843e46530d9dab887d3b4248b07184fc2e876eda",
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-final-integration-focused-79fa.log.gz"
+    },
+    {
+      "name": "expanded-final-integration-isolated-controls-79fa.log",
+      "sha256": "cff44b698e68701170d8841b50c7c27b5db16df5287e0e3746e434a467a537df",
+      "gzipSha256": "b05efbd16202246a8069bdbd2fa77f0c90e74488024f1d3b3b6a6b35dc8f4bbe",
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/startup-ingress-followup/expanded-final-integration-isolated-controls-79fa.log.gz"
+    }
+  ],
+  "originalTaskContractChanged": false,
+  "nativeProofRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+  "fullDoDClosed": false,
+  "externalPrerequisites": [
+    "Installed Windows10/11 startup/OS second-launch/DPI acceptance",
+    "Packaged/signed native and hosted/service-provider acceptance from original UI-001 contract"
+  ]
+}

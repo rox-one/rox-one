@@ -41,6 +41,7 @@ export interface SuiteResult {
   exitCode: number | null
   command: string[]
   configRoot: string
+  homeRoot: string
   log: string
   logSha256: string
   durationMs: number
@@ -389,8 +390,21 @@ export async function runSuites(options: {
     const directory = join(artifactDirectory, `${String(report.results.length + 1).padStart(5, '0')}-${hash(suite.path).slice(0, 12)}`)
     await mkdir(directory)
     const configRoot = await mkdtemp(join(tmpdir(), 'rox-test-config-'))
+    const homeRoot = join(directory, 'home')
+    await mkdir(homeRoot, { mode: 0o700 })
+    // Direct *.isolated.ts suites can clean paths relative to homedir(). Each
+    // executor and its descendants must resolve those paths inside this suite,
+    // while the caller's protected integration paths and toolchains survive.
+    const homeEnvironment = {
+      HOME: homeRoot, USERPROFILE: homeRoot,
+      XDG_CONFIG_HOME: join(homeRoot, '.config'), XDG_CACHE_HOME: join(homeRoot, '.cache'),
+      XDG_DATA_HOME: join(homeRoot, '.local', 'share'),
+      APPDATA: join(homeRoot, 'AppData', 'Roaming'), LOCALAPPDATA: join(homeRoot, 'AppData', 'Local'),
+    }
+    await Promise.all([...new Set(Object.values(homeEnvironment))].filter(path => path !== homeRoot)
+      .map(path => mkdir(path, { recursive: true, mode: 0o700 })))
     const log = join(directory, 'output.log')
-    const result: SuiteResult = { path: suite.path, runner: suite.runner, status: 'blocked', exitCode: null, command: [], configRoot, log, logSha256: '', durationMs: 0, testCounts: null }
+    const result: SuiteResult = { path: suite.path, runner: suite.runner, status: 'blocked', exitCode: null, command: [], configRoot, homeRoot, log, logSha256: '', durationMs: 0, testCounts: null }
     const started = performance.now()
     try {
       const source = await readRegularFile(join(root, suite.path))
@@ -398,7 +412,7 @@ export async function runSuites(options: {
       if (hash(source) !== suite.sha256) throw new Error('Test source changed since discovery; regenerate the manifest')
       if (suite.prerequisiteError) throw new Error(suite.prerequisiteError)
       result.command = commandFor(root, suite, directory, bunTimeoutMs, environment)
-      const childEnv: NodeJS.ProcessEnv = { ...environment, ROX_CONFIG_DIR: configRoot, CRAFT_CONFIG_DIR: configRoot }
+      const childEnv: NodeJS.ProcessEnv = { ...environment, ...homeEnvironment, ROX_CONFIG_DIR: configRoot, CRAFT_CONFIG_DIR: configRoot }
       // The existing meeting script explicitly opts into U1 fixtures. Preserve
       // that evidence boundary, while respecting a product opt-in from the caller.
       if (suite.runner === 'playwright' && suite.config === 'tests/e2e/meeting-agents/playwright.config.ts'
