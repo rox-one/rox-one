@@ -39,13 +39,18 @@ export function validateWindowsPrivatePaths(value: unknown, paths: readonly Priv
 // Input is base64 JSON on stdin, never executable path interpolation.
 const windowsPrivatePathsScript = `
 $ErrorActionPreference = 'Stop'
+[Console]::Error.WriteLine('Windows private authority stage: process-start')
 [Console]::InputEncoding = New-Object System.Text.UTF8Encoding($false)
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 try {
-  $request = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String([Console]::In.ReadToEnd())) | ConvertFrom-Json
+  [Console]::Error.WriteLine('Windows private authority stage: input-ready')
+  $payload = [Console]::In.ReadToEnd()
+  [Console]::Error.WriteLine('Windows private authority stage: input-complete')
+  $request = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($payload)) | ConvertFrom-Json
   $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
   try { $sid = $identity.User; $tokenOwner = $identity.Owner } finally { $identity.Dispose() }
   if ($null -eq $sid -or $null -eq $tokenOwner) { throw 'Windows token has no user or owner SID' }
+  [Console]::Error.WriteLine('Windows private authority stage: identity-complete')
   $items = @()
   foreach ($entry in @($request.paths)) {
     $path = [string]$entry.path
@@ -60,6 +65,7 @@ try {
     $items += [pscustomobject]@{ path = $path; directory = $directory; acl = $acl }
   }
   # All ownership/type checks finish before any security descriptor is changed.
+  [Console]::Error.WriteLine('Windows private authority stage: ownership-checked')
   $results = @()
   foreach ($item in $items) {
     $acl = $item.acl
@@ -84,9 +90,10 @@ try {
     $kind = 'file'; if ($item.directory) { $kind = 'directory' }
     $results += [pscustomobject]@{ path = $item.path; kind = $kind; ownerSid = $acl.GetOwner([System.Security.Principal.SecurityIdentifier]).Value; reparsePoint = (($attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0); protected = $acl.AreAccessRulesProtected; rules = @($rules) }
   }
+  [Console]::Error.WriteLine('Windows private authority stage: descriptor-complete')
   [pscustomobject]@{ currentSid = $sid.Value; tokenOwnerSid = $tokenOwner.Value; paths = @($results) } | ConvertTo-Json -Depth 6 -Compress
 } catch {
-  [Console]::Error.WriteLine('Windows private authority path verification failed: ' + $_.Exception.Message)
+  [Console]::Error.WriteLine('Windows private authority stage: failed')
   exit 1
 }
 `
@@ -110,7 +117,15 @@ function windowsPrivatePaths(paths: readonly PrivatePath[], operation: WindowsOp
     // No inherited PowerShell module/profile or runtime-loader overrides.
     env: { SystemRoot: systemRoot, WINDIR: systemRoot, PSModulePath: win32.join(win32.dirname(executable), 'Modules') },
   })
-  if (result.error || result.signal || result.status !== 0) throw new Error('Windows OS ownership verification failed', { cause: result.error ?? new Error(result.stderr.slice(0, 512)) })
+  if (result.error || result.signal || result.status !== 0) {
+    // Report only fixed stage tags and OS process codes. Arbitrary PowerShell
+    // errors can include request paths, and are excluded from diagnostics.
+    const allowedStages = new Set(['process-start', 'input-ready', 'input-complete', 'identity-complete', 'ownership-checked', 'descriptor-complete', 'failed'].map(stage => `Windows private authority stage: ${stage}`))
+    const stages = result.stderr.split(/\r?\n/).filter(line => allowedStages.has(line)).slice(-7)
+    const errorCode = (result.error as NodeJS.ErrnoException | undefined)?.code
+    const diagnostics = { code: typeof errorCode === 'string' && /^[A-Z0-9_]{1,32}$/.test(errorCode) ? errorCode : null, status: result.status, signal: result.signal, stages }
+    throw new Error(`Windows OS ownership verification failed: ${JSON.stringify(diagnostics)}`)
+  }
   let output: unknown
   try { output = JSON.parse(result.stdout.replace(/^\uFEFF/, '').trim()) }
   catch { throw new Error('Windows OS ownership verification returned an invalid descriptor') }

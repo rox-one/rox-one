@@ -142,6 +142,39 @@ console.log(JSON.stringify({ systemRoot, seen }));
   expect(proof.seen).toBe(String.raw`\\?\GLOBALROOT\SystemRoot`)
 })
 
+test('Windows verifier failure reports only process codes and fixed stages', () => {
+  // This isolated API/error boundary supplies no OS custody evidence. The real
+  // filesystem/authority cases retain their original assertions and deadlines.
+  const script = `
+import { mock } from 'bun:test';
+import * as filesystem from 'node:fs';
+import * as childProcess from 'node:child_process';
+const resolver = () => { throw new Error('ancestor walker must not run'); };
+resolver.native = () => 'C:\\\\Windows';
+mock.module('node:fs', () => ({ ...filesystem, realpathSync: resolver }));
+let requestTimeout;
+mock.module('node:child_process', () => ({ ...childProcess, spawnSync(executable, args, options) {
+  requestTimeout = options.timeout;
+  return { status: null, signal: 'SIGTERM', stdout: '', stderr: 'x'.repeat(5000) + '\\nWindows private authority stage: input-ready',
+    error: Object.assign(new Error('controlled child deadline'), { code: 'ETIMEDOUT' }) };
+} }));
+Object.defineProperty(process, 'platform', { value: 'win32' });
+const { requireOsOwner } = await import(${JSON.stringify(new URL('../os-private-path.ts', import.meta.url).href)});
+try { requireOsOwner('C:\\\\owned\\\\state'); throw new Error('failed verifier accepted'); }
+catch (error) { console.log(JSON.stringify({ message: error.message, requestTimeout })); }
+`
+  const result = spawnSync(process.execPath, ['--eval', script], { encoding: 'utf8', timeout: 5_000, maxBuffer: 64 * 1024 })
+  if (result.error || result.status !== 0) throw new Error(`Verifier failure boundary failed: ${result.error ?? result.stderr}`)
+  const proof = JSON.parse(result.stdout.trim())
+  expect(proof.message).toContain('Windows OS ownership verification failed')
+  expect(proof.message).toContain('ETIMEDOUT')
+  expect(proof.message).toContain('SIGTERM')
+  expect(proof.message).toContain('Windows private authority stage: input-ready')
+  expect(proof.message).not.toContain('xxx')
+  expect(proof.message.length).toBeLessThan(1024)
+  expect(proof.requestTimeout).toBe(5_000)
+})
+
 test('actual OS branch secures a new authority and its sidecars before a durable reopen', () => {
   const root = mkdtempSync(join(tmpdir(), 'authority-os-private-'))
   const stateDir = join(root, 'state')
