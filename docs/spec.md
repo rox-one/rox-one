@@ -1,3 +1,10 @@
+## Golden Gate device diagnostics recovery — 2026-10-03
+
+Owner: integration worker in isolated `codex/recover-golden-diagnostics-20261003`. Recover the genuinely absent native diagnostics slice from preserved branch `codex/golden-gate-workspace`, exact revision `5def9ffd36dc160fdc7c908784e0ef97ba6a732e` (closed unmerged PR #584). Source file hashes and the 90 recovered locale keys are recorded in `docs/golden-diagnostics-source.json`.
+
+The current TopBar and glass navigation remain authoritative. Add only the existing source chip, its lazily loaded diagnostics views and direct device-local IPC/preload wiring. Closed diagnostics perform no native reads, timers or diagnostics chunk loading. Opening shows bounded real device snapshots or truthful unavailable states; hidden/minimized/closed windows and closed popovers cancel work. Native collection accepts fixed kinds and log-source enums, never renderer commands, paths or workspace tokens; only the managed app main frame can invoke it. Logs are bounded and redact secrets, links are rejected and FIFOs cannot block a read. All recovered user strings must retain current locale parity.
+
+Acceptance: native authorization/negative-control/cancellation tests, preload field projection, CPU/network/log collector tests, poller lifecycle and endpoint redaction, headless production chip open/tab/close behavior, package types and WebUI/Electron bundles. This does not establish real hardware permission/compositor acceptance. Remaining Golden Gate recovery clusters are persisted panel workspace/resize, native surface ownership/retention, Notes/Meetings request lifecycle and task catalog; no missing module is accepted merely because it was copied.
 ## Session UX branch integration — 2026-10-03
 
 Owner: PR scout/integration worker in isolated `codex/integrate-session-ux-20261003`, based on exact #1391 head `ddf97e3d5025288819e0bfdc3b26741f75b6d3b1`. Preserve original branches and all unrelated work. The latest 203-file app completion commit remains substantive; the first four #1391 commits already occur in #1392.
