@@ -1,5 +1,17 @@
 # Unified Rox / Conation / RMA / Golden Gate behavioral specification
 
+## Оформление по образцу Zed — 2026-10-03
+
+Согласованное пользователем оформление применяется к десктопу и WebUI. Крупные панели стыкуются без зазоров, радиус 0 px; карточки, кнопки, поля и composer — 4 px; отдельные меню и диалоги — 6 px. Нативные внешние углы окна и круглые аватары сохраняются. Arial Narrow/Rox Mono, размеры текста, плотность и поведение навигации сохраняются.
+
+Верхняя панель, боковая навигация и инспектор используют лёгкое стекло цвета темы: непрозрачность 84/82/88%, размытие 20 px. Рабочие поверхности, карточки, редакторы, composer и терминал непрозрачны. Нативный материал определяет main process; WebUI использует CSS-стекло над плотным фоном страницы. Явная непрозрачность, требования доступности, неподдерживаемые эффекты и ошибки paint/GPU имеют приоритет. Новые фоновые изображения не добавляются.
+
+Встроенные Nordfox - opaque, Min Dark (Blurred), Siri Light адаптированы из установленных Zed-пакетов 0.10.5/0.2.2/0.0.12; хэши и MIT notices сохранены. Импорт охватывает семантические цвета UI, категории синтаксиса и ANSI-интенсивности терминала. Поправки контраста документируются. Siri всегда светлая, Nordfox/Min всегда тёмные; UI, код и терминал получают один эффективный режим. Nordfox выбирается только при физическом создании отсутствующей конфигурации; существующие, импортированные, legacy и пользовательские/workspace настройки сохраняют прежнее поведение.
+
+Приёмка включает чтение сохранённой конфигурации, reload/relaunch и синхронизацию окон; смену темы без остаточных стилей; реальную геометрию и изменение размеров; код/ANSI; WebUI и native macOS evidence, привязанные к ревизии; непрозрачные и accessibility fallback; профильные тесты, типы и сборки. Windows Mica подтверждается только на Windows. Локальная реализация и сборка не означают перенос в release или production delivery. Этот раздел заменяет прежний запрет импорта Zed в исторических требованиях оформления ниже; статус остальных программных задач сохраняется.
+
+Происхождение импорта: `docs/themes/zed-import.md` и `docs/themes/zed-syntax.md`; задачи, владельцы и зависимости: раздел оформления Zed в `docs/plan.md`; результаты и ограничения: `docs/themes/appearance-verification.md`.
+
 ## Desktop runtime 0.11.8 delivery — 2026-10-03
 
 The bounded OMP runtime, transcript/branch recovery, ROX context migration, bundled skills and macOS/Windows release work is tracked in [runtime specification](runtime-0.11.8-spec.md) and [parallel plan](runtime-0.11.8-plan.md). This delivery has its own source, native acceptance and release evidence; the broader program below retains its current acceptance state.

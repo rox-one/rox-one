@@ -33,6 +33,8 @@ export interface RequestContext {
   principal?: NativePrincipal
   /** Current verified server-only Actor; absent for standalone/local clients. */
   readonly actor?: AuthenticatedActor
+  /** Minted by cookie authentication and a server-owned current workspace gate. */
+  readonly webUiAuthenticated?: boolean
 }
 
 export type HandlerFn = (ctx: RequestContext, ...args: any[]) => Promise<any> | any

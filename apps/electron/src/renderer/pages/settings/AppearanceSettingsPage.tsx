@@ -435,16 +435,16 @@ export default function AppearanceSettingsPage() {
   }, [])
 
   // Handler for workspace theme change
-  // Uses ThemeContext for the active workspace (immediate visual update) and IPC for other workspaces
+  // Uses ThemeContext for the active workspace (update after successful persistence) and IPC for other workspaces
   const handleWorkspaceThemeChange = useCallback(
     async (workspaceId: string, value: string) => {
       if (!appearancePrefLive()) return
       // 'default' means inherit from app default (null in storage)
       const themeId = value === 'default' ? null : value
 
-      // If changing the current workspace, use context for immediate update
+      // If changing the current workspace, use context and await the config acknowledgement
       if (workspaceId === activeWorkspaceId) {
-        setWorkspaceColorTheme(themeId)
+        if (!await setWorkspaceColorTheme(themeId)) return
       } else {
         // For other workspaces, just persist via IPC
         await window.electronAPI?.setWorkspaceColorTheme?.(workspaceId, themeId)
@@ -619,7 +619,7 @@ export default function AppearanceSettingsPage() {
                 </SettingsCard>
                 {themeLoadError && (
                   <p className="mt-2 text-xs text-info">
-                    {t("settings.appearance.themeWarning")} {themeLoadError} ({themeResolvedFrom === 'fallback' ? t("settings.appearance.usingBundledFallback") : t("settings.appearance.usingDefaultTheme")})
+                    {themeLoadError === 'THEME_SAVE_FAILED' ? t("settings.appearance.themeSaveFailed") : <>{t("settings.appearance.themeWarning")} {themeLoadError} ({themeResolvedFrom === 'fallback' ? t("settings.appearance.usingBundledFallback") : t("settings.appearance.usingDefaultTheme")})</>}
                   </p>
                 )}
               </SettingsSection>

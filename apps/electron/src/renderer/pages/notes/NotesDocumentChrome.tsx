@@ -54,7 +54,7 @@ export function NotesBreadcrumbs({
           <button
             type="button"
             className={cn(
-              'max-w-[9rem] truncate rounded-[4px] px-1 py-0.5 hover:bg-foreground/[0.06] hover:text-foreground',
+              'max-w-[9rem] truncate rounded-[var(--radius-control)] px-1 py-0.5 hover:bg-foreground/[0.06] hover:text-foreground',
               index === crumbs.length - 1 && 'font-medium text-foreground',
             )}
             onClick={() => {
@@ -137,7 +137,7 @@ export function NotesCommandPalette({
   let offset = 0
   return (
     <div
-      className="notes-authoring-palette absolute z-30 w-80 rounded-[8px] border border-foreground/[0.08] bg-popover p-1 shadow-strong"
+      className="notes-authoring-palette absolute z-30 w-80 rounded-[var(--radius-overlay)] border border-foreground/[0.08] bg-popover p-1 shadow-strong"
       role="listbox"
       aria-label={t('notes.palette.title')}
       data-testid="notes-command-palette"
@@ -177,7 +177,7 @@ export function NotesCommandPalette({
                   key={item.id}
                   type="button"
                   className={cn(
-                    'flex w-full items-center justify-between rounded-[6px] px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
+                    'flex w-full items-center justify-between rounded-[var(--radius-control)] px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
                     flatIndex === selected && 'bg-foreground/[0.10] text-foreground',
                   )}
                   onClick={() => onSelect(item)}

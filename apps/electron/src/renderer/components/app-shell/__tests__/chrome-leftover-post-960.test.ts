@@ -46,13 +46,13 @@ describe('ship-rox-chrome-leftover-post-960', () => {
     expect(collapsed).not.toContain('mt-1 mb-1')
   })
 
-  it('preserves rounded shell gaps without extra terminal dock margins', () => {
+  it('keeps all panes flush without extra terminal dock margins', () => {
     const constants = readFileSync(join(appShell, 'panel-constants.ts'), 'utf8')
-    expect(constants).toContain('PANEL_STACK_TOP_INSET = 4')
+    expect(constants).toContain('PANEL_STACK_TOP_INSET = 0')
     expect(constants).toContain('PANEL_STACK_BOTTOM_INSET = 0')
-    expect(constants).toContain('PANEL_GAP = 4')
-    expect(constants).toContain('PANEL_EDGE_INSET = 4')
-    expect(stack).toContain('COMPACT_PANEL_TOP_GAP = 4')
+    expect(constants).toContain('PANEL_GAP = 0')
+    expect(constants).toContain('PANEL_EDGE_INSET = 0')
+    expect(stack).toContain('COMPACT_PANEL_TOP_GAP = 0')
     const dock = readFileSync(join(appShell, '../session-inspector/BottomTerminalDock.tsx'), 'utf8')
     expect(dock).not.toContain('mx-0.5 mb-0.5')
     expect(dock).not.toContain('mx-1 mb-1')

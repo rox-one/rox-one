@@ -372,7 +372,7 @@ export default function BrowserProfileImportPanel() {
       </SettingsSection>
 
       <button type="button" data-testid="browser-profile-manual-toggle" aria-expanded={manualOpen} aria-controls="browser-profile-manual"
-        className="flex w-full items-center gap-2 rounded-xl border border-border/50 bg-background/40 px-4 py-3 text-sm font-medium transition-colors hover:bg-foreground/5"
+        className="flex w-full items-center gap-2 rounded-[var(--radius-control)] border border-border/50 bg-background/40 px-4 py-3 text-sm font-medium transition-colors hover:bg-foreground/5"
         onClick={() => {
           const opening = !manualOpen
           setManualOpen(opening)
@@ -381,7 +381,7 @@ export default function BrowserProfileImportPanel() {
         {manualOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         {t('settings.browserImport.title')}
       </button>
-      {manualOpen ? <div id="browser-profile-manual" className="space-y-4 rounded-xl border border-border/50 bg-background/30 p-4">
+      {manualOpen ? <div id="browser-profile-manual" className="space-y-4 rounded-[var(--radius-card)] border border-border/50 bg-background/30 p-4">
         <p className="text-sm text-muted-foreground">{t('settings.browserImport.description')}</p>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="secondary" disabled={loading || !canImport} onClick={() => void runImport(true)}>{t('settings.browserImport.dryRun')}</Button>
@@ -391,7 +391,7 @@ export default function BrowserProfileImportPanel() {
         </div>
         {cookiePreferred && !scopedCookies ? <p className="text-xs text-muted-foreground">{t('settings.browserImport.cookiesSkippedHint')}</p> : null}
         {profiles.length === 0 && !loading ? <p className="text-sm text-muted-foreground">{t('settings.browserImport.empty')}</p> : <div className="grid gap-2 sm:grid-cols-2">
-          {profiles.map((profile) => <label key={profile.id} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors ${selectedId === profile.id ? 'border-accent/40 bg-accent/5' : 'border-border/50 hover:bg-foreground/5'}`}>
+          {profiles.map((profile) => <label key={profile.id} className={`flex cursor-pointer items-start gap-3 rounded-[var(--radius-control)] border p-3 transition-colors ${selectedId === profile.id ? 'border-accent/40 bg-accent/5' : 'border-border/50 hover:bg-foreground/5'}`}>
             <input type="radio" name="browser-profile" className="mt-1 accent-accent" checked={selectedId === profile.id}
               disabled={loading || profileBound || profile.state === 'locked' || profile.state === 'unsupported'} onChange={() => setSelectedId(profile.id)} />
             <span className="min-w-0 text-sm"><span className="block truncate font-medium">{profile.name}</span>

@@ -68,6 +68,8 @@ export interface WebApiOptions {
   serverUrl: string
   /** Workspace ID to connect as. */
   workspaceId?: string
+  /** Safe metadata for the acknowledged workspace; no host paths or credentials. */
+  workspaceName?: string
 }
 
 export function createWebApi(options: WebApiOptions): {
@@ -154,6 +156,10 @@ export function createWebApi(options: WebApiOptions): {
 
     // Workspace operations — web UI works with a single connection
     getWindowWorkspace: () => Promise.resolve(client.getAcknowledgedWorkspaceId()),
+    getWorkspaces: async () => {
+      const id = client.getAcknowledgedWorkspaceId()
+      return id ? [{ id, name: options.workspaceName ?? id, slug: id, rootPath: '', createdAt: 0 }] : []
+    },
     getWindowMode: () => Promise.resolve('main'),
     // switchWorkspace must call the server so it registers the client's
     // workspaceId — otherwise push events (session updates) won't arrive.

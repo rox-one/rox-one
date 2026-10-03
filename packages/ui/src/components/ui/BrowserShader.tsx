@@ -52,7 +52,7 @@ export interface BrowserShaderProps {
 export function BrowserShader({
   className,
   rounded = false,
-  borderRadius = '8px',
+  borderRadius = 'var(--radius-card)',
   maskImage,
   opacity = 0.85,
   colorBack = 'rgba(0,0,0,0)',

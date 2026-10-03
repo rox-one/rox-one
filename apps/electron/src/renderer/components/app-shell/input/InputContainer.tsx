@@ -260,7 +260,7 @@ export function InputContainer({
           className="absolute top-0 left-0 right-0 invisible pointer-events-none"
           aria-hidden="true"
         >
-          <div className="rounded-[8px] bg-background overflow-hidden">
+          <div className="rounded-[var(--radius-card)] bg-background overflow-hidden">
             {renderContent(true)}
           </div>
         </div>
@@ -269,7 +269,7 @@ export function InputContainer({
       {/* Visible animated container */}
       <motion.div
         className={cn(
-          "input-container relative rounded-[12px] overflow-hidden transition-colors",
+          "input-container relative rounded-[var(--radius-composer)] overflow-hidden transition-colors",
           isFocusedPanel ? "shadow-middle" : "shadow-minimal",
           "bg-background"
         )}

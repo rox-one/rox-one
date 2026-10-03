@@ -1,5 +1,5 @@
 /**
- * Shared sash primitive (ZS-05): 12px hit / 2px line, 24px on coarse pointers.
+ * Shared sash primitive: 12px hit / 1px line, 24px on coarse pointers.
  */
 
 import * as React from 'react'
@@ -16,13 +16,15 @@ import { KEYBOARD_RESIZE_LARGE_STEP, KEYBOARD_RESIZE_STEP } from './resize-math'
 
 export interface ResizeHandleProps {
   orientation?: 'vertical' | 'horizontal'
-  labelKey: 'shell.resize.sidebar' | 'shell.resize.navigator' | 'shell.resize.panels'
+  labelKey: 'shell.resize.sidebar' | 'shell.resize.navigator' | 'shell.resize.panels' | 'shell.resize.terminal'
   controlsId?: string
   valueNow: number
   valueMin: number
   valueMax: number
   dragging?: boolean
   disabled?: boolean
+  /** A bottom dock grows upward; Home/End still target the value bounds. */
+  reverseArrowKeys?: boolean
   className?: string
   style?: React.CSSProperties
   onPointerDown?: (event: React.PointerEvent<HTMLDivElement>) => void
@@ -54,6 +56,7 @@ export function ResizeHandle({
   valueMax,
   dragging = false,
   disabled = false,
+  reverseArrowKeys = false,
   className,
   style,
   onPointerDown,
@@ -79,12 +82,12 @@ export function ResizeHandle({
     const step = event.shiftKey ? KEYBOARD_RESIZE_LARGE_STEP : KEYBOARD_RESIZE_STEP
     if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
       event.preventDefault()
-      onKeyAdjust?.(-step)
+      onKeyAdjust?.(reverseArrowKeys ? step : -step)
       return
     }
     if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
       event.preventDefault()
-      onKeyAdjust?.(step)
+      onKeyAdjust?.(reverseArrowKeys ? -step : step)
       return
     }
     if (event.key === 'Home') {
@@ -131,7 +134,9 @@ export function ResizeHandle({
         dragging && 'shell-sash-active',
         className,
       )}
-      style={{ width: hit, ...style }}
+      // A touch on the sash belongs to the resize controller; browser panning
+      // would otherwise cancel its captured pointer after the first movement.
+      style={{ width: hit, touchAction: 'none', ...style }}
       onPointerDown={(event) => {
         if (disabled || event.button !== 0) return
         handlers.onMouseDown()

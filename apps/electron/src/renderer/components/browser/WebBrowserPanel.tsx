@@ -203,7 +203,7 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
             value={address}
             onChange={(event) => setAddress(event.target.value)}
             onFocus={(event) => event.currentTarget.select()}
-            className="h-9 w-full rounded-xl border border-black/[0.12] bg-black/[0.04] px-3 text-[14px] outline-none transition focus:border-black/25 focus:bg-background"
+            className="h-9 w-full rounded-[var(--radius-card)] border border-black/[0.12] bg-black/[0.04] px-3 text-[14px] outline-none transition focus:border-black/25 focus:bg-background"
             placeholder="输入网址或搜索内容"
             inputMode="url"
             autoCapitalize="none"

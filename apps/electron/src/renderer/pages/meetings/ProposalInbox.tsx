@@ -40,7 +40,7 @@ export default function ProposalInbox(props: {
         <EmptyState title={t('meetings.screen.proposalsEmptyTitle')} body={t('meetings.screen.proposalsEmptyBody')} />
       ) : null}
       {props.proposals.map((proposal) => (
-        <div key={proposal.id} data-testid="meeting-proposal" className="flex items-start gap-2 rounded-[6px] px-2 py-1.5 hover:bg-foreground/[0.04]">
+        <div key={proposal.id} data-testid="meeting-proposal" className="flex items-start gap-2 rounded-[var(--radius-control)] px-2 py-1.5 hover:bg-foreground/[0.04]">
           {proposal.status === 'proposed' ? (
             <input
               type="checkbox"

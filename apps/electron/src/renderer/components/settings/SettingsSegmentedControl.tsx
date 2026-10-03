@@ -147,7 +147,7 @@ export function SettingsSegmentedControlCard<T extends string = string>({
             aria-checked={isSelected}
             onClick={() => onValueChange(option.value)}
             className={cn(
-              'flex items-center gap-2 px-3 py-2.5 rounded-xl transition-colors text-left',
+              'flex items-center gap-2 px-3 py-2.5 rounded-[var(--radius-control)] transition-colors text-left',
               isSelected ? 'bg-muted' : 'bg-muted/50 hover:bg-muted/70'
             )}
           >

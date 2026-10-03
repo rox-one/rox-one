@@ -416,7 +416,7 @@ export default function SourceInfoPage({ sourceSlug, workspaceId, onDelete }: So
       type="button"
       variant="ghost"
       size="sm"
-      className="h-8 px-3 rounded-[6px] bg-background/60 shadow-minimal text-foreground/60 hover:text-foreground"
+      className="h-8 px-3 rounded-[var(--radius-control)] bg-background/60 shadow-minimal text-foreground/60 hover:text-foreground"
     >
       {t('common.askAi')}
     </Button>
@@ -469,7 +469,7 @@ export default function SourceInfoPage({ sourceSlug, workspaceId, onDelete }: So
                 <Button
                   type="button"
                   size="sm"
-                  className="h-8 px-3 rounded-[6px]"
+                  className="h-8 px-3 rounded-[var(--radius-card)]"
                   disabled={saving}
                   onClick={() => void handleSaveNative()}
                 >
@@ -636,7 +636,7 @@ export default function SourceInfoPage({ sourceSlug, workspaceId, onDelete }: So
                 <Button
                   type="button"
                   size="sm"
-                  className="h-8 px-3 rounded-[6px]"
+                  className="h-8 px-3 rounded-[var(--radius-card)]"
                   disabled={saving}
                   onClick={() => void handleSaveNative()}
                 >

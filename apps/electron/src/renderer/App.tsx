@@ -273,7 +273,7 @@ function SessionLoadErrorScreen({
 
   return (
     <div className="flex h-full items-center justify-center p-6">
-      <div className="max-w-lg rounded-xl border border-border/50 bg-background shadow-minimal p-6 text-center">
+      <div className="max-w-lg rounded-[var(--radius-card)] border border-border/50 bg-background shadow-minimal p-6 text-center">
         <h2 className="text-lg font-semibold text-foreground">{t("errors.failedToLoadSessions")}</h2>
         <p className="mt-2 text-sm text-foreground/60">
           {t("errors.failedToLoadSessionsDesc")}
@@ -284,7 +284,7 @@ function SessionLoadErrorScreen({
         <button
           type="button"
           onClick={onRetry}
-          className="mt-4 inline-flex h-8 items-center justify-center rounded-[8px] bg-foreground text-background px-3 text-sm font-medium hover:opacity-90 transition-opacity"
+          className="mt-4 inline-flex h-8 items-center justify-center rounded-[var(--radius-control)] bg-foreground text-background px-3 text-sm font-medium hover:opacity-90 transition-opacity"
         >
           {t("errors.retryLoadingSessions")}
         </button>

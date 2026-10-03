@@ -48,7 +48,7 @@ export type MessageHoverDockProps = {
 }
 
 const iconButton =
-  'inline-flex h-7 w-7 items-center justify-center rounded-[6px] text-muted-foreground hover:bg-foreground/5 hover:text-foreground data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground'
+  'inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-foreground/5 hover:text-foreground data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground'
 
 /**
  * Compact message action dock: at most three visible actions (heart, copy,
@@ -95,7 +95,7 @@ export function MessageHoverDock({
         aria-pressed={heart?.mine ?? false}
         aria-label={t('chat.reactHeart')}
         className={cn(
-          'inline-flex h-7 items-center gap-1 rounded-[6px] px-1.5 text-xs',
+          'inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] px-1.5 text-xs',
           heart?.mine ? 'text-rose-500' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
         )}
         onClick={onToggleHeart}
@@ -124,7 +124,7 @@ export function MessageHoverDock({
           aria-pressed={item.mine}
           aria-label={item.emoji}
           className={cn(
-            'inline-flex h-7 items-center gap-1 rounded-[6px] px-1.5 text-xs',
+            'inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] px-1.5 text-xs',
             item.mine ? 'bg-foreground/5 text-foreground' : 'text-muted-foreground hover:bg-foreground/5',
           )}
           onClick={() => onToggleEmoji(item.emoji)}

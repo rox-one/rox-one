@@ -291,7 +291,7 @@ function QuickActionsWidget({ edit, width }: WidgetProps) {
             disabled={busy === a.key}
             onClick={a.onClick}
             data-home-action={a.key}
-            className="rox-home-tile flex min-w-0 flex-col items-start justify-between gap-1 rounded-[8px] px-3 py-2 text-left disabled:opacity-60"
+            className="rox-home-tile flex min-w-0 flex-col items-start justify-between gap-1 rounded-[var(--radius-card)] px-3 py-2 text-left disabled:opacity-60"
           >
             <span className="text-foreground">{a.icon}</span>
             <span className="flex w-full min-w-0 items-baseline gap-1">
@@ -473,7 +473,7 @@ function UsageWidget({ edit, width, size = 'S' }: WidgetProps) {
               {usage.days.map((d) => (
                 <div key={d.start} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1" title={`${fmt.weekday(d.start)} · ${formatTokens(d.tokens)} · ${formatUsd(d.costUsd)}`}>
                   <div
-                    className={cn('w-full max-w-7 rounded-[4px]', d.start === usage.today.start ? 'bg-accent' : 'bg-foreground/30')}
+                    className={cn('w-full max-w-7 rounded-[var(--radius-control)]', d.start === usage.today.start ? 'bg-accent' : 'bg-foreground/30')}
                     style={{ height: d.tokens > 0 ? `${Math.max(6, Math.round((d.tokens / max) * 100))}%` : 2 }}
                   />
                   <span className="text-[11px] leading-3 text-muted-foreground">{fmt.weekday(d.start)}</span>
@@ -1223,7 +1223,7 @@ function InboxTrackerWidget({ edit, width, size = 'S' }: WidgetProps) {
           <ul className={cn('min-w-0', widgetContentLayout(width).listColumns === 2 ? 'grid grid-cols-2 gap-x-4' : 'flex flex-col')}>
             {kinds.slice(0, widgetItemLimit(size, 4, widgetContentLayout(width).listColumns)).map((k) => (
               <li key={k} className="min-w-0" data-home-row={`kind-${k}`}>
-                <button type="button" onClick={open} className="rox-home-row flex w-full min-w-0 items-center gap-2 rounded-[6px] px-1.5 py-1 text-left">
+                <button type="button" onClick={open} className="rox-home-row flex w-full min-w-0 items-center gap-2 rounded-[var(--radius-control)] px-1.5 py-1 text-left">
                   <span className="w-[42%] min-w-0 shrink-0 truncate text-[13px] leading-5 text-foreground">{t(`inbox.kind.${k}`)}</span>
                   <span className="flex h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-foreground/[0.08]">
                     <span className={cn('rounded-full', k === 'error' ? 'bg-destructive' : (['permission', 'credential', 'plan', 'memory', 'skill', 'sender'] as string[]).includes(k) ? 'bg-[var(--warning,#d9a13b)]' : 'bg-foreground/50')} style={{ width: `${(counts.byKind[k] / max) * 100}%` }} />
@@ -1290,7 +1290,7 @@ function CalendarWidget({ edit, width, size = 'S' }: WidgetProps) {
               const isToday = day.start === today
               const shown = day.events.slice(0, perDay)
               return (
-                <div key={day.start} className={cn('flex min-h-0 min-w-0 flex-col rounded-[6px] px-1 py-1', isToday ? 'bg-foreground/[0.08]' : 'bg-foreground/[0.03]')} data-home-day={isToday ? 'today' : ''}>
+                <div key={day.start} className={cn('flex min-h-0 min-w-0 flex-col rounded-[var(--radius-card)] px-1 py-1', isToday ? 'bg-foreground/[0.08]' : 'bg-foreground/[0.03]')} data-home-day={isToday ? 'today' : ''}>
                   <div className="flex items-baseline gap-1 px-0.5">
                     <span className={cn('text-[11px] uppercase tracking-wide', isToday ? 'font-bold text-foreground' : 'text-muted-foreground')}>{fmt.weekday(day.start)}</span>
                     <span className={cn('truncate text-[12px] tabular-nums', isToday ? 'font-bold text-accent' : 'text-muted-foreground')}>{fmt.dayMonth(day.start)}</span>
@@ -1304,7 +1304,7 @@ function CalendarWidget({ edit, width, size = 'S' }: WidgetProps) {
                             type="button"
                             onClick={() => openEvent(e.kind, e.id)}
                             title={`${t(`workbench.home.calendar.kind.${e.kind}`)} · ${e.title}`}
-                            className="rox-home-row flex w-full min-w-0 items-center gap-1 rounded-[4px] px-0.5 text-left text-[12px] leading-4"
+                            className="rox-home-row flex w-full min-w-0 items-center gap-1 rounded-[var(--radius-control)] px-0.5 text-left text-[12px] leading-4"
                           >
                             <Icon className={cn('h-3 w-3 shrink-0', e.overdue ? 'text-destructive' : 'text-muted-foreground')} />
                             {e.kind !== 'task' && e.kind !== 'note' ? <span className="shrink-0 tabular-nums text-muted-foreground">{fmt.time(e.at)}</span> : null}
@@ -1340,7 +1340,7 @@ function CalendarWidget({ edit, width, size = 'S' }: WidgetProps) {
                         onClick={() => openEvent(event.kind, event.id)}
                         title={`${t(`workbench.home.calendar.kind.${event.kind}`)} · ${event.title}`}
                         data-home-row={`calendar-${event.kind}-${event.id}`}
-                        className="rox-home-row flex w-full min-w-0 items-center gap-2 rounded-[6px] px-1.5 py-0.5 text-left"
+                        className="rox-home-row flex w-full min-w-0 items-center gap-2 rounded-[var(--radius-control)] px-1.5 py-0.5 text-left"
                       >
                         <span className={cn('w-12 shrink-0 text-[12px] uppercase', isToday ? 'font-bold text-accent' : 'text-muted-foreground')}>
                           {index === 0 ? `${fmt.weekday(day.start)} ${new Date(day.start).getDate()}` : null}

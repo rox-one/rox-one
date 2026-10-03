@@ -2,7 +2,8 @@ import { existsSync, readFileSync, writeFileSync, unlinkSync, readdirSync } from
 import { spawn } from 'node:child_process'
 import { homedir } from 'node:os'
 import { join, basename } from 'path'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS, CodedError } from '@rox/shared/protocol'
+import { loadWebAppTheme, loadWebPresetTheme, loadWebPresetThemes } from '../../webui/theme-storage'
 import {
   addWorkspace,
   createAndActivateLocalWorkspace,
@@ -456,18 +457,21 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
   // Theme (app-level only)
   // ============================================================
 
-  server.handle(RPC_CHANNELS.theme.GET_APP, async () => {
+  server.handle(RPC_CHANNELS.theme.GET_APP, async (ctx) => {
+    if (ctx.webUiAuthenticated) return loadWebAppTheme()
     const { loadAppTheme } = await import('@rox/shared/config/storage')
     return loadAppTheme()
   })
 
   // Preset themes (app-level)
-  server.handle(RPC_CHANNELS.theme.GET_PRESETS, async () => {
+  server.handle(RPC_CHANNELS.theme.GET_PRESETS, async (ctx) => {
+    if (ctx.webUiAuthenticated) return loadWebPresetThemes()
     const { loadPresetThemes } = await import('@rox/shared/config/storage')
     return loadPresetThemes()
   })
 
-  server.handle(RPC_CHANNELS.theme.LOAD_PRESET, async (_ctx, themeId: string) => {
+  server.handle(RPC_CHANNELS.theme.LOAD_PRESET, async (ctx, themeId: string) => {
+    if (ctx.webUiAuthenticated) return loadWebPresetTheme(themeId)
     const { loadPresetTheme } = await import('@rox/shared/config/storage')
     return loadPresetTheme(themeId)
   })
@@ -477,14 +481,21 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
     return getColorTheme()
   })
 
-  server.handle(RPC_CHANNELS.theme.SET_COLOR_THEME, async (_ctx, themeId: string) => {
+  server.handle(RPC_CHANNELS.theme.SET_COLOR_THEME, async (ctx, themeId: string) => {
+    if (ctx.webUiAuthenticated && !loadWebPresetTheme(themeId)) throw new CodedError('INVALID_PAYLOAD', 'Unknown preset theme')
     const { setColorTheme } = await import('@rox/shared/config/storage')
     setColorTheme(themeId)
   })
 
   // Broadcast theme preferences to all other windows (for cross-window sync)
   server.handle(RPC_CHANNELS.theme.BROADCAST_PREFERENCES, async (ctx, preferences: { mode: string; colorTheme: string; font: string }) => {
-    pushTyped(server, RPC_CHANNELS.theme.PREFERENCES_CHANGED, { to: 'all' }, preferences)
+    if (ctx.webUiAuthenticated) {
+      if (!loadWebPresetTheme(preferences.colorTheme)) throw new CodedError('INVALID_PAYLOAD', 'Unknown preset theme')
+      const { mode, colorTheme, font } = preferences
+      const contrast = (preferences as typeof preferences & { contrast?: string }).contrast
+      pushTyped(server, RPC_CHANNELS.theme.PREFERENCES_CHANGED, { to: 'workspace', workspaceId: ctx.workspaceId! },
+        { mode, colorTheme, font, ...(contrast ? { contrast } : {}) })
+    } else pushTyped(server, RPC_CHANNELS.theme.PREFERENCES_CHANGED, { to: 'all' }, preferences)
   })
 
   // Workspace-level theme overrides
@@ -497,21 +508,23 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
     return getWorkspaceColorTheme(workspace.rootPath) ?? null
   })
 
-  server.handle(RPC_CHANNELS.theme.SET_WORKSPACE_COLOR_THEME, async (_ctx, workspaceId: string, themeId: string | null) => {
+  server.handle(RPC_CHANNELS.theme.SET_WORKSPACE_COLOR_THEME, async (ctx, workspaceId: string, themeId: string | null) => {
+    if (ctx.webUiAuthenticated && themeId !== null && !loadWebPresetTheme(themeId)) throw new CodedError('INVALID_PAYLOAD', 'Unknown preset theme')
     const { getWorkspaces } = await import('@rox/shared/config/storage')
     const { setWorkspaceColorTheme } = await import('@rox/shared/workspaces/storage')
     const workspaces = getWorkspaces()
     const workspace = workspaces.find(w => w.id === workspaceId)
-    if (!workspace) return
+    if (!workspace) throw new Error('Workspace config is missing or unreadable')
     setWorkspaceColorTheme(workspace.rootPath, themeId ?? undefined)
   })
 
-  server.handle(RPC_CHANNELS.theme.GET_ALL_WORKSPACE_THEMES, async () => {
+  server.handle(RPC_CHANNELS.theme.GET_ALL_WORKSPACE_THEMES, async (ctx) => {
     const { getWorkspaces } = await import('@rox/shared/config/storage')
     const { getWorkspaceColorTheme } = await import('@rox/shared/workspaces/storage')
     const workspaces = getWorkspaces()
     const themes: Record<string, string | undefined> = {}
     for (const ws of workspaces) {
+      if (ctx.webUiAuthenticated && ws.id !== ctx.workspaceId) continue
       themes[ws.id] = getWorkspaceColorTheme(ws.rootPath)
     }
     return themes
@@ -519,7 +532,9 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
 
   // Broadcast workspace theme change to all other windows (for cross-window sync)
   server.handle(RPC_CHANNELS.theme.BROADCAST_WORKSPACE_THEME, async (ctx, workspaceId: string, themeId: string | null) => {
-    pushTyped(server, RPC_CHANNELS.theme.WORKSPACE_THEME_CHANGED, { to: 'all' }, { workspaceId, themeId })
+    if (ctx.webUiAuthenticated && themeId !== null && !loadWebPresetTheme(themeId)) throw new CodedError('INVALID_PAYLOAD', 'Unknown preset theme')
+    pushTyped(server, RPC_CHANNELS.theme.WORKSPACE_THEME_CHANGED,
+      ctx.webUiAuthenticated ? { to: 'workspace', workspaceId: ctx.workspaceId! } : { to: 'all' }, { workspaceId, themeId })
   })
 
   // ============================================================

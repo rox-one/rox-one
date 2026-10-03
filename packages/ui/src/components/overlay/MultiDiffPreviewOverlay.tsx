@@ -336,14 +336,14 @@ export function MultiDiffPreviewOverlay({
                   <div
                     key={change.id}
                     ref={(el) => setChangeRef(change.id, el)}
-                    className="rounded-xl overflow-hidden bg-background shadow-minimal"
-                    style={{ minHeight: change.error ? undefined : 200, borderRadius: 12 }}
+                    className="rounded-[var(--radius-card,4px)] overflow-hidden bg-background shadow-minimal"
+                    style={{ minHeight: change.error ? undefined : 200 }}
                   >
                     {change.error ? (
                       // Errored change — tinted error banner
                       <div className="px-4 py-4">
                         <div
-                          className="flex items-start gap-3 px-4 py-3 rounded-[8px] bg-[color-mix(in_oklab,var(--destructive)_5%,var(--background))] shadow-tinted"
+                          className="flex items-start gap-3 px-4 py-3 rounded-[var(--radius-card,4px)] bg-[color-mix(in_oklab,var(--destructive)_5%,var(--background))] shadow-tinted"
                           style={{ '--shadow-color': 'var(--destructive-rgb)' } as React.CSSProperties}
                         >
                           <X className="w-4 h-4 text-destructive shrink-0 mt-0.5" />

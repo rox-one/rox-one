@@ -46,7 +46,7 @@ import {
 
 export type DetailTab = 'overview' | 'recording' | 'transcript' | 'decisions' | 'actions' | 'documents'
 
-const input = 'h-7 min-w-0 rounded-[6px] bg-foreground/[0.05] px-2 text-[13px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
+const input = 'h-7 min-w-0 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-[13px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 
 export function transcriptTone(m: LocalMeeting): { tone: Tone; key: string } {
   switch (m.transcript.status) {
@@ -423,7 +423,7 @@ export function LocalMeetingDetail(props: {
           aria-label={t('meetings.local.titleLabel')}
           onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== m.title) void update({ title: v }) }}
           onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
-          className="min-w-0 flex-1 truncate rounded-[6px] bg-transparent px-1 -mx-1 text-[17px] font-semibold outline-none hover:bg-foreground/[0.04] focus:bg-foreground/[0.06]"
+          className="min-w-0 flex-1 truncate rounded-[var(--radius-control)] bg-transparent px-1 -mx-1 text-[17px] font-semibold outline-none hover:bg-foreground/[0.04] focus:bg-foreground/[0.06]"
         />
         {recordingThis
           ? <Badge tone="danger">● {t('meetings.local.recShort')}</Badge>
@@ -454,7 +454,7 @@ export function LocalMeetingDetail(props: {
             data-testid="meeting-play"
             aria-label={playing ? t('meetings.local.pausePlayback') : t('meetings.local.play')}
             onClick={() => { const el = audioRef.current; if (!el) return; if (el.paused) void el.play().catch(() => {}); else el.pause() }}
-            className="grid size-7 shrink-0 place-items-center rounded-[6px] bg-foreground/[0.06] text-foreground outline-none hover:bg-foreground/[0.1] focus-visible:bg-foreground/[0.1]"
+            className="grid size-7 shrink-0 place-items-center rounded-[var(--radius-control)] bg-foreground/[0.06] text-foreground outline-none hover:bg-foreground/[0.1] focus-visible:bg-foreground/[0.1]"
           >
             {playing ? <Pause className="size-3.5" aria-hidden /> : <Play className="size-3.5" aria-hidden />}
           </button>
@@ -498,7 +498,7 @@ export function LocalMeetingDetail(props: {
           void update({ summary: text.trim() ? { text, generated: false, updatedAt: Date.now() } : null })
         }}
         rows={m.summary ? 5 : 3}
-        className="w-full resize-y rounded-[6px] bg-foreground/[0.05] px-2 py-1 text-[13px] leading-5 outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]"
+        className="w-full resize-y rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 py-1 text-[13px] leading-5 outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]"
       />
       {m.summary?.generated && transcript && m.summary.sourceTranscriptRevision !== transcript.revision ? (
         <p role="status" className="text-[11px] text-text-muted">{t('meetings.local.analysisStale')}</p>
@@ -508,7 +508,7 @@ export function LocalMeetingDetail(props: {
         <>
           <SectionLabel>{t('meetings.local.openQuestions')}</SectionLabel>
           {m.summary.questions.map((question) => (
-            <div key={question.id} className="rounded-[6px] bg-foreground/[0.04] px-2 py-1">
+            <div key={question.id} className="rounded-[var(--radius-card)] bg-foreground/[0.04] px-2 py-1">
               <p className="text-[13px]">{question.text}</p>
               {m.summary?.sourceTranscriptRevision === transcript?.revision ? renderSourceLinks(question.sourceSegmentIds) : null}
             </div>
@@ -530,9 +530,9 @@ export function LocalMeetingDetail(props: {
       <SectionLabel>{t('meetings.local.participants')}</SectionLabel>
       <div className="flex flex-wrap items-center gap-1">
         {m.participants.map((p) => (
-          <span key={p} className="inline-flex h-6 items-center gap-1 rounded-[6px] bg-foreground/[0.06] pl-2 pr-1 text-[12px]">
+          <span key={p} className="inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] bg-foreground/[0.06] pl-2 pr-1 text-[12px]">
             {p}
-            <button type="button" aria-label={t('meetings.local.removeParticipant', { name: p })} className="rounded-[4px] px-1 text-text-muted hover:text-foreground" onClick={() => void update({ participants: m.participants.filter((x) => x !== p) })}>×</button>
+            <button type="button" aria-label={t('meetings.local.removeParticipant', { name: p })} className="rounded-[var(--radius-control)] px-1 text-text-muted hover:text-foreground" onClick={() => void update({ participants: m.participants.filter((x) => x !== p) })}>×</button>
           </span>
         ))}
         <form onSubmit={(e) => { e.preventDefault(); const v = participantDraft.trim(); if (!v) return; void update({ participants: [...m.participants, v] }); setParticipantDraft('') }}>
@@ -548,7 +548,7 @@ export function LocalMeetingDetail(props: {
         placeholder={t('meetings.local.notesPlaceholder')}
         onBlur={(e) => { if (e.target.value !== m.notes) void update({ notes: e.target.value }) }}
         rows={4}
-        className="w-full resize-y rounded-[6px] bg-foreground/[0.05] px-2 py-1 text-[13px] leading-5 outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]"
+        className="w-full resize-y rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 py-1 text-[13px] leading-5 outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]"
       />
 
       <SectionLabel>{t('meetings.local.details')}</SectionLabel>
@@ -674,7 +674,7 @@ export function LocalMeetingDetail(props: {
             </span>
           </div>
           {transcript.history?.some((version) => version.revision < transcript.revision) ? (
-            <section className="flex flex-col gap-1 rounded-[6px] bg-foreground/[0.03] p-2" aria-label={t('meetings.local.tr.history')}>
+            <section className="flex flex-col gap-1 rounded-[var(--radius-card)] bg-foreground/[0.03] p-2" aria-label={t('meetings.local.tr.history')}>
               <SectionLabel>{t('meetings.local.tr.history')}</SectionLabel>
               {transcript.history
                 .filter((version) => version.revision < transcript.revision)
@@ -724,12 +724,12 @@ export function LocalMeetingDetail(props: {
               }
               const hasEdit = !!segmentEdits[s.id]
               return (
-                <li key={s.id} className="rounded-[6px]">
+                <li key={s.id} className="rounded-[var(--radius-card)]">
                   <button
                     type="button"
                     onClick={() => seek(s.startMs)}
                     disabled={!audioUrl}
-                    className={cn('flex w-full items-start gap-2 rounded-[6px] px-2 py-1 text-left hover:bg-foreground/[0.04]', s.id === activeId && 'bg-accent/10 shadow-[inset_2px_0_0_var(--accent)]')}
+                    className={cn('flex w-full items-start gap-2 rounded-[var(--radius-control)] px-2 py-1 text-left hover:bg-foreground/[0.04]', s.id === activeId && 'bg-accent/10 shadow-[inset_2px_0_0_var(--accent)]')}
                   >
                     <span className="w-12 shrink-0 pt-px font-mono text-[11px] tabular-nums text-text-muted">{formatRecClock(s.startMs)}</span>
                     <span className="min-w-0 flex-1 text-[13px] leading-5">{s.speakerId ? `${s.speakerId}: ` : ''}{s.text}</span>
@@ -792,7 +792,7 @@ export function LocalMeetingDetail(props: {
         <>
           <SectionLabel>{t('meetings.local.decisionCandidates')}</SectionLabel>
           {candidates.map((c) => (
-            <div key={c.id} className="flex items-start gap-2 rounded-[6px] bg-accent/[0.06] px-2 py-1">
+            <div key={c.id} className="flex items-start gap-2 rounded-[var(--radius-card)] bg-accent/[0.06] px-2 py-1">
               <span className="min-w-0 flex-1">
                 <span className="block text-[13px]">{c.title}</span>
                 {c.why ? <span className="block text-[12px] text-text-secondary">{c.why}</span> : null}
@@ -823,7 +823,7 @@ export function LocalMeetingDetail(props: {
       {decisions.length ? <SectionLabel>{t('meetings.local.decisionsMade')}</SectionLabel> : null}
       <ul className="flex flex-col" data-testid="meeting-decisions">
         {decisions.map((d) => (
-          <li key={d.id} className="group flex items-start gap-2 rounded-[6px] px-2 py-1 hover:bg-foreground/[0.04]">
+          <li key={d.id} className="group flex items-start gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/[0.04]">
             <span aria-hidden className={cn('mt-2 size-1.5 shrink-0 rounded-full', d.status === 'accepted' ? 'bg-success' : 'bg-text-muted')} />
             <span className="min-w-0 flex-1">
               {editingDecision === d.id ? (
@@ -874,7 +874,7 @@ export function LocalMeetingDetail(props: {
       {m.actions.length === 0 ? <EmptyState title={t('meetings.local.actionsEmptyTitle')} body={t('meetings.local.actionsEmptyBody')} /> : null}
       <ul className="flex flex-col" data-testid="meeting-actions">
         {m.actions.map((a) => (
-          <li key={a.id} className="group flex flex-wrap items-center gap-2 rounded-[6px] px-2 py-1 hover:bg-foreground/[0.04]">
+          <li key={a.id} className="group flex flex-wrap items-center gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/[0.04]">
             <input type="checkbox" className="accent-[var(--accent)]" checked={a.done} aria-label={a.text} onChange={(e) => saveActions(m.actions.map((x) => (x.id === a.id ? { ...x, done: e.target.checked } : x)))} />
             <span className={cn('min-w-0 flex-1 text-[13px]', a.done && 'text-text-muted line-through')}>
               {a.text}
@@ -915,7 +915,7 @@ export function LocalMeetingDetail(props: {
   }
   const documentsTab = (
     <div
-      className={cn('flex min-h-[160px] flex-col gap-1 rounded-[8px]', dragOver && 'bg-accent/[0.06] shadow-[inset_0_0_0_1px_var(--accent)]')}
+      className={cn('flex min-h-[160px] flex-col gap-1 rounded-[var(--radius-card)]', dragOver && 'bg-accent/[0.06] shadow-[inset_0_0_0_1px_var(--accent)]')}
       onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDragOver(true) } }}
       onDragLeave={() => setDragOver(false)}
       onDrop={(e) => {
@@ -935,7 +935,7 @@ export function LocalMeetingDetail(props: {
       ) : (
         <ul className="flex flex-col pt-1">
           {m.documents.map((d) => (
-            <li key={d.id} className="group flex items-center gap-2 rounded-[6px] px-2 py-1 hover:bg-foreground/[0.04]">
+            <li key={d.id} className="group flex items-center gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/[0.04]">
               <button type="button" className="min-w-0 flex-1 truncate text-left text-[13px]" onClick={() => void api?.openDocument(m.id, d.id)} title={t('meetings.local.open')}>{d.name}</button>
               <span className="shrink-0 text-[11px] tabular-nums text-text-muted">{formatBytes(d.bytes)} · {shortFmt.format(d.addedAt)}</span>
               <span className="flex shrink-0 gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
@@ -998,7 +998,7 @@ export function RecordingPanel({ compact }: { compact?: boolean }) {
   const bars = 24
   const lit = Math.round(rec.level * bars)
   return (
-    <div data-testid="meeting-recording-panel" className={cn('flex items-center gap-3 rounded-[8px] bg-destructive/[0.06] px-3', compact ? 'py-2' : 'py-3')}>
+    <div data-testid="meeting-recording-panel" className={cn('flex items-center gap-3 rounded-[var(--radius-control)] bg-destructive/[0.06] px-3', compact ? 'py-2' : 'py-3')}>
       <span aria-hidden className={cn('size-2.5 shrink-0 rounded-full bg-destructive', rec.status === 'recording' && 'animate-pulse')} />
       <span className={cn('shrink-0 font-semibold tabular-nums', compact ? 'text-[15px]' : 'text-[22px]')} data-testid="meeting-rec-timer">{formatRecClock(recordedMs(rec))}</span>
       <span className="flex h-4 min-w-0 flex-1 items-end gap-[2px]" aria-label={t('meetings.local.level')} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(rec.level * 100)}>

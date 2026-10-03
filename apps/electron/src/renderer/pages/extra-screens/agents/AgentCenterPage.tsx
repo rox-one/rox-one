@@ -270,7 +270,7 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
           </Card>
 
           {nothingActive && (
-            <div className="mt-4 rounded-[8px] bg-foreground/[0.03] px-4 py-3 text-muted-foreground" role="status">{t('extraScreens.agents.allQuiet')}</div>
+            <div className="mt-4 rounded-[var(--radius-card)] bg-foreground/[0.03] px-4 py-3 text-muted-foreground" role="status">{t('extraScreens.agents.allQuiet')}</div>
           )}
 
           {center.waiting.length > 0 && (
@@ -354,7 +354,7 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
 
 function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: 'warn' | 'err' }) {
   return (
-    <div className="rounded-[8px] bg-foreground/[0.04] px-3.5 py-3">
+    <div className="rounded-[var(--radius-card)] bg-foreground/[0.04] px-3.5 py-3">
       <div className="text-[12px] text-muted-foreground">{label}</div>
       <div className={cn('mt-0.5 text-[22px] font-bold tabular-nums leading-tight', tone === 'warn' && 'text-warning', tone === 'err' && 'text-destructive')}>{value}</div>
       {sub && <div className="text-[12px] text-muted-foreground">{sub}</div>}
@@ -378,7 +378,7 @@ function Section({ title, count, hint, actions, children }: { title: string; cou
 
 function Row({ title, meta, dim, children }: { title: string; meta?: string; dim?: boolean; children?: ReactNode }) {
   return (
-    <div className="flex items-center gap-2 rounded-[6px] bg-foreground/[0.025] px-3 py-1.5">
+    <div className="flex items-center gap-2 rounded-[var(--radius-control)] bg-foreground/[0.025] px-3 py-1.5">
       <div className="min-w-0 flex-1">
         <div className={cn('truncate', dim && 'text-muted-foreground')}>{title}</div>
         {meta && <div className="truncate text-[12px] text-muted-foreground">{meta}</div>}

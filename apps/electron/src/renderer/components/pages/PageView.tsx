@@ -226,7 +226,7 @@ export function PageView({ pageSlug }: PageViewProps) {
             <span>{t('pages.notFound')}</span>
             <button
               onClick={handleBack}
-              className="inline-flex h-7 items-center gap-1.5 rounded-[8px] bg-foreground/[0.02] px-3 text-xs font-medium shadow-minimal transition-colors hover:bg-foreground/[0.05]"
+              className="inline-flex h-7 items-center gap-1.5 rounded-[var(--radius-control)] bg-foreground/[0.02] px-3 text-xs font-medium shadow-minimal transition-colors hover:bg-foreground/[0.05]"
             >
               <ArrowLeft className="h-3.5 w-3.5" /> {t('pages.backToPages')}
             </button>
@@ -393,7 +393,7 @@ export function PageView({ pageSlug }: PageViewProps) {
               <button
                 type="button"
                 onClick={handleDesignWithAgent}
-                className="inline-flex h-7 items-center gap-1.5 rounded-[8px] bg-primary px-3 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                className="inline-flex h-7 items-center gap-1.5 rounded-[var(--radius-control)] bg-primary px-3 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90"
               >
                 <Sparkles className="h-3.5 w-3.5" />
                 {t('pages.designWithAgent')}
@@ -401,7 +401,7 @@ export function PageView({ pageSlug }: PageViewProps) {
               <button
                 type="button"
                 onClick={handleOpenFolder}
-                className="inline-flex h-7 items-center gap-1.5 rounded-[8px] bg-foreground/[0.02] px-3 text-xs font-medium shadow-minimal transition-colors hover:bg-foreground/[0.05]"
+                className="inline-flex h-7 items-center gap-1.5 rounded-[var(--radius-control)] bg-foreground/[0.02] px-3 text-xs font-medium shadow-minimal transition-colors hover:bg-foreground/[0.05]"
               >
                 <FolderOpen className="h-3.5 w-3.5" />
                 {t('pages.openFolder')}
@@ -416,7 +416,7 @@ export function PageView({ pageSlug }: PageViewProps) {
             </Info_Alert>
             <button
               onClick={() => setLeaseRetry(n => n + 1)}
-              className="mt-3 inline-flex h-7 items-center rounded-[8px] bg-foreground/[0.02] px-3 text-xs font-medium shadow-minimal transition-colors hover:bg-foreground/[0.05]"
+              className="mt-3 inline-flex h-7 items-center rounded-[var(--radius-control)] bg-foreground/[0.02] px-3 text-xs font-medium shadow-minimal transition-colors hover:bg-foreground/[0.05]"
             >
               {t('common.retry')}
             </button>

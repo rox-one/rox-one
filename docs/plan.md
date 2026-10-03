@@ -1,5 +1,19 @@
 # September program implementation plan
 
+## Zed appearance implementation — 2026-10-03
+
+User confirmed the design tree and requested implementation. Base: 29e86bcc515e24039a15a781d5885b272cbad1df; isolated branch `codex/rox-zed-appearance-20261003`. The release checkout has an unrelated unfinished merge and is not modified by this work. Integrate only after its owner completes that merge, then repeat affected checks on the combined revision.
+
+| Task | Owner | Dependencies | Owned output | Verification |
+| --- | --- | --- | --- | --- |
+| GEO | /root/rox_surface_scout | Agreed 0/4/6px roles | Renderer/shared component geometry and resize tests | Zero-flow sash, pointer/keyboard behavior, radius audit |
+| THEMES | /root/theme_contract_scout | Local source JSON/manifests | Shared theme/schema/default factory; bundled palettes/provenance | Contrast, merge/schema, fresh/existing/corrupt profile tests |
+| SYNTAX | /root/zed_theme_scout | THEMES token contract | Static syntax registry, code/diff/notes and ANSI consumers | Shiki/Pierre resolution, source mapping, intensity/reset rendering |
+| MATERIAL | /root | Agreed role names | Shared CSS, native/browser chrome policy, ThemeProvider | Effective mode, persistence, preview and fallback behavior |
+| ACCEPT | /root | GEO + THEMES + SYNTAX + MATERIAL | Integrated tests/builds, browser/native evidence, Git receipt | Real routes, reload/relaunch, dark/light backdrop, narrow layout |
+
+Common CSS and ThemeProvider have a single writer (/root). Workers edit only their assigned area and return exact paths and test evidence. No dependency update or terminal backend replacement is required. Preserve existing spec/plan sections; maintain glossary in CONTEXT.md. Verification outcomes, first failures, revision and remaining platform/integration requirements are appended to `docs/themes/appearance-verification.md`.
+
 ## Desktop runtime 0.11.8 delivery — 2026-10-03
 
 The bounded OMP runtime, transcript/branch recovery, ROX context migration, bundled skills and macOS/Windows release work is tracked in [runtime specification](runtime-0.11.8-spec.md) and [parallel plan](runtime-0.11.8-plan.md). This delivery has its own source, native acceptance and release evidence; the broader program below retains its current acceptance state.
