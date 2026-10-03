@@ -32,7 +32,9 @@ describe('OMP negotiated transport before provider execution', () => {
     const message = 'QA large command ' + 'x'.repeat(1_424_866);
     const events = await chatEvents(agent, message, 8_000);
     expect(events.some(event => event.type === 'text_complete')).toBe(true);
-    expect(fake.readRpcLog().find(frame => frame.type === 'prompt')?.message).toBe(withOmpRequiredModes(message));
+    expect(fake.readRpcLog().find(frame => frame.type === 'prompt')?.message).toBe(
+      `<sources>\nActive: none\n</sources>\n\n${withOmpRequiredModes(message)}`,
+    );
     expect(fake.readRpcLog().find(frame => frame.type === 'prompt')?.observedModel).toEqual({ provider: 'rox', id: 'standard' });
   });
 
