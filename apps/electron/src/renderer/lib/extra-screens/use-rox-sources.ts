@@ -5,8 +5,8 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtomValue } from 'jotai'
-import type { PersonalTask } from '@craft-agent/core/tasks/personal'
-import { isInternalAgentSession } from '@craft-agent/shared/sessions/internal-prompts'
+import type { PersonalTask } from '@rox/core/tasks/personal'
+import { isInternalAgentSession } from '@rox/shared/sessions/internal-prompts'
 import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
 import { subscribePersonalTasks } from '@/lib/personal-tasks'
 import { listPersonalTasks } from './personal-task-bridge'
@@ -114,7 +114,7 @@ export function useMessengerBindings(): MessengerBinding[] {
   return bindings
 }
 
-export type FeedItemRow = import('@craft-agent/shared/feed').FeedItem
+export type FeedItemRow = import('@rox/shared/feed').FeedItem
 
 export interface FeedSnapshot {
   /** false = no feed:list IPC (honest «Лента недоступна»). */

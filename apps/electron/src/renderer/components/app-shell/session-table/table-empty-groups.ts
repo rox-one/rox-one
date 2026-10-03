@@ -1,4 +1,4 @@
-import type { CollectionDisplay, SessionPriority } from '@craft-agent/shared/sessions/collection'
+import type { CollectionDisplay, SessionPriority } from '@rox/shared/sessions/collection'
 
 export interface TableGroupBucket {
   key: string

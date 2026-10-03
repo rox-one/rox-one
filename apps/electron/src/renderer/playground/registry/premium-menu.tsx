@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { PremiumMenu, PremiumMenuSelect, type PremiumMenuItem, type PremiumMenuVariant } from '@craft-agent/ui'
+import { PremiumMenu, PremiumMenuSelect, type PremiumMenuItem, type PremiumMenuVariant } from '@rox/ui'
 import type { ComponentEntry } from './types'
 
 function makeItems(count: number): PremiumMenuItem[] {

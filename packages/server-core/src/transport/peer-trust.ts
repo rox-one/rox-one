@@ -1,7 +1,7 @@
 import { createHash, X509Certificate } from 'node:crypto'
 import tls from 'node:tls'
 import type { PeerCertificate } from 'node:tls'
-import type { RemoteTlsTrust } from '@craft-agent/core/types'
+import type { RemoteTlsTrust } from '@rox/core/types'
 
 export type PeerTrustVerifier = (input: {
   url: string

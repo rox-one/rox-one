@@ -17,19 +17,19 @@
  */
 import { existsSync, mkdirSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { PushTarget } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import type { Lesson, LessonOwner, LessonScope } from '@craft-agent/shared/memory/types'
-import type { RequestContext, RpcServer } from '@craft-agent/server-core/transport'
-import { pushTyped } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { PushTarget } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import type { Lesson, LessonOwner, LessonScope } from '@rox/shared/memory/types'
+import type { RequestContext, RpcServer } from '@rox/server-core/transport'
+import { pushTyped } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   isClaimableLive,
   rpcMemoryIoActResult,
   rpcMemoryIoListResult,
   rpcMemoryIoReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import { LessonStore, lessonKey } from '../../memory/LessonStore'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'
 

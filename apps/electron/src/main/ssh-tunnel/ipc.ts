@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow } from 'electron'
-import type { SshHostConfig, SshHostInput } from '@craft-agent/shared/config'
+import type { SshHostConfig, SshHostInput } from '@rox/shared/config'
 import {
   loadSshHosts,
   addSshHost,
@@ -7,7 +7,7 @@ import {
   deleteSshHost,
   getSshHost,
   importSshConfigSuggestions,
-} from '@craft-agent/shared/config'
+} from '@rox/shared/config'
 import { getSshTunnelManager } from './ssh-tunnel-manager.ts'
 import type { TunnelState } from './ssh-tunnel.ts'
 import type { BootstrapProgress } from './server-bootstrap.ts'
@@ -16,7 +16,7 @@ import {
   tunnelStateToConnectionStatus,
   type SshConnectionStatus,
 } from './connection-resolver.ts'
-import type { RemoteServerConfig } from '@craft-agent/core/types'
+import type { RemoteServerConfig } from '@rox/core/types'
 
 export const SSH_BOOTSTRAP_PROGRESS_EVENT = 'ssh:bootstrapProgress'
 /** Resolution progress for an SSH-backed workspace being (re)connected. */

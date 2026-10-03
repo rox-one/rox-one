@@ -17,8 +17,8 @@ import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { routes } from '@/lib/navigate'
-import { isClaimableLive, normalizeRox2Result } from '@craft-agent/core/rox2'
-import type { ConsentPurpose, PrivacyDto } from '@craft-agent/shared/privacy'
+import { isClaimableLive, normalizeRox2Result } from '@rox/core/rox2'
+import type { ConsentPurpose, PrivacyDto } from '@rox/shared/privacy'
 import { settingsPageActionResult } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {

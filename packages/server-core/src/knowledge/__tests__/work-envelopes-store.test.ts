@@ -5,7 +5,7 @@ import { describe, expect, it } from 'bun:test'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import type { KnowledgeRef } from '@craft-agent/core/knowledge'
+import type { KnowledgeRef } from '@rox/core/knowledge'
 import { KnowledgeWorkEnvelopesStore, parseWorkEnvelopeLine } from '../work-envelopes-store'
 
 const REF: KnowledgeRef = { scheme: 'siyuan', kind: 'document', id: 'doc-1' }

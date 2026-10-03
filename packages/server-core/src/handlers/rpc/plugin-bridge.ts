@@ -11,9 +11,9 @@
  */
 
 import { existsSync, readFileSync } from 'node:fs'
-import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
-import { filterBazaarPackages } from '@craft-agent/shared/knowledge/plugin-allowlist'
+import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
+import { getCredentialManager } from '@rox/shared/credentials'
+import { filterBazaarPackages } from '@rox/shared/knowledge/plugin-allowlist'
 import {
   detectCompatLevel,
   getExtensionStateStore,
@@ -33,14 +33,14 @@ import {
   type PluginBridgeUninstallBazaarArgs,
   type PluginBridgeUninstallBazaarResult,
   type SiYuanBridgeManifest,
-} from '@craft-agent/shared/extensions'
+} from '@rox/shared/extensions'
 import {
   SiyuanKernelClient,
   type SiyuanBazaarPluginPackage,
   type SiyuanInstalledPluginPackage,
   type SiyuanPetalInfo,
-} from '@craft-agent/core/knowledge/providers/siyuan'
-import { type RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/core/knowledge/providers/siyuan'
+import { type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   credentialIdFromRef,
@@ -52,13 +52,13 @@ import {
   readFirstSiyuanApiTokenFromConf,
   type InstalledPluginFeedItem,
 } from '../../knowledge/siyuan-plugins-fs'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { resolveConfigDir } from "@rox/shared/config/paths"
 import {
   isClaimableLive,
   rpcPluginBridgeActResult,
   rpcPluginBridgeListResult,
   rpcPluginBridgeReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.pluginBridge.LIST_PLUGINS,
@@ -576,7 +576,7 @@ function broadcastExtensionsChanged(
   reason: 'install' | 'remove' | 'state' | 'refresh' | 'projection',
 ): void {
   // Push through the RpcServer instance (not module-level pushTyped): bun
-  // mock.module of @craft-agent/server-core/transport is process-global and
+  // mock.module of @rox/server-core/transport is process-global and
   // would otherwise swallow extensions:changed in combined handler suites.
   server.push(RPC_CHANNELS.extensions.CHANGED, { to: 'all' }, { reason })
 }

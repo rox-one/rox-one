@@ -4,22 +4,22 @@
  * Handles workspace resource export/import (sources, skills, automations).
  */
 
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { getCredentialManager, SOURCE_CREDENTIAL_TYPES } from '@craft-agent/shared/credentials'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import { getCredentialManager, SOURCE_CREDENTIAL_TYPES } from '@rox/shared/credentials'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import type {
   ResourceBundle,
   ResourceImportMode,
   ExportResourcesOptions,
-} from '@craft-agent/shared/resources'
+} from '@rox/shared/resources'
 import {
   isClaimableLive,
   rpcResourcesActResult,
   rpcResourcesListResult,
   rpcResourcesReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.resources.EXPORT,
@@ -38,7 +38,7 @@ export function registerResourcesHandlers(server: RpcServer, deps: HandlerDeps):
       const workspace = getWorkspaceByNameOrId(workspaceId)
       if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
 
-      const { exportResources } = await import('@craft-agent/shared/resources')
+      const { exportResources } = await import('@rox/shared/resources')
       const result = exportResources(workspace.rootPath, options)
 
       deps.platform.logger?.info(
@@ -62,7 +62,7 @@ export function registerResourcesHandlers(server: RpcServer, deps: HandlerDeps):
       const workspace = getWorkspaceByNameOrId(workspaceId)
       if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
 
-      const { importResources } = await import('@craft-agent/shared/resources')
+      const { importResources } = await import('@rox/shared/resources')
       const credManager = getCredentialManager()
 
       const result = await importResources(workspace.rootPath, bundle, mode, {

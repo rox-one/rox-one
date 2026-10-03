@@ -7,8 +7,8 @@
  * ⚠️ Runtime contract — read before importing:
  * - This module statically imports `bun:sqlite`, which exists ONLY under the
  *   Bun runtime. The Electron main process (Node) must NEVER import it —
- *   that is why it is exported solely as the '@craft-agent/shared/pages/data-store'
- *   subpath and deliberately NOT re-exported from '@craft-agent/shared/pages'.
+ *   that is why it is exported solely as the '@rox/shared/pages/data-store'
+ *   subpath and deliberately NOT re-exported from '@rox/shared/pages'.
  * - The SQLite file is script-private. The cross-process contract is
  *   data/snapshot.json (atomically written by exportSnapshot); hosts read
  *   only the snapshot, and page.json is the completion marker they watch.
@@ -25,7 +25,7 @@
 import { Database } from 'bun:sqlite';
 import { dirname, join } from 'path';
 import { mkdirSync } from 'fs';
-import type { PageDataSnapshot, PageSeriesPoint } from '@craft-agent/core';
+import type { PageDataSnapshot, PageSeriesPoint } from '@rox/core';
 import { atomicWriteFileSync } from '../utils/files.ts';
 import { getPageSnapshotPath, getPageStorePath, PAGE_SNAPSHOT_FILENAME } from './storage.ts';
 import {

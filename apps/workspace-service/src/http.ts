@@ -11,6 +11,7 @@ import { AuthenticationError, type createVerifiedActorResolver } from './auth/ve
 import type { createLocalIssuer } from './auth/local-issuer.ts'
 
 import type { LicenseAuthority } from '../../../packages/shared/src/workspace-domain/licenses/contracts.ts'
+import type { WorkspaceBroInvitationAuthority } from './modules/collaboration/invitations.ts'
 
 export type WorkspaceActorResolver = ReturnType<typeof createVerifiedActorResolver<AuthenticatedActor>>
 export type WorkspaceLocalIssuer = Awaited<ReturnType<typeof createLocalIssuer>>
@@ -18,6 +19,7 @@ export type WorkspaceLocalIssuer = Awaited<ReturnType<typeof createLocalIssuer>>
 export interface WorkspaceHttpOptions {
   authority: SharedProjectAuthority
   licenseAuthority?: LicenseAuthority
+  collaborationAuthority?: WorkspaceBroInvitationAuthority
   licenseResponseGuard?: (actor: AuthenticatedActor, workspaceId: string, operation: string, body: unknown, result: unknown) => Promise<void>
   actorResolver: WorkspaceActorResolver
   /** Explicit trusted public key set; no token header or local-mode fallback selects keys. */
@@ -176,6 +178,42 @@ export function createWorkspaceHttpHandler(options: WorkspaceHttpOptions): (req:
       const { login, password } = input as { login: unknown; password: unknown }
       if (typeof login !== 'string' || typeof password !== 'string') throw new IdentityDomainError('INVALID_PAYLOAD')
       send(res, 200, await localIssuer.authenticate(login, password))
+      return
+    }
+    const broSession = /^\/v1\/workspaces\/([^/]+)\/sessions\/([^/]+)\/(bro-invites|bro-presence|bro-publication|bro-projection)$/.exec(path)
+    const broRevoke = /^\/v1\/workspaces\/([^/]+)\/bro-invites\/([a-f0-9]{32})\/revoke$/.exec(path)
+    const broJoin = path === '/v1/collaboration/bro-invites/join'
+    if (broSession || broRevoke || broJoin) {
+      const collaboration = options.collaborationAuthority
+      if (!collaboration) throw new HttpFailure('NOT_FOUND', 404)
+      const presence = broSession?.[3] === 'bro-presence'
+      const projection = broSession?.[3] === 'bro-projection'
+      const publication = broSession?.[3] === 'bro-publication'
+      const read = presence || projection
+      const method = read ? 'GET' : 'POST'
+      if (req.method !== method) throw new HttpFailure('METHOD_NOT_ALLOWED', 405, method)
+      query(params, false)
+      let bound = await actorResolver.authenticate(bearer(req))
+      const bytes = await readBody(req, maxBytes, timeoutMs)
+      if (read && bytes.length) throw new HttpFailure('INVALID_PAYLOAD', 400)
+      const body = read ? undefined : jsonBody(bytes, req)
+      const liveActor = async () => {
+        bound = await actorResolver.revalidate(bound)
+        return bound.actor
+      }
+      const workspaceId = broSession?.[1] ?? broRevoke?.[1]
+      const sessionId = broSession?.[2]
+      const result = broJoin ? await collaboration.join(liveActor, body)
+        : broRevoke ? await collaboration.revoke(liveActor, requireUuid(workspaceId), broRevoke[2]!, body)
+        : presence ? await collaboration.presence(liveActor, requireUuid(workspaceId), sessionId!)
+        : projection ? await collaboration.projection(liveActor, requireUuid(workspaceId), sessionId!)
+        : publication ? await collaboration.publish(liveActor, requireUuid(workspaceId), sessionId!, body)
+        : await collaboration.invite(liveActor, requireUuid(workspaceId), sessionId!, body)
+      const responseActor = await liveActor()
+      if (broJoin) {
+        if ('ok' in result && result.ok) requireActor(responseActor, requireUuid(result.workspaceId))
+      } else requireActor(responseActor, requireUuid(workspaceId))
+      send(res, 200, result)
       return
     }
     const matched = /^\/v1\/workspaces\/([^/]+)\/(commands\/(?:project\.createShared|audit\.releaseLicense)|projects(?:\/([^/]+))?|events|identity|licenses(?:\/([^/]+)(\/events)?)?)$/.exec(path)

@@ -1,0 +1,18 @@
+[
+  {
+    "client": "OpenClaw",
+    "prompt": "Preview adding this colleague to the selected partner groups.",
+    "tools": ["dialogs_list", "members_invite_preview"]
+  },
+  {
+    "client": "Codex",
+    "runtime": "chiho-cloud",
+    "prompt": "Add user 12345 to these three groups if the preview looks right.",
+    "tools": ["members_invite_preview", "write_approve_preview", "members_invite_approved"]
+  },
+  {
+    "client": "Claude Desktop",
+    "prompt": "Show which groups this colleague would be invited to and stop.",
+    "tools": ["members_invite_preview"]
+  }
+]

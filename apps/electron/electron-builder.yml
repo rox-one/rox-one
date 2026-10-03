@@ -1,4 +1,4 @@
-appId: com.lukilabs.craft-agent
+appId: one.rox.app
 productName: Rox
 copyright: Copyright © 2026 Craft Docs Ltd.
 
@@ -231,6 +231,8 @@ win:
         - "!**/.gitkeep"
 
 nsis:
+  # Preserve the existing installation identity when adopting the ROX appId.
+  guid: 61dc82ee-e3b9-557b-98c4-20b9178a0f78
   oneClick: true
   # Per-user install to %LOCALAPPDATA%\Programs\ (not Program Files).
   # Bun subprocess cannot read/write files in Program Files due to Windows permissions.

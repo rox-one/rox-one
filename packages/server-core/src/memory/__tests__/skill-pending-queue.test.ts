@@ -7,8 +7,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import type { SkillCandidate } from '@craft-agent/shared/memory/types'
-import { loadAllSkills, listSkillSlugs } from '@craft-agent/shared/skills'
+import type { SkillCandidate } from '@rox/shared/memory/types'
+import { loadAllSkills, listSkillSlugs } from '@rox/shared/skills'
 import { SkillPendingQueue, normalizeDescription, validateSkillContent } from '../SkillPendingQueue'
 
 let workspaceRoot: string

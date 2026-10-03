@@ -6,8 +6,8 @@
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { basename, dirname, isAbsolute, join } from 'node:path'
-import { isBlockedEnvVar } from '@craft-agent/core/env'
-import { CraftMcpClient, type McpClientConfig } from '@craft-agent/shared/mcp'
+import { isBlockedEnvVar } from '@rox/core/env'
+import { CraftMcpClient, type McpClientConfig } from '@rox/shared/mcp'
 import {
   ensureBuiltinMcpSources,
   ensureBuiltinMcpInstalled,
@@ -24,9 +24,9 @@ import {
   type LoadedSource,
   type McpServerConfig,
   type SourceConnectionStatus,
-} from '@craft-agent/shared/sources'
-import { getToolchain, withToolchainPathPrefix } from '@craft-agent/shared/toolchain-runtime'
-import { isLocalMcpEnabled } from '@craft-agent/shared/workspaces'
+} from '@rox/shared/sources'
+import { getToolchain, withToolchainPathPrefix } from '@rox/shared/toolchain-runtime'
+import { isLocalMcpEnabled } from '@rox/shared/workspaces'
 import { buildServersFromSources } from './build-servers.ts'
 
 type Readiness = ReturnType<typeof getBuiltinMcpReadiness>

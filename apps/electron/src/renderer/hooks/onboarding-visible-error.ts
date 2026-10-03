@@ -1,4 +1,4 @@
-const OMP_LEAK_RE = /\bOMP\b|oh-my-pi|Craft Agents/i
+const OMP_LEAK_RE = /\bOMP\b|oh-my-pi|ROX/i
 
 /** User-facing errors: empty and OMP/Craft leaks become the Rox fallback. */
 export function visibleError(raw: string | undefined | null, fallback: string): string {

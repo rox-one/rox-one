@@ -5,7 +5,7 @@
  * Active = accent tint + accent text in both states; no borders.
  */
 import type { ComponentType } from 'react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { cn } from '@/lib/utils'
 
 export interface RailRowProps {

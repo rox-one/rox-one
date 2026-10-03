@@ -19,7 +19,7 @@ import {
   type CommandRegistry,
   type ContextKeyService,
   type ResourceProviderRegistry,
-} from '@craft-agent/core/platform'
+} from '@rox/core/platform'
 import { getDefaultStore } from 'jotai'
 import i18n from 'i18next'
 import { actions, type ActionId } from '@/actions/definitions'

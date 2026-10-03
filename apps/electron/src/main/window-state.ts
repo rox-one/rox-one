@@ -1,6 +1,6 @@
-import { resolveConfigDir } from '@craft-agent/shared/config/paths'
+import { resolveConfigDir } from '@rox/shared/config/paths'
 import { existsSync, mkdirSync } from 'fs'
-import { readJsonFileSync, atomicWriteFileSync } from '@craft-agent/shared/utils/files'
+import { readJsonFileSync, atomicWriteFileSync } from '@rox/shared/utils/files'
 import { mainLog } from './logger'
 import { join } from 'path'
 

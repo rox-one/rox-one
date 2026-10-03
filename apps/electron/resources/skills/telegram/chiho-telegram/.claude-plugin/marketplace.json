@@ -1,0 +1,50 @@
+{
+  "name": "chiho",
+  "owner": {
+    "name": "Chiho"
+  },
+  "metadata": {
+    "description": "Hosted and self-hosted Telegram MCP packages from Chiho."
+  },
+  "plugins": [
+    {
+      "name": "chiho-telegram",
+      "source": "./plugins/chiho-telegram",
+      "description": "Hosted Telegram CRM through browser OAuth.",
+      "author": {
+        "name": "Chiho"
+      },
+      "homepage": "https://chiho.ai/telegram-mcp",
+      "repository": "https://github.com/chihoai/telegram-for-ai-agents",
+      "license": "MIT",
+      "category": "Productivity",
+      "tags": ["telegram", "crm", "mcp", "oauth"]
+    },
+    {
+      "name": "unofficial-telegram-mcp",
+      "source": "./plugins/unofficial-telegram-mcp",
+      "description": "Hosted personal Telegram tools through browser OAuth.",
+      "author": {
+        "name": "Chiho.ai"
+      },
+      "homepage": "https://github.com/chihoai/telegram-for-ai-agents/tree/main/plugins/unofficial-telegram-mcp",
+      "repository": "https://github.com/chihoai/telegram-for-ai-agents",
+      "license": "MIT",
+      "category": "Productivity",
+      "tags": ["telegram", "mcp", "oauth"]
+    },
+    {
+      "name": "tgchats-local",
+      "source": "./plugins/tgchats-local",
+      "description": "Self-hosted local Telegram MCP runtime.",
+      "author": {
+        "name": "Chiho"
+      },
+      "homepage": "https://github.com/chihoai/telegram-for-ai-agents",
+      "repository": "https://github.com/chihoai/telegram-for-ai-agents",
+      "license": "MIT",
+      "category": "Productivity",
+      "tags": ["telegram", "self-hosted", "local", "mcp"]
+    }
+  ]
+}

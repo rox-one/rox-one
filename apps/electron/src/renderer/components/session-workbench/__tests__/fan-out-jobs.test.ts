@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { FANOUT_PARALLEL } from '@craft-agent/core/mindmap'
+import { FANOUT_PARALLEL } from '@rox/core/mindmap'
 import { buildFanOutChildJobs } from '../fan-out-jobs'
 
 describe('buildFanOutChildJobs', () => {

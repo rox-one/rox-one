@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { setupI18n } from '@craft-agent/shared/i18n/setupI18n'
+import { setupI18n } from '@rox/shared/i18n/setupI18n'
 import type { Session, TransportConnectionState } from '../../../shared/types'
 import { deriveSessionMessagesLoadState, formatSessionLoadFailure, shouldTreatSessionLoadFailureAsTransportFallback } from '../session-load'
 

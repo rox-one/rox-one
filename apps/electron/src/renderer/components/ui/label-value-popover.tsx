@@ -18,8 +18,8 @@ import { cn } from '@/lib/utils'
 import { openLabelLink } from '@/lib/open-label-link'
 import { parseDate } from 'chrono-node'
 import { format, parse } from 'date-fns'
-import { getDateLocale } from '@craft-agent/shared/i18n'
-import type { LabelConfig } from '@craft-agent/shared/labels'
+import { getDateLocale } from '@rox/shared/i18n'
+import type { LabelConfig } from '@rox/shared/labels'
 
 export interface LabelValuePopoverProps {
   /** Label configuration (color, name, valueType) */

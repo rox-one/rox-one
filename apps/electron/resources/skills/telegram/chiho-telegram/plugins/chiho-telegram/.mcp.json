@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "chiho-cloud": {
+      "type": "http",
+      "url": "https://api.chiho.ai/mcp/v8",
+      "auth": "oauth",
+      "default_tools_approval_mode": "writes"
+    }
+  }
+}

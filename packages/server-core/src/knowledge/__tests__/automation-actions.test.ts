@@ -10,8 +10,8 @@ import {
   type KnowledgeNode,
   type KnowledgeRef,
   type MutationOp,
-} from '@craft-agent/core/knowledge'
-import type { KnowledgeAutomationAction } from '@craft-agent/shared/automations'
+} from '@rox/core/knowledge'
+import type { KnowledgeAutomationAction } from '@rox/shared/automations'
 import { KnowledgeBridgeService } from '../bridge-service'
 import { KnowledgeMutationProposalsStore } from '../proposals-store'
 import { KnowledgeAuditLog } from '../knowledge-audit'

@@ -7,7 +7,7 @@ import { getCredentialManager } from '../../credentials/manager.ts';
 import { chatEvents, createFakeOmp, makeOmpConfig, useFakeOmpEnv, type FakeOmp } from './omp-fake-cli.ts';
 
 type Observation = { agentDir: string; profile: string; ids: string[]; secretInFile: boolean; credentialMatches: boolean };
-const ids = ['rox/explore', 'rox/standard', 'rox/max', 'rox/vision', 'rox/fast'];
+const ids = ['rox/r1-max', 'rox/explore', 'rox/standard', 'rox/max', 'rox/vision', 'rox/fast'];
 let fake: FakeOmp | undefined;
 let agent: OmpAgent | undefined;
 let restore: (() => void) | undefined;
@@ -32,7 +32,7 @@ function observations(): Observation[] {
   return records;
 }
 
-async function setup(scenario = 'model-public') {
+async function setup(scenario = 'model-public', model = 'rox/standard') {
   fake = createFakeOmp(scenario);
   restore = useFakeOmpEnv(fake);
   savedKey = process.env.ROX_API_KEY;
@@ -56,7 +56,7 @@ fixtureFs.appendFileSync(${JSON.stringify(join(fake.dir, 'profile-observations.j
   // This CLI's RPC catalog comes from the actual generated file, not a fixed alias.
   writeFileSync(script, inspect + original.replace(/const availableModels = \[[\s\S]*?\n\];/, "const availableModels = fixtureIds.map(id => ({ provider: 'rox', id, name: id }));"));
   agent = new OmpAgent(makeOmpConfig(fake, {
-    model: 'rox/standard', connectionSlug,
+    model, connectionSlug,
     envOverrides: { PI_CODING_AGENT_DIR: hostile, OMP_PROFILE: 'inherited-user-profile' },
   }));
   return { agent, fake, hostile };
@@ -76,6 +76,15 @@ afterEach(async () => {
 });
 
 describe('actual OmpAgent private public catalog lifecycle', () => {
+  it('confirms the R1 Max provider/model before executing a new default-model turn', async () => {
+    const { agent, fake } = await setup('model-public', 'rox/r1-max');
+    const events = await chatEvents(agent, 'default-model fixture turn', 8000);
+    expect(events.some(event => event.type === 'text_complete')).toBe(true);
+    expect(fake.readRpcLog().find(frame => frame.type === 'set_model'))
+      .toMatchObject({ provider: 'rox', modelId: 'rox/r1-max' });
+    expect(fake.readRpcLog().find(frame => frame.type === 'prompt')?.observedModel)
+      .toEqual({ provider: 'rox', id: 'rox/r1-max' });
+  });
   it('uses the selected connection credential and generated exact catalog despite conflicting inherited profile', async () => {
     const { agent, fake, hostile } = await setup();
     expect((await chatEvents(agent, 'fixture turn, no provider request', 8000)).some(event => event.type === 'text_complete')).toBe(true);

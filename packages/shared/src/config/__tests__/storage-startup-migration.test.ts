@@ -153,7 +153,7 @@ describe('startup migration (integration)', () => {
     writeRootConfig(configPath, workspaceRoot, [
       {
         slug: 'pi-api-key',
-        name: 'Craft Agents Backend (OpenAI)',
+        name: 'ROX Backend (OpenAI)',
         providerType: 'pi',
         authType: 'api_key',
         piAuthProvider: 'openai-codex',
@@ -180,7 +180,7 @@ describe('startup migration (integration)', () => {
     writeRootConfig(configPath, workspaceRoot, [
       {
         slug: 'pi-api-key',
-        name: 'Craft Agents Backend (Anthropic)',
+        name: 'ROX Backend (Anthropic)',
         providerType: 'pi',
         authType: 'api_key',
         piAuthProvider: 'anthropic',
@@ -206,7 +206,7 @@ describe('startup migration (integration)', () => {
     writeRootConfig(configPath, workspaceRoot, [
       {
         slug: 'pi-api-key',
-        name: 'Craft Agents Backend (Anthropic)',
+        name: 'ROX Backend (Anthropic)',
         providerType: 'pi',
         authType: 'api_key',
         piAuthProvider: 'anthropic',
@@ -234,7 +234,7 @@ describe('startup migration (integration)', () => {
     writeRootConfig(configPath, workspaceRoot, [
       {
         slug: 'pi-api-key',
-        name: 'Craft Agents Backend (Anthropic)',
+        name: 'ROX Backend (Anthropic)',
         providerType: 'pi',
         authType: 'api_key',
         piAuthProvider: 'anthropic',
@@ -260,7 +260,7 @@ describe('startup migration (integration)', () => {
     writeRootConfig(configPath, workspaceRoot, [
       {
         slug: 'pi-api-key',
-        name: 'Craft Agents Backend (Anthropic)',
+        name: 'ROX Backend (Anthropic)',
         providerType: 'pi',
         authType: 'api_key',
         piAuthProvider: 'anthropic',
@@ -300,7 +300,7 @@ describe('startup migration (integration)', () => {
     writeRootConfig(configPath, workspaceRoot, [
       {
         slug: 'pi-api-key',
-        name: 'Craft Agents Backend (OpenRouter)',
+        name: 'ROX Backend (OpenRouter)',
         providerType: 'pi',
         authType: 'api_key',
         piAuthProvider: 'openrouter',
@@ -448,7 +448,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
       },
       {
         slug: 'pi-api-key',
-        name: 'Craft Agents Backend (Anthropic)',
+        name: 'ROX Backend (Anthropic)',
         providerType: 'pi',
         authType: 'api_key',
         piAuthProvider: 'anthropic',
@@ -527,7 +527,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     writeRootConfig(configPath, workspaceRoot, [
       {
         slug: 'pi-api-key',
-        name: 'Craft Agents Backend (Anthropic)',
+        name: 'ROX Backend (Anthropic)',
         providerType: 'pi',
         authType: 'api_key',
         piAuthProvider: 'anthropic',
@@ -555,7 +555,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     writeRootConfig(configPath, workspaceRoot, [
       {
         slug: 'pi-api-key',
-        name: 'Craft Agents Backend (Bedrock)',
+        name: 'ROX Backend (Bedrock)',
         providerType: 'pi',
         authType: 'iam_credentials',
         piAuthProvider: 'amazon-bedrock',
@@ -583,7 +583,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     writeRootConfig(configPath, workspaceRoot, [
       {
         slug: 'pi-api-key',
-        name: 'Craft Agents Backend (Anthropic)',
+        name: 'ROX Backend (Anthropic)',
         providerType: 'pi',
         authType: 'api_key',
         piAuthProvider: 'anthropic',
@@ -656,15 +656,131 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     const migrated = JSON.parse(readFileSync(configPath, 'utf-8'))
     const connection = findConnection(configPath, 'rox-kimi')
     expect(connection.name).toBe('ROX')
-    expect(connection.defaultModel).toBe('rox/standard')
-    expect(modelIdsOf(connection)).toEqual([
-      'rox/explore',
-      'rox/standard',
-      'rox/max',
-      'rox/vision',
-      'rox/fast',
-    ])
+    expect(connection.defaultModel).toBe('rox/r1-max')
+    expect(modelIdsOf(connection)).toEqual(['rox/r1-max'])
     expect(migrated.migrationsApplied).toContain('rox-kimi-public-models-v1')
     expect(migrated.migrationsApplied).toContain('rox-connection-display-name-v1')
+    expect(migrated.migrationsApplied).toContain('rox-r1-max-default-v1')
+  })
+
+  it('upgrades installed ROX defaults while preserving sessions and other providers', () => {
+    const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
+    const workspaceConfigPath = join(workspaceRoot, 'config.json')
+    const workspaceConfig = JSON.parse(readFileSync(workspaceConfigPath, 'utf8'))
+    workspaceConfig.defaults = { model: 'rox/standard', defaultLlmConnection: 'rox-kimi' }
+    writeFileSync(workspaceConfigPath, JSON.stringify(workspaceConfig))
+    const sessionDir = join(workspaceRoot, 'sessions', 'existing-session')
+    mkdirSync(sessionDir, { recursive: true })
+    const sessionPath = join(sessionDir, 'session.jsonl')
+    const existingTranscript = JSON.stringify({ id: 'existing-session', model: 'rox/standard', llmConnection: 'rox-kimi' }) + '\n'
+    writeFileSync(sessionPath, existingTranscript)
+    const additionalProvider = {
+      slug: 'private-endpoint', name: 'Private endpoint', providerType: 'pi_compat', authType: 'api_key',
+      models: ['private/model'], defaultModel: 'private/model', createdAt: 1,
+    }
+    writeRootConfig(configPath, workspaceRoot, [{
+      slug: 'rox-kimi', name: 'ROX', providerType: 'omp', authType: 'none',
+      models: ['rox/explore', 'rox/standard', 'rox/max', 'rox/vision', 'rox/fast'],
+      defaultModel: 'rox/standard', createdAt: 1,
+    }, additionalProvider])
+    // Simulate an existing install that already ran both earlier Rox migrations.
+    const rootConfig = JSON.parse(readFileSync(configPath, 'utf8'))
+    rootConfig.defaultLlmConnection = 'rox-kimi'
+    rootConfig.migrationsApplied = ['rox-kimi-public-models-v1', 'rox-connection-display-name-v1']
+    writeFileSync(configPath, JSON.stringify(rootConfig))
+
+    runMigration(configDir)
+    expect(findConnection(configPath, 'rox-kimi').defaultModel).toBe('rox/r1-max')
+    expect(modelIdsOf(findConnection(configPath, 'rox-kimi'))).toEqual(['rox/r1-max'])
+    expect(findConnection(configPath, 'private-endpoint')).toEqual(additionalProvider)
+    expect(JSON.parse(readFileSync(workspaceConfigPath, 'utf8')).defaults.model).toBe('rox/r1-max')
+    expect(readFileSync(sessionPath, 'utf8')).toBe(existingTranscript)
+
+    const afterFirstRun = readFileSync(configPath, 'utf8')
+    runMigration(configDir)
+    expect(readFileSync(configPath, 'utf8')).toBe(afterFirstRun)
+  })
+
+  it('keeps a custom runtime and a workspace using another provider unchanged', () => {
+    const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
+    const workspaceConfigPath = join(workspaceRoot, 'config.json')
+    const workspaceConfig = JSON.parse(readFileSync(workspaceConfigPath, 'utf8'))
+    workspaceConfig.defaults = { model: 'rox/standard', defaultLlmConnection: 'private-runtime' }
+    writeFileSync(workspaceConfigPath, JSON.stringify(workspaceConfig))
+    const privateRuntime = {
+      slug: 'private-runtime', name: 'Private', providerType: 'omp', authType: 'none',
+      models: ['rox/standard', 'private/model'], defaultModel: 'rox/standard', createdAt: 1,
+    }
+    writeRootConfig(configPath, workspaceRoot, [{
+      slug: 'rox-kimi', name: 'ROX', providerType: 'omp', authType: 'none',
+      models: ['rox/standard', 'private/extra'], defaultModel: 'rox/standard', createdAt: 1,
+    }, privateRuntime])
+
+    runMigration(configDir)
+    expect(findConnection(configPath, 'private-runtime')).toEqual(privateRuntime)
+    expect(modelIdsOf(findConnection(configPath, 'rox-kimi'))).toEqual(['rox/r1-max', 'private/extra'])
+    expect(JSON.parse(readFileSync(workspaceConfigPath, 'utf8')).defaults.model).toBe('rox/standard')
+  })
+
+  it('preserves an explicit legacy Rox Max default across repeated startup', () => {
+    const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
+    const workspaceConfigPath = join(workspaceRoot, 'config.json')
+    const workspaceConfig = JSON.parse(readFileSync(workspaceConfigPath, 'utf8'))
+    workspaceConfig.defaults = { model: 'rox/max', defaultLlmConnection: 'rox-kimi' }
+    writeFileSync(workspaceConfigPath, JSON.stringify(workspaceConfig))
+    writeRootConfig(configPath, workspaceRoot, [{
+      slug: 'rox-kimi', name: 'ROX', providerType: 'omp', authType: 'none',
+      models: ['rox/explore', 'rox/standard', 'rox/max', 'rox/vision', 'rox/fast'],
+      defaultModel: 'rox/max', createdAt: 1,
+    }])
+
+    runMigration(configDir)
+    runMigration(configDir)
+    expect(findConnection(configPath, 'rox-kimi').defaultModel).toBe('rox/max')
+    expect(modelIdsOf(findConnection(configPath, 'rox-kimi'))).toEqual(['rox/r1-max', 'rox/max'])
+    expect(JSON.parse(readFileSync(workspaceConfigPath, 'utf8')).defaults.model).toBe('rox/max')
+  })
+
+  it('upgrades old onboarding Rox defaults with a separate marker and preserves private catalogs', () => {
+    const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
+    const workspaceConfigPath = join(workspaceRoot, 'config.json')
+    const workspaceConfig = JSON.parse(readFileSync(workspaceConfigPath, 'utf8'))
+    workspaceConfig.defaults = { model: 'rox/standard', defaultLlmConnection: 'omp' }
+    writeFileSync(workspaceConfigPath, JSON.stringify(workspaceConfig))
+    const canonical = { slug: 'rox-kimi', name: 'ROX', providerType: 'omp', authType: 'none', models: ['rox/standard'], defaultModel: 'rox/standard', createdAt: 1 }
+    const legacy = { slug: 'omp', name: 'Rox', providerType: 'omp', authType: 'none', models: ['rox/standard', 'rox/max', 'rox/fast'], defaultModel: 'rox/standard', createdAt: 1 }
+    const privateCatalog = { ...legacy, slug: 'omp-3', models: ['rox/standard', 'private/model'] }
+    const privateEndpoint = { ...legacy, slug: 'omp-4', baseUrl: 'https://private.example.com/v1' }
+    writeRootConfig(configPath, workspaceRoot, [canonical, legacy, { ...legacy, slug: 'omp-2', defaultModel: 'rox/max' }, privateCatalog, privateEndpoint])
+    const rootConfig = JSON.parse(readFileSync(configPath, 'utf8'))
+    // A user's post-migration canonical choice must not be changed by the alias migration.
+    rootConfig.migrationsApplied = ['rox-kimi-public-models-v1', 'rox-connection-display-name-v1', 'rox-r1-max-default-v1']
+    writeFileSync(configPath, JSON.stringify(rootConfig))
+
+    runMigration(configDir)
+    expect(findConnection(configPath, 'omp').defaultModel).toBe('rox/r1-max')
+    expect(modelIdsOf(findConnection(configPath, 'omp'))).toEqual(['rox/r1-max'])
+    expect(findConnection(configPath, 'omp-2').defaultModel).toBe('rox/max')
+    expect(modelIdsOf(findConnection(configPath, 'omp-2'))).toEqual(['rox/r1-max', 'rox/max'])
+    expect(findConnection(configPath, 'rox-kimi')).toEqual(canonical)
+    expect(findConnection(configPath, 'omp-3')).toEqual(privateCatalog)
+    expect(findConnection(configPath, 'omp-4')).toEqual(privateEndpoint)
+    expect(JSON.parse(readFileSync(workspaceConfigPath, 'utf8')).defaults.model).toBe('rox/r1-max')
+    expect(JSON.parse(readFileSync(configPath, 'utf8')).migrationsApplied).toContain('rox-onboarding-r1-max-default-v1')
+    const afterFirstRun = readFileSync(configPath, 'utf8')
+    runMigration(configDir)
+    expect(readFileSync(configPath, 'utf8')).toBe(afterFirstRun)
+  })
+
+  it('preserves a seeded slug explicitly repointed to a private runtime', () => {
+    const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
+    const privateRuntime = {
+      slug: 'rox-kimi', name: 'Private relay', providerType: 'omp', authType: 'api_key',
+      baseUrl: 'https://private.example.com/v1',
+      models: ['rox/standard', 'kimi-K3', 'private/model'], defaultModel: 'rox/standard', createdAt: 1,
+    }
+    writeRootConfig(configPath, workspaceRoot, [privateRuntime])
+    runMigration(configDir)
+    expect(findConnection(configPath, 'rox-kimi')).toEqual(privateRuntime)
   })
 })

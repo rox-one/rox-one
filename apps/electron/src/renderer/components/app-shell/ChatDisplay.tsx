@@ -42,13 +42,13 @@ import {
   type ActivityItem,
   type FileChange,
   type DiffViewerSettings,
-} from "@craft-agent/ui"
+} from "@rox/ui"
 import { useFocusZone } from "@/hooks/keyboard"
 import { useTheme } from "@/hooks/useTheme"
 import type { Session, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, LoadedSource, LoadedSkill } from "../../../shared/types"
-import type { AnnotationV1 } from "@craft-agent/core"
-import type { PermissionMode } from "@craft-agent/shared/agent/modes"
-import type { ThinkingLevel } from "@craft-agent/shared/agent/thinking-levels"
+import type { AnnotationV1 } from "@rox/core"
+import type { PermissionMode } from "@rox/shared/agent/modes"
+import type { ThinkingLevel } from "@rox/shared/agent/thinking-levels"
 import {
   TurnCard,
   UserMessageBubble,
@@ -66,7 +66,7 @@ import {
   type UserTurn,
   type SystemTurn,
   type AuthRequestTurn,
-} from "@craft-agent/ui"
+} from "@rox/ui"
 import { MemoizedAuthRequestCard } from "@/components/chat/AuthRequestCard"
 import { ChatInputZone, type StructuredInputState, type StructuredResponse, type PermissionResponse, type AdminApprovalResponse } from "./input"
 import { MemoryProvenanceStrip } from "./MemoryProvenanceStrip"
@@ -78,7 +78,7 @@ import { useNavigation } from "@/contexts/NavigationContext"
 import { useAppShellContext } from "@/context/AppShellContext"
 import { navigate, routes } from "@/lib/navigate"
 import { SideThreadPreviewDialog, type SideThreadPreview } from "@/components/chat/SideThreadPreviewDialog"
-import { buildSideThreadPrompt, type SideThreadAction } from "@craft-agent/shared/side-threads"
+import { buildSideThreadPrompt, type SideThreadAction } from "@rox/shared/side-threads"
 import { CHAT_LAYOUT } from "@/config/layout"
 import { collectFileChangesFromActivities, getFirstFileChangeIdForActivity } from "@/lib/file-changes"
 import { resolveBranchNewPanelOption } from "./branching"
@@ -226,7 +226,7 @@ interface ChatDisplayProps {
   skills?: LoadedSkill[]
   // Label selection (for #labels)
   /** Available label configs (tree) for label menu and badge display */
-  labels?: import('@craft-agent/shared/labels').LabelConfig[]
+  labels?: import('@rox/shared/labels').LabelConfig[]
   /** Callback when labels change */
   onLabelsChange?: (labels: string[]) => void
   // State/status selection (for # menu and ActiveOptionBadges)

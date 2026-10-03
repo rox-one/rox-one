@@ -62,6 +62,14 @@ describe('getKeybindingContext', () => {
     const context = getKeybindingContext(event)
     expect(context.menuOpen).toBe(false)
   })
+
+  it('detects the shared Radix styled menu without relying on a data-slot attribute', () => {
+    ;(globalThis as unknown as { document: { querySelector: (selector: string) => object | null } }).document = {
+      querySelector: selector => selector.includes('[role="menu"][data-state="open"]') ? {} : null,
+    }
+    const event = { target: { tagName: 'BUTTON', isContentEditable: false } } as unknown as KeyboardEvent
+    expect(getKeybindingContext(event).menuOpen).toBe(true)
+  })
 })
 
 describe('snapshotKeybindingContext', () => {

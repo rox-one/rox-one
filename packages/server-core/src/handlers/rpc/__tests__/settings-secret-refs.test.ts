@@ -8,7 +8,7 @@ import { describe, expect, test } from 'bun:test'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { resolveConfigDir } from "@rox/shared/config/paths"
 
 const SUBPROCESS_TIMEOUT_MS = 15_000 // Дефолтные 5s флейкуют под нагрузкой машины (2026-08-23)
 
@@ -65,7 +65,7 @@ function runSub(configDir: string, script: string, extraEnv: Record<string, stri
     if (value === undefined) delete env[key]
     else env[key] = value
   }
-  // bun -e resolves @craft-agent/* from the primary checkout's node_modules
+  // bun -e resolves @rox/* from the primary checkout's node_modules
   // (not this worktree). A file inside the worktree uses worktree sources.
   const scriptPath = join(
     import.meta.dir,
@@ -98,7 +98,7 @@ const SETUP = [
   '  hasClientCapability: () => false,',
   '  findClientsWithCapability: () => [],',
   '};',
-  "const { RPC_CHANNELS } = await import('@craft-agent/shared/protocol');",
+  "const { RPC_CHANNELS } = await import('@rox/shared/protocol');",
   'const { registerSettingsHandlers, HANDLED_CHANNELS } = await import(',
   "  process.env.CRAFT_TEST_ROOT + '/packages/server-core/src/handlers/rpc/settings.ts'",
   ');',
@@ -208,8 +208,8 @@ describe('settings secretRef RPC (subprocess)', () => {
     const secretValue = 'sk-runtime-resolved-only'
     const r = runSub(configDir, [
       SETUP,
-      "const { refreshRuntimeSecretEnv } = await import('@craft-agent/shared/secrets');",
-      "const { getRuntimeEnvOverrides, getPersistedRuntimeEnvOverrides } = await import('@craft-agent/shared/config');",
+      "const { refreshRuntimeSecretEnv } = await import('@rox/shared/secrets');",
+      "const { getRuntimeEnvOverrides, getPersistedRuntimeEnvOverrides } = await import('@rox/shared/config');",
       'const setResult = await invoke(RPC_CHANNELS.settings.SET_SECRET_REFS, [{ name: "openai", envVar: "OPENAI_API_KEY", ref: "ROX_SECRET_OPENAI" }]);',
       'if (!setResult?.success) throw new Error("SET failed: " + JSON.stringify(setResult));',
       'const getAfter = await invoke(RPC_CHANNELS.settings.GET_SECRET_REFS);',

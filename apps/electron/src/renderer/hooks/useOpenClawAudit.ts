@@ -14,7 +14,7 @@ import type {
   AuditMode,
   OpenClawRuntimeStatus,
   SecurityAuditSnapshot,
-} from '@craft-agent/shared/openclaw'
+} from '@rox/shared/openclaw'
 
 export interface UseOpenClawAuditResult {
   /** False when OpenClaw handlers are absent on this transport. */

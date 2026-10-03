@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'bun:test'
 import { createStore } from 'jotai'
-import { setupI18n } from '@craft-agent/shared/i18n/setupI18n'
+import { setupI18n } from '@rox/shared/i18n/setupI18n'
 import i18n from 'i18next'
 import { omniboxOpenAtom } from '@/atoms/omnibox'
-import { createCommandRegistry, type CommandContribution } from '@craft-agent/core/platform'
+import { createCommandRegistry, type CommandContribution } from '@rox/core/platform'
 import { parsePrefix, scoreMatch } from '../omnibox-helpers'
 import { actions } from '@/actions/definitions'
 

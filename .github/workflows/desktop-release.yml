@@ -23,7 +23,53 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
-      - run: bun test apps/electron/src/main/__tests__/auto-update-suppress.test.ts
+      - run: bun test apps/electron/src/main/__tests__/auto-update-suppress.test.ts apps/electron/src/main/__tests__/manual-release-update.test.ts
+      - name: Runtime restoration, mandatory OMP policy, clean skill install and migration regressions
+        run: >-
+          bun test --timeout 180000
+          packages/shared/src/agent/__tests__/omp-history-recovery.test.ts
+          packages/shared/src/agent/__tests__/omp-query-llm.test.ts
+          packages/shared/src/agent/__tests__/omp-model-selection.test.ts
+          packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts
+          packages/shared/src/agent/__tests__/omp-first-run.test.ts
+          packages/shared/src/agent/__tests__/omp-worker-policy.test.ts
+          packages/shared/src/agent/__tests__/omp-native-policy.test.ts
+          packages/shared/src/agent/__tests__/omp-permission-mode.test.ts
+          packages/shared/src/agent/__tests__/omp-startup-lifecycle.test.ts
+          packages/shared/src/agent/__tests__/omp-lifecycle-hardening.test.ts
+          packages/shared/src/agent/backend/__tests__/omp-session-policy.test.ts
+          packages/server-core/src/sessions/resume-history.test.ts
+          packages/server-core/src/sessions/permission-mode.test.ts
+          packages/server-core/src/handlers/rpc/__tests__/browser-credential-import.test.ts
+          packages/server-core/src/handlers/rpc/__tests__/browser-profile-import.test.ts
+          packages/server-core/src/handlers/rpc/__tests__/browser-data-auto-import.test.ts
+          packages/shared/src/browser/__tests__/profile-native-credentials.test.ts
+          packages/shared/src/collaboration/__tests__/durable-store.test.ts
+          apps/electron/src/main/__tests__/browser-credential-vault-keys.test.ts
+          apps/electron/src/main/__tests__/browser-credential-permissions.test.ts
+          packages/shared/src/config/__tests__/env.test.ts
+          packages/shared/src/config/__tests__/legacy-config-import.test.ts
+          packages/shared/src/context-docs
+          packages/shared/src/skills/__tests__/bundled.test.ts
+          packages/shared/src/skills/__tests__/vendor-security.test.ts
+          packages/shared/src/skills/__tests__/browser-helper-security.test.ts
+          packages/shared/src/skills/__tests__/compound-helper-security.test.ts
+          packages/shared/src/skills/__tests__/gstack-security.test.ts
+          packages/shared/src/skills/__tests__/gstack-boundaries.test.ts
+          packages/shared/src/skills/__tests__/gstack-root-helpers.test.ts
+          packages/shared/src/skills/__tests__/gstack-browse-io.test.ts
+          packages/shared/src/skills/__tests__/gstack-state-security.test.ts
+          packages/shared/src/skills/__tests__/gstack-design-security.test.ts
+          packages/shared/src/skills/__tests__/autoplan-security.test.ts
+          packages/shared/src/skills/__tests__/vendor-provenance.test.ts
+          scripts/probes/omp-worker-loop.test.ts
+          packages/shared/src/toolchain/__tests__/acpx.test.ts
+          packages/shared/src/credentials/backends/__tests__/keychain-master-key.test.ts
+          packages/shared/src/agent/core/__tests__/rox-config-paths.test.ts
+          scripts/configuration-guide.test.ts
+          scripts/electron-build-resources.test.ts
+        env:
+          ROX_OMP_TEST_TIMEOUT_MS: '30000'
       - run: bun run validate:ci
         env:
           NODE_OPTIONS: --max-old-space-size=4096

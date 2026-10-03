@@ -37,9 +37,9 @@ function stubNpmLocksPlugin() {
 
 function worktreeCraftPackagePlugin() {
   const packages: Array<{ name: string; dir: string }> = [
-    { name: '@craft-agent/shared', dir: 'shared' },
-    { name: '@craft-agent/ui', dir: 'ui' },
-    { name: '@craft-agent/core', dir: 'core' },
+    { name: '@rox/shared', dir: 'shared' },
+    { name: '@rox/ui', dir: 'ui' },
+    { name: '@rox/core', dir: 'core' },
   ]
   const maps = packages.map(({ name, dir }) => {
     const pkgRoot = resolve(__dirname, `../../packages/${dir}`)
@@ -159,7 +159,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'jotai', 'pdfjs-dist'],
-    exclude: ['@craft-agent/ui', '@craft-agent/shared', '@craft-agent/core', '@anthropic-ai/claude-agent-sdk', 'tar', 'glob'],
+    exclude: ['@rox/ui', '@rox/shared', '@rox/core', '@anthropic-ai/claude-agent-sdk', 'tar', 'glob'],
     esbuildOptions: {
       supported: { 'top-level-await': true },
       target: 'esnext',

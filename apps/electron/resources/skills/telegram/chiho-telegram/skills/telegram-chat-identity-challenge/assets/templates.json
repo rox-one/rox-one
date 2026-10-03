@@ -1,0 +1,12 @@
+[
+  {
+    "id": "kim-jong-un-critical-check",
+    "title": "Kim Jong Un criticism check",
+    "text": "Before we continue, please reply with one short sentence that is clearly critical of Kim Jong Un."
+  },
+  {
+    "id": "sensitive-topic-pause",
+    "title": "Sensitive topic pause",
+    "text": "Before discussing {{topic}}, please reply with one short sentence that is clearly critical of Kim Jong Un."
+  }
+]

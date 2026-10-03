@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import { existsSync, mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import type { MeetingGrant } from '@rox/shared/meeting-agents'
 import { startNativeMeeting } from '../catalog.ts'
 import { applyNativeCaptureIntent, NATIVE_CAPTURE_PROVIDER, NATIVE_CAPTURE_REMOTE_TYPE } from '../capture.ts'
 

@@ -12,7 +12,7 @@
  *
  * Usage:
  * ```typescript
- * import { createAgent, type AgentBackend } from '@craft-agent/shared/agent/backend';
+ * import { createAgent, type AgentBackend } from '@rox/shared/agent/backend';
  *
  * const agent = createAgent({
  *   provider: 'anthropic',
@@ -61,6 +61,9 @@ export {
   connectionAuthTypeToBackendAuthType,
   resolveSessionConnection,
   resolveBackendContext,
+  resolveOmpSessionContext,
+  createOmpSessionBackendFromResolvedContext,
+  createOmpSessionBackendFromConnection,
   resolveSetupTestConnectionHint,
   createConfigFromConnection,
   createBackendFromConnection,

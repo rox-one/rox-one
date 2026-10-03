@@ -13,7 +13,7 @@ import type { Disposable } from '../types.ts';
  * Canonical KnowledgeRef from the Knowledge Provider contract (K-03 §3.1,
  * packages/core/src/knowledge/refs.ts, suite K phase P1). Re-exported here
  * so SurfaceTab/SurfaceDescriptor references and consumer imports from
- * @craft-agent/core/platform stay type-identical with the knowledge package.
+ * @rox/core/platform stay type-identical with the knowledge package.
  */
 export type { KnowledgeRef } from '../../knowledge/refs.ts';
 import type { KnowledgeRef } from '../../knowledge/refs.ts';

@@ -43,7 +43,7 @@ import type { KnowledgeRefKind } from '../../shared/types'
 /**
  * SiYuan ref as serialized in a surface tab. Kept structurally identical to
  * the Knowledge Provider contract (K-03 §3.1); apps/electron does not import
- * @craft-agent/core's knowledge module, so the shape is declared locally.
+ * @rox/core's knowledge module, so the shape is declared locally.
  */
 export interface SurfaceKnowledgeRef {
   scheme: 'siyuan'

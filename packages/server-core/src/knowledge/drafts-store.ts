@@ -7,7 +7,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import type { PublishDraft, PublicationStatus } from '@craft-agent/core/knowledge'
+import type { PublishDraft, PublicationStatus } from '@rox/core/knowledge'
 
 const DRAFT_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/
 

@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   revokeConnectionAndRevalidate,
   runGithubVertical,
   type CredentialRefId,
-} from '@craft-agent/core/platform'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/core/platform'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { getFabricRuntime } from './fabric-runtime'
 import {
@@ -13,7 +13,7 @@ import {
   rpcFabricActResult,
   rpcFabricListResult,
   rpcFabricReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.fabric.LIST_CONNECTIONS,

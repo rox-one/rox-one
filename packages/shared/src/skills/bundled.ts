@@ -40,6 +40,7 @@ import {
   readdirSync,
   readFileSync,
   statSync,
+  symlinkSync,
   writeFileSync,
 } from 'fs';
 import { createHash } from 'crypto';
@@ -170,6 +171,11 @@ function listPackSkillDirs(packDir: string): string[] {
   return skills.sort();
 }
 
+/** Preserve legacy disabled preferences after the first-party pack rename. */
+function disabledPackSet(slugs: string[]): Set<string> {
+  return new Set(slugs.map(slug => slug === 'craft-knowledge' ? 'rox-knowledge' : slug));
+}
+
 function readSkillsLock(bundleRoot: string): Map<string, SkillsLockPack> {
   const map = new Map<string, SkillsLockPack>();
   const lockPath = join(bundleRoot, SKILLS_LOCK_FILE);
@@ -184,6 +190,47 @@ function readSkillsLock(bundleRoot: string): Map<string, SkillsLockPack> {
     // Corrupt lock — fall back to directory scan with null metadata.
   }
   return map;
+}
+
+/**
+ * A disposable OMP profile needs the shipped skills immediately, independently
+ * of global installation or edited copies. Link pinned bundle directories
+ * rather than copying every script/data file for every process restart.
+ * OMP's other discovery tiers retain the user's authored skills and overrides.
+ */
+export function linkBundledSkillsForOmp(options: EnsureBundledSkillsOptions & { targetRoot: string; userSkillRoots?: string[] }): string[] {
+  const bundleRoot = options.bundleRoot ?? getBundledAssetsDir('skills');
+  const disabled = disabledPackSet(options.disabled ?? loadStoredConfig()?.bundledSkills?.disabled ?? []);
+  const lock = bundleRoot && existsSync(bundleRoot) ? readSkillsLock(bundleRoot) : new Map<string, SkillsLockPack>();
+  mkdirSync(options.targetRoot, { recursive: true });
+  const linked = new Set<string>();
+  const hidden = new Set([...lock.values()].filter(pack => disabled.has(pack.slug)).flatMap(pack => pack.skills ?? []));
+  for (const pack of [...lock.keys()].sort()) {
+    if (disabled.has(pack)) continue;
+    const packDir = join(bundleRoot!, pack);
+    for (const skill of listPackSkillDirs(packDir)) {
+      const target = join(options.targetRoot, skill);
+      if (existsSync(target)) throw new Error(`Bundled OMP skill collision: ${skill}`);
+      symlinkSync(join(packDir, skill), target, process.platform === 'win32' ? 'junction' : 'dir');
+      linked.add(skill);
+    }
+  }
+  // The profile is our disposable directory; replacing these links never
+  // writes to the user's global skill directories. Later authored tiers win,
+  // matching ROX's global OMP -> shared -> workspace discovery precedence.
+  for (const root of options.userSkillRoots ?? []) {
+    if (!existsSync(root)) continue;
+    for (const entry of readdirSync(root, { withFileTypes: true })) {
+      if (entry.name.startsWith('.') || hidden.has(entry.name)) continue;
+      const source = join(root, entry.name);
+      if (!existsSync(join(source, 'SKILL.md'))) continue;
+      const target = join(options.targetRoot, entry.name);
+      rmSync(target, { recursive: true, force: true });
+      symlinkSync(source, target, process.platform === 'win32' ? 'junction' : 'dir');
+      linked.add(entry.name);
+    }
+  }
+  return [...linked];
 }
 
 function readPackState(targetRoot: string, packSlug: string): BundledPackState | null {
@@ -265,7 +312,7 @@ export function ensureBundledSkills(options?: EnsureBundledSkillsOptions): Ensur
         disabled = []; // config unreadable — treat as "nothing disabled"
       }
     }
-    const disabledSet = new Set(disabled);
+    const disabledSet = disabledPackSet(disabled);
     const lock = readSkillsLock(bundleRoot);
     const packSlugs = readdirSync(bundleRoot, { withFileTypes: true })
       .filter(e => e.isDirectory() && !e.name.startsWith('.'))
@@ -287,7 +334,7 @@ export function ensureBundledSkills(options?: EnsureBundledSkillsOptions): Ensur
         if (!state) continue;
         for (const key of Object.keys(state.files)) {
           const slash = key.indexOf('/');
-          if (slash > 0) ownerOf.set(key.slice(0, slash), state.pack);
+          if (slash > 0) ownerOf.set(key.slice(0, slash), state.pack === 'craft-knowledge' ? 'rox-knowledge' : state.pack);
         }
       }
     }
@@ -427,7 +474,7 @@ function syncPack(
         rmSync(join(stagedDir, rel), { force: true });
       }
 
-      const backupDir = join(targetRoot, `.craft-bak-${skill}-${process.pid}`);
+      const backupDir = join(targetRoot, `.rox-bak-${skill}-${process.pid}`);
       if (hadTarget) {
         renameSync(targetDir, backupDir);
       }
@@ -498,7 +545,7 @@ export function listBundledSkillPacks(options?: EnsureBundledSkillsOptions): Bun
       disabled = [];
     }
   }
-  const disabledSet = new Set(disabled);
+  const disabledSet = disabledPackSet(disabled);
   const lock = readSkillsLock(bundleRoot);
   const packSlugs = readdirSync(bundleRoot, { withFileTypes: true })
     .filter(e => e.isDirectory() && !e.name.startsWith('.'))

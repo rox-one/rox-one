@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test'
 import { EventEmitter } from 'events'
 import { SshTunnel, buildSshArgs, type SshTunnelDeps } from '../ssh-tunnel/ssh-tunnel.ts'
 import { findFreePort } from '../ssh-tunnel/port-allocator.ts'
-import type { SshHostConfig } from '@craft-agent/shared/config'
+import type { SshHostConfig } from '@rox/shared/config'
 
 async function flush() {
   for (let i = 0; i < 5; i++) await Promise.resolve()
@@ -351,7 +351,7 @@ describe('posixSingleQuote', () => {
 import {
   DEFAULT_SSH_PORT as SHARED_SSH_PORT,
   DEFAULT_REMOTE_SERVER_PORT as SHARED_REMOTE_PORT,
-} from '@craft-agent/shared/config'
+} from '@rox/shared/config'
 import {
   DEFAULT_SSH_PORT as RENDERER_SSH_PORT,
   DEFAULT_REMOTE_SERVER_PORT as RENDERER_REMOTE_PORT,

@@ -10,7 +10,7 @@
 
 import i18n from 'i18next'
 import { toast } from 'sonner'
-import { openExternalUrl } from '@craft-agent/ui'
+import { openExternalUrl } from '@rox/ui'
 import { WsRpcClient } from '../../../electron/src/transport/client'
 import { buildClientApi } from '../../../electron/src/transport/build-api'
 import { CHANNEL_MAP } from '../../../electron/src/transport/channel-map'
@@ -92,6 +92,11 @@ export function createWebApi(options: WebApiOptions): {
 
   // Override LOCAL_ONLY methods with web-compatible implementations
   const webOverrides: Partial<ElectronAPI> = {
+    // Local browser profiles are only available in the desktop host.
+    browserDataAutoImport: async (args) => {
+      if (args.action !== 'status') throw new Error(i18n.t('settings.browserImport.dataAuto.desktopOnly'))
+      return { workspaceId: args.workspaceId, enabled: false, profileId: null, state: 'off', imported: { history: 0, bookmarks: 0 }, lastRunAt: null }
+    },
     // Shell operations — use browser APIs
     openUrl: (url: string) => {
       const result = openExternalUrl(url)

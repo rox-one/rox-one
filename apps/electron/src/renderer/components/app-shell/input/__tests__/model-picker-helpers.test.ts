@@ -6,13 +6,14 @@
  */
 
 import { describe, test, expect } from 'bun:test'
-import type { LlmConnection } from '@craft-agent/shared/config/llm-connections'
+import type { LlmConnection } from '@rox/shared/config/llm-connections'
 import {
   formatTokenCount,
   groupConnectionsByProvider,
+  getConnectionModelsForPicker,
   stripPiPrefixForDisplay,
 } from '../model-picker-helpers'
-import { ROX_VISIBLE_TERMS } from '@craft-agent/shared/identity'
+import { ROX_VISIBLE_TERMS } from '@rox/shared/identity'
 
 // -----------------------------------------------------------------------------
 // stripPiPrefixForDisplay
@@ -99,6 +100,36 @@ function conn(
   }
 }
 
+describe('getConnectionModelsForPicker', () => {
+  test('reduces a stale bundled Rox catalog to R1 Max', () => {
+    const rox = conn('rox-kimi', 'omp', { models: ['rox/explore', 'rox/standard', 'rox/max', 'rox/vision', 'rox/fast'] })
+    const models = getConnectionModelsForPicker(rox)
+    expect(models.map((model) => typeof model === 'string' ? model : model.id)).toEqual(['rox/r1-max'])
+    expect(typeof models[0] !== 'string' && models[0].name).toBe('Rox R1 Max')
+  })
+
+  test('reduces a legacy onboarding Rox catalog while leaving private omp catalogs intact', () => {
+    const legacy = conn('omp-2', 'omp', { name: 'Rox', defaultModel: 'rox/standard', models: ['rox/standard', 'rox/max', 'rox/fast'] })
+    expect(getConnectionModelsForPicker(legacy).map(model => typeof model === 'string' ? model : model.id)).toEqual(['rox/r1-max'])
+    const custom = { ...legacy, models: ['rox/standard', 'private/model'] }
+    expect(getConnectionModelsForPicker(custom)).toEqual(custom.models)
+  })
+
+  test('preserves added providers and custom OMP model catalogs', () => {
+    const anthropic = conn('anthropic', 'anthropic', { models: ['claude-opus-4-8', 'claude-sonnet-5'] })
+    const customOmp = conn('private-runtime', 'omp', { models: ['private/custom'] })
+    expect(getConnectionModelsForPicker(anthropic)).toEqual(anthropic.models!)
+    expect(getConnectionModelsForPicker(customOmp)).toEqual(customOmp.models!)
+  })
+
+  test('falls back to the active provider instead of advertising Claude on Rox', () => {
+    const models = getConnectionModelsForPicker(conn('omp', 'omp'))
+    expect(models.map(model => typeof model === 'string' ? model : model.id)).toEqual(['rox/r1-max'])
+    expect(getConnectionModelsForPicker(conn('custom-messages', 'anthropic_compat'))).toEqual([])
+    expect(getConnectionModelsForPicker(conn('custom-openai', 'pi_compat'))).toEqual([])
+  })
+})
+
 describe('groupConnectionsByProvider', () => {
   test('returns empty array for empty input', () => {
     expect(groupConnectionsByProvider([])).toEqual([])
@@ -164,5 +195,21 @@ describe('groupConnectionsByProvider', () => {
     const result = groupConnectionsByProvider([omp])
     expect(result).toEqual([[ROX_VISIBLE_TERMS.product, [omp]]])
     expect(result[0][0]).not.toBe('OMP')
+  })
+
+  test('keeps every configured provider reachable beside Rox', () => {
+    const connections = [
+      conn('rox-kimi', 'omp'),
+      conn('direct-claude', 'anthropic'),
+      conn('custom-messages', 'anthropic_compat', { models: ['private/message-model'] }),
+      conn('pi-oauth', 'pi'),
+      conn('local-openai', 'pi_compat', { baseUrl: 'http://localhost:11434' }),
+      conn('remote-openai', 'pi_compat', { baseUrl: 'https://example.com' }),
+    ]
+    const grouped = groupConnectionsByProvider(connections)
+    expect(grouped.flatMap(([, group]) => group).map(connection => connection.slug).sort())
+      .toEqual(connections.map(connection => connection.slug).sort())
+    expect(grouped.find(([name]) => name === 'Anthropic')?.[1].map(connection => connection.slug))
+      .toEqual(['direct-claude', 'custom-messages'])
   })
 })

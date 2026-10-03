@@ -13,7 +13,7 @@ import { ChevronDown, ChevronRight, DownloadCloud, RefreshCw } from 'lucide-reac
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
-import { Spinner, PremiumMenuSelect } from '@craft-agent/ui'
+import { Spinner, PremiumMenuSelect } from '@rox/ui'
 import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/components/settings'
 import { Button } from '@/components/ui/button'
 import { routes } from '@/lib/navigate'
@@ -25,8 +25,8 @@ import {
   type ForeignAutoImportStatus,
   type ForeignIndexEntry,
   type ForeignSessionKind,
-} from '@craft-agent/shared/sessions'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+} from '@rox/shared/sessions'
+import { isClaimableLive } from '@rox/core/rox2'
 import BrowserProfileImportPanel from './BrowserProfileImportPanel'
 import { settingsPageActionResult } from './settings-rox2-surface'
 
@@ -249,7 +249,7 @@ export default function ImportSettingsPage() {
                 action={
                   <div className="flex items-center gap-2" data-testid="session-import-auto">
                     {autoBusy ? <Spinner className="w-4 h-4" /> : null}
-                    <Button size="sm" variant="secondary" disabled={autoBusy} onClick={() => void runAuto(false)}>
+                    <Button size="sm" variant="secondary" disabled={autoBusy || !auto?.enabled} onClick={() => void runAuto(false)}>
                       <RefreshCw className="w-3.5 h-3.5 mr-1" />
                       {t('settings.import.auto.runNow')}
                     </Button>
@@ -265,7 +265,7 @@ export default function ImportSettingsPage() {
                   description={t('settings.import.auto.olderHint')}
                   wrapDescription
                   action={
-                    <Button size="sm" variant="secondary" disabled={autoBusy} onClick={() => void runAuto(true)}>
+                    <Button size="sm" variant="secondary" disabled={autoBusy || !auto.enabled} onClick={() => void runAuto(true)}>
                       <DownloadCloud className="w-3.5 h-3.5 mr-1" />
                       {t('settings.import.auto.importAll')}
                     </Button>
@@ -279,14 +279,16 @@ export default function ImportSettingsPage() {
           <button
             type="button"
             data-testid="session-import-manual-toggle"
+            aria-expanded={manualOpen}
+            aria-controls="session-import-manual"
             onClick={() => setManualOpen((open) => !open)}
-            className="inline-flex items-center gap-1 text-sm font-medium text-foreground/80 hover:text-foreground"
+            className="flex w-full items-center gap-2 rounded-xl border border-border/50 bg-background/40 px-4 py-3 text-sm font-medium text-foreground/80 transition-colors hover:bg-foreground/5 hover:text-foreground"
           >
             {manualOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             {t('settings.import.manual.title')}
           </button>
           {manualOpen ? (
-          <div className="space-y-4">
+          <div id="session-import-manual" className="space-y-4 rounded-xl border border-border/50 bg-background/30 p-4">
           <p className="text-sm opacity-70">{t('settings.import.scanHint')}</p>
           {truncated ? (
             <p className="text-sm text-amber-600 dark:text-amber-400" data-testid="session-import-truncated">

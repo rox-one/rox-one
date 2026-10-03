@@ -8,7 +8,7 @@ import {
   SYSTEM_RECIPES,
   type MeetingProfileId,
   type RecipeOverride,
-} from '@craft-agent/shared/meeting-agents'
+} from '@rox/shared/meeting-agents'
 import type { AgentReadinessProps, AgentReadinessView } from './AgentReadiness'
 
 const INSTALLED_SKILLS = SYSTEM_RECIPES.map((recipe) => recipe.skillId)

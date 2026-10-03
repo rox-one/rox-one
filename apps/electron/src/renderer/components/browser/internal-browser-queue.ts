@@ -3,7 +3,7 @@
  * The inspector pane may not be mounted yet when a chat link is clicked.
  */
 
-import { INTERNAL_BROWSER_OPEN_EVENT } from '@craft-agent/shared/browser/retained-pane'
+import { INTERNAL_BROWSER_OPEN_EVENT } from '@rox/shared/browser/retained-pane'
 
 let pendingUrl: string | undefined
 

@@ -83,9 +83,12 @@ describe('activity rail: expanded with labels by default', () => {
     expect(resolveRailCollapsed({ persisted: true, narrow: false, override: false })).toBe(true)
   })
 
-  it('AppShell reserves rail width only when the rail renders (same predicate as the host)', () => {
-    const shell = read('../../components/app-shell/AppShell.tsx')
-    expect(shell).toContain('useEffectiveRailCollapsed()')
-    expect(shell).toMatch(/activityRailRendered = unifiedShellEnabled\s*\|\| \(\(unifiedShellEnabled \|\| workbenchEnabled\) && topChromeEnabled\)/)
+  it('lets AppShell own a single collapsible sidebar without reserving a duplicate rail', () => {
+    const shell = readFileSync(join(__dirname, '../../components/app-shell/AppShell.tsx'), 'utf8')
+    const host = readFileSync(join(__dirname, '../WorkspaceSurfaceHost.tsx'), 'utf8')
+    expect(shell).toContain('const unifiedRailOffset = 0')
+    expect(shell).toContain('ownsPrimaryNavigation>')
+    expect(shell).toContain('const sidebarWidth = isSidebarCollapsed ? 52 : expandedSidebarWidth')
+    expect(host).toContain('chrome.showRail && !ownsPrimaryNavigation')
   })
 })

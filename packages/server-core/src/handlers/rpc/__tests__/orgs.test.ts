@@ -20,13 +20,13 @@ async function runOrgRpc(configDir: string): Promise<RunResult> {
 process.env.CRAFT_CONFIG_DIR = ${JSON.stringify(configDir)};
 process.env.ROX_CONFIG_DIR = ${JSON.stringify(configDir)};
 const { mock } = await import('bun:test');
-mock.module('@craft-agent/core/rox2', () => ({
+mock.module('@rox/core/rox2', () => ({
   isClaimableLive: () => true,
   rpcOrgsActResult: () => ({ result: {} }),
   rpcOrgsListResult: () => ({ result: {} }),
   rpcOrgsReadResult: () => ({ result: {} }),
 }));
-const { RPC_CHANNELS } = await import('@craft-agent/shared/protocol');
+const { RPC_CHANNELS } = await import('@rox/shared/protocol');
 const { registerOrgsHandlers } = await import(${JSON.stringify(handlerUrl)});
 const handlers = new Map();
 const server = { handle: (channel, handler, options) => handlers.set(channel, { handler, options }) };

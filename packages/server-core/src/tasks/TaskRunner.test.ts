@@ -2,10 +2,10 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import { mkdtempSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import type { TokenUsage } from '@craft-agent/core/types';
-import type { CreateSessionOptions } from '@craft-agent/shared/protocol';
+import type { TokenUsage } from '@rox/core/types';
+import type { CreateSessionOptions } from '@rox/shared/protocol';
 import { mkdirSync, writeFileSync } from 'node:fs'
-import { parseTaskSpec, saveTaskSpec, readRunLog, readNodeOutput, type TaskSpec } from '@craft-agent/shared/tasks';
+import { parseTaskSpec, saveTaskSpec, readRunLog, readNodeOutput, type TaskSpec } from '@rox/shared/tasks';
 import type { SessionCompletionEvent } from '../sessions/SessionManager';
 import { TaskRunner, type ConductorSessionHost } from './TaskRunner';
 

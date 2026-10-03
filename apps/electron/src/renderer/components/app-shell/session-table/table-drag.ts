@@ -1,6 +1,6 @@
 import type { SessionMeta } from '@/atoms/sessions'
-import type { SessionCommand, SessionPriority } from '@craft-agent/shared/protocol/dto'
-import type { CollectionGroupBy } from '@craft-agent/shared/sessions/collection'
+import type { SessionCommand, SessionPriority } from '@rox/shared/protocol/dto'
+import type { CollectionGroupBy } from '@rox/shared/sessions/collection'
 
 export type CrossGroupDropAction = {
   metadataPatch: Partial<Pick<SessionMeta, 'sessionStatus' | 'priority' | 'projectId'>>

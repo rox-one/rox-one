@@ -1,7 +1,7 @@
 /**
  * Visible UI brand leftovers (ROX-AUD-181 / #341).
  * Protocol/storage/OAuth IDs stay on the migration manifest. This file is
- * the allowlisted UI copy only — do not rename @craft-agent packages here.
+ * the allowlisted UI copy only — do not rename @rox packages here.
  */
 
 import { ROX_PRODUCT_NAME } from './manifest.ts'
@@ -13,7 +13,7 @@ export const UI_BRAND_MANIFEST = {
 } as const
 
 export const UI_BRAND_ALLOWLIST = [
-  '@craft-agent',
+  '@rox',
   'com.lukilabs.craft-agent',
   '.craft-agent',
   'CRAFT_',

@@ -1,4 +1,4 @@
-import { buildYearHeatmap } from '@craft-agent/shared/sessions/collection'
+import { buildYearHeatmap } from '@rox/shared/sessions/collection'
 import { IpcCallCounter } from './ipc-counter'
 import { nowMs } from './stats'
 import type { PerfMarkName, SessionIndexEntry, VaultNoteEntry } from './types'

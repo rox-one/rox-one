@@ -1,4 +1,4 @@
-import type { CredentialRef, CredentialRefId } from '@craft-agent/core/platform';
+import type { CredentialRef, CredentialRefId } from '@rox/core/platform';
 import { selectDeliveryMechanism, type DeliveryMechanism } from './delivery.ts';
 import { MemoryAccessGrantStore, type AccessGrantStore } from './grant-store.ts';
 import type { ProviderMaterialization, SecretProvider } from './types.ts';

@@ -20,9 +20,9 @@ import {
   getSourceCredentialManager,
   TokenRefreshManager,
   type LoadedSource,
-} from '@craft-agent/shared/sources'
-import { McpClientPool, proxyToolName } from '@craft-agent/shared/mcp'
-import type { Logger } from '@craft-agent/server-core/runtime'
+} from '@rox/shared/sources'
+import { McpClientPool, proxyToolName } from '@rox/shared/mcp'
+import type { Logger } from '@rox/server-core/runtime'
 import { buildServersFromSources } from '../sources/build-servers'
 import { assertPageSourceUsable } from './source-gate'
 

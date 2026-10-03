@@ -1,5 +1,5 @@
-import type { MeetingProposal, OperationResultV2 } from '@craft-agent/core/meetings'
-import { authorizeMeetingAction, type MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import type { MeetingProposal, OperationResultV2 } from '@rox/core/meetings'
+import { authorizeMeetingAction, type MeetingGrant } from '@rox/shared/meeting-agents'
 
 export type OutboxJob = {
   operationId: string

@@ -11,7 +11,7 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import { isAllowedAttributeName } from '@craft-agent/core/knowledge'
+import { isAllowedAttributeName } from '@rox/core/knowledge'
 import type {
   CraftRef,
   KnowledgeLinkRelation,
@@ -19,13 +19,13 @@ import type {
   KnowledgeRef,
   MutationOp,
   SelectionProof,
-} from '@craft-agent/core/knowledge'
+} from '@rox/core/knowledge'
 import type {
   CloudRunSubmitAction,
   KnowledgeActionRef,
   KnowledgeAutomationAction,
   CraftActionRef,
-} from '@craft-agent/shared/automations'
+} from '@rox/shared/automations'
 import type { KnowledgeBridgeService } from './bridge-service'
 import {
   getSharedAutomationLoopGuard,

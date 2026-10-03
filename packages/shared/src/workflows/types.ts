@@ -1,7 +1,7 @@
 /**
  * Session-map WorkflowSpec (Rox tracker issue 10).
  *
- * Distinct from task.yaml `WorkflowSpec` (`@craft-agent/shared/tasks`): this
+ * Distinct from task.yaml `WorkflowSpec` (`@rox/shared/tasks`): this
  * document versions the Map canvas. Runs always point at an immutable version.
  */
 import type { PermissionMode } from '../agent/mode-types.ts'
@@ -51,6 +51,12 @@ export type CanvasNode = {
   permissionMode?: PermissionMode
   provenance?: CanvasNodeProvenance
   createdAt: number
+  /** Canvas presentation survives version forks and JSON import/export. */
+  appearance?: {
+    role?: 'node' | 'sticky' | 'frame' | 'group'
+    color?: 'amber' | 'blue' | 'green' | 'rose' | 'violet'
+    size?: { width: number; height: number }
+  }
 }
 
 export type CanvasEdge = {

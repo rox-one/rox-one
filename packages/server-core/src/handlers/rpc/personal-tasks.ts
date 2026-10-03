@@ -3,10 +3,10 @@
  * under the local config dir ({configDir}/personal-tasks/). LOCAL_ONLY:
  * the renderer's localStorage (the migration source) is local too.
  */
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { resolveConfigDir } from '@craft-agent/shared/config'
-import type { PersonalTaskDelete, PersonalTaskWrite } from '@craft-agent/core/tasks/personal'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { resolveConfigDir } from '@rox/shared/config'
+import type { PersonalTaskDelete, PersonalTaskWrite } from '@rox/core/tasks/personal'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { PersonalTaskPersistStore, type PersonalTaskMeta } from '../../tasks/personal-persist.ts'
 import {

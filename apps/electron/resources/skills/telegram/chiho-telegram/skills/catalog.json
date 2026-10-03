@@ -1,0 +1,235 @@
+[
+  {
+    "name": "telegram-chat-identity-challenge",
+    "displayName": "Chat Identity Challenge",
+    "category": "telegram-automation",
+    "risk": "high",
+    "requiresApproval": true,
+    "path": "skills/telegram-chat-identity-challenge",
+    "requiredCloudScopes": [
+      "telegram.read",
+      "crm.write",
+      "telegram.message.preview",
+      "telegram.message.send",
+      "telegram.batch.write"
+    ],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp"],
+    "templates": "skills/telegram-chat-identity-challenge/assets/templates.json",
+    "examples": "skills/telegram-chat-identity-challenge/assets/examples.json"
+  },
+  {
+    "name": "telegram-human-verification-challenge",
+    "displayName": "Human Verification Challenge",
+    "category": "telegram-automation",
+    "risk": "high",
+    "requiresApproval": true,
+    "path": "skills/telegram-human-verification-challenge",
+    "requiredCloudScopes": [
+      "telegram.read",
+      "crm.write",
+      "telegram.message.preview",
+      "telegram.message.send",
+      "telegram.batch.write"
+    ],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp"],
+    "templates": "skills/telegram-human-verification-challenge/assets/templates.json",
+    "examples": "skills/telegram-human-verification-challenge/assets/examples.json"
+  },
+  {
+    "name": "telegram-bulk-template-message",
+    "displayName": "Bulk Template Message",
+    "category": "telegram-automation",
+    "risk": "high",
+    "requiresApproval": true,
+    "path": "skills/telegram-bulk-template-message",
+    "requiredCloudScopes": [
+      "telegram.read",
+      "telegram.message.preview",
+      "telegram.message.send",
+      "telegram.batch.write"
+    ],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp"],
+    "templates": "skills/telegram-bulk-template-message/assets/templates.json",
+    "examples": "skills/telegram-bulk-template-message/assets/examples.json"
+  },
+  {
+    "name": "telegram-conditional-replies",
+    "displayName": "Conditional Replies",
+    "category": "telegram-automation",
+    "risk": "high",
+    "requiresApproval": true,
+    "path": "skills/telegram-conditional-replies",
+    "requiredCloudScopes": [
+      "telegram.read",
+      "crm.write",
+      "telegram.message.preview",
+      "telegram.message.send",
+      "telegram.batch.write",
+      "automation.rules.write"
+    ],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp"],
+    "templates": "skills/telegram-conditional-replies/assets/templates.json",
+    "examples": "skills/telegram-conditional-replies/assets/examples.json"
+  },
+  {
+    "name": "telegram-add-colleagues-to-group",
+    "displayName": "Add Colleagues To Group",
+    "category": "telegram-automation",
+    "risk": "high",
+    "requiresApproval": true,
+    "path": "skills/telegram-add-colleagues-to-group",
+    "requiredCloudScopes": ["telegram.read", "telegram.members.invite"],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp"],
+    "templates": "skills/telegram-add-colleagues-to-group/assets/templates.json",
+    "examples": "skills/telegram-add-colleagues-to-group/assets/examples.json"
+  },
+  {
+    "name": "telegram-followup-tasks",
+    "displayName": "Follow-up Tasks",
+    "category": "crm-automation",
+    "risk": "low",
+    "requiresApproval": false,
+    "path": "skills/telegram-followup-tasks",
+    "requiredCloudScopes": ["telegram.read", "crm.write", "automation.rules.write"],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp", "tgchats-cli"],
+    "templates": "skills/telegram-followup-tasks/assets/templates.json",
+    "examples": "skills/telegram-followup-tasks/assets/examples.json"
+  },
+  {
+    "name": "telegram-group-cleanup",
+    "displayName": "Group Cleanup",
+    "category": "telegram-organization",
+    "risk": "high",
+    "requiresApproval": true,
+    "path": "skills/telegram-group-cleanup",
+    "requiredCloudScopes": [
+      "telegram.read",
+      "crm.write",
+      "telegram.folders.write",
+      "telegram.groups.leave"
+    ],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp"],
+    "templates": "skills/telegram-group-cleanup/assets/templates.json",
+    "examples": "skills/telegram-group-cleanup/assets/examples.json"
+  },
+  {
+    "name": "telegram-lead-qualification",
+    "displayName": "Lead Qualification",
+    "category": "crm-automation",
+    "risk": "low",
+    "requiresApproval": false,
+    "path": "skills/telegram-lead-qualification",
+    "requiredCloudScopes": ["telegram.read", "crm.write"],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp", "tgchats-cli"],
+    "templates": "skills/telegram-lead-qualification/assets/templates.json",
+    "examples": "skills/telegram-lead-qualification/assets/examples.json"
+  },
+  {
+    "name": "telegram-intro-request-triage",
+    "displayName": "Intro Request Triage",
+    "category": "crm-automation",
+    "risk": "medium",
+    "requiresApproval": true,
+    "path": "skills/telegram-intro-request-triage",
+    "requiredCloudScopes": ["telegram.read", "crm.write", "telegram.message.preview"],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp", "tgchats-cli"],
+    "templates": "skills/telegram-intro-request-triage/assets/templates.json",
+    "examples": "skills/telegram-intro-request-triage/assets/examples.json"
+  },
+  {
+    "name": "telegram-deck-followup",
+    "displayName": "Deck Follow-up",
+    "category": "crm-automation",
+    "risk": "low",
+    "requiresApproval": false,
+    "path": "skills/telegram-deck-followup",
+    "requiredCloudScopes": ["telegram.read", "crm.write", "automation.rules.write"],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp", "tgchats-cli"],
+    "templates": "skills/telegram-deck-followup/assets/templates.json",
+    "examples": "skills/telegram-deck-followup/assets/examples.json"
+  },
+  {
+    "name": "telegram-vip-inbox",
+    "displayName": "VIP Inbox",
+    "category": "crm-automation",
+    "risk": "low",
+    "requiresApproval": false,
+    "path": "skills/telegram-vip-inbox",
+    "requiredCloudScopes": ["telegram.read", "crm.write"],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp", "tgchats-cli"],
+    "templates": "skills/telegram-vip-inbox/assets/templates.json",
+    "examples": "skills/telegram-vip-inbox/assets/examples.json"
+  },
+  {
+    "name": "telegram-meeting-recap",
+    "displayName": "Meeting Recap",
+    "category": "crm-automation",
+    "risk": "low",
+    "requiresApproval": false,
+    "path": "skills/telegram-meeting-recap",
+    "requiredCloudScopes": ["telegram.read", "crm.write"],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp", "tgchats-cli"],
+    "templates": "skills/telegram-meeting-recap/assets/templates.json",
+    "examples": "skills/telegram-meeting-recap/assets/examples.json"
+  },
+  {
+    "name": "telegram-crm-export",
+    "displayName": "CRM Export",
+    "category": "crm-automation",
+    "risk": "medium",
+    "requiresApproval": true,
+    "path": "skills/telegram-crm-export",
+    "requiredCloudScopes": ["telegram.read"],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp", "tgchats-cli"],
+    "templates": "skills/telegram-crm-export/assets/templates.json",
+    "examples": "skills/telegram-crm-export/assets/examples.json"
+  },
+  {
+    "name": "telegram-partner-pipeline",
+    "displayName": "Partner Pipeline",
+    "category": "crm-automation",
+    "risk": "low",
+    "requiresApproval": false,
+    "path": "skills/telegram-partner-pipeline",
+    "requiredCloudScopes": ["telegram.read", "crm.write"],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp", "tgchats-cli"],
+    "templates": "skills/telegram-partner-pipeline/assets/templates.json",
+    "examples": "skills/telegram-partner-pipeline/assets/examples.json"
+  },
+  {
+    "name": "telegram-investor-updates",
+    "displayName": "Investor Updates",
+    "category": "crm-automation",
+    "risk": "medium",
+    "requiresApproval": true,
+    "path": "skills/telegram-investor-updates",
+    "requiredCloudScopes": ["telegram.read", "crm.write", "telegram.message.preview"],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp", "tgchats-cli"],
+    "templates": "skills/telegram-investor-updates/assets/templates.json",
+    "examples": "skills/telegram-investor-updates/assets/examples.json"
+  },
+  {
+    "name": "telegram-hiring-pipeline",
+    "displayName": "Hiring Pipeline",
+    "category": "crm-automation",
+    "risk": "medium",
+    "requiresApproval": false,
+    "path": "skills/telegram-hiring-pipeline",
+    "requiredCloudScopes": ["telegram.read", "crm.write"],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp", "tgchats-cli"],
+    "templates": "skills/telegram-hiring-pipeline/assets/templates.json",
+    "examples": "skills/telegram-hiring-pipeline/assets/examples.json"
+  },
+  {
+    "name": "telegram-support-escalation",
+    "displayName": "Support Escalation",
+    "category": "crm-automation",
+    "risk": "medium",
+    "requiresApproval": false,
+    "path": "skills/telegram-support-escalation",
+    "requiredCloudScopes": ["telegram.read", "crm.write", "automation.rules.write"],
+    "supportedRuntimes": ["chiho-cloud-mcp", "tgchats-local-mcp", "tgchats-cli"],
+    "templates": "skills/telegram-support-escalation/assets/templates.json",
+    "examples": "skills/telegram-support-escalation/assets/examples.json"
+  }
+]

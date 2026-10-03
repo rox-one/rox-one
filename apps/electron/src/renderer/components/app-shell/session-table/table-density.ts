@@ -1,4 +1,4 @@
-import type { CollectionDensity } from '@craft-agent/shared/sessions/collection'
+import type { CollectionDensity } from '@rox/shared/sessions/collection'
 
 /** Compact ≈ current 40px rows; comfortable adds vertical padding. */
 export function collectionTableRowHeight(density: CollectionDensity | undefined): number {

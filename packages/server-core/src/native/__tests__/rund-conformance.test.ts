@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { conformanceSuite, NativeRunProvider } from '@craft-agent/cloud-runner';
+import { conformanceSuite, NativeRunProvider } from '@rox/cloud-runner';
 import { NativeSupervisor, resolveNativeBin } from '../supervisor.ts';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '../../../../../');

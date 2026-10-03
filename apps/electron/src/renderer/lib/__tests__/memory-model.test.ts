@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import type { Lesson } from '@craft-agent/shared/memory/types'
+import type { Lesson } from '@rox/shared/memory/types'
 import { clusterTopics, contextSelection, duplicateIds, lessonId, matchesFilter, mergePatch, nearDuplicates, sortLessons, tokenBudget } from '../memory-model'
 
 const make = (rule: string, extra: Partial<Lesson> = {}): Lesson => ({

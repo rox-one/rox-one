@@ -13,10 +13,10 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import { Spinner } from '@craft-agent/ui'
+import { Spinner } from '@rox/ui'
 import { Info_Alert } from '@/components/info'
-import type { LoadedPage, PageActionGrant } from '@craft-agent/shared/pages/types'
-import { isPageGrantUsable } from '@craft-agent/shared/pages/types'
+import type { LoadedPage, PageActionGrant } from '@rox/shared/pages/types'
+import { isPageGrantUsable } from '@rox/shared/pages/types'
 import { describeGrantAction, useGrantRemoval } from './grant-visuals'
 
 /**

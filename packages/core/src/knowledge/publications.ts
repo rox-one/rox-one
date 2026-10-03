@@ -1,7 +1,7 @@
 /**
  * Publication pipeline types (P4, K-06) — pure contracts, no I/O.
  * Canonical home for PublishDraft / PublicationRecord / KnowledgeLinkRecord.
- * Wire DTOs re-export these from @craft-agent/shared/protocol.
+ * Wire DTOs re-export these from @rox/shared/protocol.
  */
 import type { CraftRef, KnowledgeRef } from './refs.ts';
 

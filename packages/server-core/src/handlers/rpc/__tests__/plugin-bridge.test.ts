@@ -2,10 +2,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { OEM_PLUGIN_ALLOWLIST } from '@craft-agent/shared/knowledge/plugin-allowlist'
-import { getExtensionStateStore, resetExtensionStateStoreCache } from '@craft-agent/shared/extensions'
-import { SiyuanKernelClient } from '@craft-agent/core/knowledge/providers/siyuan'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { OEM_PLUGIN_ALLOWLIST } from '@rox/shared/knowledge/plugin-allowlist'
+import { getExtensionStateStore, resetExtensionStateStoreCache } from '@rox/shared/extensions'
+import { SiyuanKernelClient } from '@rox/core/knowledge/providers/siyuan'
 import {
   HANDLED_CHANNELS,
   loadBazaarRemoteManifests,

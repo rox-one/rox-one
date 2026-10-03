@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { setupI18n } from '@craft-agent/shared/i18n/setupI18n'
+import { setupI18n } from '@rox/shared/i18n/setupI18n'
 import i18n from 'i18next'
 
 const source = readFileSync(join(import.meta.dir, '../PageFrame.tsx'), 'utf8')

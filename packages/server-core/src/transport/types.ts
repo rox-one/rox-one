@@ -2,7 +2,7 @@
  * Transport-layer interfaces for the WS-based RPC.
  */
 
-import type { PushTarget } from '@craft-agent/shared/protocol'
+import type { PushTarget } from '@rox/shared/protocol'
 import type { NativeAuthorityAction, NativePrincipal } from '../authority/native-authority'
 import type { AuthenticatedActor } from '../../../shared/src/workspace-domain/identity/contracts'
 
@@ -50,6 +50,8 @@ export interface RpcHandlerOptions {
 }
 
 export interface RpcServer {
+  /** Host-owned background tasks are disposed with the transport. */
+  onShutdown?(dispose: () => void): () => void
   handle(channel: string, handler: HandlerFn, options?: RpcHandlerOptions): void
   push(channel: string, target: PushTarget, ...args: any[]): void
   invokeClient(clientId: string, channel: string, ...args: any[]): Promise<any>

@@ -7,8 +7,8 @@
  * (`source`/`settings`/`skills`/`other`) degrade to `null` kind and are
  * rendered as plain labelled tabs until wave M3.
  */
-import type { SurfaceTabKind } from '@craft-agent/core'
-import type { ContextKeys } from '@craft-agent/core/platform'
+import type { SurfaceTabKind } from '@rox/core'
+import type { ContextKeys } from '@rox/core/platform'
 import {
   getPanelTypeFromRoute,
   parseSessionIdFromRoute,

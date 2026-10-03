@@ -1,0 +1,20 @@
+{
+  "author": "ROX",
+  "modifiedAt": "2026-10-03",
+  "upstream": "https://github.com/first-fluke/oh-my-agent",
+  "upstreamCommit": "8b17162c2fca567999add4733aeae2d8eb81faed",
+  "upstreamLicense": "MIT",
+  "note": "Upstream license/copyright notices retained. Local modifications are identified by portable paths and SHA256; local validation is separate from remote scanner closure.",
+  "securityPatches": [
+    {
+      "pack": "oh-my-agent",
+      "path": "oh-my-agent/oma-slide/resources/assets/deck-stage.js",
+      "alerts": [
+        924
+      ],
+      "change": "Root db1906fd2: cryptographic IDs+origin-checked live browser messages; presenter source/origin check; HWP transforms use descriptor reads/writes with object identity checks.",
+      "sha256": "90368e50f690dcd817d7edcc038cc33f228a93656f89257a79e0b631904051dd"
+    }
+  ],
+  "removedFiles": []
+}

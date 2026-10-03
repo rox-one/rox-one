@@ -27,7 +27,7 @@ import { useNavigation } from '@/contexts/NavigationContext'
 import { routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
 import type { ElectronAPI } from '../../../shared/types'
-import type { KnowledgeRef } from '@craft-agent/core/knowledge'
+import type { KnowledgeRef } from '@rox/core/knowledge'
 
 // ---------------------------------------------------------------------------
 // Wire types (structural — mirror packages/core knowledge publications contract)

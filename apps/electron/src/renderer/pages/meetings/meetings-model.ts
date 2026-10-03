@@ -5,7 +5,7 @@
  * The catalog carries no calendar data yet (meetings:agenda is v1), so
  * «Предстоящие» are planned meetings and day groups use createdAt.
  */
-import type { Meeting, MeetingStatus } from '@craft-agent/core/meetings'
+import type { Meeting, MeetingStatus } from '@rox/core/meetings'
 import type { MeetingListItem } from './start-rpc'
 import type { MeetingProposalRow } from './proposal-rpc'
 

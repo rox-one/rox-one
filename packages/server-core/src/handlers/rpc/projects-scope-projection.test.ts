@@ -3,9 +3,9 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
 import ts from 'typescript'
-import * as shared from '@craft-agent/shared/projects'
-import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { createWorkspaceAtPath as createWorkspace } from '@craft-agent/shared/workspaces'
+import * as shared from '@rox/shared/projects'
+import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
+import { createWorkspaceAtPath as createWorkspace } from '@rox/shared/workspaces'
 
 const cleanups: Array<() => void> = []
 afterEach(() => { for (const cleanup of cleanups.splice(0).reverse()) cleanup() })
@@ -30,7 +30,7 @@ function fixture() {
   const options = new Map<string, unknown>()
   const pushes: unknown[][] = []
   const source = readFileSync(join(import.meta.dir, 'projects.ts'), 'utf8')
-  const dynamic = /await\s+import\(['"]@craft-agent\/shared\/projects['"]\)/g
+  const dynamic = /await\s+import\(['"]@rox\/shared\/projects['"]\)/g
   if ([...source.matchAll(dynamic)].length < 3) throw new Error('Actual project loader import seams are missing')
   const code = ts.transpileModule(source.replace(dynamic, 'await loadShared()'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -39,12 +39,12 @@ function fixture() {
   const registryLookup = (id: string) => registry?.id === id ? registry : null
   const dependencies: Record<string, unknown> = {
     fs: {}, path: { join },
-    '@craft-agent/shared/workspaces': {},
-    '@craft-agent/shared/protocol': { CodedError, RPC_CHANNELS },
-    '@craft-agent/shared/config': { getWorkspaceByNameOrId: registryLookup },
-    '@craft-agent/server-core/transport': { pushTyped: (_server: unknown, ...args: unknown[]) => pushes.push(args) },
-    '@craft-agent/shared/projects': shared,
-    '@craft-agent/core/rox2': {
+    '@rox/shared/workspaces': {},
+    '@rox/shared/protocol': { CodedError, RPC_CHANNELS },
+    '@rox/shared/config': { getWorkspaceByNameOrId: registryLookup },
+    '@rox/server-core/transport': { pushTyped: (_server: unknown, ...args: unknown[]) => pushes.push(args) },
+    '@rox/shared/projects': shared,
+    '@rox/core/rox2': {
       isClaimableLive: () => true,
       rpcProjectsListResult: () => ({ result: {} }),
       rpcProjectsReadResult: () => ({ result: {} }),

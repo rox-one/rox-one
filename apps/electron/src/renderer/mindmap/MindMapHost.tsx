@@ -32,7 +32,7 @@ import {
   type MindMapGraph,
   type MindMapNodeId,
   type PinnedMap,
-} from '@craft-agent/core/mindmap'
+} from '@rox/core/mindmap'
 import {
   activeMentionQuery,
   addComment,
@@ -42,7 +42,7 @@ import {
   suggestMentions,
   TEAM_FLAG,
   type TeamVersionedTarget,
-} from '@craft-agent/shared/team'
+} from '@rox/shared/team'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { toast } from 'sonner'
 import { navigate, routes } from '@/lib/navigate'
@@ -138,6 +138,7 @@ export function MindMapHost({
   const [zen, setZen] = React.useState(false)
   const [pin, setPin] = React.useState<PinnedMap | null>(null)
   const [pinLoaded, setPinLoaded] = React.useState(false)
+  const [loadedPinEntityKey, setLoadedPinEntityKey] = React.useState<string | null>(null)
   /** User dismissed a stale banner without rebuilding. */
   const [staleDismissed, setStaleDismissed] = React.useState(false)
   const [enrichDraft, setEnrichDraft] = React.useState<MindMapGraph | null>(null)
@@ -175,6 +176,7 @@ export function MindMapHost({
     let cancelled = false
     setPin(null)
     setPinLoaded(false)
+    setLoadedPinEntityKey(null)
     setStaleDismissed(false)
     setEnrichDraft(null)
     const workspaceId = workspaceIdProp || activeWorkspaceId
@@ -183,7 +185,10 @@ export function MindMapHost({
         if (!cancelled) setPin(loaded)
       })
       .finally(() => {
-        if (!cancelled) setPinLoaded(true)
+        if (!cancelled) {
+          setLoadedPinEntityKey(entityKey)
+          setPinLoaded(true)
+        }
       })
     return () => {
       cancelled = true
@@ -505,7 +510,9 @@ export function MindMapHost({
     return () => window.removeEventListener('keydown', onKey)
   }, [zen])
 
-  if (loading) {
+  // Mount the engine after the entity's pinned structure resolves, so its
+  // initial fit uses the actual map rather than a transient starter graph.
+  if (loading || !pinLoaded || loadedPinEntityKey !== entityKey) {
     return (
       <div
         className={cn(

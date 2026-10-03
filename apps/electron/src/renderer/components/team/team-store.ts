@@ -1,5 +1,5 @@
 /**
- * Renderer store for the local-first team model (@craft-agent/shared/team).
+ * Renderer store for the local-first team model (@rox/shared/team).
  * Persists to localStorage on this device; the sync adapter decides what can
  * leave it (today: nothing — org server required).
  */
@@ -13,7 +13,7 @@ import {
   type TeamActionContext,
   type TeamFlagId,
   type TeamLocalState,
-} from '@craft-agent/shared/team'
+} from '@rox/shared/team'
 
 export const TEAM_STATE_STORAGE_KEY = 'rox-team-state-v1'
 export const TEAM_FLAGS_STORAGE_KEY = 'rox-team-flags'

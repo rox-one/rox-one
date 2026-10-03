@@ -1,9 +1,9 @@
 import { spawn, execFile } from 'child_process'
 import { connect as netConnect } from 'net'
 import { EventEmitter } from 'events'
-import type { SshHostConfig } from '@craft-agent/shared/config'
-import { getSshHost, loadManagedToken, storeManagedToken } from '@craft-agent/shared/config'
-import { generateServerToken } from '@craft-agent/server-core/bootstrap'
+import type { SshHostConfig } from '@rox/shared/config'
+import { getSshHost, loadManagedToken, storeManagedToken } from '@rox/shared/config'
+import { generateServerToken } from '@rox/server-core/bootstrap'
 import { findFreePort } from './port-allocator.ts'
 import {
   SshTunnel,
@@ -141,14 +141,11 @@ export class SshTunnelManager extends EventEmitter {
     this.emit('state', tunnel.getState())
   }
 
-  /** Fetch the remote craft-agent server token over ssh, best-effort: try the
-   * configured token file (if any) plus the common `.env` convention. */
+  /** Read canonical token locations first, then explicit legacy compatibility. */
   async fetchRemoteToken(host: SshHostConfig, tokenPath?: string): Promise<string | undefined> {
-    const candidates = tokenPath
-      ? [tokenPath]
-      : ['~/.craft-agent/server-token', '~/.craft-agent/.env']
+    const candidates = remoteTokenCandidatePaths(tokenPath)
     for (const path of candidates) {
-      const out = await this.runRemote(host, `cat ${path} 2>/dev/null || true`)
+      const out = await this.runRemote(host, remoteReadTokenCommand(path))
       const token = extractToken(out)
       if (token) return token
     }
@@ -298,10 +295,11 @@ export function buildScpArgs(
 }
 
 /** Pull a token out of `KEY=value` env lines or a bare token file. */
-function extractToken(out: string): string | undefined {
+export function extractToken(out: string): string | undefined {
   const text = out.trim()
   if (!text) return undefined
-  const match = text.match(/CRAFT_SERVER_TOKEN\s*=\s*["']?([A-Za-z0-9._-]+)["']?/)
+  const match = text.match(/(?:^|\n)\s*ROX_SERVER_TOKEN\s*=\s*["']?([A-Za-z0-9._-]+)["']?/)
+    ?? text.match(/(?:^|\n)\s*CRAFT_SERVER_TOKEN\s*=\s*["']?([A-Za-z0-9._-]+)["']?/)
   if (match) return match[1]
   // A file containing just the token.
   if (/^[A-Za-z0-9._-]{16,}$/.test(text)) return text
@@ -324,4 +322,18 @@ let singleton: SshTunnelManager | undefined
 export function getSshTunnelManager(): SshTunnelManager {
   if (!singleton) singleton = new SshTunnelManager()
   return singleton
+}
+
+/** Explicit paths override discovery and are shell quoted before reading. */
+export function remoteTokenCandidatePaths(tokenPath?: string): string[] {
+  return tokenPath ? [tokenPath] : [
+    '~/.rox/remote-server/.token', '~/.rox/server-token', '~/.rox/.env',
+    '~/.craft-agent/remote-server/.token', '~/.craft-agent/server-token', '~/.craft-agent/.env',
+  ]
+}
+
+export function remoteReadTokenCommand(path: string): string {
+  const quote = (value: string) => `'${value.replace(/'/g, "'\\''")}'`
+  const quoted = path.startsWith('~/') ? `"$HOME"/${quote(path.slice(2))}` : quote(path)
+  return `cat ${quoted} 2>/dev/null || true`
 }

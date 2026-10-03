@@ -68,7 +68,7 @@ function resolveStubRunner(): string {
   try {
     const req = createRequire(join(process.cwd(), 'package.json'));
     candidates.push(join(
-      dirname(req.resolve('@craft-agent/cloud-runner/package.json')),
+      dirname(req.resolve('@rox/cloud-runner/package.json')),
       'src', 'runners', 'stub-runner.ts',
     ));
   } catch { /* fall through */ }

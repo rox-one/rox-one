@@ -1,5 +1,5 @@
 /**
- * @craft-agent/core — platform layer.
+ * @rox/core — platform layer.
  *
  * Pure-TS registries and model for the unified shell (spec suite
  * 2026-08-07-unified-shell): panels & rails (S-03), surface tabs (S-02),

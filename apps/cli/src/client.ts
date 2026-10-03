@@ -9,11 +9,11 @@ import {
   PROTOCOL_VERSION,
   assertNativeCredentialTransport,
   type MessageEnvelope,
-} from '@craft-agent/shared/protocol'
+} from '@rox/shared/protocol'
 import {
   serializeEnvelope,
   deserializeEnvelope,
-} from '@craft-agent/server-core/transport'
+} from '@rox/server-core/transport'
 
 // ---------------------------------------------------------------------------
 // Types
