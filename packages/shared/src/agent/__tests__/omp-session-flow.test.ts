@@ -286,7 +286,7 @@ describe('OmpAgent branch handshake', () => {
     expect(switchFrame?.sessionPath).not.toBe(parentFile);
     expect(String(switchFrame?.sessionPath)).toContain(join('session-test', 'omp'));
     const branchFrame = log.find((f) => f.type === 'fork');
-    // OMP's branch cuts at the USER entry following the anchor.
+    // Runtime 18.4.12 fork retains the path through the selected entry.
     expect(branchFrame?.entryId).toBe('asst0001');
     expect(events.at(-1)?.type).toBe('complete');
   });
@@ -333,7 +333,7 @@ describe('OmpAgent branch handshake', () => {
     expect(agent.isProcessing()).toBe(false);
   });
 
-  it('own-message branch includes that user and excludes their answer and later messages', async () => {
+  it('own-message branch forks a private transcript at the selected user without editing the parent', async () => {
     const { agent, fake } = setup('healthy');
     const { parentSessionPath, parentFile } = writeParentTranscript(fake);
     const parentBytes = readFileSync(parentFile, 'utf8');
@@ -344,9 +344,14 @@ describe('OmpAgent branch handshake', () => {
     await agent.ensureBranchReady();
     const switched = fake.readRpcLog().find(frame => frame.type === 'switch_session');
     expect(String(switched?.sessionPath)).toContain(join('sessions', 'session-test', 'omp'));
-    const copied = readFileSync(String(switched?.sessionPath), 'utf8').trim().split('\n').map(line => JSON.parse(line));
-    expect(copied.map(entry => entry.id)).toEqual(['user0001', 'asst0001', 'user0002']);
-    expect(fake.readRpcLog().some(frame => frame.type === 'branch')).toBe(false);
+    // The adapter sends the inclusive native fork command after attaching a
+    // private mirror. The fake CLI records this boundary; pure branch tests
+    // separately cover the selected-user prefix and later-message exclusion.
+    expect(readFileSync(String(switched?.sessionPath), 'utf8')).toBe(parentBytes);
+    const log = fake.readRpcLog();
+    expect(log.find(frame => frame.type === 'fork')?.entryId).toBe('user0002');
+    expect(log.findIndex(frame => frame.type === 'switch_session')).toBeLessThan(log.findIndex(frame => frame.type === 'fork'));
+    expect(log.some(frame => frame.type === 'branch')).toBe(false);
     expect(readFileSync(parentFile, 'utf8')).toBe(parentBytes);
     const events = await chatEvents(agent, 'continue from selected user', 8_000);
     expect(events.at(-1)?.type).toBe('complete');
