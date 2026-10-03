@@ -30,10 +30,7 @@ export function createPocketAccountStore(options: { directory: string; safeStora
   const write = (id: string, value: unknown) => {
     ready(); const pending = join(options.directory, `.pending-${randomUUID()}`)
     let sealed: Buffer | undefined
-    try { sealed = storage.encryptString(JSON.stringify(value)); if (!sealed.length) throw Error(); writeFileSync(pending, sealed, { mode: 0o600, flag: 'wx' });
-      // Windows FlushFileBuffers requires a handle with GENERIC_WRITE access.
-      // O_WRONLY preserves the existing file and no-follow check without truncation.
-      const descriptor = openSync(pending, constants.O_WRONLY | constants.O_NOFOLLOW); try { fsyncSync(descriptor) } finally { closeSync(descriptor) }; renameSync(pending, join(options.directory, `${id}.enc`)); if (platform !== 'win32') { const directory = openSync(options.directory, constants.O_RDONLY); try { fsyncSync(directory) } finally { closeSync(directory) } } }
+    try { sealed = storage.encryptString(JSON.stringify(value)); if (!sealed.length) throw Error(); writeFileSync(pending, sealed, { mode: 0o600, flag: 'wx' }); const descriptor = openSync(pending, constants.O_RDONLY | constants.O_NOFOLLOW); try { fsyncSync(descriptor) } finally { closeSync(descriptor) }; renameSync(pending, join(options.directory, `${id}.enc`)); if (platform !== 'win32') { const directory = openSync(options.directory, constants.O_RDONLY); try { fsyncSync(directory) } finally { closeSync(directory) } } }
     catch { throw new Error('ROX_SECURE_STORE_WRITE_FAILED') }
     finally { sealed?.fill(0); rmSync(pending, { force: true }) }
   }

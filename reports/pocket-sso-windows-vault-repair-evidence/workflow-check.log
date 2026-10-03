@@ -1,0 +1,2 @@
+{"path":".github/workflows/pocket-native-vault.yml","triggers":["workflow_dispatch"],"contents":"read","jobs":["native-vault"]}
+{"path":".github/workflows/desktop-release.yml","triggers":["push","workflow_dispatch"],"contents":"read","jobs":["validate","package"]}
