@@ -8,7 +8,8 @@
  * Spec: docs/superpowers/specs/2026-08-06-toolchain-download-manager-design.md
  */
 
-import { delimiter } from 'node:path';
+import { pathEnvKey, prependPath } from './toolchain/exec.ts';
+import { getWindowsBootstrapRuntime } from './toolchain/windows-bootstrap.ts';
 
 import { getToolchainDisabled, setToolchainDisabled } from './config/storage.ts';
 import { createManager, createResolver, toolchainPaths } from './toolchain/index.ts';
@@ -93,14 +94,18 @@ export async function resolveOmpExecutableOrExplain(): Promise<string> {
  * toolchain впереди существующего PATH. Без установленных инструментов
  * возвращает env без изменений.
  */
-export async function withToolchainPathPrefix<T extends NodeJS.ProcessEnv>(env: T): Promise<T> {
+export async function withToolchainPathPrefix<T extends NodeJS.ProcessEnv>(env: T, resolver?: ToolchainResolver): Promise<T> {
+  const native = process.platform === 'win32' ? getWindowsBootstrapRuntime() : null;
+  if (native) {
+    const key = pathEnvKey(env);
+    env = { ...env, [key]: await native.filterPath(env[key] ?? '') };
+  }
   let prefix: string;
   try {
-    prefix = await getToolchain().resolver.toolchainPathPrefix();
+    prefix = await (resolver ?? getToolchain().resolver).toolchainPathPrefix();
   } catch {
     return env;
   }
   if (!prefix) return env;
-  const existing = env.PATH ?? '';
-  return { ...env, PATH: existing ? `${prefix}${delimiter}${existing}` : prefix };
+  return prependPath(env, prefix);
 }

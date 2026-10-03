@@ -1,0 +1,188 @@
+{
+  "createdAtUtc": "2026-10-03T17:39:53.868942+00:00",
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "primaryMergeRevision": "5c242cf044d6fcbacf60efa9efa08cfc1977d39f",
+  "followupBaseRevision": "4fec686d766c1d2513f4db0b685e6d3924e14a9d",
+  "change": "Initialize missing readWorkspaceGenerationRef in shared persistent fixture refs; extracted production lease, callbacks and assertions unchanged.",
+  "productSourceChanged": false,
+  "qualifiedBun": "1.3.14",
+  "targetedRed": {
+    "atPrimaryMerge": {
+      "pass": 0,
+      "fail": 4,
+      "exitCode": 1
+    },
+    "atFollowupBase": {
+      "pass": 2,
+      "fail": 5,
+      "exitCode": 1
+    }
+  },
+  "targetedGreen": {
+    "pass": 7,
+    "fail": 0,
+    "assertions": 20,
+    "exitCode": 0
+  },
+  "initialFullIntegratedAttempt": {
+    "pass": 216,
+    "fail": 10,
+    "exitCode": 1,
+    "nodeVersion": "26.8.2",
+    "qualification": "Current workflow requires Node24. Additional subprocess-output/esbuild failures under investigation; no assertion weakening."
+  },
+  "historicalFailureLogs": [
+    {
+      "originalName": "expanded-durable-c28-failure-job.log",
+      "sha256": "9470688d664edbd9b88bbf18be7720f155a1328f678b5df6c2cfc602769316df",
+      "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/expanded-durable-c28-failure-job.log.gz",
+      "gzipSha256": "d9838adaf651064abaae881253781be312705c9849f22266372bb61a24f14431"
+    },
+    {
+      "originalName": "expanded-notes-read-lifecycle-5c-red.log",
+      "sha256": "5c07e0ba5a72201ce06e964172c7084f8833d238ce6ed376169fc368685f29ec",
+      "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/expanded-notes-read-lifecycle-5c-red.log.gz",
+      "gzipSha256": "f2141310d23d2d9fabfb71413df7fe18d8f759011941ec6aec834e7e1df22ddd"
+    },
+    {
+      "originalName": "expanded-notes-read-lifecycle-4fec-red.log",
+      "sha256": "f77ff0ff4233ba231fa3c9f2c4afaf759f2e1a4a885b02d2c99863702145e0e5",
+      "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/expanded-notes-read-lifecycle-4fec-red.log.gz",
+      "gzipSha256": "6af397a1fc4ab171abb7335b46bb64959fc5109c48b6e7926701cecffe2600e9"
+    },
+    {
+      "originalName": "expanded-notes-read-lifecycle-4fec-green.log",
+      "sha256": "7f826dc6b2e16b224095d70e5ffe20f9c5b85da7d58d41d4c762a06fd5ab9bf8",
+      "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/expanded-notes-read-lifecycle-4fec-green.log.gz",
+      "gzipSha256": "869a318254402ec23712f0406e4d501fab0ec06ccd083c68b4b2036714aafbbe"
+    },
+    {
+      "originalName": "expanded-durable-integrated-4fec-green.log",
+      "sha256": "91c7faea0eac346ac8b62d9a5a5c44cd96854d7ac796022a4782d0a9fb9fbba9",
+      "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/expanded-durable-integrated-4fec-green.log.gz",
+      "gzipSha256": "1e51261d03ef9a81f99457d0c15b153117de0bf4cc55b773b6669fdee130064c"
+    },
+    {
+      "originalName": "expanded-i18n-subprocess-4fec-isolated.log",
+      "sha256": "23dbadff8c3cf021a5caeaa3e9644cdf33b26286111e8396b7adfff615f2c317",
+      "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/expanded-i18n-subprocess-4fec-isolated.log.gz",
+      "gzipSha256": "d464b1312f01d26277bf5e975038e3b34c925dbfba80c563695bd95bcb71874d"
+    },
+    {
+      "originalName": "expanded-durable-integrated-4fec-node22-retry.log",
+      "sha256": "be92773c907e5e2faa42bda999a7fc8ce6c173ee02412f783cccfdeb02ad980b",
+      "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/expanded-durable-integrated-4fec-node22-retry.log.gz",
+      "gzipSha256": "eb28f9cd75e7a16cf185d737ade82a7061f43e57f2fbb3d32416aad781e9ecc2"
+    },
+    {
+      "originalName": "expanded-durable-integrated-4fec-node24-retry.log",
+      "sha256": "3b9f9b83977fb1658c420703c5d5431fd6bee600073d20a9f7b9a662cfb942c8",
+      "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/expanded-durable-integrated-4fec-node24-retry.log.gz",
+      "gzipSha256": "07b7e6454f8fecd9ce272fdc4ce98e509ea9d2c1334dd47c947e1ba46e4bd9a6"
+    },
+    {
+      "originalName": "expanded-subprocess-isolated-node24.log",
+      "sha256": "c02de41f91e7de2c0b16bd04979379ac380eb36ab658b974d79f665a5d185147",
+      "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/expanded-subprocess-isolated-node24.log.gz",
+      "gzipSha256": "6ff07a74699068a16000b41fbcc02cff5b2f6938b281797f8b3c201553488d9b"
+    },
+    {
+      "originalName": "expanded-durable-a3c-ubuntu-success-job.log",
+      "sha256": "e0b9ca5a2690ce52f43e7ce42959f93456efd8d661c897b11f84bf9e6de62ec0",
+      "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/expanded-durable-a3c-ubuntu-success-job.log.gz",
+      "gzipSha256": "725abdfb45aacbb43b5f7053339c6ee7ad37014ff1c611389066467b792de3f0",
+      "kind": "successful-independent-CI"
+    },
+    {
+      "originalName": "rox-readiness-ui-001.cli-native-notes-pair.log",
+      "sha256": "01093045f288d7770dba88bfeef4dd2b023b65e56d29c1f5904f7684edb902f6",
+      "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/rox-readiness-ui-001.cli-native-notes-pair.log.gz",
+      "gzipSha256": "9f63c73471abba8a07adcdf0084f93999772e644704493f6ff7a3671bfe24fb2",
+      "kind": "concurrent-local-scout-diagnostic"
+    },
+    {
+      "originalName": "rox-readiness-ui-001.cli-webui-pair.log",
+      "sha256": "0aec7becbbefae0375d8fe4d842426b4aaf7717e9cbe038d0fc93a9c71b308ad",
+      "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/rox-readiness-ui-001.cli-webui-pair.log.gz",
+      "gzipSha256": "a0832fa84cb5dfdf3bbb93b2a7d3d6afa574f444b6a9ca3d454afa0c12bde550",
+      "kind": "concurrent-local-scout-diagnostic"
+    },
+    {
+      "originalName": "rox-readiness-ui-001.cli-single-scout.log",
+      "sha256": "6eb270708c1cbceae5ca62f9ddbb1ec022ed87278952e4c847874671b5e8e199",
+      "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/rox-readiness-ui-001.cli-single-scout.log.gz",
+      "gzipSha256": "d3dd444939b9314591eaaa019c94f55c27c383c6e2234b1ede98d0e701a714f4",
+      "kind": "concurrent-local-scout-diagnostic"
+    }
+  ],
+  "originalTaskContractChanged": false,
+  "fullDoDClosed": false,
+  "testRepairRevision": "a3c1247170b85f3d7076a42c1e00fa5c8dfff355",
+  "followupPullRequest": "https://github.com/rox-one/rox-one/pull/1445",
+  "upstreamWorkflowNodeVersion": "24",
+  "independentReview": "Persistent shared fixture ref is correct; production callbacks and all assertions remain unchanged.",
+  "fullIntegratedRetries": [
+    {
+      "startedAtUtc": "2026-10-03T17:38:13.512669+00:00",
+      "endedAtUtc": "2026-10-03T17:40:35.289459+00:00",
+      "baseRevision": "4fec686d766c1d2513f4db0b685e6d3924e14a9d",
+      "qualifiedBun": "1.3.14",
+      "workflow": ".github/workflows/sqlite-runtime-recovery.yml",
+      "workflowSha256": "f31d1087b21efb99f49a197203ac7ccb99a00770805573f08c60d155a0c9c7cd",
+      "command": "bun test packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts \\\n  packages/server-core/src/transport/__tests__/before-response-authority.test.ts \\\n  packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts \\\n  packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts \\\n  packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts \\\n  scripts/electron-main-cjs.test.ts \\\n  scripts/__tests__/check-i18n-coverage.test.ts \\\n  packages/pi-agent-server/src/custom-endpoint-registration.test.ts \\\n  apps/electron/src/main/__tests__/native-notes-runtime.test.ts \\\n  apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts \\\n  apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts \\\n  apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts \\\n  apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts \\\n  apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts \\\n  apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts \\\n  apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts \\\n  apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts \\\n  packages/shared/src/projects/__tests__ \\\n  apps/webui/__tests__",
+      "exitCode": 1,
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-durable-integrated-4fec-node22-retry.log",
+      "logSha256": "be92773c907e5e2faa42bda999a7fc8ce6c173ee02412f783cccfdeb02ad980b",
+      "tail": "ws as unavailable without inventing empty success [1.53ms]\n(pass) required voice read refusal is reported even when another getter throws synchronously [1.61ms]\n(pass) runtime getter errors are observed as capability refusal without dispatching any host callback [0.17ms]\n(pass) pending optional history cannot delay actual core prefs or a successful preference save [0.34ms]\n\n11 tests failed:\n(fail) Electron main CommonJS flags cold-load the unchanged SQLite adapter on Node with durable runtime controls [733.36ms]\n(fail) Electron main CommonJS module URL follows a relocated bundle with spaces and non-ASCII path characters [299.69ms]\n(fail) actual CLI skips concatenated key expressions while detecting completed literal arguments [79.82ms]\n(fail) actual CLI retains missing complete keys and exact source lines for all supported reference forms [66.87ms]\n(fail) actual CLI preserves escaped literals and plural key resolution [76.12ms]\n(fail) actual CLI still rejects invalid locale interpolation independently of key coverage [73.86ms]\n(fail) WebUI browser bootstrap > installs browser globals in a cold JavaScript realm before shared initializers [51.43ms]\n(fail) WebUI browser builtins bundle > cold-imports the real renderer stub with a working browser Buffer [3.47ms]\n(fail) WebUI browser builtins bundle > refuses a browser bundle that requests an unavailable native SQLite API [3.33ms]\n(fail) ordinary native Notes creation remains available at the explicit Feed retry custody limit without recording a new attempt [31144.74ms]\n  ^ this test timed out after 5000ms.\n(fail) roadmap persistence recovery > permits only one of two real processes released with the same observed revision [1482.25ms]\n\n 215 pass\n 11 fail\n 1 error\n 1388 expect() calls\nRan 226 tests across 26 files. [141.64s]\n",
+      "nodeVersion": "v22.23.3"
+    },
+    {
+      "startedAtUtc": "2026-10-03T17:41:10.620100+00:00",
+      "endedAtUtc": "2026-10-03T17:43:11.344390+00:00",
+      "baseRevision": "4fec686d766c1d2513f4db0b685e6d3924e14a9d",
+      "qualifiedBun": "1.3.14",
+      "workflow": ".github/workflows/sqlite-runtime-recovery.yml",
+      "workflowSha256": "f31d1087b21efb99f49a197203ac7ccb99a00770805573f08c60d155a0c9c7cd",
+      "command": "bun test packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts \\\n  packages/server-core/src/transport/__tests__/before-response-authority.test.ts \\\n  packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts \\\n  packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts \\\n  packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts \\\n  scripts/electron-main-cjs.test.ts \\\n  scripts/__tests__/check-i18n-coverage.test.ts \\\n  packages/pi-agent-server/src/custom-endpoint-registration.test.ts \\\n  apps/electron/src/main/__tests__/native-notes-runtime.test.ts \\\n  apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts \\\n  apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts \\\n  apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts \\\n  apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts \\\n  apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts \\\n  apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts \\\n  apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts \\\n  apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts \\\n  packages/shared/src/projects/__tests__ \\\n  apps/webui/__tests__",
+      "exitCode": 1,
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-durable-integrated-4fec-node24-retry.log",
+      "logSha256": "3b9f9b83977fb1658c420703c5d5431fd6bee600073d20a9f7b9a662cfb942c8",
+      "tail": "s) renderer publication faults remain visible and are never reclassified as transport refusal [0.16ms]\n(pass) an unavailable callback fault remains visible without duplicate unavailable publication [0.48ms]\n(pass) a refused or absent optional history preserves actual voice prefs and health with honest unavailable history [0.60ms]\n(pass) voice history publishes actual rows and treats malformed rows as unavailable without inventing empty success [0.15ms]\n(pass) required voice read refusal is reported even when another getter throws synchronously [0.22ms]\n(pass) runtime getter errors are observed as capability refusal without dispatching any host callback [0.34ms]\n(pass) pending optional history cannot delay actual core prefs or a successful preference save [0.46ms]\n\n11 tests failed:\n(fail) Electron main CommonJS flags cold-load the unchanged SQLite adapter on Node with durable runtime controls [907.92ms]\n(fail) Electron main CommonJS module URL follows a relocated bundle with spaces and non-ASCII path characters [343.26ms]\n(fail) actual CLI skips concatenated key expressions while detecting completed literal arguments [120.20ms]\n(fail) actual CLI retains missing complete keys and exact source lines for all supported reference forms [141.87ms]\n(fail) actual CLI preserves escaped literals and plural key resolution [59.74ms]\n(fail) actual CLI still rejects invalid locale interpolation independently of key coverage [123.22ms]\n(fail) WebUI browser bootstrap > installs browser globals in a cold JavaScript realm before shared initializers [31.28ms]\n(fail) WebUI browser builtins bundle > cold-imports the real renderer stub with a working browser Buffer [1.34ms]\n(fail) WebUI browser builtins bundle > refuses a browser bundle that requests an unavailable native SQLite API [2.55ms]\n(fail) ordinary native Notes creation remains available at the explicit Feed retry custody limit without recording a new attempt [62190.80ms]\n  ^ this test timed out after 5000ms.\n(fail) roadmap persistence recovery > permits only one of two real processes released with the same observed revision [227.66ms]\n\n 215 pass\n 11 fail\n 1 error\n 1388 expect() calls\nRan 226 tests across 26 files. [120.58s]\n",
+      "nodeVersion": "v24.21.0"
+    }
+  ],
+  "subprocessControls": {
+    "revision": "a3c1247170b85f3d7076a42c1e00fa5c8dfff355",
+    "command": [
+      "bun",
+      "test",
+      "./scripts/electron-main-cjs.test.ts",
+      "./scripts/__tests__/check-i18n-coverage.test.ts",
+      "./apps/webui/__tests__",
+      "./packages/shared/src/projects/__tests__"
+    ],
+    "bun": "1.3.14",
+    "node": "v24.21.0",
+    "exitCode": 0,
+    "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-subprocess-isolated-node24.log",
+    "logSha256": "c02de41f91e7de2c0b16bd04979379ac380eb36ab658b974d79f665a5d185147",
+    "tail": "y > does not overwrite corrupt bytes or an existing backup when backup creation fails [4.16ms]\n(pass) roadmap persistence recovery > refuses a busy writer lock without removing its bytes [1.50ms]\n(pass) roadmap persistence recovery > returns an exact revision through normal and corrupt reloads [10.69ms]\n(pass) roadmap persistence recovery > keeps unversioned callers compatible while rejecting an invalid observed token [37.63ms]\n\npackages/shared/src/projects/__tests__/storage.test.ts:\n(pass) sanitizeAssetFilename > strips control chars and NUL bytes (the literal-NUL regex fix) [79.91ms]\n(pass) sanitizeAssetFilename > strips path separators and leading dots so an upload stays in the assets dir [0.36ms]\n(pass) sanitizeAssetFilename > falls back to a generated name when the input reduces to empty [3.17ms]\n(pass) uploadProjectAsset sourcePath > refuses to read a sourcePath outside the workspace [2.87ms]\n(pass) loadProjectMemory > returns null when MEMORY.md does not exist [4.20ms]\n(pass) loadProjectMemory > returns null when MEMORY.md is whitespace-only [2.91ms]\n(pass) loadProjectMemory > returns content verbatim when under the token cap [2.14ms]\n(pass) loadProjectMemory > head-truncates and appends a marker when over the cap, staying within budget [4.96ms]\n\npackages/shared/src/projects/__tests__/roadmap-save-caller.test.ts:\n(pass) actual settings save keeps the draft and never reports success after a rejected native update [1664.43ms]\n(pass) actual settings save reports success only after its native update receipt [121.14ms]\n(pass) actual settings save does not report success when native write authority is unavailable [707.04ms]\n(pass) actual renderer autosave waits for each receipt, retains a newer draft and persists it using the acknowledged revision [321.97ms]\n(pass) actual autosave keeps the draft after failure and ignores a late receipt after scope changes [12.00ms]\n(pass) actual load effect clears an old project and does not arm autosave after a failed read [535.33ms]\n(pass) queue does not advance its observed revision after a refusal or missing receipt [0.41ms]\n(pass) actual route cleanup flushes the pending draft through the captured old project scope [27.55ms]\n(pass) actual merged AI caller refuses to send a draft without a successful save receipt [94.97ms]\n(pass) actual merged AI caller sends the acknowledged revision and preserves honest model provenance [77.81ms]\n(pass) actual merged AI caller discards a late result from a replaced writer in the same workspace [15.74ms]\n\n 84 pass\n 0 fail\n 288 expect() calls\nRan 84 tests across 11 files. [23.32s]\n",
+    "observedPass": 84,
+    "observedFail": 0,
+    "observedAssertions": 288
+  },
+  "localFullStepQualification": "Full local step remains red (Node24:215 passed/11 failed/1 error). Its ten child output/build-service failures pass under identical Bun1.3.14+Node24 when selected subprocess group executes independently (84/0/288). Feed custody-limit setup also exceeded its original5s. No source/timeout/assertions weakened; independent Ubuntu full workflow pending. Local red logs retained. Independent Ubuntu workflow passed original step226/0/1449 and all remaining steps; local failures are retained without reclassification as passes.",
+  "remoteDurableUbuntuResult": "remote-durable-ubuntu-a3c-result.json",
+  "remoteDurableUbuntuConclusion": "success",
+  "independentFullIntegratedSuite": {
+    "pass": 226,
+    "fail": 0,
+    "assertions": 1449,
+    "files": 26,
+    "timeoutChanges": false
+  },
+  "concurrentScoutQualification": "Additional scout pair/single diagnostics executed during root validation; all completed, no signals sent. They cannot establish causation or supersede the isolated84/0 or independent remote226/0 evidence."
+}

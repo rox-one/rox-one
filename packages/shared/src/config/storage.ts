@@ -164,6 +164,8 @@ export interface StoredConfig {
   // пропускает (UI-переключатель, канал toolchain:setDisabled). core/opt-in не затрагиваются.
   toolchain?: {
     disabled?: string[];
+    /** Explicit native prerequisite selection wins over the installer default. */
+    dependencyMode?: import('../toolchain/windows-bootstrap.ts').WindowsDependencyMode;
   };
   // Agent session runtime settings. envOverrides merge into every spawned agent
   // subprocess env AFTER process.env and proxy vars but BEFORE per-session
@@ -1442,6 +1444,12 @@ export function setRtkEnabled(enabled: boolean): void {
 export function getToolchainDisabled(): string[] {
   const config = loadStoredConfig();
   return config?.toolchain?.disabled ?? [];
+}
+
+/** Read only: startup must never persist an installer preference into user config. */
+export function getToolchainDependencyMode(): import('../toolchain/windows-bootstrap.ts').WindowsDependencyMode | undefined {
+  const mode = loadStoredConfig()?.toolchain?.dependencyMode;
+  return mode === 'auto' || mode === 'bundled' || mode === 'system' ? mode : undefined;
 }
 
 /**

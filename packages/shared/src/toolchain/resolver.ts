@@ -13,7 +13,9 @@ import * as path from 'node:path';
 import { TOOLCHAIN_MANIFEST } from './manifest';
 import { OPENCLAW_NPM_PIN } from './npm-locks';
 import { TOOLCHAIN_INSTALL_COMPLETE_MARKER } from './types';
-import type { ManagedOpenClawLauncher, ToolchainPaths, ToolchainPlatform, ToolchainResolver } from './types';
+import { executableCandidates, isExecutable, whichTool } from './exec';
+import { bootstrapToolName, getWindowsBootstrapRuntime, type WindowsBootstrapRuntime } from './windows-bootstrap';
+import type { ManagedOpenClawLauncher, ToolEntry, ToolchainPaths, ToolchainPlatform, ToolchainResolver } from './types';
 /** Regular file contained in the real toolchain root; rejects symlink escapes. */
 async function isManagedFile(
   toolchainDir: string,
@@ -39,20 +41,18 @@ async function isManagedFile(
 
 const isWindows = process.platform === 'win32';
 
-/** Имена-кандидаты для поиска: на Windows исполняемый файл имеет расширение (.exe/.cmd/.bat). */
-function candidateNames(name: string, win = isWindows): string[] {
-  if (!win) return [name];
-  return /\.(exe|cmd|bat)$/i.test(name) ? [name] : [`${name}.exe`, `${name}.cmd`, name];
-}
-
-/** Файл существует и исполняем (на win32 — просто существует). */
-async function isExecutable(file: string, win = isWindows): Promise<boolean> {
-  try {
-    await fs.promises.access(file, win ? fs.constants.F_OK : fs.constants.X_OK);
-    return true;
-  } catch {
-    return false;
+/** pip/git-npm generate launchers without a downloadable artifact. */
+async function entryBinPaths(paths: ToolchainPaths, entry: ToolEntry, platform: ToolchainPlatform | null): Promise<string[]> {
+  if (entry.platforms && platform && !entry.platforms.includes(platform)) return [];
+  const artifacts = platform ? [entry.artifacts[platform]] : Object.values(entry.artifacts);
+  const bins = artifacts.flatMap((artifact) => artifact?.binPaths ?? []);
+  if (entry.kind === 'pip' || entry.kind === 'git-npm') {
+    const dir = path.join(paths.toolchainDir, entry.name, 'current', 'bin');
+    for (const file of await fs.promises.readdir(dir).catch(() => [] as string[])) {
+      bins.push(path.join('bin', file));
+    }
   }
+  return bins;
 }
 
 export interface ResolverOptions {
@@ -61,6 +61,7 @@ export interface ResolverOptions {
   pathEnv?: string;
   /** DI вместо process.platform (тесты win-семантики на unix). */
   platform?: NodeJS.Platform;
+  windowsBootstrap?: WindowsBootstrapRuntime | null;
 }
 
 /** Собрать ссылку toolchain/<tool>/current → пути кандидатов по binPaths манифеста. */
@@ -71,38 +72,26 @@ async function toolchainCandidates(
   win = isWindows,
   platform: ToolchainPlatform | null = null,
 ): Promise<string[]> {
-  const baseNames = new Set(candidateNames(name, win));
+  const normalized = win ? name.toLowerCase() : name;
+  const baseNames = new Set(executableCandidates(normalized, win));
   const found: string[] = [];
   for (const entry of manifest) {
-    const artifacts = [
-      // только артефакт текущей платформы; null/legacy — весь набор (тесты)
-      ...(platform ? [entry.artifacts[platform]] : Object.values(entry.artifacts)),
-    ];
-    for (const artifact of artifacts) {
-      if (!artifact) continue;
-      for (const binRel of artifact.binPaths) {
-        const base = path.basename(binRel);
-        // Бинарь принадлежит запрашиваемому инструменту → принимаем безусловно
-        // (worktrunk шипит binary 'wt' — имя файла ≠ имени тула).
-        // Для чужих entry (общий прогон по манифесту) — только точные имена.
-        if (entry.name !== name && !baseNames.has(base.replace(/\.(exe|cmd|bat)$/i, '')) && !baseNames.has(base)) continue;
-        found.push(path.join(paths.toolchainDir, entry.name, 'current', binRel));
-      }
+    const bins = await entryBinPaths(paths, entry, platform);
+    const primary = entry.systemBinary ?? (entry.kind === 'git-npm'
+      ? entry.name
+      : bins[0] && path.basename(bins[0]).replace(/\.(exe|com|cmd|bat)$/i, ''));
+    for (const binRel of bins) {
+      const base = win ? path.basename(binRel).toLowerCase() : path.basename(binRel);
+      // A catalog name may alias its primary CLI (worktrunk → wt), never a
+      // companion binary (missing node must not resolve to npx).
+      const alias = (entry.name === normalized || (entry.name === 'python' && normalized === 'python3')) &&
+        base.replace(/\.(exe|com|cmd|bat)$/i, '') === primary;
+      if (!baseNames.has(base) && !alias) continue;
+      if (win && !/\.(exe|com|cmd|bat)$/i.test(base)) continue;
+      found.push(path.join(paths.toolchainDir, entry.name, 'current', binRel));
     }
   }
   return found;
-}
-
-/** PATH-поиск («which» кросс-платформенный). */
-async function findInPath(name: string, pathEnv: string | undefined, win = isWindows): Promise<string | null> {
-  const dirs = (pathEnv ?? '').split(path.delimiter).filter(Boolean);
-  for (const dir of dirs) {
-    for (const candidate of candidateNames(name, win)) {
-      const full = path.join(dir, candidate);
-      if (await isExecutable(full, win)) return full;
-    }
-  }
-  return null;
 }
 
 export function createResolver(
@@ -111,6 +100,7 @@ export function createResolver(
 ): ToolchainResolver {
   const manifest = opts.manifest ?? TOOLCHAIN_MANIFEST;
   const win = (opts.platform ?? process.platform) === 'win32';
+  const bootstrap = () => win ? (opts.windowsBootstrap === undefined ? getWindowsBootstrapRuntime() : opts.windowsBootstrap) : null;
   // Текущая платформа в терминах манифеста: бинарники других платформ в
   // resolver/PATH-prefix не протекают (P3: раньше Object.values брал всех).
   const platName = opts.platform ?? process.platform;
@@ -126,16 +116,31 @@ export function createResolver(
           ? 'linux-x64'
           : null;
 
-  return {
-    async findExecutable(name: string): Promise<string | null> {
+  async function resolveExecutable(name: string): Promise<string | null> {
       if (name === 'openclaw' || (win && /^openclaw\.(exe|cmd|bat)$/i.test(name))) return null;
+      const native = bootstrap();
+      if (native && /^bash(\.exe)?$/i.test(name)) return native.gitBashPath();
+      // system excludes private/managed prerequisites. auto is system-first;
+      // otherwise installer files are a bundled fallback after managed tooling.
+      if (native && bootstrapToolName(name) &&
+          (native.mode === 'system' || (native.mode === 'auto' && native.source(name) === 'system'))) {
+        return native.findExecutable(name);
+      }
       // 1) toolchain: <toolchainDir>/<tool>/current/<binPath>
       for (const candidate of await toolchainCandidates(paths, manifest, name, win, platformKey)) {
+        if (native && bootstrapToolName(name) === 'node') {
+          const directory = path.dirname(candidate);
+          if (!(await Promise.all(['node.exe', 'npm.cmd', 'npx.cmd'].map((bin) => isExecutable(path.join(directory, bin), true)))).every(Boolean)) continue;
+        }
         if (await isExecutable(candidate, win)) return candidate;
       }
+      if (native && bootstrapToolName(name)) return native.findExecutable(name);
       // 2) PATH
-      return findInPath(name, opts.pathEnv ?? process.env.PATH, win);
-    },
+      return whichTool(name, opts.pathEnv, win);
+  }
+
+  return {
+    findExecutable: resolveExecutable,
 
     async resolveOpenClawLauncher(): Promise<ManagedOpenClawLauncher | null> {
       // This deliberately does not use `findExecutable`: generic resolution can
@@ -209,27 +214,24 @@ export function createResolver(
     /** Префикс PATH для сабпроцессов агентов: bin-директории установленных инструментов. */
     async toolchainPathPrefix(): Promise<string> {
       const dirs = new Set<string>();
+      const native = bootstrap();
       // OpenClaw не попадает в PATH-префикс: только точный managed-лаунчер.
       for (const entry of manifest) {
         if (entry.name === 'openclaw') continue;
-        let installed = false;
-        try {
-          installed = fs.existsSync(path.join(paths.toolchainDir, entry.name, 'current'));
-        } catch {
-          installed = false;
-        }
-        if (!installed) continue;
-        const prefixArtifacts = platformKey
-          ? [entry.artifacts[platformKey]]
-          : Object.values(entry.artifacts);
-        for (const artifact of prefixArtifacts) {
-          if (!artifact) continue;
-          for (const binRel of artifact.binPaths) {
-            dirs.add(path.dirname(path.join(paths.toolchainDir, entry.name, 'current', binRel)));
-          }
+        if (native && bootstrapToolName(entry.name)) continue;
+        for (const binRel of await entryBinPaths(paths, entry, platformKey)) {
+          const file = path.join(paths.toolchainDir, entry.name, 'current', binRel);
+          if (win && !/\.(exe|com|cmd|bat)$/i.test(file)) continue;
+          if (await isExecutable(file, win)) dirs.add(path.dirname(file));
         }
       }
-      return [...dirs].join(path.delimiter);
+      if (native) {
+        for (const name of ['gh', 'git', 'node', 'jq', 'yq', 'bash']) {
+          const file = await resolveExecutable(name);
+          if (file) dirs.add(path.dirname(file));
+        }
+      }
+      return [...dirs].join(win ? ';' : ':');
     },
 
     toolchainDir(): string {
