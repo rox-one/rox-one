@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
-import { existsSync, mkdirSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
 import { chromium, expect as expectDOM, type Browser, type Page } from 'playwright/test'
 const repository = resolve(import.meta.dirname, '../../../../../../..')
 const fixture = resolve(import.meta.dirname, 'fixtures/voice-dictation')
@@ -11,12 +12,30 @@ const timeout = 30_000
 
 describe.skipIf(!existsSync(executablePath))('voice dictation production renderer DOM', () => {
   let server: ReturnType<typeof Bun.spawn> | undefined
+  let browserOwnerDirectory: string | undefined
   let browser: Browser
   let page: Page
   const errors: string[] = []
   const stop = async () => {
-    const owned = server; server = undefined; owned?.kill()
-    try { await browser?.close() } finally { await owned?.exited }
+    // The ephemeral bundler owns no persistent state. Retire it deterministically
+    // even when another package build has saturated the host during teardown.
+    const owned = server; server = undefined; owned?.kill('SIGKILL')
+    const ownedBrowserDirectory = browserOwnerDirectory; browserOwnerDirectory = undefined
+    const close = browser?.close()
+    const pidFile = ownedBrowserDirectory && join(ownedBrowserDirectory, 'browser.pid')
+    // The launcher records its own PID before exec, preserving Playwright's
+    // private process group. Kill only that group; browser.close reaps it and
+    // removes the private profile even if graceful CDP shutdown stalled.
+    if (pidFile && existsSync(pidFile)) {
+      const pid = Number(readFileSync(pidFile, 'utf8').trim())
+      if (!Number.isSafeInteger(pid) || pid <= 1) throw new Error('Invalid owned browser PID')
+      try { process.kill(process.platform === 'win32' ? pid : -pid, 'SIGKILL') }
+      catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error }
+    }
+    try { await close } finally {
+      await owned?.exited
+      if (ownedBrowserDirectory) rmSync(ownedBrowserDirectory, { recursive: true, force: true })
+    }
   }
   beforeAll(async () => {
     try {
@@ -28,7 +47,11 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
         if (Date.now() > deadline) throw new Error('Voice DOM fixture did not start')
         await Bun.sleep(100)
       }
-      browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox'] })
+      browserOwnerDirectory = mkdtempSync(join(tmpdir(), 'rox-voice-browser-'))
+      browser = await chromium.launch({
+        executablePath: process.platform === 'win32' ? executablePath : resolve(fixture, 'browser-launcher.sh'), headless: true, args: ['--no-sandbox'],
+        env: { ...process.env, VOICE_BROWSER_PID_FILE: join(browserOwnerDirectory, 'browser.pid'), VOICE_BROWSER_ACTUAL_EXECUTABLE: executablePath },
+      })
       const warmup = await browser.newPage(); warmup.on('pageerror', (error) => console.error('Voice fixture warmup:', error.message)); warmup.on('console', (message) => { if (message.type() === 'error') console.error('Voice fixture console:', message.text()) }); await warmup.goto(url)
       await expectDOM(warmup.getByRole('button', { name: 'Dictate', exact: true })).toBeEnabled({ timeout })
       await warmup.close()
@@ -79,4 +102,77 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
     await page.waitForTimeout(25)
     expect((await calls()).filter((call) => call.method === 'getUserMedia')).toHaveLength(0)
   }, timeout)
+
+  const hotkey = (command: string) => page.evaluate((value) => (window as any).__voiceFixture.hotkey(value), command)
+  const waitForCall = (method: string) => page.waitForFunction((name) => (window as any).__voiceFixture.calls.some((call: { method: string }) => call.method === name), method)
+
+  it('pairs push-to-talk once and consumes the current single-STOP transcript', async () => {
+    await load(); await hotkey('ptt-up'); await hotkey('cancel')
+    expect((await calls()).filter((call) => ['getUserMedia', 'cancelVoiceCapture'].includes(call.method))).toHaveLength(0)
+    await hotkey('ptt-down'); await hotkey('ptt-down')
+    await expectDOM(page.getByRole('button', { name: 'Stop dictation', exact: true })).toBeVisible()
+    await hotkey('ptt-up'); await hotkey('ptt-up')
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft Synthetic first paragraph.\n\nSynthetic second paragraph.')
+    expect((await calls()).filter((call) => call.method === 'startVoiceCapture')).toHaveLength(1)
+    expect((await calls()).filter((call) => call.method === 'stopVoiceCapture')).toHaveLength(1)
+    expect((await calls()).filter((call) => call.method === 'transcribeVoice')).toHaveLength(0)
+  }, timeout)
+
+  it('release while the microphone prompt is pending stops late tracks without starting or cancelling a host job', async () => {
+    await load('deferredMicrophone=true'); await hotkey('ptt-down'); await waitForCall('getUserMedia')
+    await hotkey('ptt-up'); await page.evaluate(() => (window as any).__voiceFixture.resolveMicrophone())
+    await waitForCall('stopTrack')
+    expect((await calls()).filter((call) => ['startVoiceCapture', 'grantVoicePermission', 'recorderStart', 'cancelVoiceCapture'].includes(call.method))).toHaveLength(0)
+  }, timeout)
+
+  for (const boundary of ['Start', 'Grant'] as const) {
+    it(`release during pending ${boundary} immediately closes the microphone and fences late capture`, async () => {
+      await load(`deferred${boundary}=true`); await hotkey('ptt-down'); await waitForCall(boundary === 'Start' ? 'startVoiceCapture' : 'grantVoicePermission')
+      await hotkey('ptt-up'); await waitForCall('stopTrack')
+      expect((await calls()).filter((call) => call.method === 'recorderStart')).toHaveLength(0)
+      await page.evaluate((name) => (window as any).__voiceFixture[`resolve${name}`](), boundary)
+      await waitForCall('cancelVoiceCapture')
+      expect((await calls()).filter((call) => call.method === 'recorderStart')).toHaveLength(0)
+      expect((await calls()).filter((call) => call.method === 'sendVoiceChunk')).toHaveLength(0)
+      expect((await calls()).filter((call) => call.method === 'cancelVoiceCapture')).toHaveLength(1)
+    }, timeout)
+  }
+
+  it('a refused START cleans acquired tracks without cancelling another host job', async () => {
+    await load('refusedStart=true'); await hotkey('ptt-down'); await waitForCall('stopTrack')
+    expect((await calls()).filter((call) => ['grantVoicePermission', 'recorderStart', 'cancelVoiceCapture'].includes(call.method))).toHaveLength(0)
+  }, timeout)
+
+  it('unmount cancels the owned request and discards a late STOP transcript', async () => {
+    await load('deferredStop=true'); await hotkey('ptt-down'); await expectDOM(page.getByRole('button', { name: 'Stop dictation', exact: true })).toBeVisible()
+    await hotkey('ptt-up'); await waitForCall('stopVoiceCapture')
+    await page.evaluate(() => (window as any).__voiceFixture.unmount())
+    await waitForCall('cancelVoiceCapture')
+    await page.evaluate(() => (window as any).__voiceFixture.resolveStop())
+    await page.waitForTimeout(25)
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft')
+    expect((await calls()).filter((call) => call.method === 'transcribeVoice')).toHaveLength(0)
+  }, timeout)
+
+  it('explicit clipboard completion uses the current local port and preserves the draft', async () => {
+    await load('delivery=clipboard'); await start(); await finish()
+    await page.waitForFunction(() => (window as any).__voiceFixture.calls.some((call: any) => call.method === 'copyVoiceText'))
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft')
+    expect((await calls()).filter(call => call.method === 'copyVoiceText')).toEqual([{ method: 'copyVoiceText', args: { text: 'Synthetic first paragraph.\n\nSynthetic second paragraph.' } }])
+  }, timeout)
+  it('refused clipboard completion preserves the draft and reports the delivery failure', async () => {
+    await load('delivery=clipboard&failedCopy=true'); await start(); await finish()
+    await page.waitForFunction(() => (window as any).__voiceFixture.calls.some((call: any) => call.method === 'copyVoiceText'))
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft')
+    await expectDOM(page.getByText('Synthetic clipboard denial', { exact: true })).toBeVisible()
+  }, timeout)
+
+  it('the explicit trailing-space preference applies to both current draft and clipboard completion', async () => {
+    await load('trailingSpace=true'); await start(); await finish()
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft Synthetic first paragraph.\n\nSynthetic second paragraph. ')
+    await load('delivery=clipboard&trailingSpace=true'); await start(); await finish()
+    await page.waitForFunction(() => (window as any).__voiceFixture.calls.some((call: any) => call.method === 'copyVoiceText'))
+    expect((await calls()).find(call => call.method === 'copyVoiceText')?.args).toEqual({ text: 'Synthetic first paragraph.\n\nSynthetic second paragraph. ' })
+  }, timeout)
+
 })

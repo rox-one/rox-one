@@ -9,6 +9,7 @@ import { basename, dirname, isAbsolute, join } from 'node:path'
 import { isBlockedEnvVar } from '@rox/core/env'
 import { CraftMcpClient, type McpClientConfig } from '@rox/shared/mcp'
 import {
+  BUILTIN_MCP_CATALOG,
   ensureBuiltinMcpSources,
   ensureBuiltinMcpInstalled,
   ensureBuiltinQmdCollection,
@@ -76,6 +77,8 @@ const defaults: BuiltinMcpStartupDependencies = {
     return getBuiltinMcpReadiness(source.config, {
       token,
       credential: credential && typeof credential === 'object' ? credential as Record<string, string> : undefined,
+      workspaceRootPath: source.workspaceRootPath,
+      sourceFolderPath: source.folderPath,
     })
   },
   isManaged: isManagedBuiltinMcpSource,
@@ -477,10 +480,17 @@ export class BuiltinMcpStartup {
     let qmdPreparation: Promise<void> | undefined
     for (let attempt = 0; attempt < this.options.attempts && !this.controller.signal.aborted; attempt++) {
       let client: ProbeClient | undefined
+      let probingSource = false
+      let usesCredentials = !!BUILTIN_MCP_CATALOG.find(spec => spec.slug === source.config.slug)?.requiredEnvironment?.length
+        || (source.config.mcp?.authType !== undefined && source.config.mcp.authType !== 'none')
       try {
         const built = await bounded(this.dependencies.buildServers([source]), this.options.timeoutMs, this.controller.signal)
         const server = built.mcpServers[source.config.slug]
         if (!server) throw new Error(built.errors[0]?.error ?? 'MCP source requires configuration or authentication')
+        if (server.type !== 'stdio' && Object.entries(server.headers ?? {}).some(([name, value]) =>
+          !!value.trim() && /authorization|api[_-]?key|token/i.test(name))) usesCredentials = true
+        if (source.config.slug === 'qdrant' && server.type === 'stdio'
+          && server.env?.QDRANT_URL?.trim() && server.env?.QDRANT_API_KEY?.trim()) usesCredentials = true
         if (server.type === 'stdio') {
           const runner = basename(server.command).replace(/\.(exe|cmd|bat)$/i, '')
           // Absolute configured binaries are validated by the catalog. Package
@@ -523,7 +533,9 @@ export class BuiltinMcpStartup {
         client = this.dependencies.createClient(clientConfig(server))
         this.clients.add(client)
         // listTools triggers initialize and a health check; no tool is invoked.
+        probingSource = true
         const tools = await bounded(client.listTools(), this.options.timeoutMs, this.controller.signal)
+        probingSource = false
         // Chromium provisioning is the only startup tool call: it installs
         // browser files and is explicitly authorized by the app's setup flow.
         // The upstream installer is idempotent when its browser is cached.
@@ -563,7 +575,11 @@ export class BuiltinMcpStartup {
           return
         }
         const message = safeError(error)
-        const needsAuth = /\b401\b|\b403\b|unauthorized|forbidden|authentication|credentials/i.test(message)
+        // Package/model/browser downloads can return 401/403 without any MCP
+        // source credentials being wrong. Only an authenticated source probe
+        // may stop recovery and ask for a new credential.
+        const needsAuth = probingSource && usesCredentials
+          && /\b401\b|\b403\b|unauthorized|forbidden|authentication|credentials/i.test(message)
         if (needsAuth || attempt + 1 === this.options.attempts) {
           this.updateStatus(root, source, needsAuth ? 'needs_auth' : 'failed', message)
           if (!needsAuth) this.markRetry(root, source.config.slug)

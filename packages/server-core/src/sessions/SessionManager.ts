@@ -29,6 +29,7 @@ import {
   resolveSessionConnection,
   createOmpSessionBackendFromConnection as createBackendFromConnection,
   resolveOmpSessionContext as resolveBackendContext,
+  resolveBackendContext as resolveOfflineSessionContext,
   createOmpSessionBackendFromResolvedContext as createBackendFromResolvedContext,
   cleanupSourceRuntimeArtifacts,
   providerTypeToAgentProvider,
@@ -97,6 +98,8 @@ import {
   type SessionHeader,
   type SessionPriority,
   pickSessionFields,
+  sessionProjectIds,
+  withProjectMembership,
   lexorankValidate,
   lexorankBetween,
   backfillRanks,
@@ -843,6 +846,7 @@ type CollectionMutableField =
   | 'priority'
   | 'dueDate'
   | 'projectId'
+  | 'projectIds'
   | 'labels'
   | 'kanbanColumn'
 
@@ -918,8 +922,9 @@ interface ManagedSession {
   enabledSourceSlugs?: string[]
   // Labels applied to this session (additive tags, many-per-session)
   labels?: string[]
-  // Workspace-scoped project binding (undefined = unbound)
+  // Workspace-scoped membership metadata; only the primary is used for project defaults.
   projectId?: string
+  projectIds?: string[]
   // Parent session id — when set, this session is a subtask of the parent (undefined = top-level task)
   parentSessionId?: string
   // Kanban board column id ('todo' | 'in-progress' | 'done'); independent of sessionStatus
@@ -1690,9 +1695,9 @@ export class SessionManager implements ISessionManager {
     }
 
     // Project binding (no dedicated event today — handled via metaChanged broadcast)
-    if (managed.projectId !== header.projectId) {
-      this.markCollectionFieldMutations(managed, ['projectId'])
-      managed.projectId = header.projectId
+    if (managed.projectId !== header.projectId || JSON.stringify(sessionProjectIds(managed)) !== JSON.stringify(sessionProjectIds(header))) {
+      this.markCollectionFieldMutations(managed, ['projectId', 'projectIds'])
+      Object.assign(managed, withProjectMembership(sessionProjectIds(header)))
       changed = true
     }
 
@@ -1759,16 +1764,17 @@ export class SessionManager implements ISessionManager {
     // watching, then download/probe in the background without blocking the UI.
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (workspace && !workspace.remoteServer) {
-      const { created } = ensureBuiltinMcpSources(workspaceRootPath)
+      ensureBuiltinMcpSources(workspaceRootPath)
       const config = loadWorkspaceConfig(workspaceRootPath)
-      const newDefaults = getEnabledBuiltinMcpSourceSlugs(workspaceRootPath).filter(slug => created.includes(slug))
-      if (config && newDefaults.length > 0) {
+      // An explicit workspace selection, including [], belongs to the user.
+      // Only seed automatic defaults when no selection has ever been saved.
+      if (config && config.defaults?.enabledSourceSlugs === undefined) {
         saveWorkspaceConfig(workspaceRootPath, {
           ...config,
           defaults: {
             ...config.defaults,
             enabledSourceSlugs: [...new Set([
-              ...(config.defaults?.enabledSourceSlugs ?? collectDefaultEnabledSourceSlugs()), ...newDefaults,
+              ...collectDefaultEnabledSourceSlugs(), ...getEnabledBuiltinMcpSourceSlugs(workspaceRootPath),
             ])],
           },
         })
@@ -2439,7 +2445,7 @@ export class SessionManager implements ISessionManager {
     // Pass session path so large API responses can be saved to session folder
     const sessionPath = getSessionStoragePath(workspaceRootPath, managed.id)
     const { mcpServers, apiServers } = await buildServersFromSources(enabledSources, sessionPath, managed.tokenRefreshManager, managed.agent?.getSummarizeCallback())
-    const intendedSlugs = enabledSources.map(s => s.config.slug)
+    const intendedSlugs = allSources.filter(s => enabledSlugs.includes(s.config.slug)).map(s => s.config.slug)
 
     // Update bridge-mcp-server config/credentials for backends that need it
     await applyBridgeUpdates(managed.agent, sessionPath, enabledSources, mcpServers, managed.id, workspaceRootPath, 'source reload', managed.poolServer?.url)
@@ -3360,7 +3366,12 @@ export class SessionManager implements ISessionManager {
     }
 
     // Resolve backend target early for branching policy checks.
-    const targetBackendContext = resolveBackendContext({
+    // The persisted first greeting runs without a provider or configured OMP
+    // connection. The first user turn still goes through the strict OMP gate.
+    const resolveCreationContext = internal?.initialAssistantMessage
+      && !options?.branchFromSessionId && !options?.branchFromMessageId
+      ? resolveOfflineSessionContext : resolveBackendContext
+    const targetBackendContext = resolveCreationContext({
       sessionConnectionSlug: options?.llmConnection,
       workspaceDefaultConnectionSlug: wsConfig?.defaults?.defaultLlmConnection,
       managedModel: resolvedModelOption,
@@ -5499,9 +5510,7 @@ export class SessionManager implements ISessionManager {
         }
 
         // Apply source servers to the agent
-        const intendedSlugs = allEnabledSources
-          .filter(isSourceUsable)
-          .map(s => s.config.slug)
+        const intendedSlugs = allEnabledSources.map(s => s.config.slug)
 
         // Update bridge-mcp-server config/credentials for backends that need it
         await applyBridgeUpdates(managed.agent!, sessionPath, allEnabledSources, mcpServers, managed.id, workspaceRootPath, 'source enable', managed.poolServer?.url)
@@ -5895,7 +5904,7 @@ export class SessionManager implements ISessionManager {
       managed.agent.setAllSources(allSources)
 
       // Set active source servers (tools are only available from these)
-      const intendedSlugs = sources.filter(isSourceUsable).map(s => s.config.slug)
+      const intendedSlugs = sources.map(s => s.config.slug)
 
       // Update bridge-mcp-server config/credentials for backends that need it
       const usableSources = sources.filter(isSourceUsable)
@@ -7265,7 +7274,7 @@ export class SessionManager implements ISessionManager {
       const apiCount = Object.keys(apiServers).length
       if (mcpCount > 0 || apiCount > 0 || enabledSlugs.length > 0) {
         const usableSources = sources.filter(isSourceUsable)
-        const intendedSlugs = usableSources.map(s => s.config.slug)
+        const intendedSlugs = sources.map(s => s.config.slug)
         await agent.setSourceServers(mcpServers, apiServers, intendedSlugs)
         await applyBridgeUpdates(agent, sessionPath, usableSources, mcpServers, sessionId, workspaceRootPath, 'send message', managed.poolServer?.url)
         sessionLog.info(`Applied ${mcpCount} MCP + ${apiCount} API sources to session ${sessionId} (${allSources.length} total)`)
@@ -8648,10 +8657,11 @@ export class SessionManager implements ISessionManager {
       }
       if (patch.projectId !== undefined) {
         const projectId = patch.projectId ?? undefined
-        affectedFields.push('projectId')
+        affectedFields.push('projectId', 'projectIds')
         before.projectId = managed.projectId
-        optimistic.projectId = projectId
-        headerPatch.projectId = projectId
+        before.projectIds = managed.projectIds
+        Object.assign(optimistic, withProjectMembership(projectId ? [projectId] : []))
+        Object.assign(headerPatch, withProjectMembership(projectId ? [projectId] : []))
       }
 
       const nextLabels = resolveBulkLabels(managed.labels, patch)
@@ -8718,6 +8728,9 @@ export class SessionManager implements ISessionManager {
               break
             case 'projectId':
               managed.projectId = before.projectId
+              break
+            case 'projectIds':
+              managed.projectIds = before.projectIds
               break
             case 'labels':
               managed.labels = before.labels
@@ -8793,16 +8806,22 @@ export class SessionManager implements ISessionManager {
    * the project binding is only used as a default for newly created sessions.
    */
   async setSessionProjectId(sessionId: string, projectId: string | null): Promise<void> {
+    await this.setSessionProjectIds(sessionId, projectId === null ? [] : [projectId])
+  }
+
+  /** Internal metadata writer. Existing RPC authorization still owns project access. */
+  async setSessionProjectIds(sessionId: string, projectIds: readonly string[]): Promise<void> {
     const managed = this.sessions.get(sessionId)
     if (managed) {
-      this.markCollectionFieldMutations(managed, ['projectId'])
-      managed.projectId = projectId ?? undefined
+      this.markCollectionFieldMutations(managed, ['projectId', 'projectIds'])
+      Object.assign(managed, withProjectMembership(projectIds))
       this.setMetadataWriteGuard(managed)
 
       this.sendEvent({
         type: 'project_id_changed',
         sessionId: managed.id,
         projectId: managed.projectId ?? null,
+        projectIds: [...(managed.projectIds ?? [])],
       }, managed.workspace.id)
 
       this.persistSession(managed)
@@ -8810,6 +8829,19 @@ export class SessionManager implements ISessionManager {
       const watcher = this.configWatchers.get(managed.workspace.rootPath)
       watcher?.notifyFileChange(`sessions/${sessionId}/session.jsonl`)
     }
+  }
+
+  /** Remove metadata edges through the live owner before a project is deleted. */
+  async unlinkProjectFromSessions(workspaceId: string, projectId: string): Promise<number> {
+    let touched = 0
+    for (const managed of this.sessions.values()) {
+      if (managed.workspace.id !== workspaceId) continue
+      const ids = sessionProjectIds(managed)
+      if (!ids.includes(projectId)) continue
+      await this.setSessionProjectIds(managed.id, ids.filter(id => id !== projectId))
+      touched++
+    }
+    return touched
   }
 
   /**
@@ -9013,9 +9045,9 @@ export class SessionManager implements ISessionManager {
     managed.taskSlug = taskSlug
     managed.taskDraft = false
     if (reconcile?.projectId !== undefined) {
-      this.markCollectionFieldMutations(managed, ['projectId'])
+      this.markCollectionFieldMutations(managed, ['projectId', 'projectIds'])
     }
-    if (reconcile?.projectId !== undefined) managed.projectId = reconcile.projectId
+    if (reconcile?.projectId !== undefined) Object.assign(managed, withProjectMembership(reconcile.projectId ? [reconcile.projectId] : []))
     if (connectionChanged) managed.llmConnection = reconcile!.llmConnection
     const renamed = Boolean(reconcile?.name && reconcile.name !== managed.name)
     if (renamed) managed.name = reconcile!.name!
@@ -9034,8 +9066,8 @@ export class SessionManager implements ISessionManager {
     // One-shot board promotion: clearing taskDraft (sent as `false`, never `undefined` — undefined
     // is dropped over the JSON wire) reveals the already-announced tile; taskSlug/projectId
     // reconcile its metadata. `false` is falsy for the board's `if (meta.taskDraft)` skip.
-    const changes: { taskDraft: boolean; taskSlug: string; projectId?: string } = { taskDraft: false, taskSlug }
-    if (reconcile?.projectId !== undefined) changes.projectId = reconcile.projectId
+    const changes: { taskDraft: boolean; taskSlug: string; projectId?: string; projectIds?: string[] } = { taskDraft: false, taskSlug }
+    if (reconcile?.projectId !== undefined) { changes.projectId = managed.projectId; changes.projectIds = managed.projectIds }
     this.sendEvent({ type: 'session_metadata_changed', sessionId, changes }, managed.workspace.id)
     if (renamed) {
       this.sendEvent({ type: 'name_changed', sessionId, name: managed.name }, managed.workspace.id)
@@ -9103,9 +9135,9 @@ export class SessionManager implements ISessionManager {
     managed.taskSlug = taskSlug
     managed.taskDraft = false
     if (reconcile?.projectId !== undefined) {
-      this.markCollectionFieldMutations(managed, ['projectId'])
+      this.markCollectionFieldMutations(managed, ['projectId', 'projectIds'])
     }
-    if (reconcile?.projectId !== undefined) managed.projectId = reconcile.projectId
+    if (reconcile?.projectId !== undefined) Object.assign(managed, withProjectMembership(reconcile.projectId ? [reconcile.projectId] : []))
     if (connectionChanged) managed.llmConnection = reconcile!.llmConnection
     const renamed = Boolean(reconcile?.name && reconcile.name !== managed.name)
     if (renamed) managed.name = reconcile!.name!
@@ -9121,8 +9153,8 @@ export class SessionManager implements ISessionManager {
     this.persistSession(managed)
     await this.flushSession(managed.id)
 
-    const changes: { taskDraft: boolean; taskSlug: string; projectId?: string } = { taskDraft: false, taskSlug }
-    if (reconcile?.projectId !== undefined) changes.projectId = reconcile.projectId
+    const changes: { taskDraft: boolean; taskSlug: string; projectId?: string; projectIds?: string[] } = { taskDraft: false, taskSlug }
+    if (reconcile?.projectId !== undefined) { changes.projectId = managed.projectId; changes.projectIds = managed.projectIds }
     this.sendEvent({ type: 'session_metadata_changed', sessionId, changes }, managed.workspace.id)
     if (renamed) {
       this.sendEvent({ type: 'name_changed', sessionId, name: managed.name }, managed.workspace.id)

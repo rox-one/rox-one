@@ -1,0 +1,56 @@
+{
+  "source_branch": "codex/golden-gate-workspace",
+  "source_sha": "5def9ffd36dc160fdc7c908784e0ef97ba6a732e",
+  "integration_base": "24f51567ef21415bcea262b0a4ffbcc2ef3c8831",
+  "qualified_integrated_types_commit": "1ee72e9b7143606e576ad8333c8942c1c502d04f",
+  "runtime_blobs": {
+    "apps/electron/src/renderer/platform/SurfaceTabs.tsx": "969bbb9cfd638b19b895f73047d71fe063af43e2ced8c84a98d0e8c032582461",
+    "apps/electron/src/renderer/platform/knowledge-tab-titles.ts": "b4bd8570c3b950bf7a4c7df020fc738ab912fddd3a3f3ed624a28bd4f8f4a021",
+    "apps/electron/src/renderer/platform/surface-tab-navigation.ts": "9863d175b3655f4f5bb304a6b259f9b129fb26e82a52ecd708b0d39436ea058d"
+  },
+  "units": {
+    "pass": 48,
+    "fail": 0,
+    "assertions": 174,
+    "files": 7
+  },
+  "actual_chromium_component_tests": {
+    "pass": 6,
+    "fail": 0,
+    "scope": "real SurfaceTabs and current panel-stack atoms; controlled authenticated bridge result port",
+    "widths": [
+      390,
+      1280
+    ],
+    "includes": "arrows/Home/End/Delete, hidden browser, topbar portal, editor draft/focus, failed title retry, shared pending read and foreign workspace rejection"
+  },
+  "negative_control": {
+    "exact_prior_source": "eee39e3ee060ab1841105a6ad80b08a35fcc1e5b",
+    "targeted_retry_test_fail": 1,
+    "separate_teardown_timeout": 1,
+    "failure": "Knowledge \u00b7 document never changes after failed read+navigation"
+  },
+  "renderer_build": "exit0 at e35b56037cba16f2ab11cc258447957a1dd954a2; owned runtime blobs identical after independent main merge",
+  "electron_types": "exit0 at qualified integrated commit",
+  "failure_history": [
+    "default browser executable missing: skip was not acceptance",
+    "first fixture omitted production renderer configuration:6 failures; fixed by loading actual configuration",
+    "static production config import exposed preexisting config typing option; dynamic Vite config loading retains production behavior",
+    "BrowserServer WebSocket connection fails in Bun at localhost and127.0.0.1; regular supported launch passes; owned tagged Chrome cleanup has bounded close and PID readback"
+  ],
+  "limits": "renderer component/browser fixture acceptance; no installed native app, external provider or full Golden program acceptance",
+  "logs": {
+    "surface-tabs-units.log": "4844088e0a893a454654d906df552e65a38441210eb1d56287cd218bc4b805b0",
+    "surface-tabs-integrated-units.log": "95330b751584ce7018abd304c7fe3187e395aa6d362e0003a54d8727387b3736",
+    "surface-tabs-negative.log": "f3ed0d7d9a10e8ee54759ba6090e0cecede5a48271bc98498ae8a797efeefdb5",
+    "surface-tabs-browser-second.log": "cccf9494f6e894e12383dd92818d201d52745874662310cc82c50a9763e82cbc",
+    "surface-tabs-browser-owned-final.log": "bddb039d53abbdc4fddeb7dac96f91e582ef43b90f3b1af22eb8406957f1809a",
+    "surface-tabs-types-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "surface-tabs-integrated-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "surface-tabs-build-final.log": "1ba5d9c564803ab1e8e34051f67cb3d484fae60487f66f765bd7d98e697f78e8"
+  },
+  "screenshot": {
+    "path": "/Users/t/Pictures/Shots/Agents/rox-branch-integration-20261003/surface-tabs-mobile.png",
+    "sha256": "4f3ee5520a360ecfffd0abf056af6c67dd1bdadba2b74136c70bf9459587b1ed"
+  }
+}

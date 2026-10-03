@@ -204,8 +204,10 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
       return
     }
 
+    // Update the live session owner first so later saves cannot resurrect removed edges.
+    const liveTouched = await deps.sessionManager.unlinkProjectFromSessions?.(workspace.id, project.config.id) ?? 0
     const { unbindProjectFromSessions } = await import('@rox/shared/sessions')
-    const touched = await unbindProjectFromSessions(workspace.rootPath, project.config.id)
+    const touched = liveTouched + await unbindProjectFromSessions(workspace.rootPath, project.config.id)
     const { unbindProjectFromPages } = await import('@rox/shared/pages')
     const touchedPages = unbindProjectFromPages(workspace.rootPath, project.config.id)
     deleteProject(workspace.rootPath, projectSlug)
