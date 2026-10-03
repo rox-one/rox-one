@@ -2,6 +2,13 @@
 
 Owner: root. Source5def9ffd36dc160fdc7c908784e0ef97ba6a732e → current-consumer comparison → title loader/navigation helpers → unit failure/cache/workspace controls and actual Chromium SurfaceTabs interactions → renderer strict types/build → separate PR/exact merge readback. Depends on current unified-shell atoms and pending panel focus repair1415; preserve its aria-controls contract when integrating.
 
+## Connections consumer recovery plan — 2026-10-03
+
+1. Freeze source intent and current UI gap; backend1414 is the dependency. pr_scout owns page/lifecycle/device/connection-info consumers only; root owns main integration and SurfaceTabs/remaining Golden semantics.
+2. Restore safe inspect projection and shared committed-scope lifecycle controls, active lease consent, current test/repair/rotate, registered move target and public GitHub device flow. Preserve current page and unrelated inspector contracts.
+3. Exercise actual production page/inspector consumers with controlled backend promises: latest selection, A→B→A, duplicate writes, stale receipts, sanitized errors/retry, confirmations, URI/secret refusal, cancellation/late-start, one poll, slow_down, denial/expiry and scoped import refresh. Retain source history and all locale catalogs.
+4. Reconcile live main, freeze delivered candidate, run scoped UI/projection tests, renderer types/build and localization, record exact source/head/log receipt, push and attach a separate PR. Lead reviews and merges; real native/provider/backend acceptance remains explicit.
+
 ## Golden Gate persisted panel workspace recovery plan — 2026-10-03
 
 Closing a focused panel restores DOM focus only when the disconnected node belongs to that removed panel or tab. Preserve another live focus owner, dialog, IME, resize and hidden targets; exercise actual closePanelAtom and production PanelStackContainer in browser adverse controls.
