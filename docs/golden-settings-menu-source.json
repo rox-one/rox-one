@@ -1,0 +1,42 @@
+{
+  "source_sha": "5def9ffd36dc160fdc7c908784e0ef97ba6a732e",
+  "source_pr": 584,
+  "integration_main": "2f03faa5dcc075d4acbd364dd7bdb3ba14993596",
+  "source_files": [
+    {
+      "path": "apps/electron/src/renderer/components/settings/settings-menu-navigation.ts",
+      "source_sha256": "0ce656775212de221b03bd42a94aff981d414b644fdfdd4d2f19d7bcebbeebff",
+      "integrated_sha256": "0ce656775212de221b03bd42a94aff981d414b644fdfdd4d2f19d7bcebbeebff"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/settings/SettingsFieldContext.tsx",
+      "source_sha256": "f92c39dad7cfcf33acb18bdc84ba337f24e134daff6bd9f5b2a1a5d0d8f63aed",
+      "integrated_sha256": "f92c39dad7cfcf33acb18bdc84ba337f24e134daff6bd9f5b2a1a5d0d8f63aed"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/settings/SettingsMenuSelect.tsx",
+      "source_sha256": "2b47bee6a845eb4204d87228539a135ea9b8f42cc033dac9e9d8a0ff4bdd2066",
+      "integrated_sha256": "bb568322963279819da79b6967daeea6bf9bb16b26fe343028d24e9712eb8ea9"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/settings/SettingsRow.tsx",
+      "source_sha256": "d59a0b9dc9ff7405d6420c0b71b428e5c3cc601b7cf44402f86686b21ee44a3b",
+      "integrated_sha256": "d849d2d5fd086e0c2756dbd0e80104c74d10e389b12ccc3af9c7af3e46ac3297"
+    }
+  ],
+  "adaptations": [
+    "keep current menu/row styling, descriptions, translations, dimensions and live preview callbacks",
+    "actual current RadixPopover consumers gain focus-only keyboard navigation, prefix/repeated-character typeahead and explicit commit",
+    "filter uses only current enabled visible options; disabled candidates cannot preview or commit",
+    "IME, default-prevented and modifier keys do not change active choice; search Home/End keeps editing meaning",
+    "Radix open/close focus lifetime replaces uncancelled search-focus timer",
+    "visible custom SettingsRow label/description IDs flow only into current MenuSelect; current SettingsMenuSelectRow declares its own IDs",
+    "current SettingsSelect is unchanged"
+  ],
+  "real_context_consumers": [
+    "AppearanceSettingsPage colorTheme/language/projectColorTreatment/status-column SettingsRow -> SettingsMenuSelect",
+    "ZenShellSettings material SettingsRow -> SettingsMenuSelect",
+    "Input/Workspace/AI/Runtime/Voice SettingsMenuSelectRow consumers"
+  ],
+  "acceptance_limit": "Actual production SettingsRow/SettingsMenuSelect/SettingsMenuSelectRow and real Radix DOM in headless browser; current native settings route and full visual/release acceptance separate"
+}

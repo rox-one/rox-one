@@ -1,0 +1,102 @@
+{
+  "source_sha": "35f78fa2665e9f2e8a3ad20a07e2282bd7f0dde5",
+  "integration_main": "ae19683e69f079893cd09065487cfa7653d01154",
+  "source_branch": "codex/product-learning-a6-20261003",
+  "owner": "pr_scout",
+  "dependent_owner": "historical_sweep (UI/runtime and actual consumers)",
+  "prefixes": [
+    "contracts",
+    "core",
+    "persistence",
+    "analytics"
+  ],
+  "files": [
+    {
+      "path": "apps/electron/src/renderer/features/product-tour/analytics/analytics.test.ts",
+      "source_sha256": "c0213f699565bf4e4e221d05100684e8e26cdec5a852533d8310663ab6ed840b",
+      "integrated_sha256": "1d0fd7d0c403df663a0a378eb55a94d47e99b6e8f5d4c97581b02b9f9292c48b"
+    },
+    {
+      "path": "apps/electron/src/renderer/features/product-tour/analytics/diagnostics.ts",
+      "source_sha256": "c9be0368bc6b7f08d467f238dfd4db7be25bb13b6645f53b090f68e5d22bc6d0",
+      "integrated_sha256": "c9be0368bc6b7f08d467f238dfd4db7be25bb13b6645f53b090f68e5d22bc6d0"
+    },
+    {
+      "path": "apps/electron/src/renderer/features/product-tour/analytics/events.ts",
+      "source_sha256": "d25817d236356dfaf10d1bc1e959cd6a821c6e311070db966dd40ecfcfe16ceb",
+      "integrated_sha256": "de66c3e8805815dd5d8c6748cb66192679ea72741ce36b3411f7976cd4268356"
+    },
+    {
+      "path": "apps/electron/src/renderer/features/product-tour/analytics/index.ts",
+      "source_sha256": "593a52f39cc6b9d5ae6a17e4935533bfe5c77a49e508e9afcde9e3cf0e14dda0",
+      "integrated_sha256": "593a52f39cc6b9d5ae6a17e4935533bfe5c77a49e508e9afcde9e3cf0e14dda0"
+    },
+    {
+      "path": "apps/electron/src/renderer/features/product-tour/analytics/metrics.ts",
+      "source_sha256": "ac4ac15ffbb9f5ea7fa886716c6e9c4de81529949b378b6df1d975defa70cb5f",
+      "integrated_sha256": "ac4ac15ffbb9f5ea7fa886716c6e9c4de81529949b378b6df1d975defa70cb5f"
+    },
+    {
+      "path": "apps/electron/src/renderer/features/product-tour/contracts/index.ts",
+      "source_sha256": "6e925a48ef0df68280873b44b7d6d10fbd1202efdb5342263c2b0b6d8e579b43",
+      "integrated_sha256": "6ff8493553ca8f11903c195f78954acf3c97993d9206c25f74d21b3bdab66fd6"
+    },
+    {
+      "path": "apps/electron/src/renderer/features/product-tour/core/engine.test.ts",
+      "source_sha256": "f8d15d7c3435e0805668f7d8f85b448b0447e47a80cb7f093ba001f2a4e22c5c",
+      "integrated_sha256": "83385e844e50b2593fb765fcadab20ade4f934e7d8e2943a2641b3f2c25cd2a6"
+    },
+    {
+      "path": "apps/electron/src/renderer/features/product-tour/core/index.ts",
+      "source_sha256": "2ccd8d96e573df9283d645e731ea2b13d8dd3847803d6794c7fccd4462388f24",
+      "integrated_sha256": "942217bd2568b9e593b31e726aaa08434c7cb636522f0a0315c3a5bfaeba2647"
+    },
+    {
+      "path": "apps/electron/src/renderer/features/product-tour/persistence/browser-test-entry.ts",
+      "source_sha256": "e393bf87ca534e2e659f76e6fbb00dd1b8c05772050c6ffbb6182d51e9a7cfc3",
+      "integrated_sha256": "e393bf87ca534e2e659f76e6fbb00dd1b8c05772050c6ffbb6182d51e9a7cfc3"
+    },
+    {
+      "path": "apps/electron/src/renderer/features/product-tour/persistence/browser-test-harness.ts",
+      "source_sha256": "e75203a025abe3a644ae8405caefcb439e80b4ed07fe23b1d0eb04c6ea10ab0a",
+      "integrated_sha256": "e75203a025abe3a644ae8405caefcb439e80b4ed07fe23b1d0eb04c6ea10ab0a"
+    },
+    {
+      "path": "apps/electron/src/renderer/features/product-tour/persistence/database.ts",
+      "source_sha256": "fa2dde69b27fe1eb2b90c8577823098408828a655db4f85fb6e1057e36dafd72",
+      "integrated_sha256": "fa2dde69b27fe1eb2b90c8577823098408828a655db4f85fb6e1057e36dafd72"
+    },
+    {
+      "path": "apps/electron/src/renderer/features/product-tour/persistence/index.ts",
+      "source_sha256": "51798825b58a272ee00cb41e3e12f6b9990e86bd2fd15de15338003da8d0add8",
+      "integrated_sha256": "51798825b58a272ee00cb41e3e12f6b9990e86bd2fd15de15338003da8d0add8"
+    },
+    {
+      "path": "apps/electron/src/renderer/features/product-tour/persistence/lease.ts",
+      "source_sha256": "d23b32718a9d404a017d3714d0cf806574d94f9aa3734d516b0782a4e27aabba",
+      "integrated_sha256": "d23b32718a9d404a017d3714d0cf806574d94f9aa3734d516b0782a4e27aabba"
+    },
+    {
+      "path": "apps/electron/src/renderer/features/product-tour/persistence/profile.ts",
+      "source_sha256": "97099fae433f8be278d5182148de0eaf471847f21784ef4ec052d1827a845d30",
+      "integrated_sha256": "97099fae433f8be278d5182148de0eaf471847f21784ef4ec052d1827a845d30"
+    },
+    {
+      "path": "apps/electron/src/renderer/features/product-tour/persistence/progress.test.ts",
+      "source_sha256": "db8cd9112ae262570a2451bddd608ea921b930b575246a5c53ecf87e1cb3344c",
+      "integrated_sha256": "db8cd9112ae262570a2451bddd608ea921b930b575246a5c53ecf87e1cb3344c"
+    },
+    {
+      "path": "apps/electron/src/renderer/features/product-tour/persistence/progress.ts",
+      "source_sha256": "cff72f278d87447a3e1ceb725cca5536d188e818fb37f9044479c8d03ee88874",
+      "integrated_sha256": "cff72f278d87447a3e1ceb725cca5536d188e818fb37f9044479c8d03ee88874"
+    }
+  ],
+  "adaptations": [
+    "Contract comment describes current foundation/dependent consumer scope; interfaces are unchanged.",
+    "Diagnostics allowlist captures enumerable own data descriptors once; getters and inherited properties cannot smuggle private values between validation and serialization. Negative controls plus actual IndexedDB readback cover the reproduced leak.",
+    "Pure engine rejects unknown evidence origins/levels from untyped callers rather than promoting them into verified native outcomes; typed interface and legitimate native/UI observations unchanged.",
+    "Local test-only retention deadline override is capped at120s; source20s default and all production TTL/retention values remain unchanged. Earlier under-load deadline failure retained in receipt."
+  ],
+  "acceptance_limit": "Pure engine and real IndexedDB durable/multi-window foundation only. No claim of activated routes, spotlight UI, native provider operations or full Product Learning feature acceptance until dependent current-consumer integration."
+}
