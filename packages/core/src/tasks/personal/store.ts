@@ -464,7 +464,7 @@ export class PersonalTaskStore {
   }
 
   /** Set «Когда». */
-  setWhen(id: string, when: TaskWhen): PersonalTask {
+  setWhen(id: string, when: TaskWhen, now = Date.now()): PersonalTask {
     const task = this.require(id)
     switch (when.kind) {
       case 'inbox':
@@ -484,7 +484,7 @@ export class PersonalTaskStore {
         break
       case 'date': {
         const at = startOfLocalDay(when.at)
-        const isToday = at === startOfLocalDay(Date.now())
+        const isToday = at === startOfLocalDay(now)
         Object.assign(task, isToday
           ? { list: 'today', startAt: undefined, evening: Boolean(when.evening) }
           : { list: 'upcoming', startAt: at, evening: Boolean(when.evening) })

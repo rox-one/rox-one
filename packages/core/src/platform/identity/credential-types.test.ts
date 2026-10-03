@@ -128,6 +128,61 @@ describe('CredentialRefRegistry', () => {
     expect(listed).not.toContain('"secret"');
   });
 
+  const invalidLocators: readonly [string, () => unknown][] = [
+    ['prototype-derived fields', () => Object.create({ type: 'local', key: 'github/default' })],
+    ['non-enumerable fields', () => Object.defineProperty({ type: 'local', key: 'github/default' }, 'key', { enumerable: false })],
+    ['symbol fields', () => ({ type: 'local', key: 'github/default', [Symbol('hidden')]: 'unexpected' })],
+  ];
+
+  for (const [name, createLocator] of invalidLocators) {
+    it(`rejects locator ${name} before registration or provider replacement`, () => {
+      const registry = createRegistry();
+      expect(() => registry.register({
+        kind: 'api_key',
+        providerId: 'local',
+        locator: createLocator() as never,
+      })).toThrow();
+      expect(registry.list()).toEqual([]);
+
+      const ref = registry.register({
+        kind: 'api_key',
+        providerId: 'local',
+        locator: { type: 'local', key: 'github/default' },
+        now: 100,
+      });
+      expect(() => registry.updateProvider(ref.id, 'other', createLocator() as never, 200)).toThrow();
+      expect(registry.get(ref.id)).toEqual(ref);
+    });
+  }
+
+  for (const field of ['type', 'key'] as const) {
+    it(`rejects locator ${field} accessors without executing them`, () => {
+      const registry = createRegistry();
+      let reads = 0;
+      const locator = { type: 'local', key: 'github/default' };
+      Object.defineProperty(locator, field, {
+        enumerable: true,
+        get: () => {
+          reads += 1;
+          return field === 'type' ? 'local' : 'github/default';
+        },
+      });
+      expect(() => registry.register({ kind: 'api_key', providerId: 'local', locator: locator as never })).toThrow();
+      expect(reads).toBe(0);
+      expect(registry.list()).toEqual([]);
+    });
+  }
+
+  it('accepts enumerable readonly and frozen locator data fields', () => {
+    const registry = createRegistry();
+    const locator = Object.freeze({ type: 'local' as const, key: 'github/default' });
+    const ref = registry.register({ kind: 'api_key', providerId: 'local', locator, now: 100 });
+    expect(ref.locator).toEqual({ type: 'local', key: 'github/default' });
+    expect(locator).toEqual({ type: 'local', key: 'github/default' });
+    const updated = registry.updateProvider(ref.id, 'other', Object.freeze({ type: 'git_helper' as const, host: 'github.com' }), 200);
+    expect(updated.locator).toEqual({ type: 'git_helper', host: 'github.com' });
+  });
+
   it('rejects hidden and nested secret fields at the registry boundary', () => {
     const registry = createRegistry();
     const hiddenRef = {
