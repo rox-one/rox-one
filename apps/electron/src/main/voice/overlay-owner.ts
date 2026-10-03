@@ -10,7 +10,7 @@ export const VOICE_OVERLAY_COMMAND = 'rox:owned-voice-overlay:command'
 /** One private child surface for the current verified, foreground capture owner. */
 export function createNativeVoiceOverlayHost(options: {
   resolveOwner(context: RequestContext): BrowserWindow | null
-  sendCommand(context: RequestContext, command: 'toggle' | 'cancel'): boolean
+  sendCommand(context: RequestContext, command: 'toggle' | 'cancel', recordingId: string): boolean
 }): NativeVoiceOverlayHost & { dispose(): void } {
   let child: BrowserWindow | null = null
   let owner: BrowserWindow | null = null
@@ -46,17 +46,17 @@ export function createNativeVoiceOverlayHost(options: {
     if (!child || child.isDestroyed() || event.sender !== child.webContents || !currentOwner()
       || !owner!.isFocused()) return { ok: false }
     if (action === 'snapshot') return { ok: true, state: latest!.state }
-    if (recordingId !== latest!.state.recordingId) return { ok: false }
+    if (typeof recordingId !== 'string' || !recordingId || recordingId !== latest!.state.recordingId) return { ok: false }
     const phase = latest!.state.phase
     if (action === 'stop') {
       if (phase !== 'recording' || stopSent || cancelSent) return { ok: false }
       stopSent = true
-      return { ok: options.sendCommand(latest!.context, 'toggle') }
+      return { ok: options.sendCommand(latest!.context, 'toggle', recordingId) }
     }
     if (action === 'cancel') {
       if (!['permission', 'recording', 'saving', 'transcribing', 'enhancing'].includes(phase) || cancelSent) return { ok: false }
       cancelSent = true
-      return { ok: options.sendCommand(latest!.context, 'cancel') }
+      return { ok: options.sendCommand(latest!.context, 'cancel', recordingId) }
     }
     return { ok: false }
   })
