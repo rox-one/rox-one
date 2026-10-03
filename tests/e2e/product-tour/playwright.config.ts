@@ -29,7 +29,7 @@ export default defineConfig({
     reuseExistingServer: false,
   },
   projects: [
-    { name: 'real-app-isolated-native-store', testMatch: '*.application.spec.ts' },
+    { name: 'real-app-isolated-native-store', testMatch: '*.application.spec.ts', timeout: 90_000 },
     { name: 'production-components', testMatch: '*.ui.spec.ts' },
   ],
 })

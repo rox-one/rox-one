@@ -2,6 +2,10 @@ import { test, expect, type Page, type TestInfo } from '@playwright/test'
 
 const marker = 'rox-product-tour-application-test-only'
 const flag = 'craft-feature-product-tour-v1'
+async function waitForApp(page: Page) {
+  await page.waitForFunction(() => document.getElementById('root')?.childElementCount || (window as any).__productTourApplicationImportError, undefined, { timeout: 60_000 })
+  expect(await page.evaluate(() => (window as any).__productTourApplicationImportError ?? null)).toBeNull()
+}
 async function openApp(page: Page, route: string, enabled = false) {
   await page.addInitScript(({ flag, enabled }) => {
     localStorage.setItem('i18nextLng', 'en')
@@ -13,8 +17,7 @@ async function openApp(page: Page, route: string, enabled = false) {
     else localStorage.removeItem(flag)
   }, { flag, enabled })
   await page.goto(`/?mode=web&route=${encodeURIComponent(route)}`, { waitUntil: 'domcontentloaded' })
-  await page.waitForFunction(() => document.getElementById('root')?.childElementCount || (window as any).__productTourApplicationImportError, { timeout: 60_000 })
-  expect(await page.evaluate(() => (window as any).__productTourApplicationImportError ?? null)).toBeNull()
+  await waitForApp(page)
   await expect.poll(() => page.evaluate(() => (window as any).__productTourApplication?.marker)).toBe(marker)
 }
 async function evidence(page: Page) {
@@ -23,6 +26,10 @@ async function evidence(page: Page) {
 async function attachEvidence(page: Page, info: TestInfo) {
   await info.attach('application-evidence', { body: Buffer.from(JSON.stringify(await evidence(page), null, 2)), contentType: 'application/json' })
 }
+
+test.afterEach(async ({ page }, info) => {
+  if (info.status !== info.expectedStatus) await attachEvidence(page, info).catch(() => {})
+})
 
 test('APP-01/APP-06: an existing profile without the tour flag loads the real App without a forced tour', async ({ page }, info) => {
   await openApp(page, 'allSessions')
@@ -64,8 +71,8 @@ test('DOMAIN-12: the real Notes UI creates, edits, commits, reloads, and finds a
     const result = await evidence(page)
     return result.nativeFiles.some((file: { actualContent: string; content: string }) => file.actualContent.includes(content) && file.actualContent === file.content)
   }).toBe(true)
-  await page.reload()
-  await expect(page.locator('#root')).not.toBeEmpty()
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await waitForApp(page)
   await expect(page.locator('[contenteditable="true"]').first()).toContainText(content)
   const search = await page.evaluate(async (phrase) => {
     const workspaceId = (window as any).__productTourApplication.workspaceId
