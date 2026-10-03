@@ -57,9 +57,13 @@ export interface VoicePrefs {
   cloudEnhancementConsent: boolean
   webEnrichmentConsent: boolean
   privacyMigrationPending: boolean
+  /** Explicit local completion target; missing legacy preference remains draft. */
+  delivery?: 'draft' | 'clipboard'
+  trailingSpace?: boolean
   autoSubmit: boolean
   enhancementMode: EnhancementMode
   enhancementModules: string[]
+  pttModifier?: 'AltRight' | 'ControlRight' | 'none'
   hotkeyMode: HotkeyMode
   toggleAccelerator: string
   cancelAccelerator: string
@@ -186,9 +190,12 @@ export function getDefaultVoicePrefs(now: number = Date.now()): VoicePrefs {
     cloudEnhancementConsent: false,
     webEnrichmentConsent: false,
     privacyMigrationPending: false,
+    delivery: 'draft',
+    trailingSpace: false,
     autoSubmit: false,
     enhancementMode: 'verbatim',
     enhancementModules: [],
+    pttModifier: 'AltRight',
     hotkeyMode: 'toggle',
     toggleAccelerator: 'CommandOrControl+Shift+D',
     cancelAccelerator: 'Escape',

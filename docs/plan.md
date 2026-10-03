@@ -719,3 +719,15 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 - Recover the absent per-account request fence from source `1dd90c5031087855e72cd3ecfce7dd057a2a6208`, preserving current conflict/identity and provider-readiness behavior.
 - Verification: deterministic deferred adapters reproduce stale event/cursor overwrite, stale conflict/delete replacement and newer-failure/older-success races before the fix; after the fix verify all three and independent-account/revocation controls, plus the complete calendar suite and core types.
 - Delivery: isolated `codex/recover-calendar-sync-fence-20261003` and separate PR; original branches preserved, lead owns merge.
+
+
+### Voice archive recovery ownership and verification (2026-10-03)
+
+- Owner: recent-features worker. Dependencies: current actor-scoped voice HistoryIndex, native authority and request fences, registered RPC/channel-map and actual Settings/composer lifecycle. Lead owns ordered merge; original source branches remain intact.
+- Recover current UI search/detail/revisions/edit/select/delete/export/play plus explicit draft/clipboard completion. Add scoped handlers where current ports are absent; retain expected-selected CAS, foreign-record ownership, bounded text, path-free bounded audio frames, final integrity verification and local-only managed-owner clipboard writes. No legacy global capture, fake receipt/provider or default cloud consent is restored.
+- Verify actual authenticated WS actor/read-only/stale/oversize/symlink/persistence/restart controls; actual local-only clipboard RPC remote/forged/dead/moved-owner rejection; complete audio-byte/frame replacement/digest/dispose controls; actual Chromium current UI search/edit/select/stale/copy/export/play/delete/out-of-order/unmount/web denial and composer delivery. Run relevant shared/server/Electron types, protocol catalog/routing and all locale parity; qualify renderer/main/preload builds on the delivered source.
+- Native OS microphone/provider/installed clipboard acceptance and the full Voice/Meeting program remain separate from synthetic bounded integration evidence.
+
+Current foreground PTT also restores the explicit Right Control and disabled presets alongside the default Right Alt/Option. Stored current-schema preferences are normalized and consumed by the same managed foreground key owner; left/wrong modifiers remain untouched, repeat is paired once, changed held modifiers cancel once, and the existing key-up completion contract survives mode changes. These controls do not claim OS-wide modifier capture.
+
+An explicit current-schema trailing-space preference applies to draft and clipboard completion, while the missing/legacy preference preserves current no-trailing-space behavior. Real Chromium completion controls verify both targets.
