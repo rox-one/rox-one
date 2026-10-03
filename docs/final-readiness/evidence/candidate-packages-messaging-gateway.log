@@ -1,0 +1,178 @@
+src/__tests__/access-control.test.ts(215,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(expected: AccessDecision): void', gave the following error.
+    Type '"mode-disabled"' is not assignable to type 'AccessRejectReason'.
+  Overload 2 of 2, '(expected: NoInfer<AccessDecision>): void', gave the following error.
+    Object literal may only specify known properties, and 'allow' does not exist in type 'AccessDecision'.
+src/__tests__/access-control.test.ts(230,22): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(expected: AccessDecision): void', gave the following error.
+    Type '"mode-disabled"' is not assignable to type 'AccessRejectReason'.
+  Overload 2 of 2, '(expected: NoInfer<AccessDecision>): void', gave the following error.
+    Object literal may only specify known properties, and 'allow' does not exist in type 'AccessDecision'.
+src/__tests__/access-control.test.ts(231,19): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(expected: AccessDecision): void', gave the following error.
+    Type '"mode-disabled"' is not assignable to type 'AccessRejectReason'.
+  Overload 2 of 2, '(expected: NoInfer<AccessDecision>): void', gave the following error.
+    Object literal may only specify known properties, and 'allow' does not exist in type 'AccessDecision'.
+src/__tests__/access-control.test.ts(236,32): error TS2345: Argument of type '"mode-disabled"' is not assignable to parameter of type 'AccessRejectReason'.
+src/__tests__/binding-store-update.test.ts(28,7): error TS2322: Type '"allow-list"' is not assignable to type 'MessagingAccessMode | undefined'.
+src/__tests__/binding-store-update.test.ts(41,7): error TS2322: Type '"open"' is not assignable to type 'MessagingAccessMode | undefined'.
+src/__tests__/binding-store-update.test.ts(49,42): error TS2322: Type '"allow-list"' is not assignable to type 'MessagingAccessMode | undefined'.
+src/__tests__/binding-store-update.test.ts(66,46): error TS2322: Type '"open"' is not assignable to type 'MessagingAccessMode | undefined'.
+src/__tests__/binding-store-update.test.ts(74,39): error TS2322: Type '"open"' is not assignable to type 'MessagingAccessMode | undefined'.
+src/__tests__/commands-access.test.ts(145,13): error TS2322: Type 'MessagingAccessMode | "owner-only"' is not assignable to type 'MessagingAccessMode | undefined'.
+  Type '"owner-only"' is not assignable to type 'MessagingAccessMode | undefined'.
+src/__tests__/commands-access.test.ts(167,9): error TS2322: Type '{ owners?: PlatformOwner[] | undefined; accessMode?: "owner-only" | undefined; enabled: true; }' is not assignable to type 'PlatformAccessSlice & { supergroup?: TelegramSupergroupConfig | undefined; }'.
+  Type '{ owners?: PlatformOwner[] | undefined; accessMode?: "owner-only" | undefined; enabled: true; }' is not assignable to type 'PlatformAccessSlice'.
+    Types of property 'accessMode' are incompatible.
+      Type '"owner-only" | undefined' is not assignable to type 'MessagingAccessMode | undefined'.
+        Type '"owner-only"' is not assignable to type 'MessagingAccessMode | undefined'.
+src/__tests__/router-access.test.ts(101,5): error TS2345: Argument of type 'Partial<{ accessMode: "public-inbox" | "owner-control" | "allow-list" | "inherit" | "open"; allowedSenderIds: string[]; }> | undefined' is not assignable to parameter of type 'Partial<BindingConfig> | undefined'.
+  Type 'Partial<{ accessMode: "public-inbox" | "owner-control" | "allow-list" | "inherit" | "open"; allowedSenderIds: string[]; }>' is not assignable to type 'Partial<BindingConfig>'.
+    Types of property 'accessMode' are incompatible.
+      Type '"public-inbox" | "owner-control" | "allow-list" | "inherit" | "open" | undefined' is not assignable to type 'MessagingAccessMode | undefined'.
+        Type '"allow-list"' is not assignable to type 'MessagingAccessMode | undefined'.
+src/__tests__/router-access.test.ts(128,49): error TS2322: Type '"open"' is not assignable to type 'MessagingAccessMode | undefined'.
+src/__tests__/router-access.test.ts(150,13): error TS2322: Type '"owner-only"' is not assignable to type 'MessagingAccessMode | undefined'.
+src/__tests__/router-access.test.ts(171,49): error TS2322: Type '"open"' is not assignable to type 'MessagingAccessMode | undefined'.
+src/__tests__/router-access.test.ts(187,49): error TS2322: Type '"open"' is not assignable to type 'MessagingAccessMode | undefined'.
+src/__tests__/router-access.test.ts(201,49): error TS2322: Type '"open"' is not assignable to type 'MessagingAccessMode | undefined'.
+src/__tests__/router-access.test.ts(222,13): error TS2322: Type '"owner-only"' is not assignable to type 'MessagingAccessMode | undefined'.
+../server-core/src/authority/native-authority.ts(4,30): error TS2307: Cannot find module '@craft-agent/shared/utils/sqlite-runtime' or its corresponding type declarations.
+../server-core/src/authority/native-authority.ts(335,99): error TS2532: Object is possibly 'undefined'.
+../server-core/src/authority/native-authority.ts(346,44): error TS2532: Object is possibly 'undefined'.
+../server-core/src/authority/native-journal.ts(18,30): error TS2307: Cannot find module '@craft-agent/shared/utils/sqlite-runtime' or its corresponding type declarations.
+../server-core/src/domain/connection-setup-logic.ts(8,38): error TS2307: Cannot find module '@craft-agent/shared/config/models' or its corresponding type declarations.
+../server-core/src/handlers/rpc/cloud-runs.ts(21,90): error TS2307: Cannot find module '@craft-agent/shared/config/storage' or its corresponding type declarations.
+../server-core/src/handlers/rpc/cloud-runs.ts(156,21): error TS7006: Parameter 'ref' implicitly has an 'any' type.
+../server-core/src/handlers/rpc/cloud-runs.ts(163,6): error TS7006: Parameter 'ref' implicitly has an 'any' type.
+../server-core/src/knowledge/bridge-service.ts(53,42): error TS2307: Cannot find module '@craft-agent/shared/agent/knowledge-permissions' or its corresponding type declarations.
+../server-core/src/knowledge/bridge-service.ts(57,8): error TS2307: Cannot find module '@craft-agent/shared/agent/knowledge-permissions' or its corresponding type declarations.
+../server-core/src/knowledge/bridge-service.ts(58,35): error TS2307: Cannot find module '@craft-agent/shared/agent/mode-manager' or its corresponding type declarations.
+../server-core/src/knowledge/connections-store.ts(213,13): error TS2322: Type '{ id?: string | undefined; provider?: "siyuan" | undefined; mode?: KnowledgeConnectionMode | undefined; baseUrl?: string | undefined; credentialRef?: string | undefined; ... 4 more ...; updatedAt?: string | undefined; }' is not assignable to type 'KnowledgeConnectionRecord'.
+  Types of property 'id' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+../server-core/src/knowledge/connections-store.ts(248,11): error TS2322: Type '{ status: KnowledgeConnectionStatus; updatedAt: string; id?: string | undefined; provider?: "siyuan" | undefined; mode?: KnowledgeConnectionMode | undefined; ... 4 more ...; createdAt?: string | undefined; }' is not assignable to type 'KnowledgeConnectionRecord'.
+  Types of property 'id' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+../server-core/src/memory/decay.ts(90,51): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/decay.ts(93,20): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/episodic-memory.ts(176,12): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/episodic-memory.ts(176,19): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/episodic-memory.ts(177,14): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/episodic-memory.ts(177,21): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/episodic-memory.ts(178,14): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/episodic-memory.ts(178,21): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/LessonStore.ts(217,20): error TS2345: Argument of type '{ generated?: boolean; ts: string; source: { sessionId?: string; trigger: LessonTrigger; }; owner?: LessonOwner; rule?: string | undefined; category?: LessonCategory | undefined; ... 13 more ...; editedAt?: string; }' is not assignable to parameter of type 'Lesson'.
+  Types of property 'rule' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+../server-core/src/memory/LessonStore.ts(220,27): error TS2345: Argument of type 'Lesson | undefined' is not assignable to parameter of type 'Lesson'.
+  Type 'undefined' is not assignable to type 'Lesson'.
+../server-core/src/memory/LessonStore.ts(246,35): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/LessonStore.ts(247,20): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/LessonStore.ts(250,5): error TS2322: Type '{ disabled?: boolean; source?: { sessionId?: string; trigger: LessonTrigger; } | undefined; pinned?: boolean; owner?: LessonOwner; ts?: string | undefined; ... 14 more ...; scope?: LessonScope | undefined; }' is not assignable to type 'Lesson'.
+  Types of property 'ts' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+../server-core/src/memory/LessonStore.ts(254,19): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/LessonStore.ts(255,25): error TS2345: Argument of type 'Lesson | undefined' is not assignable to parameter of type 'Lesson'.
+  Type 'undefined' is not assignable to type 'Lesson'.
+../server-core/src/memory/LessonStore.ts(265,35): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/LessonStore.ts(266,20): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/LessonStore.ts(287,31): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/LessonStore.ts(287,67): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/LessonStore.ts(288,7): error TS2322: Type '{ usageCount: number; lastUsedAt: string; usedAt: string[]; owner?: LessonOwner; ts?: string | undefined; rule?: string | undefined; category?: LessonCategory | undefined; ... 12 more ...; editedAt?: string; }' is not assignable to type 'Lesson'.
+  Types of property 'ts' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+../server-core/src/memory/LessonStore.ts(290,22): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/LessonStore.ts(292,22): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/LessonStore.ts(311,28): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/LessonStore.ts(312,5): error TS2322: Type '{ conflicts: LessonConflict[]; owner?: LessonOwner; ts?: string | undefined; rule?: string | undefined; category?: LessonCategory | undefined; scope?: LessonScope | undefined; ... 13 more ...; editedAt?: string; }' is not assignable to type 'Lesson'.
+  Types of property 'ts' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+../server-core/src/memory/LessonStore.ts(314,58): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/LessonStore.ts(315,5): error TS2322: Type 'Lesson | undefined' is not assignable to type 'Lesson | null'.
+  Type 'undefined' is not assignable to type 'Lesson | null'.
+../server-core/src/memory/LessonStore.ts(455,39): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/LessonStore.ts(466,13): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/MemoryService.ts(25,37): error TS2307: Cannot find module '@craft-agent/shared/sessions/jsonl' or its corresponding type declarations.
+../server-core/src/memory/MemoryService.ts(26,36): error TS2307: Cannot find module '@craft-agent/shared/sessions/storage' or its corresponding type declarations.
+../server-core/src/memory/MemoryService.ts(27,66): error TS2307: Cannot find module '@craft-agent/shared/config/storage' or its corresponding type declarations.
+../server-core/src/memory/MemoryService.ts(31,8): error TS2307: Cannot find module '@craft-agent/shared/prompts/system' or its corresponding type declarations.
+../server-core/src/memory/MemoryService.ts(32,48): error TS2307: Cannot find module '@craft-agent/shared/agent/conversation-summary' or its corresponding type declarations.
+../server-core/src/memory/MemoryService.ts(604,40): error TS7006: Parameter 'm' implicitly has an 'any' type.
+../server-core/src/memory/provenance.ts(20,32): error TS2307: Cannot find module '@craft-agent/shared/sessions/storage' or its corresponding type declarations.
+../server-core/src/memory/skill-usage.ts(69,20): error TS2532: Object is possibly 'undefined'.
+../server-core/src/memory/skill-usage.ts(205,39): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../server-core/src/memory/skill-usage.ts(206,39): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../server-core/src/memory/SkillPendingQueue.ts(43,39): error TS2307: Cannot find module '@craft-agent/shared/skills/storage' or its corresponding type declarations.
+../server-core/src/memory/SkillPendingQueue.ts(128,22): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../server-core/src/memory/SkillPendingQueue.ts(129,22): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../server-core/src/memory/SkillPendingQueue.ts(130,33): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../server-core/src/memory/SkillPendingQueue.ts(131,34): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../server-core/src/memory/SkillPendingQueue.ts(131,67): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../server-core/src/memory/SkillPendingQueue.ts(134,27): error TS18048: 'script' is possibly 'undefined'.
+../server-core/src/memory/SkillPendingQueue.ts(135,25): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../server-core/src/memory/SkillPendingQueue.ts(156,30): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../server-core/src/memory/SkillPendingQueue.ts(164,32): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+../server-core/src/native/supervisor.ts(11,41): error TS2307: Cannot find module '@craft-agent/shared/sessions/journal-shadow.ts' or its corresponding type declarations.
+../server-core/src/native/supervisor.ts(12,42): error TS2307: Cannot find module '@craft-agent/shared/sessions/journal-primary.ts' or its corresponding type declarations.
+../server-core/src/native/supervisor.ts(333,37): error TS7031: Binding element 'sessionDir' implicitly has an 'any' type.
+../server-core/src/native/supervisor.ts(333,49): error TS7031: Binding element 'lines' implicitly has an 'any' type.
+../server-core/src/native/supervisor.ts(346,30): error TS7031: Binding element 'sessionDir' implicitly has an 'any' type.
+../server-core/src/native/supervisor.ts(346,42): error TS7031: Binding element 'lines' implicitly has an 'any' type.
+../server-core/src/services/search.ts(10,43): error TS2307: Cannot find module '@craft-agent/shared/agent/backend' or its corresponding type declarations.
+../server-core/src/services/search.ts(119,23): error TS2532: Object is possibly 'undefined'.
+../server-core/src/services/search.ts(149,20): error TS2532: Object is possibly 'undefined'.
+../server-core/src/sessions/runtime-config.ts(1,49): error TS2307: Cannot find module '@craft-agent/shared/agent/backend' or its corresponding type declarations.
+../server-core/src/sessions/SessionManager.ts(36,8): error TS2307: Cannot find module '@craft-agent/shared/agent/backend' or its corresponding type declarations.
+../server-core/src/sessions/SessionManager.ts(113,30): error TS2307: Cannot find module '@craft-agent/shared/utils/bundle-files' or its corresponding type declarations.
+../server-core/src/sessions/SessionManager.ts(130,75): error TS2307: Cannot find module '@craft-agent/shared/prompts/system' or its corresponding type declarations.
+../server-core/src/sessions/SessionManager.ts(133,46): error TS2307: Cannot find module '@craft-agent/shared/config/models' or its corresponding type declarations.
+../server-core/src/sessions/SessionManager.ts(140,34): error TS2307: Cannot find module '@craft-agent/shared/statuses/storage' or its corresponding type declarations.
+../server-core/src/sessions/SessionManager.ts(559,37): error TS2307: Cannot find module '@craft-agent/shared/agent/backend' or its corresponding type declarations.
+../server-core/src/sessions/SessionManager.ts(658,49): error TS2538: Type 'undefined' cannot be used as an index type.
+../server-core/src/sessions/SessionManager.ts(1957,18): error TS18048: 'pending' is possibly 'undefined'.
+../server-core/src/sessions/SessionManager.ts(1968,26): error TS18048: 'pending' is possibly 'undefined'.
+../server-core/src/sessions/SessionManager.ts(1971,23): error TS18048: 'pending' is possibly 'undefined'.
+../server-core/src/sessions/SessionManager.ts(1973,28): error TS18048: 'pending' is possibly 'undefined'.
+../server-core/src/sessions/SessionManager.ts(1974,34): error TS18048: 'pending' is possibly 'undefined'.
+../server-core/src/sessions/SessionManager.ts(1975,30): error TS18048: 'pending' is possibly 'undefined'.
+../server-core/src/sessions/SessionManager.ts(1976,32): error TS18048: 'pending' is possibly 'undefined'.
+../server-core/src/sessions/SessionManager.ts(1977,28): error TS18048: 'pending' is possibly 'undefined'.
+../server-core/src/sessions/SessionManager.ts(1979,24): error TS18048: 'pending' is possibly 'undefined'.
+../server-core/src/sessions/SessionManager.ts(3986,50): error TS7006: Parameter 'model' implicitly has an 'any' type.
+../server-core/src/sessions/SessionManager.ts(4331,91): error TS2307: Cannot find module '@craft-agent/shared/config/storage' or its corresponding type declarations.
+../server-core/src/sessions/SessionManager.ts(4825,47): error TS7006: Parameter 'mode' implicitly has an 'any' type.
+../server-core/src/sessions/SessionManager.ts(4843,11): error TS2322: Type 'PermissionMode | undefined' is not assignable to type 'PermissionMode'.
+  Type 'undefined' is not assignable to type 'PermissionMode'.
+../server-core/src/sessions/SessionManager.ts(4853,46): error TS7006: Parameter 'planPath' implicitly has an 'any' type.
+../server-core/src/sessions/SessionManager.ts(4921,38): error TS7006: Parameter 'request' implicitly has an 'any' type.
+../server-core/src/sessions/SessionManager.ts(4991,45): error TS7006: Parameter 'request' implicitly has an 'any' type.
+../server-core/src/sessions/SessionManager.ts(5241,45): error TS7006: Parameter 's' implicitly has an 'any' type.
+../server-core/src/sessions/SessionManager.ts(5244,41): error TS7006: Parameter 's' implicitly has an 'any' type.
+../server-core/src/sessions/SessionManager.ts(5247,44): error TS7006: Parameter 's' implicitly has an 'any' type.
+../server-core/src/sessions/SessionManager.ts(5346,29): error TS2345: Argument of type 'LoadedSource | undefined' is not assignable to parameter of type 'LoadedSource'.
+  Type 'undefined' is not assignable to type 'LoadedSource'.
+../server-core/src/sessions/SessionManager.ts(5547,47): error TS2307: Cannot find module '@craft-agent/shared/config/storage' or its corresponding type declarations.
+../server-core/src/sessions/SessionManager.ts(5644,28): error TS18048: 'userMessage' is possibly 'undefined'.
+../server-core/src/sessions/SessionManager.ts(5644,63): error TS18048: 'userMessage' is possibly 'undefined'.
+../server-core/src/sessions/SessionManager.ts(5650,9): error TS2532: Object is possibly 'undefined'.
+../server-core/src/sessions/SessionManager.ts(5824,11): error TS18048: 'msg' is possibly 'undefined'.
+../server-core/src/sessions/SessionManager.ts(5824,40): error TS18048: 'msg' is possibly 'undefined'.
+../server-core/src/sessions/SessionManager.ts(5825,16): error TS18048: 'msg' is possibly 'undefined'.
+$ tsc --noEmit
