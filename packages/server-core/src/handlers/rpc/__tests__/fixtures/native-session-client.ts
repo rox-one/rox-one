@@ -1,6 +1,6 @@
 /** Real authority/WS/handlers; the deterministic manager avoids provider calls. */
 import assert from 'node:assert/strict'
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { NativeAuthority } from '../../../../authority/native-authority'
 import { WsRpcServer } from '../../../../transport/server'
@@ -14,7 +14,7 @@ import { RPC_CHANNELS, type Session, type SessionEvent } from '@craft-agent/shar
 import type { AnnotationV1 } from '@craft-agent/core/types'
 import type { RequestContext } from '../../../../transport/types'
 
-const directory = process.env.ROX_CONFIG_DIR!
+const directory = realpathSync(process.env.ROX_CONFIG_DIR!)
 const roots = ['workspace-a', 'workspace-b'].map(id => {
   const rootPath = join(directory, id); mkdirSync(rootPath)
   writeFileSync(join(rootPath, 'config.json'), JSON.stringify({ id, name: id, slug: id, createdAt: Date.now(), defaults: { defaultLlmConnection: 'workspace-rox' } }))
@@ -28,7 +28,7 @@ writeFileSync(join(sourcePath, 'config.json'), JSON.stringify({ id: 'source-fixt
   api: { baseUrl: 'https://provider.test', authType: 'header', headers: { Authorization: 'host-private-provider-secret' } }, local: { path: '/host/private/source' }, connectionError: '/host/private/source' }))
 const sessions: Session[] = roots.map((workspace, i) => ({ id: `session-${i}`, workspaceId: workspace.id, workspaceName: workspace.name,
   lastMessageAt: Date.now(), messages: [{ id: `user-${i}`, role: 'user', content: `own conversation ${i}`, timestamp: 1,
-    attachments: [{ id: 'attachment', type: 'document', name: 'private', mimeType: 'text/plain', size: 1, storedPath: '/host/private/attachment' }] },
+    attachments: [{ id: 'attachment', type: 'text', name: 'private', mimeType: 'text/plain', size: 1, storedPath: '/host/private/attachment' }] },
     { id: `tool-${i}`, role: 'tool', content: 'host-private-tool-output', timestamp: 2, toolInput: { secret: 'host-private-tool-secret' } }],
   isProcessing: false, sessionFolderPath: '/host/private/session', workingDirectory: workspace.rootPath, llmConnection: 'workspace-rox' }))
 const canonical = join(directory, 'session-fixture.json')

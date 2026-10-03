@@ -1,3 +1,9 @@
+## Session UX branch integration — 2026-10-03
+
+Owner: PR scout/integration worker in isolated `codex/integrate-session-ux-20261003`, based on exact #1391 head `ddf97e3d5025288819e0bfdc3b26741f75b6d3b1`. Preserve original branches and all unrelated work. The latest 203-file app completion commit remains substantive; the first four #1391 commits already occur in #1392.
+
+This slice repairs reproducible integration blockers: fixture enrollments must succeed at runtime and narrow their nullable result; native session fixtures must use an actual attachment type; browser model controls must import the pure public model catalog directly so configuration barrels cannot bring filesystem-based managed skill code into the renderer. Acceptance requires relevant native isolation/persistence tests, complete package types and WebUI/Electron renderer builds. Secret credential reads and ASR recording uploads also use one bounded, no-follow opened-descriptor read with before/opened/after/current BigInt file identity checks. Callers must reject links/replacements/growth before publishing keys or uploading foreign bytes. The missing Inbox/Security states require all 22 keys in every current locale catalog. CodeQL findings and real-provider/native hardware acceptance are separate and must not be inferred from build success. `.codegraph/` is absent in this checkout; targeted source/dataflow reads supplied the import evidence.
+
 # Unified Rox / Conation / RMA / Golden Gate behavioral specification
 
 ## Current target and execution scope — 2026-10-03

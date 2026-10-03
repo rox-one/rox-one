@@ -1,5 +1,6 @@
+import { readBoundedRegularFile } from '../packages/shared/src/utils/bounded-file.ts'
 /** Run on the backend host: bun scripts/verify-service-keys.ts candidates.json private.env */
-import { closeSync, constants, existsSync, fsyncSync, lstatSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import { closeSync, constants, existsSync, fsyncSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { SERVER_SERVICE_KEYS, type ServerServiceKey } from '../packages/shared/src/config/server-services.ts'
 import { latestNovaModel } from '../packages/shared/src/voice/adapters/deepgram-transcription'
@@ -72,12 +73,10 @@ export function publishVerifiedServiceKeys(output: string, selected: Record<stri
   }
   let existing: string[] = []
   if (existsSync(output)) {
-    const stat = lstatSync(output)
-    if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 64 * 1024
-      || (process.platform !== 'win32' && ((stat.mode & 0o077) !== 0 || (typeof process.getuid === 'function' && stat.uid !== process.getuid())))) {
-      throw new Error('Existing service secrets must be a private backend-owned regular file')
-    }
-    existing = readFileSync(output, 'utf8').split(/\r?\n/).filter((line) => {
+    let previous: string
+    try { previous = readBoundedRegularFile(output, { maxBytes: 64 * 1024, privateOwner: true }).toString('utf8') }
+    catch { throw new Error('Existing service secrets must be a private backend-owned regular file') }
+    existing = previous.split(/\r?\n/).filter((line) => {
       const name = /^\s*(?:export\s+)?([A-Z][A-Z0-9_]*)=/.exec(line)?.[1]
       return line.trim() && (!name || !Object.hasOwn(selected, name))
     })

@@ -1,3 +1,4 @@
+import { readBoundedRegularFile } from '@craft-agent/shared/utils/bounded-file'
 import { getServerServiceKey } from '@craft-agent/shared/config/server-services'
 /**
  * Local meeting store: one folder per meeting under `<root>/<id>/`.
@@ -860,9 +861,9 @@ export class LocalMeetingStore {
       let modelRevision: string | undefined
       let diarizationModel: string | undefined
       if (engine.engine === 'deepgram') {
-        if (statSync(audioPath).size > 200 * 1024 * 1024) throw new Error('Audio exceeds the transcription size limit (200 MB)')
+        const audio = readBoundedRegularFile(audioPath, { maxBytes: 200 * 1024 * 1024 })
         const prefs = loadVoicePrefs()
-        const input: TranscriptionRequest = { audio: new Uint8Array(readFileSync(audioPath)), mimeType: meeting.audio!.mimeType,
+        const input: TranscriptionRequest = { audio: new Uint8Array(audio), mimeType: meeting.audio!.mimeType,
           language: prefs.recognitionLanguage === 'auto' ? undefined : prefs.recognitionLanguage, signal }
         const result = this.deps.transcribeCloud
           ? await this.deps.transcribeCloud(input, meeting, job.context)

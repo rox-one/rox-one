@@ -20,7 +20,8 @@ import {
   ExternalLink,
 } from 'lucide-react'
 
-import { CAPABILITY_PACKS, CAPABILITY_TOOLS, buildOfflineCapabilityReport } from '@craft-agent/shared/capabilities'
+import { CAPABILITY_PACKS, CAPABILITY_TOOLS } from '@craft-agent/shared/capabilities/packs'
+import { buildOfflineCapabilityReport } from '@craft-agent/shared/capabilities/agents-md'
 import { routes } from '@/lib/navigate'
 import { isClaimableLive } from '@craft-agent/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
@@ -37,7 +38,7 @@ import {
   groupExtensionPermissions,
   permissionsForMarketplaceKind,
 } from '@craft-agent/shared/extensions/browser'
-import { filterMarketplaceEntries } from '@craft-agent/shared/marketplace'
+import { filterMarketplaceEntries } from '@craft-agent/shared/marketplace/filters'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',

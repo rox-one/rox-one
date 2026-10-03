@@ -109,7 +109,7 @@ import {
   stripPiPrefixForDisplay,
 } from './model-picker-helpers'
 import { VoiceDictationControl } from './VoiceDictationControl'
-import { ROX_PUBLIC_MODEL_DESCRIPTION_KEYS, isRoxPublicModelId } from '@craft-agent/shared/config'
+import { ROX_PUBLIC_MODEL_DESCRIPTION_KEYS, isRoxPublicModelId } from '@craft-agent/shared/config/rox-public-models'
 
 function dedupModelsById<T extends string | ModelDefinition>(models: T[]): T[] {
   const seen = new Set<string>()

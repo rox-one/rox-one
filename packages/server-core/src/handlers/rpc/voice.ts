@@ -1,3 +1,4 @@
+import { readBoundedRegularFile } from '@craft-agent/shared/utils/bounded-file'
 /**
  * Voice RPC — private actor preferences, client audio capture and Deepgram ASR.
  *
@@ -495,9 +496,8 @@ export function registerVoiceHandlers(server: RpcServer, deps: HandlerDeps, opti
     if (!/^[a-f0-9-]{36}$/.test(recording.id)) throw new Error('Invalid recording identifier')
     const root = directory(context, 'write')
     const path = join(root, 'voice', 'recordings', recording.id, 'original.bin')
-    if (!existsSync(path) || !lstatSync(path).isFile() || lstatSync(path).isSymbolicLink()
-      || lstatSync(path).size > MAX_AUDIO_BYTES) throw new Error('Original recording is unavailable')
-    const result = await transcribe(context, readFileSync(path), audioMime(recording.format))
+    const original = readBoundedRegularFile(path, { maxBytes: MAX_AUDIO_BYTES })
+    const result = await transcribe(context, original, audioMime(recording.format))
     const prefs = readPrefs(context)
     const transcript = normalizedResult(result, prefs)
     const history = index(context)

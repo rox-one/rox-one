@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict'
 import { mkdirSync, readFileSync, realpathSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { NativeAuthority } from '../../../../authority/native-authority'
@@ -22,7 +23,11 @@ try { Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable:
 finally { if (descriptor) Object.defineProperty(process.stdin, 'isTTY', descriptor); else Reflect.deleteProperty(process.stdin, 'isTTY') }
 const ownRoot = join(configDir, 'own'), foreignRoot = join(configDir, 'foreign'); mkdirSync(ownRoot); mkdirSync(foreignRoot)
 authority.registerWorkspace(admin.credential, 'own', ownRoot); authority.registerWorkspace(admin.credential, 'foreign', foreignRoot)
-const enroll = (label: string) => authority.redeemEnrollment(authority.issueEnrollment(admin.credential, label, Date.now() + 60000), label)
+const enroll = (label: string) => {
+  const issued = authority.redeemEnrollment(authority.issueEnrollment(admin.credential, label, Date.now() + 60000), label)
+  assert(issued, 'Fixture enrollment must succeed')
+  return issued
+}
 const alice = enroll('Alice'), bob = enroll('Bob')
 for (const person of [alice, bob]) authority.grantWorkspace(admin.credential, person.principal.subject, 'own', ['read', 'subscribe'])
 awardXp('session_completed'); const hostPath = join(configDir, 'gamification.json'), hostBefore = readFileSync(hostPath, 'utf8')
