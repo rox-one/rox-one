@@ -27,7 +27,7 @@ async function fixtureBundle() {
     import { panelStackAtom, focusedPanelIdAtom, focusedPanelRouteAtom } from './apps/electron/src/renderer/atoms/panel-stack';
     const store = createStore();
     let ready=true, sessionsReady=true, ws='ws-a', slug='a', remote='remote-a', deepLink;
-    let state, pagesChanged;
+    let state, pagesChanged, switchMode='ok'; const switches=[];
     const pageRequests=[], pageSubscriptions=[], deepSubscriptions=[], createRequests=[], commands=[], inputs=[], messages=[], scheduled=[];
     const nativeSetTimeout=window.setTimeout;
     window.electronAPI = {
@@ -50,7 +50,7 @@ async function fixtureBundle() {
     const root=createRoot(document.getElementById('root'));
     // Production callback identities can stay stable across a remote-only owner
     // change. Recreating them in render would mask a missing effect dependency.
-    const onSwitchWorkspaceBySlug=next=>{slug=next;ws='ws-'+next;remote=ws==='ws-a'?'remote-a':null;render();return true};
+    const onSwitchWorkspaceBySlug=next=>{if(switchMode==='missing')return false;if(switchMode==='reject')return Promise.reject(new Error('fixture switch rejected'));if(switchMode==='hold')return new Promise(resolve=>switches.push({next,resolve}));slug=next;ws='ws-'+next;remote=ws==='ws-a'?'remote-a':null;render();return true};
     const onCreateSession=workspaceId=>new Promise(resolve=>createRequests.push({workspaceId,resolve}));
     const onInputChange=(id,input)=>{inputs.push({id,input})};
     function render() { root.render(React.createElement(Provider,{store},React.createElement(NavigationProvider,{
@@ -81,6 +81,7 @@ async function fixtureBundle() {
       timers(){return scheduled.length},
       fireActionTimers(){window.setTimeout=nativeSetTimeout;scheduled.splice(0).forEach(callback=>callback())},
       snapshot(){return{nav:state.navigationState,panels:store.get(panelStackAtom),ws,slug}},
+      switchMode(value){switchMode=value}, resolveSwitch(index, result){switches[index].resolve(result)},
       pop(search){history.pushState({seq:0},'',search);window.dispatchEvent(new PopStateEvent('popstate',{state:{seq:0}}))},
     };
     const params=new URLSearchParams(location.search);
@@ -187,6 +188,32 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.goForward();await routeIs('notes/note/note-a')
     await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('allSessions/session/first-b')
     await page.evaluate(()=>(window as any).ui001nav.workspace('ws-a','a'));await routeIs('notes/note/note-a')
+  })
+
+  browserTest('missing or rejected workspace history targets release suppression and retain current selection',async()=>{
+    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
+    for (const mode of ['missing','reject']) {
+      await page.evaluate(mode=>{(window as any).ui001nav.switchMode(mode);(window as any).ui001nav.pop('?ws=gone&route=notes%2Fnote%2Fforeign')},mode)
+      await page.waitForFunction(()=>new URL(location.href).searchParams.get('ws')==='a')
+      expect((await snapshot()).ws).toBe('ws-a')
+      expect((await snapshot()).nav.details.noteId).toBe('a')
+      await page.evaluate(()=>(window as any).ui001nav.navigate('home'));await routeIs('home')
+      await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
+      await page.evaluate(()=>(window as any).ui001nav.navigate('notes/note/a'));await routeIs('notes/note/a')
+    }
+  })
+
+  browserTest('pending workspace history keeps its target during resize and late failure cannot overwrite a newer intent',async()=>{
+    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
+    await page.evaluate(()=>{(window as any).ui001nav.switchMode('hold');(window as any).ui001nav.pop('?ws=gone&route=notes%2Fnote%2Fforeign');(window as any).ui001nav.resizePanels()})
+    await page.waitForTimeout(100)
+    expect(new URL(page.url()).searchParams.get('ws')).toBe('gone')
+    await page.evaluate(()=>(window as any).ui001nav.navigate('home'));await routeIs('home')
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
+    await page.evaluate(()=>(window as any).ui001nav.resolveSwitch(0,false))
+    await page.waitForTimeout(100)
+    expect(new URL(page.url()).searchParams.get('route')).toBe('home')
+    expect((await snapshot()).ws).toBe('ws-a')
   })
 
   browserTest('canonical page broadcasts beat stale list replies and former workspace replies are ignored',async()=>{

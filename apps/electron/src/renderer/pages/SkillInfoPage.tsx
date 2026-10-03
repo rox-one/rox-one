@@ -45,20 +45,33 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
   const [editContent, setEditContent] = useState('')
   const [saving, setSaving] = useState(false)
   const loadedSkillRef = React.useRef<LoadedSkill | null>(null)
+  const scopeOwnerRef = React.useRef({ active: true })
+  const catalogRevisionRef = React.useRef(0)
+  React.useLayoutEffect(() => {
+    const owner = { active: true }
+    scopeOwnerRef.current.active = false
+    scopeOwnerRef.current = owner
+    loadedSkillRef.current = null
+    ++catalogRevisionRef.current
+    setSkill(null)
+    setLoading(true)
+    setError(null)
+    setSaving(false)
+    return () => { owner.active = false; ++catalogRevisionRef.current }
+  }, [workspaceId, skillSlug, workingDirectory])
 
   // Load skill data
   useEffect(() => {
     let cancelled = false
-    let revision = 0
-    loadedSkillRef.current = null
+    const owner = scopeOwnerRef.current
     setLoading(true)
     setError(null)
 
     const load = async (background = false) => {
-      const request = ++revision
+      const request = ++catalogRevisionRef.current
       try {
         const skills = await window.electronAPI.getSkills(workspaceId, workingDirectory)
-        if (cancelled || request !== revision) return
+        if (cancelled || !owner.active || scopeOwnerRef.current !== owner || request !== catalogRevisionRef.current) return
         const found = skills.find((s) => s.slug === skillSlug) ?? null
         if (!found) {
           setError(t('skillInfo.notFound'))
@@ -76,12 +89,12 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
         setEditDescription(value => previous && value !== previous.metadata.description ? value : found.metadata.description)
         setEditContent(value => previous && value !== (previous.content || '') ? value : found.content || '')
       } catch (err) {
-        if (cancelled || request !== revision) return
+        if (cancelled || !owner.active || scopeOwnerRef.current !== owner || request !== catalogRevisionRef.current) return
         if (!background || !loadedSkillRef.current) {
           setError(err instanceof Error ? err.message : t('skillInfo.failedToLoad'))
         }
       } finally {
-        if (!cancelled && request === revision) setLoading(false)
+        if (!cancelled && owner.active && scopeOwnerRef.current === owner && request === catalogRevisionRef.current) setLoading(false)
       }
     }
 
@@ -95,7 +108,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
 
     return () => {
       cancelled = true
-      revision += 1
+      ++catalogRevisionRef.current
       cleanup?.()
     }
   }, [workspaceId, skillSlug, workingDirectory, t])
@@ -111,11 +124,14 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
 
   const handleDelete = useCallback(async () => {
     if (!skill) return
+    const owner = scopeOwnerRef.current
     try {
       await window.electronAPI.deleteSkill(workspaceId, skillSlug)
+      if (!owner.active || scopeOwnerRef.current !== owner) return
       toast.success(t('skillInfo.deletedSkill', { name: skill.metadata.name }))
       navigate(routes.view.skills())
     } catch (err) {
+      if (!owner.active || scopeOwnerRef.current !== owner) return
       toast.error(t('skillInfo.failedToDelete'), {
         description: err instanceof Error ? err.message : undefined,
       })
@@ -127,7 +143,10 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
   }, [skillSlug])
 
   const handleSave = useCallback(async () => {
-    if (!skill || skill.source !== 'workspace') return
+    if (!skill || skill.source !== 'workspace' || saving) return
+    const owner = scopeOwnerRef.current
+    const isCurrent = () => owner.active && scopeOwnerRef.current === owner
+    if (!isCurrent()) return
     const name = editName.trim()
     const description = editDescription.trim()
     if (!name || !description) {
@@ -141,6 +160,8 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
         description,
         content: editContent,
       })
+      if (!isCurrent()) return
+      ++catalogRevisionRef.current
       loadedSkillRef.current = updated
       setSkill(updated)
       setEditName(value => value === editName ? updated.metadata.name : value)
@@ -148,13 +169,14 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
       setEditContent(value => value === editContent ? updated.content || '' : value)
       toast.success(t('skillInfo.saved'))
     } catch (err) {
+      if (!isCurrent()) return
       toast.error(t('skillInfo.saveFailed'), {
         description: err instanceof Error ? err.message : undefined,
       })
     } finally {
-      setSaving(false)
+      if (isCurrent()) setSaving(false)
     }
-  }, [skill, editName, editDescription, editContent, workspaceId, skillSlug, t])
+  }, [saving, skill, editName, editDescription, editContent, workspaceId, skillSlug, t])
 
   const skillName = skill?.metadata.name || skillSlug
   const canDeleteSkill = skill?.source === 'workspace'
