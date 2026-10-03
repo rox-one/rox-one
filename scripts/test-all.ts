@@ -204,6 +204,13 @@ function wholeSuiteTimeout(value: string | undefined): number {
 }
 
 async function nearestConfiguration(root: string, file: string, kind: 'playwright' | 'vitest') {
+  // This native product entry has a separate existing config. Its sibling
+  // browser config deliberately excludes native tests; falling back to it
+  // would discover the file without ever executing its acceptance case.
+  if (kind === 'playwright' && portable(relative(root, file)) === NATIVE_PRODUCT_SUITE) {
+    try { return await readRegularFile(join(root, NATIVE_PRODUCT_CONFIG)) ? NATIVE_PRODUCT_CONFIG : undefined }
+    catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined; throw error }
+  }
   let directory = dirname(file)
   while (true) {
     for (const extension of CONFIG_EXTENSIONS) {
@@ -216,6 +223,9 @@ async function nearestConfiguration(root: string, file: string, kind: 'playwrigh
     directory = parent
   }
 }
+
+const NATIVE_PRODUCT_SUITE = 'tests/e2e/product-tour/product.native.spec.ts'
+const NATIVE_PRODUCT_CONFIG = 'tests/e2e/product-tour/native.config.ts'
 
 function nearestPackage(root: string, file: string) {
   let directory = dirname(file)
@@ -317,6 +327,10 @@ export async function discoverSuites(inputRoot: string): Promise<SuiteManifest> 
       suite.config = await nearestConfiguration(root, path, runner)
       suite.packageRoot = nearestPackage(root, path)
       if (!suite.config) suite.prerequisiteError = `${runner} config not found for ${suite.path}`
+      else if (runner === 'playwright' && suite.path === NATIVE_PRODUCT_SUITE
+        && process.platform !== 'darwin' && process.platform !== 'win32') {
+        suite.prerequisiteError = `Native product-tour suite requires macOS or Windows; unavailable on ${process.platform}`
+      }
     }
     manifest.suites.push(suite)
   }

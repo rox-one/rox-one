@@ -217,6 +217,53 @@ describe('UI-001 repository test runner', () => {
     expect(report.summary.blocked).toBe(1)
   })
 
+  test('the native product suite retains its dedicated configuration, command and platform prerequisite', async () => {
+    const root = fixture(), directory = 'tests/e2e/product-tour'
+    file(root, directory + '/playwright.config.ts', 'export default {testMatch: "*.application.spec.ts"}')
+    file(root, directory + '/native.config.ts', 'export default {testMatch: "*.native.spec.ts"}')
+    for (const kind of ['application', 'native']) file(root, `${directory}/product.${kind}.spec.ts`, "import {test} from '@playwright/test'; test('retained suite',()=>{});")
+    file(root, 'node_modules/@playwright/test/cli.js', `const assert=require('node:assert/strict');
+      const path=process.argv[3]; const config=process.argv[process.argv.indexOf('--config')+1];
+      assert.equal(config,path.endsWith('.native.spec.ts')?'tests/e2e/product-tour/native.config.ts':'tests/e2e/product-tour/playwright.config.ts');
+      console.log('actual-config-command:'+config);`)
+    const api = await runner(), manifest = await api.discoverSuites(root)
+    expect(manifest.suites).toMatchObject([
+      { path: `${directory}/product.application.spec.ts`, runner: 'playwright', config: `${directory}/playwright.config.ts` },
+      { path: `${directory}/product.native.spec.ts`, runner: 'playwright', config: `${directory}/native.config.ts` },
+    ])
+    const report = await api.runSuites({ root, manifest, artifactDirectory: join(root, 'evidence') })
+    expect(report.summary.expected).toBe(2)
+    expect(report.summary.completed).toBe(2)
+    const application = report.results[0]!, native = report.results[1]!
+    expect(application.status).toBe('passed')
+    expect(readFileSync(application.log, 'utf8')).toContain('actual-config-command:' + directory + '/playwright.config.ts')
+    if (process.platform === 'darwin' || process.platform === 'win32') {
+      expect(native.status).toBe('passed')
+      expect(native.command[native.command.indexOf('--config') + 1]).toBe(directory + '/native.config.ts')
+      expect(readFileSync(native.log, 'utf8')).toContain('actual-config-command:' + directory + '/native.config.ts')
+    } else {
+      expect(report.status).toBe('failed')
+      expect(report.summary).toMatchObject({ passed: 1, failed: 0, blocked: 1 })
+      expect(native).toMatchObject({ status: 'blocked', command: [], error: expect.stringContaining('macOS or Windows') })
+      expect(readFileSync(native.log, 'utf8')).toContain('macOS or Windows')
+    }
+  }, 20_000)
+
+  test('a missing native product configuration stays blocked even when the generic browser configuration exists', async () => {
+    const root = fixture(), directory = 'tests/e2e/product-tour'
+    file(root, directory + '/playwright.config.ts', 'export default {testMatch: "*.application.spec.ts"}')
+    file(root, directory + '/product.native.spec.ts', "import {test} from '@playwright/test'; test('required native coverage',()=>{});")
+    const api = await runner(), manifest = await api.discoverSuites(root)
+    expect(manifest.suites).toHaveLength(1)
+    expect(manifest.suites[0]).toMatchObject({ path: directory + '/product.native.spec.ts', runner: 'playwright' })
+    expect(manifest.suites[0]!.prerequisiteError).toContain('config not found')
+    expect(manifest.suites[0]!.config).toBeUndefined()
+    const report = await api.runSuites({ root, manifest, artifactDirectory: join(root, 'evidence') })
+    expect(report.status).toBe('failed')
+    expect(report.summary).toMatchObject({ expected: 1, completed: 1, passed: 0, failed: 0, blocked: 1 })
+    expect(report.results[0]).toMatchObject({ path: directory + '/product.native.spec.ts', status: 'blocked', command: [], error: expect.stringContaining('config not found') })
+  }, 20_000)
+
   test('runtime Bun imports using the Chromium library keep their Bun executor', async () => {
     const root = fixture()
     file(root, 'tests/library.test.ts', "const {test}=require('bun:test'); import {chromium} from '@playwright/test'; test('Bun owns this test',()=>{});")
