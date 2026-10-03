@@ -4,7 +4,7 @@
 
 **Goal:** Ship first-class local terminal on existing Session: twin `SurfaceTab` union, RPC control, binary data plane with credits/snapshot/fence, Electron detach D0/D1/D2, flags default off.
 
-**Architecture:** `types-union` widens core + renderer twins together; `coordinator` owns `@craft-agent/server-core/src/execution/` (local-electron only, no Session task fields); `data-plane` owns binary frames outside `transport/codec.ts`; `electron-surface` adds contribution keeping URL as SoT. G1 spike is throwaway before data-plane. Evaluator fails closed on AC coverage.
+**Architecture:** `types-union` widens core + renderer twins together; `coordinator` owns `@rox/server-core/src/execution/` (local-electron only, no Session task fields); `data-plane` owns binary frames outside `transport/codec.ts`; `electron-surface` adds contribution keeping URL as SoT. G1 spike is throwaway before data-plane. Evaluator fails closed on AC coverage.
 
 **Tech Stack:** TypeScript, Bun test, Electron (main/renderer), length-prefixed binary framing, workspace `workbench.*` flags.
 

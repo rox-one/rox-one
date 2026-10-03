@@ -1,12 +1,12 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Layers } from 'lucide-react'
-import { PremiumMenu } from '@craft-agent/ui'
+import { PremiumMenu } from '@rox/ui'
 import {
   COLLECTION_GROUP_BY_VALUES,
   type CollectionDisplay,
   type CollectionGroupBy,
-} from '@craft-agent/shared/sessions/collection'
+} from '@rox/shared/sessions/collection'
 import { cn } from '@/lib/utils'
 
 const GROUP_I18N: Record<CollectionGroupBy, string> = {

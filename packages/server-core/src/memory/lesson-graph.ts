@@ -19,7 +19,7 @@
  * the workspace list (getWorkspaces() result) so the module stays testable
  * with plain `{id, rootPath}` refs.
  */
-import type { Lesson, LessonCategory, LessonOwner } from '@craft-agent/shared/memory/types'
+import type { Lesson, LessonCategory, LessonOwner } from '@rox/shared/memory/types'
 import { LessonStore, lessonKey } from './LessonStore'
 import { MemoryFileStore } from './MemoryFileStore'
 

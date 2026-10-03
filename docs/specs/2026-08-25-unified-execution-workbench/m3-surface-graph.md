@@ -48,7 +48,7 @@ Every edge below cites a current path. `[INFERENCE]` is marked.
 
 | Edge | Meaning | Evidence |
 | --- | --- | --- |
-| N8 ⇢ N1 | Renderer **does not import** core `SurfaceTab`; it restates the union | `layout-snapshot.ts` comment: “structural twin”; “apps/electron does not import @craft-agent/core's knowledge module” |
+| N8 ⇢ N1 | Renderer **does not import** core `SurfaceTab`; it restates the union | `layout-snapshot.ts` comment: “structural twin”; “apps/electron does not import @rox/core's knowledge module” |
 | N2 → N1 | Adding `kind: 'terminal'` **fails typecheck** until both switches grow | `descriptor.ts` `switch (tab.kind)` |
 | N6 → N1 | Parser allowlists kinds; unknown → `null` | `migrate.ts` `parseWorkbenchTab`; test rejects `{ kind: 'work-record' }` |
 | N7 → N1 | Layout describe switch | `layout.ts` `describeWorkbenchTab` |

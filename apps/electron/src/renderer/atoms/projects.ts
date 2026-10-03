@@ -5,7 +5,7 @@
  */
 
 import { atom } from 'jotai'
-import type { LoadedProject } from '@craft-agent/shared/projects/types'
+import type { LoadedProject } from '@rox/shared/projects/types'
 
 import type { SharedProjectProjection, ProjectAuthorityState } from '../../shared/project-authority'
 

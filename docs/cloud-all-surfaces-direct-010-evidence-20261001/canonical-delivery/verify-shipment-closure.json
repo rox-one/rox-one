@@ -194,75 +194,75 @@
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/cloud-runner: symlink target exists inside delivery",
+      "name": "node_modules/@rox/cloud-runner: symlink target exists inside delivery",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/cloud-runner: workspace link resolves to exact package",
+      "name": "node_modules/@rox/cloud-runner: workspace link resolves to exact package",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/core: symlink target exists inside delivery",
+      "name": "node_modules/@rox/core: symlink target exists inside delivery",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/core: workspace link resolves to exact package",
+      "name": "node_modules/@rox/core: workspace link resolves to exact package",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/messaging-discord-worker: symlink target exists inside delivery",
+      "name": "node_modules/@rox/messaging-discord-worker: symlink target exists inside delivery",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/messaging-discord-worker: workspace link resolves to exact package",
+      "name": "node_modules/@rox/messaging-discord-worker: workspace link resolves to exact package",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/messaging-gateway: symlink target exists inside delivery",
+      "name": "node_modules/@rox/messaging-gateway: symlink target exists inside delivery",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/messaging-gateway: workspace link resolves to exact package",
+      "name": "node_modules/@rox/messaging-gateway: workspace link resolves to exact package",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/messaging-whatsapp-worker: symlink target exists inside delivery",
+      "name": "node_modules/@rox/messaging-whatsapp-worker: symlink target exists inside delivery",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/messaging-whatsapp-worker: workspace link resolves to exact package",
+      "name": "node_modules/@rox/messaging-whatsapp-worker: workspace link resolves to exact package",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/server: symlink target exists inside delivery",
+      "name": "node_modules/@rox/server: symlink target exists inside delivery",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/server: workspace link resolves to exact package",
+      "name": "node_modules/@rox/server: workspace link resolves to exact package",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/server-core: symlink target exists inside delivery",
+      "name": "node_modules/@rox/server-core: symlink target exists inside delivery",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/server-core: workspace link resolves to exact package",
+      "name": "node_modules/@rox/server-core: workspace link resolves to exact package",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/session-tools-core: symlink target exists inside delivery",
+      "name": "node_modules/@rox/session-tools-core: symlink target exists inside delivery",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/session-tools-core: workspace link resolves to exact package",
+      "name": "node_modules/@rox/session-tools-core: workspace link resolves to exact package",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/shared: symlink target exists inside delivery",
+      "name": "node_modules/@rox/shared: symlink target exists inside delivery",
       "pass": true
     },
     {
-      "name": "node_modules/@craft-agent/shared: workspace link resolves to exact package",
+      "name": "node_modules/@rox/shared: workspace link resolves to exact package",
       "pass": true
     },
     {
@@ -25414,15 +25414,15 @@
   "native_or_provider_acceptance": false,
   "observed_revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
   "workspace_package_names": {
-    "server": "@craft-agent/server",
-    "server-core": "@craft-agent/server-core",
-    "shared": "@craft-agent/shared",
-    "core": "@craft-agent/core",
-    "session-tools-core": "@craft-agent/session-tools-core",
-    "messaging-gateway": "@craft-agent/messaging-gateway",
-    "messaging-whatsapp-worker": "@craft-agent/messaging-whatsapp-worker",
-    "messaging-discord-worker": "@craft-agent/messaging-discord-worker",
-    "cloud-runner": "@craft-agent/cloud-runner"
+    "server": "@rox/server",
+    "server-core": "@rox/server-core",
+    "shared": "@rox/shared",
+    "core": "@rox/core",
+    "session-tools-core": "@rox/session-tools-core",
+    "messaging-gateway": "@rox/messaging-gateway",
+    "messaging-whatsapp-worker": "@rox/messaging-whatsapp-worker",
+    "messaging-discord-worker": "@rox/messaging-discord-worker",
+    "cloud-runner": "@rox/cloud-runner"
   },
   "binary_modes": {
     "resources/bin/uv": {
@@ -25445,87 +25445,87 @@
   },
   "workspace_links": {
     "expected": {
-      "node_modules/@craft-agent/cloud-runner": "../../packages/cloud-runner",
-      "node_modules/@craft-agent/core": "../../packages/core",
-      "node_modules/@craft-agent/messaging-discord-worker": "../../packages/messaging-discord-worker",
-      "node_modules/@craft-agent/messaging-gateway": "../../packages/messaging-gateway",
-      "node_modules/@craft-agent/messaging-whatsapp-worker": "../../packages/messaging-whatsapp-worker",
-      "node_modules/@craft-agent/server": "../../packages/server",
-      "node_modules/@craft-agent/server-core": "../../packages/server-core",
-      "node_modules/@craft-agent/session-tools-core": "../../packages/session-tools-core",
-      "node_modules/@craft-agent/shared": "../../packages/shared"
+      "node_modules/@rox/cloud-runner": "../../packages/cloud-runner",
+      "node_modules/@rox/core": "../../packages/core",
+      "node_modules/@rox/messaging-discord-worker": "../../packages/messaging-discord-worker",
+      "node_modules/@rox/messaging-gateway": "../../packages/messaging-gateway",
+      "node_modules/@rox/messaging-whatsapp-worker": "../../packages/messaging-whatsapp-worker",
+      "node_modules/@rox/server": "../../packages/server",
+      "node_modules/@rox/server-core": "../../packages/server-core",
+      "node_modules/@rox/session-tools-core": "../../packages/session-tools-core",
+      "node_modules/@rox/shared": "../../packages/shared"
     },
     "delivered": {
-      "node_modules/@craft-agent/cloud-runner": "../../packages/cloud-runner",
-      "node_modules/@craft-agent/core": "../../packages/core",
-      "node_modules/@craft-agent/messaging-discord-worker": "../../packages/messaging-discord-worker",
-      "node_modules/@craft-agent/messaging-gateway": "../../packages/messaging-gateway",
-      "node_modules/@craft-agent/messaging-whatsapp-worker": "../../packages/messaging-whatsapp-worker",
-      "node_modules/@craft-agent/server": "../../packages/server",
-      "node_modules/@craft-agent/server-core": "../../packages/server-core",
-      "node_modules/@craft-agent/session-tools-core": "../../packages/session-tools-core",
-      "node_modules/@craft-agent/shared": "../../packages/shared"
+      "node_modules/@rox/cloud-runner": "../../packages/cloud-runner",
+      "node_modules/@rox/core": "../../packages/core",
+      "node_modules/@rox/messaging-discord-worker": "../../packages/messaging-discord-worker",
+      "node_modules/@rox/messaging-gateway": "../../packages/messaging-gateway",
+      "node_modules/@rox/messaging-whatsapp-worker": "../../packages/messaging-whatsapp-worker",
+      "node_modules/@rox/server": "../../packages/server",
+      "node_modules/@rox/server-core": "../../packages/server-core",
+      "node_modules/@rox/session-tools-core": "../../packages/session-tools-core",
+      "node_modules/@rox/shared": "../../packages/shared"
     }
   },
   "all_delivery_symlinks": [
     {
-      "path": "node_modules/@craft-agent/cloud-runner",
+      "path": "node_modules/@rox/cloud-runner",
       "target": "../../packages/cloud-runner",
       "resolved": "/workspace/rox-r15-direct-server-dist-20261001/packages/cloud-runner",
       "target_exists": true,
       "resolved_inside_delivery": true
     },
     {
-      "path": "node_modules/@craft-agent/core",
+      "path": "node_modules/@rox/core",
       "target": "../../packages/core",
       "resolved": "/workspace/rox-r15-direct-server-dist-20261001/packages/core",
       "target_exists": true,
       "resolved_inside_delivery": true
     },
     {
-      "path": "node_modules/@craft-agent/messaging-discord-worker",
+      "path": "node_modules/@rox/messaging-discord-worker",
       "target": "../../packages/messaging-discord-worker",
       "resolved": "/workspace/rox-r15-direct-server-dist-20261001/packages/messaging-discord-worker",
       "target_exists": true,
       "resolved_inside_delivery": true
     },
     {
-      "path": "node_modules/@craft-agent/messaging-gateway",
+      "path": "node_modules/@rox/messaging-gateway",
       "target": "../../packages/messaging-gateway",
       "resolved": "/workspace/rox-r15-direct-server-dist-20261001/packages/messaging-gateway",
       "target_exists": true,
       "resolved_inside_delivery": true
     },
     {
-      "path": "node_modules/@craft-agent/messaging-whatsapp-worker",
+      "path": "node_modules/@rox/messaging-whatsapp-worker",
       "target": "../../packages/messaging-whatsapp-worker",
       "resolved": "/workspace/rox-r15-direct-server-dist-20261001/packages/messaging-whatsapp-worker",
       "target_exists": true,
       "resolved_inside_delivery": true
     },
     {
-      "path": "node_modules/@craft-agent/server",
+      "path": "node_modules/@rox/server",
       "target": "../../packages/server",
       "resolved": "/workspace/rox-r15-direct-server-dist-20261001/packages/server",
       "target_exists": true,
       "resolved_inside_delivery": true
     },
     {
-      "path": "node_modules/@craft-agent/server-core",
+      "path": "node_modules/@rox/server-core",
       "target": "../../packages/server-core",
       "resolved": "/workspace/rox-r15-direct-server-dist-20261001/packages/server-core",
       "target_exists": true,
       "resolved_inside_delivery": true
     },
     {
-      "path": "node_modules/@craft-agent/session-tools-core",
+      "path": "node_modules/@rox/session-tools-core",
       "target": "../../packages/session-tools-core",
       "resolved": "/workspace/rox-r15-direct-server-dist-20261001/packages/session-tools-core",
       "target_exists": true,
       "resolved_inside_delivery": true
     },
     {
-      "path": "node_modules/@craft-agent/shared",
+      "path": "node_modules/@rox/shared",
       "target": "../../packages/shared",
       "resolved": "/workspace/rox-r15-direct-server-dist-20261001/packages/shared",
       "target_exists": true,

@@ -15,7 +15,7 @@ V2 расширяет старые документы. В части охват�
 
 ## Что уже реализовано и что ещё нет
 
-Первый кодовый срез `a428eb42c5681adb15d97dcacc88ce45cef7e7a4`: `@craft-agent/core/bases`, reference-only TableSurface v1, строгий codec, пять исходных host kinds, source/query keys, availability metadata и тесты. Новых зависимостей нет. Availability helper не является server authorization.
+Первый кодовый срез `a428eb42c5681adb15d97dcacc88ce45cef7e7a4`: `@rox/core/bases`, reference-only TableSurface v1, строгий codec, пять исходных host kinds, source/query keys, availability metadata и тесты. Новых зависимостей нет. Availability helper не является server authorization.
 
 Это **не** готовый пользовательский table engine. Base persistence, typed rows, native owner adapters, редакторы, комментарии, расширенные formulas/grid, real workflow/mail/CRM integrations и product E2E ещё требуют исполнения плана. PR остаётся отдельным draft; main и посторонние WIP-ветки этой ревизией не изменяются.
 

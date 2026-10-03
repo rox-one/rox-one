@@ -452,7 +452,7 @@ export interface ResolvedLabelsResult {
   available: string[];
   /**
    * Optional per-input rejection reason, keyed by the original input string.
-   * Populated by `resolveSessionLabels()` from `@craft-agent/shared/labels`.
+   * Populated by `resolveSessionLabels()` from `@rox/shared/labels`.
    * Handlers use this to build clearer errors (e.g. "label X doesn't accept a value").
    */
   reasons?: Record<string, string>;
@@ -511,7 +511,7 @@ export interface CreateTaskResult {
 // ============================================================
 // Pages Types
 // ============================================================
-// Plain JSON shapes mirroring @craft-agent/core page types — duplicated here
+// Plain JSON shapes mirroring @rox/core page types — duplicated here
 // on purpose so this package stays dependency-free (same rule as
 // CreateTaskInput). The backend maps real PageConfig/LoadedPage onto these.
 

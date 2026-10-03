@@ -9,7 +9,7 @@
 
 **Architecture:** TypeScript остаётся control plane. Один Rust sidecar (`craft-native`) говорит существующим `MessageEnvelope` по UDS/named pipe. Первый модуль за швом — source index. Дешёвые TS-префакторы (мёртвый credential-cache, SQLite driver A/B, facade) идут раньше native-кода.
 
-**Tech Stack:** Bun + существующий `@craft-agent/shared/protocol`; Rust 1.83 + tokio + rusqlite + ignore + notify + blake3; feature flag `CRAFT_FEATURE_NATIVE_SIDECAR`; toolchain download manager для доставки бинарника.
+**Tech Stack:** Bun + существующий `@rox/shared/protocol`; Rust 1.83 + tokio + rusqlite + ignore + notify + blake3; feature flag `CRAFT_FEATURE_NATIVE_SIDECAR`; toolchain download manager для доставки бинарника.
 
 ## Global Constraints
 

@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'bun:test';
-import type {Message} from '@craft-agent/core/types';
+import type {Message} from '@rox/core/types';
 import {selectResumeHistory} from './resume-history';
 const messages=[
   {id:'u1',role:'user',content:'first'}, {id:'a1',role:'assistant',content:'answer'},
@@ -7,13 +7,18 @@ const messages=[
 ] as Message[];
 describe('native transcript reconstruction input',()=>{
   it('keeps prior tool history and excludes the persisted active submission',()=>{
-    expect(selectResumeHistory(messages,true).map(m=>m.id)).toEqual(['u1','a1','t1']);
+    expect(selectResumeHistory(messages,'u2').map(m=>m.id)).toEqual(['u1','a1','t1']);
     expect(messages).toHaveLength(4);
   });
   it('keeps the entire selected branch slice during preflight',()=>{
-    expect(selectResumeHistory(messages,false).map(m=>m.id)).toEqual(['u1','a1','t1','u2']);
+    expect(selectResumeHistory(messages).map(m=>m.id)).toEqual(['u1','a1','t1','u2']);
+  });
+  it('excludes later queued prompts without replaying the active submission',()=>{
+    const queued=[...messages,{id:'u3',role:'user',content:'queued'}] as Message[];
+    expect(selectResumeHistory(queued,'u2',['u3']).map(m=>m.id)).toEqual(['u1','a1','t1']);
+    expect(selectResumeHistory(queued,undefined,['u3']).map(m=>m.id)).toEqual(['u1','a1','t1','u2']);
   });
   it('does not fabricate context for a brand-new first turn',()=>{
-    expect(selectResumeHistory([messages[3]!],true)).toEqual([]);
+    expect(selectResumeHistory([messages[3]!],'u2')).toEqual([]);
   });
 });

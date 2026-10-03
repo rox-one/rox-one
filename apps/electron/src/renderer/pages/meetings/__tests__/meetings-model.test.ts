@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import type { Meeting } from '@craft-agent/core/meetings'
+import type { Meeting } from '@rox/core/meetings'
 import {
   bucketCounts,
   durationMs,

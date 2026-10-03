@@ -1421,7 +1421,7 @@ async function handleInit(msg: Extract<InboundMessage, { type: 'init' }>): Promi
   });
 }
 
-// Context-overflow detection lives in @craft-agent/shared (errors.ts) so the
+// Context-overflow detection lives in @rox/shared (errors.ts) so the
 // subprocess and the parent's parseError stay in sync (#666).
 const isContextOverflowErrorMessage = isContextOverflowMessage;
 /**

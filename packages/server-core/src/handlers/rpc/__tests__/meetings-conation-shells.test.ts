@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { RpcServer } from '@rox/server-core/transport'
 import { registerMeetingHandlers, resetMeetingHandlerStateForTests } from '../meetings.ts'
 
 type Handler = (ctx: unknown, ...args: unknown[]) => unknown | Promise<unknown>

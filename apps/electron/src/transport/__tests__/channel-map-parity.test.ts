@@ -5,7 +5,7 @@ import type {
   AuditMode,
   OpenClawRuntimeStatus,
   SecurityAuditSnapshot,
-} from '@craft-agent/shared/openclaw'
+} from '@rox/shared/openclaw'
 import { CHANNEL_MAP } from '../channel-map'
 
 type AnyFn = (...args: any[]) => any

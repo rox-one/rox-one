@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GitBranch } from 'lucide-react'
-import type { GitWorkingTreeStatus } from '@craft-agent/shared/git/status'
-import { emptyGitWorkingTreeStatus } from '@craft-agent/shared/git/status'
+import type { GitWorkingTreeStatus } from '@rox/shared/git/status'
+import { emptyGitWorkingTreeStatus } from '@rox/shared/git/status'
 import { cn } from '@/lib/utils'
 
 export function SessionGitPanel({ cwd }: { cwd: string | undefined }) {

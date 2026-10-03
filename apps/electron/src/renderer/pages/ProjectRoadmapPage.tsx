@@ -57,11 +57,11 @@ import {
   soupProjectActResult,
   soupProjectListResult,
   soupProjectReadResult,
-} from '@craft-agent/core/rox2'
-import type { PersonalTask } from '@craft-agent/core/tasks/personal'
+} from '@rox/core/rox2'
+import type { PersonalTask } from '@rox/core/tasks/personal'
 import { PROJECT_COLOR_PALETTE } from '@/utils/project-colors'
 import { InlineColorPickerRow } from '@/components/ui/inline-color-picker-row'
-import type { LoadedProject, ProjectAsset } from '@craft-agent/shared/projects/types'
+import type { LoadedProject, ProjectAsset } from '@rox/shared/projects/types'
 import {
   createRoadmapSaveQueue,
   isRoadmapRevision,
@@ -76,8 +76,8 @@ import {
   type ProjectRoadmap,
   type RoadmapMarkdownLabels,
   type RoadmapMilestone,
-} from '@craft-agent/shared/projects/roadmap'
-import { applyProposalItem, type ProposalItemKey, type RoadmapProposal } from '@craft-agent/shared/projects/roadmap-ai'
+} from '@rox/shared/projects/roadmap'
+import { applyProposalItem, type ProposalItemKey, type RoadmapProposal } from '@rox/shared/projects/roadmap-ai'
 import { buildDelegationPrompt, subtasksOf } from '@/pages/tasks/task-model'
 import { AutoTextarea, CheckBox, EditableItemList, EmptyLine, IconButton, InlineInput, Section, TextButton } from './project/roadmap-ui'
 import { MilestoneList, RoadmapTimeline } from './project/ProjectTimeline'
@@ -118,7 +118,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
   const [roadmapCorrupt, setRoadmapCorrupt] = useState(false)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [expandedMilestone, setExpandedMilestone] = useState<string | null>(null)
-  const [aiResult, setAiResult] = useState<import('@craft-agent/shared/projects/roadmap-ai').RoadmapAiResponse | null>(null)
+  const [aiResult, setAiResult] = useState<import('@rox/shared/projects/roadmap-ai').RoadmapAiResponse | null>(null)
   useEffect(() => setAiResult(null), [workspaceId, projectSlug])
   const [aiStatus, setAiStatus] = useState<AiStatus | null>(null)
   const [improve, setImprove] = useState<ImproveProposal | null>(null)

@@ -50,7 +50,7 @@ describe('terminology linter', () => {
   it('flags runtime names in normal-UI locale values', () => {
     expect(localeValueViolations('onboarding.providerSelect.ompDesc', 'Local oh-my-pi agent')).toContain('oh-my-pi')
     expect(localeValueViolations('settings.identity.title', 'OMP identity')).toContain('OMP')
-    expect(localeValueViolations('onboarding.welcome.title', 'Welcome to Craft Agents')).toContain('Craft Agents')
+    expect(localeValueViolations('onboarding.welcome.title', 'Welcome to ROX')).toContain('ROX')
     expect(localeValueViolations('settings.security.description', 'slice for Craft and OpenClaw')).toContain('Craft')
     expect(localeValueViolations('settings.ai.backend', 'Pi backend')).toContain('Pi')
     expect(localeValueViolations('inspector.context.attachments', 'Pièces jointes')).toEqual([])

@@ -17,7 +17,7 @@ import { homedir } from 'os';
 import { existsSync, realpathSync } from 'fs';
 import { debug } from '../utils/debug.ts';
 import { dirname, isAbsolute, relative, resolve } from 'path';
-import { getSessionSafeAllowedToolNames } from '@craft-agent/session-tools-core';
+import { getSessionSafeAllowedToolNames } from '@rox/session-tools-core';
 import { FEATURE_FLAGS } from '../feature-flags.ts';
 import { isBrowserToolNameOrAlias } from './browser-tool-names.ts';
 import type { PermissionsContext, MergedPermissionsConfig } from './permissions-config.ts';

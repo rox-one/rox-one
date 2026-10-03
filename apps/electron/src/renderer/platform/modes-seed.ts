@@ -6,7 +6,7 @@
  * nulls their rootRoute while the flag is off — that is the capability gate
  * behind `requiredCapabilities`.
  */
-import type { ModeContribution } from '@craft-agent/core/platform'
+import type { ModeContribution } from '@rox/core/platform'
 import { routes } from '../../shared/routes'
 import {
   isHomeNavigation,

@@ -62,15 +62,15 @@ Bundled 3313 modules in 621ms
   Total: 644 packages copied to node_modules
 
 [7/8] Copying workspace packages...
-  Symlink: @craft-agent/session-tools-core -> packages/session-tools-core
-  Symlink: @craft-agent/messaging-gateway -> packages/messaging-gateway
-  Symlink: @craft-agent/shared -> packages/shared
-  Symlink: @craft-agent/server -> packages/server
-  Symlink: @craft-agent/core -> packages/core
-  Symlink: @craft-agent/messaging-discord-worker -> packages/messaging-discord-worker
-  Symlink: @craft-agent/messaging-whatsapp-worker -> packages/messaging-whatsapp-worker
-  Symlink: @craft-agent/cloud-runner -> packages/cloud-runner
-  Symlink: @craft-agent/server-core -> packages/server-core
+  Symlink: @rox/session-tools-core -> packages/session-tools-core
+  Symlink: @rox/messaging-gateway -> packages/messaging-gateway
+  Symlink: @rox/shared -> packages/shared
+  Symlink: @rox/server -> packages/server
+  Symlink: @rox/core -> packages/core
+  Symlink: @rox/messaging-discord-worker -> packages/messaging-discord-worker
+  Symlink: @rox/messaging-whatsapp-worker -> packages/messaging-whatsapp-worker
+  Symlink: @rox/cloud-runner -> packages/cloud-runner
+  Symlink: @rox/server-core -> packages/server-core
 
 [8/8] Creating entry scripts...
 

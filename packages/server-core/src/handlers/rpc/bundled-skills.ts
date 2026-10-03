@@ -2,22 +2,22 @@
  * Bundled skill packs RPC (runtime-context-marketplace PRD §7).
  * LOCAL_ONLY: packs live under ~/.agents/skills + config.bundledSkills.disabled.
  */
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getBundledSkillsDisabled, setBundledSkillsDisabled } from '@craft-agent/shared/config'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getBundledSkillsDisabled, setBundledSkillsDisabled } from '@rox/shared/config'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   isClaimableLive,
   rpcBundledSkillsActResult,
   rpcBundledSkillsListResult,
   rpcBundledSkillsReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import {
   ensureBundledSkills,
   invalidateSkillsCache,
   listBundledSkillPacks,
   resetBundledSkillsInitialized,
-} from '@craft-agent/shared/skills'
+} from '@rox/shared/skills'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.bundledSkills.LIST,

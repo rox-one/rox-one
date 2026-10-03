@@ -1,5 +1,5 @@
 import { readFileSync, existsSync } from 'node:fs';
-import type { CredentialKind, CredentialRefId, StorageMode } from '@craft-agent/core/platform';
+import type { CredentialKind, CredentialRefId, StorageMode } from '@rox/core/platform';
 import type { CredentialBackend } from '../backends/types.ts';
 import type { CredentialId, StoredCredential } from '../types.ts';
 import { credentialIdToAccount } from '../types.ts';

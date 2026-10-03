@@ -19,7 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { routes } from '@/lib/navigate'
-import { Spinner } from '@craft-agent/ui'
+import { Spinner } from '@rox/ui'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { NetworkProxySettings } from '../../../shared/types'
 
@@ -33,7 +33,7 @@ import {
 } from '@/components/settings'
 import { useUpdateChecker } from '@/hooks/useUpdateChecker'
 import { EnvironmentSettingsSection } from './EnvironmentSettingsSection'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
 import { toast } from 'sonner'
 

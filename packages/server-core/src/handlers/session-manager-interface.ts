@@ -6,11 +6,11 @@
  * satisfy it at runtime.
  */
 
-import type { Workspace, WorkspaceInfo, ActiveSessionInfo } from '@craft-agent/core/types'
-import type { StoredAttachment, AnnotationV1 } from '@craft-agent/core/types'
-import type { PermissionMode } from '@craft-agent/shared/agent/mode-types'
-import type { ThinkingLevel } from '@craft-agent/shared/agent/thinking-levels'
-import type { AuthResult } from '@craft-agent/shared/agent'
+import type { Workspace, WorkspaceInfo, ActiveSessionInfo } from '@rox/core/types'
+import type { StoredAttachment, AnnotationV1 } from '@rox/core/types'
+import type { PermissionMode } from '@rox/shared/agent/mode-types'
+import type { ThinkingLevel } from '@rox/shared/agent/thinking-levels'
+import type { AuthResult } from '@rox/shared/agent'
 import type {
   Session,
   SessionStatus,
@@ -25,10 +25,10 @@ import type {
   ShareResult,
   BulkUpdateSessionsInput,
   BulkUpdateSessionsResult,
-} from '@craft-agent/shared/protocol'
-import type { SessionBundle, DispatchMode } from '@craft-agent/shared/sessions'
-import type { SessionProvenance } from '@craft-agent/shared/memory/types'
-import type { AgentBudgetSnapshot } from '@craft-agent/shared/agent'
+} from '@rox/shared/protocol'
+import type { SessionBundle, DispatchMode } from '@rox/shared/sessions'
+import type { SessionProvenance } from '@rox/shared/memory/types'
+import type { AgentBudgetSnapshot } from '@rox/shared/agent'
 import type { EventSink } from '../transport'
 
 export interface ISessionManager {
@@ -109,7 +109,7 @@ export interface ISessionManager {
   setRank(sessionId: string, rank: string): Promise<void>
   reorderRank(sessionId: string, prevId?: string, nextId?: string): Promise<void>
   setTaskNodeCount(sessionId: string, count: number): Promise<void>
-  setSessionMemoryMode(sessionId: string, mode: import('@craft-agent/core/types').SessionMemoryMode): Promise<void>
+  setSessionMemoryMode(sessionId: string, mode: import('@rox/core/types').SessionMemoryMode): Promise<void>
   adoptGeneratedTaskOrchestrator(
     sessionId: string,
     taskSlug: string,
@@ -225,7 +225,7 @@ export interface ISessionManager {
   exportRemoteSessionTransfer(
     sessionId: string,
     workspaceId: string,
-  ): Promise<import('@craft-agent/shared/protocol').RemoteSessionTransferPayload | null>
+  ): Promise<import('@rox/shared/protocol').RemoteSessionTransferPayload | null>
 
   /**
    * Import a session bundle into a target workspace.
@@ -243,8 +243,8 @@ export interface ISessionManager {
    */
   importRemoteSessionTransfer(
     workspaceId: string,
-    payload: import('@craft-agent/shared/protocol').RemoteSessionTransferPayload,
-  ): Promise<import('@craft-agent/shared/protocol').ImportRemoteSessionTransferResult>
+    payload: import('@rox/shared/protocol').RemoteSessionTransferPayload,
+  ): Promise<import('@rox/shared/protocol').ImportRemoteSessionTransferResult>
 
   // ---------------------------------------------------------------------------
   // Utilities

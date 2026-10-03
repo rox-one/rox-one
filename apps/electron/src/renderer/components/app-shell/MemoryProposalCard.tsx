@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
-import type { MemoryProposal, MemoryProposalScope } from '@craft-agent/shared/memory/proposals'
+import type { MemoryProposal, MemoryProposalScope } from '@rox/shared/memory/proposals'
 import { consumeLearnFromSessionRequest, LEARN_FROM_SESSION_EVENT } from '@/lib/session-learn-request'
 
 export interface MemoryProposalCardProps {

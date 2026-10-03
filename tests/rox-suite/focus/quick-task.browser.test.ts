@@ -128,7 +128,7 @@ beforeAll(async () => {
   server = await createServer({
     configFile: false, root: temporary, cacheDir: join(temporary, '.vite'),
     plugins: [react(), tailwindcss()],
-    resolve: { alias: { '@craft-agent/ui/styles': join(root, 'packages/ui/src/styles/index.css') } },
+    resolve: { alias: { '@rox/ui/styles': join(root, 'packages/ui/src/styles/index.css') } },
     server: { host: '127.0.0.1', port: 0, fs: { allow: [temporary, root] } },
   })
   await server.listen()

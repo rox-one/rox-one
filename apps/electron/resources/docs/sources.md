@@ -1,6 +1,6 @@
 # Sources Configuration Guide
 
-This guide explains how to configure sources (MCP servers, APIs, local filesystems) in Craft Agent.
+This guide explains how to configure sources (MCP servers, APIs, local filesystems) in ROX.
 
 > **CLI-first workflow (recommended):** Use `craft-agent source ...` commands instead of editing source config files directly.
 > - `craft-agent source --help`
@@ -237,7 +237,7 @@ Would you like me to show you what issues are currently open?
 ## Overview
 
 Sources are stored as folders under:
-- `~/.craft-agent/workspaces/{workspaceId}/sources/{sourceSlug}/`
+- `~/.rox/workspaces/{workspaceId}/sources/{sourceSlug}/`
 
 Each source folder contains:
 - `config.json` - Source configuration (required)
@@ -313,7 +313,7 @@ They make configs portable without changing existing behavior.
 |----------|-------------|--------|
 | `~` / `~/` | Home directory | `~/Development/my-mcp` |
 | `${HOME}` | Home directory | `${HOME}/.crawl4ai/venv/bin/python` |
-| `${CRAFT_CONFIG_DIR}` | Craft Agent config directory (default: `~/.craft-agent`) | `${CRAFT_CONFIG_DIR}/sources/my-mcp` |
+| `${CRAFT_CONFIG_DIR}` | ROX config directory (default: `~/.rox`) | `${CRAFT_CONFIG_DIR}/sources/my-mcp` |
 | `${WORKSPACE}` | Current workspace root | `${WORKSPACE}/mcp-servers/my-server` |
 | `${SOURCE_DIR}` | This source's own folder | `${SOURCE_DIR}/server/index.js` |
 
@@ -953,7 +953,7 @@ The `config.icon` field controls the source icon. Resolution follows this priori
 ## Provider Domain Cache
 
 For favicon resolution, a cache maps provider names to their canonical domains at:
-`~/.craft-agent/provider-domains.json`
+`~/.rox/provider-domains.json`
 
 **Format:**
 ```json
@@ -1022,7 +1022,7 @@ Technical steps:
 
 1. Create the source folder:
    ```bash
-   mkdir -p ~/.craft-agent/workspaces/{ws}/sources/my-source
+   mkdir -p ~/.rox/workspaces/{ws}/sources/my-source
    ```
 
 2. Write `config.json` with appropriate settings (see schemas above)

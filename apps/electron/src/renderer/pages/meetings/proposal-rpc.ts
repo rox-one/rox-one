@@ -1,6 +1,6 @@
-import type { MeetingProposal, OperationResultV2 } from '@craft-agent/core/meetings'
-import { isUiVerified } from '@craft-agent/core/meetings'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import type { MeetingProposal, OperationResultV2 } from '@rox/core/meetings'
+import { isUiVerified } from '@rox/core/meetings'
+import type { MeetingGrant } from '@rox/shared/meeting-agents'
 import { routes, type Route } from '../../../shared/routes'
 
 export type NativeProposalType = 'create_task' | 'create_note'

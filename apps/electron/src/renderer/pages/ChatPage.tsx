@@ -38,7 +38,7 @@ import {
   soupChatActResult,
   soupChatListResult,
   soupChatReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 // Model resolution: connection.defaultModel (no hardcoded defaults)
 import { resolveEffectiveConnectionSlug, isSessionConnectionUnavailable } from '@config/llm-connections'
 import {
@@ -51,7 +51,7 @@ import {
 } from '@/components/app-shell/EntityViewTabs'
 import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
 import type { FanOutChildJob } from '@/components/session-workbench/fan-out-jobs'
-import type { SceneMessage } from '@craft-agent/core/mindmap'
+import type { SceneMessage } from '@rox/core/mindmap'
 import { useSiyuanConnected } from '@/hooks/useSiyuanConnected'
 
 // Secondary session tabs (workflow xyflow, knowledge surface, mindmap outline) — lazy so

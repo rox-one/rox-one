@@ -122,7 +122,7 @@
       "dependencies": [
         "ROX2-001"
       ],
-      "rollback": "Remove rox2 export from @craft-agent/core.",
+      "rollback": "Remove rox2 export from @rox/core.",
       "evidence": "new-requirement",
       "status": "open"
     },
@@ -146,7 +146,7 @@
       ],
       "tests": "packages/core/src/rox2/__tests__/platform-contract.test.ts",
       "acceptance": [
-        "Rox2Event type is exported from @craft-agent/core/rox2"
+        "Rox2Event type is exported from @rox/core/rox2"
       ],
       "dependencies": [
         "ROX2-001"
@@ -501,7 +501,7 @@
       ],
       "tests": "packages/core/src/rox2/__tests__/platform-contract.test.ts",
       "acceptance": [
-        "@craft-agent/core/rox2 export exists"
+        "@rox/core/rox2 export exists"
       ],
       "dependencies": [
         "ROX2-001"

@@ -1,7 +1,7 @@
 import {
   initialFanOutStatuses,
   planFanOutJobs,
-} from '@craft-agent/core/mindmap'
+} from '@rox/core/mindmap'
 
 export type FanOutChildJob = {
   index: number

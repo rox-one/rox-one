@@ -142,7 +142,7 @@
     {
       "path": "packages/shared/src/pages/index.ts",
       "symbol": "Page types and storage export lists",
-      "change": "Export accepted renderer-safe canvas types/authority adapter functions needed by existing @craft-agent/shared/pages callers. Do not export workspace-service repository I/O into renderer imports or preserve obsolete shared write shims.",
+      "change": "Export accepted renderer-safe canvas types/authority adapter functions needed by existing @rox/shared/pages callers. Do not export workspace-service repository I/O into renderer imports or preserve obsolete shared write shims.",
       "reason": "RPC dynamically imports this existing barrel; isolated declarations not exposed to consumers would leave integration incomplete."
     },
     {

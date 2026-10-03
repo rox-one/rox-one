@@ -289,7 +289,7 @@
     "rootOwnedNewBootstrapFiles": [
       {
         "path": "apps/workspace-service/package.json",
-        "change": "Root-owned Bun app manifest: @craft-agent/core/shared/server-core workspace ports; jose direct dependency using currently locked 6.1.3. Scripts start and migrate. No new ORM/HTTP framework."
+        "change": "Root-owned Bun app manifest: @rox/core/shared/server-core workspace ports; jose direct dependency using currently locked 6.1.3. Scripts start and migrate. No new ORM/HTTP framework."
       },
       {
         "path": "apps/workspace-service/tsconfig.json",

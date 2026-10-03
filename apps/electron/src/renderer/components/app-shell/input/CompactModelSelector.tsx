@@ -8,7 +8,7 @@ import {
   Image as ImageIcon,
   Sparkles,
 } from 'lucide-react'
-import { Spinner } from '@craft-agent/ui'
+import { Spinner } from '@rox/ui'
 import {
   Drawer,
   DrawerTrigger,
@@ -36,7 +36,7 @@ import {
 import {
   THINKING_LEVELS,
   type ThinkingLevel,
-} from '@craft-agent/shared/agent/thinking-levels'
+} from '@rox/shared/agent/thinking-levels'
 import { ConnectionIcon } from '@/components/icons/ConnectionIcon'
 import { derivePickerMode } from './picker-mode'
 import {
@@ -49,7 +49,7 @@ import { useModelVisionToggle } from './useModelVisionToggle'
 import { useAtomValue } from 'jotai'
 import { featureWorkbenchHarnessChatChromeV1Atom } from '@/atoms/unified-shell'
 import { formatCostUsd } from './turn-progress'
-import { ROX_PUBLIC_MODEL_DESCRIPTION_KEYS, isRoxPublicModelId } from '@craft-agent/shared/config'
+import { ROX_PUBLIC_MODEL_DESCRIPTION_KEYS, isRoxPublicModelId } from '@rox/shared/config'
 
 interface CompactModelSelectorProps {
   currentModel: string

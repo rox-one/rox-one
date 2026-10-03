@@ -99,10 +99,10 @@ export class ConfigValidator {
   }
 
   /**
-   * Check if a file path is a Craft Agent config file.
+   * Check if a file path is a ROX config file.
    *
    * @param filePath - Path to check
-   * @returns true if this is a Craft Agent config
+   * @returns true if this is a ROX config
    */
   isCraftAgentConfig(filePath: string): boolean {
     const normalizedPath = process.platform === 'win32'

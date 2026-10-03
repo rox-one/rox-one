@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { bindSurfaceContext } from '@craft-agent/core/rox2'
+import { bindSurfaceContext } from '@rox/core/rox2'
 import { answerMeetingQuestion } from '../assist.ts'
 import type { MeetingGrant } from '../policies.ts'
 

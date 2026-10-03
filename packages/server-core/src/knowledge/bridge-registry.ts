@@ -5,7 +5,7 @@
  */
 
 import type { KnowledgeBridgeService } from './bridge-service'
-import type { KnowledgeProvider } from '@craft-agent/core/knowledge'
+import type { KnowledgeProvider } from '@rox/core/knowledge'
 
 type ProviderResolver = (connectionId: string) => Promise<KnowledgeProvider>
 

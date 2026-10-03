@@ -2,7 +2,7 @@
  * Fail-closed append of journal events onto an existing meeting snapshot.
  * Does not invent a meeting when the snapshot is missing.
  */
-import type { MeetingJournalEvent } from '@craft-agent/core/meetings'
+import type { MeetingJournalEvent } from '@rox/core/meetings'
 import { MeetingJournal } from './journal.ts'
 
 export type JournalAppendFailCode =

@@ -24,6 +24,26 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
       - run: bun test apps/electron/src/main/__tests__/auto-update-suppress.test.ts
+      - name: Runtime restoration, mandatory OMP policy, clean skill install and migration regressions
+        run: >-
+          bun test --timeout 180000
+          packages/shared/src/agent/__tests__/omp-history-recovery.test.ts
+          packages/shared/src/agent/__tests__/omp-query-llm.test.ts
+          packages/shared/src/agent/__tests__/omp-model-selection.test.ts
+          packages/shared/src/agent/__tests__/omp-first-run.test.ts
+          packages/shared/src/agent/__tests__/omp-startup-lifecycle.test.ts
+          packages/shared/src/agent/__tests__/omp-lifecycle-hardening.test.ts
+          packages/shared/src/agent/backend/__tests__/omp-session-policy.test.ts
+          packages/server-core/src/sessions/resume-history.test.ts
+          packages/shared/src/config/__tests__/env.test.ts
+          packages/shared/src/config/__tests__/legacy-config-import.test.ts
+          packages/shared/src/context-docs
+          packages/shared/src/skills/__tests__/bundled.test.ts
+          packages/shared/src/toolchain/__tests__/acpx.test.ts
+          packages/shared/src/credentials/backends/__tests__/keychain-master-key.test.ts
+          packages/shared/src/agent/core/__tests__/rox-config-paths.test.ts
+        env:
+          ROX_OMP_TEST_TIMEOUT_MS: '30000'
       - run: bun run validate:ci
         env:
           NODE_OPTIONS: --max-old-space-size=4096

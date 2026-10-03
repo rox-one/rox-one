@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtom } from 'jotai'
 import { inboxPreferencesAtom } from '@/atoms/inbox'
-import { decideRecipientRequest, selectInboxForUser } from '@craft-agent/shared/team'
+import { decideRecipientRequest, selectInboxForUser } from '@rox/shared/team'
 import { TEAM_FLAG, dispatchTeam, readTeamState, teamActionContext, useTeamFlag, useTeamState } from '@/components/team/team-store'
 import { useTeamRoster } from '@/components/team/use-team-roster'
 import { useTranslation } from 'react-i18next'
@@ -52,7 +52,7 @@ import type { MailFolder } from '../../shared/mail-local'
 import { useMail } from './inbox/mail/useMail'
 import { MailCompose, MailListPanel, MailNavSection, MailReader, folderLabel, useComposeState } from './inbox/mail/MailPanels'
 import { emailIdFromItem, mailItemId, mailToInboxItem, statusKey } from './inbox/mail/mail-view'
-import type { TeamInboxItem } from '@craft-agent/shared/team'
+import type { TeamInboxItem } from '@rox/shared/team'
 
 const KIND_GLYPH: Record<InboxKind, string> = {
   permission: '⚿',

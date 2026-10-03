@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { CodedError } from '@craft-agent/shared/protocol'
+import { CodedError } from '@rox/shared/protocol'
 import type { RequestContext } from '../transport/types.ts'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'

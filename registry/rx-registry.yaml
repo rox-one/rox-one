@@ -11,7 +11,7 @@
   status: done
   refs: [RX-CMP-0008, RX-CMP-0044, RX-ADR-0001]
   note: |
-    Пакет @craft-agent/core: типы, знания, mindmap, платформенные реестры (surfaces/panels/modes/commands/resources), identity fabric. Покрыт тестами platform/ и knowledge/.
+    Пакет @rox/core: типы, знания, mindmap, платформенные реестры (surfaces/panels/modes/commands/resources), identity fabric. Покрыт тестами platform/ и knowledge/.
 
 - id: RX-PKG-0002
   title: Общая бизнес-логика
@@ -20,7 +20,7 @@
   status: done
   refs: [RX-CMP-0031, RX-CMP-0051, RX-INT-0001]
   note: |
-    Пакет @craft-agent/shared: агент, auth/OAuth, конфиг, credentials, MCP, sources, marketplace, secrets, automations. Есть bun test.
+    Пакет @rox/shared: агент, auth/OAuth, конфиг, credentials, MCP, sources, marketplace, secrets, automations. Есть bun test.
 
 - id: RX-PKG-0003
   title: Общие UI-компоненты
@@ -29,7 +29,7 @@
   status: done
   refs: [RX-CMP-0017, RX-CMP-0018, RX-CMP-0019]
   note: |
-    Пакет @craft-agent/ui: чат, markdown/Tiptap, оверлеи, аннотации, Island, токены Tailwind v4. Тесты chat/markdown/overlay/annotations.
+    Пакет @rox/ui: чат, markdown/Tiptap, оверлеи, аннотации, Island, токены Tailwind v4. Тесты chat/markdown/overlay/annotations.
 
 - id: RX-PKG-0004
   title: Headless-инфраструктура сервера
@@ -38,7 +38,7 @@
   status: done
   refs: [RX-CMP-0030, RX-CMP-0052, RX-CMP-0055]
   note: |
-    Пакет @craft-agent/server-core: транспорт WS RPC, bootstrap, SessionManager, доменные хендлеры, memory, native sidecar, tasks.
+    Пакет @rox/server-core: транспорт WS RPC, bootstrap, SessionManager, доменные хендлеры, memory, native sidecar, tasks.
 
 - id: RX-PKG-0005
   title: Автономный headless-сервер
@@ -47,7 +47,7 @@
   status: done
   refs: [RX-PKG-0004, RX-CMP-0057]
   note: |
-    Пакет @craft-agent/server, бинарь craft-server: тонкая оболочка над server-core (токен, TLS, webui, VpsBrowserPaneManager).
+    Пакет @rox/server, бинарь craft-server: тонкая оболочка над server-core (токен, TLS, webui, VpsBrowserPaneManager).
 
 - id: RX-PKG-0006
   title: Провайдеры Cloud Runs
@@ -56,7 +56,7 @@
   status: done
   refs: [RX-INT-0020, RX-INT-0021, RX-API-0003]
   note: |
-    Пакет @craft-agent/cloud-runner: Cloudflare/Modal/local/native провайдеры и conformance. Есть bun test src/__tests__.
+    Пакет @rox/cloud-runner: Cloudflare/Modal/local/native провайдеры и conformance. Есть bun test src/__tests__.
 
 - id: RX-PKG-0007
   title: Шлюз мессенджеров
@@ -65,7 +65,7 @@
   status: done
   refs: [RX-CMP-0042, RX-INT-0022, RX-INT-0024]
   note: |
-    Пакет @craft-agent/messaging-gateway: Telegram, WhatsApp, Discord, Lark, WeChat; BindingStore, pairing, access-control.
+    Пакет @rox/messaging-gateway: Telegram, WhatsApp, Discord, Lark, WeChat; BindingStore, pairing, access-control.
 
 - id: RX-PKG-0008
   title: Воркер Discord
@@ -119,7 +119,7 @@
   status: done
   refs: [RX-CMP-0002, RX-CMP-0059, RX-SRF-0014]
   note: |
-    Приложение @craft-agent/electron: main/preload/renderer, workbench, BrowserPane, ExtensionHost.
+    Приложение @rox/electron: main/preload/renderer, workbench, BrowserPane, ExtensionHost.
 
 - id: RX-PKG-0014
   title: Веб-клиент WebUI
@@ -326,7 +326,7 @@
   status: done
   refs: [RX-PKG-0003]
   note: |
-    Единая Tailwind v4 тема @craft-agent/ui: 6 цветов, light/dark, тени, z-index. Импортируется приложениями.
+    Единая Tailwind v4 тема @rox/ui: 6 цветов, light/dark, тени, z-index. Импортируется приложениями.
 
 - id: RX-CMP-0018
   title: Примитивы чата

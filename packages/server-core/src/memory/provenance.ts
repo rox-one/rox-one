@@ -17,8 +17,8 @@
  */
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
-import { getSessionPath } from '@craft-agent/shared/sessions/storage'
-import type { LessonPromptUsage, SessionProvenance } from '@craft-agent/shared/memory/types'
+import { getSessionPath } from '@rox/shared/sessions/storage'
+import type { LessonPromptUsage, SessionProvenance } from '@rox/shared/memory/types'
 
 export type { LessonPromptUsage, SessionProvenance }
 

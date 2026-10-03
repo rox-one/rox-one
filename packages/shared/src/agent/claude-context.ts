@@ -24,7 +24,7 @@ import type {
   ApiTestResult,
   SourceConfig,
   DeveloperFeedback,
-} from '@craft-agent/session-tools-core';
+} from '@rox/session-tools-core';
 import {
   validateConfig,
   validateSource,
@@ -65,7 +65,7 @@ import { updatePreferences as updatePreferencesImpl } from '../config/preference
 import { resolveConfigDir } from "../config/paths.ts"
 
 // Re-export types that may be needed by consumers
-export type { SessionToolContext, SessionToolCallbacks } from '@craft-agent/session-tools-core';
+export type { SessionToolContext, SessionToolCallbacks } from '@rox/session-tools-core';
 
 /**
  * Options for creating a Claude context

@@ -292,7 +292,7 @@
 | A3 | iOS bundle ids | Новый App Store app |
 | P1–P3 | OAuth relay + electron publish URL | Чужой infra + third-party consoles |
 | P6 | ASCII `CRAFT_LOGO` | Нет Rox wordmark |
-| N1 | `@craft-agent/*` | Repo-wide codemod |
+| N1 | `@rox/*` | Repo-wide codemod |
 | O1 default | `clientId: 'craft-agents-desktop'` | Контракт с private website |
 | L3 | README/TRADEMARK/NOTICE | Legal review |
 | L5 | System prompt «You are Craft Agent» + `agents-noreply@craft.do` | Persona / prompt regression |

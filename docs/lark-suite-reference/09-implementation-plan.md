@@ -1288,7 +1288,7 @@ Execution prerequisites: resolve delivery revision/digest; assign real implement
 
 ## 11. Combined Code Intelligence execution routing
 
-[13](13-code-intelligence.md) добавляет 15 пакетов CI-001…015; [14](14-code-intelligence-ui.md) задаёт12 конкретных экранов. Normative detailed records сохраняются отдельно в [code-intelligence.json](../../plans/lark-suite-reference/code-intelligence.json). Их existing files включают настоящий `@craft-agent/shared/code-intelligence` pack, capability inventory и `RepoArchitectureExplainer`; existing `types.ts` не является worker-owned new file.
+[13](13-code-intelligence.md) добавляет 15 пакетов CI-001…015; [14](14-code-intelligence-ui.md) задаёт12 конкретных экранов. Normative detailed records сохраняются отдельно в [code-intelligence.json](../../plans/lark-suite-reference/code-intelligence.json). Их existing files включают настоящий `@rox/shared/code-intelligence` pack, capability inventory и `RepoArchitectureExplainer`; existing `types.ts` не является worker-owned new file.
 
 Общий [execution-packages.json](../../plans/lark-suite-reference/execution-packages.json) нормализует61 ownership/inputs/outputs/cloud gates и указывает JSON pointers в двух исходных contracts. [execution-dag.json](../../plans/lark-suite-reference/execution-dag.json) содержит161 prerequisite edges. Три cross-program dependencies намеренны: CI-008 adoption требует LSX-WP-001 descriptor и LSX-WP-003 CAS; CI-011 RepoWiki navigation требует LSX-WP-025 same-ref library. Read-only repository search не ждёт полного Docs editor или всех Base views.
 

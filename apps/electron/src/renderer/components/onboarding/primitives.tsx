@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import { Button, type ButtonProps } from "@/components/ui/button"
-import { Spinner } from "@craft-agent/ui"
+import { Spinner } from "@rox/ui"
 
 /* =============================================================================
    ONBOARDING PRIMITIVES

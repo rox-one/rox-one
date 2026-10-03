@@ -7,7 +7,7 @@ import { useAppShellContext } from '@/context/AppShellContext'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { routes } from '@/lib/navigate'
 import { pagesAtom } from '@/atoms/pages'
-import { LoadingIndicator } from '@craft-agent/ui'
+import { LoadingIndicator } from '@rox/ui'
 import { Info_Alert } from '@/components/info'
 import {
   DropdownMenu,
@@ -20,7 +20,7 @@ import {
   StyledDropdownMenuSubTrigger,
 } from '@/components/ui/styled-dropdown'
 import { useProjects } from '@/hooks/useProjects'
-import type { LoadedPage, PageDataSnapshot, PageRenderLease } from '@craft-agent/shared/pages/types'
+import type { LoadedPage, PageDataSnapshot, PageRenderLease } from '@rox/shared/pages/types'
 import { PageFrame } from './PageFrame'
 import { PageFreshness, PageKindBadge } from './page-visuals'
 import { DeletePageDialog } from './DeletePageDialog'

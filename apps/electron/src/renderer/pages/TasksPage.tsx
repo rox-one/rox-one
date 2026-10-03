@@ -41,7 +41,7 @@ import {
   type TaskMoveTarget,
   type TaskSortId,
   type TaskWhen,
-} from '@craft-agent/core/tasks/personal'
+} from '@rox/core/tasks/personal'
 import { CalendarStatusStrip } from '@/components/calendar/CalendarStatusStrip'
 import { useActiveWorkspace, useOptionalAppShellContext } from '@/context/AppShellContext'
 import { useProjects } from '@/hooks/useProjects'

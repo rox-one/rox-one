@@ -177,7 +177,7 @@
     {
       "path": "packages/core/src/docs/index.ts",
       "symbol": "docs barrel exports (1-7)",
-      "change": "If consumers use @craft-agent/core/docs, export only the accepted public draft journal/schema API under an expanded integration lease; keep backend-only persistence adapters out of renderer bundles.",
+      "change": "If consumers use @rox/core/docs, export only the accepted public draft journal/schema API under an expanded integration lease; keep backend-only persistence adapters out of renderer bundles.",
       "reason": "Owned draft-journal new file is not yet in the current barrel. A new file alone does not expose a working persistence boundary.",
       "scope": "BLOCKED_OUTSIDE_CURRENT_SHARED_PATHS; integrator may instead use an already-supported direct import after confirming package export policy",
       "missingPrerequisite": "Lead reviews actual package export boundary; no manifest changes authorized here"

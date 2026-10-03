@@ -4,12 +4,12 @@
  */
 import { createHash, randomUUID } from 'node:crypto'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { DatabaseSync } from '@craft-agent/shared/utils/sqlite-runtime'
+import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import {
   deleteImportedProfile,
   discoverBrowserProfileById,
@@ -19,13 +19,13 @@ import {
   type ImportConsent,
   type ProfileFs,
   type ProtectedCookieImport,
-} from '@craft-agent/shared/browser/profile-import'
+} from '@rox/shared/browser/profile-import'
 import {
   loadPrivacyState,
   providerScopeAllowed,
   setProviderAccessConsent,
-} from '@craft-agent/shared/privacy'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/shared/privacy'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { deleteProtectedCookieKey } from './browser-protected-cookie-key'
 import {
@@ -33,7 +33,7 @@ import {
   rpcBrowserProfileImportActResult,
   rpcBrowserProfileImportListResult,
   rpcBrowserProfileImportReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const BROWSER_PROFILE_CHANNELS = [
   RPC_CHANNELS.browserProfile.DISCOVER,

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Swords } from 'lucide-react'
-import { SIDE_THREAD_ACTIONS, type SideThreadAction } from '@craft-agent/shared/side-threads'
+import { SIDE_THREAD_ACTIONS, type SideThreadAction } from '@rox/shared/side-threads'
 import { SimpleDropdown, SimpleDropdownItem } from '../ui/SimpleDropdown'
 import { cn } from '../../lib/utils'
 

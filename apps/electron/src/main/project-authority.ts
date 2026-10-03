@@ -1,7 +1,7 @@
 import { ProjectCreateIntentStore, readVerifiedProjectCreateScope } from './project-create-intent'
 import type { ProjectCreateAttempt, ProjectCreateIntentView, ProjectCreateIntentAction, VerifiedProjectCreateScope } from '../shared/project-create-intent'
-import { getCredentialManager, type CredentialManager } from '@craft-agent/shared/credentials'
-import { loadStoredConfig, saveConfig, type StoredConfig } from '@craft-agent/shared/config'
+import { getCredentialManager, type CredentialManager } from '@rox/shared/credentials'
+import { loadStoredConfig, saveConfig, type StoredConfig } from '@rox/shared/config'
 import { createAuthorityJournalPorts, ProjectAuthorityJournal, type AuthorityJournalPorts } from './project-authority-journal'
 import {
   PROJECT_AUTHORITY_CREDENTIAL_NAME,

@@ -24,7 +24,7 @@ import {
   type FeedListResult,
   type FeedTab,
   type XConnectionStatus,
-} from '@craft-agent/shared/feed'
+} from '@rox/shared/feed'
 import {
   ArrowDownWideNarrow,
   ArrowUpNarrowWide,

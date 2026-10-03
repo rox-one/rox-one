@@ -2,7 +2,7 @@ import {
   isLocalConnection,
   type LlmConnection,
 } from '@config/llm-connections'
-import { ROX_VISIBLE_TERMS } from '@craft-agent/shared/identity'
+import { ROX_VISIBLE_TERMS } from '@rox/shared/identity'
 
 /**
  * Format token count for display (e.g., 1500 -> "1.5k", 200000 -> "200k").

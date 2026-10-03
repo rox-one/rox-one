@@ -3,7 +3,7 @@
  * group (spec: rox-shots/screens-spec2). Order = rail order.
  */
 import { Bot, Contact, Gavel, Radar, Timer, type LucideIcon } from 'lucide-react'
-import { EXTRA_SCREEN_FLAG } from '@craft-agent/core/platform'
+import { EXTRA_SCREEN_FLAG } from '@rox/core/platform'
 import type { ExtraScreenId } from '../../../shared/extra-screens'
 
 export interface ExtraScreenDef {

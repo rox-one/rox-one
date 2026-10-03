@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test';
-import { CredentialRefRegistry } from '@craft-agent/core/platform';
+import { CredentialRefRegistry } from '@rox/core/platform';
 import type { CredentialBackend } from '../credentials/backends/types.ts';
 import type { CredentialId, StoredCredential } from '../credentials/types.ts';
 import { credentialIdToAccount } from '../credentials/types.ts';

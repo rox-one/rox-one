@@ -85,8 +85,8 @@
     "source_import": "packages/server-core/src/handlers/rpc/cloud-runs.ts",
     "source_import_line": 49,
     "packaging_script": "scripts/build-server.ts",
-    "omitted_workspace_package": "@craft-agent/cloud-runner",
-    "diagnostic": "Cannot find module '@craft-agent/cloud-runner' from delivered packages/server-core/src/handlers/rpc/cloud-runs.ts"
+    "omitted_workspace_package": "@rox/cloud-runner",
+    "diagnostic": "Cannot find module '@rox/cloud-runner' from delivered packages/server-core/src/handlers/rpc/cloud-runs.ts"
   },
   "executed": [
     "canonical standalone assembly",

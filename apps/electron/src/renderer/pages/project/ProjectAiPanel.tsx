@@ -17,8 +17,8 @@ import {
   type RoadmapAiAnswer,
   type RoadmapAiResponse,
   type RoadmapProposal,
-} from '@craft-agent/shared/projects/roadmap-ai'
-import type { ProjectRoadmap } from '@craft-agent/shared/projects/roadmap'
+} from '@rox/shared/projects/roadmap-ai'
+import type { ProjectRoadmap } from '@rox/shared/projects/roadmap'
 import { RoadmapModelResult } from './RoadmapModelResult'
 import { TextButton } from './roadmap-ui'
 

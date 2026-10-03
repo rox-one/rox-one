@@ -469,7 +469,7 @@
       ],
       "scope": "Only cloud-runner added to existing dependency-scan seed and workspace-copy list. No pins/nativeadapter/authority/refactors/envsettings changed.",
       "knownWorkspaceClosureAdditional": [
-        "@craft-agent/cloud-runner"
+        "@rox/cloud-runner"
       ],
       "cloudRunnerDeclaredExternalDependencies": {},
       "mainF632AlreadyHadSameOmission": true,
@@ -479,7 +479,7 @@
         "pass": 0,
         "fail": 2,
         "expects": 4,
-        "prelisten": "Cannot find module @craft-agent/cloud-runner from packages/server-core/src/handlers/rpc/cloud-runs.ts:49",
+        "prelisten": "Cannot find module @rox/cloud-runner from packages/server-core/src/handlers/rpc/cloud-runs.ts:49",
         "sourceMissingSites": "scripts/build-server.ts:384 and :478–487; source scanner :353 and workspace dependencies skip :401",
         "receipt": "union-validation/a4ca-canonical-delivery-smoke.json",
         "log": "union-validation/a4ca-canonical-delivery-smoke.log"

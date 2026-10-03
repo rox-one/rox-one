@@ -89,7 +89,7 @@ export interface KanbanTask {
   /** Accrued cost in USD, shown in the footer when available. */
   costUsd?: number
   /** B6 collection priority (`__priority_x` pseudo-grouping on the board). */
-  priority?: import('@craft-agent/shared/protocol/dto').SessionPriority
+  priority?: import('@rox/shared/protocol/dto').SessionPriority
 }
 
 export interface KanbanProject {

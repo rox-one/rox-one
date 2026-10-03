@@ -1,12 +1,12 @@
 import log from 'electron-log/main'
 import { appendFileSync, existsSync, mkdirSync, renameSync, rmSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { resolveConfigDir } from '@craft-agent/shared/config/paths'
+import { resolveConfigDir } from '@rox/shared/config/paths'
 import type {
   MessagingLogContext,
   MessagingLogMeta,
   MessagingLogger,
-} from '@craft-agent/messaging-gateway'
+} from '@rox/messaging-gateway'
 
 /**
  * Resolve debug mode deterministically across runtimes.

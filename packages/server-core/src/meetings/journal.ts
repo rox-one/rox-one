@@ -6,9 +6,9 @@
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync, copyFileSync, openSync, closeSync, unlinkSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { assertWritableSchema } from '@craft-agent/core/meetings'
-import type { MeetingCommitCommand, MeetingCommitResult, MeetingJournalEvent, MeetingOutboxEntry } from '@craft-agent/core/meetings'
-import { emptyMeeting, type Meeting } from '@craft-agent/core/meetings'
+import { assertWritableSchema } from '@rox/core/meetings'
+import type { MeetingCommitCommand, MeetingCommitResult, MeetingJournalEvent, MeetingOutboxEntry } from '@rox/core/meetings'
+import { emptyMeeting, type Meeting } from '@rox/core/meetings'
 
 export type JournalSnapshot = {
   schemaVersion: 1

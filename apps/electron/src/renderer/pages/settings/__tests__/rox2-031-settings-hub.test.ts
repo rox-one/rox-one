@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+import { isClaimableLive } from '@rox/core/rox2'
 import { SETTINGS_PAGES } from '../../../../shared/settings-registry.ts'
 import {
   SETTINGS_HUB_REQUIRES_CONATION_FLAG,

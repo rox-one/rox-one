@@ -1,10 +1,10 @@
 import { Menu, app, shell, BrowserWindow } from 'electron'
-import { i18n } from '@craft-agent/shared/i18n'
+import { i18n } from '@rox/shared/i18n'
 import { RPC_CHANNELS, type BroadcastEventMap } from '../shared/types'
 import { EDIT_MENU, VIEW_MENU, WINDOW_MENU } from '../shared/menu-schema'
 import type { MenuItem } from '../shared/menu-schema'
 import type { WindowManager } from './window-manager'
-import type { EventSink } from '@craft-agent/server-core/transport'
+import type { EventSink } from '@rox/server-core/transport'
 import { mainLog, isDebugMode } from './logger'
 
 type ClientResolver = (webContentsId: number) => string | undefined

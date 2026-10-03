@@ -5,7 +5,7 @@
  * never treated as authorization claims.
  */
 
-import { getCredentialManager } from '@craft-agent/shared/credentials'
+import { getCredentialManager } from '@rox/shared/credentials'
 import {
   BroInviteStore,
   slugifyUsername,
@@ -13,7 +13,7 @@ import {
   type JoinResult,
   type PresenceMember,
   type RoxAccount,
-} from '@craft-agent/shared/collaboration'
+} from '@rox/shared/collaboration'
 
 export type AccountResolver = () => Promise<RoxAccount | null>
 

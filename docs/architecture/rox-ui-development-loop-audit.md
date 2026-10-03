@@ -67,7 +67,7 @@ read, and preview mode never writes preferences or IPC-broadcasts.
 
 ## Design manifest boundary
 
-`@craft-agent/shared/design-manifest` accepts only versioned serializable data:
+`@rox/shared/design-manifest` accepts only versioned serializable data:
 grid coordinates, IDs, JSON-safe props, an allowlisted component type, and an
 allowlisted theme preset. It rejects arbitrary JSX, functions, accessors,
 prototype-polluting keys, duplicates, unknown themes, and out-of-grid modules.

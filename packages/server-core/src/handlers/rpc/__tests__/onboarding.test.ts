@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
 
 let setupDeferred = false
@@ -8,7 +8,7 @@ let setupDeferredReadCount = 0
 const setupDeferredCalls: boolean[] = []
 let oauthPreparationCalls = 0
 
-mock.module('@craft-agent/shared/auth', () => ({
+mock.module('@rox/shared/auth', () => ({
   fetchRoxBalance: async () => ({ balanceRox: '0' }),
   getAuthState: async () => ({
     billing: {
@@ -65,7 +65,7 @@ mock.module('@craft-agent/shared/auth', () => ({
   },
 }))
 
-mock.module('@craft-agent/shared/config', () => ({
+mock.module('@rox/shared/config', () => ({
   isSetupDeferred: () => {
     setupDeferredReadCount += 1
     return setupDeferred
@@ -76,7 +76,7 @@ mock.module('@craft-agent/shared/config', () => ({
   },
 }))
 
-mock.module('@craft-agent/shared/credentials', () => ({
+mock.module('@rox/shared/credentials', () => ({
   getCredentialManager: () => ({
     setLlmOAuth: async () => {},
     setClaudeOAuthCredentials: async () => {},
@@ -84,7 +84,7 @@ mock.module('@craft-agent/shared/credentials', () => ({
   }),
 }))
 
-mock.module('@craft-agent/shared/mcp', () => ({
+mock.module('@rox/shared/mcp', () => ({
   validateMcpConnection: async () => ({ success: true }),
 }))
 

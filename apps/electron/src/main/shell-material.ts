@@ -8,7 +8,7 @@
 
 import { BrowserWindow, nativeTheme, systemPreferences } from 'electron'
 import { release } from 'os'
-import { isZenShellEnabled, getZenShellMaterialPreference } from '@craft-agent/shared/config'
+import { isZenShellEnabled, getZenShellMaterialPreference } from '@rox/shared/config'
 import {
   snapshotZenShell,
   type ResolvedShellMaterial,

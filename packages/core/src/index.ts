@@ -1,5 +1,5 @@
 /**
- * @craft-agent/core
+ * @rox/core
  *
  * Core types and utilities for Craft Agent.
  *

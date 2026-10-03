@@ -3,8 +3,8 @@
  * Not live Conation. Fail-closed when grant, outbox, or configDir is missing:
  * nothing is applied and revision is not invented.
  */
-import type { MeetingProposal, OperationResultV2 } from '@craft-agent/core/meetings'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import type { MeetingProposal, OperationResultV2 } from '@rox/core/meetings'
+import type { MeetingGrant } from '@rox/shared/meeting-agents'
 import { applyNativeMeetingAction, createNativeActionHarness, readbackNative } from './native-actions.ts'
 import { executeApprovedProposal, type OutboxJob } from './executor.ts'
 import { approveMeetingProposal, type ProposalStore } from './proposals.ts'

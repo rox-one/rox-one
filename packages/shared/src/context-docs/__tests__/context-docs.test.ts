@@ -34,13 +34,13 @@ const originalConfigDir = process.env.CRAFT_CONFIG_DIR;
 const originalRoxConfigDir = process.env.ROX_CONFIG_DIR;
 
 const SOUL_TEMPLATE = `<!-- context-doc-version: 1 -->
-# Soul — Craft Agent
+# Soul — ROX
 
 SOUL_TEMPLATE_MARKER: direct tone, evidence-first.
 `;
 
 const RULES_TEMPLATE = `<!-- context-doc-version: 1 -->
-# Rules — Craft Agent
+# Rules — ROX
 
 RULES_TEMPLATE_MARKER: skills first, verify before done.
 `;

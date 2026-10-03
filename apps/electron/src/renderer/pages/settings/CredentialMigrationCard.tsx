@@ -26,7 +26,7 @@ import type {
   CredentialMigrationErrorCode,
   CredentialMigrationResult,
   CredentialMigrationStatusDto,
-} from '@craft-agent/shared/protocol'
+} from '@rox/shared/protocol'
 
 const ERROR_CODES = [
   'not_ready',

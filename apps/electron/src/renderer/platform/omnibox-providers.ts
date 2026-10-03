@@ -9,9 +9,9 @@ import type {
   ResourceItem,
   ResourceProvider,
   ResourceSearchContext,
-} from '@craft-agent/core/platform'
+} from '@rox/core/platform'
 import i18n from 'i18next'
-import type { KnowledgeRef } from '@craft-agent/core/knowledge'
+import type { KnowledgeRef } from '@rox/core/knowledge'
 import { scoreMatch, scoreMatchAny } from './omnibox-helpers'
 import { routes } from '../../shared/routes'
 

@@ -73,4 +73,4 @@ Desktop DSH у оператора стоит `danger-full-access`. Rox уже `a
 
 Канон в коде: `packages/core/src/platform/workbench/harness-skip-list.ts`.
 
-**Post-H6 durable store (2026-09-11):** workspace `.agent-teams/` via `AgentTeamsStore` (`@craft-agent/core/platform/agent-teams`). Flag remains default false. Cordis `agentTeamsRuntime` stays skipped. No Timeline / inspector DAG in this follow-up.
+**Post-H6 durable store (2026-09-11):** workspace `.agent-teams/` via `AgentTeamsStore` (`@rox/core/platform/agent-teams`). Flag remains default false. Cordis `agentTeamsRuntime` stays skipped. No Timeline / inspector DAG in this follow-up.

@@ -6,7 +6,7 @@ import {
   fingerprintSecurityFinding,
   type OpenClawRuntimeStatus,
   type SecurityAuditSnapshot,
-} from '@craft-agent/shared/openclaw'
+} from '@rox/shared/openclaw'
 import {
   CraftSecurityCollector,
   OpenClawSecurityCollector,

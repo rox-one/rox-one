@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { MeetingProposal } from '@craft-agent/core/meetings'
-import { parseProposal } from '@craft-agent/core/meetings'
-import { authorizeMeetingAction, type MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import type { MeetingProposal } from '@rox/core/meetings'
+import { parseProposal } from '@rox/core/meetings'
+import { authorizeMeetingAction, type MeetingGrant } from '@rox/shared/meeting-agents'
 
 export type ProposalStore = {
   items: MeetingProposal[]

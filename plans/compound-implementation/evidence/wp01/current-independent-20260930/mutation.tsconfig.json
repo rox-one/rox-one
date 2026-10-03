@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
     "paths": {
-      "@craft-agent/shared/protocol": [
+      "@rox/shared/protocol": [
         "/private/tmp/rox-wp01-current-independent-ultra-20260930/mutation/packages/shared/src/protocol/index.ts"
       ],
-      "@craft-agent/shared/utils": [
+      "@rox/shared/utils": [
         "/private/tmp/rox-wp01-current-independent-ultra-20260930/mutation/packages/shared/src/utils/index.ts"
       ],
-      "@craft-agent/core/types": [
+      "@rox/core/types": [
         "/private/tmp/rox-wp01-current-independent-ultra-20260930/mutation/packages/core/src/types/index.ts"
       ]
     }

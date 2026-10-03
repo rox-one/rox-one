@@ -116,14 +116,14 @@
       },
     },
     "apps/cli": {
-      "name": "@craft-agent/cli",
-      "version": "0.11.7",
+      "name": "@rox/cli",
+      "version": "0.11.8",
       "bin": {
         "craft-cli": "src/index.ts",
       },
       "dependencies": {
-        "@craft-agent/server-core": "workspace:*",
-        "@craft-agent/shared": "workspace:*",
+        "@rox/server-core": "workspace:*",
+        "@rox/shared": "workspace:*",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -132,7 +132,7 @@
       },
     },
     "apps/cloud-gateway": {
-      "name": "@craft-agent/cloud-gateway",
+      "name": "@rox/cloud-gateway",
       "version": "0.1.0",
       "dependencies": {
         "@cloudflare/computer": "0.1.0-alpha.1",
@@ -144,14 +144,9 @@
       },
     },
     "apps/electron": {
-      "name": "@craft-agent/electron",
-      "version": "0.11.7",
+      "name": "@rox/electron",
+      "version": "0.11.8",
       "dependencies": {
-        "@craft-agent/core": "workspace:*",
-        "@craft-agent/messaging-gateway": "workspace:*",
-        "@craft-agent/server-core": "workspace:*",
-        "@craft-agent/shared": "workspace:*",
-        "@craft-agent/ui": "workspace:*",
         "@dnd-kit/core": "^6.3.1",
         "@dnd-kit/sortable": "^10.0.0",
         "@dnd-kit/utilities": "^3.2.2",
@@ -163,6 +158,11 @@
         "@radix-ui/react-label": "^2.1.8",
         "@radix-ui/react-popover": "^1.1.15",
         "@radix-ui/react-switch": "^1.2.6",
+        "@rox/core": "workspace:*",
+        "@rox/messaging-gateway": "workspace:*",
+        "@rox/server-core": "workspace:*",
+        "@rox/shared": "workspace:*",
+        "@rox/ui": "workspace:*",
         "@tanstack/react-table": "^8.21.3",
         "@xyflow/react": "^12.11.3",
         "buffer": "^6.0.3",
@@ -197,11 +197,11 @@
       },
     },
     "apps/viewer": {
-      "name": "@craft-agent/viewer",
-      "version": "0.11.7",
+      "name": "@rox/viewer",
+      "version": "0.11.8",
       "dependencies": {
-        "@craft-agent/core": "workspace:*",
-        "@craft-agent/ui": "workspace:*",
+        "@rox/core": "workspace:*",
+        "@rox/ui": "workspace:*",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-i18next": "^17.0.2",
@@ -225,12 +225,12 @@
       },
     },
     "apps/webui": {
-      "name": "@craft-agent/webui",
-      "version": "0.11.7",
+      "name": "@rox/webui",
+      "version": "0.11.8",
       "dependencies": {
-        "@craft-agent/core": "workspace:*",
-        "@craft-agent/shared": "workspace:*",
-        "@craft-agent/ui": "workspace:*",
+        "@rox/core": "workspace:*",
+        "@rox/shared": "workspace:*",
+        "@rox/ui": "workspace:*",
         "i18next": "^26.0.3",
         "i18next-browser-languagedetector": "^8.2.1",
         "jotai": "^2.16.0",
@@ -241,25 +241,25 @@
       },
     },
     "apps/workspace-service": {
-      "name": "@craft-agent/workspace-service",
+      "name": "@rox/workspace-service",
       "version": "0.11.5",
       "bin": {
         "rox-workspace-service": "src/index.ts",
       },
       "dependencies": {
-        "@craft-agent/server-core": "workspace:*",
-        "@craft-agent/shared": "workspace:*",
+        "@rox/server-core": "workspace:*",
+        "@rox/shared": "workspace:*",
         "jose": "^6.0.0",
         "ws": "^8.19.0",
       },
     },
     "packages/cloud-runner": {
-      "name": "@craft-agent/cloud-runner",
+      "name": "@rox/cloud-runner",
       "version": "0.1.0",
     },
     "packages/core": {
-      "name": "@craft-agent/core",
-      "version": "0.11.7",
+      "name": "@rox/core",
+      "version": "0.11.8",
       "dependencies": {
         "yaml": "^2.8.2",
       },
@@ -272,7 +272,7 @@
       },
     },
     "packages/messaging-discord-worker": {
-      "name": "@craft-agent/messaging-discord-worker",
+      "name": "@rox/messaging-discord-worker",
       "version": "0.11.0",
       "dependencies": {
         "discord.js": "^14.16.0",
@@ -283,15 +283,15 @@
       },
     },
     "packages/messaging-gateway": {
-      "name": "@craft-agent/messaging-gateway",
-      "version": "0.11.7",
+      "name": "@rox/messaging-gateway",
+      "version": "0.11.8",
       "dependencies": {
-        "@craft-agent/core": "workspace:*",
-        "@craft-agent/messaging-discord-worker": "workspace:*",
-        "@craft-agent/messaging-whatsapp-worker": "workspace:*",
-        "@craft-agent/server-core": "workspace:*",
-        "@craft-agent/shared": "workspace:*",
         "@larksuiteoapi/node-sdk": "^1.62.1",
+        "@rox/core": "workspace:*",
+        "@rox/messaging-discord-worker": "workspace:*",
+        "@rox/messaging-whatsapp-worker": "workspace:*",
+        "@rox/server-core": "workspace:*",
+        "@rox/shared": "workspace:*",
         "grammy": "^1.35.0",
         "qrcode-terminal": "0.12.0",
       },
@@ -301,8 +301,8 @@
       },
     },
     "packages/messaging-whatsapp-worker": {
-      "name": "@craft-agent/messaging-whatsapp-worker",
-      "version": "0.11.7",
+      "name": "@rox/messaging-whatsapp-worker",
+      "version": "0.11.8",
       "dependencies": {
         "@whiskeysockets/baileys": "^6.7.0",
       },
@@ -312,17 +312,17 @@
       },
     },
     "packages/pi-agent-server": {
-      "name": "@craft-agent/pi-agent-server",
-      "version": "0.11.7",
+      "name": "@rox/pi-agent-server",
+      "version": "0.11.8",
       "bin": {
         "pi-agent-server": "./dist/index.js",
       },
       "dependencies": {
-        "@craft-agent/core": "workspace:*",
-        "@craft-agent/session-tools-core": "workspace:*",
         "@earendil-works/pi-agent-core": "0.85.1",
         "@earendil-works/pi-ai": "0.85.1",
         "@earendil-works/pi-coding-agent": "0.85.1",
+        "@rox/core": "workspace:*",
+        "@rox/session-tools-core": "workspace:*",
         "duck-duck-scrape": "^2.2.7",
         "node-html-parser": "^6.1.0",
         "pdfjs-dist": "^5.4.0",
@@ -333,16 +333,16 @@
       },
     },
     "packages/server": {
-      "name": "@craft-agent/server",
-      "version": "0.11.7",
+      "name": "@rox/server",
+      "version": "0.11.8",
       "bin": {
         "craft-server": "src/index.ts",
       },
       "dependencies": {
-        "@craft-agent/core": "workspace:*",
-        "@craft-agent/messaging-gateway": "workspace:*",
-        "@craft-agent/server-core": "workspace:*",
-        "@craft-agent/shared": "workspace:*",
+        "@rox/core": "workspace:*",
+        "@rox/messaging-gateway": "workspace:*",
+        "@rox/server-core": "workspace:*",
+        "@rox/shared": "workspace:*",
       },
       "devDependencies": {
         "@types/node": "^22.0.0",
@@ -351,14 +351,14 @@
       },
     },
     "packages/server-core": {
-      "name": "@craft-agent/server-core",
-      "version": "0.11.7",
+      "name": "@rox/server-core",
+      "version": "0.11.8",
       "dependencies": {
-        "@craft-agent/cloud-runner": "workspace:*",
-        "@craft-agent/core": "workspace:*",
-        "@craft-agent/session-tools-core": "workspace:*",
-        "@craft-agent/shared": "workspace:*",
         "@earendil-works/pi-ai": "0.85.1",
+        "@rox/cloud-runner": "workspace:*",
+        "@rox/core": "workspace:*",
+        "@rox/session-tools-core": "workspace:*",
+        "@rox/shared": "workspace:*",
         "@tursodatabase/database": "0.7.2",
         "@xenova/transformers": "2.17.2",
         "gray-matter": "^4.0.3",
@@ -372,15 +372,15 @@
       },
     },
     "packages/session-mcp-server": {
-      "name": "@craft-agent/session-mcp-server",
-      "version": "0.11.7",
+      "name": "@rox/session-mcp-server",
+      "version": "0.11.8",
       "bin": {
         "session-mcp-server": "./dist/index.js",
       },
       "dependencies": {
-        "@craft-agent/session-tools-core": "workspace:*",
-        "@craft-agent/shared": "workspace:*",
         "@modelcontextprotocol/sdk": "^1.29.0",
+        "@rox/session-tools-core": "workspace:*",
+        "@rox/shared": "workspace:*",
         "zod": "^4.0.0",
       },
       "devDependencies": {
@@ -388,10 +388,10 @@
       },
     },
     "packages/session-tools-core": {
-      "name": "@craft-agent/session-tools-core",
-      "version": "0.11.7",
+      "name": "@rox/session-tools-core",
+      "version": "0.11.8",
       "dependencies": {
-        "@craft-agent/core": "workspace:*",
+        "@rox/core": "workspace:*",
         "beautiful-mermaid": "*",
         "gray-matter": "^4.0.3",
         "zod": "^3.23.0",
@@ -402,16 +402,16 @@
       },
     },
     "packages/shared": {
-      "name": "@craft-agent/shared",
-      "version": "0.11.7",
+      "name": "@rox/shared",
+      "version": "0.11.8",
       "dependencies": {
-        "@craft-agent/core": "workspace:*",
-        "@craft-agent/session-tools-core": "workspace:*",
         "@earendil-works/pi-agent-core": "0.85.1",
         "@earendil-works/pi-ai": "0.85.1",
         "@earendil-works/pi-coding-agent": "0.85.1",
         "@isaacs/ttlcache": "^2.1.4",
         "@leeoniya/ufuzzy": "^1.0.19",
+        "@rox/core": "workspace:*",
+        "@rox/session-tools-core": "workspace:*",
         "bash-parser": "^0.5.0",
         "croner": "^10.0.1",
         "date-fns": "^4.1.0",
@@ -433,12 +433,12 @@
       },
     },
     "packages/ui": {
-      "name": "@craft-agent/ui",
-      "version": "0.11.7",
+      "name": "@rox/ui",
+      "version": "0.11.8",
       "dependencies": {
-        "@craft-agent/core": "workspace:*",
-        "@craft-agent/shared": "workspace:*",
         "@paper-design/shaders-react": "^0.0.69",
+        "@rox/core": "workspace:*",
+        "@rox/shared": "workspace:*",
         "@types/mdast": "^4.0.0",
         "@uiw/react-json-view": "^2.0.0-alpha.40",
         "beautiful-mermaid": "*",
@@ -706,42 +706,6 @@
     "@cloudflare/workerd-windows-64": ["@cloudflare/workerd-windows-64@1.20260801.1", "", { "os": "win32", "cpu": "x64" }, "sha512-2oQz+Ksu4ji6e/+ZoYX+tWQEcxAii2p7l+iR8kx48W1llMalaufAsmVxTlk+3/vrM7D3/2c0iK448e0UQTcIMg=="],
 
     "@cloudflare/workers-types": ["@cloudflare/workers-types@4.20260702.1", "", {}, "sha512-mOhf5TUEB1m2vPrxtqoIGfz0fUC9xyxRDx5gWHy5s+OCo6dcV+g7wI1R7gYCMFohhqF/2y2xeKVwMwCJjfn/WA=="],
-
-    "@craft-agent/cli": ["@craft-agent/cli@workspace:apps/cli"],
-
-    "@craft-agent/cloud-gateway": ["@craft-agent/cloud-gateway@workspace:apps/cloud-gateway"],
-
-    "@craft-agent/cloud-runner": ["@craft-agent/cloud-runner@workspace:packages/cloud-runner"],
-
-    "@craft-agent/core": ["@craft-agent/core@workspace:packages/core"],
-
-    "@craft-agent/electron": ["@craft-agent/electron@workspace:apps/electron"],
-
-    "@craft-agent/messaging-discord-worker": ["@craft-agent/messaging-discord-worker@workspace:packages/messaging-discord-worker"],
-
-    "@craft-agent/messaging-gateway": ["@craft-agent/messaging-gateway@workspace:packages/messaging-gateway"],
-
-    "@craft-agent/messaging-whatsapp-worker": ["@craft-agent/messaging-whatsapp-worker@workspace:packages/messaging-whatsapp-worker"],
-
-    "@craft-agent/pi-agent-server": ["@craft-agent/pi-agent-server@workspace:packages/pi-agent-server"],
-
-    "@craft-agent/server": ["@craft-agent/server@workspace:packages/server"],
-
-    "@craft-agent/server-core": ["@craft-agent/server-core@workspace:packages/server-core"],
-
-    "@craft-agent/session-mcp-server": ["@craft-agent/session-mcp-server@workspace:packages/session-mcp-server"],
-
-    "@craft-agent/session-tools-core": ["@craft-agent/session-tools-core@workspace:packages/session-tools-core"],
-
-    "@craft-agent/shared": ["@craft-agent/shared@workspace:packages/shared"],
-
-    "@craft-agent/ui": ["@craft-agent/ui@workspace:packages/ui"],
-
-    "@craft-agent/viewer": ["@craft-agent/viewer@workspace:apps/viewer"],
-
-    "@craft-agent/webui": ["@craft-agent/webui@workspace:apps/webui"],
-
-    "@craft-agent/workspace-service": ["@craft-agent/workspace-service@workspace:apps/workspace-service"],
 
     "@cspotcode/source-map-support": ["@cspotcode/source-map-support@0.8.1", "", { "dependencies": { "@jridgewell/trace-mapping": "0.3.9" } }, "sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw=="],
 
@@ -1336,6 +1300,42 @@
     "@rollup/rollup-win32-x64-gnu": ["@rollup/rollup-win32-x64-gnu@4.55.1", "", { "os": "win32", "cpu": "x64" }, "sha512-xGGY5pXj69IxKb4yv/POoocPy/qmEGhimy/FoTpTSVju3FYXUQQMFCaZZXJVidsmGxRioZAwpThl/4zX41gRKg=="],
 
     "@rollup/rollup-win32-x64-msvc": ["@rollup/rollup-win32-x64-msvc@4.55.1", "", { "os": "win32", "cpu": "x64" }, "sha512-SPEpaL6DX4rmcXtnhdrQYgzQ5W2uW3SCJch88lB2zImhJRhIIK44fkUrgIV/Q8yUNfw5oyZ5vkeQsZLhCb06lw=="],
+
+    "@rox/cli": ["@rox/cli@workspace:apps/cli"],
+
+    "@rox/cloud-gateway": ["@rox/cloud-gateway@workspace:apps/cloud-gateway"],
+
+    "@rox/cloud-runner": ["@rox/cloud-runner@workspace:packages/cloud-runner"],
+
+    "@rox/core": ["@rox/core@workspace:packages/core"],
+
+    "@rox/electron": ["@rox/electron@workspace:apps/electron"],
+
+    "@rox/messaging-discord-worker": ["@rox/messaging-discord-worker@workspace:packages/messaging-discord-worker"],
+
+    "@rox/messaging-gateway": ["@rox/messaging-gateway@workspace:packages/messaging-gateway"],
+
+    "@rox/messaging-whatsapp-worker": ["@rox/messaging-whatsapp-worker@workspace:packages/messaging-whatsapp-worker"],
+
+    "@rox/pi-agent-server": ["@rox/pi-agent-server@workspace:packages/pi-agent-server"],
+
+    "@rox/server": ["@rox/server@workspace:packages/server"],
+
+    "@rox/server-core": ["@rox/server-core@workspace:packages/server-core"],
+
+    "@rox/session-mcp-server": ["@rox/session-mcp-server@workspace:packages/session-mcp-server"],
+
+    "@rox/session-tools-core": ["@rox/session-tools-core@workspace:packages/session-tools-core"],
+
+    "@rox/shared": ["@rox/shared@workspace:packages/shared"],
+
+    "@rox/ui": ["@rox/ui@workspace:packages/ui"],
+
+    "@rox/viewer": ["@rox/viewer@workspace:apps/viewer"],
+
+    "@rox/webui": ["@rox/webui@workspace:apps/webui"],
+
+    "@rox/workspace-service": ["@rox/workspace-service@workspace:apps/workspace-service"],
 
     "@sapphire/async-queue": ["@sapphire/async-queue@1.5.5", "", {}, "sha512-cvGzxbba6sav2zZkH8GPf2oGk9yYoD5qrNWdu9fRehifgnFZJMV+nuy2nON2roRO4yQQ+v7MK/Pktl/HgfsUXg=="],
 
@@ -4003,34 +4003,6 @@
 
     "@cacheable/utils/keyv": ["keyv@5.6.0", "", { "dependencies": { "@keyv/serialize": "^1.1.1" } }, "sha512-CYDD3SOtsHtyXeEORYRx2qBtpDJFjRTGXUtmNEMGyzYOKj1TE3tycdlho7kA1Ufx9OYWZzg52QFBGALTirzDSw=="],
 
-    "@craft-agent/cli/@types/bun": ["@types/bun@1.4.2", "", { "dependencies": { "bun-types": "1.4.2" } }, "sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ=="],
-
-    "@craft-agent/cli/@types/node": ["@types/node@22.19.6", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-qm+G8HuG6hOHQigsi7VGuLjUVu6TtBo/F05zvX04Mw2uCg9Dv0Qxy3Qw7j41SidlTcl5D/5yg0SEZqOB+EqZnQ=="],
-
-    "@craft-agent/messaging-discord-worker/@types/node": ["@types/node@22.19.6", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-qm+G8HuG6hOHQigsi7VGuLjUVu6TtBo/F05zvX04Mw2uCg9Dv0Qxy3Qw7j41SidlTcl5D/5yg0SEZqOB+EqZnQ=="],
-
-    "@craft-agent/messaging-gateway/@types/node": ["@types/node@22.19.6", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-qm+G8HuG6hOHQigsi7VGuLjUVu6TtBo/F05zvX04Mw2uCg9Dv0Qxy3Qw7j41SidlTcl5D/5yg0SEZqOB+EqZnQ=="],
-
-    "@craft-agent/messaging-whatsapp-worker/@types/node": ["@types/node@22.19.6", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-qm+G8HuG6hOHQigsi7VGuLjUVu6TtBo/F05zvX04Mw2uCg9Dv0Qxy3Qw7j41SidlTcl5D/5yg0SEZqOB+EqZnQ=="],
-
-    "@craft-agent/pi-agent-server/@types/node": ["@types/node@22.19.6", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-qm+G8HuG6hOHQigsi7VGuLjUVu6TtBo/F05zvX04Mw2uCg9Dv0Qxy3Qw7j41SidlTcl5D/5yg0SEZqOB+EqZnQ=="],
-
-    "@craft-agent/server/@types/node": ["@types/node@22.19.6", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-qm+G8HuG6hOHQigsi7VGuLjUVu6TtBo/F05zvX04Mw2uCg9Dv0Qxy3Qw7j41SidlTcl5D/5yg0SEZqOB+EqZnQ=="],
-
-    "@craft-agent/session-mcp-server/@types/node": ["@types/node@22.19.6", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-qm+G8HuG6hOHQigsi7VGuLjUVu6TtBo/F05zvX04Mw2uCg9Dv0Qxy3Qw7j41SidlTcl5D/5yg0SEZqOB+EqZnQ=="],
-
-    "@craft-agent/session-mcp-server/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
-
-    "@craft-agent/session-tools-core/zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
-
-    "@craft-agent/viewer/@vitejs/plugin-react": ["@vitejs/plugin-react@4.7.0", "", { "dependencies": { "@babel/core": "^7.28.0", "@babel/plugin-transform-react-jsx-self": "^7.27.1", "@babel/plugin-transform-react-jsx-source": "^7.27.1", "@rolldown/pluginutils": "1.0.0-beta.27", "@types/babel__core": "^7.20.5", "react-refresh": "^0.17.0" }, "peerDependencies": { "vite": "^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0" } }, "sha512-gUu9hwfWvvEDBBmgtAowQCojwZmJ5mcLn3aufeCsitijs3+f2NsrPtlAWIR6OPiqljl96GVCUbLe0HyqIpVaoA=="],
-
-    "@craft-agent/viewer/lucide-react": ["lucide-react@0.501.0", "", { "peerDependencies": { "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-E2KoyhW59fCb/yUbR3rbDer83fqn7a8NG91ZhIot2yWaPHjPyGzzsNKh40N//GezYShAuycf3TcQksRQznIsRw=="],
-
-    "@craft-agent/viewer/react-markdown": ["react-markdown@9.1.0", "", { "dependencies": { "@types/hast": "^3.0.0", "@types/mdast": "^4.0.0", "devlop": "^1.0.0", "hast-util-to-jsx-runtime": "^2.0.0", "html-url-attributes": "^3.0.0", "mdast-util-to-hast": "^13.0.0", "remark-parse": "^11.0.0", "remark-rehype": "^11.0.0", "unified": "^11.0.0", "unist-util-visit": "^5.0.0", "vfile": "^6.0.0" }, "peerDependencies": { "@types/react": ">=18", "react": ">=18" } }, "sha512-xaijuJB0kzGiUdG7nc2MOMDUDBWPyGAjZtUrow9XxUeua8IqeP+VlIfAZ3bphpcLTnSZXz6z9jcVC/TCwbfgdw=="],
-
-    "@craft-agent/viewer/tailwind-merge": ["tailwind-merge@2.6.0", "", {}, "sha512-P+Vu1qXfzediirmHOC3xKGAYeZtPcV9g76X+xg2FD4tYgR71ewMA35Y3sCz3zhiN/dwefRpJX0yBcgwi1fXNQA=="],
-
     "@cspotcode/source-map-support/@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.9", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.0.3", "@jridgewell/sourcemap-codec": "^1.4.10" } }, "sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ=="],
 
     "@discordjs/rest/@discordjs/collection": ["@discordjs/collection@2.1.1", "", {}, "sha512-LiSusze9Tc7qF03sLCujF5iZp7K+vRNEDBZ86FT9aQAv3vxMLihUvKvpsCWiQ2DJq1tVckopKm1rxomgNUc9hg=="],
@@ -4188,6 +4160,34 @@
     "@radix-ui/react-tooltip/@radix-ui/react-slot": ["@radix-ui/react-slot@1.2.3", "", { "dependencies": { "@radix-ui/react-compose-refs": "1.1.2" }, "peerDependencies": { "@types/react": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react"] }, "sha512-aeNmHnBxbi2St0au6VBVC7JXFlhLlOnvIIlePNniyUNAClzmtAUEY8/pBiK3iHjufOlwA+c20/8jngo7xcrg8A=="],
 
     "@radix-ui/react-visually-hidden/@radix-ui/react-primitive": ["@radix-ui/react-primitive@2.1.3", "", { "dependencies": { "@radix-ui/react-slot": "1.2.3" }, "peerDependencies": { "@types/react": "*", "@types/react-dom": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc", "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react", "@types/react-dom"] }, "sha512-m9gTwRkhy2lvCPe6QJp4d3G1TYEUHn/FzJUtq9MjH46an1wJU+GdoGC5VLof8RX8Ft/DlpshApkhswDLZzHIcQ=="],
+
+    "@rox/cli/@types/bun": ["@types/bun@1.4.2", "", { "dependencies": { "bun-types": "1.4.2" } }, "sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ=="],
+
+    "@rox/cli/@types/node": ["@types/node@22.19.6", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-qm+G8HuG6hOHQigsi7VGuLjUVu6TtBo/F05zvX04Mw2uCg9Dv0Qxy3Qw7j41SidlTcl5D/5yg0SEZqOB+EqZnQ=="],
+
+    "@rox/messaging-discord-worker/@types/node": ["@types/node@22.19.6", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-qm+G8HuG6hOHQigsi7VGuLjUVu6TtBo/F05zvX04Mw2uCg9Dv0Qxy3Qw7j41SidlTcl5D/5yg0SEZqOB+EqZnQ=="],
+
+    "@rox/messaging-gateway/@types/node": ["@types/node@22.19.6", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-qm+G8HuG6hOHQigsi7VGuLjUVu6TtBo/F05zvX04Mw2uCg9Dv0Qxy3Qw7j41SidlTcl5D/5yg0SEZqOB+EqZnQ=="],
+
+    "@rox/messaging-whatsapp-worker/@types/node": ["@types/node@22.19.6", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-qm+G8HuG6hOHQigsi7VGuLjUVu6TtBo/F05zvX04Mw2uCg9Dv0Qxy3Qw7j41SidlTcl5D/5yg0SEZqOB+EqZnQ=="],
+
+    "@rox/pi-agent-server/@types/node": ["@types/node@22.19.6", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-qm+G8HuG6hOHQigsi7VGuLjUVu6TtBo/F05zvX04Mw2uCg9Dv0Qxy3Qw7j41SidlTcl5D/5yg0SEZqOB+EqZnQ=="],
+
+    "@rox/server/@types/node": ["@types/node@22.19.6", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-qm+G8HuG6hOHQigsi7VGuLjUVu6TtBo/F05zvX04Mw2uCg9Dv0Qxy3Qw7j41SidlTcl5D/5yg0SEZqOB+EqZnQ=="],
+
+    "@rox/session-mcp-server/@types/node": ["@types/node@22.19.6", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-qm+G8HuG6hOHQigsi7VGuLjUVu6TtBo/F05zvX04Mw2uCg9Dv0Qxy3Qw7j41SidlTcl5D/5yg0SEZqOB+EqZnQ=="],
+
+    "@rox/session-mcp-server/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
+
+    "@rox/session-tools-core/zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
+
+    "@rox/viewer/@vitejs/plugin-react": ["@vitejs/plugin-react@4.7.0", "", { "dependencies": { "@babel/core": "^7.28.0", "@babel/plugin-transform-react-jsx-self": "^7.27.1", "@babel/plugin-transform-react-jsx-source": "^7.27.1", "@rolldown/pluginutils": "1.0.0-beta.27", "@types/babel__core": "^7.20.5", "react-refresh": "^0.17.0" }, "peerDependencies": { "vite": "^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0" } }, "sha512-gUu9hwfWvvEDBBmgtAowQCojwZmJ5mcLn3aufeCsitijs3+f2NsrPtlAWIR6OPiqljl96GVCUbLe0HyqIpVaoA=="],
+
+    "@rox/viewer/lucide-react": ["lucide-react@0.501.0", "", { "peerDependencies": { "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-E2KoyhW59fCb/yUbR3rbDer83fqn7a8NG91ZhIot2yWaPHjPyGzzsNKh40N//GezYShAuycf3TcQksRQznIsRw=="],
+
+    "@rox/viewer/react-markdown": ["react-markdown@9.1.0", "", { "dependencies": { "@types/hast": "^3.0.0", "@types/mdast": "^4.0.0", "devlop": "^1.0.0", "hast-util-to-jsx-runtime": "^2.0.0", "html-url-attributes": "^3.0.0", "mdast-util-to-hast": "^13.0.0", "remark-parse": "^11.0.0", "remark-rehype": "^11.0.0", "unified": "^11.0.0", "unist-util-visit": "^5.0.0", "vfile": "^6.0.0" }, "peerDependencies": { "@types/react": ">=18", "react": ">=18" } }, "sha512-xaijuJB0kzGiUdG7nc2MOMDUDBWPyGAjZtUrow9XxUeua8IqeP+VlIfAZ3bphpcLTnSZXz6z9jcVC/TCwbfgdw=="],
+
+    "@rox/viewer/tailwind-merge": ["tailwind-merge@2.6.0", "", {}, "sha512-P+Vu1qXfzediirmHOC3xKGAYeZtPcV9g76X+xg2FD4tYgR71ewMA35Y3sCz3zhiN/dwefRpJX0yBcgwi1fXNQA=="],
 
     "@sentry/bundler-plugin-core/glob": ["glob@10.5.0", "", { "dependencies": { "foreground-child": "^3.1.0", "jackspeak": "^3.1.2", "minimatch": "^9.0.4", "minipass": "^7.1.2", "package-json-from-dist": "^1.0.0", "path-scurry": "^1.11.1" }, "bin": { "glob": "dist/esm/bin.mjs" } }, "sha512-DfXN8DfhJ7NH3Oe7cFmu3NCu1wKbkReJ8TorzSAFbSKrlNaQSKfIzqYqVY8zlbs2NLBbWpRiU52GX2PbaBVNkg=="],
 
@@ -4535,26 +4535,6 @@
 
     "@babel/highlight/chalk/supports-color": ["supports-color@5.5.0", "", { "dependencies": { "has-flag": "^3.0.0" } }, "sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow=="],
 
-    "@craft-agent/cli/@types/bun/bun-types": ["bun-types@1.4.2", "", { "dependencies": { "@types/node": "*" } }, "sha512-bxV1FgK7yBIzjRe5zBozIM4Bem11ZJcCXSrjWRG3YWLt8yFDePu4cLjpebO8OvPeIE9trbyPF4fuj3Cia4Fj3w=="],
-
-    "@craft-agent/cli/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
-
-    "@craft-agent/messaging-discord-worker/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
-
-    "@craft-agent/messaging-gateway/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
-
-    "@craft-agent/messaging-whatsapp-worker/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
-
-    "@craft-agent/pi-agent-server/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
-
-    "@craft-agent/server/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
-
-    "@craft-agent/session-mcp-server/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
-
-    "@craft-agent/viewer/@vitejs/plugin-react/@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.0-beta.27", "", {}, "sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA=="],
-
-    "@craft-agent/viewer/@vitejs/plugin-react/react-refresh": ["react-refresh@0.17.0", "", {}, "sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ=="],
-
     "@earendil-works/chord/esbuild/@esbuild/aix-ppc64": ["@esbuild/aix-ppc64@0.28.1", "", { "os": "aix", "cpu": "ppc64" }, "sha512-Svl7tq8k/08+p6CXPpRjQ1fKX+1odH/BQbb48fV6fj3CWHhsoIOoY87w1oHXm0qEpkIK3ZfVgp0hed3XBXzXMQ=="],
 
     "@earendil-works/chord/esbuild/@esbuild/android-arm": ["@esbuild/android-arm@0.28.1", "", { "os": "android", "cpu": "arm" }, "sha512-0k2F129Xdio1TdJfzJ8sy1Q47vUD2NnwdhiAf7drUN1EBTfPf4hsFCtmMgu/6m8JSzsBrlmVjudMBQqOfG8usQ=="],
@@ -4676,6 +4656,26 @@
     "@radix-ui/react-tabs/@radix-ui/react-primitive/@radix-ui/react-slot": ["@radix-ui/react-slot@1.2.3", "", { "dependencies": { "@radix-ui/react-compose-refs": "1.1.2" }, "peerDependencies": { "@types/react": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react"] }, "sha512-aeNmHnBxbi2St0au6VBVC7JXFlhLlOnvIIlePNniyUNAClzmtAUEY8/pBiK3iHjufOlwA+c20/8jngo7xcrg8A=="],
 
     "@radix-ui/react-visually-hidden/@radix-ui/react-primitive/@radix-ui/react-slot": ["@radix-ui/react-slot@1.2.3", "", { "dependencies": { "@radix-ui/react-compose-refs": "1.1.2" }, "peerDependencies": { "@types/react": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react"] }, "sha512-aeNmHnBxbi2St0au6VBVC7JXFlhLlOnvIIlePNniyUNAClzmtAUEY8/pBiK3iHjufOlwA+c20/8jngo7xcrg8A=="],
+
+    "@rox/cli/@types/bun/bun-types": ["bun-types@1.4.2", "", { "dependencies": { "@types/node": "*" } }, "sha512-bxV1FgK7yBIzjRe5zBozIM4Bem11ZJcCXSrjWRG3YWLt8yFDePu4cLjpebO8OvPeIE9trbyPF4fuj3Cia4Fj3w=="],
+
+    "@rox/cli/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
+
+    "@rox/messaging-discord-worker/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
+
+    "@rox/messaging-gateway/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
+
+    "@rox/messaging-whatsapp-worker/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
+
+    "@rox/pi-agent-server/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
+
+    "@rox/server/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
+
+    "@rox/session-mcp-server/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
+
+    "@rox/viewer/@vitejs/plugin-react/@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.0-beta.27", "", {}, "sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA=="],
+
+    "@rox/viewer/@vitejs/plugin-react/react-refresh": ["react-refresh@0.17.0", "", {}, "sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ=="],
 
     "@sentry/bundler-plugin-core/glob/jackspeak": ["jackspeak@3.4.3", "", { "dependencies": { "@isaacs/cliui": "^8.0.2" }, "optionalDependencies": { "@pkgjs/parseargs": "^0.11.0" } }, "sha512-OGlZQpz2yfahA/Rd1Y8Cd9SIEsqvXkLVoSw/cgwhnhFMDbsQFeZYoJJ7bIZBS9BcamUW96asq/npPWugM+RQBw=="],
 
@@ -4963,8 +4963,6 @@
 
     "@babel/highlight/chalk/supports-color/has-flag": ["has-flag@3.0.0", "", {}, "sha512-sKJf1+ceQBr4SMkvQnBDNDtf4TXpVhVGateu0t918bl30FnbE2m4vNLX+VWe/dpjlb+HugGYzW7uQXH98HPEYw=="],
 
-    "@craft-agent/cli/@types/bun/bun-types/@types/node": ["@types/node@25.0.8", "", { "dependencies": { "undici-types": "~7.16.0" } }, "sha512-powIePYMmC3ibL0UJ2i2s0WIbq6cg6UyVFQxSCpaPxxzAaziRfimGivjdF943sSGV6RADVbk0Nvlm5P/FB44Zg=="],
-
     "@earendil-works/pi-coding-agent/minimatch/brace-expansion/balanced-match": ["balanced-match@4.0.3", "", {}, "sha512-1pHv8LX9CpKut1Zp4EXey7Z8OfH11ONNH6Dhi2WDUt31VVZFXZzKwXcysBgqSumFCmR+0dqjMK5v5JiFHzi0+g=="],
 
     "@electron/rebuild/got/cacheable-request/keyv": ["keyv@4.5.4", "", { "dependencies": { "json-buffer": "3.0.1" } }, "sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw=="],
@@ -4974,6 +4972,8 @@
     "@electron/rebuild/got/decompress-response/mimic-response": ["mimic-response@3.1.0", "", {}, "sha512-z0yWI+4FDrrweS8Zmt4Ej5HdJmky15+L2e6Wgn3+iK5fWzb6T3fhNFq2+MeTRb064c6Wr4N/wv0DzQTjNzHNGQ=="],
 
     "@electron/rebuild/tar/minizlib/minipass": ["minipass@3.3.6", "", { "dependencies": { "yallist": "^4.0.0" } }, "sha512-DxiNidxSEK+tHG6zOIklvNOwm3hvCrbUrdtzY74U6HKTJxvIDfOUL5W5P2Ghd3DTkhhKPYGqeNUIh5qcM4YBfw=="],
+
+    "@rox/cli/@types/bun/bun-types/@types/node": ["@types/node@25.0.8", "", { "dependencies": { "undici-types": "~7.16.0" } }, "sha512-powIePYMmC3ibL0UJ2i2s0WIbq6cg6UyVFQxSCpaPxxzAaziRfimGivjdF943sSGV6RADVbk0Nvlm5P/FB44Zg=="],
 
     "@sentry/bundler-plugin-core/glob/minimatch/brace-expansion": ["brace-expansion@2.0.2", "", { "dependencies": { "balanced-match": "^1.0.0" } }, "sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ=="],
 

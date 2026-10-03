@@ -49,7 +49,7 @@
       "id": "renderer-route-and-core-export-scope",
       "kind": "NAMED_SEAM_GAP",
       "source": "apps/electron/src/renderer/pages/notes/note-views.ts:5,24-34; apps/electron/src/renderer/pages/notes/NotesViewHost.tsx:46,58-116; packages/core/src/docs/index.ts:1-7; plans/lark-suite-reference/work-packages.json:10672-10694,10869",
-      "gate": "The actual view-kind union is NoteViewKind and excludes map, while the normative note-views shared-symbol allocation names NoteBaseView/projectNoteRows/formulaValue/notesViewsStorageKey instead. The @craft-agent/core/docs barrel has no map-view-config export. Host accepts no editing/layout bridge, actor-scoped preferences or view-switch callback.",
+      "gate": "The actual view-kind union is NoteViewKind and excludes map, while the normative note-views shared-symbol allocation names NoteBaseView/projectNoteRows/formulaValue/notesViewsStorageKey instead. The @rox/core/docs barrel has no map-view-config export. Host accepts no editing/layout bridge, actor-scoped preferences or view-switch callback.",
       "impact": "Adding a host branch alone does not make Map reachable or guarantee Map/Outline selection persistence. Do not overload table/base config or repurpose Canvas. Existing callers and package import/export reachability must be resolved by the integration owner.",
       "missingPrerequisite": "Reviewed packet explicitly admitting NoteViewKind and any required existing route/caller and core export symbols. The caller source was outside this packet's inspected package/direct-import scope; its current symbols and behavior are not asserted here.",
       "state": "REQUIRES_UPDATED_REVIEWED_PACKET"

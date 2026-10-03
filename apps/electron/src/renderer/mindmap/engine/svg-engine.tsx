@@ -17,8 +17,8 @@ import {
   renamePinnedCustomNode,
   type MindMapLayout,
   type MindMapNodeId,
-} from '@craft-agent/core/mindmap'
-import { PremiumMenuSelect } from '@craft-agent/ui'
+} from '@rox/core/mindmap'
+import { PremiumMenuSelect } from '@rox/ui'
 import { MindMapMinimap } from './minimap'
 import {
   MIND_MAP_NODE_HEIGHT,

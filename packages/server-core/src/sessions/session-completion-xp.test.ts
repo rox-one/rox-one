@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, it } from 'bun:test'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { getXpReward, loadGamificationState } from '@craft-agent/shared/gamification'
+import { getXpReward, loadGamificationState } from '@rox/shared/gamification'
 import { SessionManager, type SessionCompletionEvent } from './SessionManager.ts'
 
 let root: string

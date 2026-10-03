@@ -144,7 +144,7 @@ git commit -m "feat(sessions): workspace-scoped slices with rename and unique na
 **Step 1: Failing tests**
 
 - [ ] `shouldClearChipsOnFilterKeyChange(prev, next)` is true iff both keys are non-empty and `prev !== next`.
-- [ ] `chipsAfterRailChange()` returns a clone of `DEFAULT_COLLECTION_FILTERS` (empty object / default export from `@craft-agent/shared/sessions/collection`).
+- [ ] `chipsAfterRailChange()` returns a clone of `DEFAULT_COLLECTION_FILTERS` (empty object / default export from `@rox/shared/sessions/collection`).
 - [ ] Document in comments: overwriting that key in `filters.json` is intentional.
 
 **Step 2: Implement helper**

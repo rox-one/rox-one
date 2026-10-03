@@ -4,7 +4,7 @@
  */
 import { atom, type PrimitiveAtom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
-import { EXTRA_SCREEN_FLAG } from '@craft-agent/core/platform'
+import { EXTRA_SCREEN_FLAG } from '@rox/core/platform'
 import { EXTRA_SCREEN_IDS, type ExtraScreenId } from '../../shared/extra-screens'
 
 export function extraScreenFlagStorageKey(id: ExtraScreenId): string {

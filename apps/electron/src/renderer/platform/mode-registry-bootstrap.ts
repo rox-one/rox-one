@@ -1,4 +1,4 @@
-import { createModeRegistry, type ModeRegistry } from '@craft-agent/core/platform'
+import { createModeRegistry, type ModeRegistry } from '@rox/core/platform'
 import { CORE_MODES } from './modes-seed'
 
 let registry: ModeRegistry | null = null

@@ -10,7 +10,7 @@ import { basename, join } from 'node:path';
 import type { SessionToolContext } from '../context.ts';
 import type { ToolResult, SourceConfig, ConnectionStatus } from '../types.ts';
 import { errorResponse } from '../response.ts';
-import { resolveStdioConfig } from '@craft-agent/shared/utils';
+import { resolveStdioConfig } from '@rox/shared/utils';
 import {
   validateJsonFileHasFields,
   validateSourceConfigBasic,

@@ -13,7 +13,7 @@ import type {
   AuditMode,
   OpenClawRuntimeStatus,
   SecurityAuditSnapshot,
-} from '@craft-agent/shared/openclaw'
+} from '@rox/shared/openclaw'
 
 export interface OpenClawSecurityWorkspaceInput {
   readonly workspaceId: string

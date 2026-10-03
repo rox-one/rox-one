@@ -1,14 +1,14 @@
-import { getToolchainManager, setToolchainDisabledTools } from '@craft-agent/shared/toolchain-runtime'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { ToolName } from '@craft-agent/shared/toolchain'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import { getToolchainManager, setToolchainDisabledTools } from '@rox/shared/toolchain-runtime'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { ToolName } from '@rox/shared/toolchain'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   isClaimableLive,
   rpcToolchainActResult,
   rpcToolchainListResult,
   rpcToolchainReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.toolchain.STATUS,

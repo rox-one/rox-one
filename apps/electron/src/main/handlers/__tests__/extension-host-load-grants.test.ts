@@ -6,14 +6,14 @@ import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { RpcServer } from '@craft-agent/server-core/transport'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import type { RpcServer } from '@rox/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 
 const workspaceRoots = new Map<string, string>()
 
-const actualConfigExports = await import('@craft-agent/shared/config')
+const actualConfigExports = await import('@rox/shared/config')
 
-mock.module('@craft-agent/shared/config', () => ({
+mock.module('@rox/shared/config', () => ({
   ...actualConfigExports,
   CONFIG_DIR: '/tmp/craft-ext-host-load-grants-config',
   getWorkspaceByNameOrId: (id: string) => {
@@ -36,7 +36,7 @@ const { startWorker } = await import('../../extension-host/worker')
 
 import { EventEmitter } from 'node:events'
 import type { ExtensionHostChild, ExtensionHostForkFn } from '../../extension-host-manager'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { resolveConfigDir } from "@rox/shared/config/paths"
 
 class FakeChild extends EventEmitter implements ExtensionHostChild {
   pid = 9100

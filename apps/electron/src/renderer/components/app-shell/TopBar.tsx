@@ -9,7 +9,7 @@
 
 import { useTranslation } from "react-i18next"
 import * as Icons from "lucide-react"
-import { Tooltip, TooltipTrigger, TooltipContent } from "@craft-agent/ui"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@rox/ui"
 import { PanelLeftRounded } from "../icons/PanelLeftRounded"
 import { SquarePenRounded } from "../icons/SquarePenRounded"
 import { TopBarButton } from "../ui/TopBarButton"
@@ -31,7 +31,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai"
 import { BrowserTabStrip } from "../browser/BrowserTabStrip"
 import type { Workspace } from "../../../shared/types"
 import { AccountMenu } from "./AccountMenu"
-import { getDocUrl } from "@craft-agent/shared/docs/doc-links"
+import { getDocUrl } from "@rox/shared/docs/doc-links"
 import { AppMenu } from "../AppMenu"
 import { HeaderStatusLane } from "./HeaderStatusLane"
 import { MeetingRecordingIndicator } from "../meetings/MeetingRecordingIndicator"
@@ -54,7 +54,7 @@ import { ModeBar, type ModeBarMetrics } from "@/platform/ModeBar"
 import { resolveModePillLayout } from "./mode-pill-layout"
 import { resolveWorkbenchChrome } from "@/platform/workbench-chrome"
 import { resolveBottomTerminalToggle } from "@/platform/inspector-model"
-import { WORKBENCH_FLAG } from "@craft-agent/core/platform"
+import { WORKBENCH_FLAG } from "@rox/core/platform"
 
 const RIGHT_SLOT_FULL_BADGES_THRESHOLD = 420
 const RIGHT_SLOT_TWO_BADGES_THRESHOLD = 300

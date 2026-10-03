@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { isDeepStrictEqual } from 'node:util'
-import type { CredentialId, StoredCredential } from '@craft-agent/shared/credentials'
+import type { CredentialId, StoredCredential } from '@rox/shared/credentials'
 import type { AuthorityJournalPorts } from './project-authority-journal'
 import { WsRpcClient } from '../transport/client'
 import { peerTrustOptionsForRemote } from '../shared/remote-tls-client-options'

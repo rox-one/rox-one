@@ -11,14 +11,14 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { getActiveWorkspace, getWorkspaceByNameOrId } from '@craft-agent/shared/config'
+import { getActiveWorkspace, getWorkspaceByNameOrId } from '@rox/shared/config'
 import {
   discoverForeignSessionsAsync,
   loadForeignImportRegistry,
   persistForeignSession,
   type ForeignAutoImportStatus,
   type ForeignIndexEntry,
-} from '@craft-agent/shared/sessions'
+} from '@rox/shared/sessions'
 import type { HandlerDeps } from '../handler-deps'
 
 export const AUTO_IMPORT_RECENT_DAYS = 30

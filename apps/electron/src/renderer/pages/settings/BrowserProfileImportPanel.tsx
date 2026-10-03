@@ -13,7 +13,7 @@ import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/co
 import { Button } from '@/components/ui/button'
 import type { BrowserCookieAutoStatus } from '../../../shared/types'
 import { useActiveWorkspace } from '@/context/AppShellContext'
-import type { DiscoveredProfile, ImportConsent, ImportSummary } from '@craft-agent/shared/browser/profile-import'
+import type { DiscoveredProfile, ImportConsent, ImportSummary } from '@rox/shared/browser/profile-import'
 
 const STATE_KEYS: Record<DiscoveredProfile['state'], string> = {
   ok: 'settings.browserImport.stateOk',

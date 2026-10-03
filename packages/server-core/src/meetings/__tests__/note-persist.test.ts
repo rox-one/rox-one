@@ -2,7 +2,7 @@ import { describe, expect, it, beforeEach, afterEach } from 'bun:test'
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { createNativeNotesEngine } from '@craft-agent/core/rox2'
+import { createNativeNotesEngine } from '@rox/core/rox2'
 import { MeetingNotePersistStore } from '../note-persist.ts'
 
 const tmpDirs: string[] = []

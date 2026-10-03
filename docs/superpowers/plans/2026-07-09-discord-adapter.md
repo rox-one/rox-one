@@ -4,7 +4,7 @@
 
 **Goal:** Add Discord as a messaging channel (DM + guild text channels) via an isolated `discord.js` subprocess worker, exposing the full `PlatformAdapter` capability set.
 
-**Architecture:** New `@craft-agent/messaging-discord-worker` package runs `discord.js` in a Node subprocess, speaking NDJSON over stdio to a new `DiscordAdapter` in `messaging-gateway`. All routing/binding/access/commands are reused unchanged. Mirrors the WhatsApp/Baileys isolation model.
+**Architecture:** New `@rox/messaging-discord-worker` package runs `discord.js` in a Node subprocess, speaking NDJSON over stdio to a new `DiscordAdapter` in `messaging-gateway`. All routing/binding/access/commands are reused unchanged. Mirrors the WhatsApp/Baileys isolation model.
 
 **Tech Stack:** TypeScript, `discord.js` v14, Bun test, esbuild bundling, Electron.
 
@@ -29,7 +29,7 @@
 
 **Produces:** `WorkerCommand`, `WorkerEvent`, `encodeMessage`, `parseFrames<T>`, plus attachment/button wire types.
 
-- [ ] package.json: name `@craft-agent/messaging-discord-worker`, `main: src/worker.ts`, exports `.`→`./src/protocol.ts`, `./worker`→`./src/worker.ts`, dep `discord.js@^14`.
+- [ ] package.json: name `@rox/messaging-discord-worker`, `main: src/worker.ts`, exports `.`→`./src/protocol.ts`, `./worker`→`./src/worker.ts`, dep `discord.js@^14`.
 - [ ] tsconfig.json: copy whatsapp-worker's verbatim.
 - [ ] protocol.ts: define command/event unions per spec; copy `encodeMessage`/`parseFrames` from whatsapp worker.
 - [ ] protocol.test.ts: round-trip encode→parse for each command + event; partial-frame buffering.
@@ -82,7 +82,7 @@
 - Test: `packages/messaging-gateway/src/adapters/discord/__tests__/format.test.ts`
 - Test: `packages/messaging-gateway/src/adapters/discord/lifecycle.test.ts`
 
-**Consumes:** Task 1 protocol (`@craft-agent/messaging-discord-worker`), Task 4 types.
+**Consumes:** Task 1 protocol (`@rox/messaging-discord-worker`), Task 4 types.
 **Produces:** `DiscordAdapter`, `parseDiscordCredentials`, `DiscordCredentials`, `DiscordEvent`.
 
 - [ ] `format.ts`: Markdown→Discord (near-passthrough; strip unsupported), `formatForDiscord(text): string`.
@@ -97,7 +97,7 @@
 **Files:**
 - Modify: `packages/messaging-gateway/src/registry.ts`
 - Modify: `packages/messaging-gateway/src/index.ts`
-- Modify: `packages/messaging-gateway/package.json` (+`@craft-agent/messaging-discord-worker` workspace dep)
+- Modify: `packages/messaging-gateway/package.json` (+`@rox/messaging-discord-worker` workspace dep)
 
 - [ ] Options += `discord?: { workerEntry, nodeBin? }`; `WorkspaceState` += `discord`/`discordOffEvent`.
 - [ ] `testDiscordCredentials` (GET `https://discord.com/api/v10/users/@me` with `Bot <token>`), `saveDiscordCredentials`, `tryConnectDiscord`, `parseDiscordCredentials`.

@@ -72,7 +72,7 @@ for(const variant of ['baseline','mutation']) {
     await symlink(target,resolve(root,'node_modules',dep));
     dependencies.push({variant,dependency:dep,target,version:metadata.version,packageJsonSha256:sha(metadataBytes),access:'external dependency read-only symlink'});
   }
-  const paths={ '@craft-agent/shared/protocol':[resolve(root,'packages/shared/src/protocol/index.ts')], '@craft-agent/shared/utils':[resolve(root,'packages/shared/src/utils/index.ts')], '@craft-agent/core/types':[resolve(root,'packages/core/src/types/index.ts')] };
+  const paths={ '@rox/shared/protocol':[resolve(root,'packages/shared/src/protocol/index.ts')], '@rox/shared/utils':[resolve(root,'packages/shared/src/utils/index.ts')], '@rox/core/types':[resolve(root,'packages/core/src/types/index.ts')] };
   await Bun.write(resolve(here,variant+'.tsconfig.json'),JSON.stringify({compilerOptions:{paths}},null,2));
 }
 const repositoryPath='apps/workspace-service/src/modules/identity/repository.ts';

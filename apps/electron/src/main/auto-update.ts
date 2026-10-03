@@ -20,14 +20,14 @@ import { platform } from 'os'
 import * as path from 'path'
 import * as fs from 'fs'
 import { mainLog, autoUpdateLog } from './logger'
-import { getAppVersion } from '@craft-agent/shared/version'
+import { getAppVersion } from '@rox/shared/version'
 import {
   getDismissedUpdateVersion,
   clearDismissedUpdateVersion,
-} from '@craft-agent/shared/config'
-import { readJsonFileSync } from '@craft-agent/shared/utils/files'
+} from '@rox/shared/config'
+import { readJsonFileSync } from '@rox/shared/utils/files'
 import { RPC_CHANNELS, type UpdateInfo } from '../shared/types'
-import type { EventSink } from '@craft-agent/server-core/transport'
+import type { EventSink } from '@rox/server-core/transport'
 import {
   shouldSuppressUpdateFeed,
   shouldAcceptReadyUpdate,
@@ -40,7 +40,7 @@ const IS_MAC = PLATFORM === 'darwin'
 const IS_WINDOWS = PLATFORM === 'win32'
 
 // electron-builder.yml sets updaterCacheDirName; fall back to app.getName()-updater.
-const DEFAULT_UPDATER_CACHE_DIR_NAME = '@craft-agentelectron-updater'
+const DEFAULT_UPDATER_CACHE_DIR_NAME = '@roxelectron-updater'
 
 function readUpdaterCacheDirName(): string {
   try {

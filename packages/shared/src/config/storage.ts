@@ -29,7 +29,7 @@ import { expandPath, toPortablePath, getBundledAssetsDir } from '../utils/paths.
 import { debug } from '../utils/debug.ts';
 import { atomicWriteFileSync, readJsonFileSync, safeJsonParse } from '../utils/files.ts';
 import { CONFIG_DIR, resolveConfigDir } from './paths.ts';
-import type { StoredAttachment, StoredMessage } from '@craft-agent/core/types';
+import type { StoredAttachment, StoredMessage } from '@rox/core/types';
 import type { Plan } from '../agent/plan-types.ts';
 import type { PermissionMode } from '../agent/mode-manager.ts';
 import type { ThinkingLevel } from '../agent/thinking-levels.ts';
@@ -51,10 +51,10 @@ export type {
   McpAuthType,
   AuthType,
   OAuthCredentials,
-} from '@craft-agent/core/types';
+} from '@rox/core/types';
 
 // Import for local use
-import type { Workspace, AuthType, RemoteServerConfig } from '@craft-agent/core/types';
+import type { Workspace, AuthType, RemoteServerConfig } from '@rox/core/types';
 import { normalizeRemoteTlsTrust } from './remote-tls-trust.ts';
 import { SECRET_PROVIDER_IDS, SecretConfigError, toPublicSecretRef, type SecretRefEntry } from '../secrets/types.ts';
 
@@ -1983,7 +1983,7 @@ function ensureWorkspaceDir(workspaceId: string): string {
 
 
 // Re-export types from core for convenience
-export type { StoredAttachment, StoredMessage } from '@craft-agent/core/types';
+export type { StoredAttachment, StoredMessage } from '@rox/core/types';
 
 export interface WorkspaceConversation {
   messages: StoredMessage[];

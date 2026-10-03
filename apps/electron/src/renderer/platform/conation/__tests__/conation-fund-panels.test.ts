@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { createPanelRegistry } from '@craft-agent/core/platform'
+import { createPanelRegistry } from '@rox/core/platform'
 import {
   CONATION_FUND_DEEP_LINK,
   CONATION_FUND_PANEL_ID,

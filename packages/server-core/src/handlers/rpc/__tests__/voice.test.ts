@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'bun:test'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { registerVoiceHandlers, HANDLED_CHANNELS } from '../voice'
-import type { RpcServer } from '@craft-agent/server-core/transport'
-import { getDefaultVoicePrefs } from '@craft-agent/shared/voice'
+import type { RpcServer } from '@rox/server-core/transport'
+import { getDefaultVoicePrefs } from '@rox/shared/voice'
 
 type Handler = (ctx: unknown, ...args: unknown[]) => unknown | Promise<unknown>
 

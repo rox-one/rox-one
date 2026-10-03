@@ -1,25 +1,25 @@
 import { createHash } from 'node:crypto'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { appendAutomationHistoryEntry } from '@craft-agent/shared/automations/history-store'
-import { awardXpSafe } from '@craft-agent/shared/gamification'
-import { AUTOMATION_HISTORY_MAX_RUNS_PER_MATCHER } from '@craft-agent/shared/automations/constants'
-import { atomicWriteFileSync } from '@craft-agent/shared/utils/files'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import { appendAutomationHistoryEntry } from '@rox/shared/automations/history-store'
+import { awardXpSafe } from '@rox/shared/gamification'
+import { AUTOMATION_HISTORY_MAX_RUNS_PER_MATCHER } from '@rox/shared/automations/constants'
+import { atomicWriteFileSync } from '@rox/shared/utils/files'
 import {
   buildAutomationGraphSave,
   getAutomationGraphProjection,
   parseSaveAutomationGraphPayload,
-} from '@craft-agent/shared/automations/graph'
-import { resolveAutomationsConfigPath, generateShortId } from '@craft-agent/shared/automations/resolve-config-path'
-import { ensureDefaultAutomations } from '@craft-agent/shared/automations/default-seeds'
-import { validateAutomationsConfig } from '@craft-agent/shared/automations/validation'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/shared/automations/graph'
+import { resolveAutomationsConfigPath, generateShortId } from '@rox/shared/automations/resolve-config-path'
+import { ensureDefaultAutomations } from '@rox/shared/automations/default-seeds'
+import { validateAutomationsConfig } from '@rox/shared/automations/validation'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { isClaimableLive, rpcAutomationsActResult, rpcAutomationsListResult, rpcAutomationsReadResult } from '@craft-agent/core/rox2'
+import { isClaimableLive, rpcAutomationsActResult, rpcAutomationsListResult, rpcAutomationsReadResult } from '@rox/core/rox2'
 
-// History file name — matches AUTOMATIONS_HISTORY_FILE from @craft-agent/shared/automations/constants
+// History file name — matches AUTOMATIONS_HISTORY_FILE from @rox/shared/automations/constants
 const HISTORY_FILE = 'automations-history.jsonl'
 interface HistoryEntry { id: string; ts: number; ok: boolean; sessionId?: string; prompt?: string; error?: string; webhook?: { method: string; url: string; statusCode: number; durationMs: number; attempts?: number; error?: string; responseBody?: string } }
 
@@ -302,13 +302,13 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
     })
   })
 
-  server.handle(RPC_CHANNELS.automations.TEST, async (_ctx, payload: import('@craft-agent/shared/protocol').TestAutomationPayload) => {
+  server.handle(RPC_CHANNELS.automations.TEST, async (_ctx, payload: import('@rox/shared/protocol').TestAutomationPayload) => {
     const workspace = getWorkspaceByNameOrId(payload.workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
-    const results: import('@craft-agent/shared/protocol').TestAutomationActionResult[] = []
-    const { parsePromptReferences } = await import('@craft-agent/shared/automations')
-    const { executeWebhookRequest, createWebhookHistoryEntry, createPromptHistoryEntry } = await import('@craft-agent/shared/automations/webhook-utils')
+    const results: import('@rox/shared/protocol').TestAutomationActionResult[] = []
+    const { parsePromptReferences } = await import('@rox/shared/automations')
+    const { executeWebhookRequest, createWebhookHistoryEntry, createPromptHistoryEntry } = await import('@rox/shared/automations/webhook-utils')
 
     let actionsToTest = payload.actions
     if (payload.automationId) {
@@ -331,7 +331,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
       if (action.type === 'webhook') {
         // Execute webhook action using shared utility (no env expansion for test — raw URLs)
         // Cast needed: protocol DTO uses loose `method?: string`, WebhookAction uses strict union
-        const result = await executeWebhookRequest(action as import('@craft-agent/shared/automations').WebhookAction)
+        const result = await executeWebhookRequest(action as import('@rox/shared/automations').WebhookAction)
         const method = action.method ?? 'POST'
 
         results.push({
@@ -365,7 +365,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
         // with a synthesized SchedulerTick env (tests simulate the cron path).
         // Timeout is clamped below the 30s RPC timeout so a slow script fails
         // the test visibly instead of tripping the transport (see #943).
-        const { executeScriptAction, createScriptHistoryEntry, buildScriptEnv } = await import('@craft-agent/shared/automations')
+        const { executeScriptAction, createScriptHistoryEntry, buildScriptEnv } = await import('@rox/shared/automations')
         const env = buildScriptEnv(
           'SchedulerTick',
           { workspaceId: payload.workspaceId, timestamp: Date.now() },
@@ -466,7 +466,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
 
     // History changed (and lastExecutedAt with it) — let lists refresh.
     if (payload.automationId) notifyChanged(payload.workspaceId)
-    return { actions: results } satisfies import('@craft-agent/shared/protocol').TestAutomationResult
+    return { actions: results } satisfies import('@rox/shared/protocol').TestAutomationResult
   })
 
   // Automation enabled state management (toggle enabled/disabled in automations.json)
@@ -602,7 +602,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
-    const { resolveAutomationsConfigPath } = await import('@craft-agent/shared/automations/resolve-config-path')
+    const { resolveAutomationsConfigPath } = await import('@rox/shared/automations/resolve-config-path')
     const configPath = resolveAutomationsConfigPath(workspace.rootPath)
     const raw = await readFile(configPath, 'utf-8')
     const config = JSON.parse(raw) as { automations?: Record<string, Array<{ id?: string; actions?: Array<{ type: string; [key: string]: unknown }> }>> }
@@ -619,9 +619,9 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
         : 'No webhook actions to replay')
     }
 
-    const { executeWebhookRequest, createWebhookHistoryEntry } = await import('@craft-agent/shared/automations/webhook-utils')
+    const { executeWebhookRequest, createWebhookHistoryEntry } = await import('@rox/shared/automations/webhook-utils')
     const results = await Promise.all(
-      webhookActions.map(a => executeWebhookRequest(a as unknown as import('@craft-agent/shared/automations').WebhookAction))
+      webhookActions.map(a => executeWebhookRequest(a as unknown as import('@rox/shared/automations').WebhookAction))
     )
 
     // Write history entries for replay — use index to correctly attribute method per action

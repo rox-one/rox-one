@@ -1,4 +1,4 @@
-import type { TerminalFrame } from '@craft-agent/shared/execution/terminal-protocol'
+import type { TerminalFrame } from '@rox/shared/execution/terminal-protocol'
 
 export function encodeFrame(frame: TerminalFrame): Uint8Array {
   const header = JSON.stringify({ seq: frame.seq, epoch: frame.epoch, kind: frame.kind, len: frame.payload.byteLength })

@@ -47,9 +47,9 @@ import {
   type SceneMessage,
   type SessionMapCamera,
   type SessionMapPin,
-} from '@craft-agent/core/mindmap'
+} from '@rox/core/mindmap'
 import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -120,7 +120,7 @@ import {
   convertNodeKind,
   isProductionWorkflowSuccess,
   type WorkflowRun,
-} from '@craft-agent/shared/workflows'
+} from '@rox/shared/workflows'
 
 export type RelatedBranch = {
   id: string

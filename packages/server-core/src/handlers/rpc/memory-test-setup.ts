@@ -1,6 +1,6 @@
 /**
  * Test-side env setup: config dir is read by
- * @craft-agent/shared/config/paths at module-eval time, so it must be set
+ * @rox/shared/config/paths at module-eval time, so it must be set
  * before any module under test loads. Import this file FIRST in handler tests.
  *
  * bun test preload already sets ROX_CONFIG_DIR, and resolveConfigDir() prefers

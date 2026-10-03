@@ -39,7 +39,7 @@ import {
   type LocalBucket,
   type LocalGroup,
 } from './meetings/local-meetings-model'
-import { getAppLocale } from '@craft-agent/shared/i18n'
+import { getAppLocale } from '@rox/shared/i18n'
 
 const ERROR_KEYS: Record<string, string> = {
   'mic-denied': 'meetings.local.err.micDenied',

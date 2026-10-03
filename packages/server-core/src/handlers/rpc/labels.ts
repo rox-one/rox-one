@@ -1,13 +1,13 @@
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   isClaimableLive,
   rpcLabelsActResult,
   rpcLabelsListResult,
   rpcLabelsReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.labels.LIST,
@@ -24,18 +24,18 @@ export function registerLabelsHandlers(server: RpcServer, _deps: HandlerDeps): v
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
-    const { listLabels } = await import('@craft-agent/shared/labels/storage')
+    const { listLabels } = await import('@rox/shared/labels/storage')
     return listLabels(workspace.rootPath)
   })
 
   // Create a new label in a workspace
-  server.handle(RPC_CHANNELS.labels.CREATE, async (_ctx, workspaceId: string, input: import('@craft-agent/shared/labels').CreateLabelInput) => {
+  server.handle(RPC_CHANNELS.labels.CREATE, async (_ctx, workspaceId: string, input: import('@rox/shared/labels').CreateLabelInput) => {
     const act = rpcLabelsActResult({ source: 'native', action: 'write', nativeId: 'label' })
     if (!isClaimableLive(act)) throw new Error('label create is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
-    const { createLabel } = await import('@craft-agent/shared/labels/crud')
+    const { createLabel } = await import('@rox/shared/labels/crud')
     const label = createLabel(workspace.rootPath, input)
     pushTyped(server, RPC_CHANNELS.labels.CHANGED, { to: 'workspace', workspaceId }, workspaceId)
     return label
@@ -46,7 +46,7 @@ export function registerLabelsHandlers(server: RpcServer, _deps: HandlerDeps): v
     _ctx,
     workspaceId: string,
     labelId: string,
-    updates: import('@craft-agent/shared/labels').UpdateLabelInput,
+    updates: import('@rox/shared/labels').UpdateLabelInput,
   ) => {
     const read = rpcLabelsReadResult({ source: 'native', nativeId: labelId })
     if (!isClaimableLive(read.result)) throw new Error('label is not live')
@@ -55,7 +55,7 @@ export function registerLabelsHandlers(server: RpcServer, _deps: HandlerDeps): v
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
-    const { updateLabel } = await import('@craft-agent/shared/labels/crud')
+    const { updateLabel } = await import('@rox/shared/labels/crud')
     const label = updateLabel(workspace.rootPath, labelId, updates)
     pushTyped(server, RPC_CHANNELS.labels.CHANGED, { to: 'workspace', workspaceId }, workspaceId)
     return label
@@ -69,7 +69,7 @@ export function registerLabelsHandlers(server: RpcServer, _deps: HandlerDeps): v
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
-    const { deleteLabel } = await import('@craft-agent/shared/labels/crud')
+    const { deleteLabel } = await import('@rox/shared/labels/crud')
     const result = deleteLabel(workspace.rootPath, labelId)
     pushTyped(server, RPC_CHANNELS.labels.CHANGED, { to: 'workspace', workspaceId }, workspaceId)
     return result

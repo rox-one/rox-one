@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'bun:test'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { setupI18n } from '@craft-agent/shared/i18n/setupI18n'
-import { CLI_COMMAND_CATALOG } from '@craft-agent/shared/cli'
+import { setupI18n } from '@rox/shared/i18n/setupI18n'
+import { CLI_COMMAND_CATALOG } from '@rox/shared/cli'
 import i18n from 'i18next'
 
 const renderer = join(import.meta.dir, '../../..')

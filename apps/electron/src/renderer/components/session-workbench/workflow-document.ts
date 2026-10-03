@@ -11,7 +11,7 @@ import {
   type CanvasNodeKind,
   type SessionWorkflowDocument,
   type SessionWorkflowSpec,
-} from '@craft-agent/shared/workflows'
+} from '@rox/shared/workflows'
 
 export function isSessionNodeKind(value: unknown): value is SessionNodeKind {
   return typeof value === 'string' && (CANVAS_NODE_KINDS as readonly string[]).includes(value)

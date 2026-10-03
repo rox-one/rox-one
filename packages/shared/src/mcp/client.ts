@@ -10,7 +10,7 @@ import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
-import { isBlockedEnvVar } from '@craft-agent/core/env';
+import { isBlockedEnvVar } from '@rox/core/env';
 import { createMcpGuardedFetch } from './guarded-fetch.ts';
 
 /**

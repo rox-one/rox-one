@@ -6,14 +6,14 @@ import { describe, expect, it, mock, beforeEach, afterEach } from 'bun:test'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { RpcServer, HandlerFn, RequestContext } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { RpcServer, HandlerFn, RequestContext } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 
 let workspaceRoot: string
 const configDir = process.env.CRAFT_CONFIG_DIR!
 
-mock.module('@craft-agent/shared/config', () => ({
+mock.module('@rox/shared/config', () => ({
   getWorkspaceByNameOrId: (id: string) =>
     id === 'ws1' ? { id: 'ws1', name: 'ws1', rootPath: workspaceRoot } : null,
   getWorkspaces: () => [{ id: 'ws1', name: 'ws1', rootPath: workspaceRoot }],

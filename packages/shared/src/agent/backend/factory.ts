@@ -411,7 +411,8 @@ export function resolveOmpSessionContext(args: {
     workspaceSlug: args.workspaceDefaultConnectionSlug, defaultSlug: getDefaultLlmConnection(),
   });
   return {connection,provider:'omp',authType:connectionAuthTypeToBackendAuthType(connection.authType),
-    resolvedModel:selectOmpSessionModel(connection,args.managedModel,prior?.providerType==='omp'),
+    resolvedModel:selectOmpSessionModel(connection,args.managedModel,
+      prior?.providerType==='omp' && (!args.sessionConnectionSlug || prior.slug===args.sessionConnectionSlug)),
     capabilities:BACKEND_CAPABILITIES.omp};
 }
 

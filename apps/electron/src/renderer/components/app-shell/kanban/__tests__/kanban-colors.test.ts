@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { DEFAULT_BUILTIN_STATUS_PALETTE } from '@craft-agent/shared/colors'
+import { DEFAULT_BUILTIN_STATUS_PALETTE } from '@rox/shared/colors'
 import { DEFAULT_KANBAN_COLUMN_COLORS } from '../kanban-colors'
 
 describe('Kanban column palette', () => {

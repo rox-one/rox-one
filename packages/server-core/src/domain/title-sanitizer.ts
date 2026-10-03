@@ -3,7 +3,7 @@
  * Extracted to a separate file to allow unit testing without importing
  * Electron main process modules.
  */
-import { replacePathMentions, WS_ID_CHARS } from '@craft-agent/shared/mentions'
+import { replacePathMentions, WS_ID_CHARS } from '@rox/shared/mentions'
 
 /** Non-nesting, leftmost delimiter stripping matching the historical regex grammar. */
 function stripDelimited(text: string, open: string, close: string, nonempty: boolean): string {

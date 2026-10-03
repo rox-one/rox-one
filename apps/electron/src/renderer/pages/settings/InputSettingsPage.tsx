@@ -25,7 +25,7 @@ import {
   SettingsMenuSelectRow,
 } from '@/components/settings'
 import { VoiceSettingsSection } from './VoiceSettingsSection'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {

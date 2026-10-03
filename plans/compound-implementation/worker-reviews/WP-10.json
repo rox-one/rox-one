@@ -171,7 +171,7 @@
       "path": "packages/shared/src/pages/index.ts",
       "symbol": "Types / Storage public exports",
       "change": "Expose accepted Page content DTOs/ports as needed without exposing service I/O to renderer imports; retain standalone HTML exports guarded by WP-51 rather than making a second service facade/store.",
-      "reason": "RPC imports @craft-agent/shared/pages and relies on this existing public boundary."
+      "reason": "RPC imports @rox/shared/pages and relies on this existing public boundary."
     },
     {
       "path": "packages/server-core/src/transport/types.ts",

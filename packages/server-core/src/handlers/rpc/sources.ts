@@ -1,11 +1,11 @@
 import { join } from 'path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { ensureDefaultMicroserviceSources, loadSourceConfig, loadWorkspaceSources, saveSourceConfig, saveSourceGuide, type FolderSourceConfig } from '@craft-agent/shared/sources'
-import { safeJsonParse } from '@craft-agent/shared/utils/files'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
-import { ensureRoxLayout, loadWorkspaceConfig, saveWorkspaceConfig } from '@craft-agent/shared/workspaces'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import { ensureDefaultMicroserviceSources, loadSourceConfig, loadWorkspaceSources, saveSourceConfig, saveSourceGuide, type FolderSourceConfig } from '@rox/shared/sources'
+import { safeJsonParse } from '@rox/shared/utils/files'
+import { getCredentialManager } from '@rox/shared/credentials'
+import { ensureRoxLayout, loadWorkspaceConfig, saveWorkspaceConfig } from '@rox/shared/workspaces'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { KnowledgeConnectionsStore, credentialIdFromRef } from '../../knowledge'
 import {
@@ -13,7 +13,7 @@ import {
   rpcSourcesActResult,
   rpcSourcesListResult,
   rpcSourcesReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sources.GET,
@@ -63,12 +63,12 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
   })
 
   // Create a new source
-  server.handle(RPC_CHANNELS.sources.CREATE, async (_ctx, workspaceId: string, config: Partial<import('@craft-agent/shared/sources').CreateSourceInput>) => {
+  server.handle(RPC_CHANNELS.sources.CREATE, async (_ctx, workspaceId: string, config: Partial<import('@rox/shared/sources').CreateSourceInput>) => {
     const act = rpcSourcesActResult({ source: 'native', action: 'write', nativeId: config.name || 'source' })
     if (!isClaimableLive(act)) throw new Error('source create is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
-    const { createSource } = await import('@craft-agent/shared/sources')
+    const { createSource } = await import('@rox/shared/sources')
     const created = await createSource(workspace.rootPath, {
       name: config.name || 'New Source',
       provider: config.provider || 'custom',
@@ -152,7 +152,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
     }
 
     // Return fully loaded source for the UI
-    const { loadSource } = await import('@craft-agent/shared/sources')
+    const { loadSource } = await import('@rox/shared/sources')
     const loaded = loadSource(workspace.rootPath, sourceSlug)
     if (!loaded) throw new Error(`Source not found after update: ${sourceSlug}`)
 
@@ -170,11 +170,11 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
     if (!isClaimableLive(act)) throw new Error('source delete is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
-    const { deleteSource } = await import('@craft-agent/shared/sources')
+    const { deleteSource } = await import('@rox/shared/sources')
     deleteSource(workspace.rootPath, sourceSlug)
 
     // Clean up stale slug from workspace default sources
-    const { loadWorkspaceConfig, saveWorkspaceConfig } = await import('@craft-agent/shared/workspaces')
+    const { loadWorkspaceConfig, saveWorkspaceConfig } = await import('@rox/shared/workspaces')
     const config = loadWorkspaceConfig(workspace.rootPath)
     if (config?.defaults?.enabledSourceSlugs?.includes(sourceSlug)) {
       config.defaults.enabledSourceSlugs = config.defaults.enabledSourceSlugs.filter(s => s !== sourceSlug)
@@ -197,7 +197,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
     if (!isClaimableLive(act)) throw new Error('source save credentials is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
-    const { loadSource, getSourceCredentialManager, markSourceAuthenticated } = await import('@craft-agent/shared/sources')
+    const { loadSource, getSourceCredentialManager, markSourceAuthenticated } = await import('@rox/shared/sources')
 
     const source = loadSource(workspace.rootPath, sourceSlug)
     if (!source) {
@@ -243,7 +243,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
     if (!workspace) return null
 
     const { existsSync, readFileSync } = await import('fs')
-    const { getSourcePermissionsPath } = await import('@craft-agent/shared/agent')
+    const { getSourcePermissionsPath } = await import('@rox/shared/agent')
     const path = getSourcePermissionsPath(workspace.rootPath, sourceSlug)
 
     if (!existsSync(path)) return null
@@ -263,7 +263,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
     if (!workspace) return null
 
     const { existsSync, readFileSync } = await import('fs')
-    const { getWorkspacePermissionsPath } = await import('@craft-agent/shared/agent')
+    const { getWorkspacePermissionsPath } = await import('@rox/shared/agent')
     const path = getWorkspacePermissionsPath(workspace.rootPath)
 
     if (!existsSync(path)) return null
@@ -280,7 +280,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
   // Get default permissions from ~/.craft-agent/permissions/default.json
   server.handle(RPC_CHANNELS.permissions.GET_DEFAULTS, async () => {
     const { existsSync, readFileSync } = await import('fs')
-    const { getAppPermissionsDir } = await import('@craft-agent/shared/agent')
+    const { getAppPermissionsDir } = await import('@rox/shared/agent')
     const { join } = await import('path')
 
     const defaultPath = join(getAppPermissionsDir(), 'default.json')
@@ -317,7 +317,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
         return { success: false, error: 'Source has not been tested yet' }
       }
 
-      const { CraftMcpClient } = await import('@craft-agent/shared/mcp')
+      const { CraftMcpClient } = await import('@rox/shared/mcp')
       let client: InstanceType<typeof CraftMcpClient>
 
       if (source.config.mcp.transport === 'stdio') {
@@ -361,7 +361,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
       const tools = await client.listTools()
       await client.close()
 
-      const { loadSourcePermissionsConfig, permissionsConfigCache } = await import('@craft-agent/shared/agent')
+      const { loadSourcePermissionsConfig, permissionsConfigCache } = await import('@rox/shared/agent')
       const permissionsConfig = loadSourcePermissionsConfig(workspace.rootPath, sourceSlug)
 
       const mergedConfig = permissionsConfigCache.getMergedConfig({

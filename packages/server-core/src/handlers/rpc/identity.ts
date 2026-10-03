@@ -5,10 +5,10 @@
  * knowledge / LLM connection registries. Secrets only via CredentialManager.
  */
 
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
-import { getLlmConnections } from '@craft-agent/shared/config'
-import { getIdentityStore } from '@craft-agent/core/platform/identity/store'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getCredentialManager } from '@rox/shared/credentials'
+import { getLlmConnections } from '@rox/shared/config'
+import { getIdentityStore } from '@rox/core/platform/identity/store'
 import type {
   ConnectServiceInput,
   IdentityState,
@@ -16,17 +16,17 @@ import type {
   ServiceConnectionStatus,
   ServiceProvider,
   UpdateProfileInput,
-} from '@craft-agent/core/platform/identity/types'
+} from '@rox/core/platform/identity/types'
 import { KnowledgeConnectionsStore } from '../../knowledge/connections-store'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { resolveConfigDir } from "@rox/shared/config/paths"
 import {
   isClaimableLive,
   rpcIdentityActResult,
   rpcIdentityListResult,
   rpcIdentityReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.identity.GET_STATE,

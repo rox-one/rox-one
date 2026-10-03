@@ -12,7 +12,7 @@ import {
   type CollectionDisplay,
   type CollectionFilters,
   type SessionPriority,
-} from '@craft-agent/shared/sessions/collection'
+} from '@rox/shared/sessions/collection'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { routes } from '@/lib/navigate'

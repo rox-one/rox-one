@@ -7,11 +7,11 @@
 - `config/legacy-config-migration.ts` performs copy-only import with no source deletion. Existing ROX files win. Conflicts are archived in `.legacy-imports/source-N/` outside active context, so conflicting instructions are never silently injected twice. A completion stamp prevents repeated imports. A failed import throws rather than pretending migration succeeded.
 - Existing legacy variables remain accepted as explicit compatibility inputs and emit a deprecation warning. They should not be newly emitted by launch scripts.
 
-## Remaining inventory for integration owner
+## Initial inventory (before integration)
 
 | Surface | Current finding | Required migration |
 | --- | --- | --- |
-| Package namespace | `@craft-agent/*` occurs across workspace manifests, imports, mocks, build aliases and workflows (over 1,200 tracked files) | Rename consistently to `@rox/*`, update Bun lock, frozen install and bundled build resolution together; no compatibility alias needed for unpublished internal modules |
+| Package namespace | `@craft-agent/*` occurred across workspace manifests, imports, mocks, build aliases and workflows (over 1,200 tracked files) | Rename consistently to `@rox/*`, update Bun lock, frozen install and bundled build resolution together; no compatibility alias needed for unpublished internal modules |
 | macOS/Windows identity | `electron-builder.yml` appId `com.lukilabs.craft-agent`; identity manifest deliberately retains this alias | Primary appId `one.rox.app`; verify macOS app data, Electron encryption keychain identity and Windows NSIS upgrade handling before removing old registration |
 | Protocols | Identity accepts `rox` and legacy `craftagents`; `main/handlers/workspace.ts:115` still generates legacy URLs | Emit only `rox://`; retain parser alias for existing OAuth/links until their migration |
 | Permissions path | `shared/src/agent/permissions-config.ts:51` reads old env/default directly | Use canonical resolver, preserving existing permissions via import |
@@ -54,3 +54,10 @@ Credential service migration is now implemented: the canonical service is `rox.c
 - Exact production dependency lock: 73 entries, HTTPS npm registry URLs and SHA512 integrity for every transitive package; installation uses npm ci with lifecycle scripts disabled. The package is default-on in managed toolchain for all four supported platforms and depends on managed Node (upstream Node >=22.13 requirement).
 - POSIX and Windows launchers use the managed Node runtime, with optional ROX_NODE_PATH override. Tests execute a declared CLI through the launcher and verify Node rather than Bun.
 - Upstream ACP agent adapters and authentication are independent first-use requirements. Installing acpx does not replace the OMP runtime used for ROX conversations and does not claim those external agents are preinstalled or authenticated.
+
+## Integrated application identity and namespace
+
+- Workspace manifests/imports/build aliases now use `@rox/*`; the pinned Bun lock is regenerated.
+- Packaged appId matches canonical `one.rox.app`. Explicit NSIS GUID `61dc82ee-e3b9-557b-98c4-20b9178a0f78` preserves the prior Windows installation registration.
+- Original copyright, licenses, source provenance, legacy OAuth client identifiers and migration-format strings remain intact. These are compatibility/attribution boundaries, rather than newly emitted product branding.
+- GitHub release installer now verifies published asset digest/size and preserves the old app bundle and user data.

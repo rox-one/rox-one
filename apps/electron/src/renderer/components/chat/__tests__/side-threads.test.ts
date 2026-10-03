@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { buildSideThreadPrompt, improvePromptWithMeta } from '@craft-agent/shared/side-threads'
+import { buildSideThreadPrompt, improvePromptWithMeta } from '@rox/shared/side-threads'
 
 const inputContainer = readFileSync(
   join(__dirname, '../../app-shell/input/InputContainer.tsx'),

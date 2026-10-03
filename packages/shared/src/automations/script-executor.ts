@@ -23,7 +23,7 @@ import { isAbsolute, join } from 'node:path';
 import {
   resolveScriptRuntime,
   isPathWithinDirectory,
-} from '@craft-agent/session-tools-core';
+} from '@rox/session-tools-core';
 import { createLogger } from '../utils/debug.ts';
 import { recordPageRefresh } from '../pages/storage.ts';
 import { HISTORY_FIELD_MAX_LENGTH } from './constants.ts';

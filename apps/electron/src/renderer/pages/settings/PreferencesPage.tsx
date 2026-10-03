@@ -17,8 +17,8 @@ import {
   SettingsTextarea,
 } from '@/components/settings'
 import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopover'
-import { Spinner } from '@craft-agent/ui'
-import { persistAgentIdentity, resolveAgentIdentity } from '@craft-agent/shared/identity'
+import { Spinner } from '@rox/ui'
+import { persistAgentIdentity, resolveAgentIdentity } from '@rox/shared/identity'
 
 interface PreferencesFormState {
   name: string

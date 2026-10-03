@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 /** Durable local OS presentation for the canonical personal-task reminder. */
-import { isOpenTask, PersonalTaskStore, PERSONAL_TASKS_STORAGE_KEY, type PersonalTask } from '@craft-agent/core/tasks/personal'
+import { isOpenTask, PersonalTaskStore, PERSONAL_TASKS_STORAGE_KEY, type PersonalTask } from '@rox/core/tasks/personal'
 import { loadPersonalTaskStore, persistPersonalTaskStore, subscribePersonalTasks } from './personal-tasks'
 
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import type { SessionPriority } from '@craft-agent/shared/protocol/dto'
+import type { SessionPriority } from '@rox/shared/protocol/dto'
 import type { KanbanTask } from '../types'
 import {
   buildPriorityGroups,

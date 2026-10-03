@@ -1,7 +1,7 @@
 // =============================================================================
 // Protocol re-exports (channels, DTOs, events, wire types)
 // =============================================================================
-export * from '@craft-agent/shared/protocol'
+export * from '@rox/shared/protocol'
 
 // =============================================================================
 // Package re-exports (convenience for renderer imports)
@@ -27,20 +27,20 @@ import type {
   RemoteTlsTrust,
   SessionMemoryMode,
   ServerHealth,
-} from '@craft-agent/core/types';
+} from '@rox/core/types';
 
 // Mode types from dedicated subpath export (avoids pulling in SDK)
-import type { PermissionMode } from '@craft-agent/shared/agent/modes';
+import type { PermissionMode } from '@rox/shared/agent/modes';
 import type {
   DiscoveredProfile,
   ImportCategory,
   ImportConsent,
   ImportSummary,
-} from '@craft-agent/shared/browser/profile-import'
-import type { ForeignAutoImportStatus } from '@craft-agent/shared/sessions'
-import type { ProjectOkrDocument } from '@craft-agent/shared/projects/types'
-import type { AgentBudgetSnapshot } from '@craft-agent/shared/agent'
-import type { OrgMember, OrgInvite, OrgRole } from '@craft-agent/shared/orgs'
+} from '@rox/shared/browser/profile-import'
+import type { ForeignAutoImportStatus } from '@rox/shared/sessions'
+import type { ProjectOkrDocument } from '@rox/shared/projects/types'
+import type { AgentBudgetSnapshot } from '@rox/shared/agent'
+import type { OrgMember, OrgInvite, OrgRole } from '@rox/shared/orgs'
 import type {
   PersonalTaskWrite,
   PersonalTaskDelete,
@@ -48,7 +48,7 @@ import type {
   PersonalTaskPutResult,
   PersonalTaskDeleteResult,
   PersonalTasksSnapshot,
-} from '@craft-agent/core/tasks/personal'
+} from '@rox/core/tasks/personal'
 
 /** Automatic browser cookie import (in-app browser). Values never cross RPC. */
 export interface BrowserCookieAutoStatus {
@@ -69,40 +69,40 @@ export interface BrowserCookieAutoStatus {
   error?: string
 }
 export type { PermissionMode };
-export { PERMISSION_MODE_CONFIG } from '@craft-agent/shared/agent/modes';
+export { PERMISSION_MODE_CONFIG } from '@rox/shared/agent/modes';
 
 // Thinking level types
-import type { ThinkingLevel } from '@craft-agent/shared/agent/thinking-levels';
-import type { XpEventType } from '@craft-agent/shared/gamification';
-import type { QuestRecord, SessionRating } from '@craft-agent/shared/gamification';
-import type { ConsentPurpose, ExportReceipt, PrivacyDeletionReceipt, PrivacyDto } from '@craft-agent/shared/privacy';
-import type { VoiceHealth, VoicePrefs } from '@craft-agent/shared/voice';
-import type { EnvironmentPrefs, QuestionId } from '@craft-agent/shared/environment';
-import type { ContextDocContent, ContextDocInfo } from '@craft-agent/shared/context-docs';
+import type { ThinkingLevel } from '@rox/shared/agent/thinking-levels';
+import type { XpEventType } from '@rox/shared/gamification';
+import type { QuestRecord, SessionRating } from '@rox/shared/gamification';
+import type { ConsentPurpose, ExportReceipt, PrivacyDeletionReceipt, PrivacyDto } from '@rox/shared/privacy';
+import type { VoiceHealth, VoicePrefs } from '@rox/shared/voice';
+import type { EnvironmentPrefs, QuestionId } from '@rox/shared/environment';
+import type { ContextDocContent, ContextDocInfo } from '@rox/shared/context-docs';
 import type {
   AutomationGraphProjection,
   SaveAutomationGraphPayload,
   SavedAutomationGraph,
-} from '@craft-agent/shared/automations';
+} from '@rox/shared/automations';
 export type { ContextDocContent, ContextDocInfo };
-import type { BundledSkillPackStatus } from '@craft-agent/shared/skills';
+import type { BundledSkillPackStatus } from '@rox/shared/skills';
 export type { BundledSkillPackStatus };
 import type {
   MarketplaceCatalogResult,
   MarketplaceEntryStats,
   MarketplaceInstallResult,
   MarketplaceRemoveResult,
-} from '@craft-agent/shared/marketplace';
+} from '@rox/shared/marketplace';
 export type {
   MarketplaceCatalogResult,
   MarketplaceEntryStats,
   MarketplaceInstallResult,
   MarketplaceRemoveResult,
 };
-import type { AddLessonResult, Lesson, LessonCategory, LessonScope, MemoryInsights, PendingSkill, PendingSkillDiff, ProjectMemoryDto, PromoteLessonResult, PromotionCandidate, SessionProvenance, SkillExportResult, SkillPruneResult, SkillUsageMap } from '@craft-agent/shared/memory/types';
+import type { AddLessonResult, Lesson, LessonCategory, LessonScope, MemoryInsights, PendingSkill, PendingSkillDiff, ProjectMemoryDto, PromoteLessonResult, PromotionCandidate, SessionProvenance, SkillExportResult, SkillPruneResult, SkillUsageMap } from '@rox/shared/memory/types';
 export type { Lesson, LessonCategory, LessonScope, MemoryInsights };
 export type { ThinkingLevel };
-export { THINKING_LEVELS, DEFAULT_THINKING_LEVEL } from '@craft-agent/shared/agent/thinking-levels';
+export { THINKING_LEVELS, DEFAULT_THINKING_LEVEL } from '@rox/shared/agent/thinking-levels';
 
 export type {
   CoreMessage as Message,
@@ -142,15 +142,15 @@ export interface WorkspaceActivation {
 export type WorkspaceCreationResult = Workspace & { activation?: WorkspaceActivation };
 
 // Auth types for onboarding
-import type { AuthState, SetupNeeds } from '@craft-agent/shared/auth/types';
-import type { AuthType } from '@craft-agent/shared/config/types';
+import type { AuthState, SetupNeeds } from '@rox/shared/auth/types';
+import type { AuthType } from '@rox/shared/config/types';
 export type { AuthState, SetupNeeds, AuthType };
 
 import type {
   SshHostConfig,
   SshHostInput,
   SshConfigImportSuggestion,
-} from '@craft-agent/shared/config';
+} from '@rox/shared/config';
 export type { SshHostConfig, SshHostInput, SshConfigImportSuggestion };
 
 /** Renderer-safe copies of the SSH defaults (the renderer bundle can't value-import
@@ -173,7 +173,7 @@ export interface SshBootstrapProgress {
 }
 
 // Credential health types
-import type { CredentialHealthStatus, CredentialHealthIssue, CredentialHealthIssueType } from '@craft-agent/shared/credentials/types';
+import type { CredentialHealthStatus, CredentialHealthIssue, CredentialHealthIssueType } from '@rox/shared/credentials/types';
 export type { CredentialHealthStatus, CredentialHealthIssue, CredentialHealthIssueType };
 
 import type {
@@ -184,7 +184,7 @@ import type {
   CredentialMigrationResult,
   CredentialMigrationRollbackDto,
   CredentialMigrationStatusDto,
-} from '@craft-agent/shared/protocol';
+} from '@rox/shared/protocol';
 export type {
   CredentialMigrationApplyDto,
   CredentialMigrationCountsDto,
@@ -201,9 +201,9 @@ import type {
   ServiceConnection,
   Profile,
   ProfilePlan,
-} from '@craft-agent/core/platform/identity/types';
+} from '@rox/core/platform/identity/types';
 export type { IdentityState, UpdateProfileInput, ServiceProvider, ServiceConnection, Profile, ProfilePlan };
-export { PROFILE_PLANS } from '@craft-agent/core/platform/identity/types';
+export { PROFILE_PLANS } from '@rox/core/platform/identity/types';
 export type { RemoteTlsTrust, RemoteServerConfig };
 
 // Extension Center (S-05) + SiYuan plugin bridge / Extension Host (W6)
@@ -227,7 +227,7 @@ import type {
   PluginBridgeSetEnabledResult,
   PluginBridgeUninstallBazaarArgs,
   PluginBridgeUninstallBazaarResult,
-} from '@craft-agent/shared/extensions'
+} from '@rox/shared/extensions'
 export type {
   BridgeProjectedContributions,
   CatalogEntry,
@@ -251,19 +251,19 @@ export type {
 }
 
 // Source types for session source selection
-import type { LoadedSource, FolderSourceConfig, SourceConnectionStatus } from '@craft-agent/shared/sources/types';
+import type { LoadedSource, FolderSourceConfig, SourceConnectionStatus } from '@rox/shared/sources/types';
 export type { LoadedSource, FolderSourceConfig, SourceConnectionStatus };
 
 // Skill types
-import type { LoadedSkill, SkillMetadata } from '@craft-agent/shared/skills/types';
+import type { LoadedSkill, SkillMetadata } from '@rox/shared/skills/types';
 export type { LoadedSkill, SkillMetadata };
 
 // Resource bundle types (cross-workspace export/import)
-import type { ExportResourcesOptions, ExportResult, ResourceImportMode, ResourceBundle, ResourceImportResult } from '@craft-agent/shared/resources';
+import type { ExportResourcesOptions, ExportResult, ResourceImportMode, ResourceBundle, ResourceImportResult } from '@rox/shared/resources';
 export type { ExportResourcesOptions, ExportResult, ResourceImportMode, ResourceBundle, ResourceImportResult };
 
 // LLM connection types
-import type { LlmConnection, LlmConnectionWithStatus, LlmAuthType, LlmProviderType, NetworkProxySettings } from '@craft-agent/shared/config';
+import type { LlmConnection, LlmConnectionWithStatus, LlmAuthType, LlmProviderType, NetworkProxySettings } from '@rox/shared/config';
 export type { LlmConnection, LlmConnectionWithStatus, LlmAuthType, LlmProviderType, NetworkProxySettings };
 // Knowledge provider contract types (P1 read-only — spec 2026-08-07-siyuan-integration/03;
 // mutation types are intentionally not surfaced: no mutation channels exist at P1)
@@ -280,7 +280,7 @@ import type {
   SearchInput,
   SearchPage,
   KnowledgeNotebookInfo,
-} from '@craft-agent/core/knowledge';
+} from '@rox/core/knowledge';
 export type {
   ContextMode,
   ContextPayload,
@@ -296,15 +296,15 @@ export type {
   KnowledgeNotebookInfo,
 };
 
-import type { ViewConfig as KnowledgeViewConfig } from '@craft-agent/shared/views';
+import type { ViewConfig as KnowledgeViewConfig } from '@rox/shared/views';
 export type { KnowledgeViewConfig };
-import type { SecretRefEntry, SecretRefsSettingsPayload } from '@craft-agent/shared/secrets';
+import type { SecretRefEntry, SecretRefsSettingsPayload } from '@rox/shared/secrets';
 export type { SecretRefEntry, SecretRefsSettingsPayload };
 import type { ZenShellSnapshot } from './shell-appearance';
-import type { ListDocTreeResult } from '@craft-agent/core/knowledge/providers/siyuan';
+import type { ListDocTreeResult } from '@rox/core/knowledge/providers/siyuan';
 
 // Toolchain manager types (first-run download manager, spec 2026-08-06)
-import type { ToolStatus as ToolchainToolStatus, ToolName as ToolchainToolName } from '@craft-agent/shared/toolchain/types';
+import type { ToolStatus as ToolchainToolStatus, ToolName as ToolchainToolName } from '@rox/shared/toolchain/types';
 export type { ToolchainToolStatus, ToolchainToolName };
 
 // OpenClaw runtime and security audit data contracts. These are data-only,
@@ -314,7 +314,7 @@ import type {
   AuditMode,
   OpenClawRuntimeStatus,
   SecurityAuditSnapshot,
-} from '@craft-agent/shared/openclaw';
+} from '@rox/shared/openclaw';
 export type {
   AcceptSecurityRiskRequest,
   AuditMode,
@@ -426,7 +426,7 @@ export interface TransportConnectionState {
 // =============================================================================
 
 // Re-import types for ElectronAPI
-import type { WorkspaceInfo, Workspace, SessionMetadata, StoredAttachment as StoredAttachmentType } from '@craft-agent/core/types';
+import type { WorkspaceInfo, Workspace, SessionMetadata, StoredAttachment as StoredAttachmentType } from '@rox/core/types';
 
 // Import protocol types used by ElectronAPI (they come through the `export *` above,
 // but we need them in scope for the interface definition)
@@ -515,7 +515,7 @@ import type {
   PublishPrepareResult,
   SiyuanSurfaceState,
   ExtensionSurfaceState,
-} from '@craft-agent/shared/protocol'
+} from '@rox/shared/protocol'
 
 export interface WorkGraphConnectionRecord {
   readonly id: string
@@ -661,7 +661,7 @@ export interface ElectronAPI {
     workspaceId: string,
     query: string,
   ): Promise<{
-    page: import('@craft-agent/core/meetings').Meeting[]
+    page: import('@rox/core/meetings').Meeting[]
     continueCursor: string | null
     denied?: boolean
     error?: { code: string }
@@ -674,38 +674,38 @@ export interface ElectronAPI {
     workspaceId: string,
     title: string,
     actorId: string,
-    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
-  ): Promise<{ meeting: import('@craft-agent/core/meetings').Meeting | null; error?: { code: string } }>
+    grant: import('@rox/shared/meeting-agents').MeetingGrant | null,
+  ): Promise<{ meeting: import('@rox/core/meetings').Meeting | null; error?: { code: string } }>
   createMeetingProposal(
     workspaceId: string,
     meetingId: string,
     type: 'create_task' | 'create_note',
     payload: Record<string, unknown>,
     actorId: string,
-    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
-  ): Promise<{ proposal: import('@craft-agent/core/meetings').MeetingProposal | null; error?: { code: string } }>
+    grant: import('@rox/shared/meeting-agents').MeetingGrant | null,
+  ): Promise<{ proposal: import('@rox/core/meetings').MeetingProposal | null; error?: { code: string } }>
   approveMeetingProposal(
     workspaceId: string,
     proposalId: string,
     actorId: string,
-    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
+    grant: import('@rox/shared/meeting-agents').MeetingGrant | null,
     payload: Record<string, unknown>,
   ): Promise<{
-    proposal: import('@craft-agent/core/meetings').MeetingProposal
-    operation: import('@craft-agent/core/meetings').OperationResultV2
+    proposal: import('@rox/core/meetings').MeetingProposal
+    operation: import('@rox/core/meetings').OperationResultV2
   }>
   rejectMeetingProposal(
     workspaceId: string,
     proposalId: string,
     actorId: string,
-    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
-  ): Promise<{ proposal: import('@craft-agent/core/meetings').MeetingProposal | null; error?: { code: string } }>
+    grant: import('@rox/shared/meeting-agents').MeetingGrant | null,
+  ): Promise<{ proposal: import('@rox/core/meetings').MeetingProposal | null; error?: { code: string } }>
   openMeetingTarget(
     workspaceId: string,
     entityId: string,
     revisionId: string,
     actorId: string,
-    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
+    grant: import('@rox/shared/meeting-agents').MeetingGrant | null,
   ): Promise<{
     target: { kind: 'note' | 'task'; id: string; revisionId: string; entityId: string } | null
     error?: { code: string }
@@ -714,47 +714,47 @@ export interface ElectronAPI {
     workspaceId: string,
     meetingId: string,
     actorId: string,
-    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
-  ): Promise<{ meeting: import('@craft-agent/core/meetings').Meeting | null; error?: { code: string } }>
+    grant: import('@rox/shared/meeting-agents').MeetingGrant | null,
+  ): Promise<{ meeting: import('@rox/core/meetings').Meeting | null; error?: { code: string } }>
   pauseCapture(
     workspaceId: string,
     meetingId: string,
     actorId: string,
-    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
-  ): Promise<{ meeting: import('@craft-agent/core/meetings').Meeting | null; error?: { code: string } }>
+    grant: import('@rox/shared/meeting-agents').MeetingGrant | null,
+  ): Promise<{ meeting: import('@rox/core/meetings').Meeting | null; error?: { code: string } }>
   stopCapture(
     workspaceId: string,
     meetingId: string,
     actorId: string,
-    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
-  ): Promise<{ meeting: import('@craft-agent/core/meetings').Meeting | null; error?: { code: string } }>
+    grant: import('@rox/shared/meeting-agents').MeetingGrant | null,
+  ): Promise<{ meeting: import('@rox/core/meetings').Meeting | null; error?: { code: string } }>
   importMedia(
     workspaceId: string,
     meetingId: string,
     actorId: string,
-    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
+    grant: import('@rox/shared/meeting-agents').MeetingGrant | null,
     spec: { contentHash: string; byteLength: number; mimeType?: string },
-  ): Promise<{ meeting: import('@craft-agent/core/meetings').Meeting | null; error?: { code: string } }>
+  ): Promise<{ meeting: import('@rox/core/meetings').Meeting | null; error?: { code: string } }>
   finalizeMeeting(
     workspaceId: string,
     meetingId: string,
     actorId: string,
-    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
-  ): Promise<{ meeting: import('@craft-agent/core/meetings').Meeting | null; error?: { code: string } }>
+    grant: import('@rox/shared/meeting-agents').MeetingGrant | null,
+  ): Promise<{ meeting: import('@rox/core/meetings').Meeting | null; error?: { code: string } }>
   addManualNote(
     workspaceId: string,
     meetingId: string,
     actorId: string,
-    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
+    grant: import('@rox/shared/meeting-agents').MeetingGrant | null,
     spec: { noteId: string; text: string },
-  ): Promise<{ meeting: import('@craft-agent/core/meetings').Meeting | null; error?: { code: string } }>
+  ): Promise<{ meeting: import('@rox/core/meetings').Meeting | null; error?: { code: string } }>
   correctSegment(
     workspaceId: string,
     meetingId: string,
     actorId: string,
-    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
+    grant: import('@rox/shared/meeting-agents').MeetingGrant | null,
     spec: { segmentId: string; replacement: string },
-  ): Promise<{ meeting: import('@craft-agent/core/meetings').Meeting | null; error?: { code: string } }>
+  ): Promise<{ meeting: import('@rox/core/meetings').Meeting | null; error?: { code: string } }>
 
   respondToPermission(sessionId: string, requestId: string, allowed: boolean, alwaysAllow: boolean, options?: PermissionResponseOptions): Promise<boolean>
   respondToCredential(sessionId: string, requestId: string, response: CredentialResponse): Promise<boolean>
@@ -763,17 +763,17 @@ export interface ElectronAPI {
   sessionCommand(sessionId: string, command: SessionCommand): Promise<void | ShareResult | BroInviteCommandResult | BroPresenceMemberDto[] | RefreshTitleResult | ImproveDraftResult | UndoResult | { count: number }>
 
   // B4: multi-select bulk patch over sessions:command setters (rank forbidden; 200 ids max)
-  bulkUpdateSessions(input: import('@craft-agent/shared/protocol/dto').BulkUpdateSessionsInput): Promise<import('@craft-agent/shared/protocol/dto').BulkUpdateSessionsResult>
-  onSessionsBulkChanged(callback: (event: import('@craft-agent/shared/protocol/dto').SessionsBulkChangedEvent) => void): () => void
+  bulkUpdateSessions(input: import('@rox/shared/protocol/dto').BulkUpdateSessionsInput): Promise<import('@rox/shared/protocol/dto').BulkUpdateSessionsResult>
+  onSessionsBulkChanged(callback: (event: import('@rox/shared/protocol/dto').SessionsBulkChangedEvent) => void): () => void
 
   // Server info (REMOTE_ELIGIBLE — returns data from whichever server owns the workspace)
   getServerHomeDir(): Promise<string>
   getServerHealth(): Promise<ServerHealth>
 
   // Server mode configuration
-  getServerConfig(): Promise<import('@craft-agent/shared/config/server-config').ServerConfig>
-  setServerConfig(config: import('@craft-agent/shared/config/server-config').ServerConfig): Promise<void>
-  getServerStatus(): Promise<import('@craft-agent/shared/config/server-config').ServerStatus>
+  getServerConfig(): Promise<import('@rox/shared/config/server-config').ServerConfig>
+  setServerConfig(config: import('@rox/shared/config/server-config').ServerConfig): Promise<void>
+  getServerStatus(): Promise<import('@rox/shared/config/server-config').ServerStatus>
 
   // App lifecycle
   relaunchApp(): Promise<void>
@@ -961,21 +961,21 @@ export interface ElectronAPI {
   // Notes
   listNotes(workspaceId: string): Promise<NoteSummary[]>
   readNote(workspaceId: string, noteId: string): Promise<NoteDocument>
-  resolveContent(ref: import('@craft-agent/core/rox2').Rox2EntityRef): Promise<import('@craft-agent/server-core/docs/descriptor-resolver').ContentResolution | import('@craft-agent/server-core/docs/descriptor-resolver').ContentFailure>
-  describeContent(ref: import('@craft-agent/core/rox2').Rox2EntityRef): Promise<import('@craft-agent/server-core/docs/descriptor-resolver').ContentResolution | import('@craft-agent/server-core/docs/descriptor-resolver').ContentFailure>
-  adoptContentDescriptor(command: import('@craft-agent/server-core/docs/descriptor-resolver').AdoptDescriptorCommand): Promise<import('@craft-agent/server-core/docs/descriptor-resolver').DescriptorReceipt | import('@craft-agent/server-core/docs/descriptor-resolver').ContentFailure>
-  getBlockTree(request: import('@craft-agent/server-core/docs/block-tree-service').GetBlockTreeRequest): Promise<import('@craft-agent/server-core/docs/block-tree-service').BlockTreeResult>
-  previewMarkerMapping(request: import('@craft-agent/server-core/docs/block-tree-service').PreviewMarkerMappingRequest): Promise<import('@craft-agent/server-core/docs/block-tree-service').NativeMarkerMappingPreview>
-  applyMarkerMapping(request: import('@craft-agent/server-core/docs/block-tree-service').ApplyMarkerMappingRequest): Promise<import('@craft-agent/server-core/docs/block-tree-service').MarkerMappingCommitResult>
-  commitMarkdown(command: import('@craft-agent/core/docs').MarkdownCommitCommand): Promise<{ note: NoteDocument; receipt: import('@craft-agent/server-core/docs/markdown-commit').MarkdownCommitReceipt }>
-  getMarkdownCommitReceipt(workspaceId: string, noteId: string, operationId: string, sourceStoreId: string): Promise<import('@craft-agent/server-core/docs/markdown-commit').MarkdownCommitReceipt | null>
-  previewProjectRepository(input: import('@craft-agent/shared/code-intelligence').RepositoryPreviewInput): Promise<import('@craft-agent/shared/code-intelligence').RepositoryPreview>
-  bindProjectRepository(input: import('@craft-agent/shared/code-intelligence').RepositoryBindInput): Promise<import('@craft-agent/shared/code-intelligence').RepositoryBinding>
-  captureProjectRepository(input: import('@craft-agent/shared/code-intelligence').RepositoryProjectInput): Promise<import('@craft-agent/shared/code-intelligence').RepositorySnapshotSummary>
-  listProjectRepositorySnapshots(input: import('@craft-agent/shared/code-intelligence').RepositoryProjectInput): Promise<import('@craft-agent/shared/code-intelligence').RepositoryConnectionInspection>
-  readProjectRepositorySpan(input: import('@craft-agent/shared/code-intelligence').RepositoryReadSpanInput): Promise<import('@craft-agent/shared/code-intelligence').FileSpan>
-  checkProjectRepositoryFreshness(input: import('@craft-agent/shared/code-intelligence').RepositorySnapshotInput): Promise<import('@craft-agent/shared/code-intelligence').RepositoryFreshness>
-  cancelProjectRepositoryRequest(input: import('@craft-agent/shared/code-intelligence').RepositoryProjectInput): Promise<boolean>
+  resolveContent(ref: import('@rox/core/rox2').Rox2EntityRef): Promise<import('@rox/server-core/docs/descriptor-resolver').ContentResolution | import('@rox/server-core/docs/descriptor-resolver').ContentFailure>
+  describeContent(ref: import('@rox/core/rox2').Rox2EntityRef): Promise<import('@rox/server-core/docs/descriptor-resolver').ContentResolution | import('@rox/server-core/docs/descriptor-resolver').ContentFailure>
+  adoptContentDescriptor(command: import('@rox/server-core/docs/descriptor-resolver').AdoptDescriptorCommand): Promise<import('@rox/server-core/docs/descriptor-resolver').DescriptorReceipt | import('@rox/server-core/docs/descriptor-resolver').ContentFailure>
+  getBlockTree(request: import('@rox/server-core/docs/block-tree-service').GetBlockTreeRequest): Promise<import('@rox/server-core/docs/block-tree-service').BlockTreeResult>
+  previewMarkerMapping(request: import('@rox/server-core/docs/block-tree-service').PreviewMarkerMappingRequest): Promise<import('@rox/server-core/docs/block-tree-service').NativeMarkerMappingPreview>
+  applyMarkerMapping(request: import('@rox/server-core/docs/block-tree-service').ApplyMarkerMappingRequest): Promise<import('@rox/server-core/docs/block-tree-service').MarkerMappingCommitResult>
+  commitMarkdown(command: import('@rox/core/docs').MarkdownCommitCommand): Promise<{ note: NoteDocument; receipt: import('@rox/server-core/docs/markdown-commit').MarkdownCommitReceipt }>
+  getMarkdownCommitReceipt(workspaceId: string, noteId: string, operationId: string, sourceStoreId: string): Promise<import('@rox/server-core/docs/markdown-commit').MarkdownCommitReceipt | null>
+  previewProjectRepository(input: import('@rox/shared/code-intelligence').RepositoryPreviewInput): Promise<import('@rox/shared/code-intelligence').RepositoryPreview>
+  bindProjectRepository(input: import('@rox/shared/code-intelligence').RepositoryBindInput): Promise<import('@rox/shared/code-intelligence').RepositoryBinding>
+  captureProjectRepository(input: import('@rox/shared/code-intelligence').RepositoryProjectInput): Promise<import('@rox/shared/code-intelligence').RepositorySnapshotSummary>
+  listProjectRepositorySnapshots(input: import('@rox/shared/code-intelligence').RepositoryProjectInput): Promise<import('@rox/shared/code-intelligence').RepositoryConnectionInspection>
+  readProjectRepositorySpan(input: import('@rox/shared/code-intelligence').RepositoryReadSpanInput): Promise<import('@rox/shared/code-intelligence').FileSpan>
+  checkProjectRepositoryFreshness(input: import('@rox/shared/code-intelligence').RepositorySnapshotInput): Promise<import('@rox/shared/code-intelligence').RepositoryFreshness>
+  cancelProjectRepositoryRequest(input: import('@rox/shared/code-intelligence').RepositoryProjectInput): Promise<boolean>
   saveNote(workspaceId: string, noteId: string, content: string, expectedRevision?: string, operationOrSourceStoreId?: NoteMutationOptions | string): Promise<NoteDocument>
   createNote(workspaceId: string, title: string, folder?: string, operation?: NoteMutationOptions): Promise<NoteDocument>
   renameNote(workspaceId: string, noteId: string, nextTitle: string, operation?: NoteMutationOptions): Promise<NoteRenameResult>
@@ -1301,17 +1301,17 @@ export interface ElectronAPI {
   /** Materialize consented copies into the workspace imports folder. */
   executeNotesImport(input: { workspaceId: string; sourcePath: string }): Promise<unknown>
   /** RX-DOC-0032: pending commands awaiting an owner decision. */
-  listPendingCommands(input: { workspaceId: string }): Promise<import('@craft-agent/server-core/command-gateway').PendingCommand[]>
+  listPendingCommands(input: { workspaceId: string }): Promise<import('@rox/server-core/command-gateway').PendingCommand[]>
   approveCommand(input: { workspaceId: string; id: string }): Promise<{ ok: true }>
   denyCommand(input: { workspaceId: string; id: string }): Promise<{ ok: true }>
   /** RX-TSK-0112: OpenClaw runtime status for the audit panel. */
-  getOpenClawRuntimeStatus(input: { workspaceId: string }): Promise<import('@craft-agent/shared/openclaw').OpenClawRuntimeStatus>
+  getOpenClawRuntimeStatus(input: { workspaceId: string }): Promise<import('@rox/shared/openclaw').OpenClawRuntimeStatus>
   /** Run a security audit ('standard' | 'deep') and return the snapshot. */
-  runSecurityAudit(input: { workspaceId: string; mode: import('@craft-agent/shared/openclaw').AuditMode }): Promise<import('@craft-agent/shared/openclaw').SecurityAuditSnapshot>
+  runSecurityAudit(input: { workspaceId: string; mode: import('@rox/shared/openclaw').AuditMode }): Promise<import('@rox/shared/openclaw').SecurityAuditSnapshot>
   /** Latest stored snapshot or null. */
-  getLatestSecurityAudit(input: { workspaceId: string }): Promise<import('@craft-agent/shared/openclaw').SecurityAuditSnapshot | null>
+  getLatestSecurityAudit(input: { workspaceId: string }): Promise<import('@rox/shared/openclaw').SecurityAuditSnapshot | null>
   /** Owner accepts a finding as a known risk. */
-  acceptSecurityRisk(input: import('@craft-agent/shared/openclaw').AcceptSecurityRiskRequest): Promise<void>
+  acceptSecurityRisk(input: import('@rox/shared/openclaw').AcceptSecurityRiskRequest): Promise<void>
   /** Revoke a previously accepted risk by fingerprint. */
   revokeSecurityRiskAcceptance(input: { workspaceId: string; fingerprint: string }): Promise<void>
   getToolchainStatus(): Promise<ToolchainToolStatus[]>
@@ -1716,10 +1716,10 @@ export interface ElectronAPI {
   onVoiceChanged(callback: (prefs: VoicePrefs) => void): () => void
   bootstrapVoice(): Promise<{ installationId: string; expiresAt: number; scopes: string[] }>
   getVoiceCapabilities(): Promise<{ displayName: string; languageCount: number; show74Badge: boolean; modelId: string }>
-  startVoiceCapture(): Promise<import('@craft-agent/shared/voice').VoiceJob>
-  stopVoiceCapture(): Promise<import('@craft-agent/shared/voice').VoiceJob>
-  cancelVoiceCapture(): Promise<import('@craft-agent/shared/voice').VoiceJob | null>
-  grantVoicePermission(): Promise<import('@craft-agent/shared/voice').VoiceJob>
+  startVoiceCapture(): Promise<import('@rox/shared/voice').VoiceJob>
+  stopVoiceCapture(): Promise<import('@rox/shared/voice').VoiceJob>
+  cancelVoiceCapture(): Promise<import('@rox/shared/voice').VoiceJob | null>
+  grantVoicePermission(): Promise<import('@rox/shared/voice').VoiceJob>
   sendVoiceChunk(payload: { audioBase64: string }): Promise<{ ok: true }>
   listVoiceHistory(query?: { cursor?: string; limit?: number; search?: string; favorite?: boolean }): Promise<{ page: unknown[]; continueCursor: string | null; isDone: boolean }>
   getVoiceHistoryItem(payload: { id: string }): Promise<{ recording: unknown; revisions: unknown[]; runs: unknown[] }>
@@ -1730,15 +1730,15 @@ export interface ElectronAPI {
   reprocessVoice(payload: { id: string }): Promise<{ ok: true; recordingId: string }>
   processVoiceTranscript(payload: { text: string }): Promise<unknown>
   listVoiceModels(): Promise<{ families: string[]; catalog: unknown[] }>
-  onVoiceJob(callback: (job: import('@craft-agent/shared/voice').VoiceJob) => void): () => void
-  onVoiceOverlay(callback: (state: import('@craft-agent/shared/voice').OverlayState) => void): () => void
+  onVoiceJob(callback: (job: import('@rox/shared/voice').VoiceJob) => void): () => void
+  onVoiceOverlay(callback: (state: import('@rox/shared/voice').OverlayState) => void): () => void
   onVoiceHotkey(callback: (payload: { command: 'toggle' | 'ptt-down' | 'ptt-up' | 'cancel' }) => void): () => void
 
   // Session Drafts (persisted composer state — text + attachment refs)
-  getDraft(sessionId: string): Promise<import('@craft-agent/shared/config').SessionDraft | null>
-  setDraft(sessionId: string, draft: import('@craft-agent/shared/config').SessionDraft): Promise<void>
+  getDraft(sessionId: string): Promise<import('@rox/shared/config').SessionDraft | null>
+  setDraft(sessionId: string, draft: import('@rox/shared/config').SessionDraft): Promise<void>
   deleteDraft(sessionId: string): Promise<void>
-  getAllDrafts(): Promise<Record<string, import('@craft-agent/shared/config').SessionDraft>>
+  getAllDrafts(): Promise<Record<string, import('@rox/shared/config').SessionDraft>>
 
   // Session Info Panel
   getSessionFiles(sessionId: string): Promise<SessionFile[]>
@@ -1765,9 +1765,9 @@ export interface ElectronAPI {
   deleteSource(workspaceId: string, sourceSlug: string): Promise<void>
   startSourceOAuth(workspaceId: string, sourceSlug: string): Promise<{ success: boolean; error?: string }>
   saveSourceCredentials(workspaceId: string, sourceSlug: string, credential: string): Promise<void>
-  getSourcePermissionsConfig(workspaceId: string, sourceSlug: string): Promise<import('@craft-agent/shared/agent').PermissionsConfigFile | null>
-  getWorkspacePermissionsConfig(workspaceId: string): Promise<import('@craft-agent/shared/agent').PermissionsConfigFile | null>
-  getDefaultPermissionsConfig(): Promise<{ config: import('@craft-agent/shared/agent').PermissionsConfigFile | null; path: string }>
+  getSourcePermissionsConfig(workspaceId: string, sourceSlug: string): Promise<import('@rox/shared/agent').PermissionsConfigFile | null>
+  getWorkspacePermissionsConfig(workspaceId: string): Promise<import('@rox/shared/agent').PermissionsConfigFile | null>
+  getDefaultPermissionsConfig(): Promise<{ config: import('@rox/shared/agent').PermissionsConfigFile | null; path: string }>
   getMcpTools(workspaceId: string, sourceSlug: string): Promise<McpToolsResult>
   reindexSources(workspaceId: string): Promise<{
     indexed: number
@@ -1822,7 +1822,7 @@ export interface ElectronAPI {
   updateSkill(
     workspaceId: string,
     skillSlug: string,
-    updates: import('@craft-agent/shared/skills').UpdateSkillContentInput,
+    updates: import('@rox/shared/skills').UpdateSkillContentInput,
   ): Promise<LoadedSkill>
   deleteSkill(workspaceId: string, skillSlug: string): Promise<void>
   /** Import an OMP skill into workspace craft skills. Returns the materialized slug (may get a `-omp` suffix on conflict). */
@@ -1869,16 +1869,16 @@ export interface ElectronAPI {
   listInsights(workspaceId?: string): Promise<MemoryInsights>
   // Y4: stamp the one-shot onboarding marker ({configDir}/memory/.onboarded)
   markMemoryOnboarded(): Promise<void>
-  listMemoryProposals(workspaceId: string, sessionId?: string): Promise<import('@craft-agent/shared/memory/proposals').MemoryProposal[]>
+  listMemoryProposals(workspaceId: string, sessionId?: string): Promise<import('@rox/shared/memory/proposals').MemoryProposal[]>
   extractMemoryProposals(args: {
     workspaceId: string
     sessionId: string
     projectId?: string
-    trigger: import('@craft-agent/shared/memory/proposals').MemoryProposalTrigger
+    trigger: import('@rox/shared/memory/proposals').MemoryProposalTrigger
     messages: Array<{ id: string; role: string; content: string }>
   }): Promise<{
     disabled: boolean
-    proposals: import('@craft-agent/shared/memory/proposals').MemoryProposal[]
+    proposals: import('@rox/shared/memory/proposals').MemoryProposal[]
     preview: string[]
     /** User/assistant messages the extractor read. */
     scannedMessages?: number
@@ -1890,63 +1890,63 @@ export interface ElectronAPI {
   approveMemoryProposal(
     workspaceId: string,
     proposalId: string,
-    scope: import('@craft-agent/shared/memory/proposals').MemoryProposalScope,
+    scope: import('@rox/shared/memory/proposals').MemoryProposalScope,
     editedText?: string,
     projectId?: string,
-  ): Promise<import('@craft-agent/shared/memory/proposals').MemoryProposal | null>
-  rejectMemoryProposal(workspaceId: string, proposalId: string): Promise<import('@craft-agent/shared/memory/proposals').MemoryProposal | null>
-  editMemoryProposal(workspaceId: string, proposalId: string, text: string): Promise<import('@craft-agent/shared/memory/proposals').MemoryProposal | null>
+  ): Promise<import('@rox/shared/memory/proposals').MemoryProposal | null>
+  rejectMemoryProposal(workspaceId: string, proposalId: string): Promise<import('@rox/shared/memory/proposals').MemoryProposal | null>
+  editMemoryProposal(workspaceId: string, proposalId: string, text: string): Promise<import('@rox/shared/memory/proposals').MemoryProposal | null>
   deleteMemoryProposal(workspaceId: string, proposalId: string): Promise<boolean>
   enrichMindMap(input: {
     workspaceId: string
-    entity: import('@craft-agent/core/mindmap').MindMapEntityRef
-    graph: import('@craft-agent/core/mindmap').MindMapGraph
+    entity: import('@rox/core/mindmap').MindMapEntityRef
+    graph: import('@rox/core/mindmap').MindMapGraph
     sourceExcerpt?: string
     heuristicOnly?: boolean
   }): Promise<
-    | { ok: true; graph: import('@craft-agent/core/mindmap').MindMapGraph; mode: 'llm' | 'heuristic' }
-    | { ok: false; error: string; graph: import('@craft-agent/core/mindmap').MindMapGraph; mode?: 'passthrough' }
+    | { ok: true; graph: import('@rox/core/mindmap').MindMapGraph; mode: 'llm' | 'heuristic' }
+    | { ok: false; error: string; graph: import('@rox/core/mindmap').MindMapGraph; mode?: 'passthrough' }
   >
   mindmapPinLoad(input: {
     workspaceId: string
-    entity: import('@craft-agent/core/mindmap').MindMapEntityRef
-  }): Promise<import('@craft-agent/core/mindmap').PinnedMap | null>
+    entity: import('@rox/core/mindmap').MindMapEntityRef
+  }): Promise<import('@rox/core/mindmap').PinnedMap | null>
   mindmapPinSave(input: {
     workspaceId: string
-    pin: import('@craft-agent/core/mindmap').PinnedMap
+    pin: import('@rox/core/mindmap').PinnedMap
   }): Promise<{ ok: true } | { ok: false; error: string }>
   mindmapPinClear(input: {
     workspaceId: string
-    entity: import('@craft-agent/core/mindmap').MindMapEntityRef
+    entity: import('@rox/core/mindmap').MindMapEntityRef
   }): Promise<{ ok: true } | { ok: false; error: string }>
   onMemoryChanged(callback: (workspaceId: string | null, scope: LessonScope | 'both') => void): () => void
 
   // Statuses (workspace-scoped)
-  listStatuses(workspaceId: string): Promise<import('@craft-agent/shared/statuses').StatusConfig[]>
+  listStatuses(workspaceId: string): Promise<import('@rox/shared/statuses').StatusConfig[]>
   reorderStatuses(workspaceId: string, orderedIds: string[]): Promise<void>
   onStatusesChanged(callback: (workspaceId: string) => void): () => void
 
   // Labels (workspace-scoped)
-  listLabels(workspaceId: string): Promise<import('@craft-agent/shared/labels').LabelConfig[]>
-  createLabel(workspaceId: string, input: import('@craft-agent/shared/labels').CreateLabelInput): Promise<import('@craft-agent/shared/labels').LabelConfig>
+  listLabels(workspaceId: string): Promise<import('@rox/shared/labels').LabelConfig[]>
+  createLabel(workspaceId: string, input: import('@rox/shared/labels').CreateLabelInput): Promise<import('@rox/shared/labels').LabelConfig>
   updateLabel(
     workspaceId: string,
     labelId: string,
-    updates: import('@craft-agent/shared/labels').UpdateLabelInput,
-  ): Promise<import('@craft-agent/shared/labels').LabelConfig>
+    updates: import('@rox/shared/labels').UpdateLabelInput,
+  ): Promise<import('@rox/shared/labels').LabelConfig>
   deleteLabel(workspaceId: string, labelId: string): Promise<{ stripped: number }>
   onLabelsChanged(callback: (workspaceId: string) => void): () => void
 
   // Organizations (P3.1 team workspaces)
-  listOrganizations(): Promise<import('@craft-agent/shared/orgs').OrganizationWithMembers[]>
-  createOrganization(input: import('@craft-agent/shared/orgs').CreateOrganizationInput): Promise<import('@craft-agent/shared/orgs').OrganizationWithMembers>
-  inviteToOrganization(input: import('@craft-agent/shared/orgs').InviteToOrgInput): Promise<import('@craft-agent/shared/orgs').OrgInvite>
-  acceptOrganizationInvite(input: import('@craft-agent/shared/orgs').AcceptInviteInput): Promise<{
-    org: import('@craft-agent/shared/orgs').OrganizationWithMembers
-    member: import('@craft-agent/shared/orgs').OrgMember
-    invite: import('@craft-agent/shared/orgs').OrgInvite
+  listOrganizations(): Promise<import('@rox/shared/orgs').OrganizationWithMembers[]>
+  createOrganization(input: import('@rox/shared/orgs').CreateOrganizationInput): Promise<import('@rox/shared/orgs').OrganizationWithMembers>
+  inviteToOrganization(input: import('@rox/shared/orgs').InviteToOrgInput): Promise<import('@rox/shared/orgs').OrgInvite>
+  acceptOrganizationInvite(input: import('@rox/shared/orgs').AcceptInviteInput): Promise<{
+    org: import('@rox/shared/orgs').OrganizationWithMembers
+    member: import('@rox/shared/orgs').OrgMember
+    invite: import('@rox/shared/orgs').OrgInvite
   }>
-  listOrganizationMembers(orgId: string): Promise<import('@craft-agent/shared/orgs').OrgMember[]>
+  listOrganizationMembers(orgId: string): Promise<import('@rox/shared/orgs').OrgMember[]>
   updateOrganizationMemberRole(orgId: string, userId: string, role: OrgRole): Promise<OrgMember>
   removeOrganizationMember(orgId: string, userId: string): Promise<OrgMember>
   revokeOrganizationInvite(orgId: string, inviteId: string): Promise<Omit<OrgInvite, 'token'>>
@@ -1957,8 +1957,8 @@ export interface ElectronAPI {
   onLlmConnectionsChanged(callback: () => void): () => void
 
   // Views (workspace-scoped, stored in views.json)
-  listViews(workspaceId: string): Promise<import('@craft-agent/shared/views').ViewConfig[]>
-  saveViews(workspaceId: string, views: import('@craft-agent/shared/views').ViewConfig[]): Promise<void>
+  listViews(workspaceId: string): Promise<import('@rox/shared/views').ViewConfig[]>
+  saveViews(workspaceId: string, views: import('@rox/shared/views').ViewConfig[]): Promise<void>
 
   // Generic workspace image loading/saving
   readWorkspaceImage(workspaceId: string, relativePath: string): Promise<string>
@@ -1968,9 +1968,9 @@ export interface ElectronAPI {
   getToolIconMappings(): Promise<ToolIconMapping[]>
 
   // Theme (app-level default)
-  getAppTheme(): Promise<import('@craft-agent/shared/config').ThemeOverrides | null>
-  loadPresetThemes(): Promise<import('@craft-agent/shared/config').PresetTheme[]>
-  loadPresetTheme(themeId: string): Promise<import('@craft-agent/shared/config').PresetTheme | null>
+  getAppTheme(): Promise<import('@rox/shared/config').ThemeOverrides | null>
+  loadPresetThemes(): Promise<import('@rox/shared/config').PresetTheme[]>
+  loadPresetTheme(themeId: string): Promise<import('@rox/shared/config').PresetTheme | null>
   getColorTheme(): Promise<string>
   setColorTheme(themeId: string): Promise<void>
   getWorkspaceColorTheme(workspaceId: string): Promise<string | null>
@@ -1978,7 +1978,7 @@ export interface ElectronAPI {
   getAllWorkspaceThemes(): Promise<Record<string, string | undefined>>
 
   // Theme change listeners
-  onAppThemeChange(callback: (theme: import('@craft-agent/shared/config').ThemeOverrides | null) => void): () => void
+  onAppThemeChange(callback: (theme: import('@rox/shared/config').ThemeOverrides | null) => void): () => void
 
   // Logo URL resolution
   getLogoUrl(serviceUrl: string, provider?: string): Promise<string | null>
@@ -2138,7 +2138,7 @@ export interface ElectronAPI {
   // LLM Connections (provider configurations)
   listLlmConnections(): Promise<LlmConnection[]>
   listLlmConnectionsWithStatus(): Promise<LlmConnectionWithStatus[]>
-  getStartupRuntimeSummary(): Promise<import('@craft-agent/shared/protocol').StartupRuntimeSummary | null>
+  getStartupRuntimeSummary(): Promise<import('@rox/shared/protocol').StartupRuntimeSummary | null>
   getLlmConnection(slug: string): Promise<LlmConnection | null>
   getLlmConnectionApiKey(slug: string): Promise<string | null>
   saveLlmConnection(connection: LlmConnection): Promise<{ success: boolean; error?: string }>
@@ -2155,95 +2155,95 @@ export interface ElectronAPI {
   connectProjectAuthority(workspaceId: string, input: import('./project-authority').ProjectAuthorityLoginInput): Promise<import('./project-authority').ProjectAuthorityMutationResult>
   disconnectProjectAuthority(workspaceId: string): Promise<import('./project-authority').ProjectAuthorityMutationResult>
   onProjectAuthorityChanged(callback: () => void): () => void
-  getSharedProjects(workspaceId: string, body: unknown): Promise<import('@craft-agent/shared/workspace-domain/identity/contracts').ProjectPage>
-  getSharedProject(workspaceId: string, body: unknown): Promise<import('@craft-agent/shared/workspace-domain/identity/contracts').SharedProject>
-  createSharedProject(workspaceId: string, body: unknown): Promise<import('@craft-agent/shared/workspace-domain/identity/contracts').SharedProjectResult>
+  getSharedProjects(workspaceId: string, body: unknown): Promise<import('@rox/shared/workspace-domain/identity/contracts').ProjectPage>
+  getSharedProject(workspaceId: string, body: unknown): Promise<import('@rox/shared/workspace-domain/identity/contracts').SharedProject>
+  createSharedProject(workspaceId: string, body: unknown): Promise<import('@rox/shared/workspace-domain/identity/contracts').SharedProjectResult>
   getSharedProjectCreateIntent(workspaceId: string): Promise<import('./project-create-intent').ProjectCreateIntentView>
   queueSharedProjectCreate(workspaceId: string, body: unknown): Promise<import('./project-create-intent').ProjectCreateIntentView>
   retrySharedProjectCreate(workspaceId: string): Promise<import('./project-create-intent').ProjectCreateAttempt>
   cancelSharedProjectCreate(workspaceId: string): Promise<import('./project-create-intent').ProjectCreateIntentView>
-  getSharedProjectEvents(workspaceId: string, body: unknown): Promise<import('@craft-agent/shared/workspace-domain/identity/contracts').IdentityEventPage>
+  getSharedProjectEvents(workspaceId: string, body: unknown): Promise<import('@rox/shared/workspace-domain/identity/contracts').IdentityEventPage>
 
   // Projects (workspace-scoped)
   getProjects(workspaceId: string): Promise<unknown>
   getProject(workspaceId: string, projectIdOrSlug: string): Promise<unknown | null>
   getProjectOkr(workspaceId: string, projectSlug: string): Promise<ProjectOkrDocument>
   saveProjectOkr(workspaceId: string, projectSlug: string, expectedRevision: number, document: Pick<ProjectOkrDocument, 'cycles'>): Promise<ProjectOkrDocument | { conflict: true; expectedRevision: number; actualRevision: number }>
-  createProject(workspaceId: string, input: import('@craft-agent/shared/projects/types').CreateProjectInput): Promise<import('@craft-agent/shared/projects/types').ProjectConfig>
-  updateProject(workspaceId: string, projectSlug: string, patch: Partial<Omit<import('@craft-agent/shared/projects/types').ProjectConfig, 'id' | 'slug' | 'createdAt'>>): Promise<import('@craft-agent/shared/projects/types').ProjectConfig>
+  createProject(workspaceId: string, input: import('@rox/shared/projects/types').CreateProjectInput): Promise<import('@rox/shared/projects/types').ProjectConfig>
+  updateProject(workspaceId: string, projectSlug: string, patch: Partial<Omit<import('@rox/shared/projects/types').ProjectConfig, 'id' | 'slug' | 'createdAt'>>): Promise<import('@rox/shared/projects/types').ProjectConfig>
   deleteProject(workspaceId: string, projectSlug: string): Promise<void>
   listProjectAssets(workspaceId: string, projectSlug: string): Promise<unknown>
-  uploadProjectAsset(workspaceId: string, projectSlug: string, input: { filename: string; base64?: string; text?: string; sourcePath?: string }): Promise<import('@craft-agent/shared/projects/types').ProjectAsset>
+  uploadProjectAsset(workspaceId: string, projectSlug: string, input: { filename: string; base64?: string; text?: string; sourcePath?: string }): Promise<import('@rox/shared/projects/types').ProjectAsset>
   deleteProjectAsset(workspaceId: string, projectSlug: string, filename: string): Promise<void>
-  getProjectRoadmap(workspaceId: string, projectSlug: string): Promise<import('@craft-agent/shared/projects/roadmap-storage').LoadedRoadmap | null>
-  saveProjectRoadmap(workspaceId: string, projectSlug: string, roadmap: import('@craft-agent/shared/projects/roadmap').ProjectRoadmap): Promise<import('@craft-agent/shared/projects/roadmap').ProjectRoadmap>
+  getProjectRoadmap(workspaceId: string, projectSlug: string): Promise<import('@rox/shared/projects/roadmap-storage').LoadedRoadmap | null>
+  saveProjectRoadmap(workspaceId: string, projectSlug: string, roadmap: import('@rox/shared/projects/roadmap').ProjectRoadmap): Promise<import('@rox/shared/projects/roadmap').ProjectRoadmap>
   getProjectAiStatus(workspaceId: string): Promise<{ available: boolean; connectionName?: string; model?: string; reason?: string }>
-  runProjectRoadmapAi(workspaceId: string, projectSlug: string, request: import('@craft-agent/shared/projects/roadmap-ai').RoadmapAiRequest & { language?: string; today?: string; inputs?: string[] }): Promise<import('@craft-agent/shared/projects/roadmap-ai').RoadmapAiResponse>
+  runProjectRoadmapAi(workspaceId: string, projectSlug: string, request: import('@rox/shared/projects/roadmap-ai').RoadmapAiRequest & { language?: string; today?: string; inputs?: string[] }): Promise<import('@rox/shared/projects/roadmap-ai').RoadmapAiResponse>
   onProjectsChanged(callback: (workspaceId: string, projects: unknown) => void): () => void
 
   // Pages (workspace-scoped mini dashboards)
-  getPages(workspaceId: string): Promise<import('@craft-agent/shared/pages/types').LoadedPage[]>
-  getPage(workspaceId: string, pageIdOrSlug: string): Promise<import('@craft-agent/shared/pages/types').LoadedPage | null>
-  createPage(workspaceId: string, input: import('@craft-agent/shared/pages/types').CreatePageInput): Promise<import('@craft-agent/shared/pages/types').PageConfig>
+  getPages(workspaceId: string): Promise<import('@rox/shared/pages/types').LoadedPage[]>
+  getPage(workspaceId: string, pageIdOrSlug: string): Promise<import('@rox/shared/pages/types').LoadedPage | null>
+  createPage(workspaceId: string, input: import('@rox/shared/pages/types').CreatePageInput): Promise<import('@rox/shared/pages/types').PageConfig>
   /** Optional fields (projectId, description, refresh) accept explicit null = clear (undefined is dropped by the JSON transport). */
-  updatePage(workspaceId: string, pageSlug: string, patch: Partial<Omit<import('@craft-agent/shared/pages/types').PageConfig, 'id' | 'slug' | 'createdAt' | 'contentDigest' | 'lastRefresh' | 'grants' | 'share' | 'projectId' | 'description' | 'refresh'>> & { projectId?: string | null; description?: string | null; refresh?: import('@craft-agent/shared/pages/types').PageRefreshSpec | null }): Promise<import('@craft-agent/shared/pages/types').PageConfig>
+  updatePage(workspaceId: string, pageSlug: string, patch: Partial<Omit<import('@rox/shared/pages/types').PageConfig, 'id' | 'slug' | 'createdAt' | 'contentDigest' | 'lastRefresh' | 'grants' | 'share' | 'projectId' | 'description' | 'refresh'>> & { projectId?: string | null; description?: string | null; refresh?: import('@rox/shared/pages/types').PageRefreshSpec | null }): Promise<import('@rox/shared/pages/types').PageConfig>
   deletePage(workspaceId: string, pageSlug: string): Promise<{ publicCopyMayRemain: boolean }>
   getPageContent(workspaceId: string, pageSlug: string): Promise<{ content: string | null; contentDigest?: string }>
-  setPageContent(workspaceId: string, pageSlug: string, content: string): Promise<import('@craft-agent/shared/pages/types').PageConfig>
-  getPageData(workspaceId: string, pageSlug: string): Promise<import('@craft-agent/shared/pages/types').PageDataSnapshot | null>
-  listPageGrants(workspaceId: string, pageSlug: string): Promise<import('@craft-agent/shared/pages/types').PageActionGrant[]>
-  issuePageGrant(workspaceId: string, pageSlug: string, input: { action: import('@craft-agent/shared/pages/types').PageActionDescriptor; description?: string; ttlMs?: number }): Promise<import('@craft-agent/shared/pages/types').PageActionGrant>
+  setPageContent(workspaceId: string, pageSlug: string, content: string): Promise<import('@rox/shared/pages/types').PageConfig>
+  getPageData(workspaceId: string, pageSlug: string): Promise<import('@rox/shared/pages/types').PageDataSnapshot | null>
+  listPageGrants(workspaceId: string, pageSlug: string): Promise<import('@rox/shared/pages/types').PageActionGrant[]>
+  issuePageGrant(workspaceId: string, pageSlug: string, input: { action: import('@rox/shared/pages/types').PageActionDescriptor; description?: string; ttlMs?: number }): Promise<import('@rox/shared/pages/types').PageActionGrant>
   revokePageGrant(workspaceId: string, pageSlug: string, grantId: string): Promise<boolean>
-  createPageLease(workspaceId: string, pageSlug: string): Promise<{ lease: import('@craft-agent/shared/pages/types').PageRenderLease; content: string }>
+  createPageLease(workspaceId: string, pageSlug: string): Promise<{ lease: import('@rox/shared/pages/types').PageRenderLease; content: string }>
   releasePageLease(workspaceId: string, leaseId: string): Promise<void>
-  executePageAction(workspaceId: string, request: import('@craft-agent/shared/pages/types').PageActionRequest): Promise<import('@craft-agent/shared/pages/types').PageActionResult>
+  executePageAction(workspaceId: string, request: import('@rox/shared/pages/types').PageActionRequest): Promise<import('@rox/shared/pages/types').PageActionResult>
   cancelPageAction(workspaceId: string, requestId: string): Promise<boolean>
   getPageShareCapabilities(): Promise<{ sharingEnabled: boolean }>
   /** What `includeData` would publish + key paths that look credential-bearing (warn-only). */
   getPageShareDataScan(workspaceId: string, pageSlug: string): Promise<{ snapshotBytes: number | null; secretCandidates: string[] }>
-  publishPage(workspaceId: string, pageSlug: string, options: { includeData: boolean; password?: string; viewOnlyAcknowledged?: boolean }): Promise<import('@craft-agent/shared/pages/types').PageConfig>
-  setPagePublicationPassword(workspaceId: string, pageSlug: string, password: string | null): Promise<import('@craft-agent/shared/pages/types').PageConfig>
-  unpublishPage(workspaceId: string, pageSlug: string): Promise<{ config: import('@craft-agent/shared/pages/types').PageConfig; warning?: 'remote-copy-may-remain' }>
+  publishPage(workspaceId: string, pageSlug: string, options: { includeData: boolean; password?: string; viewOnlyAcknowledged?: boolean }): Promise<import('@rox/shared/pages/types').PageConfig>
+  setPagePublicationPassword(workspaceId: string, pageSlug: string, password: string | null): Promise<import('@rox/shared/pages/types').PageConfig>
+  unpublishPage(workspaceId: string, pageSlug: string): Promise<{ config: import('@rox/shared/pages/types').PageConfig; warning?: 'remote-copy-may-remain' }>
   /** Read a page's cached poster as a data URL — only returns when fresh (digest matches current content). */
   getPageThumbnail(workspaceId: string, pageSlug: string): Promise<{ dataUrl: string; digest: string } | null>
   /** Request a (re)capture of a page's poster (no-op on hosts without a capturer). */
   regeneratePageThumbnail(workspaceId: string, pageSlug: string): Promise<boolean>
-  onPagesChanged(callback: (workspaceId: string, pages: import('@craft-agent/shared/pages/types').LoadedPage[]) => void): () => void
+  onPagesChanged(callback: (workspaceId: string, pages: import('@rox/shared/pages/types').LoadedPage[]) => void): () => void
 
   // Personal tasks (config-dir persist; localStorage is a cache)
   personalTasksList(): Promise<PersonalTasksSnapshot>
   personalTasksPut(writes: PersonalTaskWrite[], meta?: PersonalTaskMeta | null): Promise<PersonalTaskPutResult>
   personalTasksDelete(deletes: PersonalTaskDelete[]): Promise<PersonalTaskDeleteResult>
-  personalTasksMigrate(input: import('@craft-agent/core/tasks/personal').PersonalTasksMigrateInput): Promise<import('@craft-agent/core/tasks/personal').PersonalTasksMigrateResult>
+  personalTasksMigrate(input: import('@rox/core/tasks/personal').PersonalTasksMigrateInput): Promise<import('@rox/core/tasks/personal').PersonalTasksMigrateResult>
   onPersonalTasksChanged(callback: (payload: { at: number }) => void): () => void
   // Лента (feed:*)
-  feedList(workspaceId?: string | null): Promise<import('@craft-agent/shared/feed').FeedListResult>
-  feedAddSource(url: string, intervalMin?: number, opts?: import('@craft-agent/shared/feed').FeedAddSourceOptions): Promise<{ ok: true; source: import('@craft-agent/shared/feed').FeedSource } | { ok: false; error: 'invalid-url' | 'duplicate' | 'too-many' }>
+  feedList(workspaceId?: string | null): Promise<import('@rox/shared/feed').FeedListResult>
+  feedAddSource(url: string, intervalMin?: number, opts?: import('@rox/shared/feed').FeedAddSourceOptions): Promise<{ ok: true; source: import('@rox/shared/feed').FeedSource } | { ok: false; error: 'invalid-url' | 'duplicate' | 'too-many' }>
   feedRemoveSource(id: string): Promise<{ removed: boolean }>
-  feedUpdateSource(id: string, patch: import('@craft-agent/shared/feed').FeedSourcePatch): Promise<import('@craft-agent/shared/feed').FeedSource | null>
+  feedUpdateSource(id: string, patch: import('@rox/shared/feed').FeedSourcePatch): Promise<import('@rox/shared/feed').FeedSource | null>
   feedRefresh(id?: string | null): Promise<{ ok: boolean }>
-  feedSetXToken(token: string): Promise<import('@craft-agent/shared/feed').XConnectionStatus>
-  feedClearX(): Promise<import('@craft-agent/shared/feed').XConnectionStatus>
-  feedPreviewSource(url: string): Promise<import('@craft-agent/shared/feed').FeedPreviewResult>
-  feedAnnotate(ids: string[], patch: import('@craft-agent/shared/feed').FeedAnnotationPatch): Promise<{ updated: number }>
+  feedSetXToken(token: string): Promise<import('@rox/shared/feed').XConnectionStatus>
+  feedClearX(): Promise<import('@rox/shared/feed').XConnectionStatus>
+  feedPreviewSource(url: string): Promise<import('@rox/shared/feed').FeedPreviewResult>
+  feedAnnotate(ids: string[], patch: import('@rox/shared/feed').FeedAnnotationPatch): Promise<{ updated: number }>
   onFeedChanged(callback: (payload: { at: number }) => void): () => void
 
   // Kanban board config (workspace-scoped)
-  getKanbanConfig(workspaceId: string): Promise<import('@craft-agent/shared/kanban').KanbanBoardConfig>
-  setKanbanConfig(workspaceId: string, config: import('@craft-agent/shared/kanban').KanbanBoardConfig): Promise<import('@craft-agent/shared/kanban').KanbanBoardConfig>
-  onKanbanConfigChanged(callback: (workspaceId: string, config: import('@craft-agent/shared/kanban').KanbanBoardConfig) => void): () => void
+  getKanbanConfig(workspaceId: string): Promise<import('@rox/shared/kanban').KanbanBoardConfig>
+  setKanbanConfig(workspaceId: string, config: import('@rox/shared/kanban').KanbanBoardConfig): Promise<import('@rox/shared/kanban').KanbanBoardConfig>
+  onKanbanConfigChanged(callback: (workspaceId: string, config: import('@rox/shared/kanban').KanbanBoardConfig) => void): () => void
 
   // Sessions collection display (workspace-scoped)
-  getCollectionDisplay(workspaceId: string): Promise<import('@craft-agent/shared/sessions').CollectionDisplay>
-  setCollectionDisplay(workspaceId: string, display: import('@craft-agent/shared/sessions').CollectionDisplay): Promise<import('@craft-agent/shared/sessions').CollectionDisplay>
-  onCollectionDisplayChanged(callback: (workspaceId: string, display: import('@craft-agent/shared/sessions').CollectionDisplay) => void): () => void
-  getCollectionFilters(workspaceId: string): Promise<Record<string, import('@craft-agent/shared/sessions').CollectionFilters>>
+  getCollectionDisplay(workspaceId: string): Promise<import('@rox/shared/sessions').CollectionDisplay>
+  setCollectionDisplay(workspaceId: string, display: import('@rox/shared/sessions').CollectionDisplay): Promise<import('@rox/shared/sessions').CollectionDisplay>
+  onCollectionDisplayChanged(callback: (workspaceId: string, display: import('@rox/shared/sessions').CollectionDisplay) => void): () => void
+  getCollectionFilters(workspaceId: string): Promise<Record<string, import('@rox/shared/sessions').CollectionFilters>>
   setCollectionFilters(
     workspaceId: string,
-    filters: Record<string, import('@craft-agent/shared/sessions').CollectionFilters>,
-  ): Promise<Record<string, import('@craft-agent/shared/sessions').CollectionFilters>>
+    filters: Record<string, import('@rox/shared/sessions').CollectionFilters>,
+  ): Promise<Record<string, import('@rox/shared/sessions').CollectionFilters>>
   onCollectionFiltersChanged(
-    callback: (workspaceId: string, filters: Record<string, import('@craft-agent/shared/sessions').CollectionFilters>) => void,
+    callback: (workspaceId: string, filters: Record<string, import('@rox/shared/sessions').CollectionFilters>) => void,
   ): () => void
 
   // Automations
@@ -2367,7 +2367,7 @@ export interface MessagingPlatformRuntimeInfo {
 
 /**
  * Workspace-level access policy for a messaging platform.
- * Mirrors the canonical type in `@craft-agent/messaging-gateway`.
+ * Mirrors the canonical type in `@rox/messaging-gateway`.
  */
 export type MessagingPlatformAccessMode = 'public-inbox' | 'owner-control' | 'disabled'
 
@@ -2631,7 +2631,7 @@ export interface ScreenNavigationState {
 /**
  * Knowledge ref kinds, mirrored from the Knowledge Provider contract
  * (spec K-03 §3.1: `KnowledgeRef { scheme:'siyuan'; kind; id }`). Declared
- * locally because apps/electron does not import @craft-agent/core.
+ * locally because apps/electron does not import @rox/core.
  */
 export type KnowledgeRefKind = 'notebook' | 'document' | 'block' | 'database' | 'asset'
 

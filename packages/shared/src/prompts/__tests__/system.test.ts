@@ -95,7 +95,7 @@ describe('includeCoAuthoredBy handling', () => {
       '/tmp/workspace',
       '/tmp/workspace',
       undefined,
-      'Craft Agents Backend'
+      'ROX Backend'
       // 7th arg omitted — must not regress to `true` default
     )
 
@@ -135,8 +135,8 @@ describe('Rox agent identity in the system prompt', () => {
     expect(prompt).toContain('- Name: Agent Rox#001')
     expect(prompt).toContain('compatibility implementation metadata')
     expect(prompt).toContain('If the user asks for technical or runtime detail, you may mention the backend (OMP)')
-    expect(prompt).not.toContain('You are Craft Agent')
-    expect(prompt).not.toContain('You must refer to yourself as Craft Agent')
+    expect(prompt).not.toContain('You are ROX')
+    expect(prompt).not.toContain('You must refer to yourself as ROX')
   })
 })
 

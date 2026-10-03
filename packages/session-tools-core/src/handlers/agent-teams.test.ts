@@ -4,7 +4,7 @@ import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { handleAgentTeams } from './agent-teams.ts';
 import type { SessionToolContext } from '../context.ts';
-import { AgentTeamsStore } from '@craft-agent/core/platform';
+import { AgentTeamsStore } from '@rox/core/platform';
 
 const dirs: string[] = [];
 

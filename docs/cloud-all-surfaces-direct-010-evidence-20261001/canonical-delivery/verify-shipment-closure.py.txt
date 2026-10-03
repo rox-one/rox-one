@@ -156,7 +156,7 @@ def verify():
         if has_dist:
             add_tree(expected, source / 'dist', f'{relative}/dist')
         package_name = json.loads((source / 'package.json').read_text())['name']
-        check(f'{package}: source package has craft-agent scope', package_name.startswith('@craft-agent/'))
+        check(f'{package}: source package has craft-agent scope', package_name.startswith('@rox/'))
         package_names[package] = package_name
         link = f'node_modules/{package_name}'
         expected_links[link] = f'../../packages/{package}'
@@ -233,10 +233,10 @@ def verify():
                                   'delivered_sha256': sha256(delivery_stub) if delivery_stub.is_file() else None,
                                   'exact': bool(stub_exact)}
 
-    scope = delivered_tree(DELIVERY / 'node_modules/@craft-agent', 'node_modules/@craft-agent')
+    scope = delivered_tree(DELIVERY / 'node_modules/@rox', 'node_modules/@rox')
     actual_links = {key: value['target'] for key, value in scope['symlinks'].items()}
     check('nine workspace symlinks have exact source names and targets', actual_links == expected_links and len(actual_links) == 9)
-    check('workspace scope contains only its nine symlinks', not scope['files'] and scope['directories'] == ['node_modules/@craft-agent'])
+    check('workspace scope contains only its nine symlinks', not scope['files'] and scope['directories'] == ['node_modules/@rox'])
     report['workspace_links'] = {'expected': dict(sorted(expected_links.items())), 'delivered': dict(sorted(actual_links.items()))}
     all_links = []
     for directory, dirs, files in os.walk(DELIVERY, followlinks=False):

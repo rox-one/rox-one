@@ -140,7 +140,7 @@
     {
       "path": "packages/shared/src/code-intelligence/index.ts",
       "symbol": "public canonical exports",
-      "change": "Export the accepted neutral RepoWiki and receipt types from types.ts through @craft-agent/shared/code-intelligence. Preserve existing local-adapter/explainer/Syft and refs/provider/repository-connection exports. Do not export server-side provider/process implementations or invent another package entry point.",
+      "change": "Export the accepted neutral RepoWiki and receipt types from types.ts through @rox/shared/code-intelligence. Preserve existing local-adapter/explainer/Syft and refs/provider/repository-connection exports. Do not export server-side provider/process implementations or invent another package entry point.",
       "reason": "index.ts:1-27 is already the canonical integration surface and now exports live wave0 foundations; replacement would erase or duplicate existing mechanisms.",
       "scope": "normative sharedPatchPath; integration-owner only"
     },
@@ -228,7 +228,7 @@
       "id": "CI-006-AC-5",
       "criterion": "provider-neutral contract tolerates different intended OpenWiki",
       "currentEvidence": "KnowledgeProvider is provider-neutral in name but canonical KnowledgeRef scheme is siyuan (refs.ts:19-32,167-205); CodeIntelligenceProviderRegistry already has repo-wiki operation and version/digest/activation gates (provider.ts:17-38,67-96). scopedProviderResourceId namespaces IDs by workspace/project/repository/snapshot/provider/version (111-123). The specification records OpenWiki identity as an assumption (160-163,5312-5316).",
-      "actualSeam": ["KnowledgeProvider/KnowledgeRegistry", "canonicalKnowledgeRef/validateKnowledgeRef", "CodeIntelligenceProviderRegistry", "scopedProviderResourceId", "@craft-agent/shared/code-intelligence exports"],
+      "actualSeam": ["KnowledgeProvider/KnowledgeRegistry", "canonicalKnowledgeRef/validateKnowledgeRef", "CodeIntelligenceProviderRegistry", "scopedProviderResourceId", "@rox/shared/code-intelligence exports"],
       "requiredChange": "Place common RepoWiki page/section/claim/read/list contracts in canonical types/exports; keep upstream tool names, sidecar/run schema and pin handling entirely in openwiki.ts. Use neutral repo-wiki knowledge refs with opaque namespaced identity, not raw upstream IDs or repo paths cast to SiYuan. A changed intended upstream is another explicitly pinned implementation of the same contract, not another knowledge store/route.",
       "verification": {"requiredSet": "All eight normativeVerificationSet items.", "targeted": ["Roundtrip page/section/collection refs through canonical parser/serializer/mentions/provider-form conversion and real RPC lookup.", "Use identical provider-local page IDs under distinct repository/snapshot/provider-version scopes; ensure no cross-resolution or default-provider fallback.", "Exercise the neutral contract with the real selected adapter and an isolated contract fixture for an alternative provider shape; fixture proof is not claimed as external provider readiness.", "Unknown provider, digest mismatch, wrong connection and inactive/unready provider fail closed while existing SiYuan/local-fs-symbols/Syft paths retain behavior."]},
       "missingPrerequisite": ["Accepted CI-001 canonical ref and selection decision", "FG-KNOWLEDGE-CONNECTION-SCHEMA", "canonical shared RepoWiki DTOs and lead patches", "actual OpenWiki pin/readiness receipt"],

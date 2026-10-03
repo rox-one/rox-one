@@ -6,7 +6,7 @@
  */
 import { existsSync, watch as fsWatch, type FSWatcher } from 'node:fs'
 import { extname } from 'node:path'
-import { isNativeIndexWatchEnabled } from '@craft-agent/shared/feature-flags'
+import { isNativeIndexWatchEnabled } from '@rox/shared/feature-flags'
 import {
   reindexWorkspaceSources,
   type SourceReindexResult,

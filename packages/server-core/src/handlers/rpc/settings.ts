@@ -1,23 +1,23 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'path'
-import { RPC_CHANNELS, CodedError, isErrorCode } from '@craft-agent/shared/protocol'
-import { getPreferencesPath, getSessionDraft, setSessionDraft, deleteSessionDraft, getAllSessionDrafts, getWorkspaceByNameOrId, getDefaultThinkingLevel, setDefaultThinkingLevel, getPersistedRuntimeEnvOverrides, setRuntimeEnvOverrides, getRuntimeSecretRefs, setRuntimeSecretRefs } from '@craft-agent/shared/config'
-import { diagnoseInfisicalAvailability, SecretConfigError, toPublicSecretRef, type SecretRefEntry } from '@craft-agent/shared/secrets'
-import { getDefaultWorkspacesDir } from '@craft-agent/shared/workspaces'
-import { isValidThinkingLevel, normalizeThinkingLevel, THINKING_LEVEL_IDS } from '@craft-agent/shared/agent/thinking-levels'
+import { RPC_CHANNELS, CodedError, isErrorCode } from '@rox/shared/protocol'
+import { getPreferencesPath, getSessionDraft, setSessionDraft, deleteSessionDraft, getAllSessionDrafts, getWorkspaceByNameOrId, getDefaultThinkingLevel, setDefaultThinkingLevel, getPersistedRuntimeEnvOverrides, setRuntimeEnvOverrides, getRuntimeSecretRefs, setRuntimeSecretRefs } from '@rox/shared/config'
+import { diagnoseInfisicalAvailability, SecretConfigError, toPublicSecretRef, type SecretRefEntry } from '@rox/shared/secrets'
+import { getDefaultWorkspacesDir } from '@rox/shared/workspaces'
+import { isValidThinkingLevel, normalizeThinkingLevel, THINKING_LEVEL_IDS } from '@rox/shared/agent/thinking-levels'
 
 const VALID_THINKING_LEVELS_LIST = THINKING_LEVEL_IDS.map(id => `'${id}'`).join(', ')
-import { getWorkspaceOrThrow } from '@craft-agent/server-core/handlers'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import { getWorkspaceOrThrow } from '@rox/server-core/handlers'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { requestClientOpenFileDialog } from '@craft-agent/server-core/transport'
+import { requestClientOpenFileDialog } from '@rox/server-core/transport'
 import { isValidWorkingDirectory, isValidNotesPath } from '../../utils/path-validation'
 import {
   isClaimableLive,
   rpcSettingsActResult,
   rpcSettingsListResult,
   rpcSettingsReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.workspace.SETTINGS_GET,
@@ -177,7 +177,7 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
     }
 
     // Load workspace config
-    const { loadWorkspaceConfig } = await import('@craft-agent/shared/workspaces')
+    const { loadWorkspaceConfig } = await import('@rox/shared/workspaces')
     const config = loadWorkspaceConfig(workspace.rootPath)
 
     return {
@@ -209,7 +209,7 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
 
     // Validate defaultLlmConnection exists before saving
     if (key === 'defaultLlmConnection' && normalizedValue !== undefined && normalizedValue !== null) {
-      const { getLlmConnection } = await import('@craft-agent/shared/config/storage')
+      const { getLlmConnection } = await import('@rox/shared/config/storage')
       if (!getLlmConnection(normalizedValue as string)) {
         throw new Error(`LLM connection "${normalizedValue}" not found`)
       }
@@ -222,7 +222,7 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
       }
     }
 
-    const { loadWorkspaceConfig, saveWorkspaceConfig } = await import('@craft-agent/shared/workspaces')
+    const { loadWorkspaceConfig, saveWorkspaceConfig } = await import('@rox/shared/workspaces')
     const config = loadWorkspaceConfig(workspace.rootPath)
     if (!config) {
       throw new Error(`Failed to load workspace config: ${workspaceId}`)
@@ -295,7 +295,7 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
   })
 
   // Set draft for a session (empty drafts are cleared)
-  server.handle(RPC_CHANNELS.drafts.SET, async (_ctx, sessionId: string, draft: import('@craft-agent/shared/config').SessionDraft) => {
+  server.handle(RPC_CHANNELS.drafts.SET, async (_ctx, sessionId: string, draft: import('@rox/shared/config').SessionDraft) => {
     setSessionDraft(sessionId, draft)
   })
 
@@ -318,37 +318,37 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // Get auto-capitalisation setting
   server.handle(RPC_CHANNELS.input.GET_AUTO_CAPITALISATION, async () => {
-    const { getAutoCapitalisation } = await import('@craft-agent/shared/config/storage')
+    const { getAutoCapitalisation } = await import('@rox/shared/config/storage')
     return getAutoCapitalisation()
   })
 
   // Set auto-capitalisation setting
   server.handle(RPC_CHANNELS.input.SET_AUTO_CAPITALISATION, async (_ctx, enabled: boolean) => {
-    const { setAutoCapitalisation } = await import('@craft-agent/shared/config/storage')
+    const { setAutoCapitalisation } = await import('@rox/shared/config/storage')
     setAutoCapitalisation(enabled)
   })
 
   // Get send message key setting
   server.handle(RPC_CHANNELS.input.GET_SEND_MESSAGE_KEY, async () => {
-    const { getSendMessageKey } = await import('@craft-agent/shared/config/storage')
+    const { getSendMessageKey } = await import('@rox/shared/config/storage')
     return getSendMessageKey()
   })
 
   // Set send message key setting
   server.handle(RPC_CHANNELS.input.SET_SEND_MESSAGE_KEY, async (_ctx, key: 'enter' | 'cmd-enter') => {
-    const { setSendMessageKey } = await import('@craft-agent/shared/config/storage')
+    const { setSendMessageKey } = await import('@rox/shared/config/storage')
     setSendMessageKey(key)
   })
 
   // Get spell check setting
   server.handle(RPC_CHANNELS.input.GET_SPELL_CHECK, async () => {
-    const { getSpellCheck } = await import('@craft-agent/shared/config/storage')
+    const { getSpellCheck } = await import('@rox/shared/config/storage')
     return getSpellCheck()
   })
 
   // Set spell check setting
   server.handle(RPC_CHANNELS.input.SET_SPELL_CHECK, async (_ctx, enabled: boolean) => {
-    const { setSpellCheck } = await import('@craft-agent/shared/config/storage')
+    const { setSpellCheck } = await import('@rox/shared/config/storage')
     setSpellCheck(enabled)
   })
 
@@ -358,7 +358,7 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // Get keep awake while running setting
   server.handle(RPC_CHANNELS.power.GET_KEEP_AWAKE, async () => {
-    const { getKeepAwakeWhileRunning } = await import('@craft-agent/shared/config/storage')
+    const { getKeepAwakeWhileRunning } = await import('@rox/shared/config/storage')
     return getKeepAwakeWhileRunning()
   })
 
@@ -368,19 +368,19 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // Get rich tool descriptions setting
   server.handle(RPC_CHANNELS.appearance.GET_RICH_TOOL_DESCRIPTIONS, async () => {
-    const { getRichToolDescriptions } = await import('@craft-agent/shared/config/storage')
+    const { getRichToolDescriptions } = await import('@rox/shared/config/storage')
     return getRichToolDescriptions()
   })
 
   // Set rich tool descriptions setting
   server.handle(RPC_CHANNELS.appearance.SET_RICH_TOOL_DESCRIPTIONS, async (_ctx, enabled: boolean) => {
-    const { setRichToolDescriptions } = await import('@craft-agent/shared/config/storage')
+    const { setRichToolDescriptions } = await import('@rox/shared/config/storage')
     setRichToolDescriptions(enabled)
   })
 
   // Get default zoom level setting
   server.handle(RPC_CHANNELS.appearance.GET_DEFAULT_ZOOM_LEVEL, async () => {
-    const { getDefaultZoomLevel } = await import('@craft-agent/shared/config/storage')
+    const { getDefaultZoomLevel } = await import('@rox/shared/config/storage')
     return getDefaultZoomLevel()
   })
 
@@ -390,25 +390,25 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // Get extended prompt cache (1h TTL) setting
   server.handle(RPC_CHANNELS.caching.GET_EXTENDED_PROMPT_CACHE, async () => {
-    const { getExtendedPromptCache } = await import('@craft-agent/shared/config/storage')
+    const { getExtendedPromptCache } = await import('@rox/shared/config/storage')
     return getExtendedPromptCache()
   })
 
   // Set extended prompt cache (1h TTL) setting
   server.handle(RPC_CHANNELS.caching.SET_EXTENDED_PROMPT_CACHE, async (_ctx, enabled: boolean) => {
-    const { setExtendedPromptCache } = await import('@craft-agent/shared/config/storage')
+    const { setExtendedPromptCache } = await import('@rox/shared/config/storage')
     setExtendedPromptCache(enabled)
   })
 
   // Get 1M context window setting
   server.handle(RPC_CHANNELS.caching.GET_ENABLE_1M_CONTEXT, async () => {
-    const { getEnable1MContext } = await import('@craft-agent/shared/config/storage')
+    const { getEnable1MContext } = await import('@rox/shared/config/storage')
     return getEnable1MContext()
   })
 
   // Set 1M context window setting
   server.handle(RPC_CHANNELS.caching.SET_ENABLE_1M_CONTEXT, async (_ctx, enabled: boolean) => {
-    const { setEnable1MContext } = await import('@craft-agent/shared/config/storage')
+    const { setEnable1MContext } = await import('@rox/shared/config/storage')
     setEnable1MContext(enabled)
   })
 
@@ -418,25 +418,25 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // Get rtk Bash-output compression setting
   server.handle(RPC_CHANNELS.rtk.GET_ENABLED, async () => {
-    const { getRtkEnabled } = await import('@craft-agent/shared/config/storage')
+    const { getRtkEnabled } = await import('@rox/shared/config/storage')
     return getRtkEnabled()
   })
 
   // Set rtk Bash-output compression setting
   server.handle(RPC_CHANNELS.rtk.SET_ENABLED, async (_ctx, enabled: boolean) => {
-    const { setRtkEnabled } = await import('@craft-agent/shared/config/storage')
+    const { setRtkEnabled } = await import('@rox/shared/config/storage')
     setRtkEnabled(enabled)
   })
 
   // Detect rtk installation (used by Settings UI to swap install prompt ↔ toggle)
   server.handle(RPC_CHANNELS.rtk.GET_STATUS, async (_ctx, opts?: { forceRecheck?: boolean }) => {
-    const { getRtkStatus } = await import('@craft-agent/shared/agent')
+    const { getRtkStatus } = await import('@rox/shared/agent')
     return getRtkStatus(opts)
   })
 
   // Token-savings summary from `rtk gain --format json` (efficiency meter)
   server.handle(RPC_CHANNELS.rtk.GET_GAIN, async () => {
-    const { getRtkGain } = await import('@craft-agent/shared/agent')
+    const { getRtkGain } = await import('@rox/shared/agent')
     return getRtkGain()
   })
 
@@ -445,12 +445,12 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
   // ============================================================
 
   server.handle(RPC_CHANNELS.tools.GET_BROWSER_TOOL_ENABLED, async () => {
-    const { getBrowserToolEnabled } = await import('@craft-agent/shared/config/storage')
+    const { getBrowserToolEnabled } = await import('@rox/shared/config/storage')
     return getBrowserToolEnabled()
   })
 
   server.handle(RPC_CHANNELS.tools.SET_BROWSER_TOOL_ENABLED, async (_ctx, enabled: boolean) => {
-    const { setBrowserToolEnabled } = await import('@craft-agent/shared/config/storage')
+    const { setBrowserToolEnabled } = await import('@rox/shared/config/storage')
     setBrowserToolEnabled(enabled)
   })
 
@@ -460,7 +460,7 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // Get network proxy settings
   server.handle(RPC_CHANNELS.settings.GET_NETWORK_PROXY, async () => {
-    const { getNetworkProxySettings } = await import('@craft-agent/shared/config/storage')
+    const { getNetworkProxySettings } = await import('@rox/shared/config/storage')
     return getNetworkProxySettings()
   })
 }

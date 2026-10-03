@@ -42,8 +42,8 @@ import type { BrowserWindow } from 'electron'
 import { mainLog } from './logger'
 import type { WindowManager } from './window-manager'
 import { RPC_CHANNELS } from '../shared/types'
-import type { EventSink } from '@craft-agent/server-core/transport'
-import { isRoxDeeplinkProtocol } from '@craft-agent/shared/identity'
+import type { EventSink } from '@rox/server-core/transport'
+import { isRoxDeeplinkProtocol } from '@rox/shared/identity'
 import { COMPOUND_ROUTE_PREFIXES } from '../shared/route-parser'
 
 export interface DeepLinkTarget {

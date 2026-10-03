@@ -1,11 +1,11 @@
-import { CredentialRefRegistry } from '@craft-agent/core/platform'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { CredentialRefRegistry } from '@rox/core/platform'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   InProcessCredentialBroker,
   LocalFileSecretProvider,
   SecureStorageBackend,
-} from '@craft-agent/shared/credentials'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/shared/credentials'
+import type { RpcServer } from '@rox/server-core/transport'
 import {
   convertCopyToReferenceAndRevalidate,
   commitGitHelperImport,
@@ -31,7 +31,7 @@ import {
   type CreateConnectionInput,
   type GithubFetch,
   type WorkGraphKernel,
-} from '@craft-agent/server-core/workgraph'
+} from '@rox/server-core/workgraph'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.workgraph.GET_HEALTH,

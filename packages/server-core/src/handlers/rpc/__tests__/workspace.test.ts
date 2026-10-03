@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
 
 const activeRemoteWorkspace = {
@@ -24,7 +24,7 @@ const localWorkspace = {
   kind: 'personal' as const,
 }
 
-mock.module('@craft-agent/shared/config', () => ({
+mock.module('@rox/shared/config', () => ({
   addWorkspace: () => localWorkspace,
   createAndActivateLocalWorkspace: async () => ({
     workspace: localWorkspace,
@@ -37,15 +37,15 @@ mock.module('@craft-agent/shared/config', () => ({
   updateWorkspaceRemoteServer: () => {},
 }))
 
-mock.module('@craft-agent/shared/config/paths', () => ({
+mock.module('@rox/shared/config/paths', () => ({
   CONFIG_DIR: '/config',
 }))
 
-mock.module('@craft-agent/shared/utils', () => ({
+mock.module('@rox/shared/utils', () => ({
   perf: { start: () => () => {} },
 }))
 
-mock.module('@craft-agent/server-core/transport', () => ({
+mock.module('@rox/server-core/transport', () => ({
   pushTyped: (
     server: { push: (channel: string, target: unknown, ...args: unknown[]) => void },
     channel: string,

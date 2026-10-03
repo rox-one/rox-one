@@ -1,5 +1,5 @@
 /**
- * @craft-agent/cloud-runner — Cloud Runs contract + Daytona-first providers.
+ * @rox/cloud-runner — Cloud Runs contract + Daytona-first providers.
  *
  * Public registry: daytona | local | native. Cloudflare/Modal/E2B are
  * retired from the normal registry (issue 25).

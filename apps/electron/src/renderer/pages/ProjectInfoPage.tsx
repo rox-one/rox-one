@@ -61,12 +61,12 @@ import {
   soupProjectActResult,
   soupProjectListResult,
   soupProjectReadResult,
-} from '@craft-agent/core/rox2'
-import type { PersonalTask } from '@craft-agent/core/tasks/personal'
+} from '@rox/core/rox2'
+import type { PersonalTask } from '@rox/core/tasks/personal'
 import { PROJECT_COLOR_PALETTE } from '@/utils/project-colors'
 import { InlineColorPickerRow } from '@/components/ui/inline-color-picker-row'
-import type { LoadedProject, ProjectAsset, OkrCycle, OkrKeyResult, OkrObjective, OkrProgress, ProjectOkrDocument } from '@craft-agent/shared/projects/types'
-import { calculateOkrCycle, createOkrCycle } from '@craft-agent/shared/projects'
+import type { LoadedProject, ProjectAsset, OkrCycle, OkrKeyResult, OkrObjective, OkrProgress, ProjectOkrDocument } from '@rox/shared/projects/types'
+import { calculateOkrCycle, createOkrCycle } from '@rox/shared/projects'
 import { RepositorySnapshotPanel } from '@/components/code-intelligence/RepositorySnapshotPanel'
 import { SharedProjectDetails } from '@/components/projects/SharedProjectProjection'
 import {
@@ -83,8 +83,8 @@ import {
   type ProjectRoadmap,
   type RoadmapMarkdownLabels,
   type RoadmapMilestone,
-} from '@craft-agent/shared/projects/roadmap'
-import { applyProposalItem, type ProposalItemKey, type RoadmapProposal } from '@craft-agent/shared/projects/roadmap-ai'
+} from '@rox/shared/projects/roadmap'
+import { applyProposalItem, type ProposalItemKey, type RoadmapProposal } from '@rox/shared/projects/roadmap-ai'
 import { buildDelegationPrompt, subtasksOf } from '@/pages/tasks/task-model'
 import { AutoTextarea, CheckBox, EditableItemList, EmptyLine, IconButton, InlineInput, Section, TextButton } from './project/roadmap-ui'
 import { MilestoneList, RoadmapTimeline } from './project/ProjectTimeline'
@@ -313,7 +313,7 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const roadmapSaverRef = useRef<ReturnType<typeof createRoadmapSaveQueue> | null>(null)
   const saveAttemptRef = useRef(0)
   const loadedOnce = useRef(false)
-  const exportAttemptRef = useRef<{ operationId: string; note?: import('@craft-agent/shared/protocol/dto').NoteDocument } | null>(null)
+  const exportAttemptRef = useRef<{ operationId: string; note?: import('@rox/shared/protocol/dto').NoteDocument } | null>(null)
   const exportingRef = useRef(false)
 
   // ── Load project (first load shows the spinner; broadcasts reload silently) ──

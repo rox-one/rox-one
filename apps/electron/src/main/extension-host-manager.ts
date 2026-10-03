@@ -10,18 +10,18 @@
  * - Injectable forkFn / workerPath for tests (never requires real Electron)
  */
 
-import { resolveConfigDir } from '@craft-agent/shared/config/paths'
+import { resolveConfigDir } from '@rox/shared/config/paths'
 import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { EventEmitter } from 'node:events'
 
-import { isExtensionPermission, type ExtensionHostStatus, type ExtensionPermission } from '@craft-agent/shared/extensions'
+import { isExtensionPermission, type ExtensionHostStatus, type ExtensionPermission } from '@rox/shared/extensions'
 import {
   getCredentialManager,
   type CredentialId,
-} from '@craft-agent/shared/credentials'
-import { isDevRuntime } from '@craft-agent/shared/feature-flags'
+} from '@rox/shared/credentials'
+import { isDevRuntime } from '@rox/shared/feature-flags'
 
 import {
   assertPathAllowlisted,
