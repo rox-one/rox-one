@@ -296,7 +296,7 @@ export function PageView({ pageSlug }: PageViewProps) {
           </span>
         )}
         <PageKindBadge kind={config.kind} />
-        <span ref={pageFreshnessTarget} className="inline-flex"><PageFreshness config={config} /></span>
+        <span ref={pageFreshnessTarget} className="hidden @[28rem]/panel:inline-flex"><PageFreshness config={config} /></span>
         <div className="ml-auto flex items-center gap-1">
           {(sharingEnabled || config.share) && (
             <button
