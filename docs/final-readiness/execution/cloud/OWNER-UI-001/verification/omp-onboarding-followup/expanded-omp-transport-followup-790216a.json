@@ -1,0 +1,73 @@
+{
+  "head": "790216a785189279c376f5b144f76dc2da97795b",
+  "trackedStatus": "M packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts",
+  "toolchain": {
+    "bun": "1.3.14",
+    "node": "v24.21.0"
+  },
+  "testTimeoutOverride": null,
+  "inputHashesBefore": {
+    "packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts": "f728f558288df3f5dd4c313ee545043ae2a32bf48e126ddb3683cd0b07ec5ba2",
+    "packages/shared/src/agent/__tests__/omp-fake-cli.ts": "6368653751ee81dfc1fc2eff73ee90f8acfbf88f27023ecc5ad9dc28b2b182a3",
+    "packages/shared/src/agent/omp-agent.ts": "bb8ff894ce6df443b54ce0669d9de8d7f8e06727372155920b3df8795ad1983c",
+    "packages/shared/src/agent/omp-rpc-transport.ts": "11015bcd3e12234f87317bc41380ffc721f7e193a8174efcbd53ac2121d8869d",
+    "packages/shared/src/auth/rox-account-authority.ts": "5a0366ae799c760451c1005afc1523531b342c48995b593985afa3dcb778b357",
+    "packages/shared/src/auth/__tests__/pocket-test-fixture.ts": "e23452fb96157d5212a8743fc10deb7e04e804db17a30eacc5a20456b0f99d17",
+    "package.json": "999100cd459b8f2cf3870997d8480207e51f0425d02a12f6a0ca1902f90f306a",
+    "bunfig.toml": "deeae6086535bc87b723805491fb04850c07c23f730fc8764137432cf15bd529",
+    "scripts/test-config-isolation.ts": "8b847732d8c6ef5f3e901914e8cf15178863ef5c1d68ae09a6d2958d94c5a373"
+  },
+  "inputHashesAfter": {
+    "packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts": "f728f558288df3f5dd4c313ee545043ae2a32bf48e126ddb3683cd0b07ec5ba2",
+    "packages/shared/src/agent/__tests__/omp-fake-cli.ts": "6368653751ee81dfc1fc2eff73ee90f8acfbf88f27023ecc5ad9dc28b2b182a3",
+    "packages/shared/src/agent/omp-agent.ts": "bb8ff894ce6df443b54ce0669d9de8d7f8e06727372155920b3df8795ad1983c",
+    "packages/shared/src/agent/omp-rpc-transport.ts": "11015bcd3e12234f87317bc41380ffc721f7e193a8174efcbd53ac2121d8869d",
+    "packages/shared/src/auth/rox-account-authority.ts": "5a0366ae799c760451c1005afc1523531b342c48995b593985afa3dcb778b357",
+    "packages/shared/src/auth/__tests__/pocket-test-fixture.ts": "e23452fb96157d5212a8743fc10deb7e04e804db17a30eacc5a20456b0f99d17",
+    "package.json": "999100cd459b8f2cf3870997d8480207e51f0425d02a12f6a0ca1902f90f306a",
+    "bunfig.toml": "deeae6086535bc87b723805491fb04850c07c23f730fc8764137432cf15bd529",
+    "scripts/test-config-isolation.ts": "8b847732d8c6ef5f3e901914e8cf15178863ef5c1d68ae09a6d2958d94c5a373"
+  },
+  "results": [
+    {
+      "stage": "combined-onboarding",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "run",
+        "test:mcp-onboarding"
+      ],
+      "pid": 324,
+      "observedExitCode": 1,
+      "durationSeconds": 454.90171813964844,
+      "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001-omp-ci/../expanded-omp-transport-combined-onboarding-790216a.log",
+      "logSha256": "038786864097535b1b0f869fcd0bdbba9164706c0a39be1908ea9b921d03ceeb",
+      "reportedChildSummaries": [
+        {
+          "pass": 151,
+          "skip": 0,
+          "fail": 0,
+          "assertions": 637
+        }
+      ],
+      "reportedChildSummariesIncludingErrors": [
+        {
+          "pass": 151,
+          "skip": 0,
+          "fail": 0,
+          "errors": 0,
+          "assertions": 637
+        },
+        {
+          "pass": 373,
+          "skip": 0,
+          "fail": 10,
+          "errors": 7,
+          "assertions": 1847
+        }
+      ],
+      "finalRpcSourcesStageExecuted": false,
+      "classification": "Ten5-second outer test timeouts: six transport and four existing permission-mode cases; seven late unhandled callback errors. Parent naturally exited1; no signals."
+    }
+  ],
+  "qualification": "Uncommitted test-only repair at790216a. Exact package script includes independent Bun children; per-child summaries retained. No provider calls or product source edits."
+}
