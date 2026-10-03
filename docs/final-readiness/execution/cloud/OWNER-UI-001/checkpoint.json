@@ -1,0 +1,45 @@
+{
+  "objective": "Continue, verify and improve UI-001 within original owner scope",
+  "acceptance": [
+    "Owned source patch and real callback/component checks delivered",
+    "Original target acceptance remains explicitly open"
+  ],
+  "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+  "tasks": [
+    {
+      "id": "source-implementation",
+      "status": "complete",
+      "productCommit": "3b32a3e44b08d09966b336e0acf038f9dce7af5a"
+    },
+    {
+      "id": "owned-verification",
+      "status": "complete",
+      "evidence": [
+        "evidence/owned-tests.json",
+        "evidence/browser-final.json",
+        "evidence/final-typecheck.json",
+        "evidence/renderer-build-final.json"
+      ]
+    },
+    {
+      "id": "non-owned-integration",
+      "status": "external-prerequisite",
+      "reason": "Lead-owned parser/session auto-selection and two regression assertions"
+    },
+    {
+      "id": "full-target-acceptance",
+      "status": "not-observed",
+      "reason": "See target-workflows.json and result externalPrerequisites"
+    }
+  ],
+  "decisions": [
+    "No further delegation; no push/PR/main or global changes",
+    "Preserve all prior and local failure history; fullDoDClosed false"
+  ],
+  "evidence": [
+    "result.json",
+    "source-manifest.json"
+  ],
+  "active_ids": {},
+  "next_action": "Lead integrates the unapplied proposals and supplies actual target/service fixtures, then execute target-workflows.json against the immutable integrated candidate."
+}

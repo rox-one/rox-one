@@ -1,0 +1,15 @@
+{
+  "inputRevision": "76228cc33e44518e5fab5e59f5c754f4051d1e8c",
+  "productCommit": "3b32a3e44b08d09966b336e0acf038f9dce7af5a",
+  "files": {
+    "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts": "8beab3d06987d1426850acc45085d28faddfbe0fe66deca9cbc47e081e30392e",
+    "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "5a319396c87dc50d0427231623aa497ad67d1df06f542b2e898efdef83f35b72",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.component-harness.ts": "b1d4c124f367c123203675604ba4542b7a612e2e41906798915573e3e3d84372",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.effect-harness.ts": "ff0681f6f70f0a09a7f86c81638fc2b91fa5ac3cac6dfd6bdcffebfb1e9a7db3",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts": "f70cf603bbd493ac4840fed01287d858bef1a40e2017d755f82e5ed4097edd50",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts": "94a4515028a3f878c3de77c3ecdf46472a3eefb11ffb7860d3df91e023aa3beb"
+  },
+  "lockfileSha256": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+}
