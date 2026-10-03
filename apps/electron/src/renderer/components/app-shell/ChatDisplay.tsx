@@ -1378,10 +1378,11 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
 
     // Sending a message should always re-stick to bottom.
     isStickToBottomRef.current = true
+    beginOutputMotion()
 
     const owner = captureScrollOwner()
     requestAnimationFrame(() => { followOutput(owner) })
-  }, [session?.id, messageCount, lastMessageId, lastMessageRole, captureScrollOwner, followOutput])
+  }, [session?.id, messageCount, lastMessageId, lastMessageRole, captureScrollOwner, followOutput, beginOutputMotion])
 
   // Handle message submission from InputContainer
   // Backend handles interruption and queueing if currently processing
@@ -1398,6 +1399,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
 
     // Force stick-to-bottom when user sends a message
     isStickToBottomRef.current = true
+    beginOutputMotion()
     onSendMessage(normalizedMessage, attachments, skillSlugs)
 
     // Persist sent marker on follow-up annotations so TurnCard can distinguish
