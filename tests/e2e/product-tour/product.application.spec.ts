@@ -91,9 +91,9 @@ test('T-LEARNING-LIBRARY/T-LEARNING-CONTROLS: production learning controls start
   const popup = page.locator('[data-product-tour-popover]')
   await expect(popup).toBeVisible()
   await expect(popup).toHaveAttribute('data-product-tour-step', 'learning.library')
-  await popup.getByRole('button', { name: /Next|Continue/i }).click()
+  await popup.getByRole('button', { name: /^(Next|Continue)$/i }).click()
   await expect(popup).toHaveAttribute('data-product-tour-step', 'learning.controls')
-  await popup.getByRole('button', { name: /Next|Continue|Finish/i }).click()
+  await popup.getByRole('button', { name: /^(Next|Continue|Finish)$/i }).click()
   await expect(popup).toHaveCount(0)
   const calls = (await evidence(page)).operations as Array<{ method: string }>
   expect(calls.some(call => ['sendMessage', 'respondToPermission', 'performOAuth', 'runAutomation', 'toggleAutomation'].includes(call.method))).toBe(false)
