@@ -381,6 +381,22 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
     const swappedTargets = new Set<string>()
     const rewrittenMarkers = new Map<string, MarketplaceLockRecord | null>()
 
+    const rollbackInstall = (): void => {
+      for (const swap of swaps.reverse()) {
+        try {
+          swap.rollback()
+        } catch {
+          // Preserve the original error; backup remains available for recovery.
+        }
+      }
+      for (const [target, marker] of rewrittenMarkers) {
+        if (existsSync(target)) {
+          if (marker) writeInstallMarker(target, marker)
+          else removeInstallMarker(target)
+        }
+      }
+    }
+
     const installOne = (name: string, srcDir: string): void => {
       progress('install', name)
       const previousAlias = previous?.skillAliases?.[name] ?? previous?.skills?.find(candidate => candidate === name || candidate === `${entry.id}--${name}`)
@@ -494,19 +510,7 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
         })
       }
     } catch (err) {
-      for (const swap of swaps.reverse()) {
-        try {
-          swap.rollback()
-        } catch {
-          // Preserve the original error; backup remains available for recovery.
-        }
-      }
-      for (const [target, marker] of rewrittenMarkers) {
-        if (existsSync(target)) {
-          if (marker) writeInstallMarker(target, marker)
-          else removeInstallMarker(target)
-        }
-      }
+      rollbackInstall()
       throw err
     }
     const result: MarketplaceInstallResult = {
@@ -520,19 +524,7 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
     try {
       upsertLockRecord(paths.lockFile, record)
     } catch (err) {
-      for (const swap of swaps.reverse()) {
-        try {
-          swap.rollback()
-        } catch {
-          // Preserve the original error; backup remains available for recovery.
-        }
-      }
-      for (const [target, marker] of rewrittenMarkers) {
-        if (existsSync(target)) {
-          if (marker) writeInstallMarker(target, marker)
-          else removeInstallMarker(target)
-        }
-      }
+      rollbackInstall()
       throw err
     }
     for (const swap of swaps) swap.commit()
