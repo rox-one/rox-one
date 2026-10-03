@@ -19,6 +19,9 @@ import {
   type PersonalTask,
 } from '@rox/core/tasks/personal'
 import type { PersonalTaskConflict } from '@rox/core/tasks/personal'
+import type { VersionedPersonalTask } from '@rox/core/tasks/personal'
+import { samePersonalTask } from '../features/product-tour/adapters/work/tasks-projects'
+import { commitPersonalTaskLink } from '../features/product-tour/adapters/work/tasks-projects/native-commit'
 import {
   bundleFromSnapshot,
   diffPersonalTaskBundles,
@@ -50,6 +53,21 @@ let hydrating: Promise<void> | null = null
 let unsubscribeServer: (() => void) | null = null
 let retryTimer: number | null = null
 let syncConflicts: PersonalTaskConflict[] = []
+const nativeCommitListeners = new Set<(record: VersionedPersonalTask) => void>()
+
+/** Canonical receipts only. Cache mutations and optimistic rows never notify. */
+export function subscribePersonalTaskCommits(listener: (record: VersionedPersonalTask) => void): () => void {
+  nativeCommitListeners.add(listener)
+  return () => { nativeCommitListeners.delete(listener) }
+}
+
+function notifyNativeCommit(record: VersionedPersonalTask): void {
+  for (const listener of nativeCommitListeners) {
+    try { listener(structuredClone(record)) } catch { /* Observers cannot turn a durable commit into a write failure. */ }
+  }
+}
+
+export function personalTasksNativeAvailable(): boolean { return api() !== null }
 
 function kv(): Storage {
   return localStorage
@@ -147,6 +165,12 @@ async function syncBundle(remote: PersonalTasksApi, next: PersonalTaskBundle): P
       synced = bundleFromSnapshot(snapshot)
       revisions = snapshot.revisions
       syncState = 'synced'
+      for (const accepted of result.accepted) {
+        const saved = snapshot.tasks.find(task => task.id === accepted.task.id)
+        if (saved && snapshot.revisions[saved.id] === accepted.revision && samePersonalTask(saved, accepted.task)) {
+          notifyNativeCommit({ task: saved, revision: accepted.revision })
+        }
+      }
     } catch {
       syncState = 'error'
     }
@@ -182,11 +206,47 @@ export async function persistPersonalTaskConfirmed(task: PersonalTask): Promise<
     persistPersonalTaskCache(kv(), new PersonalTaskStore(next), loadStatus)
     syncState = syncConflicts.length > 0 ? 'error'
       : synced && isEmptyDiff(diffPersonalTaskBundles(synced, next)) ? 'synced' : 'syncing'
+    notifyNativeCommit(accepted)
     emit()
   } catch (cause) {
     syncState = 'error'
     emit()
     throw cause instanceof PersonalTaskCreationError ? cause : new PersonalTaskCreationError(task, cause)
+  }
+}
+
+/** Delegation waits for durable task→session linkage before submitting work. */
+export async function persistPersonalTaskSessionLink(taskId: string, sessionId: string): Promise<VersionedPersonalTask> {
+  const remote = api()
+  if (!remote) throw new Error('Native personal task storage unavailable')
+  await hydratePersonalTasks()
+  const latest = loadPersonalTaskStore().snapshot()
+  const task = latest.tasks.find(entry => entry.id === taskId)
+  if (!task) throw new Error('Personal task no longer exists')
+  try {
+    const accepted = await commitPersonalTaskLink(remote, task, sessionId, revisions[taskId] ?? null)
+    // Merge only the confirmed link if another edit arrived during the write.
+    const current = loadPersonalTaskStore().snapshot()
+    const local = current.tasks.find(entry => entry.id === taskId)
+    if (local && samePersonalTask(local, task)) {
+      currentBundle = { ...current, tasks: current.tasks.map(entry => entry.id === taskId ? accepted.task : entry) }
+    } else if (local) {
+      const linked = structuredClone(local)
+      if (!linked.links.some(link => link.kind === 'session' && link.id === sessionId)) linked.links.push({ kind: 'session', id: sessionId })
+      currentBundle = { ...current, tasks: current.tasks.map(entry => entry.id === taskId ? linked : entry) }
+    }
+    revisions[taskId] = accepted.revision
+    if (synced) synced = { ...synced, tasks: [...synced.tasks.filter(entry => entry.id !== taskId), accepted.task] }
+    if (currentBundle) persistPersonalTaskCache(kv(), new PersonalTaskStore(currentBundle), loadStatus)
+    syncState = synced && currentBundle && isEmptyDiff(diffPersonalTaskBundles(synced, currentBundle)) ? 'synced' : 'syncing'
+    notifyNativeCommit(accepted)
+    emit()
+    if (synced && currentBundle && syncState === 'syncing') void syncBundle(remote, currentBundle)
+    return accepted
+  } catch (error) {
+    syncState = 'error'
+    emit()
+    throw error
   }
 }
 
