@@ -1,3 +1,4 @@
+import { getRoxAccountAuthority, LOCAL_ROX_CALLER } from '@rox/shared/auth'
 /**
  * Electron wiring for Rox Mail (direct ipcMain, like meetings-local): the
  * mailbox credential and the JMAP connection stay in the main process.
@@ -43,8 +44,8 @@ async function identityHints(): Promise<{ ownerUuid?: string | null; handles: Ar
   const handles: Array<string | null | undefined> = []
   let ownerUuid: string | null = null
   try {
-    const cloud = await getCredentialManager().getRoxCloudSession()
-    if (cloud?.userId) ownerUuid = cloud.userId
+    const cloud = (await getRoxAccountAuthority().state(LOCAL_ROX_CALLER)).account?.user
+    if (cloud?.id) ownerUuid = cloud.id
     if (cloud?.email) handles.push(cloud.email)
     if (cloud?.name) handles.push(cloud.name)
   } catch { /* not connected to rox.one */ }
@@ -59,7 +60,7 @@ async function identityHints(): Promise<{ ownerUuid?: string | null; handles: Ar
 
 async function senderName(): Promise<string | null> {
   try {
-    const cloud = await getCredentialManager().getRoxCloudSession()
+    const cloud = (await getRoxAccountAuthority().state(LOCAL_ROX_CALLER)).account?.user
     if (cloud?.name) return cloud.name
   } catch { /* not connected */ }
   try {

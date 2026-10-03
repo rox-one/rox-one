@@ -1,0 +1,2 @@
+{"case": "destination-created-at-publication", "rejected": true, "existingEmptyDirectoryInodePreserved": true, "scratchRemoved": true, "platform": "darwin"}
+{"case": "dangling-destination-symlink", "rejected": true, "linkPreserved": true, "resolvedTargetAbsent": true, "scratchAbsent": true}

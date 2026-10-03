@@ -1,0 +1,22 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/auth/__tests__/rox-account-authority.test.ts:
+(pass) Pocket host account authority > does not share native/local account credentials and never projects tokens/key [1.72ms]
+(pass) Pocket host account authority > keeps zero balance authenticated and ready but rejects paid dispatch [0.49ms]
+(pass) Pocket host account authority > fences old executor and durable session/automation bindings on account switch [0.52ms]
+(pass) Pocket host account authority > restores exact owned resources after restart without ambient fallback [0.18ms]
+(pass) Pocket host account authority > persists refresh operation proof before dispatch, retries same id after dropped response [0.33ms]
+(pass) Pocket host account authority > refreshes expired access and durably clears pending proof before inference without a UI poll [0.26ms]
+(pass) Pocket host account authority > ignores a late bootstrap response after logout and removes persisted secrets [3.19ms]
+(pass) Pocket host account authority > uses sealed prior access proof to revoke a device after an in-flight refresh rotation [2.58ms]
+(pass) Pocket host account authority > fences a running executor when account key generation changes [0.27ms]
+(pass) Pocket host account authority > invalidates the running executor when the active key is revoked [0.20ms]
+(pass) Pocket host account authority > keeps failed device revocation sealed for retry after process restart [0.35ms]
+(pass) Pocket host account authority > revokes via logout-only prior access proof without an expired refresh replay [0.21ms]
+(pass) Pocket host account authority > fences crash-window active records and drains logout on ordinary restart state reads [0.36ms]
+(pass) Pocket host account authority > keeps a pending logout fail-closed across clear failure and broker outage restarts [0.41ms]
+
+ 14 pass
+ 0 fail
+ 63 expect() calls
+Ran 14 tests across 1 file. [118.00ms]

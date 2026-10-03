@@ -1,0 +1,9 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/handlers/rpc/__tests__/pocket-core-registry.test.ts:
+(pass) actual registerCoreRpcHandlers serves Connect/bootstrap/logout over authenticated local RPC [3048.00ms]
+
+ 1 pass
+ 0 fail
+ 2 expect() calls
+Ran 1 test across 1 file. [3.22s]
