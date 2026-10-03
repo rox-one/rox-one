@@ -5,8 +5,8 @@ import { fileURLToPath } from 'node:url'
 import { dirname } from 'node:path'
 import type { RuntimeState, StepId, TourSignal, TourProgress } from '../contracts'
 
-interface NativeContinuitySnapshot { phase: RuntimeState['phase']; stepId?: StepId; evidence: RuntimeState['attemptEvidence']; progress: TourProgress | null; signals: TourSignal[]; calls: { startVoiceCapture: number; stopVoiceCapture: number; getSources: number } }
-declare global { interface Window { nativeContinuity: { start(kind: 'voice' | 'source', emptyTranscript?: boolean): void; show(): void; acknowledge(): void; snapshot(): NativeContinuitySnapshot } } }
+interface NativeContinuitySnapshot { phase: RuntimeState['phase']; stepId?: StepId; evidence: RuntimeState['attemptEvidence']; progress: TourProgress | null; signals: TourSignal[]; calls: { startVoiceCapture: number; stopVoiceCapture: number; copyVoiceText: number; getSources: number } }
+declare global { interface Window { nativeContinuity: { start(kind: 'voice' | 'source', emptyTranscript?: boolean, delivery?: 'draft' | 'clipboard', trailingSpace?: boolean): void; show(): void; acknowledge(): void; snapshot(): NativeContinuitySnapshot; clipboard(): string } } }
 const isolatedCase = process.env.ROX_PRODUCT_TOUR_NATIVE_CONTINUITY_CASE
 let registeredCase = false
 let browser: Browser | undefined
@@ -29,18 +29,44 @@ beforeAll(async () => {
 }, 30_000)
 afterAll(async () => { await browser?.close(); server?.stop(true) })
 
+function capturePipe(stream: ReadableStream<Uint8Array>) {
+  const reader = stream.getReader()
+  const decoder = new TextDecoder()
+  let output = ''
+  const done = (async () => {
+    try {
+      for (;;) {
+        const chunk = await reader.read()
+        if (chunk.done) break
+        output = (output + decoder.decode(chunk.value, { stream: true })).slice(-65_536)
+      }
+      output += decoder.decode()
+    } catch (error) { output += `\nOutput stream closed: ${String(error)}` }
+  })()
+  return { done, text: () => output, stop: () => { void reader.cancel().catch(() => {}) } }
+}
+
 function browserTest(name: string, operation: () => Promise<void>) {
   if (isolatedCase && isolatedCase !== name) return
   if (isolatedCase) registeredCase = true
   test(name, async () => {
     if (isolatedCase === name) return operation()
     const child = Bun.spawn([process.execPath, 'test', fileURLToPath(import.meta.url)], { env: { ...process.env, ROX_PRODUCT_TOUR_NATIVE_CONTINUITY_CASE: name }, stdout: 'pipe', stderr: 'pipe' })
-    const timeout = setTimeout(() => child.kill(), 40_000)
+    const stdout = capturePipe(child.stdout)
+    const stderr = capturePipe(child.stderr)
+    let timedOut = false
+    const timeout = setTimeout(() => { timedOut = true; child.kill() }, 40_000)
+    let drainTimeout: ReturnType<typeof setTimeout> | undefined
     try {
-      const [stdout, stderr, exitCode] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited])
-      if (exitCode !== 0) throw new Error(`Native renderer continuity case exited ${exitCode}:\n${stdout}${stderr}`)
+      const exitCode = await child.exited
+      // A browser descendant can hold the pipes after Bun exits. EOF is not the test result.
+      await Promise.race([
+        Promise.all([stdout.done, stderr.done]),
+        new Promise<void>(resolve => { drainTimeout = setTimeout(resolve, 1_000) }),
+      ])
+      if (timedOut || exitCode !== 0) throw new Error(`Native renderer continuity case ${timedOut ? 'timed out' : `exited ${exitCode}`}:\n${stdout.text()}${stderr.text()}`)
       expect(exitCode).toBe(0)
-    } finally { clearTimeout(timeout); child.kill() }
+    } finally { clearTimeout(timeout); clearTimeout(drainTimeout); child.kill(); stdout.stop(); stderr.stop() }
   }, isolatedCase ? 30_000 : 45_000)
 }
 
@@ -94,6 +120,58 @@ browserTest('T-VOICE-REVIEW an empty native transcription cannot supply insertio
     expect(result.evidence['voice.review']?.level).toBeUndefined()
     expect(result.phase).toBe('waiting-action')
     expect(await page.getByRole('textbox', { name: 'Draft' }).inputValue()).toBe('Existing draft')
+  } finally { await page.close() }
+})
+
+for (const trailingSpace of [false, true]) browserTest(`T-VOICE-REVIEW clipboard delivery ${trailingSpace ? 'with' : 'without'} a trailing space cannot supply composer insertion evidence`, async () => {
+  const page = await browser!.newPage()
+  try {
+    await page.goto(server!.url.href)
+    await page.waitForFunction(() => !!window.nativeContinuity)
+    await page.evaluate(value => window.nativeContinuity.start('voice', false, 'clipboard', value), trailingSpace)
+    await page.getByRole('button', { name: 'Dictate', exact: true }).waitFor()
+    await page.evaluate(() => window.nativeContinuity.show())
+    await page.getByRole('button', { name: 'Dictate', exact: true }).click()
+    await page.getByRole('button', { name: 'Stop dictation', exact: true }).click()
+    await page.waitForFunction(() => window.nativeContinuity.snapshot().calls.copyVoiceText === 1)
+    await page.getByRole('button', { name: 'Dictate', exact: true }).waitFor()
+    expect(await page.evaluate(() => window.nativeContinuity.clipboard())).toBe(`Private fixture transcript${trailingSpace ? ' ' : ''}`)
+    await page.evaluate(() => { window.nativeContinuity.acknowledge(); window.nativeContinuity.show(); window.nativeContinuity.acknowledge() })
+    const result = await page.evaluate(() => window.nativeContinuity.snapshot())
+    expect(result.calls.startVoiceCapture).toBe(1)
+    expect(result.calls.stopVoiceCapture).toBe(1)
+    expect(result.calls.copyVoiceText).toBe(1)
+    expect(result.signals).toEqual([])
+    expect(result.evidence['voice.review']?.level).toBeUndefined()
+    expect(result.phase).toBe('waiting-action')
+    expect(await page.getByRole('textbox', { name: 'Draft' }).inputValue()).toBe('Existing draft')
+    expect(JSON.stringify(result)).not.toContain('Private fixture transcript')
+  } finally { await page.close() }
+})
+
+browserTest('T-VOICE-REVIEW draft delivery preserves the requested trailing space and still needs a visible review acknowledgement', async () => {
+  const page = await browser!.newPage()
+  try {
+    await page.goto(server!.url.href)
+    await page.waitForFunction(() => !!window.nativeContinuity)
+    await page.evaluate(() => window.nativeContinuity.start('voice', false, 'draft', true))
+    await page.getByRole('button', { name: 'Dictate', exact: true }).waitFor()
+    await page.evaluate(() => window.nativeContinuity.show())
+    await page.getByRole('button', { name: 'Dictate', exact: true }).click()
+    await page.getByRole('button', { name: 'Stop dictation', exact: true }).click()
+    await page.waitForFunction(() => window.nativeContinuity.snapshot().signals.length === 1)
+    expect(await page.getByRole('textbox', { name: 'Draft' }).inputValue()).toBe('Existing draft Private fixture transcript ')
+    const inserted = await page.evaluate(() => window.nativeContinuity.snapshot())
+    expect(inserted.calls.startVoiceCapture).toBe(1)
+    expect(inserted.calls.stopVoiceCapture).toBe(1)
+    expect(inserted.calls.copyVoiceText).toBe(0)
+    expect(inserted.evidence['voice.review']?.level).toBe('observed')
+    expect(inserted.evidence['voice.review']?.acknowledgedAt).toBeUndefined()
+    expect(JSON.stringify(inserted)).not.toContain('Private fixture transcript')
+    await page.evaluate(() => { window.nativeContinuity.acknowledge(); window.nativeContinuity.show() })
+    expect(await page.evaluate(() => window.nativeContinuity.snapshot().phase)).toBe('presenting')
+    await page.evaluate(() => window.nativeContinuity.acknowledge())
+    expect(await page.evaluate(() => window.nativeContinuity.snapshot().phase)).toBe('finished')
   } finally { await page.close() }
 })
 
