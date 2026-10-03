@@ -676,3 +676,11 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 | LOC-05: Publish, review and merge main | Lead | LOC-04 | scoped PR and verification receipt | exact pushed HEAD, check readback, merge SHA and main ancestry; retain unrelated work |
 
 The latest user authorization explicitly permits source repair, GitHub writes and merge into main. Existing feature-program acceptance states remain independent of this credential-boundary repair.
+
+
+## Explicit Connection host import recovery — 2026-10-03
+
+1. Historical worker verifies actual source delta and local-only Electron handler -> current adapter -> existing importer/host-runner call chain. Lead retains integration; original source branch remains unchanged.
+2. Recover commit defaults, preserving direct injected importer overrides. Add internal low-level runner ports used only by tests and host composition. Keep candidate previews free of helper password/process execution, except explicit metadata/public-identity list operations.
+3. Test all five positive selected paths, output masking/copy/reference behavior, unknown candidate refusal before secret access, helper failure without Connection/copy, and explicit override precedence. Prove negative controls by restoring exact pre-change adapter blobs, then restore candidate before final checks.
+4. Run existing importer/runner/workgraph/handler controls and consumed server-core/Electron types. Publish a separate codex PR and exact remote-head/proof receipt; lead merges after qualification. No actual host credential reads or external sends are part of verification.
