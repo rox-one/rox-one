@@ -10,7 +10,7 @@ const require = createRequire(root + '/package.json');
 const { chromium } = require('playwright');
 const enabled = process.env.ROX_RAIL_POPOVER_BROWSER_TEST === '1';
 const directory = process.env.ROX_RAIL_POPOVER_FIXTURE_DIST;
-let browser, server, address;
+let browser, browserServer, server, address;
 if (!enabled) test('workspace link popover browser qualification requires explicit opt-in', { skip: true }, () => {});
 else {
   before(async () => {
@@ -23,9 +23,17 @@ else {
     });
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
     address = `http://127.0.0.1:${server.address().port}`;
-    browser = await chromium.launch({ headless: true, executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE });
+    browserServer = await chromium.launchServer({ headless: true, executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE });
+    browser = await chromium.connect(browserServer.wsEndpoint());
   }, { timeout: 20_000 });
-  after(async () => { await browser?.close(); server?.closeAllConnections(); await new Promise(resolve => server?.close(resolve)); }, { timeout: 20_000 });
+  after(async () => {
+    // This isolated headless server owns its child process; terminate it before
+    // closing the client so slow Chromium graceful shutdown cannot strand Node.
+    await browserServer?.kill();
+    await browser?.close();
+    server?.closeAllConnections();
+    await new Promise(resolve => server?.close(resolve));
+  }, { timeout: 20_000 });
   async function pageFor(t, width = 1386, height = 800) {
     const context = await browser.newContext({ viewport: { width, height } });
     t.after(() => context.close());

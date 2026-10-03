@@ -1,0 +1,54 @@
+{
+  "source_pr": 1447,
+  "source_head": "e004a44bd5148a050515277073b9aa432f497a4c",
+  "qualified_production_head": "7aeb4371a3aa9c9ffc13bee1353e2c75be0123aa",
+  "integrated_main": "e1b0c1f68a63a5ad9418775d7d09f5c99010ca60",
+  "source_hashes": {
+    "apps/electron/src/renderer/components/app-shell/WorkspaceIconRail.tsx": "18067ccddfd3d6deb0f00925b040d4e599e7d7146f1cebbb8136bf80e0af9d29",
+    "apps/electron/src/renderer/components/app-shell/__tests__/workspace-link-popover.fixture.mjs": "8ef842b9d6701031da0a1e90f32165b80d81353f48a8d00eb80922cf02b254d1",
+    "apps/electron/src/renderer/components/app-shell/__tests__/workspace-link-popover.browser.node.mjs": "da72cc837af3c2d4261e5e699343ecaa85a1c92c44d2d66917696f3037097c8d"
+  },
+  "checks": {
+    "actual_component_browser": {
+      "pass": 9,
+      "fail": 0,
+      "skip": 0,
+      "cancel": 0
+    },
+    "actual_old_component_negative": {
+      "pass": 0,
+      "fail": 1,
+      "failure": "Actual field width 25 must exceed 200px"
+    },
+    "actual_component_tailwind_build": 0,
+    "full_electron_types_node22": 0
+  },
+  "unchanged_seams": [
+    "workspace transport/avatar/creation",
+    "translation-key labels",
+    "navigation capture",
+    "toast capture"
+  ],
+  "actual_dependencies": [
+    "WorkspaceIconRail",
+    "Radix Popover/Select/Tooltip",
+    "rail-links storage",
+    "current product tour hook",
+    "full renderer CSS"
+  ],
+  "repairs": [
+    "Source280px panel overflowed320px viewport; constrain to Radix available width and viewport",
+    "Native teardown occasionally stranded Chromium graceful close; kill only owned headless browser server before client close",
+    "Initial old negative fixture missing PremiumMenuSelect failed to mount; corrected fixture executes exact old component and demonstrates25px field"
+  ],
+  "logs_sha256": {
+    "qa-rail-final-current-build.log": "222c72d8b71a149031ff208a09aa6650ef9ea138e43bda20bebdb7bb0b4e4ddd",
+    "qa-rail-final-owned-cleanup-browser.log": "b01cfcba35a41bc26bc2efcf6da3f7e1039b1b0825ef127149842f527c1a3449",
+    "qa-rail-negative-fixture-build-repaired.log": "194d39dd4cf6e3eed209fdb0f9cc39c7a07570668d98501d64047b17ff3faf33",
+    "qa-rail-negative-browser-repaired.log": "60f9c574d9188b2499b4312c14a1e191495079c9c52e7ab36094d9fe64c7308c",
+    "qa-rail-current-electron-types.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qa-rail-final-current-browser.log": "579b17bab6fb075df84bd7d2c81918bf4da9692c6811175cdafdae8fd4335a02"
+  },
+  "branches_preserved": true,
+  "full_native_release_acceptance": false
+}

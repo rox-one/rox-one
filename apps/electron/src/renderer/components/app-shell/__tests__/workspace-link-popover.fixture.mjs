@@ -16,7 +16,7 @@ const mocks={
  '@/hooks/useWorkspaceIcon':"const icons=new Map();export const useWorkspaceIcons=()=>icons;",
  '@/lib/transport-wait':"export const waitForTransportConnected=()=>Promise.resolve();",
  '@/lib/navigate':`export {routes} from ${JSON.stringify(root+'/apps/electron/src/shared/routes.ts')};export const navigate=route=>window.railFixture.navigations.push(route);`,
- '@rox/ui':`export {Tooltip,TooltipTrigger,TooltipContent,TooltipProvider} from ${JSON.stringify(root+'/packages/ui/src/components/tooltip.tsx')};`
+ '@rox/ui':`export {Tooltip,TooltipTrigger,TooltipContent,TooltipProvider} from ${JSON.stringify(root+'/packages/ui/src/components/tooltip.tsx')};export {PremiumMenuSelect} from ${JSON.stringify(root+'/packages/ui/src/components/ui/PremiumMenuSelect.tsx')};`
 };
 for(const [key,value] of Object.entries(mocks)) if(key.startsWith('@/')) mocks[root+'/apps/electron/src/renderer/'+key.slice(2)]=value;
 const entry=`import React from 'react';import {createRoot} from 'react-dom/client';import {flushSync} from 'react-dom';
