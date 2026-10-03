@@ -20,7 +20,8 @@ import {
   ExternalLink,
 } from 'lucide-react'
 
-import { CAPABILITY_PACKS, CAPABILITY_TOOLS, buildOfflineCapabilityReport } from '@rox/shared/capabilities'
+import { CAPABILITY_PACKS, CAPABILITY_TOOLS } from '@rox/shared/capabilities/packs'
+import { buildOfflineCapabilityReport } from '@rox/shared/capabilities/agents-md'
 import { routes } from '@/lib/navigate'
 import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
@@ -37,7 +38,7 @@ import {
   groupExtensionPermissions,
   permissionsForMarketplaceKind,
 } from '@rox/shared/extensions/browser'
-import { filterMarketplaceEntries } from '@rox/shared/marketplace'
+import { filterMarketplaceEntries } from '@rox/shared/marketplace/filters'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',

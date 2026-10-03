@@ -2,6 +2,7 @@
 import { BUILTIN_MEETING_AGENTS, type BuiltinMeetingAgentId } from './catalog.ts'
 import { recipeById, type MeetingProfileId, type RecipeOverride } from './recipes.ts'
 import { compileMeetingFollowupMatcher, cronMatchesAt, meetingFollowupOccurrenceKey } from '../automations/meeting-followup.ts'
+import { Cron } from 'croner'
 import type { MeetingFollowupKind } from '../automations/types.ts'
 
 const PROFILE_ROLES: Record<MeetingProfileId, readonly BuiltinMeetingAgentId[]> = {
@@ -79,7 +80,9 @@ export function invokeMeetingSlash(text: string, selectedId: MeetingProfileId): 
   return selectedId
 }
 function followupPlan(input: FollowupPlanningInput, now: number): NonNullable<MeetingActionPlan['followup']> {
-  if (!input || !/^[A-Za-z0-9._-]{1,128}$/.test(input.id) ||
+  if (!input || typeof input.id !== 'string' || !/^[A-Za-z0-9._-]{1,128}$/.test(input.id) ||
+    typeof input.timezone !== 'string' || !input.timezone || input.timezone.length > 128 ||
+    (input.cron !== undefined && (typeof input.cron !== 'string' || input.cron.length > 512)) ||
     !['prepare', 'finalize', 'promise-check', 'send', 'capture'].includes(input.kind) ||
     !['skip', 'catch-up-once', 'hold'].includes(input.missedRunPolicy) ||
     !['device', 'server'].includes(input.scope) || !Number.isFinite(input.expiresAt) ||
@@ -94,6 +97,8 @@ function followupPlan(input: FollowupPlanningInput, now: number): NonNullable<Me
   const matcher = compileMeetingFollowupMatcher(input)
   // A proposed configuration is not an enabled authenticated executor.
   matcher.enabled = false
+  try { new Cron(matcher.cron!, { timezone: input.timezone }).nextRun(new Date(now)) }
+  catch { throw new MeetingPlanningError('invalid-cron') }
   const due = cronMatchesAt(matcher.cron!, now, input.timezone)
   let policy = 'planned'
   if (input.optOut) policy = 'opt-out'

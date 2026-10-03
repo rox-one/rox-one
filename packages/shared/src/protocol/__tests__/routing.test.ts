@@ -230,11 +230,10 @@ describe('credential migration routing (desktop vault)', () => {
     RPC_CHANNELS.credentials.ROLLBACK_MIGRATION,
   ]
 
-  const IDENTITY_CHANNELS = Object.values(RPC_CHANNELS.identity)
+  const HOST_IDENTITY_CHANNELS = [RPC_CHANNELS.identity.CONNECT, RPC_CHANNELS.identity.DISCONNECT, RPC_CHANNELS.identity.REFRESH_STATUS, RPC_CHANNELS.identity.CHANGED]
 
-  test('keeps the four migration channels LOCAL_ONLY like identity', () => {
-    expect(IDENTITY_CHANNELS.length).toBeGreaterThan(0)
-    for (const channel of IDENTITY_CHANNELS) {
+  test('keeps credential migration and host service connections LOCAL_ONLY', () => {
+    for (const channel of HOST_IDENTITY_CHANNELS) {
       expect(LOCAL_ONLY_CHANNELS.has(channel)).toBe(true)
       expect(REMOTE_ELIGIBLE_CHANNELS.has(channel)).toBe(false)
     }
@@ -242,6 +241,13 @@ describe('credential migration routing (desktop vault)', () => {
     for (const channel of MIGRATION_CHANNELS) {
       expect(LOCAL_ONLY_CHANNELS.has(channel)).toBe(true)
       expect(REMOTE_ELIGIBLE_CHANNELS.has(channel)).toBe(false)
+    }
+  })
+
+  test('routes authenticated native self profile metadata without opening host service connections', () => {
+    for (const channel of [RPC_CHANNELS.identity.GET_STATE, RPC_CHANNELS.identity.UPDATE_PROFILE]) {
+      expect(REMOTE_ELIGIBLE_CHANNELS.has(channel)).toBe(true)
+      expect(LOCAL_ONLY_CHANNELS.has(channel)).toBe(false)
     }
   })
 

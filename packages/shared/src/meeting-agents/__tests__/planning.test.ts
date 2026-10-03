@@ -58,6 +58,7 @@ describe('read-only followup scheduling policies', () => {
   })
   it('refuses invalid policy values and impossible timezone', () => {
     expect(() => followup({ timezone: 'unknown-zone' })).toThrow('invalid-timezone')
+    expect(() => followup({ cron: 'impossible schedule' })).toThrow('invalid-cron')
     expect(() => followup({ maxRetries: Infinity })).toThrow('invalid-followup')
     expect(() => followup({ id: '../unsafe' })).toThrow('invalid-followup')
     expect(() => followup({ budgetRemaining: -1 })).toThrow('invalid-followup')

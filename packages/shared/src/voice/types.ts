@@ -6,6 +6,8 @@
  * separate consents. Legacy cloud/TTS defaults never imply user consent.
  */
 
+import { DEEPGRAM_TRANSCRIPTION_MODEL } from './contracts.ts'
+
 export const VOICE_PREFS_VERSION = 3 as const
 export const DEFAULT_WAKE_PHRASE = 'Так, Рокс!'
 
@@ -91,8 +93,11 @@ export interface TranscribeInput {
   audio: Uint8Array
   mimeType: string
   language?: string
+  signal?: AbortSignal
 }
 export interface TranscribeResult {
+  segments?: import('./adapters/audio-result.ts').TranscriptSegment[]
+  words?: import('./adapters/audio-result.ts').TranscriptWord[]
   text: string
   engine: SttEngine
   uploaded: boolean
@@ -100,6 +105,8 @@ export interface TranscribeResult {
   requestId?: string
   requestedModelId?: string
   resolvedModelId?: string
+  modelRevision?: string
+  diarizationModel?: string
   routeVersion?: string
   detectedLanguage?: string
   durationMs?: number
@@ -172,7 +179,7 @@ export function getDefaultVoicePrefs(now: number = Date.now()): VoicePrefs {
     ttsEngine: 'system',
     audioRetention: 'cloud-policy',
     localArchivePolicy: 'until-delete',
-    asrModelId: 'rocks-t1',
+    asrModelId: DEEPGRAM_TRANSCRIPTION_MODEL,
     recognitionLanguage: 'auto',
     timestamps: 'segment',
     cloudAsrConsent: false,

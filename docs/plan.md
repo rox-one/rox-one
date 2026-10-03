@@ -1,3 +1,19 @@
+## Golden Gate device diagnostics recovery plan — 2026-10-03
+
+1. Historical scout identified exact source revision and runtime files absent from main; integration worker audited the diagnostic dependency closure and recorded source hashes.
+2. Recover the 13 source modules/tests, localized keys and minimal TopBar/main/preload wiring, preserving current shell behavior.
+3. Cover arbitrary command/path/sender denial, native cancellation/replacement, bounded/redacted logs including links/FIFOs, browser closed cost and open/tab/close behavior.
+4. Run targeted tests, complete package types and WebUI/Electron main/preload/renderer builds; publish a separate PR after main/release reconciliation. Lead owns independent review and serial main merge; all original branches remain.
+5. Recover remaining panel/native/request/task clusters in coherent subsequent slices with actual callers and behavior evidence.
+
+Integration with current main `d8c92f96363f47e0b72e7296a36aa23a9227a691` preserves its OMP 18.4.12 private native fork and stored-prefix recovery, MCP runtime, Compound additions and UI-001 detail/storage validation. The UI user-message anchor feeds the runtime inclusive native fork. Module imports and fixture aliases use the renamed `@rox` workspace packages; protocol identifiers and legacy migration strings remain unchanged.
+## Session UX branch integration plan — 2026-10-03
+
+1. PR scout owns exhaustive fresh open PR/check/head inventory, retained in `/tmp/rox-branch-integration-20261003/pr-scout.json`; complete.
+2. UI worker reproduces exact #1391 fixture typing and renderer import failures; original logs retained under that task directory; complete.
+3. UI worker applies only runtime-checked fixture narrowing, valid attachment type and direct pure public catalog imports; root separately owns release runtime/security repairs.
+4. UI worker repairs the reproduced credential/ASR check/read races and 22 missing locale keys, covers malicious links/replacements/growth and caller upload/publication refusal, then runs complete package type checks, validate:ci, targeted native behavior tests and browser builds; publishes an isolated candidate commit and reports exact receipt.
+5. Root owns serial release/session reconciliation, security disposition and authorized main integration; no branch deletion. Product/provider/hardware acceptance retains its existing pending state.
 ## Golden Gate native surface ownership recovery plan — 2026-10-03
 
 1. Audit actual missing source closure and current callers. Preserve current deliberate SiYuan removal and cookie consent behavior; exclude historical shell replacements.
@@ -624,7 +640,15 @@ Owner: historical integration; parent retains merge. Dependency: existing useWor
 Owner: historical integration; parent merges. Dependency: current packaged roles/recipes, safe analysis session port, local Meeting store, NativeAuthority read fences and canonical MeetingJournal. Preserve concurrent voice/PTT producer/consumer work, native Notes authority and current glass/navigation.
 
 1. Map richer historical recipe/followup intent to actual routed consumers; reject synthetic receipts, writable-file grants and invented host principal.
-2. Bind profile/slash to current safe analysis callback and persist profile through existing local store; retain source-revision result validation and permissions.
+2. Bind profile/slash to current durable claim/attach/finish analysis and persist profile through existing local store; retain CAS, no-source-tool sessions, source-revision result validation and manual-edit supersession.
 3. Publish context-bound read-only plan RPC with canonical revision and policy projection; refuse unsafe/background execution, independent scheduling writes and corrupt-tail repair.
 4. Verify actual safe analysis callback, store restart, real authenticated WebSocket planning, foreign/missing/forged/revoked identities, asynchronous revocation, unknown/unpermitted slash and no journal/outbox/schedule mutation. Check routing, all locale catalogs, changed package/renderer types and relevant builds.
 5. Deliver separate PR with exact source/head and explicitly bounded receipts. The missing real authenticated backend/scheduler delegation ports remain named acceptance limits.
+## Selective editor block recovery — 2026-10-03
+
+Owner: recent feature worker; integration owner: branch audit lead. Source dependency: `1f56af31d3658ee9880105361ad5312324f36ab8`; base: live main `3d04470f9be127945dd15c582775ed1e0401ed50`.
+
+1. Recover only ColumnsBlock, DocumentFolding and rox-block-syntax plus focused source tests and styles; retain current editor/shell behavior.
+2. Wire Notes folding preferences and replace placeholder slash insertions with real nodes. Supply legacy parser/serializer adapters required by the current default engine; preserve existing column aliases and literal code fences.
+3. Verify actual installed legacy parser/ProseMirror/serializer parse-edit-export-reopen, official-engine roundtrips, fold state normalization, malformed markers, bounded resizing, read-only refusal and locale parity; run consumed Electron types and renderer build.
+4. Publish a separate PR on the isolated codex branch and read back its exact head. Lead owns ordered main merge. Original source branch remains intact. The historical worker separately owns an authenticated read-only KnowledgeProvider adapter; this editor PR introduces no filesystem provider or new native permissions.

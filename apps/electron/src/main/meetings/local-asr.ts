@@ -1,8 +1,7 @@
+import { getServerServiceKey } from '@rox/shared/config/server-services'
 /**
- * Local ASR for meeting recordings: whisper.cpp (`whisper-cli`) + a ggml model
- * from ~/.rox/models, ffmpeg for decoding. Everything runs as local child
- * processes — no audio is uploaded anywhere. Sequential queue; progress is
- * parsed from `-pp` output.
+ * Meeting ASR: configured Deepgram Nova for cloud transcription after consent;
+ * whisper.cpp remains available for an explicitly selected local engine.
  */
 import { spawn } from 'node:child_process'
 import { existsSync, readdirSync, statSync } from 'node:fs'
@@ -10,6 +9,8 @@ import { cpus, homedir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import type { LocalAsrEngine } from '../../shared/meetings-local'
 import { modelLabel, parseWhisperProgress, pickWhisperModel } from './local-model'
+import { DEEPGRAM_TRANSCRIPTION_MODEL } from '@rox/shared/voice'
+import { loadVoicePrefs } from '@rox/shared/voice'
 
 const BIN_DIRS = ['/opt/homebrew/bin', '/usr/local/bin', '/opt/local/bin', '/usr/bin']
 
@@ -34,6 +35,13 @@ export function modelDirs(configDir: string): string[] {
 }
 
 export function detectEngine(configDir: string): LocalAsrEngine {
+  const prefs = loadVoicePrefs(configDir)
+  if (prefs.sttEngine === 'cloud-rox') {
+    const configured = Boolean(getServerServiceKey('DEEPGRAM_API_KEY'))
+    const missing = [!configured && 'deepgram-not-configured', (!prefs.cloudAsrConsent || prefs.privacyMigrationPending) && 'cloud-consent'].filter((value): value is string => Boolean(value))
+    return { ready: missing.length === 0, engine: 'deepgram', model: process.env.DEEPGRAM_MODEL?.trim() || DEEPGRAM_TRANSCRIPTION_MODEL,
+      binary: null, modelPath: null, ffmpeg: findBinary(['ffmpeg']), missing, cloudAvailable: configured }
+  }
   const binary = findBinary(['whisper-cli', 'whisper-cpp'])
   const ffmpeg = findBinary(['ffmpeg'])
   let modelPath: string | null = null

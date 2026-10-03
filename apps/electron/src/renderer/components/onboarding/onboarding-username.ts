@@ -41,7 +41,7 @@ export type UsernameAdvanceContext = {
 }
 
 export function parseOnboardingUsername(raw: string): string | null {
-  if (/[\u0000-\u001f\u007f]/u.test(raw)) return null
+  if (/[\u0000-\u001f\u007f-\u009f]/u.test(raw)) return null
   const name = raw.normalize('NFC').trim().replace(/\s+/gu, ' ')
   if (name.length < 1 || name.length > ONBOARDING_USERNAME_MAX) return null
   return name
