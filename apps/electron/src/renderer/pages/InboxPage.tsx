@@ -53,6 +53,8 @@ import { emailIdFromItem, mailItemId, mailToInboxItem, statusKey } from './inbox
 import type { TeamInboxItem } from '@rox/shared/team'
 import { InboxSidebar, InboxKindIcon, isMailFilter, type InboxPageFilter } from './inbox/InboxSidebar'
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
+import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { inboxFeedCapabilities } from '@/features/product-tour/adapters/work/inbox-feed'
 
 const KIND_TONE: Record<InboxKind, Tone> = {
   permission: 'warning',
@@ -71,6 +73,9 @@ const KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory
 
 export default function InboxPage({ selectedId }: { selectedId?: string | null }) {
   const { t, i18n } = useTranslation()
+  const tourSignals = useTourSignals()
+  const listTourRef = useTourTarget('inbox.list')
+  const actionsTourRef = useTourTarget('inbox.actions')
   const teamInboxEnabled = useTeamFlag(TEAM_FLAG.mentions)
   const teamState = useTeamState()
   const teamRoster = useTeamRoster()
@@ -419,6 +424,13 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   const initialLoading = !!workspaceId && (!loaded.memory || !loaded.skills || !loaded.senders)
     || mail.statusLoading || mailReady && mail.loading && mail.unread.length === 0
   const refreshing = Object.values(loading).some(Boolean) || mail.loading || mail.statusLoading
+  const inboxFailed = errorEntries.length > 0 && visible.length === 0
+  const inboxCapability = useMemo(() => inboxFeedCapabilities({
+    workspacePresent: !!workspaceId, inboxApi: !!shell, inboxLoaded: !initialLoading, inboxFailed,
+    feedApi: false, feedLoaded: false, feedFailed: false, feedItems: [],
+  })['inbox.available']!, [workspaceId, shell, initialLoading, inboxFailed])
+  useEffect(() => tourSignals.capability('inbox.available', inboxCapability),
+    [tourSignals, inboxCapability])
   const refreshInbox = async () => {
     await Promise.all([reload(), mail.refreshStatus().then(() => mail.refresh())])
   }
@@ -509,7 +521,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
       ) : null}
       <div role="listbox" aria-label={t('inbox.title')} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="inbox-list">
         {visible.length === 0 ? (
-          <div className="flex min-h-[300px] flex-1 flex-col items-center justify-center px-5 py-10 text-center" role={initialLoading ? 'status' : undefined}>
+          <div ref={actionsTourRef} data-tour-id="inbox.actions" className="flex min-h-[300px] flex-1 flex-col items-center justify-center px-5 py-10 text-center" role={initialLoading ? 'status' : undefined}>
           <span aria-hidden="true" className="mb-2 flex size-16 items-center justify-center rounded-2xl bg-accent/10 text-accent">
             {initialLoading ? <LoaderCircle className="size-7 animate-spin motion-reduce:animate-none" /> : errorEntries.length || !workspaceId ? <Inbox className="size-7" /> : narrowed ? <Search className="size-7" /> : <CheckCheck className="size-7" />}
           </span>
@@ -536,7 +548,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     const targets = snoozeTargets(now)
     const isDone = state.done[item.id] !== undefined
     return (
-      <div className="flex flex-wrap items-center gap-1.5 pt-4">
+      <div ref={actionsTourRef} data-tour-id="inbox.actions" className="flex flex-wrap items-center gap-1.5 pt-4">
         {item.kind !== 'team-recipient' ? (isDone ? (
           <Button onClick={() => setState((s) => reopen(s, item.id))}>{t('inbox.reopen')}</Button>
         ) : (
@@ -711,7 +723,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
           onAfterRemove={() => { setPinnedMail(null); select(nextAfter(selected.id)) }}
         />
       ) : null}
-      <div className="px-5 pb-4">
+      <div ref={actionsTourRef} data-tour-id="inbox.actions" className="px-5 pb-4">
         <Button disabled={busy === selected.id} onClick={() => void done(selected)} title="E">{t('inbox.done')}</Button>
       </div>
     </div>
@@ -741,5 +753,5 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     </>
   )
 
-  return <ModeScreenLayout testId="inbox-page" navigator={navigator} list={listPanel} detail={selected || currentId || mailSelected || composeState.compose ? detail : null} status={status} />
+  return <ModeScreenLayout testId="inbox-page" navigator={navigator} list={<div ref={listTourRef} data-tour-id="inbox.list" className="flex min-h-0 flex-1 flex-col">{listPanel}</div>} detail={selected || currentId || mailSelected || composeState.compose ? detail : null} status={status} />
 }

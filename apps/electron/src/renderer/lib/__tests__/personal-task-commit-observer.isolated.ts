@@ -47,7 +47,9 @@ test('T-TASKS-CREATE: cache row emits only after real native write and canonical
     const throwingObserver = subscribePersonalTaskCommits(() => { throw new Error('Observer-only failure') })
     try { await persistPersonalTaskConfirmed(quickAdd) } finally { throwingObserver() }
     expect(records).toHaveLength(2)
-    expect(records[1]).toEqual(new PersonalTaskPersistStore(root).get(quickAdd.id))
+    const confirmedReadback = new PersonalTaskPersistStore(root).get(quickAdd.id)
+    if (!confirmedReadback) throw new Error('Confirmed quick-add must survive native restart')
+    expect(records[1]).toEqual(confirmedReadback)
     // A rejected native write never becomes teaching evidence.
     const originalPut = api.personalTasksPut
     api.personalTasksPut = async () => { throw new Error('Synthetic native write denied') }
