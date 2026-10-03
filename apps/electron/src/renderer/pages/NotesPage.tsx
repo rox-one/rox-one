@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/hooks'
 import { matchesNoteReceipt, notesReadCapability } from '@/features/product-tour/adapters/knowledge'
+import { EMPTY_COMMENT_DRAFT, noteCommentDraftKey, updateCommentDraft, type NoteCommentDraft } from './notes/comment-drafts'
 import { capabilityErrorCode, readScopedCapability } from '@/lib/scoped-capability-read'
 import { hasNativeNotesTransport } from '@/lib/notes-capability'
 import { CalendarDays, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, Paperclip, Pencil, Plus, Search, SquarePen, Tags, Trash2 } from 'lucide-react'
@@ -330,9 +331,14 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [content, setContent] = React.useState('')
   const [query, setQuery] = React.useState('')
   const [selectedTag, setSelectedTag] = React.useState<string | null>(null)
-  const [commentDraftQuote, setCommentDraftQuote] = React.useState('')
+  const [commentDrafts, setCommentDrafts] = React.useState<ReadonlyMap<string, NoteCommentDraft>>(() => new Map())
+  const commentDraftKey = noteCommentDraftKey(activeWorkspaceId ?? null, activeNote?.id ?? null)
+  const commentDraft = (commentDraftKey ? commentDrafts.get(commentDraftKey) : null) ?? EMPTY_COMMENT_DRAFT
+  const commentDraftQuote = commentDraft.quote
+  const commentComposerBody = commentDraft.body
+  const setCommentDraftQuote = React.useCallback((quote: string) => setCommentDrafts(drafts => updateCommentDraft(drafts, commentDraftKey, { quote })), [commentDraftKey])
+  const setCommentComposerBody = React.useCallback((body: string) => setCommentDrafts(drafts => updateCommentDraft(drafts, commentDraftKey, { body })), [commentDraftKey])
   const [commentComposerTop, setCommentComposerTop] = React.useState(48)
-  const [commentComposerBody, setCommentComposerBody] = React.useState('')
   const [commentTooltip, setCommentTooltip] = React.useState<{ body: string; quote: string; top: number; left: number } | null>(null)
   const [footnoteDraft, setFootnoteDraft] = React.useState('')
   const [indexHealth, setIndexHealth] = React.useState<NoteIndexHealth>(EMPTY_NOTE_INDEX_HEALTH)

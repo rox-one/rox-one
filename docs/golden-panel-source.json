@@ -1,0 +1,86 @@
+{
+  "source_sha": "5def9ffd36dc160fdc7c908784e0ef97ba6a732e",
+  "source_pr": 584,
+  "copied_files": [
+    {
+      "path": "apps/electron/src/renderer/atoms/panel-workspace.ts",
+      "source_sha256": "cc0aa9332a32d05e041eb68f5b28183dda9be907753c5d992d9a3dfb7786a330",
+      "replaces_existing": false,
+      "integrated_sha256": "cc0aa9332a32d05e041eb68f5b28183dda9be907753c5d992d9a3dfb7786a330"
+    },
+    {
+      "path": "apps/electron/src/renderer/atoms/__tests__/panel-workspace.test.ts",
+      "source_sha256": "c6d177d0c63315cf96f5063edae88f4db028443c492c2a878ddbe8160bf147de",
+      "replaces_existing": false,
+      "integrated_sha256": "c6d177d0c63315cf96f5063edae88f4db028443c492c2a878ddbe8160bf147de"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/panel-workspace-layout.ts",
+      "source_sha256": "865a6d20ea9ed91c45238015afd948c7d09a5d671c255b31343786b3133545a5",
+      "replaces_existing": false,
+      "integrated_sha256": "865a6d20ea9ed91c45238015afd948c7d09a5d671c255b31343786b3133545a5"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/__tests__/panel-workspace-layout.test.ts",
+      "source_sha256": "8a7c7d472ff8b50059bde44fdfc8f9b11d85417366e56538bbdeda4c6fdabbdc",
+      "replaces_existing": false,
+      "integrated_sha256": "8a7c7d472ff8b50059bde44fdfc8f9b11d85417366e56538bbdeda4c6fdabbdc"
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/usePanelWorkspaceLayout.ts",
+      "source_sha256": "ede31917727fd496e305b3334f0e49087b9caa7d6fff83f98c0d4137198816cf",
+      "replaces_existing": false,
+      "integrated_sha256": "ede31917727fd496e305b3334f0e49087b9caa7d6fff83f98c0d4137198816cf"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/PanelWorkspaceMenu.tsx",
+      "source_sha256": "644db226f3646acea7758fa62fff5756e20943006b5c0c2ea43a7870dfb4bb44",
+      "replaces_existing": false,
+      "integrated_sha256": "644db226f3646acea7758fa62fff5756e20943006b5c0c2ea43a7870dfb4bb44"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/PanelGridResizeSash.tsx",
+      "source_sha256": "f7a8cde6ceb165b3c5b7aab3eb8ac4efe194613280efd24c6f90f495b6e8fa61",
+      "replaces_existing": false,
+      "integrated_sha256": "f7a8cde6ceb165b3c5b7aab3eb8ac4efe194613280efd24c6f90f495b6e8fa61"
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/usePanelResize.ts",
+      "source_sha256": "ac50c51b98b9e1a782cb964e2dfe6ae7ff976777733c0cac0467acf1a4eb02dd",
+      "replaces_existing": true,
+      "integrated_sha256": "ac50c51b98b9e1a782cb964e2dfe6ae7ff976777733c0cac0467acf1a4eb02dd"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx",
+      "source_sha256": "885d576d6590e6747a31166db6bebbceac3618b568b194216e682cb5fa272866",
+      "replaces_existing": true,
+      "integrated_sha256": "f2d00aa4520f55e252e9cc12f3be21e93ed50d0b9ca34737c95f93bf2efdac22"
+    }
+  ],
+  "locale_keys": {
+    "panelWorkspace.auto": "Automatic",
+    "panelWorkspace.columns": "Columns",
+    "panelWorkspace.focus": "Focused panel",
+    "panelWorkspace.grid2": "2-column grid",
+    "panelWorkspace.grid3": "3-column grid",
+    "panelWorkspace.layout": "Panel layout",
+    "panelWorkspace.openPanels": "Open panels",
+    "panelWorkspace.reset": "Reset panel sizes",
+    "panelWorkspace.selected": "Selected"
+  },
+  "integration_main": "74b8de9554c34b383b6254b30479c877435bb1db",
+  "preserved": [
+    "Native spatial focus/input/dialog/IME fences",
+    "UI001 current geometry guards and route detail/storage validation",
+    "Current flush shell styling and browser lifecycle registry",
+    "No panel identities or route persistence replacement"
+  ],
+  "adaptations": [
+    "Keep current native spatial-focus subscription and input/dialog/IME guards; use grid topology only for visible targets",
+    "Keep current flush shell pane classes, insets and route/detail consumers",
+    "Retain all flat-keyed PanelSlots across layout/focus/compact changes with inert hidden siblings",
+    "Use current validated resize controller; restore source two-axis pointer capture and owner-safe cleanup",
+    "ResizeHandle adds only orientation-specific keyboard/style handling; current hover treatment stays",
+    "Restore removed focused panel DOM focus only for its disconnected owner, preserving live editing/toolbar focus, dialogs, composition, resize and hidden targets; tabs declare aria-controls ownership"
+  ]
+}
