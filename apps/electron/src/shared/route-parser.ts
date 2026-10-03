@@ -303,7 +303,7 @@ function parseCompoundRouteUnchecked(route: string): ParsedCompoundRoute | null 
     if (segments[1] === 'instance' && segments[2]) {
       return {
         navigator: 'browser',
-        details: { type: 'browser', id: segments[2] },
+        details: { type: 'browser', id: decodeURIComponent(segments[2]) },
       }
     }
     return null
@@ -629,7 +629,7 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
 
   if (parsed.navigator === 'browser') {
     if (!parsed.details) return 'browser'
-    return `browser/instance/${parsed.details.id}`
+    return `browser/instance/${encodeURIComponent(parsed.details.id)}`
   }
 
   if (parsed.navigator === 'projects') {

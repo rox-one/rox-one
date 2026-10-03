@@ -3,7 +3,7 @@
  * persistence channel.
  *
  * The canonical encoding of an open-surfaces layout is the URL encoding that
- * `NavigationContext.syncUrl` already writes (`?route=`, `?panels=<route>:<prop>,…`,
+ * `NavigationContext.syncUrl` already writes (`?route=`, versioned `?panels=`,
  * `?fi=<focusedIndex>`) and `reconcileFromUrlParams` reads back. This module
  * only derives `SurfaceLayoutSnapshot` from that encoding and re-encodes
  * snapshots into it; `KEYS.workspaceUrl` remains the source of truth and wins
@@ -20,21 +20,18 @@
  * (S-02 §3.5) and are dropped from snapshots; full mixed stacks keep round-
  * tripping through the URL channel itself, untouched by this module.
  *
- * Degradation (matches the table in shared/route-parser.ts): malformed surface
- * routes degrade to sessions/allSessions at parse time and therefore surface
- * here as a session tab with no sessionId → dropped (null) rather than
- * resurrected as a bogus surface. Until W2/W5, renderers resolve surface
- * states through `degradeSurfaceNavigationState`.
+ * Malformed surface routes resolve as unavailable and are dropped from this
+ * tab-only projection. The original mixed stack stays in the URL transport.
  *
- * Transport precision: proportions are encoded via `Number.toFixed(4)`
- * (syncUrl's format), so they round-trip exactly when stored at ≤4 decimal
- * places; finer values are normalized on encode.
+ * Transport precision: versioned JSON preserves finite numeric proportions;
+ * the older comma/colon transport is still readable without URI re-decoding.
  */
 
 import { routes } from '../../shared/routes'
 import type { ViewRoute } from '../../shared/routes'
-import { parseRouteToNavigationState } from '../../shared/route-parser'
+import { parseRouteToNavigationStateOrUnavailable } from '../../shared/route-parser'
 import type { KnowledgeRefKind } from '../../shared/types'
+import { decodePanelEntries, encodePanelEntries } from '../lib/panel-url'
 
 // =============================================================================
 // Surface tab model (structural twin of S-02 §3.1 SurfaceTab)
@@ -127,8 +124,7 @@ export function surfaceTabToRoute(tab: SurfaceTabLike): string {
  * routes, extension roots without viewId, degraded malformed surface routes).
  */
 export function surfaceTabFromRoute(route: string): SurfaceTabLike | null {
-  const state = parseRouteToNavigationState(route)
-  if (!state) return null
+  const state = parseRouteToNavigationStateOrUnavailable(route)
 
   switch (state.navigator) {
     case 'sessions':
@@ -174,22 +170,12 @@ export function surfaceTabFromRoute(route: string): SurfaceTabLike | null {
 // =============================================================================
 
 /**
- * Parse the URL panel-stack encoding (`panels` entries joined by ',', each
- * `<route>:<proportion.toFixed(4)>`) into raw stack entries. Mirrors
+ * Parse the current or legacy URL panel-stack encoding. Mirrors
  * NavigationContext.reconcileFromUrlParams: missing/invalid proportions get an
  * equal split; non-unit totals are rescaled.
  */
-function decodePanelEntries(panelsParam: string): Array<{ route: string; proportion: number }> {
-  const entries = panelsParam.split(',').filter(Boolean).map(entry => {
-    const colonIdx = entry.lastIndexOf(':')
-    if (colonIdx > 0) {
-      const proportion = parseFloat(entry.slice(colonIdx + 1))
-      if (!isNaN(proportion) && proportion > 0 && proportion < 1) {
-        return { route: entry.slice(0, colonIdx), proportion }
-      }
-    }
-    return { route: entry, proportion: 0 }
-  })
+function decodeLayoutPanelEntries(panelsParam: string): Array<{ route: string; proportion: number }> {
+  const entries = decodePanelEntries(panelsParam)
 
   const hasProportions = entries.some(e => e.proportion > 0)
   if (!hasProportions) {
@@ -220,7 +206,7 @@ export function snapshotFromUrlSearch(
 
   let rawEntries: Array<{ route: string; proportion: number }> = []
   if (panelsParam) {
-    rawEntries = decodePanelEntries(panelsParam)
+    rawEntries = decodeLayoutPanelEntries(panelsParam)
   } else {
     const route = params.get('route')
     if (route) rawEntries = [{ route, proportion: 1 }]
@@ -256,9 +242,7 @@ export function snapshotToUrlSearch(snapshot: SurfaceLayoutSnapshot): string {
     params.set('route', surfaceTabToRoute(snapshot.tabs[focusedIndex].tab))
   }
   if (snapshot.tabs.length > 1) {
-    const encoded = snapshot.tabs
-      .map(t => `${surfaceTabToRoute(t.tab)}:${t.proportion.toFixed(4)}`)
-      .join(',')
+    const encoded = encodePanelEntries(snapshot.tabs.map(tab => ({ route: surfaceTabToRoute(tab.tab), proportion: tab.proportion })))
     params.set('panels', encoded)
     params.set('fi', String(focusedIndex))
   }

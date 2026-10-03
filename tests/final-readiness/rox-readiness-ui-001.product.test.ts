@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { _electron, type ElectronApplication, type Page } from 'playwright'
-import { mkdtemp, mkdir, readFile, writeFile, stat, symlink } from 'node:fs/promises'
+import { mkdtemp, mkdir, readFile, writeFile, stat, symlink, readdir } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { createHash } from 'node:crypto'
 
@@ -20,9 +20,10 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
     const evidence = process.env.ROX_UI_001_EVIDENCE_DIR ?? join(root, 'docs/final-readiness/execution/cloud/OWNER-UI-001/native-e2e', `rox-readiness-ui-001-${Date.now()}`)
     await mkdir(evidence, { recursive: true })
     const profile = await mkdtemp(join(root, 'work', 'rox-readiness-ui-001-'))
+    const bunPath = process.env.ROX_UI_001_BUN ?? process.execPath
     const executablePath = process.env.ROX_UI_001_ELECTRON ?? join(root, 'work/electron-39.2.7/Electron.app/Contents/MacOS/Electron')
     const bin = join(profile, 'bin'); await mkdir(bin)
-    for (const [name, path] of [['bun', process.execPath], ['node', '/opt/homebrew/bin/node'], ['sh', '/bin/sh'],
+    for (const [name, path] of [['bun', bunPath], ['node', '/opt/homebrew/bin/node'], ['sh', '/bin/sh'],
       ['env', '/usr/bin/env'], ['git', '/usr/bin/git'], ['uname', '/usr/bin/uname'], ['which', '/usr/bin/which']]) {
       await symlink(path!, join(bin, name!))
     }
@@ -31,13 +32,21 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
     // enter the process and `security` is absent from its executable inventory.
     const isolatedShell = join(bin, 'isolated-shell')
     await writeFile(isolatedShell, '#!/bin/sh\nexport PATH=' + "'" + bin.replaceAll("'", "'\\''") + "'" + '\nexec /bin/bash --noprofile --norc "$@"\n', { mode: 0o700 })
+    // Explicit executablePath suppresses Playwright's normal unpackaged-app
+    // loader. Preserve its documented loader ordering through an owned launch
+    // wrapper while executing the exact cached Electron binary.
+    const electronLauncher = join(bin, 'electron-launcher')
+    const quote = (value: string) => "'" + value.replaceAll("'", "'\\''") + "'"
+    const electronPidPath = join(profile, 'electron.pid')
+    await writeFile(electronLauncher, '#!/bin/sh\nprintf "%s\\n" "$$" > ' + quote(electronPidPath) + '\nexec ' + quote(executablePath) + ' -r '
+      + quote(join(root, 'node_modules/playwright-core/lib/server/electron/loader.js')) + ' "$@"\n', { mode: 0o700 })
     const environment = { HOME: process.env.HOME!, USER: process.env.USER ?? 'ui001', TMPDIR: process.env.TMPDIR ?? '/tmp',
       LANG: 'ru_RU.UTF-8', PATH: bin, SHELL: isolatedShell, ROX_CONFIG_DIR: profile, CRAFT_CONFIG_DIR: profile,
       ROX_USER_DATA_DIR: join(profile, 'chromium'), CRAFT_USER_DATA_DIR: join(profile, 'chromium'),
       ROX_INSTANCE_NUMBER: '96', CRAFT_INSTANCE_NUMBER: '96', ROX_APP_NAME: 'ROX UI-001 acceptance',
       ROX_SKIP_PROTOCOL_REGISTRATION: '1', NODE_ENV: 'test' }
     // Keep the host HOME unchanged. ROX config and Chromium are owned roots.
-    const seedChild = Bun.spawn([process.execPath, join(import.meta.dir, 'rox-readiness-ui-001.seed.ts')],
+    const seedChild = Bun.spawn([bunPath, join(import.meta.dir, 'rox-readiness-ui-001.seed.ts')],
       { cwd: root, env: environment, stdout: 'pipe', stderr: 'pipe' })
     const seedOutput = await new Response(seedChild.stdout).text()
     const seedLog = await new Response(seedChild.stderr).text()
@@ -51,9 +60,20 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       'apps/electron/src/renderer/contexts/NavigationContext.tsx', 'apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx',
       'apps/electron/src/renderer/components/app-shell/AppShell.tsx', 'apps/electron/src/renderer/atoms/unified-shell.ts']
     const sourceHashes = Object.fromEntries(await Promise.all(sourcePaths.map(async path => [path, sha256(await readFile(join(root, path)))])))
-    const buildPaths = ['apps/electron/dist/main.cjs', 'apps/electron/dist/bootstrap-preload.cjs', 'apps/electron/dist/renderer/index.html']
+    const buildPaths = ['apps/electron/dist/main.cjs', 'apps/electron/dist/bootstrap-preload.cjs', 'apps/electron/dist/renderer/index.html',
+      ...(await readdir(join(root, 'apps/electron/dist/renderer/assets'))).filter(path => /\.(?:js|css)$/.test(path)).sort()
+        .map(path => 'apps/electron/dist/renderer/assets/' + path)]
     const buildHashes = Object.fromEntries(await Promise.all(buildPaths.map(async path => [path, sha256(await readFile(join(root, path)))])))
+    const buildReceipts = await Promise.all(['main', 'renderer'].map(async kind => {
+      try { return JSON.parse(await readFile(join(root, `work/rox-readiness-ui-001-build-${kind}.json`), 'utf8')) }
+      catch { return null }
+    }))
+    const qualifiedBuild = buildReceipts.every(receipt => receipt?.inputRevision === inputRevision)
+      && buildReceipts[0]?.sourceManifestSha256 === buildReceipts[1]?.sourceManifestSha256
     const observations: Record<string, unknown> = { inputRevision, sourceHashes, buildHashes, profile,
+      buildProvenanceQualified: qualifiedBuild, buildReceipts,
+      buildQualifier: qualifiedBuild ? 'frozen source manifest checked before and after main/renderer builds'
+        : 'provisional product replay; current source snapshot does not bind the earlier generated build',
       acceptanceLevel: 'actual local macOS Electron with shipped RPC and disposable canonical backend',
       fullDoDClosed: false, platformLimits: ['Windows 10/11 DPI and native acceptance not run', 'Hosted web ingress/transport acceptance not run'],
       protocolRegistration: 'explicit test-only guard; OS protocol registration itself not exercised',
@@ -96,7 +116,7 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       await page.locator('[data-shell-role="chrome"]').waitFor({ timeout: 40_000 })
     }
     const launch = async () => {
-      app = await _electron.launch({ executablePath, args: ['--disable-gpu', join(root, 'apps/electron')], env: environment, timeout: 60_000 })
+      app = await _electron.launch({ executablePath: electronLauncher, args: ['--disable-gpu', join(root, 'apps/electron')], env: environment, timeout: 120_000 })
       app.process().stderr?.on('data', bytes => logs.push(String(bytes)))
       app.process().stdout?.on('data', bytes => logs.push(String(bytes)))
       page = await app.firstWindow()
@@ -151,11 +171,13 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       await direct(`skills/skill/${seed.skillSlug}`); await page.getByText('UI001 canonical skill body.', { exact: false }).first().waitFor()
       await direct(`notes/note/${seed.noteId}`); await page.getByText('UI001 canonical note body.', { exact: false }).first().waitFor()
       await direct(`pages/page/${seed.pageSlug}`); await page.getByText('UI001 page', { exact: true }).first().waitFor()
+      await page.frameLocator('iframe[title="UI001 page"]').getByText('UI001 canonical page body', { exact: true }).waitFor()
       await capture('canonical-page')
 
       stage('unavailable-capability-routes')
       for (const [target, selector] of [
         ['terminal/ui001-absent-terminal', '[data-testid="terminal-surface-unavailable"]'],
+        ['browser/ui001-absent-browser', '[data-testid="browser-surface-missing"], [data-testid="browser-surface-unavailable"]'],
         ['cloud-run/ui001-absent-run', '[data-testid="cloud-run-surface-not-found"], [data-testid="cloud-run-surface-unavailable"]'],
         ['knowledge/block/ui001-absent-block', '[data-testid="knowledge-entity-unavailable"]'],
         ['extension/ui001-absent-extension/ui001-absent-view', '[data-testid="extension-surface-unavailable"]'],
@@ -267,6 +289,10 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       await direct('not-a-supported-ui001-route')
       await page.getByTestId('route-unavailable').waitFor(); expect(await route()).toBe('not-a-supported-ui001-route')
       await capture('unknown-link-unavailable')
+      if (qualifiedBuild) {
+        const frozenHashes: Record<string, string> = buildReceipts[0].sourceHashes
+        for (const [path, hash] of Object.entries(frozenHashes)) expect(sha256(await readFile(join(root, path)))).toBe(hash)
+      }
       observations.status = 'passed'; observations.errors = errors; expect(errors).toEqual([])
     } catch (error) {
       observations.status = 'failed'; observations.error = error instanceof Error ? error.message : String(error)
@@ -277,6 +303,14 @@ describe.skipIf(!enabled)('UI-001 actual Electron → NavigationProvider → RPC
       await writeFile(join(evidence, 'rox-readiness-ui-001.result.json'), JSON.stringify(observations, null, 2))
       await writeFile(join(evidence, 'rox-readiness-ui-001.native.log'), redactLog(logs.join('')))
       await app?.close().catch(() => {})
+      if (!app) {
+        const pid = Number(await readFile(electronPidPath, 'utf8').catch(() => ''))
+        if (Number.isInteger(pid) && pid > 1) {
+          try { process.kill(pid, 'SIGTERM') } catch {}
+          await new Promise(resolve => setTimeout(resolve, 500))
+          try { process.kill(pid, 'SIGKILL') } catch {}
+        }
+      }
       console.log(`UI-001 native evidence: ${evidence}`)
     }
   }, 600_000)

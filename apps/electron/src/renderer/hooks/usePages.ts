@@ -58,13 +58,13 @@ export function usePages(activeWorkspaceId: string | null | undefined): UsePages
 
   useEffect(() => {
     if (!activeWorkspaceId) return
+    const scope = owner.current
     const off = window.electronAPI.onPagesChanged((wsId, list) => {
       // Watcher-driven pushes carry the CONFIG workspace id, but the WebUI
       // identifies its workspace by slug — those pushes still target this
       // client (routing is handshake-based), so on an id-form mismatch we
       // re-read instead of dropping (mirrors useAutomations' refetch shape).
-      const scope = owner.current
-      if (!scope.active || scope.workspaceId !== activeWorkspaceId) return
+      if (!scope.active || owner.current !== scope || scope.workspaceId !== activeWorkspaceId) return
       if (wsId === activeWorkspaceId) {
         // A deletion/update broadcast supersedes any earlier list request.
         scope.revision += 1
