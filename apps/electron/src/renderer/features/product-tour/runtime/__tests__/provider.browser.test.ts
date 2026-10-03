@@ -53,6 +53,7 @@ afterAll(async () => {
 }, 30_000)
 
 // Keep the production bundle and browser lifecycle independent of other Bun suites.
+// The child budget includes its 30s setup, unchanged case deadline and 30s teardown.
 function browserTest(name: string, operation: () => Promise<void>, timeout: number) {
   if (isolatedCase && isolatedCase !== name) return
   if (isolatedCase) registeredIsolatedCase = true
@@ -64,10 +65,10 @@ function browserTest(name: string, operation: () => Promise<void>, timeout: numb
       return
     }
     const code = await runNativeBrowserProcess([process.execPath, 'test', fileURLToPath(import.meta.url)], {
-      label: name, env: { ...process.env, ROX_PRODUCT_TOUR_PROVIDER_CASE: name }, deadlineMs: 35_000,
+      label: name, env: { ...process.env, ROX_PRODUCT_TOUR_PROVIDER_CASE: name }, deadlineMs: 80_000,
     })
     expect(code).toBe(0)
-  }, isolatedCase ? timeout : 40_000)
+  }, isolatedCase ? timeout : 90_000)
 }
 async function setup() {
   stage('provider:fixture:page')
