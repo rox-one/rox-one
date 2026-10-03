@@ -15,9 +15,9 @@ test('UI-01/UI-03: production target registry resolves only the bound panel and 
     const api = (window as any).__productTourComponent
     const first = api.resolve('panel-a'), second = api.resolve('panel-b'), missing = api.resolve('foreign')
     const replaced = api.staleCleanup()
-    return { first: first.target?.element.getAttribute('aria-label'), second: second.target?.element.getAttribute('aria-label'), missing: missing.status, token: replaced.target?.registrationToken }
+    return { first: first.target?.element.getAttribute('aria-label'), second: second.target?.element.getAttribute('aria-label'), missing: missing.status, replacement: replaced.target?.context.entityId }
   })
-  expect(result).toEqual({ first: 'First panel draft', second: 'Second panel draft', missing: 'blocked', token: 'new' })
+  expect(result).toEqual({ first: 'First panel draft', second: 'Second panel draft', missing: 'blocked', replacement: 'replacement' })
 })
 
 test('UI-05/UI-09: production mask follows measured target geometry after move and viewport resize without stealing focus', async ({ page }) => {
