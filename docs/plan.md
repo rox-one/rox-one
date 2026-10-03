@@ -519,3 +519,8 @@ The [original plan](integration-history/pr1313/plan.md) is retained as historica
 ## PR1230 OMP/session program evidence
 
 The [original plan](integration-history/pr1230/plan.md) is retained alongside current runtime context, protocol negotiation, child-scoped transport errors and public-model cleanup contracts. Historical acceptance remains source-bound.
+
+
+## PR1321 sidebar restoration scope/evidence
+
+The [original plan](integration-history/pr1321/plan.md) remains preserved. Current shell keeps persisted sidebar choice across routes and uses the same mounted-rail/effective-collapse contract as the combined rail implementation; bounded source tests and historical native receipts remain distinct.
