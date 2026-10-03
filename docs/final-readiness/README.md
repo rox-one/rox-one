@@ -9,6 +9,8 @@ This audit accounts for accumulated ROX source beyond main: active branches, PRs
 1. [09 — Canonical source, all branches/PRs and reconciliation](09-source-reconciliation.md).
 2. [15 — Fresh candidate compiler/build/runtime checks](15-candidate-verification.md).
 3. [08 — Complete task navigation](08-task-index.md) or [machine-readable backlog](backlog.json).
+4. [16 — Parallel launch plan, exact counts and unavoidable dependencies](16-parallel-launch-plan.md); [445 individually assigned executable leaves](parallel-work/launch-plan.json).
+5. [17 — Подробный план запуска по-русски](17-parallel-launch-plan.ru.md).
 
 **Current findings:** root typecheck passes on the assembled candidate;16/18 workspace checks pass, with viewer and messaging gateway still failing.69 durability/lifecycle tests and34 WebUI/bootstrap tests pass. Real built-server lifecycle passes on Bun1.3.14 (4 tests) and fails at startup on Bun1.4.2. Branches contain substantial durable state, authority, product and runtime improvements; integration, remaining concrete defects, signed installed targets, live providers and deployed hosted acceptance are still open.
 
@@ -31,6 +33,8 @@ This audit accounts for accumulated ROX source beyond main: active branches, PRs
 | [13 — Integration completion](13-integration-reconciliation-backlog.md) | Feature-preserving source integration, dirty OMP/voice recovery, compiler/runtime closure and final source recheck. |
 | [14 — Candidate architecture/dependencies](14-candidate-inventory.md) | All18 assembled workspaces including new workspace-service, changed architectural contracts and complete direct dependency declarations. |
 | [15 — Fresh candidate checks](15-candidate-verification.md) | Independent18-workspace compilation, tests/build and Bun1.3.14/1.4.2 actual startup comparison. |
+| [16 — Parallel launch plan](16-parallel-launch-plan.md) | Exact445-leaf partition, all three target lanes now, shared file ownership, environment provisioning and unavoidable consumed-output gates. |
+| [17 — План запуска по-русски](17-parallel-launch-plan.ru.md) | Подсчёт, одновременные Windows/macOS/Web потоки, распределение модулей, неизбежные зависимости и формат приёмки. |
 
 ## [ROX-FINAL-COUNTS] Task scope
 
@@ -48,6 +52,8 @@ This audit accounts for accumulated ROX source beyond main: active branches, PRs
 | **Total blocks** | **182** | **443** |
 
 Each task and subtask ends with **Requirements / DoD / Full functional verification / Test method**, and has its own immutable ROX code reference. Checkboxes remain unchecked until complete task acceptance is established. Source implementation, branch integration, scoped compiler/unit/fixture evidence and full target release DoD are independent. Do not recreate already implemented branch features merely because the baseline described their earlier absence.
+
+**Execution count:**625 descriptions comprise445 executable leaves and180 parent acceptance rollups. `QA-012` and `INT-018` are standalone executable records without children, despite being parent-marked in the table. Platform/test phases reuse those leaf IDs rather than multiplying the task count. [Exact allocation and acceptance](parallel-work/launch-plan.json).
 
 ## [ROX-FINAL-MACHINE] Machine-readable evidence
 

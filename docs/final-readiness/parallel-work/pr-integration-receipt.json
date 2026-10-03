@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "phase": "INTEGRATING_NOT_YET_REMOTE_MERGED",
+  "capturedAt": "2026-10-03T01:33:26.091Z",
+  "repository": "rox-one/rox-one",
+  "localIntegrationCommit": "22299aa9b083c3b2fa325e8d66c4b5a2da4863fc",
+  "snapshotPRCount": 17,
+  "pullRequests": [
+    {
+      "number": 1323,
+      "url": "https://github.com/rox-one/rox-one/pull/1323",
+      "originalHead": "3cc2483d61e587fa3e3b54331b1bf623206f16b1",
+      "originalBase": "cloud/all-surfaces-20260930",
+      "localHeadAncestor": true,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    },
+    {
+      "number": 1322,
+      "url": "https://github.com/rox-one/rox-one/pull/1322",
+      "originalHead": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+      "originalBase": "main",
+      "localHeadAncestor": true,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    },
+    {
+      "number": 1321,
+      "url": "https://github.com/rox-one/rox-one/pull/1321",
+      "originalHead": "2c7a1fb01ec1d90d923a5e08a4cea60967347bbf",
+      "originalBase": "main",
+      "localHeadAncestor": false,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    },
+    {
+      "number": 1320,
+      "url": "https://github.com/rox-one/rox-one/pull/1320",
+      "originalHead": "a69187c609898517658365fa80d5ab11270d4305",
+      "originalBase": "main",
+      "localHeadAncestor": true,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    },
+    {
+      "number": 1319,
+      "url": "https://github.com/rox-one/rox-one/pull/1319",
+      "originalHead": "bdd28272856be5fdead6c7a93ca1b45eb13b17ed",
+      "originalBase": "feat/september-program-20260930",
+      "localHeadAncestor": true,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    },
+    {
+      "number": 1318,
+      "url": "https://github.com/rox-one/rox-one/pull/1318",
+      "originalHead": "8c1b8d95944cc21c4745484ba45edd0cf0afbb73",
+      "originalBase": "feat/unified-tables-baserow-20260930",
+      "localHeadAncestor": true,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    },
+    {
+      "number": 1317,
+      "url": "https://github.com/rox-one/rox-one/pull/1317",
+      "originalHead": "bbb30156a0758d1c00510e97eb6dc715c6b64fbe",
+      "originalBase": "main",
+      "localHeadAncestor": true,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    },
+    {
+      "number": 1316,
+      "url": "https://github.com/rox-one/rox-one/pull/1316",
+      "originalHead": "8afd289ac9e7d0a07be98f33c98f7989c2bcb68d",
+      "originalBase": "feat/rox-compound-workspace-20260930",
+      "localHeadAncestor": true,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    },
+    {
+      "number": 1315,
+      "url": "https://github.com/rox-one/rox-one/pull/1315",
+      "originalHead": "4504549086016dc3b892d17e9855a71afc1925d8",
+      "originalBase": "fix/webui-bridge-recovery-20260930",
+      "localHeadAncestor": true,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    },
+    {
+      "number": 1314,
+      "url": "https://github.com/rox-one/rox-one/pull/1314",
+      "originalHead": "8619f908bcdb7784b7b75fe0ae48f4f8902910bd",
+      "originalBase": "main",
+      "localHeadAncestor": true,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    },
+    {
+      "number": 1313,
+      "url": "https://github.com/rox-one/rox-one/pull/1313",
+      "originalHead": "5a9bf9cafd7df367f6ac32102b80e777377da162",
+      "originalBase": "main",
+      "localHeadAncestor": true,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    },
+    {
+      "number": 1294,
+      "url": "https://github.com/rox-one/rox-one/pull/1294",
+      "originalHead": "5f0df2522346b50bbb67f5eb718e30c1bdfcd157",
+      "originalBase": "wip/september-cloud-snapshot-20260930",
+      "localHeadAncestor": true,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    },
+    {
+      "number": 1293,
+      "url": "https://github.com/rox-one/rox-one/pull/1293",
+      "originalHead": "8f43e92d2a27a98994573d081b85d0b4c51728de",
+      "originalBase": "main",
+      "localHeadAncestor": true,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    },
+    {
+      "number": 1292,
+      "url": "https://github.com/rox-one/rox-one/pull/1292",
+      "originalHead": "01889b4a43a2ce4f730d3109b49750a0fbde4db8",
+      "originalBase": "main",
+      "localHeadAncestor": true,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    },
+    {
+      "number": 1230,
+      "url": "https://github.com/rox-one/rox-one/pull/1230",
+      "originalHead": "f32863be2d22945163fe17d76fc893f17c005fd0",
+      "originalBase": "main",
+      "localHeadAncestor": true,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    },
+    {
+      "number": 1087,
+      "url": "https://github.com/rox-one/rox-one/pull/1087",
+      "originalHead": "2e444a1e7fb6165f61c09210904b0e6ca912e9e2",
+      "originalBase": "main",
+      "localHeadAncestor": false,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    },
+    {
+      "number": 1082,
+      "url": "https://github.com/rox-one/rox-one/pull/1082",
+      "originalHead": "518636a6cb6c7c7331c3cf614e4182d92cb240df",
+      "originalBase": "main",
+      "localHeadAncestor": false,
+      "remoteState": "OPEN_AT_LAUNCH_SNAPSHOT",
+      "remoteMergeVerified": false
+    }
+  ],
+  "limits": "Intermediate receipt. Root publishes final state only after combined qualification and independent GitHub readback. Native signed/installed and hosted production acceptance remain separately open."
+}
