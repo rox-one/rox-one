@@ -1,0 +1,15 @@
+{
+  "head": "790216a785189279c376f5b144f76dc2da97795b",
+  "command": [
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+    "test",
+    "./packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts"
+  ],
+  "pid": 91822,
+  "observedExitCode": 1,
+  "durationSeconds": 9.973296165466309,
+  "testHash": "ef65fc4e296992804b01dacadfbce6e970fa64cd2ff84cee7600ca3edba561a2",
+  "log": "../expanded-omp-transport-isolated-red-exit-790216a.log",
+  "logSha256": "94069fe0bca974c50a3050e9bd0a37df2b9b8a074080342f7e5f06cdab29de33",
+  "qualification": "Baseline fixture with no trusted account context; no source modifications during run."
+}

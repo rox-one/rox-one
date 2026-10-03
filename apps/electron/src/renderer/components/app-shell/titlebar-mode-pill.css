@@ -1,6 +1,6 @@
 /* =============================================================================
    TITLEBAR MODE PILL — one centered segmented control for every screen mode.
-   A soft glass track holds colored mode icons and a raised active segment.
+   Flat mode tabs share the titlebar material, with one active segment.
    The active segment slides between items without moving their labels.
    High contrast keeps solid fills and removes decorative depth.
    ============================================================================= */
@@ -14,16 +14,9 @@
   height: 30px;
   padding: 2px;
   border: 0;
-  border-radius: 11px;
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 16%, transparent),
-    inset 0 0 0 1px color-mix(in oklch, var(--foreground) 6%, transparent),
-    0 2px 8px color-mix(in srgb, black 8%, transparent);
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklch, var(--foreground) 4%, transparent),
-    color-mix(in oklch, var(--foreground) 7%, transparent)
-  );
+  border-radius: var(--rox-radius-panel);
+  box-shadow: none;
+  background: transparent;
   font-family: var(--font-sans);
   font-size: var(--chrome-font-size, 12px);
   letter-spacing: var(--chrome-tracking, normal);
@@ -44,9 +37,9 @@
   height: 26px;
   padding: 0 9px;
   border: 0;
-  border-radius: 9px;
+  border-radius: var(--radius-control);
   background: transparent;
-  color: color-mix(in oklch, var(--foreground) 62%, transparent);
+  color: var(--text-secondary);
   font: inherit;
   cursor: default;
   outline: none;
@@ -60,7 +53,7 @@
   min-width: 15px;
   height: 15px;
   padding: 0 4px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: var(--accent);
   color: var(--accent-foreground, white);
   font-size: 10px;
@@ -85,7 +78,7 @@ html[data-contrast="high"] .rox-mode-pill-badge {
   width: 19px;
   height: 19px;
   padding: 2px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   color: var(--mode-color, var(--accent));
   background: color-mix(in oklch, var(--mode-color, var(--accent)) 12%, transparent);
   flex-shrink: 0;
@@ -109,7 +102,7 @@ html.dark .rox-mode-pill-item[data-mode="inbox"] { --mode-color: oklch(0.76 0.13
 
 .rox-mode-pill-item:not([aria-disabled="true"]):not([aria-current="page"]):hover {
   color: var(--foreground);
-  background: color-mix(in oklch, var(--foreground) 5%, transparent);
+  background: var(--element-hover, color-mix(in oklch, var(--foreground) 5%, transparent));
 }
 
 .rox-mode-pill-item[aria-current="page"] {
@@ -141,15 +134,9 @@ html.dark .rox-mode-pill-item[data-mode="inbox"] { --mode-color: oklch(0.76 0.13
   top: 2px;
   left: 0;
   height: 26px;
-  border-radius: 9px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklch, var(--accent) 13%, transparent),
-    color-mix(in oklch, var(--accent) 20%, transparent)
-  );
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 22%, transparent),
-    0 1px 3px color-mix(in srgb, black 9%, transparent);
+  border-radius: var(--radius-control);
+  background: var(--element-selected, color-mix(in oklch, var(--accent) 20%, transparent));
+  box-shadow: none;
   opacity: 0;
   pointer-events: none;
 }
@@ -197,7 +184,7 @@ html.dark .rox-mode-pill-item[data-mode="inbox"] { --mode-color: oklch(0.76 0.13
 }
 
 html[data-contrast="high"] .rox-mode-pill {
-  background: color-mix(in oklch, var(--foreground) 11%, transparent);
+  background: transparent;
   box-shadow: none;
 }
 
@@ -234,7 +221,7 @@ html[data-contrast="high"] .rox-mode-pill-icon {
   gap: 3px;
   height: 22px;
   padding: 0 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   color: color-mix(in oklch, var(--foreground) 55%, transparent);
   font-family: var(--font-sans);
   font-size: var(--chrome-font-size-sm, 11px);
@@ -245,7 +232,7 @@ html[data-contrast="high"] .rox-mode-pill-icon {
 
 .rox-titlebar-cost:hover {
   color: var(--foreground);
-  background: color-mix(in oklch, var(--foreground) 5%, transparent);
+  background: var(--element-hover, color-mix(in oklch, var(--foreground) 5%, transparent));
 }
 
 html[data-contrast="high"] .rox-titlebar-cost {

@@ -67,7 +67,7 @@ export function SettingsRadioGroup<T extends string = string>({
       <div
         role="radiogroup"
         className={cn(
-          'rounded-xl bg-background shadow-minimal overflow-hidden',
+          'rounded-[var(--radius-card)] bg-background shadow-minimal overflow-hidden',
           className
         )}
       >
@@ -148,7 +148,7 @@ export function SettingsRadioCard({
     <div
       className={cn(
         'overflow-hidden transition-colors',
-        needsCardStyling && 'rounded-xl shadow-minimal bg-background',
+        needsCardStyling && 'rounded-[var(--radius-card)] shadow-minimal bg-background',
         !disabled && 'hover:bg-foreground-3',
         disabled && 'opacity-50 cursor-not-allowed',
         className

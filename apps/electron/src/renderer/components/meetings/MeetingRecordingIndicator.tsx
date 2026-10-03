@@ -36,7 +36,7 @@ export function MeetingRecordingIndicator() {
       data-testid="meeting-rec-indicator"
       onClick={() => navigate(routes.view.meetings(rec.meetingId ?? undefined))}
       title={t('meetings.local.recIndicatorTitle', { title: rec.title })}
-      className="titlebar-no-drag ml-2 inline-flex h-6 shrink-0 items-center gap-1.5 rounded-[6px] bg-destructive/12 px-2 font-sans text-[12px] font-medium text-destructive hover:bg-destructive/20"
+      className="titlebar-no-drag ml-2 inline-flex h-6 shrink-0 items-center gap-1.5 rounded-[var(--radius-control)] bg-destructive/12 px-2 font-sans text-[12px] font-medium text-destructive hover:bg-destructive/20"
     >
       <span aria-hidden className={cn('size-2 rounded-full bg-destructive', !paused && 'animate-pulse')} />
       <span>{label}</span>

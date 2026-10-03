@@ -34,7 +34,11 @@
   },
   "credential_regressions": {
     "log": "rpc-edges-credential-regressions.log.gz",
-    "providers": "unavailable synthetic preload, private stores only"
+    "providers": "unavailable synthetic preload, private stores only",
+    "pass": 17,
+    "fail": 0,
+    "assertions": 53,
+    "files": 4
   },
   "strict_types_exit": {
     "server_core": 0,

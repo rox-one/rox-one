@@ -127,7 +127,7 @@ export function MarkdownDocBlock({ code, className, onUrlClick, onFileClick }: M
 
   return (
     <MarkdownDocBlockErrorBoundary fallback={fallback}>
-      <div className={cn('relative group rounded-[8px] overflow-hidden border bg-muted/10', className)}>
+      <div className={cn('relative group rounded-[var(--radius-card)] overflow-hidden border bg-muted/10', className)}>
         <div className="px-3 py-2 bg-muted/50 border-b flex items-center gap-2">
           <FileText className="w-3.5 h-3.5 text-muted-foreground/50" />
           <span className="text-[12px] text-muted-foreground font-medium flex-1">{headerTitle}</span>
@@ -136,7 +136,7 @@ export function MarkdownDocBlock({ code, className, onUrlClick, onFileClick }: M
             <button
               onClick={() => setIsFullscreen((v) => !v)}
               className={cn(
-                "p-1 rounded-[6px] transition-all select-none",
+                "p-1 rounded-[var(--radius-control)] transition-all select-none",
                 "bg-background shadow-minimal",
                 "text-muted-foreground/50 hover:text-foreground",
                 "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100",

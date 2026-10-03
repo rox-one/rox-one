@@ -143,7 +143,7 @@ export default function FocusPage(_props: { itemId: string | null }) {
                 key={`${event.kind}:${event.id}`}
                 type="button"
                 onClick={() => { if (event.kind === 'meeting') navigate(routes.view.meetings(event.id)) }}
-                className={cn('flex w-full items-baseline gap-3 rounded-[6px] px-2 py-1.5 text-left', event.kind === 'meeting' ? 'hover:bg-foreground/5' : 'cursor-default', event.endAt && event.endAt < now && 'text-muted-foreground')}
+                className={cn('flex w-full items-baseline gap-3 rounded-[var(--radius-control)] px-2 py-1.5 text-left', event.kind === 'meeting' ? 'hover:bg-foreground/5' : 'cursor-default', event.endAt && event.endAt < now && 'text-muted-foreground')}
               >
                 <span className="w-[44px] shrink-0 tabular-nums text-[12px] text-muted-foreground">{event.allDay ? t('extraScreens.focus.allDay') : time(event.startAt)}</span>
                 <span className="min-w-0 flex-1 truncate">{event.title}</span>
@@ -156,7 +156,7 @@ export default function FocusPage(_props: { itemId: string | null }) {
           <div className="mt-5"><SectionLabel>{t('extraScreens.focus.inbox')} · {pendingInbox.length}</SectionLabel></div>
           {pendingInbox.length === 0 && <div className="text-muted-foreground">{t('extraScreens.focus.inboxEmpty')}</div>}
           {pendingInbox.slice(0, 6).map((item) => (
-            <button key={item.id} type="button" onClick={() => navigate(routes.view.inbox(item.id))} className="flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left hover:bg-foreground/5">
+            <button key={item.id} type="button" onClick={() => navigate(routes.view.inbox(item.id))} className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/5">
               {item.blocking && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />}
               <span className="min-w-0 flex-1 truncate">{item.title}</span>
               <span className="shrink-0 truncate text-[12px] text-muted-foreground">{item.source}</span>
@@ -205,7 +205,7 @@ export default function FocusPage(_props: { itemId: string | null }) {
                   <ScreenButton variant="ghost" onClick={() => update({ ...focus, queue: focus.queue.filter((q) => q.workspaceId !== workspaceId) })}>{t('extraScreens.focus.clearQueue')}</ScreenButton>
                 </div>
                 {queueToday.map((q) => (
-                  <button key={JSON.stringify([q.workspaceId, q.sessionId])} type="button" onClick={() => { update({ ...focus, queue: focus.queue.filter((x) => x.workspaceId !== q.workspaceId || x.sessionId !== q.sessionId) }); navigate(routes.view.allSessions(q.sessionId)) }} className="flex w-full items-center gap-2 rounded-[6px] px-2 py-1 text-left hover:bg-foreground/5">
+                  <button key={JSON.stringify([q.workspaceId, q.sessionId])} type="button" onClick={() => { update({ ...focus, queue: focus.queue.filter((x) => x.workspaceId !== q.workspaceId || x.sessionId !== q.sessionId) }); navigate(routes.view.allSessions(q.sessionId)) }} className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1 text-left hover:bg-foreground/5">
                     <span className="min-w-0 flex-1 truncate">{q.title}{q.count > 1 ? ` ×${q.count}` : ''}</span>
                     <span className="max-w-[40%] truncate text-[12px] text-muted-foreground">{q.body}</span>
                     <span className="text-[12px] text-muted-foreground">{time(q.at)}</span>
@@ -228,7 +228,7 @@ export default function FocusPage(_props: { itemId: string | null }) {
               </div>
             )}
             {!choosing && top.map((task, index) => (
-              <button key={task.id} type="button" onClick={() => navigate(routes.view.tasks(task.id))} className="mt-1 flex w-full items-center gap-3 rounded-[6px] px-2 py-1.5 text-left hover:bg-foreground/5">
+              <button key={task.id} type="button" onClick={() => navigate(routes.view.tasks(task.id))} className="mt-1 flex w-full items-center gap-3 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/5">
                 <span className="w-4 text-[15px] font-bold text-accent">{index + 1}</span>
                 <span className="min-w-0 flex-1 truncate text-[14px]">{task.title}</span>
                 {focus.top3.includes(task.id) && <Chip>{t('extraScreens.focus.pinned')}</Chip>}
@@ -238,7 +238,7 @@ export default function FocusPage(_props: { itemId: string | null }) {
             {choosing && (
               <div className="mt-1 max-h-[260px] overflow-y-auto">
                 {openTasks.map((task) => (
-                  <label key={task.id} className="flex items-center gap-2 rounded-[6px] px-2 py-1 hover:bg-foreground/5">
+                  <label key={task.id} className="flex items-center gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/5">
                     <input type="checkbox" checked={focus.top3.includes(task.id)} onChange={() => togglePin(task.id)} className="h-3.5 w-3.5 accent-[var(--accent)]" />
                     <span className="min-w-0 flex-1 truncate">{task.title}</span>
                   </label>

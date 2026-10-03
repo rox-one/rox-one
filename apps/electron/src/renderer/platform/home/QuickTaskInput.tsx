@@ -60,7 +60,7 @@ export function QuickTaskInput({ onCreate, disabled = false }: {
   return (
     <>
       <form
-        className="rox-home-quick-task flex items-center gap-1 rounded-[6px] px-1.5"
+        className="rox-home-quick-task flex items-center gap-1 rounded-[var(--radius-control)] px-1.5"
         onSubmit={submit}
         data-home-quick-add=""
         data-error={failed || undefined}
@@ -118,7 +118,7 @@ export function QuickTaskInput({ onCreate, disabled = false }: {
         <button
           type="submit"
           disabled={disabled || pending || !hasTitle}
-          className="rox-home-quick-task-add flex h-6 shrink-0 items-center whitespace-nowrap rounded-[6px] px-2 text-[12px] font-bold text-foreground"
+          className="rox-home-quick-task-add flex h-6 shrink-0 items-center whitespace-nowrap rounded-[var(--radius-control)] px-2 text-[12px] font-bold text-foreground"
           data-empty={!hasTitle || undefined}
           onFocus={() => { if (!pointerFocus.current) setKeyboardFocus(true) }}
         >
@@ -128,7 +128,7 @@ export function QuickTaskInput({ onCreate, disabled = false }: {
           <button
             type="button"
             disabled={disabled}
-            className="rox-home-quick-task-help h-6 w-6 rounded-[6px] text-[12px] text-muted-foreground"
+            className="rox-home-quick-task-help h-6 w-6 rounded-[var(--radius-card)] text-[12px] text-muted-foreground"
             aria-label={t('workbench.home.taskTracker.quickAddHelpLabel')}
             aria-describedby={helpId}
             aria-expanded={helpOpen}

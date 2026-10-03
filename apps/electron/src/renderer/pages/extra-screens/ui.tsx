@@ -75,7 +75,7 @@ export function ScreenButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-[6px] px-2.5 text-[12px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-foreground disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-control)] px-2.5 text-[12px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-foreground disabled:cursor-not-allowed disabled:opacity-50',
         variant === 'primary' && 'bg-accent font-semibold text-[var(--accent-foreground,white)] hover:brightness-110',
         variant === 'default' && 'bg-foreground/[0.07] text-foreground hover:bg-foreground/[0.11]',
         variant === 'danger' && 'bg-foreground/[0.07] text-destructive hover:bg-destructive/10',
@@ -117,7 +117,7 @@ export function ListRow({
       onClick={onClick}
       aria-current={active || undefined}
       className={cn(
-        'relative mx-1.5 flex w-[calc(100%-12px)] items-start gap-2.5 rounded-[6px] px-2.5 py-1.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground',
+        'relative mx-1.5 flex w-[calc(100%-12px)] items-start gap-2.5 rounded-[var(--radius-card)] px-2.5 py-1.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground',
         // HC: selection also gets an inset accent bar, not just a tint
         active ? 'bg-foreground/[0.08] before:absolute before:inset-y-1 before:left-0 before:w-[2px] before:rounded-full before:bg-accent' : 'hover:bg-foreground/5',
         className,
@@ -130,7 +130,7 @@ export function ListRow({
 
 export function Card({ children, accent, className }: { children: React.ReactNode; accent?: boolean; className?: string }) {
   return (
-    <div className={cn('mt-3 rounded-[8px] px-3.5 py-3', accent ? 'bg-accent/10' : 'bg-foreground/[0.04]', className)}>
+    <div className={cn('mt-3 rounded-[var(--radius-card)] px-3.5 py-3', accent ? 'bg-accent/10' : 'bg-foreground/[0.04]', className)}>
       {children}
     </div>
   )
@@ -152,7 +152,7 @@ export function Chip({
   tone?: 'neutral' | 'ok' | 'warn' | 'err'
 }) {
   const cls = cn(
-    'inline-flex items-center gap-1 whitespace-nowrap rounded-[6px] px-2 py-0.5 text-[12px]',
+    'inline-flex items-center gap-1 whitespace-nowrap rounded-[var(--radius-control)] px-2 py-0.5 text-[12px]',
     active
       ? 'bg-accent/10 text-accent'
       : tone === 'ok'
@@ -219,7 +219,7 @@ export function TextField({
         }
       }}
       className={cn(
-        'h-8 w-full rounded-[6px] bg-foreground/[0.06] px-2.5 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground/60',
+        'h-8 w-full rounded-[var(--radius-card)] bg-foreground/[0.06] px-2.5 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground/60',
         className,
       )}
     />
@@ -246,7 +246,7 @@ export function TextArea({
       aria-label={ariaLabel ?? placeholder}
       placeholder={placeholder}
       onChange={(event) => onChange(event.target.value)}
-      className="w-full resize-y rounded-[6px] bg-foreground/[0.06] px-2.5 py-2 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground/60"
+      className="w-full resize-y rounded-[var(--radius-card)] bg-foreground/[0.06] px-2.5 py-2 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground/60"
     />
   )
 }

@@ -9,7 +9,7 @@ import type { LlmAuthType, LlmProviderType } from "@rox/shared/config/llm-connec
 export type ProviderSegment = 'anthropic' | 'pi'
 
 const BetaBadge = ({ label }: { label: string }) => (
-  <span className="inline px-1.5 pt-[2px] pb-[3px] text-[10px] font-accent font-bold rounded-[4px] bg-accent text-background ml-1 relative -top-[1px]">
+  <span className="inline px-1.5 pt-[2px] pb-[3px] text-[10px] font-accent font-bold rounded-[var(--radius-control)] bg-accent text-background ml-1 relative -top-[1px]">
     {label}
   </span>
 )
@@ -93,7 +93,7 @@ function OptionButton({
     <button
       onClick={() => onSelect(option.id)}
       className={cn(
-        "flex w-full items-start gap-4 rounded-xl p-4 text-left transition-all",
+        "flex w-full items-start gap-4 rounded-[var(--radius-card)] p-4 text-left transition-all",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "hover:bg-foreground/[0.02] shadow-minimal",
         isSelected
@@ -151,7 +151,7 @@ function ProviderSegmentedControl({
   const segments: ProviderSegment[] = ['anthropic', 'pi']
 
   return (
-    <div className="flex rounded-xl bg-foreground/[0.03] p-1 mb-4">
+    <div className="flex rounded-[var(--radius-card)] bg-foreground/[0.03] p-1 mb-4">
       {segments.map((segment) => (
         <button
           key={segment}
@@ -265,7 +265,7 @@ export function APISetupStep({
       />
 
       {/* Segment description */}
-      <div className="bg-foreground-2 rounded-[8px] p-4 mb-3">
+      <div className="bg-foreground-2 rounded-[var(--radius-card)] p-4 mb-3">
         <p className="text-sm text-muted-foreground text-center">
           {SEGMENT_DESCRIPTIONS[activeSegment]}
         </p>
