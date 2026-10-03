@@ -534,7 +534,7 @@ const definitions = [
   {
     "id": "OBT-06",
     "slug": "dictation",
-    "version": 1,
+    "version": 2,
     "title": "Голосовой ввод",
     "goal": "Продиктовать черновик и проверить текст.",
     "why": "Упростить ввод, не связывая обучение с постоянной записью.",
@@ -582,7 +582,7 @@ const definitions = [
       },
       {
         "id": "voice.review",
-        "version": 1,
+        "version": 2,
         "target": "composer.input",
         "routeKey": "keep",
         "copy": {
@@ -599,8 +599,8 @@ const definitions = [
           "kind": "signal",
           "signal": "dictation.inserted",
           "evidence": "observed",
-          "priorState": "after-activation",
-          "requireAcknowledgementAfterEvidence": false
+          "priorState": "same-attempt",
+          "requireAcknowledgementAfterEvidence": true
         },
         "handoff": false,
         "optional": false,
