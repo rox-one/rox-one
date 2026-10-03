@@ -1,3 +1,10 @@
+## Product Learning foundation recovery plan — 2026-10-03
+
+1. Freeze final a6 source and import only contracts/core/persistence/analytics; pr_scout owns these interfaces, historical_sweep integrates dependent UI/runtime/current consumers without copying old shell/pages.
+2. Inspect evidence/correlation and durable ownership boundaries. Retain original negative controls; reproduce and fix diagnostic accessor validation/serialization race through single captured own data properties, preserving interfaces.
+3. Exercise pure engine and real Chromium IndexedDB across isolated windows, storage/transaction/future-version failures, scoped reset and privacy/retention. Verify all foundation modules with strict renderer compiler options and actual browser bundling without claiming route/native feature acceptance.
+4. Reconcile live main, freeze source/proof/log receipt, publish/attach a separate PR. Notify dependent worker of exact interfaces/head and preserve every original branch; lead reviews and merges.
+
 ## Golden Gate Settings menu recovery plan — 2026-10-03
 
 1. Verify actual current consumers and source intent before import: current menu is a Popover with no arrow/typeahead model; Appearance and ZenShell custom SettingsRow slots lack label/description relationships.

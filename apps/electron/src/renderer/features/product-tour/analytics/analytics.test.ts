@@ -15,6 +15,20 @@ test('DATA-07 allowlist discards all content and correlation IDs including disgu
   expect(sanitizeLearningEvent({ eventName: 'step-shown', tourId: 'OBT-99', stepId: 'private', version: Infinity })).toEqual({ eventName: 'step-shown' })
 })
 
+test('diagnostic projection reads only captured own data properties and never invokes accessors', () => {
+  let calls = 0
+  const input = { eventName: 'tour-started', get phase() { calls++; return calls === 1 ? 'idle' : 'PRIVATE-CONTENT' },
+    get tourId() { calls++; throw new Error('must not read') }, version: 1 }
+  expect(sanitizeLearningEvent(input)).toEqual({ eventName: 'tour-started', version: 1 })
+  expect(calls).toBe(0)
+  expect(sanitizeLearningEvent(Object.create({ eventName: 'tour-started', phase: 'idle' }))).toBeNull()
+  expect(sanitizeLearningEvent({ get eventName() { calls++; return 'tour-started' } })).toBeNull()
+  expect(calls).toBe(0)
+  expect(sanitizeLearningEvent(new Proxy({}, { ownKeys() { throw new Error('unavailable') } }))).toBeNull()
+  const hidden = Object.defineProperty({ eventName: 'tour-started' }, 'phase', { value: 'idle' })
+  expect(sanitizeLearningEvent(hidden)).toEqual({ eventName: 'tour-started' })
+})
+
 test('metrics count milestones separately and deduplicate replay snapshots', () => {
   const progress: TourProgress = { schemaVersion: 1, scopeKey: 'scope', tourId: 'OBT-01', tourVersion: 1, revision: 1, status: 'partial', steps: {
     'first.send': { stepId: 'first.send', stepVersion: 1, shownAt: 0, observedAt: 1, verifiedAt: 2 },
@@ -38,15 +52,22 @@ describe('real IndexedDB private diagnostics', () => {
       const enabled = await profile.updatePreferences({ diagnosticsEnabled: true, invitationsEnabled: true })
       const saved = await logger.append({ eventName: 'step-verified', tourId: 'OBT-01', stepId: 'first.send', sessionId: 'secret', path: '/private' }, 'raw-native-event')
       const duplicate = await logger.append({ eventName: 'step-verified' }, 'raw-native-event')
+      let reads = 0
+      const accessor = await logger.append({ eventName: 'tour-paused', get reason() { reads++; return reads === 1 ? 'user-paused' : 'PRIVATE-CONTENT' } })
       const log = await logger.read()
       await profile.updatePreferences({ diagnosticsEnabled: false })
-      return { off, empty, enabled, saved, duplicate, log, cleared: await logger.read(), profile: await profile.read() }
+      return { off, empty, enabled, saved, duplicate, accessor, reads, log, cleared: await logger.read(), profile: await profile.read() }
     }))
     expect(result.off).toEqual({ status: 'saved', value: false })
     expect(result.empty).toEqual({ status: 'saved', value: [] })
     expect(result.saved).toEqual({ status: 'saved', value: true })
     expect(result.duplicate).toEqual({ status: 'saved', value: false })
-    expect(result.log.status === 'saved' && result.log.value).toHaveLength(1)
+    expect(result.log.status === 'saved' && result.log.value).toHaveLength(2)
+    expect(result.accessor).toEqual({ status: 'saved', value: true })
+    expect(result.reads).toBe(0)
+    expect(result.log.status === 'saved' && result.log.value[1]?.eventName).toBe('tour-paused')
+    expect(result.log.status === 'saved' && result.log.value[1]?.reason).toBeUndefined()
+    expect(JSON.stringify(result.log)).not.toContain('PRIVATE-CONTENT')
     expect(JSON.stringify(result.log)).not.toContain('secret')
     expect(JSON.stringify(result.log)).not.toContain('raw-native-event')
     expect(result.cleared).toEqual({ status: 'saved', value: [] })
@@ -67,5 +88,5 @@ describe('real IndexedDB private diagnostics', () => {
     expect(result.capped.status === 'saved' && result.capped.value).toHaveLength(500)
     expect(result.capped.status === 'saved' && result.capped.value[0]?.version).toBe(6)
     expect(result.expired).toEqual({ status: 'saved', value: [] })
-  }, 20_000)
+  }, Math.min(120_000, Math.max(20_000, Number(process.env.ROX_LEARNING_BROWSER_TIMEOUT_MS) || 20_000)))
 })

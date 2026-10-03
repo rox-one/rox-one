@@ -181,7 +181,9 @@ function acceptSignal(state: RuntimeState, signal: TourSignal): Transition {
     || signal.at < state.attempt.startedAt || (state.seenEventTokens ?? []).includes(signal.eventToken)) return inert(state)
   // Even an untyped caller must never promote UI observations to verified evidence.
   const suppliedOrigin: string = signal.origin
-  if (signal.level === 'verified' && suppliedOrigin === 'ui-observation') return inert(state)
+  if ((signal.level !== 'observed' && signal.level !== 'verified')
+    || !['native-event', 'native-commit', 'ui-observation'].includes(suppliedOrigin)
+    || (signal.level === 'verified' && suppliedOrigin === 'ui-observation')) return inert(state)
   const activeIndex = state.definition.steps.findIndex(step => step.id === state.attempt!.stepId)
   const candidates = state.definition.steps.filter((step, index) => index >= activeIndex
     && step.completion.kind === 'signal' && step.completion.signal === signal.name
