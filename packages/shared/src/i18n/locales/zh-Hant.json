@@ -2503,6 +2503,7 @@
   "inspector.info": "資訊",
   "inspector.kind.session": "Session",
   "inspector.outline": "大綱",
+  "inspector.resize": "調整檢查器寬度",
   "inspector.tab.browser": "瀏覽器",
   "inspector.tab.context": "內容",
   "inspector.tab.files": "檔案",

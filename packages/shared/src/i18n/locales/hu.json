@@ -2503,6 +2503,7 @@
   "inspector.info": "Infó",
   "inspector.kind.session": "Session",
   "inspector.outline": "Vázlat",
+  "inspector.resize": "Az ellenőrzőpanel átméretezése",
   "inspector.tab.browser": "Böngésző",
   "inspector.tab.context": "Kontextus",
   "inspector.tab.files": "Fájlok",
