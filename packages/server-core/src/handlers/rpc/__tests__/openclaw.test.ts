@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'bun:test'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type {
   AcceptSecurityRiskRequest,
   AuditMode,
   OpenClawRuntimeStatus,
   SecurityAuditSnapshot,
-} from '@craft-agent/shared/openclaw'
+} from '@rox/shared/openclaw'
 import type { HandlerDeps, OpenClawSecurityService } from '../../handler-deps'
 import { HANDLED_CHANNELS, registerOpenClawHandlers } from '../openclaw'
 import type { RequestContext, RpcServer } from '../../../transport/types'

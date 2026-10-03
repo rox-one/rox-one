@@ -1,0 +1,12 @@
+[
+  {
+    "id": "followup-short",
+    "title": "Short follow-up",
+    "text": "Hi {{first_name}}, quick follow-up on {{topic}}. Is this still useful to discuss this week?"
+  },
+  {
+    "id": "event-update",
+    "title": "Event update",
+    "text": "Hi {{first_name}}, sharing a quick update about {{event_name}}: {{update_summary}}"
+  }
+]

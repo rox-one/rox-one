@@ -24,9 +24,9 @@ import { ProjectAuthorityConnection } from '../transport/project-authority-conne
 import { PROJECT_AUTHORITY_IPC, PROJECT_AUTHORITY_CONNECT_IPC, PROJECT_AUTHORITY_DISCONNECT_IPC, PROJECT_AUTHORITY_CONFIGURATION_IPC, type ProjectAuthorityTarget, type ProjectAuthorityConfiguration, type ProjectAuthorityMutationResult } from '../shared/project-authority'
 import { buildClientApi } from '../transport/build-api'
 import { CHANNEL_MAP } from '../transport/channel-map'
-import { createCallbackServer } from '@craft-agent/shared/auth/callback-server'
+import { createCallbackServer } from '@rox/shared/auth/callback-server'
 import { createNativeReplicaBridge } from './native-replica'
-import { CHATGPT_OAUTH_CONFIG } from '@craft-agent/shared/auth/chatgpt-oauth-config'
+import { CHATGPT_OAUTH_CONFIG } from '@rox/shared/auth/chatgpt-oauth-config'
 import {
   isOAuthFlowCancelledError,
   OAuthFlowTimedOutError,
@@ -40,10 +40,10 @@ import {
   CLIENT_OPEN_FILE_DIALOG,
   CLIENT_BROWSER_INVOKE,
   LOCAL_CLIENT_CAPABILITIES,
-} from '@craft-agent/server-core/transport'
-import type { ConfirmDialogSpec, FileDialogSpec, BrowserCapabilityRequest } from '@craft-agent/server-core/transport'
-import type { RpcClient } from '@craft-agent/server-core/transport'
-import type { RemoteServerConfig } from '@craft-agent/core/types'
+} from '@rox/server-core/transport'
+import type { ConfirmDialogSpec, FileDialogSpec, BrowserCapabilityRequest } from '@rox/server-core/transport'
+import type { RpcClient } from '@rox/server-core/transport'
+import type { RemoteServerConfig } from '@rox/core/types'
 import type { ElectronAPI, SshBootstrapProgress, SshConnectionStatus } from '../shared/types'
 import { isSshBacked } from '../shared/ssh'
 import { MEETINGS_LOCAL_IPC, type MeetingsLocalApi } from '../shared/meetings-local'

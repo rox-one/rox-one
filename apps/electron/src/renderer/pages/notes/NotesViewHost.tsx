@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { FilePlus2, ScanSearch, ZoomIn, ZoomOut } from 'lucide-react'
-import { PremiumMenuSelect } from '@craft-agent/ui'
+import { PremiumMenuSelect } from '@rox/ui'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -44,7 +44,7 @@ import {
   type NoteProjectionRow,
 } from './note-views'
 import { parseNoteDocument } from './document-ia'
-import type { ListTreeProjection, ListNode } from '@craft-agent/core/docs'
+import type { ListTreeProjection, ListNode } from '@rox/core/docs'
 
 export type NotesViewNote = {
   id: string

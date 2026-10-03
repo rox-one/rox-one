@@ -1,5 +1,5 @@
-import type { TranscriptSegment } from '@craft-agent/core/meetings'
-import { segmentKey } from '@craft-agent/core/meetings'
+import type { TranscriptSegment } from '@rox/core/meetings'
+import { segmentKey } from '@rox/core/meetings'
 
 export type TranscriptState = {
   segments: Record<string, TranscriptSegment>

@@ -7,8 +7,8 @@ import { LessonStore } from '../LessonStore'
 import { MemoryFileStore } from '../MemoryFileStore'
 import { EpisodicMemory, type Embedder } from '../episodic-memory'
 import { closeAll } from '../fts-index'
-import type { DistillResult, Lesson, LessonPromptUsage, MemoryConfig, SkillCandidate } from '@craft-agent/shared/memory/types'
-import type { StoredMessage, SessionMemoryMode } from '@craft-agent/core/types'
+import type { DistillResult, Lesson, LessonPromptUsage, MemoryConfig, SkillCandidate } from '@rox/shared/memory/types'
+import type { StoredMessage, SessionMemoryMode } from '@rox/core/types'
 
 const MSGS: StoredMessage[] = [
   { id: 'm1', type: 'user', content: 'use key AKIAIOSFODNN7EXAMPLE and api_key=abc123 here' },

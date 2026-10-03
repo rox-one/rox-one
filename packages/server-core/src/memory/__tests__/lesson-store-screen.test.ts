@@ -6,8 +6,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { LESSON_LIMITS, type Lesson } from '@craft-agent/shared/memory/types'
-import { selectContextLessons } from '@craft-agent/shared/memory/context-select'
+import { LESSON_LIMITS, type Lesson } from '@rox/shared/memory/types'
+import { selectContextLessons } from '@rox/shared/memory/context-select'
 import { LessonStore, resetLessonBackupsForTests } from '../LessonStore'
 
 let dir: string

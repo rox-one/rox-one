@@ -1,11 +1,11 @@
-import { CredentialRefRegistry } from '@craft-agent/core/platform'
+import { CredentialRefRegistry } from '@rox/core/platform'
 import {
   InfisicalProviderError,
   InfisicalSecretProvider,
   type InfisicalHttpClient,
   type InProcessCredentialBroker,
   type LocalFileSecretProvider,
-} from '@craft-agent/shared/credentials'
+} from '@rox/shared/credentials'
 
 import type { ConnectionRecord, WorkGraphKernel } from './index'
 

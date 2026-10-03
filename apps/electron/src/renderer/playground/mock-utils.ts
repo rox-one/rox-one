@@ -19,7 +19,7 @@ import type {
   PlatformAccessMode,
   PlatformOwner,
 } from '../components/messaging/access/types'
-import { getDefaultEnvironmentPrefs, pendingQuestionIds } from '@craft-agent/shared/environment'
+import { getDefaultEnvironmentPrefs, pendingQuestionIds } from '@rox/shared/environment'
 
 // ============================================================================
 // Messaging mock state + control handle
@@ -687,6 +687,10 @@ export const mockElectronAPI = {
     truncated: false,
   }),
   discoverBrowserProfiles: async () => [],
+  browserDataAutoImport: async (args: { workspaceId: string }) => ({
+    workspaceId: args.workspaceId, enabled: false, profileId: null,
+    state: 'off' as const, imported: { history: 0, bookmarks: 0 }, lastRunAt: null,
+  }),
   browserCookieAutoStatus: async () => ({
     consent: false,
     supported: true,
@@ -717,6 +721,7 @@ export const mockElectronAPI = {
     imported: 420,
     lastRunAt: Date.now(),
   }),
+  browserCredentialCapabilities: async () => ({ supported: false, mechanism: null }),
   importBrowserProfile: async () => ({
     dryRun: true,
     profileId: '',

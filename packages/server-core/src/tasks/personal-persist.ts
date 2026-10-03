@@ -16,14 +16,14 @@
  */
 import { closeSync, copyFileSync, existsSync, mkdirSync, openSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync, writeSync } from 'fs'
 import { basename, join } from 'path'
-import type { PersonalTask, PersonalTaskMeta, PersonalTaskMigrationMarker, PersonalTaskWrite } from '@craft-agent/core/tasks/personal'
+import type { PersonalTask, PersonalTaskMeta, PersonalTaskMigrationMarker, PersonalTaskWrite } from '@rox/core/tasks/personal'
 
 const TASK_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/
 
 /** v2 = Things-style fields (checklist, trashedAt, reminderAt, source, repeat modes). */
 export const PERSONAL_TASK_SCHEMA_VERSION = 2
 
-export type { PersonalTaskMeta, PersonalTaskMigrationMarker } from '@craft-agent/core/tasks/personal'
+export type { PersonalTaskMeta, PersonalTaskMigrationMarker } from '@rox/core/tasks/personal'
 
 export interface PersistedPersonalTask {
   task: PersonalTask

@@ -1,0 +1,56 @@
+# Independent source security review of runtime PR1394 — 2026-10-03
+
+Three concrete issues were established during this review: gbrain marker takeover/release races, strict PDF image confinement bypass through an ancestor-directory replacement, and browser command forwarding through HTTP307/308 redirects. The lead repaired the first two; the browser prerequisite is worker commit `5a000e4431ae8c639158201601a9f3e45c9ad2de` included in runtime integration commit `07f05212b7efdfff12be27f167c3c44490517d8a`. No additional high-confidence exploitable chain was established in the remaining reviewed results. This is a bounded source review with actual negative controls, not a claim that every CodeQL finding is closed or the product has full security acceptance.
+
+## Exact inputs and scope
+
+- Initial runtime revision: `05f1e37414f254ed68ab2cb256b5472ae63d245e`.
+- `pr-1392-vendor-current-sarif.json`:146 vendor results,129 matching the previous disposition catalog,17 new. The complete reviewed new subset is `runtime-security-new17.json`.
+- `pr-1392-codeql-annotations.json` contains100 annotations from a longer GitHub report; it does not itself establish coverage of all131 newly reported findings.
+- The382-entry disposition catalog is source-bound to older CodeQL head `2af860c5783dd4dd24209f030d119aeaf2e212e8`, with remoteClosureVerified:false. A source disposition does not prove fresh scanner closure.
+- Marker repair: `9278f0a80205ff07cd5bb41d523d6bbc33e131bf`.
+- PDF repair inspected/tested in `4e26fbcd8a7c9e7ed0a9967378c395ecff1f3061`; both production copies have identical SHA256.
+- No production files in the lead checkout were modified by this worker. Probes used synthetic contents/tokens, isolated temporary state, loopback HTTP servers and separate processes. No real credentials, external providers, devices or installed license settings were touched.
+
+## Confirmed issues and independent verification
+
+**gbrain stale takeover/release.** The original `gstack/gstack/bin/gstack-gbrain-sync.ts` performed stale-check/unlink/exclusive-create without serialization, and PID-only cleanup could delete another marker generation from the same process. The repair serializes acquisition/stale takeover/release with atomic mkdir0700, creates wx0600 markers with a UUID generation, and compares pid/started_at/generation with the locally recorded owner. Age alone cannot steal a live process's marker; an abandoned mutation guard remains fail-closed. Independent testing ran two real subprocesses against a stale dead-PID marker: exactly one won, the generation and0600 mode were correct, and the winner removed only its own marker. Verified source SHA256: `82d04434df4e1d8a938463f452845a002a5fdf6889af5bc15d4b3e65db9579bf`.
+
+**PDF strict confinement (#958/#961).** The original `inlineLocalImages` checked realpath containment then opened the original path with NOFOLLOW applying only to the leaf. An ancestor swap to an outside symlink at the actual open seam caused strict:true to embed synthetic outside bytes. `diagram-race-probe.ts` reproduces this against05f1e3741 (hookCalls1/outsideBytesEmbedded:true). Against the lead repair, the same seam rejects with StrictModeError before the first outside descriptor read. The independent positive control preserves normal authored local bytes. The repair checks BigInt named/opened/current identity, size/timestamps, and root/parent/leaf realpath before and after a bounded read. Both copy SHA256s: `80511d07ba2c6d1670870213eebf746825068bb368a4e85b574bd4e66641f1e6`. The flat resource cannot import naturally in this tree because `../../lib/aside-render` is absent; operational controls ran against the complete nested canonical module, while the flat copy is verified by identical bytes and provenance.
+
+**Browser-command redirects.** All three BrowseClient copies used default-follow fetch. Actual HTTP307/308 forwarded POST command contents to another endpoint; same-origin redirects also retained the bearer. Cross-port redirects stripped the bearer but still sent the body. Before repair:3 normal cases passed and12 redirect controls failed. Commit `5a000e4431ae8c639158201601a9f3e45c9ad2de` adds redirect:manual to all copies, preserving the existing non-2xx BrowseClientError contract. After repair:15 behavior cases plus provenance/neighbor suites =31pass/0fail. Direct POST preserves authentication/arguments/tabId; same-origin/cross-port307/308 cause zero destination requests. All three helper hashes: `4ed6b44315b06d445ead9eed707474a471d536071da214d411beb43b1d6fab02`. Parent catalogs, SKILLS.lock and portable notices were refreshed without scanner exclusions or suppressions.
+
+## All17 new vendor results
+
+Alert IDs/lines refer to frozen SARIF inputs and can shift after repair. Paths are relative to `apps/electron/resources/skills/`.
+
+| Alerts | Source | Disposition and evidence |
+| --- | --- | --- |
+|950,951|flat/nested `gstack/.../browse/src/file-permissions.ts:130`|The flagged sink opens an existing file O_RDONLY/NOFOLLOW/NONBLOCK with no O_CREAT, verifies a regular owned descriptor, then fchmods it. This line does not create an insecure temporary file. |
+|952|`gstack/gstack/lib/cso/bounded-file.ts:17`|Read-only bounded stable descriptor: named/opened/current BigInt dev/inode/type/nlink/size/timestamps, max+1 cap. This is not temporary-file creation. |
+|953|`gstack/gstack/lib/cso/state.ts:354`|Read-only state uses NOFOLLOW, private-owner/regular-single-link checks, bounds, opened identity and post-read stability before JSON consumption. Not temporary-file creation. |
+|954|`gstack/gstack/scripts/test-paid-shards.ts:842`|Bounded descriptor tail read of an existing shard log, with no O_CREAT. This is a diagnostic paid-test runner rather than a remote app entry point. Log creation is a distinct callsite; this disposition does not claim blanket closure for all log writers. |
+|955|`gstack/gstack/lib/cso/preparation-container.ts:110`|The host-runner policy uses lstat/open NOFOLLOW/NONBLOCK, regular/type/size/dev-inode binding, max+1 bounded reads and strict schema. No pathname replacement bypass established. Concurrent in-place mutation of the trusted host policy remains a possible hardening assumption, not a demonstrated attacker-controlled path. |
+|956|`gstack/gstack/lib/cso/preparation-executor.ts:847`|Preparation-tree hashing uses NOFOLLOW/NONBLOCK, initial/final descriptor identity/size/mode/timestamps, exact readBytes and deadline in runner-owned prepared trees. Pre-open named stat is not directly compared with opened stat; this is a snapshot-hardening limitation. No external principal controlling the private tree and the race seam was established in the inspected callers. Do not describe this as a universally atomic snapshot. |
+|957|`gstack/gstack/lib/review-evidence.ts:123`|Post-read fstat equals prior lstat across dev/inode/mode/size/mtime/ctime, then bytes exactly equal the committed Git blob; attributes and committed mode are checked. A replacement cannot grant reusable evidence. |
+|958,961|flat/nested `make-pdf/src/diagram-prepass.ts:634`|Actual strict-confinement bypass confirmed and repaired; independently verified normal rendering and ancestor-swap rejection before any outside descriptor read. See above. |
+|959|`gstack/gstack/scripts/cso-eval-producer.ts:318`|ArtifactIdentity binds a bounded regular single-link input to opened descriptor identity, caps streaming, and verifies final fd/current pathname identity/mode/timestamps. Arbitrary replacement cannot acquire an artifact identity. |
+|960|`gstack/gstack/scripts/eval-input-cache.ts:224`|NOFOLLOW regular descriptor and size cap; credit requires exact current input identity, complete proof/case IDs/result hash, current validateResult and freshness. Filename is not taken from receipt content. This local proof cache does not completely guard a concurrent privileged writer or growth after fstat during readFileSync; that is a hardening limitation. An attacker-controlled writer was not established. Do not call it universally race-free or bounded under concurrent growth. |
+|988|`compound-engineering/ce-polish/scripts/safe-files.js:50`|Authorized board/session payload is JSON content in private state. Private mkdtemp+wx0600 temporary descriptor and atomic rename; remote data does not choose the pathname. Intended persistence. |
+|989,990|flat/nested `browse/src/file-permissions.ts:378`|Network data is content of selected private state rather than filesystem authority. Writes use an owned regular descriptor, NOFOLLOW/NONBLOCK and private permissions before truncate/write. The Windows ACL branch was not exercised by this macOS review. |
+|991,992|`gstack/gstack/lib/fs-atomic.ts:49/:51`|Design provider response IDs/data are persisted as JSON/design content. Callers select paths; responseId is a content field rather than a filename. Random+PID temporary path, exclusive wx0600 and atomic rename/noReplace link. HTTP-to-file flow is intentional; arbitrary write-path selection from the response was not found. |
+
+## Additional priority flags
+
+- **Stored XSS, ce-brainstorm/ce-prototype light-webserver.js:1133:** this loopback server intentionally executes trusted local authored HTML prototypes from the operator's root. renderPage reads a contained regular local file. Annotations update separate private state and cannot write screen HTML. LOCAL-SECURITY.md explicitly documents executable authored HTML. No path from an unauthenticated annotation to prototype execution was found. This classification does not make unknown prototypes safe.
+- **User-controlled bypass, ce-polish/live-endpoint.js:2639/:2673:** dispatch branches do not themselves grant authorization. Session probe calls authorizePageToken with exact app origin/page bearer; page routes call authorizePage/session checks; agent routes require agent bearer, reject Origin/page bearer and reject ended tokens. OPTIONS returns metadata only; unknown routes404. No route authorization bypass was established.
+- **ios-qa/single-instance.ts:86:** atomic mutation directory0700 serializes compliant acquisition/release, exclusive private PID file creation and startedAt owner cleanup. A stale-looking guard is not deleted over a potentially live writer. This is cooperative coordination rather than protection from a hostile same-privileged process.
+- **Bounded-file/File-permissions:** no-follow descriptors, private ownership, exact identity and bounds provide the actual guard evidence; a scanner label alone is insufficient to establish exploitability.
+
+## Evidence and remaining boundaries
+
+- `browser-redirect-before.log`:3pass/12fail with actual forwarded synthetic POST contents.
+- `browser-redirect-regressions.log`:31pass/0fail,3037 assertions on Bun1.3.14.
+- `independent-runtime-security.test.ts` and `.log`:3pass/0fail,10 assertions for normal strict image, ancestor replacement with zero outside reads and two real stale-marker contenders.
+- The lead must evaluate findings on the exact pushed PR head separately. A successful analyzer job or an old disposition catalog does not prove fresh remote closure.
+- No external provider, live credential/PDF publication, iOS device, Windows ACL path or native Settings UI was exercised. Full runtime/security/production acceptance remains separate.

@@ -21,7 +21,7 @@ import { createProject, loadWorkspaceProjects } from '../../packages/shared/src/
 import { readJsonFileSync, atomicWriteFileSync } from '../../packages/shared/src/utils/files'
 import type { StoredConfig } from '../../packages/shared/src/config'
 import { DOMAIN_PROJECT_RPC, SHARED_PROJECT_TEXT_MAX_LENGTH } from '../../packages/shared/src/workspace-domain/identity/contracts'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 
 const schema = 'wp01_native_' + randomBytes(6).toString('hex')
 const issuer = 'urn:rox:native-routing:' + randomUUID()

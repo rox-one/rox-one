@@ -4,8 +4,8 @@
  */
 
 import { ipcMain } from 'electron'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
-import type { MeetingCaptureSession, MeetingCaptureStatus } from '@craft-agent/shared/voice'
+import type { MeetingGrant } from '@rox/shared/meeting-agents'
+import type { MeetingCaptureSession, MeetingCaptureStatus } from '@rox/shared/voice'
 import {
   startMeetingCapture,
   pauseMeetingCapture,

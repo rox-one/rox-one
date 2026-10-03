@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { WsRpcServer } from '../server'
-import { PROTOCOL_VERSION } from '@craft-agent/shared/protocol'
+import { PROTOCOL_VERSION } from '@rox/shared/protocol'
 
 const TEST_TOKEN = 'test-token-with-enough-entropy-to-pass'
 

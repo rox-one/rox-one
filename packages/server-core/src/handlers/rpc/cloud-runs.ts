@@ -1,7 +1,7 @@
 /**
  * Cloud Runs RPC handlers (PRD docs/cloud-runs-prd.md, phase G3).
  *
- * Wires the renderer to @craft-agent/cloud-runner providers:
+ * Wires the renderer to @rox/cloud-runner providers:
  *   submit → buildResearchSpec + provider.createRun (+ local registry)
  *   status/cancel/listArtifacts → provider passthrough
  *   import → download artifacts into <configDir>/workspaces/<ws>/runs/<id>/
@@ -17,13 +17,13 @@ import { copyFileSync, existsSync, readFileSync, writeFileSync, chmodSync } from
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol';
-import { getWorkspaceDataPath, getRuntimeSecretRefs, loadStoredConfig, saveConfig } from '@craft-agent/shared/config/storage';
+import { RPC_CHANNELS } from '@rox/shared/protocol';
+import { getWorkspaceDataPath, getRuntimeSecretRefs, loadStoredConfig, saveConfig } from '@rox/shared/config/storage';
 import {
   assertCredentialReferenceOnly,
   assertNoSecretsInArtifact,
   readIncidentKillSwitch,
-} from '@craft-agent/shared/security';
+} from '@rox/shared/security';
 import {
   FileScopeAudit,
   assertCallerOwnsWorkspace,
@@ -46,21 +46,21 @@ import {
   type ResearchPackKind,
   type RunHandle,
   type RunStatus,
-} from '@craft-agent/cloud-runner';
-import { awardXpSafe } from '@craft-agent/shared/gamification';
-import type { RpcServer } from '@craft-agent/server-core/transport';
+} from '@rox/cloud-runner';
+import { awardXpSafe } from '@rox/shared/gamification';
+import type { RpcServer } from '@rox/server-core/transport';
 import type { HandlerDeps } from '../handler-deps';
 import { resolveContainedRelativePath } from '../../utils/path-validation';
-import { isNativeSidecarEnabled } from '@craft-agent/shared/feature-flags';
+import { isNativeSidecarEnabled } from '@rox/shared/feature-flags';
 import { getNativeSidecarClient } from '../../native/supervisor.ts';
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
-import { registerSecretValues, resolveSecretsForSpawn } from '@craft-agent/shared/secrets';
+import { resolveConfigDir } from "@rox/shared/config/paths"
+import { registerSecretValues, resolveSecretsForSpawn } from '@rox/shared/secrets';
 import {
   isClaimableLive,
   rpcCloudRunsActResult,
   rpcCloudRunsListResult,
   rpcCloudRunsReadResult,
-} from '@craft-agent/core/rox2';
+} from '@rox/core/rox2';
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.cloudRuns.GET_CONFIG,

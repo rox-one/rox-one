@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { importMeetingMedia } from '../import.ts'
 import { MeetingImportError, MeetingMediaArchive } from '../import-media.ts'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import type { MeetingGrant } from '@rox/shared/meeting-agents'
 
 describe('meeting import (RMA-I004)', () => {
   test('permission-like rejects, replay is idempotent, corrupt empty media fails', () => {

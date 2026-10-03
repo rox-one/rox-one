@@ -8,9 +8,26 @@ import {
   serializeSessionDraftGraph,
   serializeSessionDraftNodes,
   sessionDraftNodesStorageKey,
+  STICKY_COLORS,
 } from '../draft-nodes'
 
 describe('session draft nodes', () => {
+  test('legacy note-shaped frames retain layout as non-executable annotations', () => {
+    const frame = createSessionDraftNode({ id: 'frame', kind: 'note', role: 'frame', title: 'Review', position: { x: 80, y: 120 }, now: 1 })
+    const tool = createSessionDraftNode({ id: 'tool', kind: 'tool', position: { x: 90, y: 130 }, now: 2 })
+    const graph = parseSessionDraftGraph(serializeSessionDraftGraph('s1', {
+      nodes: [frame, tool], edges: [createSessionDraftEdge({ source: frame.id, target: tool.id })],
+    }), 's1')
+    expect(graph.nodes[0]).toMatchObject({ kind: 'annotation_frame', role: 'frame', position: { x: 80, y: 120 }, title: 'Review' })
+    expect(graph.edges).toEqual([])
+    expect(canPersistDraftEdge({ source: frame.id, target: tool.id }, [frame, tool], [])).toBe(false)
+  })
+  test('new stickers use varied translucent colors and preserve the chosen color on reload', () => {
+    const stickers = STICKY_COLORS.map(() => createSessionDraftNode({ kind: 'note', role: 'sticky', position: { x: 0, y: 0 }, now: 1 }))
+    expect(new Set(stickers.map((node) => node.color)).size).toBe(STICKY_COLORS.length)
+    expect(parseSessionDraftNodes(serializeSessionDraftNodes('s1', stickers), 's1')).toEqual(stickers)
+    expect(createSessionDraftNode({ kind: 'note', role: 'sticky', color: 'rose', position: { x: 0, y: 0 } }).color).toBe('rose')
+  })
   test('serializes local draft nodes separately from scene layout pins', () => {
     const node = createSessionDraftNode({
       id: 'draft_note_1',

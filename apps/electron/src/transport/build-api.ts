@@ -5,8 +5,8 @@
  * enforces types at compile time — this proxy provides runtime dispatch.
  */
 
-import type { RpcClient } from '@craft-agent/server-core/transport'
-import { isErrorCode } from '@craft-agent/shared/protocol'
+import type { RpcClient } from '@rox/server-core/transport'
+import { isErrorCode } from '@rox/shared/protocol'
 import type { ElectronAPI } from '../shared/types'
 
 // ---------------------------------------------------------------------------

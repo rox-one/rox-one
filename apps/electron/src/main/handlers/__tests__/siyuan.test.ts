@@ -9,8 +9,8 @@
  */
 
 import { describe, it, expect, beforeEach, mock } from 'bun:test'
-import type { RpcServer } from '@craft-agent/server-core/transport'
-import { RPC_CHANNELS, type SiyuanSurfaceState } from '@craft-agent/shared/protocol'
+import type { RpcServer } from '@rox/server-core/transport'
+import { RPC_CHANNELS, type SiyuanSurfaceState } from '@rox/shared/protocol'
 import type { HandlerDeps } from '../handler-deps'
 
 const cookieSetCalls: Array<{ partition: string; cookie: Record<string, unknown> }> = []

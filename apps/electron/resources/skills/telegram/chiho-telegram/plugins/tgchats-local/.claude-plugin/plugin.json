@@ -1,0 +1,14 @@
+{
+  "name": "tgchats-local",
+  "version": "1.0.0",
+  "description": "Connect Claude to a self-hosted local tgchats Telegram MCP runtime.",
+  "author": {
+    "name": "Chiho",
+    "url": "https://chiho.ai/"
+  },
+  "homepage": "https://github.com/chihoai/telegram-for-ai-agents",
+  "repository": "https://github.com/chihoai/telegram-for-ai-agents",
+  "license": "MIT",
+  "keywords": ["telegram", "self-hosted", "local", "mcp", "crm"],
+  "mcpServers": "./claude-mcp.json"
+}

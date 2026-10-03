@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { AnnotationV1 } from '@craft-agent/core'
+import type { AnnotationV1 } from '@rox/core'
 import { resolveTextAnnotations } from '../../markdown/annotation-resolver'
 import {
   aggregateReactions,

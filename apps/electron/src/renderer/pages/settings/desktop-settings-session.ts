@@ -1,5 +1,5 @@
 import type { ElectronAPI } from '../../../shared/types'
-import type { VoiceHealth, VoicePrefs } from '@craft-agent/shared/voice'
+import type { VoiceHealth, VoicePrefs } from '@rox/shared/voice'
 
 type RuntimeCapability = { getRuntimeEnvironment?: () => 'electron' | 'web' }
 

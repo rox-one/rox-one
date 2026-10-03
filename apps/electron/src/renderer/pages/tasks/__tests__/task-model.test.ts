@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import type { PersonalTask } from '@craft-agent/core/tasks/personal'
+import type { PersonalTask } from '@rox/core/tasks/personal'
 import {
   agentChipFor,
   agentCounts,

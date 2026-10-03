@@ -8,8 +8,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Spinner } from '@craft-agent/ui'
-import type { LoadedPage } from '@craft-agent/shared/pages/types'
+import { Spinner } from '@rox/ui'
+import type { LoadedPage } from '@rox/shared/pages/types'
 import { describeGrantAction, describeGrantStatus, grantKindIcon, useGrantRemoval } from './grant-visuals'
 
 /**

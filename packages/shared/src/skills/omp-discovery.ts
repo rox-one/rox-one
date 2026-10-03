@@ -5,8 +5,8 @@
  * `{workspaceRoot}/.omp/skills` (workspace-level) — and returns lightweight
  * metadata for each skill (SKILL.md YAML frontmatter: name/description).
  *
- * OMP skills are read-only in the craft UI; the user can export them into
- * workspace craft skills (see the `skills:importOmp` RPC handler).
+ * OMP skills are read-only in the ROX UI; the user can export them into
+ * workspace ROX skills (see the `skills:importOmp` RPC handler).
  *
  * Caching: results are cached per directory with a 60s TTL plus a directory
  * mtime check (short-circuits a rescan when nothing was added/removed).

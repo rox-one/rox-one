@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { ensureBuiltinMcpSources } from '@craft-agent/shared/sources/builtin-mcp'
+import { ensureBuiltinMcpSources } from '@rox/shared/sources/builtin-mcp'
 import { resolveDefaultSessionSources } from '../default-session-sources'
 
 describe('default session MCP selection', () => {

@@ -11,7 +11,7 @@ import {
   tlsSocketOptions,
   verifyPeerTrust,
 } from '../peer-trust.ts'
-import type { RemoteTlsTrust } from '@craft-agent/core/types'
+import type { RemoteTlsTrust } from '@rox/core/types'
 
 const PIN = Buffer.alloc(32, 7).toString('base64')
 const OTHER = Buffer.alloc(32, 9).toString('base64')

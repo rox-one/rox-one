@@ -1,4 +1,4 @@
-import { DEFAULT_BUILTIN_STATUS_PALETTE } from '@craft-agent/shared/colors'
+import { DEFAULT_BUILTIN_STATUS_PALETTE } from '@rox/shared/colors'
 import type { BuiltInKanbanColumnId } from './types'
 
 /**

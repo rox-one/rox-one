@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Braces, Clock, Filter, GitBranch, Group, MessageSquare, Save, Trash2, Webhook } from 'lucide-react'
-import { compileAutomationGraph } from '@craft-agent/shared/automations/graph'
-import type { AutomationGraph, AutomationGraphNode } from '@craft-agent/shared/automations/types'
+import { compileAutomationGraph } from '@rox/shared/automations/graph'
+import type { AutomationGraph, AutomationGraphNode } from '@rox/shared/automations/types'
 import { cn } from '@/lib/utils'
 import { NODE_HEIGHT, fitGraphLayout, nodeDisplayLabel } from './graph-fit-layout'
 

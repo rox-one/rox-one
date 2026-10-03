@@ -76,9 +76,9 @@ import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
 import { getSessionTitle } from '@/utils/session'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { MessagingPlatformRuntimeInfo } from '../../../shared/types'
-import { MESSAGING_PROVIDER_CAPABILITIES } from '@craft-agent/messaging-gateway/capabilities'
+import { MESSAGING_PROVIDER_CAPABILITIES } from '@rox/messaging-gateway/capabilities'
 
-import { isClaimableLive } from '@craft-agent/core/rox2'
+import { isClaimableLive } from '@rox/core/rox2'
 import {
   settingsPageActionAllowed,
   settingsPageActionResult,

@@ -1,6 +1,6 @@
-import { DEFAULT_COLLECTION_FILTERS, type CollectionFilters } from '@craft-agent/shared/sessions/collection'
-import { mergeSliceViews, sliceToView, type CollectionSliceLike } from '@craft-agent/shared/views'
-import type { ViewConfig } from '@craft-agent/shared/views'
+import { DEFAULT_COLLECTION_FILTERS, type CollectionFilters } from '@rox/shared/sessions/collection'
+import { mergeSliceViews, sliceToView, type CollectionSliceLike } from '@rox/shared/views'
+import type { ViewConfig } from '@rox/shared/views'
 import { routes } from '../../../../shared/routes'
 
 

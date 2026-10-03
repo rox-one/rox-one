@@ -69,7 +69,7 @@ function freshConfigDir(): string {
 }
 
 const SETUP = `
-const { RPC_CHANNELS } = await import('@craft-agent/shared/protocol');
+const { RPC_CHANNELS } = await import('@rox/shared/protocol');
 const { registerCloudRunsHandlers } = await import(process.env.CRAFT_TEST_ROOT + '/packages/server-core/src/handlers/rpc/cloud-runs.ts');
 const handlers = new Map();
 const fakeServer = { handle: (ch, fn) => handlers.set(ch, fn) };

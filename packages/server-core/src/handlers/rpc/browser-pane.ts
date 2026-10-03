@@ -1,9 +1,9 @@
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type { BrowserScreenshotOptions } from '../browser-pane-manager-interface'
 import type { RpcServer } from '../../transport'
 import { pushTyped } from '../../transport'
 import type { HandlerDeps } from '../handler-deps'
-import { isClaimableLive, rpcBrowserPaneActResult, rpcBrowserPaneListResult, rpcBrowserPaneReadResult } from '@craft-agent/core/rox2'
+import { isClaimableLive, rpcBrowserPaneActResult, rpcBrowserPaneListResult, rpcBrowserPaneReadResult } from '@rox/core/rox2'
 
 type BrowserPaneCreateOptions = { id?: string; show?: boolean; bindToSessionId?: string }
 type BrowserManagerWithEvents = NonNullable<HandlerDeps['browserPaneManager']> & {

@@ -16,7 +16,7 @@ import {
   type PanelRegistry,
   type PanelRegistryState,
   type PanelSlot,
-} from '@craft-agent/core/platform'
+} from '@rox/core/platform'
 
 export const DEFAULT_PANEL_REGISTRY_STATE: PanelRegistryState = {
   version: 1,

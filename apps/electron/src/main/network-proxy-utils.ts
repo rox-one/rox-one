@@ -4,7 +4,7 @@
  * Parses NO_PROXY rules and determines whether a given URL should bypass the proxy.
  */
 
-import type { NetworkProxySettings } from '@craft-agent/shared/config/types';
+import type { NetworkProxySettings } from '@rox/shared/config/types';
 
 /** Split a comma-separated string into trimmed, non-empty entries. */
 export function splitCommaSeparated(str: string | undefined): string[] {

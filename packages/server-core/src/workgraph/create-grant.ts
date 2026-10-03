@@ -1,5 +1,5 @@
-import type { CredentialRefId } from '@craft-agent/core/platform'
-import type { InProcessCredentialBroker } from '@craft-agent/shared/credentials'
+import type { CredentialRefId } from '@rox/core/platform'
+import type { InProcessCredentialBroker } from '@rox/shared/credentials'
 
 import type { WorkGraphKernel } from './index'
 

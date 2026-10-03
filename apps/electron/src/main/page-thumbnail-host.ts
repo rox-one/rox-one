@@ -10,7 +10,7 @@
  * actions.
  */
 
-import type { PageDataSnapshot, PageKind } from '@craft-agent/shared/pages/types'
+import type { PageDataSnapshot, PageKind } from '@rox/shared/pages/types'
 
 /** Logical render viewport (16:10) the offscreen window uses. */
 export const THUMB_LOGICAL_WIDTH = 1000

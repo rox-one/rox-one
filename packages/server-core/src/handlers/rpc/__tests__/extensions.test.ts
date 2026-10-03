@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { resetExtensionStateStoreCache } from '@craft-agent/shared/extensions'
-import { SiyuanKernelClient } from '@craft-agent/core/knowledge/providers/siyuan'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { resetExtensionStateStoreCache } from '@rox/shared/extensions'
+import { SiyuanKernelClient } from '@rox/core/knowledge/providers/siyuan'
 import { HANDLED_CHANNELS, registerExtensionsHandlers } from '../extensions'
 import {
   resetPluginBridgeFixture,

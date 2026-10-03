@@ -8,24 +8,25 @@ import {
   type FileAttachment,
   type SendMessageOptions,
   type SessionEvent,
-} from '@craft-agent/shared/protocol'
-import type { StoredAttachment, SessionMemoryMode } from '@craft-agent/core/types'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { perf } from '@craft-agent/shared/utils'
-import { isValidThinkingLevel, THINKING_LEVEL_IDS } from '@craft-agent/shared/agent/thinking-levels'
+} from '@rox/shared/protocol'
+import type { StoredAttachment, SessionMemoryMode } from '@rox/core/types'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import { perf } from '@rox/shared/utils'
+import { isValidThinkingLevel, THINKING_LEVEL_IDS } from '@rox/shared/agent/thinking-levels'
 
 const VALID_THINKING_LEVELS_LIST = THINKING_LEVEL_IDS.map(id => `'${id}'`).join(', ')
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { setTransferableHandler } from './transfer'
 import { assertValidBulkUpdateInput, assertValidBulkUpdatePatch } from '../../sessions/bulk-labels'
-import { getBroInviteService } from '../../collaboration/bro-invite-service.ts'
+import { disposeBroInviteService, getBroInviteService } from '../../collaboration/bro-invite-service.ts'
+import { parseInviteUrl } from '@rox/shared/collaboration'
 import {
   isClaimableLive,
   rpcSessionsActResult,
   rpcSessionsListResult,
   rpcSessionsReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 interface ClientSessionWatchState {
   watcher: import('fs').FSWatcher
@@ -76,10 +77,10 @@ export function cleanupSessionFileWatchForClient(clientId: string): void {
 // Recursive directory scanner for session files
 // Filters out internal files (session.jsonl) and hidden files (. prefix)
 // Returns only non-empty directories
-async function scanSessionDirectory(dirPath: string): Promise<import('@craft-agent/shared/protocol').SessionFile[]> {
+async function scanSessionDirectory(dirPath: string): Promise<import('@rox/shared/protocol').SessionFile[]> {
   const { readdir, stat } = await import('fs/promises')
   const entries = await readdir(dirPath, { withFileTypes: true })
-  const files: import('@craft-agent/shared/protocol').SessionFile[] = []
+  const files: import('@rox/shared/protocol').SessionFile[] = []
 
   for (const entry of entries) {
     // Skip internal and hidden files
@@ -153,6 +154,7 @@ export const HANDLED_CHANNELS = [
 export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): void {
   const { sessionManager, platform } = deps
   const log = platform.logger
+  server.onShutdown?.(disposeBroInviteService)
 
   // Get all sessions for the calling window's workspace
   // Waits for initialization to complete so sessions are never returned empty during startup
@@ -210,7 +212,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   })
 
   // Create a new session
-  server.handle(RPC_CHANNELS.sessions.CREATE, async (_ctx, workspaceId: string, options?: import('@craft-agent/shared/protocol').CreateSessionOptions) => {
+  server.handle(RPC_CHANNELS.sessions.CREATE, async (_ctx, workspaceId: string, options?: import('@rox/shared/protocol').CreateSessionOptions) => {
     const act = rpcSessionsActResult({ source: 'native', action: 'write', nativeId: workspaceId || 'session' })
     if (!isClaimableLive(act)) throw new Error('session create is not live')
     const end = perf.start('rpc.createSession', { workspaceId })
@@ -317,7 +319,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // Respond to a credential request (secure auth input)
   // Returns true if the response was delivered, false if agent/session is gone
-  server.handle(RPC_CHANNELS.sessions.RESPOND_TO_CREDENTIAL, async (_ctx, sessionId: string, requestId: string, response: import('@craft-agent/shared/protocol').CredentialResponse) => {
+  server.handle(RPC_CHANNELS.sessions.RESPOND_TO_CREDENTIAL, async (_ctx, sessionId: string, requestId: string, response: import('@rox/shared/protocol').CredentialResponse) => {
     return sessionManager.respondToCredential(sessionId, requestId, response)
   })
 
@@ -327,9 +329,9 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // Session commands - consolidated handler for session operations
   server.handle(RPC_CHANNELS.sessions.COMMAND, async (
-    _ctx,
+    ctx,
     sessionId: string,
-    command: import('@craft-agent/shared/protocol').SessionCommand
+    command: import('@rox/shared/protocol').SessionCommand
   ) => {
     switch (command.type) {
       case 'flag':
@@ -396,7 +398,11 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
       case 'revokeShare':
         return sessionManager.revokeShare(sessionId)
       case 'inviteBro': {
-        const invited = await getBroInviteService().invite(sessionId, command.role)
+        const session = await sessionManager.getSession(sessionId)
+        if (!session) {
+          return { success: false, error: 'invalid', errorCode: 'invalid' }
+        }
+        const invited = await getBroInviteService().invite(sessionId, command.role, { workspaceId: session.workspaceId, session })
         if (!invited.success) {
           return {
             success: false,
@@ -414,11 +420,21 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         }
       }
       case 'revokeBroInvite':
-        return getBroInviteService().revoke(command.joinKey)
-      case 'joinBroInvite':
-        return getBroInviteService().join(command.url)
+        return getBroInviteService().revoke(command.joinKey, ctx.workspaceId)
+      case 'joinBroInvite': {
+        const parsed = parseInviteUrl(command.url)
+        if (!parsed) return { ok: false, error: 'invalid' }
+        const service = getBroInviteService()
+        if (service.usesRemote(ctx.workspaceId)) return service.join(command.url, ctx.workspaceId)
+        // An invite must not be consumed if its session has been deleted.
+        // Resolve the target from the URL, independently of the caller's page.
+        const targetSession = await sessionManager.getSession(parsed.sessionId)
+        if (!targetSession) return { ok: false, error: 'invalid' }
+        const joined = await service.join(command.url)
+        return joined.ok ? { ...joined, workspaceId: targetSession.workspaceId } : joined
+      }
       case 'listBroPresence':
-        return getBroInviteService().listPresence(sessionId)
+        return getBroInviteService().listPresence(sessionId, (await sessionManager.getSession(sessionId))?.workspaceId ?? ctx.workspaceId)
       case 'refreshTitle':
         log.info(`IPC: refreshTitle received for session ${sessionId}`)
         return sessionManager.refreshTitle(sessionId)
@@ -596,8 +612,8 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     const visibleSessions = sessionManager.getSessions(workspace.id).filter((session) => !session.hidden)
     const allowedSessionIds = visibleSessions.map((session) => session.id)
 
-    const { searchSessions } = await import('@craft-agent/server-core/services')
-    const { getWorkspaceSessionsPath } = await import('@craft-agent/shared/workspaces')
+    const { searchSessions } = await import('@rox/server-core/services')
+    const { getWorkspaceSessionsPath } = await import('@rox/shared/workspaces')
     const sessionsDir = getWorkspaceSessionsPath(workspace.rootPath)
     log.debug('SEARCH_SESSIONS: Searching workspace content', { searchId: id, queryLength: query.length })
 
@@ -739,7 +755,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     if (!targetWorkspaceId || typeof targetWorkspaceId !== 'string') throw new Error('targetWorkspaceId is required')
     if (mode !== 'move' && mode !== 'fork') throw new Error(`Invalid dispatch mode: ${mode}`)
 
-    return sessionManager.importSession(targetWorkspaceId, bundle as import('@craft-agent/shared/sessions').SessionBundle, mode)
+    return sessionManager.importSession(targetWorkspaceId, bundle as import('@rox/shared/sessions').SessionBundle, mode)
   }
   server.handle(RPC_CHANNELS.sessions.IMPORT, importHandler)
   // Also register as transferable so chunked transfer can invoke it on commit
@@ -757,7 +773,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   })
 
   // Import a summarized remote-transfer payload into a target workspace.
-  server.handle(RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER, async (_ctx, targetWorkspaceId: string, payload: import('@craft-agent/shared/protocol').RemoteSessionTransferPayload) => {
+  server.handle(RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER, async (_ctx, targetWorkspaceId: string, payload: import('@rox/shared/protocol').RemoteSessionTransferPayload) => {
     await sessionManager.waitForInit()
     if (!targetWorkspaceId || typeof targetWorkspaceId !== 'string') throw new Error('targetWorkspaceId is required')
     return sessionManager.importRemoteSessionTransfer(targetWorkspaceId, payload)

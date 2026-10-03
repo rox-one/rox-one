@@ -15,7 +15,7 @@ import {
   CAPTAIN_KEY,
   sanitizeKey,
   type AgentTeamState,
-} from '@craft-agent/core/platform';
+} from '@rox/core/platform';
 import type { SessionToolContext } from '../context.ts';
 import type { ToolResult } from '../types.ts';
 import { successResponse, errorResponse } from '../response.ts';

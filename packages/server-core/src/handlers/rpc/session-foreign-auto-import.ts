@@ -9,48 +9,22 @@
  * never freezes. Settings + last status live in `<workspace>/.rox/`.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { getActiveWorkspace, getWorkspaceByNameOrId } from '@craft-agent/shared/config'
+import { getActiveWorkspace, getWorkspaceByNameOrId } from '@rox/shared/config'
 import {
   discoverForeignSessionsAsync,
   loadForeignImportRegistry,
   persistForeignSession,
   type ForeignAutoImportStatus,
   type ForeignIndexEntry,
-} from '@craft-agent/shared/sessions'
+} from '@rox/shared/sessions'
 import type { HandlerDeps } from '../handler-deps'
+import { readAutoImportFile, writeAutoImportFile } from './session-foreign-auto-import-storage'
 
 export const AUTO_IMPORT_RECENT_DAYS = 30
 export const AUTO_IMPORT_MAX_PER_RUN = 150
 const STARTUP_DELAY_MS = 20_000
 const INTERVAL_MS = 15 * 60_000
 
-interface AutoImportFile {
-  enabled?: boolean
-  lastRunAt?: number | null
-  status?: Partial<ForeignAutoImportStatus>
-}
-
-function autoImportPath(workspaceRoot: string): string {
-  return join(workspaceRoot, '.rox', 'foreign-auto-import.json')
-}
-
-function readAutoImportFile(workspaceRoot: string): AutoImportFile {
-  const path = autoImportPath(workspaceRoot)
-  if (!existsSync(path)) return {}
-  try {
-    return JSON.parse(readFileSync(path, 'utf8')) as AutoImportFile
-  } catch {
-    return {}
-  }
-}
-
-function writeAutoImportFile(workspaceRoot: string, data: AutoImportFile): void {
-  const path = autoImportPath(workspaceRoot)
-  mkdirSync(dirname(path), { recursive: true })
-  writeFileSync(path, `${JSON.stringify(data, null, 2)}\n`)
-}
 
 function emptyStatus(workspaceId: string | null, enabled: boolean): ForeignAutoImportStatus {
   return {

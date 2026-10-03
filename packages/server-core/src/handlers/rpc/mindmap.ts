@@ -17,17 +17,17 @@ import {
   type MindMapEntityRef,
   type MindMapGraph,
   type PinnedMap,
-} from '@craft-agent/core/mindmap'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/core/mindmap'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   isClaimableLive,
   rpcMindmapActResult,
   rpcMindmapListResult,
   rpcMindmapReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import { isPathInsideBase } from '../../utils/path-validation'
 
 export const HANDLED_CHANNELS = [

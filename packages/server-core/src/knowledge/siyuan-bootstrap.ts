@@ -15,15 +15,15 @@ import {
   shouldAutoStartSiyuan,
   SIYUAN_INSTALL_URL,
   SIYUAN_LOCAL_BASE_URL,
-} from '@craft-agent/shared/knowledge/siyuan-binary'
+} from '@rox/shared/knowledge/siyuan-binary'
 import { KnowledgeConnectionsStore, credentialIdFromRef } from './connections-store'
 import { loadG2AcceptedVariantFromDisk } from './g2-status'
 import { SiyuanProcessManager, seedDefaultNotebook } from './process-manager'
-import { parseOemKernelPin, resolveOemManagedLayout } from '@craft-agent/shared/knowledge/oem-pin'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
+import { parseOemKernelPin, resolveOemManagedLayout } from '@rox/shared/knowledge/oem-pin'
+import { getCredentialManager } from '@rox/shared/credentials'
 import { readFileSync } from 'node:fs'
 import { resolveKnowledgeHosting, type KnowledgeHostingMode } from './hosting-mode'
-import { CONFIG_DIR } from "@craft-agent/shared/config/paths"
+import { CONFIG_DIR } from "@rox/shared/config/paths"
 
 /** Stable id for the auto-seeded local connection. */
 export const SIYUAN_LOCAL_CONNECTION_ID = 'siyuan-local'

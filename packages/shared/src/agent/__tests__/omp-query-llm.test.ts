@@ -100,7 +100,8 @@ describe('OmpAgent.queryLlm — model honesty', () => {
 
     const printCalls = fake.readArgvLog().filter((argv) => argv.includes('-p'));
     const prompt = printCalls[0]![printCalls[0]!.indexOf('-p') + 1]!;
-    expect(prompt).toBe('SYSTEM-PART\n\nUSER-PART');
+    expect(prompt).toBe('orchestrate workflowz ultrathink\n\nSYSTEM-PART\n\nUSER-PART');
+    expect(printCalls[0]![printCalls[0]!.indexOf('--thinking') + 1]).toBe('max');
   });
 
   it('propagates non-model failures instead of silently falling back', async () => {
@@ -113,6 +114,11 @@ describe('OmpAgent.queryLlm — model honesty', () => {
 });
 
 describe('OmpAgent.runMiniCompletion', () => {
+  it('uses the public Rox fast route for clean-install titles instead of a legacy foreign mini model', async () => {
+    const {agent,fake}=setup();(agent as any)._model='rox/standard';(agent as any).config.miniModel='claude-haiku-4-5';
+    expect(await agent.runMiniCompletion('title')).toContain('fake-omp answer');const argv=fake.readArgvLog().find(a=>a.includes('-p'))!;
+    expect(argv[argv.indexOf('--model')+1]).toBe('rox/fast');expect(argv[argv.indexOf('-p')+1]).toBe('orchestrate workflowz ultrathink\n\ntitle');
+  });
   it('returns trimmed stdout text from the one-shot', async () => {
     const { agent } = setup();
 

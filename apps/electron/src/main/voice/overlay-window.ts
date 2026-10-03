@@ -1,7 +1,7 @@
 import { app, BrowserWindow, globalShortcut, screen } from 'electron'
 import { join } from 'node:path'
-import { canBindAccelerator, detectHotkeyCapabilities, overlayShouldStealFocus } from '@craft-agent/shared/voice'
-import { loadVoicePrefs } from '@craft-agent/shared/voice'
+import { canBindAccelerator, detectHotkeyCapabilities, overlayShouldStealFocus } from '@rox/shared/voice'
+import { loadVoicePrefs } from '@rox/shared/voice'
 
 let overlay: BrowserWindow | null = null
 

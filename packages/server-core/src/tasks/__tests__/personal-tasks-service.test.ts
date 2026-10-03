@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { mkdtempSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { emptyBundle, type PersonalTask } from '@craft-agent/core/tasks/personal'
+import { emptyBundle, type PersonalTask } from '@rox/core/tasks/personal'
 import { PersonalTaskPersistStore } from '../personal-persist.ts'
 import {
   deletePersonalTasks,

@@ -1,4 +1,4 @@
-import type { MeetingCommitCommand, MeetingCommitResult, MeetingOutboxEntry } from '@craft-agent/core/meetings'
+import type { MeetingCommitCommand, MeetingCommitResult, MeetingOutboxEntry } from '@rox/core/meetings'
 import { MeetingJournal } from './journal.ts'
 
 export class MeetingRepository {

@@ -15,7 +15,7 @@ import {
 } from '../app-shell/ProjectMultiSelectFilter'
 import { PageTile, type PageTileProject } from './PageTile'
 import { DeletePageDialog } from './DeletePageDialog'
-import type { LoadedPage } from '@craft-agent/shared/pages/types'
+import type { LoadedPage } from '@rox/shared/pages/types'
 
 /**
  * Pages library — the full-width home grid (mirrors the Kanban board pane).

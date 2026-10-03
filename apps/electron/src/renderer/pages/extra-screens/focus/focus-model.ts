@@ -2,7 +2,7 @@
  * Фокус — pure helpers: today's calendar, top-3 task ranking and the day
  * summary section upserted into the daily note between markers.
  */
-import type { PersonalTask } from '@craft-agent/core/tasks/personal'
+import type { PersonalTask } from '@rox/core/tasks/personal'
 
 export interface DayEvent {
   id: string

@@ -4,7 +4,7 @@ import {
   createContextKeyService,
   evaluateWhen,
   WORKBENCH_FLAG,
-} from '@craft-agent/core/platform'
+} from '@rox/core/platform'
 import { CONATION_BOARD_DEEP_LINK } from '../conation/conation-board-panels'
 import { CONATION_FUND_DEEP_LINK } from '../conation/conation-fund-panels'
 import {

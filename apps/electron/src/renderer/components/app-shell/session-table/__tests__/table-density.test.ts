@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import type { CollectionDensity } from '@craft-agent/shared/sessions/collection'
+import type { CollectionDensity } from '@rox/shared/sessions/collection'
 import { collectionTableRowClass, collectionTableRowHeight } from '../table-density'
 
 describe('collectionTableRowHeight', () => {

@@ -1,4 +1,4 @@
-import type { PanelContribution, PanelRegistry, PanelRenderer } from '@craft-agent/core/platform'
+import type { PanelContribution, PanelRegistry, PanelRenderer } from '@rox/core/platform'
 
 /** Keep id in sync with packages/core/src/conation/notes/flags.ts */
 export const CONATION_NOTES_PANEL_ID = 'conation.notes' as const

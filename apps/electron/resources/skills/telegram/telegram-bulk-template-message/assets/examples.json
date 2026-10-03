@@ -1,0 +1,18 @@
+[
+  {
+    "client": "OpenClaw",
+    "runtime": "chiho-cloud",
+    "prompt": "Send the short follow-up template to the selected investor chats after previewing it.",
+    "tools": ["dialogs_list", "outbox_preview", "write_approve_preview", "outbox_send_approved"]
+  },
+  {
+    "client": "Codex",
+    "prompt": "Prepare a preview for the event update template for these five peers, then stop for approval.",
+    "tools": ["outbox_preview"]
+  },
+  {
+    "client": "Claude Desktop",
+    "prompt": "Use Chiho MCP to preview a batch Telegram update for the listed chats.",
+    "tools": ["outbox_preview"]
+  }
+]

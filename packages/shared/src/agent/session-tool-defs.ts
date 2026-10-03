@@ -22,7 +22,7 @@
 import { getSessionToolProxyDefs } from './backend/pi/session-tool-defs.ts';
 import { getBrowserToolEnabled } from '../config/storage.ts';
 import type { McpClientPool } from '../mcp/mcp-pool.ts';
-import { applyMcpLens } from '@craft-agent/session-tools-core';
+import { applyMcpLens } from '@rox/session-tools-core';
 
 /** Minimal structural shape every backend registration frame accepts. */
 export interface SessionToolDef {

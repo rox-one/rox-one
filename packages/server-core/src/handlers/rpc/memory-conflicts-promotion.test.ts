@@ -7,7 +7,7 @@
  *   the RPC layer and broadcast memory.changed(global) on promote.
  *
  * Follows the memory-skills-pending.test.ts harness: workspace resolution and
- * the workspace registry (@craft-agent/shared/config) are mocked; the global
+ * the workspace registry (@rox/shared/config) are mocked; the global
  * config dir is redirected via memory-test-setup.
  */
 import './memory-test-setup' // must run before any module reading CRAFT_CONFIG_DIR
@@ -15,14 +15,14 @@ import { describe, expect, it, mock, beforeEach, afterEach } from 'bun:test'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { RpcServer, HandlerFn, RequestContext } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { RpcServer, HandlerFn, RequestContext } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 
 let workspaceRoots: string[]
 const configDir = process.env.CRAFT_CONFIG_DIR!
 
-mock.module('@craft-agent/shared/config', () => ({
+mock.module('@rox/shared/config', () => ({
   getWorkspaceByNameOrId: (id: string) => {
     const i = ['ws1', 'ws2', 'ws3'].indexOf(id)
     return i >= 0 ? { id, name: id, rootPath: workspaceRoots[i] } : null

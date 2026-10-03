@@ -1,4 +1,8 @@
 #!/bin/sh
 ENTRY="${CRAFT_COMMANDS_ENTRY:-$CRAFT_CLI_ENTRY}"
+if [ -z "$ENTRY" ] || [ ! -f "$ENTRY" ]; then
+  printf '%s\n' 'ROX does not bundle a configuration CLI. Use the ROX application interfaces or the available session configuration tools. A compatibility CLI requires an explicit existing CRAFT_COMMANDS_ENTRY.' >&2
+  exit 69
+fi
 export CRAFT_CLI_JSON_ONLY="${CRAFT_CLI_JSON_ONLY:-1}"
 exec "${CRAFT_BUN:-bun}" run "$ENTRY" "$@"

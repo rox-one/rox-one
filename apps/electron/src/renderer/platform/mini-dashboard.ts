@@ -3,7 +3,7 @@
  * Missing measurements stay `null` (render "—"). Never coerce unknown to 0.
  */
 
-import { isInternalAgentSession } from '@craft-agent/shared/sessions/internal-prompts'
+import { isInternalAgentSession } from '@rox/shared/sessions/internal-prompts'
 import type { TransportConnectionState } from '../../shared/types'
 
 export type SyncStatus =

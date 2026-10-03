@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { ListFilter } from 'lucide-react'
-import type { CollectionFilters, SessionPriority } from '@craft-agent/shared/sessions/collection'
+import type { CollectionFilters, SessionPriority } from '@rox/shared/sessions/collection'
 import type { SessionStatus } from '@/config/session-status-config'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
@@ -14,7 +14,7 @@ import {
   CollectionMenuRow,
   CollectionMenuSection,
 } from './collection-menu-row'
-import { userCollectionSlices } from '@craft-agent/shared/views'
+import { userCollectionSlices } from '@rox/shared/views'
 import { persistUserCollectionSlices, userSliceNavigation } from './collection-rail-filters'
 import { useViews } from '@/hooks/useViews'
 import {

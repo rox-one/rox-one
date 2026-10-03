@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ExplainerNode } from '@craft-agent/shared/code-intelligence'
+import type { ExplainerNode } from '@rox/shared/code-intelligence'
 
 export function RepoArchitectureExplainer({ nodes }: { nodes: ExplainerNode[] }) {
   const { t } = useTranslation()

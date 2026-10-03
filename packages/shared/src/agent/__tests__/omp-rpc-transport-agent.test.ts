@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'bun:test';
 import { OmpAgent } from '../omp-agent.ts';
 import { OmpRpcTransport } from '../omp-rpc-transport.ts';
+import { withOmpRequiredModes } from '../omp-history.ts';
 import { chatEvents, createFakeOmp, makeOmpConfig, useFakeOmpEnv, type FakeOmp } from './omp-fake-cli.ts';
 
 let fake: FakeOmp | undefined;
@@ -31,7 +32,7 @@ describe('OMP negotiated transport before provider execution', () => {
     const message = 'QA large command ' + 'x'.repeat(1_424_866);
     const events = await chatEvents(agent, message, 8_000);
     expect(events.some(event => event.type === 'text_complete')).toBe(true);
-    expect(fake.readRpcLog().find(frame => frame.type === 'prompt')?.message).toBe(message);
+    expect(fake.readRpcLog().find(frame => frame.type === 'prompt')?.message).toBe(withOmpRequiredModes(message));
     expect(fake.readRpcLog().find(frame => frame.type === 'prompt')?.observedModel).toEqual({ provider: 'rox', id: 'standard' });
   });
 

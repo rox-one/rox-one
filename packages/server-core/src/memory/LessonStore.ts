@@ -20,8 +20,8 @@
 import { createHash, randomUUID } from 'crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
-import { selectContextLessons } from '@craft-agent/shared/memory/context-select'
-import { LESSON_LIMITS, type AuditActor, type Lesson, type LessonConflict, type LessonOwner, type LessonScope } from '@craft-agent/shared/memory/types'
+import { selectContextLessons } from '@rox/shared/memory/context-select'
+import { LESSON_LIMITS, type AuditActor, type Lesson, type LessonConflict, type LessonOwner, type LessonScope } from '@rox/shared/memory/types'
 import { AuditLog, type AuditInput } from './AuditLog'
 import { removeLesson as ftsRemoveLesson, upsertLesson as ftsUpsertLesson } from './fts-index'
 

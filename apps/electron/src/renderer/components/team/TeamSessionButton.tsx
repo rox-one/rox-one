@@ -20,7 +20,7 @@ import {
   suggestMentions,
   type TeamAccessRole,
   type TeamTarget,
-} from '@craft-agent/shared/team'
+} from '@rox/shared/team'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
 import { navigate, routes } from '@/lib/navigate'

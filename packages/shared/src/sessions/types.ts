@@ -11,7 +11,7 @@
 
 import type { PermissionMode } from '../agent/mode-manager.ts';
 import type { ThinkingLevel } from '../agent/thinking-levels.ts';
-import type { StoredAttachment, MessageRole, ToolStatus, AuthRequestType, AuthStatus, CredentialInputMode, StoredMessage, SessionMemoryMode } from '@craft-agent/core/types';
+import type { StoredAttachment, MessageRole, ToolStatus, AuthRequestType, AuthStatus, CredentialInputMode, StoredMessage, SessionMemoryMode } from '@rox/core/types';
 import type { SessionPriority } from '../protocol/dto.ts';
 
 export type { SessionPriority };
@@ -108,9 +108,9 @@ export interface SessionTokenUsage {
 
 /**
  * Stored message format (simplified for persistence)
- * Re-exported from @craft-agent/core for convenience
+ * Re-exported from @rox/core for convenience
  */
-export type { StoredMessage } from '@craft-agent/core/types';
+export type { StoredMessage } from '@rox/core/types';
 
 /**
  * Session configuration (persisted metadata)

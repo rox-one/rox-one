@@ -5,9 +5,9 @@ import { join } from 'node:path'
 // provider fixtures: the real Electron app and its real storage own all writes.
 const root = process.env.ROX_CONFIG_DIR
 if (!root || !root.includes('rox-compound-e2e-')) throw new Error('Isolated profile required')
-const config = await import('@craft-agent/shared/config')
-const workspaces = await import('@craft-agent/shared/workspaces')
-const projects = await import('@craft-agent/shared/projects')
+const config = await import('@rox/shared/config')
+const workspaces = await import('@rox/shared/workspaces')
+const projects = await import('@rox/shared/projects')
 const workspaceRoot = join(root, 'workspaces', 'acceptance')
 config.saveConfig({ workspaces: [], activeWorkspaceId: null, activeSessionId: null, setupDeferred: true, defaultZoomLevel: 100, notificationsEnabled: false, memory: { enabled: false, semantic: false } })
 const folder = workspaces.createWorkspaceAtPath(workspaceRoot, 'Приёмка Docs', { workingDirectory: workspaceRoot }, { id: 'ws_compound_acceptance', slug: 'acceptance', kind: 'personal' })

@@ -15,7 +15,7 @@ import type {
   MutationInput,
   MutationProposal,
   MutationProposalStatus,
-} from '@craft-agent/shared/protocol'
+} from '@rox/shared/protocol'
 
 /** i18next `t` — structurally narrowed to what the toasts consume. */
 export type TranslateFn = (key: string, options?: Record<string, unknown>) => string

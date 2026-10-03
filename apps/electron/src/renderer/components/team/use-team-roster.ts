@@ -3,8 +3,8 @@
  * comes from that same membership-scoped response, never renderer preferences.
  */
 import * as React from 'react'
-import type { OrganizationWithMembers } from '@craft-agent/shared/orgs'
-import { createTeamSyncAdapter, type TeamMemberRef, type TeamSyncStatus } from '@craft-agent/shared/team'
+import type { OrganizationWithMembers } from '@rox/shared/orgs'
+import { createTeamSyncAdapter, type TeamMemberRef, type TeamSyncStatus } from '@rox/shared/team'
 
 export interface TeamRoster {
   loading: boolean

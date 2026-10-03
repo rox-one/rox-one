@@ -16,9 +16,9 @@ import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'no
 import { homedir } from 'node:os'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { session } from 'electron'
-import { CONFIG_DIR } from '@craft-agent/shared/config'
-import { loadPrivacyState, providerScopeAllowed, setProviderAccessConsent } from '@craft-agent/shared/privacy'
-import { chromiumRootRel, type DiscoveredProfile } from '@craft-agent/shared/browser/profile-import'
+import { CONFIG_DIR } from '@rox/shared/config'
+import { loadPrivacyState, providerScopeAllowed, setProviderAccessConsent } from '@rox/shared/privacy'
+import { chromiumRootRel, type DiscoveredProfile } from '@rox/shared/browser/profile-import'
 import type { BrowserCookieAutoStatus } from '../shared/types'
 import {
   browserNameFor,

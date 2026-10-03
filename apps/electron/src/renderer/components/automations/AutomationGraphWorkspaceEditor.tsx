@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import type { AutomationGraphProjection } from '@craft-agent/shared/automations/graph'
-import type { AutomationGraph } from '@craft-agent/shared/automations/types'
+import type { AutomationGraphProjection } from '@rox/shared/automations/graph'
+import type { AutomationGraph } from '@rox/shared/automations/types'
 import { cn } from '@/lib/utils'
 import { AutomationGraphEditor } from './AutomationGraphEditor'
 

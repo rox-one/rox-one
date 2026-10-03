@@ -10,7 +10,7 @@ import {
   type CollectionProperty,
   type CollectionSessionMeta,
   type CollectionViewMode,
-} from '@craft-agent/shared/sessions/collection'
+} from '@rox/shared/sessions/collection'
 import { cn } from '@/lib/utils'
 import type { SessionMeta } from '@/atoms/sessions'
 import type { SessionStatus } from '@/config/session-status-config'

@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process'
 import { describe, expect, it } from 'bun:test'
-import type { FeedItem, FeedSource } from '@craft-agent/shared/feed'
+import type { FeedItem, FeedSource } from '@rox/shared/feed'
 import { applyAnnotations, filterView, groupByDay, groupOrdered, itemsPerDay, matchesChip, sourceHealth, suggestTags, tagsInUse, visibleMarkCounts } from '../feed-model'
 
 const NOW = new Date(2026, 8, 29, 18, 0).getTime()

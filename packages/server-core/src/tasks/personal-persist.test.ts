@@ -9,7 +9,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import type { PersonalTask } from '@craft-agent/core/tasks/personal'
+import type { PersonalTask } from '@rox/core/tasks/personal'
 import { PersonalTaskPersistStore } from './personal-persist.ts'
 
 let root: string

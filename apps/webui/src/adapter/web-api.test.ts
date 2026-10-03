@@ -9,7 +9,7 @@ import type {
   createWebApi as CreateWebApi,
 } from './web-api'
 
-// web-api → @craft-agent/ui → pdfjs Vite `?url` import, which bun cannot load.
+// web-api → @rox/ui → pdfjs Vite `?url` import, which bun cannot load.
 mock.module('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({ default: '' }))
 mock.module('pdfjs-dist', () => ({
   GlobalWorkerOptions: { workerSrc: '' },

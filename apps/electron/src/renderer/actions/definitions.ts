@@ -74,19 +74,19 @@ export const actions = {
   'nav.focusSidebar': {
     id: 'nav.focusSidebar',
     labelKey: 'shortcuts.action.focusSidebar',
-    defaultHotkey: 'mod+1',
+    defaultHotkey: 'mod+alt+1',
     category: 'Navigation',
   },
   'nav.focusNavigator': {
     id: 'nav.focusNavigator',
     labelKey: 'shortcuts.action.focusNavigator',
-    defaultHotkey: 'mod+2',
+    defaultHotkey: 'mod+alt+2',
     category: 'Navigation',
   },
   'nav.focusChat': {
     id: 'nav.focusChat',
     labelKey: 'shortcuts.action.focusChat',
-    defaultHotkey: 'mod+3',
+    defaultHotkey: 'mod+alt+3',
     category: 'Navigation',
   },
   'nav.nextZone': {
@@ -127,55 +127,62 @@ export const actions = {
     when: '!inputFocus',  // CMD+Right = cursor to line end in text inputs
   },
 
-  // Titlebar mode pill: ⌥⌘1…7 (mod+1..3 are focus zones)
+  // Titlebar surfaces: ⌘/Ctrl 1…7; focus zones use ⌥⌘/Ctrl+Alt 1…3.
   'mode.slot1': {
     id: 'mode.slot1',
     labelKey: 'shortcuts.action.modeSlot1',
     description: 'Switch to titlebar mode #1',
-    defaultHotkey: 'mod+alt+1',
+    defaultHotkey: 'mod+1',
     category: 'Navigation',
+    when: '!menuOpen',
   },
   'mode.slot2': {
     id: 'mode.slot2',
     labelKey: 'shortcuts.action.modeSlot2',
     description: 'Switch to titlebar mode #2',
-    defaultHotkey: 'mod+alt+2',
+    defaultHotkey: 'mod+2',
     category: 'Navigation',
+    when: '!menuOpen',
   },
   'mode.slot3': {
     id: 'mode.slot3',
     labelKey: 'shortcuts.action.modeSlot3',
     description: 'Switch to titlebar mode #3',
-    defaultHotkey: 'mod+alt+3',
+    defaultHotkey: 'mod+3',
     category: 'Navigation',
+    when: '!menuOpen',
   },
   'mode.slot4': {
     id: 'mode.slot4',
     labelKey: 'shortcuts.action.modeSlot4',
     description: 'Switch to titlebar mode #4',
-    defaultHotkey: 'mod+alt+4',
+    defaultHotkey: 'mod+4',
     category: 'Navigation',
+    when: '!menuOpen',
   },
   'mode.slot5': {
     id: 'mode.slot5',
     labelKey: 'shortcuts.action.modeSlot5',
     description: 'Switch to titlebar mode #5',
-    defaultHotkey: 'mod+alt+5',
+    defaultHotkey: 'mod+5',
     category: 'Navigation',
+    when: '!menuOpen',
   },
   'mode.slot6': {
     id: 'mode.slot6',
     labelKey: 'shortcuts.action.modeSlot6',
     description: 'Switch to titlebar mode #6',
-    defaultHotkey: 'mod+alt+6',
+    defaultHotkey: 'mod+6',
     category: 'Navigation',
+    when: '!menuOpen',
   },
   'mode.slot7': {
     id: 'mode.slot7',
     labelKey: 'shortcuts.action.modeSlot7',
     description: 'Switch to titlebar mode #7',
-    defaultHotkey: 'mod+alt+7',
+    defaultHotkey: 'mod+7',
     category: 'Navigation',
+    when: '!menuOpen',
   },
 
   // ═══════════════════════════════════════════

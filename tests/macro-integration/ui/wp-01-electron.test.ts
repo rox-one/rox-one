@@ -159,9 +159,9 @@ async function isolatedSeed(): Promise<void> {
   const profile = process.env.ROX_CONFIG_DIR
   if (!profile || !profile.includes('rox-wp01-electron-')) throw new Error('Explicit isolated WP01 profile required')
   const input = JSON.parse(await Bun.stdin.text()) as SeedInput
-  const config = await import('@craft-agent/shared/config')
-  const workspaces = await import('@craft-agent/shared/workspaces')
-  const projects = await import('@craft-agent/shared/projects')
+  const config = await import('@rox/shared/config')
+  const workspaces = await import('@rox/shared/workspaces')
+  const projects = await import('@rox/shared/projects')
   // security is genuinely absent from the isolated PATH. Production v3 falls
   // back to its real mode-0600 credentials.key file, without a provider mock,
   // binary shim or any change to the host's OS keychain search/default list.
@@ -201,7 +201,7 @@ if (process.argv.includes('--verify-shell')) {
   const { loadShellEnv } = await import('../../../apps/electron/src/main/shell-env')
   const { existsSync } = await import('node:fs')
   const { delimiter } = await import('node:path')
-  const { getToolchainDisabled } = await import('@craft-agent/shared/config')
+  const { getToolchainDisabled } = await import('@rox/shared/config')
   loadShellEnv()
   const securityPaths = (process.env.PATH ?? '').split(delimiter).map(directory => join(directory,'security')).filter(path => existsSync(path))
   if (process.env.SHELL !== '/bin/bash' || securityPaths.length) throw new Error('Actual login shell reintroduced security')
@@ -214,7 +214,7 @@ if (process.argv.includes('--credential-readback')) {
   const profile = process.env.ROX_CONFIG_DIR
   if (!profile?.includes('rox-wp01-electron-')) throw new Error('Owned credential readback profile required')
   const { localWorkspaceId } = JSON.parse(await Bun.stdin.text()) as { localWorkspaceId: string }
-  const { getCredentialManager } = await import('@craft-agent/shared/credentials')
+  const { getCredentialManager } = await import('@rox/shared/credentials')
   const { PROJECT_AUTHORITY_CREDENTIAL_NAME } = await import('../../../apps/electron/src/shared/project-authority')
   const credential = await getCredentialManager().get({ type: 'service_oauth', workspaceId: localWorkspaceId, name: PROJECT_AUTHORITY_CREDENTIAL_NAME })
   // Only nonsecret readback leaves this child; JWT and key never enter evidence.

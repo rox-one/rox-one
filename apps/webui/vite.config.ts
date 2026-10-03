@@ -54,16 +54,16 @@ function stubNpmLocksPlugin() {
 }
 
 /**
- * Resolve @craft-agent/* from this checkout. A shared node_modules symlink
+ * Resolve @rox/* from this checkout. A shared node_modules symlink
  * otherwise follows workspace links into another worktree's packages.
  */
 function worktreeCraftPackagePlugin() {
   const packages: Array<{ name: string; dir: string }> = [
-    { name: '@craft-agent/shared', dir: 'shared' },
-    { name: '@craft-agent/ui', dir: 'ui' },
-    { name: '@craft-agent/core', dir: 'core' },
-    { name: '@craft-agent/server-core', dir: 'server-core' },
-    { name: '@craft-agent/cloud-runner', dir: 'cloud-runner' },
+    { name: '@rox/shared', dir: 'shared' },
+    { name: '@rox/ui', dir: 'ui' },
+    { name: '@rox/core', dir: 'core' },
+    { name: '@rox/server-core', dir: 'server-core' },
+    { name: '@rox/cloud-runner', dir: 'cloud-runner' },
   ]
   const maps = packages.map(({ name, dir }) => {
     const pkgRoot = resolve(__dirname, `../../packages/${dir}`)
@@ -159,7 +159,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'jotai'],
-    exclude: ['@craft-agent/ui', '@craft-agent/shared', '@craft-agent/core'],
+    exclude: ['@rox/ui', '@rox/shared', '@rox/core'],
     esbuildOptions: {
       supported: { 'top-level-await': true },
       target: 'esnext',

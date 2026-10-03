@@ -12,7 +12,7 @@ import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test'
 import { mkdtempSync, writeFileSync, rmSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
-import type { RpcServer, RequestContext } from '@craft-agent/server-core/transport'
+import type { RpcServer, RequestContext } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { RPC_CHANNELS } from '../../../shared/types'
 
@@ -134,7 +134,7 @@ async function probeWatcherReadiness(path: string, content: string, delivered: (
 
 describe('session file watcher isolation', () => {
   afterEach(async () => {
-    const { cleanupSessionFileWatchForClient } = await import('@craft-agent/server-core/handlers/rpc')
+    const { cleanupSessionFileWatchForClient } = await import('@rox/server-core/handlers/rpc')
     cleanupSessionFileWatchForClient('client-a')
     cleanupSessionFileWatchForClient('client-b')
     for (const dir of tempDirs) {
@@ -149,7 +149,7 @@ describe('session file watcher isolation', () => {
     const sessionPaths = new Map([['s1', dir1], ['s2', dir2]])
     const { server, deps, handlers, pushCalls } = createTestHarness(sessionPaths)
 
-    const { registerSessionsHandlers, cleanupSessionFileWatchForClient } = await import('@craft-agent/server-core/handlers/rpc')
+    const { registerSessionsHandlers, cleanupSessionFileWatchForClient } = await import('@rox/server-core/handlers/rpc')
     registerSessionsHandlers(server, deps)
 
     const watchHandler = handlers.get(RPC_CHANNELS.sessions.WATCH_FILES)!
@@ -209,7 +209,7 @@ describe('session file watcher isolation', () => {
     const sessionPaths = new Map([['s1', dir1], ['s2', dir2]])
     const { server, deps, handlers, pushCalls } = createTestHarness(sessionPaths)
 
-    const { registerSessionsHandlers, cleanupSessionFileWatchForClient } = await import('@craft-agent/server-core/handlers/rpc')
+    const { registerSessionsHandlers, cleanupSessionFileWatchForClient } = await import('@rox/server-core/handlers/rpc')
     registerSessionsHandlers(server, deps)
 
     const watchHandler = handlers.get(RPC_CHANNELS.sessions.WATCH_FILES)!
@@ -246,7 +246,7 @@ describe('session file watcher isolation', () => {
     const sessionPaths = new Map([['s1', dir]])
     const { server, deps, handlers, pushCalls } = createTestHarness(sessionPaths)
 
-    const { registerSessionsHandlers, cleanupSessionFileWatchForClient } = await import('@craft-agent/server-core/handlers/rpc')
+    const { registerSessionsHandlers, cleanupSessionFileWatchForClient } = await import('@rox/server-core/handlers/rpc')
     registerSessionsHandlers(server, deps)
 
     const watchHandler = handlers.get(RPC_CHANNELS.sessions.WATCH_FILES)!

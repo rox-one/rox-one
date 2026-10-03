@@ -8,14 +8,14 @@
  *                                                history/YYYY-MM-DD.md }
  *
  * HOME resolution follows the same convention as the rest of the config code:
- * CONFIG_DIR from @craft-agent/shared/config/paths (CRAFT_CONFIG_DIR override,
+ * CONFIG_DIR from @rox/shared/config/paths (CRAFT_CONFIG_DIR override,
  * default ~/.craft-agent).
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import type { LessonScope, WorkspaceMemory } from '@craft-agent/shared/memory/types'
+import type { LessonScope, WorkspaceMemory } from '@rox/shared/memory/types'
 import { upsertContext, upsertHistory } from './fts-index'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { resolveConfigDir } from "@rox/shared/config/paths"
 
 /** How many of the most recent daily history files loadWorkspaceMemory keeps. */
 export const RECENT_HISTORY_DAYS = 7
@@ -30,7 +30,7 @@ export class MemoryFileStore {
    * @param scope  'global' (config dir) or 'workspace' (needs workspaceRoot)
    * @param workspaceRoot  required for workspace scope
    * @param configDir  override for the global config dir (tests); defaults to
-   *                   CONFIG_DIR from @craft-agent/shared/config/paths
+   *                   CONFIG_DIR from @rox/shared/config/paths
    */
   // CRAFT_CONFIG_DIR is read lazily here (not via the frozen CONFIG_DIR
   // constant) so late-bound test harnesses with their own import order still

@@ -1,6 +1,6 @@
 import * as React from "react"
 import { useTranslation, Trans } from "react-i18next"
-import { isInternalAgentSession } from "@craft-agent/shared/sessions/internal-prompts"
+import { isInternalAgentSession } from "@rox/shared/sessions/internal-prompts"
 import { useRef, useState, useEffect, useCallback, useMemo } from "react"
 import { useAtomValue, useStore } from "jotai"
 import { motion, AnimatePresence } from "motion/react"
@@ -31,6 +31,7 @@ import {
   FolderKanban,
   PanelsTopLeft,
   Eye,
+  Link2,
 } from "lucide-react"
 // SessionStatusIcons no longer used - icons come from dynamic sessionStatuses
 import { SourceAvatar } from "@/components/ui/source-avatar"
@@ -44,7 +45,7 @@ import { HeaderIconButton } from "@/components/ui/HeaderIconButton"
 import { resolveInheritedFilterParams, type FilterMode } from "./inherited-filter-params"
 import { HeaderMenu } from "@/components/ui/HeaderMenu"
 import { Separator } from "@/components/ui/separator"
-import { Tooltip, TooltipTrigger, TooltipContent } from "@craft-agent/ui"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@rox/ui"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -55,13 +56,6 @@ import {
   StyledDropdownMenuSubTrigger,
   StyledDropdownMenuSubContent,
 } from "@/components/ui/styled-dropdown"
-import {
-  ContextMenu,
-  ContextMenuTrigger,
-  StyledContextMenuContent,
-} from "@/components/ui/styled-context-menu"
-import { ContextMenuProvider } from "@/components/ui/menu-context"
-import { SidebarMenu } from "./SidebarMenu"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { FadingText } from "@/components/ui/fading-text"
 import {
@@ -73,13 +67,17 @@ import {
 import { SessionList, type ChatGroupingMode } from "./SessionList"
 import { MainContentPanel } from "./MainContentPanel"
 import { CollectionViewChrome } from "./collection/CollectionViewChrome"
-import { getDefaultViews } from "@craft-agent/shared/views"
+import { getDefaultViews } from "@rox/shared/views"
 import { collectionViewRoute, isCollectionCanvasView, rememberCollectionView, resolveCycleTarget } from "./collection/collection-view-cycle"
 import type { CollectionViewMode } from "./kanban/BoardListToggle"
 import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
-import { LeftSidebar } from "./LeftSidebar"
-import { type ProfileStripData } from "./ProfileStrip"
+import { LeftSidebar, type LinkItem, type SidebarItem as SidebarLinkItem } from "./LeftSidebar"
+import { ShellSidebarContext } from "./ShellSidebarPortal"
+import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
+import { enabledExtraScreenIdsAtom } from "@/atoms/extra-screens"
+import { visibleExtraScreens } from "@/pages/extra-screens/registry"
+import { ProfileStrip, type ProfileStripData } from "./ProfileStrip"
 import { SidebarChrome } from "./SidebarChrome"
 import { usePromoInsights } from "@/hooks/usePromoInsights"
 import { useShellAppearance } from "@/hooks/useShellAppearance"
@@ -97,8 +95,6 @@ import {
 import { APP_NAV_DESTINATIONS_BY_ID } from "./nav-destinations"
 import {
   WorkspaceSurfaceHost,
-  activityRailWidth,
-  useEffectiveRailCollapsed,
   StatusBarHost,
   shouldShowStatusBar,
   resolveWorkbenchAvailability,
@@ -106,7 +102,7 @@ import {
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
 import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { useInspectorSuppressed } from "@/platform/inspector-suppression"
-import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom, bottomTerminalOpenAtom, bottomDockHeightAtom } from "@/atoms/unified-shell"
+import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom, bottomTerminalOpenAtom, bottomDockHeightAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -124,7 +120,7 @@ import { collectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collect
 import { CompactSessionListFilter } from "./CompactSessionListFilter"
 import { collectionFiltersAtom, collectionFilterKeyAtom } from "@/atoms/collection-filters"
 import { chipsAfterRailChange, railViewNavigation, skipRailChipClearOnce, userSliceNavigation } from "./collection/collection-rail-filters"
-import { compareSessions, DEFAULT_COLLECTION_FILTERS, filterSessionMeta } from "@craft-agent/shared/sessions/collection"
+import { compareSessions, DEFAULT_COLLECTION_FILTERS, filterSessionMeta } from "@rox/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
 import { skillsAtom } from "@/atoms/skills"
 import { panelStackAtom, panelCountAtom, focusedPanelIdAtom, focusedSessionIdAtom, focusNextPanelAtom, focusPrevPanelAtom, parseSessionIdFromRoute } from "@/atoms/panel-stack"
@@ -134,9 +130,9 @@ import { useLabels } from "@/hooks/useLabels"
 import { useViews } from "@/hooks/useViews"
 import { useContainerWidth } from "@/hooks/useContainerWidth"
 import { LabelIcon, LabelValueTypeIcon } from "@/components/ui/label-icon"
-import { buildLabelTree, getDescendantIds, getLabelDisplayName, flattenLabels, extractLabelId, findLabelById, sortLabelsForDisplay, matchesLabelFilter } from "@craft-agent/shared/labels"
-import type { LabelConfig, LabelTreeNode } from "@craft-agent/shared/labels"
-import { resolveEntityColor } from "@craft-agent/shared/colors"
+import { buildLabelTree, getDescendantIds, getLabelDisplayName, flattenLabels, extractLabelId, findLabelById, sortLabelsForDisplay, matchesLabelFilter } from "@rox/shared/labels"
+import type { LabelConfig, LabelTreeNode } from "@rox/shared/labels"
+import { resolveEntityColor } from "@rox/shared/colors"
 import * as storage from "@/lib/local-storage"
 import { commitShellLayout, loadShellLayout, NAVIGATOR_WIDTH_DEFAULT, NAVIGATOR_WIDTH_MAX, NAVIGATOR_WIDTH_MIN, SIDEBAR_WIDTH_DEFAULT, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from "@/lib/shell-layout-preferences"
 import { toast } from "sonner"
@@ -303,36 +299,31 @@ function AppShellContent({
   const [storedSidebarVisible, setIsSidebarVisible] = React.useState(() => {
     return storage.get(storage.KEYS.sidebarVisible, !defaultCollapsed)
   })
-  // W1 unified shell: when the activity rail is mounted, the absolute sidebar
-  // sashes shift right by the rail width (+ one PANEL_GAP); zero when OFF.
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
-  const topChromeEnabled = useAtomValue(featureWorkbenchTopChromeV2Atom)
   const harnessInspectorEnabled = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
   const inspectorSuppressed = useInspectorSuppressed()
   const statusBarEnabled = useAtomValue(featureWorkbenchStatusBarV1Atom)
-  // PR-2: the rail offset follows the same two-key decision as the host.
   const workbenchUserPreference = useAtomValue(featureWorkbenchAtom)
   const workbenchAvailability = resolveWorkbenchAvailability(
     workbenchOperatorCapability,
     workbenchUserPreference,
   )
   const workbenchEnabled = workbenchAvailability === 'enabled'
-  const { collapsed: activityRailCollapsed } = useEffectiveRailCollapsed()
   const inspectorVisible = useAtomValue(inspectorVisibleAtom)
   const bottomTerminalOpen = useAtomValue(bottomTerminalOpenAtom)
   const bottomDockHeight = useAtomValue(bottomDockHeightAtom)
   // Collapsed terminal has no bottom strip (the TopBar button is the entry point).
   const terminalClearance = (bottomTerminalOpen ? bottomDockHeight : 0) + PANEL_EDGE_INSET + 4
-  // Same predicate as WorkspaceSurfaceHost's `chrome.showRail`
-  // (unifiedShell || topChrome gated by unifiedShell/workbench): never
-  // reserve rail width when the rail is not rendered.
-  const activityRailRendered = unifiedShellEnabled
-    || ((unifiedShellEnabled || workbenchEnabled) && topChromeEnabled)
-  const unifiedRailOffset = activityRailRendered
-    ? activityRailWidth(activityRailCollapsed) + PANEL_GAP
-    : 0
-  // The visible toggle follows the saved preference on every route.
+  // WorkspaceSurfaceHost suppresses its ActivityRail while AppShell owns primary navigation.
+  // Keep its geometric offset at zero regardless of experimental chrome flags.
+  const unifiedRailOffset = 0 // AppShell owns the single primary sidebar.
+  // Preserve the saved expanded-label preference across every route. The compact
+  // icon rail remains available when labels are collapsed; focus mode hides both.
   const isSidebarVisible = storedSidebarVisible
+  const isSidebarCollapsed = !isSidebarVisible
+  const isPrimarySidebarRendered = true
+  const [shellSidebarSlot, setShellSidebarSlot] = useState<HTMLElement | null>(null)
+  const extraScreens = visibleExtraScreens(useAtomValue(enabledExtraScreenIdsAtom))
   const [storedSidebarWidth, setSidebarWidth] = React.useState(() => {
     return loadShellLayout(null).sidebarWidth
   })
@@ -381,17 +372,18 @@ function AppShellContent({
   // session column below CENTER_MIN_WIDTH when the window is wide enough.
   // Display-only; the persisted widths are untouched. The right inspector
   // yields first (InspectorHost), then the list, then the sidebar.
-  const { sidebar: sidebarWidth, navigator: sessionListWidth } = clampShellColumns({
+  const { sidebar: expandedSidebarWidth, navigator: sessionListWidth } = clampShellColumns({
     shellWidth: isAutoCompact ? 0 : shellWidth,
     reserved: unifiedRailOffset + CHROME_DENSITY.railWidth,
-    sidebar: storedSidebarWidth,
+    sidebar: isSidebarCollapsed ? 52 : storedSidebarWidth,
     navigator: storedSessionListWidth,
-    sidebarVisible: isSidebarVisible && !isSidebarAndNavigatorHidden,
+    sidebarVisible: isPrimarySidebarRendered && !isSidebarAndNavigatorHidden,
     navigatorVisible: !isSidebarAndNavigatorHidden,
-    sidebarMin: SIDEBAR_WIDTH_MIN,
+    sidebarMin: isSidebarCollapsed ? 52 : SIDEBAR_WIDTH_MIN,
     navigatorMin: NAVIGATOR_WIDTH_MIN,
     centerMin: CENTER_MIN_WIDTH,
   })
+  const sidebarWidth = isSidebarCollapsed ? 52 : expandedSidebarWidth
   const showStatusBar = shouldShowStatusBar(
     statusBarEnabled && (unifiedShellEnabled || workbenchEnabled),
     isAutoCompact,
@@ -520,6 +512,16 @@ function AppShellContent({
   // UNIFIED NAVIGATION STATE - single source of truth from NavigationContext
   // Derived from focused panel's route — all panels are peers
   const navState = useNavigationState()
+  const contextualSidebarKey = navState.navigator === 'screen' ? `screen:${navState.screen}` : navState.navigator
+  const [applicationSectionsOpenFor, setApplicationSectionsOpenFor] = useState<string | null>(null)
+  const hasContextualSidebar = isInboxNavigation(navState) || isFeedNavigation(navState) || isNotesNavigation(navState)
+    || isTasksNavigation(navState) || isMeetingsNavigation(navState) || isSettingsNavigation(navState) || isScreenNavigation(navState)
+  const pendingSidebarRevealId = React.useRef<string | null>(null)
+  const handleExpandNavigation = useCallback((link: LinkItem) => {
+    pendingSidebarRevealId.current = link.id
+    setIsSidebarVisible(true)
+    setApplicationSectionsOpenFor(contextualSidebarKey)
+  }, [contextualSidebarKey])
 
   const store = useStore()
   const panelStack = useAtomValue(panelStackAtom)
@@ -573,7 +575,7 @@ function AppShellContent({
   // without this the navigator column stayed mounted and empty beside them.
   const isModeScreenView = isInboxNavigation(navState) || isFeedNavigation(navState) || isScreenNavigation(navState)
   const hideModuleMiddleNav =
-    isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isModeScreenView
+    isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
 
   // Derive source filter from navigation state (only when in sources navigator)
   const sourceFilter: SourceFilter | null = isSourcesNavigation(navState) ? navState.filter ?? null : null
@@ -883,8 +885,6 @@ function AppShellContent({
     const saved = storage.get<string[]>(storage.KEYS.expandedFolders, [])
     return new Set(saved)
   })
-  const [focusedSidebarItemId, setFocusedSidebarItemId] = React.useState<string | null>(null)
-  const sidebarItemRefs = React.useRef<Map<string, HTMLElement>>(new Map())
   // Track which expandable sidebar items are collapsed
   // Labels are collapsed by default; user preference is persisted once toggled
   const [collapsedItems, setCollapsedItems] = React.useState<Set<string>>(() => {
@@ -901,6 +901,18 @@ function AppShellContent({
       return next
     })
   }, [])
+  const toggleSidebarSection = React.useCallback((id: string, current: boolean, onNavigate: () => void, activate = false) => {
+    if (!current || activate) onNavigate()
+    if (current) {
+      toggleExpanded(id)
+    } else {
+      setCollapsedItems(previous => {
+        const next = new Set(previous)
+        next.delete(id)
+        return next
+      })
+    }
+  }, [toggleExpanded])
   // Sources state (workspace-scoped)
   const [sources, setSources] = React.useState<LoadedSource[]>([])
   // Sync sources to atom for NavigationContext auto-selection
@@ -972,7 +984,9 @@ function AppShellContent({
   // Reset UI state when workspace changes
   // This prevents stale search queries, focused items, and filter state from persisting
   const previousWorkspaceRef = React.useRef<string | null>(null)
-  React.useEffect(() => {
+  const [workspaceUiStateId, setWorkspaceUiStateId] = React.useState<string | null>(null)
+  // Cancel gestures synchronously before a queued timer can use new handlers.
+  React.useLayoutEffect(() => {
     if (!activeWorkspaceId) return
 
     const previousWorkspaceId = previousWorkspaceRef.current
@@ -985,13 +999,19 @@ function AppShellContent({
       setSearchActive(false)
       setSearchQuery('')
 
-      // Clear focused sidebar item
-      setFocusedSidebarItemId(null)
     }
 
     // Load workspace-scoped state on BOTH initial mount AND workspace switch
     // This fixes CMD+R losing filters - previously only ran on workspace switch
     if (previousWorkspaceId !== activeWorkspaceId) {
+      // Cancel pointer/keyboard previews before restoring the next workspace,
+      // so a delayed commit cannot save old dimensions under the new id.
+      sidebarResize.handleKeyCancel()
+      navigatorResize.handleKeyCancel()
+      const layout = loadShellLayout(activeWorkspaceId)
+      setSidebarWidth(layout.sidebarWidth)
+      setSessionListWidth(layout.navigatorWidth)
+
       const newViewFilters = storage.get<ViewFiltersMap>(storage.KEYS.viewFilters, {}, activeWorkspaceId)
       setViewFiltersMap(newViewFilters)
 
@@ -1002,37 +1022,29 @@ function AppShellContent({
       setCollapsedItems(newCollapsedItems !== null ? new Set(newCollapsedItems) : new Set(['nav:labels']))
     }
 
+    setWorkspaceUiStateId(activeWorkspaceId)
     previousWorkspaceRef.current = activeWorkspaceId
   }, [activeWorkspaceId])
 
-  // Load sources from backend on mount
+  // A live update is newer than the initial snapshot; obsolete loads must not
+  // resurrect deleted entities or cross a workspace boundary.
   React.useEffect(() => {
+    let disposed = false
+    let updated = false
+    setSources([])
     if (!activeWorkspaceId) return
-    window.electronAPI.getSources(activeWorkspaceId).then((loaded) => {
-      setSources(loaded || [])
-    }).catch(err => {
-      console.error('[Chat] Failed to load sources:', err)
-    })
-  }, [activeWorkspaceId])
-
-  // Subscribe to live source updates (when sources are added/removed dynamically)
-  React.useEffect(() => {
     const cleanup = window.electronAPI.onSourcesChanged((workspaceId, updatedSources) => {
-      if (workspaceId !== activeWorkspaceId) return
-      // Clear icon cache so updated source icons are re-fetched on render
+      if (disposed || workspaceId !== activeWorkspaceId) return
+      updated = true
       clearSourceIconCaches()
       setSources(updatedSources || [])
     })
-    return cleanup
-  }, [activeWorkspaceId])
-
-  // Subscribe to live skill updates (when skills are added/removed dynamically)
-  React.useEffect(() => {
-    const cleanup = window.electronAPI.onSkillsChanged((workspaceId, updatedSkills) => {
-      if (workspaceId !== activeWorkspaceId) return
-      setSkills(updatedSkills || [])
+    window.electronAPI.getSources(activeWorkspaceId).then((loaded) => {
+      if (!disposed && !updated) setSources(loaded || [])
+    }).catch(err => {
+      if (!disposed && !updated) console.error('[Chat] Failed to load sources:', err)
     })
-    return cleanup
+    return () => { disposed = true; cleanup() }
   }, [activeWorkspaceId])
 
   // Handle session source selection changes
@@ -1134,6 +1146,14 @@ function AppShellContent({
 
   // Register focus zones
   const { zoneRef: sidebarRef, isFocused: sidebarFocused } = useFocusZone({ zoneId: 'sidebar' })
+  React.useLayoutEffect(() => {
+    if (isSidebarCollapsed || !pendingSidebarRevealId.current) return
+    const button = Array.from(sidebarRef.current?.querySelectorAll<HTMLButtonElement>('[data-sidebar-link-id]') ?? [])
+      .find(element => element.dataset.sidebarLinkId === pendingSidebarRevealId.current)
+    if (!button) return
+    button.focus()
+    pendingSidebarRevealId.current = null
+  }, [isSidebarCollapsed, applicationSectionsOpenFor, sidebarRef])
 
   // Global keyboard shortcuts using centralized action registry
   // Actions are defined in @/actions/definitions.ts
@@ -1142,14 +1162,14 @@ function AppShellContent({
   useAction('nav.focusSidebar', () => focusZone('sidebar', { intent: 'keyboard' }))
   useAction('nav.focusNavigator', () => focusZone('navigator', { intent: 'keyboard' }))
   useAction('nav.focusChat', () => focusZone('chat', { intent: 'keyboard' }))
-  // ⌥⌘1…7 → titlebar modes (flag-aware)
+  // ⌘/Ctrl 1…7 → titlebar surfaces (flag-aware)
   useModeHotkeys()
   useExtraScreensBackground(activeWorkspaceId ?? null)
 
   // Tab navigation between zones
   useAction('nav.nextZone', () => {
     focusNextZone()
-  }, { enabled: () => !document.querySelector('[role="dialog"]') })
+  }, { enabled: () => !document.querySelector('[role="dialog"]') && !document.activeElement?.closest('[data-focus-zone="sidebar"], [data-contextual-sidebar], [role="tablist"], .rox-mode-pill') })
 
   // Shift+Tab cycles permission mode through enabled modes (textarea handles its own, this handles when focus is elsewhere)
   // In multi-panel, targets the focused panel's session
@@ -1173,7 +1193,7 @@ function AppShellContent({
       const nextMode = modes[nextIndex]
       contextValue.onSessionOptionsChange(effectiveSessionId, { permissionMode: nextMode })
     }
-  })
+  }, { enabled: () => !document.activeElement?.closest('[data-focus-zone="sidebar"], [data-contextual-sidebar], [role="tablist"], .rox-mode-pill') })
 
   const handleToggleSidebar = useCallback(() => {
     if (isSidebarAndNavigatorHidden) {
@@ -1402,12 +1422,26 @@ function AppShellContent({
     ? sessionMetaMap.get(session.selected)?.workingDirectory
     : undefined
   React.useEffect(() => {
+    let disposed = false
+    let revision = 0
+    setSkills([])
     if (!activeWorkspaceId) return
-    window.electronAPI.getSkills(activeWorkspaceId, activeSessionWorkingDirectory).then((loaded) => {
-      setSkills(loaded || [])
-    }).catch(err => {
-      console.error('[Chat] Failed to load skills:', err)
+    const load = () => {
+      const request = ++revision
+      window.electronAPI.getSkills(activeWorkspaceId, activeSessionWorkingDirectory).then((loaded) => {
+        if (!disposed && request === revision) setSkills(loaded || [])
+      }).catch(err => {
+        if (!disposed && request === revision) console.error('[Chat] Failed to load skills:', err)
+      })
+    }
+    const cleanup = window.electronAPI.onSkillsChanged((workspaceId) => {
+      if (disposed || workspaceId !== activeWorkspaceId) return
+      // Watcher payloads omit project skills and shadowed OMP variants.
+      // Refresh with the same directory/options as the canonical initial list.
+      load()
     })
+    load()
+    return () => { disposed = true; revision += 1; cleanup() }
   }, [activeWorkspaceId, activeSessionWorkingDirectory])
 
   // Filter session metadata by active workspace
@@ -1713,9 +1747,9 @@ function AppShellContent({
   }), [contextValue, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, projects, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, automationTestResults, getAutomationHistory, handleReplayAutomation])
   // Persist expanded folders to localStorage (workspace-scoped)
   React.useEffect(() => {
-    if (!activeWorkspaceId) return
+    if (!activeWorkspaceId || workspaceUiStateId !== activeWorkspaceId) return
     storage.set(storage.KEYS.expandedFolders, [...expandedFolders], activeWorkspaceId)
-  }, [expandedFolders, activeWorkspaceId])
+  }, [expandedFolders, activeWorkspaceId, workspaceUiStateId])
 
   // Persist sidebar visibility to localStorage
   React.useEffect(() => {
@@ -1757,16 +1791,16 @@ function AppShellContent({
 
   // Persist per-view filter map to localStorage (workspace-scoped)
   React.useEffect(() => {
-    if (!activeWorkspaceId) return
+    if (!activeWorkspaceId || workspaceUiStateId !== activeWorkspaceId) return
     storage.set(storage.KEYS.viewFilters, viewFiltersMap, activeWorkspaceId)
-  }, [viewFiltersMap, activeWorkspaceId])
+  }, [viewFiltersMap, activeWorkspaceId, workspaceUiStateId])
 
   // Persist sidebar section collapsed states (workspace-scoped)
   React.useEffect(() => {
-    if (!activeWorkspaceId) return
+    if (!activeWorkspaceId || workspaceUiStateId !== activeWorkspaceId) return
     storage.set(storage.KEYS.collapsedSidebarItems, [...collapsedItems], activeWorkspaceId)
     commitShellLayout({ workspaceId: activeWorkspaceId, collapsedSectionIds: [...collapsedItems] })
-  }, [collapsedItems, activeWorkspaceId])
+  }, [collapsedItems, activeWorkspaceId, workspaceUiStateId])
 
   const handleAllSessionsClick = useCallback(() => {
     navigate(routes.view.allSessions())
@@ -2180,158 +2214,16 @@ function AppShellContent({
     handleNewChat()
   }, [menuNewChatTrigger, handleNewChat])
 
-  // Unified sidebar items: nav buttons only (agents system removed)
-  type SidebarItem = {
-    id: string
-    type: 'nav'
-    action?: () => void
-  }
-
-  const unifiedSidebarItems = React.useMemo((): SidebarItem[] => {
-    const result: SidebarItem[] = []
-
-    // 1. Sessions section: All Sessions (expandable) with status items, Flagged, Archived as children
-    result.push({ id: 'nav:allSessions', type: 'nav', action: handleAllSessionsClick })
-    for (const state of effectiveSessionStatuses) {
-      result.push({ id: `nav:state:${state.id}`, type: 'nav', action: () => handleSessionStatusClick(state.id) })
-    }
-    result.push({ id: 'nav:flagged', type: 'nav', action: handleFlaggedClick })
-    result.push({ id: 'nav:archived', type: 'nav', action: handleArchivedClick })
-
-    // 2. Labels section header + regular label tree for keyboard nav
-    result.push({ id: 'nav:labels', type: 'nav', action: () => handleLabelClick('__all__') })
-    // Flatten regular label tree for keyboard navigation (depth-first)
-    const flattenTree = (nodes: LabelTreeNode[]) => {
-      for (const node of nodes) {
-        if (node.label) {
-          result.push({ id: `nav:label:${node.fullId}`, type: 'nav', action: () => handleLabelClick(node.fullId) })
-        }
-        if (node.children.length > 0) flattenTree(node.children)
-      }
-    }
-    flattenTree(labelTree)
-
-    // «Представления» (session views) is no longer shown in the sidebar.
-
-    // 3. Destinations (matches APP_NAV_DESTINATIONS / sidebar order)
-    result.push({ id: 'nav:projects', type: 'nav', action: handleProjectsClick })
-    result.push({ id: 'nav:pages', type: 'nav', action: handlePagesClick })
-    result.push({ id: 'nav:memory', type: 'nav', action: handleMemoryClick })
-    result.push({ id: 'nav:tasks', type: 'nav', action: handleTasksClick })
-    result.push({ id: 'nav:meetings', type: 'nav', action: handleMeetingsClick })
-    result.push({ id: 'nav:sources', type: 'nav', action: handleSourcesClick })
-    result.push({ id: 'nav:skills', type: 'nav', action: handleSkillsClick })
-    result.push({ id: 'nav:notes', type: 'nav', action: handleNotesClick })
-    result.push({ id: 'nav:automations', type: 'nav', action: handleAutomationsClick })
-    result.push({ id: 'nav:settings', type: 'nav', action: () => handleSettingsClick() })
-
-    return result
-  }, [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelTree, sessionViewConfigs, handleViewClick, handleViewsAllClick, handleSourcesClick, handleSkillsClick, handleMemoryClick, handleTasksClick, handleMeetingsClick, handleNotesClick, handleProjectsClick, handlePagesClick, handleAutomationsClick, handleSettingsClick])
-
-  // Toggle folder expanded state
-  const handleToggleFolder = React.useCallback((path: string) => {
-    setExpandedFolders(prev => {
-      const next = new Set(prev)
-      if (next.has(path)) {
-        next.delete(path)
-      } else {
-        next.add(path)
-      }
-      return next
-    })
-  }, [])
-
-  // Get props for any sidebar item (unified roving tabindex pattern)
-  const getSidebarItemProps = React.useCallback((id: string) => ({
-    tabIndex: focusedSidebarItemId === id ? 0 : -1,
-    'data-focused': focusedSidebarItemId === id,
-    ref: (el: HTMLElement | null) => {
-      if (el) {
-        sidebarItemRefs.current.set(id, el)
-      } else {
-        sidebarItemRefs.current.delete(id)
-      }
-    },
-  }), [focusedSidebarItemId])
-
-  // Unified sidebar keyboard navigation
-  const handleSidebarKeyDown = React.useCallback((e: React.KeyboardEvent) => {
-    if (!sidebarFocused || unifiedSidebarItems.length === 0) return
-
-    const currentIndex = unifiedSidebarItems.findIndex(item => item.id === focusedSidebarItemId)
-    const currentItem = currentIndex >= 0 ? unifiedSidebarItems[currentIndex] : null
-
-    switch (e.key) {
-      case 'ArrowDown': {
-        e.preventDefault()
-        const nextIndex = currentIndex < unifiedSidebarItems.length - 1 ? currentIndex + 1 : 0
-        const nextItem = unifiedSidebarItems[nextIndex]
-        setFocusedSidebarItemId(nextItem.id)
-        sidebarItemRefs.current.get(nextItem.id)?.focus()
-        break
-      }
-      case 'ArrowUp': {
-        e.preventDefault()
-        const prevIndex = currentIndex > 0 ? currentIndex - 1 : unifiedSidebarItems.length - 1
-        const prevItem = unifiedSidebarItems[prevIndex]
-        setFocusedSidebarItemId(prevItem.id)
-        sidebarItemRefs.current.get(prevItem.id)?.focus()
-        break
-      }
-      case 'ArrowLeft': {
-        e.preventDefault()
-        // At boundary - do nothing (Left doesn't change zones from sidebar)
-        break
-      }
-      case 'ArrowRight': {
-        e.preventDefault()
-        // Move to next zone (navigator) - keyboard navigation
-        focusZone('navigator', { intent: 'keyboard' })
-        break
-      }
-      case 'Enter':
-      case ' ': {
-        e.preventDefault()
-        if (currentItem?.type === 'nav' && currentItem.action) {
-          currentItem.action()
-        }
-        break
-      }
-      case 'Home': {
-        e.preventDefault()
-        if (unifiedSidebarItems.length > 0) {
-          const firstItem = unifiedSidebarItems[0]
-          setFocusedSidebarItemId(firstItem.id)
-          sidebarItemRefs.current.get(firstItem.id)?.focus()
-        }
-        break
-      }
-      case 'End': {
-        e.preventDefault()
-        if (unifiedSidebarItems.length > 0) {
-          const lastItem = unifiedSidebarItems[unifiedSidebarItems.length - 1]
-          setFocusedSidebarItemId(lastItem.id)
-          sidebarItemRefs.current.get(lastItem.id)?.focus()
-        }
-        break
-      }
-    }
-  }, [sidebarFocused, unifiedSidebarItems, focusedSidebarItemId, focusZone])
-
-  // Focus sidebar item when sidebar zone gains focus
   React.useEffect(() => {
-    if (sidebarFocused && unifiedSidebarItems.length > 0) {
-      // Set focused item if not already set
-      const itemId = focusedSidebarItemId || unifiedSidebarItems[0].id
-      if (!focusedSidebarItemId) {
-        setFocusedSidebarItemId(itemId)
-      }
-      // Actually focus the DOM element
-      requestAnimationFrame(() => {
-        sidebarItemRefs.current.get(itemId)?.focus()
-      })
-    }
-  }, [sidebarFocused, focusedSidebarItemId, unifiedSidebarItems])
+    if (!sidebarFocused) return
+    const frame = requestAnimationFrame(() => {
+      if (document.activeElement?.closest('[data-focus-zone="sidebar"]')) return
+      const first = Array.from(document.querySelectorAll<HTMLElement>('[data-focus-zone="sidebar"] button, [data-focus-zone="sidebar"] summary'))
+        .find(item => item.getClientRects().length > 0)
+      first?.focus()
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [sidebarFocused])
 
   // Get title based on navigation state
   const listTitle = React.useMemo(() => {
@@ -2480,8 +2372,337 @@ function AppShellContent({
     })
   }, [sessionFilter, labelCounts, activeWorkspace?.id, handleLabelClick, isExpanded, toggleExpanded, openConfigureLabels, handleAddLabel, handleDeleteLabel])
 
+  const sidebarLinks: SidebarLinkItem[] = [
+    // --- Sessions Section ---
+    // All Sessions: expandable with status children (sortable) + Flagged & Archived as trailing items
+    {
+      id: "nav:allSessions",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.sessions.labelKey),
+      label: String(workspaceSessionMetas.length),
+      icon: APP_NAV_DESTINATIONS_BY_ID.sessions.icon,
+      variant: sessionFilter?.kind === 'allSessions' ? "default" : "ghost",
+      onClick: () => toggleSidebarSection('nav:allSessions', isSessionsNavigation(navState), handleAllSessionsClick, true),
+      expandable: true,
+      expanded: isSessionsNavigation(navState) && isExpanded('nav:allSessions'),
+      onToggle: () => toggleSidebarSection('nav:allSessions', isSessionsNavigation(navState), handleAllSessionsClick),
+      actions: (
+        <div className="flex shrink-0 items-center gap-0.5">
+          <button type="button" onClick={() => window.dispatchEvent(new Event('craft:join-session'))} title={t('sessionMenu.join')} aria-label={t('sessionMenu.join')} className="grid size-7 place-items-center rounded-lg text-foreground/50 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring"><Link2 className="size-3.5" aria-hidden /></button>
+          <button type="button" onClick={event => handleNewChat(event.metaKey || event.ctrlKey)} title={`${t('session.newSession')} ${newChatHotkey}`} aria-label={t('session.newSession')} data-tutorial="new-chat-button" className="grid size-7 place-items-center rounded-lg bg-accent/10 text-accent hover:bg-accent/20 focus-visible:ring-1 focus-visible:ring-ring"><Plus className="size-3.5" aria-hidden /></button>
+        </div>
+      ),
+      contextMenu: {
+        type: 'allSessions',
+        onConfigureStatuses: openConfigureStatuses,
+        onMarkAllRead: () => {
+          if (!activeWorkspaceId) return
+          // Optimistic: clear hasUnread on all workspace session metas
+          setSessionMetaMap(prev => {
+            const next = new Map(prev)
+            for (const [id, meta] of next) {
+              if (meta.workspaceId === activeWorkspaceId && meta.hasUnread) {
+                next.set(id, { ...meta, hasUnread: false })
+              }
+            }
+            return next
+          })
+          window.electronAPI.markAllSessionsRead(activeWorkspaceId)
+        },
+      },
+      // Enable flat DnD reorder for status items
+      sortable: { onReorder: handleStatusReorder },
+      items: [
+        // Status items (sortable via SortableStatusList)
+        ...effectiveSessionStatuses.map(state => ({
+          id: `nav:state:${state.id}`,
+          title: t(`status.${state.id}`, state.label),
+          label: String(sessionStatusCounts[state.id] || 0),
+          icon: state.icon,
+          iconColor: state.resolvedColor,
+          iconColorable: state.iconColorable,
+          variant: (sessionFilter?.kind === 'state' && sessionFilter.stateId === state.id ? "default" : "ghost") as "default" | "ghost",
+          onClick: () => handleSessionStatusClick(state.id),
+          // Accent dot when a session landed in this bucket since last open.
+          hasUnseen: !!unseenStatuses[state.id],
+          contextMenu: {
+            type: 'status' as const,
+            statusId: state.id,
+            onConfigureStatuses: openConfigureStatuses,
+          },
+        })),
+        // Separator: SortableStatusList splits here — items after become non-sortable trailingItems
+        { id: 'separator:states-flagged', type: 'separator' as const },
+        // Flagged (trailing, non-sortable)
+        {
+          id: "nav:flagged",
+          title: t("knowledge.nav.favorites"),
+          label: String(flaggedCount),
+          icon: <Flag className="h-3.5 w-3.5" />,
+          variant: (sessionFilter?.kind === 'flagged' ? "default" : "ghost") as "default" | "ghost",
+          onClick: handleFlaggedClick,
+        },
+        // Archived (trailing, non-sortable)
+        {
+          id: "nav:archived",
+          title: t("sidebar.archived"),
+          label: archivedCount > 0 ? String(archivedCount) : undefined,
+          icon: Archive,
+          variant: (sessionFilter?.kind === 'archived' ? "default" : "ghost") as "default" | "ghost",
+          onClick: handleArchivedClick,
+        },
+    {
+      id: "nav:labels",
+      title: t("sidebar.labels"),
+      icon: Tag,
+      // Only highlighted when "Labels" itself is selected (not sub-labels)
+      variant: (sessionFilter?.kind === 'label' && sessionFilter.labelId === '__all__') ? "default" as const : "ghost" as const,
+      // Clicking navigates to "all labeled sessions" view
+      onClick: () => { handleLabelClick('__all__'); toggleExpanded('nav:labels') },
+      expandable: true,
+      expanded: isExpanded('nav:labels'),
+      onToggle: () => toggleExpanded('nav:labels'),
+      contextMenu: {
+        type: 'labels' as const,
+        onConfigureLabels: openConfigureLabels,
+        onAddLabel: handleAddLabel,
+      },
+      items: buildLabelSidebarItems(labelTree),
+    },
+      ],
+    },
+    // «Представления» (session views) section intentionally hidden.
+    // --- Projects (after session chrome) ---
+    {
+      id: "nav:projects",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.projects.labelKey),
+      label: String(projects.length),
+      icon: APP_NAV_DESTINATIONS_BY_ID.projects.icon,
+      // Highlight only when on Projects view itself, not when a child is "active" (jumped-to filter)
+      variant: isProjectsNavigation(navState) ? "default" : "ghost",
+      onClick: () => toggleSidebarSection('nav:projects', isProjectsNavigation(navState), handleProjectsClick, true),
+      expandable: projects.length > 0,
+      expanded: isProjectsNavigation(navState) && isExpanded('nav:projects'),
+      onToggle: () => toggleSidebarSection('nav:projects', isProjectsNavigation(navState), handleProjectsClick),
+      contextMenu: {
+        type: 'projects' as const,
+        onAddProject: openAddProject,
+      },
+      items: projects.map(p => ({
+        id: `nav:projects:${p.config.id}`,
+        title: p.config.name,
+        icon: FolderKanban,
+        // Highlight when on allSessions view AND filter includes this project (the jump-to state)
+        variant: (sessionFilter?.kind === 'allSessions' && (collectionFilters.projectId ?? []).includes(p.config.id)) ? "default" as const : "ghost" as const,
+        onClick: () => handleJumpToProjectSessions(p.config.id),
+      })),
+    },
+    {
+      id: "nav:pages",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.pages.labelKey),
+      label: String(pages.length),
+      icon: APP_NAV_DESTINATIONS_BY_ID.pages.icon,
+      variant: (isPagesNavigation(navState) && !navState.details) ? "default" : "ghost",
+      onClick: () => toggleSidebarSection('nav:pages', isPagesNavigation(navState), handlePagesClick, true),
+      expandable: pages.length > 0,
+      expanded: isPagesNavigation(navState) && isExpanded('nav:pages'),
+      onToggle: () => toggleSidebarSection('nav:pages', isPagesNavigation(navState), handlePagesClick),
+      items: pages.map(p => ({
+        id: `nav:pages:${p.config.id}`,
+        title: p.config.name,
+        icon: PanelsTopLeft,
+        variant: (isPagesNavigation(navState) && navState.details?.pageSlug === p.config.slug) ? "default" as const : "ghost" as const,
+        onClick: () => navigate(routes.view.pages(p.config.slug)),
+      })),
+    },
+    // --- Separator after projects ---
+    { id: "separator:projects-memory", type: "separator" },
+    {
+      id: "nav:tasks",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.tasks.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.tasks.icon,
+      variant: isTasksNavigation(navState) ? "default" : "ghost",
+      onClick: handleTasksClick,
+    },
+    // --- Memory ---
+    {
+      id: "nav:memory",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.memory.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.memory.icon,
+      variant: isMemoryNavigation(navState) ? "default" : "ghost",
+      onClick: handleMemoryClick,
+    },
+    {
+      id: "nav:meetings",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.meetings.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.meetings.icon,
+      variant: isMeetingsNavigation(navState) ? "default" : "ghost",
+      onClick: handleMeetingsClick,
+    },
+    // --- Sources ---
+    {
+      id: "nav:sources",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.sources.labelKey),
+      label: String(sources.length),
+      icon: APP_NAV_DESTINATIONS_BY_ID.sources.icon,
+      variant: (isSourcesNavigation(navState) && !sourceFilter) ? "default" : "ghost",
+      onClick: () => toggleSidebarSection('nav:sources', isSourcesNavigation(navState), handleSourcesClick, true),
+      dataTutorial: "sources-nav",
+      expandable: true,
+      expanded: isSourcesNavigation(navState) && isExpanded('nav:sources'),
+      onToggle: () => toggleSidebarSection('nav:sources', isSourcesNavigation(navState), handleSourcesClick),
+      contextMenu: {
+        type: 'sources',
+        onAddSource: () => openAddSource(),
+      },
+      items: [
+        {
+          id: "nav:sources:api",
+          title: t("sidebar.apis"),
+          label: String(sourceTypeCounts.api),
+          icon: Globe,
+          variant: (sourceFilter?.kind === 'type' && sourceFilter.sourceType === 'api') ? "default" : "ghost",
+          onClick: handleSourcesApiClick,
+          contextMenu: {
+            type: 'sources' as const,
+            onAddSource: () => openAddSource('api'),
+            sourceType: 'api',
+          },
+        },
+        {
+          id: "nav:sources:mcp",
+          title: t("sidebar.mcps"),
+          label: String(sourceTypeCounts.mcp),
+          icon: <McpIcon className="h-3.5 w-3.5" />,
+          variant: (sourceFilter?.kind === 'type' && sourceFilter.sourceType === 'mcp') ? "default" : "ghost",
+          onClick: handleSourcesMcpClick,
+          contextMenu: {
+            type: 'sources' as const,
+            onAddSource: () => openAddSource('mcp'),
+            sourceType: 'mcp',
+          },
+        },
+        {
+          id: "nav:sources:local",
+          title: t("sidebar.localFolders"),
+          label: String(sourceTypeCounts.local),
+          icon: FolderOpen,
+          variant: (sourceFilter?.kind === 'type' && sourceFilter.sourceType === 'local') ? "default" : "ghost",
+          onClick: handleSourcesLocalClick,
+          contextMenu: {
+            type: 'sources' as const,
+            onAddSource: () => openAddSource('local'),
+            sourceType: 'local',
+          },
+        },
+      ],
+    },
+    {
+      id: "nav:skills",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.skills.labelKey),
+      label: String(skills.length),
+      icon: APP_NAV_DESTINATIONS_BY_ID.skills.icon,
+      variant: isSkillsNavigation(navState) ? "default" : "ghost",
+      onClick: handleSkillsClick,
+      contextMenu: {
+        type: 'skills',
+        onAddSkill: openAddSkill,
+      },
+    },
+    {
+      id: "nav:notes",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.notes.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.notes.icon,
+      variant: isNotesNavigation(navState) ? "default" : "ghost",
+      onClick: handleNotesClick,
+    },
+    // --- Separator before footer ---
+    { id: "separator:notes-automations", type: "separator" },
+    {
+      id: "nav:automations",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.automations.labelKey),
+      label: String(automations.length),
+      icon: APP_NAV_DESTINATIONS_BY_ID.automations.icon,
+      variant: (isAutomationsNavigation(navState) && !automationFilter) ? "default" : "ghost",
+      onClick: () => toggleSidebarSection('nav:automations', isAutomationsNavigation(navState), handleAutomationsClick, true),
+      expandable: true,
+      expanded: isAutomationsNavigation(navState) && isExpanded('nav:automations'),
+      onToggle: () => toggleSidebarSection('nav:automations', isAutomationsNavigation(navState), handleAutomationsClick),
+      contextMenu: {
+        type: 'automations' as const,
+        onAddAutomation: openAddAutomation,
+      },
+      items: [
+        {
+          id: "nav:automations:scheduled",
+          title: t("sidebar.scheduled"),
+          label: String(automationTypeCounts.scheduled),
+          icon: Clock,
+          variant: (automationFilter?.kind === 'type' && automationFilter.automationType === 'scheduled') ? "default" : "ghost",
+          onClick: handleAutomationsScheduledClick,
+          contextMenu: { type: 'automations' as const, onAddAutomation: openAddAutomation },
+        },
+        {
+          id: "nav:automations:event",
+          title: t("sidebar.eventBased"),
+          label: String(automationTypeCounts.event),
+          icon: Radio,
+          variant: (automationFilter?.kind === 'type' && automationFilter.automationType === 'event') ? "default" : "ghost",
+          onClick: handleAutomationsEventClick,
+          contextMenu: { type: 'automations' as const, onAddAutomation: openAddAutomation },
+        },
+        {
+          id: "nav:automations:agentic",
+          title: t("sidebar.agentic"),
+          label: String(automationTypeCounts.agentic),
+          icon: Bot,
+          variant: (automationFilter?.kind === 'type' && automationFilter.automationType === 'agentic') ? "default" : "ghost",
+          onClick: handleAutomationsAgenticClick,
+          contextMenu: { type: 'automations' as const, onAddAutomation: openAddAutomation },
+        },
+      ],
+    },
+    {
+      id: "nav:connections",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.connections.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.connections.icon,
+      variant: isConnectionsNavigation(navState) ? "default" : "ghost",
+      onClick: () => navigate(routes.view.connections()),
+    },
+    // --- Settings (What's New moved to TopBar) ---
+    {
+      id: "nav:settings",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.settings.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.settings.icon,
+      variant: isSettingsNavigation(navState) ? "default" : "ghost",
+      onClick: () => handleSettingsClick(),
+    },
+  ]
+  const experimentalLinks: SidebarLinkItem[] = extraScreens.map(screen => ({
+    id: `nav:screen:${screen.id}`,
+    title: t(screen.labelKey), icon: screen.icon,
+    variant: navState.navigator === 'screen' && navState.screen === screen.id ? 'default' : 'ghost',
+    onClick: () => navigate(routes.view.screen(screen.id)),
+    iconColor: screen.id === 'radar' ? '#38bdf8' : screen.id === 'focus' ? '#34d399' : '#c084fc',
+  }))
+
+  const globalSidebarNavigation = (
+    <>
+      <LeftSidebar
+        isCollapsed={isSidebarCollapsed}
+        onExpand={handleExpandNavigation}
+        links={sidebarLinks}
+      />
+      {experimentalLinks.length > 0 && (
+        <section className="mx-1 mt-5 rounded-xl bg-foreground/[0.025] py-2" aria-label={t('sidebar.experimentalFeatures')}>
+          {!isSidebarCollapsed && <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-foreground/40">{t('sidebar.experimentalFeatures')}</div>}
+          <LeftSidebar isCollapsed={isSidebarCollapsed} onExpand={handleExpandNavigation} links={experimentalLinks} />
+        </section>
+      )}
+    </>
+  )
   return (
     <AppShellProvider value={appShellContextValue}>
+      <ShellSidebarContext.Provider value={isAutoCompact ? null : shellSidebarSlot}>
         {/* === TOP BAR === */}
         <TopBar
           workspaces={workspaces}
@@ -2517,6 +2738,15 @@ function AppShellContent({
 
         {isWebUI && <WebBrowserPanel open={webBrowserOpen} onClose={() => setWebBrowserOpen(false)} />}
 
+      {isAutoCompact && !isSidebarAndNavigatorHidden && (
+        <div data-compact-profile className="chrome-rail fixed bottom-1 left-1 z-panel flex h-11 items-center gap-1 rounded-xl px-1" data-shell-role="chrome">
+          <ProfileStrip data={profileStripWithSpend} compact onClick={() => handleSettingsClick('account')} className="w-10 p-0.5" />
+          <button type="button" onClick={() => handleSettingsClick()} aria-label={t('sidebar.settings')} title={t('sidebar.settings')} className="grid size-9 place-items-center rounded-lg text-foreground/60 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring">
+            <Settings className="size-4" aria-hidden />
+          </button>
+        </div>
+      )}
+
       {/* === OUTER LAYOUT: Unified Panel Stack | Right Sidebar === */}
       <div className="flex h-full min-h-0 flex-col">
       <div
@@ -2525,14 +2755,13 @@ function AppShellContent({
         data-viewport={shellWidth > 0 ? viewportBand(shellWidth) : undefined}
         style={{
           paddingRight: isAutoCompact ? 0 : PANEL_EDGE_INSET,
-          paddingBottom: (isAutoCompact || showStatusBar) ? 0 : PANEL_EDGE_INSET,
+          paddingBottom: isAutoCompact && !isSidebarAndNavigatorHidden ? 48 : showStatusBar ? 0 : PANEL_EDGE_INSET,
           paddingLeft: 0,
           gap: PANEL_GAP,
         }}
       >
-        {/* PR-2 Workbench host: legacy children remain unchanged until both
-            operator capability and explicit user preference are true. */}
-        <WorkspaceSurfaceHost operatorCapability={workbenchOperatorCapability}>
+        {/* AppShell owns primary navigation; the host keeps optional workspace chrome. */}
+        <WorkspaceSurfaceHost operatorCapability={workbenchOperatorCapability} ownsPrimaryNavigation>
           <PanelStackContainer
           sidebarSlot={
             <div
@@ -2542,342 +2771,31 @@ function AppShellContent({
               data-shell-role="chrome"
               data-focus-zone="sidebar"
               tabIndex={sidebarFocused ? 0 : -1}
-              onKeyDown={handleSidebarKeyDown}
+              onKeyDown={handleSidebarTreeKeyDown}
             >
             <div className="flex h-full flex-col select-none">
               {/* Sidebar Top Section */}
               <div className="flex-1 flex flex-col min-h-0">
-                {/* New Session Button - Gmail-style, with context menu for "Open in New Window" */}
-                <div className="px-2 pb-2 shrink-0">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <ContextMenu modal={true}>
-                          <ContextMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              onClick={(e) => handleNewChat(e.metaKey || e.ctrlKey)}
-                              className="w-full justify-start gap-2 py-[7px] px-2 text-[13px] font-normal rounded-[6px]"
-                              data-tutorial="new-chat-button"
-                            >
-                              <SquarePenRounded className="h-3.5 w-3.5 shrink-0" />
-                              {t("session.newSession")}
-                            </Button>
-                          </ContextMenuTrigger>
-                          <StyledContextMenuContent>
-                            <ContextMenuProvider>
-                              <SidebarMenu type="newSession" />
-                            </ContextMenuProvider>
-                          </StyledContextMenuContent>
-                        </ContextMenu>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">{newChatHotkey}</TooltipContent>
-                  </Tooltip>
-                </div>
                 {/* Primary Nav: Sessions → Labels → Projects → Pages | Memory…Knowledge | Automations → Settings */}
                 {/* pb-4 provides clearance so the last item scrolls above the mask-fade-bottom gradient */}
                 <div className="flex-1 overflow-y-auto min-h-0 mask-fade-bottom pb-4">
-                <LeftSidebar
-                  isCollapsed={false}
-                  getItemProps={getSidebarItemProps}
-                  focusedItemId={focusedSidebarItemId}
-                  links={[
-                    // --- Sessions Section ---
-                    // All Sessions: expandable with status children (sortable) + Flagged & Archived as trailing items
-                    {
-                      id: "nav:allSessions",
-                      title: t(APP_NAV_DESTINATIONS_BY_ID.sessions.labelKey),
-                      label: String(workspaceSessionMetas.length),
-                      icon: APP_NAV_DESTINATIONS_BY_ID.sessions.icon,
-                      variant: sessionFilter?.kind === 'allSessions' ? "default" : "ghost",
-                      onClick: handleAllSessionsClick,
-                      expandable: true,
-                      expanded: isExpanded('nav:allSessions'),
-                      onToggle: () => toggleExpanded('nav:allSessions'),
-                      contextMenu: {
-                        type: 'allSessions',
-                        onConfigureStatuses: openConfigureStatuses,
-                        onMarkAllRead: () => {
-                          if (!activeWorkspaceId) return
-                          // Optimistic: clear hasUnread on all workspace session metas
-                          setSessionMetaMap(prev => {
-                            const next = new Map(prev)
-                            for (const [id, meta] of next) {
-                              if (meta.workspaceId === activeWorkspaceId && meta.hasUnread) {
-                                next.set(id, { ...meta, hasUnread: false })
-                              }
-                            }
-                            return next
-                          })
-                          window.electronAPI.markAllSessionsRead(activeWorkspaceId)
-                        },
-                      },
-                      // Enable flat DnD reorder for status items
-                      sortable: { onReorder: handleStatusReorder },
-                      items: [
-                        // Status items (sortable via SortableStatusList)
-                        ...effectiveSessionStatuses.map(state => ({
-                          id: `nav:state:${state.id}`,
-                          title: t(`status.${state.id}`, state.label),
-                          label: String(sessionStatusCounts[state.id] || 0),
-                          icon: state.icon,
-                          iconColor: state.resolvedColor,
-                          iconColorable: state.iconColorable,
-                          variant: (sessionFilter?.kind === 'state' && sessionFilter.stateId === state.id ? "default" : "ghost") as "default" | "ghost",
-                          onClick: () => handleSessionStatusClick(state.id),
-                          // Accent dot when a session landed in this bucket since last open.
-                          hasUnseen: !!unseenStatuses[state.id],
-                          contextMenu: {
-                            type: 'status' as const,
-                            statusId: state.id,
-                            onConfigureStatuses: openConfigureStatuses,
-                          },
-                        })),
-                        // Separator: SortableStatusList splits here — items after become non-sortable trailingItems
-                        { id: 'separator:states-flagged', type: 'separator' as const },
-                        // Flagged (trailing, non-sortable)
-                        {
-                          id: "nav:flagged",
-                          title: t("sidebar.flagged"),
-                          label: String(flaggedCount),
-                          icon: <Flag className="h-3.5 w-3.5" />,
-                          variant: (sessionFilter?.kind === 'flagged' ? "default" : "ghost") as "default" | "ghost",
-                          onClick: handleFlaggedClick,
-                        },
-                        // Archived (trailing, non-sortable)
-                        {
-                          id: "nav:archived",
-                          title: t("sidebar.archived"),
-                          label: archivedCount > 0 ? String(archivedCount) : undefined,
-                          icon: Archive,
-                          variant: (sessionFilter?.kind === 'archived' ? "default" : "ghost") as "default" | "ghost",
-                          onClick: handleArchivedClick,
-                        },
-                      ],
-                    },
-                    // Labels: navigable header (shows all labeled sessions) + hierarchical tree (drag-and-drop reorder + re-parent)
-                    {
-                      id: "nav:labels",
-                      title: t("sidebar.labels"),
-                      icon: Tag,
-                      // Only highlighted when "Labels" itself is selected (not sub-labels)
-                      variant: (sessionFilter?.kind === 'label' && sessionFilter.labelId === '__all__') ? "default" as const : "ghost" as const,
-                      // Clicking navigates to "all labeled sessions" view
-                      onClick: () => handleLabelClick('__all__'),
-                      expandable: true,
-                      expanded: isExpanded('nav:labels'),
-                      onToggle: () => toggleExpanded('nav:labels'),
-                      contextMenu: {
-                        type: 'labels' as const,
-                        onConfigureLabels: openConfigureLabels,
-                        onAddLabel: handleAddLabel,
-                      },
-                      items: buildLabelSidebarItems(labelTree),
-                    },
-                    // «Представления» (session views) section intentionally hidden.
-                    // --- Projects (after session chrome) ---
-                    {
-                      id: "nav:projects",
-                      title: t(APP_NAV_DESTINATIONS_BY_ID.projects.labelKey),
-                      label: String(projects.length),
-                      icon: APP_NAV_DESTINATIONS_BY_ID.projects.icon,
-                      // Highlight only when on Projects view itself, not when a child is "active" (jumped-to filter)
-                      variant: isProjectsNavigation(navState) ? "default" : "ghost",
-                      onClick: handleProjectsClick,
-                      expandable: projects.length > 0,
-                      expanded: isExpanded('nav:projects'),
-                      onToggle: () => toggleExpanded('nav:projects'),
-                      contextMenu: {
-                        type: 'projects' as const,
-                        onAddProject: openAddProject,
-                      },
-                      items: projects.map(p => ({
-                        id: `nav:projects:${p.config.id}`,
-                        title: p.config.name,
-                        icon: FolderKanban,
-                        // Highlight when on allSessions view AND filter includes this project (the jump-to state)
-                        variant: (sessionFilter?.kind === 'allSessions' && (collectionFilters.projectId ?? []).includes(p.config.id)) ? "default" as const : "ghost" as const,
-                        onClick: () => handleJumpToProjectSessions(p.config.id),
-                      })),
-                    },
-                    {
-                      id: "nav:pages",
-                      title: t(APP_NAV_DESTINATIONS_BY_ID.pages.labelKey),
-                      label: String(pages.length),
-                      icon: APP_NAV_DESTINATIONS_BY_ID.pages.icon,
-                      variant: (isPagesNavigation(navState) && !navState.details) ? "default" : "ghost",
-                      onClick: handlePagesClick,
-                      expandable: pages.length > 0,
-                      expanded: isExpanded('nav:pages'),
-                      onToggle: () => toggleExpanded('nav:pages'),
-                      items: pages.map(p => ({
-                        id: `nav:pages:${p.config.id}`,
-                        title: p.config.name,
-                        icon: PanelsTopLeft,
-                        variant: (isPagesNavigation(navState) && navState.details?.pageSlug === p.config.slug) ? "default" as const : "ghost" as const,
-                        onClick: () => navigate(routes.view.pages(p.config.slug)),
-                      })),
-                    },
-                    // --- Separator after projects ---
-                    { id: "separator:projects-memory", type: "separator" },
-                    // --- Memory ---
-                    {
-                      id: "nav:memory",
-                      title: t(APP_NAV_DESTINATIONS_BY_ID.memory.labelKey),
-                      icon: APP_NAV_DESTINATIONS_BY_ID.memory.icon,
-                      variant: isMemoryNavigation(navState) ? "default" : "ghost",
-                      onClick: handleMemoryClick,
-                    },
-                    {
-                      id: "nav:tasks",
-                      title: t(APP_NAV_DESTINATIONS_BY_ID.tasks.labelKey),
-                      icon: APP_NAV_DESTINATIONS_BY_ID.tasks.icon,
-                      variant: isTasksNavigation(navState) ? "default" : "ghost",
-                      onClick: handleTasksClick,
-                    },
-                    {
-                      id: "nav:meetings",
-                      title: t(APP_NAV_DESTINATIONS_BY_ID.meetings.labelKey),
-                      icon: APP_NAV_DESTINATIONS_BY_ID.meetings.icon,
-                      variant: isMeetingsNavigation(navState) ? "default" : "ghost",
-                      onClick: handleMeetingsClick,
-                    },
-                    // --- Sources ---
-                    {
-                      id: "nav:sources",
-                      title: t(APP_NAV_DESTINATIONS_BY_ID.sources.labelKey),
-                      label: String(sources.length),
-                      icon: APP_NAV_DESTINATIONS_BY_ID.sources.icon,
-                      variant: (isSourcesNavigation(navState) && !sourceFilter) ? "default" : "ghost",
-                      onClick: handleSourcesClick,
-                      dataTutorial: "sources-nav",
-                      expandable: true,
-                      expanded: isExpanded('nav:sources'),
-                      onToggle: () => toggleExpanded('nav:sources'),
-                      contextMenu: {
-                        type: 'sources',
-                        onAddSource: () => openAddSource(),
-                      },
-                      items: [
-                        {
-                          id: "nav:sources:api",
-                          title: t("sidebar.apis"),
-                          label: String(sourceTypeCounts.api),
-                          icon: Globe,
-                          variant: (sourceFilter?.kind === 'type' && sourceFilter.sourceType === 'api') ? "default" : "ghost",
-                          onClick: handleSourcesApiClick,
-                          contextMenu: {
-                            type: 'sources' as const,
-                            onAddSource: () => openAddSource('api'),
-                            sourceType: 'api',
-                          },
-                        },
-                        {
-                          id: "nav:sources:mcp",
-                          title: t("sidebar.mcps"),
-                          label: String(sourceTypeCounts.mcp),
-                          icon: <McpIcon className="h-3.5 w-3.5" />,
-                          variant: (sourceFilter?.kind === 'type' && sourceFilter.sourceType === 'mcp') ? "default" : "ghost",
-                          onClick: handleSourcesMcpClick,
-                          contextMenu: {
-                            type: 'sources' as const,
-                            onAddSource: () => openAddSource('mcp'),
-                            sourceType: 'mcp',
-                          },
-                        },
-                        {
-                          id: "nav:sources:local",
-                          title: t("sidebar.localFolders"),
-                          label: String(sourceTypeCounts.local),
-                          icon: FolderOpen,
-                          variant: (sourceFilter?.kind === 'type' && sourceFilter.sourceType === 'local') ? "default" : "ghost",
-                          onClick: handleSourcesLocalClick,
-                          contextMenu: {
-                            type: 'sources' as const,
-                            onAddSource: () => openAddSource('local'),
-                            sourceType: 'local',
-                          },
-                        },
-                      ],
-                    },
-                    {
-                      id: "nav:skills",
-                      title: t(APP_NAV_DESTINATIONS_BY_ID.skills.labelKey),
-                      label: String(skills.length),
-                      icon: APP_NAV_DESTINATIONS_BY_ID.skills.icon,
-                      variant: isSkillsNavigation(navState) ? "default" : "ghost",
-                      onClick: handleSkillsClick,
-                      contextMenu: {
-                        type: 'skills',
-                        onAddSkill: openAddSkill,
-                      },
-                    },
-                    {
-                      id: "nav:notes",
-                      title: t(APP_NAV_DESTINATIONS_BY_ID.notes.labelKey),
-                      icon: APP_NAV_DESTINATIONS_BY_ID.notes.icon,
-                      variant: isNotesNavigation(navState) ? "default" : "ghost",
-                      onClick: handleNotesClick,
-                    },
-                    // --- Separator before footer ---
-                    { id: "separator:notes-automations", type: "separator" },
-                    {
-                      id: "nav:automations",
-                      title: t(APP_NAV_DESTINATIONS_BY_ID.automations.labelKey),
-                      label: String(automations.length),
-                      icon: APP_NAV_DESTINATIONS_BY_ID.automations.icon,
-                      variant: (isAutomationsNavigation(navState) && !automationFilter) ? "default" : "ghost",
-                      onClick: handleAutomationsClick,
-                      expandable: true,
-                      expanded: isExpanded('nav:automations'),
-                      onToggle: () => toggleExpanded('nav:automations'),
-                      contextMenu: {
-                        type: 'automations' as const,
-                        onAddAutomation: openAddAutomation,
-                      },
-                      items: [
-                        {
-                          id: "nav:automations:scheduled",
-                          title: t("sidebar.scheduled"),
-                          label: String(automationTypeCounts.scheduled),
-                          icon: Clock,
-                          variant: (automationFilter?.kind === 'type' && automationFilter.automationType === 'scheduled') ? "default" : "ghost",
-                          onClick: handleAutomationsScheduledClick,
-                          contextMenu: { type: 'automations' as const, onAddAutomation: openAddAutomation },
-                        },
-                        {
-                          id: "nav:automations:event",
-                          title: t("sidebar.eventBased"),
-                          label: String(automationTypeCounts.event),
-                          icon: Radio,
-                          variant: (automationFilter?.kind === 'type' && automationFilter.automationType === 'event') ? "default" : "ghost",
-                          onClick: handleAutomationsEventClick,
-                          contextMenu: { type: 'automations' as const, onAddAutomation: openAddAutomation },
-                        },
-                        {
-                          id: "nav:automations:agentic",
-                          title: t("sidebar.agentic"),
-                          label: String(automationTypeCounts.agentic),
-                          icon: Bot,
-                          variant: (automationFilter?.kind === 'type' && automationFilter.automationType === 'agentic') ? "default" : "ghost",
-                          onClick: handleAutomationsAgenticClick,
-                          contextMenu: { type: 'automations' as const, onAddAutomation: openAddAutomation },
-                        },
-                      ],
-                    },
-                    // --- Settings (What's New moved to TopBar) ---
-                    {
-                      id: "nav:settings",
-                      title: t(APP_NAV_DESTINATIONS_BY_ID.settings.labelKey),
-                      icon: APP_NAV_DESTINATIONS_BY_ID.settings.icon,
-                      variant: isSettingsNavigation(navState) ? "default" : "ghost",
-                      onClick: () => handleSettingsClick(),
-                    },
-                  ]}
-                />
-                {/* Agent Tree: Hierarchical list of agents */}
-                {/* Agents section removed */}
+                <div ref={setShellSidebarSlot} hidden={isSidebarCollapsed} data-primary-sidebar-context className="mb-2 border-b border-foreground/5 empty:hidden">
+                  {isSettingsNavigation(navState) && !isAutoCompact && (
+                    <SettingsNavigator selectedSubpage={navState.subpage ?? null} onSelectSubpage={subpage => handleSettingsClick(subpage)} />
+                  )}
+                </div>
+                {hasContextualSidebar && !isSidebarCollapsed ? (
+                  <details className="group/application-sections mx-1 mt-2 rounded-xl bg-foreground/[0.025]" data-application-sections
+                    open={applicationSectionsOpenFor === contextualSidebarKey}
+                    onToggle={event => setApplicationSectionsOpenFor(event.currentTarget.open ? contextualSidebarKey : null)}>
+                    <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl px-3 py-2.5 text-[11px] font-semibold text-foreground/50 outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                      <Layers className="size-3.5 text-accent" aria-hidden />
+                      <span className="min-w-0 flex-1 truncate">{t('sidebar.applicationSections')}</span>
+                      <ChevronRight className="size-3.5 transition-transform group-open/application-sections:rotate-90 motion-reduce:transition-none" aria-hidden />
+                    </summary>
+                    {globalSidebarNavigation}
+                  </details>
+                ) : globalSidebarNavigation}
                 </div>
                 <div className="shrink-0">
                   <SidebarChrome
@@ -2885,6 +2803,9 @@ function AppShellContent({
                     onProfileClick={() => handleSettingsClick('account')}
                     promoKind={promoKind}
                     onPromoCta={handleMemoryClick}
+                    collapsed={isSidebarCollapsed}
+                    onToggleSidebar={handleToggleSidebar}
+                    onOpenSettings={() => handleSettingsClick()}
                   />
                 </div>
               </div>
@@ -2892,7 +2813,7 @@ function AppShellContent({
             </div>
           </div>
           }
-          sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : (isSidebarVisible ? sidebarWidth : 0)}
+          sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : sidebarWidth}
           navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || hideModuleMiddleNav) ? null : (
             <div
               style={{ width: isAutoCompact ? '100%' : sessionListWidth }}
@@ -2901,7 +2822,7 @@ function AppShellContent({
             >
             <PanelHeader
                 title={listTitle}
-                compensateForStoplight={!isSidebarVisible}
+                compensateForStoplight={!isPrimarySidebarRendered}
                 badge={automationFilter?.automationType === 'scheduled' ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -3099,7 +3020,7 @@ function AppShellContent({
         </WorkspaceSurfaceHost>
 
         {/* A collapsed sidebar has no resize boundary; its sash would intercept main-panel controls. */}
-        {isSidebarVisible && !effectiveSidebarAndNavigatorHidden && (
+        {isSidebarVisible && !isSidebarCollapsed && !effectiveSidebarAndNavigatorHidden && (
         <ResizeHandle
           labelKey="shell.resize.sidebar"
           controlsId="shell-sidebar"
@@ -3172,7 +3093,7 @@ function AppShellContent({
             height: 'auto',
             left:
               unifiedRailOffset +
-              (isSidebarVisible ? sidebarWidth + PANEL_GAP : PANEL_EDGE_INSET) +
+              (isPrimarySidebarRendered ? sidebarWidth + PANEL_GAP : PANEL_EDGE_INSET) +
               sessionListWidth +
               (PANEL_GAP / 2) -
               sashHitWidthPx() / 2,
@@ -3180,7 +3101,7 @@ function AppShellContent({
           }}
           onPointerDown={(event) => {
             setIsResizing('session-list')
-            const offset = isSidebarVisible ? sidebarWidth : 0
+            const offset = isPrimarySidebarRendered ? sidebarWidth : 0
             navigatorResize.handlePointerDown(event, {
               leftId: 'shell-navigator',
               rightId: 'shell-content',
@@ -3197,7 +3118,7 @@ function AppShellContent({
           onPointerCancel={navigatorResize.handlePointerCancel}
           onLostPointerCapture={navigatorResize.handleLostPointerCapture}
           onKeyAdjust={(delta) => {
-            const offset = isSidebarVisible ? sidebarWidth : 0
+            const offset = isPrimarySidebarRendered ? sidebarWidth : 0
             navigatorResize.handleKeyAdjust(delta, {
               leftId: 'shell-navigator',
               rightId: 'shell-content',
@@ -3212,7 +3133,7 @@ function AppShellContent({
           onKeyCommit={navigatorResize.handleKeyCommit}
           onKeyCancel={navigatorResize.handleKeyCancel}
           onReset={() => {
-            const offset = isSidebarVisible ? sidebarWidth : 0
+            const offset = isPrimarySidebarRendered ? sidebarWidth : 0
             navigatorResize.handleReset({
               leftId: 'shell-navigator',
               rightId: 'shell-content',
@@ -3456,6 +3377,7 @@ function AppShellContent({
       {/* Y4: first-run memory onboarding — shown once when no lessons exist */}
       <OnboardingDialog workspaceId={activeWorkspaceId ?? undefined} />
 
+      </ShellSidebarContext.Provider>
     </AppShellProvider>
   )
 }

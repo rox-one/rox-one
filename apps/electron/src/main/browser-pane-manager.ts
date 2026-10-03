@@ -8,7 +8,7 @@
 
 import { join, parse as parsePath } from 'path'
 import { existsSync, mkdirSync } from 'fs'
-import { validateFilePath, getWorkspaceAllowedDirs } from '@craft-agent/server-core/handlers'
+import { validateFilePath, getWorkspaceAllowedDirs } from '@rox/server-core/handlers'
 import { BrowserWindow, WebContentsView, app, ipcMain, nativeTheme, session, shell, type Session as ElectronSession } from 'electron'
 import { isOmniboxChord } from './global-input-router'
 import { mainLog } from './logger'
@@ -19,18 +19,18 @@ import {
   type BrowserEmptyStateLaunchResult,
   type BrowserInstanceInfo,
 } from '../shared/types'
-import { DEFAULT_THEME, loadAppTheme, getAllowRemoteEvaluate } from '@craft-agent/shared/config'
-import { CodedError } from '@craft-agent/shared/protocol'
+import { DEFAULT_THEME, loadAppTheme, getAllowRemoteEvaluate } from '@rox/shared/config'
+import { CodedError } from '@rox/shared/protocol'
 import { getBrowserLiveFxCornerRadii } from '../shared/browser-live-fx'
-import { i18n } from '@craft-agent/shared/i18n'
+import { i18n } from '@rox/shared/i18n'
 import type {
   IBrowserPaneManager,
   BrowserInstanceSnapshot,
-} from '@craft-agent/server-core/handlers'
+} from '@rox/server-core/handlers'
 import type {
   BrowserCapabilityRequest,
   ScreenshotResultWire,
-} from '@craft-agent/server-core/transport'
+} from '@rox/server-core/transport'
 
 function escapeOverlayText(value: string): string {
   return value.replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`)
@@ -1699,7 +1699,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     return instance.downloads.slice(-limit)
   }
 
-  // validateUploadFilePath removed — uses shared validateFilePath from @craft-agent/server-core/handlers
+  // validateUploadFilePath removed — uses shared validateFilePath from @rox/server-core/handlers
 
   async uploadFile(id: string, ref: string, filePaths: string[]): Promise<ElementGeometry> {
     const instance = this.requireAliveInstance(id)

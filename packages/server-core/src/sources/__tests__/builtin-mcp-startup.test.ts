@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import type { FolderSourceConfig, LoadedSource } from '@craft-agent/shared/sources'
+import type { FolderSourceConfig, LoadedSource } from '@rox/shared/sources'
 import { BuiltinMcpStartup, type BuiltinMcpStartupDependencies } from '../builtin-mcp-startup.ts'
 
 const services: BuiltinMcpStartup[] = []
