@@ -1,0 +1,7 @@
+bun install v1.3.14 (0d9b296a)
+Resolving dependencies
+Resolved, downloaded and extracted [91]
+
++ htmlparser2@3.10.1
+
+37 packages installed [10.02s]

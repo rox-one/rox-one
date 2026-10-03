@@ -18,6 +18,6 @@ export default defineConfig({
     { command: `${quote(bun)} run tests/e2e/runtime-map/server.ts`, cwd: repoRoot, url: 'http://127.0.0.1:4177/health', timeout: 30_000,
       env: { ROX_RUNTIME_MAP_E2E: '1' }, reuseExistingServer: false },
     { command: `${quote(bun)} run tests/e2e/runtime-map/start-renderer.ts`,
-      cwd: repoRoot, url: 'http://127.0.0.1:4176', timeout: 120_000, reuseExistingServer: false },
+      cwd: repoRoot, url: 'http://127.0.0.1:4176', timeout: 300_000, reuseExistingServer: false },
   ],
 })

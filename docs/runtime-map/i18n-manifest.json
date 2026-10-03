@@ -883,6 +883,10 @@
     "en": "Previous events",
     "ru": "Предыдущие события"
   },
+  "runtimeMap.processTerminationUnknown": {
+    "ru": "Завершение процесса не подтверждено",
+    "en": "Process termination is unconfirmed"
+  },
   "runtimeMap.provenance.explicit": {
     "en": "Explicit explanation from the agent",
     "ru": "Явное объяснение агента"

@@ -1,0 +1,10 @@
+{
+  "browser": "Chromium 131.0.6778.33 / Playwright build 1148",
+  "installation": "not completed after ten-minute isolated install; owned installer terminated",
+  "binaryPresent": true,
+  "operation": "Playwright chromium.launch(headless=true, explicit binary path, timeout=10000)",
+  "observedError": "Target page, context or browser has been closed after launch; no successful version readback",
+  "cause": "not established; incomplete install is retained under task-local work/playwright-ui001",
+  "fallback": "Previously verified task browser Chromium 153.0.8010.12; CI uses pinned Playwright browser on macos-15",
+  "globalConfigurationOrPermissionsChanged": false
+}

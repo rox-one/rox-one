@@ -5046,6 +5046,7 @@
   "runtimeMap.planVersion": "План v{{version}} · задач: {{count}}",
   "runtimeMap.previousEvent": "Предыдущее записанное событие",
   "runtimeMap.previousWindow": "Предыдущие события",
+  "runtimeMap.processTerminationUnknown": "Завершение процесса не подтверждено",
   "runtimeMap.provenance.explicit": "Явное объяснение агента",
   "runtimeMap.provenance.provider": "Текст, предоставленный исполнителем / провайдером",
   "runtimeMap.provenance.summary": "Краткая сводка рассуждений",

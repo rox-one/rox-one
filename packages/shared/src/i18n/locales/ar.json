@@ -5030,6 +5030,7 @@
   "runtimeMap.planVersion": "Plan v{{version}} · {{count}} tasks",
   "runtimeMap.previousEvent": "Previous recorded event",
   "runtimeMap.previousWindow": "Previous events",
+  "runtimeMap.processTerminationUnknown": "Process termination is unconfirmed",
   "runtimeMap.provenance.explicit": "Explicit explanation from the agent",
   "runtimeMap.provenance.provider": "Text provided by the runtime / provider",
   "runtimeMap.provenance.summary": "Reasoning summary",

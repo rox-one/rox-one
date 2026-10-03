@@ -2292,11 +2292,11 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   }, [windowWorkspaceId, setSession, store])
 
   // Handle workspace switch by slug (called by NavigationContext on popstate when ?ws= changes)
-  const handleSwitchWorkspaceBySlug = useCallback((slug: string) => {
+  const handleSwitchWorkspaceBySlug = useCallback(async (slug: string) => {
     const target = workspaces.find(w => w.slug === slug)
-    if (target) {
-      handleSelectWorkspace(target.id)
-    }
+    if (!target) return false
+    await handleSelectWorkspace(target.id)
+    return true
   }, [workspaces, handleSelectWorkspace])
 
   // Handle workspace refresh (e.g., after icon upload)
