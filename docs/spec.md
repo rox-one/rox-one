@@ -812,3 +812,8 @@ Recover the strict local calendar-day check from preserved Golden source5def9ffd
 ### Golden per-task form draft recovery — 2026-10-04
 
 Recover source5def9ffd per-task unsubmitted link/tag input through the existing modern TasksPage → TaskDetail consumer. Drafts remain ephemeral input only; canonical notes/task mutations, native actor/workspace CAS/ACK/readback, background import barriers and Product signals keep their owners. Input belongs to its captured caller generation and panel/workspace lifetime; scope ABA/unmount and obsolete rendered submissions cannot revive or write it. Clear only the submitted field value; keep other task drafts and link kind.
+
+
+### Native OMP launch cancellation recovery — 2026-10-04
+
+Owner recent_features. Recover source1464 through the current OmpAgent. Startup and helper preparation carry launch/account/model-domain generations before every asynchronous boundary; cancelled or destroyed work never spawns a late child. Preparation failures release ready ownership and allow a later valid retry. Managed Bun paths and literal native argv retain policy, source observers and Windows hidden-process options. Runtime guidance is translated in all twelve locales.

@@ -1,0 +1,176 @@
+{
+  "source_pr": 1464,
+  "source_head": "510dd6cf7f356364d3bd4a88b6f2d9cd16d2b1aa",
+  "source_latest_main_merge_only": "154f6b6bced5c4a69090a51ca3815ea3300cec4f",
+  "base": "2338adb95cb986157f9c14dbf949c2d19b26f65a",
+  "native_source_version": "18.4.12",
+  "native_source_sha256": "a51e06caf5e5f382c7f80c86030ae13a70ed4c7d0c1ac9f6d6ffc11c20d2c81e",
+  "source_files": [
+    {
+      "path": "docs/omp-rpc-notes.md",
+      "sha256": "ffff13dff97ec6afefcdefb70745f174d9e4cc5e3d13453d7a59edd463b1d797"
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/omp-runtime-observer.test.ts",
+      "sha256": "66cbe6a6b63666a58cb4b52d82c92f452b16d1a921edbf99f3d67bc44fb05101"
+    },
+    {
+      "path": "packages/shared/src/agent/omp-agent.ts",
+      "sha256": "fbe2b095deedc6f26bf7458fac1594f5e8e5e43874c00f732da5ef06364449f6"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ar.json",
+      "sha256": "f6e6e5994a604e6d4eab596f002841e60328a5052da1efffc59288fa2dfe83d0"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/de.json",
+      "sha256": "2afed52dd28961c974d3366f43fe2570feeb31f7616232a8ba89869f01f6b0af"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/en.json",
+      "sha256": "4a23f51d0405fb75ed7a3702ceab2551d94410dafaba3218bb59f29c73c86e73"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/es.json",
+      "sha256": "13fb0e6dd174be5e436cad719d9798c6e33067d2c013d525d04ecce6e40518d8"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/fr.json",
+      "sha256": "b6969bb0f0c9a96d0622400370023e0868ac28348e6c1304ac6c5ce9d0bc292e"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/hu.json",
+      "sha256": "01b818642e885b42a7d968adad7e7b8402ffcf363e197cdf490c7272989b921a"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ja.json",
+      "sha256": "8fa98bf74810d7e4893b73116195b46b4fe8238d44505e8d83b5d8a1dace8ce9"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ko.json",
+      "sha256": "bf3962e0c14b8abf75d20129b945a25f0fe637c83b889bc431d94ef056130876"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/pl.json",
+      "sha256": "f0f565ce3d26fccee7b8292c17dee589a9ecb0ec0a8f5d2afc170ed534a86d16"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "sha256": "255d3264f70ae142662dc4c6b63b6d6b23e7e4e0b5593f5d7eddb70680a074b1"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "sha256": "afc6d030e5dfb1475924acea3d46b5fa5277679bab78e5718da4ebe3ebd38816"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hant.json",
+      "sha256": "a297aeffc1edf14e5dc1458a0200d8a3e7169933e2556dfc222fc1ae7cebf79d"
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/omp-native-launch-fixture.ts",
+      "sha256": "60f4d157710576767603d5a4d4e11048e73fe546567dcd5ba2d2b1f164a2760e"
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/omp-native-launch.test.ts",
+      "sha256": "9a9b802c325764f0f5d87a9c8bc8803d0b20427c1b3e9db58c7ce74e73d03869"
+    }
+  ],
+  "logs": [
+    {
+      "path": "docs/integration-history/native-launch-cancellation-recovery-20261004/logs/pr-1464-native-launch-before.log.gz",
+      "uncompressed_sha256": "cf09af6f79e80c4d3c486cfcac269b641296cac18918d639ef94b7087a133d1e",
+      "sha256": "268f7ef617aaac64aabce8530af8bcb8f9b9128030833299be41692e88310004"
+    },
+    {
+      "path": "docs/integration-history/native-launch-cancellation-recovery-20261004/logs/pr-1464-native-launch-current.log.gz",
+      "uncompressed_sha256": "01f003b5ea9a3fa43ed8211eb9579fe9a0a3114c16130b03a6f5f3ab253d9ffa",
+      "sha256": "46259dd43aabe5b8fe313b11c79e69896da987269ffef71a227f9fd26b1b5034"
+    },
+    {
+      "path": "docs/integration-history/native-launch-cancellation-recovery-20261004/logs/pr-1464-native-launch-qualified.log.gz",
+      "uncompressed_sha256": "4525473ca9016f7226f499e0346be86f59a75a511e809f94477e1d7752c1d2dd",
+      "sha256": "3e8aab57db4aee08b521e4457d0e2e27c7c8bf0ec70e483261e9ece0e35e9d25"
+    },
+    {
+      "path": "docs/integration-history/native-launch-cancellation-recovery-20261004/logs/pr-1464-native-launch-final-source.log.gz",
+      "uncompressed_sha256": "ef6951b68f13cef6cc752d578cf3bad6c3ebcd934e95e169d4b87a5a4e955d02",
+      "sha256": "240587b9d934fbb038102437c407e57290d60cf60c74eaadff48b871a655bb6c"
+    },
+    {
+      "path": "docs/integration-history/native-launch-cancellation-recovery-20261004/logs/pr-1464-owner-observer-locales.log.gz",
+      "uncompressed_sha256": "46f81329c7c0f95680fd3c2ddde988821268d79cdc9c7784d0560d821418f80c",
+      "sha256": "9309ccdc716439c77838d8be57187327617cdd8a43a5a18c46f5884f499013c0"
+    },
+    {
+      "path": "docs/integration-history/native-launch-cancellation-recovery-20261004/logs/pr-1464-owner-observer-locales-qualified.log.gz",
+      "uncompressed_sha256": "f9e6506af9765ed96b962cba64f4d4223cf8228730d4d670559d0562d7494c1a",
+      "sha256": "624937364400ad256eb1242a05c43b198b701e42faa7839296416d5cf6a388e1"
+    },
+    {
+      "path": "docs/integration-history/native-launch-cancellation-recovery-20261004/logs/pr-1464-owner-observer-locales-qualified-current.log.gz",
+      "uncompressed_sha256": "fa29b63c85810ee72f217c89cb7a48bcc715a1c4e023adf3a08a3674f78eb5d9",
+      "sha256": "b86617c6e820e96fad622995f6c3593946c6e630bd7f8a649f7691cfd968a556"
+    },
+    {
+      "path": "docs/integration-history/native-launch-cancellation-recovery-20261004/logs/pr-1464-owner-observer-locales-final.log.gz",
+      "uncompressed_sha256": "c36a6c471f63fe749eb9385bd2eeae2786a08e5fc880233034ec6a5e4811e417",
+      "sha256": "e10c4242329528e117762f6fa55486f7426a66cc5311f854b293228356e98024"
+    },
+    {
+      "path": "docs/integration-history/native-launch-cancellation-recovery-20261004/logs/pr-1464-owner-observer-locales-accepted.log.gz",
+      "uncompressed_sha256": "ac100343bcd5d106d28d409c6b3a0a69fa66f90d2294565be987a8a099d149bb",
+      "sha256": "3eddc68269b062440c5d5f074275a83c4ac33b900a59a0ddcaaadb68277bdb1e"
+    },
+    {
+      "path": "docs/integration-history/native-launch-cancellation-recovery-20261004/logs/pr-1464-electron-types.log.gz",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "path": "docs/integration-history/native-launch-cancellation-recovery-20261004/logs/pr-1464-electron-final-source-types.log.gz",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    }
+  ],
+  "gates": {
+    "before": {
+      "pass": 0,
+      "fail": 1,
+      "behavior": "held native preparation, destroy, then release previously spawned an obsolete child"
+    },
+    "native_current": {
+      "exit_code": 0,
+      "pass": 27,
+      "fail": 0,
+      "assertions": 264
+    },
+    "account_domain_helpers_observer_locales": {
+      "exit_code": 0,
+      "pass": 317,
+      "fail": 0,
+      "assertions": 6667
+    },
+    "electron_strict_current_source_types": {
+      "exit_code": 0,
+      "config": "docs/integration-history/golden-task-drafts-recovery-20261004/typecheck-config.json"
+    }
+  },
+  "test_environment": {
+    "bun": "1.3.14",
+    "node": "22.23.3",
+    "outer_bun_timeout_ms": 40000,
+    "native_policy": "cached exact source copied into disposable fixture package; no installed runtime/auth/config mutated"
+  },
+  "failure_history": [
+    "default 5s outer runner interrupted four unchanged 30s controls; renewed full 27 gate accepted",
+    "account logout error priority repaired to retain ROX_ACCOUNT_CHANGED",
+    "shared node_modules pointed to old host tool source; explicit current workspace aliases fixed resolution",
+    "legacy observer fixture now explicitly omits getHostBashEnv so the supported legacy port is exercised; real managed local stdout/stderr fixture retained",
+    "misplaced Bun tsconfig override invoked package runner and failed before tests; corrected test argument placement"
+  ],
+  "limits": [
+    "Synthetic native package and account state prove lifecycle seams on macOS; no installed Windows/public release acceptance",
+    "No transport framing or source credential contract changed"
+  ],
+  "reconciliation_pending": "fresh main99d1 includes independent windowsHide options; normal merge follows scoped commit"
+}

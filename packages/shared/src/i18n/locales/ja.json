@@ -1723,6 +1723,7 @@
   "errors.omp.authRequired.title": "Roxの認証が必要です",
   "errors.omp.noModels.message": "Roxの実行環境にモデルプロバイダーがありません。最初のターンの前に Rox APIキー（ROX_API_KEY）またはローカルの models.yml が必要です。",
   "errors.omp.noModels.title": "Roxにモデルが設定されていません",
+  "errors.omp.runtimeUnavailable.message": "「{{path}}」のBunランタイムを起動できません。CRAFT_BUN_PATHにネイティブBun実行ファイルを指定するか管理対象のBunランタイムをインストールして、再試行してください。",
   "errors.pleaseReload": "ページを再読み込みしてください。エラーは報告されました。",
   "errors.retryLoadingSessions": "セッション一覧を再読み込み",
   "errors.sessionNotFound": "セッションが見つかりません",

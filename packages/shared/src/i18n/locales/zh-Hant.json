@@ -1723,6 +1723,7 @@
   "errors.omp.authRequired.title": "需要 Rox 身分驗證",
   "errors.omp.noModels.message": "Rox 執行環境沒有模型提供者。首次對話前需要 Rox API 金鑰（ROX_API_KEY）或本機 models.yml。",
   "errors.omp.noModels.title": "Rox 未設定任何模型",
+  "errors.omp.runtimeUnavailable.message": "無法啟動「{{path}}」的 Bun 執行階段。請將 CRAFT_BUN_PATH 設為原生 Bun 執行檔或安裝受管理的 Bun 執行階段，然後重試。",
   "errors.pleaseReload": "請重新載入頁面。錯誤已被報告。",
   "errors.retryLoadingSessions": "重試載入會話",
   "errors.sessionNotFound": "未找到會話",
