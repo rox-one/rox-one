@@ -63,9 +63,15 @@ test('successful startup closes once for concurrent disposal and removes its pro
   const exited = once(child, 'exit')
   const original = new Error('controlled application close failure')
   let closes = 0
+  let processCalls = 0
   try {
     const product = await openNativeStartup({ profile, launch: async () => ({
-      process: () => child, firstWindow: async () => 'controlled-page',
+      process() {
+        processCalls++
+        // Playwright's ElectronApplication binding is disposed by close().
+        if (closes) throw new TypeError("Cannot read properties of undefined (reading '_object')")
+        return child
+      }, firstWindow: async () => 'controlled-page',
       async close() { closes++; child.kill('SIGKILL'); await exited; throw original },
     }), async report() { throw new Error('successful startup must not report a failure') } })
     expect(product.page).toBe('controlled-page')
@@ -74,6 +80,9 @@ test('successful startup closes once for concurrent disposal and removes its pro
     expect(first).toBe(second)
     await expect(first).rejects.toBe(original)
     expect(closes).toBe(1)
+    expect(processCalls).toBe(1)
     expect(existsSync(profile)).toBe(false)
+    expect(child.stdout.listenerCount('data')).toBe(0)
+    expect(child.stderr.listenerCount('data')).toBe(0)
   } finally { child.kill('SIGKILL'); await rm(profile, { recursive: true, force: true }) }
 }, 5_000)

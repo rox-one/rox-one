@@ -60,20 +60,26 @@ export async function openNativeStartup<Page, App extends NativeStartupApp<Page>
   report(diagnostics: NativeStartupDiagnostics): Promise<void>
 }): Promise<{ app: App; page: Page; dispose(): Promise<void> }> {
   let app: App | undefined
+  // ElectronApplication's Playwright binding is gone after close(). Keep only
+  // this owned process reference for diagnostics and listener cleanup.
+  let child: ChildProcess | undefined
   let stage: NativeStartupDiagnostics['stage'] = 'launch'
   let stdout: string | null = null
   let stderr: string | null = null
   const captureOut = (chunk: Buffer | string) => { stdout = (stdout! + chunk.toString()).slice(-tailLimit) }
   const captureErr = (chunk: Buffer | string) => { stderr = (stderr! + chunk.toString()).slice(-tailLimit) }
-  const detach = () => { app?.process().stdout?.off('data', captureOut); app?.process().stderr?.off('data', captureErr) }
+  const detach = () => { child?.stdout?.off('data', captureOut); child?.stderr?.off('data', captureErr) }
   let disposing: Promise<void> | undefined
   const dispose = () => disposing ??= (async () => {
     try { await app?.close() }
-    finally { detach(); await rm(input.profile, { recursive: true, force: true }) }
+    finally {
+      try { detach() }
+      finally { await rm(input.profile, { recursive: true, force: true }) }
+    }
   })()
   try {
     app = await input.launch()
-    const child = app.process()
+    child = app.process()
     if (child.stdout) { stdout = ''; child.stdout.on('data', captureOut) }
     if (child.stderr) { stderr = ''; child.stderr.on('data', captureErr) }
     stage = 'first-window'
@@ -81,7 +87,6 @@ export async function openNativeStartup<Page, App extends NativeStartupApp<Page>
     const page = await app.firstWindow()
     return { app, page, dispose }
   } catch (error) {
-    const child = app?.process()
     const diagnostics: NativeStartupDiagnostics = {
       stage, error: String(error), pid: child?.pid ?? null,
       exitCode: child?.exitCode ?? null, signalCode: child?.signalCode ?? null,
