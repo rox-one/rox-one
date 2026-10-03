@@ -1012,7 +1012,16 @@ export function resolveViewRoute(route: string, sidebarParam?: string): Navigati
     const normalizedPath = path.split('/').filter(Boolean).join('/')
     const decodedPath = decodeURIComponent(normalizedPath)
     const query = route.slice(path.length)
-    const state = parseRouteToNavigationState(normalizedPath + query, sidebarParam)
+    // Keep published rest-of-path entity addresses through the strict raw
+    // grammar. Encode the complete legacy ID as one segment before parsing;
+    // never select only its prefix. Existing escapes are decoded exactly once.
+    const segments = normalizedPath.split('/')
+    const restStart = segments[0] === 'knowledge' && segments.length > 3 ? 2
+      : segments[0] === 'extension' && segments.length > 3 ? 2
+      : ['cloud-run', 'terminal', 'diff'].includes(segments[0]) && segments.length > 2 ? 1 : null
+    const parsePath = restStart === null ? normalizedPath
+      : segments.slice(0, restStart).join('/') + '/' + encodeURIComponent(decodeURIComponent(segments.slice(restStart).join('/')))
+    const state = parseRouteToNavigationState(parsePath + query, sidebarParam)
     if (!state) return unavailable
     // Compare the full address, allowing equivalent entity encoding and the
     // established settings aliases. A parser fallback must not drop a suffix.

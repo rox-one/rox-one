@@ -25,14 +25,35 @@ const invalidViews = [
   ...EXTRA_SCREEN_IDS.flatMap(screen => [screen + '/other/a', screen + '/item', screen + '/item/a/extra', screen + '/item/%']),
 ]
 
-describe('UI-001 strict view grammar preserves the exact invalid address', () => {
+// Raw grammar stays strict. The runtime boundary retains these published
+// aliases without dropping an entity suffix or acquiring action capabilities.
+const runtimeLegacyViews = new Map([
+  ['/allSessions', 'allSessions'], ['allSessions/', 'allSessions'],
+  ['allSessions//session/a', 'allSessions/session/a'],
+  ['settings//workspace', 'settings/workspace'], ['settings/workspace/', 'settings/workspace'],
+  ['notes/note/folder//file', routes.view.notes('folder/file')], ['notes/note/a/', routes.view.notes('a')],
+  ['knowledge/document/a/extra', routes.view.siyuan({ kind: 'document', id: 'a/extra' })],
+  ['knowledge/view/a/extra', routes.view.knowledgeView('a/extra')],
+  ['cloud-run/a/extra', routes.view.cloudRun('a/extra')], ['terminal/a/extra', routes.view.terminal('a/extra')],
+  ['diff/a/extra', routes.view.proposal('a/extra')], ['extension/a/v/extra', routes.view.extension('a', 'v/extra')],
+])
+
+describe('UI-001 strict raw view grammar and lossless runtime compatibility', () => {
   for (const route of invalidViews) {
     it(route, () => {
       expect(() => parseCompoundRoute(route)).not.toThrow()
       expect(parseCompoundRoute(route)).toBeNull()
       expect(parseRouteToNavigationState(route)).toBeNull()
-      expect(resolveRouteNavigationState(route)).toEqual({ navigator: 'unavailable', route, details: null })
-      expect(buildRouteFromNavigationState(resolveRouteNavigationState(route))).toBe(route)
+      const canonical = runtimeLegacyViews.get(route)
+      if (canonical) {
+        const expected = parseRouteToNavigationState(canonical)
+        expect(expected).not.toBeNull()
+        expect(resolveRouteNavigationState(route)).toEqual(expected!)
+        expect(buildRouteFromNavigationState(resolveRouteNavigationState(route))).toBe(canonical)
+      } else {
+        expect(resolveRouteNavigationState(route)).toEqual({ navigator: 'unavailable', route, details: null })
+        expect(buildRouteFromNavigationState(resolveRouteNavigationState(route))).toBe(route)
+      }
     })
   }
 })

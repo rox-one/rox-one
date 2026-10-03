@@ -53,10 +53,15 @@ describe('UI-001 external route recovery', () => {
 
   it('preserves established parsing, query and explicit entity addresses', () => {
     for (const route of ['allSessions/session/s1', 'sources/source/s', 'skills/skill/s', 'projects/project/p', 'notes/note/n', 'pages/page/p', 'knowledge/document/d', 'extension/e/v', 'terminal/t', 'cloud-run/r', 'search?q=two%20words', 'settings/toolchain', 'settings/preferences', 'notes/note/folder/name', 'knowledge/document/folder/name', 'extension/e/folder/view', 'tasks/task/a%2Fb', 'label/work%20items/session/s1', 'board/session/s1', 'dossier/item/a%2Fb']) {
-      expect(resolveViewRoute(route)).toEqual(parseRouteToNavigationState(route)!)
+      const resolved = resolveViewRoute(route)
+      expect(resolved.navigator).not.toBe('unavailable')
+      // Strict raw parsing can reject a published legacy spelling; the runtime
+      // must retain its complete identity and round-trip the canonical address.
+      expect(resolved).toEqual(parseRouteToNavigationState(buildRouteFromNavigationState(resolved))!)
     }
     expect(parseSessionIdFromRoute('allSessions/session/s1?x=y' as ViewRoute)).toBe('s1')
-    expect(parseRouteToNavigationState('knowledge/unknown/doc')?.navigator).toBe('sessions')
+    // Incoming strict raw parsing now rejects unknown knowledge kinds itself.
+    expect(parseRouteToNavigationState('knowledge/unknown/doc')).toBeNull()
     expect(parseNavigationStateKey('unavailable:%ZZ')).toBeNull()
   })
   it('normalizes empty separators before resolving known routes and retains encoded entity data', () => {

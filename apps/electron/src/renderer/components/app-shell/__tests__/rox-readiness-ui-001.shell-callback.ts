@@ -4,6 +4,8 @@ import { createStore } from 'jotai'
 import { focusServicePanelAtom } from '../service-navigation'
 import { APP_NAV_DESTINATIONS_BY_ID, type AppNavDestinationId } from '../nav-destinations'
 import { routes } from '../../../../shared/routes'
+import { focusedPanelRouteAtom } from '../../../atoms/panel-stack'
+import { resolveViewRoute } from '../../../../shared/route-parser'
 
 // Executes the actual named/sidebar callback and, when present, its actual
 // central service callback. Navigation is a recording sink; focus uses real atoms.
@@ -30,10 +32,11 @@ export function invokeShellNavigationCallback(path: string, target: { name: stri
     `const handleServiceClick = ${serviceCallback || 'undefined'}; const handler = (${callback});`,
     { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } },
   ).outputText
-  const handler = new Function('navigate', 'routes', 'focusServicePanel', 'APP_NAV_DESTINATIONS_BY_ID', `${script}; return handler`)(
+  const handler = new Function('navigate', 'routes', 'focusServicePanel', 'APP_NAV_DESTINATIONS_BY_ID', 'navState', `${script}; return handler`)(
     (route: string) => calls.push(route), routes,
     (serviceId: AppNavDestinationId) => store.set(focusServicePanelAtom, serviceId),
     APP_NAV_DESTINATIONS_BY_ID,
+    resolveViewRoute(store.get(focusedPanelRouteAtom) ?? routes.view.allSessions()),
   ) as () => void
   handler()
   return calls

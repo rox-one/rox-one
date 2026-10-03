@@ -391,12 +391,12 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
       await page.locator('[data-focused="true"] [data-leaf="session"][data-entity="s1"]').waitFor()
       await page.evaluate(id => (window as any).ui001.navigate(`allSessions/session/${id}?keep=1`, { skipAutoSelect: true }), id)
       const missing = id === 'missing'
-      const surface = page.locator(`[data-focused="true"] [data-testid="${missing ? 'route-session-unavailable' : 'route-unavailable'}"]`)
+      const surface = page.locator(`[data-focused="true"] [data-testid="${missing ? 'route-session-missing' : 'route-unavailable'}"]`)
       await surface.waitFor()
       const state = await snapshot()
       if (missing) {
         expect(state.state.details.sessionId).toBe(id)
-        expect(await surface.getAttribute('data-session-id')).toBe(id)
+        expect(await surface.getAttribute('data-route-entity')).toBe(id)
       } else {
         expect(state.state).toMatchObject({navigator:'unavailable',route:`allSessions/session/${id}?keep=1`,reason:'workspace-mismatch'})
       }
