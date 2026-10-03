@@ -1005,6 +1005,13 @@ Collection recovery qualification completed on current bb047:33/0/80 native-stor
 Owner recent_features; depends on current Tasks1456, strict date1470 and Product1454. Preserve old source and modern Things UI. Exercise actual two-task link/kind/tag retention, submitted-field-only clearing, actor/workspace ABA, unmount and stale pre-render button denial, plus all retained task import/responsive cases and current native commit controls. Retain the before-fix lost draft and fixture failure history; qualify current Electron types with own workspace dependency resolution, record exact source/log hashes, reconcile all current docs without deletions, publish separate PR for parent review/merge.
 
 
+### Knowledge availability recovery — 2026-10-03
+
+- [x] Freeze original #1436 and current consumers; reject its global singleton cache because actual A→B/connection and invalidation probes expose wrong reuse. Coordinate collection/AppShell ownership with historical worker.
+- [x] Restore scoped bounded availability through both current consumers, shared native-event invalidation, local-store retention, render scope ownership, and obsolete kernel-call fences.
+- [x] Verify actual mounted components: offline zero kernel reads, shared status/remount fast path, native-event recovery, workspace/event late-response negatives, missing channel and current Notes navigation. Qualify adjacent Knowledge logic, current consumers through Vite and Electron types; retain the whole renderer build as incomplete due to host load, plus failed fixture and real race history.
+- [x] Prepare separate qualified PR and update the exhaustive 137-path source/caller ledger. Root owns remote merge; source branches remain intact.
+
 ## Notes source-path classification recovery — 2026-10-04
 
 1. Freeze source1465/6f59 and its external merge2338; retain negative current-source evidence. After correcting only the fixture's canonical root, actual current controls reproduce35pass/2fail for a corrupt parent directory and its transport classification.

@@ -51,13 +51,14 @@ import type {
 } from '../../shared/types'
 import { buildNewDocumentCreateArgs, pickOpenNotebook } from './knowledge-new-note'
 import { filterTree, mergeFolderChildren, type NavFilter, type SiyuanDocTreeNode } from './knowledge-tree'
+import { getKernelAvailability, observeKernelAvailability, type KernelAvailabilityProbe } from './kernel-availability'
 
 // ---------------------------------------------------------------------------
 // Data plumbing (exported for logic-level tests — KnowledgeHome precedent)
 // ---------------------------------------------------------------------------
 
 /** Subset of ElectronAPI.knowledge the navigator consumes (structural for tests). */
-export interface KnowledgeNavigatorApi {
+export interface KnowledgeNavigatorApi extends KernelAvailabilityProbe {
   listConnections(): Promise<Array<{ id: string }>>
   listNotebooks?(args: { connectionId: string }): Promise<KnowledgeNotebookInfo[]>
   listTree?(args: {
@@ -147,12 +148,17 @@ export function selectFavoriteEnvelopes(
  */
 export async function loadKnowledgeNavigatorData(
   api: KnowledgeNavigatorApi,
+  opts: { workspaceId?: string; probeKernel?: boolean; skipKernelReads?: boolean; isCurrent?: () => boolean } = {},
 ): Promise<KnowledgeNavigatorData> {
   const connections = await api.listConnections().catch(() => [] as Array<{ id: string }>)
+  if (opts.isCurrent?.() === false) return { notebooks: { status: 'unavailable', items: [] }, views: [], recent: [], favorites: [] }
   const connectionId = connections[0]?.id
+  const canReadKernel = opts.skipKernelReads ? Promise.resolve(false) : opts.probeKernel
+    ? getKernelAvailability(api, { workspaceId: opts.workspaceId, connectionId }).then(status => status.running)
+    : Promise.resolve(true)
 
   const notebooksPromise = (async (): Promise<NotebookSectionState> => {
-    if (!connectionId || typeof api.listNotebooks !== 'function') {
+    if (!connectionId || typeof api.listNotebooks !== 'function' || !await canReadKernel || opts.isCurrent?.() === false) {
       return { status: 'unavailable', items: [] }
     }
     try {
@@ -187,15 +193,16 @@ export async function loadKnowledgeNavigatorData(
     // Best-effort title resolution in parallel; per-row failure keeps the row
     // (label falls back to the ref id) rather than poisoning the section.
     const titles = new Map<string, string>()
-    if (typeof api.get === 'function' && connectionId) {
+    if (typeof api.get === 'function' && connectionId && await canReadKernel && opts.isCurrent?.() !== false) {
       const uniqueRefs = new Map<string, KnowledgeRef>()
       for (const entry of [...recentEnvelopes, ...favoriteEnvelopes]) {
         uniqueRefs.set(`${entry.knowledgeRef.kind}:${entry.knowledgeRef.id}`, entry.knowledgeRef)
       }
       await Promise.all(
         [...uniqueRefs.values()].map(async (ref) => {
+          if (opts.isCurrent?.() === false) return
           try {
-            const node = await api.get!({ connectionId, ref })
+            const node = await api.get!({ connectionId, ...(opts.workspaceId ? { workspaceId: opts.workspaceId } : {}), ref })
             if (typeof node?.title === 'string' && node.title) {
               titles.set(`${ref.kind}:${ref.id}`, node.title)
             }
@@ -281,18 +288,24 @@ export function KnowledgeNotebookTree({ mobile = false }: { mobile?: boolean }) 
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
-  const [data, setData] = React.useState<KnowledgeNavigatorData | null>(null)
+  const [snapshot, setSnapshot] = React.useState<{ workspaceId: string | null; data: KnowledgeNavigatorData } | null>(null)
+  // Workspace-private rows disappear during render, before passive cleanup/loading.
+  const data = snapshot?.workspaceId === workspaceId ? snapshot.data : null
 
   React.useEffect(() => {
     const api = typeof window === 'undefined' ? undefined : window.electronAPI?.knowledge
     if (!api) return
     let cancelled = false
-    void loadKnowledgeNavigatorData(api).then((result) => {
-      if (!cancelled) setData(result)
-    })
-    return () => {
-      cancelled = true
+    let request = 0
+    const refresh = () => {
+      const ticket = ++request
+      void loadKnowledgeNavigatorData(api, { workspaceId: workspaceId ?? undefined, probeKernel: true, isCurrent: () => !cancelled && ticket === request }).then(result => {
+        if (!cancelled && ticket === request) setSnapshot({ workspaceId, data: result })
+      })
     }
+    refresh()
+    const unsubscribe = observeKernelAvailability(api, refresh)
+    return () => { cancelled = true; ++request; unsubscribe() }
   }, [workspaceId])
 
   return (
