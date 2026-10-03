@@ -39,7 +39,7 @@ afterAll(async () => {
   await browser?.close()
   server?.stop(true)
   stage('continuity:browser:closed')
-})
+}, 30_000)
 
 function browserTest(name: string, operation: () => Promise<void>) {
   if (isolatedCase && isolatedCase !== name) return
@@ -53,9 +53,11 @@ function browserTest(name: string, operation: () => Promise<void>) {
     }
     const exitCode = await runNativeBrowserProcess([process.execPath, 'test', fileURLToPath(import.meta.url)], {
       label: name, env: { ...process.env, ROX_PRODUCT_TOUR_NATIVE_CONTINUITY_CASE: name },
+      // Supervision covers setup, the unchanged 30s case, and owned browser teardown.
+      deadlineMs: 90_000,
     })
     expect(exitCode).toBe(0)
-  }, isolatedCase ? 30_000 : 45_000)
+  }, isolatedCase ? 30_000 : 100_000)
 }
 
 for (const early of [true, false]) browserTest(`T-VOICE-REVIEW production dictation response ${early ? 'before' : 'after'} the start acknowledgement needs one capture and a visible review`, async () => {
