@@ -7,16 +7,18 @@ import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { extraScreenFlagAtoms } from '@/atoms/extra-screens'
 import { navigate, routes } from '@/lib/navigate'
+import { lazyRoutePage } from '@/lib/route-recovery'
 import type { ExtraScreenId } from '../../../shared/extra-screens'
 import { extraScreenDef } from './registry'
 import { EmptyState, ScreenButton } from './ui'
+import { ExtraScreenItemUnavailable } from './ExtraScreenItemUnavailable'
 
-const PAGES: Record<ExtraScreenId, React.LazyExoticComponent<React.ComponentType<{ itemId: string | null }>>> = {
-  dossier: React.lazy(() => import('./dossier/DossierPage')),
-  radar: React.lazy(() => import('./radar/RadarPage')),
-  decisions: React.lazy(() => import('./decisions/DecisionsPage')),
-  agents: React.lazy(() => import('./agents/AgentCenterPage')),
-  focus: React.lazy(() => import('./focus/FocusPage')),
+const PAGES: Record<ExtraScreenId, React.ComponentType<{ itemId: string | null }>> = {
+  dossier: lazyRoutePage(() => import('./dossier/DossierPage')),
+  radar: lazyRoutePage(() => import('./radar/RadarPage')),
+  decisions: lazyRoutePage(() => import('./decisions/DecisionsPage')),
+  agents: lazyRoutePage(() => import('./agents/AgentCenterPage')),
+  focus: lazyRoutePage(() => import('./focus/FocusPage')),
 }
 
 export interface ExtraScreenHostProps {
@@ -41,9 +43,13 @@ export default function ExtraScreenHost({ screen, itemId }: ExtraScreenHostProps
       />
     )
   }
+  // These overview screens currently have no item-detail contract.
+  if (itemId && (screen === 'agents' || screen === 'focus')) {
+    return <ExtraScreenItemUnavailable screen={screen} itemId={itemId} />
+  }
   const Page = PAGES[screen]
   return (
-    <React.Suspense fallback={null}>
+    <React.Suspense fallback={<div className="flex h-full items-center justify-center text-muted-foreground" data-testid="extra-screen-loading">{t('common.loading')}</div>}>
       <Page itemId={itemId} />
     </React.Suspense>
   )

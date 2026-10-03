@@ -7,7 +7,7 @@ import * as React from 'react'
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import type { KnowledgeRef } from '@rox/core/knowledge'
-import { deriveKnowledgeMindMap, type MindMapGraph } from '@rox/core/mindmap'
+import type { MindMapGraph } from '@rox/core/mindmap'
 import {
   defaultKnowledgeEntityCapabilities,
   EntityViewTabs,
@@ -20,6 +20,7 @@ import { useSiyuanConnected } from '@/hooks/useSiyuanConnected'
 import { MindMapHost } from '@/mindmap/MindMapHost'
 import { KnowledgeInspector } from '@/knowledge/KnowledgeInspector'
 import { knowledgeEntityCompanionRef } from '@/knowledge/knowledge-entity-ref'
+import { loadKnowledgeEntityGraph } from '@/knowledge/knowledge-entity-projection'
 import KnowledgeSurfacePage from '@/pages/KnowledgeSurfacePage'
 import type { SiyuanSurfaceRef } from '@/knowledge/siyuan-url'
 
@@ -40,97 +41,64 @@ export default function KnowledgeEntityPage({ kind, id, panelId }: KnowledgeEnti
   )
   const [view, setView] = useEntityView(`knowledge:${kind}:${id}`, capabilities, 'standard')
 
-  const [graph, setGraph] = React.useState<MindMapGraph | null>(null)
-  const [loading, setLoading] = React.useState(false)
-  const [error, setError] = React.useState<string | null>(null)
+  const [attempt, setAttempt] = React.useState(0)
+  const identity = JSON.stringify([activeWorkspaceId, kind, id, attempt])
+  const [projection, setProjection] = React.useState<{
+    identity: string
+    status: 'loading' | 'ready' | 'missing' | 'error'
+    graph?: MindMapGraph
+    error?: string
+  }>({ identity, status: 'loading' })
+  const currentProjection: typeof projection = projection.identity === identity ? projection : { identity, status: 'loading' }
 
   React.useEffect(() => {
     if (view !== 'map' && view !== 'outline') {
-      setGraph(null)
-      setError(null)
-      setLoading(false)
       return
     }
     if (!activeWorkspaceId) {
-      setError(t('knowledge.inspector.noConnection'))
-      setGraph(null)
-      setLoading(false)
+      setProjection({ identity, status: 'error', error: t('knowledge.inspector.noConnection') })
       return
     }
 
     let cancelled = false
     const run = async () => {
-      setLoading(true)
-      setError(null)
+      setProjection({ identity, status: 'loading' })
       try {
-        const connections = await window.electronAPI.knowledge.listConnections()
-        // Prefer default-local connection over arbitrary [0] when multi-connection.
-        const connectionId =
-          connections.find((c) => c.id === 'siyuan-local')?.id ??
-          connections.find((c) => (c.label ?? '').toLowerCase().includes('local'))?.id ??
-          connections[0]?.id
-        if (!connectionId) throw new Error(t('knowledge.inspector.noConnection'))
-
-        const ref: KnowledgeRef = { scheme: 'siyuan', kind: kind as KnowledgeRef['kind'], id }
-        const args = { workspaceId: activeWorkspaceId, connectionId, ref }
-
-        const node = await window.electronAPI.knowledge.get(args)
-        const backlinks = await window.electronAPI.knowledge.getBacklinks(args).catch(() => [])
-
-        let children: Array<{ blockId: string; content: string }> | undefined
-        try {
-          const ctx = await window.electronAPI.knowledge.getContext({
-            ...args,
-            mode: 'live-reference',
-          })
-          if (ctx?.children?.length) {
-            children = ctx.children.map((c) => ({
-              blockId: c.blockId,
-              content: c.content,
-            }))
-          }
-        } catch {
-          // outline from markdown
-        }
-
+        const result = await loadKnowledgeEntityGraph({
+          api: window.electronAPI.knowledge, workspaceId: activeWorkspaceId,
+          ref: { scheme: 'siyuan', kind: kind as KnowledgeRef['kind'], id },
+          isCurrent: () => !cancelled, noConnectionMessage: t('knowledge.inspector.noConnection'),
+        })
         if (cancelled) return
-        setGraph(
-          deriveKnowledgeMindMap({
-            ref,
-            title: node?.title || id,
-            content: node?.markdown ?? '',
-            children,
-            backlinks: (backlinks ?? []).map((b) => ({
-              ref: b.ref,
-              title: b.title || b.ref.id,
-            })),
-          }),
-        )
+        if (result.status !== 'cancelled') setProjection({ identity, ...result })
       } catch (e) {
         if (!cancelled) {
-          setGraph(null)
-          setError(e instanceof Error ? e.message : String(e))
+          setProjection({ identity, status: 'error', error: e instanceof Error ? e.message : String(e) })
         }
-      } finally {
-        if (!cancelled) setLoading(false)
       }
     }
     void run()
     return () => {
       cancelled = true
     }
-  }, [view, kind, id, activeWorkspaceId, t])
+  }, [view, kind, id, activeWorkspaceId, identity, t])
 
   const companionRef = knowledgeEntityCompanionRef(kind, id)
 
   let body: React.ReactNode
   if (view === 'map' || view === 'outline') {
-    body = (
+    body = currentProjection.status === 'missing' || currentProjection.status === 'error' ? (
+      <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-muted-foreground" data-testid="knowledge-entity-unavailable" data-entity-id={id}>
+        <p className="text-sm">{currentProjection.status === 'missing' ? t('common.unavailable') : currentProjection.error || t('common.unavailable')}</p>
+        <button type="button" className="rounded-md border border-border px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => setAttempt(value => value + 1)}>
+          {t('common.retry')}
+        </button>
+      </div>
+    ) : (
       <MindMapHost
         entity={{ type: 'knowledge', ref: { scheme: 'siyuan', kind: kind as KnowledgeRef['kind'], id } }}
-        graph={graph}
-        loading={loading}
-        error={error}
+        graph={currentProjection.graph ?? null}
+        loading={currentProjection.status === 'loading'}
         mode={view}
         workspaceId={activeWorkspaceId || undefined}
       />
