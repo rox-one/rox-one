@@ -39,7 +39,36 @@
     "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.effect-harness.ts",
     "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts",
     "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.selected-resource.test.ts",
-    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts"
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/checkpoint.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/docs/plan.md",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/docs/spec.md",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/lead-navigation-proposal.md",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/report.md",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/result.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/browser/cloud-run-b.png",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/browser/selected-source-missing.png",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/failure-history.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/log-manifest.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/logs/baseline-tests.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/logs/baseline-typecheck.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/logs/browser-final.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/logs/browser-first.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/logs/callbacks-first.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/logs/dependency-install.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/logs/focused-final.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/logs/geometry-negative-control.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/logs/integrated-build.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/logs/integrated-focused.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/logs/integrated-typecheck.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/logs/regression-final.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/logs/renderer-build-final.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/logs/typecheck-final.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/logs/typecheck-first.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/original-contract.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/prior-cloud.diff.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/prior-result.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/source-manifest.json"
   ],
   "existingProductPaths": [
     "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
@@ -69,7 +98,7 @@
       "log": "verification/logs/dependency-install.log.gz"
     },
     {
-      "command": "bun test <five isolated UI-001 unit test files>",
+      "command": "bun test apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.selected-resource.test.ts apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
       "result": "32pass0fail220assertions",
       "log": "verification/logs/focused-final.log.gz"
     },
@@ -94,7 +123,7 @@
       "log": "verification/logs/renderer-build-final.log.gz"
     },
     {
-      "command": "geometry tests against clean main negative control",
+      "command": "cd clean main snapshot && bun test apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts (copied test file only)",
       "result": "2pass11expectedfail; tests reject unbounded live writes and unsupported storage recovery",
       "log": "verification/logs/geometry-negative-control.log.gz"
     },
@@ -103,7 +132,7 @@
       "result": "pass"
     },
     {
-      "command": "ROX_UI001_BROWSER_TEST=1 bun test <all six isolated UI-001 test files>",
+      "command": "ROX_UI001_BROWSER_TEST=1 ROX_UI001_CHROMIUM_EXECUTABLE=<existing Chromium executable> bun test apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.selected-resource.test.ts apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
       "result": "40pass0fail237assertions on integrated source536eaa1483550a2cb2916c7cf090b07fe710ee2c",
       "log": "verification/logs/integrated-focused.log.gz"
     },
