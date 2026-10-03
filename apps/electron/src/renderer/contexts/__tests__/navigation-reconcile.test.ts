@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
-import { normalizePanelRouteForReconcile } from '../navigation-reconcile'
-import type { NavigationState } from '../../../shared/types'
+import { normalizePanelRouteForReconcile, parsePanelEntriesFromUrl } from '../navigation-reconcile'
 import type { ViewRoute } from '../../../shared/routes'
+import type { NavigationState } from '../../../shared/types'
 
 describe('normalizePanelRouteForReconcile', () => {
   it('auto-selects session details for filter-only session routes', () => {
@@ -59,6 +59,14 @@ describe('normalizePanelRouteForReconcile', () => {
     expect(normalized).toBe('allSessions')
   })
 
+  it('preserves every query parameter when reconciling a list or search route', () => {
+    const identity = (state: NavigationState) => state
+    expect<string>(normalizePanelRouteForReconcile('tasks?view=calendar' as ViewRoute, identity)).toBe('tasks?view=calendar')
+    expect<string>(normalizePanelRouteForReconcile('search?q=ok&mode=future' as ViewRoute, identity)).toBe('search?q=ok&mode=future')
+    expect<string>(normalizePanelRouteForReconcile('allSessions?keep=a%2Cb' as ViewRoute, state => ({ ...state, details: { type: 'session', sessionId: 's1' } } as NavigationState)))
+      .toBe('allSessions/session/s1?keep=a%2Cb')
+  })
+
   it('keeps non-session routes unchanged with session-only resolver', () => {
     const resolver = (state: NavigationState): NavigationState => {
       if (state.navigator === 'sessions' && !state.details) {
@@ -105,6 +113,18 @@ describe('normalizePanelRouteForReconcile', () => {
 
     expect(normalized).toEqual(['allSessions/session/left', 'allSessions/session/right'])
   })
+  it('keeps JSON-valid non-tuple legacy addresses unavailable instead of auto-selecting the focused route', () => {
+    for (const route of ['["future"]', '[1]', '[["future"]]']) {
+      expect(parsePanelEntriesFromUrl(route)).toEqual([{route:route as ViewRoute,proportion:0}])
+      expect(normalizePanelRouteForReconcile(route as ViewRoute, () => {throw new Error('Unexpected auto-selection')})).toBe(route as ViewRoute)
+    }
+  })
+
+  it('returns no entries for malformed structured panel data so focused-route recovery can run', () => {
+    for (const value of ['[', 'v2:[1]', 'v2:[["tasks"]]', ' [ [ "tasks", 1 ] ', '[["",0]]', '[[" ",0]]', '  ']) expect(parsePanelEntriesFromUrl(value)).toEqual([])
+    expect(parsePanelEntriesFromUrl('[["tasks",0]]')).toEqual([{ route: 'tasks', proportion: 0 }])
+  })
+
 })
 
 // PR1412 also preserves query spelling for auto-selected collection roots.

@@ -1,0 +1,21 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/notes-canonical-navigation.test.ts:
+(pass) Notes shell navigation > opens the workspace-local Notes surface instead of a knowledge provider [3052.59ms]
+(pass) Notes shell navigation > resolves imported chat notes to local Notes, not SiYuan [1.92ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/connections-nav.test.ts:
+(pass) CF-6.2 Connections nav and surface > registers an enabled connections destination for the Workbench rail [0.72ms]
+(pass) CF-6.2 Connections nav and surface > exposes Connections in the single primary sidebar using the canonical route [837.71ms]
+(pass) CF-6.2 Connections nav and surface > renders ConnectionsPage from MainContentPanel on the connections navigator [0.26ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-navigation.test.ts:
+(pass) UI-001 retained addresses and service focus > cannot classify unavailable or malformed addresses as an existing service [506.40ms]
+(pass) UI-001 retained addresses and service focus > refuses to focus an unavailable panel and preserves its address [0.14ms]
+(pass) UI-001 retained addresses and service focus > focuses a valid service sibling while preserving all retained panel identities [0.20ms]
+(pass) UI-001 retained addresses and service focus > actual Sessions callback opens its canonical route rather than reusing an unavailable panel [280.72ms]
+
+ 9 pass
+ 0 fail
+ 72 expect() calls
+Ran 9 tests across 3 files. [13.44s]

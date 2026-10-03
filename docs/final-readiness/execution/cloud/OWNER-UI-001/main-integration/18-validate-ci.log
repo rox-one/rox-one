@@ -1,0 +1,265 @@
+$ bun run validate:dev && bun run lint:i18n:parity && bun run lint:i18n:sorted && bun run lint:i18n:coverage
+$ bun run typecheck:all && bun run test:shared:all && bun run test:connection-fabric && bun run test:config-isolation && bun run test:doc-tools
+$ cd packages/core && bun run tsc --noEmit && cd ../shared && bun run tsc --noEmit && cd ../server-core && bun run tsc --noEmit && cd ../server && bun run tsc --noEmit && cd ../session-tools-core && bun run tsc --noEmit && cd ../pi-agent-server && bun run typecheck && cd ../../apps/electron && bun run typecheck && cd ../../packages/ui && bun run tsc --noEmit && cd ../.. && bun run typecheck:pages-worker && bun run workspace-service:typecheck
+$ tsc --noEmit -p tsconfig.typecheck.json
+$ tsc --noEmit
+$ if [ -d workers/pages ]; then cd workers/pages && bun run typecheck; else echo 'workers/pages not present (OSS export) - skipping'; fi
+workers/pages not present (OSS export) - skipping
+$ bun run --cwd apps/workspace-service typecheck
+$ tsc --noEmit
+$ bun run test:shared:llm-connections && bun run test:shared:models-pi && bun run test:shared:config
+$ cd packages/shared && bun test tests/llm-connections.test.ts
+bun test v1.3.14 (0d9b296a)
+
+tests/llm-connections.test.ts:
+(pass) getMiniModel() > finds haiku for anthropic provider [0.16ms]
+(pass) getMiniModel() > finds mini for pi provider [0.05ms]
+(pass) getMiniModel() > skips denied codex-mini-latest alias for pi provider [0.02ms]
+(pass) getMiniModel() > skips denied pi/codex-mini-latest alias for pi provider [0.02ms]
+(pass) getMiniModel() > finds mini for pi_compat provider [0.02ms]
+(pass) getMiniModel() > finds mini for Pi list with mixed models [0.02ms]
+(pass) getMiniModel() > finds mini even when model name has "mini" in different position [1.32ms]
+(pass) getMiniModel() > falls back to last model when Pi list has no mini/flash model [0.04ms]
+(pass) getMiniModel() > returns undefined for empty model list [0.16ms]
+(pass) getMiniModel() > returns undefined for undefined models [0.02ms]
+(pass) getMiniModel() > falls back to last model when no keyword match [0.03ms]
+(pass) getMiniModel() > prefers rox/fast for omp public catalog [0.68ms]
+(pass) getMiniModel() > fallback ignores denied alias and returns last allowed model [0.03ms]
+(pass) getMiniModel() > handles single-model list [0.02ms]
+(pass) getSummarizationModel() > returns same result as getMiniModel (shared implementation) [0.03ms]
+(pass) getMiniModel() — auth-flavor awareness > skips *codex-mini* variants under openai-codex auth [0.02ms]
+(pass) getMiniModel() — auth-flavor awareness > still returns *codex-mini* variants under regular openai (API-key) auth [0.02ms]
+(pass) getMiniModel() — auth-flavor awareness > falls back to last allowed model when every mini candidate is denied [0.02ms]
+(pass) isDeniedMiniModelId() > always denies codex-mini-latest [0.02ms]
+(pass) isDeniedMiniModelId() > denies *codex-mini* variants only under openai-codex auth [0.02ms]
+(pass) isDeniedMiniModelId() > does not deny non-codex-mini models [0.02ms]
+
+ 21 pass
+ 0 fail
+ 28 expect() calls
+Ran 21 tests across 1 file. [1293.00ms]
+$ cd packages/shared && bun test tests/models-pi.test.ts
+bun test v1.3.14 (0d9b296a)
+
+tests/models-pi.test.ts:
+(pass) models-pi filtering > excludes codex-mini-latest for openai models [0.48ms]
+(pass) models-pi filtering > excludes all gpt-4* models for openai models [33.87ms]
+(pass) models-pi filtering > keeps Claude Opus 4.6 models in Anthropic catalogs [206.41ms]
+(pass) models-pi filtering > includes DeepSeek in the Pi API key provider list with a human-readable label [29.57ms]
+(pass) models-pi filtering > returns current DeepSeek models from the Pi SDK catalog [52.66ms]
+(pass) models-pi filtering > returns current Kimi Code models with K3 first-class metadata [0.17ms]
+(pass) models-pi filtering > includes Moonshot AI in the Pi API key provider list with human-readable labels [0.29ms]
+(pass) models-pi filtering > returns Claude Opus 5 from the Pi SDK catalog for Anthropic and Bedrock [0.44ms]
+(pass) models-pi filtering > returns the DeepSeek V4 Flash vision model from the Pi SDK catalog [0.03ms]
+(pass) models-pi filtering > returns GPT-6 Astra from the Pi SDK catalog for OpenAI API keys and ChatGPT accounts [0.46ms]
+(pass) models-pi filtering > returns Kimi K3 from the Pi SDK catalog for both Moonshot providers [0.10ms]
+
+ 11 pass
+ 0 fail
+ 22 expect() calls
+Ran 11 tests across 1 file. [2.46s]
+$ cd packages/shared && bun test src/config/__tests__/llm-connections.test.ts src/config/__tests__/storage-migrations.test.ts src/config/__tests__/storage-startup-migration.test.ts src/config/__tests__/default-thinking-level.test.ts
+bun test v1.3.14 (0d9b296a)
+
+src/config/__tests__/llm-connections.test.ts:
+(pass) getDefaultModelsForConnection > anthropic returns ANTHROPIC_MODELS (ModelDefinition[]) [0.10ms]
+(pass) getDefaultModelsForConnection > pi with piAuthProvider returns filtered models including Opus 4.6 [2.05ms]
+(pass) getDefaultModelsForConnection > pi without piAuthProvider returns all Pi models [130.40ms]
+(pass) provider registry fallback > uses R1 Max for Rox when a persisted catalog is missing [0.33ms]
+(pass) getDefaultModelForConnection > returns first model ID for anthropic [0.04ms]
+(pass) getDefaultModelForConnection > regression: Pi anthropic default is in its own model list [1.99ms]
+(pass) getDefaultModelForConnection > Pi anthropic keeps Opus 4.8 as default with Opus 5 ranked directly below it [0.16ms]
+(pass) getDefaultModelForConnection > never ranks a deprecated catalog entry as the Pi default [32.02ms]
+(pass) getDefaultModelForConnection > Pi openai default is in its own model list [0.34ms]
+(pass) getDefaultModelForConnection > Pi openai and openai-codex default to GPT-6 Astra with GPT-5.6 Sol ranked next [0.31ms]
+(pass) getDefaultModelForConnection > Pi deepseek default is in its own model list [0.04ms]
+(pass) getDefaultModelForConnection > Pi moonshotai defaults to Kimi K3 from its own model list [0.27ms]
+(pass) getDefaultModelForConnection > returns empty string for pi_compat (dynamic provider) [0.02ms]
+(pass) getDefaultModelForConnection > returns empty string for anthropic_compat (dynamic provider) [0.01ms]
+(pass) getDefaultModelForConnection > omp exposes one R1 Max model by default [0.04ms]
+(pass) isCompatProvider > returns true for pi_compat [0.01ms]
+(pass) isCompatProvider > returns true for anthropic_compat
+(pass) isCompatProvider > returns false for anthropic
+(pass) isCompatProvider > returns false for pi
+(pass) isAnthropicProvider > returns true for anthropic [0.02ms]
+(pass) isAnthropicProvider > returns true for anthropic_compat
+(pass) isAnthropicProvider > returns false for pi
+(pass) isPiProvider > returns true for pi [0.01ms]
+(pass) isPiProvider > returns true for pi_compat
+(pass) isPiProvider > returns false for anthropic_compat
+(pass) isPiProvider > returns false for anthropic
+(pass) toBedrockNativeId > maps bare Anthropic IDs to US inference profile IDs [0.05ms]
+(pass) toBedrockNativeId > keeps Opus 4.7 mapped and selectable [0.01ms]
+(pass) toBedrockNativeId > maps Sonnet 5 forward and reverse across regions and base IDs [0.05ms]
+(pass) toBedrockNativeId > normalizes deprecated Opus IDs to Opus 4.8 before mapping, keeping Opus 4.6 [0.02ms]
+(pass) toBedrockNativeId > maps base Bedrock IDs to US inference profile IDs [0.01ms]
+(pass) toBedrockNativeId > passes through already US-prefixed IDs
+(pass) toBedrockNativeId > passes through unknown IDs [0.01ms]
+(pass) toBedrockNativeId > maps to EU inference profiles when regionPrefix is eu [0.01ms]
+(pass) toBedrockNativeId > defaults to US when regionPrefix is omitted or us
+(pass) toBedrockNativeId > passes through unknown IDs regardless of regionPrefix
+(pass) deriveBedrockRegionPrefix > returns us for US regions [0.02ms]
+(pass) deriveBedrockRegionPrefix > returns eu for EU regions [0.23ms]
+(pass) deriveBedrockRegionPrefix > returns us for other regions (fallback) [0.04ms]
+(pass) deriveBedrockRegionPrefix > returns us when undefined [0.02ms]
+(pass) Bedrock preferred defaults ordering > sorts preferred models first for amazon-bedrock [2.44ms]
+(pass) Kimi preferred defaults ordering > uses Kimi K3 as the default Kimi Code model [0.12ms]
+(pass) fromBedrockNativeId > maps US inference profile IDs back to bare Anthropic [0.02ms]
+(pass) fromBedrockNativeId > maps EU/Global inference profile IDs back to bare [0.01ms]
+(pass) fromBedrockNativeId > maps base Bedrock IDs back to bare
+(pass) fromBedrockNativeId > passes through bare IDs
+(pass) fromBedrockNativeId > maps Opus 4.6 native IDs back to the bare ID
+(pass) normalizeBedrockModelId > strips pi/ prefix and maps to US inference profile [0.04ms]
+(pass) normalizeBedrockModelId > maps bare IDs to US inference profile [0.07ms]
+(pass) normalizeBedrockModelId > maps Opus 4.6 IDs to their own native IDs [0.02ms]
+(pass) normalizeBedrockModelId > maps base Bedrock IDs to US inference profile
+(pass) normalizeBedrockModelId > is idempotent for already US-prefixed IDs
+(pass) normalizeBedrockModelId > handles empty/undefined [0.01ms]
+(pass) normalizeBedrockModelId > respects regionPrefix for EU [0.06ms]
+(pass) Bedrock-native model display > getModelDisplayName resolves US inference profile IDs [2.42ms]
+(pass) Bedrock-native model display > getModelDisplayName resolves EU/base Bedrock IDs [0.02ms]
+(pass) Bedrock-native model display > getModelShortName resolves Bedrock IDs [0.05ms]
+(pass) Bedrock-native model display > getModelContextWindow resolves Bedrock IDs [0.03ms]
+(pass) Bedrock-native model display > isClaudeModel recognizes Bedrock IDs [0.03ms]
+(pass) Claude Fable 5 > is registered as an Anthropic model with the expected metadata [0.04ms]
+(pass) Claude Fable 5 > resolves display/short name, context window, and Claude detection [0.04ms]
+(pass) Claude Fable 5 > does NOT become the Anthropic default (Opus 4.8 stays default) [0.01ms]
+(pass) Claude Fable 5 > round-trips through the Bedrock inference-profile mapping [0.04ms]
+(pass) Claude Fable 5.1 > is registered as an Anthropic model with the expected metadata [0.02ms]
+(pass) Claude Fable 5.1 > is listed before Fable 5 so the newest Fable wins shortName resolution [0.27ms]
+(pass) Claude Fable 5.1 > resolves display/short name, context window, and Claude detection [0.04ms]
+(pass) Claude Fable 5.1 > does NOT become the Anthropic default (Opus 4.8 stays default)
+(pass) Claude Fable 5.1 > round-trips through the Bedrock inference-profile mapping [3.41ms]
+(pass) Claude Fable 5.1 > the 5.1 and 5.0 ids never cross-map through the Bedrock tables [0.05ms]
+
+src/config/__tests__/storage-startup-migration.test.ts:
+killed 1 dangling process
+78 |   })
+79 |
+80 |   if (run.exitCode !== 0) {
+81 |     throw new Error(
+82 |       `migration subprocess failed (exit ${run.exitCode})\nstdout:\n${run.stdout.toString()}\nstderr:\n${run.stderr.toString()}`,
+83 |     )
+         ^
+error: migration subprocess failed (exit null)
+stdout:
+
+stderr:
+
+      at runMigration (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/packages/shared/src/config/__tests__/storage-startup-migration.test.ts:83:5)
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/packages/shared/src/config/__tests__/storage-startup-migration.test.ts:113:5)
+(fail) startup migration (integration) > migrates legacy anthropic_compat connections into anthropic_compat with endpoint metadata [5050.35ms]
+  ^ this test timed out after 5000ms.
+killed 1 dangling process
+78 |   })
+79 |
+80 |   if (run.exitCode !== 0) {
+81 |     throw new Error(
+82 |       `migration subprocess failed (exit ${run.exitCode})\nstdout:\n${run.stdout.toString()}\nstderr:\n${run.stderr.toString()}`,
+83 |     )
+         ^
+error: migration subprocess failed (exit null)
+stdout:
+
+stderr:
+
+      at runMigration (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/packages/shared/src/config/__tests__/storage-startup-migration.test.ts:83:5)
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/packages/shared/src/config/__tests__/storage-startup-migration.test.ts:141:5)
+(fail) startup migration (integration) > upgrades temporary pi_compat anthropic-messages connections into anthropic_compat [5022.88ms]
+  ^ this test timed out after 5000ms.
+killed 1 dangling process
+78 |   })
+79 |
+80 |   if (run.exitCode !== 0) {
+81 |     throw new Error(
+82 |       `migration subprocess failed (exit ${run.exitCode})\nstdout:\n${run.stdout.toString()}\nstderr:\n${run.stderr.toString()}`,
+83 |     )
+         ^
+error: migration subprocess failed (exit null)
+stdout:
+
+stderr:
+
+      at runMigration (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/packages/shared/src/config/__tests__/storage-startup-migration.test.ts:83:5)
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/packages/shared/src/config/__tests__/storage-startup-migration.test.ts:166:5)
+(fail) startup migration (integration) > repairs broken pi-api-key openai-codex provider on startup migration [5019.90ms]
+  ^ this test timed out after 5000ms.
+(pass) startup migration (integration) > preserves userDefined3Tier model subsets during startup migration [3363.79ms]
+(pass) startup migration (integration) > normalizes auto mode model set back to provider defaults [3627.18ms]
+(pass) startup migration (integration) > repairs userDefined3Tier lists by removing invalid IDs and fixing default model [4993.67ms]
+(fail) startup migration (integration) > falls back to provider defaults when userDefined3Tier becomes empty after filtering [5554.47ms]
+  ^ this test timed out after 5000ms.
+(pass) startup migration (integration) > normalizes legacy unprefixed userDefined3Tier model IDs instead of resetting [3925.91ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps direct Anthropic Opus 4.6 default/model entries intact [4708.64ms]
+killed 1 dangling process
+78 |   })
+79 |
+80 |   if (run.exitCode !== 0) {
+81 |     throw new Error(
+82 |       `migration subprocess failed (exit ${run.exitCode})\nstdout:\n${run.stdout.toString()}\nstderr:\n${run.stderr.toString()}`,
+83 |     )
+         ^
+error: migration subprocess failed (exit null)
+stdout:
+
+stderr:
+
+      at runMigration (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/packages/shared/src/config/__tests__/storage-startup-migration.test.ts:83:5)
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-7/work/ui-001-main/packages/shared/src/config/__tests__/storage-startup-migration.test.ts:406:5)
+(fail) legacy Opus migration to default Opus (integration) > restores Opus 4.6 once to direct Anthropic connections and respects a later removal [5022.83ms]
+  ^ this test timed out after 5000ms.
+(pass) legacy Opus migration to default Opus (integration) > migrates direct Anthropic Opus 4.5 defaults straight to Opus 4.8 [4575.65ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates previous direct Anthropic Opus 4.7 defaults to Opus 4.8 while keeping 4.7 selectable [3105.12ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps workspace default Opus 4.6 unchanged [3195.71ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates workspace default Opus 4.7 to Opus 4.8 [4727.13ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps Pi Anthropic Opus 4.6 IDs unchanged [2312.63ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps Pi Bedrock Opus 4.6 native IDs unchanged [3294.54ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates legacy unprefixed Pi Anthropic Opus 4.6 IDs to pi-prefixed Opus 4.6 [2136.12ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates legacy Bedrock provider Opus 4.6 IDs to Pi Bedrock native Opus 4.6 IDs [2867.51ms]
+(pass) legacy Opus migration to default Opus (integration) > migrates seeded rox-kimi kimi-K3 connections onto the public ROX plane [1919.33ms]
+(pass) legacy Opus migration to default Opus (integration) > upgrades installed ROX defaults while preserving sessions and other providers [3806.76ms]
+(pass) legacy Opus migration to default Opus (integration) > keeps a custom runtime and a workspace using another provider unchanged [1821.91ms]
+(pass) legacy Opus migration to default Opus (integration) > preserves an explicit legacy Rox Max default across repeated startup [2929.38ms]
+(pass) legacy Opus migration to default Opus (integration) > upgrades old onboarding Rox defaults with a separate marker and preserves private catalogs [3354.48ms]
+(pass) legacy Opus migration to default Opus (integration) > preserves a seeded slug explicitly repointed to a private runtime [2435.92ms]
+
+src/config/__tests__/storage-migrations.test.ts:
+(pass) shouldMigratePiOpenAiProvider > migrates legacy Pi OAuth OpenAI connections to openai-codex [0.09ms]
+(pass) shouldMigratePiOpenAiProvider > does not migrate Pi API key OpenAI connections [0.01ms]
+(pass) shouldMigratePiOpenAiProvider > does not migrate Pi custom endpoint connections [0.02ms]
+(pass) shouldMigratePiOpenAiProvider > does not migrate already-correct openai-codex connections [0.01ms]
+(pass) shouldRepairPiApiKeyCodexProvider > repairs Pi API key connections that were incorrectly set to openai-codex [0.03ms]
+(pass) shouldRepairPiApiKeyCodexProvider > repairs Pi API key with endpoint connections that were incorrectly set to openai-codex [0.01ms]
+(pass) shouldRepairPiApiKeyCodexProvider > does not repair OAuth openai-codex connections [0.01ms]
+(pass) shouldRepairPiApiKeyCodexProvider > does not repair non-OpenAI-Codex providers [0.01ms]
+(pass) inferModelSelectionMode > infers automaticallySyncedFromProvider when model list equals provider defaults [0.12ms]
+(pass) inferModelSelectionMode > infers userDefined3Tier when model list is a custom subset [0.02ms]
+(pass) inferModelSelectionMode > infers automaticallySyncedFromProvider for empty model lists [0.01ms]
+
+src/config/__tests__/default-thinking-level.test.ts:
+(pass) default thinking level storage > falls back to bundled default when no app-level default is set [861.86ms]
+(pass) default thinking level storage > persists defaultThinkingLevel to config.json [1158.11ms]
+(pass) default thinking level storage > round-trips persisted value across get/set in a fresh process [1470.14ms]
+(pass) default thinking level storage > supports every thinking level [3238.87ms]
+(pass) default thinking level storage > migrates legacy "think" value to "medium" [2261.79ms]
+
+5 tests failed:
+(fail) startup migration (integration) > migrates legacy anthropic_compat connections into anthropic_compat with endpoint metadata [5050.35ms]
+  ^ this test timed out after 5000ms.
+(fail) startup migration (integration) > upgrades temporary pi_compat anthropic-messages connections into anthropic_compat [5022.88ms]
+  ^ this test timed out after 5000ms.
+(fail) startup migration (integration) > repairs broken pi-api-key openai-codex provider on startup migration [5019.90ms]
+  ^ this test timed out after 5000ms.
+(fail) startup migration (integration) > falls back to provider defaults when userDefined3Tier becomes empty after filtering [5554.47ms]
+  ^ this test timed out after 5000ms.
+(fail) legacy Opus migration to default Opus (integration) > restores Opus 4.6 once to direct Anthropic connections and respects a later removal [5022.83ms]
+  ^ this test timed out after 5000ms.
+
+ 104 pass
+ 5 fail
+ 278 expect() calls
+Ran 109 tests across 4 files. [102.80s]
+error: script "test:shared:config" exited with code 1
+error: script "test:shared:all" exited with code 1
+error: script "validate:dev" exited with code 1
+error: script "validate:ci" exited with code 1

@@ -1,0 +1,42 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/platform/__tests__/layout-snapshot.test.ts:
+(pass) layout-snapshot: tab ↔ route > maps every SurfaceTab kind to its canonical route and back [2.64ms]
+(pass) layout-snapshot: tab ↔ route > round-trips terminal via URL snapshot [0.76ms]
+(pass) layout-snapshot: tab ↔ route > returns null for non-surface routes and surfaces without a durable ref [0.75ms]
+(pass) layout-snapshot: tab ↔ route > drops degraded surface routes instead of resurrecting bogus tabs [0.04ms]
+(pass) layout-snapshot: snapshot ↔ URL encoding > round-trips a single-session layout (no panels param, like syncUrl) [0.37ms]
+(pass) layout-snapshot: snapshot ↔ URL encoding > round-trips a mixed 4-surface layout with focus on tab 2 [0.72ms]
+(pass) layout-snapshot: snapshot ↔ URL encoding > round-trips a layout covering all 8 surface kinds [0.19ms]
+(pass) layout-snapshot: snapshot ↔ URL encoding > preserves non-uniform proportions at transport precision [0.07ms]
+(pass) layout-snapshot: snapshot ↔ URL encoding > emits the exact syncUrl format (route always, panels/fi only when multi-panel) [0.04ms]
+(pass) layout-snapshot: snapshot ↔ URL encoding > skips non-surface panels and remaps focus to the kept surface tabs [0.11ms]
+(pass) layout-snapshot: snapshot ↔ URL encoding > drops malformed surface panels without failing the rest of the stack [0.09ms]
+(pass) layout-snapshot: snapshot ↔ URL encoding > reconstructs panel-stack entries for reconcilePanelStackAtom [0.05ms]
+(pass) layout-snapshot: snapshot ↔ open surfaces > round-trips through the OpenSurfaces view with deterministic defaults [0.10ms]
+(pass) layout-snapshot: snapshot ↔ open surfaces > preserves custom ids and proportions when provided [2.01ms]
+(pass) layout-snapshot restore → inspector contribution > restored knowledge tab yields activeSurface knowledge so knowledge.inspector is listed [0.83ms]
+(pass) layout-snapshot restore → inspector contribution > restored session tab does not list knowledge.inspector [0.18ms]
+
+apps/electron/src/renderer/lib/__tests__/rox-readiness-ui-001.panel-url.test.ts:
+(pass) UI-001 panel URL transport > preserves raw route delimiters, malformed escapes and existing encoded IDs through browser query transport [0.59ms]
+(pass) UI-001 panel URL transport > preserves legacy encoded slash IDs without an extra URI decode [0.54ms]
+(pass) UI-001 panel URL transport > retains legacy missing proportion and last-colon parsing behavior [0.06ms]
+(pass) UI-001 panel URL transport > supports a valid single-entry v2 payload [0.07ms]
+(pass) UI-001 panel URL transport > rejects corrupt versioned transport v2:[ [1.14ms]
+(pass) UI-001 panel URL transport > rejects corrupt versioned transport v2:null [0.01ms]
+(pass) UI-001 panel URL transport > rejects corrupt versioned transport v2:{}
+(pass) UI-001 panel URL transport > rejects corrupt versioned transport v2:[{"route":"home","proportion":null}] [0.03ms]
+(pass) UI-001 panel URL transport > rejects corrupt versioned transport v2:[{"route":"","proportion":0.5}]
+(pass) UI-001 panel URL transport > rejects corrupt versioned transport v2:[{"route":12,"proportion":0.5}]
+(pass) UI-001 panel URL transport > rejects corrupt versioned transport v2:[{"route":"home","proportion":-1}]
+(pass) UI-001 panel URL transport > rejects corrupt versioned transport v2:[{"route":"home","proportion":2}]
+(pass) UI-001 panel URL transport > rejects corrupt versioned transport v2:[{"route":"home","proportion":1e999}]
+(pass) UI-001 panel URL transport > layout snapshots use the same transport and preserve comma-containing durable refs [0.22ms]
+(pass) UI-001 panel URL transport > reads published tuple URLs and keeps literal commas, colons and existing URI escapes intact [0.08ms]
+(pass) UI-001 panel URL transport > snapshots restore the explicit focused session when panel serialization is empty or damaged [0.14ms]
+
+ 32 pass
+ 0 fail
+ 135 expect() calls
+Ran 32 tests across 2 files. [520.00ms]

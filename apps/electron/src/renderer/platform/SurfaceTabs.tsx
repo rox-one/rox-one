@@ -17,6 +17,7 @@ import { createPortal } from 'react-dom'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { BookOpen, DatabaseZap, Globe, MessageSquare, PanelTop, Settings, X, Zap, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { resolveViewRoute } from '../../shared/route-parser'
 import {
   closePanelAtom,
   focusedPanelIdAtom,
@@ -192,6 +193,7 @@ export function SurfaceTabs() {
   }, [])
   const resolveRouteTitle = useCallback(
     (route: string) => {
+      if (resolveViewRoute(route).navigator === 'unavailable') return t('common.unavailable')
       const key = routeTitleKeys.get(route.split('?')[0].split('/')[0])
       return key ? t(key) : null
     },

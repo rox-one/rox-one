@@ -1,0 +1,111 @@
+{
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "inputHead": "09b263efc7cea715d4385db2b3eab1e9311aab77",
+  "integratedBase": "b697e96daeab9fe3cdc8fc8cca0d3169c66d96be",
+  "workingProductPatchSha256": "07ec7767c97e14f9aa4e3b14ded7787ed98d5e3039f4399d280e38b716f0b304",
+  "sourceContentHashes": {
+    ".github/workflows/ui-route-recovery.yml": "03024fedae3d138504b6f48307ab44a0044b8e3a58a093056a099e7c5b4f902d",
+    "apps/electron/src/main/__tests__/deep-link-parse.test.ts": "2e63c8d9d11d5a8cc8ecb5bb62c3b59c783afd54e6a18f34f3a621165104354e",
+    "apps/electron/src/main/__tests__/deep-link-routing.test.ts": "c11d4408f86a523a69d66429c6749abc3e37cd7cf25a0f6b2564c4d1a0754d88",
+    "apps/electron/src/main/__tests__/rox-readiness-ui-001.native-preload.ts": "8ee9639c26727e58fa8ebe501574c0a1784df45ae6adfad31c12a254bc51f3da",
+    "apps/electron/src/main/deep-link.ts": "0e70f480c456e92130f9f39c0032311ab3b7071f71eea61fd78c6b23c3fd0c40",
+    "apps/electron/src/renderer/atoms/panel-stack.ts": "12fb6c1fd4458dcd33bbe272b87af1d403698c97b61b96ae866e1a1026b6adf7",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "d8982a1ef07cbc3087d5dece9d162d6929942ba0e1603659870384c7c6664ca7",
+    "apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu.tsx": "77412f323402a792f684179b1c0797a2f8335e7d4ba873474be54e451dd00ae1",
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "9e8e4236f97d5e21653b8cd1292bd2921d92b9ebb50aed36a277c134d0383d09",
+    "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": "35bdbe03154e6af7646f33dabcb9455dd48d969223e76d15b12692add7345d94",
+    "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "412f23dad2690ba563dbf6b5b783386b7b90fd6bb529802324039d8dce4e9523",
+    "apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts": "cfa55da662cac55b9193043061c5973732bf97e1fe11caf17743f78844b91710",
+    "apps/electron/src/renderer/components/app-shell/__tests__/compact-workspace-navigation.test.ts": "ec0f57e4a38072fdb7f39f4c372438784a8ba8acd2135200711a615c518543c9",
+    "apps/electron/src/renderer/components/app-shell/__tests__/connections-nav.test.ts": "bda2b9afb4e707eef912a018849e6499973b2d10709876613da0d41bd748d435",
+    "apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts": "db6ca51a11e27ede445863b0e98d1597b912c60b9bd082766b7a6ea69ba89218",
+    "apps/electron/src/renderer/components/app-shell/__tests__/notes-canonical-navigation.test.ts": "24f860d63eb8a1088ea21879a890d5589a6475ee378e6dfdcf6c11306ccd077a",
+    "apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts": "7232661ae9985068f9e740e3375fdddc82785d264d31d152d2e760f0d9dcd23f",
+    "apps/electron/src/renderer/components/app-shell/__tests__/radius-everywhere.test.ts": "4c32251dc57bcc946aa41f67ba9af41627646576c0bb71b0278de710962edebf",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts": "1683a5148a47e9de1b8ab8d6df97aa73bccba3d83d583941b44276ad88355336",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts": "a00486878aaf46fa794a1f214ae103bbf3064d8ce296885413aef20f19522ddc",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-navigation.test.ts": "7f9983b9e78c32976826baea3f42fd084c9a57cfb3ee9da167773e9564151072",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.shell-callback.ts": "a2faba7fed4c05df6f5b233ba4b0ba1de31e36a7eaf5d92c0309162675181a89",
+    "apps/electron/src/renderer/components/app-shell/__tests__/sash-terminal-clearance.test.ts": "002fefdf199b1593d7626c6884339f6fccf47205ce1080914f67498bdf00e4a9",
+    "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-native-browser.test.ts": "51e9e56b9c89fcb61ae6e0eccb0af73ec2fa6afdbfc82f31e149f9f534129da4",
+    "apps/electron/src/renderer/components/app-shell/compact-workspace-navigation.ts": "470c7a70400cee09713863ce2638594224b229c403ec30db1eedb856d15c5dae",
+    "apps/electron/src/renderer/components/app-shell/service-navigation.ts": "95e9fe5e1a3ea1aeb87cca113b7921c90485142c699b2f2898f9133053381303",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "a8305d95e9bad4b0628b7775ea1cde4540844d1b1f2f9e8d42a093f96ee65dd9",
+    "apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts": "56afc5cd2a95436fdc680c62c8c1e755ac182ecc5f76377b34a6b93e7c6d8ea7",
+    "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "94fe130699ec12c53d29ca4b0dca5eb285681453e6b47117cd1840d9b8ab10d0",
+    "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+    "apps/electron/src/renderer/platform/layout-snapshot.ts": "7ddddb3219994b3ecad254429d2207adda7b90d29a7f905b79d150839871b057",
+    "apps/electron/src/shared/__tests__/ipc-channels.test.ts": "6221f39ef3d44b59b154677794c926b0ebfa28cfdab3eb01366ec3fa965ce379",
+    "apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts": "6b9595889bc3a524cea2e39ee8bf70a3164be5c480e3ccb0d6bdad93c8a32c77",
+    "apps/electron/src/shared/route-parser.ts": "f743c060c592b25be85d0d680769e3a797d30016bf774158c5c8cc58d3c7a664",
+    "apps/electron/src/shared/types.ts": "3599d06642af88d0367e0589880bdc95bc69e18d7188ba4853d0be462f5bd72a",
+    "package.json": "3745122d57049c86eb4717c743f2ee0d5e64a5dabbd1074ab03fc884184613aa"
+  },
+  "evidence": [
+    {
+      "path": "80-delivery-validate-ci.log",
+      "originalCaptureSha256": "fa5533288839898e5df6651bc429bba13fb5aec7c92562f7eb89238ed51ae9a7"
+    },
+    {
+      "path": "81-delivery-renderer-build.log",
+      "originalCaptureSha256": "bb891e621f3e322fa9f3bc980c386ca2dab3108ca7f65061cfe8b80a7e8ee7e3"
+    },
+    {
+      "path": "82-delivery-Bun-electron-types.log",
+      "originalCaptureSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "83-separators-and-invalid-JSON-red.log",
+      "originalCaptureSha256": "af931452e161278a3fb20adf3070c7e46cddbfa4cb842fee7ba0545ea5ef1942"
+    },
+    {
+      "path": "84-invalid-panels-browser-red.log",
+      "originalCaptureSha256": "c249b28e37ff518fdfd7eaa49827a22914bfce68a27f095019432b230cad5488"
+    },
+    {
+      "path": "85-separator-and-JSON-regression-green.log",
+      "originalCaptureSha256": "bb6108ae99b4a3b2d4a3d9e1cd8b28e4ca45f26864ebc18851339f255f4fc868"
+    },
+    {
+      "path": "86-final-navigation-browser.log",
+      "originalCaptureSha256": "6a8af3e9d289187a4c092c34ef0068f005b30a83aa3873597338b935fc615de0"
+    },
+    {
+      "path": "87-final-navigation-browser-green.log",
+      "originalCaptureSha256": "6f29db49af70697a4eef082be05ba328f41ce33e170fdc595bcc43fbf3edfeef"
+    }
+  ],
+  "reviewRoots": [
+    4173929270,
+    4173929273
+  ],
+  "judgment": "Both findings valid: known separator aliases are preserved, and invalid panel serialization falls back to the explicit focused route. Unknown suffixes and malformed entity encoding remain unavailable. Encoded slash data is not normalized.",
+  "implementedClauses": [
+    "Normalize empty literal path separators before decode/strict canonical comparison while preserving query and encoded entity data",
+    "Invalid/truncated JSON, invalid tuples, blank structured routes and whitespace-only legacy panel values yield no entries for focused-route fallback"
+  ],
+  "negativeControls": {
+    "unit83": "44 pass / 2 expected failures / 311 assertions",
+    "browser84": "0 pass / 1 expected failure / 19 filtered; actual callbacks keep serialization blob before fix",
+    "browser86": "20 pass / 1 fail: overstrict test expected raw task slash alias; existing list canonicalization is retained, corrected assertion checks canonical task path and complete query; notes detail spelling is still asserted"
+  },
+  "testResults": {
+    "unit85": "573 pass / 0 fail / 88 explicit opt-in skips / 2413 assertions / 104 files",
+    "browser87": "21 pass / 0 fail / 321 assertions",
+    "preRepairPackage80": "exit0; 391 Bun tests + 19 Python tests and complete package typegraph/i18n",
+    "preRepairBuild81": "exit0; 1m26s",
+    "preRepairTypes82": "exit0; exact stable-source frozen Electron TypeScript compiler under Bun1.3.14",
+    "finalPackage88": "running",
+    "finalBuild89": "running",
+    "finalTypes90": "running"
+  },
+  "currency11Confirmation": {
+    "marked": "currency:ab7f380dd8355a0f6d06f053cacf5ed2fc2a843036aa0655b673e1ccb8040323"
+  },
+  "failureHistoryPreserved": true,
+  "originalRequirementsChanged": false,
+  "fullDoDClosed": false
+}

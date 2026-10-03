@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
+import { execFileSync } from 'node:child_process'
 import { join, resolve } from 'node:path'
 import { chromium, expect as expectDOM, type Browser, type Page } from 'playwright/test'
 const repository = resolve(import.meta.dirname, '../../../../../../..')
@@ -13,6 +14,7 @@ const timeout = 30_000
 describe.skipIf(!existsSync(executablePath))('voice dictation production renderer DOM', () => {
   let server: ReturnType<typeof Bun.spawn> | undefined
   let browserOwnerDirectory: string | undefined
+  let browserOwnerMarker: string | undefined
   let browser: Browser
   let page: Page
   const errors: string[] = []
@@ -21,19 +23,54 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
     // even when another package build has saturated the host during teardown.
     const owned = server; server = undefined; owned?.kill('SIGKILL')
     const ownedBrowserDirectory = browserOwnerDirectory; browserOwnerDirectory = undefined
-    const close = browser?.close()
     const pidFile = ownedBrowserDirectory && join(ownedBrowserDirectory, 'browser.pid')
     // The launcher records its own PID before exec, preserving Playwright's
     // private process group. Kill only that group; browser.close reaps it and
     // removes the private profile even if graceful CDP shutdown stalled.
+    let ownedBrowserPid: number | undefined
     if (pidFile && existsSync(pidFile)) {
       const pid = Number(readFileSync(pidFile, 'utf8').trim())
       if (!Number.isSafeInteger(pid) || pid <= 1) throw new Error('Invalid owned browser PID')
-      try { process.kill(process.platform === 'win32' ? pid : -pid, 'SIGKILL') }
-      catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error }
+      try {
+        const command = execFileSync('ps', ['-p', String(pid), '-o', 'command='], { encoding: 'utf8' })
+        if (!browserOwnerMarker || !command.includes(browserOwnerMarker)) throw new Error('Browser PID no longer belongs to this fixture')
+        ownedBrowserPid = pid
+      } catch (error) {
+        if (!(error && typeof error === 'object' && 'status' in error && error.status === 1)) throw error
+      }
     }
-    try { await close } finally {
-      await owned?.exited
+    const close = browser?.close()
+    if (ownedBrowserPid) {
+      try {
+        const group = Number(execFileSync('ps', ['-p', String(ownedBrowserPid), '-o', 'pgid='], { encoding: 'utf8' }).trim())
+        process.kill(group === ownedBrowserPid ? -ownedBrowserPid : ownedBrowserPid, 'SIGKILL')
+      }
+      catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error
+        // Bun's Node child-process adapter can omit the detached POSIX group.
+        // The private marker above also verifies the direct child fallback.
+        try { process.kill(ownedBrowserPid, 'SIGKILL') }
+        catch (directError) { if ((directError as NodeJS.ErrnoException).code !== 'ESRCH') throw directError }
+      }
+    }
+    try {
+      await Promise.race([close, Bun.sleep(5000)])
+      if (ownedBrowserPid) {
+        try {
+          const state = execFileSync('ps', ['-p', String(ownedBrowserPid), '-o', 'stat='], { encoding: 'utf8' })
+          if (!state.trim().startsWith('Z')) throw new Error('Owned fixture browser is still running after teardown')
+        } catch (error) {
+          if (!(error && typeof error === 'object' && 'status' in error && error.status === 1)) throw error
+        }
+      }
+      const exited = await Promise.race([
+        owned?.exited.then(code => ({ code })),
+        Bun.sleep(5000).then(() => undefined),
+      ])
+      // Bun leaves exitCode null for a signal exit; the resolved exited promise
+      // is the authoritative reap receipt for this owned killed subprocess.
+      if (owned && !exited) throw new Error('Owned fixture server could not be reaped')
+    } finally {
       if (ownedBrowserDirectory) rmSync(ownedBrowserDirectory, { recursive: true, force: true })
     }
   }
@@ -48,8 +85,9 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
         await Bun.sleep(100)
       }
       browserOwnerDirectory = mkdtempSync(join(tmpdir(), 'rox-voice-browser-'))
+      browserOwnerMarker = `--rox-voice-fixture=${browserOwnerDirectory.split(/[\\/]/).pop()}`
       browser = await chromium.launch({
-        executablePath: process.platform === 'win32' ? executablePath : resolve(fixture, 'browser-launcher.sh'), headless: true, args: ['--no-sandbox'],
+        executablePath: process.platform === 'win32' ? executablePath : resolve(fixture, 'browser-launcher.sh'), headless: true, args: ['--no-sandbox', browserOwnerMarker],
         env: { ...process.env, VOICE_BROWSER_PID_FILE: join(browserOwnerDirectory, 'browser.pid'), VOICE_BROWSER_ACTUAL_EXECUTABLE: executablePath },
       })
       const warmup = await browser.newPage(); warmup.on('pageerror', (error) => console.error('Voice fixture warmup:', error.message)); warmup.on('console', (message) => { if (message.type() === 'error') console.error('Voice fixture console:', message.text()) }); await warmup.goto(url)
