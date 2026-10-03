@@ -3,6 +3,7 @@ import { chromium, type Browser, type Page } from '@playwright/test'
 import { build } from 'esbuild'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { noteNativeBrowserStage as stage, runNativeBrowserProcess } from '../../adapters/work/meetings-automations/native-browser-process'
 
 let browser: Browser
 let server: ReturnType<typeof Bun.serve>
@@ -11,6 +12,7 @@ const isolatedCase = process.env.ROX_PRODUCT_TOUR_PROVIDER_CASE
 let registeredIsolatedCase = false
 beforeAll(async () => {
   if (!isolatedCase) return
+  stage('provider:bundle:start')
   const compiled = await build({ entryPoints: [resolve(import.meta.dir, 'fixtures/provider.browser.tsx')], bundle: true,
     write: false, platform: 'browser', format: 'iife', jsx: 'automatic', tsconfig: resolve(root, 'apps/electron/tsconfig.json'),
     plugins: [{ name: 'isolated-provider-bootstrap', setup(builder) {
@@ -33,57 +35,48 @@ beforeAll(async () => {
     } }],
   })
   const script = compiled.outputFiles[0]!.text
+  stage('provider:bundle:ready')
   server = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch(request) {
     return new URL(request.url).pathname === '/script.js' ? new Response(script, { headers: { 'Content-Type': 'application/javascript' } })
       : new Response('<!doctype html><div id="root"></div><script src="/script.js"></script>', { headers: { 'Content-Type': 'text/html' } })
   } })
+  stage('provider:browser:launch')
   browser = await chromium.launch({ executablePath: process.env.LEARNING_CHROMIUM_PATH ?? '/usr/bin/chromium', args: ['--no-sandbox'] })
+  stage('provider:browser:ready')
 }, 30_000)
-afterAll(async () => { await browser?.close(); server?.stop(true) })
-function capturePipe(stream: ReadableStream<Uint8Array>) {
-  const reader = stream.getReader()
-  const decoder = new TextDecoder()
-  let output = ''
-  const done = (async () => {
-    try {
-      for (;;) {
-        const chunk = await reader.read()
-        if (chunk.done) break
-        output = (output + decoder.decode(chunk.value, { stream: true })).slice(-65_536)
-      }
-      output += decoder.decode()
-    } catch (error) { output += `\nOutput stream closed: ${String(error)}` }
-  })()
-  return { done, text: () => output, stop: () => { void reader.cancel().catch(() => {}) } }
-}
+afterAll(async () => {
+  if (!isolatedCase) return
+  stage('provider:browser:close')
+  await browser?.close()
+  server?.stop(true)
+  stage('provider:browser:closed')
+})
 
 // Keep the production bundle and browser lifecycle independent of other Bun suites.
 function browserTest(name: string, operation: () => Promise<void>, timeout: number) {
   if (isolatedCase && isolatedCase !== name) return
   if (isolatedCase) registeredIsolatedCase = true
   test(name, async () => {
-    if (isolatedCase === name) return operation()
-    const child = Bun.spawn([process.execPath, 'test', fileURLToPath(import.meta.url)], {
-      env: { ...process.env, ROX_PRODUCT_TOUR_PROVIDER_CASE: name }, stdout: 'pipe', stderr: 'pipe',
+    if (isolatedCase === name) {
+      stage('provider:case:start')
+      await operation()
+      stage('provider:case:passed')
+      return
+    }
+    const code = await runNativeBrowserProcess([process.execPath, 'test', fileURLToPath(import.meta.url)], {
+      label: name, env: { ...process.env, ROX_PRODUCT_TOUR_PROVIDER_CASE: name }, deadlineMs: 35_000,
     })
-    const stdout = capturePipe(child.stdout)
-    const stderr = capturePipe(child.stderr)
-    let timedOut = false
-    const timer = setTimeout(() => { timedOut = true; child.kill() }, 35_000)
-    let drainTimer: ReturnType<typeof setTimeout> | undefined
-    try {
-      const code = await child.exited
-      // Descendants may inherit the pipes after Bun exits. Test success follows its exit.
-      await Promise.race([Promise.all([stdout.done, stderr.done]), new Promise<void>(resolve => { drainTimer = setTimeout(resolve, 1_000) })])
-      if (timedOut || code !== 0) throw new Error(`Provider regression ${timedOut ? 'timed out' : `exited ${code}`}:\n${stdout.text()}${stderr.text()}`)
-      expect(code).toBe(0)
-    } finally { clearTimeout(timer); clearTimeout(drainTimer); child.kill(); stdout.stop(); stderr.stop() }
+    expect(code).toBe(0)
   }, isolatedCase ? timeout : 40_000)
 }
 async function setup() {
+  stage('provider:fixture:page')
   const page = await browser.newPage({ viewport: { width: 1200, height: 900 } })
+  stage('provider:fixture:navigate')
   await page.goto(server.url.href)
+  stage('provider:fixture:controller')
   await page.waitForFunction(() => (window as any).learningProviderTest?.controller?.ready)
+  stage('provider:fixture:ready')
   return page
 }
 async function eventually(read: () => Promise<boolean>) {

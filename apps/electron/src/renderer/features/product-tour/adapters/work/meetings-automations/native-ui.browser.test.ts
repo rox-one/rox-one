@@ -3,6 +3,7 @@ import { createServer, type Server } from 'node:http'
 import { build } from 'esbuild'
 import { chromium, type Browser, type Page } from '@playwright/test'
 import { resolve } from 'node:path'
+import { noteNativeBrowserStage as stage, runNativeBrowserProcess } from './native-browser-process'
 
 // Real renderer components and DOM; the native transport is an isolated explicit fixture.
 // This is component evidence, not a macOS microphone or full App acceptance claim.
@@ -92,44 +93,42 @@ async function bundle() {
 
 beforeAll(async () => {
   if (!isolatedCase) return
+  stage('meetings:bundle:start')
   const source = await bundle()
+  stage('meetings:bundle:ready')
   server = createServer((req, res) => {
     res.setHeader('Content-Type', req.url === '/fixture.js' ? 'application/javascript' : 'text/html')
     res.end(req.url === '/fixture.js' ? source : '<html><body><div id="root"></div><script src="/fixture.js"></script></body></html>')
   })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
   base = 'http://127.0.0.1:' + (server.address() as { port: number }).port
+  stage('meetings:browser:launch')
   browser = await chromium.launch({ headless: true, executablePath: process.env.ROX_BROWSER_PATH ?? '/usr/bin/chromium', args: ['--no-sandbox'] })
+  stage('meetings:browser:ready')
 }, 30_000)
 
-afterAll(async () => { await browser?.close(); server?.close() })
+afterAll(async () => {
+  if (!isolatedCase) return
+  stage('meetings:browser:close')
+  await browser?.close()
+  server?.close()
+  stage('meetings:browser:closed')
+})
 
 async function fixture(surface: 'meetings' | 'automation', mode = 'empty') {
+  stage(`meetings:fixture:${surface}:${mode}:page`)
   const page = await browser.newPage()
+  stage('meetings:fixture:navigate')
   await page.goto(base)
+  stage('meetings:fixture:mount')
   await page.evaluate(([surface, mode]) => (window as any).fixture.mount(surface, mode), [surface, mode])
+  stage('meetings:fixture:capability')
   await page.waitForFunction(() => (window as any).fixture.capabilities['meetings.available']?.value.state === 'ready'
     || (window as any).fixture.capabilities['automations.available']?.value.state === 'ready')
+  stage('meetings:fixture:ready')
   return page
 }
 const inspect = (page: Page) => page.evaluate(() => (window as any).fixture.inspect())
-
-function capturePipe(stream: ReadableStream<Uint8Array>) {
-  const reader = stream.getReader()
-  const decoder = new TextDecoder()
-  let output = ''
-  const done = (async () => {
-    try {
-      for (;;) {
-        const chunk = await reader.read()
-        if (chunk.done) break
-        output = (output + decoder.decode(chunk.value, { stream: true })).slice(-65_536)
-      }
-      output += decoder.decode()
-    } catch (error) { output += `\nOutput stream closed: ${String(error)}` }
-  })()
-  return { done, text: () => output, stop: () => { void reader.cancel().catch(() => {}) } }
-}
 
 // The full suite may mutate Bun module caches before esbuild's plugin callbacks.
 // A fresh process owns each real native component bundle and Chromium lifecycle.
@@ -137,32 +136,17 @@ function browserTest(name: string, operation: () => Promise<void>) {
   if (isolatedCase && isolatedCase !== name) return
   if (isolatedCase) registeredIsolatedCase = true
   it(name, async () => {
-    if (isolatedCase === name) return operation()
-    const child = Bun.spawn([process.execPath, 'test', import.meta.path], {
-      env: { ...process.env, ROX_PRODUCT_TOUR_MEETINGS_CASE: name },
-      stdout: 'pipe', stderr: 'pipe',
-    })
-    const stdout = capturePipe(child.stdout)
-    const stderr = capturePipe(child.stderr)
-    let timedOut = false
-    const timeout = setTimeout(() => { timedOut = true; child.kill() }, 40_000)
-    let drainTimeout: ReturnType<typeof setTimeout> | undefined
-    try {
-      const exitCode = await child.exited
-      // A browser descendant can inherit pipes after Bun exits; EOF is not the test result.
-      await Promise.race([
-        Promise.all([stdout.done, stderr.done]),
-        new Promise<void>(resolve => { drainTimeout = setTimeout(resolve, 1_000) }),
-      ])
-      if (timedOut || exitCode !== 0) throw new Error(`Native Meetings/Automation browser case ${timedOut ? 'timed out' : `exited ${exitCode}`}:\n${stdout.text()}${stderr.text()}`)
-      expect(exitCode).toBe(0)
-    } finally {
-      clearTimeout(timeout)
-      clearTimeout(drainTimeout)
-      child.kill()
-      stdout.stop()
-      stderr.stop()
+    if (isolatedCase === name) {
+      stage('meetings:case:start')
+      await operation()
+      stage('meetings:case:passed')
+      return
     }
+    const exitCode = await runNativeBrowserProcess([process.execPath, 'test', import.meta.path], {
+      label: name,
+      env: { ...process.env, ROX_PRODUCT_TOUR_MEETINGS_CASE: name },
+    })
+    expect(exitCode).toBe(0)
   }, isolatedCase ? 30_000 : 45_000)
 }
 
@@ -183,8 +167,11 @@ describe('A11 rendered native surfaces', () => {
   browserTest('T-MEETINGS-RESULT: opening loaded native content emits observed evidence only', async () => {
     const page = await fixture('meetings', 'summary')
     expect((await inspect(page)).events).toEqual([])
+    stage('meetings:summary:start-tour')
     await page.evaluate(() => (window as any).fixture.start())
+    stage('meetings:summary:open-overview')
     await page.getByRole('tab', { name: 'meetings.local.tab.overview' }).click()
+    stage('meetings:summary:inspect-evidence')
     const state = await inspect(page)
     expect(state.targets['meetings.artifacts'].testId).toBe('meeting-summary')
     expect(state.accepted).toHaveLength(1)
@@ -195,10 +182,13 @@ describe('A11 rendered native surfaces', () => {
     // Execute the latest production view model and actual planner in Chromium.
     expect(await page.evaluate(() => (window as any).fixture.previewProfile()))
       .toContain('Role perspectives: rox.meeting.analyst, rox.meeting.scribe.')
+    stage('meetings:summary:open-actions')
     await page.getByRole('tab', { name: 'meetings.local.tab.actions' }).click()
     expect((await inspect(page)).events).toHaveLength(1)
     expect((await inspect(page)).mutations).toEqual([])
+    stage('meetings:summary:close-page')
     await page.close()
+    stage('meetings:summary:page-closed')
   })
 
   browserTest('T-MEETINGS-RESULT: a delayed native load cannot finish a replay or another panel', async () => {

@@ -4,6 +4,7 @@ import { build } from 'esbuild'
 import { fileURLToPath } from 'node:url'
 import { dirname } from 'node:path'
 import type { RuntimeState, StepId, TourSignal, TourProgress } from '../contracts'
+import { noteNativeBrowserStage as stage, runNativeBrowserProcess } from '../adapters/work/meetings-automations/native-browser-process'
 
 interface NativeContinuitySnapshot { phase: RuntimeState['phase']; stepId?: StepId; evidence: RuntimeState['attemptEvidence']; progress: TourProgress | null; signals: TourSignal[]; calls: { startVoiceCapture: number; stopVoiceCapture: number; copyVoiceText: number; getSources: number } }
 declare global { interface Window { nativeContinuity: { start(kind: 'voice' | 'source', emptyTranscript?: boolean, delivery?: 'draft' | 'clipboard', trailingSpace?: boolean): void; show(): void; acknowledge(): void; snapshot(): NativeContinuitySnapshot; clipboard(): string } } }
@@ -13,9 +14,11 @@ let browser: Browser | undefined
 let server: ReturnType<typeof Bun.serve> | undefined
 beforeAll(async () => {
   if (!isolatedCase) return
+  stage('continuity:themes:start')
   const themesDirectory = new URL('../../../../../resources/themes/', import.meta.url)
   const themeModules: Record<string, unknown> = {}
   for (const name of new Bun.Glob('*.json').scanSync({ cwd: fileURLToPath(themesDirectory) })) themeModules[`../../../resources/themes/${name}`] = await Bun.file(new URL(name, themesDirectory)).json()
+  stage('continuity:bundle:start')
   const bundle = await build({ entryPoints: [fileURLToPath(new URL('./native-continuity.browser.tsx', import.meta.url))], tsconfig: fileURLToPath(new URL('../../../../../tsconfig.json', import.meta.url)), bundle: true, platform: 'browser', format: 'esm', write: false, outdir: 'native-continuity-browser', loader: { '.woff2': 'dataurl', '.woff': 'dataurl', '.ttf': 'dataurl', '.svg': 'dataurl' }, plugins: [
     // Use the renderer's actual production shim, matching electron/vite.config.ts.
     { name: 'production-renderer-node-boundary', setup(build) { build.onResolve({ filter: /^node:/ }, () => ({ path: fileURLToPath(new URL('../../../shims/node-stub.ts', import.meta.url)) })) } },
@@ -24,49 +27,34 @@ beforeAll(async () => {
     { name: 'unused-preview-worker-url', setup(build) { build.onResolve({ filter: /\?url$/ }, args => ({ path: args.path, namespace: 'unused-preview-worker' })); build.onLoad({ filter: /.*/, namespace: 'unused-preview-worker' }, () => ({ contents: "export default 'about:blank'", loader: 'js' })) } },
   ] })
   const script = bundle.outputFiles.find(file => file.path.endsWith('.js'))!.text
+  stage('continuity:bundle:ready')
   server = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch(request) { return new URL(request.url).pathname === '/script.js' ? new Response(script, { headers: { 'content-type': 'text/javascript' } }) : new Response('<!doctype html><div id="root"></div><script type="module" src="/script.js"></script>', { headers: { 'content-type': 'text/html' } }) } })
+  stage('continuity:browser:launch')
   browser = await chromium.launch({ executablePath: process.env.LEARNING_CHROMIUM_PATH ?? '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] })
+  stage('continuity:browser:ready')
 }, 30_000)
-afterAll(async () => { await browser?.close(); server?.stop(true) })
-
-function capturePipe(stream: ReadableStream<Uint8Array>) {
-  const reader = stream.getReader()
-  const decoder = new TextDecoder()
-  let output = ''
-  const done = (async () => {
-    try {
-      for (;;) {
-        const chunk = await reader.read()
-        if (chunk.done) break
-        output = (output + decoder.decode(chunk.value, { stream: true })).slice(-65_536)
-      }
-      output += decoder.decode()
-    } catch (error) { output += `\nOutput stream closed: ${String(error)}` }
-  })()
-  return { done, text: () => output, stop: () => { void reader.cancel().catch(() => {}) } }
-}
+afterAll(async () => {
+  if (!isolatedCase) return
+  stage('continuity:browser:close')
+  await browser?.close()
+  server?.stop(true)
+  stage('continuity:browser:closed')
+})
 
 function browserTest(name: string, operation: () => Promise<void>) {
   if (isolatedCase && isolatedCase !== name) return
   if (isolatedCase) registeredCase = true
   test(name, async () => {
-    if (isolatedCase === name) return operation()
-    const child = Bun.spawn([process.execPath, 'test', fileURLToPath(import.meta.url)], { env: { ...process.env, ROX_PRODUCT_TOUR_NATIVE_CONTINUITY_CASE: name }, stdout: 'pipe', stderr: 'pipe' })
-    const stdout = capturePipe(child.stdout)
-    const stderr = capturePipe(child.stderr)
-    let timedOut = false
-    const timeout = setTimeout(() => { timedOut = true; child.kill() }, 40_000)
-    let drainTimeout: ReturnType<typeof setTimeout> | undefined
-    try {
-      const exitCode = await child.exited
-      // A browser descendant can hold the pipes after Bun exits. EOF is not the test result.
-      await Promise.race([
-        Promise.all([stdout.done, stderr.done]),
-        new Promise<void>(resolve => { drainTimeout = setTimeout(resolve, 1_000) }),
-      ])
-      if (timedOut || exitCode !== 0) throw new Error(`Native renderer continuity case ${timedOut ? 'timed out' : `exited ${exitCode}`}:\n${stdout.text()}${stderr.text()}`)
-      expect(exitCode).toBe(0)
-    } finally { clearTimeout(timeout); clearTimeout(drainTimeout); child.kill(); stdout.stop(); stderr.stop() }
+    if (isolatedCase === name) {
+      stage('continuity:case:start')
+      await operation()
+      stage('continuity:case:passed')
+      return
+    }
+    const exitCode = await runNativeBrowserProcess([process.execPath, 'test', fileURLToPath(import.meta.url)], {
+      label: name, env: { ...process.env, ROX_PRODUCT_TOUR_NATIVE_CONTINUITY_CASE: name },
+    })
+    expect(exitCode).toBe(0)
   }, isolatedCase ? 30_000 : 45_000)
 }
 
