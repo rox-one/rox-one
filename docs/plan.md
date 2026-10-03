@@ -1,3 +1,21 @@
+## Product Learning foundation recovery plan — 2026-10-03
+
+1. Freeze final a6 source and import only contracts/core/persistence/analytics; pr_scout owns these interfaces, historical_sweep integrates dependent UI/runtime/current consumers without copying old shell/pages.
+2. Inspect evidence/correlation and durable ownership boundaries. Retain original negative controls; reproduce and fix diagnostic accessor validation/serialization race through single captured own data properties, preserving interfaces.
+3. Exercise pure engine and real Chromium IndexedDB across isolated windows, storage/transaction/future-version failures, scoped reset and privacy/retention. Verify all foundation modules with strict renderer compiler options and actual browser bundling without claiming route/native feature acceptance.
+4. Reconcile live main, freeze source/proof/log receipt, publish/attach a separate PR. Notify dependent worker of exact interfaces/head and preserve every original branch; lead reviews and merges.
+
+## Golden Gate Settings menu recovery plan — 2026-10-03
+
+1. Verify actual current consumers and source intent before import: current menu is a Popover with no arrow/typeahead model; Appearance and ZenShell custom SettingsRow slots lack label/description relationships.
+2. Recover pure source navigation/context helpers and adapt only current MenuSelect/Row behavior. Preserve existing classes/locale strings and keep SettingsSelect unchanged. pr_scout owns these files; root owns remaining Golden semantic audit and main merge.
+3. Execute real production row/menu/Radix controls: field descriptions/overrides, enabled filtered navigation without commit, typeahead/preview/Escape, search caret/empty result, IME/modifier/default-prevented and disabled choices/control, changing options, selection/focus return. Retain source helper/i18n tests and run Electron/WebUI types, renderer build and locale gates.
+4. Reconcile live main, freeze source/head/proof receipt, publish/attach a separate PR, preserving all original branches. Real native route/screenshot/provider and full feature acceptance remain separate.
+
+# Golden Gate surface tab recovery — 2026-10-03
+
+Owner: root. Source5def9ffd36dc160fdc7c908784e0ef97ba6a732e → current-consumer comparison → title loader/navigation helpers → unit failure/cache/workspace controls and actual Chromium SurfaceTabs interactions → renderer strict types/build → separate PR/exact merge readback. Depends on current unified-shell atoms and pending panel focus repair1415; preserve its aria-controls contract when integrating.
+
 ## Connections consumer recovery plan — 2026-10-03
 
 1. Freeze source intent and current UI gap; backend1414 is the dependency. pr_scout owns page/lifecycle/device/connection-info consumers only; root owns main integration and SurfaceTabs/remaining Golden semantics.
@@ -712,6 +730,26 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 
 Evidence and delivery receipt: `docs/credential-locator-own-data-validation.md`. .codegraph is absent in the frozen repository; targeted symbol/caller inspection supplies the bounded source map. Native work and Vercel account deployment status remain outside this locator correction.
 
+## Credential metadata own-data repair and integration — 2026-10-03
+
+The user authorized full source repair, GitHub writes and merge into `main`. The original checkout and its unrelated CSS edits are preserved. One lead owns the isolated `fix/credential-metadata-own-data-20261003` source branch; an independent reviewer owns separate evidence artifacts. Initial integration base: `829e2cbd840e2980b421038457866d0efd0893f2`.
+
+The integration at `b1526a85f6db5a6cdf668438e484f62ce15e6f29` preserves PR #1407's locator implementation and inherited-field tests, adds only distinct locator controls, and retains main's MCP onboarding step. A prior macOS full-CI attempt hit 17 subprocess timeouts; the unchanged 109-test config gate subsequently passed with the original deadlines. Preserve both receipts and verify the complete integrated candidate on Linux and hosted runners.
+
+| Task | Owner | Dependencies | Verification / delivery |
+| --- | --- | --- | --- |
+| LOC-STATE | Lead | none | Exact fresh main, clean isolated checkout, live PR and publishing policy readback |
+| LOC-FIX | Lead | LOC-STATE | Own-data snapshots in registry/attachment; regressions for all locator variants, accessors, frozen controls and persisted state |
+| LOC-REVIEW | Independent reviewer | LOC-STATE, LOC-FIX | Source hashes, adversarial holdout, negative controls and actionable compatibility findings |
+| LOC-VERIFY | Lead | LOC-FIX | Pinned Linux Bun 1.3.14 full core, core TypeScript, unchanged CI alias and separate MCP onboarding script; preserve any initial failures and exact logs |
+| LOC-CI | Lead | LOC-FIX | Full core suite, unchanged CI alias and main's separate MCP onboarding step on hosted Ubuntu 24.04 and macOS 15; existing permissions/install/deadlines/assertions retained |
+| LOC-DELIVER | Lead | LOC-REVIEW, LOC-VERIFY, LOC-CI | Commit/push scoped files, publish a current PR, resolve actionable feedback, merge main, read back delivered source and save revision-bound report |
+
+The earlier local-only candidate and its results remain historical evidence. They do not replace complete verification of this new base or the delivered revision. Integration receipts, commands, exits, source/artifact hashes, actual hosted run URLs and final main identity are saved outside the checkout; no publication or acceptance is inferred from a task launch. This slice does not change broader native/provider/platform acceptance.
+
+
+Integration with current main `d8c92f96363f47e0b72e7296a36aa23a9227a691` preserves its OMP 18.4.12 private native fork and stored-prefix recovery, MCP runtime, Compound additions and UI-001 detail/storage validation. The UI user-message anchor feeds the runtime inclusive native fork. Module imports and fixture aliases use the renamed `@rox` workspace packages; protocol identifiers and legacy migration strings remain unchanged.
+
 ## Credential locator repair plan — 2026-10-03
 
 | Task | Owner | Depends on | Owned files | Verification |
@@ -765,3 +803,11 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 2. Recover the pure keyed draft map and bind current floating composer setters to workspace plus active document identity. Preserve current write/mutation authority and in-page draft lifetime.
 3. Execute actual component state/setters across A/B/workspace changes, stale edit/clear callbacks, missing identity and delimiter collisions. Restore exact pre-change NotesPage for negative proof, then restore candidate before final checks. Run current native read-lifecycle and comment controls plus consumed Electron types.
 4. Publish a separate codex PR with source/head/test provenance; root owns merge. Preserve original Golden branch and mark this one feature separately in its cumulative source disposition.
+
+
+## Golden service navigation and guidance recovery — 2026-10-03
+
+1. Historical integration owns selective `findServicePanel`/focus atom recovery onto the current registry and routes; compose it only into current AppShell root callbacks. Depend on the existing panel stack and its NavigationContext history subscriber. Keep explicit subroutes and compact Settings drill-in.
+2. Recover the source's workspace-scoped dismissal key/helper; compose it into today's flat SidebarChrome/PromoSlot using the existing all-locale `common.dismiss` key. Fence focus by captured workspace and connected/visible profile owner. Keep reminders independent.
+3. Execute actual component callbacks with real panel atoms and controlled local storage: mounted-route/draft preservation, preferred match, missing-service fallback, explicit subroutes, compact mode, durable workspace isolation and stale-callback focus. Verify current DOM keyboard/disclosure, panel lanes, promo policy and Electron types. Run before-source negative controls, restore exact files, reconcile live main without replacing later docs, publish a separate PR and retain all source branches.
+4. Acceptance is bounded source and renderer integration; do not claim installed native UI, old sidebar layout recovery, full Golden source-family completion or production acceptance.
