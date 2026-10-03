@@ -11,3 +11,5 @@ Every newer popstate request owns a new history reconciliation lease. A supersed
 Local workspace transitions and layout disposal invalidate history leases synchronously. Remote-only action-owner rotation preserves the local-workspace history lease, so a still-current failed switch can release its suppression. All action owner and focus-ABA guards are retained.
 
 Acceptance: execute the actual production popstate callback in isolated regression tests and the mounted production NavigationProvider with React, Jotai and browser history. Preserve the failing baseline, exact source/input/bundle hashes, original timeouts, and explicit test-fixture limits. This proof does not establish installed Windows, packaged macOS, hosted web or real-provider acceptance; `fullDoDClosed` remains false.
+
+StrictMode effect replay must resume an already-completed restoration under its new history lease. The continuation must retain the previous semantic key, preserve explicit navigation before the frame, and reject disposed leases, cross-workspace switches and deferred restoration. Original task Requirements, DoD, Full functional verification and Test method remain unchanged.

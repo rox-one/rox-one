@@ -57,6 +57,7 @@ function fixture() {
     historySeqRef: { current: 0 }, isPopstateSwitchRef: { current: false },
     suppressPushRef: { current: false }, pendingUrlRestoreRef: { current: null as string | null },
     lastSemanticHistoryKeyRef: { current: '' },
+    initialRouteRestoredRef: { current: false },
   }
   let scope: Scope = { workspaceId: 'workspace-a', workspaceSlug: 'alpha', remoteWorkspaceId: 'remote-a', isReady: true, isSessionsReady: true }
   const browser = { location: { search: '?ws=alpha&route=notes%2Fnote%2Finitial' } }
@@ -64,6 +65,7 @@ function fixture() {
   const switches: Array<{ slug: string; pending: ReturnType<typeof deferred> }> = []
   const syncs: Array<{ push: boolean; search: string }> = [], reconciles: string[] = [], warnings: unknown[][] = []
   const frames: Array<() => void> = []
+  const historyPushes: Array<{ route: string }> = []
   let committedEffects: Effect[] = []
   let functions!: { handlePopState(event: { state: { seq: number } }): void; finishHistoryReconcile(): void }
   const commit = (update: Partial<Scope> = {}) => {
@@ -80,7 +82,7 @@ function fixture() {
         browser.location.search = '?' + new URLSearchParams({ ws: scope.workspaceSlug, route: focusedRoute })
         syncs.push({ push, search: browser.location.search })
       },
-      maybePushHistoryForSemanticChange: () => {},
+      maybePushHistoryForSemanticChange: () => { historyPushes.push({ route: focusedRoute }) },
       reconcileFromUrlParamsRef: { current: (params: URLSearchParams) => {
         focusedRoute = params.get('route') ?? 'allSessions'; reconciles.push(params.toString())
       } },
@@ -99,12 +101,22 @@ function fixture() {
   }
   commit()
   return {
-    refs, browser, switches, syncs, reconciles, warnings, commit,
+    refs, browser, switches, syncs, reconciles, warnings, commit, historyPushes,
     pop(search: string) { browser.location.search = search; functions.handlePopState({ state: { seq: ++seq } }) },
     focus(route: string) { focusedRoute = route; refs.navigationOwnerRef.current.revision++ },
     flushFrames() { while (frames.length) frames.shift()!() },
     // Commit-time layout disposal precedes the passive history-mounted cleanup.
     disposeLayout() { committedEffects.forEach(effect => effect.cleanup?.()) },
+    // React StrictMode replays layout setup after the first passive cleanup.
+    replayLayout() {
+      committedEffects.forEach(effect => effect.cleanup?.())
+      refs.historyMountedRef.current = false
+      committedEffects.forEach(effect => {
+        const cleanup = effect.create()
+        effect.cleanup = typeof cleanup === 'function' ? cleanup : undefined
+      })
+      refs.historyMountedRef.current = true
+    },
   }
 }
 
@@ -194,5 +206,49 @@ describe('actual popstate failed-switch history lease', () => {
     expect(f.refs.isPopstateSwitchRef.current).toBe(true)
     expect(f.refs.suppressPushRef.current).toBe(true)
     expect(f.syncs).toEqual([]); expect(f.reconciles).toEqual([])
+  })
+
+  test('StrictMode layout replay resumes restoration and preserves navigation before its frame', () => {
+    const f = fixture(); f.refs.initialRouteRestoredRef.current = true
+    f.pop('?ws=alpha&route=notes%2Fnote%2Frestored')
+    const semanticKey = f.refs.lastSemanticHistoryKeyRef.current
+    f.replayLayout(); f.focus('notes/note/explicit-after-replay')
+    expect(f.refs.lastSemanticHistoryKeyRef.current).toBe(semanticKey)
+    expect(f.refs.suppressPushRef.current).toBe(true)
+    f.flushFrames()
+    expect(f.refs.suppressPushRef.current).toBe(false)
+    expect(f.historyPushes).toEqual([{ route: 'notes/note/explicit-after-replay' }])
+  })
+
+  test('StrictMode replay does not release an active cross-workspace history switch', () => {
+    const f = fixture(); f.refs.initialRouteRestoredRef.current = true
+    f.pop('?ws=bravo&route=notes%2Fnote%2Fforeign'); f.replayLayout(); f.flushFrames()
+    expect(f.refs.isPopstateSwitchRef.current).toBe(true)
+    expect(f.refs.suppressPushRef.current).toBe(true)
+    expect(f.historyPushes).toEqual([])
+  })
+
+  test('StrictMode replay does not release readiness-deferred history restoration', () => {
+    const f = fixture(); f.refs.initialRouteRestoredRef.current = true
+    f.commit({ isReady: false }); const search = '?ws=alpha&route=notes%2Fnote%2Fpending'
+    f.pop(search); f.replayLayout(); f.flushFrames()
+    expect(f.refs.pendingUrlRestoreRef.current).toBe(search)
+    expect(f.refs.suppressPushRef.current).toBe(true)
+    expect(f.historyPushes).toEqual([])
+  })
+
+  test('disposing a replayed layout lease fences both the original and replacement frames', () => {
+    const f = fixture(); f.refs.initialRouteRestoredRef.current = true
+    f.pop('?ws=alpha&route=notes%2Fnote%2Frestored'); f.replayLayout()
+    f.disposeLayout(); f.refs.historyMountedRef.current = false; f.flushFrames()
+    expect(f.refs.suppressPushRef.current).toBe(true)
+    expect(f.historyPushes).toEqual([])
+  })
+
+  test('a completed restoration does not synthesize another release during replay', () => {
+    const f = fixture(); f.refs.initialRouteRestoredRef.current = true
+    f.replayLayout(); f.flushFrames()
+    expect(f.refs.suppressPushRef.current).toBe(false)
+    expect(f.historyPushes).toEqual([])
   })
 })
