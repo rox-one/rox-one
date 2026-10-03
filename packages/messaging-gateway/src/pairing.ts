@@ -11,7 +11,7 @@
  */
 
 import { randomInt } from 'node:crypto'
-import type { PlatformType } from './types'
+import type { NativeMessagingContext, PlatformType } from './types'
 
 /**
  * Pairing-code intent.
@@ -26,6 +26,7 @@ import type { PlatformType } from './types'
 export type PairingKind = 'session' | 'workspace-supergroup'
 
 export interface PairingEntry {
+  nativeContext?: NativeMessagingContext
   kind: PairingKind
   workspaceId: string
   /** Only set for `kind: 'session'`. */
@@ -73,8 +74,9 @@ export class PairingCodeManager {
    * Issue a new pairing code.
    * @throws Error with code 'RATE_LIMIT' when the workspace exceeds the per-minute cap.
    */
-  generate(workspaceId: string, sessionId: string, platform: PlatformType): GeneratedPairing {
-    return this.generateInternal({ kind: 'session', workspaceId, sessionId, platform })
+  generate(workspaceId: string, sessionId: string, platform: PlatformType, nativeContext?: NativeMessagingContext): GeneratedPairing {
+    nativeContext?.assertAuthorized()
+    return this.generateInternal({ kind: 'session', workspaceId, sessionId, platform, nativeContext })
   }
 
   /**
@@ -91,6 +93,7 @@ export class PairingCodeManager {
     workspaceId: string
     sessionId?: string
     platform: PlatformType
+    nativeContext?: NativeMessagingContext
   }): GeneratedPairing {
     this.checkRate(args.workspaceId)
     this.gc()
@@ -109,6 +112,7 @@ export class PairingCodeManager {
       platform: args.platform,
       code,
       expiresAt,
+      ...(args.nativeContext ? { nativeContext: { ...args.nativeContext, owner: { ...args.nativeContext.owner } } } : {}),
     })
     return { code, expiresAt }
   }
@@ -126,7 +130,14 @@ export class PairingCodeManager {
       return null
     }
     this.entries.delete(this.key(platform, code))
+    try { entry.nativeContext?.assertAuthorized() } catch { return null }
     return entry
+  }
+
+  isNativeCode(workspaceId: string, platform: PlatformType, code: string): boolean {
+    const entry = this.entries.get(this.key(platform, code))
+    if (!entry?.nativeContext || entry.workspaceId !== workspaceId || entry.expiresAt < Date.now()) return false
+    try { entry.nativeContext.assertAuthorized(); return true } catch { return false }
   }
 
   /** Invalidate all codes for a workspace. Used on platform disconnect. */

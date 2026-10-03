@@ -1,0 +1,53 @@
+TAP version 13
+# Subtest: current SkillInfoPage catalog/draft/save ownership
+    # Subtest: watcher reads the complete same-directory catalog and preserves edited fields
+    ok 1 - watcher reads the complete same-directory catalog and preserves edited fields
+      ---
+      duration_ms: 415.370666
+      type: 'test'
+      ...
+    # Subtest: latest catalog read defeats an older pending load and deletion recreates the selected address
+    ok 2 - latest catalog read defeats an older pending load and deletion recreates the selected address
+      ---
+      duration_ms: 251.973959
+      type: 'test'
+      ...
+    # Subtest: workspace ABA and a retained old watcher cannot publish an old catalog
+    ok 3 - workspace ABA and a retained old watcher cannot publish an old catalog
+      ---
+      duration_ms: 236.045458
+      type: 'test'
+      ...
+    # Subtest: save acknowledgement preserves later edits and invalidates older watcher reads
+    ok 4 - save acknowledgement preserves later edits and invalidates older watcher reads
+      ---
+      duration_ms: 335.631791
+      type: 'test'
+      ...
+    # Subtest: failed write retains draft and a late save from the previous directory cannot replace current content
+    ok 5 - failed write retains draft and a late save from the previous directory cannot replace current content
+      ---
+      duration_ms: 390.040958
+      type: 'test'
+      ...
+    # Subtest: project skill stays read-only after workspace-only watch payload
+    ok 6 - project skill stays read-only after workspace-only watch payload
+      ---
+      duration_ms: 162.190625
+      type: 'test'
+      ...
+    1..6
+ok 1 - current SkillInfoPage catalog/draft/save ownership
+  ---
+  duration_ms: 2458.79325
+  type: 'suite'
+  ...
+1..1
+# tests 6
+# suites 1
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2836.688833

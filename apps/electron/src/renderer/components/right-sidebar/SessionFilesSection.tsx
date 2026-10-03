@@ -422,11 +422,16 @@ function FileTreeItem({
  */
 export function SessionFilesSection({ sessionId, className, sessionFolderPath, hideHeader = false }: SessionFilesSectionProps) {
   const { t } = useTranslation()
-  const [files, setFiles] = useState<SessionFile[]>([])
+  const scopeRef = useRef({ sessionId })
+  if (scopeRef.current.sessionId !== sessionId) scopeRef.current = { sessionId }
+  const scope = scopeRef.current
+  const [snapshot, setSnapshot] = useState<{ scope: typeof scope; files: SessionFile[] }>({ scope, files: [] })
+  const files = snapshot.scope === scope ? snapshot.files : []
   const [isLoading, setIsLoading] = useState(false)
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
   const [hasSavedExpandedState, setHasSavedExpandedState] = useState(false)
   const mountedRef = useRef(true)
+  const requestIdRef = useRef(0)
 
   // Load expanded paths from storage when session changes.
   // If no value exists yet, we default to "expand all" after files load.
@@ -456,16 +461,20 @@ export function SessionFilesSection({ sessionId, className, sessionFolderPath, h
 
   // Load files
   const loadFiles = useCallback(async () => {
+    if (!mountedRef.current || scopeRef.current !== scope) return
+    const requestId = ++requestIdRef.current
+    const current = () => mountedRef.current && scopeRef.current === scope && requestIdRef.current === requestId
     if (!sessionId) {
-      setFiles([])
+      setSnapshot({ scope, files: [] })
+      setIsLoading(false)
       return
     }
 
     setIsLoading(true)
     try {
       const sessionFiles = await window.electronAPI.getSessionFiles(sessionId)
-      if (mountedRef.current) {
-        setFiles(sessionFiles)
+      if (current()) {
+        setSnapshot({ scope, files: sessionFiles })
 
         // Default behavior: expand the entire folder tree when there's no saved state yet.
         if (!hasSavedExpandedState) {
@@ -479,47 +488,49 @@ export function SessionFilesSection({ sessionId, className, sessionFolderPath, h
       }
     } catch (error) {
       console.error('Failed to load session files:', error)
-      if (mountedRef.current) {
-        setFiles([])
+      if (current()) {
+        setSnapshot({ scope, files: [] })
       }
     } finally {
-      if (mountedRef.current) {
+      if (current()) {
         setIsLoading(false)
       }
     }
-  }, [sessionId, hasSavedExpandedState, saveExpandedPaths])
+  }, [sessionId, scope, hasSavedExpandedState, saveExpandedPaths])
 
   // Initial load and file watcher setup
   useEffect(() => {
     mountedRef.current = true
-    loadFiles()
+    void loadFiles()
 
     if (sessionId) {
       // Start watching for file changes
-      void window.electronAPI.watchSessionFiles(sessionId)
+      void window.electronAPI.watchSessionFiles(sessionId).catch(() => {})
 
       // Listen for file change events
       const unsubscribe = window.electronAPI.onSessionFilesChanged((changedSessionId) => {
-        if (changedSessionId === sessionId && mountedRef.current) {
+        if (changedSessionId === sessionId && mountedRef.current && scopeRef.current === scope) {
           void loadFiles()
         }
       })
 
       const unsubscribeReconnect = window.electronAPI.onReconnected(() => {
-        if (!mountedRef.current) return
+        if (!mountedRef.current || scopeRef.current !== scope) return
         void restoreSessionFileWatch(sessionId, loadFiles)
       })
 
       return () => {
         mountedRef.current = false
+        requestIdRef.current += 1
         unsubscribe()
         unsubscribeReconnect()
-        void window.electronAPI.unwatchSessionFiles()
+        void window.electronAPI.unwatchSessionFiles().catch(() => {})
       }
     }
 
     return () => {
       mountedRef.current = false
+      requestIdRef.current += 1
     }
   }, [sessionId, loadFiles])
 

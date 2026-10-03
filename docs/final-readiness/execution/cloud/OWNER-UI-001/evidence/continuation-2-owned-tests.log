@@ -1,0 +1,66 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts:
+(pass) ROX UI-001 real persisted layout atoms > bounds live writes before consumers read them and saves the same value [4.87ms]
+(pass) ROX UI-001 real persisted layout atoms > retains the inspector host range instead of narrowing valid saved widths [0.45ms]
+(pass) ROX UI-001 real persisted layout atoms > rounds updater callbacks and reloads canonical values in a fresh store [0.46ms]
+(pass) ROX UI-001 real persisted layout atoms > recovers malformed JSON, wrong types and non-finite JSON on reload [1.32ms]
+(pass) ROX UI-001 real persisted layout atoms > keeps valid live sizes usable when persistence or reset is denied [2.35ms]
+(pass) ROX UI-001 real persisted layout atoms > normalizes cross-window storage events and unsubscribes on unmount [1.39ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:
+(pass) ROX UI-001 actual AppShell workspace callbacks > ignores late sources responses after workspace/directory change [2200.83ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > keeps a live sources deletion ahead of a pending initial snapshot [131.85ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > ignores late skills responses after workspace/directory change [353.69ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > keeps a live skills deletion ahead of a pending initial snapshot [164.78ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > recovers from request rejection and unmount without installing stale data [84.48ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > restores workspace geometry before an old pending keyboard resize can commit [174.06ms]
+(pass) ROX UI-001 workspace persistence isolation > does not save old viewFilters over the next workspace during restoration [16.16ms]
+(pass) ROX UI-001 workspace persistence isolation > does not save old collapsedSidebarItems over the next workspace during restoration [89.14ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts:
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1347:9:
+      1347 │     case 'pages':
+           ╵          ~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1321:9:
+      1321 │     case 'pages':
+           ╵          ~~~~~~~
+
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1349:9:
+      1349 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1323:9:
+      1323 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches allSessions/session/session-one with its own selected entity [105.29ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches sources/source/source-one with its own selected entity [48.48ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches skills/skill/skill-one with its own selected entity [7.70ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches projects/project/project-one with its own selected entity [0.81ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches notes/note/note-one with its own selected entity [0.45ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches pages/page/page-one with its own selected entity [35.32ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches knowledge/document/knowledge-one with its own selected entity [170.12ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches extension/extension-one/view-one with its own selected entity [52.90ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches terminal/terminal-one with its own selected entity [8.27ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches cloud-run/run-one with its own selected entity [0.91ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches dossier/item/item-one with its own selected entity [0.71ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches radar/item/item-one with its own selected entity [3.59ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches decisions/item/item-one with its own selected entity [0.99ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches agents/item/item-one with its own selected entity [0.21ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches focus/item/item-one with its own selected entity [0.17ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > renders an explicit unavailable state for an unsupported navigation state [0.31ms]
+
+ 30 pass
+ 0 fail
+ 99 expect() calls
+Ran 30 tests across 3 files. [6.90s]

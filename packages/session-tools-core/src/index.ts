@@ -164,6 +164,8 @@ export type {
   HostBashPort,
   HostBashExecRequest,
   HostBashExecResult,
+  HostBashObservation,
+  HostBashObserver,
 } from './runtime/host-bash-port.ts';
 
 // Knowledge tool runtime (K-10 §3.1 read capabilities) — registered by the

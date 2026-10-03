@@ -26,7 +26,7 @@ import {
   type ReplicaSnapshot,
   type ReplicaWriteInput,
 } from './types.ts';
-import { validateReplicaOperation, type ReplicaOutboxPort, type ReplicaServerAcknowledgement } from './outbox.ts';
+import { validateReplicaOperation, type ReplicaCreationAttempt, type ReplicaOutboxPort, type ReplicaServerAcknowledgement } from './outbox.ts';
 
 export class ReplicaTenancyError extends Error {
   constructor(message = 'workspace is not bound to this account') {
@@ -189,7 +189,7 @@ export class AccountReplica {
     return op;
   }
 
-  enqueueOffline(input: ReplicaWriteInput): ReplicaOperation {
+  enqueueOffline(input: ReplicaWriteInput, creationAttempt?: ReplicaCreationAttempt): ReplicaOperation {
     if (!this.outbox) throw new Error('durable replica outbox is required for offline writes');
     if (isExcludedReplicaCategory(input.category) || !isReplicaCategory(input.category)) {
       throw new ReplicaCategoryError();
@@ -204,6 +204,10 @@ export class AccountReplica {
       ...input, accountId: this.accountId, id: randomUUID(), seq: 0, ts: Date.now(),
     };
     validateReplicaOperation(op);
+    if (creationAttempt) {
+      if (!this.outbox.enqueueCreation) throw new Error('durable creation attempt custody is required');
+      return this.outbox.enqueueCreation(op, creationAttempt);
+    }
     this.outbox.enqueue(op);
     return op;
   }

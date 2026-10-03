@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { meetingCaptureCapability, type MeetingGrant } from '@rox/shared/meeting-agents'
+import { meetingCaptureCapability, type MeetingGrant } from '@rox/shared/meeting-agents/browser'
 import { RPC_CHANNELS } from '../../../shared/types'
 import { isWebUI } from '../../lib/platform'
 import { buildMeetingCaptureGrant } from './capture-rpc'
+import { useTourSignals, useTourTarget } from '../../features/product-tour/runtime/hooks'
+import { meetingsAutomationCapabilities } from '../../features/product-tour/adapters/work/meetings-automations'
 import {
   listStateFromResult,
   toMeetingPageItems,
@@ -65,12 +67,17 @@ export default function MeetingsWorkspace({
   const [state, setState] = useState<MeetingPageState>('empty')
   const [selected, setSelected] = useState<MeetingPageItem | undefined>()
   const [captureState, setCaptureStatus] = useState<string | undefined>()
+  const [loading, setLoading] = useState(true)
+  const tourSignals = useTourSignals()
+  const listTarget = useTourTarget('meetings.list')
 
   const load = useCallback(async () => {
+    setLoading(true)
     const api = window.electronAPI as MeetingsElectronApi | undefined
     if (!workspaceId || !api?.listMeetings || !channelOpen(api, RPC_CHANNELS.meetings.LIST)) {
       setItems([])
       setState('empty')
+      setLoading(false)
       return
     }
     try {
@@ -82,12 +89,29 @@ export default function MeetingsWorkspace({
     } catch {
       setItems([])
       setState('offline')
+    } finally {
+      setLoading(false)
     }
   }, [workspaceId])
 
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    const api = window.electronAPI as MeetingsElectronApi | undefined
+    const capabilities = meetingsAutomationCapabilities({
+      surface: 'meetings', workspaceId,
+      apiAvailable: !!api?.listMeetings && channelOpen(api, RPC_CHANNELS.meetings.LIST),
+      loadState: loading ? 'loading' : state === 'offline' || state === 'denied' ? 'error' : 'ready',
+      // This legacy list does not render an artifact viewer; never infer an opened result.
+      selectedId: selected?.id,
+    })
+    const available = tourSignals.capability('meetings.available', state === 'denied'
+      ? { state: 'denied', reason: 'not-authorized' } : capabilities['meetings.available']!)
+    const artifact = tourSignals.capability('meeting.artifact-present', capabilities['meeting.artifact-present']!)
+    return () => { available(); artifact() }
+  }, [tourSignals, workspaceId, loading, state, selected?.id])
 
   const onStart = useCallback(async () => {
     const api = window.electronAPI as MeetingsElectronApi | undefined
@@ -177,6 +201,7 @@ export default function MeetingsWorkspace({
           </button>
         ) : null}
       </header>
+      <div ref={listTarget} className="min-h-0 flex-1" data-testid="meetings-native-list">
       {state === 'denied' ? (
         <p className="p-3 text-sm" data-testid="meetings-denied">denied</p>
       ) : state === 'offline' ? (
@@ -195,6 +220,7 @@ export default function MeetingsWorkspace({
           ) : null}
         </div>
       )}
+      </div>
     </div>
   )
 }

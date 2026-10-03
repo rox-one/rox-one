@@ -1,3 +1,4 @@
+import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -71,6 +72,7 @@ export function WorkspaceIconRail({
 	className,
 }: WorkspaceIconRailProps) {
 	const { t } = useTranslation();
+	const tourWorkspaceTarget = useTourTarget('workspace.switcher', { scope: 'shell', variant: 'rail' });
 	const [showCreationScreen, setShowCreationScreen] = React.useState(false);
 	const [reconnectTarget, setReconnectTarget] =
 		React.useState<Workspace | null>(null);
@@ -333,6 +335,7 @@ export function WorkspaceIconRail({
 			</AnimatePresence>
 
 			<aside
+				ref={tourWorkspaceTarget}
 				className={cn(
 					"rox-rail h-full shrink-0 titlebar-no-drag",
 					"flex flex-col items-center overflow-y-auto overflow-x-hidden px-2 pb-2",
@@ -485,7 +488,7 @@ export function WorkspaceIconRail({
 								align="start"
 								sideOffset={8}
 								aria-labelledby={addLinkTitleId}
-								className="w-80 max-w-[calc(100vw-40px)] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto p-3"
+								className="w-80 max-w-[min(calc(100vw-40px),var(--radix-popover-content-available-width))] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto p-3"
 								onOpenAutoFocus={(event) => {
 									event.preventDefault();
 									draftLabelRef.current?.focus();

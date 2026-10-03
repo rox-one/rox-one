@@ -1,3 +1,4 @@
+import { TourConnectionPolicyContext } from '@/features/product-tour/runtime/hooks'
 import * as React from "react"
 import { useTranslation, Trans } from "react-i18next"
 import { isInternalAgentSession } from "@rox/shared/sessions/internal-prompts"
@@ -173,6 +174,9 @@ import { usePages } from "@/hooks/usePages"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { PanelHeader } from "./PanelHeader"
 import { OnboardingDialog } from "./OnboardingDialog"
+import { useProductLearning } from '@/features/product-tour/runtime'
+import { useTourTarget, useTourSignals } from '@/features/product-tour/runtime/hooks'
+import { beginChatSessionCreation } from '@/features/product-tour/adapters/chat'
 import { FabNewChat } from "./FabNewChat"
 import { SendToWorkspaceDialog } from "./SendToWorkspaceDialog"
 import { CreateProjectDialog } from "../projects/CreateProjectDialog"
@@ -331,11 +335,11 @@ function AppShellContent({
   const [shellSidebarSlot, setShellSidebarSlot] = useState<HTMLElement | null>(null)
   const extraScreens = visibleExtraScreens(useAtomValue(enabledExtraScreenIdsAtom))
   const [storedSidebarWidth, setSidebarWidth] = React.useState(() => {
-    return loadShellLayout(null).sidebarWidth
+    return loadShellLayout(activeWorkspaceId).sidebarWidth
   })
   // Session list width in pixels (min 240, max 480)
   const [storedSessionListWidth, setSessionListWidth] = React.useState(() => {
-    return loadShellLayout(null).navigatorWidth
+    return loadShellLayout(activeWorkspaceId).navigatorWidth
   })
 
   // Hides both sidebar and navigator (CMD+. toggle)
@@ -536,6 +540,9 @@ function AppShellContent({
 
   const store = useStore()
   const panelStack = useAtomValue(panelStackAtom)
+  const productLearning = useProductLearning()
+  const tourNewSessionTarget = useTourTarget('session.new', { variant: 'regular' })
+  const tourSignals = useTourSignals()
   const panelCount = useAtomValue(panelCountAtom)
   const focusedSessionId = useAtomValue(focusedSessionIdAtom)
 
@@ -586,7 +593,7 @@ function AppShellContent({
   // without this the navigator column stayed mounted and empty beside them.
   const isModeScreenView = isInboxNavigation(navState) || isFeedNavigation(navState) || isScreenNavigation(navState)
   const hideModuleMiddleNav =
-    isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
+    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isModeScreenView || (isSettingsNavigation(navState) && !isAutoCompact)
 
   // Derive source filter from navigation state (only when in sources navigator)
   const sourceFilter: SourceFilter | null = isSourcesNavigation(navState) ? navState.filter ?? null : null
@@ -899,7 +906,7 @@ function AppShellContent({
   // Track which expandable sidebar items are collapsed
   // Labels are collapsed by default; user preference is persisted once toggled
   const [collapsedItems, setCollapsedItems] = React.useState<Set<string>>(() => {
-    const saved = loadShellLayout(null).collapsedSectionIds
+    const saved = loadShellLayout(activeWorkspaceId).collapsedSectionIds
     if (saved.length > 0) return new Set(saved)
     return new Set(['nav:labels'])
   })
@@ -972,6 +979,7 @@ function AppShellContent({
 
   // Whether local MCP servers are enabled (affects stdio source status)
   const [localMcpEnabled, setLocalMcpEnabled] = React.useState(true)
+  const [learningSourcePolicy, setLearningSourcePolicy] = React.useState<{ workspaceId: string; localMcpEnabled: boolean | null } | null>(null)
 
   // Enabled permission modes for Shift+Tab cycling (min 2 modes)
   const [enabledModes, setEnabledModes] = React.useState<PermissionMode[]>(['safe', 'ask', 'allow-all'])
@@ -979,7 +987,11 @@ function AppShellContent({
   // Load workspace settings (for localMcpEnabled and cyclablePermissionModes) on workspace change
   React.useEffect(() => {
     if (!activeWorkspaceId) return
+    let cancelled = false
+    setLearningSourcePolicy(null)
     window.electronAPI.getWorkspaceSettings(activeWorkspaceId).then((settings) => {
+      if (cancelled) return
+      setLearningSourcePolicy({ workspaceId: activeWorkspaceId, localMcpEnabled: settings ? (settings.localMcpEnabled ?? true) : null })
       if (settings) {
         setLocalMcpEnabled(settings.localMcpEnabled ?? true)
         // Load cyclablePermissionModes from workspace settings
@@ -988,8 +1000,9 @@ function AppShellContent({
         }
       }
     }).catch((err) => {
-      console.error('[Chat] Failed to load workspace settings:', err)
+      if (!cancelled) console.error('[Chat] Failed to load workspace settings:', err)
     })
+    return () => { cancelled = true }
   }, [activeWorkspaceId])
 
   // Reset UI state when workspace changes
@@ -1035,7 +1048,7 @@ function AppShellContent({
 
     setWorkspaceUiStateId(activeWorkspaceId)
     previousWorkspaceRef.current = activeWorkspaceId
-  }, [activeWorkspaceId])
+  }, [activeWorkspaceId, sidebarResize.handleKeyCancel, navigatorResize.handleKeyCancel])
 
   // A live update is newer than the initial snapshot; obsolete loads must not
   // resurrect deleted entities or cross a workspace boundary.
@@ -1705,10 +1718,13 @@ function AppShellContent({
 
   // Ensure session messages are loaded when selected
   React.useEffect(() => {
-    if (session.selected) {
-      ensureMessagesLoaded(session.selected)
-    }
-  }, [session.selected, ensureMessagesLoaded])
+    if (!session.selected || !activeWorkspaceId) return
+    // Read current ownership at the side-effect boundary: another selection
+    // writer or a workspace transition may have invalidated the rendered map.
+    const meta = store.get(sessionMetaMapAtom).get(session.selected)
+    if (!meta || (meta.workspaceId !== activeWorkspaceId && meta.workspaceId !== remoteWorkspaceId)) return
+    ensureMessagesLoaded(session.selected)
+  }, [session.selected, activeWorkspaceId, remoteWorkspaceId, sessionMetaMap, ensureMessagesLoaded, store])
 
   // Wrap delete handler to clear selection when deleting the currently selected session
   // This prevents stale state during re-renders that could cause crashes
@@ -1732,6 +1748,7 @@ function AppShellContent({
     enabledSources: sources,
     skills,
     activeSessionWorkingDirectory,
+    localMcpEnabled,
     labels: displayLabelConfigs,
     onSessionLabelsChange: handleSessionLabelsChange,
     projects: projectMenuOptions,
@@ -1755,7 +1772,7 @@ function AppShellContent({
     automationTestResults,
     getAutomationHistory,
     onReplayAutomation: handleReplayAutomation,
-  }), [contextValue, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, projects, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, automationTestResults, getAutomationHistory, handleReplayAutomation])
+  }), [contextValue, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, localMcpEnabled, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, projects, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, automationTestResults, getAutomationHistory, handleReplayAutomation])
   // Persist expanded folders to localStorage (workspace-scoped)
   React.useEffect(() => {
     if (!activeWorkspaceId || workspaceUiStateId !== activeWorkspaceId) return
@@ -1815,10 +1832,11 @@ function AppShellContent({
 
   const focusServicePanel = useSetAtom(focusServicePanelAtom)
   const handleServiceClick = useCallback((serviceId: AppNavDestinationId) => {
-    if (focusServicePanel(serviceId)) return
+    // An explicit service selection must recover a stale workspace URL through navigate.
+    if (navState.navigator !== 'unavailable' && focusServicePanel(serviceId)) return
     const route = APP_NAV_DESTINATIONS_BY_ID[serviceId].route?.()
     if (route) navigate(route)
-  }, [focusServicePanel, navigate])
+  }, [focusServicePanel, navigate, navState.navigator])
 
   const handleAllSessionsClick = useCallback(() => {
     handleServiceClick('sessions')
@@ -2160,6 +2178,7 @@ function AppShellContent({
     const inherited = resolveInheritedNewSessionParams()
 
     // Delegate to NavigationContext which handles session creation
+    beginChatSessionCreation(tourSignals.capture())
     navigate(
       routes.action.newSession(inherited ?? undefined),
       newPanel ? { newPanel: true, targetLaneId: 'main' } : undefined
@@ -2167,7 +2186,7 @@ function AppShellContent({
 
     // Focus the chat input after navigation completes
     setTimeout(() => focusZone('chat', { intent: 'programmatic' }), 50)
-  }, [activeWorkspace, focusZone, handleNewKnowledgeNote, navigate, navState, resolveInheritedNewSessionParams])
+  }, [activeWorkspace, focusZone, handleNewKnowledgeNote, navigate, navState, resolveInheritedNewSessionParams, tourSignals])
 
   const setInspectorVisible = useSetAtom(inspectorVisibleAtom)
   const setInspectorChromeCollapsed = useSetAtom(inspectorChromeCollapsedAtom)
@@ -2410,7 +2429,7 @@ function AppShellContent({
       actions: (
         <div className="flex shrink-0 items-center gap-0.5">
           <button type="button" onClick={() => window.dispatchEvent(new Event('craft:join-session'))} title={t('sessionMenu.join')} aria-label={t('sessionMenu.join')} className="grid size-7 place-items-center rounded-lg text-foreground/50 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring"><Link2 className="size-3.5" aria-hidden /></button>
-          <button type="button" onClick={event => handleNewChat(event.metaKey || event.ctrlKey)} title={`${t('session.newSession')} ${newChatHotkey}`} aria-label={t('session.newSession')} data-tutorial="new-chat-button" className="grid size-7 place-items-center rounded-lg bg-accent/10 text-accent hover:bg-accent/20 focus-visible:ring-1 focus-visible:ring-ring"><Plus className="size-3.5" aria-hidden /></button>
+          <button ref={tourNewSessionTarget} type="button" onClick={event => handleNewChat(event.metaKey || event.ctrlKey)} title={`${t('session.newSession')} ${newChatHotkey}`} aria-label={t('session.newSession')} data-tutorial="new-chat-button" className="grid size-7 place-items-center rounded-lg bg-accent/10 text-accent hover:bg-accent/20 focus-visible:ring-1 focus-visible:ring-ring"><Plus className="size-3.5" aria-hidden /></button>
         </div>
       ),
       contextMenu: {
@@ -2723,6 +2742,7 @@ function AppShellContent({
     </>
   )
   return (
+    <TourConnectionPolicyContext.Provider value={learningSourcePolicy?.workspaceId === activeWorkspaceId ? learningSourcePolicy : null}>
     <AppShellProvider value={appShellContextValue}>
       <WorkspaceBrowserRegistry enabled={browserSurfaceEnabled} />
       <ShellSidebarContext.Provider value={isAutoCompact ? null : shellSidebarSlot}>
@@ -3399,9 +3419,10 @@ function AppShellContent({
       <PublishSessionDialogHost />
 
       {/* Y4: first-run memory onboarding — shown once when no lessons exist */}
-      <OnboardingDialog workspaceId={activeWorkspaceId ?? undefined} />
+      <OnboardingDialog workspaceId={activeWorkspaceId ?? undefined} presentationAllowed={!productLearning?.enabled || (navState.navigator === 'memory' && ['idle', 'paused', 'blocked', 'finished'].includes(productLearning.state.phase))} />
 
       </ShellSidebarContext.Provider>
     </AppShellProvider>
+    </TourConnectionPolicyContext.Provider>
   )
 }

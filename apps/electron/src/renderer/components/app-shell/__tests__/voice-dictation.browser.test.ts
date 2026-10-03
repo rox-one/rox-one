@@ -67,13 +67,28 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
   const finish = () => page.getByRole('button', { name: 'Stop dictation', exact: true }).click()
 
   it('consumes STOP once and appends the returned paragraphs to the latest edited draft', async () => {
-    await load('deferredStop=true'); await start(); await finish()
+    await load('deferredStop=true'); await start(); await finish(); await waitForCall('stopVoiceCapture')
     await page.getByRole('textbox', { name: 'Draft' }).fill('Edited while transcribing')
     await page.evaluate(() => (window as any).__voiceFixture.resolveStop())
     await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Edited while transcribing Synthetic first paragraph.\n\nSynthetic second paragraph.')
     expect((await calls()).filter((call) => call.method === 'stopVoiceCapture')).toHaveLength(1)
     expect((await calls()).find((call) => call.method === 'startVoiceCapture')?.args).toEqual({ mimeType: 'audio/webm' })
     expect((await calls()).filter((call) => call.method === 'transcribeVoice')).toHaveLength(0)
+  }, timeout)
+
+  it('preserves the latest draft ending in space, newline or tab with both trailing-space preferences', async () => {
+    const transcript = 'Synthetic first paragraph.\n\nSynthetic second paragraph.'
+    for (const ending of [' ', '\n', '\t']) {
+      for (const trailingSpace of [false, true]) {
+        await load(`deferredStop=true&trailingSpace=${trailingSpace}`)
+        await start(); await finish(); await waitForCall('stopVoiceCapture')
+        const draft = `Edited while transcribing${ending}`
+        await page.getByRole('textbox', { name: 'Draft' }).fill(draft)
+        await page.evaluate(() => (window as any).__voiceFixture.resolveStop())
+        await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue(`${draft}${transcript}${trailingSpace ? ' ' : ''}`)
+        expect((await calls()).filter(call => call.method === 'stopVoiceCapture')).toHaveLength(1)
+      }
+    }
   }, timeout)
 
   it('asks for cloud upload consent at first use and starts only after the saved grant', async () => {
@@ -103,8 +118,208 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
     expect((await calls()).filter((call) => call.method === 'getUserMedia')).toHaveLength(0)
   }, timeout)
 
+  it('unmount stops microphone tracks while permission is pending and its late grant cannot start a recorder', async () => {
+    await load('deferredGrant=true'); await start()
+    await expectDOM.poll(async () => (await calls()).filter((call) => call.method === 'grantVoicePermission').length).toBe(1)
+    expect((await calls()).filter((call) => call.method === 'recorderStart')).toHaveLength(0)
+    await page.evaluate(() => (window as any).__voiceFixture.unmount())
+    await expectDOM(page.getByRole('button', { name: 'Loading…', exact: true })).toHaveCount(0)
+    await expectDOM.poll(async () => (await calls()).filter((call) => call.method === 'stopTrack').length).toBeGreaterThan(0)
+    expect((await calls()).filter((call) => call.method === 'cancelVoiceCapture')).toHaveLength(1)
+    await page.evaluate(async () => {
+      ;(window as any).__voiceFixture.resolveGrant()
+      await new Promise((resolve) => setTimeout(resolve, 25))
+    })
+    const afterGrant = await calls()
+    expect(afterGrant.filter((call) => call.method === 'recorderStart')).toHaveLength(0)
+    expect(afterGrant.filter((call) => ['sendVoiceChunk', 'stopVoiceCapture', 'transcribeVoice'].includes(call.method))).toHaveLength(0)
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft')
+  }, timeout)
+
+  it('synchronous double toggle starts only one capture while microphone access is pending', async () => {
+    await load('deferredMedia=true')
+    await page.getByRole('button', { name: 'Dictate', exact: true }).evaluate((button) => {
+      ;(button as HTMLButtonElement).click()
+      ;(button as HTMLButtonElement).click()
+    })
+    await expectDOM(page.getByRole('button', { name: 'Loading…', exact: true })).toBeDisabled()
+    const pending = await calls()
+    expect(pending.filter((call) => call.method === 'getUserMedia')).toHaveLength(1)
+    expect(pending.filter((call) => call.method === 'startVoiceCapture')).toHaveLength(0)
+    await page.evaluate(() => (window as any).__voiceFixture.resolveMedia())
+    await expectDOM(page.getByRole('button', { name: 'Stop dictation', exact: true })).toBeVisible()
+    const started = await calls()
+    expect(started.filter((call) => call.method === 'getUserMedia')).toHaveLength(1)
+    expect(started.filter((call) => call.method === 'startVoiceCapture')).toHaveLength(1)
+    expect(started.filter((call) => call.method === 'recorderStart')).toHaveLength(1)
+    await finish()
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft Synthetic first paragraph.\n\nSynthetic second paragraph.')
+  }, timeout)
+
+  it('a microphone startup failure restores the enabled control and allows a successful retry', async () => {
+    await load('rejectMediaOnce=true'); await start()
+    await expectDOM(page.getByRole('button', { name: 'Dictate', exact: true })).toBeEnabled({ timeout: 2_000 })
+    expect((await calls()).filter((call) => call.method === 'cancelVoiceCapture')).toHaveLength(0)
+    expect((await calls()).filter((call) => call.method === 'startVoiceCapture')).toHaveLength(0)
+    await start()
+    await expectDOM(page.getByRole('button', { name: 'Stop dictation', exact: true })).toBeVisible()
+    const retried = await calls()
+    expect(retried.filter((call) => call.method === 'getUserMedia')).toHaveLength(2)
+    expect(retried.filter((call) => call.method === 'startVoiceCapture')).toHaveLength(1)
+    expect(retried.filter((call) => call.method === 'recorderStart')).toHaveLength(1)
+    await finish()
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft Synthetic first paragraph.\n\nSynthetic second paragraph.')
+  }, timeout)
+
+  it('idle unmount does not cancel another host job and the control can remount', async () => {
+    await load('rejectCancel=true')
+    await page.evaluate(() => (window as any).__voiceFixture.unmount())
+    await expectDOM(page.getByRole('button', { name: 'Dictate', exact: true })).toHaveCount(0)
+    expect((await calls()).filter((call) => call.method === 'cancelVoiceCapture')).toHaveLength(0)
+    await page.waitForTimeout(120)
+    expect((await calls()).filter((call) => ['getUserMedia', 'recorderStart', 'sendVoiceChunk'].includes(call.method))).toHaveLength(0)
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft')
+    await page.evaluate(() => (window as any).__voiceFixture.remount())
+    await expectDOM(page.getByRole('button', { name: 'Dictate', exact: true })).toBeEnabled()
+  }, timeout)
+
+  it('a denied CANCEL cannot hide the original startup failure or prevent a successful retry', async () => {
+    await load('rejectGrantOnce=true&rejectCancel=true'); await start()
+    await expectDOM.poll(async () => (await calls()).filter((call) => call.method === 'cancelVoiceCapture').length).toBe(1)
+    await expectDOM(page.locator('[data-sonner-toast]')).toContainText('Synthetic microphone permission denied')
+    await expectDOM(page.getByRole('button', { name: 'Dictate', exact: true })).toBeEnabled()
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft')
+    await start()
+    await expectDOM(page.getByRole('button', { name: 'Stop dictation', exact: true })).toBeVisible()
+    expect((await calls()).filter((call) => call.method === 'getUserMedia')).toHaveLength(2)
+    expect((await calls()).filter((call) => call.method === 'recorderStart')).toHaveLength(1)
+    await finish()
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft Synthetic first paragraph.\n\nSynthetic second paragraph.')
+  }, timeout)
+
+  it('a late owned START after unmount tolerates denied CANCEL without granting or starting a recorder', async () => {
+    await load('deferredStart=true&rejectCancel=true'); await start()
+    await expectDOM.poll(async () => (await calls()).filter((call) => call.method === 'startVoiceCapture').length).toBe(1)
+    await page.evaluate(() => (window as any).__voiceFixture.unmount())
+    await expectDOM.poll(async () => (await calls()).filter((call) => call.method === 'stopTrack').length).toBeGreaterThan(0)
+    await page.evaluate(() => (window as any).__voiceFixture.resolveStart())
+    await expectDOM.poll(async () => (await calls()).filter((call) => call.method === 'cancelVoiceCapture').length).toBe(1)
+    await page.waitForTimeout(120)
+    expect((await calls()).filter((call) => ['grantVoicePermission', 'recorderStart', 'sendVoiceChunk', 'stopVoiceCapture'].includes(call.method))).toHaveLength(0)
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft')
+  }, timeout)
+
+  it('a denied user CANCEL stops local recording, discards its audio and allows another capture', async () => {
+    await load('rejectCancel=true'); await start()
+    await expectDOM(page.getByRole('button', { name: 'Stop dictation', exact: true })).toBeVisible()
+    await page.evaluate(() => (window as any).__voiceFixture.cancel())
+    await expectDOM(page.getByRole('button', { name: 'Dictate', exact: true })).toBeEnabled()
+    await expectDOM.poll(async () => (await calls()).filter((call) => call.method === 'stopTrack').length).toBeGreaterThan(0)
+    await page.waitForTimeout(120)
+    const cancelled = await calls()
+    expect(cancelled.filter((call) => call.method === 'cancelVoiceCapture')).toHaveLength(1)
+    expect(cancelled.filter((call) => ['sendVoiceChunk', 'stopVoiceCapture', 'transcribeVoice'].includes(call.method))).toHaveLength(0)
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft')
+    await start(); await finish()
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft Synthetic first paragraph.\n\nSynthetic second paragraph.')
+    expect((await calls()).filter((call) => call.method === 'recorderStart')).toHaveLength(2)
+  }, timeout)
+
+  it('uploads audio larger than 4 MiB as exact 1 MiB frames and consumes one STOP transcript into the current draft', async () => {
+    await load('largeAudio=true&deferredStop=true'); await start(); await finish()
+    await expectDOM.poll(async () => page.evaluate(() => (window as any).__voiceFixture.calls.filter((call: any) => call.method === 'stopVoiceCapture').length)).toBe(1)
+    await page.getByRole('textbox', { name: 'Draft' }).fill('Large recording edited draft')
+    const upload = await page.evaluate(() => {
+      const fixture = (window as any).__voiceFixture
+      const frames = fixture.calls.filter((call: any) => call.method === 'sendVoiceChunk')
+        .map((call: any) => atob(call.args.audioBase64)) as string[]
+      let total = 0
+      let exact = true
+      for (const frame of frames) {
+        for (let index = 0; index < frame.length; index++) {
+          if (frame.charCodeAt(index) !== (total + index) % 251) exact = false
+        }
+        total += frame.length
+      }
+      return { sizes: frames.map((frame) => frame.length), total, expected: fixture.audioBytes, exact,
+        stops: fixture.calls.filter((call: any) => call.method === 'stopVoiceCapture').length,
+        asr: fixture.calls.filter((call: any) => call.method === 'asrOnStop').length,
+        directAsr: fixture.calls.filter((call: any) => call.method === 'transcribeVoice').length }
+    })
+    expect(upload.sizes).toEqual([1024 * 1024, 1024 * 1024, 1024 * 1024, 1024 * 1024, 1024 * 1024, 123])
+    expect(upload.total).toBe(upload.expected)
+    expect(upload.exact).toBe(true)
+    expect(upload.stops).toBe(1)
+    expect(upload.asr).toBe(1)
+    expect(upload.directAsr).toBe(0)
+    await page.evaluate(() => (window as any).__voiceFixture.resolveStop())
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Large recording edited draft Synthetic first paragraph.\n\nSynthetic second paragraph.')
+  }, timeout)
   const hotkey = (command: string) => page.evaluate((value) => (window as any).__voiceFixture.hotkey(value), command)
   const waitForCall = (method: string) => page.waitForFunction((name) => (window as any).__voiceFixture.calls.some((call: { method: string }) => call.method === name), method)
+
+  const overlayCommand = (command: 'toggle' | 'cancel', recordingId: string) => page.evaluate(
+    payload => (window as any).__voiceFixture.overlay(payload.command, payload.recordingId), { command, recordingId })
+
+  it('tagged overlay commands never start an idle microphone or stop a foreign capture', async () => {
+    await load()
+    await overlayCommand('toggle', 'foreign-recording'); await overlayCommand('cancel', 'foreign-recording')
+    expect((await calls()).filter(call => ['getUserMedia', 'startVoiceCapture'].includes(call.method))).toHaveLength(0)
+    await start()
+    await expectDOM(page.getByRole('button', { name: 'Stop dictation', exact: true })).toBeVisible()
+    await overlayCommand('toggle', 'foreign-recording'); await overlayCommand('cancel', 'foreign-recording')
+    expect((await calls()).filter(call => ['stopVoiceCapture', 'cancelVoiceCapture'].includes(call.method))).toHaveLength(0)
+    await overlayCommand('toggle', 'synthetic-recording')
+    await expectDOM(page.getByRole('button', { name: 'Dictate', exact: true })).toBeEnabled()
+    expect((await calls()).filter(call => call.method === 'stopVoiceCapture')).toHaveLength(1)
+    await overlayCommand('toggle', 'synthetic-recording')
+    expect((await calls()).filter(call => call.method === 'startVoiceCapture')).toHaveLength(1)
+  }, timeout)
+
+  it('retired overlay packets cannot stop or cancel a replacement capture', async () => {
+    await load(); await start(); await finish()
+    await expectDOM(page.getByRole('button', { name: 'Dictate', exact: true })).toBeEnabled()
+    await start()
+    await expectDOM(page.getByRole('button', { name: 'Stop dictation', exact: true })).toBeVisible()
+    await overlayCommand('toggle', 'synthetic-recording'); await overlayCommand('cancel', 'synthetic-recording')
+    expect((await calls()).filter(call => call.method === 'stopVoiceCapture')).toHaveLength(1)
+    expect((await calls()).filter(call => call.method === 'cancelVoiceCapture')).toHaveLength(0)
+    await overlayCommand('cancel', 'synthetic-recording-2'); await waitForCall('cancelVoiceCapture')
+    expect((await calls()).filter(call => call.method === 'startVoiceCapture')).toHaveLength(2)
+    expect((await calls()).filter(call => call.method === 'cancelVoiceCapture')).toHaveLength(1)
+  }, timeout)
+
+  for (const boundary of ['Start', 'Grant'] as const) for (const command of ['toggle', 'cancel'] as const) {
+    it(`owned overlay ${command} at pending ${boundary} ignores stale packets and completes only that capture`, async () => {
+      await load(`deferred${boundary}=true`); await start()
+      await waitForCall(boundary === 'Start' ? 'startVoiceCapture' : 'grantVoicePermission')
+      await overlayCommand(command, 'synthetic-recording')
+      await overlayCommand('cancel', 'foreign-recording')
+      if (command === 'toggle' || boundary === 'Start') {
+        expect((await calls()).filter(call => ['recorderStart', 'stopVoiceCapture', 'cancelVoiceCapture'].includes(call.method))).toHaveLength(0)
+      }
+      await page.evaluate(name => (window as any).__voiceFixture[`resolve${name}`](), boundary)
+      await waitForCall(command === 'cancel' ? 'cancelVoiceCapture' : 'stopVoiceCapture')
+      await expectDOM(page.getByRole('button', { name: 'Dictate', exact: true })).toBeEnabled()
+      const completed = await calls()
+      expect(completed.filter(call => call.method === 'getUserMedia')).toHaveLength(1)
+      expect(completed.filter(call => call.method === 'startVoiceCapture')).toHaveLength(1)
+      expect(completed.filter(call => call.method === 'recorderStart')).toHaveLength(command === 'cancel' ? 0 : 1)
+      expect(completed.filter(call => call.method === 'stopVoiceCapture')).toHaveLength(command === 'cancel' ? 0 : 1)
+      expect(completed.filter(call => call.method === 'cancelVoiceCapture')).toHaveLength(command === 'cancel' ? 1 : 0)
+      expect(completed.filter(call => call.method === 'grantVoicePermission')).toHaveLength(command === 'cancel' && boundary === 'Start' ? 0 : 1)
+      if (command === 'cancel') await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft')
+    }, timeout)
+  }
+
+  it('a queued owned cancel wins over stop before START returns and never starts a recorder', async () => {
+    await load('deferredStart=true'); await start(); await waitForCall('startVoiceCapture')
+    await overlayCommand('cancel', 'synthetic-recording'); await overlayCommand('toggle', 'synthetic-recording')
+    await page.evaluate(() => (window as any).__voiceFixture.resolveStart())
+    await waitForCall('cancelVoiceCapture')
+    expect((await calls()).filter(call => ['grantVoicePermission', 'recorderStart', 'stopVoiceCapture'].includes(call.method))).toHaveLength(0)
+    expect((await calls()).filter(call => call.method === 'cancelVoiceCapture')).toHaveLength(1)
+  }, timeout)
 
   it('pairs push-to-talk once and consumes the current single-STOP transcript', async () => {
     await load(); await hotkey('ptt-up'); await hotkey('cancel')
@@ -173,6 +388,59 @@ describe.skipIf(!existsSync(executablePath))('voice dictation production rendere
     await load('delivery=clipboard&trailingSpace=true'); await start(); await finish()
     await page.waitForFunction(() => (window as any).__voiceFixture.calls.some((call: any) => call.method === 'copyVoiceText'))
     expect((await calls()).find(call => call.method === 'copyVoiceText')?.args).toEqual({ text: 'Synthetic first paragraph.\n\nSynthetic second paragraph. ' })
+  }, timeout)
+
+  const learning = () => page.evaluate(() => {
+    const state = (window as any).__voiceFixture.learning
+    return { signals: state.signals, accepted: state.accepted, handoffs: state.handoffs,
+      targets: [...state.targets.values()], capabilities: [...state.capabilities.entries()] }
+  })
+
+  it('learning observes only actual draft insertion, scoped target and balanced native handoff without transcript content', async () => {
+    await load('learning=true&compact=true'); await start(); await finish()
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft Synthetic first paragraph.\n\nSynthetic second paragraph.')
+    const observed = await learning()
+    expect(observed.targets).toEqual([{ variant: 'compact', workspaceId: 'voice-workspace', panelId: 'voice-panel' }])
+    expect(observed.capabilities).toEqual([['voice.available', { state: 'ready' }]])
+    expect(observed.handoffs).toEqual([{ open: true, runToken: 'voice-original-attempt' }, { open: false, runToken: 'voice-original-attempt' }])
+    expect(observed.signals).toHaveLength(1)
+    expect(observed.signals[0]).toMatchObject({ name: 'dictation.inserted', level: 'observed', origin: 'native-event',
+      binding: { workspaceId: 'voice-workspace', panelId: 'voice-panel', sessionId: 'voice-session', runToken: 'voice-original-attempt' } })
+    expect(observed.accepted).toHaveLength(1)
+    expect(JSON.stringify(observed)).not.toContain('Synthetic first paragraph')
+    expect((await calls()).filter(call => call.method === 'stopVoiceCapture')).toHaveLength(1)
+  }, timeout)
+
+  it('learning never verifies consent refusal, capture refusal, no speech, cancellation or clipboard-only completion', async () => {
+    await load('learning=true&consent=false'); await start(); await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+    expect((await learning()).signals).toEqual([]); expect((await learning()).handoffs).toEqual([])
+    expect((await calls()).filter(call => call.method === 'getUserMedia')).toEqual([])
+    await load('learning=true&refusedStart=true'); await hotkey('ptt-down'); await waitForCall('stopTrack')
+    expect((await learning()).signals).toEqual([])
+    expect((await learning()).handoffs.map((item: { open: boolean }) => item.open)).toEqual([true, false])
+    await load('learning=true&noSpeech=true'); await start(); await finish()
+    await expectDOM(page.getByRole('button', { name: 'Dictate', exact: true })).toBeEnabled()
+    expect((await learning()).signals).toEqual([])
+    await load('learning=true'); await start(); await hotkey('cancel'); await waitForCall('cancelVoiceCapture')
+    expect((await learning()).signals).toEqual([])
+    await load('learning=true&delivery=clipboard'); await start(); await finish(); await waitForCall('copyVoiceText')
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft')
+    expect((await learning()).signals).toEqual([])
+  }, timeout)
+
+  it('late STOP retains its original observation and disabled learning leaves successful dictation uninstrumented', async () => {
+    await load('learning=true&deferredStop=true'); await start(); await finish(); await waitForCall('stopVoiceCapture')
+    await page.evaluate(() => { const f = (window as any).__voiceFixture; f.changeAttempt(); f.resolveStop() })
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft Synthetic first paragraph.\n\nSynthetic second paragraph.')
+    expect((await learning()).signals[0].binding.runToken).toBe('voice-original-attempt')
+    expect((await learning()).accepted).toEqual([])
+    await load('learning=true&deferredStop=true'); await start(); await finish(); await waitForCall('stopVoiceCapture')
+    await page.evaluate(() => (window as any).__voiceFixture.unmount()); await waitForCall('cancelVoiceCapture')
+    await page.evaluate(() => (window as any).__voiceFixture.resolveStop()); await page.waitForTimeout(25)
+    expect((await learning()).signals).toEqual([]); expect((await learning()).targets).toEqual([])
+    await load(); await start(); await finish()
+    await expectDOM(page.getByRole('textbox', { name: 'Draft' })).toHaveValue('Existing draft Synthetic first paragraph.\n\nSynthetic second paragraph.')
+    expect(await learning()).toEqual({ signals: [], accepted: [], handoffs: [], targets: [], capabilities: [] })
   }, timeout)
 
 })

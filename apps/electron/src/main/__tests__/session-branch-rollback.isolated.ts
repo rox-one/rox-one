@@ -15,6 +15,11 @@ let mockedProvider: 'anthropic' | 'pi' = 'anthropic'
 // Partial-mock baseline: import real modules via file paths (avoids recursive mock imports)
 const actualSharedAgentModule = await import('../../../../../packages/shared/src/agent/index.ts')
 const actualSharedAgentBackendModule = await import('../../../../../packages/shared/src/agent/backend/index.ts')
+const actualSharedConfigModule = await import('../../../../../packages/shared/src/config/index.ts')
+const actualSharedWorkspacesModule = await import('../../../../../packages/shared/src/workspaces/index.ts')
+const actualSharedSourcesModule = await import('../../../../../packages/shared/src/sources/index.ts')
+const actualSharedAutomationsModule = await import('../../../../../packages/shared/src/automations/index.ts')
+const actualSharedSessionsModule = await import('../../../../../packages/shared/src/sessions/index.ts')
 
 mock.module('electron', () => ({
   app: {
@@ -57,6 +62,7 @@ mock.module('../logger', () => {
 })
 
 mock.module('@rox/shared/config', () => ({
+  ...actualSharedConfigModule,
   getWorkspaceByNameOrId: (id: string) => (id === workspace.id ? workspace : null),
   getWorkspaces: () => [workspace],
   loadConfigDefaults: () => ({
@@ -116,6 +122,7 @@ mock.module('@rox/shared/config', () => ({
 }))
 
 mock.module('@rox/shared/workspaces', () => ({
+  ...actualSharedWorkspacesModule,
   loadWorkspaceConfig: () => ({
     defaults: {
       permissionMode: 'ask',
@@ -152,6 +159,11 @@ mock.module('@rox/shared/agent/backend', () => ({
     resolvedModel: mockedProvider === 'anthropic' ? 'claude-sonnet-4-20250514' : 'pi/gpt-5',
     connection: { providerType: mockedProvider === 'anthropic' ? 'anthropic' : 'pi' },
   }),
+  resolveOmpSessionContext: () => ({
+    provider: mockedProvider,
+    resolvedModel: mockedProvider === 'anthropic' ? 'claude-sonnet-4-20250514' : 'pi/gpt-5',
+    connection: { providerType: mockedProvider === 'anthropic' ? 'anthropic' : 'pi' },
+  }),
   createBackendFromResolvedContext: () => {
     throw new Error('not used in this test')
   },
@@ -170,6 +182,7 @@ mock.module('@rox/shared/agent/backend', () => ({
 }))
 
 mock.module('@rox/shared/sources', () => ({
+  ...actualSharedSourcesModule,
   loadWorkspaceSources: () => [],
   loadAllSources: () => [],
   getSourcesBySlugs: () => [],
@@ -191,6 +204,7 @@ mock.module('@rox/shared/sources', () => ({
 }))
 
 mock.module('@rox/shared/automations', () => ({
+  ...actualSharedAutomationsModule,
   AutomationSystem: class AutomationSystem {
     constructor(..._args: unknown[]) {}
     setInitialSessionMetadata() {}
@@ -205,6 +219,7 @@ mock.module('@rox/shared/automations', () => ({
 }))
 
 mock.module('@rox/shared/sessions', () => ({
+  ...actualSharedSessionsModule,
   listSessions: () => [],
   loadSession: (_root: string, id: string) => storedById.get(id) ?? null,
   saveSession: async (session: any) => {

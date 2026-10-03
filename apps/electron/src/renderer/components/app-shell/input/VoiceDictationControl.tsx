@@ -1,3 +1,4 @@
+import { useTourSignals, useTourTarget, type TourObservation } from '@/features/product-tour/runtime/hooks'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Mic, Square } from 'lucide-react'
@@ -30,6 +31,14 @@ function blobToBase64(blob: Blob): Promise<string> {
   })
 }
 
+async function cancelHostCapture(): Promise<void> {
+  try {
+    await window.electronAPI.cancelVoiceCapture?.()
+  } catch {
+    // A revoked grant or disconnected host must not interrupt local cleanup.
+  }
+}
+
 export function VoiceDictationControl({
   disabled,
   compactMode,
@@ -38,7 +47,19 @@ export function VoiceDictationControl({
 }: VoiceDictationControlProps) {
   const { t } = useTranslation()
   const [prefs, setPrefs] = useState<VoicePrefs | null>(null)
+  const voiceTarget = useTourTarget('composer.voice', { variant: compactMode ? 'compact' : 'regular' })
+  const tourSignals = useTourSignals()
+  const dictationObservationRef = useRef<TourObservation | null>(null)
+  useEffect(() => {
+    const capturePorts = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
+      && typeof MediaRecorder !== 'undefined' && ['startVoiceCapture', 'grantVoicePermission', 'sendVoiceChunk', 'stopVoiceCapture', 'cancelVoiceCapture']
+        .every(port => typeof window.electronAPI?.[port as keyof Window['electronAPI']] === 'function')
+    return tourSignals.capability('voice.available', !capturePorts ? { state: 'unavailable', reason: 'api-unavailable' }
+      : !prefs ? { state: 'pending', reason: 'installing' } : { state: 'ready' })
+  }, [tourSignals, prefs])
   const [recording, setRecording] = useState(false)
+  const [starting, setStarting] = useState(false)
+  const startingRef = useRef(false)
   const [transcribing, setTranscribing] = useState(false)
   const [consentOpen, setConsentOpen] = useState(false)
   const [savingConsent, setSavingConsent] = useState(false)
@@ -47,6 +68,8 @@ export function VoiceDictationControl({
   const chunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
   const captureIdRef = useRef(0)
+  const nativeRecordingIdRef = useRef<string | null>(null)
+  const pendingOverlayCommandsRef = useRef(new Map<string, { captureId: number; command: 'toggle' | 'cancel' }>())
   const activeRequestRef = useRef(false)
   const hostStartedRef = useRef(false)
   const commandRef = useRef<VoiceCommandController | null>(null)
@@ -65,6 +88,24 @@ export function VoiceDictationControl({
       if (job.job === 'ready' || job.job === 'cancelled' || job.job === 'failed') setRecording(false)
     })
     const offHotkey = window.electronAPI.onVoiceHotkey?.((payload) => {
+      if (payload.recordingId !== undefined) {
+        const { recordingId, command } = payload
+        if (typeof recordingId !== 'string' || !recordingId || (command !== 'toggle' && command !== 'cancel')) return
+        const remember = () => {
+          const previous = pendingOverlayCommandsRef.current.get(recordingId)
+          pendingOverlayCommandsRef.current.set(recordingId, { captureId: captureIdRef.current, command: previous?.command === 'cancel' ? 'cancel' : command })
+        }
+        if (recordingId !== nativeRecordingIdRef.current) {
+          // Native phase events can precede the START response. Keep this
+          // command with the pending local capture, then match its returned ID.
+          if (!nativeRecordingIdRef.current && activeRequestRef.current) remember()
+          return
+        }
+        if (command === 'cancel') cancelRecordingRef.current()
+        else if (recorderRef.current?.state === 'recording') recorderRef.current.stop()
+        else if (activeRequestRef.current) remember()
+        return
+      }
       void commandRef.current?.handle(payload.command)
     })
     return () => {
@@ -85,6 +126,7 @@ export function VoiceDictationControl({
     const recorder = recorderRef.current
     recorderRef.current = null
     const captureId = captureIdRef.current
+    const dictationObservation = dictationObservationRef.current
     setRecording(false)
     stopTracks()
     if (!recorder) return
@@ -92,9 +134,14 @@ export function VoiceDictationControl({
     const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' })
     chunksRef.current = []
     try {
-      const audioBase64 = await blobToBase64(blob)
-      if (captureId !== captureIdRef.current) return
-      await window.electronAPI.sendVoiceChunk?.({ audioBase64 })
+      // The host accepts bounded frames. Keep long recordings below its 4 MiB
+      // decoded chunk limit without changing the single-transcription flow.
+      const frameBytes = 1024 * 1024
+      for (let offset = 0; offset < blob.size; offset += frameBytes) {
+        const audioBase64 = await blobToBase64(blob.slice(offset, offset + frameBytes))
+        if (captureId !== captureIdRef.current) return
+        await window.electronAPI.sendVoiceChunk?.({ audioBase64 })
+      }
       if (captureId !== captureIdRef.current) return
       const job = await window.electronAPI.stopVoiceCapture?.()
       if (captureId !== captureIdRef.current) return
@@ -118,7 +165,10 @@ export function VoiceDictationControl({
         if (prefs?.delivery === 'clipboard') {
           await window.electronAPI.copyVoiceText({ text: deliveredText })
           if (captureId !== captureIdRef.current) return
-        } else latest.onInputChange?.(latest.inputValue ? `${latest.inputValue} ${deliveredText}` : deliveredText)
+        } else if (latest.onInputChange) {
+          latest.onInputChange(latest.inputValue ? `${latest.inputValue}${/\s$/.test(latest.inputValue) ? '' : ' '}${deliveredText}` : deliveredText)
+          tourSignals.emit(dictationObservation, 'dictation.inserted', 'observed', 'native-event')
+        }
       }
       else if (result.noSpeech) toast.error(t('settings.input.voiceNoSpeech'))
     } catch (error) {
@@ -127,13 +177,18 @@ export function VoiceDictationControl({
       }
     } finally {
       if (captureId === captureIdRef.current) {
+        nativeRecordingIdRef.current = null
+        pendingOverlayCommandsRef.current.clear()
         activeRequestRef.current = false
         setTranscribing(false)
       }
     }
-  }, [prefs?.sttEngine, prefs?.delivery, prefs?.trailingSpace, stopTracks, t])
+  }, [prefs?.sttEngine, prefs?.delivery, prefs?.trailingSpace, stopTracks, t, tourSignals])
 
   const cancelRecording = useCallback(() => {
+    dictationObservationRef.current = null
+    nativeRecordingIdRef.current = null
+    pendingOverlayCommandsRef.current.clear()
     captureIdRef.current += 1
     activeRequestRef.current = false
     const hostStarted = hostStartedRef.current
@@ -142,17 +197,18 @@ export function VoiceDictationControl({
     recorderRef.current = null
     chunksRef.current = []
     setRecording(false)
+    setStarting(false)
     setTranscribing(false)
     stopTracks()
     if (recorder && recorder.state !== 'inactive') recorder.stop()
-    if (hostStarted) void window.electronAPI.cancelVoiceCapture?.()
+    if (hostStarted) void cancelHostCapture()
   }, [stopTracks])
 
   const cancelRecordingRef = useRef(cancelRecording)
   cancelRecordingRef.current = cancelRecording
 
   const startRecording = useCallback(async (selectedPrefs = prefs) => {
-    if (!selectedPrefs) return
+    if (!selectedPrefs || startingRef.current) return
     if (selectedPrefs.sttEngine === 'cloud-rox' && (!selectedPrefs.cloudAsrConsent || selectedPrefs.privacyMigrationPending)) {
       setConsentOpen(true)
       return
@@ -161,10 +217,17 @@ export function VoiceDictationControl({
       toast.error(t('settings.input.voiceOffline'))
       return
     }
+    startingRef.current = true
+    setStarting(true)
     const captureId = ++captureIdRef.current
+    nativeRecordingIdRef.current = null
+    pendingOverlayCommandsRef.current.clear()
+    const dictationObservation = tourSignals.capture()
+    dictationObservationRef.current = dictationObservation
     activeRequestRef.current = true
     let pendingStream: MediaStream | null = null
     try {
+      tourSignals.handoff(dictationObservation, true)
       pendingStream = await navigator.mediaDevices.getUserMedia({
         audio: selectedPrefs.selectedInputDeviceId
           ? { deviceId: { exact: selectedPrefs.selectedInputDeviceId } }
@@ -184,13 +247,19 @@ export function VoiceDictationControl({
       const started = await window.electronAPI.startVoiceCapture?.({ mimeType: recorder.mimeType || 'audio/webm' })
       if (!started?.recordingId) throw new Error(t('settings.input.voiceOffline'))
       if (captureId !== captureIdRef.current) {
-        await window.electronAPI.cancelVoiceCapture?.()
+        await cancelHostCapture()
         return
       }
       hostStartedRef.current = true
+      nativeRecordingIdRef.current = started.recordingId
+      const pendingOverlay = pendingOverlayCommandsRef.current.get(started.recordingId)
+      if (pendingOverlay?.captureId === captureId && pendingOverlay.command === 'cancel') {
+        cancelRecordingRef.current()
+        return
+      }
       await window.electronAPI.grantVoicePermission?.()
       if (captureId !== captureIdRef.current) {
-        if (hostStartedRef.current) await window.electronAPI.cancelVoiceCapture?.()
+        if (hostStartedRef.current) await cancelHostCapture()
         hostStartedRef.current = false
         return
       }
@@ -205,19 +274,32 @@ export function VoiceDictationControl({
       recorderRef.current = recorder
       setRecording(true)
       recorder.start()
+      const pendingCommand = pendingOverlayCommandsRef.current.get(started.recordingId)
+      pendingOverlayCommandsRef.current.clear()
+      if (pendingCommand?.captureId === captureId) {
+        if (pendingCommand.command === 'cancel') cancelRecordingRef.current()
+        else recorder.stop()
+      }
     } catch (error) {
       pendingStream?.getTracks().forEach((track) => track.stop())
       if (captureId === captureIdRef.current) {
+        setStarting(false)
         stopTracks()
+        nativeRecordingIdRef.current = null
+        pendingOverlayCommandsRef.current.clear()
         captureIdRef.current += 1
         activeRequestRef.current = false
         const hostStarted = hostStartedRef.current
         hostStartedRef.current = false
-        if (hostStarted) await window.electronAPI.cancelVoiceCapture?.()
+        if (hostStarted) await cancelHostCapture()
         toast.error(error instanceof Error ? error.message : t('chat.dictate'))
       }
+    } finally {
+      startingRef.current = false
+      if (captureId === captureIdRef.current) setStarting(false)
+      tourSignals.handoff(dictationObservation, false)
     }
-  }, [finishRecording, prefs, stopTracks, t])
+  }, [finishRecording, prefs, stopTracks, t, tourSignals])
 
   const enableCloudTranscription = useCallback(async () => {
     const captureId = captureIdRef.current
@@ -247,6 +329,7 @@ export function VoiceDictationControl({
   }
 
   const toggle = useCallback(() => {
+    if (startingRef.current) return
     void commandRef.current?.handle('toggle')
   }, [])
 
@@ -272,10 +355,10 @@ export function VoiceDictationControl({
     stopTracks()
   }, [stopTracks])
 
-  const label = recording ? t('chat.dictateStop') : t('chat.dictate')
+  const label = starting ? t('common.loading') : recording ? t('chat.dictateStop') : t('chat.dictate')
 
   return (
-    <div className={cn('flex items-center', compactMode && 'shrink-0')}>
+    <div ref={voiceTarget} className={cn('flex items-center', compactMode && 'shrink-0')}>
       <FreeFormInputContextBadge
         icon={recording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
         label={label}
@@ -284,7 +367,7 @@ export function VoiceDictationControl({
         showChevron={false}
         onClick={toggle}
         tooltip={modelEvidence ? `${t('chat.dictateTooltip')} · ${modelEvidence}` : t('chat.dictateTooltip')}
-        disabled={disabled || !prefs || transcribing}
+        disabled={disabled || !prefs || starting || transcribing}
       />
       <Dialog open={consentOpen} onOpenChange={(open) => { if (!savingConsent) setConsentOpen(open) }}>
         <DialogContent showCloseButton={!savingConsent}>

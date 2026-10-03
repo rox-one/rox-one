@@ -26,11 +26,14 @@ import type {
   TestAutomationResult,
 } from '../../shared/types'
 import type { SessionStatus as SessionStatusConfig } from '@/config/session-status-config'
+import type { SessionModelCatalog, StartupRuntimeSummary } from '@rox/shared/protocol'
 import type { SessionOptions, SessionOptionUpdates } from '../hooks/useSessionOptions'
 import { defaultSessionOptions } from '../hooks/useSessionOptions'
 import { sessionAtomFamily } from '../atoms/sessions'
 
 export interface AppShellContextType {
+  /** Identity of the mounted content panel, independent from its selected session. */
+  panelId?: string
   /** Registers a panel header for the compact top-bar slot. */
   registerCompactHeader?: (
     id: string,
@@ -56,6 +59,10 @@ export interface AppShellContextType {
   activeWorkspaceSlug: string | null
   /** All LLM connections with authentication status */
   llmConnections: LlmConnectionWithStatus[]
+  /** Native workspace model metadata, without account or credential status. */
+  runtimeSummary?: StartupRuntimeSummary | null
+  /** Scoped to the mounted chat; distinct from the workspace's default runtime. */
+  sessionModelCatalog?: SessionModelCatalog | null
   /** Default LLM connection slug for the current workspace */
   workspaceDefaultLlmConnection?: string
   /** Refresh LLM connections from config */
@@ -74,6 +81,7 @@ export interface AppShellContextType {
   skills?: LoadedSkill[]
   /** Working directory of the active session — needed for project-level skill resolution */
   activeSessionWorkingDirectory?: string
+  localMcpEnabled?: boolean
   /** All label configs (tree) for label menu and badge display */
   labels?: import('@rox/shared/labels').LabelConfig[]
   /** Callback when session labels change */

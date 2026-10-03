@@ -1,0 +1,905 @@
+{
+  "source": "ROX Product Learning acceptance contract; expected policy matrix, not execution evidence",
+  "steps": [
+    {
+      "tourId": "OBT-01",
+      "id": "first.session",
+      "testId": "T-FIRST-SESSION",
+      "target": "session.entry",
+      "completion": {
+        "kind": "signal",
+        "signal": "session.ready",
+        "evidence": "observed",
+        "priorState": "allow-current-state",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-01",
+      "id": "first.permissions",
+      "testId": "T-FIRST-PERMISSIONS",
+      "target": "composer.permissions",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-01",
+      "id": "first.compose",
+      "testId": "T-FIRST-COMPOSE",
+      "target": "composer.input",
+      "completion": {
+        "kind": "signal",
+        "signal": "draft.nonempty",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-01",
+      "id": "first.send",
+      "testId": "T-FIRST-SEND",
+      "target": "composer.send",
+      "completion": {
+        "kind": "signal",
+        "signal": "user-turn.accepted",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-01",
+      "id": "first.execution",
+      "testId": "T-FIRST-EXECUTION",
+      "target": "session.execution",
+      "completion": {
+        "kind": "signal",
+        "signal": "execution.state-visible",
+        "evidence": "observed",
+        "priorState": "allow-current-state",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-01",
+      "id": "first.result",
+      "testId": "T-FIRST-RESULT",
+      "target": "session.final-result",
+      "completion": {
+        "kind": "signal",
+        "signal": "user-turn.final-delivered",
+        "evidence": "verified",
+        "priorState": "same-attempt",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-02",
+      "id": "workspace.scope",
+      "testId": "T-WORKSPACE-SCOPE",
+      "target": "workspace.switcher",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-03",
+      "id": "models.picker",
+      "testId": "T-MODELS-PICKER",
+      "target": "composer.model",
+      "completion": {
+        "kind": "signal",
+        "signal": "model-picker.opened",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": true,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-03",
+      "id": "models.settings",
+      "testId": "T-MODELS-SETTINGS",
+      "target": "settings.ai",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-04",
+      "id": "cwd.inspect",
+      "testId": "T-CWD-INSPECT",
+      "target": "composer.directory",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-05",
+      "id": "attachments.add",
+      "testId": "T-ATTACHMENTS-ADD",
+      "target": "composer.attach",
+      "completion": {
+        "kind": "signal",
+        "signal": "attachment.ready",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": true,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-05",
+      "id": "attachments.review",
+      "testId": "T-ATTACHMENTS-REVIEW",
+      "target": "composer.attachments",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-06",
+      "id": "voice.start",
+      "testId": "T-VOICE-START",
+      "target": "composer.voice",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": true,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-06",
+      "id": "voice.review",
+      "testId": "T-VOICE-REVIEW",
+      "target": "composer.input",
+      "completion": {
+        "kind": "signal",
+        "signal": "dictation.inserted",
+        "evidence": "observed",
+        "priorState": "same-attempt",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-07",
+      "id": "sources.status",
+      "testId": "T-SOURCES-STATUS",
+      "target": "sources.list",
+      "completion": {
+        "kind": "signal",
+        "signal": "source.details-visible",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-07",
+      "id": "sources.details",
+      "testId": "T-SOURCES-DETAILS",
+      "target": "source.status",
+      "completion": {
+        "kind": "signal",
+        "signal": "source.details-visible",
+        "evidence": "observed",
+        "priorState": "allow-current-state",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-08",
+      "id": "sources.select",
+      "testId": "T-SOURCES-SELECT",
+      "target": "composer.sources",
+      "completion": {
+        "kind": "signal",
+        "signal": "session.sources-committed",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": true,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-08",
+      "id": "sources.ask",
+      "testId": "T-SOURCES-ASK",
+      "target": "composer.input",
+      "completion": {
+        "kind": "signal",
+        "signal": "user-turn.accepted",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-08",
+      "id": "sources.result",
+      "testId": "T-SOURCES-RESULT",
+      "target": "session.tool-result",
+      "completion": {
+        "kind": "signal",
+        "signal": "source.tool-succeeded",
+        "evidence": "verified",
+        "priorState": "same-attempt",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-09",
+      "id": "skills.explain",
+      "testId": "T-SKILLS-EXPLAIN",
+      "target": "skills.list",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-09",
+      "id": "skills.select",
+      "testId": "T-SKILLS-SELECT",
+      "target": "composer.skills",
+      "completion": {
+        "kind": "signal",
+        "signal": "skill.selected",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": true,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-10",
+      "id": "approval.inspect",
+      "testId": "T-APPROVAL-INSPECT",
+      "target": "permission.request",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-10",
+      "id": "approval.resolve",
+      "testId": "T-APPROVAL-RESOLVE",
+      "target": "permission.actions",
+      "completion": {
+        "kind": "signal",
+        "signal": "permission.resolved-by-user",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": true,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-11",
+      "id": "parallel.new",
+      "testId": "T-PARALLEL-NEW",
+      "target": "session.new",
+      "completion": {
+        "kind": "signal",
+        "signal": "session.created",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-11",
+      "id": "parallel.return",
+      "testId": "T-PARALLEL-RETURN",
+      "target": "session.list",
+      "completion": {
+        "kind": "signal",
+        "signal": "session.reopened",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-12",
+      "id": "agents.overview",
+      "testId": "T-AGENTS-OVERVIEW",
+      "target": "agents.summary",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-12",
+      "id": "agents.budget",
+      "testId": "T-AGENTS-BUDGET",
+      "target": "agents.budget",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-13",
+      "id": "workflow.status",
+      "testId": "T-WORKFLOW-STATUS",
+      "target": "session.status",
+      "completion": {
+        "kind": "signal",
+        "signal": "session.status-committed",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": true,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-13",
+      "id": "workflow.label",
+      "testId": "T-WORKFLOW-LABEL",
+      "target": "session.labels",
+      "completion": {
+        "kind": "signal",
+        "signal": "session.labels-committed",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": true,
+      "optional": true,
+      "onUnavailable": "not-applicable"
+    },
+    {
+      "tourId": "OBT-13",
+      "id": "workflow.board",
+      "testId": "T-WORKFLOW-BOARD",
+      "target": "sessions.view-switcher",
+      "completion": {
+        "kind": "signal",
+        "signal": "sessions.view-visible",
+        "evidence": "observed",
+        "priorState": "allow-current-state",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-14",
+      "id": "project.open",
+      "testId": "T-PROJECT-OPEN",
+      "target": "projects.list",
+      "completion": {
+        "kind": "signal",
+        "signal": "project.visible",
+        "evidence": "observed",
+        "priorState": "allow-current-state",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-14",
+      "id": "project.link",
+      "testId": "T-PROJECT-LINK",
+      "target": "session.project",
+      "completion": {
+        "kind": "signal",
+        "signal": "session.project-committed",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": true,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-15",
+      "id": "tasks.create",
+      "testId": "T-TASKS-CREATE",
+      "target": "tasks.quick-entry",
+      "completion": {
+        "kind": "signal",
+        "signal": "personal-task.persisted",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-15",
+      "id": "tasks.delegate",
+      "testId": "T-TASKS-DELEGATE",
+      "target": "tasks.delegate",
+      "completion": {
+        "kind": "signal",
+        "signal": "personal-task.delegated",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": true,
+      "onUnavailable": "not-applicable"
+    },
+    {
+      "tourId": "OBT-16",
+      "id": "pages.open",
+      "testId": "T-PAGES-OPEN",
+      "target": "pages.host",
+      "completion": {
+        "kind": "signal",
+        "signal": "page.rendered",
+        "evidence": "observed",
+        "priorState": "allow-current-state",
+        "requireAcknowledgementAfterEvidence": true
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-16",
+      "id": "pages.state",
+      "testId": "T-PAGES-STATE",
+      "target": "pages.freshness",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-17",
+      "id": "notes.create",
+      "testId": "T-NOTES-CREATE",
+      "target": "notes.create",
+      "completion": {
+        "kind": "signal",
+        "signal": "note.created",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": true,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-17",
+      "id": "notes.save",
+      "testId": "T-NOTES-SAVE",
+      "target": "notes.editor",
+      "completion": {
+        "kind": "signal",
+        "signal": "note.persisted",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-18",
+      "id": "memory.inspect",
+      "testId": "T-MEMORY-INSPECT",
+      "target": "memory.list",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-18",
+      "id": "memory.scope",
+      "testId": "T-MEMORY-SCOPE",
+      "target": "memory.scope",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-18",
+      "id": "memory.save",
+      "testId": "T-MEMORY-SAVE",
+      "target": "memory.editor",
+      "completion": {
+        "kind": "signal",
+        "signal": "memory.persisted",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": true,
+      "optional": true,
+      "onUnavailable": "not-applicable"
+    },
+    {
+      "tourId": "OBT-19",
+      "id": "search.query",
+      "testId": "T-SEARCH-QUERY",
+      "target": "search.input",
+      "completion": {
+        "kind": "signal",
+        "signal": "search.finished",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-19",
+      "id": "search.open",
+      "testId": "T-SEARCH-OPEN",
+      "target": "search.results",
+      "completion": {
+        "kind": "signal",
+        "signal": "search.result-opened",
+        "evidence": "verified",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-20",
+      "id": "inbox.queue",
+      "testId": "T-INBOX-QUEUE",
+      "target": "inbox.list",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-20",
+      "id": "inbox.triage",
+      "testId": "T-INBOX-TRIAGE",
+      "target": "inbox.actions",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-21",
+      "id": "feed.sources",
+      "testId": "T-FEED-SOURCES",
+      "target": "feed.sources",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-21",
+      "id": "feed.read",
+      "testId": "T-FEED-READ",
+      "target": "feed.reader",
+      "completion": {
+        "kind": "signal",
+        "signal": "feed.item-opened",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-22",
+      "id": "meetings.list",
+      "testId": "T-MEETINGS-LIST",
+      "target": "meetings.list",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-22",
+      "id": "meetings.result",
+      "testId": "T-MEETINGS-RESULT",
+      "target": "meetings.artifacts",
+      "completion": {
+        "kind": "signal",
+        "signal": "meeting.artifact-opened",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": true,
+      "onUnavailable": "not-applicable"
+    },
+    {
+      "tourId": "OBT-23",
+      "id": "automation.trigger",
+      "testId": "T-AUTOMATION-TRIGGER",
+      "target": "automation.trigger",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-23",
+      "id": "automation.action",
+      "testId": "T-AUTOMATION-ACTION",
+      "target": "automation.action",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-23",
+      "id": "automation.control",
+      "testId": "T-AUTOMATION-CONTROL",
+      "target": "automation.controls",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-24",
+      "id": "connections.services",
+      "testId": "T-CONNECTIONS-SERVICES",
+      "target": "connections.services",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-24",
+      "id": "connections.audit",
+      "testId": "T-CONNECTIONS-AUDIT",
+      "target": "connections.audit",
+      "completion": {
+        "kind": "signal",
+        "signal": "connections.audit-visible",
+        "evidence": "observed",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": true,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-25",
+      "id": "learning.library",
+      "testId": "T-LEARNING-LIBRARY",
+      "target": "learning.library",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    },
+    {
+      "tourId": "OBT-25",
+      "id": "learning.controls",
+      "testId": "T-LEARNING-CONTROLS",
+      "target": "learning.preferences",
+      "completion": {
+        "kind": "ack",
+        "signal": null,
+        "evidence": "acknowledged",
+        "priorState": "after-activation",
+        "requireAcknowledgementAfterEvidence": false
+      },
+      "handoff": false,
+      "optional": false,
+      "onUnavailable": "block"
+    }
+  ],
+  "revisions": [
+    "sources.result priorState=same-attempt, step version 2, approved by A0 to correlate the source question and result.",
+    "notes.create handoff=true, step version 2 and OBT-17 version 2, approved by A0 after real Notes creation Dialog inspection."
+  ]
+}

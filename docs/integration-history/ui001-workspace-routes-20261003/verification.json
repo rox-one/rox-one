@@ -1,0 +1,491 @@
+{
+  "state": "currentmain_qualified",
+  "source_pr": 1448,
+  "source_head": "1eb2c8289b68e9103880c3f2aee2c57e70c3409a",
+  "actual_source_path_count": 107,
+  "infra14_paths_delivered_pr": 1455,
+  "native_portable_delivered_pr": 1452,
+  "root93_paths_disposition_complete": true,
+  "core_qualified": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
+  "navigation_1457_receipt": "pr1457-current-recovery-receipt.json",
+  "bounded_checks": [
+    {
+      "name": "core strict parser/public navigation/leaves/gateway/registry/12locales",
+      "pass": 484,
+      "fail": 0,
+      "assertions": 7492,
+      "files": 96
+    },
+    {
+      "name": "initial actual mounted Navigation core",
+      "pass": 28,
+      "fail": 0
+    },
+    {
+      "name": "new1457 history focus/remote/lifecycle mounted Navigation",
+      "pass": 35,
+      "fail": 0,
+      "before_pass": 30,
+      "before_fail": 5
+    },
+    {
+      "name": "new1457 actual callbacks",
+      "pass": 37,
+      "fail": 0,
+      "assertions": 208,
+      "before_pass": 35,
+      "before_fail": 2
+    },
+    {
+      "name": "serial compatibility fixtures with four service-recovery seams renewed",
+      "pass": 242,
+      "fail": 0,
+      "note": "summary serial JSON retains earlier4 failures; service-complete-seams replaces those4 rows; no aggregate manipulation"
+    },
+    {
+      "name": "service/terms/locales/strictparser overlap",
+      "pass": 419,
+      "fail": 0,
+      "assertions": 7217
+    },
+    {
+      "name": "actual disposable PostgreSQL17.11 UTF8 domain/HTTP/native/transport",
+      "pass": 41,
+      "fail": 0,
+      "production_state_touched": false
+    },
+    {
+      "name": "vendored cookie/daemon controls",
+      "pass": 51,
+      "fail": 0,
+      "skip": 18,
+      "assertions": 316,
+      "skip_reason": "nativeWindows cases on macOS"
+    },
+    {
+      "name": "actual warm Swift generation/run",
+      "pass": 57,
+      "fail": 0,
+      "assertions": 144,
+      "initial_pass": 56,
+      "initial_fail": 1,
+      "initial_failure": "cold swiftc5.288sec exceeds unchanged5sec test timeout"
+    },
+    {
+      "name": "full Electron types before new1457 Nav",
+      "exit": 0
+    },
+    {
+      "name": "full renderer before new1457 Nav",
+      "exit": 0
+    }
+  ],
+  "qualification_overlap_not_added": true,
+  "additional_repairs": [
+    "Bun test fixture adaptation retains current native Task scope and ACK ownership",
+    "Stand-alone public uppercase brand guard keeps exact ROX_API_KEY environment identifier",
+    "Removed unreachable duplicate unavailable switch case",
+    "UTF8 disposable database fixes SQL_ASCII test fixture; production source unchanged"
+  ],
+  "failure_history_retained": true,
+  "logs": [
+    {
+      "log": "ui1448-all-final-controls.log",
+      "sha256": "964e35438a49aff74a356ce09feea93e5e4e77b1d132e130d14a7523f13d7734",
+      "bytes": 66489
+    },
+    {
+      "log": "ui1448-current-navigation-browser.log",
+      "sha256": "b56001ebdb54da3cacb5ec71e4f691603920b927a3d90f409cbfeff60eb4275c",
+      "bytes": 7719
+    },
+    {
+      "log": "ui1448-final-current-electron-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "log": "ui1448-renderer-build-final.log",
+      "sha256": "9ea9dceee29d5c20e08dbd7e27fa85a18d41972927a54bfee392beaa0b5f2b41",
+      "bytes": 61598
+    },
+    {
+      "log": "ui1448-final-new-service-terminology-locales.log",
+      "sha256": "42d5c74f14b1af28f37f055782d8c27cbae130dc43c182b22ccf836046c52257",
+      "bytes": 56994
+    },
+    {
+      "log": "ui1448-service-complete-seams.log",
+      "sha256": "fa01972494d1bda09766eca76cb1e2d789b12afb7c2f8cb64f3a841bac6a0d3a",
+      "bytes": 995
+    },
+    {
+      "log": "ui1448-vendored-current-controls.log",
+      "sha256": "2b7fd1342b6caa40de5fbb30f3fd4e0e1640f33b7c006846ccfca81d49a6869c",
+      "bytes": 12143
+    },
+    {
+      "log": "ui1448-swift-accessor-controls.log",
+      "sha256": "255f1c3aa80dcf665d0eb9531ebde3ee0dc5c8c0dda339c11f1970991608dd18",
+      "bytes": 6256
+    },
+    {
+      "log": "ui1448-swift-accessor-warm-current.log",
+      "sha256": "d536b09d0cb263676156321bf87012989b904e524c9867e03db3e3057913fa41",
+      "bytes": 6053
+    },
+    {
+      "log": "ui1448-public-parser-native-readback.log",
+      "sha256": "882b47f9b28fd52c65698bdc0a136e4e47c5d513d80bd66d5a359046ffb1a180",
+      "bytes": 825
+    },
+    {
+      "log": "ui1448-public-parser-negative.log",
+      "sha256": "8b3032c9b3c83c17e1544377c40d81cf18ff357516abdbd0366efd308f9d378a",
+      "bytes": 144
+    },
+    {
+      "log": "ui1448-public-parser-negative-correct-import.log",
+      "sha256": "478fc6a0ceb0212990b1db586543199ca168a730b79d4f221810e29d4ccf26f0",
+      "bytes": 134
+    },
+    {
+      "log": "ui1448-owned-pg-final-utf8.log",
+      "sha256": "5355aae754cfd50705f65e755013a14e4fd74f8e2a5e99ec30bfb7345be84e6b",
+      "bytes": 873
+    },
+    {
+      "log": "ui1448-macro-current-controls.log",
+      "sha256": "1c019d1357ec1c6a90d369f554256da6ccf3435e41833970b302cf243a1a943d",
+      "bytes": 4195
+    },
+    {
+      "log": "ui1448-owned-pg-correct-context.log",
+      "sha256": "3a5f1f4b99be42bae0899ad04f16332d5dd90926dc13e7ecf002b8acdc45a0f5",
+      "bytes": 873
+    },
+    {
+      "log": "ui1448-owned-pg-wp-01-transport.test.ts-initial-context.log",
+      "sha256": "b6eb648829a2a6d9ba50d0b711afaeec7c9dfee8427eec21509e3e276564a02b",
+      "bytes": 1261
+    },
+    {
+      "log": "ui1448-final-compat-tests_rox-suite_focus-native-ack.test.ts.log",
+      "sha256": "14f3769aac66ebf394aaf1e835b44835de77f0d8153a88761c40cdb5540edca9",
+      "bytes": 581
+    },
+    {
+      "log": "ui1448-final-compat-packages_server-core_src_sessions_refresh-connection-runtime.test.ts.log",
+      "sha256": "c5a5cf603ebe0a15c91e0789cef1a4ac797872953fc26544b8d842700e4f0c1c",
+      "bytes": 1711
+    },
+    {
+      "log": "pr1457-current-electron-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_renderer_pages_settings___tests___extension-center-h4.test.ts.log",
+      "sha256": "78d9c409335e8d27efe57ecfa28b7697a338818f091e5c7c194380bc3720272c",
+      "bytes": 499
+    },
+    {
+      "log": "ui1448-owned-pg-wp-01.test.ts.log",
+      "sha256": "c467da829a63c6cf2e82a20aa40a2089c9a323a8e15a402d5e92e09d8d8f6667",
+      "bytes": 2490
+    },
+    {
+      "log": "ui1448-final-compat-packages_ui_src_components_annotations___tests___interaction-state-machine.test.ts.log",
+      "sha256": "7d7c3ea099e65b040d5f1e55140fd68f274c2734119b02f624af87b091cbcff2",
+      "bytes": 648
+    },
+    {
+      "log": "ui1448-owned-pg-wp-01-http.test.ts-sql-ascii.log",
+      "sha256": "011fbef1c13e15ab33648a5a79db8649f1c033fff54dadcfab4074545f775d28",
+      "bytes": 1654
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_shared___tests___route-surfaces.test.ts.log",
+      "sha256": "476e5719eb7c0e27c079d84dcfb94e247a339a56b739e599b003a77082ee6de4",
+      "bytes": 6347
+    },
+    {
+      "log": "ui1448-owned-pg-wp-01-http.test.ts-initial-context-sql-ascii.log",
+      "sha256": "3d0b4e17adeadb46c3d0e0a6202bb5026b0ce92d45d7ce2335d8eb0a349c68fe",
+      "bytes": 1256
+    },
+    {
+      "log": "ui1448-owned-pg-wp-01-http.test.ts-initial-context.log",
+      "sha256": "3d0b4e17adeadb46c3d0e0a6202bb5026b0ce92d45d7ce2335d8eb0a349c68fe",
+      "bytes": 1256
+    },
+    {
+      "log": "ui1448-owned-pg-wp-01.test.ts-initial-context.log",
+      "sha256": "b752569c9e58575e96ca2419e148e891e006936f0890ad38073f54ff18f412c0",
+      "bytes": 1251
+    },
+    {
+      "log": "pr1457-current-before-browser.log",
+      "sha256": "20b912ab5afa181cc5edf2ccc49b085e6d35a7894a3e95f0b3cb68d5bf8d31b0",
+      "bytes": 13244
+    },
+    {
+      "log": "ui1448-final-compat-packages_shared_src_config___tests___storage-startup-migration.test.ts.log",
+      "sha256": "4898bd1041ae4c74ab96df18c09fdbc158c7fb0266fe3b6356f7807a6fffb64c",
+      "bytes": 3435
+    },
+    {
+      "log": "ui1448-owned-pg-wp-01-transport.test.ts.log",
+      "sha256": "d4aa18c391f8b309890fc190edf7e93793cc216e3d84218f8b5a8b37025a1536",
+      "bytes": 1405
+    },
+    {
+      "log": "ui1448-owned-pg-wp-01-native-routing.test.ts-sql-ascii.log",
+      "sha256": "359e881c7c806cc283df6ba989ef09fffd027daa49e6116231d812f4f16bd167",
+      "bytes": 3930
+    },
+    {
+      "log": "ui1448-final-compat-packages_shared_src_config_theme-vibrancy.test.ts.log",
+      "sha256": "8755c0ee696f75fd74abdb38d3367f82945f0a0002571a9fb6f251452c5255a3",
+      "bytes": 797
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_renderer_pages___tests___rox-readiness-ui-001.project-lifecycle.test.ts.log",
+      "sha256": "887b584c58608e0a247336d6cb92d7e10d2ba43eb997d19d6ad047ba905430d4",
+      "bytes": 1173
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_main_handlers___tests___registration.test.ts.log",
+      "sha256": "75cc38a31945810de37157af746fe4308422abd443bab64c195562de13b6d891",
+      "bytes": 358
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_renderer_components_ui___tests___continue-visual-3-chrome.test.ts.log",
+      "sha256": "253ac986e85c93c9d46952075c6f7a8e79d0164674af210dec205a4e129f9ac1",
+      "bytes": 766
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_renderer_lib___tests___unknown-error-i18n.test.ts.log",
+      "sha256": "f750a7dcfc86ca610b01454a468c3b0d67e52dcc862bc4ebf784b49c50920979",
+      "bytes": 873
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_renderer_platform___tests___workbench-leftover-chrome.test.ts.log",
+      "sha256": "ff2eec3c6a0ba7949285eb78c3a10c6611e650bd6878168ad1bb66595d8408e9",
+      "bytes": 735
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_renderer_components_app-shell___tests___chrome-leftover-post-960.test.ts.log",
+      "sha256": "247efefc81932167549b845e57ea5185109d1488cc63a62e75c2677d7573b5ca",
+      "bytes": 740
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_main___tests___session-branch-rollback.isolated.ts.log",
+      "sha256": "92962a38fec63cc80bd7cdef7efe994d2f5053801cf04206703eea4cbc92c0d3",
+      "bytes": 6421
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_renderer_components_app-shell___tests___service-panel-navigation.test.ts.log",
+      "sha256": "fce6e5dbd5aaabbf0d102cf019e137e1126a4dcdcf94897bd952b78dcd88382b",
+      "bytes": 1131
+    },
+    {
+      "log": "ui1448-final-compat-packages_shared_src_identity___tests___terminology-lint.test.ts.log",
+      "sha256": "f2245114b573af17dfe4a5b5869e150b574cf5d1f7b9e722227130c1ac481b89",
+      "bytes": 848
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_renderer_lib___tests___zen-shell-acceptance.test.ts.log",
+      "sha256": "223a9a4c161f6fd448e7b7b91051f3037b878e9e6c70380b193f96271420e881",
+      "bytes": 1226
+    },
+    {
+      "log": "ui1448-final-compat-packages_server-core_src_bootstrap_lock-identity.test.ts.log",
+      "sha256": "a792546add3fac1be25e72a846395257712fd1e776e3ea13d9f4f4288dd79cb3",
+      "bytes": 1318
+    },
+    {
+      "log": "ui1448-final-compat-packages_shared_src_agent_core___tests___prerequisite-manager.isolated.ts.log",
+      "sha256": "1fd2823ce443730fade261adf4369c8a4a90ae7760bb758c801eb138a58c93a2",
+      "bytes": 3680
+    },
+    {
+      "log": "ui1448-owned-pg-wp-01.test.ts-initial-context-sql-ascii.log",
+      "sha256": "b752569c9e58575e96ca2419e148e891e006936f0890ad38073f54ff18f412c0",
+      "bytes": 1251
+    },
+    {
+      "log": "ui1448-owned-pg-wp-01-native-routing.test.ts.log",
+      "sha256": "c91f14e8590cabc45dd133123bc7d0abd73206bee71f279009a8b27d58b5ab56",
+      "bytes": 1991
+    },
+    {
+      "log": "pr1457-current-after-callbacks.log",
+      "sha256": "cce055bf5d426849e75f5dbfa770f205e685e36f54bf3f6aad02722477402c5d",
+      "bytes": 6038
+    },
+    {
+      "log": "ui1448-final-compat-packages_server-core_src_handlers_rpc___tests___roadmap-model-provenance.test.ts.log",
+      "sha256": "0e1e32a370ca2462cf9d27b6c5fc4a74ef141af2c7612567c6a1d18dd6bb3119",
+      "bytes": 431
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_renderer_components_app-shell___tests___zen-shell-native-browser.test.ts.log",
+      "sha256": "b6b11ebd90f51513aa0fc2b74b9471cdf98ad6dc92ecfe158fe7e33a515e2b56",
+      "bytes": 336
+    },
+    {
+      "log": "ui1448-owned-pg-wp-01-http.test.ts.log",
+      "sha256": "24b4d86338bb5d9b73c8a2771efc810952733d320102fca094509d07d9934304",
+      "bytes": 1654
+    },
+    {
+      "log": "pr1457-current-after-browser.log",
+      "sha256": "fefff2d5ece3f78b14ff356c577d04a70555ca0d4b972f49d693a281cd3c1d76",
+      "bytes": 9663
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_main_handlers___tests___registration-profiles.test.ts.log",
+      "sha256": "d59168ed3a5a5d27ccd6f848584b6d8b84a8f6d1f7867d8f05e7e3d34cdfedff",
+      "bytes": 385
+    },
+    {
+      "log": "ui1448-owned-pg-wp-01.test.ts-sql-ascii.log",
+      "sha256": "cb24a1a986df1a1f65e7cdcf4c313472646de82ed51c18b024711ee90a96c1db",
+      "bytes": 2489
+    },
+    {
+      "log": "ui1448-final-compat-packages_ui_src_components_overlay___tests___useRichBlockInteractions.test.ts.log",
+      "sha256": "5216ed7ca66e8f969ff2f4a64cd173c96795d48e2e4ef4f84b220677777bf1ab",
+      "bytes": 533
+    },
+    {
+      "log": "ui1448-owned-pg-wp-01-transport.test.ts-sql-ascii.log",
+      "sha256": "4ed212d70bada9783c29e5931c30db9a4d1e199b565ce6b188ffd13888425764",
+      "bytes": 1409
+    },
+    {
+      "log": "ui1448-final-compat-packages_messaging-gateway_src___tests___gateway-button-access.test.ts.log",
+      "sha256": "b614f393573f13cfa7cb26590f29b27e3926de5b572b078e7680a4eeda51e979",
+      "bytes": 8880
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_renderer_components_app-shell___tests___terminal-cloudrun-hosts-nav.test.ts.log",
+      "sha256": "b9e8fb9f3bac7e1269e8bdb3156737c2a6f34bcc81065dfdf4f4f206c45285c5",
+      "bytes": 1303
+    },
+    {
+      "log": "ui1448-owned-pg-wp-01-native-routing.test.ts-initial-context.log",
+      "sha256": "613dcf7e040c863fc3d7cf4e8efafae4f172c2308af9d1b50fb4b7bf6be61b16",
+      "bytes": 1266
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_renderer_platform___tests___inspector-strip-host.test.ts.log",
+      "sha256": "21f8437a2ba5767ca992ecc2803af7c9032e2bd9b9e9d8890184acb77a5d6578",
+      "bytes": 585
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_renderer_platform___tests___panel-inset-alignment.test.ts.log",
+      "sha256": "8dffe06500f4e2e3d860ae4b21414108b33e4aacb824617fcd44ade9bbaad3fb",
+      "bytes": 274
+    },
+    {
+      "log": "pr1457-current-before-callbacks.log",
+      "sha256": "9aa5bc7895d202e7b576645b9b52fd26944ceb5e732515a1727f8ff1dd8aa99a",
+      "bytes": 7725
+    },
+    {
+      "log": "ui1448-owned-pg-wp-01-native-routing.test.ts-initial-context-sql-ascii.log",
+      "sha256": "613dcf7e040c863fc3d7cf4e8efafae4f172c2308af9d1b50fb4b7bf6be61b16",
+      "bytes": 1266
+    },
+    {
+      "log": "ui1448-final-compat-packages_ui_src_components_overlay___tests___rich-block-parity.test.ts.log",
+      "sha256": "6838a14b3cfdec00cced0b18d1982b4e5f233487f4a457c9e62f037283a4d77d",
+      "bytes": 367
+    },
+    {
+      "log": "ui1448-final-compat-apps_electron_src_renderer_components_app-shell___tests___rox-readiness-ui-001.service-workspace-recovery.test.ts.log",
+      "sha256": "b37d45e9a1263d8e935a9d71320ca42d725733db052721d9dc528eca451dc581",
+      "bytes": 2998
+    },
+    {
+      "log": "ui1448-owned-pg-wp-01-transport.test.ts-initial-context-sql-ascii.log",
+      "sha256": "b6eb648829a2a6d9ba50d0b711afaeec7c9dfee8427eec21509e3e276564a02b",
+      "bytes": 1261
+    },
+    {
+      "log": "pr1457-joined-current-callbacks-second.log",
+      "sha256": "8c54b07cf325272ae8ecb6217ce6191f6f49cd5a65ecf698c043b273de7d1a19",
+      "bytes": 8204
+    },
+    {
+      "log": "pr1457-joined-current-browser.log",
+      "sha256": "d8a721bef18e085260d1cd8e0f767d8c6d0b64995d5d5f1cfa8a657c6309bfde",
+      "bytes": 10184
+    },
+    {
+      "log": "pr1457-joined-current-electron-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "log": "pr1457-joined-current-callbacks-first.log",
+      "sha256": "2e1d2a2a7427c6163a7de82e7f6249391b656df028b62a8e66533fd29a868878",
+      "bytes": 24269
+    },
+    {
+      "log": "ui1448-latestmain-core-controls.log",
+      "sha256": "e8308f6c5407e5c3a8ddeed8cafec8001726d3589e77f6662e5a0ff034719c1c",
+      "bytes": 66890
+    },
+    {
+      "log": "ui1448-latestmain-electron-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "log": "ui1448-latestmain-renderer-build.log",
+      "sha256": "352293bc3fbc9b02d936eda052b3077c71f2d4083df7246462b6a98934c8e2a2",
+      "bytes": 61795
+    }
+  ],
+  "installed_desktop_or_full_feature_acceptance": false,
+  "all_200_cards_accepted": false,
+  "source_branches_deleted": false,
+  "integration_main": "c9f149554f22b89cb3db1b65a3b9cb6b882f8dbb",
+  "navigation_production_blob": "979d29d343db6b6124d7abbcdb3c002273080266",
+  "latest_navigation_checks": {
+    "actual_mounted_pass": 37,
+    "fail": 0,
+    "callbacks_pass": 50,
+    "callbacks_fail": 0,
+    "assertions": 268,
+    "full_Electron_types_exit": 0,
+    "incoming_StrictMode_retained": true
+  },
+  "qualified_revision": "bc10aa146323551c1b5d591ff028060af0c902fa",
+  "final_checks": {
+    "core": {
+      "pass": 487,
+      "fail": 0,
+      "assertions": 7506,
+      "files": 96
+    },
+    "mounted_navigation": {
+      "pass": 37,
+      "fail": 0
+    },
+    "callback_history": {
+      "pass": 50,
+      "fail": 0,
+      "assertions": 268
+    },
+    "full_Electron_types_exit": 0,
+    "full_renderer_build_exit": 0,
+    "renderer_build_seconds": 129
+  },
+  "warning_limits": [
+    "Existing chunk-size and CSS diagnostics retained in successful renderer log; not a native release claim"
+  ]
+}

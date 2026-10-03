@@ -296,7 +296,7 @@ describe('installEntry (skillpack, directory mode)', () => {
 
     const result = await installEntry(PACK_ENTRY, { configDir, skillsDir, execFileFn: fakeGit })
     expect(readFileSync(join(target, 'SKILL.md'), 'utf8')).toBe('# FOREIGN content')
-    expect(result.kind === 'skillpack' && result.skills).toEqual(['mega-pack--mega-pack'])
+    expect(result.kind === 'skillpack' && result.targets).toEqual([join(skillsDir, 'mega-pack--mega-pack')])
     expect(readFileSync(join(skillsDir, 'mega-pack--mega-pack', 'SKILL.md'), 'utf8')).toBe('# Mega Skill')
   })
 })
@@ -507,7 +507,7 @@ describe('installEntry (unowned target guard)', () => {
         { configDir, skillsDir, execFileFn: guardGit },
       )
     expect(readFileSync(join(userPack, 'SKILL.md'), 'utf8')).toBe('# USER pack')
-    expect(result.kind === 'skillpack' && result.skills).toEqual(['mega-pack--mega-pack'])
+    expect(result.kind === 'skillpack' && result.targets).toEqual([join(skillsDir, 'mega-pack--mega-pack')])
   })
 })
 

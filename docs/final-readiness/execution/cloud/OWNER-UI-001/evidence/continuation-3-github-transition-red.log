@@ -1,0 +1,1047 @@
+component-recovery	Shell, parser, persistence and navigation regression	﻿2026-10-03T15:48:20.8288349Z ##[group]Run bun test --timeout 30000 apps/electron/src/renderer/components/app-shell/__tests__ apps/electron/src/shared/__tests__ apps/electron/src/renderer/contexts/__tests__ apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts apps/electron/src/renderer/atoms/rox-readiness-ui-001.panels.test.ts
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.8290767Z ^[[36;1mbun test --timeout 30000 apps/electron/src/renderer/components/app-shell/__tests__ apps/electron/src/shared/__tests__ apps/electron/src/renderer/contexts/__tests__ apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts apps/electron/src/renderer/atoms/rox-readiness-ui-001.panels.test.ts^[[0m
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.8351046Z shell: /usr/bin/bash -e {0}
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.8351280Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.8712210Z bun test v1.3.14 (0d9b296a)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9385399Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9386395Z ##[group]apps/electron/src/shared/__tests__/route-parser-connections.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9609119Z (pass) route-parser: Connections routes > round-trips the bare connections route [0.81ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9609866Z (pass) route-parser: Connections routes > does not throw on an unknown connections subpath [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9610209Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9610540Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9610657Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9610981Z ##[group]apps/electron/src/shared/__tests__/route-parser-automations.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9616819Z (pass) route-parser: automations routes > parses "automations" as automations navigator with no filter or details [0.11ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9617822Z (pass) route-parser: automations routes > parses "automations/scheduled" as automations with scheduled filter [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9618810Z (pass) route-parser: automations routes > parses "automations/event" as automations with event filter [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9619664Z (pass) route-parser: automations routes > parses "automations/agentic" as automations with agentic filter [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9620522Z (pass) route-parser: automations routes > parses "automations/scheduled/automation/automation-1" as filtered + details [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9621399Z (pass) route-parser: automations routes > parses "automations/automation/automation-1" as unfiltered + details [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9622098Z (pass) route-parser: automations routes > roundtrips automations (no filter, no details) [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9622701Z (pass) route-parser: automations routes > roundtrips automations with scheduled filter [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9623336Z (pass) route-parser: automations routes > roundtrips automations/scheduled/automation/automation-1 [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9624093Z (pass) route-parser: automations routes > roundtrips automations/automation/automation-1 [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9624394Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9624636Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9624739Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9625314Z ##[group]apps/electron/src/shared/__tests__/route-surfaces.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9633964Z (pass) route-parser: unified shell surfaces > registers Search as a query-preserving route and accepts its deep link [0.30ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9635419Z (pass) route-parser: unified shell surfaces > round-trips session via NavigationState: allSessions/session/session-1 [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9636825Z (pass) route-parser: unified shell surfaces > round-trips session via ParsedCompoundRoute: allSessions/session/session-1 [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9637911Z (pass) route-parser: unified shell surfaces > round-trips browser via NavigationState: browser/instance/browser-embedded-7 [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9639225Z (pass) route-parser: unified shell surfaces > round-trips browser via ParsedCompoundRoute: browser/instance/browser-embedded-7
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9640766Z (pass) route-parser: unified shell surfaces > round-trips knowledge via NavigationState: knowledge/document/doc-1 [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9641987Z (pass) route-parser: unified shell surfaces > round-trips knowledge via ParsedCompoundRoute: knowledge/document/doc-1
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9643206Z (pass) route-parser: unified shell surfaces > round-trips database via NavigationState: knowledge/database/db-9 [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9644414Z (pass) route-parser: unified shell surfaces > round-trips database via ParsedCompoundRoute: knowledge/database/db-9
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9645704Z (pass) route-parser: unified shell surfaces > round-trips cloud-run via NavigationState: cloud-run/run-42 [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9646830Z (pass) route-parser: unified shell surfaces > round-trips cloud-run via ParsedCompoundRoute: cloud-run/run-42
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9648045Z (pass) route-parser: unified shell surfaces > round-trips extension via NavigationState: extension/ext-1/mainview [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9649339Z (pass) route-parser: unified shell surfaces > round-trips extension via ParsedCompoundRoute: extension/ext-1/mainview [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9650510Z (pass) route-parser: unified shell surfaces > round-trips diff via NavigationState: diff/prop-2 [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9651531Z (pass) route-parser: unified shell surfaces > round-trips diff via ParsedCompoundRoute: diff/prop-2
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9652321Z (pass) route-parser: unified shell surfaces > parses knowledge route into knowledge navigator with ref kind + id [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9653042Z (pass) route-parser: unified shell surfaces > parses database route as knowledge navigator with kind "database" [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9654184Z (pass) route-parser: unified shell surfaces > parses cloud-run extension and diff into their own navigators [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9655274Z (pass) route-parser: unified shell surfaces > decodes percent-encoded ids (slashes/spaces survive the round-trip) [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9656574Z (pass) route-parser: unified shell surfaces > builds exact route strings (compat pins for the new builders) [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9657362Z (pass) route-parser: unified shell surfaces > parses knowledge/view/{viewId} into knowledge-view details and round-trips [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9658116Z (pass) route-parser: unified shell surfaces > keeps a knowledge route with an unknown ref kind unavailable [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9658787Z (pass) route-parser: unified shell surfaces > keeps a knowledge route missing its id unavailable [0.20ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9659481Z (pass) route-parser: unified shell surfaces > keeps bare surface roots as navigator-only states that rebuild exactly [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9660636Z (pass) route-parser: unified shell surfaces > does not disguise a knowledge surface as a session in the compatibility parser [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9661951Z (pass) route-parser: unified shell surfaces > maps surface states to nearest existing views via degradeSurfaceNavigationState [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9662781Z (pass) route-parser: unified shell surfaces > is identity for pre-W1 states [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9663580Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: allSessions [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9664535Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: flagged [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9665639Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: archived [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9666815Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: board [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9667786Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: table [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9668762Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: heatmap [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9669689Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: memory
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9670622Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: home [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9671840Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: allSessions/session/abc123 [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9672995Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: flagged/session/abc123 [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9674141Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: state/todo/session/abc123 [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9675410Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: label/work/session/abc123 [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9676461Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: sources [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9677498Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: sources/api [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9678595Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: sources/api/source/gmail [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9679747Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: sources/source/github [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9680783Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: skills [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9681890Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: skills/skill/skill-1 [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9682873Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: notes [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9683556Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: notes/note/note-1 [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9684185Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: automations [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9684816Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: automations/scheduled [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9685787Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: automations/scheduled/automation/auto-1 [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9686469Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: projects [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9687141Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: projects/project/proj-1 [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9687744Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: settings [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9688349Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: settings/shortcuts [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9689353Z (pass) route-parser: unified shell surfaces > keeps pre-existing route intact: browser/instance/browser-embedded-1 [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9690630Z (pass) route-parser: unified shell surfaces > parses table route into sessions viewMode table and round-trips [0.12ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9691857Z (pass) route-parser: unified shell surfaces > parses heatmap route into sessions viewMode heatmap and round-trips [0.08ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9692475Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9692848Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9693018Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9693584Z ##[group]apps/electron/src/shared/__tests__/route-parser-legacy-settings.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9694775Z (pass) legacy settings redirects > redirects toolchain → runtime [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9695802Z (pass) legacy settings redirects > redirects preferences → context [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9696987Z (pass) legacy settings redirects > keeps Marketplace and Extensions as independent settings routes [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9697895Z (pass) legacy settings redirects > rejects unknown pages [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9698769Z (pass) legacy settings redirects > maps bare settings to Overview and keeps settings/app as App [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9699288Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9699662Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9699821Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9700308Z ##[group]apps/electron/src/shared/__tests__/route-parser-board-session.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9960925Z (pass) route-parser: board session card > round-trips board without a session [0.12ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9961775Z (pass) route-parser: board session card > round-trips board/session/{id} as board + session details [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9962120Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9962535Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9962639Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9962949Z ##[group]apps/electron/src/shared/__tests__/ipc-channels.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9990410Z (pass) RPC_CHANNELS wire-format stability > contains exactly 803 channel strings [0.56ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:20.9995432Z (pass) RPC_CHANNELS wire-format stability > preserves exact wire-format strings (sorted equality) [0.48ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0000386Z (pass) RPC_CHANNELS wire-format stability > has no duplicate wire-format strings [0.31ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0001483Z (pass) BroadcastEventMap payload shapes > sources:changed carries (workspaceId, sources) [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0002502Z (pass) BroadcastEventMap payload shapes > sources:indexChanged carries (workspaceId, payload)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0003124Z (pass) BroadcastEventMap payload shapes > skills:changed carries (workspaceId, skills)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0003656Z (pass) BroadcastEventMap payload shapes > contextDocs:CHANGED carries no payload
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0003918Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0004273Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0004411Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0004725Z ##[group]apps/electron/src/shared/__tests__/right-sidebar-param.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0007634Z (pass) right sidebar URL round-trip > round-trips files, history, git, browser, and context [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0008438Z (pass) right sidebar URL round-trip > omits none from the URL and still parses the token [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0011350Z (pass) right sidebar URL round-trip > does not treat terminal as a sidebar panel [0.35ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0011789Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0012059Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0012171Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0012460Z ##[group]apps/electron/src/shared/__tests__/route-parser-inbox.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0017597Z (pass) inbox route > builds and parses inbox routes [0.09ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0018200Z (pass) inbox route > round-trips navigation state [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0018511Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0018814Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0018960Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0019267Z ##[group]apps/electron/src/shared/__tests__/shell-window-lifecycle.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0028421Z (pass) reduceZenWindow > did-finish-load and timeout show once without applying glass [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0029346Z (pass) reduceZenWindow > ready-to-show shows once and applies material [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0030224Z (pass) reduceZenWindow > late ready-to-show still applies material after an opaque first show [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0030802Z (pass) reduceZenWindow > gpu-crash increments generation and clears material [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0031763Z (pass) reduceZenWindow > policy-change applies only when paintGeneration matches generation [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0032357Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0032674Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0032781Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0033086Z ##[group]apps/electron/src/shared/__tests__/route-parser-pages.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0035914Z (pass) pages routes > route builders emit the pages prefix [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0036561Z (pass) pages routes > pages is a compound route prefix [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0037698Z (pass) pages routes > parses bare pages route (library grid, no auto-selected detail) [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0038490Z (pass) pages routes > parses page detail route [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0039072Z (pass) pages routes > rejects malformed pages routes [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0039783Z (pass) pages routes > round-trips route ⇄ navigation state [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0040214Z (pass) pages routes > buildCompoundRoute emits pages routes [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0042913Z (pass) pages routes > round-trips navigation state ⇄ panel key [0.40ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0043969Z (pass) pages routes > automations panel key round-trips (regression: id had a leading slash) [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0044429Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0044935Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0045234Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0045702Z ##[group]apps/electron/src/shared/__tests__/settings-security.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0075939Z (pass) security settings page registry > registers exactly one security subpage through the canonical registry [0.15ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0082570Z (pass) security settings page registry > derives the deep link and every menu/component/icon integration from the registry [0.19ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0084047Z (pass) security settings page registry > keeps unknown deep links invalid [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0084519Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0084779Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0084895Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0085431Z ##[group]apps/electron/src/shared/__tests__/settings-presentation.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0086419Z (pass) settings presentation > covers every registered settings page exactly once [0.54ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0087656Z (pass) settings presentation > filters translated rows without reordering matching pages [0.11ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0088333Z (pass) settings presentation > returns the original ordered rows for a blank query [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0088872Z (pass) settings presentation > looks up the group for a registered page [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0090628Z (pass) settings presentation > groups filtered rows and hides empty groups [0.19ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0091322Z (pass) settings presentation > places permissions in Agent after ai (not Application) [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0091610Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0091845Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0091948Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0092237Z ##[group]apps/electron/src/shared/__tests__/route-parser-home.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0098506Z (pass) route-parser: Home routes > round-trips the bare home route [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0099372Z (pass) route-parser: Home routes > does not throw on an unknown home subpath [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0099675Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0099933Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0100047Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0100366Z ##[group]apps/electron/src/shared/__tests__/route-parser-label-filter.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0106089Z (pass) route-parser: label filter routes > parses a plain label route [0.46ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0107516Z (pass) route-parser: label filter routes > round-trips a label route with session details [0.15ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0108488Z (pass) route-parser: label filter routes > builds label routes without details [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0109609Z (pass) route-parser: label filter routes > a stray query tail never leaks into the parsed labelId (slash-segment invariant) [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0110557Z (pass) route-parser: label filter routes > session ids extracted from label routes stay clean even with a query tail [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0111105Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0111474Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0111651Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0112022Z ##[group]apps/electron/src/shared/__tests__/settings-knowledge.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0115796Z (pass) settings knowledge page > registers exactly one knowledge entry with i18n label keys [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0116603Z (pass) settings knowledge page > is a valid settings subpage resolvable via getSettingsPage [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0117256Z (pass) settings knowledge page > round-trips settings/knowledge through the compound route parser [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0118197Z (pass) settings knowledge page > still rejects unknown settings subpages [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0118788Z (pass) settings knowledge page > presents local notes as default and does not require an external engine [0.09ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0119158Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0119467Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0119899Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0120338Z ##[group]apps/electron/src/shared/__tests__/browser-live-fx.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0124976Z (pass) getBrowserLiveFxCornerRadii > uses 16px bottom corners on macOS [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0125868Z (pass) getBrowserLiveFxCornerRadii > uses 8px bottom corners on Windows [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0126471Z (pass) getBrowserLiveFxCornerRadii > uses 6px bottom corners on Linux and fallback platforms [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0126842Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0127166Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0127320Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0127860Z ##[group]apps/electron/src/shared/__tests__/rox-readiness-ui-001.routes.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0132497Z (pass) UI-001 unavailable routes retain their exact address > keeps retired/surface unavailable through parsing, route building and panel persistence [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0133704Z (pass) UI-001 unavailable routes retain their exact address > keeps knowledge/unknown/id unavailable through parsing, route building and panel persistence [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0134784Z (pass) UI-001 unavailable routes retain their exact address > keeps knowledge/document unavailable through parsing, route building and panel persistence [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0135833Z (pass) UI-001 unavailable routes retain their exact address > recovers invalid encoding in sources/source/% without selecting a chat [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0136706Z (pass) UI-001 unavailable routes retain their exact address > recovers invalid encoding in skills/skill/%E0%A4%A without selecting a chat [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0137729Z (pass) UI-001 unavailable routes retain their exact address > recovers invalid encoding in allSessions/session/%FF without selecting a chat
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0138703Z (pass) UI-001 unavailable routes retain their exact address > keeps action parsing separate from selected view state [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0139552Z (pass) UI-001 unavailable routes retain their exact address > round-trips the emitted session panel key and accepts the existing compatibility key [0.24ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0140438Z (pass) UI-001 unavailable routes retain their exact address > retains the existing cloud-run and diff list surfaces without selecting a chat [0.08ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0140854Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0141076Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0141186Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0141520Z ##[group]apps/electron/src/shared/__tests__/shell-appearance.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0148361Z (pass) parseZenShellEnabled / parseShellMaterialPreference > enables fresh installs and preserves explicit opt-outs [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0149213Z (pass) parseZenShellEnabled / parseShellMaterialPreference > defaults unknown preference to system [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0149915Z (pass) parseZenShellPatch > accepts enabled and materialPreference only [0.12ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0151828Z (pass) parseZenShellPatch > rejects BrowserWindow options and extra keys [0.22ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0153088Z (pass) resolveShellMaterial > does not emit glass when zen is disabled (resolver not used for OFF path) [0.09ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0154544Z (pass) resolveShellMaterial > macOS system/glass → vibrancy when paint is healthy [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0155691Z (pass) resolveShellMaterial > uses mica only on Windows 11 22H2 or newer [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0156500Z (pass) resolveShellMaterial > Linux and web are honest solid [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0157632Z (pass) resolveShellMaterial > user opaque, reduce transparency, high contrast, missing paint, gpu, destroyed beat glass [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0158840Z (pass) resolveShellMaterial > accessibility beats user glass even on capable macOS [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0160066Z (pass) snapshotZenShell > exposes the typed flag name and resolved material [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0160521Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0160889Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0161057Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0161539Z ##[group]apps/electron/src/shared/__tests__/route-parser-meetings.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0162987Z (pass) meetings routes > route builders emit the meetings prefix [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0163756Z (pass) meetings routes > meetings is a compound route prefix [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0164731Z (pass) meetings routes > parses bare and detail meetings routes [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0165676Z (pass) meetings routes > round-trips navigation state and panel keys [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0166086Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0166431Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0166602Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0167072Z ##[group]apps/electron/src/shared/__tests__/route-parser-tasks.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0168310Z (pass) tasks routes > route builders emit the tasks prefix [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0172593Z (pass) tasks routes > tasks is a compound route prefix [0.40ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0173339Z (pass) tasks routes > parses bare and detail tasks routes [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0174285Z (pass) tasks routes > round-trips navigation state and panel keys [0.08ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0174683Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0175206Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0175364Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0175864Z ##[group]apps/electron/src/shared/__tests__/route-parser-extra-screens.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0182815Z (pass) extra screen routes > every extra screen id is a compound route prefix (rox:// accepts it) [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0183770Z (pass) extra screen routes > route builders [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0184519Z (pass) extra screen routes > segment parser rejects unknown ids [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0185567Z (pass) extra screen routes > dossier: parse, build and panel-key round trips [0.20ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0186427Z (pass) extra screen routes > radar: parse, build and panel-key round trips [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0188429Z (pass) extra screen routes > decisions: parse, build and panel-key round trips [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0189337Z (pass) extra screen routes > agents: parse, build and panel-key round trips [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0190208Z (pass) extra screen routes > focus: parse, build and panel-key round trips [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0190639Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0190996Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0191151Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0191669Z ##[group]apps/electron/src/shared/__tests__/route-parser-notes-legacy.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0195941Z (pass) route-parser: canonical Notes routes > builds canonical local Notes routes and round-trips nested note ids [0.59ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0197130Z (pass) route-parser: canonical Notes routes > does not expose retired legacy Notes routes [0.09ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0198152Z (pass) route-parser: canonical Notes routes > uses canonical Notes navigation-state keys [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0198668Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0199059Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0199214Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0199674Z ##[group]apps/electron/src/shared/__tests__/page-bridge.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0227176Z (pass) parsePageBridgeMessage > accepts a well-formed api action [0.45ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0228057Z (pass) parsePageBridgeMessage > accepts a bare script action trigger [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0228981Z (pass) parsePageBridgeMessage > accepts a well-formed mcp action with args [0.13ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0229882Z (pass) parsePageBridgeMessage > accepts ready / action-cancel / open-url [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0230814Z (pass) parsePageBridgeMessage > rejects wrong/missing protocol and unknown types [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0231612Z (pass) parsePageBridgeMessage > rejects malformed actions [0.08ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0291237Z (pass) parsePageBridgeMessage > rejects oversized and cyclic payloads [6.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0292115Z (pass) parsePageBridgeMessage > rejects pathologically deep params [0.14ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0295241Z (pass) parsePageBridgeMessage: grant-request > accepts well-formed mcp and api entries [0.26ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0298143Z (pass) parsePageBridgeMessage: grant-request > rejects missing nonce, empty/oversized request lists, duplicate keys [0.28ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0299253Z (pass) parsePageBridgeMessage: grant-request > rejects malformed descriptors [0.11ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0301238Z (pass) parsePageBridgeMessage: grant-request > accepts a well-formed script descriptor [0.22ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0303143Z (pass) parsePageBridgeMessage: grant-request > rejects unsafe or malformed script descriptors [0.19ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0306149Z (pass) parsePageBridgeMessage: grant-request > rejects oversized descriptions [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0307112Z (pass) descriptorEquals > matches on all fields per kind, never across kinds [0.09ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0308081Z (pass) descriptorEquals > script matches on path, runtime (bun default), and ordered args [0.09ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0308894Z (pass) isSafeExternalUrl > allows only http(s) [0.16ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0309674Z (pass) isMutatingInvocation > api GET is the only activation-exempt invocation [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0311063Z (pass) isMutatingInvocation > mcp always mutates (opaque tools — no method to infer read vs write) [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0312181Z (pass) isMutatingInvocation > script always mutates (host command execution needs a fresh gesture) [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0313159Z (pass) outgoing message builders > stamp the protocol and wrap payloads [0.11ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0314080Z (pass) outgoing message builders > init and grants messages carry grant summaries [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0314883Z (pass) PageActionRateLimiter > caps concurrent requests [0.18ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0315845Z (pass) PageActionRateLimiter > caps mutating requests to one in flight [0.11ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0316690Z (pass) PageActionRateLimiter > enforces a sliding one-minute window [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0317601Z (pass) PageActionRateLimiter > exposes in-flight ids for unmount cancellation [0.08ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0318464Z (pass) reconcileGrantSummaries > config additions appear, revocations disappear [0.16ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0319382Z (pass) reconcileGrantSummaries > an in-render approval survives until the config confirms it [0.12ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0320304Z (pass) reconcileGrantSummaries > grantIdsEqual is order-insensitive set equality [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0320766Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0321233Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0321410Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0321885Z ##[group]apps/electron/src/renderer/atoms/rox-readiness-ui-001.panels.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0398899Z (pass) UI-001 visible panel allocation > opens the first panel at full width [1.47ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0402296Z (pass) UI-001 visible panel allocation > opens a sibling with a positive width and preserves the existing panel identity [0.31ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0406634Z (pass) UI-001 visible panel allocation > preserves the ratio of resized siblings when inserting another panel [0.48ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0407245Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0407693Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0407841Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0408363Z ##[group]apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0468443Z (pass) ROX UI-001 real persisted layout atoms > bounds live writes before consumers read them and saves the same value [0.95ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0473510Z (pass) ROX UI-001 real persisted layout atoms > retains the inspector host range instead of narrowing valid saved widths [0.54ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0479441Z (pass) ROX UI-001 real persisted layout atoms > rounds updater callbacks and reloads canonical values in a fresh store [0.60ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0488008Z (pass) ROX UI-001 real persisted layout atoms > recovers malformed JSON, wrong types and non-finite JSON on reload [0.84ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0492863Z (pass) ROX UI-001 real persisted layout atoms > keeps valid live sizes usable when persistence or reset is denied [0.50ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0498889Z (pass) ROX UI-001 real persisted layout atoms > normalizes cross-window storage events and unsubscribes on unmount [0.58ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0502171Z (pass) ROX UI-001 real persisted layout atoms > does not replay an older queued storage value or clear over the current preference [0.32ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0503609Z (pass) ROX UI-001 persisted shell geometry > rounds and bounds preferences within the controls existing supported ranges [0.08ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0505262Z (pass) ROX UI-001 persisted shell geometry > recovers malformed and non-finite reload values to a usable default [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0505890Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0506387Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0506556Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0507085Z ##[group]apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0518618Z (pass) shell layout preferences (ZS-06) > clamps sidebar 180–360 and navigator 240–480 [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0520294Z (pass) shell layout preferences (ZS-06) > migrates legacy keys without deleting them [0.22ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0522202Z (pass) shell layout preferences (ZS-06) > commit dual-writes snapshot and legacy keys; preview is not a write [0.17ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0523433Z (pass) shell layout preferences (ZS-06) > rejects foreign workspace snapshots and extra schema versions [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.0524692Z (pass) shell layout preferences (ZS-06) > treats a tight-window clamp as derived effective width, not a new preference [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1335593Z (pass) shell layout preferences (ZS-06) > keyboard debounce is 250ms and cancel prevents the write [81.08ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1337864Z (pass) shell layout preferences (ZS-06) > two workspaces keep independent snapshots [0.36ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1343116Z (pass) side panel defaults (layout v2) > left sidebar and right inspector share one default width [0.51ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1346431Z (pass) side panel defaults (layout v2) > narrows wider stored widths once, keeps narrower ones, expands the rail [0.30ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1348954Z (pass) side panel defaults (layout v2) > narrows workspace snapshots so a later commit cannot restore the old width [0.26ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1350055Z (pass) side panel defaults (layout v2) > leaves narrower user widths and fresh installs untouched [0.11ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1350555Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1350956Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1351073Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1351393Z ##[group]apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1363761Z (pass) isDetailNavState > treats Settings Overview as a compact detail surface [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1364836Z (pass) isDetailNavState > keeps other navigator semantics [0.09ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1365300Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1365538Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1365651Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1365981Z ##[group]apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1376217Z (pass) normalizePanelRouteForReconcile > auto-selects session details for filter-only session routes [0.20ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1377154Z (pass) normalizePanelRouteForReconcile > keeps explicit session details unchanged [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1378020Z (pass) normalizePanelRouteForReconcile > normalizes each session panel route independently [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1378973Z (pass) normalizePanelRouteForReconcile > keeps route unchanged when resolver leaves state without details [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1379956Z (pass) normalizePanelRouteForReconcile > keeps non-session routes unchanged with session-only resolver [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1381329Z (pass) normalizePanelRouteForReconcile > keeps explicit detail route even if resolver tries to rewrite it [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1383031Z (pass) normalizePanelRouteForReconcile > keeps explicit detail routes distinct across multiple panels [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1383601Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1384169Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1384273Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1384617Z ##[group]apps/electron/src/renderer/contexts/__tests__/navigation-history-key.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1393613Z (pass) buildSemanticHistoryKey > changes when focused panel index changes even if routes are identical [0.08ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1394491Z (pass) buildSemanticHistoryKey > stays stable for identical semantic inputs [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1395393Z (pass) canRunInitialRestore > returns false until session metadata is ready [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1396846Z (pass) canRunInitialRestore > returns true only when all restore conditions are satisfied [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1397901Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1398474Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1398778Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1399265Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/session-row-click.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1402304Z (pass) sessionRowClickTarget > sends title/row clicks to chat and status clicks to the board card [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1403058Z (pass) boardCardRoute > encodes board/session/{id} [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1403370Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1403735Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1403972Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.1404917Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/sidebar-disclosure.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3878926Z (pass) sidebar disclosure helpers (ZS-04) > builds a stable section id from the nav key [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3879924Z (pass) sidebar disclosure helpers (ZS-04) > treats expandable items with onClick as navigable parents [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3880719Z (pass) sidebar disclosure helpers (ZS-04) > restores focus to the toggle when it is inside the collapsible body [0.09ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3881073Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3881538Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3881645Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3882602Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/compact-workspace-navigation.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3949555Z (pass) compact workspace navigation > keeps every registered service reachable without a desktop rail or sidebar [0.56ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3954988Z (pass) compact workspace navigation > selects any open panel and preserves its identity, route, filter and sizing [0.53ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3956853Z (pass) compact workspace navigation > reuses an open service before calling its normal opener [0.28ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3957382Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3957781Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3958082Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3958847Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/transfer-targets.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3969712Z (pass) getTransferTargets > offers every workspace except the active one, local and remote alike [0.09ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3971585Z (pass) getTransferTargets > includes local workspaces when the active workspace is remote (remote → local send) [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3972704Z (pass) getTransferTargets > offers everything when no active workspace is known [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3973682Z (pass) hasTransferTargets > is false with a single (active-only) workspace [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3974719Z (pass) hasTransferTargets > is true with two local workspaces — no remote required [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3975701Z (pass) hasTransferTargets > handles missing workspace lists [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3976072Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3976417Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3976585Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3977123Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/zen-topbar.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3978912Z (pass) Zen Shell top bar (ZS-03) > uses native traffic-light safe area and does not draw HTML stoplights [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3980191Z (pass) Zen Shell top bar (ZS-03) > wires shell history to onBack/onForward and AppMenu [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3981124Z (pass) Zen Shell top bar (ZS-03) > keeps interactive controls out of the drag region [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3981591Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3981909Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3982737Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3983350Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/sources-list-groups.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3987691Z (pass) P35-08 sources UI split and notification default > groups microservices vs MCP in the sources list when unfiltered [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3989066Z (pass) P35-08 sources UI split and notification default > splits default-source toggles into microservices vs MCP [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3990296Z (pass) P35-08 sources UI split and notification default > defaults background-session notifications on [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3991106Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3991433Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3991596Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3992240Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/new-session-filter-inheritance.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3997784Z (pass) new session filter inheritance > inherits a sole included status, label, or project [0.12ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.3998896Z (pass) new session filter inheritance > does not inherit an excluded status, label, or project [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4000026Z (pass) new session filter inheritance > ignores excluded filters when resolving a sole included filter [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4001170Z (pass) new session filter inheritance > falls back to defaults when there are no included filters [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4002311Z (pass) new session filter inheritance > falls back to defaults when multiple included filters are active [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4002922Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4003262Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4003433Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4004027Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/sash-terminal-clearance.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4011009Z (pass) sash terminal clearance > stops resize sashes from drawing through the top bar gap and bottom terminal [0.39ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4011643Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4011963Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4012128Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4012726Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/ChatDisplay.follow-ups.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4028177Z (pass) formatFollowUpSection — the OSS #580 regression > preserves a >1000-char quote verbatim (no truncation to 280) [0.17ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4029821Z (pass) formatFollowUpSection — the OSS #580 regression > collapses multiline quotes to a single line (required by round-trip parser) [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4031682Z (pass) formatFollowUpSection — the OSS #580 regression > emits the canonical `> [#N] <quote>\n→ <note>` shape for a single follow-up [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4033051Z (pass) formatFollowUpSection — the OSS #580 regression > numbers multiple follow-ups sequentially [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4034382Z (pass) formatFollowUpSection — the OSS #580 regression > returns an empty string when no follow-ups are pending [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4036095Z (pass) formatFollowUpSection — the OSS #580 regression > respects includeTopSeparator=false (used when there is no base message) [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4037723Z (pass) formatFollowUpSection — the OSS #580 regression > prepends a `---` separator by default (used under a base message) [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4039118Z (pass) normalizeFollowUpsMarkdown — round-trip parser > round-trips a long-quote message unchanged [0.48ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4040533Z (pass) normalizeFollowUpsMarkdown — round-trip parser > renumbers items when called on a message with wrong indices [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4041973Z (pass) normalizeFollowUpsMarkdown — round-trip parser > returns the input unchanged if no follow-up heading is present [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4043061Z (pass) truncateForChipTooltip > returns input unchanged when below the cap [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4043944Z (pass) truncateForChipTooltip > truncates with ellipsis when over the cap [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4044866Z (pass) truncateForChipTooltip > collapses whitespace before measuring length [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4045494Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4045813Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4046220Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4046796Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/session-list-families.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4210704Z (pass) SessionList family behavior (date mode) > renders a branch directly below its root [0.61ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4211994Z (pass) SessionList family behavior (date mode) > collapsing a family hides branches but keeps the root [0.11ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4213270Z (pass) SessionList family behavior (date mode) > expanding restores branch rows [0.08ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4214541Z (pass) SessionList family behavior (date mode) > family bucket is determined by the latest activity across members [0.14ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4216768Z (pass) SessionList family behavior (date mode) > a singleton session renders as a plain row (no chevron) [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4218144Z (pass) SessionList family behavior (date mode) > legacy branch (no branchFromSessionId) renders as a plain chat [0.13ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4219663Z (pass) SessionList family behavior (date mode) > Collapse All includes family keys; Expand All clears them [0.26ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4221172Z (pass) SessionList family behavior (status/unread/project bucketing) > unread mode: whole family lands in the bucket of its latest-activity member [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4222930Z (pass) SessionList family behavior (status/unread/project bucketing) > project mode: family bucketed by the project of its latest-activity member [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4224604Z (pass) SessionList family behavior (search mode) > non-matching members are absent; matching branch without root has no chevron [0.15ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4225487Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4226055Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4226318Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.4227075Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/profile-strip-accessibility.test.tsx:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5697467Z (pass) ProfileStrip preserves its translated accessibility contracts in isolation [145.28ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5711980Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5712513Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5712683Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5713313Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/invite-bro-chrome.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5714814Z (pass) Позвать Бро session chrome > adds inviteBro next to publication share in desktop and compact menus [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5716166Z (pass) Позвать Бро session chrome > renders presence avatars under session header controls [0.08ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5716673Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5716986Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5717174Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5717753Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/quest-progress-card.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5725546Z (pass) quest progress card > is not mounted on Home (no promo carousel) and never blocks core chrome [0.40ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5726848Z (pass) quest progress card > rates sessions with 👍/👎 from the session menu, not a composer scale [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5727378Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5727721Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5727885Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5728441Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/workspace-rail.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5733874Z (pass) shouldShowWorkspaceIconRail > is hidden when the setting is disabled [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5734910Z (pass) shouldShowWorkspaceIconRail > is hidden below the compact viewport breakpoint [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5736851Z (pass) shouldShowWorkspaceIconRail > is shown at and above the compact viewport breakpoint [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5737988Z (pass) getTopBarLeftInset > insets the top bar by the rail width only when the rail is visible [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5739088Z (pass) workspace selector rail event > exports the shared event name used by settings and App [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5739595Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5739928Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5740088Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5740656Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/connections-nav.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5743154Z (pass) CF-6.2 Connections nav and surface > registers an enabled connections destination for the Workbench rail [0.08ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5744669Z (pass) CF-6.2 Connections nav and surface > exposes Connections in the single primary sidebar using the canonical route [0.15ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5747675Z (pass) CF-6.2 Connections nav and surface > renders ConnectionsPage from MainContentPanel on the connections navigator [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5748256Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5748493Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5748609Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5749178Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-disclosure.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5755286Z (pass) Zen Shell sidebar disclosure (ZS-04) > extracts a disclosure primitive with aria-expanded/controls [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5756499Z (pass) Zen Shell sidebar disclosure (ZS-04) > uses sibling navigation + disclosure for navigable parents [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5757615Z (pass) Zen Shell sidebar disclosure (ZS-04) > does not nest a clickable span inside the nav button [0.14ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5758162Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5758495Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5758696Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5759242Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/tasks-nav.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5765962Z (pass) Issue 17 Tasks nav and surface > registers an enabled tasks destination for the Workbench rail [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5767036Z (pass) Issue 17 Tasks nav and surface > wires Tasks into AppShell and MainContentPanel [0.15ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5767518Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5767845Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5767987Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:21.5768550Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/sidebar-guidance.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.1240520Z (pass) actual sidebar guidance dismissal > dismissal persists only its workspace onboarding preference and returns focus to profile [0.39ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.1241954Z (pass) actual sidebar guidance dismissal > captured old-workspace dismissal cannot hide new workspace guidance or steal its focus [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.1243488Z (pass) actual sidebar guidance dismissal > unbound workspace uses the retained default scope; truthy non-boolean preference is not dismissal [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.1244971Z (pass) actual sidebar guidance dismissal > current flat PromoSlot wires the actual dismissal only for onboarding; localized dismiss key already exists [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.1245936Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.1246368Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.1246548Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.1247162Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.4366859Z (skip) production native surface renderer ownership > (unnamed)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.4427098Z (skip) production native surface renderer ownership > hidden/released duplicate hosts cannot hide their visible sibling, while clipping hides the selected host
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.4446516Z (skip) production native surface renderer ownership > retains a typed draft through responsive hiding, restores geometry and suppresses overlays
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.4484317Z (skip) production native surface renderer ownership > releases an inspector attachment arriving after close without hiding a sibling surface
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.4504199Z (skip) production native surface renderer ownership > ignores an obsolete attachment failure after a newer open succeeds
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.4506312Z (skip) production native surface renderer ownership > preserves imported-cookie consent controls and routes explicit opt-in to a private instance
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.4507446Z (skip) production native surface renderer ownership > (unnamed)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.4507808Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.4508246Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.4508491Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.4509059Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/service-panel-navigation.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5211280Z (pass) actual AppShell service selection over current panel owner > Notes root focuses an existing detailed panel and preserves panel identities/routes/proportions and drafts [2.79ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5214103Z (pass) actual AppShell service selection over current panel owner > same-service focus is preferred among multiple matching panels; absent service navigates current registry route [0.30ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5216445Z (pass) actual AppShell service selection over current panel owner > explicit source subcategory and settings subpage preserve navigation; compact bare Settings keeps drill-in [0.51ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5254076Z (pass) actual AppShell service selection over current panel owner > every current root service has fallback through its existing registry; Connections inline selection shares the same callback [4.87ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5256853Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5257520Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5257694Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5258351Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/notes-canonical-navigation.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5272929Z (pass) Notes shell navigation > opens the workspace-local Notes surface instead of a knowledge provider [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5274013Z (pass) Notes shell navigation > resolves imported chat notes to local Notes, not SiYuan [0.15ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5274499Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5274854Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5275138Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5275873Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-history-switch.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5623597Z (pass) actual App rejects a deleted workspace slug without requesting a switch [1.64ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5627563Z (pass) actual App confirms a history switch only after its asynchronous operation finishes [0.23ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5628852Z (pass) actual App propagates a failed workspace operation to NavigationProvider recovery [0.14ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5629600Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5630183Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5630540Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5631399Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/accounts-settings-presentation.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5637134Z (pass) AccountsSettingsPage presentation > does not display raw profile IDs or modes [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5638503Z (pass) AccountsSettingsPage presentation > gives the Notes section sole ownership of its cloud connection [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5640050Z (pass) AccountsSettingsPage presentation > keeps the credential value hidden while passing it through the existing identity API [0.12ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5640960Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5641475Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5641815Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5643137Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/chat-display-branching.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5709841Z (pass) ChatDisplay branching navigation option > defaults to opening in new panel when options are missing [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5717080Z (pass) ChatDisplay branching navigation option > respects explicit newPanel=false [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5718394Z (pass) ChatDisplay branching navigation option > respects explicit newPanel=true [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5719084Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5719655Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5720006Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5720836Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/device-status-chip.browser.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5779801Z (skip) real diagnostic chip lifecycle with a native bridge fixture > (unnamed)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5781497Z (skip) real diagnostic chip lifecycle with a native bridge fixture > does no closed diagnostic reads, loads on opening, switches tabs and stops after closing
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5782875Z (skip) real diagnostic chip lifecycle with a native bridge fixture > (unnamed)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5783462Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5784003Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5784323Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5785228Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-roles.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5855682Z (pass) Zen Shell chrome/content roles (ZS-02) > marks top bar and sidebar as chrome and panels as opaque content [0.32ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5856157Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5856478Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5856594Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:22.5857047Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/quest-progress-card.browser.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:43.6230762Z (pass) production quest cards in Chromium > shows three distinct icon cards and a personal competition from actual supplied XP [646.25ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:44.7803957Z (pass) production quest cards in Chromium > completes a quest, increases real displayed progress, and retains achievement after browser reload [1157.23ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:45.3536852Z (pass) production quest cards in Chromium > disables every quest action while a pending completion prevents repeated clicks [572.54ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:46.0017449Z (pass) production quest cards in Chromium > retains playable cards on a failed action and retry performs that same action [646.47ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:46.5599763Z (pass) production quest cards in Chromium > recovers an initial unavailable profile without pretending an empty quest board [558.87ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:47.3596864Z (pass) production quest cards in Chromium > persists snooze and dismiss without XP and keeps the snoozed deadline visible [799.66ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:47.9700576Z (pass) production quest cards in Chromium > keeps levels and weekly competition available after every quest is completed [611.30ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:48.5235537Z (pass) production quest cards in Chromium > fits 320px and supports keyboard focus and activation [554.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:49.0072889Z (pass) production quest cards in Chromium > ignores old replies after A → B → A workspace changes [483.83ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:49.6353394Z (pass) production quest cards in Chromium > does not refresh or repaint after a pending action resolves following unmount [628.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:49.7758474Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:49.7759424Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:49.7759672Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:49.7760311Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/session-join-ui.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:49.8278984Z (pass) Join session dialog behavior > invalidates a delayed join across A → B → A without loading, navigation or a success toast [47.37ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:49.8607096Z (pass) Join session dialog behavior > keeps the join form while an unrelated publication completes during its pending request [30.92ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:49.8832263Z (pass) Join session dialog behavior > ignores a delayed join after the host is unmounted [24.42ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:49.9084440Z (pass) Join session dialog behavior > opens a remote published transcript for viewing without creating an editable session or switching local workspace [25.14ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:49.9307725Z (pass) Join session dialog behavior > switches workspace and opens actual loaded session after workspace restoration before showing success [22.33ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:49.9534882Z (pass) Join session dialog behavior > opens a session in the current workspace without switching [22.69ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:49.9756676Z (pass) Join session dialog behavior > keeps a deleted-target denial visible without loading, navigation or success [21.87ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:49.9986871Z (pass) Join session dialog behavior > does not report success if the actual session disappears after acceptance [21.33ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.0187078Z (pass) Join session dialog behavior > keeps a failed workspace switch recoverable instead of navigating the old workspace [21.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.0384359Z (pass) Join session dialog behavior > rejects inconsistent target workspace data before a switch [19.99ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.0392175Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.0393285Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.0405731Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.0408304Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/main-content-panel-browser-i18n.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1136510Z (pass) MainContentPanel browser empty state is i18n > uses browser.noInstanceSelected and skips the English defaultValue leftover [0.12ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1197530Z (pass) MainContentPanel browser empty state is i18n > English locale keeps the previous empty-state copy [6.99ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1204226Z (pass) MainContentPanel browser empty state is i18n > Russian copy is distinct from English [0.74ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1563372Z (pass) MainContentPanel browser empty state is i18n > all 12 locales already define the wired browser empty-state key [35.78ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1563976Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1564695Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1564814Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1565422Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/resize-math.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1591413Z (pass) solveSplit (ZS-05) > clamps A=500 B=500 min=440 delta=200 to A=560 B=440 [0.19ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1627047Z (pass) solveSplit (ZS-05) > returns infeasible instead of negative widths when T=800 and both mins are 440 [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1676281Z (pass) solveSplit (ZS-05) > rejects non-finite input [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1685711Z (pass) solveSplit (ZS-05) > equal split respects mins [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1708403Z (pass) resize controller (ZS-05) > coalesces 1000 moves into one preview and zero commits until pointerup [2.45ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1726354Z (pass) resize controller (ZS-05) > cancel restores the snapshot and ignores a second cleanup [0.19ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1733842Z (pass) resize controller (ZS-05) > cancels when neighbor ids change [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1737964Z (pass) sash geometry (ZS-05) > uses a 12px hit area and 2px line, 24px on coarse pointers [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1738705Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1739392Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1739550Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:50.1740111Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/voice-dictation.browser.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:56.0189861Z Voice fixture console: Failed to load resource: the server responded with a status of 404 (Not Found)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:57.4387379Z (pass) voice dictation production renderer DOM > consumes STOP once and appends the returned paragraphs to the latest edited draft [1406.85ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:58.7634222Z (pass) voice dictation production renderer DOM > asks for cloud upload consent at first use and starts only after the saved grant [1324.21ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:48:59.9060337Z (pass) voice dictation production renderer DOM > closing the consent dialog leaves capture and audio upload untouched [1141.64ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:01.1676685Z (pass) voice dictation production renderer DOM > late consent success after unmount cannot start a microphone capture [1263.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:02.4384035Z (pass) voice dictation production renderer DOM > pairs push-to-talk once and consumes the current single-STOP transcript [1269.99ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:03.4815838Z (pass) voice dictation production renderer DOM > release while the microphone prompt is pending stops late tracks without starting or cancelling a host job [1043.39ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:04.5362109Z (pass) voice dictation production renderer DOM > release during pending Start immediately closes the microphone and fences late capture [1054.79ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:05.5748083Z (pass) voice dictation production renderer DOM > release during pending Grant immediately closes the microphone and fences late capture [1038.23ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:06.6291880Z (pass) voice dictation production renderer DOM > a refused START cleans acquired tracks without cancelling another host job [1053.58ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:07.6882913Z (pass) voice dictation production renderer DOM > unmount cancels the owned request and discards a late STOP transcript [1059.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.6898427Z killed 1 dangling process
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.6930125Z (fail) voice dictation production renderer DOM > (unnamed) [30002.32ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.6930616Z   ^ a beforeEach/afterEach hook timed out for this test.
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.6930821Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.6931090Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.6931194Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.6932013Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/shell-width-clamp.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.7926060Z (pass) clampShellColumns > keeps restored widths when the center already has its minimum [0.16ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.7926987Z (pass) clampShellColumns > narrows the list first, then the sidebar [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.7927754Z (pass) clampShellColumns > stops at the column minimums in genuinely narrow windows [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.7928547Z (pass) clampShellColumns > ignores hidden columns and unmeasured shells [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.7929521Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.7929931Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.7930090Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.7930697Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/main-content-panel-bulk.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.7947849Z (pass) MainContentPanel sessions bulk UI > does not mount the legacy MultiSelectPanel in the sessions branch [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.7949079Z (pass) MainContentPanel sessions bulk UI > keeps CollectionBulkBar mounted for sessions list/chat content [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.7950334Z (pass) MainContentPanel sessions bulk UI > keeps MultiSelectPanel for sources, skills, and automations [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.7950891Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.7951291Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.7951462Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:37.7952075Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/projects-home-loaded.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.3998807Z (pass) Projects home loaded DTO boundary > renders the loaded project store without the session-picker projection [24.52ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4049264Z (pass) Projects home loaded DTO boundary > renders an empty loaded store without inventing a project DTO [4.99ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4093526Z (pass) Projects home current workspace and explicit source > explicit loaded DTOs take precedence over the isolated atom source [4.39ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4121390Z (pass) Projects home current workspace and explicit source > an explicit empty result remains empty even when the atom has projects [2.83ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4158465Z (pass) Projects home current workspace and explicit source > atom fallback rejects another workspace before rendering the list [3.71ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4188848Z (pass) Projects home current workspace and explicit source > explicit input also rejects previous workspace rows [3.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4215274Z (pass) Projects home current workspace and explicit source > an absent active workspace renders no previously loaded project [2.26ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4215831Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4216259Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4216406Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4217100Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/premium-menu-chrome-hygiene.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4277641Z (pass) Issue 04 chrome hygiene > keeps AppShell on StyledDropdown [1.91ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4278368Z (pass) Issue 04 chrome hygiene > keeps BrowserTabStrip on StyledDropdown [0.11ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4278639Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4278995Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4279104Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4279448Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/home-nav.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4300449Z (pass) Workbench Home nav and surface > seeds Home as a live Mode Bar destination [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4301479Z (pass) Workbench Home nav and surface > hides the navigator column on the home route [0.15ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4302533Z (pass) Workbench Home nav and surface > renders HomeFrontPage from MainContentPanel on the home navigator [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4303123Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4303515Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4303675Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4304238Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/titlebar-mode-pill.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4439765Z (pass) titlebar mode pill layout > keeps labels when both sides have room [1.95ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4440832Z (pass) titlebar mode pill layout > collapses to icons when the labelled pill would hit a side group [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4442564Z (pass) titlebar mode pill layout > centers on the window, compensating for the left rail inset [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4443637Z (pass) titlebar mode pill layout > reserves a gap around the compact pill even when browser tabs exceed their available width [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4444708Z (pass) titlebar mode pill source contract > renders every mode in one pill with no overflow menu [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4445870Z (pass) titlebar mode pill source contract > is no-drag and keeps high contrast accessible [0.11ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4447245Z (pass) titlebar mode pill source contract > mounts the pill centered in the titlebar, outside the left group [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4448476Z (pass) titlebar mode pill source contract > keeps cost/usage out of the titlebar (balance lives in the profile strip) [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4449536Z (pass) titlebar mode pill source contract > uses the plate-free portrait for the titlebar mark [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4450676Z (pass) titlebar mode pill source contract > exposes the seven primary surfaces without requiring experimental Workbench chrome [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4451292Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4451723Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4451870Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4452402Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/error-message-actions.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4600895Z (pass) handleErrorMessageAction > routes retry through the session-scoped focus handler [2.08ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4601902Z (pass) handleErrorMessageAction > opens the provided URL for open_url actions [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4602851Z (pass) handleErrorMessageAction > calls onRetry instead of onRetryFocus when provided [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4603786Z (pass) handleErrorMessageAction > runs the settings handler for settings actions [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4604260Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4604684Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4604842Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4605903Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/extension-origin-permissions-presentation.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4624587Z (pass) extension origin and permissions presentation > shows installed origin next to runtime [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4626077Z (pass) extension origin and permissions presentation > chips marketplace permissions beside GitHub origin and highlights high-risk [0.14ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4627434Z (pass) extension origin and permissions presentation > keeps marketplace kind permissions in a browser-safe helper [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4628081Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4628457Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4628627Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.4629288Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.selected-resource.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.5033345Z (pass) UI-001 selected resource canonical callbacks > source deletion wins over an older initial load and does not navigate away [27.47ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.5206928Z (pass) UI-001 selected resource canonical callbacks > a malformed source event reports unavailable without throwing [17.22ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.5360546Z (pass) UI-001 selected resource canonical callbacks > source read rejection becomes unavailable and recovers from a real subscription callback [14.86ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.5618920Z (pass) UI-001 selected resource canonical callbacks > unmount suppresses an obsolete source read and missing capability is explicit [26.25ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.5755978Z (pass) UI-001 selected resource canonical callbacks > skill events re-read project/global resolution context and reject an older response [13.09ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.5756717Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.5757076Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.5757181Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.5757569Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/sidebar-dashboard.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.5869784Z (pass) sidebar dashboard source contracts > localizes the scheduled-automation machine warning [0.18ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.5871234Z (pass) sidebar dashboard source contracts > mounts usage cards on the account page, not the sidebar [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.5873102Z (pass) sidebar dashboard source contracts > keeps TopBar session/browser shortcuts as labeled icon buttons [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.5873771Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.5874368Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.5874653Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.5875558Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6031692Z (skip) UI-001 real Chromium component and persistence fixtures > (unnamed)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6032969Z (skip) UI-001 real Chromium component and persistence fixtures > selected source deletion and recreation preserve workspace and entity address
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6034283Z (skip) UI-001 real Chromium component and persistence fixtures > retry recovers an unavailable selected source through the actual click handler
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6035670Z (skip) UI-001 real Chromium component and persistence fixtures > late resource load cannot replace a new missing address
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6036476Z (skip) UI-001 real Chromium component and persistence fixtures > cloud run switch clears previous content while the new callback is pending
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6037241Z (skip) UI-001 real Chromium component and persistence fixtures > retries rejected lazy imports and keeps the selected route
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6038023Z (skip) UI-001 real Chromium component and persistence fixtures > retries rendering failure and a new route clears a previous error
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6038882Z (skip) UI-001 real Chromium component and persistence fixtures > workspace switch cancels a real pending resize timer before it can persist old geometry
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6039755Z (skip) UI-001 real Chromium component and persistence fixtures > actual localStorage persists valid sizes across reload and other windows
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6040376Z (skip) UI-001 real Chromium component and persistence fixtures > (unnamed)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6040608Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6041154Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6041256Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6041649Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/memory-proposal-card.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6054089Z (pass) Issue 13 memory proposal UI wiring > renders compact blue proposal cards in chat and the memory review [0.28ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6054561Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6054813Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6054913Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6055414Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/sidebar-keyboard.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6193096Z (pass) single sidebar keyboard navigation > moves from portalled filters to the next visible control and skips folded controls [2.47ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6194442Z (pass) single sidebar keyboard navigation > leaves Tab to native traversal within the sidebar [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6195836Z (pass) single sidebar keyboard navigation > skips inert closing-animation content even while it has layout rectangles [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6197288Z (pass) single sidebar keyboard navigation > skips closed native disclosure content even when Chromium keeps nonempty layout rectangles [0.25ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6198580Z (pass) single sidebar keyboard navigation > reserves unmodified numbered platform shortcuts for surfaces with no duplicate defaults [0.25ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6199213Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6199623Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6199781Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6200355Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/sidebar-rail-preference.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.6960106Z (pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on sessions [41.30ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.7210756Z (pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on meetings [25.09ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.7405775Z (pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on settings [19.41ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.7613607Z (pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on home [20.84ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.7792676Z (pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on tasks [15.50ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.7910105Z (pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on notes [12.95ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.8036355Z (pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on projects [13.69ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.8164462Z (pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on pages [12.80ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.8309129Z (pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on knowledge [14.48ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.8466200Z (pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on connections [15.65ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.8596428Z (pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on search [12.99ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.8722518Z (pass) actual combined sidebar preference and rail geometry > restores, toggles, persists, and reloads the sidebar on screen [12.63ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.8781645Z (pass) actual combined sidebar preference and rail geometry > explicit focus and automatic compact suppression preserve the saved sidebar choice [5.89ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.9531112Z (pass) actual combined sidebar preference and rail geometry > the primary sidebar suppresses duplicate rail geometry for every flag and collapse state [74.82ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.9531866Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.9532312Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.9589781Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:38.9590658Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:39.0125615Z (pass) ROX UI-001 actual AppShell workspace callbacks > ignores late sources responses after workspace/directory change [46.94ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:39.0410957Z (pass) ROX UI-001 actual AppShell workspace callbacks > keeps a live sources deletion ahead of a pending initial snapshot [28.58ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:39.0888442Z (pass) ROX UI-001 actual AppShell workspace callbacks > ignores late skills responses after workspace/directory change [47.73ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:39.1090682Z (pass) ROX UI-001 actual AppShell workspace callbacks > keeps a live skills deletion ahead of a pending initial snapshot [20.13ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:39.1289983Z (pass) ROX UI-001 actual AppShell workspace callbacks > keeps project and OMP skills when a workspace-only event invalidates the full catalog [19.97ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:39.1538423Z (pass) ROX UI-001 actual AppShell workspace callbacks > accepts only the newest scoped skill refresh after consecutive workspace events [24.81ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:39.1755814Z (pass) ROX UI-001 actual AppShell workspace callbacks > retains the complete skill catalog through a failed refresh and accepts a later recovery [21.63ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:39.2002649Z (pass) ROX UI-001 actual AppShell workspace callbacks > recovers from request rejection and unmount without installing stale data [24.73ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:39.2268108Z (pass) ROX UI-001 actual AppShell workspace callbacks > restores workspace geometry before an old pending keyboard resize can commit [26.58ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:39.2515852Z (pass) ROX UI-001 workspace persistence isolation > does not save old viewFilters over the next workspace during restoration [24.58ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:39.2712462Z (pass) ROX UI-001 workspace persistence isolation > does not save old collapsedSidebarItems over the next workspace during restoration [19.78ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:39.2713254Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:39.2713724Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:39.2714377Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:39.2714906Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/message-actions.browser.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:47.5496798Z (pass) production message actions with persisted synthetic RPC > shows the requested action order on both user and assistant messages, including compact mode [1477.99ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:49.3071886Z (pass) production message actions with persisted synthetic RPC > likes its own message through the real annotation RPC and retains/removes the reaction after reload [1757.76ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:50.9811618Z (pass) production message actions with persisted synthetic RPC > toggles the authenticated user’s own reaction on an assistant answer without duplicating it [1673.90ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:52.5069104Z (pass) production message actions with persisted synthetic RPC > keeps likes disabled when identity fails and retries when the app gains focus [1525.76ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:53.8602030Z (pass) production message actions with persisted synthetic RPC > copies, quotes and directly listens to the selected message with a visible stop control [1351.77ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:55.2535774Z (pass) production message actions with persisted synthetic RPC > creates a usable own-message branch via the real creation RPC and continues the child dialogue [1394.73ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:56.5218102Z (pass) production message actions with persisted synthetic RPC > forks an assistant answer with its complete earlier context [1266.21ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:57.9999029Z (pass) production message actions with persisted synthetic RPC > opens a side-thread prompt for the chosen user message and keeps canonical provenance [1479.53ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1843284Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1844260Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1844460Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1845253Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1879033Z (pass) ship-rox-chrome-leftover-post-960 > equalizes compact panel bottom inset without magic ±6 [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1879840Z (pass) ship-rox-chrome-leftover-post-960 > makes chat status lane and browser chrome opaque without blur [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1887927Z (pass) ship-rox-chrome-leftover-post-960 > aligns FreeFormInput toolbar leftovers to 9px / h-6 [0.88ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1889128Z (pass) ship-rox-chrome-leftover-post-960 > retains the inspector while collapsed and honors overlay suppression [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1890282Z (pass) ship-rox-chrome-leftover-post-960 > preserves rounded shell gaps without extra terminal dock margins [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1890652Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1890943Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1892862Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1893535Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/topbar-shortcuts.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1917233Z (pass) TopBar navigation cutover > leaves keyboard shortcut discovery to Settings instead of rendering a duplicate button [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1918457Z (pass) TopBar navigation cutover > forwards Settings subpage navigation to the canonical AppMenu route [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1919632Z (pass) TopBar navigation cutover > keeps the compact left sidebar control wired to its existing callback [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1920727Z (pass) TopBar navigation cutover > exposes bottom-terminal toggle in TopBar whenever the inspector toggle is shown [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1921451Z (pass) TopBar navigation cutover > toggles the right inspector and restores fully collapsed chrome [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1922448Z (pass) TopBar navigation cutover > exposes a dedicated Map affordance for the focused session [0.14ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1923872Z (pass) TopBar navigation cutover > does not retain the legacy TopBar What’s New action [0.17ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1924878Z (pass) TopBar navigation cutover > does not keep update checks on the ProfileStrip [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1926921Z (pass) TopBar navigation cutover > uses dedicated session and browser actions instead of a generic plus menu [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1927897Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1928167Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1928279Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1928665Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/composer-toolbar-type.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1958231Z (pass) composer toolbar type > uses 9px on context badge and chrome CSS override for toolbar buttons [0.29ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1958775Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1959005Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1959115Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1959615Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/voice-composer.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1984345Z (pass) voice composer and listen wiring > exposes dictation in the composer and listen on turns [0.41ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1984793Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1985156Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1985271Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.1985798Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/meetings-nav.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2025976Z (pass) RMA-I012 Meetings nav and surface > registers an enabled meetings destination for the Workbench rail [1.80ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2027147Z (pass) RMA-I012 Meetings nav and surface > wires Meetings into AppShell and MainContentPanel [0.18ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2027643Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2028010Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2028167Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2028760Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/radius-everywhere.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2050174Z (pass) one-surface shell > rounded panels sit on a 4px gap/inset grid [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2051211Z (pass) one-surface shell > renders sidebar and navigator as flush panes with a hairline divider [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2052169Z (pass) one-surface shell > content panels are flush, divided only in split view [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2053064Z (pass) one-surface shell > activity rail and inspector are flush with dividers, not boxes [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2053954Z (pass) one-surface shell > account card is a flat row (no rox-card outline) [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2054790Z (pass) one-surface shell > defines divider tokens for standard and high contrast [0.24ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2055376Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2055741Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2055903Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2056489Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/transport-connection-banner.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2191820Z (pass) shouldShowTransportConnectionBanner > is hidden for null state [2.28ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2192829Z (pass) shouldShowTransportConnectionBanner > is hidden when mode is local [0.14ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2193797Z (pass) shouldShowTransportConnectionBanner > is hidden when remote connection is healthy [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2194758Z (pass) shouldShowTransportConnectionBanner > is shown when remote connection is reconnecting [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2195875Z (pass) shouldShowTransportConnectionBanner > is shown when remote connection failed [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2199899Z (pass) getTransportBannerCopy > maps auth failures to token guidance [0.68ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2205847Z (pass) getTransportBannerCopy > maps reconnecting state to warning with attempt info [0.57ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2206363Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2206796Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2206942Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2207480Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/module-home-nav.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2236881Z (pass) module home navigator parity (Memory/Tasks/Meetings/Projects/Pages) > collapses the middle navigator for all five module homes [0.17ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2238082Z (pass) module home navigator parity (Memory/Tasks/Meetings/Projects/Pages) > hosts PagesHome-pattern surfaces in main content [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2238636Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2238990Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2239157Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2239782Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/notes-local-entrypoints.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2265181Z (pass) local Notes entry points > wires the primary shell sidebar and keyboard navigation to Notes [0.18ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2266537Z (pass) local Notes entry points > uses the canonical local Notes route from both rail entry points [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2267376Z (pass) local Notes entry points > loads the local Markdown Notes surface without a knowledge-engine API [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2267784Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2268072Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2268187Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2268686Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/panel-workspace.browser.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2300194Z (skip) production persistent panel container and resize > (unnamed)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2301412Z (skip) production persistent panel container and resize > keeps drafts and panel identities mounted across grid, focus and compact arrangements
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2302962Z (skip) production persistent panel container and resize > commits column and row sizes, restores them after reload and isolates workspace preferences
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2304464Z (skip) production persistent panel container and resize > keeps pointer preview transient and restores it on Escape before a final commit
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2305800Z (skip) production persistent panel container and resize > preserves native spatial focus, while editing, dialogs and composition fence keyboard shortcuts
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2306804Z (skip) production persistent panel container and resize > restores DOM focus after the focused panel closes without remounting surviving drafts
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2307747Z (skip) production persistent panel container and resize > does not steal a surviving editor or toolbar focus when another focused panel closes
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2308566Z (skip) production persistent panel container and resize > leaves modal and composing focus untouched on panel removal
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2309409Z (skip) production persistent panel container and resize > restores focus for the removed tab owner and preserves a newer focus acquired before the frame
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2310365Z (skip) production persistent panel container and resize > rejects malformed or foreign saved layout without losing usable panel geometry
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2310988Z (skip) production persistent panel container and resize > (unnamed)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2311225Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2311549Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2311664Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2312061Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/account-menu-presentation.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2324701Z (pass) AccountMenu presentation mode > uses a nested Drawer when compact is true [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2325983Z (pass) AccountMenu presentation mode > keeps DropdownMenu on the desktop (!compact) path only [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2327055Z (pass) AccountMenu presentation mode > loads Identity Center state via identityGetState and getCredentialHealth [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2328037Z (pass) AccountMenu presentation mode > exposes four Identity Center sections on both compact and desktop surfaces [0.20ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2330916Z (pass) AccountMenu presentation mode > does not present secrets or a second account switcher [0.21ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2331465Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2331814Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2331976Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2332605Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/profile-strip-presentation.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2371647Z (pass) ProfileStrip presentation > renders a compact identity trigger instead of persistent XP chrome [0.08ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2372841Z (pass) ProfileStrip presentation > does not present a competing account switcher or secret-bearing actions [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2373466Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2373849Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2374009Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2374621Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-layout-commit.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2396315Z (pass) AppShell layout commit boundary (ZS-06) > loads and commits through the shell-layout adapter, not on pointermove [0.25ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2398068Z (pass) AppShell layout commit boundary (ZS-06) > allows sidebar preferred width up to 360 on the live path [0.12ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2398640Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2399022Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2399189Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2399803Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/toolchain-status-banner.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2546104Z (pass) getToolchainBannerPhase > is hidden without a tool snapshot [0.09ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2547213Z (pass) getToolchainBannerPhase > is hidden while the manager has not started (missing) [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2548574Z (pass) getToolchainBannerPhase > is hidden when the runtime is ready [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2549399Z (pass) getToolchainBannerPhase > is hidden when the runtime is usable but outdated [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2550120Z (pass) getToolchainBannerPhase > is shown while downloading [0.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2550742Z (pass) getToolchainBannerPhase > is shown while installing [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2551415Z (pass) getToolchainBannerPhase > is shown on error and offline [0.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2552136Z (pass) toolchainBannerPercent > rounds download progress to whole percents [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2553239Z (pass) toolchainBannerPercent > clamps into the 0–100 range [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2554012Z (pass) toolchainBannerPercent > is indeterminate without byte totals [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2554887Z (pass) getToolchainBannerCopy > reports nothing for phases the banner hides [0.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2556067Z (pass) getToolchainBannerCopy > maps downloading to info copy with percent and progress bar [0.47ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2557076Z (pass) getToolchainBannerCopy > maps downloading without totals to indeterminate copy [0.11ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2558063Z (pass) getToolchainBannerCopy > maps installing to info copy without a progress bar [0.08ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2559061Z (pass) getToolchainBannerCopy > maps error to the critical copy with the Toolchain shortcut [0.21ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2560004Z (pass) getToolchainBannerCopy > maps offline to warning copy with the Toolchain shortcut [0.11ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2560434Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2560852Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2561000Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2561577Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/background-task-chip-state.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2700300Z (pass) background task chip lifecycle > keeps a recently signaled running task unchanged [2.41ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2701598Z (pass) background task chip lifecycle > marks a no-signal running task stale without claiming completion [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2702635Z (pass) background task chip lifecycle > does not auto-prune stale tasks [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2703579Z (pass) background task chip lifecycle > retains and prunes terminal states using their existing linger windows [0.09ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2704544Z (pass) background task chip lifecycle > restores a stale task to running when progress resumes [0.05ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2705662Z (pass) background task chip lifecycle > does not resurrect terminal tasks on late progress [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2706797Z (pass) background task chip lifecycle > turn teardown converts both running and stale tasks to true orphaned state [0.14ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2707415Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2707848Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2708051Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2708683Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/compact-session-list-filter.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2732722Z (pass) session list grouping chrome > hides the leftover compact groupingMode cycle (date/status/unread) [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2733979Z (pass) session list grouping chrome > leaves CollectionGroupByMenu as the grouping control in collection chrome [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2734621Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2735162Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2735318Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2735920Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/zen-topbar-safe-area.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2862784Z (pass) zenTopBarSafeLeftPx (ZS-03) > does not reserve traffic-light space on webui or non-mac [2.61ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2863796Z (pass) zenTopBarSafeLeftPx (ZS-03) > scales the macOS desktop inset at 100/125/150% zoom [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2864678Z (pass) zenTopBarSafeLeftPx (ZS-03) > drops the stoplight inset in fullscreen [0.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2865302Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2865732Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2865883Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2867025Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/background-finished-chip-clarity.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2889977Z (pass) background finished chip clarity > uses solid fill and hover without backdrop blur [0.17ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2890540Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2890915Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2891079Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2891634Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/edit-file-i18n.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2916335Z (pass) composer Edit File action is i18n > AppShell secondaryAction uses common.editFile and skips the English label [0.19ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2917740Z (pass) composer Edit File action is i18n > FreeFormInput secondaryAction uses common.editFile and skips the English label [0.13ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2921417Z (pass) composer Edit File action is i18n > English locale matches the previous hardcoded label [0.37ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2921944Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2922311Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2922466Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2923102Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2949735Z (pass) MainContentPanel terminal + cloud-run hosts (#571) > wires isTerminalNavigation / isCloudRunNavigation to dedicated surface pages [0.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2951290Z (pass) MainContentPanel terminal + cloud-run hosts (#571) > never mute-falls terminal/cloud-run through to session.selectConversation [0.06ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2952533Z (pass) MainContentPanel terminal + cloud-run hosts (#571) > leaves browser/extension hosts intact [0.08ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2953721Z (pass) MainContentPanel terminal + cloud-run hosts (#571) > terminal host uses InspectorTerminal or honest empty + dock path [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.2955240Z (pass) MainContentPanel terminal + cloud-run hosts (#571) > cloud-run host loads run status or honest unavailable + settings path [0.04ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.3034510Z (pass) MainContentPanel terminal + cloud-run hosts (#571) > English and Russian locales keep distinct surface copy [8.24ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.3422613Z (pass) MainContentPanel terminal + cloud-run hosts (#571) > all 12 locales define the wired surface keys [38.71ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.3423229Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.3423646Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.3423781Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.3424315Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-splitter.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.3481492Z (pass) Zen Shell splitter wiring (ZS-05) > uses ResizeHandle and pointer capture rather than document mousemove [2.50ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.3482170Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.3482601Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.3482768Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.3483375Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-native-browser.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.3506943Z (pass) Zen Shell native browser wiring (ZS-07) > hides the native view through visibility leases and the existing syncBounds receiver [0.18ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.3507699Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.3508119Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.3508287Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.3508862Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/permission-mode-ui.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.4491430Z (pass) desktop Overview permission selection > clicks safe for new-empty-session, selects it, and reconciles the persisted version [85.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.5098735Z (pass) desktop Overview permission selection > clicks safe for active-chat-session, selects it, and reconciles the persisted version [60.74ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.5715826Z (pass) desktop Overview permission selection > restores the actual mode when RPC fails before the optimistic UI commits [61.70ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.6423496Z (pass) desktop Overview permission selection > rolls back after a failed command and unavailable readback [70.72ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.6984154Z (pass) desktop Overview permission selection > restores the last actual mode when both rapid clicks fail offline [56.07ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.7451743Z (pass) desktop Overview permission selection > uses the confirmed event as the fallback while a newer click fails [46.75ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.7963537Z (pass) desktop Overview permission selection > ignores failure of an older click and stale versioned mode events [50.53ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.8449207Z (pass) desktop Overview permission selection > keeps a newer selection when an older readback arrives late [49.15ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.8968179Z (pass) desktop Overview permission selection > does not restore host session options after switching to native authority [51.55ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:58.9575449Z (pass) compact Overview permission selection > clicks safe for new-empty-session, selects it, and reconciles the persisted version [60.97ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.0097207Z (pass) compact Overview permission selection > clicks safe for active-chat-session, selects it, and reconciles the persisted version [50.81ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.0692148Z (pass) compact Overview permission selection > restores the actual mode when RPC fails before the optimistic UI commits [60.83ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.1246362Z (pass) compact Overview permission selection > rolls back after a failed command and unavailable readback [55.41ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.1801465Z (pass) compact Overview permission selection > restores the last actual mode when both rapid clicks fail offline [55.53ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.2281574Z (pass) compact Overview permission selection > uses the confirmed event as the fallback while a newer click fails [47.95ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.2782820Z (pass) compact Overview permission selection > ignores failure of an older click and stale versioned mode events [50.10ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.3316657Z (pass) compact Overview permission selection > keeps a newer selection when an older readback arrives late [53.38ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.3748801Z (pass) compact Overview permission selection > does not restore host session options after switching to native authority [43.23ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.3749288Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.3749614Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.3749763Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.3750198Z ##[group]apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.5555287Z (pass) ROX UI-001 actual MainContentPanel dispatch > dispatches allSessions/session/session-one with its own selected entity [10.38ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.5612659Z (pass) ROX UI-001 actual MainContentPanel dispatch > dispatches sources/source/source-one with its own selected entity [5.75ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.5619247Z (pass) ROX UI-001 actual MainContentPanel dispatch > dispatches skills/skill/skill-one with its own selected entity [0.75ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.5714214Z (pass) ROX UI-001 actual MainContentPanel dispatch > dispatches projects/project/project-one with its own selected entity [9.46ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.5875220Z (pass) ROX UI-001 actual MainContentPanel dispatch > dispatches notes/note/note-one with its own selected entity [16.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.5921179Z (pass) ROX UI-001 actual MainContentPanel dispatch > dispatches pages/page/page-one with its own selected entity [4.52ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.6035752Z (pass) ROX UI-001 actual MainContentPanel dispatch > dispatches knowledge/document/knowledge-one with its own selected entity [11.48ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.6196177Z (pass) ROX UI-001 actual MainContentPanel dispatch > dispatches extension/extension-one/view-one with its own selected entity [16.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.6356630Z (pass) ROX UI-001 actual MainContentPanel dispatch > dispatches terminal/terminal-one with its own selected entity [16.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.6517726Z (pass) ROX UI-001 actual MainContentPanel dispatch > dispatches cloud-run/run-one with its own selected entity [16.02ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.6677179Z (pass) ROX UI-001 actual MainContentPanel dispatch > dispatches dossier/item/item-one with its own selected entity [16.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.6837139Z (pass) ROX UI-001 actual MainContentPanel dispatch > dispatches radar/item/item-one with its own selected entity [16.00ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.6997937Z (pass) ROX UI-001 actual MainContentPanel dispatch > dispatches decisions/item/item-one with its own selected entity [16.01ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7158588Z (pass) ROX UI-001 actual MainContentPanel dispatch > dispatches agents/item/item-one with its own selected entity [16.03ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7318171Z (pass) ROX UI-001 actual MainContentPanel dispatch > dispatches focus/item/item-one with its own selected entity [16.00ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7362275Z (pass) ROX UI-001 actual MainContentPanel dispatch > renders an explicit unavailable state for an unsupported navigation state [4.40ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7362960Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7363288Z ##[endgroup]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7363408Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7363517Z 31 tests skipped:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7363838Z (skip) production native surface renderer ownership > (unnamed)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7364573Z (skip) production native surface renderer ownership > hidden/released duplicate hosts cannot hide their visible sibling, while clipping hides the selected host
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7365893Z (skip) production native surface renderer ownership > retains a typed draft through responsive hiding, restores geometry and suppresses overlays
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7366736Z (skip) production native surface renderer ownership > releases an inspector attachment arriving after close without hiding a sibling surface
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7367511Z (skip) production native surface renderer ownership > ignores an obsolete attachment failure after a newer open succeeds
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7368365Z (skip) production native surface renderer ownership > preserves imported-cookie consent controls and routes explicit opt-in to a private instance
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7368977Z (skip) production native surface renderer ownership > (unnamed)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7369422Z (skip) real diagnostic chip lifecycle with a native bridge fixture > (unnamed)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7370248Z (skip) real diagnostic chip lifecycle with a native bridge fixture > does no closed diagnostic reads, loads on opening, switches tabs and stops after closing
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7371059Z (skip) real diagnostic chip lifecycle with a native bridge fixture > (unnamed)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7371590Z (skip) UI-001 real Chromium component and persistence fixtures > (unnamed)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7372355Z (skip) UI-001 real Chromium component and persistence fixtures > selected source deletion and recreation preserve workspace and entity address
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7373302Z (skip) UI-001 real Chromium component and persistence fixtures > retry recovers an unavailable selected source through the actual click handler
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7374149Z (skip) UI-001 real Chromium component and persistence fixtures > late resource load cannot replace a new missing address
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7375119Z (skip) UI-001 real Chromium component and persistence fixtures > cloud run switch clears previous content while the new callback is pending
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7376030Z (skip) UI-001 real Chromium component and persistence fixtures > retries rejected lazy imports and keeps the selected route
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7376879Z (skip) UI-001 real Chromium component and persistence fixtures > retries rendering failure and a new route clears a previous error
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7377819Z (skip) UI-001 real Chromium component and persistence fixtures > workspace switch cancels a real pending resize timer before it can persist old geometry
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7379231Z (skip) UI-001 real Chromium component and persistence fixtures > actual localStorage persists valid sizes across reload and other windows
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7379960Z (skip) UI-001 real Chromium component and persistence fixtures > (unnamed)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7380419Z (skip) production persistent panel container and resize > (unnamed)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7381164Z (skip) production persistent panel container and resize > keeps drafts and panel identities mounted across grid, focus and compact arrangements
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7382342Z (skip) production persistent panel container and resize > commits column and row sizes, restores them after reload and isolates workspace preferences
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7383690Z (skip) production persistent panel container and resize > keeps pointer preview transient and restores it on Escape before a final commit
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7384731Z (skip) production persistent panel container and resize > preserves native spatial focus, while editing, dialogs and composition fence keyboard shortcuts
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7386467Z (skip) production persistent panel container and resize > restores DOM focus after the focused panel closes without remounting surviving drafts
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7398857Z (skip) production persistent panel container and resize > does not steal a surviving editor or toolbar focus when another focused panel closes
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7399876Z (skip) production persistent panel container and resize > leaves modal and composing focus untouched on panel removal
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7400722Z (skip) production persistent panel container and resize > restores focus for the removed tab owner and preserves a newer focus acquired before the frame
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7401589Z (skip) production persistent panel container and resize > rejects malformed or foreign saved layout without losing usable panel geometry
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7402192Z (skip) production persistent panel container and resize > (unnamed)
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7402417Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7402426Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7402517Z 1 tests failed:
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7402856Z (fail) voice dictation production renderer DOM > (unnamed) [30002.32ms]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7403244Z   ^ a beforeEach/afterEach hook timed out for this test.
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7403440Z 
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7403520Z  562 pass
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7403702Z  31 skip
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7403870Z  1 fail
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7404052Z  2035 expect() calls
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7404309Z Ran 594 tests across 100 files. [98.87s]
+component-recovery	Shell, parser, persistence and navigation regression	2026-10-03T15:49:59.7937086Z ##[error]Process completed with exit code 1.

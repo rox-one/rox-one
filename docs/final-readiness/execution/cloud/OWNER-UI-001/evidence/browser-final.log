@@ -1,0 +1,58 @@
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1347:9:
+      1347 │     case 'pages':
+           ╵          ~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1321:9:
+      1321 │     case 'pages':
+           ╵          ~~~~~~~
+
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1349:9:
+      1349 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1323:9:
+      1323 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+{
+  "environment": "isolated headless Chromium component fixture; real MainContentPanel with leaf hosts and IPC event fixtures; not installed/native/hosted acceptance",
+  "browserVersion": "153.0.8010.12",
+  "results": [
+    {
+      "name": "Changing the selected source remounts its detail state",
+      "pass": true
+    },
+    {
+      "name": "Changing workspace cannot retain the previous source detail state",
+      "pass": true
+    },
+    {
+      "name": "A live deletion leaves the selected source on a specific missing surface",
+      "pass": true
+    },
+    {
+      "name": "Recreating a selected source recovers its detail host",
+      "pass": true
+    },
+    {
+      "name": "Foreign workspace events cannot remove the current selected source",
+      "pass": true
+    },
+    {
+      "name": "A live deletion leaves the selected skill on a specific missing surface",
+      "pass": true
+    },
+    {
+      "name": "Recreating a selected skill recovers its detail host",
+      "pass": true
+    }
+  ]
+}

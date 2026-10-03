@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test';
+import * as path from 'node:path';
 
 import { getGitLock } from '../git-locks';
 import { MANIFEST_DATA, TOOL_PLATFORM_MATRIX } from '../manifest-data';
@@ -153,7 +154,7 @@ describe('manifest validation', () => {
     expect(gbrain?.kind).toBe('git-npm');
     expect(gbrain?.tier).toBe('default-on');
     expect(gbrain?.version).toBe('15b9863d1363');
-    expect(gbrain?.dependsOn).toEqual(['bun']);
+    expect(gbrain?.dependsOn).toEqual(['bun', 'git']);
     // Платформенная матрица покрывает текущую платформу — иначе ensureAll пропустил бы его.
     expect(gbrain?.platforms).toContain(currentPlatform());
   });
@@ -168,9 +169,31 @@ describe('manifest validation', () => {
 
   it('toolchainPaths собирает пути от config-dir', () => {
     const paths = toolchainPaths('/tmp/craft-test');
-    expect(paths.toolchainDir).toBe('/tmp/craft-test/toolchain');
-    expect(paths.downloadsDir).toBe('/tmp/craft-test/downloads');
-    expect(paths.stateFile).toBe('/tmp/craft-test/toolchain/state.json');
+    expect(paths.toolchainDir).toBe(path.join('/tmp/craft-test', 'toolchain'));
+    expect(paths.downloadsDir).toBe(path.join('/tmp/craft-test', 'downloads'));
+    expect(paths.stateFile).toBe(path.join('/tmp/craft-test', 'toolchain', 'state.json'));
+  });
+
+  it('Windows uv zip exposes root-level uv and uvx, and Node exposes npm', () => {
+    expect(MANIFEST_DATA.uv?.artifacts['win32-x64']?.binPaths).toEqual(['uv.exe', 'uvx.exe']);
+    expect(MANIFEST_DATA.node?.artifacts['win32-x64']?.binPaths).toContain('node-v22.23.2-win-x64/npm.cmd');
+  });
+
+  it('pins the verified Windows FFmpeg release without treating media as critical runtime', () => {
+    expect(MANIFEST_DATA.ffmpeg?.critical).not.toBe(true);
+    expect(MANIFEST_DATA.ffmpeg?.artifacts['win32-x64']).toEqual({
+      url: 'https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-30-13-08/ffmpeg-n9.0.2-17-g2a571b6068-win64-lgpl-9.0.zip',
+      sha256: '6b264b9e6019103f601d98c292bd332fd87acf1c5e941ddff4fb71760fe63432',
+      size: 171535354,
+      archive: 'zip',
+      binPaths: ['ffmpeg-n9.0.2-17-g2a571b6068-win64-lgpl-9.0/bin/ffmpeg.exe'],
+    });
+    expect(MANIFEST_DATA.ffmpeg?.artifacts['linux-x64']?.sha256)
+      .toBe('97d4b95d33da6f0d3102e252eaa7a4778a673ebf2434a0bf15f409a37e3afeb1');
+    expect(MANIFEST_DATA.ffmpeg?.artifacts['darwin-arm64']?.sha256)
+      .toBe('5267ef149ee0d208057a1b316aac079b661b0476574dee5da7d225769773c603');
+    expect(MANIFEST_DATA.ffmpeg?.artifacts['darwin-x64']?.sha256)
+      .toBe('79d14663d8b078dbbc38de18d63a30f8a5bfc860af5dfee7f8cf3e387cf1c02c');
   });
 
   it('currentPlatform возвращает валидную платформу манифеста', () => {

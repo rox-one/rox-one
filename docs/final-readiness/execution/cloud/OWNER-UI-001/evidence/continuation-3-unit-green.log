@@ -1,0 +1,80 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts:
+(pass) ROX UI-001 real persisted layout atoms > bounds live writes before consumers read them and saves the same value [28.20ms]
+(pass) ROX UI-001 real persisted layout atoms > retains the inspector host range instead of narrowing valid saved widths [112.63ms]
+(pass) ROX UI-001 real persisted layout atoms > rounds updater callbacks and reloads canonical values in a fresh store [0.60ms]
+(pass) ROX UI-001 real persisted layout atoms > recovers malformed JSON, wrong types and non-finite JSON on reload [249.94ms]
+(pass) ROX UI-001 real persisted layout atoms > keeps valid live sizes usable when persistence or reset is denied [0.76ms]
+(pass) ROX UI-001 real persisted layout atoms > normalizes cross-window storage events and unsubscribes on unmount [0.40ms]
+(pass) ROX UI-001 persisted shell geometry > rounds and bounds preferences within the controls existing supported ranges [0.04ms]
+(pass) ROX UI-001 persisted shell geometry > recovers malformed and non-finite reload values to a usable default [0.03ms]
+
+apps/electron/src/shared/__tests__/rox-readiness-ui-001.routes.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+SyntaxError: Export named 'getPanelKey' not found in module '/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/shared/types.ts'.
+-------------------------------
+
+
+apps/electron/src/renderer/contexts/__tests__/navigation-history-key.test.ts:
+(pass) buildSemanticHistoryKey > changes when focused panel index changes even if routes are identical [0.12ms]
+(pass) buildSemanticHistoryKey > stays stable for identical semantic inputs [0.02ms]
+(pass) canRunInitialRestore > returns false until session metadata is ready [0.03ms]
+(pass) canRunInitialRestore > returns true only when all restore conditions are satisfied [0.02ms]
+
+apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts:
+(pass) normalizePanelRouteForReconcile > auto-selects session details for filter-only session routes [0.90ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit session details unchanged [0.03ms]
+(pass) normalizePanelRouteForReconcile > normalizes each session panel route independently [15.17ms]
+(pass) normalizePanelRouteForReconcile > keeps route unchanged when resolver leaves state without details [0.15ms]
+(pass) normalizePanelRouteForReconcile > keeps non-session routes unchanged with session-only resolver [0.06ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit detail route even if resolver tries to rewrite it [0.04ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit detail routes distinct across multiple panels [0.05ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.selected-resource.test.ts:
+(pass) UI-001 selected resource canonical callbacks > source deletion wins over an older initial load and does not navigate away [2493.23ms]
+(pass) UI-001 selected resource canonical callbacks > a malformed source event reports unavailable without throwing [692.94ms]
+(pass) UI-001 selected resource canonical callbacks > source read rejection becomes unavailable and recovers from a real subscription callback [394.78ms]
+(pass) UI-001 selected resource canonical callbacks > unmount suppresses an obsolete source read and missing capability is explicit [351.50ms]
+(pass) UI-001 selected resource canonical callbacks > skill events re-read project/global resolution context and reject an older response [181.74ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts:
+(pass) ROX UI-001 actual AppShell workspace callbacks > ignores late sources responses after workspace/directory change [971.31ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > keeps a live sources deletion ahead of a pending initial snapshot [330.97ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > ignores late skills responses after workspace/directory change [1433.12ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > keeps a live skills deletion ahead of a pending initial snapshot [60.29ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > keeps project and OMP skills when a workspace-only event invalidates the full catalog [334.91ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > accepts only the newest scoped skill refresh after consecutive workspace events [19.59ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > retains the complete skill catalog through a failed refresh and accepts a later recovery [277.68ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > recovers from request rejection and unmount without installing stale data [306.05ms]
+(pass) ROX UI-001 actual AppShell workspace callbacks > restores workspace geometry before an old pending keyboard resize can commit [183.86ms]
+(pass) ROX UI-001 workspace persistence isolation > does not save old viewFilters over the next workspace during restoration [11.61ms]
+(pass) ROX UI-001 workspace persistence isolation > does not save old collapsedSidebarItems over the next workspace during restoration [221.39ms]
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts:
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches allSessions/session/session-one with its own selected entity [204.89ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches sources/source/source-one with its own selected entity [0.76ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches skills/skill/skill-one with its own selected entity [0.42ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches projects/project/project-one with its own selected entity [286.63ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches notes/note/note-one with its own selected entity [1.86ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches pages/page/page-one with its own selected entity [29.53ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches knowledge/document/knowledge-one with its own selected entity [227.83ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches extension/extension-one/view-one with its own selected entity [389.95ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches terminal/terminal-one with its own selected entity [1.16ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches cloud-run/run-one with its own selected entity [0.92ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches dossier/item/item-one with its own selected entity [113.27ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches radar/item/item-one with its own selected entity [15.90ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches decisions/item/item-one with its own selected entity [55.28ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches agents/item/item-one with its own selected entity [0.66ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > dispatches focus/item/item-one with its own selected entity [0.28ms]
+(pass) ROX UI-001 actual MainContentPanel dispatch > renders an explicit unavailable state for an unsupported navigation state [6.47ms]
+
+1 tests failed:
+
+ 51 pass
+ 1 fail
+ 1 error
+ 159 expect() calls
+Ran 52 tests across 7 files. [27.65s]
