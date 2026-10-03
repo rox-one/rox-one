@@ -151,7 +151,8 @@ export function TopBar({
     statusBar: false,
   })
 
-  const showModePill = chrome.showModeBar && !isCompact
+  // Primary application surfaces remain available independently of experimental Workbench chrome.
+  const showModePill = !isCompact
   const topbarRef = useRef<HTMLDivElement | null>(null)
   const leftFixedRef = useRef<HTMLDivElement | null>(null)
   const [modePillMetrics, setModePillMetrics] = useState<ModeBarMetrics | null>(null)

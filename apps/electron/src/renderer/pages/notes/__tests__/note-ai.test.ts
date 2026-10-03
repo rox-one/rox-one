@@ -7,8 +7,8 @@ import {
 } from '../note-ai'
 
 describe('note AI model and prompts', () => {
-  test('default free Rox model is rox/standard', () => {
-    expect(NOTES_AI_MODEL).toBe('rox/standard')
+  test('default free Rox model is rox/r1-max', () => {
+    expect(NOTES_AI_MODEL).toBe('rox/r1-max')
   })
 
   test('stored prompts override defaults and round-trip', () => {

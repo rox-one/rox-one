@@ -42,7 +42,7 @@ export interface BroInviteCard {
 export type JoinDenial = 'expired' | 'revoked' | 'reused' | 'membership_required' | 'invalid'
 
 export type JoinResult =
-  | { ok: true; sessionId: string; role: Exclude<CollaboratorRole, 'owner'>; accountId: string }
+  | { ok: true; sessionId: string; role: Exclude<CollaboratorRole, 'owner'>; accountId: string; workspaceId?: string }
   | { ok: false; error: JoinDenial }
 
 const JOIN_KEY_RE = /^[a-f0-9]{32}$/

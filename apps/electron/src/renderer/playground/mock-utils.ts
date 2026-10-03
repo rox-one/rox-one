@@ -687,6 +687,10 @@ export const mockElectronAPI = {
     truncated: false,
   }),
   discoverBrowserProfiles: async () => [],
+  browserDataAutoImport: async (args: { workspaceId: string }) => ({
+    workspaceId: args.workspaceId, enabled: false, profileId: null,
+    state: 'off' as const, imported: { history: 0, bookmarks: 0 }, lastRunAt: null,
+  }),
   browserCookieAutoStatus: async () => ({
     consent: false,
     supported: true,

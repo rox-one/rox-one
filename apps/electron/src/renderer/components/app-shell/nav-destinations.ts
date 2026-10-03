@@ -114,20 +114,20 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     isActive: isPagesNavigation,
   },
   {
-    id: 'memory',
-    linkId: 'nav:memory',
-    icon: Brain,
-    labelKey: 'sidebar.memory',
-    route: () => routes.view.memory(),
-    isActive: isMemoryNavigation,
-  },
-  {
     id: 'tasks',
     linkId: 'nav:tasks',
     icon: ListTodo, // same glyph as the Mode Bar «Задачи»
     labelKey: 'sidebar.tasks',
     route: () => routes.view.tasks(),
     isActive: isTasksNavigation,
+  },
+  {
+    id: 'memory',
+    linkId: 'nav:memory',
+    icon: Brain,
+    labelKey: 'sidebar.memory',
+    route: () => routes.view.memory(),
+    isActive: isMemoryNavigation,
   },
   {
     id: 'meetings',

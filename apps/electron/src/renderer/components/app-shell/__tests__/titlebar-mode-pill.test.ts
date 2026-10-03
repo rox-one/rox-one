@@ -40,7 +40,7 @@ describe('titlebar mode pill source contract', () => {
     expect(modeBar).toContain('rox-mode-pill-indicator')
   })
 
-  it('is no-drag and flat in both contrast modes', () => {
+  it('is no-drag and keeps high contrast accessible', () => {
     expect(pillCss).toContain('-webkit-app-region: no-drag')
     expect(pillCss).not.toMatch(/border:\s*1px/)
     expect(pillCss).toContain('html[data-contrast="high"] .rox-mode-pill-indicator')
@@ -62,4 +62,9 @@ describe('titlebar mode pill source contract', () => {
     expect(tileMark).toContain('rox-mark-portrait-18.png')
     expect(tileMark).not.toContain('rox-mark-tile-')
   })
+  it('exposes the seven primary surfaces without requiring experimental Workbench chrome', () => {
+    expect(topBar).toContain('const showModePill = !isCompact')
+    expect(topBar).not.toContain('const showModePill = chrome.showModeBar')
+  })
+
 })

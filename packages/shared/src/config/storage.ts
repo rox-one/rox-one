@@ -77,7 +77,11 @@ import {
   ROX_DEFAULT_PARENT_MODEL,
   ROX_GATEWAY_BASE_URL,
   ROX_KIMI_PUBLIC_MODELS_MIGRATION,
+  ROX_R1_MAX_DEFAULT_MIGRATION,
+  isRoxPublicModelId,
+  isRoxLegacyInternalModelId,
   toRoxPublicConnectionModels,
+  toRoxPublicModelDefinitions,
 } from './rox-public-models.ts';
 
 export { ROX_DEFAULT_CONNECTION_SLUG } from './rox-public-models.ts';
@@ -3396,19 +3400,58 @@ function migrateRoxConnectionDisplayName(config: StoredConfig): boolean {
   }
 
   for (const connection of config.llmConnections ?? []) {
-    if (connection.slug !== ROX_DEFAULT_CONNECTION_SLUG) continue;
+    if (connection.slug !== ROX_DEFAULT_CONNECTION_SLUG || connection.providerType !== 'omp') continue;
     if (connection.name !== ROX_DEFAULT_CONNECTION_NAME) {
       if (connection.name === 'ROX · OMP' || /\bOMP\b/.test(connection.name ?? '')) {
         connection.name = ROX_DEFAULT_CONNECTION_NAME;
       }
     }
-    connection.models = toRoxPublicConnectionModels();
   }
 
   config.migrationsApplied = [
     ...(config.migrationsApplied ?? []),
     ROX_CONNECTION_DISPLAY_NAME_MIGRATION,
   ];
+  return true;
+}
+
+/** Upgrade only the bundled connection. Stored sessions keep their explicit legacy model IDs. */
+function migrateRoxR1MaxDefault(config: StoredConfig): boolean {
+  if (config.migrationsApplied?.includes(ROX_R1_MAX_DEFAULT_MIGRATION)) return false;
+
+  const connection = config.llmConnections?.find((entry) =>
+    entry.slug === ROX_DEFAULT_CONNECTION_SLUG && entry.providerType === 'omp');
+  if (!connection) return false;
+
+  const shouldReplaceDefault = !connection.defaultModel
+    || connection.defaultModel === 'rox/standard'
+    || isRoxLegacyInternalModelId(connection.defaultModel);
+  if (shouldReplaceDefault) connection.defaultModel = ROX_DEFAULT_PARENT_MODEL;
+
+  // Keep user-defined endpoints if they were added to the bundled connection.
+  const customModels = (connection.models ?? []).filter((entry) => {
+    const id = typeof entry === 'string' ? entry : entry.id;
+    return !isRoxPublicModelId(id) && !isRoxLegacyInternalModelId(id);
+  });
+  const selectedLegacyModel = !shouldReplaceDefault && connection.defaultModel !== ROX_DEFAULT_PARENT_MODEL
+    ? toRoxPublicModelDefinitions().filter((entry) => entry.id === connection.defaultModel)
+    : [];
+  // An explicit legacy preference must stay in the stored catalog so the next
+  // startup's default validation does not silently replace it.
+  connection.models = [...toRoxPublicConnectionModels(), ...selectedLegacyModel, ...customModels];
+
+  for (const workspace of config.workspaces ?? []) {
+    const workspaceConfig = loadWorkspaceConfig(workspace.rootPath);
+    if (!workspaceConfig?.defaults?.model) continue;
+    const effectiveSlug = workspaceConfig.defaults.defaultLlmConnection ?? config.defaultLlmConnection;
+    if (effectiveSlug !== connection.slug) continue;
+    const model = workspaceConfig.defaults.model;
+    if (model !== 'rox/standard' && !isRoxLegacyInternalModelId(model)) continue;
+    workspaceConfig.defaults.model = ROX_DEFAULT_PARENT_MODEL;
+    saveWorkspaceConfig(workspace.rootPath, workspaceConfig);
+  }
+
+  config.migrationsApplied = [...(config.migrationsApplied ?? []), ROX_R1_MAX_DEFAULT_MIGRATION];
   return true;
 }
 
@@ -3562,6 +3605,9 @@ export function migrateLegacyLlmConnectionsConfig(): void {
       needsSave = true;
     }
     if (migrateRoxConnectionDisplayName(config)) {
+      needsSave = true;
+    }
+    if (migrateRoxR1MaxDefault(config)) {
       needsSave = true;
     }
 
@@ -3740,8 +3786,8 @@ export function migrateOrphanedDefaultConnections(): void {
  * When the config has no LLM connections at all (fresh install), a single
  * "rox-kimi" connection is created pointing at the Rox gateway
  * (https://api.rox.one/v1) and runs on the OMP backend (providerType 'omp')
- * with the public ROX catalog (`rox/explore|standard|max|vision|fast`,
- * default `rox/standard`). OMP reads the gateway credentials from
+ * with a single visible model, `Rox R1 Max` (`rox/r1-max`).
+ * OMP reads the gateway credentials from
  * its own config (~/.omp/agent/config.yml); the ROX_API_KEY env var is still
  * mirrored into the craft credential store for potential pi_compat fallback.
  *

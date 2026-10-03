@@ -15,6 +15,7 @@ export function createCanvasNode({
   position,
   permissionMode,
   provenance,
+  appearance,
   now = Date.now(),
 }: {
   id?: string
@@ -23,6 +24,7 @@ export function createCanvasNode({
   position: { x: number; y: number }
   permissionMode?: PermissionMode
   provenance?: CanvasNode['provenance']
+  appearance?: CanvasNode['appearance']
   now?: number
 }): CanvasNode {
   const nodeId = id ?? mintId(`n_${kind}`, now)
@@ -36,6 +38,7 @@ export function createCanvasNode({
     outputs: ports.outputs,
     ...(permissionMode ? { permissionMode } : {}),
     ...(provenance ? { provenance } : {}),
+    ...(appearance ? { appearance } : {}),
     createdAt: now,
   }
 }
@@ -95,7 +98,14 @@ export function cloneSpec(spec: SessionWorkflowSpec, patch: Partial<SessionWorkf
   return {
     ...spec,
     ...patch,
-    nodes: patch.nodes ?? spec.nodes.map((node) => ({ ...node, position: { ...node.position } })),
+    nodes: patch.nodes ?? spec.nodes.map((node) => ({
+      ...node,
+      position: { ...node.position },
+      ...(node.appearance ? { appearance: {
+        ...node.appearance,
+        ...(node.appearance.size ? { size: { ...node.appearance.size } } : {}),
+      } } : {}),
+    })),
     edges: patch.edges ?? spec.edges.map((edge) => ({ ...edge })),
     defaults: patch.defaults ?? { ...spec.defaults },
   }
@@ -149,7 +159,7 @@ export function reachableFrom(startId: string, edges: readonly CanvasEdge[]): Se
 
 export function fingerprintSpec(spec: SessionWorkflowSpec): string {
   const nodes = spec.nodes
-    .map((node) => `${node.id}:${node.kind}:${node.title}:${node.position.x},${node.position.y}:${node.permissionMode ?? ''}`)
+    .map((node) => `${node.id}:${node.kind}:${node.title}:${node.position.x},${node.position.y}:${node.permissionMode ?? ''}:${JSON.stringify(node.appearance ?? {})}`)
     .sort()
   const edges = spec.edges
     .map((edge) => `${edge.source}:${edge.sourcePort ?? ''}->${edge.target}:${edge.targetPort ?? ''}`)

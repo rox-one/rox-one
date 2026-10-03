@@ -381,13 +381,14 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
       <NavTitle>{t('inbox.title')}</NavTitle>
       <NavItem label={t('inbox.view.all')} count={filteredCounts.all} active={sameFilter(filter, 'all')} onClick={() => setFilter('all')} testId="inbox-nav-all" />
       <NavItem label={t('inbox.view.decisions')} count={filteredCounts.decisions} dot={visibleBlockingCount ? 'warning' : undefined} active={sameFilter(filter, 'decisions')} onClick={() => setFilter('decisions')} testId="inbox-nav-decisions" />
-      <NavItem label={t('inbox.view.messages')} count={filteredCounts.messages} active={sameFilter(filter, 'messages')} onClick={() => setFilter('messages')} />
-      <NavItem label={t('inbox.view.snoozed')} count={filteredCounts.snoozed} active={sameFilter(filter, 'snoozed')} onClick={() => setFilter('snoozed')} />
-      <NavItem label={t('inbox.view.done')} count={filteredCounts.done} active={sameFilter(filter, 'done')} onClick={() => setFilter('done')} />
+      <NavItem label={t('inbox.view.messages')} count={filteredCounts.messages} active={sameFilter(filter, 'messages')} onClick={() => setFilter('messages')} testId="inbox-nav-messages" />
+      <NavItem label={t('inbox.view.snoozed')} count={filteredCounts.snoozed} active={sameFilter(filter, 'snoozed')} onClick={() => setFilter('snoozed')} testId="inbox-nav-snoozed" />
+      <NavItem label={t('inbox.view.done')} count={filteredCounts.done} active={sameFilter(filter, 'done')} onClick={() => setFilter('done')} testId="inbox-nav-done" />
       <NavSection title={t('inbox.types')}>
         {KINDS.map((kind) => (
           <NavItem
             key={kind}
+            testId={`inbox-nav-${kind}`}
             label={kindLabel(kind)}
             count={filteredCounts.byKind[kind]}
             active={sameFilter(filter, { kind })}

@@ -5,11 +5,13 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { execFileSync, spawnSync } from 'node:child_process'
 import { DatabaseSync } from '@craft-agent/shared/utils/sqlite-runtime'
+import { readNativeBrowserData } from '@craft-agent/shared/browser/profile-native-data'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
+import { getWorkspaceByNameOrId, getWorkspaces } from '@craft-agent/shared/config'
+import { loadEnvironmentPrefs } from '@craft-agent/shared/environment'
 import {
   deleteImportedProfile,
   discoverBrowserProfileById,
@@ -28,6 +30,7 @@ import {
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { deleteProtectedCookieKey } from './browser-protected-cookie-key'
+import { BrowserDataAutoImporter } from './browser-data-auto-import'
 import {
   isClaimableLive,
   rpcBrowserProfileImportActResult,
@@ -40,6 +43,7 @@ export const BROWSER_PROFILE_CHANNELS = [
   RPC_CHANNELS.browserProfile.IMPORT,
   RPC_CHANNELS.browserProfile.ROLLBACK,
   RPC_CHANNELS.browserProfile.DELETE,
+  RPC_CHANNELS.browserProfile.DATA_AUTO_IMPORT,
 ] as const
 
 function nodeFs(): ProfileFs {
@@ -143,8 +147,44 @@ function protectedCookieAccess(workspaceId: string, profileId: string): Protecte
   }
 }
 
+const importers = new WeakMap<RpcServer, BrowserDataAutoImporter>()
+
 export function registerBrowserProfileImportHandlers(server: RpcServer, _deps: HandlerDeps): void {
   const fs = nodeFs()
+  importers.get(server)?.stop()
+  const autoImporter = new BrowserDataAutoImporter({
+    workspace: getWorkspaceByNameOrId,
+    preferences: () => loadEnvironmentPrefs().browserImport.value ?? [],
+    importData(workspace, profileId, categories) {
+      const act = rpcBrowserProfileImportActResult({ source: 'native', action: 'write', nativeId: profileId })
+      if (!isClaimableLive(act)) throw new Error('browser-profile-unavailable')
+      const profile = discoverBrowserProfileById({ home: homedir(), platform: process.platform, fs, profileId })
+      if (!profile || profile.state === 'locked' || profile.state === 'unsupported') throw new Error('browser-profile-unavailable')
+      const paths = pathsFor(workspace.id)
+      if (!paths) throw new Error('browser-workspace-unavailable')
+      const result = importProfile({
+        profile, fs, indexPath: paths.indexPath, vaultPath: paths.vaultPath,
+        consent: { historyBookmarks: true, ...categories, cookies: false, credentials: false, osCredentialsApproved: false },
+        authorizedScopes: { cookies: false, credentials: false }, nativeData: readNativeBrowserData,
+        dryRun: false, retainRollback: false,
+      })
+      return { history: result.counts.history, bookmarks: result.counts.bookmarks }
+    },
+  })
+  importers.set(server, autoImporter)
+  server.onShutdown?.(() => autoImporter.stop())
+  // Source reads resume only for previously authorized profiles in the desktop host.
+  if (process.versions.electron && process.env.NODE_ENV !== 'test') autoImporter.start(getWorkspaces().map((workspace) => workspace.id))
+
+  server.handle(RPC_CHANNELS.browserProfile.DATA_AUTO_IMPORT, (_ctx, args: { workspaceId: string; action: 'status' | 'set' | 'run'; enabled?: boolean; profileId?: string }) => {
+    if (!args || typeof args.workspaceId !== 'string') throw new Error('browser-workspace-unavailable')
+    if (args.action === 'status') return autoImporter.status(args.workspaceId)
+    const act = rpcBrowserProfileImportActResult({ source: 'native', action: 'write', nativeId: args.profileId ?? args.workspaceId })
+    if (!isClaimableLive(act)) throw new Error('browser-profile-unavailable')
+    if (args.action === 'set') return autoImporter.set(args.workspaceId, args.enabled === true, args.profileId)
+    if (args.action === 'run') return autoImporter.run(args.workspaceId)
+    throw new Error('browser-import-action-invalid')
+  })
 
   server.handle(RPC_CHANNELS.browserProfile.DISCOVER, (_ctx, args?: { consent?: boolean; explicitId?: string }) => {
     if (args?.consent !== true) return []
@@ -165,9 +205,13 @@ export function registerBrowserProfileImportHandlers(server: RpcServer, _deps: H
   server.handle(
     RPC_CHANNELS.browserProfile.IMPORT,
     (_ctx, args: { workspaceId: string; profileId: string; consent: ImportConsent; dryRun?: boolean }) => {
-      const consent = args.consent.cookies
-        ? { ...args.consent, domains: exactDomains(args.consent.domains ?? []) }
-        : args.consent
+      // The native host has no OS-approved password import adapter yet. A
+      // renderer checkbox cannot attest to an OS grant or authorize store reads.
+      const consent: ImportConsent = {
+        ...args.consent,
+        osCredentialsApproved: false,
+        ...(args.consent.cookies ? { domains: exactDomains(args.consent.domains ?? []) } : {}),
+      }
       const act = rpcBrowserProfileImportActResult({
         source: 'native',
         action: 'write',
@@ -221,6 +265,7 @@ export function registerBrowserProfileImportHandlers(server: RpcServer, _deps: H
           consent,
           authorizedScopes,
           protectedCookies: protectedCookieAccess(args.workspaceId, args.profileId),
+          nativeData: readNativeBrowserData,
           fs,
           indexPath: paths.indexPath,
           vaultPath: paths.vaultPath,
@@ -261,6 +306,7 @@ export function registerBrowserProfileImportHandlers(server: RpcServer, _deps: H
     if (!isClaimableLive(act)) return { ok: false }
     const paths = pathsFor(args.workspaceId)
     if (!paths) throw new Error('Workspace not found')
+    autoImporter.set(args.workspaceId, false)
     return { ok: rollbackImport(fs, paths.indexPath, args.token, { vaultPath: paths.vaultPath, deleteKey: deleteProtectedCookieKey }) }
   })
 
@@ -274,6 +320,7 @@ export function registerBrowserProfileImportHandlers(server: RpcServer, _deps: H
     if (!isClaimableLive(act)) return { ok: false }
     const paths = pathsFor(workspaceId)
     if (!paths) throw new Error('Workspace not found')
+    autoImporter.set(workspaceId, false)
     const read = rpcBrowserProfileImportReadResult({ source: 'native', nativeId: workspaceId })
     if (!isClaimableLive(read.result)) return { ok: false }
     return deleteImportedProfile({

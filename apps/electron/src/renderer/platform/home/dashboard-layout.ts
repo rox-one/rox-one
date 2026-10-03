@@ -226,6 +226,18 @@ export function shiftWidget(layout: HomeDashboardLayout, id: HomeWidgetId, delta
 
 /** Grid columns for a container width (px). Always 12 so spans stay simple. */
 export const HOME_GRID_COLUMNS = 12
+export const HOME_GRID_GAP = 12
+export const HOME_GRID_ROW_HEIGHT = 110
+
+/** Two rows preserve the original small card height; larger sizes grow vertically. */
+export function widgetRowSpan(size: HomeWidgetSize): number {
+  return size === 'S' ? 2 : size === 'M' ? 3 : 4
+}
+
+/** Taller cards can show more rows; width determines how many columns fit. */
+export function widgetItemLimit(size: HomeWidgetSize, smallLimit: number, columns = 1): number {
+  return (smallLimit + (widgetRowSpan(size) - 2) * 3) * columns
+}
 
 /**
  * Column span for a widget size at a container width. Wide (≥1100): S=3,

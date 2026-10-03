@@ -1,6 +1,7 @@
 import { createCipheriv, randomBytes, randomUUID } from 'node:crypto'
 
 import { basename, isAbsolute, relative, resolve, sep } from 'node:path'
+import type { NativeBrowserData } from './profile-native-data.ts'
 
 
 /**
@@ -35,6 +36,9 @@ export interface DiscoveredProfile {
 
 export interface ImportConsent {
   historyBookmarks: boolean
+  /** Optional individual preferences; older callers keep both enabled. */
+  history?: boolean
+  bookmarks?: boolean
   cookies: boolean
   credentials: boolean
   osCredentialsApproved: boolean
@@ -56,6 +60,16 @@ export interface ImportSummary {
   accessedStores: ImportCategory[]
   rollbackToken: string | null
   deletionReceipt: { deletedAt: number; categories: ImportCategory[]; itemCount: number } | null
+}
+
+export interface BrowserDataAutoStatus {
+  workspaceId: string | null
+  enabled: boolean
+  profileId: string | null
+  state: 'off' | 'idle' | 'done' | 'error'
+  imported: { history: number; bookmarks: number }
+  lastRunAt: number | null
+  error?: string
 }
 
 export interface IndexedItem {
@@ -216,10 +230,13 @@ export function importProfile(input: {
   consent: ImportConsent
   authorizedScopes: { cookies: boolean; credentials: boolean }
   protectedCookies?: ProtectedCookieImport
+  nativeData?: (profile: DiscoveredProfile, categories: { history: boolean; bookmarks: boolean }) => NativeBrowserData
   fs: ProfileFs
   indexPath: string
   vaultPath: string
   dryRun: boolean
+  /** Repeated non-secret sync can replace its index without retaining duplicate snapshots. */
+  retainRollback?: boolean
   now?: number
 }): ImportSummary {
   if (input.profile.state === 'unsupported' || input.profile.state === 'locked') {
@@ -237,6 +254,10 @@ export function importProfile(input: {
 
   if (input.consent.historyBookmarks) {
     accessed.push('history_bookmarks')
+    const native = input.nativeData?.(input.profile, {
+      history: input.consent.history !== false,
+      bookmarks: input.consent.bookmarks !== false,
+    }) ?? {}
     const bookmarkFile = firstExisting(input.fs, [
       `${input.profile.path}/Bookmarks`,
       `${input.profile.path}/bookmarks.html`,
@@ -246,8 +267,8 @@ export function importProfile(input: {
       `${input.profile.path}/history.json`,
       `${input.profile.path}/History.json`,
     ])
-    if (bookmarkFile) bookmarks = parseBookmarks(input.fs.readText(bookmarkFile) ?? '')
-    if (historyFile) history = parseHistory(input.fs.readText(historyFile) ?? '')
+    if (input.consent.bookmarks !== false) bookmarks = native.bookmarks ?? (bookmarkFile ? parseBookmarks(input.fs.readText(bookmarkFile) ?? '') : [])
+    if (input.consent.history !== false) history = native.history ?? (historyFile ? parseHistory(input.fs.readText(historyFile) ?? '') : [])
     if (input.profile.state === 'corrupt' && bookmarks.length === 0 && history.length === 0) {
       skipped += 1
     }
@@ -298,7 +319,7 @@ export function importProfile(input: {
     }
   }
 
-  const rollbackToken = input.dryRun ? null : `rb-${randomUUID()}`
+  const rollbackToken = input.dryRun || (input.retainRollback === false && !input.consent.cookies) ? null : `rb-${randomUUID()}`
   try {
     if (!input.dryRun && (input.consent.historyBookmarks || cookieKeyRef !== null)) {
       const previous = input.fs.readText(input.indexPath) ?? JSON.stringify({ bookmarks: [], history: [] })
@@ -321,8 +342,8 @@ export function importProfile(input: {
       input.fs.writeText(
         input.indexPath,
         JSON.stringify({
-          bookmarks: input.consent.historyBookmarks ? bookmarks : existing.bookmarks ?? [],
-          history: input.consent.historyBookmarks ? history : existing.history ?? [],
+          bookmarks: input.consent.historyBookmarks && input.consent.bookmarks !== false ? bookmarks : existing.bookmarks ?? [],
+          history: input.consent.historyBookmarks && input.consent.history !== false ? history : existing.history ?? [],
           cookieKeyRef: cookieKeyRef ?? existing.cookieKeyRef,
         }),
       )

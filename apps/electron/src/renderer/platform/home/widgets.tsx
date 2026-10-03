@@ -61,7 +61,7 @@ import { ALL_KINDS, isActive, sortInbox } from '@/pages/inbox/inbox-model'
 import { getSessionTitle } from '@/utils/session'
 import { isHomeSessionInWorkspace, pickRecentHomeSessions } from '../home-model'
 import { buildMiniDashboard, formatDashboardCost, formatTokenCount, syncStatusLabelKey } from '../mini-dashboard'
-import type { HomeWidgetId } from './dashboard-layout'
+import { widgetItemLimit, type HomeWidgetId, type HomeWidgetSize } from './dashboard-layout'
 import {
   TASK_LISTS,
   buildAutomationsOverview,
@@ -86,6 +86,8 @@ import { QuickTaskInput } from './QuickTaskInput'
 
 export interface WidgetProps {
   edit: WidgetEditProps | null
+  /** Persisted size controls height independently of the responsive width. */
+  size?: HomeWidgetSize
   /** Resolved column span (1..12) — lets a widget show more when it is wide. */
   span: number
 }
@@ -163,9 +165,9 @@ function useFocusState(): FocusState {
   return state
 }
 
-/** Rows that fit: S/M widgets are short lists, L gets a few more. */
-function rowsFor(span: number, base: number): number {
-  return span >= 12 ? base + 1 : base
+/** Visible rows grow with the card height, independently of screen width. */
+function rowsFor(size: HomeWidgetSize, base: number): number {
+  return widgetItemLimit(size, base)
 }
 
 // ---------------------------------------------------------------------------
@@ -308,12 +310,12 @@ function QuickActionsWidget({ edit, span }: WidgetProps) {
 // Недавние сессии
 // ---------------------------------------------------------------------------
 
-function RecentSessionsWidget({ edit, span }: WidgetProps) {
+function RecentSessionsWidget({ edit, span, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(60_000)
   const { active } = useHomeSessions()
-  const recent = useMemo(() => pickRecentHomeSessions(active, span >= 12 ? 14 : 7), [active, span])
+  const recent = useMemo(() => pickRecentHomeSessions(active, widgetItemLimit(size, 5, span >= 12 ? 2 : 1)), [active, span, size])
   return (
     <WidgetFrame testId="recentSessions" title={t('workbench.home.recent')} onOpen={() => navigate(routes.view.allSessions())} edit={edit} meta={active.length ? String(active.length) : undefined}>
       {recent.length === 0 ? (
@@ -340,7 +342,7 @@ function RecentSessionsWidget({ edit, span }: WidgetProps) {
 // Активные агенты
 // ---------------------------------------------------------------------------
 
-function AgentsWidget({ edit, span }: WidgetProps) {
+function AgentsWidget({ edit, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(30_000)
@@ -376,7 +378,7 @@ function AgentsWidget({ edit, span }: WidgetProps) {
     ...center.waiting.map((w) => ({ id: w.session.id, name: w.session.name, tone: 'warning' as const, note: t('workbench.home.agents.waitingRow') })),
     ...center.stuck.map((s) => ({ id: s.id, name: s.name, tone: 'danger' as const, note: t('workbench.home.agents.stuckRow') })),
     ...center.running.map((s) => ({ id: s.id, name: s.name, tone: 'accent' as const, note: s.lastMessageAt ? fmt.ago(s.lastMessageAt, now) : '' })),
-  ].slice(0, rowsFor(span, 3))
+  ].slice(0, rowsFor(size, 3))
   const open = () => navigate(routes.view.screen('agents'))
   return (
     <WidgetFrame testId="agents" title={t('workbench.home.w.agents')} onOpen={open} edit={edit}>
@@ -408,11 +410,11 @@ function AgentsWidget({ edit, span }: WidgetProps) {
 // Входящие
 // ---------------------------------------------------------------------------
 
-function InboxWidget({ edit, span }: WidgetProps) {
+function InboxWidget({ edit, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const { items, state, counts, now } = useInboxItems({ withRemote: true })
-  const pending = useMemo(() => sortInbox(items.filter((i) => isActive(state, i, now))).slice(0, rowsFor(span, 4)), [items, state, now, span])
+  const pending = useMemo(() => sortInbox(items.filter((i) => isActive(state, i, now))).slice(0, rowsFor(size, 4)), [items, state, now, size])
   return (
     <WidgetFrame
       testId="inbox"
@@ -617,13 +619,13 @@ function BalanceWidget({ edit }: WidgetProps) {
 // Задачи
 // ---------------------------------------------------------------------------
 
-function TasksWidget({ edit, span }: WidgetProps) {
+function TasksWidget({ edit, span, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(60_000)
   const tasks = usePersonalTasks()
   const focus = useFocusState()
-  const top = useMemo(() => topOpenTasks(tasks, focus.top3, now, span >= 12 ? 10 : 5), [tasks, focus.top3, now, span])
+  const top = useMemo(() => topOpenTasks(tasks, focus.top3, now, widgetItemLimit(size, 5, span >= 12 ? 2 : 1)), [tasks, focus.top3, now, span, size])
   const dayStart = startOfLocalDay(now)
   return (
     <WidgetFrame
@@ -684,17 +686,17 @@ function transcriptTone(status: string): 'success' | 'danger' | 'accent' | 'mute
   return status === 'done' ? 'success' : status === 'failed' ? 'danger' : status === 'running' || status === 'queued' ? 'accent' : 'muted'
 }
 
-function MeetingsWidget({ edit, span }: WidgetProps) {
+function MeetingsWidget({ edit, span, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(60_000)
   const workspace = useActiveWorkspace()
   const rec = useRecordAction()
   const { available, loaded, meetings } = useLocalMeetings(workspace?.id ?? null)
-  const overview = useMemo(() => buildMeetingsOverview(meetings, now, span >= 12 ? 4 : 2), [meetings, now, span])
+  const overview = useMemo(() => buildMeetingsOverview(meetings, now, widgetItemLimit(size, 2)), [meetings, now, size])
   const open = (id?: string) => navigate(routes.view.meetings(id))
   const empty = loaded && !overview.live && overview.upcoming.length === 0 && overview.recent.length === 0
-  const recent = overview.recent.slice(0, span >= 12 ? 4 : overview.upcoming.length > 0 ? 2 : 3)
+  const recent = overview.recent.slice(0, widgetItemLimit(size, overview.upcoming.length > 0 ? 2 : 3))
   return (
     <WidgetFrame testId="meetings" title={t('workbench.home.w.meetings')} onOpen={() => open()} edit={edit} action={available ? <RecordButton rec={rec} /> : undefined}>
       {!available ? (
@@ -748,14 +750,14 @@ function MeetingsWidget({ edit, span }: WidgetProps) {
 // Звонки
 // ---------------------------------------------------------------------------
 
-function CallsWidget({ edit, span }: WidgetProps) {
+function CallsWidget({ edit, span, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(60_000)
   const workspace = useActiveWorkspace()
   const rec = useRecordAction()
   const { available, loaded, meetings } = useLocalMeetings(workspace?.id ?? null)
-  const calls = useMemo(() => recentCalls(meetings, span >= 12 ? 8 : 4), [meetings, span])
+  const calls = useMemo(() => recentCalls(meetings, widgetItemLimit(size, 4, span >= 12 ? 2 : 1)), [meetings, span, size])
   const totalMs = useMemo(() => recentCalls(meetings, Number.MAX_SAFE_INTEGER).filter((m) => (m.startedAt ?? m.createdAt) >= startOfLocalDay(now) - 6 * 86_400_000).reduce((sum, m) => sum + (m.durationMs || 0), 0), [meetings, now])
   const open = (id?: string) => navigate(routes.view.meetings(id))
   return (
@@ -895,7 +897,7 @@ function cronRunsUntil(items: readonly AutomationListItem[], until: number, cap 
   return out
 }
 
-function AutomationsWidget({ edit, span }: WidgetProps) {
+function AutomationsWidget({ edit, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(60_000)
@@ -922,7 +924,7 @@ function AutomationsWidget({ edit, span }: WidgetProps) {
   const nextAt = new Map(overview.next.map((n) => [n.id, n.at]))
   const rows = [...data.items]
     .sort((a, b) => (nextAt.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (nextAt.get(b.id) ?? Number.MAX_SAFE_INTEGER) || Number(b.enabled) - Number(a.enabled))
-    .slice(0, Math.max(1, (span >= 12 ? 6 : 4) - Math.min(overview.failures.length, 2)))
+    .slice(0, Math.max(1, widgetItemLimit(size, 4) - Math.min(overview.failures.length, 2)))
   return (
     <WidgetFrame
       testId="automations"
@@ -975,13 +977,13 @@ function AutomationsWidget({ edit, span }: WidgetProps) {
 // Лента
 // ---------------------------------------------------------------------------
 
-function FeedWidget({ edit, span }: WidgetProps) {
+function FeedWidget({ edit, span, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(60_000)
   const workspace = useActiveWorkspace()
   const feed = useFeedItems(workspace?.id ?? null, { retainStale: true })
-  const latest = feed.items.slice(0, span >= 12 ? 10 : 5)
+  const latest = feed.items.slice(0, widgetItemLimit(size, 5, span >= 12 ? 2 : 1))
   return (
     <WidgetFrame testId="feed" title={t('workbench.home.w.feed')} onOpen={() => navigate(routes.view.feed())} edit={edit}>
       {feed.refreshing && !feed.loaded ? (
@@ -1051,13 +1053,13 @@ function useNotes(workspaceId: string | null): { available: boolean; loaded: boo
   return state
 }
 
-function NotesWidget({ edit, span }: WidgetProps) {
+function NotesWidget({ edit, span, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(60_000)
   const workspace = useActiveWorkspace()
   const state = useNotes(workspace?.id ?? null)
-  const shown = useMemo(() => recentByUpdated(state.notes, span >= 12 ? 10 : 5), [state.notes, span])
+  const shown = useMemo(() => recentByUpdated(state.notes, widgetItemLimit(size, 5, span >= 12 ? 2 : 1)), [state.notes, span, size])
   return (
     <WidgetFrame testId="notes" title={t('workbench.home.w.notes')} onOpen={() => navigate(routes.view.notes())} edit={edit}>
       {!state.available ? (
@@ -1079,13 +1081,13 @@ function NotesWidget({ edit, span }: WidgetProps) {
 // Решения
 // ---------------------------------------------------------------------------
 
-function DecisionsWidget({ edit, span }: WidgetProps) {
+function DecisionsWidget({ edit, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(5 * 60_000)
   const workspace = useActiveWorkspace()
   const data = useWorkspaceStore(DECISIONS_NS, workspace?.id ?? null, loadDecisions)
-  const recent = useMemo(() => data.decisions.filter((d) => d.status === 'accepted').sort((a, b) => b.decidedAt - a.decidedAt).slice(0, rowsFor(span, 4)), [data.decisions, span])
+  const recent = useMemo(() => data.decisions.filter((d) => d.status === 'accepted').sort((a, b) => b.decidedAt - a.decidedAt).slice(0, rowsFor(size, 4)), [data.decisions, size])
   const open = (id?: string) => navigate(routes.view.screen('decisions', id))
   return (
     <WidgetFrame
@@ -1116,13 +1118,13 @@ function DecisionsWidget({ edit, span }: WidgetProps) {
 // Радар
 // ---------------------------------------------------------------------------
 
-function RadarWidget({ edit, span }: WidgetProps) {
+function RadarWidget({ edit, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(5 * 60_000)
   const workspace = useActiveWorkspace()
   const data = useWorkspaceStore(RADAR_NS, workspace?.id ?? null, loadRadar)
-  const signals = useMemo(() => radarSignals(data, rowsFor(span, 4)), [data, span])
+  const signals = useMemo(() => radarSignals(data, rowsFor(size, 4)), [data, size])
   const open = () => navigate(routes.view.screen('radar'))
   const bucketTone = (bucket: string) => (bucket === 'reaction' ? 'warning' : bucket === 'important' ? 'accent' : 'muted') as 'warning' | 'accent' | 'muted'
   return (
@@ -1248,7 +1250,7 @@ const CALENDAR_ICON: Record<CalendarEventKind, React.ComponentType<{ className?:
   note: FileText,
 }
 
-function CalendarWidget({ edit, span }: WidgetProps) {
+function CalendarWidget({ edit, span, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(5 * 60_000)
@@ -1277,7 +1279,7 @@ function CalendarWidget({ edit, span }: WidgetProps) {
   }
   const total = days.reduce((sum, d) => sum + d.events.length, 0)
   const wide = span >= 6
-  const perDay = span >= 12 ? 5 : 3
+  const perDay = widgetItemLimit(size, 3)
   const today = startOfLocalDay(now)
   return (
     <WidgetFrame testId="calendar" title={t('workbench.home.w.calendar')} onOpen={() => navigate(routes.view.meetings())} edit={edit} meta={t('workbench.home.calendar.events', { count: total })}>

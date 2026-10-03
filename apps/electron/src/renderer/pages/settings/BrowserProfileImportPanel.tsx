@@ -1,19 +1,20 @@
 /**
- * Settings → Import: privileged browser profile import (Issue 15).
- * Consent for cookies/credentials is separate from history/bookmarks.
- *
- * Top: automatic cookie/session import for the in-app browser behind ONE
- * explicit consent switch (default off). Below: the manual profile import.
+ * Browser import preferences are separate from per-profile access grants.
+ * Discovery is explicit; OS credential approval can only come from the host.
  */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, ChevronRight, DownloadCloud, RefreshCw, RotateCcw, Trash2 } from 'lucide-react'
+import { Bookmark, ChevronDown, ChevronRight, Cookie, DownloadCloud, Globe2, History, KeyRound, RefreshCw, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
+import { PremiumMenuSelect } from '@craft-agent/ui'
+import { answerChoice, type BrowserImportCategory } from '@craft-agent/shared/environment'
 import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/components/settings'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import type { BrowserCookieAutoStatus } from '../../../shared/types'
 import { useActiveWorkspace } from '@/context/AppShellContext'
-import type { DiscoveredProfile, ImportConsent, ImportSummary } from '@craft-agent/shared/browser/profile-import'
+import type { BrowserDataAutoStatus, DiscoveredProfile, ImportSummary } from '@craft-agent/shared/browser/profile-import'
+import { browserImportConsent, browserImportProfileSelection } from './browser-import-consent'
 
 const STATE_KEYS: Record<DiscoveredProfile['state'], string> = {
   ok: 'settings.browserImport.stateOk',
@@ -23,31 +24,68 @@ const STATE_KEYS: Record<DiscoveredProfile['state'], string> = {
   unsupported: 'settings.browserImport.stateUnsupported',
 }
 
+const PREFERENCE_ROWS = [
+  { category: 'history', key: 'onboarding.environment.browserImportHistory', icon: History, color: 'text-sky-500' },
+  { category: 'bookmarks', key: 'onboarding.environment.browserImportBookmarks', icon: Bookmark, color: 'text-violet-500' },
+  { category: 'cookies', key: 'settings.browserImport.consentCookies', icon: Cookie, color: 'text-amber-500' },
+  { category: 'credentials', key: 'onboarding.environment.browserImportCredentials', icon: KeyRound, color: 'text-emerald-500' },
+] as const
+
 export default function BrowserProfileImportPanel() {
   const { t, i18n } = useTranslation()
   const workspace = useActiveWorkspace()
+  const activeWorkspaceId = useRef(workspace?.id)
+  activeWorkspaceId.current = workspace?.id
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [profiles, setProfiles] = useState<DiscoveredProfile[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [cookieDomains, setCookieDomains] = useState('')
-  const [consent, setConsent] = useState<ImportConsent>({
-    historyBookmarks: true,
-    cookies: false,
-    credentials: false,
-    osCredentialsApproved: false,
-  })
+  const [categories, setCategories] = useState<BrowserImportCategory[] | null>(null)
+  const [savingPreferences, setSavingPreferences] = useState(false)
   const [summary, setSummary] = useState<ImportSummary | null>(null)
   const [cookieAuto, setCookieAuto] = useState<BrowserCookieAutoStatus | null>(null)
   const [cookieError, setCookieError] = useState<string | null>(null)
+  const [dataAuto, setDataAuto] = useState<BrowserDataAutoStatus | null>(null)
+  const [dataBusy, setDataBusy] = useState(false)
   const [manualOpen, setManualOpen] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void window.electronAPI.getEnvironmentSetup().then(({ prefs }) => {
+      if (!cancelled) setCategories(prefs.browserImport.value ?? [])
+    }).catch((err) => {
+      if (!cancelled) setError(err instanceof Error ? err.message : String(err))
+    })
+    const unsubscribe = window.electronAPI.onEnvironmentChanged?.((prefs) => {
+      if (!cancelled) setCategories(prefs.browserImport.value ?? [])
+    }) ?? (() => {})
+    return () => { cancelled = true; unsubscribe() }
+  }, [])
+
+  const setPreference = useCallback(async (category: BrowserImportCategory, checked: boolean) => {
+    if (!categories || savingPreferences) return
+    const previous = categories
+    const next = checked ? [...new Set([...categories, category])] : categories.filter((item) => item !== category)
+    setCategories(next)
+    setSavingPreferences(true)
+    setError(null)
+    try {
+      const { prefs } = await window.electronAPI.saveEnvironmentSetup({ browserImport: answerChoice(next) })
+      setCategories(prefs.browserImport.value ?? [])
+    } catch (err) {
+      setCategories(previous)
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setSavingPreferences(false)
+    }
+  }, [categories, savingPreferences])
 
   const refreshCookieAuto = useCallback(async () => {
     try {
       const status = await window.electronAPI.browserCookieAutoStatus()
       setCookieAuto(status)
       if (status.consent) {
-        setSelectedId((current) => current ?? status.profileId ?? null)
         setCookieDomains((current) => current || status.domains?.join(', ') || '')
       }
     } catch (err) {
@@ -55,7 +93,61 @@ export default function BrowserProfileImportPanel() {
     }
   }, [])
 
+  const refreshDataAuto = useCallback(async () => {
+    if (!workspace?.id) { setDataAuto(null); return }
+    try {
+      const status = await window.electronAPI.browserDataAutoImport({ workspaceId: workspace.id, action: 'status' })
+      if (activeWorkspaceId.current !== workspace.id) return
+      setDataAuto(status)
+    } catch (err) {
+      if (activeWorkspaceId.current !== workspace.id) return
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }, [workspace?.id])
+
+  useEffect(() => {
+    setDataAuto(null)
+    setSelectedId(null)
+    void refreshDataAuto()
+    const timer = window.setInterval(() => void refreshDataAuto(), 15_000)
+    return () => window.clearInterval(timer)
+  }, [refreshDataAuto])
+
+  useEffect(() => {
+    setSelectedId((current) => browserImportProfileSelection(workspace?.id, current, dataAuto, cookieAuto))
+  }, [workspace?.id, dataAuto, cookieAuto])
+
+  const updateDataAuto = useCallback(async (action: 'set' | 'run', enabled?: boolean) => {
+    if (!workspace?.id || dataBusy) return
+    setDataBusy(true)
+    setError(null)
+    try {
+      const status = await window.electronAPI.browserDataAutoImport({
+        workspaceId: workspace.id, action, enabled, profileId: enabled ? selectedId ?? undefined : undefined,
+      })
+      if (activeWorkspaceId.current === workspace.id) setDataAuto(status)
+    } catch (err) {
+      if (activeWorkspaceId.current === workspace.id) setError(err instanceof Error ? err.message : String(err))
+    } finally { setDataBusy(false) }
+  }, [workspace?.id, dataBusy, selectedId])
+
   const cookieBusy = cookieAuto?.state === 'importing'
+  const profileBound = cookieAuto?.consent === true || dataAuto?.enabled === true
+  const domains = cookieDomains.split(',').map((domain) => domain.trim()).filter(Boolean)
+  const selectedProfile = profiles.find((profile) => profile.id === selectedId)
+  const cookiePreferred = categories?.includes('cookies') ?? false
+  const consent = browserImportConsent(categories ?? [], selectedProfile?.family, domains)
+  const scopedCookies = consent.cookies
+  const canImport = Boolean(workspace?.id && selectedId && categories &&
+    (consent.historyBookmarks || consent.cookies) &&
+    selectedProfile?.state !== 'locked' && selectedProfile?.state !== 'unsupported')
+  const dataSelected = categories?.includes('history') || categories?.includes('bookmarks')
+  const dataLine = !dataAuto?.enabled ? t('settings.browserImport.dataAuto.off')
+    : !dataSelected ? t('settings.browserImport.dataAuto.paused')
+    : dataAuto.error ? t('settings.browserImport.dataAuto.error')
+    : !dataAuto.lastRunAt ? t('settings.browserImport.dataAuto.pending')
+    : t('settings.browserImport.dataAuto.done', { history: dataAuto.imported.history, bookmarks: dataAuto.imported.bookmarks, time: new Date(dataAuto.lastRunAt).toLocaleString(i18n.language) })
+
   useEffect(() => {
     void refreshCookieAuto()
     const timer = window.setInterval(() => void refreshCookieAuto(), cookieBusy ? 1500 : 15_000)
@@ -64,8 +156,8 @@ export default function BrowserProfileImportPanel() {
 
   const setCookieConsent = useCallback(async (on: boolean) => {
     setCookieError(null)
-    const domains = cookieDomains.split(',').map((domain) => domain.trim()).filter(Boolean)
-    if (on && (!selectedId || domains.length === 0)) {
+    const allowedDomains = cookieDomains.split(',').map((domain) => domain.trim()).filter(Boolean)
+    if (on && (!selectedId || allowedDomains.length === 0)) {
       setCookieError(t('settings.browserImport.auto.scopeHint'))
       return
     }
@@ -73,7 +165,7 @@ export default function BrowserProfileImportPanel() {
       setCookieAuto(await window.electronAPI.browserCookieAutoSet({
         consent: on,
         profileId: on ? selectedId ?? undefined : undefined,
-        domains: on ? domains : undefined,
+        domains: on ? allowedDomains : undefined,
       }))
     } catch (err) {
       setCookieError(err instanceof Error ? err.message : String(err))
@@ -99,15 +191,11 @@ export default function BrowserProfileImportPanel() {
         time: new Date(cookieAuto.revocationReceipt.revokedAt).toLocaleString(i18n.language),
       })
     }
-    if (!cookieAuto.consent && cookieAuto.state === 'error') {
-      return t('settings.browserImport.auto.error', { error: cookieAuto.error ?? '' })
-    }
+    if (!cookieAuto.consent && cookieAuto.state === 'error') return t('settings.browserImport.auto.error', { error: cookieAuto.error ?? '' })
     if (!cookieAuto.supported) return t('settings.browserImport.auto.unsupported')
     if (!cookieAuto.consent) return t('settings.browserImport.auto.scopeHint')
     if (cookieAuto.state === 'importing') return t('settings.browserImport.auto.importing', { browser: cookieAuto.browser ?? '' })
-    if (cookieAuto.state === 'error') {
-      return t('settings.browserImport.auto.error', { error: cookieAuto.error ?? '' })
-    }
+    if (cookieAuto.state === 'error') return t('settings.browserImport.auto.error', { error: cookieAuto.error ?? '' })
     if (!cookieAuto.lastRunAt) return t('settings.browserImport.auto.pending', { browser: cookieAuto.browser ?? '' })
     return t('settings.browserImport.auto.done', {
       count: cookieAuto.imported,
@@ -123,7 +211,7 @@ export default function BrowserProfileImportPanel() {
     try {
       const found = await window.electronAPI.discoverBrowserProfiles({ consent: true })
       setProfiles(found)
-      setSelectedId(null)
+      setSelectedId((current) => found.some((profile) => profile.id === current) ? current : null)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -131,247 +219,160 @@ export default function BrowserProfileImportPanel() {
     }
   }, [])
 
-
-
-  const runImport = useCallback(async (dryRun: boolean) => {
-    if (!workspace?.id || !selectedId) return
+  const runImport = async (dryRun: boolean) => {
+    if (!workspace?.id || !selectedId || !canImport || loading) return
     setLoading(true)
     setError(null)
     try {
-      const result = await window.electronAPI.importBrowserProfile({
-        workspaceId: workspace.id,
-        profileId: selectedId,
-        consent: { ...consent, domains: cookieDomains.split(',').map((domain) => domain.trim()).filter(Boolean) },
-        dryRun,
-      })
-      setSummary(result)
+      setSummary(await window.electronAPI.importBrowserProfile({ workspaceId: workspace.id, profileId: selectedId, consent, dryRun }))
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
       setLoading(false)
     }
-  }, [consent, cookieDomains, selectedId, workspace?.id])
+  }
 
   const rollback = useCallback(async () => {
-    if (!workspace?.id || !summary?.rollbackToken) return
+    if (!workspace?.id || !summary?.rollbackToken || loading) return
     setLoading(true)
     setError(null)
     try {
-      await window.electronAPI.rollbackBrowserProfileImport({
-        workspaceId: workspace.id,
-        token: summary.rollbackToken,
-      })
+      const result = await window.electronAPI.rollbackBrowserProfileImport({ workspaceId: workspace.id, token: summary.rollbackToken })
+      if (!result.ok) { setError(t('settings.browserImport.rollbackUnavailable')); return }
       setSummary(null)
+      await refreshDataAuto()
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
       setLoading(false)
     }
-  }, [summary?.rollbackToken, workspace?.id])
+  }, [loading, summary?.rollbackToken, t, workspace?.id, refreshDataAuto])
 
   const removeImported = useCallback(async () => {
-    if (!workspace?.id) return
+    if (!workspace?.id || loading) return
     setLoading(true)
     setError(null)
     try {
       const deleted = await window.electronAPI.deleteImportedBrowserProfile(workspace.id)
       setSummary({
-        dryRun: false,
-        profileId: selectedId ?? '',
+        dryRun: false, profileId: selectedId ?? '',
         counts: { history: 0, bookmarks: 0, cookies: 0, credentials: 0, skipped: 0 },
-        accessedStores: [],
-        rollbackToken: null,
-        deletionReceipt: deleted.deletionReceipt,
+        accessedStores: [], rollbackToken: null, deletionReceipt: deleted.deletionReceipt,
       })
+      await refreshDataAuto()
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
       setLoading(false)
     }
-  }, [selectedId, workspace?.id])
+  }, [loading, selectedId, workspace?.id, refreshDataAuto])
+
+  const profileItems = profiles.map((profile) => ({
+    id: profile.id,
+    label: `${profile.name} · ${profile.family}`,
+    description: t(STATE_KEYS[profile.state]),
+    icon: <Globe2 className="h-4 w-4 text-sky-500" />,
+    disabled: profile.state === 'locked' || profile.state === 'unsupported',
+  }))
+  if (cookieAuto?.consent && cookieAuto.profileId && !profiles.some((profile) => profile.id === cookieAuto.profileId)) {
+    profileItems.push({ id: cookieAuto.profileId, label: cookieAuto.profileName ?? t('settings.browserImport.profileLabel'), description: t('settings.browserImport.accessGranted'), icon: <Globe2 className="h-4 w-4 text-sky-500" />, disabled: false })
+  }
+  if (dataAuto?.enabled && dataAuto.profileId && !profileItems.some((profile) => profile.id === dataAuto.profileId)) {
+    profileItems.push({ id: dataAuto.profileId, label: t('settings.browserImport.dataAuto.authorizedProfile'), description: t('settings.browserImport.accessGranted'), icon: <Globe2 className="h-4 w-4 text-sky-500" />, disabled: false })
+  }
 
   return (
-    <section className="space-y-4" data-testid="browser-profile-import">
-      <SettingsSection title={t('settings.browserImport.auto.title')} description={t('settings.browserImport.auto.description')}>
+    <section className="space-y-6" data-testid="browser-profile-import" aria-busy={loading}>
+      <SettingsSection title={t('settings.browserImport.preferencesTitle')} description={t('settings.browserImport.preferencesHint')}>
         <SettingsCard>
-          <SettingsToggle
-            label={t('settings.browserImport.auto.consent')}
-            description={t('settings.browserImport.auto.consentHint')}
-            checked={cookieAuto?.consent ?? false}
-            disabled={!cookieAuto || !cookieAuto.supported || (!cookieAuto.consent && (!selectedId || cookieDomains.trim().length === 0))}
-            onCheckedChange={(on) => void setCookieConsent(on)}
-          />
-          <label className="flex items-center gap-2 text-sm">
-            {t('settings.browserImport.profileLabel')}
-            <select
-              value={selectedId ?? ''}
-              onChange={(event) => setSelectedId(event.target.value || null)}
-              disabled={profiles.length === 0 || cookieAuto?.consent === true}
-            >
-              <option value="">{t('settings.browserImport.empty')}</option>
-              {cookieAuto?.consent && cookieAuto.profileId && !profiles.some((profile) => profile.id === cookieAuto.profileId) ? (
-                <option value={cookieAuto.profileId}>{cookieAuto.profileName ?? cookieAuto.browser ?? t('settings.browserImport.profileLabel')}</option>
-              ) : null}
-              {profiles.map((profile) => (
-                <option key={profile.id} value={profile.id}>{profile.name}</option>
-              ))}
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            {t('settings.browserImport.auto.domainsLabel')}
-            <input
-              value={cookieDomains}
-              onChange={(event) => setCookieDomains(event.target.value)}
-              placeholder={t('settings.browserImport.auto.domainsPlaceholder')}
-              disabled={cookieAuto?.consent ?? false}
+          {PREFERENCE_ROWS.map(({ category, key, icon: Icon, color }) => (
+            <SettingsToggle key={category}
+              label={<span className="flex items-center gap-2"><Icon className={`h-4 w-4 ${color}`} />{t(key)}</span>}
+              checked={categories?.includes(category) ?? false}
+              disabled={!categories || savingPreferences || loading}
+              onCheckedChange={(checked) => void setPreference(category, checked)}
             />
-          </label>
-          <SettingsRow
-            label={t('settings.browserImport.auto.status')}
-            description={cookieAuto?.consent && cookieAuto.domains?.length
-              ? `${cookieLine} · ${t('settings.browserImport.auto.domainsLabel')}: ${cookieAuto.domains.join(', ')}`
-              : cookieLine}
-            wrapDescription
-            action={
-              cookieAuto?.consent ? (
-                <Button size="sm" variant="secondary" disabled={cookieBusy} onClick={() => void runCookieImport()}>
-                  <RefreshCw className="w-3.5 h-3.5 mr-1" />
-                  {t('settings.browserImport.auto.runNow')}
-                </Button>
-              ) : undefined
-            }
+          ))}
+          <SettingsRow label={<span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-muted-foreground" />{t('settings.browserImport.osAccessTitle')}</span>}
+            data-testid="browser-profile-os-access"
+            description={t('settings.browserImport.osAccessUnavailable')} wrapDescription
+            action={<span className="rounded-md bg-foreground/5 px-2 py-1 text-[11px] text-muted-foreground">{t('settings.browserImport.accessUnavailable')}</span>}
           />
         </SettingsCard>
-        {cookieError ? <div className="mt-2 text-xs text-destructive">{cookieError}</div> : null}
       </SettingsSection>
-      <button
-        type="button"
-        data-testid="browser-profile-manual-toggle"
+
+      <SettingsSection title={t('settings.browserImport.dataAuto.title')} description={t('settings.browserImport.dataAuto.description')}>
+        <SettingsCard>
+          <SettingsRow label={t('settings.browserImport.profileLabel')} wrapDescription
+            action={<div className="flex items-center gap-2">
+              <PremiumMenuSelect items={profileItems} selectedId={selectedId} placeholder={t('settings.browserImport.selectProfile')}
+                disabled={loading || profileItems.length === 0 || profileBound} className="h-8 max-w-[180px]"
+                onSelect={(item) => setSelectedId(item.id)} />
+              <Button size="sm" variant="secondary" disabled={loading || profileBound} onClick={() => void discover()}>
+                <RefreshCw className={`mr-1 h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />{t('settings.browserImport.discover')}
+              </Button>
+            </div>}
+          />
+          <SettingsToggle label={t('settings.browserImport.dataAuto.consent')} description={t('settings.browserImport.dataAuto.consentHint')}
+            checked={dataAuto?.enabled ?? false}
+            disabled={!dataAuto || dataBusy || loading || (!dataAuto.enabled && (!selectedId || !dataSelected || selectedProfile?.state === 'locked' || selectedProfile?.state === 'unsupported'))}
+            onCheckedChange={(on) => void updateDataAuto('set', on)} />
+          <SettingsRow label={t('settings.browserImport.auto.status')} description={dataLine} wrapDescription
+            action={dataAuto?.enabled ? <Button size="sm" variant="secondary" disabled={dataBusy || !dataSelected} onClick={() => void updateDataAuto('run')}><RefreshCw className={`mr-1 h-3.5 w-3.5 ${dataBusy ? 'animate-spin' : ''}`} />{t('settings.browserImport.auto.runNow')}</Button> : undefined} />
+          <div className="space-y-2 px-4 py-3.5">
+            <label htmlFor="browser-import-domains" className="text-sm font-medium">{t('settings.browserImport.auto.domainsLabel')}</label>
+            <Input id="browser-import-domains" value={cookieDomains} onChange={(event) => setCookieDomains(event.target.value)}
+              placeholder={t('settings.browserImport.auto.domainsPlaceholder')} disabled={cookieAuto?.consent ?? false} />
+          </div>
+          <SettingsToggle label={t('settings.browserImport.auto.consent')} description={t('settings.browserImport.auto.consentHint')}
+            checked={cookieAuto?.consent ?? false}
+            disabled={!cookieAuto || !cookieAuto.supported || (!cookieAuto.consent && (!selectedId || selectedProfile?.family !== 'chromium' || domains.length === 0))}
+            onCheckedChange={(on) => void setCookieConsent(on)} />
+          <SettingsRow label={t('settings.browserImport.auto.status')} description={cookieLine} wrapDescription
+            action={cookieAuto?.consent ? <Button size="sm" variant="secondary" disabled={cookieBusy} onClick={() => void runCookieImport()}><RefreshCw className="mr-1 h-3.5 w-3.5" />{t('settings.browserImport.auto.runNow')}</Button> : undefined} />
+        </SettingsCard>
+        {cookieError ? <p role="alert" className="mt-2 text-xs text-destructive">{cookieError}</p> : null}
+      </SettingsSection>
+
+      <button type="button" data-testid="browser-profile-manual-toggle" aria-expanded={manualOpen} aria-controls="browser-profile-manual"
+        className="flex w-full items-center gap-2 rounded-xl border border-border/50 bg-background/40 px-4 py-3 text-sm font-medium transition-colors hover:bg-foreground/5"
         onClick={() => {
           const opening = !manualOpen
           setManualOpen(opening)
           if (opening && profiles.length === 0) void discover()
-        }}
-      >
-        {manualOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        }}>
+        {manualOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         {t('settings.browserImport.title')}
       </button>
-      {manualOpen ? (
-      <div className="space-y-3">
-      <p className="text-sm opacity-70">{t('settings.browserImport.description')}</p>
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => void discover()}
-          className="inline-flex items-center gap-1 text-xs border rounded-md px-2 py-1.5 hover:bg-muted"
-        >
-          <RefreshCw className="w-3 h-3" />
-          {t('settings.browserImport.discover')}
-        </button>
-        <button
-          type="button"
-          onClick={() => void runImport(true)}
-          className="inline-flex items-center gap-1 text-xs border rounded-md px-2 py-1.5 hover:bg-muted"
-        >
-          {t('settings.browserImport.dryRun')}
-        </button>
-        <button
-          type="button"
-          onClick={() => void runImport(false)}
-          className="inline-flex items-center gap-1 text-xs border rounded-md px-2 py-1.5 hover:bg-muted"
-        >
-          <DownloadCloud className="w-3 h-3" />
-          {t('settings.browserImport.import')}
-        </button>
-        <button
-          type="button"
-          onClick={() => void rollback()}
-          disabled={!summary?.rollbackToken}
-          className="inline-flex items-center gap-1 text-xs border rounded-md px-2 py-1.5 hover:bg-muted disabled:opacity-40"
-        >
-          <RotateCcw className="w-3 h-3" />
-          {t('settings.browserImport.rollback')}
-        </button>
-        <button
-          type="button"
-          onClick={() => void removeImported()}
-          className="inline-flex items-center gap-1 text-xs border rounded-md px-2 py-1.5 hover:bg-muted"
-        >
-          <Trash2 className="w-3 h-3" />
-          {t('settings.browserImport.delete')}
-        </button>
-      </div>
-      <div className="space-y-1 text-sm">
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={consent.historyBookmarks}
-            onChange={(ev) => setConsent((prev) => ({ ...prev, historyBookmarks: ev.target.checked }))}
-          />
-          {t('settings.browserImport.consentBookmarks')}
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={consent.cookies}
-            onChange={(ev) => setConsent((prev) => ({ ...prev, cookies: ev.target.checked }))}
-          />
-          {t('settings.browserImport.consentCookies')}
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={consent.credentials}
-            onChange={(ev) => setConsent((prev) => ({ ...prev, credentials: ev.target.checked }))}
-          />
-          {t('settings.browserImport.consentCredentials')}
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            data-testid="browser-profile-os-approved"
-            checked={consent.osCredentialsApproved}
-            onChange={(ev) => setConsent((prev) => ({ ...prev, osCredentialsApproved: ev.target.checked }))}
-          />
-          {t('settings.browserImport.osApproved')}
-        </label>
-      </div>
-      {loading ? <p className="text-sm opacity-70">{t('settings.browserImport.discover')}</p> : null}
-      {error ? <div className="text-xs text-destructive">{error}</div> : null}
-      {profiles.length === 0 && !loading ? (
-        <p className="text-sm opacity-60">{t('settings.browserImport.empty')}</p>
-      ) : (
-        <ul className="space-y-2">
-          {profiles.map((profile) => (
-            <li key={profile.id} className="border rounded-md px-3 py-2 text-sm">
-              <label className="flex items-start gap-2">
-                <input
-                  type="radio"
-                  name="browser-profile"
-                  checked={selectedId === profile.id}
-                  onChange={() => setSelectedId(profile.id)}
-                />
-                <span>
-                  <span className="font-medium">{profile.name}</span>
-                  {profile.recommended ? (
-                    <span className="ml-2 text-xs opacity-60">{t('settings.browserImport.recommended')}</span>
-                  ) : null}
-                  <span className="block text-xs opacity-60">
-                    {profile.family} · {t(STATE_KEYS[profile.state])}
-                  </span>
-                </span>
-              </label>
-            </li>
-          ))}
-        </ul>
-      )}
-      {summary ? (
-        <p className="text-xs opacity-70" data-testid="browser-profile-import-summary">
-          {summary.counts.bookmarks}/{summary.counts.history}/{summary.counts.cookies}/{summary.counts.credentials}
-        </p>
-      ) : null}
-      </div>
-      ) : null}
+      {manualOpen ? <div id="browser-profile-manual" className="space-y-4 rounded-xl border border-border/50 bg-background/30 p-4">
+        <p className="text-sm text-muted-foreground">{t('settings.browserImport.description')}</p>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="secondary" disabled={loading || !canImport} onClick={() => void runImport(true)}>{t('settings.browserImport.dryRun')}</Button>
+          <Button size="sm" disabled={loading || !canImport} onClick={() => void runImport(false)}><DownloadCloud className="mr-1 h-3.5 w-3.5" />{t('settings.browserImport.import')}</Button>
+          <Button size="sm" variant="outline" disabled={loading || !summary?.rollbackToken} onClick={() => void rollback()}><RotateCcw className="mr-1 h-3.5 w-3.5" />{t('settings.browserImport.rollback')}</Button>
+          <Button size="sm" variant="ghost" disabled={loading || !workspace?.id} onClick={() => void removeImported()}><Trash2 className="mr-1 h-3.5 w-3.5" />{t('settings.browserImport.delete')}</Button>
+        </div>
+        {cookiePreferred && !scopedCookies ? <p className="text-xs text-muted-foreground">{t('settings.browserImport.cookiesSkippedHint')}</p> : null}
+        {profiles.length === 0 && !loading ? <p className="text-sm text-muted-foreground">{t('settings.browserImport.empty')}</p> : <div className="grid gap-2 sm:grid-cols-2">
+          {profiles.map((profile) => <label key={profile.id} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors ${selectedId === profile.id ? 'border-accent/40 bg-accent/5' : 'border-border/50 hover:bg-foreground/5'}`}>
+            <input type="radio" name="browser-profile" className="mt-1 accent-accent" checked={selectedId === profile.id}
+              disabled={loading || profileBound || profile.state === 'locked' || profile.state === 'unsupported'} onChange={() => setSelectedId(profile.id)} />
+            <span className="min-w-0 text-sm"><span className="block truncate font-medium">{profile.name}</span>
+              <span className="mt-1 block text-xs text-muted-foreground">{profile.family} · {t(STATE_KEYS[profile.state])}</span>
+              {profile.recommended ? <span className="mt-1 block text-xs text-accent">{t('settings.browserImport.recommended')}</span> : null}
+            </span>
+          </label>)}
+        </div>}
+        {summary ? <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="browser-profile-import-summary" aria-live="polite">
+          {[
+            ['onboarding.environment.browserImportBookmarks', summary.counts.bookmarks],
+            ['onboarding.environment.browserImportHistory', summary.counts.history],
+            ['settings.browserImport.consentCookies', summary.counts.cookies],
+            ['settings.browserImport.skipped', summary.counts.skipped],
+          ].map(([key, count]) => <div key={key} className="rounded-lg bg-foreground/5 px-3 py-2"><span className="block text-lg font-semibold tabular-nums">{count}</span><span className="text-[11px] text-muted-foreground">{t(String(key))}</span></div>)}
+        </div> : null}
+      </div> : null}
+      {error ? <p role="alert" className="text-xs text-destructive">{error}</p> : null}
     </section>
   )
 }

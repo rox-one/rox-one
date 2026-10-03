@@ -20,6 +20,7 @@ import type { HandlerDeps } from '../handler-deps'
 import { setTransferableHandler } from './transfer'
 import { assertValidBulkUpdateInput, assertValidBulkUpdatePatch } from '../../sessions/bulk-labels'
 import { getBroInviteService } from '../../collaboration/bro-invite-service.ts'
+import { parseInviteUrl } from '@craft-agent/shared/collaboration'
 import {
   isClaimableLive,
   rpcSessionsActResult,
@@ -396,6 +397,9 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
       case 'revokeShare':
         return sessionManager.revokeShare(sessionId)
       case 'inviteBro': {
+        if (!await sessionManager.getSession(sessionId)) {
+          return { success: false, error: 'invalid', errorCode: 'invalid' }
+        }
         const invited = await getBroInviteService().invite(sessionId, command.role)
         if (!invited.success) {
           return {
@@ -415,8 +419,16 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
       }
       case 'revokeBroInvite':
         return getBroInviteService().revoke(command.joinKey)
-      case 'joinBroInvite':
-        return getBroInviteService().join(command.url)
+      case 'joinBroInvite': {
+        const parsed = parseInviteUrl(command.url)
+        if (!parsed) return { ok: false, error: 'invalid' }
+        // An invite must not be consumed if its session has been deleted.
+        // Resolve the target from the URL, independently of the caller's page.
+        const targetSession = await sessionManager.getSession(parsed.sessionId)
+        if (!targetSession) return { ok: false, error: 'invalid' }
+        const joined = await getBroInviteService().join(command.url)
+        return joined.ok ? { ...joined, workspaceId: targetSession.workspaceId } : joined
+      }
       case 'listBroPresence':
         return getBroInviteService().listPresence(sessionId)
       case 'refreshTitle':

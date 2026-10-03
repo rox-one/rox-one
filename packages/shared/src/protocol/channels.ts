@@ -820,6 +820,7 @@ export const RPC_CHANNELS = {
     IMPORT: 'browserProfile:import',
     ROLLBACK: 'browserProfile:rollback',
     DELETE: 'browserProfile:delete',
+    DATA_AUTO_IMPORT: 'browserProfile:dataAutoImport',
     COOKIE_AUTO_STATUS: 'browserProfile:cookieAutoStatus',
     COOKIE_AUTO_SET: 'browserProfile:cookieAutoSet',
     COOKIE_AUTO_RUN: 'browserProfile:cookieAutoRun',

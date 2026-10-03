@@ -91,6 +91,7 @@ export const CHANNEL_MAP = {
   foreignAutoImportSet: invoke(RPC_CHANNELS.sessions.FOREIGN_AUTO_SET),
   discoverBrowserProfiles: invoke(RPC_CHANNELS.browserProfile.DISCOVER),
   importBrowserProfile: invoke(RPC_CHANNELS.browserProfile.IMPORT),
+  browserDataAutoImport: invoke(RPC_CHANNELS.browserProfile.DATA_AUTO_IMPORT),
   rollbackBrowserProfileImport: invoke(RPC_CHANNELS.browserProfile.ROLLBACK),
   deleteImportedBrowserProfile: invoke(RPC_CHANNELS.browserProfile.DELETE),
   browserCookieAutoStatus: invoke(RPC_CHANNELS.browserProfile.COOKIE_AUTO_STATUS),

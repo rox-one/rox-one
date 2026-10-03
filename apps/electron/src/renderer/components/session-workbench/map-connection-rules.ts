@@ -20,14 +20,16 @@ export type MapConnectionRejectReason =
   | 'unknown'
   | 'duplicate'
   | 'cycle'
+  | 'annotation'
+  | 'output'
 
 export type MapConnectionVerdict =
-  | { ok: true; kind: MapEdgeKind; source: string; target: string }
+  | { ok: true; kind: MapEdgeKind; source: string; target: string; sourceHandle?: string; targetHandle?: string }
   | { ok: false; reason: MapConnectionRejectReason }
 
 export type MapConnectionContext = {
-  draftNodes: ReadonlyArray<Pick<SessionDraftNode, 'id'>>
-  draftEdges: ReadonlyArray<Pick<SessionDraftEdge, 'source' | 'target' | 'kind'>>
+  draftNodes: ReadonlyArray<Pick<SessionDraftNode, 'id'> & Partial<Pick<SessionDraftNode, 'kind' | 'role'>>>
+  draftEdges: ReadonlyArray<Pick<SessionDraftEdge, 'source' | 'target' | 'kind' | 'sourceHandle' | 'targetHandle'>>
   sceneIds: ReadonlySet<string>
 }
 
@@ -41,7 +43,7 @@ export function draftEdgeKind(edge: Pick<SessionDraftEdge, 'kind'>): MapEdgeKind
  * regardless of the drag direction.
  */
 export function classifyMapConnection(
-  connection: { source?: string | null; target?: string | null },
+  connection: { source?: string | null; target?: string | null; sourceHandle?: string | null; targetHandle?: string | null },
   ctx: MapConnectionContext,
 ): MapConnectionVerdict {
   const source = connection.source ?? ''
@@ -57,13 +59,25 @@ export function classifyMapConnection(
   if (sourceIsScene && targetIsScene) return { ok: false, reason: 'scene-scene' }
   if (source.startsWith('br_') || target.startsWith('br_')) return { ok: false, reason: 'branch' }
 
+  const sourceDraft = ctx.draftNodes.find((node) => node.id === source)
+  const targetDraft = ctx.draftNodes.find((node) => node.id === target)
+  if ([sourceDraft, targetDraft].some((node) => node?.kind === 'annotation_frame' || node?.role === 'frame' || node?.role === 'group')) {
+    return { ok: false, reason: 'annotation' }
+  }
+  // An output is a workflow sink. Context links may still attach it to a scene.
+  if (sourceIsDraft && targetIsDraft && sourceDraft?.kind === 'output') return { ok: false, reason: 'output' }
+
   if (sourceIsDraft && targetIsDraft) {
     const steps = ctx.draftEdges.filter((edge) => draftEdgeKind(edge) === 'step')
-    if (steps.some((edge) => edge.source === source && edge.target === target)) {
+    if (steps.some((edge) => edge.source === source && edge.target === target && (edge.sourceHandle ?? '') === (connection.sourceHandle ?? '') && (edge.targetHandle ?? '') === (connection.targetHandle ?? ''))) {
       return { ok: false, reason: 'duplicate' }
     }
     if (wouldCreateDraftEdgeCycle(steps, { source, target })) return { ok: false, reason: 'cycle' }
-    return { ok: true, kind: 'step', source, target }
+    return {
+      ok: true, kind: 'step', source, target,
+      ...(connection.sourceHandle ? { sourceHandle: connection.sourceHandle } : {}),
+      ...(connection.targetHandle ? { targetHandle: connection.targetHandle } : {}),
+    }
   }
 
   if ((sourceIsScene && targetIsDraft) || (sourceIsDraft && targetIsScene)) {
@@ -90,6 +104,10 @@ export function connectionRejectMessageKey(reason: MapConnectionRejectReason): s
       return 'entityView.mapConnectCycle'
     case 'duplicate':
       return 'entityView.mapConnectDuplicate'
+    case 'annotation':
+      return 'entityView.mapConnectAnnotation'
+    case 'output':
+      return 'entityView.mapConnectOutput'
     case 'branch':
     case 'self':
     case 'unknown':

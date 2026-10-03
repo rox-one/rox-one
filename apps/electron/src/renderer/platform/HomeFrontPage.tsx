@@ -29,6 +29,8 @@ import { cn } from '@/lib/utils'
 import {
   DEFAULT_HOME_LAYOUT,
   HOME_GRID_COLUMNS,
+  HOME_GRID_GAP,
+  HOME_GRID_ROW_HEIGHT,
   HOME_WIDGET_DEFAULT_SIZE,
   HOME_WIDGET_GROUPS,
   HOME_WIDGET_IDS,
@@ -46,6 +48,7 @@ import {
   resizeWidget,
   shiftWidget,
   widgetSpan,
+  widgetRowSpan,
   type HomeDashboardLayout,
   type HomeWidgetId,
   type HomeWidgetPlacement,
@@ -150,7 +153,7 @@ function SortableWidget({
       data-home-cell={placement.id}
       data-home-size={placement.size}
       className={cn('min-w-0', isDragging && 'relative z-10 opacity-80')}
-      style={{ gridColumn: `span ${span} / span ${span}`, transform: CSS.Translate.toString(transform), transition }}
+      style={{ gridColumn: `span ${span} / span ${span}`, gridRow: `span ${widgetRowSpan(placement.size)}`, transform: CSS.Translate.toString(transform), transition }}
     >
       <WidgetBoundary
         fallback={
@@ -160,7 +163,7 @@ function SortableWidget({
           </div>
         }
       >
-        <Widget edit={edit} span={span} />
+        <Widget edit={edit} span={span} size={placement.size} />
       </WidgetBoundary>
     </div>
   )
@@ -482,8 +485,8 @@ export function HomeFrontPage() {
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
               <SortableContext items={ids} strategy={rectSortingStrategy}>
                 <div
-                  className="grid gap-3"
-                  style={{ gridTemplateColumns: `repeat(${HOME_GRID_COLUMNS}, minmax(0, 1fr))`, gridAutoRows: '232px' }}
+                  className="grid"
+                  style={{ gridTemplateColumns: `repeat(${HOME_GRID_COLUMNS}, minmax(0, 1fr))`, gridAutoRows: `${HOME_GRID_ROW_HEIGHT}px`, gap: HOME_GRID_GAP }}
                   data-home-grid=""
                 >
                   {layout.widgets.map((placement) => (
@@ -501,7 +504,7 @@ export function HomeFrontPage() {
                       type="button"
                       onClick={() => setPickerOpen(true)}
                       className="rox-home-add-cell flex min-w-0 flex-col items-center justify-center gap-1 rounded-[10px] text-[13px] font-bold text-muted-foreground hover:text-foreground"
-                      style={{ gridColumn: `span ${widgetSpan('S', width)} / span ${widgetSpan('S', width)}` }}
+                      style={{ gridColumn: `span ${widgetSpan('S', width)} / span ${widgetSpan('S', width)}`, gridRow: `span ${widgetRowSpan('S')}` }}
                     >
                       <Plus className="h-5 w-5" />
                       {t('workbench.home.edit.addWidget')}

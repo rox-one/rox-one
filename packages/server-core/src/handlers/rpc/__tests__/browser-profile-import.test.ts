@@ -6,6 +6,7 @@ import type { HandlerDeps } from '../../handler-deps'
 
 mock.module('@craft-agent/shared/config', () => ({
   getWorkspaceByNameOrId: (id: string) => (id === 'missing' ? null : { id, rootPath: '/tmp/rox-issue15-ws' }),
+  getWorkspaces: () => [],
 }))
 
 type Handler = (ctx: unknown, ...args: unknown[]) => unknown

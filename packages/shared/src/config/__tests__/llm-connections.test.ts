@@ -144,11 +144,11 @@ describe('getDefaultModelForConnection', () => {
     expect(defaultModel).toBe('')
   })
 
-  it('omp defaults to the public ROX catalog with rox/standard as default', () => {
+  it('omp exposes one R1 Max model by default', () => {
     const models = getDefaultModelsForConnection('omp')
     const ids = models.map(m => typeof m === 'string' ? m : m.id)
-    expect(ids).toEqual(['rox/explore', 'rox/standard', 'rox/max', 'rox/vision', 'rox/fast'])
-    expect(getDefaultModelForConnection('omp')).toBe('rox/standard')
+    expect(ids).toEqual(['rox/r1-max'])
+    expect(getDefaultModelForConnection('omp')).toBe('rox/r1-max')
   })
 })
 

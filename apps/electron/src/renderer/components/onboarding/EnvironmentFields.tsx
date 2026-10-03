@@ -29,6 +29,7 @@ const BROWSER_KEYS: Record<BrowserImportCategory, string> = {
   bookmarks: 'onboarding.environment.browserImportBookmarks',
   history: 'onboarding.environment.browserImportHistory',
   cookies: 'onboarding.environment.browserImportCookies',
+  credentials: 'onboarding.environment.browserImportCredentials',
   extensions: 'onboarding.environment.browserImportExtensions',
 }
 

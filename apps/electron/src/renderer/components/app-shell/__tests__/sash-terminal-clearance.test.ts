@@ -8,8 +8,8 @@ const constants = readFileSync(join(import.meta.dir, '../panel-constants.ts'), '
 
 describe('sash terminal clearance', () => {
   it('stops resize sashes from drawing through the top bar gap and bottom terminal', () => {
-    // One-surface shell: the stack sits flush under the top bar.
-    expect(constants).toContain('export const PANEL_STACK_TOP_INSET = 0')
+    // Rounded shell: stack and resize sashes share the same 4px top inset.
+    expect(constants).toContain('export const PANEL_STACK_TOP_INSET = 4')
     expect(constants).toContain('export const PANEL_STACK_VERTICAL_OVERFLOW = 0')
 
     expect(appShell).toContain('bottomTerminalOpenAtom')

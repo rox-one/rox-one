@@ -10,6 +10,7 @@ import type { LlmConnection } from '@craft-agent/shared/config/llm-connections'
 import {
   formatTokenCount,
   groupConnectionsByProvider,
+  getConnectionModelsForPicker,
   stripPiPrefixForDisplay,
 } from '../model-picker-helpers'
 import { ROX_VISIBLE_TERMS } from '@craft-agent/shared/identity'
@@ -98,6 +99,22 @@ function conn(
     ...extras,
   }
 }
+
+describe('getConnectionModelsForPicker', () => {
+  test('reduces a stale bundled Rox catalog to R1 Max', () => {
+    const rox = conn('rox-kimi', 'omp', { models: ['rox/explore', 'rox/standard', 'rox/max', 'rox/vision', 'rox/fast'] })
+    const models = getConnectionModelsForPicker(rox)
+    expect(models.map((model) => typeof model === 'string' ? model : model.id)).toEqual(['rox/r1-max'])
+    expect(typeof models[0] !== 'string' && models[0].name).toBe('Rox R1 Max')
+  })
+
+  test('preserves added providers and custom OMP model catalogs', () => {
+    const anthropic = conn('anthropic', 'anthropic', { models: ['claude-opus-4-8', 'claude-sonnet-5'] })
+    const customOmp = conn('private-runtime', 'omp', { models: ['private/custom'] })
+    expect(getConnectionModelsForPicker(anthropic)).toEqual(anthropic.models!)
+    expect(getConnectionModelsForPicker(customOmp)).toEqual(customOmp.models!)
+  })
+})
 
 describe('groupConnectionsByProvider', () => {
   test('returns empty array for empty input', () => {

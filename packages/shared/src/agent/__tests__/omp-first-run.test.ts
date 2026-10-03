@@ -137,7 +137,7 @@ describe('provisionOmpRoxConfig', () => {
     expect(models).toContain('https://api.rox.one/v1');
     expect(models).toContain('rox/standard');
     expect(models).not.toContain('kimi-K3');
-    expect(config).toMatch(/modelRoles:[\s\S]*default:\s*rox\/rox\/standard/);
+    expect(config).toMatch(/modelRoles:[\s\S]*default:\s*rox\/rox\/r1-max/);
   });
 
   it('does not overwrite an existing models.yml', () => {
@@ -179,7 +179,7 @@ describe('private public Rox runtime catalog', () => {
     writeFileSync(join(userAgent, 'config.yml'), originalConfig);
     const runtime = prepareOmpRoxRuntimeConfig({ runtimeRoot: join(home, 'private-runs'), apiKey: 'private-fixture-secret' });
     const models = readFileSync(join(runtime.agentDir, 'models.yml'), 'utf8');
-    expect([...models.matchAll(/- id: (.+)/g)].map(match => match[1])).toEqual(['rox/explore', 'rox/standard', 'rox/max', 'rox/vision', 'rox/fast']);
+    expect([...models.matchAll(/- id: (.+)/g)].map(match => match[1])).toEqual(['rox/r1-max', 'rox/explore', 'rox/standard', 'rox/max', 'rox/vision', 'rox/fast']);
     expect(models).not.toContain('private-fixture-secret');
     expect(models).not.toContain('kimi-K3');
     expect(runtime.env).toEqual({ PI_CODING_AGENT_DIR: runtime.agentDir, OMP_PROFILE: 'default', ROX_API_KEY: 'private-fixture-secret' });

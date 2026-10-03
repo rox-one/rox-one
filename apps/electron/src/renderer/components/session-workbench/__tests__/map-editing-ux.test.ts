@@ -34,6 +34,27 @@ const noteB = createSessionDraftNode({ id: 'draft_b', kind: 'model', position: {
 const sceneIds = new Set(['scn_1', 'scn_2'])
 
 describe('map connection validation', () => {
+  test('frames and groups are annotations, while an output accepts steps without starting another', () => {
+    const output = createSessionDraftNode({ id: 'out', kind: 'output', position: { x: 0, y: 0 } })
+    const frame = createSessionDraftNode({ id: 'frame', kind: 'annotation_frame', role: 'frame', position: { x: 0, y: 0 } })
+    const ctx = { draftNodes: [noteA, output, frame], draftEdges: [], sceneIds }
+    expect(classifyMapConnection({ source: noteA.id, target: output.id }, ctx).ok).toBe(true)
+    expect(classifyMapConnection({ source: output.id, target: noteA.id }, ctx)).toEqual({ ok: false, reason: 'output' })
+    expect(classifyMapConnection({ source: noteA.id, target: frame.id }, ctx)).toEqual({ ok: false, reason: 'annotation' })
+    expect(classifyMapConnection({ source: frame.id, target: 'scn_1' }, ctx)).toEqual({ ok: false, reason: 'annotation' })
+  })
+
+  test('condition branches keep their distinct ports through storage and workflow export', () => {
+    const condition = createSessionDraftNode({ id: 'decision', kind: 'condition', position: { x: 0, y: 0 } })
+    const first = createSessionDraftEdge({ source: condition.id, target: noteA.id, sourceHandle: 'decision:true' })
+    const second = createSessionDraftEdge({ source: condition.id, target: noteA.id, sourceHandle: 'decision:false' })
+    const ctx = { draftNodes: [condition, noteA], draftEdges: [first], sceneIds }
+    expect(classifyMapConnection(first, ctx)).toEqual({ ok: false, reason: 'duplicate' })
+    expect(classifyMapConnection(second, ctx).ok).toBe(true)
+    const stored = parseSessionDraftGraph(serializeSessionDraftGraph('s1', { nodes: ctx.draftNodes, edges: [first, second] }), 's1')
+    expect(stored.edges.map((edge) => edge.sourceHandle)).toEqual(['decision:true', 'decision:false'])
+    expect(draftGraphToSpec(stored).edges.map((edge) => edge.sourcePort)).toEqual(['decision:true', 'decision:false'])
+  })
   test('draft → draft is a step edge; cycles and duplicates are refused', () => {
     const ctx = { draftNodes: [noteA, noteB], draftEdges: [], sceneIds }
     expect(classifyMapConnection({ source: 'draft_a', target: 'draft_b' }, ctx)).toEqual({
@@ -97,8 +118,8 @@ describe('map connection validation', () => {
     expect(draftGraphToSpec(parsed).edges).toHaveLength(1)
   })
 
-  test('editor uses loose connection mode with hover validation and no drop-to-fork', () => {
-    expect(editor).toContain('connectionMode={ConnectionMode.Loose}')
+  test('editor uses directed connection mode with hover validation and no drop-to-fork', () => {
+    expect(editor).toContain('connectionMode={ConnectionMode.Strict}')
     expect(editor).toContain('isValidConnection={isValidConnection}')
     expect(editor).toContain('connectionLineComponent={MapConnectionLine}')
     expect(editor).not.toContain('onConnectEnd')
@@ -167,12 +188,13 @@ describe('scene node visuals', () => {
 })
 
 describe('map menus and inspector', () => {
-  test('one docked inspector, node-only context menu and a canvas «+» picker', () => {
+  test('one overlay inspector, a node context menu and a canvas «+» / right-click picker', () => {
     expect(editor).toContain('data-testid="session-canvas-inspector"')
     expect(editor).toContain('<aside')
     expect(editor).not.toContain('ContextMenuTrigger')
     expect(editor).toContain('data-testid="map-add-node"')
     expect(editor).toContain('data-testid="map-node-picker"')
+    expect(editor).toContain('onPaneContextMenu=')
     expect(editor).toContain('openPicker(event.clientX, event.clientY)')
     expect(editor).toContain("t('entityView.workbenchRewriteBranch')")
     // «Рассылка» only from the inspector.

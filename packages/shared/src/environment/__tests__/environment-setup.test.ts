@@ -41,6 +41,19 @@ describe('environment questionnaire', () => {
     ])
   })
 
+  it('preselects import preferences without recording an access grant or changing saved opt-outs', () => {
+    const dir = tmp()
+    const fresh = loadEnvironmentPrefs(dir)
+    expect(fresh.browserImport.status).toBe('unanswered')
+    expect(fresh.browserImport.value).toEqual(['bookmarks', 'history', 'cookies', 'credentials', 'extensions'])
+
+    saveEnvironmentPrefs({ browserImport: answerChoice([]) }, dir)
+    const reopened = loadEnvironmentPrefs(dir)
+    expect(reopened.browserImport).toEqual({ status: 'answered', value: [] })
+    saveEnvironmentPrefs({ notifications: answerChoice(true) }, dir)
+    expect(loadEnvironmentPrefs(dir).browserImport.value).toEqual([])
+  })
+
   it('lets the user skip optional voice and browser import without losing prior answers', () => {
     const dir = tmp()
     const saved = saveEnvironmentPrefs({

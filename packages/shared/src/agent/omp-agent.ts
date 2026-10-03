@@ -331,6 +331,8 @@ export class OmpAgent extends BaseAgent {
    * retry after a failed startup spawns fresh.
    */
   private spawnPromise: Promise<void> | null = null;
+  /** A mode change must finish retiring its child before another turn claims the event queue. */
+  private permissionModeRespawnPromise: Promise<void> | null = null;
   private modelSelectionPromise: Promise<void> | null = null;
   private rpcTransport = new OmpRpcTransport();
   private supportsRpcV2 = false;
@@ -1998,6 +2000,10 @@ export class OmpAgent extends BaseAgent {
     attachments?: FileAttachment[],
     _options?: ChatOptions,
   ): AsyncGenerator<AgentEvent> {
+    // Permission changes retire the child asynchronously. Wait before claiming
+    // this turn so its predecessor's intentional exit cannot fail the new turn
+    // or leave ensureSubprocess using a child whose stdin is already closed.
+    if (this.permissionModeRespawnPromise) await this.permissionModeRespawnPromise;
     // Idle point between turns: pick up source-proxy changes since spawn.
     await this.refreshHostToolsFromPool();
     // BaseAgent.chat does not serialize concurrent chat() calls, and two
@@ -2237,9 +2243,11 @@ export class OmpAgent extends BaseAgent {
     // next chat() respawns with the correct flag. (Same constraint as model
     // pinning: no live-migration without respawn — documented in file header.)
     const wantAutoApprove = mode === 'allow-all';
-    if (this.subprocess && this.autoApproveAtSpawn !== wantAutoApprove) {
+    if (this.subprocess && this.autoApproveAtSpawn !== wantAutoApprove && !this.permissionModeRespawnPromise) {
       this.debug(`Permission mode flip requires OMP respawn (${this.autoApproveAtSpawn} → ${wantAutoApprove})`);
-      void this.killSubprocessGracefully();
+      this.permissionModeRespawnPromise = this.killSubprocessGracefully().finally(() => {
+        this.permissionModeRespawnPromise = null;
+      });
     }
   }
 

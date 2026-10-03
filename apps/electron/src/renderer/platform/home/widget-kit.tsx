@@ -108,7 +108,7 @@ export function WidgetFrame({
           </div>
         ) : null}
       </header>
-      <div className={cn('relative min-h-0 flex-1 overflow-hidden', edit && 'pointer-events-none select-none opacity-70')}>{children}</div>
+      <div className={cn('relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto', edit && 'pointer-events-none select-none opacity-70')}>{children}</div>
     </section>
   )
 }

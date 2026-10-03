@@ -95,6 +95,8 @@ export interface LinkItem {
   hasUnseen?: boolean
   /** Optional hover tooltip (e.g. saved view descriptions). */
   tooltip?: string
+  /** Sibling row actions, never nested inside the navigation button. */
+  actions?: React.ReactNode
 }
 
 export interface SeparatorItem {
@@ -120,6 +122,7 @@ interface LeftSidebarProps {
   focusedItemId?: string | null
   /** Whether this is a nested sidebar (child of expandable item) */
   isNested?: boolean
+  onExpand?: (link: LinkItem) => void
 }
 
 // Stagger only small trees. A 500-row section must not pay sequential delays.
@@ -182,10 +185,12 @@ const itemVariants: Variants = {
  * - Uses @dnd-kit with DragOverlay portaled to document.body (no clipping)
  * - Two-phase drop animation: overlay fades out, ghost fades in
  */
-export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested }: LeftSidebarProps) {
+export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested, onExpand }: LeftSidebarProps) {
+  const { t } = useTranslation()
+  const reduceMotion = useReducedMotion()
   // For nested sidebars, wrap in motion container for stagger effect
-  const NavWrapper = isNested ? motion.nav : 'nav'
-  const navProps = isNested ? {
+  const NavWrapper = isNested && !reduceMotion ? motion.nav : 'nav'
+  const navProps = isNested && !reduceMotion ? {
     variants: nestedContainerVariants(links.length),
     initial: 'hidden',
     animate: 'visible',
@@ -200,7 +205,7 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
           isNested ? "pl-5 pr-0 relative" : "px-2"
         )}
         role="navigation"
-        aria-label={isNested ? "Sub navigation" : "Main navigation"}
+        aria-label={t('rail.title')}
         {...navProps}
       >
         {/* Vertical line for nested items - 4px left of chevron center */}
@@ -223,6 +228,17 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
           const link = item
           const itemProps = getItemProps?.(link.id)
 
+          if (isCollapsed) {
+            return (
+              <button key={link.id} type="button" title={link.title} aria-label={link.title}
+                aria-current={link.variant === 'default' ? 'page' : undefined}
+                onClick={() => { onExpand?.(link); link.onClick?.() }}
+                className={cn('group mx-auto grid size-9 place-items-center rounded-xl outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring', link.variant === 'default' ? 'bg-foreground/[0.09]' : 'hover:bg-foreground/[0.06]')}>
+                <span className="flex size-5 items-center justify-center [&>svg]:size-5">{renderIcon(link)}</span>
+              </button>
+            )
+          }
+
           const content = link.expandable ? (
             <ExpandableSection
               link={link}
@@ -233,17 +249,15 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
             />
           ) : (
             <div className="group/section">
-              {wrapWithContextMenu(link, (
-                <SidebarButton
-                  link={link}
-                  itemProps={itemProps}
-                />
-              ))}
+              <div className="flex min-w-0 items-center gap-1">
+                <div className="min-w-0 flex-1">{wrapWithContextMenu(link, <SidebarButton link={link} itemProps={itemProps} />)}</div>
+                {link.actions}
+              </div>
             </div>
           )
 
           // For nested items, wrap in motion.div for stagger animation
-          return isNested ? (
+          return isNested && !reduceMotion ? (
             <motion.div key={link.id} variants={itemVariants}>
               {content}
             </motion.div>
@@ -324,10 +338,10 @@ function ExpandableSection({
 
   const navButton = (
     <SidebarButton
-      link={link}
+      link={navParent ? { ...link, onClick: () => { link.onClick?.(); handleToggle() } } : link}
       itemProps={itemProps}
       groupDisclosure={!navParent}
-      sectionId={!navParent ? sectionId : undefined}
+      sectionId={sectionId}
       toggleRef={!navParent ? toggleRef : undefined}
       onGroupToggle={!navParent ? handleToggle : undefined}
       groupAriaLabel={groupAriaLabel}
@@ -350,6 +364,7 @@ function ExpandableSection({
           <div className="min-w-0 flex-1">
             {wrapWithContextMenu(link, navButton)}
           </div>
+          {link.actions}
         </div>
       ) : (
         wrapWithContextMenu(link, navButton)
@@ -517,16 +532,7 @@ function SortableStatusList({ items, onReorder, getItemProps, focusedItemId, tra
             <div className="my-1 ml-2" aria-hidden="true">
               <div className="h-px bg-foreground/5" />
             </div>
-            <div className="grid gap-0.5">
-              {trailingItems.map(item => (
-                <div key={item.id} className="group/section">
-                  <SidebarButton
-                    link={item}
-                    itemProps={getItemProps?.(item.id)}
-                  />
-                </div>
-              ))}
-            </div>
+            <LeftSidebar links={trailingItems} isCollapsed={false} getItemProps={getItemProps} focusedItemId={focusedItemId} />
           </>
         )}
       </div>
@@ -577,13 +583,15 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
           if (!isOverlay && itemProps?.ref) itemProps.ref(el)
         }}
         onClick={isOverlay ? undefined : (groupDisclosure ? onGroupToggle : link.onClick)}
+        type="button"
         title={link.tooltip}
+        aria-current={link.variant === 'default' ? 'page' : undefined}
         data-tutorial={link.dataTutorial}
-        aria-expanded={groupDisclosure ? !!link.expanded : undefined}
-        aria-controls={groupDisclosure ? sectionId : undefined}
+        aria-expanded={link.expandable ? !!link.expanded : undefined}
+        aria-controls={link.expandable ? sectionId : undefined}
         aria-label={groupAriaLabel}
         className={cn(
-          "group flex w-full items-center gap-2 rounded-[6px] text-[13px] select-none outline-none",
+          "group flex w-full min-w-0 items-center gap-2 rounded-lg text-[13px] select-none outline-none transition-colors",
           "focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring",
           // Compact mode: 4px less total height (py-[3px] vs py-[5px])
           link.compact ? "py-[3px]" : "py-[5px]",
@@ -603,7 +611,7 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
         <span className="relative h-3.5 w-3.5 shrink-0 flex items-center justify-center">
           {renderIcon(link)}
         </span>
-        {link.title}
+        <span className="min-w-0 truncate">{link.title}</span>
         {/* After-title element: type indicator icon, right-aligned before count badge, revealed on hover */}
         {link.afterTitle && (
           <span data-touch-reveal="true" className="ml-auto opacity-100">
@@ -635,6 +643,14 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
  * Helper to render icon - either component (function/forwardRef) or React element.
  * Colors are always applied via inline style (resolved CSS color strings from EntityColor).
  */
+const SIDEBAR_ICON_COLORS: Record<string, string> = {
+  'nav:allSessions': '#818cf8', 'nav:projects': '#eab308', 'nav:pages': '#38bdf8',
+  'nav:tasks': '#34d399', 'nav:memory': '#a78bfa', 'nav:meetings': '#fb7185',
+  'nav:sources': '#22d3ee', 'nav:skills': '#fbbf24', 'nav:notes': '#c084fc',
+  'nav:automations': '#f97316', 'nav:connections': '#2dd4bf', 'nav:labels': '#f472b6',
+  'nav:flagged': '#fbbf24', 'nav:archived': '#94a3b8',
+}
+
 function renderIcon(link: LinkItem) {
   const isComponent = typeof link.icon === 'function' ||
     (typeof link.icon === 'object' && link.icon !== null && 'render' in link.icon)
@@ -644,7 +660,7 @@ function renderIcon(link: LinkItem) {
   // Lucide components are always colorable; ReactNode icons check iconColorable
   // Default to true for backwards compatibility (most icons are colorable)
   const applyColor = link.iconColorable !== false
-  const colorStyle = applyColor ? { color: link.iconColor || defaultColor } : undefined
+  const colorStyle = applyColor ? { color: link.iconColor || SIDEBAR_ICON_COLORS[link.id] || defaultColor } : undefined
 
   if (isComponent) {
     const Icon = link.icon as React.ComponentType<{ className?: string; style?: React.CSSProperties }>

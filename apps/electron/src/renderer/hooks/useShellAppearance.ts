@@ -4,14 +4,15 @@ import { readDesktopAppearance } from '@/lib/desktop-appearance'
 
 function applySnapshot(snapshot: ZenShellSnapshot): void {
   const root = document.documentElement
+  // Keep the material fallback even when shell styling is disabled, so an
+  // explicit opt-out cannot leave the default glass chrome visible.
+  root.setAttribute('data-shell-material', snapshot.material)
   if (snapshot.enabled) {
     root.setAttribute('data-shell-style', 'zen')
-    root.setAttribute('data-shell-material', snapshot.material)
   } else {
     if (root.getAttribute('data-shell-style') === 'zen') {
       root.removeAttribute('data-shell-style')
     }
-    root.removeAttribute('data-shell-material')
   }
 }
 

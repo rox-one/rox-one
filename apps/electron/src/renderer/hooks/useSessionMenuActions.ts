@@ -30,6 +30,7 @@ import { toast } from 'sonner'
 import { navigate, routes } from '@/lib/navigate'
 import { extractLabelId, toggleLabelInList } from '@craft-agent/shared/labels'
 import type { SessionMeta } from '@/atoms/sessions'
+import { createSessionLink, copySessionLink, presentSessionLink, requestJoinSession, SessionLinkError, type SessionLinkKind } from '@/lib/session-sharing'
 
 export interface UseSessionMenuActionsOptions {
   item: SessionMeta
@@ -58,7 +59,7 @@ export interface SessionMenuActions {
   inviteBro: () => Promise<void>
   /** Save a portable session bundle via the native save dialog. */
   exportSession: () => Promise<void>
-  /** Open a shared session URL from the clipboard, or explain how to join. */
+  /** Open an explicit URL entry dialog for collaboration invites or viewer links. */
   joinSession: () => Promise<void>
 }
 
@@ -133,21 +134,25 @@ export function useSessionMenuActions({
     onLabelsChange(next)
   }, [onLabelsChange])
 
-  const share = React.useCallback(async () => {
-    const result = await window.electronAPI.sessionCommand(sessionId, { type: 'shareToViewer' }) as { success: boolean; url?: string; error?: string } | undefined
-    if (result?.success && result.url) {
-      await navigator.clipboard.writeText(result.url)
-      toast.success(t('toast.linkCopied'), {
-        description: result.url,
-        action: {
-          label: t('common.open'),
-          onClick: () => window.electronAPI.openUrl(result.url!),
-        },
+  const publishLink = React.useCallback(async (kind: SessionLinkKind) => {
+    const progress = toast.loading(t('common.loading'))
+    try {
+      const link = await createSessionLink(window.electronAPI.sessionCommand, sessionId, kind)
+      const copied = await copySessionLink(link.url, text => navigator.clipboard.writeText(text))
+      presentSessionLink({ ...link, copied })
+    } catch (error) {
+      const membership = error instanceof SessionLinkError && error.code === 'membership_required'
+      const invalid = error instanceof SessionLinkError && error.code === 'invalid'
+      toast.error(t(kind === 'invite' ? 'toast.failedToInvite' : 'toast.failedToShare'), {
+        description: membership ? t('sessionSharing.error.membership_required') : invalid ? t('sessionSharing.error.invalid') : error instanceof Error && error.message ? error.message : t('toast.unknownError'),
+        action: membership ? { label: t('sidebar.settings'), onClick: () => navigate(routes.view.settings('account')) } : undefined,
       })
-    } else {
-      toast.error(t('toast.failedToShare'), { description: result?.error || t('toast.unknownError') })
+    } finally {
+      toast.dismiss(progress)
     }
   }, [sessionId, t])
+
+  const share = React.useCallback(() => publishLink('share'), [publishLink])
 
   const showInFinder = React.useCallback(() => {
     window.electronAPI.sessionCommand(sessionId, { type: 'showInFinder' })
@@ -176,48 +181,44 @@ export function useSessionMenuActions({
 
   const openSharedInBrowser = React.useCallback(() => {
     if (!sharedUrl) return
-    window.electronAPI.openUrl(sharedUrl)
-  }, [sharedUrl])
+    void window.electronAPI.openUrl(sharedUrl).catch(() => toast.error(t('sessionSharing.error.failed')))
+  }, [sharedUrl, t])
 
   const copySharedLink = React.useCallback(async () => {
     if (!sharedUrl) return
-    await navigator.clipboard.writeText(sharedUrl)
-    toast.success(t('toast.linkCopied'))
+    const copied = await copySessionLink(sharedUrl, text => navigator.clipboard.writeText(text))
+    presentSessionLink({ kind: 'share', url: sharedUrl, copied })
   }, [sharedUrl, t])
 
   const updateShare = React.useCallback(async () => {
-    const result = await window.electronAPI.sessionCommand(sessionId, { type: 'updateShare' })
-    if (result && 'success' in result && result.success) {
-      toast.success(t('chat.shareUpdated'))
-    } else {
-      const errorMsg = result && 'error' in result ? result.error : undefined
-      toast.error(t('chat.failedToUpdateShare'), { description: errorMsg })
+    try {
+      const result = await window.electronAPI.sessionCommand(sessionId, { type: 'updateShare' })
+      if (result && 'success' in result && result.success) {
+        toast.success(t('chat.shareUpdated'))
+      } else {
+        const errorMsg = result && 'error' in result ? result.error : undefined
+        toast.error(t('chat.failedToUpdateShare'), { description: errorMsg })
+      }
+    } catch (error) {
+      toast.error(t('chat.failedToUpdateShare'), { description: error instanceof Error ? error.message : t('toast.unknownError') })
     }
   }, [sessionId, t])
 
   const revokeShare = React.useCallback(async () => {
-    const result = await window.electronAPI.sessionCommand(sessionId, { type: 'revokeShare' })
-    if (result && 'success' in result && result.success) {
-      toast.success(t('chat.sharingStopped'))
-    } else {
-      const errorMsg = result && 'error' in result ? result.error : undefined
-      toast.error(t('chat.failedToStopSharing'), { description: errorMsg })
+    try {
+      const result = await window.electronAPI.sessionCommand(sessionId, { type: 'revokeShare' })
+      if (result && 'success' in result && result.success) {
+        toast.success(t('chat.sharingStopped'))
+      } else {
+        const errorMsg = result && 'error' in result ? result.error : undefined
+        toast.error(t('chat.failedToStopSharing'), { description: errorMsg })
+      }
+    } catch (error) {
+      toast.error(t('chat.failedToStopSharing'), { description: error instanceof Error ? error.message : t('toast.unknownError') })
     }
   }, [sessionId, t])
 
-  const inviteBro = React.useCallback(async () => {
-    const result = await window.electronAPI.sessionCommand(sessionId, { type: 'inviteBro' }) as {
-      success: boolean
-      url?: string
-      error?: string
-    } | undefined
-    if (result?.success && result.url) {
-      await navigator.clipboard.writeText(result.url)
-      toast.success(t('toast.inviteCopied'), { description: result.url })
-    } else {
-      toast.error(t('toast.failedToInvite'), { description: result?.error || t('toast.unknownError') })
-    }
-  }, [sessionId, t])
+  const inviteBro = React.useCallback(() => publishLink('invite'), [publishLink])
 
   const exportSession = React.useCallback(async () => {
     try {
@@ -241,18 +242,8 @@ export function useSessionMenuActions({
   }, [sessionId, t])
 
   const joinSession = React.useCallback(async () => {
-    let candidate = ''
-    try {
-      candidate = (await navigator.clipboard.readText()).trim()
-    } catch {
-      candidate = ''
-    }
-    if (/^https?:\/\//i.test(candidate)) {
-      window.electronAPI.openUrl(candidate)
-      return
-    }
-    toast.info(t('toast.joinNeedsLink'))
-  }, [t])
+    requestJoinSession()
+  }, [])
 
   return {
     appliedLabelIds,

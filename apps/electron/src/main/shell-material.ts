@@ -73,6 +73,7 @@ function clearNativeMaterial(window: BrowserWindow): void {
     } else if (process.platform === 'win32' && typeof window.setBackgroundMaterial === 'function') {
       window.setBackgroundMaterial('none')
     }
+    window.setBackgroundColor(nativeTheme.shouldUseDarkColors ? '#0c0c0d' : '#f4f4f5')
   } catch (error) {
     windowLog.warn('Failed to clear Zen Shell material:', error)
   }
@@ -83,12 +84,14 @@ function applyNativeMaterial(window: BrowserWindow, material: ResolvedShellMater
   try {
     if (material === 'vibrancy' && process.platform === 'darwin') {
       window.setVibrancy('under-window')
+      window.setBackgroundColor('#00000000')
       ;(window as unknown as { setVisualEffectState?: (state: string) => void })
         .setVisualEffectState?.('active')
       return
     }
     if (material === 'mica' && process.platform === 'win32' && typeof window.setBackgroundMaterial === 'function') {
       window.setBackgroundMaterial('mica')
+      window.setBackgroundColor('#00000000')
       return
     }
     clearNativeMaterial(window)
@@ -161,17 +164,20 @@ export function attachZenWindowPolicy(window: BrowserWindow): void {
 }
 
 export function reapplyZenShellOnAllWindows(): void {
-  const enabled = isZenShellEnabled()
   for (const window of BrowserWindow.getAllWindows()) {
-    if (window.isDestroyed()) continue
-    if (enabled) {
-      attachZenWindowPolicy(window)
-      const record = attached.get(window)
-      if (record) dispatch(window, record, { type: 'policy-change' })
-    } else {
-      clearNativeMaterial(window)
-      applyLegacyMaterial(window)
-    }
+    reapplyZenShellOnWindow(window)
+  }
+}
+
+export function reapplyZenShellOnWindow(window: BrowserWindow): void {
+  if (window.isDestroyed()) return
+  if (isZenShellEnabled()) {
+    attachZenWindowPolicy(window)
+    const record = attached.get(window)
+    if (record) dispatch(window, record, { type: 'policy-change' })
+  } else {
+    clearNativeMaterial(window)
+    applyLegacyMaterial(window)
   }
 }
 

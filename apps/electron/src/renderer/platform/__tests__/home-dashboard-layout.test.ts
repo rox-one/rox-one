@@ -14,9 +14,24 @@ import {
   resizeWidget,
   shiftWidget,
   widgetSpan,
+  widgetRowSpan,
+  widgetItemLimit,
+  HOME_GRID_GAP,
+  HOME_GRID_ROW_HEIGHT,
 } from '../home/dashboard-layout'
 
 describe('home dashboard layout', () => {
+  it('increases height and visible items for each size even on a narrow screen', () => {
+    const sizes = ['S', 'M', 'L'] as const
+    const heights = sizes.map((size) => widgetRowSpan(size) * HOME_GRID_ROW_HEIGHT + (widgetRowSpan(size) - 1) * HOME_GRID_GAP)
+    expect(heights).toEqual([232, 354, 476])
+    expect(sizes.map((size) => widgetSpan(size, 500))).toEqual([12, 12, 12])
+    expect(sizes.map((size) => widgetItemLimit(size, 4))).toEqual([4, 7, 10])
+    expect(widgetItemLimit('L', 4, 2)).toBe(20)
+    const saved = normalizeHomeLayout({ version: 2, widgets: [{ id: 'feed', size: 'M' }] })
+    expect(widgetRowSpan(saved.widgets[0]!.size)).toBe(3)
+  })
+
   it('default layout has unique known widgets filling whole 12-column rows at desktop width', () => {
     const ids = DEFAULT_HOME_LAYOUT.widgets.map((w) => w.id)
     expect(new Set(ids).size).toBe(ids.length)

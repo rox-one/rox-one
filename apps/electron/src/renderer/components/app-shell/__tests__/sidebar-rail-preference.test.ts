@@ -33,6 +33,14 @@ function findPersistence(node: ts.Node) {
 }
 findPersistence(shell)
 if (!persist) throw new Error('Actual sidebar persistence absent')
+let ownsPrimaryNavigation = false
+function findNavigationOwner(node: ts.Node) {
+  if (ts.isJsxAttribute(node) && node.name.getText(shell) === 'ownsPrimaryNavigation') {
+    ownsPrimaryNavigation = !node.initializer || (ts.isJsxExpression(node.initializer) && node.initializer.expression?.kind === ts.SyntaxKind.TrueKeyword)
+  }
+  ts.forEachChild(node, findNavigationOwner)
+}
+findNavigationOwner(shell)
 const routes = ['sessions', 'meetings', 'settings', 'home', 'tasks', 'notes', 'projects', 'pages', 'knowledge', 'connections', 'search', 'screen']
 
 describe('actual combined sidebar preference and rail geometry', () => {
@@ -72,7 +80,8 @@ describe('actual combined sidebar preference and rail geometry', () => {
     expect(evaluate(shell, declaration(shell, 'isSidebarVisible'), { storedSidebarVisible: visible })).toBe(true)
   })
 
-  it('actual shell offset agrees with the actual host chrome gate for every flag and collapse state', () => {
+  it('the primary sidebar suppresses duplicate rail geometry for every flag and collapse state', () => {
+    expect(ownsPrimaryNavigation).toBe(true)
     for (const unifiedShellEnabled of [false, true]) for (const workbenchEnabled of [false, true]) for (const topChromeEnabled of [false, true]) for (const activityRailCollapsed of [false, true]) {
       const activityRailRendered = evaluate(shell, declaration(shell, 'activityRailRendered'), { unifiedShellEnabled, workbenchEnabled, topChromeEnabled })
       const granularChrome = evaluate(host, declaration(host, 'granularChrome'), { unifiedShell: unifiedShellEnabled, workbenchEnabled })
@@ -81,8 +90,8 @@ describe('actual combined sidebar preference and rail geometry', () => {
         tabGroups: false, browserSurface: false, harnessInspector: false,
       })
       const offset = evaluate(shell, declaration(shell, 'unifiedRailOffset'), { activityRailRendered, activityRailCollapsed, activityRailWidth, PANEL_GAP })
-      expect(activityRailRendered).toBe(chrome.showRail)
-      expect(offset).toBe(chrome.showRail ? activityRailWidth(activityRailCollapsed) + PANEL_GAP : 0)
+      expect(activityRailRendered).toBe(chrome.showRail && !ownsPrimaryNavigation)
+      expect(offset).toBe(chrome.showRail && !ownsPrimaryNavigation ? activityRailWidth(activityRailCollapsed) + PANEL_GAP : 0)
     }
   })
 })

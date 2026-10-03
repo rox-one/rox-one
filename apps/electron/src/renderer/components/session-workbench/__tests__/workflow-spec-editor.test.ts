@@ -4,10 +4,45 @@ import { join } from 'node:path'
 import { createSessionDraftNode, serializeSessionDraftGraph, parseSessionDraftGraph } from '../draft-nodes'
 import { draftGraphToSpec, specToDraftGraph } from '../workflow-document'
 import { isSessionMapEmpty } from '../map-empty-actions'
+import { createCanvasEdge, createCanvasNode, createDraftSpec, exportSpec, importSpec } from '@craft-agent/shared/workflows'
 
 const editorSource = readFileSync(join(__dirname, '..', 'SessionWorkflowEditor.tsx'), 'utf8')
 
 describe('workflow spec editor wiring', () => {
+  test('valid named-port imports render default handles and retain canonical ports on export', () => {
+    const spec = createDraftSpec('s1', 1)
+    spec.nodes = [
+      createCanvasNode({ id: 'note', kind: 'note', title: 'Input', position: { x: 0, y: 0 }, now: 1 }),
+      createCanvasNode({ id: 'out', kind: 'output', title: 'Result', position: { x: 200, y: 0 }, now: 2 }),
+    ]
+    spec.edges = [createCanvasEdge({ source: 'note', target: 'out', sourcePort: 'note:text', targetPort: 'out:value', now: 3 })]
+    const graph = specToDraftGraph(importSpec(exportSpec(spec), 's1'))
+    expect(graph.edges[0]?.sourceHandle).toBeUndefined()
+    expect(graph.edges[0]?.targetHandle).toBeUndefined()
+    expect(draftGraphToSpec(graph).edges[0]).toMatchObject({ sourcePort: 'note:text', targetPort: 'out:value' })
+    expect(parseSessionDraftGraph(serializeSessionDraftGraph('s1', graph), 's1').edges[0]).toMatchObject({ sourcePort: 'note:text', targetPort: 'out:value' })
+  })
+
+  test('short condition port names normalize to named canvas handles on import', () => {
+    const spec = createDraftSpec('s1', 1)
+    spec.nodes = [
+      createCanvasNode({ id: 'decision', kind: 'condition', title: 'Check', position: { x: 0, y: 0 }, provenance: { sessionId: 's1', sceneId: 'scn_1', messageIds: [] }, now: 1 }),
+      createCanvasNode({ id: 'out', kind: 'output', title: 'Result', position: { x: 200, y: 0 }, now: 2 }),
+    ]
+    spec.edges = [createCanvasEdge({ source: 'decision', target: 'out', sourcePort: 'false', targetPort: 'value', now: 3 })]
+    const graph = specToDraftGraph(importSpec(exportSpec(spec), 's1'))
+    expect(graph.edges[0]).toMatchObject({ sourceHandle: 'decision:false', sourcePort: 'false', targetPort: 'value' })
+    expect(draftGraphToSpec(graph).edges[0]).toMatchObject({ sourcePort: 'false', targetPort: 'value' })
+  })
+  test('import/export preserves sticker color, frame role and user-resized boxes', () => {
+    const sticky = createSessionDraftNode({ id: 'sticky', kind: 'note', role: 'sticky', color: 'blue', title: 'Context', position: { x: 1, y: 2 }, now: 1 })
+    sticky.size = { width: 280, height: 200 }
+    const frame = createSessionDraftNode({ id: 'frame', kind: 'annotation_frame', role: 'frame', title: 'Review', position: { x: 0, y: 0 }, now: 2 })
+    const graph = { v: 1 as const, sessionId: 's1', nodes: [sticky, frame], edges: [] }
+    expect(specToDraftGraph(JSON.parse(JSON.stringify(draftGraphToSpec(graph)))).nodes).toEqual([sticky, frame])
+    expect(draftGraphToSpec(graph).nodes[1]?.inputs).toEqual([])
+    expect(draftGraphToSpec(graph).nodes[1]?.outputs).toEqual([])
+  })
   test('palette, conversion, promote, version, and run actions are wired', () => {
     expect(editorSource).toContain("handleCreateNode('note')")
     expect(editorSource).toContain('handlePromoteTrace')

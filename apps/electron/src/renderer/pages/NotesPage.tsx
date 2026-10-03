@@ -25,6 +25,7 @@ import {
 } from '@/components/session-workbench/right-session-shell'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
+import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
 import {
   contentHash,
   isClaimableLive,
@@ -585,6 +586,7 @@ export default function NotesPage(props: NotesPageProps) {
 }
 
 function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
+  const shellSidebarTarget = useShellSidebarTarget()
   const { t } = useTranslation()
   const navigationRevision = React.useContext(NavigationContext)?.navigationRevision
   const {
@@ -2374,7 +2376,7 @@ h1,h2,h3{margin-top:1.5em}
     <>
     <NotesEditorHeadlineStyles />
     <div className="notes-shell flex h-full min-w-0">
-      <aside
+      <ShellSidebarPortal
         className="notes-side-surface shrink-0 flex flex-col min-h-0"
         style={{ width: railLayout.vaultCollapsed ? 0 : railLayout.vault }}
         hidden={railLayout.vaultCollapsed}
@@ -2538,14 +2540,14 @@ h1,h2,h3{margin-top:1.5em}
         <div className="shrink-0 px-3 py-2 text-[11px] text-muted-foreground/80">
           {t('notes.vault.noteCount', { count: notes.length })} · {t('notes.vault.assetCount', { count: allAssets.length })}
         </div>
-      </aside>
-      <NotesRailSash
+      </ShellSidebarPortal>
+      {!shellSidebarTarget && <NotesRailSash
         width={railLayout.vault}
         onWidth={(vault) => setRailLayout({ vault })}
         collapsed={railLayout.vaultCollapsed}
         onToggle={() => setRailLayout({ vaultCollapsed: !railLayout.vaultCollapsed })}
         label={t('notes.layout.resizeVault')}
-      />
+      />}
 
       <main className="notes-content-surface flex-1 min-w-0 flex flex-col">
         <div className="h-[42px] shrink-0 px-3 flex items-center gap-2">

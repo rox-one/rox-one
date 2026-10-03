@@ -3,6 +3,20 @@ import {
   type LlmConnection,
 } from '@config/llm-connections'
 import { ROX_VISIBLE_TERMS } from '@craft-agent/shared/identity'
+import { ANTHROPIC_MODELS, type ModelDefinition } from '@config/models'
+import { ROX_DEFAULT_CONNECTION_SLUG, isRoxPublicModelId, isRoxLegacyInternalModelId, toRoxSelectableModelDefinitions } from '@craft-agent/shared/config/rox-public-models'
+
+/** Older installs may still send the five bundled endpoints before startup migration runs. */
+export function getConnectionModelsForPicker(connection: Pick<LlmConnection, 'slug' | 'providerType' | 'models'>): Array<string | ModelDefinition> {
+  if (connection.slug === ROX_DEFAULT_CONNECTION_SLUG && connection.providerType === 'omp') {
+    const customModels = (connection.models ?? []).filter((entry) => {
+      const id = typeof entry === 'string' ? entry : entry.id
+      return !isRoxPublicModelId(id) && !isRoxLegacyInternalModelId(id)
+    })
+    return [...toRoxSelectableModelDefinitions(), ...customModels]
+  }
+  return connection.models ?? ANTHROPIC_MODELS
+}
 
 /**
  * Format token count for display (e.g., 1500 -> "1.5k", 200000 -> "200k").
