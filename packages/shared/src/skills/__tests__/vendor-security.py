@@ -1,13 +1,16 @@
 """Offline regression checks for ROX security patches to pinned upstream scripts."""
 import ast
 import contextlib
+import copy
 import datetime
 import io
 import json
 import os
+import re
 from pathlib import Path
 import sys
 import tempfile
+import threading
 import types
 import unittest
 from unittest.mock import patch
@@ -108,6 +111,47 @@ class VendorSecurity(unittest.TestCase):
             scope['main']()
         self.assertNotIn('fixture-secret', output.getvalue())
         self.assertEqual(writes, [('fixture-private-config', 'fixture-secret-api')])
+
+
+    def test_review_scope_scoped_case_regex_matches_expected_paths(self):
+        path = ROOT / 'compound-engineering/ce-code-review/scripts/review-scope.py'
+        tree = ast.parse(path.read_text())
+        assignment = next(n for n in tree.body if isinstance(n, ast.Assign)
+                          and any(isinstance(t, ast.Name) and t.id == 'TEST_PATTERN' for t in n.targets))
+        scope = {'re': re}
+        exec(compile(ast.fix_missing_locations(ast.Module(body=[assignment], type_ignores=[])), str(path), 'exec'), scope)
+        pattern = scope['TEST_PATTERN']
+        for name in ('tests/unit.py', 'src/a.test.ts', 'test_api.py', 'src/AuthTest.java', 'src/AuthTests.cs'):
+            self.assertIsNotNone(pattern.search(name), name)
+        for name in ('Contest.java', 'Manifest.cs', 'src/AuthTEST.java', 'src/app.ts'):
+            self.assertIsNone(pattern.search(name), name)
+
+    def test_reddit_memo_constructs_three_element_success_and_failure_entries(self):
+        path = ROOT / 'last30days/last30days/scripts/lib/reddit.py'
+        for fail in (False, True):
+            calls = []
+            failures = []
+            @contextlib.contextmanager
+            def tee():
+                yield []
+            def search(*args, **kwargs):
+                calls.append(True)
+                if fail:
+                    raise ValueError('fixture failure')
+                return {'items': [{'title': 'fixture'}]}
+            scope = functions(path, ['_sc_memo_outcome', 'search_and_enrich_memo'], {
+                'copy': copy, 'threading': threading, '_SC_MEMO': {}, '_SC_INFLIGHT': {},
+                '_SC_MEMO_LOCK': threading.Lock(), 'search_and_enrich': search,
+                'http': types.SimpleNamespace(tee_failures=tee, _record_failure=failures.append),
+            })
+            for replay in range(2):
+                if fail:
+                    with self.assertRaisesRegex(ValueError, 'fixture failure'):
+                        scope['search_and_enrich_memo']('topic', 'start', 'end')
+                else:
+                    self.assertEqual(scope['search_and_enrich_memo']('topic', 'start', 'end'), {'items': [{'title': 'fixture'}]})
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(len(next(iter(scope['_SC_MEMO'].values()))), 3)
 
 
 if __name__ == '__main__':
