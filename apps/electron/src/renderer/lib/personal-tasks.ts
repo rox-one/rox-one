@@ -360,7 +360,7 @@ export async function importPersonalTasksConfirmed(incoming: PersonalTaskBundle,
     if (!current()) throw new Error('Personal task caller changed')
     await hydratePersonalTasks()
     if (!current() || !synced) throw new Error('Personal task caller changed')
-    const transport = scopedApi(remote, generation)
+    const transport = scopedApi(remote, generation, current)
     const oldBase = synced
     const snapshot = await transport.personalTasksList()
     if (!current()) throw new Error('Personal task caller changed')

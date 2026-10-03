@@ -20,7 +20,7 @@ function fixture() {
   const oldStorage = globalThis.localStorage
   const cache = new Map<string, string>()
   const storage = { getItem: (key: string) => cache.get(key) ?? null, setItem: (key: string, value: string) => { cache.set(key, value) }, removeItem: (key: string) => { cache.delete(key) } }
-  const write = deferred(), readback = deferred(), readbackEntered = deferred(), writeSettled = deferred()
+  const write = deferred(), writeEntered = deferred(), readback = deferred(), readbackEntered = deferred(), writeSettled = deferred()
   let scope: NativePersonalTaskScope
   let written = false, capturedReadback = false, rejectedWrite = false
   const pending = new Set<Promise<unknown>>()
@@ -47,6 +47,7 @@ function fixture() {
     personalTasksDelete: async deletes => store.delete(scope, deletes, assertScope(scope)),
     personalTasksPut: (writes, meta) => track((async () => {
       const captured = scope
+      writeEntered.resolve()
       try {
         await write.promise
         const result = store.put(captured, writes, meta, assertScope(captured))
@@ -70,7 +71,7 @@ function fixture() {
   let committed!: (record: VersionedPersonalTask) => void
   const completion = new Promise<VersionedPersonalTask>(resolve => { committed = resolve })
   const off = subscribePersonalTaskCommits(record => { records.push(record); committed(record) })
-  return { root, store, cache, bind, records, completion, write, readback, readbackEntered, writeSettled,
+  return { root, store, cache, bind, records, completion, write, writeEntered, readback, readbackEntered, writeSettled,
     rejectedWrite: () => rejectedWrite,
     async drain() { await Promise.allSettled([...pending]) },
     async cleanup() {
@@ -114,6 +115,7 @@ test('T-TASKS-CREATE: a foreign caller transition rejects a held native PUT with
     const next = loadPersonalTaskStore()
     const created = next.create({ id: 'private-alice-task', title: 'Private Alice task', list: 'inbox' })
     persistPersonalTaskStore(next)
+    await f.writeEntered.promise
     const foreign = await f.bind('fixture-bob', 'workspace-b')
     f.write.resolve()
     await f.writeSettled.promise
