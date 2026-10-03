@@ -676,3 +676,9 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 | LOC-05: Publish, review and merge main | Lead | LOC-04 | scoped PR and verification receipt | exact pushed HEAD, check readback, merge SHA and main ancestry; retain unrelated work |
 
 The latest user authorization explicitly permits source repair, GitHub writes and merge into main. Existing feature-program acceptance states remain independent of this credential-boundary repair.
+
+## Recovered connection audit action projection — 2026-10-03
+
+Owner: branch integration lead. Source: checkpoint/session-audit-20260821-craft-agents @86154e8c812746261282bb4c517b16ad7becc0ec; dependency: delivered Connections producer PR1414 and current canonical WorkGraph SQLite. Recover the missing additive schema3 action column and creation audit projection. V1/V2 migration SQL/checksums must remain identical; migration3 SQL matches the source. Older ledger rows remain immutable and expose event type as the fallback action. Only metadata action labels cross transport; never restore payload content.
+
+Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/installation, schema3 restart, current actions plus creation event, foreign workspace exclusion and update/delete trigger refusal. The negative control runs the actual new test against unchanged main. Existing kernel/connection/revalidation and consumed server types must pass. Deliver independently and retain the source branch. This supplies audit metadata for the separately recovered Connections UI; no native/provider acceptance is claimed.
