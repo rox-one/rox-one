@@ -10,11 +10,11 @@ import {
   PAGE_DATA_PATCH_MAX_BYTES,
 } from './data-write.ts';
 import { PageDataStore, PAGE_DATA_MAX_KV_KEYS, PAGE_DATA_MAX_SERIES } from './data-store.ts';
-import type { PageDataSnapshot } from '@craft-agent/core';
+import type { PageDataSnapshot } from '@rox/core';
 
 // Pin dev-mode runtime resolution: this suite spawns the real Bun runtime via
 // resolveScriptRuntime and must assert dev behavior (PATH fallback allowed)
-// even when the suite runs under a packaged Craft Agents host (agent Bash
+// even when the suite runs under a packaged ROX host (agent Bash
 // sessions inherit CRAFT_IS_PACKAGED=true).
 const SAVED_IS_PACKAGED = process.env.CRAFT_IS_PACKAGED;
 beforeAll(() => {

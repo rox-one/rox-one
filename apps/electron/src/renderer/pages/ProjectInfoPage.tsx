@@ -31,18 +31,18 @@ import {
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { cn } from '@/lib/utils'
 import {
   isClaimableLive,
   soupProjectActResult,
   soupProjectListResult,
   soupProjectReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import { PROJECT_COLOR_PALETTE } from '@/utils/project-colors'
 import { InlineColorPickerRow } from '@/components/ui/inline-color-picker-row'
-import type { LoadedProject, OkrCycle, OkrKeyResult, OkrObjective, OkrProgress, ProjectOkrDocument, ProjectAsset } from '@craft-agent/shared/projects/types'
-import { calculateOkrCycle, createOkrCycle } from '@craft-agent/shared/projects'
+import type { LoadedProject, OkrCycle, OkrKeyResult, OkrObjective, OkrProgress, ProjectOkrDocument, ProjectAsset } from '@rox/shared/projects/types'
+import { calculateOkrCycle, createOkrCycle } from '@rox/shared/projects'
 
 interface ProjectInfoPageProps {
   projectSlug: string

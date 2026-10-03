@@ -3,9 +3,9 @@ import { describe, expect, it } from 'bun:test'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { addWorkspace } from '@craft-agent/shared/config'
-import { loadSession } from '@craft-agent/shared/sessions'
-import { setupI18n } from '@craft-agent/shared/i18n'
+import { addWorkspace } from '@rox/shared/config'
+import { loadSession } from '@rox/shared/sessions'
+import { setupI18n } from '@rox/shared/i18n'
 import { SessionManager } from './SessionManager'
 
 describe('first-session welcome real transcript', () => {

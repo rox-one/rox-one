@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test'
-import { RPC_CHANNELS, type NoteDocument } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS, type NoteDocument } from '@rox/shared/protocol'
 import { createNativeReplicaBridge } from '../native-replica'
 
 test('explicit non-native plan preserves legacy create arguments and result without native custody', async () => {

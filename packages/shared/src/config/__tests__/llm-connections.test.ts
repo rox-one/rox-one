@@ -3,6 +3,7 @@ import '../../../tests/setup/register-pi-model-resolver.ts'
 import {
   getDefaultModelsForConnection,
   getDefaultModelForConnection,
+  getModelsForProviderType,
   PI_PREFERRED_DEFAULTS,
   isCompatProvider,
   isAnthropicProvider,
@@ -45,6 +46,17 @@ describe('getDefaultModelsForConnection', () => {
     expect(models.length).toBeGreaterThan(0)
   })
 
+})
+
+describe('provider registry fallback', () => {
+  it('uses R1 Max for Rox when a persisted catalog is missing', () => {
+    const models = getModelsForProviderType('omp')
+    expect(models.map(model => model.id)).toEqual(['rox/r1-max'])
+    expect(models[0]!.name).toBe('Rox R1 Max')
+    expect(getModelsForProviderType('anthropic')).toEqual(ANTHROPIC_MODELS)
+    expect(getModelsForProviderType('pi_compat')).toEqual([])
+    expect(getModelsForProviderType('anthropic_compat')).toEqual([])
+  })
 })
 
 // ============================================================
@@ -144,11 +156,11 @@ describe('getDefaultModelForConnection', () => {
     expect(defaultModel).toBe('')
   })
 
-  it('omp defaults to the public ROX catalog with rox/standard as default', () => {
+  it('omp exposes one R1 Max model by default', () => {
     const models = getDefaultModelsForConnection('omp')
     const ids = models.map(m => typeof m === 'string' ? m : m.id)
-    expect(ids).toEqual(['rox/explore', 'rox/standard', 'rox/max', 'rox/vision', 'rox/fast'])
-    expect(getDefaultModelForConnection('omp')).toBe('rox/standard')
+    expect(ids).toEqual(['rox/r1-max'])
+    expect(getDefaultModelForConnection('omp')).toBe('rox/r1-max')
   })
 })
 

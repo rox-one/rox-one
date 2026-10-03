@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "runtime": "OMP",
+  "runtimeVersion": "18.4.12",
+  "probe": "RPC get_state on isolated HOME with full bundled skill profile",
+  "paidModelPromptSent": false,
+  "ready": true,
+  "success": true,
+  "toolNames": [
+    "read",
+    "bash",
+    "edit",
+    "eval",
+    "glob",
+    "grep",
+    "task",
+    "wait",
+    "todo",
+    "web_search",
+    "write"
+  ],
+  "orchestrateTaskToolAvailable": true,
+  "workflowEvalToolAvailable": true,
+  "javascriptEvaluationEnabled": true,
+  "mandatoryPolicy": {
+    "magicKeywords": {
+      "enabled": true,
+      "ultrathink": true,
+      "orchestrate": true,
+      "workflow": true
+    },
+    "providers": {
+      "autoThinkingMaxEffort": "max"
+    },
+    "eval": {
+      "js": true,
+      "tools": {
+        "enabled": true
+      }
+    },
+    "skills": {
+      "enabled": true,
+      "enableSkillCommands": true,
+      "enablePiUser": true,
+      "enableAgentsUser": false,
+      "enableCodexUser": false,
+      "enableClaudeUser": false
+    },
+    "disabledProviders": [
+      "claude-plugins",
+      "agent-plugins",
+      "omp-plugins"
+    ]
+  },
+  "systemPromptParts": 2,
+  "systemPromptSha256": "e6b60242918a9c75191b2a6fae21769174781584bdffbb837d1728840f64deb0",
+  "initialThinkingLevel": "high",
+  "thinkingNote": "ROX adapter forces max before each user prompt; this read-only probe sends no prompt and reports native initial level.",
+  "goalState": null,
+  "limitations": [
+    "Tool discovery verifies native runtime prerequisites, without invoking model calls, task delegation or evaluation.",
+    "Bundled upstream ultragoal additionally requires its omo CLI and Codex create_goal/get_goal integration; these exact prerequisites are not supplied by discovering OMP task/eval tools."
+  ]
+}

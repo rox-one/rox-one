@@ -14,8 +14,8 @@ import type {
   ContextPayload,
   KnowledgeNode,
   SearchPage,
-} from '@craft-agent/core/knowledge';
-import { KnowledgeError } from '@craft-agent/core/knowledge';
+} from '@rox/core/knowledge';
+import { KnowledgeError } from '@rox/core/knowledge';
 import {
   clearKnowledgeToolRuntime,
   getKnowledgeToolRuntime,

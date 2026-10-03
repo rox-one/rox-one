@@ -2,20 +2,20 @@ import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   addChild,
   createEmptyGraph,
   createPinnedMap,
   finalizeGraph,
   pinFilename,
-} from '@craft-agent/core/mindmap'
+} from '@rox/core/mindmap'
 import type { RpcServer } from '../../../transport/types'
 import type { HandlerDeps } from '../../handler-deps'
 import type { RequestContext } from '../../../transport/types'
 
 let root = ''
-mock.module('@craft-agent/shared/config', () => ({
+mock.module('@rox/shared/config', () => ({
   getWorkspaceByNameOrId: (id: string) =>
     id === 'ws1' ? { id: 'ws1', name: 'ws1', rootPath: root } : null,
 }))

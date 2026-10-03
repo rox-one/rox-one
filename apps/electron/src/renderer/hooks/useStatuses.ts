@@ -7,7 +7,7 @@
 
 import i18n from 'i18next'
 import { useState, useEffect, useCallback } from 'react'
-import type { StatusConfig } from '@craft-agent/shared/statuses'
+import type { StatusConfig } from '@rox/shared/statuses'
 import { clearIconCache } from '@/config/session-status-config'
 
 export interface UseStatusesResult {

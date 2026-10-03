@@ -2,8 +2,8 @@ import { chmodSync, mkdirSync, realpathSync } from 'node:fs'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { join, resolve } from 'node:path'
 import type { IpcMain, IpcMainInvokeEvent } from 'electron'
-import { AccountReplica, SqliteReplicaOutbox } from '@craft-agent/shared/account-replica'
-import type { NativeDataContext, NativeDataReceipt } from '@craft-agent/shared/protocol/dto'
+import { AccountReplica, SqliteReplicaOutbox } from '@rox/shared/account-replica'
+import type { NativeDataContext, NativeDataReceipt } from '@rox/shared/protocol/dto'
 import {
   acknowledgementFromReceipt,
   NATIVE_REPLICA_IPC,
@@ -15,8 +15,8 @@ import {
   type NativeReplicaSessionIpcInput,
   type NativeReplicaCacheSnapshotIpcInput,
   type NativeReplicaReadSnapshotIpcInput,
-} from '@craft-agent/shared/protocol/native-replica'
-import type { CredentialId, StoredCredential } from '@craft-agent/shared/credentials'
+} from '@rox/shared/protocol/native-replica'
+import type { CredentialId, StoredCredential } from '@rox/shared/credentials'
 
 export { NATIVE_REPLICA_IPC }
 

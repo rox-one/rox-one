@@ -1,5 +1,5 @@
-import type { SessionEvent } from '@craft-agent/shared/protocol'
-import type { TokenUsage } from '@craft-agent/core/types'
+import type { SessionEvent } from '@rox/shared/protocol'
+import type { TokenUsage } from '@rox/core/types'
 
 export type TurnCompleteReason = 'complete' | 'interrupted' | 'error' | 'timeout'
 

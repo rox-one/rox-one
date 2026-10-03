@@ -226,6 +226,43 @@ export function shiftWidget(layout: HomeDashboardLayout, id: HomeWidgetId, delta
 
 /** Grid columns for a container width (px). Always 12 so spans stay simple. */
 export const HOME_GRID_COLUMNS = 12
+export const HOME_GRID_GAP = 12
+export const HOME_GRID_ROW_HEIGHT = 110
+
+/** Pixel width of a card, including the gaps between its grid columns. */
+export function widgetWidth(span: number, containerWidth: number): number {
+  const columnWidth = (containerWidth - (HOME_GRID_COLUMNS - 1) * HOME_GRID_GAP) / HOME_GRID_COLUMNS
+  return Math.max(0, columnWidth * span + (span - 1) * HOME_GRID_GAP)
+}
+
+/** A full-width card may still be narrow: use pixels for its internal layout. */
+export function widgetContentLayout(width: number): {
+  summaryColumns: 2 | 3 | 6
+  quickActionColumns: 2 | 4
+  listColumns: 1 | 2
+  splitPanels: boolean
+  calendarView: 'list' | 'week'
+  trackerColumns: 2 | 4
+} {
+  return {
+    summaryColumns: width >= 960 ? 6 : width >= 480 ? 3 : 2,
+    quickActionColumns: width >= 760 ? 4 : 2,
+    listColumns: width >= 720 ? 2 : 1,
+    splitPanels: width >= 520,
+    calendarView: width >= 840 ? 'week' : 'list',
+    trackerColumns: width >= 480 ? 4 : 2,
+  }
+}
+
+/** Two rows preserve the original small card height; larger sizes grow vertically. */
+export function widgetRowSpan(size: HomeWidgetSize): number {
+  return size === 'S' ? 2 : size === 'M' ? 3 : 4
+}
+
+/** Taller cards can show more rows; width determines how many columns fit. */
+export function widgetItemLimit(size: HomeWidgetSize, smallLimit: number, columns = 1): number {
+  return (smallLimit + (widgetRowSpan(size) - 2) * 3) * columns
+}
 
 /**
  * Column span for a widget size at a container width. Wide (≥1100): S=3,

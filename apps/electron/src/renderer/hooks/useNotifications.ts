@@ -10,10 +10,10 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Session } from '../../shared/types'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { deferIfDeepWork, isFocusRunning, loadFocusState } from '@/lib/focus-session'
 import { useTaskReminders } from '@/lib/task-reminders'
-import type { PersonalTask } from '@craft-agent/core/tasks/personal'
+import type { PersonalTask } from '@rox/core/tasks/personal'
 
 /**
  * Draw a badge onto an icon image using Canvas

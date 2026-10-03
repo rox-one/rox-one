@@ -2,7 +2,7 @@
  * Messaging RPC handlers — UI ↔ Server communication for messaging config and bindings.
  */
 
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type { RpcServer } from '../../transport/types'
 import type { HandlerDeps } from '../handler-deps'
 import type {
@@ -16,7 +16,7 @@ import {
   rpcMessagingActResult,
   rpcMessagingListResult,
   rpcMessagingReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.messaging.GET_CONFIG,

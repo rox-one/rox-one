@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import type { SecurityDomain, SecurityDomainSummary } from '@craft-agent/shared/openclaw'
+import type { SecurityDomain, SecurityDomainSummary } from '@rox/shared/openclaw'
 
 export const SECURITY_SNAKE_DOMAINS = [
   'ingress',

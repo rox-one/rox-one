@@ -42,7 +42,7 @@
  * failures throw CodedError directly (INVALID_REF / NOT_FOUND /
  * CONNECTION_UNAVAILABLE), mirroring the notes.ts/marketplace.ts conventions.
  */
-import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import type {
   ApplyResult,
   KnowledgeDetectEngineResult,
@@ -58,19 +58,19 @@ import type {
   PublishApplyResult,
   PublishDraft,
   PublishPrepareResult,
-} from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId, getWorkspaces } from '@craft-agent/shared/config'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
-import assertKnowledgeActionAllowed from '@craft-agent/shared/agent/knowledge-permissions'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
-import { registerKnowledgeToolRuntime } from '@craft-agent/session-tools-core'
+} from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId, getWorkspaces } from '@rox/shared/config'
+import { getCredentialManager } from '@rox/shared/credentials'
+import assertKnowledgeActionAllowed from '@rox/shared/agent/knowledge-permissions'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
+import { registerKnowledgeToolRuntime } from '@rox/session-tools-core'
 import type { HandlerDeps } from '../handler-deps'
 import {
   isClaimableLive,
   rpcKnowledgeActResult,
   rpcKnowledgeListResult,
   rpcKnowledgeReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import {
   createKnowledgeRegistry,
   KnowledgeError,
@@ -78,7 +78,7 @@ import {
   ProposalTransitionError,
   isAllowedAttributeName,
   siyuanDeepLink,
-} from '@craft-agent/core/knowledge'
+} from '@rox/core/knowledge'
 import type {
   ContextMode,
   ContextPayload,
@@ -90,19 +90,19 @@ import type {
   KnowledgeWorkEnvelope,
   SearchHit,
   SearchInput,
-} from '@craft-agent/core/knowledge'
+} from '@rox/core/knowledge'
 import {
   buildKnowledgeViewContext,
   compileView,
   evaluateView,
   type ViewConfig,
-} from '@craft-agent/shared/views'
-import { listViews as listViewsFromStorage } from '@craft-agent/shared/views/storage'
+} from '@rox/shared/views'
+import { listViews as listViewsFromStorage } from '@rox/shared/views/storage'
 import {
   SiyuanKernelClient,
   type ListDocTreeResult,
   SiyuanKnowledgeProvider,
-} from '@craft-agent/core/knowledge/providers/siyuan'
+} from '@rox/core/knowledge/providers/siyuan'
 import {
   KnowledgeAuditLog,
   KnowledgeConnectionsStore,
@@ -148,7 +148,7 @@ import type {
 } from '../../knowledge'
 
 /**
- * Тестовый seam (вместо mock.module('@craft-agent/core/knowledge/providers/siyuan')).
+ * Тестовый seam (вместо mock.module('@rox/core/knowledge/providers/siyuan')).
  * mock.module — транзитивно-глобален и необратим для модулей, загруженных после
  * мока: он ломал packages/core knowledge adapter-тесты в полном прогоне
  * (19 fails; версия '2.10.0' из их фейка). Хендлер дергает provider/client

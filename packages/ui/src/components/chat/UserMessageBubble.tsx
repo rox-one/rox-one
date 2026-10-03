@@ -13,15 +13,15 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Clock } from 'lucide-react'
-import type { AnnotationV1, StoredAttachment, ContentBadge } from '@craft-agent/core'
-import { normalizePath } from '@craft-agent/core/utils'
+import type { AnnotationV1, StoredAttachment, ContentBadge } from '@rox/core'
+import { normalizePath } from '@rox/core/utils'
 import { cn } from '../../lib/utils'
 import { Markdown } from '../markdown'
 import { FileTypeIcon, getFileTypeLabel } from './attachment-helpers'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../tooltip'
 import { useTranslation } from 'react-i18next'
 import { MessageHoverDock } from './MessageHoverDock'
-import type { SideThreadAction } from '@craft-agent/shared/side-threads'
+import type { SideThreadAction } from '@rox/shared/side-threads'
 import {
   aggregateReactions,
   createReactionAnnotation,

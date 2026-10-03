@@ -7,7 +7,7 @@
  * runtime keep these tests independent of disk state, credentials, and network.
  */
 import { describe, expect, it } from 'bun:test';
-import type { AgentEvent as CraftAgentEvent } from '@craft-agent/core/types';
+import type { AgentEvent as CraftAgentEvent } from '@rox/core/types';
 import {
   createAgentSession,
   createExtensionRuntime,

@@ -1,6 +1,6 @@
 {
-  "name": "@craft-agent/pi-agent-server",
-  "version": "0.11.7",
+  "name": "@rox/pi-agent-server",
+  "version": "0.11.8",
   "license": "Apache-2.0",
   "description": "Out-of-process Pi agent server communicating via JSONL over stdio",
   "type": "module",
@@ -14,8 +14,8 @@
     "validate": "bun run typecheck && bun run build"
   },
   "dependencies": {
-    "@craft-agent/session-tools-core": "workspace:*",
-    "@craft-agent/core": "workspace:*",
+    "@rox/session-tools-core": "workspace:*",
+    "@rox/core": "workspace:*",
     "@earendil-works/pi-coding-agent": "0.85.1",
     "@earendil-works/pi-agent-core": "0.85.1",
     "@earendil-works/pi-ai": "0.85.1",

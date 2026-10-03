@@ -6,9 +6,9 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { existsSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { basename, extname, join } from 'node:path'
-import { CONFIG_DIR } from '@craft-agent/shared/config'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
-import type { MailboxSecretStore } from '@craft-agent/shared/mail'
+import { CONFIG_DIR } from '@rox/shared/config'
+import { getCredentialManager } from '@rox/shared/credentials'
+import type { MailboxSecretStore } from '@rox/shared/mail'
 import { MAIL_IPC as C, type MailAttachment, type MailComposeInput, type MailListQuery, type MailPickedFile, type MailStatus } from '../../shared/mail-local'
 import { MailService, errorResult } from './mail-service'
 import { safeFileName } from './mail-model'
@@ -49,7 +49,7 @@ async function identityHints(): Promise<{ ownerUuid?: string | null; handles: Ar
     if (cloud?.name) handles.push(cloud.name)
   } catch { /* not connected to rox.one */ }
   try {
-    const { getIdentityStore } = await import('@craft-agent/core/platform/identity/store')
+    const { getIdentityStore } = await import('@rox/core/platform/identity/store')
     const profile = getIdentityStore(CONFIG_DIR).getState().profile as { displayName?: string; email?: string }
     if (profile?.email) handles.splice(ownerUuid ? 1 : 0, 0, profile.email)
     if (profile?.displayName) handles.push(profile.displayName)
@@ -63,7 +63,7 @@ async function senderName(): Promise<string | null> {
     if (cloud?.name) return cloud.name
   } catch { /* not connected */ }
   try {
-    const { getIdentityStore } = await import('@craft-agent/core/platform/identity/store')
+    const { getIdentityStore } = await import('@rox/core/platform/identity/store')
     const profile = getIdentityStore(CONFIG_DIR).getState().profile as { displayName?: string }
     return profile?.displayName || null
   } catch {

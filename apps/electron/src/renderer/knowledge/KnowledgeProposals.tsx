@@ -12,14 +12,14 @@ import { useAtomValue } from 'jotai'
 import { FileDiff, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { MutationProposal, MutationProposalStatus } from '@craft-agent/shared/protocol'
+import type { MutationProposal, MutationProposalStatus } from '@rox/shared/protocol'
 import { windowWorkspaceIdAtom } from '@/atoms/sessions'
 import { EntityList } from '@/components/ui/entity-list'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
 import { resolveKnowledgeMutationsApi } from './proposal-actions'
-import { getAppLocale } from '@craft-agent/shared/i18n'
+import { getAppLocale } from '@rox/shared/i18n'
 
 const PROPOSAL_STATUS_FILTERS: readonly MutationProposalStatus[] = [
   'draft',

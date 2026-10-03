@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { QuestId, QuestRecord } from '@craft-agent/shared/gamification'
+import type { QuestId, QuestRecord } from '@rox/shared/gamification'
 import { cn } from '@/lib/utils'
 
 const QUEST_TITLE: Record<QuestId, string> = {

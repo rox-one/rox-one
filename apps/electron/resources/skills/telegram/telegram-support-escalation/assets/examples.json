@@ -1,0 +1,6 @@
+[
+  {
+    "prompt": "Find urgent customer issues in Telegram and create escalation tasks.",
+    "tools": ["search_messages", "chat_read", "tasks_add", "tags_set"]
+  }
+]

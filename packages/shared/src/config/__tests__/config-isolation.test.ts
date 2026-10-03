@@ -5,7 +5,7 @@ import { resolveConfigDir } from "../paths.ts"
 
 /**
  * Guards the invariant that a test run never touches the developer's real
- * Craft Agents installation.
+ * ROX installation.
  *
  * Without it, `bun test` wrote into `~/.craft-agent`: CONFIG_DIR is resolved
  * when config/paths.ts first loads, which under `bun test` is the bunfig

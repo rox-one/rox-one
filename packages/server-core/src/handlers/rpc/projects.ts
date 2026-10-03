@@ -1,25 +1,25 @@
 import { mkdirSync } from 'fs'
 import { join } from 'path'
-import { loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
-import { getDefaultWorkspacesDir } from '@craft-agent/shared/workspaces'
-import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+import { loadWorkspaceConfig } from '@rox/shared/workspaces'
+import { getDefaultWorkspacesDir } from '@rox/shared/workspaces'
+import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import type { RequestContext } from '../../transport/types'
-import type { LoadedProject } from '@craft-agent/shared/projects'
+import type { LoadedProject } from '@rox/shared/projects'
 import {
   ProjectOkrConflictError,
   loadProjectOkr,
   saveProjectOkr,
   type ProjectOkrDocument,
-} from '@craft-agent/shared/projects'
+} from '@rox/shared/projects'
 import {
   isClaimableLive,
   rpcProjectsActResult,
   rpcProjectsListResult,
   rpcProjectsReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.projects.GET,
@@ -61,10 +61,10 @@ function projectWorkspaceProjection(
 async function projectInputLines(
   workspaceRootPath: string,
   projectSlug: string,
-  roadmap: import('@craft-agent/shared/projects').ProjectRoadmap,
+  roadmap: import('@rox/shared/projects').ProjectRoadmap,
   iconFilename?: string,
 ): Promise<string[]> {
-  const { listProjectAssets, getProjectAssetsPath } = await import('@craft-agent/shared/projects')
+  const { listProjectAssets, getProjectAssetsPath } = await import('@rox/shared/projects')
   const { readFileSync, realpathSync, existsSync } = await import('fs')
   const { relative, isAbsolute } = await import('node:path')
   const workspaceRoot = realpathSync(workspaceRootPath)
@@ -109,7 +109,7 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
       throw new CodedError('AUTH_FAILED', 'Project workspace projection scope changed or is invalid')
     }
     const canonicalWorkspaceId = workspace.id
-    const { loadWorkspaceProjects } = await import('@craft-agent/shared/projects')
+    const { loadWorkspaceProjects } = await import('@rox/shared/projects')
     const projects = projectWorkspaceProjection(loadWorkspaceProjects(workspaceRootPath), canonicalWorkspaceId, workspaceRootPath)
     pushTyped(server, RPC_CHANNELS.projects.CHANGED, { to: 'workspace', workspaceId: canonicalWorkspaceId }, canonicalWorkspaceId, projects)
   }
@@ -124,7 +124,7 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
       return []
     }
     const { id, rootPath } = workspace
-    const { loadWorkspaceProjects } = await import('@craft-agent/shared/projects')
+    const { loadWorkspaceProjects } = await import('@rox/shared/projects')
     return projectWorkspaceProjection(loadWorkspaceProjects(rootPath), id, rootPath)
   })
 
@@ -135,18 +135,18 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) return null
     const { id, rootPath } = workspace
-    const { loadProject, loadProjectById } = await import('@craft-agent/shared/projects')
+    const { loadProject, loadProjectById } = await import('@rox/shared/projects')
     const project = loadProject(rootPath, projectIdOrSlug) ?? loadProjectById(rootPath, projectIdOrSlug)
     return projectWorkspaceProjection(project ? [project] : [], id, rootPath)[0] ?? null
   })
 
   // Create a new project
-  server.handle(RPC_CHANNELS.projects.CREATE, async (_ctx, workspaceId: string, input: import('@craft-agent/shared/projects').CreateProjectInput) => {
+  server.handle(RPC_CHANNELS.projects.CREATE, async (_ctx, workspaceId: string, input: import('@rox/shared/projects').CreateProjectInput) => {
     const act = rpcProjectsActResult({ source: 'native', action: 'write', nativeId: input?.name || 'project' })
     if (!isClaimableLive(act)) throw new Error('project create is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
-    const { createProject } = await import('@craft-agent/shared/projects')
+    const { createProject } = await import('@rox/shared/projects')
     const project = createProject(workspace.rootPath, {
       name: input.name?.trim() || 'New Project',
       description: input.description,
@@ -178,11 +178,11 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     _ctx,
     workspaceId: string,
     projectSlug: string,
-    patch: Partial<Omit<import('@craft-agent/shared/projects').ProjectConfig, 'id' | 'slug' | 'createdAt'>>,
+    patch: Partial<Omit<import('@rox/shared/projects').ProjectConfig, 'id' | 'slug' | 'createdAt'>>,
   ) => {
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
-    const { updateProject } = await import('@craft-agent/shared/projects')
+    const { updateProject } = await import('@rox/shared/projects')
     const updated = updateProject(workspace.rootPath, projectSlug, patch)
     await broadcastChanged(workspaceId, workspace.rootPath)
     return updated
@@ -196,16 +196,16 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
 
-    const { loadProject, deleteProject } = await import('@craft-agent/shared/projects')
+    const { loadProject, deleteProject } = await import('@rox/shared/projects')
     const project = loadProject(workspace.rootPath, projectSlug)
     if (!project) {
       log.warn(`PROJECTS_DELETE: project ${projectSlug} not found`)
       return
     }
 
-    const { unbindProjectFromSessions } = await import('@craft-agent/shared/sessions')
+    const { unbindProjectFromSessions } = await import('@rox/shared/sessions')
     const touched = await unbindProjectFromSessions(workspace.rootPath, project.config.id)
-    const { unbindProjectFromPages } = await import('@craft-agent/shared/pages')
+    const { unbindProjectFromPages } = await import('@rox/shared/pages')
     const touchedPages = unbindProjectFromPages(workspace.rootPath, project.config.id)
     deleteProject(workspace.rootPath, projectSlug)
     await broadcastChanged(workspaceId, workspace.rootPath)
@@ -216,7 +216,7 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
   server.handle(RPC_CHANNELS.projects.LIST_ASSETS, async (_ctx, workspaceId: string, projectSlug: string) => {
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) return []
-    const { listProjectAssets } = await import('@craft-agent/shared/projects')
+    const { listProjectAssets } = await import('@rox/shared/projects')
     return listProjectAssets(workspace.rootPath, projectSlug)
   })
 
@@ -225,11 +225,11 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     _ctx,
     workspaceId: string,
     projectSlug: string,
-    input: import('@craft-agent/shared/projects').UploadProjectAssetInput,
+    input: import('@rox/shared/projects').UploadProjectAssetInput,
   ) => {
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
-    const { uploadProjectAsset } = await import('@craft-agent/shared/projects')
+    const { uploadProjectAsset } = await import('@rox/shared/projects')
     const asset = uploadProjectAsset(workspace.rootPath, projectSlug, input)
     await broadcastChanged(workspaceId, workspace.rootPath)
     log.info(`Uploaded asset ${asset.filename} to project ${projectSlug}`)
@@ -248,7 +248,7 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     if (!isClaimableLive(act)) throw new Error('project asset delete is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
-    const { deleteProjectAsset } = await import('@craft-agent/shared/projects')
+    const { deleteProjectAsset } = await import('@rox/shared/projects')
     deleteProjectAsset(workspace.rootPath, projectSlug, filename)
     await broadcastChanged(workspaceId, workspace.rootPath)
   })
@@ -259,7 +259,7 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     if (!isClaimableLive(read.result)) return null
     const workspace = requireCallerWorkspace(ctx, deps, workspaceId)
     if (!workspace || !projectSlug) return null
-    const { loadProjectConfig, loadProjectRoadmap } = await import('@craft-agent/shared/projects')
+    const { loadProjectConfig, loadProjectRoadmap } = await import('@rox/shared/projects')
     if (!loadProjectConfig(workspace.rootPath, projectSlug)) return null
     return loadProjectRoadmap(workspace.rootPath, projectSlug)
   }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
@@ -270,7 +270,7 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     const workspace = requireCallerWorkspace(ctx, deps, workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
     if (!projectSlug) throw new Error('projectSlug is required')
-    const { saveProjectRoadmap, isRoadmapRevision } = await import('@craft-agent/shared/projects')
+    const { saveProjectRoadmap, isRoadmapRevision } = await import('@rox/shared/projects')
     const revision = roadmap && typeof roadmap === 'object' ? (roadmap as { revision?: unknown }).revision : undefined
     if (!isRoadmapRevision(revision)) throw new Error('PROJECT_ROADMAP_INVALID_REVISION')
     return saveProjectRoadmap(workspace.rootPath, projectSlug, roadmap, { expectedRevision: revision })
@@ -290,8 +290,8 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     ctx,
     workspaceId: string,
     projectSlug: string,
-    request: import('@craft-agent/shared/projects').RoadmapAiRequest & { language?: string; today?: string; inputs?: string[] },
-  ): Promise<import('@craft-agent/shared/projects').RoadmapAiResponse> => {
+    request: import('@rox/shared/projects').RoadmapAiRequest & { language?: string; today?: string; inputs?: string[] },
+  ): Promise<import('@rox/shared/projects').RoadmapAiResponse> => {
     const workspace = requireCallerWorkspace(ctx, deps, workspaceId)
     if (!workspace) return { ok: false, error: `Workspace not found: ${workspaceId}` }
     const principal = ctx.principal
@@ -315,7 +315,7 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     const status = typeof describe === 'function' ? describe.call(deps.sessionManager, workspaceId) : { available: true }
     if (!status.available) return { ok: false, error: status.reason ?? 'no-connection', unavailable: true }
 
-    const shared = await import('@craft-agent/shared/projects')
+    const shared = await import('@rox/shared/projects')
     const project = shared.loadProject(workspace.rootPath, projectSlug)
     if (!project) return { ok: false, error: `Project not found: ${projectSlug}` }
     const { roadmap } = shared.loadProjectRoadmap(workspace.rootPath, projectSlug)

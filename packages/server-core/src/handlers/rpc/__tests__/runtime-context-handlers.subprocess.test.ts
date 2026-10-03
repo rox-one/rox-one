@@ -91,7 +91,7 @@ describe('runtime-context rpc handlers (subprocess)', () => {
   test('toolchain SET_DISABLED persists fzf via real storage', () => {
     const script = [
       FAKE_SERVER_SETUP,
-      "const { RPC_CHANNELS } = await import('@craft-agent/shared/protocol');",
+      "const { RPC_CHANNELS } = await import('@rox/shared/protocol');",
       'const { registerToolchainHandlers } = await import(',
       "  process.env.CRAFT_TEST_ROOT + '/packages/server-core/src/handlers/rpc/toolchain.ts'",
       ');',
@@ -107,7 +107,7 @@ describe('runtime-context rpc handlers (subprocess)', () => {
       "  throw new Error('GET_DISABLED missing fzf: ' + JSON.stringify(disabled));",
       '}',
       '',
-      "const { getToolchainDisabled } = await import('@craft-agent/shared/config');",
+      "const { getToolchainDisabled } = await import('@rox/shared/config');",
       'const stored = getToolchainDisabled();',
       "if (!stored.includes('fzf')) {",
       "  throw new Error('getToolchainDisabled missing fzf: ' + JSON.stringify(stored));",
@@ -139,10 +139,10 @@ describe('runtime-context rpc handlers (subprocess)', () => {
     const marker = 'rpc-sub-marker-' + Date.now() + '-' + Math.random().toString(36).slice(2)
     const script = [
       FAKE_SERVER_SETUP,
-      "const { setBundledAssetsRoot } = await import('@craft-agent/shared/utils');",
+      "const { setBundledAssetsRoot } = await import('@rox/shared/utils');",
       'setBundledAssetsRoot(process.env.CRAFT_ELECTRON_ROOT);',
       '',
-      "const { RPC_CHANNELS } = await import('@craft-agent/shared/protocol');",
+      "const { RPC_CHANNELS } = await import('@rox/shared/protocol');",
       'const { registerContextDocsHandlers } = await import(',
       "  process.env.CRAFT_TEST_ROOT + '/packages/server-core/src/handlers/rpc/context-docs.ts'",
       ');',
@@ -191,14 +191,14 @@ describe('runtime-context rpc handlers (subprocess)', () => {
 
     const script = [
       FAKE_SERVER_SETUP,
-      "const { setBundledAssetsRoot } = await import('@craft-agent/shared/utils');",
+      "const { setBundledAssetsRoot } = await import('@rox/shared/utils');",
       'setBundledAssetsRoot(process.env.CRAFT_ELECTRON_ROOT);',
       '',
       '// Force the degradation ladder onto the bundled catalog: unreachable remote',
       '// makes the https fetch fail closed without depending on network.',
       "process.env.CRAFT_MARKETPLACE_CATALOG_URL = 'https://127.0.0.1:1/catalog-unreachable.json';",
       '',
-      "const { RPC_CHANNELS } = await import('@craft-agent/shared/protocol');",
+      "const { RPC_CHANNELS } = await import('@rox/shared/protocol');",
       'const { registerMarketplaceHandlers, HANDLED_CHANNELS } = await import(',
       "  process.env.CRAFT_TEST_ROOT + '/packages/server-core/src/handlers/rpc/marketplace.ts'",
       ');',

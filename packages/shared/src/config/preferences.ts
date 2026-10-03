@@ -60,7 +60,8 @@ export interface UserPreferences {
   uiLanguage?: LanguageCode;
   /**
    * Zen Shell (`shell.zen.v1`). Main-owned so WindowManager can read it before
-   * first paint. Default OFF. Not exposed via `update_user_preferences`.
+   * first paint. Enabled by default; an explicit opt-out is preserved.
+   * Not exposed via `update_user_preferences`.
    */
   zenShellEnabled?: boolean;
   /** User material preference while Zen Shell is on. Default `system`. */
@@ -321,9 +322,10 @@ export function getCoAuthorPreference(): boolean {
   return prefs.includeCoAuthoredBy !== false;
 }
 
-/** `shell.zen.v1` — missing/invalid values are OFF. */
+/** `shell.zen.v1` — enabled on a fresh install; preserve explicit opt-outs. */
 export function isZenShellEnabled(): boolean {
-  return loadPreferences().zenShellEnabled === true;
+  const value = loadPreferences().zenShellEnabled;
+  return value === undefined || value === true;
 }
 
 export function getZenShellMaterialPreference(): 'system' | 'glass' | 'opaque' {
@@ -341,7 +343,9 @@ export function setZenShellPreference(patch: {
   materialPreference?: 'system' | 'glass' | 'opaque';
 }): { enabled: boolean; materialPreference: 'system' | 'glass' | 'opaque' } {
   const current = loadPreferences();
-  const enabled = patch.enabled !== undefined ? patch.enabled === true : current.zenShellEnabled === true;
+  const enabled = patch.enabled !== undefined
+    ? patch.enabled === true
+    : current.zenShellEnabled === undefined || current.zenShellEnabled === true;
   const materialPreference =
     patch.materialPreference === 'system' || patch.materialPreference === 'glass' || patch.materialPreference === 'opaque'
       ? patch.materialPreference

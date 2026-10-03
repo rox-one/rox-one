@@ -17,15 +17,13 @@ import {
   ListHeader,
   ListRow,
   ModeScreenLayout,
-  NavItem,
-  NavSection,
-  NavTitle,
   useListKeys,
 } from '@/components/mode-screen/ModeScreen'
 import { clearRecorderError, meetingsApi, recordedMs, startRecording, useRecorder } from '@/lib/meetings/recorder'
 import { newLocalId } from '@/lib/extra-screens/storage'
 import type { LocalAsrEngine, LocalMeeting } from '../../shared/meetings-local'
 import { LocalMeetingDetail, transcriptTone, type DetailTab } from './meetings/LocalMeetingDetail'
+import { MeetingsSidebar } from './meetings/MeetingsSidebar'
 import {
   formatDuration,
   groupLocalMeetings,
@@ -39,7 +37,7 @@ import {
   type LocalBucket,
   type LocalGroup,
 } from './meetings/local-meetings-model'
-import { getAppLocale } from '@craft-agent/shared/i18n'
+import { getAppLocale } from '@rox/shared/i18n'
 
 const ERROR_KEYS: Record<string, string> = {
   'mic-denied': 'meetings.local.err.micDenied',
@@ -252,46 +250,8 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     needsAction: t('meetings.local.needsAction'),
   }
 
-  const engineLine = engine
-    ? engine.ready
-      ? { dot: 'success' as const, label: `${engine.engine} · ${engine.model}` }
-      : { dot: 'warning' as const, label: t('meetings.local.engineMissing') }
-    : null
-
   const navigator = (
-    <>
-      <NavTitle>{t('meetings.title')}</NavTitle>
-      {(['all', 'today', 'upcoming', 'past', 'live'] as const).map((b) => (
-        <NavItem
-          key={b}
-          label={bucketTitle[b]}
-          count={counts[b]}
-          dot={b === 'live' && counts.live ? 'danger' : undefined}
-          active={bucket === b}
-          onClick={() => setBucket(b)}
-          testId={`meetings-nav-${b}`}
-        />
-      ))}
-      <NavSection title={t('meetings.screen.requireAction')}>
-        <NavItem label={bucketTitle.needsAction} count={counts.needsAction} dot={counts.needsAction ? 'warning' : undefined} active={bucket === 'needsAction'} onClick={() => setBucket('needsAction')} testId="meetings-nav-needsAction" />
-      </NavSection>
-      <NavSection title={t('meetings.local.transcription')}>
-        {engineLine ? (
-          <div className="flex items-start gap-2 px-2 py-1 text-[12px]" data-testid="meetings-engine" title={engine?.modelPath ?? undefined}>
-            <span aria-hidden className={cn('mt-1.5 size-1.5 shrink-0 rounded-full', engineLine.dot === 'success' ? 'bg-success' : 'bg-[var(--warning,#d9a13b)]')} />
-            <span className="min-w-0">
-              <span className="block truncate text-text-secondary">{engineLine.label}</span>
-              <span className="block text-[11px] text-text-muted">
-                {engine?.ready ? t('meetings.local.engineLocal') : t('meetings.local.engineHowTo', { missing: engine?.missing.map((k) => t(`meetings.local.missing.${k}`)).join(', ') })}
-              </span>
-            </span>
-          </div>
-        ) : null}
-      </NavSection>
-      <NavSection title={t('meetings.screen.sources')}>
-        <NavItem label={t('meetings.screen.calendarsNone')} dot="muted" onClick={() => navigate(routes.view.connections())} testId="meetings-connect-calendar" />
-      </NavSection>
-    </>
+    <MeetingsSidebar bucket={bucket} counts={counts} engine={engine} onBucketSelect={setBucket} onConnectCalendar={() => navigate(routes.view.connections())} />
   )
 
   const bannerNode = banner ? (
@@ -304,7 +264,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   const busyRecording = rec.status !== 'idle'
   const listPanel = (
     <div
-      className={cn('flex min-h-0 flex-1 flex-col', dropActive && 'bg-accent/[0.05] shadow-[inset_0_0_0_1px_var(--accent)]')}
+      className={cn('flex min-h-0 flex-1 flex-col', dropActive && 'bg-accent/[0.05] ring-1 ring-inset ring-accent')}
       onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDropActive(true) } }}
       onDragLeave={() => setDropActive(false)}
       onDrop={(e) => {

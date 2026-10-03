@@ -1,5 +1,10 @@
 # Unified Rox / Conation / RMA / Golden Gate behavioral specification
 
+## Desktop runtime 0.11.8 delivery — 2026-10-03
+
+The bounded OMP runtime, transcript/branch recovery, ROX context migration, bundled skills and macOS/Windows release work is tracked in [runtime specification](runtime-0.11.8-spec.md) and [parallel plan](runtime-0.11.8-plan.md). This delivery has its own source, native acceptance and release evidence; the broader program below retains its current acceptance state.
+
+
 ## Current target and execution scope — 2026-10-03
 
 Windows10/11, macOS and hosted Web remain simultaneous completion targets. [Current dispatch and unavoidable dependencies](final-readiness/17-parallel-launch-plan.ru.md) preserve every original requirement/DoD and schedule445 executable leaves plus180 parent acceptance rollups. Historical sequential stage notes below do not supersede the user's latest concurrent-work authorization. PR integration and bounded source/fixture/runtime checks do not certify signed installed or production-hosted release behavior.
@@ -414,6 +419,17 @@ The [original spec](integration-history/pr1321/spec.md) remains preserved. Curre
 The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 is reconciled with this independent integration. Its original [spec](integration-history/remote-main-3dd1f98b7/spec.md) and release archive preserve all historical scope. Desktop0.11.6, native staging and dedicated GitHub/CircleCI packaging pipelines are retained; their presence does not establish signed installed Windows10/11/macOS or hosted acceptance. The current [445-leaf parallel allocation](final-readiness/parallel-work/launch-plan.json) governs development dispatch.
 
 
+## Branch integration request — 2026-10-03
+
+The authorized outcome is an exhaustive inventory of the live `rox-one/rox-one` branches against main, followed by separate pull requests and integration of substantive additions. All original branches and unrelated working changes must remain intact. The initial authoritative main is `76228cc33e44518e5fab5e59f5c754f4051d1e8c`; GitHub listed 665 live branches. Ahead counts alone are insufficient because the repository uses squash merges.
+
+Classify source changes using exact ancestry, patch equivalence, related merged PR ancestry, and current source semantics. Superseded recovery workflows and obsolete wording tests must not revert current behavior. Each integration candidate requires relevant checks on its exact delivered revision. Existing native/production acceptance boundaries remain in force.
+
+For the runtime lane, preserve the release branch's OMP recovery, mandatory policy, context migration and skill provenance. The exact-head validation failure comprised ten TypeScript errors in three gstack regression fixtures. Correct the mocks and fixture argument validation while retaining every security assertion; exercise the focused suites, full repository validation, runtime regressions and remote CI. Security scan findings require source-based disposition; a passing analyzer job does not prove no findings.
+
+Runtime security follow-up: gbrain sync/dream markers serialize acquisition, stale takeover and release through an exclusive mutation directory. A stale marker owned by a live PID is retained. Only the exact UUID generation acquired by this process can be removed; publication uses exclusive private files. A crashed mutation guard remains conservative rather than being reclaimed automatically.
+
+
 ## Recovered Compound native license evidence — 2026-10-03
 
 Branch audit against main `76228cc33e44518e5fab5e59f5c754f4051d1e8c` found the unmerged native slice in `feat/rox-compound-workspace-20260930` commit `d141e962185fd808f177a2d01760b211f47f0832`. The canonical WP48 backend was already present; the Settings consumer, strict native evidence schemas and typed license audit operation in the existing encrypted Project intent slot were absent. This recovery retains those additions and their original source-bound proofs without replacing newer main contracts.
@@ -437,3 +453,4 @@ credentials require their own verification. See `docs/cursor-cloud-server.md`.
 ## Legacy binding replay recovery (2026-10-03)
 
 Recovered binding idempotency: migrating a legacy unencoded four-slot external binding key must preserve entity identity across all identical encoded-key reimports. Foreign workspace, wrong kind and unrelated entity IDs still quarantine. Owner: historical branch recovery. Source: cursor/contract-status-split-93d2 @fa254fe0f2e2504dd399202ee00e2d3b2a8a7b6b.
+The canonical and portable gstack browser clients must send authenticated commands only to their selected literal loopback endpoint. HTTP redirects must fail through the existing non-2xx error contract without forwarding the command body or capability. Real HTTP 307/308 negative controls cover both same-origin and another-port destinations; normal authenticated POST commands retain their arguments and tab scope.

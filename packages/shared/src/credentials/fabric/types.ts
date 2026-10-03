@@ -5,7 +5,7 @@ import type {
   CredentialVersion,
   ProviderLocator,
   StorageMode,
-} from '@craft-agent/core/platform';
+} from '@rox/core/platform';
 import type { StoredCredential } from '../types.ts';
 
 export interface ImportCandidate {

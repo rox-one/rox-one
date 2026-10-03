@@ -7,7 +7,7 @@
 
 import { forwardRef, useEffect, useState, type ButtonHTMLAttributes } from 'react'
 import * as Icons from 'lucide-react'
-import { Spinner } from '@craft-agent/ui'
+import { Spinner } from '@rox/ui'
 import type { BrowserInstanceInfo } from '../../../shared/types'
 import { getHostname, getThemeLuminance } from './utils'
 
@@ -45,7 +45,7 @@ export const BrowserTabBadge = forwardRef<HTMLButtonElement, BrowserTabBadgeProp
       type="button"
       className={`
         group flex items-center gap-1 h-[26px] pl-2.5 pr-1.5 rounded-lg cursor-pointer select-none titlebar-no-drag
-        text-[11px] leading-tight transition-colors max-w-[160px] shadow-minimal
+        text-[11px] leading-tight transition-colors min-w-0 max-w-[160px] shadow-minimal
         bg-background
         ${foregroundClass}
         ${instance.agentControlActive ? 'border border-accent' : ''}

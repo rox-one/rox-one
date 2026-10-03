@@ -1,11 +1,11 @@
-import type { RemoteServerConfig } from '@craft-agent/core/types'
+import type { RemoteServerConfig } from '@rox/core/types'
 import {
   createPeerTrustVerifier,
   tlsSocketOptions,
   type PeerTrustVerifier,
   type RemoteTlsSocketOptions,
-} from '@craft-agent/server-core/transport'
-import { normalizeRemoteTlsTrust } from '@craft-agent/shared/config'
+} from '@rox/server-core/transport'
+import { normalizeRemoteTlsTrust } from '@rox/shared/config'
 
 export function peerTrustOptionsForRemote(
   remote: Pick<RemoteServerConfig, 'url' | 'token' | 'remoteWorkspaceId' | 'tlsTrust' | 'sshHostId'>,

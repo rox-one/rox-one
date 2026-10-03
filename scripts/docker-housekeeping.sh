@@ -26,7 +26,7 @@ for d in \
   "$HOME/Library/Caches/dev.kdrag0n.MacVirt" \
   "$HOME/.npm/_cacache" \
   "$HOME/.cache/bun/install/cache" \
-  "$HOME/Library/Caches/@craft-agentelectron-updater"; do
+  "$HOME/Library/Caches/@roxelectron-updater"; do
   if [ -d "$d" ]; then
     log "removing $d contents"
     rm -rf "${d:?}/"* 2>/dev/null || true

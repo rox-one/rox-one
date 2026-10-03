@@ -1,10 +1,10 @@
 import { join } from 'node:path'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getEnv } from '@craft-agent/shared/config'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import type { MeetingGrant } from '@rox/shared/meeting-agents'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getEnv } from '@rox/shared/config'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import type { Meeting, MeetingProposal, OperationResultV2 } from '@craft-agent/core/meetings'
+import type { Meeting, MeetingProposal, OperationResultV2 } from '@rox/core/meetings'
 import { deleteMeeting, getMeeting, queryMeetings, type MeetingQueryActor } from '../../meetings/queries.ts'
 import { listNativeMeetings, startNativeMeeting, searchNativeMeetings } from '../../meetings/catalog.ts'
 import { loadMeetingQueryIndex, saveMeetingQueryIndex } from '../../meetings/query-store.ts'
@@ -30,7 +30,7 @@ import {
   sendPreparedMail,
   type MailLedgerEntry,
 } from '../../meetings/conation/native-shells.ts'
-import { gateMeetingConationShell } from '@craft-agent/core/rox2'
+import { gateMeetingConationShell } from '@rox/core/rox2'
 
 const proposalStores = new Map<string, ProposalStore>()
 const jobStores = new Map<string, OutboxJob[]>()

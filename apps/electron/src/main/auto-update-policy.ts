@@ -1,4 +1,5 @@
 import { join, sep } from 'path'
+import { compare, valid } from 'semver'
 
 /**
  * Local/dev/unsigned packaged builds must not chase the production update feed.
@@ -25,17 +26,16 @@ export function shouldSuppressUpdateFeed(options: {
   return execPath === homeApps || execPath.startsWith(homeApps + sep)
 }
 
-/** Compare dotted semver-ish versions: -1 if a<b, 0 if equal, 1 if a>b. */
+/** Invalid versions cannot authorize an update or match a cached installer. */
+export function isValidUpdateVersion(version: string): boolean {
+  return valid(version.trim()) !== null
+}
+
+/** SemVer precedence includes prereleases and ignores build metadata. */
 export function compareSemver(a: string, b: string): number {
-  const pa = a.replace(/^v/i, '').split(/[^0-9]+/).map((p) => Number.parseInt(p, 10) || 0)
-  const pb = b.replace(/^v/i, '').split(/[^0-9]+/).map((p) => Number.parseInt(p, 10) || 0)
-  const n = Math.max(pa.length, pb.length)
-  for (let i = 0; i < n; i++) {
-    const av = pa[i] ?? 0
-    const bv = pb[i] ?? 0
-    if (av !== bv) return av < bv ? -1 : 1
-  }
-  return 0
+  const left = valid(a.trim())
+  const right = valid(b.trim())
+  return left && right ? compare(left, right) : Number.NaN
 }
 
 /**
@@ -50,7 +50,8 @@ export function shouldAcceptReadyUpdate(options: {
 }): boolean {
   const feed = options.feedVersion?.trim()
   if (!feed) return false
-  if (compareSemver(options.localVersion, feed) >= 0) {
+  const ordering = compareSemver(options.localVersion, feed)
+  if (!Number.isFinite(ordering) || ordering >= 0) {
     return false
   }
   const cached = options.cachedVersion?.trim()
@@ -58,4 +59,15 @@ export function shouldAcceptReadyUpdate(options: {
     return false
   }
   return true
+}
+
+
+/** Unsigned /Applications releases can explicitly check public metadata only.
+ * User-local/dev copies keep their existing feed suppression. */
+export function shouldOfferManualReleaseCheck(options: {
+  craftDevRuntime?: string; homeDir: string; execPath: string; isAdHocSigned?: boolean;
+}): boolean {
+  return options.isAdHocSigned === true
+    && options.execPath.startsWith('/Applications/')
+    && !shouldSuppressUpdateFeed({ ...options, isAdHocSigned: false })
 }

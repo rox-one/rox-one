@@ -1,3 +1,4 @@
+import { ROX_CREDENTIAL_KEYCHAIN_SERVICE, readOrMigrateKeychainMasterKey } from './keychain-master-key.ts';
 /**
  * Secure Storage Backend
  *
@@ -68,7 +69,7 @@ const STORE_NAME = 'credentials.enc';
 const CREDENTIALS_FILE_NAME = STORE_NAME;
 const BACKUP_NAME = 'credentials.enc.bak';
 const KEY_FILE_NAME = 'credentials.key';
-const KEYCHAIN_SERVICE = 'craft-agent.credentials';
+const KEYCHAIN_SERVICE = ROX_CREDENTIAL_KEYCHAIN_SERVICE;
 const KEYCHAIN_ACCOUNT = 'master';
 const MASTER_KEY_HEX = /^[0-9a-f]{64}$/i;
 
@@ -134,12 +135,12 @@ const PBKDF2_ITERATIONS = 100000;
  */
 const masterKeyMemo = new Map<string, Buffer>();
 
-function keychainReadHex(): string | null {
+function keychainReadHex(service: string): string | null {
   try {
     if (process.platform === 'darwin') {
       const res = spawnSync(
         'security',
-        ['find-generic-password', '-s', KEYCHAIN_SERVICE, '-a', KEYCHAIN_ACCOUNT, '-w'],
+        ['find-generic-password', '-s', service, '-a', KEYCHAIN_ACCOUNT, '-w'],
         { encoding: 'utf8' },
       );
       const value = res.status === 0 ? (res.stdout ?? '').trim() : '';
@@ -148,7 +149,7 @@ function keychainReadHex(): string | null {
     if (process.platform === 'linux') {
       const res = spawnSync(
         'secret-tool',
-        ['lookup', 'service', KEYCHAIN_SERVICE, 'account', KEYCHAIN_ACCOUNT],
+        ['lookup', 'service', service, 'account', KEYCHAIN_ACCOUNT],
         { encoding: 'utf8' },
       );
       const value = res.status === 0 ? (res.stdout ?? '').trim() : '';
@@ -160,12 +161,12 @@ function keychainReadHex(): string | null {
   return null;
 }
 
-function keychainWriteHex(hex: string): boolean {
+function keychainWriteHex(hex: string, service: string = KEYCHAIN_SERVICE): boolean {
   try {
     if (process.platform === 'darwin') {
       const res = spawnSync(
         'security',
-        ['add-generic-password', '-U', '-s', KEYCHAIN_SERVICE, '-a', KEYCHAIN_ACCOUNT, '-w', hex],
+        ['add-generic-password', '-U', '-s', service, '-a', KEYCHAIN_ACCOUNT, '-w', hex],
         { encoding: 'utf8' },
       );
       return res.status === 0;
@@ -173,7 +174,7 @@ function keychainWriteHex(hex: string): boolean {
     if (process.platform === 'linux') {
       const res = spawnSync(
         'secret-tool',
-        ['store', 'service', KEYCHAIN_SERVICE, 'account', KEYCHAIN_ACCOUNT],
+        ['store', 'service', service, 'account', KEYCHAIN_ACCOUNT],
         { input: hex },
       );
       return res.status === 0;
@@ -219,7 +220,7 @@ function getOrCreateMasterKey(directory: string): Buffer {
   const memo = masterKeyMemo.get(directory);
   if (memo) return memo;
 
-  const keychainHex = keychainReadHex();
+  const keychainHex = readOrMigrateKeychainMasterKey(keychainReadHex, (service, key) => keychainWriteHex(key, service));
   if (keychainHex) {
     const key = Buffer.from(keychainHex, 'hex');
     masterKeyMemo.set(directory, key);

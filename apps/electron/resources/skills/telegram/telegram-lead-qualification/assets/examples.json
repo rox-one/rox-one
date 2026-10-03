@@ -1,0 +1,10 @@
+[
+  {
+    "prompt": "Qualify my recent inbound Telegram leads and show the top follow-ups.",
+    "tools": ["dialogs_list", "chat_read", "tags_suggest", "company_suggest", "tasks_suggest"]
+  },
+  {
+    "prompt": "Qualify @alice as a lead and apply the CRM updates if the evidence is strong.",
+    "tools": ["chat_read", "tags_suggest", "company_suggest", "tasks_suggest", "tags_set", "company_link", "tasks_add"]
+  }
+]

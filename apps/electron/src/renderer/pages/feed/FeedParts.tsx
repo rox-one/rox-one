@@ -6,7 +6,7 @@
  */
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { FEED_COLORS, FEED_MAX_TAGS, normalizeFeedTags, type FeedColor, type FeedSource, type FeedSourceKind } from '@craft-agent/shared/feed'
+import { FEED_COLORS, FEED_MAX_TAGS, normalizeFeedTags, type FeedColor, type FeedSource, type FeedSourceKind } from '@rox/shared/feed'
 import { Check, Github, Globe, Rss, X as XIcon, Youtube, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { sourceHost, type SourceHealth } from './feed-model'

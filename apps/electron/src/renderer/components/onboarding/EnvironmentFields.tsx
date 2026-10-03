@@ -1,35 +1,27 @@
 import { useTranslation } from 'react-i18next'
-import { PremiumMenuSelect } from '@craft-agent/ui'
+import { PremiumMenuSelect } from '@rox/ui'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import {
-  BROWSER_IMPORT_CATEGORIES,
   SYNC_PURPOSES,
   answerChoice,
   type AgentRule,
   type AgentRuleLabel,
-  type BrowserImportCategory,
   type EnvironmentPrefs,
   type ModelPlacement,
   type QuestionId,
   type SttChoice,
   type SyncPurpose,
   type TtsChoice,
-} from '@craft-agent/shared/environment'
+} from '@rox/shared/environment'
+import { BrowserImportPreferences } from './BrowserImportPreferences'
 
 const MODEL_KEYS: Record<ModelPlacement, { label: string; desc: string }> = {
   local: { label: 'onboarding.environment.modelLocal', desc: 'onboarding.environment.modelLocalDesc' },
   cloud: { label: 'onboarding.environment.modelCloud', desc: 'onboarding.environment.modelCloudDesc' },
   mixed: { label: 'onboarding.environment.modelMixed', desc: 'onboarding.environment.modelMixedDesc' },
-}
-
-const BROWSER_KEYS: Record<BrowserImportCategory, string> = {
-  bookmarks: 'onboarding.environment.browserImportBookmarks',
-  history: 'onboarding.environment.browserImportHistory',
-  cookies: 'onboarding.environment.browserImportCookies',
-  extensions: 'onboarding.environment.browserImportExtensions',
 }
 
 const SYNC_KEYS: Record<SyncPurpose, string> = {
@@ -186,20 +178,8 @@ export function EnvironmentFields({
         <section className="space-y-2">
           <p className="text-sm font-medium">{t('onboarding.environment.browserImport')}</p>
           <p className="text-xs text-muted-foreground">{t('onboarding.environment.browserImportDesc')}</p>
-          {BROWSER_IMPORT_CATEGORIES.map((category) => (
-            <label key={category} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={(prefs.browserImport.value ?? []).includes(category)}
-                onChange={() => toggleList<BrowserImportCategory>(
-                  prefs.browserImport.value,
-                  category,
-                  (next) => onChange({ browserImport: answerChoice(next) }),
-                )}
-              />
-              {t(BROWSER_KEYS[category])}
-            </label>
-          ))}
+          <BrowserImportPreferences selected={prefs.browserImport.value}
+            onChange={(next) => onChange({ browserImport: answerChoice(next) })} />
         </section>
       )}
 

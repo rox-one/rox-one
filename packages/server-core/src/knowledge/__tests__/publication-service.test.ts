@@ -17,8 +17,8 @@ import {
   hashKnowledgeContent,
   type KnowledgeNode,
   type KnowledgeRef,
-} from '@craft-agent/core/knowledge'
-import type { KnowledgeChangedPayload } from '@craft-agent/shared/protocol'
+} from '@rox/core/knowledge'
+import type { KnowledgeChangedPayload } from '@rox/shared/protocol'
 import { KnowledgeAuditLog } from '../knowledge-audit'
 import { KnowledgeBridgeService } from '../bridge-service'
 import { KnowledgeMutationProposalsStore } from '../proposals-store'

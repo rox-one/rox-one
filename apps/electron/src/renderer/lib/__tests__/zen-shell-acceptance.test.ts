@@ -58,12 +58,12 @@ describe('Zen Shell acceptance gate (ZS-08)', () => {
     }
   })
 
-  it('keeps shell.zen.v1 default OFF with no remote force-on', () => {
-    expect(parseZenShellEnabled(undefined)).toBe(false)
+  it('enables shell.zen.v1 on fresh installs without a remote flag', () => {
+    expect(parseZenShellEnabled(undefined)).toBe(true)
     expect(parseZenShellEnabled('true')).toBe(false)
     expect(ZEN_SHELL_FLAG).toBe('shell.zen.v1')
     const prefs = read('packages/shared/src/config/preferences.ts')
-    expect(prefs).toContain("return loadPreferences().zenShellEnabled === true")
+    expect(prefs).toContain('return value === undefined || value === true')
     const flags = read('packages/shared/src/feature-flags.ts')
     expect(flags).not.toContain('ZEN_SHELL')
     expect(flags).not.toContain('shell.zen.v1')

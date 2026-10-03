@@ -3,19 +3,19 @@
  *
  * Handles workspace setup and configuration persistence.
  */
-import { fetchRoxBalance, getOnboardingAuthPayload, saveOmpRoxCredential } from '@craft-agent/shared/auth'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
-import { isSetupDeferred, setSetupDeferred } from '@craft-agent/shared/config'
-import { prepareClaudeOAuth, exchangeClaudeCode, hasValidOAuthState, clearOAuthState, prepareMcpOAuth } from '@craft-agent/shared/auth'
-import { validateMcpConnection } from '@craft-agent/shared/mcp'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { fetchRoxBalance, getOnboardingAuthPayload, saveOmpRoxCredential } from '@rox/shared/auth'
+import { getCredentialManager } from '@rox/shared/credentials'
+import { isSetupDeferred, setSetupDeferred } from '@rox/shared/config'
+import { prepareClaudeOAuth, exchangeClaudeCode, hasValidOAuthState, clearOAuthState, prepareMcpOAuth } from '@rox/shared/auth'
+import { validateMcpConnection } from '@rox/shared/mcp'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   isClaimableLive,
   rpcOnboardingActResult,
   rpcOnboardingListResult,
   rpcOnboardingReadResult,
-} from '@craft-agent/core/rox2'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/core/rox2'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 
 // ============================================

@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { SourcedStatement } from '../SourcedStatement'
-import type { SourceCitationView } from '@craft-agent/core/research'
+import type { SourceCitationView } from '@rox/core/research'
 
 const source: SourceCitationView = {
   url: 'https://example.com/paper',

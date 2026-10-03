@@ -1,3 +1,4 @@
+import { resolveConfigDir } from '../../config/env.ts';
 /**
  * ConfigValidator - Pre-Write Configuration Validation
  *
@@ -27,26 +28,26 @@ const CONFIG_FILE_PATTERNS: { pattern: RegExp; type: ConfigFileType }[] = [
 ];
 
 /**
- * Craft Agent specific config files that have known schemas.
+ * ROX specific config files that have known schemas.
  */
-const CRAFT_AGENT_CONFIG_PATTERNS = [
+const ROX_CONFIG_PATTERNS = [
   // Main config
-  /\.craft-agent\/config\.json$/,
+  /\.(?:rox|craft-agents?)\/config\.json$/,
   // Preferences
-  /\.craft-agent\/preferences\.json$/,
+  /\.(?:rox|craft-agents?)\/preferences\.json$/,
   // Source configs
-  /\.craft-agent\/workspaces\/[^/]+\/sources\/[^/]+\/config\.json$/,
+  /\.(?:rox|craft-agents?)\/workspaces\/[^/]+\/sources\/[^/]+\/config\.json$/,
   // Permissions
-  /\.craft-agent\/workspaces\/[^/]+\/permissions\.json$/,
-  /\.craft-agent\/permissions\/[^/]+\.json$/,
+  /\.(?:rox|craft-agents?)\/workspaces\/[^/]+\/permissions\.json$/,
+  /\.(?:rox|craft-agents?)\/permissions\/[^/]+\.json$/,
   // Theme
-  /\.craft-agent\/workspaces\/[^/]+\/theme\.json$/,
+  /\.(?:rox|craft-agents?)\/workspaces\/[^/]+\/theme\.json$/,
   // Statuses
-  /\.craft-agent\/workspaces\/[^/]+\/statuses\/config\.json$/,
+  /\.(?:rox|craft-agents?)\/workspaces\/[^/]+\/statuses\/config\.json$/,
   // Labels
-  /\.craft-agent\/workspaces\/[^/]+\/labels\.json$/,
+  /\.(?:rox|craft-agents?)\/workspaces\/[^/]+\/labels\.json$/,
   // Tool icons
-  /\.craft-agent\/tool-icons\/tool-icons\.json$/,
+  /\.(?:rox|craft-agents?)\/tool-icons\/tool-icons\.json$/,
 ];
 
 /**
@@ -98,16 +99,21 @@ export class ConfigValidator {
   }
 
   /**
-   * Check if a file path is a Craft Agent config file.
+   * Check if a file path is a ROX config file.
    *
    * @param filePath - Path to check
-   * @returns true if this is a Craft Agent config
+   * @returns true if this is a ROX config
    */
   isCraftAgentConfig(filePath: string): boolean {
     const normalizedPath = process.platform === 'win32'
       ? filePath.replace(/\\/g, '/').toLowerCase()
       : filePath.replace(/\\/g, '/');
-    return CRAFT_AGENT_CONFIG_PATTERNS.some((pattern) => pattern.test(normalizedPath));
+    const root = resolveConfigDir().replace(/\\/g, '/').replace(/\/$/, '');
+    const comparableRoot = process.platform === 'win32' ? root.toLowerCase() : root;
+    const configuredPath = normalizedPath.startsWith(comparableRoot + '/')
+      ? '/.rox/' + normalizedPath.slice(comparableRoot.length + 1)
+      : normalizedPath;
+    return ROX_CONFIG_PATTERNS.some((pattern) => pattern.test(configuredPath));
   }
 
   // ============================================================

@@ -1,5 +1,10 @@
 # September program implementation plan
 
+## Desktop runtime 0.11.8 delivery — 2026-10-03
+
+The bounded OMP runtime, transcript/branch recovery, ROX context migration, bundled skills and macOS/Windows release work is tracked in [runtime specification](runtime-0.11.8-spec.md) and [parallel plan](runtime-0.11.8-plan.md). This delivery has its own source, native acceptance and release evidence; the broader program below retains its current acceptance state.
+
+
 ## Current execution policy — 2026-10-03
 
 The user now authorizes integration of all captured open PRs and concurrent Windows10/11, macOS and hosted Web development. [The Russian parallel launch plan](final-readiness/17-parallel-launch-plan.ru.md) and [exact445-leaf allocation](final-readiness/parallel-work/launch-plan.json) define current dispatch. Only named consumed outputs and phases impose mandatory order; historical global stage sequencing below is retained as historical evidence and does not block independent work. Existing parent acceptance requirements remain intact. [The integration receipt](final-readiness/parallel-work/pr-integration-receipt.json) distinguishes local source lineage, remote merged states and bounded checks from full release acceptance.
@@ -535,6 +540,21 @@ The [original plan](integration-history/pr1321/plan.md) remains preserved. Curre
 The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 is reconciled with this independent integration. Its original [plan](integration-history/remote-main-3dd1f98b7/plan.md) and release archive preserve all historical scope. Desktop0.11.6, native staging and dedicated GitHub/CircleCI packaging pipelines are retained; their presence does not establish signed installed Windows10/11/macOS or hosted acceptance. The current [445-leaf parallel allocation](final-readiness/parallel-work/launch-plan.json) governs development dispatch.
 
 
+## Parallel branch integration — 2026-10-03
+
+| Task | Owner | Input | Dependency | Verification |
+| --- | --- | --- | --- | --- |
+| Exhaustive live branch inventory and ordered integration | Lead | 665 GitHub branch refs; initial main `76228cc33` | None | Current remote refs, exact ancestry/patch/source evidence, final readback |
+| Historical branch equivalence and useful absent configuration | Historical worker | Branches before 2026-09-25 | Frozen inventory | Patch/merge-tree comparison, superseding merged PR ancestry, relevant local checks |
+| Recent feature recovery | Recent worker | Nine Sep29–30 candidate branches | Frozen inventory | Current-source comparison and Compound WP48 domain checks |
+| Session UI and app completion integration | PR worker | PR1391 at `ddf97e3d` | Runtime ordering where shared files overlap | Fixture types, renderer build, focused domain/browser checks |
+| Runtime validation recovery | Lead | PR1392 at `29e86bcc` | None | Three gstack suites, pinned Bun1.3.14 full validation/runtime regressions, remote checks |
+
+Workers use isolated new branches. The lead merges accepted PRs sequentially and refreshes main before each integration. No original branch is deleted or rewritten; the original release checkout contains an unrelated in-progress merge and is preserved. Review/code/CI failures are repaired within scope. External Vercel account blocking is reported separately from source validation.
+
+Runtime follow-up gate: marker contention, replacement generation, symlink refusal, live stale owner and private permissions are exercised by the actual imported vendor helper. Update every portable provenance SHA and keep remote security closure explicitly unverified until the new scan is read back.
+
+
 ## Compound native license recovery — 2026-10-03
 
 | Task | Owner | Dependency | Verification / delivery |
@@ -563,3 +583,4 @@ Dependencies: current server entry point and helper build commands at main
 ## Legacy binding replay recovery (2026-10-03)
 
 Binding replay recovery: compare the exact legacy identity alongside the canonical encoded identity; verify raw-key migration followed by repeated imports, and negative controls for wrong kind, unrelated ID and foreign workspace. Run the existing platform-contract tests before separate PR publication.
+The recent worker owns the gstack command redirect prerequisite in an isolated security worktree. Input is the three identical shipped BrowseClient copies at runtime revision `05f1e3741`; dependencies are the existing bearer/port validation and portable provenance catalogs. Verify real HTTP redirects fail before any destination request, direct commands retain authentication, and patch hashes match all parent and portable notices. The lead integrates the committed prerequisite into the runtime PR and retains remote CodeQL closure as a separate pending gate.

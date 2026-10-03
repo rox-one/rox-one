@@ -25,6 +25,16 @@ const GIT_CONVENTIONS_HEADING = '## Git Conventions'
 const CO_AUTHOR_TRAILER = 'Co-Authored-By: Agent Rox#001 <agents-noreply@craft.do>'
 
 describe('system prompt guidance', () => {
+  it('uses available configuration tools rather than a nonexistent bundled CLI', () => {
+    const prompt = getSystemPrompt(undefined, undefined, '/tmp/workspace', '/tmp/workspace')
+    expect(prompt).toContain('The desktop app does not bundle a configuration management CLI')
+    expect(prompt).toContain('config_validate')
+    expect(prompt).toContain('skill_validate')
+    expect(prompt).toContain('source_test')
+    expect(prompt).not.toContain('craft-agent label --help')
+    expect(prompt).not.toContain('Prefer `craft-agent`')
+  })
+
   it('routes relevant tasks to actual integrations and identifies skill-only products', () => {
     const prompt = getSystemPrompt(undefined, undefined, '/tmp/workspace', '/tmp/workspace')
 
@@ -125,7 +135,7 @@ describe('includeCoAuthoredBy handling', () => {
       '/tmp/workspace',
       '/tmp/workspace',
       undefined,
-      'Craft Agents Backend'
+      'ROX Backend'
       // 7th arg omitted — must not regress to `true` default
     )
 
@@ -165,8 +175,8 @@ describe('Rox agent identity in the system prompt', () => {
     expect(prompt).toContain('- Name: Agent Rox#001')
     expect(prompt).toContain('compatibility implementation metadata')
     expect(prompt).toContain('If the user asks for technical or runtime detail, you may mention the backend (OMP)')
-    expect(prompt).not.toContain('You are Craft Agent')
-    expect(prompt).not.toContain('You must refer to yourself as Craft Agent')
+    expect(prompt).not.toContain('You are ROX')
+    expect(prompt).not.toContain('You must refer to yourself as ROX')
   })
 })
 

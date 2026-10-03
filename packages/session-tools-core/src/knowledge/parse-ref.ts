@@ -4,13 +4,13 @@
  * Models hand refs to tools in whatever form they last saw them — search-hit
  * provenance lines, [knowledge:…] mentions in chat text, or siyuan:// deep links.
  * All accepted forms funnel through the canonical grammar in
- * @craft-agent/core/knowledge refs.ts (parseKnowledgeRef / parseSiyuanDeepLink);
+ * @rox/core/knowledge refs.ts (parseKnowledgeRef / parseSiyuanDeepLink);
  * this module only strips the mention wrapper. Unknown shapes → null (callers
  * raise a typed INVALID_REF listing the accepted forms).
  */
 
-import { parseKnowledgeRef, parseSiyuanDeepLink } from '@craft-agent/core/knowledge';
-import type { KnowledgeRef } from '@craft-agent/core/knowledge';
+import { parseKnowledgeRef, parseSiyuanDeepLink } from '@rox/core/knowledge';
+import type { KnowledgeRef } from '@rox/core/knowledge';
 
 /** Human/agent-readable list of accepted ref forms (used in INVALID_REF errors). */
 export const KNOWLEDGE_REF_ACCEPTED_FORMS =

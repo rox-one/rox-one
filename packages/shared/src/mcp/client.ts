@@ -12,7 +12,7 @@ import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { basename, dirname, resolve } from 'node:path';
 import { realpathSync } from 'node:fs';
-import { isBlockedEnvVar } from '@craft-agent/core/env';
+import { isBlockedEnvVar } from '@rox/core/env';
 import { createMcpGuardedFetch } from './guarded-fetch.ts';
 import { getToolchain, withToolchainPathPrefix } from '../toolchain-runtime.ts';
 

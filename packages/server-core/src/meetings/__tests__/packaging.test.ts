@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { mkdtempSync, readFileSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { BUILTIN_MEETING_AGENT_IDS } from '@craft-agent/shared/meeting-agents'
+import { BUILTIN_MEETING_AGENT_IDS } from '@rox/shared/meeting-agents'
 import {
   applyPackagedUpgrade,
   hasEightRoles,

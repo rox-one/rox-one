@@ -1,0 +1,7 @@
+[
+  {
+    "id": "cleanup-review-note",
+    "title": "Cleanup review note",
+    "text": "Review whether to keep, organize, or leave {{group_name}}. Reason: {{reason}}"
+  }
+]

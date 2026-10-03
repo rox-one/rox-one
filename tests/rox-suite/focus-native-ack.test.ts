@@ -7,7 +7,7 @@ import {
   type PersonalTask,
   type PersonalTaskKv,
   type PersonalTaskMeta,
-} from '@craft-agent/core/tasks/personal'
+} from '@rox/core/tasks/personal'
 import { PersonalTaskPersistStore } from '../../packages/server-core/src/tasks/personal-persist'
 import { deletePersonalTasks, migratePersonalTasks, putPersonalTasks, readPersonalTasks } from '../../packages/server-core/src/tasks/personal-tasks-service'
 import { PersonalTaskCreationError, putPersonalTaskConfirmed, pushPersonalTaskDiff, type PersonalTasksApi } from '../../apps/electron/src/renderer/lib/personal-tasks-sync'

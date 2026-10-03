@@ -9,7 +9,7 @@
  * connection id, serialized ref, siyuan:// deep link, content hash.
  */
 
-import type { KnowledgeNode } from '@craft-agent/core/knowledge';
+import type { KnowledgeNode } from '@rox/core/knowledge';
 import type { SessionToolContext } from '../context.ts';
 import type { ToolResult } from '../types.ts';
 import { errorResponse, successResponse } from '../response.ts';

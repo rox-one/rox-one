@@ -29,6 +29,15 @@ describe('titlebar mode pill layout', () => {
     const layout = resolveModePillLayout({ topbarWidth: 1552, leftInset: 48, leftFixedEdge: 120, rightWidth: 260, metrics })
     // Window center is 800px; relative to the titlebar that is 752px.
     expect(layout.leftMax).toBe(752 - 260 - 12)
+    expect(layout.rightMax).toBe(1552 - 752 - 260 - 12)
+  })
+
+  it('reserves a gap around the compact pill even when browser tabs exceed their available width', () => {
+    const layout = resolveModePillLayout({ topbarWidth: 800, leftInset: 0, leftFixedEdge: 120, rightWidth: 700, metrics })
+    expect(layout.collapsed).toBe(true)
+    expect(layout.leftMax).toBe(283)
+    expect(layout.rightMax).toBe(283)
+    expect(layout.leftMax + metrics.compact + layout.rightMax).toBe(800 - 24)
   })
 })
 
@@ -40,7 +49,7 @@ describe('titlebar mode pill source contract', () => {
     expect(modeBar).toContain('rox-mode-pill-indicator')
   })
 
-  it('is no-drag and flat in both contrast modes', () => {
+  it('is no-drag and keeps high contrast accessible', () => {
     expect(pillCss).toContain('-webkit-app-region: no-drag')
     expect(pillCss).not.toMatch(/border:\s*1px/)
     expect(pillCss).toContain('html[data-contrast="high"] .rox-mode-pill-indicator')
@@ -62,4 +71,9 @@ describe('titlebar mode pill source contract', () => {
     expect(tileMark).toContain('rox-mark-portrait-18.png')
     expect(tileMark).not.toContain('rox-mark-tile-')
   })
+  it('exposes the seven primary surfaces without requiring experimental Workbench chrome', () => {
+    expect(topBar).toContain('const showModePill = !isCompact')
+    expect(topBar).not.toContain('const showModePill = chrome.showModeBar')
+  })
+
 })

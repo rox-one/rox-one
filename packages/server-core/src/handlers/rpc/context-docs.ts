@@ -1,5 +1,5 @@
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   acceptContextDocTemplate,
@@ -10,14 +10,14 @@ import {
   readContextDoc,
   readContextDocTemplate,
   writeContextDoc,
-} from '@craft-agent/shared/context-docs'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+} from '@rox/shared/context-docs'
+import { resolveConfigDir } from "@rox/shared/config/paths"
 import {
   isClaimableLive,
   rpcContextDocsActResult,
   rpcContextDocsListResult,
   rpcContextDocsReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.contextDocs.LIST,

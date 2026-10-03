@@ -14,9 +14,12 @@
  * the declared Rox contract, not a claim of gateway discovery. They use a
  * private per-run agent directory and retain every original user file.
  */
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { delimiter, join } from 'node:path';
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
+import { linkBundledSkillsForOmp } from '../skills/bundled.ts';
+import { OMP_WORKER_POLICY_SOURCE } from './omp-worker-policy.ts';
 import type { OmpStartupErrorCode } from './errors.ts';
 import { ROX_DEFAULT_PARENT_MODEL, ROX_PUBLIC_MODEL_CATALOG } from '../config/rox-public-models.ts';
 
@@ -247,13 +250,78 @@ export function prepareOmpRoxRuntimeConfig(input: {
   runtimeRoot: string;
   apiKey?: string | null;
   baseUrl?: string;
+  /** False keeps the user's provider catalog while applying ROX runtime policy. */
+  publicRoxCatalog?: boolean;
+  sourceAgentDir?: string;
+  /** Injection seams for clean-home native discovery verification. */
+  bundleRoot?: string;
+  homeDir?: string;
+  configFiles?: string;
+  disabledPacks?: string[];
 }): { agentDir: string; env: Record<string, string>; dispose: () => void } {
   mkdirSync(input.runtimeRoot, { recursive: true, mode: 0o700 });
   const agentDir = mkdtempSync(join(input.runtimeRoot, 'rox-omp-'));
   try {
+    const sourceDir = input.sourceAgentDir ?? ompAgentDir(input.homeDir ?? homedir());
+    // Preserve provider credentials and unrelated settings in the disposable
+    // overlay. No host-global skill directory or user config is modified.
+    for (const name of ['auth.json', 'auth.yml', 'auth.yaml', 'secrets.json', 'models.yml', 'models.yaml']) {
+      const source = join(sourceDir, name);
+      if (existsSync(source)) copyFileSync(source, join(agentDir, name));
+    }
+    let config: Record<string, any> = {};
+    for (const name of CONFIG_BASENAMES) {
+      const source = join(sourceDir, name);
+      if (!existsSync(source)) continue;
+      const parsed = parseYaml(readFileSync(source, 'utf8'));
+      if (parsed !== null && (typeof parsed !== 'object' || Array.isArray(parsed))) {
+        throw new Error(`OMP configuration must be a mapping: ${source}`);
+      }
+      config = parsed ?? {};
+      break;
+    }
     const baseUrl = (input.baseUrl?.trim() || ROX_OMP_DEFAULT_BASE_URL).replace(/\/$/, '');
-    writeFileSync(join(agentDir, 'models.yml'), modelsYmlTemplate(baseUrl), { mode: 0o600 });
-    writeFileSync(join(agentDir, 'config.yml'), configYmlTemplate(), { mode: 0o600 });
+    if (input.publicRoxCatalog !== false) {
+      rmSync(join(agentDir, 'models.yaml'), { force: true });
+      writeFileSync(join(agentDir, 'models.yml'), modelsYmlTemplate(baseUrl), { mode: 0o600 });
+      config.modelRoles = { ...config.modelRoles, default: `${ROX_OMP_PROVIDER_ID}/${ROX_OMP_MODEL_ID}` };
+    }
+    config.magicKeywords = { ...config.magicKeywords, enabled: true, ultrathink: true, orchestrate: true, workflow: true };
+    config.providers = { ...config.providers, autoThinkingMaxEffort: 'max' };
+    const workerPolicyPath = join(agentDir, 'rox-worker-policy.js');
+    writeFileSync(workerPolicyPath, OMP_WORKER_POLICY_SOURCE, { mode: 0o600 });
+    config.extensions = [...(Array.isArray(config.extensions) ? config.extensions : []), workerPolicyPath];
+    config.task = { ...config.task, maxEffort: 'max' };
+    config.eval = { ...config.eval, js: true, tools: { ...config.eval?.tools, enabled: true } };
+    config.skills = {
+      ...config.skills, enabled: true, enableSkillCommands: true, enablePiUser: true, enableAgentsUser: false,
+      enableCodexUser: false, enableClaudeUser: false,
+    };
+    writeFileSync(join(agentDir, 'config.yml'), stringifyYaml(config), { mode: 0o600 });
+    // Explicit overlays are evaluated after project settings by native OMP.
+    // ROX's mandatory execution policy must survive a workspace config that
+    // switches off these keywords, without rewriting that workspace file.
+    writeFileSync(join(agentDir, 'rox-runtime-policy.yml'), stringifyYaml({
+      magicKeywords: config.magicKeywords,
+      providers: { autoThinkingMaxEffort: 'max' },
+      task: { maxEffort: 'max' },
+      extensions: config.extensions,
+      eval: { js: true, tools: { enabled: true } },
+      skills: { enabled: true, enableSkillCommands: true, enablePiUser: true, enableAgentsUser: false, enableCodexUser: false, enableClaudeUser: false },
+      // ROX supplies its host tools and pinned offline skill tier. Scanning
+      // unrelated foreign plugin catalogs can block every process startup.
+      disabledProviders: [...new Set([...(Array.isArray(config.disabledProviders) ? config.disabledProviders : []), 'claude-plugins', 'agent-plugins', 'omp-plugins'])],
+    }), { mode: 0o600 });
+    linkBundledSkillsForOmp({
+      bundleRoot: input.bundleRoot, targetRoot: join(agentDir, 'skills'), disabled: input.disabledPacks,
+      userSkillRoots: [join(sourceDir, 'skills'), join(input.homeDir ?? homedir(), '.agents', 'skills')],
+    });
+    // OMP stores image/tool blobs relative to the agent profile. Keep that store
+    // across process restarts so a restored transcript retains its attachments.
+    const existingBlobs = join(sourceDir, 'blobs');
+    const persistentBlobs = existsSync(existingBlobs) ? existingBlobs : join(input.runtimeRoot, 'state', 'blobs');
+    mkdirSync(persistentBlobs, { recursive: true, mode: 0o700 });
+    symlinkSync(persistentBlobs, join(agentDir, 'blobs'), process.platform === 'win32' ? 'junction' : 'dir');
   } catch (error) {
     rmSync(agentDir, { recursive: true, force: true });
     throw error;
@@ -264,6 +332,7 @@ export function prepareOmpRoxRuntimeConfig(input: {
       PI_CODING_AGENT_DIR: agentDir,
       // Named ambient profiles override agent-dir resolution unless default is explicit.
       OMP_PROFILE: 'default',
+      PI_CONFIG_FILES: [input.configFiles ?? process.env.PI_CONFIG_FILES, join(agentDir, 'rox-runtime-policy.yml')].filter(Boolean).join(delimiter),
       ROX_API_KEY: input.apiKey?.trim() || '',
     },
     dispose: () => rmSync(agentDir, { recursive: true, force: true }),

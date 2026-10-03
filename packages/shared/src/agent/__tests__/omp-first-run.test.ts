@@ -12,6 +12,7 @@ import { afterEach, describe, expect, it } from 'bun:test';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { parse as parseYaml } from 'yaml';
 import {
   formatOmpCredentialLine,
   formatOmpCredentialStep,
@@ -137,7 +138,7 @@ describe('provisionOmpRoxConfig', () => {
     expect(models).toContain('https://api.rox.one/v1');
     expect(models).toContain('rox/standard');
     expect(models).not.toContain('kimi-K3');
-    expect(config).toMatch(/modelRoles:[\s\S]*default:\s*rox\/rox\/standard/);
+    expect(config).toMatch(/modelRoles:[\s\S]*default:\s*rox\/rox\/r1-max/);
   });
 
   it('does not overwrite an existing models.yml', () => {
@@ -177,12 +178,19 @@ describe('private public Rox runtime catalog', () => {
     const originalConfig = 'modelRoles:\n  default: user/private-choice\n';
     writeFileSync(join(userAgent, 'models.yml'), original);
     writeFileSync(join(userAgent, 'config.yml'), originalConfig);
-    const runtime = prepareOmpRoxRuntimeConfig({ runtimeRoot: join(home, 'private-runs'), apiKey: 'private-fixture-secret' });
+    const runtime = prepareOmpRoxRuntimeConfig({ runtimeRoot: join(home, 'private-runs'), homeDir: home, apiKey: 'private-fixture-secret' });
     const models = readFileSync(join(runtime.agentDir, 'models.yml'), 'utf8');
-    expect([...models.matchAll(/- id: (.+)/g)].map(match => match[1])).toEqual(['rox/explore', 'rox/standard', 'rox/max', 'rox/vision', 'rox/fast']);
+    expect([...models.matchAll(/- id: (.+)/g)].map(match => match[1])).toEqual(['rox/r1-max', 'rox/explore', 'rox/standard', 'rox/max', 'rox/vision', 'rox/fast']);
     expect(models).not.toContain('private-fixture-secret');
     expect(models).not.toContain('kimi-K3');
-    expect(runtime.env).toEqual({ PI_CODING_AGENT_DIR: runtime.agentDir, OMP_PROFILE: 'default', ROX_API_KEY: 'private-fixture-secret' });
+    const config = parseYaml(readFileSync(join(runtime.agentDir, 'config.yml'), 'utf8'));
+    expect(config.magicKeywords).toEqual({ enabled: true, ultrathink: true, orchestrate: true, workflow: true });
+    expect(config.providers.autoThinkingMaxEffort).toBe('max');
+    expect(config.eval).toEqual({ js: true, tools: { enabled: true } });
+    expect(runtime.env.PI_CODING_AGENT_DIR).toBe(runtime.agentDir);
+    expect(runtime.env.OMP_PROFILE).toBe('default');
+    expect(runtime.env.ROX_API_KEY).toBe('private-fixture-secret');
+    expect(runtime.env.PI_CONFIG_FILES).toEndWith(join(runtime.agentDir, 'rox-runtime-policy.yml'));
     expect(readFileSync(join(userAgent, 'models.yml'), 'utf8')).toBe(original);
     expect(readFileSync(join(userAgent, 'config.yml'), 'utf8')).toBe(originalConfig);
     runtime.dispose();
@@ -190,6 +198,66 @@ describe('private public Rox runtime catalog', () => {
     expect(existsSync(runtime.agentDir)).toBe(false);
     expect(readFileSync(join(userAgent, 'models.yml'), 'utf8')).toBe(original);
     expect(readFileSync(join(userAgent, 'config.yml'), 'utf8')).toBe(originalConfig);
+  });
+
+  it('ships skills into each clean private profile and keeps blobs across process restarts', () => {
+    const home = tempHome();
+    const bundle = join(home, 'bundle');
+    mkdirSync(join(bundle, 'example', 'alpha'), { recursive: true });
+    writeFileSync(join(bundle, 'example', 'alpha', 'SKILL.md'), '---\nname: alpha\ndescription: Test skill\n---\nOffline instructions.');
+    writeFileSync(join(bundle, 'SKILLS.lock'), JSON.stringify({ packs: [{ slug: 'example', skills: ['alpha'] }] }));
+    const runtimeRoot = join(home, 'runs');
+    const first = prepareOmpRoxRuntimeConfig({ runtimeRoot, homeDir: home, bundleRoot: bundle });
+    expect(readFileSync(join(first.agentDir, 'skills', 'alpha', 'SKILL.md'), 'utf8')).toContain('Offline instructions.');
+    writeFileSync(join(first.agentDir, 'blobs', 'image.dat'), 'persisted-image');
+    first.dispose();
+    const second = prepareOmpRoxRuntimeConfig({ runtimeRoot, homeDir: home, bundleRoot: bundle });
+    expect(readFileSync(join(second.agentDir, 'blobs', 'image.dat'), 'utf8')).toBe('persisted-image');
+    expect(existsSync(join(home, '.agents', 'skills'))).toBe(false);
+    second.dispose();
+  });
+
+  it('preserves non-public models, credentials and user settings while enforcing runtime policy', () => {
+    const home = tempHome();
+    const source = join(home, '.omp', 'agent');
+    mkdirSync(source, { recursive: true });
+    const models = 'providers:\n  local:\n    models:\n      - id: user-model\n';
+    writeFileSync(join(source, 'models.yaml'), models);
+    writeFileSync(join(source, 'auth.json'), '{"fixture":true}');
+    const config = 'theme:\n  dark: custom\nmagicKeywords:\n  enabled: false\neval:\n  py: false\n';
+    writeFileSync(join(source, 'config.yaml'), config);
+    const runtime = prepareOmpRoxRuntimeConfig({ runtimeRoot: join(home, 'runs'), homeDir: home, publicRoxCatalog: false });
+    expect(readFileSync(join(runtime.agentDir, 'models.yaml'), 'utf8')).toBe(models);
+    expect(readFileSync(join(runtime.agentDir, 'auth.json'), 'utf8')).toBe('{"fixture":true}');
+    const effective = parseYaml(readFileSync(join(runtime.agentDir, 'config.yml'), 'utf8'));
+    expect(effective.theme.dark).toBe('custom');
+    expect(effective.eval.py).toBe(false);
+    expect(effective.magicKeywords.enabled).toBe(true);
+    expect(readFileSync(join(source, 'config.yaml'), 'utf8')).toBe(config);
+    runtime.dispose();
+  });
+
+  it('preserves authored skill priority and does not rediscover disabled global bundle copies', () => {
+    const home = tempHome();
+    const bundle = join(home, 'bundle');
+    for (const [pack, slug, description] of [['enabled', 'alpha', 'Bundled alpha'], ['disabled', 'beta', 'Bundled beta']]) {
+      mkdirSync(join(bundle, pack!, slug!), { recursive: true });
+      writeFileSync(join(bundle, pack!, slug!, 'SKILL.md'), `---\nname: ${slug}\ndescription: ${description}\n---\nBody`);
+    }
+    writeFileSync(join(bundle, 'SKILLS.lock'), JSON.stringify({ packs: [{ slug: 'enabled', skills: ['alpha'] }, { slug: 'disabled', skills: ['beta'] }] }));
+    const shared = join(home, '.agents', 'skills');
+    for (const slug of ['alpha', 'beta']) {
+      mkdirSync(join(shared, slug), { recursive: true });
+      writeFileSync(join(shared, slug, 'SKILL.md'), `---\nname: ${slug}\ndescription: User ${slug}\n---\nUser instructions`);
+    }
+    const runtime = prepareOmpRoxRuntimeConfig({ runtimeRoot: join(home, 'runs'), homeDir: home, bundleRoot: bundle, disabledPacks: ['disabled'] });
+    expect(readFileSync(join(runtime.agentDir, 'skills', 'alpha', 'SKILL.md'), 'utf8')).toContain('User instructions');
+    expect(existsSync(join(runtime.agentDir, 'skills', 'beta'))).toBe(false);
+    expect(readFileSync(join(shared, 'beta', 'SKILL.md'), 'utf8')).toContain('User instructions');
+    const policy = parseYaml(readFileSync(join(runtime.agentDir, 'rox-runtime-policy.yml'), 'utf8'));
+    expect(policy.skills.enableAgentsUser).toBe(false);
+    runtime.dispose();
+    expect(readFileSync(join(shared, 'alpha', 'SKILL.md'), 'utf8')).toContain('User instructions');
   });
 });
 

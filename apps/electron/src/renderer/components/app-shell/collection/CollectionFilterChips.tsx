@@ -7,7 +7,7 @@ import {
   type CollectionFilters,
   type DueRange,
   type SessionPriority,
-} from '@craft-agent/shared/sessions/collection'
+} from '@rox/shared/sessions/collection'
 import type { SessionStatus } from '@/config/session-status-config'
 import { resolveStatusDisplayLabel } from '@/config/session-status-config'
 import { cn } from '@/lib/utils'

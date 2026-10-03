@@ -9,7 +9,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Cloud, Download, FileText, Link2, MoreHorizontal, OctagonX, RefreshCw, Rocket, Sparkles, XCircle } from 'lucide-react'
-import { Markdown, PremiumMenuSelect } from '@craft-agent/ui'
+import { Markdown, PremiumMenuSelect } from '@rox/ui'
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { useRegisterModal } from '@/context/ModalContext'
 import { navigate, routes } from '@/lib/navigate'
-import { getAppLocale } from '@craft-agent/shared/i18n'
+import { getAppLocale } from '@rox/shared/i18n'
 
 type RunState = 'queued' | 'start' | 'ready' | 'running' | 'done' | 'failed' | 'cancelled' | 'expired'
 interface ListedRun {

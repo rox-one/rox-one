@@ -4,7 +4,7 @@ import {
   type CredentialKind,
   type CredentialRef,
   type ProviderLocator,
-} from '@craft-agent/core/platform';
+} from '@rox/core/platform';
 import type { CredentialBackend } from '../backends/types.ts';
 import type { CredentialId, StoredCredential } from '../types.ts';
 import { credentialPayloadFingerprint } from '../envelope.ts';
@@ -41,7 +41,7 @@ export class LocalFileSecretProvider implements SecretProvider {
     payload: StoredCredential;
     copyPayload?: boolean;
     expiresAt?: number;
-  }): Promise<{ ref: CredentialRef; version: import('@craft-agent/core/platform').CredentialVersion }> {
+  }): Promise<{ ref: CredentialRef; version: import('@rox/core/platform').CredentialVersion }> {
     const conflictKey = input.locator.type === 'local' ? input.locator.key : JSON.stringify(input.locator);
     const fingerprint = credentialPayloadFingerprint(input.kind, input.payload);
     const existing = this.byConflict.get(`${conflictKey}:${fingerprint}`);
@@ -132,6 +132,6 @@ export class LocalFileSecretProvider implements SecretProvider {
   }
 }
 
-export function assertCredentialRefId(id: string): asserts id is import('@craft-agent/core/platform').CredentialRefId {
+export function assertCredentialRefId(id: string): asserts id is import('@rox/core/platform').CredentialRefId {
   if (!isCredentialRefId(id)) throw new Error('Invalid credential metadata: id');
 }

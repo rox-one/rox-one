@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { ONBOARDING_USERNAME_MAX, parseOnboardingUsername, persistOnboardingUsername } from "./onboarding-username"
 import { createStorageAdapter, rememberLocalProfile } from "./first-result-ui"
 import { StepFormLayout, ContinueButton } from "./primitives"
+import { WelcomeBrowserImportPreferences } from './WelcomeBrowserImportPreferences'
 
 interface WelcomeStepProps {
   onContinue: () => void
@@ -20,9 +21,10 @@ interface WelcomeStepProps {
 /**
  * WelcomeStep - the only onboarding screen
  *
- * First-run collects a username (in-app DisplayName), then «Начать» opens the
- * app directly with the Rox runtime. Workspace name stays the OS
- * user/computer name. Existing-user settings edits skip the gate.
+ * First-run collects a username (in-app DisplayName) and offers browser import
+ * preferences. Profile access is requested later from Import settings.
+ * «Начать» opens the app with Rox; workspace name stays the OS user/computer
+ * name. Existing-user settings edits skip the gate.
  */
 export function WelcomeStep({
   onContinue,
@@ -33,10 +35,12 @@ export function WelcomeStep({
   const { t } = useTranslation()
   const [username, setUsername] = useState("")
   const [saving, setSaving] = useState(false)
+  const [preferenceSaving, setPreferenceSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const submitInFlight = useRef(false)
 
   useEffect(() => {
+    let cancelled = false
     const api = typeof window !== "undefined" ? window.electronAPI : undefined
     if (!api) return
     void api.getOrgIdentity()
@@ -47,11 +51,12 @@ export function WelcomeStep({
           ? await api.identityGetState().catch(() => null)
           : null
         const existing = orgIdentity.name?.trim() || identity?.profile.displayName?.trim() || orgIdentity.username?.trim()
-        if (existing) setUsername(existing)
+        if (existing && !cancelled) setUsername((current) => current || existing)
       })
       .catch(() => {
         // Identity reads are optional; a non-empty name is still required to continue.
       })
+    return () => { cancelled = true }
   }, [isExistingUser])
 
   const handleContinue = async () => {
@@ -59,7 +64,7 @@ export function WelcomeStep({
       onContinue()
       return
     }
-    if (submitInFlight.current || saving || isFinishing) return
+    if (submitInFlight.current || saving || preferenceSaving || isFinishing) return
     const trimmed = username.trim()
     if (trimmed.length === 0) {
       setError(t("onboarding.welcome.usernameRequired"))
@@ -96,7 +101,7 @@ export function WelcomeStep({
 
   const continueDisabled = isExistingUser
     ? isLoading || isFinishing
-    : isLoading || isFinishing || saving || !parseOnboardingUsername(username)
+    : isLoading || isFinishing || saving || preferenceSaving || !parseOnboardingUsername(username)
 
   return (
     <StepFormLayout
@@ -116,8 +121,8 @@ export function WelcomeStep({
           onClick={() => void handleContinue()}
           className="w-full"
           disabled={continueDisabled}
-          loading={isLoading || saving || isFinishing}
-          loadingText={isFinishing ? t("onboarding.completion.settingUp") : t("common.checking")}
+          loading={isLoading || saving || preferenceSaving || isFinishing}
+          loadingText={isFinishing ? t("onboarding.completion.settingUp") : preferenceSaving ? t('common.saving') : t("common.checking")}
         >
           {isExistingUser ? t("onboarding.welcome.continue") : t("onboarding.welcome.getStarted")}
         </ContinueButton>
@@ -144,6 +149,7 @@ export function WelcomeStep({
             }}
           />
           {error && <p className="text-sm text-destructive">{error}</p>}
+          <WelcomeBrowserImportPreferences onSavingChange={setPreferenceSaving} />
         </div>
       )}
     </StepFormLayout>

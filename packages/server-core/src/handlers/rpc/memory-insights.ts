@@ -10,17 +10,17 @@
  */
 import { existsSync, mkdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { AuditEntry, MemoryInsights } from '@craft-agent/shared/memory/types'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { AuditEntry, MemoryInsights } from '@rox/shared/memory/types'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   isClaimableLive,
   rpcMemoryInsightsActResult,
   rpcMemoryInsightsListResult,
   rpcMemoryInsightsReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import { AuditLog } from '../../memory/AuditLog'
 import { LessonStore } from '../../memory/LessonStore'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'

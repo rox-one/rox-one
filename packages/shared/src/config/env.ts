@@ -4,15 +4,14 @@
  * deprecation warning per process per name.
  *
  * Default directory: ~/.rox when present or on a clean install.
- * Existing ~/.craft-agent trees stay readable until brand migration
- * copies them (see identity/config-migration.ts).
+ * Legacy default trees are imported once without replacing ROX data.
+ * Sources and conflicting files remain preserved.
  */
-import { existsSync } from 'node:fs';
+import { importLegacyConfig } from './legacy-config-migration.ts';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import {
   ROX_CONFIG_DIR_NAME,
-  ROX_LEGACY_CONFIG_DIR_NAME,
 } from '../identity/manifest.ts';
 
 const warnedCraftNames = new Set<string>();
@@ -50,9 +49,8 @@ export function getEnv(
 }
 
 /**
- * Config dir: ROX_CONFIG_DIR, then CRAFT_CONFIG_DIR, then ~/.rox when
- * it exists or neither tree exists (clean install). A Craft-era
- * ~/.craft-agent without ~/.rox stays in place until migration runs.
+ * Config dir: ROX_CONFIG_DIR, then the deprecated explicit alias, then ~/.rox.
+ * Before using the default, import missing legacy data once, preserving conflicts.
  */
 export function resolveConfigDir(
   env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
@@ -61,11 +59,6 @@ export function resolveConfigDir(
   const override = getEnv('CONFIG_DIR', env);
   if (override) return override;
   const roxDir = join(homeDir, ROX_CONFIG_DIR_NAME);
-  const legacyDir = join(homeDir, ROX_LEGACY_CONFIG_DIR_NAME);
-  if (existsSync(roxDir)) return roxDir;
-  if (existsSync(legacyDir)) {
-    warnCraftDeprecated(`~/${ROX_LEGACY_CONFIG_DIR_NAME}`, `~/${ROX_CONFIG_DIR_NAME}`);
-    return legacyDir;
-  }
+  importLegacyConfig(homeDir, roxDir);
   return roxDir;
 }

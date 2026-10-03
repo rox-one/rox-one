@@ -6,7 +6,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { MindMapGraph, MindMapNodeId } from '@craft-agent/core/mindmap'
+import type { MindMapGraph, MindMapNodeId } from '@rox/core/mindmap'
 
 export interface MindMapOutlineProps {
   graph: MindMapGraph

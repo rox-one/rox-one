@@ -64,6 +64,12 @@ describe('isClaudeModel', () => {
 });
 
 describe('getModelShortName', () => {
+  it('uses the built-in R1 Max name and keeps legacy Rox IDs displayable', () => {
+    expect(getModelDisplayName('rox/r1-max')).toBe('Rox R1 Max');
+    expect(getModelShortName('rox/r1-max')).toBe('R1 Max');
+    expect(getModelDisplayName('rox/standard')).toBe('ROX R1');
+    expect(getModelById('rox/r1-max')?.supportsThinking).toBe(true);
+  });
   it('returns registry shortName for known models', () => {
     expect(getModelShortName('claude-opus-4-8')).toBe('Opus');
     expect(getModelShortName('claude-sonnet-4-6')).toBe('Sonnet');

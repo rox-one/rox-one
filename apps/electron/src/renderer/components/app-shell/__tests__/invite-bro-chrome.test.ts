@@ -12,7 +12,7 @@ describe('Позвать Бро session chrome', () => {
     expect(MENU).toContain("t('sessionMenu.inviteBro')")
     expect(MENU).toContain('actions.inviteBro')
     expect(COMPACT).toContain("t('sessionMenu.inviteBro')")
-    expect(HOOK).toContain("type: 'inviteBro'")
+    expect(HOOK).toContain("publishLink('invite')")
   })
 
   it('renders presence avatars under session header controls', () => {

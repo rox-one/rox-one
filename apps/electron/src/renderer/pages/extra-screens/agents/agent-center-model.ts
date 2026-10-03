@@ -1,4 +1,4 @@
-import type { AgentBudgetSnapshot } from '@craft-agent/shared/agent'
+import type { AgentBudgetSnapshot } from '@rox/shared/agent'
 
 /**
  * Центр агентов — pure aggregation of sessions, pending permission/credential

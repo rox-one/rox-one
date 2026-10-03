@@ -10,6 +10,7 @@ import {
   addPinnedCustomNode,
   autoLayout,
   deletePinnedCustomNode,
+  entityKey,
   layoutBounds,
   MAX_CUSTOM_MIND_MAP_LABEL_LENGTH,
   PinnedMindMapEditError,
@@ -17,15 +18,16 @@ import {
   renamePinnedCustomNode,
   type MindMapLayout,
   type MindMapNodeId,
-} from '@craft-agent/core/mindmap'
-import { PremiumMenuSelect } from '@craft-agent/ui'
+} from '@rox/core/mindmap'
+import { PremiumMenuSelect } from '@rox/ui'
 import { MindMapMinimap } from './minimap'
 import {
   MIND_MAP_NODE_HEIGHT,
   MIND_MAP_NODE_WIDTH,
   type MindMapEngineProps,
 } from './types'
-import { clampMindMapZoom, fitMindMapViewport } from './fit'
+import { clampMindMapZoom, fitMindMapViewport, shouldAutoFitMindMap } from './fit'
+import { canvasMenuPosition, menuFocusIndex } from '@/components/session-workbench/canvas-interactions'
 const ZOOM_IN = 1.1
 const ZOOM_OUT = 1 / ZOOM_IN
 
@@ -104,6 +106,8 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
     const [structureNotice, setStructureNotice] = React.useState<string | null>(null)
     const [contextMenu, setContextMenu] = React.useState<{ x: number; y: number; nodeId: MindMapNodeId | null } | null>(null)
     const [linkFrom, setLinkFrom] = React.useState<MindMapNodeId | null>(null)
+    const autoFittedEntityRef = React.useRef<string | null>(null)
+    const lastFitRequestRef = React.useRef(fitRequestKey)
 
     const collapsedList = React.useMemo(
       () => normalizeCollapsed(collapsedProp),
@@ -189,18 +193,24 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
       [fitView, zoomBy, pan.x, pan.y, zoom],
     )
 
-    const graphKey = `${graph.contentHash}:${graph.rootId}`
+    const graphEntityKey = entityKey(graph.entity)
 
-    // Re-fit after graph layout, mount sizing, and every container resize.
+    // Fit after the first measurable data load. Editing, collapse and resize
+    // preserve pan/zoom so adding a node cannot move the whole map.
     React.useLayoutEffect(() => {
+      if (!shouldAutoFitMindMap(autoFittedEntityRef.current, graphEntityKey, size, visibleCount)) return
       fitView()
-    }, [graphKey, layout, size.width, size.height, fitView])
+      autoFittedEntityRef.current = graphEntityKey
+    }, [graphEntityKey, size, visibleCount, fitView])
 
     React.useEffect(() => {
-      if (fitRequestKey > 0) fitView()
+      if (lastFitRequestRef.current === fitRequestKey) return
+      lastFitRequestRef.current = fitRequestKey
+      fitView()
     }, [fitRequestKey, fitView])
 
     const onWheel = (e: React.WheelEvent) => {
+      if ((e.target as Element).closest('[data-mindmap-structure-controls], [role="menu"]')) return
       e.preventDefault()
       const el = containerRef.current
       if (!el) return
@@ -447,6 +457,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
     return (
       <div
         ref={containerRef}
+        tabIndex={0}
         className={cn(
           'relative flex-1 min-h-0 min-w-0 overflow-hidden bg-background touch-none select-none',
           isPanning ? 'cursor-grabbing' : linkFrom ? 'cursor-crosshair' : 'cursor-grab',
@@ -457,10 +468,17 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
         onPointerMove={onPointerMove}
         onPointerUp={endPan}
         onPointerCancel={endPan}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            setContextMenu(null)
+            setStructureEditor(null)
+            setLinkFrom(null)
+          }
+        }}
         onDoubleClick={(event) => {
           if (!canEditStructure) return
           const target = event.target as Element
-          if (target.closest('[data-mindmap-node]')) return
+          if (target.closest('[data-mindmap-node], [data-mindmap-structure-controls], [role="menu"]')) return
           event.preventDefault()
           beginAddNode(graph.rootId)
         }}
@@ -471,9 +489,12 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
           const nodeId = nodeEl?.getAttribute('data-mindmap-node') ?? null
           const rect = containerRef.current?.getBoundingClientRect()
           if (!rect) return
+          const position = canvasMenuPosition(
+            { x: event.clientX, y: event.clientY }, rect, { width: 176, height: nodeId ? 150 : 40 },
+          )
           setContextMenu({
-            x: event.clientX - rect.left,
-            y: event.clientY - rect.top,
+            x: position.left,
+            y: position.top,
             nodeId,
           })
         }}
@@ -508,11 +529,21 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
                 return (
                   <g
                     key={n.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={n.label}
+                    aria-pressed={n.selected}
                     data-mindmap-node={n.id}
                     transform={`translate(${x}, ${y})`}
                     className={cn('cursor-pointer', n.dimmed ? 'opacity-25' : 'opacity-100')}
                     onPointerDown={(e) => {
                       e.stopPropagation()
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key !== 'Enter' && event.key !== ' ') return
+                      event.preventDefault()
+                      event.stopPropagation()
+                      onSelect?.(n.id)
                     }}
                     onClick={(e) => {
                       e.stopPropagation()
@@ -787,12 +818,23 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
 
         {contextMenu ? (
           <div
-            className="absolute z-20 min-w-[160px] rounded-lg border border-border/60 bg-background/95 py-1 shadow-strong backdrop-blur"
+            role="menu"
+            aria-label={t('mindmap.addNode')}
+            className="absolute z-20 w-44 max-w-[calc(100%-1rem)] max-h-[calc(100%-1rem)] overflow-y-auto rounded-lg border border-border/60 bg-background/95 py-1 shadow-strong backdrop-blur"
             style={{ left: contextMenu.x, top: contextMenu.y }}
             onPointerDown={(event) => event.stopPropagation()}
+            onKeyDown={(event) => {
+              const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'))
+              const next = menuFocusIndex(event.key, items.indexOf(document.activeElement as HTMLButtonElement), items.length)
+              if (next === null) return
+              event.preventDefault()
+              items[next]?.focus()
+            }}
           >
             <button
               type="button"
+              role="menuitem"
+              autoFocus
               className="flex w-full px-3 py-1.5 text-left text-[12px] hover:bg-foreground/5"
               onClick={() => beginAddNode(contextMenu.nodeId ?? graph.rootId)}
             >
@@ -802,6 +844,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
               <>
                 <button
                   type="button"
+                  role="menuitem"
                   className="flex w-full px-3 py-1.5 text-left text-[12px] hover:bg-foreground/5"
                   onClick={() => {
                     setLinkFrom(contextMenu.nodeId)
@@ -815,6 +858,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
                 graph.nodes[contextMenu.nodeId]?.parentId !== graph.rootId ? (
                   <button
                     type="button"
+                    role="menuitem"
                     className="flex w-full px-3 py-1.5 text-left text-[12px] hover:bg-foreground/5"
                     onClick={() => unlinkNode(contextMenu.nodeId!)}
                   >
@@ -823,6 +867,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
                 ) : null}
                 <button
                   type="button"
+                  role="menuitem"
                   className="flex w-full px-3 py-1.5 text-left text-[12px] text-destructive hover:bg-foreground/5"
                   onClick={() => {
                     const id = contextMenu.nodeId

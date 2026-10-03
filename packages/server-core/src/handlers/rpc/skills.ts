@@ -1,10 +1,10 @@
 import { join } from 'path'
 import { cpSync, existsSync, readdirSync, statSync } from 'fs'
-import { RPC_CHANNELS, type SkillFile } from '@craft-agent/shared/protocol'
-import type { SkillExportResult, SkillPruneResult, SkillUsageMap } from '@craft-agent/shared/memory/types'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import type { RequestContext, RpcServer } from '@craft-agent/server-core/transport'
-import { pushTyped } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS, type SkillFile } from '@rox/shared/protocol'
+import type { SkillExportResult, SkillPruneResult, SkillUsageMap } from '@rox/shared/memory/types'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import type { RequestContext, RpcServer } from '@rox/server-core/transport'
+import { pushTyped } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { exportSkillToProject, pruneUnusedSkills, readUsage } from '../../memory/skill-usage'
 import {
@@ -12,7 +12,7 @@ import {
   rpcSkillsActResult,
   rpcSkillsListResult,
   rpcSkillsReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 // Authenticated native principals are strictly bound to the workspace chosen
 // during handshake; local Electron windows may use their server-side binding.
@@ -46,7 +46,7 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
   // Panel refresh after mutations: same payload shape as SessionManager's
   // fs-watcher broadcast (workspaceId, skills) that AppShell subscribes to.
   const broadcastSkillsChanged = async (workspaceId: string, workspaceRoot: string): Promise<void> => {
-    const { loadAllSkills } = await import('@craft-agent/shared/skills')
+    const { loadAllSkills } = await import('@rox/shared/skills')
     pushTyped(server, RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId }, workspaceId, loadAllSkills(workspaceRoot))
   }
 
@@ -66,7 +66,7 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     const effectiveWorkingDir = workingDirectory && existsSync(workingDirectory)
       ? workingDirectory
       : undefined
-    const { loadAllSkills } = await import('@craft-agent/shared/skills')
+    const { loadAllSkills } = await import('@rox/shared/skills')
     // includeShadowedOmp: the skills panel shows OMP variants shadowed by a
     // craft skill of the same slug as inactive (craft-wins) with an explanation.
     const skills = loadAllSkills(workspace.rootPath, effectiveWorkingDir, { includeOmp: true, includeShadowedOmp: true })
@@ -85,7 +85,7 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
       return []
     }
 
-    const { resolveWorkspaceSkillDir } = await import('@craft-agent/shared/skills')
+    const { resolveWorkspaceSkillDir } = await import('@rox/shared/skills')
 
     let skillDir: string
     try {
@@ -140,7 +140,7 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
-    const { deleteSkill } = await import('@craft-agent/shared/skills')
+    const { deleteSkill } = await import('@rox/shared/skills')
     deleteSkill(workspace.rootPath, skillSlug)
     deps.platform.logger?.info(`Deleted skill: ${skillSlug}`)
   }, { nativeAction: 'delete' })
@@ -150,7 +150,7 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     ctx,
     workspaceId: string,
     skillSlug: string,
-    updates: import('@craft-agent/shared/skills').UpdateSkillContentInput,
+    updates: import('@rox/shared/skills').UpdateSkillContentInput,
   ) => {
     assertSkillWorkspace(ctx, workspaceId, deps)
     const act = rpcSkillsActResult({ source: 'native', action: 'write', nativeId: skillSlug })
@@ -158,7 +158,7 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
-    const { updateSkillContent } = await import('@craft-agent/shared/skills')
+    const { updateSkillContent } = await import('@rox/shared/skills')
     const skill = updateSkillContent(workspace.rootPath, skillSlug, updates)
     if (!skill) throw new Error(`Skill not found: ${skillSlug}`)
 
@@ -176,8 +176,8 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
-    const { listOmpSkills, isOmpSkillPath, invalidateSkillsCache } = await import('@craft-agent/shared/skills')
-    const { getWorkspaceSkillsPath } = await import('@craft-agent/shared/workspaces')
+    const { listOmpSkills, isOmpSkillPath, invalidateSkillsCache } = await import('@rox/shared/skills')
+    const { getWorkspaceSkillsPath } = await import('@rox/shared/workspaces')
 
     const ompSkill = listOmpSkills(workspace.rootPath).find(s => s.slug === slug)
     if (!ompSkill || !isOmpSkillPath(ompSkill.path, workspace.rootPath)) {
@@ -206,7 +206,7 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     if (!workspace) throw new Error('Workspace not found')
     if (workspace.remoteServer) throw new Error('Open in editor is not available for remote workspaces')
 
-    const { resolveWorkspaceSkillDir } = await import('@craft-agent/shared/skills')
+    const { resolveWorkspaceSkillDir } = await import('@rox/shared/skills')
     const skillDir = resolveWorkspaceSkillDir(workspace.rootPath, skillSlug)
     const skillFile = join(skillDir, 'SKILL.md')
     await deps.platform.openPath?.(skillFile)
@@ -219,7 +219,7 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     if (!workspace) throw new Error('Workspace not found')
     if (workspace.remoteServer) throw new Error('Show in Finder is not available for remote workspaces')
 
-    const { resolveWorkspaceSkillDir } = await import('@craft-agent/shared/skills')
+    const { resolveWorkspaceSkillDir } = await import('@rox/shared/skills')
     const skillDir = resolveWorkspaceSkillDir(workspace.rootPath, skillSlug)
     await deps.platform.showItemInFolder?.(skillDir)
   }, { nativeAction: 'read' })

@@ -9,13 +9,13 @@
  * contextMode mapping for read (get only vs get + getContext).
  */
 import { describe, it, expect } from 'bun:test'
-import { KnowledgeError } from '@craft-agent/core/knowledge'
+import { KnowledgeError } from '@rox/core/knowledge'
 import type {
   ContextPayload,
   KnowledgeNode,
   KnowledgeProvider,
   SearchPage,
-} from '@craft-agent/core/knowledge'
+} from '@rox/core/knowledge'
 import { createKnowledgeToolRuntime } from '../tool-runtime'
 
 const DOC_REF = { scheme: 'siyuan', kind: 'document', id: 'doc-1' } as const

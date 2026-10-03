@@ -11,8 +11,8 @@ import {
   type OpenClawSafeError,
   type SecurityDomain,
   type SecurityFinding,
-} from '@craft-agent/shared/openclaw'
-import type { ManagedOpenClawLauncher } from '@craft-agent/shared/toolchain/types'
+} from '@rox/shared/openclaw'
+import type { ManagedOpenClawLauncher } from '@rox/shared/toolchain/types'
 import type { OpenClawAuditRuntime, OpenClawAuditRuntimeProvider } from './runtime-manager.ts'
 
 export type { OpenClawAuditRuntimeProvider } from './runtime-manager.ts'

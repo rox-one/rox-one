@@ -21,10 +21,10 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { randomUUID } from 'node:crypto'
-import type { CredentialId } from '@craft-agent/shared/credentials'
-import { CodedError, type KnowledgeConnectionMode } from '@craft-agent/shared/protocol'
+import type { CredentialId } from '@rox/shared/credentials'
+import { CodedError, type KnowledgeConnectionMode } from '@rox/shared/protocol'
 import { loadG2AcceptedVariantFromDisk } from './g2-status'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { resolveConfigDir } from "@rox/shared/config/paths"
 
 export type { KnowledgeConnectionMode }
 

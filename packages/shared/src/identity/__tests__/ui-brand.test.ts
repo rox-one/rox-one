@@ -12,14 +12,14 @@ describe('ROX-AUD-181 visible brand leftovers', () => {
     expect(dashboard).toContain(`<title>${UI_BRAND_MANIFEST.dashboardTitle}</title>`)
     expect(playground).toContain(`<title>${UI_BRAND_MANIFEST.playgroundTitle}</title>`)
     expect(dashboard).toContain(`<span class="glow">${UI_BRAND_MANIFEST.productName}</span>`)
-    expect(dashboard).not.toContain('Craft Agents —')
-    expect(playground).not.toContain('Craft Agent</title>')
+    expect(dashboard).not.toContain('ROX —')
+    expect(playground).not.toContain('ROX</title>')
   })
 
   it('does not rename protocol, storage, or package-scope IDs', () => {
-    expect(UI_BRAND_ALLOWLIST).toContain('@craft-agent')
+    expect(UI_BRAND_ALLOWLIST).toContain('@rox')
     expect(UI_BRAND_ALLOWLIST).toContain('com.lukilabs.craft-agent')
     const shared = JSON.parse(readFileSync(join(ROOT, 'packages/shared/package.json'), 'utf8')) as { name: string }
-    expect(shared.name.startsWith('@craft-agent/')).toBe(true)
+    expect(shared.name.startsWith('@rox/')).toBe(true)
   })
 })

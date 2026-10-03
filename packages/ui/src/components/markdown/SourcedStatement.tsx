@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import type { SourceCitationView } from '@craft-agent/core/research'
+import type { SourceCitationView } from '@rox/core/research'
 import { cn } from '../../lib/utils'
 
 export interface SourcedStatementProps {

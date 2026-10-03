@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import type { LessonCategory } from '@craft-agent/shared/memory/types'
+import type { LessonCategory } from '@rox/shared/memory/types'
 
 interface SeedLesson {
   key: 'memory.seed1' | 'memory.seed2' | 'memory.seed3'

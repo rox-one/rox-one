@@ -8,13 +8,13 @@ test('actual workspace query preserves unknown and known backend model without f
  const fixture = mkdtempSync(join(tmpdir(), 'roadmap-model-runtime-'))
  try {
   const config = join(fixture, 'tsconfig.json')
-  writeFileSync(config, JSON.stringify({compilerOptions:{baseUrl:root,paths:{'@craft-agent/shared/*':[join(root,'packages/shared/src/*')],'@craft-agent/server-core/*':[join(root,'packages/server-core/src/*')],'@craft-agent/core/*':[join(root,'packages/core/src/*')]}}}))
+  writeFileSync(config, JSON.stringify({compilerOptions:{baseUrl:root,paths:{'@rox/shared/*':[join(root,'packages/shared/src/*')],'@rox/server-core/*':[join(root,'packages/server-core/src/*')],'@rox/core/*':[join(root,'packages/core/src/*')]}}}))
   const child = Bun.spawn([process.execPath, '--tsconfig-override', config, '-e', `
 const {mock}=await import('bun:test');const {mkdirSync}=await import('node:fs');const {join}=await import('node:path');
 const {saveConfig}=await import('./packages/shared/src/config/storage.ts');const workspace=join(process.env.ROX_CONFIG_DIR,'workspace');mkdirSync(workspace);saveConfig({workspaces:[{id:'own',name:'Own',rootPath:workspace,createdAt:1}],activeWorkspaceId:'own',activeSessionId:null});
-const real=await import('@craft-agent/shared/agent/backend');let known=false,destroys=0,queries=[];
+const real=await import('@rox/shared/agent/backend');let known=false,destroys=0,queries=[];
 const connection={slug:'fixture',name:'Fixture',providerType:'omp',authType:'none',defaultModel:'requested-fixture'};
-mock.module('@craft-agent/shared/agent/backend',()=>({...real,resolveBackendContext:()=>({connection,resolvedModel:'requested-fixture',provider:'omp'}),createBackendFromResolvedContext:()=>({postInit:async()=>({authInjected:true}),queryLlm:async request=>{queries.push(request.model);return {text:'Controlled backend response',...(known?{model:'actual-fixture'}:{warning:'Fallback model unknown'})}},destroy:()=>{destroys++}})}));
+mock.module('@rox/shared/agent/backend',()=>({...real,resolveBackendContext:()=>({connection,resolvedModel:'requested-fixture',provider:'omp'}),createBackendFromResolvedContext:()=>({postInit:async()=>({authInjected:true}),queryLlm:async request=>{queries.push(request.model);return {text:'Controlled backend response',...(known?{model:'actual-fixture'}:{warning:'Fallback model unknown'})}},destroy:()=>{destroys++}})}));
 const {SessionManager,setSessionPlatform}=await import('./packages/server-core/src/sessions/SessionManager.ts');setSessionPlatform({appRootPath:workspace,resourcesPath:workspace,isPackaged:false,logger:{info(){},warn(){},error(){},debug(){}}});const instance=Object.create(SessionManager.prototype);
 const unknown=await instance.queryWorkspaceLlm('own',{prompt:'owned fixture'});known=true;const resolved=await instance.queryWorkspaceLlm('own',{prompt:'owned fixture'});
 console.log(JSON.stringify({unknown,resolved,destroys,queries}));
@@ -35,15 +35,15 @@ test('actual workspace one-shot respects selected durable budget and never relea
  const fixture = mkdtempSync(join(tmpdir(), 'roadmap-budget-runtime-'))
  try {
   const config = join(fixture, 'tsconfig.json')
-  writeFileSync(config, JSON.stringify({compilerOptions:{baseUrl:root,paths:{'@craft-agent/shared/*':[join(root,'packages/shared/src/*')],'@craft-agent/server-core/*':[join(root,'packages/server-core/src/*')],'@craft-agent/core/*':[join(root,'packages/core/src/*')]}}}))
+  writeFileSync(config, JSON.stringify({compilerOptions:{baseUrl:root,paths:{'@rox/shared/*':[join(root,'packages/shared/src/*')],'@rox/server-core/*':[join(root,'packages/server-core/src/*')],'@rox/core/*':[join(root,'packages/core/src/*')]}}}))
   const child = Bun.spawn([process.execPath, '--tsconfig-override', config, '-e', `
-const {mock}=await import('bun:test');const {mkdirSync}=await import('node:fs');const {join}=await import('node:path');const {DatabaseSync}=await import('@craft-agent/shared/utils/sqlite-runtime');
+const {mock}=await import('bun:test');const {mkdirSync}=await import('node:fs');const {join}=await import('node:path');const {DatabaseSync}=await import('@rox/shared/utils/sqlite-runtime');
 const {saveConfig}=await import('./packages/shared/src/config/storage.ts');const {saveWorkspaceConfig}=await import('./packages/shared/src/workspaces/storage.ts');
 const workspace=join(process.env.ROX_CONFIG_DIR,'workspace');mkdirSync(workspace);saveConfig({workspaces:[{id:'own',name:'Own',rootPath:workspace,createdAt:1}],activeWorkspaceId:'own',activeSessionId:null});saveWorkspaceConfig(workspace,{id:'own',name:'Own',slug:'own',defaults:{dailyAgentBudgetUsd:1}});
-const {setupI18n}=await import('@craft-agent/shared/i18n');setupI18n();
-const real=await import('@craft-agent/shared/agent/backend');let mode='auth-error',created=0,queries=0,destroys=0;
+const {setupI18n}=await import('@rox/shared/i18n');setupI18n();
+const real=await import('@rox/shared/agent/backend');let mode='auth-error',created=0,queries=0,destroys=0;
 const connection={slug:'fixture',name:'Fixture',providerType:'omp',authType:'none',defaultModel:'requested-fixture'};
-mock.module('@craft-agent/shared/agent/backend',()=>({...real,resolveBackendContext:()=>({connection,resolvedModel:'requested-fixture',provider:'omp'}),createBackendFromResolvedContext:()=>{created++;return {postInit:async()=>mode==='auth-error'?{authInjected:false,authWarningLevel:'error',authWarning:'Controlled signed-out'}:{authInjected:true},queryLlm:async()=>{queries++;if(mode==='query-error')throw Error('Controlled dispatch error');return {text:'Controlled response',model:'actual-fixture'}},destroy:()=>{destroys++}}}}));
+mock.module('@rox/shared/agent/backend',()=>({...real,resolveBackendContext:()=>({connection,resolvedModel:'requested-fixture',provider:'omp'}),createBackendFromResolvedContext:()=>{created++;return {postInit:async()=>mode==='auth-error'?{authInjected:false,authWarningLevel:'error',authWarning:'Controlled signed-out'}:{authInjected:true},queryLlm:async()=>{queries++;if(mode==='query-error')throw Error('Controlled dispatch error');return {text:'Controlled response',model:'actual-fixture'}},destroy:()=>{destroys++}}}}));
 const {SessionManager,setSessionPlatform}=await import('./packages/server-core/src/sessions/SessionManager.ts');setSessionPlatform({appRootPath:workspace,resourcesPath:workspace,isPackaged:false,logger:{info(){},warn(){},error(){},debug(){}}});const instance=Object.create(SessionManager.prototype);
 const checks=[];const check=(name,value)=>{if(!value)throw Error(name);checks.push(name)};const denied=async()=>{try{await instance.queryWorkspaceLlm('own',{prompt:'owned fixture'});return false}catch{return true}};
 check('auth refusal',await denied());check('auth refusal zero dispatch',queries===0);check('pre-dispatch releases',instance.getAgentBudget('own').remainingUsd===1);

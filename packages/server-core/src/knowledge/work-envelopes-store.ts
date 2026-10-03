@@ -12,7 +12,7 @@ import {
   knowledgeEnvelopeKey,
   type KnowledgeRef,
   type KnowledgeWorkEnvelope,
-} from '@craft-agent/core/knowledge'
+} from '@rox/core/knowledge'
 
 export function parseWorkEnvelopeLine(line: string): KnowledgeWorkEnvelope | null {
   const trimmed = line.trim()

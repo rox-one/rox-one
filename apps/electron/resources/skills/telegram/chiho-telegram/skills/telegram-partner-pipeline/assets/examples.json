@@ -1,0 +1,6 @@
+[
+  {
+    "prompt": "Build my partner pipeline from Telegram and show follow-ups by stage.",
+    "tools": ["search_messages", "chat_read", "tags_suggest", "company_suggest", "tasks_suggest"]
+  }
+]

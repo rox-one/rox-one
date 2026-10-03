@@ -9,7 +9,7 @@ import { Type } from '@earendil-works/pi-ai';
 import type { ToolDefinition } from '@earendil-works/pi-coding-agent';
 import type { WebSearchProvider, WebSearchResult } from './types.ts';
 import { DDGSearchProvider } from './providers/ddg.ts';
-import { planEvidenceSearch, runBoundedResearch } from '@craft-agent/core/research';
+import { planEvidenceSearch, runBoundedResearch } from '@rox/core/research';
 
 const schema = Type.Object({
   query: Type.String({ description: 'The search query' }),

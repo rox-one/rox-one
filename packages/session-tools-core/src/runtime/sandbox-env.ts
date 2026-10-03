@@ -1,7 +1,7 @@
 /**
  * Shared environment sanitization for script-execution tools.
  *
- * The credential blocklist lives in `@craft-agent/core/env` so MCP stdio
+ * The credential blocklist lives in `@rox/core/env` so MCP stdio
  * spawn cannot drift from this sanitizer (inventory 6.4).
  */
 
@@ -11,7 +11,7 @@ import {
   BLOCKED_ENV_VAR_PREFIXES,
   BLOCKED_ENV_VARS,
   isBlockedEnvVar,
-} from '@craft-agent/core/env';
+} from '@rox/core/env';
 import type { ScriptRuntimeLanguage } from './resolve-script-runtime.ts';
 
 export { BLOCKED_ENV_VAR_PREFIXES, BLOCKED_ENV_VARS, isBlockedEnvVar };

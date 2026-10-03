@@ -28,10 +28,10 @@ import {
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
-import { Spinner } from '@craft-agent/ui'
+import { Spinner } from '@rox/ui'
 import { navigate, routes } from '@/lib/navigate'
 import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+import { isClaimableLive } from '@rox/core/rox2'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type {
   CatalogCategory,
@@ -42,7 +42,7 @@ import type {
   ExtensionRuntime,
   ExtensionsListCatalogResult,
   ExtensionsListInstalledResult,
-} from '@craft-agent/shared/extensions/browser'
+} from '@rox/shared/extensions/browser'
 import {
   CATALOG_CATEGORIES,
   EXTENSION_CENTER_GROUPS,
@@ -51,7 +51,7 @@ import {
   groupExtensionPermissions,
   HIGH_RISK_PERMISSIONS,
   RUNTIME_PLACEMENT,
-} from '@craft-agent/shared/extensions/browser'
+} from '@rox/shared/extensions/browser'
 import { useAtomValue } from 'jotai'
 import { featureWorkbenchHarnessExtCenterV1Atom } from '@/atoms/unified-shell'
 import { useActiveWorkspace } from '@/context/AppShellContext'

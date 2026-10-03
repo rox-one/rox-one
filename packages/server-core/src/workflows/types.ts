@@ -1,10 +1,10 @@
-import type { OperationReceipt, OperationResultV2 } from '@craft-agent/core/meetings'
+import type { OperationReceipt, OperationResultV2 } from '@rox/core/meetings'
 import type {
   SessionWorkflowSpec,
   WorkflowArtifact,
   WorkflowNodeRunStatus,
   WorkflowRunMode,
-} from '@craft-agent/shared/workflows'
+} from '@rox/shared/workflows'
 
 export type WorkflowModelRequest = {
   nodeId: string

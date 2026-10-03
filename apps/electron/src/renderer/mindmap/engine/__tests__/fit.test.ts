@@ -5,14 +5,24 @@ import {
   createEmptyGraph,
   finalizeGraph,
   layoutBounds,
-} from '@craft-agent/core/mindmap'
+} from '@rox/core/mindmap'
 import {
   fitMindMapViewport,
   MIND_MAP_FIT_PADDING,
+  shouldAutoFitMindMap,
 } from '../fit'
 import { MIND_MAP_NODE_HEIGHT, MIND_MAP_NODE_WIDTH } from '../types'
 
 describe('fitMindMapViewport', () => {
+  test('fits the first measured data load, preserves edits and resize, and fits a different entity', () => {
+    const size = { width: 800, height: 480 }
+    expect(shouldAutoFitMindMap(null, 'note:a', size, 0)).toBe(false)
+    expect(shouldAutoFitMindMap(null, 'note:a', { width: 0, height: 480 }, 3)).toBe(false)
+    expect(shouldAutoFitMindMap(null, 'note:a', size, 3)).toBe(true)
+    expect(shouldAutoFitMindMap('note:a', 'note:a', size, 4)).toBe(false)
+    expect(shouldAutoFitMindMap('note:a', 'note:a', { width: 450, height: 240 }, 4)).toBe(false)
+    expect(shouldAutoFitMindMap('note:a', 'note:b', size, 4)).toBe(true)
+  })
   test('waits for a measured mount, then keeps root and child boxes visible after fit', () => {
     const graph = createEmptyGraph({ type: 'note', noteId: 'note' }, 'Root')
     addChild(graph, graph.rootId, { id: 'child', label: 'Child', kind: 'heading' })

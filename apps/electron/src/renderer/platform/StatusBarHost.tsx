@@ -14,7 +14,7 @@
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { featureWorkbenchHarnessAgentIntelV1Atom, featureWorkbenchStatusBarV1Atom } from '@/atoms/unified-shell'
-import { resolveModelFallbackStatus } from '@craft-agent/shared/agent/model-fallback-status'
+import { resolveModelFallbackStatus } from '@rox/shared/agent/model-fallback-status'
 import { focusedSessionIdAtom } from '@/atoms/panel-stack'
 import { backgroundTasksAtomFamily, sessionMetaMapAtom } from '@/atoms/sessions'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'

@@ -2,14 +2,14 @@
  * Zen Shell material policy (ZS-01).
  *
  * Pure resolver: no Electron imports. Main applies the snapshot; the renderer
- * only consumes the typed result. `shell.zen.v1` defaults OFF and OFF does not
+ * only consumes the typed result. `shell.zen.v1` defaults ON and OFF does not
  * run this resolver — the existing window/material path stays in charge.
  */
 
 export const ZEN_SHELL_FLAG = 'shell.zen.v1' as const
 
-/** Windows 11 22H2+ (build 22000). Older Zen-ON Windows is solid, not acrylic. */
-export const WINDOWS_MICA_BUILD = 22000
+/** Electron's backgroundMaterial API requires Windows 11 22H2 or newer. */
+export const WINDOWS_MICA_BUILD = 22621
 
 export type ShellMaterialPreference = 'system' | 'glass' | 'opaque'
 export type ResolvedShellMaterial = 'vibrancy' | 'mica' | 'solid'
@@ -24,6 +24,7 @@ export type ShellMaterialFallbackReason =
   | 'no-healthy-paint'
   | 'window-destroyed'
   | 'gpu-failure'
+  | 'material-unavailable'
   | 'zen-disabled'
 
 export interface ResolveShellMaterialInput {
@@ -55,7 +56,7 @@ export interface ZenShellSnapshot {
 const MATERIAL_PREFERENCES = new Set<ShellMaterialPreference>(['system', 'glass', 'opaque'])
 
 export function parseZenShellEnabled(value: unknown): boolean {
-  return value === true
+  return value === undefined || value === true
 }
 
 export function parseShellMaterialPreference(value: unknown): ShellMaterialPreference {

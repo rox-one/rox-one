@@ -1,5 +1,5 @@
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import {
   loadCollectionDisplay,
   saveCollectionDisplay,
@@ -7,15 +7,15 @@ import {
   saveCollectionFiltersMap,
   type CollectionDisplay,
   type CollectionFilters,
-} from '@craft-agent/shared/sessions'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+} from '@rox/shared/sessions'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   isClaimableLive,
   rpcCollectionActResult,
   rpcCollectionListResult,
   rpcCollectionReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.collection.GET_DISPLAY,

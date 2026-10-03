@@ -1,10 +1,10 @@
 import * as React from 'react'
 import type { CSSProperties } from 'react'
 import type { TFunction } from "i18next"
-import type { StatusConfig } from '@craft-agent/shared/statuses'
-import { isEmoji } from '@craft-agent/shared/utils/icon-constants'
-import { resolveEntityColor, getDefaultStatusColor } from '@craft-agent/shared/colors'
-import type { EntityColor } from '@craft-agent/shared/colors'
+import type { StatusConfig } from '@rox/shared/statuses'
+import { isEmoji } from '@rox/shared/utils/icon-constants'
+import { resolveEntityColor, getDefaultStatusColor } from '@rox/shared/colors'
+import type { EntityColor } from '@rox/shared/colors'
 import { StatusIcon } from '@/components/ui/status-icon'
 import { iconCache } from '@/lib/icon-cache'
 

@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { resetIdentityStoreCache } from '@craft-agent/core/platform/identity/store'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { resetIdentityStoreCache } from '@rox/core/platform/identity/store'
 import { HANDLED_CHANNELS, registerIdentityHandlers } from '../identity'
 
 type Handler = (ctx: unknown, ...args: unknown[]) => unknown | Promise<unknown>

@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it } from 'bun:test';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { AGENT_ERROR_CODES, isAgentErrorCode } from '@craft-agent/core/types';
+import { AGENT_ERROR_CODES, isAgentErrorCode } from '@rox/core/types';
 import {
   LIVE_TURN_REQUIRED_SECRET,
   LIVE_TURN_STEPS,

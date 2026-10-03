@@ -6,7 +6,7 @@ import type {
   SecurityAuditSnapshot,
   SecurityDomain,
   SecurityFinding,
-} from '@craft-agent/shared/openclaw'
+} from '@rox/shared/openclaw'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
@@ -25,7 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { PremiumMenuSelect } from '@craft-agent/ui'
+import { PremiumMenuSelect } from '@rox/ui'
 import { SecuritySnake, filterSecurityFindings } from './security/SecuritySnake'
 import { runConfirmedSecurityAction } from './security/security-actions'
 import {
@@ -33,7 +33,7 @@ import {
   getRiskAcceptanceDateLimits,
   validateRiskAcceptance,
 } from './security/security-validation'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult, type SettingsPageActionKind } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {

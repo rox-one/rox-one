@@ -29,12 +29,23 @@ export interface ModePillLayoutInput {
  * Decide whether the centered mode pill shows labels or icons only, and how
  * wide the left group may grow without sliding under the pill.
  */
-export function resolveModePillLayout(input: ModePillLayoutInput): { collapsed: boolean; leftMax: number } {
+export interface ModePillLayout {
+  collapsed: boolean
+  leftMax: number
+  /** Limit the browser strip before it covers the pill or fixed right actions. */
+  rightMax: number
+}
+
+export function resolveModePillLayout(input: ModePillLayoutInput): ModePillLayout {
   const centerX = input.topbarWidth / 2 - input.leftInset / 2
   const fits = (pillWidth: number) =>
     centerX - pillWidth / 2 - MODE_PILL_GAP >= input.leftFixedEdge + MODE_PILL_MIN_LEFT_FLEX
     && input.topbarWidth - centerX - pillWidth / 2 - MODE_PILL_GAP >= input.rightWidth
   const collapsed = !fits(input.metrics.full)
   const pillWidth = collapsed ? input.metrics.compact : input.metrics.full
-  return { collapsed, leftMax: Math.max(0, Math.floor(centerX - pillWidth / 2 - MODE_PILL_GAP)) }
+  return {
+    collapsed,
+    leftMax: Math.max(0, Math.floor(centerX - pillWidth / 2 - MODE_PILL_GAP)),
+    rightMax: Math.max(0, Math.floor(input.topbarWidth - centerX - pillWidth / 2 - MODE_PILL_GAP)),
+  }
 }

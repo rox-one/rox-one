@@ -15,12 +15,23 @@ import { upsertPresence, type PresenceMember } from './presence.ts'
 
 export interface CreateInviteInput {
   sessionId: string
+  workspaceId?: string
   owner: RoxAccount
   role?: Exclude<CollaboratorRole, 'owner'>
   ttlMs?: number
 }
 
-export class BroInviteStore {
+/** Server-side invitation persistence contract; never accepts renderer account claims. */
+export interface BroInviteStorage {
+  createInvite(input: CreateInviteInput): BroInviteCard
+  join(url: string, account: RoxAccount | null): JoinResult
+  revoke(joinKey: string, actorAccountId: string): boolean
+  listPresence(sessionId: string, workspaceId?: string): PresenceMember[]
+  getInvite(joinKey: string): BroInvite | undefined
+  close?(): void
+}
+
+export class BroInviteStore implements BroInviteStorage {
   private readonly invites = new Map<string, BroInvite>()
   private readonly presenceBySession = new Map<string, PresenceMember[]>()
 
@@ -34,6 +45,7 @@ export class BroInviteStore {
     const createdAt = this.now()
     const invite: BroInvite = {
       sessionId: input.sessionId,
+      ...(input.workspaceId === undefined ? {} : { workspaceId: input.workspaceId }),
       ownerAccountId: input.owner.accountId,
       ownerUsername: slugifyUsername(input.owner.username),
       joinKey,
@@ -43,8 +55,8 @@ export class BroInviteStore {
     }
     this.invites.set(joinKey, invite)
     this.presenceBySession.set(
-      input.sessionId,
-      upsertPresence(this.listPresence(input.sessionId), input.owner, 'owner', createdAt),
+      this.presenceKey(input.sessionId, input.workspaceId),
+      upsertPresence(this.listPresence(input.sessionId, input.workspaceId), input.owner, 'owner', createdAt),
     )
     return buildInviteCard(invite)
   }
@@ -62,14 +74,15 @@ export class BroInviteStore {
     if (status !== 'active') return { ok: false, error: status }
     invite.usedAt = this.now()
     this.presenceBySession.set(
-      invite.sessionId,
-      upsertPresence(this.listPresence(invite.sessionId), account, invite.role, this.now()),
+      this.presenceKey(invite.sessionId, invite.workspaceId),
+      upsertPresence(this.listPresence(invite.sessionId, invite.workspaceId), account, invite.role, this.now()),
     )
     return {
       ok: true,
       sessionId: invite.sessionId,
       role: invite.role,
       accountId: account.accountId,
+      ...(invite.workspaceId === undefined ? {} : { workspaceId: invite.workspaceId }),
     }
   }
 
@@ -82,8 +95,12 @@ export class BroInviteStore {
     return true
   }
 
-  listPresence(sessionId: string): PresenceMember[] {
-    return [...(this.presenceBySession.get(sessionId) ?? [])]
+  private presenceKey(sessionId: string, workspaceId?: string): string {
+    return JSON.stringify([workspaceId ?? '', sessionId])
+  }
+
+  listPresence(sessionId: string, workspaceId?: string): PresenceMember[] {
+    return [...(this.presenceBySession.get(this.presenceKey(sessionId, workspaceId)) ?? [])]
   }
 
   getInvite(joinKey: string): BroInvite | undefined {
