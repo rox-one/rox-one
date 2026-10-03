@@ -54,7 +54,7 @@
       "path": "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx",
       "source_sha256": "885d576d6590e6747a31166db6bebbceac3618b568b194216e682cb5fa272866",
       "replaces_existing": true,
-      "integrated_sha256": "7767fa9dac41d267ad4a6d0dfbd2e599a296c299bf40e9b912888e1250190720"
+      "integrated_sha256": "f2d00aa4520f55e252e9cc12f3be21e93ed50d0b9ca34737c95f93bf2efdac22"
     }
   ],
   "locale_keys": {
@@ -80,6 +80,7 @@
     "Keep current flush shell pane classes, insets and route/detail consumers",
     "Retain all flat-keyed PanelSlots across layout/focus/compact changes with inert hidden siblings",
     "Use current validated resize controller; restore source two-axis pointer capture and owner-safe cleanup",
-    "ResizeHandle adds only orientation-specific keyboard/style handling; current hover treatment stays"
+    "ResizeHandle adds only orientation-specific keyboard/style handling; current hover treatment stays",
+    "Restore removed focused panel DOM focus only for its disconnected owner, preserving live editing/toolbar focus, dialogs, composition, resize and hidden targets; tabs declare aria-controls ownership"
   ]
 }

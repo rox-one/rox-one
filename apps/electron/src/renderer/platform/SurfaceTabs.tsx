@@ -69,6 +69,7 @@ function SurfaceTabItem({ tab }: { tab: SurfaceTabView }) {
   return (
     <div
       role="tab"
+      aria-controls={tab.panelId}
       aria-selected={tab.focused}
       tabIndex={0}
       title={tab.title}

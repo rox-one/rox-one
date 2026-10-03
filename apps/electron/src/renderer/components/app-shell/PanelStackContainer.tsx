@@ -65,6 +65,9 @@ export function PanelStackContainer({
   const { mode, preferences, setTracks } = usePanelWorkspaceLayout()
   const reduceMotion = useReducedMotion()
   const scrollRef = useRef<HTMLDivElement>(null)
+  const previousFocusedPanelRef = useRef(focusedPanelId)
+  const lastDomFocusRef = useRef<{ element: Element; panelId: string | null } | null>(null)
+  const composingRef = useRef(false)
   const focusedId = panels.some((entry) => entry.id === focusedPanelId) ? focusedPanelId : panels[0]?.id
   const singlePanel = isCompact || mode === 'focus' || panels.length <= 1
   const shape = useMemo(() => panelGridShape(panels.length, singlePanel ? 'focus' : mode), [panels.length, singlePanel, mode])
@@ -135,6 +138,51 @@ export function PanelStackContainer({
       focusPanelInDirection(direction)
     })
   }, [focusPanelInDirection])
+
+  // Removal blurs a focused DOM node to body before the new panel is painted.
+  // Remember its owner so a close cannot steal focus from unrelated live UI.
+  useEffect(() => {
+    const rememberFocus = (event: FocusEvent) => {
+      if (!(event.target instanceof Element)) return
+      const element = event.target
+      const content = element.closest<HTMLElement>('[data-panel-role="content"][data-panel-id]')
+      const tab = element.closest<HTMLElement>('[role="tab"][aria-controls]')
+      const panelId = content && scrollRef.current?.contains(content)
+        ? content.dataset.panelId ?? null : tab?.getAttribute('aria-controls') ?? null
+      lastDomFocusRef.current = { element, panelId }
+    }
+    const beginComposition = () => { composingRef.current = true }
+    const endComposition = () => { composingRef.current = false }
+    document.addEventListener('focusin', rememberFocus, true)
+    document.addEventListener('compositionstart', beginComposition, true)
+    document.addEventListener('compositionend', endComposition, true)
+    return () => {
+      document.removeEventListener('focusin', rememberFocus, true)
+      document.removeEventListener('compositionstart', beginComposition, true)
+      document.removeEventListener('compositionend', endComposition, true)
+    }
+  }, [])
+
+  useEffect(() => {
+    const previousId = previousFocusedPanelRef.current
+    previousFocusedPanelRef.current = focusedPanelId
+    if (!previousId || panels.some(panel => panel.id === previousId) || !focusedId) return
+    const frame = requestAnimationFrame(() => {
+      if (isPanelResizeActive() || composingRef.current || document.querySelector('[role="dialog"]')) return
+      const active = document.activeElement
+      if (active && active !== document.body && active !== document.documentElement && active.isConnected) return
+      const previousOwner = lastDomFocusRef.current
+      if (!previousOwner || previousOwner.panelId !== previousId || previousOwner.element.isConnected) return
+      const target = Array.from(scrollRef.current?.querySelectorAll<HTMLElement>('[data-panel-role="content"][data-panel-id]') ?? [])
+        .find(element => element.dataset.panelId === focusedId)
+      if (!target?.isConnected || target.closest('[inert], [aria-hidden="true"]')) return
+      const bounds = target.getBoundingClientRect()
+      if (bounds.width <= 0 || bounds.height <= 0) return
+      target.focus({ preventScroll: true })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [focusedPanelId, focusedId, panels])
+
   // Focus via tabs, shortcuts and opening a panel all reveal the actual cell,
   // including the lower rows of a workspace that is smaller than its contents.
   useEffect(() => {
