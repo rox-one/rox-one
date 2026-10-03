@@ -66,13 +66,13 @@ jobs:
           CHROMIUM_EXECUTABLE: ${{ runner.temp }}/ui001-separate-browser-phase
         run: >-
           bun test --timeout 30000
-          apps/electron/src/renderer/components/app-shell/__tests__
-          apps/electron/src/shared/__tests__
-          apps/electron/src/renderer/contexts/__tests__
-          apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts
-          apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts
-          apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts
-          apps/electron/src/renderer/atoms/rox-readiness-ui-001.panels.test.ts
+          ./apps/electron/src/renderer/components/app-shell/__tests__
+          ./apps/electron/src/shared/__tests__
+          ./apps/electron/src/renderer/contexts/__tests__
+          ./apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts
+          ./apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts
+          ./apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts
+          ./apps/electron/src/renderer/atoms/rox-readiness-ui-001.panels.test.ts
       - name: Project validation and types
         env:
           NODE_OPTIONS: --max-old-space-size=4096

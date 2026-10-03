@@ -47,9 +47,9 @@ describe('actual native overlay owner composition', () => {
     expect(command({ sender: child.webContents }, 'stop', 'another-recording')).toEqual({ ok: false })
     expect(command({ sender: child.webContents }, 'stop', state.recordingId)).toEqual({ ok: true })
     expect(command({ sender: child.webContents }, 'stop', state.recordingId)).toEqual({ ok: false })
-    expect(commands).toEqual([[context, 'toggle']])
+    expect(commands).toEqual([[context, 'toggle', state.recordingId]])
     expect(command({ sender: child.webContents }, 'cancel', state.recordingId)).toEqual({ ok: true })
-    expect(commands.at(-1)).toEqual([context, 'cancel'])
+    expect(commands.at(-1)).toEqual([context, 'cancel', state.recordingId])
     expect(child.openHandler?.()).toEqual({ action: 'deny' })
     valid = false
     expect(command({ sender: child.webContents }, 'cancel', state.recordingId)).toEqual({ ok: false })

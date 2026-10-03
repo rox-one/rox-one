@@ -1,5 +1,5 @@
 {
-  "state": "qualified_current_production_pending_latestmain_reconciliation",
+  "state": "latestmain_reconciled_pending_final_core_and_build",
   "source_pr": 1448,
   "source_head": "1eb2c8289b68e9103880c3f2aee2c57e70c3409a",
   "actual_source_path_count": 107,
@@ -413,9 +413,40 @@
       "log": "ui1448-owned-pg-wp-01-transport.test.ts-initial-context-sql-ascii.log",
       "sha256": "b6eb648829a2a6d9ba50d0b711afaeec7c9dfee8427eec21509e3e276564a02b",
       "bytes": 1261
+    },
+    {
+      "log": "pr1457-joined-current-callbacks-second.log",
+      "sha256": "8c54b07cf325272ae8ecb6217ce6191f6f49cd5a65ecf698c043b273de7d1a19",
+      "bytes": 8204
+    },
+    {
+      "log": "pr1457-joined-current-browser.log",
+      "sha256": "d8a721bef18e085260d1cd8e0f767d8c6d0b64995d5d5f1cfa8a657c6309bfde",
+      "bytes": 10184
+    },
+    {
+      "log": "pr1457-joined-current-electron-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "log": "pr1457-joined-current-callbacks-first.log",
+      "sha256": "2e1d2a2a7427c6163a7de82e7f6249391b656df028b62a8e66533fd29a868878",
+      "bytes": 24269
     }
   ],
   "installed_desktop_or_full_feature_acceptance": false,
   "all_200_cards_accepted": false,
-  "source_branches_deleted": false
+  "source_branches_deleted": false,
+  "integration_main": "c9f149554f22b89cb3db1b65a3b9cb6b882f8dbb",
+  "navigation_production_blob": "979d29d343db6b6124d7abbcdb3c002273080266",
+  "latest_navigation_checks": {
+    "actual_mounted_pass": 37,
+    "fail": 0,
+    "callbacks_pass": 50,
+    "callbacks_fail": 0,
+    "assertions": 268,
+    "full_Electron_types_exit": 0,
+    "incoming_StrictMode_retained": true
+  }
 }

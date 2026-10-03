@@ -324,10 +324,24 @@ export function NavigationProvider({
   const historyReconcileRevisionRef = useRef(0)
   const historyMountedRef = useRef(false)
 
-  // History belongs to the local workspace. Remote ownership and panel focus
-  // rotate action custody, but cannot strand a pending history switch.
+  // History leases belong to the local workspace, independently of action
+  // ownership, which also rotates on remote changes and panel focus intents.
   useLayoutEffect(() => {
-    ++historyReconcileRevisionRef.current
+    const revision = ++historyReconcileRevisionRef.current
+    // StrictMode replays layout setup after passive cleanup. The initial
+    // restoration remains complete, but its release frame belongs to the
+    // disposed lease. Resume that release without resetting the semantic key,
+    // so navigation arriving before the frame still creates a history entry.
+    if (initialRouteRestoredRef.current && suppressPushRef.current
+      && !historyMountedRef.current && !isPopstateSwitchRef.current
+      && pendingUrlRestoreRef.current === null) {
+      requestAnimationFrame(() => {
+        if (!historyMountedRef.current || revision !== historyReconcileRevisionRef.current
+          || isPopstateSwitchRef.current || pendingUrlRestoreRef.current !== null) return
+        suppressPushRef.current = false
+        maybePushHistoryForSemanticChange()
+      })
+    }
     return () => { ++historyReconcileRevisionRef.current }
   }, [workspaceId])
 

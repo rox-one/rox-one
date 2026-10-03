@@ -149,6 +149,7 @@ export interface ValidatorInterface {
  * - Codex: createCodexContext() with callback IPC and limited capabilities
  */
 export interface SessionToolContext {
+  hostBashObserver?: (observation: import('./runtime/host-bash-port.ts').HostBashObservation) => void;
   // ============================================================
   // Session Info
   // ============================================================

@@ -1,0 +1,25 @@
+{
+  "checkedAtUtc": "2026-10-03T20:08:20.418325+00:00",
+  "testMethod": "Same actual extracted layout/handlePopState/finishHistory callbacks and assertions. Scratch red adjusts only input source path to immutable pre-repair c522 source. Green reads current production source.",
+  "runtime": {
+    "bun": "1.3.14",
+    "node": "24.21.0"
+  },
+  "baselineRevision": "c522e7c0134a0d168b16ad3d0eaa4aa06cd09d58",
+  "greenSourceSha256": "6897d00eef5acdebe4ecc754ebbea58642fba44b5cc1a2b21dcb0b4245424557",
+  "rows": [
+    {
+      "phase": "red",
+      "observedExitCode": 1,
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-history-strict-lease-red.log",
+      "sha256": "3c029935c80a8a305267c347e50a6f8c645e5cccde2b366a66a03b7170f2997b"
+    },
+    {
+      "phase": "green",
+      "observedExitCode": 0,
+      "logPath": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-history-strict-lease-green.log",
+      "sha256": "b3ca9224498d40070769bd2631f259880d87180aea6ad45a3a3bef406a4b5440"
+    }
+  ],
+  "fullDoDClosed": false
+}

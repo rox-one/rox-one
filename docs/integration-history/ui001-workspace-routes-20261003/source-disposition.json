@@ -158,7 +158,7 @@
       "current_blob": "3f5a2b6d387032402d5271ce943d2695c0930cd6",
       "consumer": "Current executable/resource/protocol build admission already delivered PR1452; renderer changes do not replace current native bootstrap",
       "proof_refs": [
-        "docs/integration-history/ui001-portable-resources-20261003"
+        "docs/integration-history/portable-resources-20261003"
       ]
     },
     "apps/electron/src/renderer/App.tsx": {
@@ -741,7 +741,8 @@
       "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
       "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
       "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
-      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json"
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
     },
     "docs/final-readiness/execution/cloud/OWNER-UI-001/continuation-plan.md": {
       "status": "preserved_original_evidence_not_current_acceptance",
@@ -851,7 +852,8 @@
       "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
       "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
       "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
-      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json"
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
     },
     "packages/messaging-gateway/src/__tests__/access-control.test.ts": {
       "status": "incorporated_adapted_current_source_contracts",
@@ -960,7 +962,8 @@
       "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
       "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
       "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
-      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json"
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
     },
     "packages/server-core/src/transport/__tests__/rox-readiness-ui-001.response-admission.test.ts": {
       "status": "delivered_qualified_merged_slice",
@@ -973,7 +976,8 @@
       "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
       "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
       "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
-      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json"
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
     },
     "packages/server-core/src/transport/server.ts": {
       "status": "delivered_qualified_merged_slice",
@@ -986,7 +990,8 @@
       "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
       "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
       "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
-      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json"
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
     },
     "packages/server-core/src/transport/types.ts": {
       "status": "delivered_qualified_merged_slice",
@@ -999,7 +1004,8 @@
       "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
       "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
       "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
-      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json"
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
     },
     "packages/shared/src/agent/core/__tests__/prerequisite-manager.isolated.ts": {
       "status": "incorporated_exact_source",
@@ -1272,7 +1278,8 @@
       "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
       "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
       "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
-      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json"
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
     },
     "packages/shared/src/toolchain/__tests__/kinds.test.ts": {
       "status": "delivered_qualified_merged_slice",
@@ -1285,7 +1292,8 @@
       "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
       "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
       "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
-      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json"
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
     },
     "packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-isolation.test.ts": {
       "status": "delivered_qualified_merged_slice",
@@ -1298,7 +1306,8 @@
       "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
       "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
       "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
-      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json"
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
     },
     "packages/shared/src/toolchain/__tests__/rox-readiness-ui-001.git-npm-recovery.test.ts": {
       "status": "delivered_qualified_merged_slice",
@@ -1311,7 +1320,8 @@
       "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
       "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
       "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
-      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json"
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
     },
     "packages/shared/src/toolchain/installer.ts": {
       "status": "delivered_qualified_merged_slice",
@@ -1324,7 +1334,8 @@
       "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
       "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
       "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
-      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json"
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
     },
     "packages/shared/src/toolchain/manager.ts": {
       "status": "delivered_qualified_merged_slice",
@@ -1337,7 +1348,8 @@
       "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
       "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
       "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
-      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json"
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
     },
     "packages/ui/src/components/annotations/__tests__/interaction-state-machine.test.ts": {
       "status": "incorporated_exact_source",
@@ -1444,7 +1456,7 @@
       "current_blob": "404263a9366df13bf61e41bc99fb810d97282f1b",
       "consumer": "Current executable/resource/protocol build admission already delivered PR1452; renderer changes do not replace current native bootstrap",
       "proof_refs": [
-        "docs/integration-history/ui001-portable-resources-20261003"
+        "docs/integration-history/portable-resources-20261003"
       ]
     },
     "scripts/electron-build-resources.ts": {
@@ -1459,7 +1471,7 @@
       "current_blob": "ca00b78453b3bbfa5f022802302f9dbfbab64bb7",
       "consumer": "Current executable/resource/protocol build admission already delivered PR1452; renderer changes do not replace current native bootstrap",
       "proof_refs": [
-        "docs/integration-history/ui001-portable-resources-20261003"
+        "docs/integration-history/portable-resources-20261003"
       ]
     },
     "scripts/rox-readiness-ui-001.native-protocol.test.ts": {
@@ -1474,7 +1486,7 @@
       "current_blob": "bc2a60fdd909cbf7e91ccb2641451f5f4f7c00ea",
       "consumer": "Current executable/resource/protocol build admission already delivered PR1452; renderer changes do not replace current native bootstrap",
       "proof_refs": [
-        "docs/integration-history/ui001-portable-resources-20261003"
+        "docs/integration-history/portable-resources-20261003"
       ]
     },
     "scripts/rox-readiness-ui-001.resource-copy.test.ts": {
@@ -1489,7 +1501,7 @@
       "current_blob": "3bc8a36054d2e132dbbedb735062db07ab9a72a8",
       "consumer": "Current executable/resource/protocol build admission already delivered PR1452; renderer changes do not replace current native bootstrap",
       "proof_refs": [
-        "docs/integration-history/ui001-portable-resources-20261003"
+        "docs/integration-history/portable-resources-20261003"
       ]
     },
     "scripts/rox-readiness-ui-001.runner-electron.test.ts": {
@@ -1504,7 +1516,7 @@
       "current_blob": "7d3e565073d3007547ba39c1325b08cf8d5cdbe5",
       "consumer": "Current executable/resource/protocol build admission already delivered PR1452; renderer changes do not replace current native bootstrap",
       "proof_refs": [
-        "docs/integration-history/ui001-portable-resources-20261003"
+        "docs/integration-history/portable-resources-20261003"
       ]
     },
     "scripts/rox-readiness-ui-001.runner.test.ts": {
@@ -1518,7 +1530,8 @@
       "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
       "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
       "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
-      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json"
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
     },
     "scripts/test-all.ts": {
       "status": "delivered_qualified_merged_slice",
@@ -1531,7 +1544,8 @@
       "merge_commit": "5211746270f5005d551ddc103970714520b25b67",
       "head": "bccdacfaa3e225145fdac90ad78dc99c74a55762",
       "qualification": "docs/integration-history/install-response-runner-20261003/verification.json",
-      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json"
+      "qualification_url": "https://github.com/rox-one/rox-one/blob/5211746270f5005d551ddc103970714520b25b67/docs/integration-history/install-response-runner-20261003/verification.json",
+      "proof_refs": []
     },
     "tests/e2e/meeting-agents/harness.ts": {
       "status": "incorporated_exact_source",
@@ -1545,7 +1559,7 @@
       "current_blob": "e7c4b3f3d53c49b369a812fc514e525ed9df2586",
       "consumer": "Current executable/resource/protocol build admission already delivered PR1452; renderer changes do not replace current native bootstrap",
       "proof_refs": [
-        "docs/integration-history/ui001-portable-resources-20261003"
+        "docs/integration-history/portable-resources-20261003"
       ]
     },
     "tests/macro-integration/wp-01-http.test.ts": {
@@ -1648,5 +1662,6 @@
   "full_native_release_acceptance": false,
   "root_navigation_additional_source": 1457,
   "root_final_qualified_production_core": "905a1ec8cff68fa88851bdaaddf0310e16fff25f",
-  "root_final_navigation_blob": "cc3511fb3414f8dc7401d89dbcfc21767d253888"
+  "root_final_navigation_blob": "979d29d343db6b6124d7abbcdb3c002273080266",
+  "integration_main": "c9f149554f22b89cb3db1b65a3b9cb6b882f8dbb"
 }
