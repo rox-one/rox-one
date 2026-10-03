@@ -106,6 +106,7 @@ test('T-NOTES-CREATE/T-NOTES-SAVE: the real Notes tour verifies canonical creati
   await page.getByTestId('learning-start-OBT-17').click()
   const popup = page.locator('[data-product-tour-popover]')
   await expect(popup).toHaveAttribute('data-product-tour-step', 'notes.create')
+  await expect(popup.getByRole('heading', { name: 'Create a note', exact: true })).toBeVisible()
   // Notes has several ordinary create buttons; act on the actual highlighted control.
   const readHighlightedControl = () => page.locator('[data-product-tour-mask] rect').evaluate(rect => {
     const x = Number(rect.getAttribute('x')) + Number(rect.getAttribute('width')) / 2
@@ -139,12 +140,11 @@ test('T-NOTES-CREATE/T-NOTES-SAVE: the real Notes tour verifies canonical creati
   await attachEvidence(page, info)
 })
 
-test('T-WORKSPACE-SCOPE: the real App resolves a shell target for the voluntary workspace explanation', async ({ page }, info) => {
+test('T-WORKSPACE-SCOPE: restricted WebUI blocks an unavailable workspace switcher without inventing a control', async ({ page }, info) => {
   await openApp(page, 'settings/learning', true)
   await page.getByTestId('learning-start-OBT-02').click()
   const popup = page.locator('[data-product-tour-popover]')
-  await expect(popup).toHaveAttribute('data-product-tour-step', 'workspace.scope')
-  await popup.getByRole('button', { name: /^(Next|Finish)$/i }).click()
+  await expect(page.getByTestId('product-tour-status')).toContainText('The required control has not appeared yet.')
   await expect(popup).toHaveCount(0)
   await attachEvidence(page, info)
 })
@@ -153,7 +153,7 @@ test('APP-03: ordinary navigation away from an active Learning step pauses its r
   await openApp(page, 'settings/learning', true)
   await page.getByTestId('learning-start-OBT-25').click()
   await expect(page.locator('[data-product-tour-popover]')).toHaveAttribute('data-product-tour-step', 'learning.library')
-  await page.locator('[data-tutorial="sources-nav"]').first().click()
+  await page.getByRole('button', { name: /^Sources/ }).click({ timeout: 15_000 })
   await expect(page.locator('[data-product-tour-popover]')).toHaveCount(0)
   await expect(page.getByTestId('product-tour-status')).toContainText(/changed|paused/i)
   await attachEvidence(page, info)

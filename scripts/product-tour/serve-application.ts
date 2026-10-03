@@ -52,10 +52,17 @@ const journal = new NativeJournal({
   authorizePreparedRecovery: (...args) => authority.authorizePreparedRecovery(...args),
 })
 const operations: Array<{ channel: string; method: string }> = []
+const senders = new Map<number, EventEmitter & { id: number; isDestroyed(): boolean }>()
+let nextWebContentsId = 100
+function closeWindow(id: number) {
+  const sender = senders.get(id)
+  if (!sender) return
+  senders.delete(id); sender.emit('destroyed')
+}
 const rpc = new WsRpcServer({
   host: '127.0.0.1', port: 0, requireAuth: true, nativeAuthority: authority,
-  resolveLocalClientBinding: candidate => candidate.localClientProof === 'owned-product-tour-bootstrap' && candidate.webContentsId === 101 && candidate.workspaceId === workspaceId
-    ? { workspaceId, webContentsId: 101 } : null,
+  resolveLocalClientBinding: candidate => candidate.localClientProof === 'owned-product-tour-bootstrap' && typeof candidate.webContentsId === 'number' && senders.has(candidate.webContentsId) && candidate.workspaceId === workspaceId
+    ? { workspaceId, webContentsId: candidate.webContentsId } : null,
 })
 const registered = new Set<string>()
 const realHandle = rpc.handle.bind(rpc)
@@ -102,19 +109,20 @@ await rpc.listen()
 // In-process IPC adapter, with the production main queue and production preload bridge.
 // This is application harness evidence, never OS/Electron IPC custody evidence.
 const ipcHandlers = new Map<string, (...args: any[]) => any>()
-const sender = Object.assign(new EventEmitter(), { id: 101, isDestroyed: () => false })
 const credentials = new Map<string, import('../../packages/shared/src/credentials/types').StoredCredential>()
 const disposeReplica = registerNativeReplicaIpc({ handle(channel: string, fn: (...args: any[]) => any) { ipcHandlers.set(channel, fn) }, removeHandler(channel: string) { ipcHandlers.delete(channel) } } as any, {
   configDir: config,
   credentials: { get: async id => credentials.get(JSON.stringify(id)) ?? null, set: async (id, value) => { credentials.set(JSON.stringify(id), value) } },
-  getWorkspaceForWindow: id => id === 101 ? workspaceId : null,
+  getWorkspaceForWindow: id => senders.has(id) ? workspaceId : null,
 })
 const fixtureMarker = 'rox-product-tour-application-test-only'
 const fixtureHttp: import('connect').NextHandleFunction = async (request, response, next) => {
   if (!request.url?.startsWith('/__fixture/')) { next(); return }
   response.setHeader('Content-Type', 'application/json')
   if (request.url === '/__fixture/bootstrap') {
-    response.end(JSON.stringify({ marker: fixtureMarker, workspaceId, serverUrl: `ws://127.0.0.1:${rpc.port}`, token: issued.credential, proof: 'owned-product-tour-bootstrap' })); return
+    const webContentsId = ++nextWebContentsId
+    senders.set(webContentsId, Object.assign(new EventEmitter(), { id: webContentsId, isDestroyed: () => !senders.has(webContentsId) }))
+    response.end(JSON.stringify({ marker: fixtureMarker, workspaceId, webContentsId, serverUrl: `ws://127.0.0.1:${rpc.port}`, token: issued.credential, proof: 'owned-product-tour-bootstrap' })); return
   }
   if (request.url === '/__fixture/evidence') {
     const snapshots = deps.nativeData!.sync.pull(principal, workspaceId, 0, 100)
@@ -127,9 +135,15 @@ const fixtureHttp: import('connect').NextHandleFunction = async (request, respon
       const input = JSON.parse(body)
       const handler = ipcHandlers.get(input.channel)
       if (!handler) throw new Error('Unregistered test IPC method')
+      const sender = senders.get(input.webContentsId)
+      if (!sender) throw new Error('Closed or unknown owned application window')
       response.end(JSON.stringify({ value: await handler({ sender }, input.input) }))
     } catch (error) { response.statusCode = 400; response.end(JSON.stringify({ error: String(error) })) }
     return
+  }
+  if (request.url === '/__fixture/window-close' && request.method === 'POST') {
+    let body = ''; for await (const chunk of request) body += chunk
+    closeWindow(JSON.parse(body).webContentsId); response.end('{}'); return
   }
   response.statusCode = 404; response.end('{}')
 }
@@ -140,7 +154,8 @@ let disposed = false
 async function dispose() {
   if (disposed) return
   disposed = true
-  sender.emit('destroyed'); disposeReplica(); await vite.close(); rpc.close(); journal.close(); authority.close()
+  for (const id of senders.keys()) closeWindow(id)
+  disposeReplica(); await vite.close(); rpc.close(); journal.close(); authority.close()
   rmSync(profile, { recursive: true, force: true })
 }
 for (const signal of ['SIGTERM', 'SIGINT'] as const) process.once(signal, () => { void dispose().then(() => process.exit(0)) })
