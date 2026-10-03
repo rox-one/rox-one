@@ -1,0 +1,24 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+(pass) UI-001 actual navigation in Chromium > unknown single link survives reload and never selects its nested session [20283.29ms]
+(pass) UI-001 actual navigation in Chromium > malformed encoding and legacy lossy degradation retain their own unavailable surface [30405.58ms]
+(pass) UI-001 actual navigation in Chromium > multi-panel restore retains valid sibling, unavailable focus and proportions across reload [9272.46ms]
+(pass) UI-001 actual navigation in Chromium > empty panel list "[]" restores the focused address during history and reload [7409.78ms]
+(pass) UI-001 actual navigation in Chromium > empty panel list " [] " restores the focused address during history and reload [8420.09ms]
+(pass) UI-001 actual navigation in Chromium > empty panel list ",," restores the focused address during history and reload [17330.58ms]
+(pass) UI-001 actual navigation in Chromium > actual navigate and deep-link callbacks preserve unavailable route and browser back/forward [14348.01ms]
+(pass) UI-001 actual navigation in Chromium > stored action address cannot execute, while explicit action callback still runs once [9720.53ms]
+(pass) UI-001 actual navigation in Chromium > explicit navigation preserves spelling only after session workspace validation [6064.30ms]
+(pass) UI-001 actual navigation in Chromium > pending search replay retains query and new-panel options [7305.77ms]
+(pass) UI-001 actual navigation in Chromium > latest pending unknown address wins without selecting a previous valid session [9241.61ms]
+(pass) UI-001 actual navigation in Chromium > additional query parameters survive list auto-selection, navigation, history and reload [30268.36ms]
+(pass) UI-001 actual navigation in Chromium > literal commas, percent encoding and unknown addresses retain separate panels after reload [13986.83ms]
+(pass) UI-001 actual navigation in Chromium > compact menu labels unavailable panels consistently and Sessions opens its own service [12871.42ms]
+(pass) UI-001 actual navigation in Chromium > desktop unavailable links remove the unrelated navigator and resize boundary [17035.09ms]
+(pass) UI-001 actual navigation in Chromium > workspace restoration and history keep each workspace address [8729.33ms]
+
+ 16 pass
+ 0 fail
+ 261 expect() calls
+Ran 16 tests across 1 file. [260.37s]

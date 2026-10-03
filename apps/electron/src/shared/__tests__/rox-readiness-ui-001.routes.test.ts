@@ -39,12 +39,10 @@ describe('UI-001 unavailable routes retain their exact address', () => {
     const state = { navigator: 'unavailable' as const, route: 'retired/with,a:0.5', reason: 'workspace-mismatch' as const }
     expect(parsePanelKey(getPanelKey(state))).toEqual(state)
     expect(parsePanelKey('unavailable:workspace-mismatch:retired%2Fwith%2Ca%3A0.5')).toEqual(state)
-    expect(parseRouteToNavigationStateOrUnavailable('cloud-run/').navigator).toBe('unavailable')
-    expect(parseRouteToNavigationStateOrUnavailable('diff/').navigator).toBe('unavailable')
   })
 
   it('retains the existing cloud-run and diff list surfaces without selecting a chat', () => {
-    for (const route of ['cloud-run', 'diff']) {
+    for (const route of ['cloud-run', 'cloud-run/', 'diff', 'diff/']) {
       const state = parseRouteToNavigationStateOrUnavailable(route)
       expect(state.navigator).toBe(route.startsWith('cloud-run') ? 'cloud-run' : 'diff')
       expect('details' in state && state.details).toBeNull()

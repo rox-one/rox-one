@@ -743,6 +743,10 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 4. Publish a separate PR on the isolated codex branch and read back its exact head. Lead owns ordered main merge. Original source branch remains intact. The historical worker separately owns an authenticated read-only KnowledgeProvider adapter; this editor PR introduces no filesystem provider or new native permissions.
 
 
+## UI-001: внешние ссылки и интеграция в main — 2026-10-03
+
+Владелец: `fix/ui-001-main-integration-20261003-7`. [UI-001 план](final-readiness/execution/cloud/OWNER-UI-001/main-integration/plan.md) сохраняет исходную матрицу UI-001.1/UI-001.2 и явное разрешение пользователя на GitHub/merge. Другие разделы и рабочие копии сохраняются.
+
 # Credential locator boundary validation — 2026-10-03
 
 | Task | Owner | Dependency | Verification |

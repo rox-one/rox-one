@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { build } from 'esbuild'
 import { chromium, type Browser, type BrowserContext, type Page } from '@playwright/test'
+import { launchOwnedFixtureBrowser } from '../../components/app-shell/__tests__/rox-readiness-ui-001.browser-owner'
 
 // Mounted production NavigationProvider + real React/Jotai/history. Only backend
 // data and IPC transport are fixtures; native product proof lives in the separate
@@ -11,6 +12,7 @@ import { chromium, type Browser, type BrowserContext, type Page } from '@playwri
 const enabled = process.env.ROX_UI001_BROWSER_TEST === '1'
 const root = join(import.meta.dir, '../../../../../..')
 let server: Server, browser: Browser, context: BrowserContext, page: Page, base: string
+let closeBrowser: (() => Promise<void>) | undefined
 
 async function fixtureBundle() {
   // A separately bundled immutable fixture and external CDP endpoint keep
@@ -148,13 +150,17 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     })
     await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve))
     base='http://127.0.0.1:'+(server.address() as any).port
-    browser=process.env.ROX_UI001_CHROMIUM_CDP_URL
-      ? await chromium.connectOverCDP(process.env.ROX_UI001_CHROMIUM_CDP_URL)
-      : await chromium.launch({executablePath:process.env.ROX_UI001_CHROMIUM_EXECUTABLE,channel:process.env.ROX_UI001_CHROMIUM_EXECUTABLE?undefined:'chrome',headless:true})
+    if (process.env.ROX_UI001_CHROMIUM_CDP_URL) {
+      browser=await chromium.connectOverCDP(process.env.ROX_UI001_CHROMIUM_CDP_URL)
+      closeBrowser=()=>browser.close()
+    } else {
+      const owned=await launchOwnedFixtureBrowser({executablePath:process.env.ROX_UI001_CHROMIUM_EXECUTABLE,headless:true,args:['--disable-gpu']})
+      browser=owned.browser;closeBrowser=owned.close
+    }
   },30000)
   beforeEach(async()=>{context=await browser.newContext();page=await context.newPage();page.setDefaultTimeout(3000)})
   afterEach(async()=>{await context?.close()},15000)
-  afterAll(async()=>{await browser?.close();server?.closeAllConnections();if(server)await new Promise<void>(resolve=>server.close(()=>resolve()))},15000)
+  afterAll(async()=>{try{await closeBrowser?.()}finally{server?.closeAllConnections();if(server)await new Promise<void>(resolve=>server.close(()=>resolve()))}},15000)
 
   browserTest('initial missing entity never auto-selects an existing chat and survives reload',async()=>{
     await page.goto(base+'/?ws=a&route=allSessions%2Fsession%2Fdeleted')
@@ -169,7 +175,7 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
   })
 
   browserTest('unknown and malformed routes preserve raw addresses on initial load/reload/deep link',async()=>{
-    for(const route of ['unknown/entity','allSessions/session/%E0%A4%A','notes/note/id/extra','action/copy?text=unsafe']){
+    for(const route of ['unknown/entity','allSessions/session/%E0%A4%A','action/copy?text=unsafe']){
       await page.goto(base+'/?ws=a&route='+encodeURIComponent(route));await routeIs(route)
       expect((await snapshot()).nav).toMatchObject({navigator:'unavailable',route})
       await page.reload();await routeIs(route)
@@ -178,6 +184,17 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.evaluate(()=>(window as any).ui001nav.deep('other/raw%ZZ'))
     await routeIs('other/raw%ZZ')
     expect(new URL(page.url()).searchParams.get('route')).toBe('other/raw%ZZ')
+  })
+
+  browserTest('nested note IDs retain their complete identity through reload and deep link',async()=>{
+    const route='notes/note/id/extra'
+    await page.goto(base+'/?ws=a&route='+encodeURIComponent(route));await routeIs(route)
+    expect((await snapshot()).nav.details.noteId).toBe('id/extra')
+    await page.reload();await routeIs(route)
+    expect((await snapshot()).nav.details.noteId).toBe('id/extra')
+    await page.evaluate(()=>(window as any).ui001nav.deep('notes/note/folder/other'))
+    await routeIs('notes/note/folder/other')
+    expect((await snapshot()).nav.details.noteId).toBe('folder/other')
   })
 
   browserTest('legacy known-root incomplete shapes remain unavailable through auto-selection effects',async()=>{

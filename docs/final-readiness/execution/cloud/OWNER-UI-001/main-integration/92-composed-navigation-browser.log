@@ -1,0 +1,53 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+▲ [WARNING] Duplicate "data-route" attribute in JSX element [duplicate-object-key]
+
+    ui-001-navigation-fixture.tsx:649:8:
+      649 │         data-route={navState.navigator === 'unavailable' ? navSta...
+          ╵         ~~~~
+
+  The original "data-route" attribute is here:
+
+    ui-001-navigation-fixture.tsx:648:8:
+      648 │         data-route={navState.navigator === 'unavailable' ? navSta...
+          ╵         ~~~~
+
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/renderer/lib/nav-helpers.ts:42:9:
+      42 │     case 'unavailable':
+         ╵          ~~~~~~~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/renderer/lib/nav-helpers.ts:32:9:
+      32 │     case 'unavailable':
+         ╵          ~~~~~~~~~~~~~
+
+(pass) UI-001 actual navigation in Chromium > unknown single link survives reload and never selects its nested session [6105.91ms]
+(pass) UI-001 actual navigation in Chromium > malformed encoding and legacy lossy degradation retain their own unavailable surface [12630.87ms]
+(pass) UI-001 actual navigation in Chromium > multi-panel restore retains valid sibling, unavailable focus and proportions across reload [5407.31ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list "[]" restores the focused address during history and reload [4899.95ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list " [] " restores the focused address during history and reload [1478.17ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list ",," restores the focused address during history and reload [1295.40ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list "[" restores the focused address during history and reload [1577.20ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list "[1]" restores the focused address during history and reload [1744.01ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list "[[\"tasks\"]]" restores the focused address during history and reload [1354.28ms]
+(pass) UI-001 actual navigation in Chromium > empty or invalid panel list "  " restores the focused address during history and reload [1663.16ms]
+(pass) UI-001 actual navigation in Chromium > known routes with empty separators resolve their surface and query through navigation and reload [1031.94ms]
+(pass) UI-001 actual navigation in Chromium > actual navigate and deep-link callbacks preserve unavailable route and browser back/forward [870.51ms]
+(pass) UI-001 actual navigation in Chromium > stored action address cannot execute, while explicit action callback still runs once [1085.66ms]
+(pass) UI-001 actual navigation in Chromium > missing or foreign session links retain their requested address and cannot mount an unrelated chat [1696.90ms]
+(pass) UI-001 actual navigation in Chromium > pending search replay retains query and new-panel options [1175.11ms]
+(pass) UI-001 actual navigation in Chromium > latest pending unknown address wins without selecting a previous valid session [1281.50ms]
+(pass) UI-001 actual navigation in Chromium > additional query parameters survive list auto-selection, navigation, history and reload [6227.10ms]
+(pass) UI-001 actual navigation in Chromium > literal commas, percent encoding and unknown addresses retain separate panels after reload [2564.32ms]
+(pass) UI-001 actual navigation in Chromium > compact menu labels unavailable panels consistently and Sessions opens its own service [1432.58ms]
+(pass) UI-001 actual navigation in Chromium > desktop unavailable links remove the unrelated navigator and resize boundary [3237.41ms]
+(pass) UI-001 actual navigation in Chromium > workspace restoration and history keep each workspace address [1329.85ms]
+
+ 21 pass
+ 0 fail
+ 325 expect() calls
+Ran 21 tests across 1 file. [78.50s]

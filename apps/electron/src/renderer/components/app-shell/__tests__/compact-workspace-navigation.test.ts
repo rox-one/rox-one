@@ -1,12 +1,19 @@
 import { describe, expect, it } from 'bun:test'
 import { createStore } from 'jotai'
 import { focusedPanelIdAtom, panelStackAtom, pushPanelAtom } from '../../../atoms/panel-stack'
-import { routes } from '../../../../shared/routes'
+import { routes, type ViewRoute } from '../../../../shared/routes'
 import { parseRouteToNavigationState } from '../../../../shared/route-parser'
 import { APP_NAV_DESTINATIONS } from '../nav-destinations'
 import { getActiveService, resolveCompactWorkspaceSelection } from '../compact-workspace-navigation'
 
 describe('compact workspace navigation', () => {
+  it('does not match an unavailable retained route to the sessions service', () => {
+    const store = createStore()
+    store.set(pushPanelAtom, { route: 'knowledge/unknown/doc' as ViewRoute })
+    const panels = store.get(panelStackAtom)
+    expect(resolveCompactWorkspaceSelection(panels, panels[0].id, { kind: 'service', serviceId: 'sessions' }))
+      .toEqual({ kind: 'navigate', route: routes.view.allSessions() })
+  })
   it('keeps every registered service reachable without a desktop rail or sidebar', () => {
     for (const destination of APP_NAV_DESTINATIONS) {
       const action = resolveCompactWorkspaceSelection([], null, {
