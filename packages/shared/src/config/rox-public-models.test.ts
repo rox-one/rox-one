@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import {
   connectionUsesLegacyRoxInternalModels,
+  connectionUsesBuiltInRoxModels,
   getRoxSubagentModel,
   isRoxLegacyInternalModelId,
   isRoxPublicModelId,
@@ -38,6 +39,17 @@ describe('ROX public model plane', () => {
   it('advertises only R1 Max as a built-in session choice', () => {
     expect(toRoxSelectableModelDefinitions().map((entry) => entry.id)).toEqual(['rox/r1-max']);
     expect(toRoxPublicConnectionModels().map((entry) => entry.id)).toEqual(['rox/r1-max']);
+  });
+
+  it('recognizes old onboarding catalogs without claiming custom runtimes', () => {
+    const legacy = { slug: 'omp-2', name: 'Rox', providerType: 'omp', defaultModel: 'rox/standard', models: [...ROX_PUBLIC_MODEL_IDS] }
+    expect(connectionUsesBuiltInRoxModels(legacy)).toBe(true)
+    expect(connectionUsesBuiltInRoxModels({ ...legacy, slug: 'private-runtime' })).toBe(false)
+    expect(connectionUsesBuiltInRoxModels({ ...legacy, name: 'Private runtime' })).toBe(false)
+    expect(connectionUsesBuiltInRoxModels({ ...legacy, baseUrl: 'https://private.example.com/v1' })).toBe(false)
+    expect(connectionUsesBuiltInRoxModels({ ...legacy, slug: 'rox-kimi', baseUrl: 'https://private.example.com/v1' })).toBe(false)
+    expect(connectionUsesBuiltInRoxModels({ ...legacy, models: ['private/model'] })).toBe(false)
+    expect(connectionUsesBuiltInRoxModels({ ...legacy, providerType: 'pi_compat' })).toBe(false)
   });
 
   it('sends every public parent to the cheap public subagent endpoint', () => {
@@ -121,6 +133,9 @@ describe('resolveSpawnSessionModel', () => {
       slug: 'other',
       providerType: 'omp',
       defaultModel: 'kimi-K3',
+    })).toBe(false);
+    expect(connectionUsesLegacyRoxInternalModels({
+      slug: 'rox-kimi', providerType: 'omp', defaultModel: 'kimi-K3', baseUrl: 'https://private.example.com/v1',
     })).toBe(false);
   });
 

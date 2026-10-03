@@ -816,6 +816,7 @@ export const RPC_CHANNELS = {
     INTERACTED: 'browser-pane:interacted',
   },
   browserProfile: {
+    CREDENTIAL_CAPABILITIES: 'browserProfile:credentialCapabilities',
     DISCOVER: 'browserProfile:discover',
     IMPORT: 'browserProfile:import',
     ROLLBACK: 'browserProfile:rollback',

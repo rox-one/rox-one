@@ -2,9 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import ts from 'typescript'
-import { activityRailWidth } from '../../../platform/ActivityRail'
 import { resolveWorkbenchChrome } from '../../../platform/workbench-chrome'
-import { PANEL_GAP } from '../panel-constants'
 
 const shell = ts.createSourceFile('AppShell.tsx', readFileSync(resolve(import.meta.dir, '../AppShell.tsx'), 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const host = ts.createSourceFile('WorkspaceSurfaceHost.tsx', readFileSync(resolve(import.meta.dir, '../../../platform/WorkspaceSurfaceHost.tsx'), 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
@@ -42,6 +40,16 @@ function findNavigationOwner(node: ts.Node) {
 }
 findNavigationOwner(shell)
 const routes = ['sessions', 'meetings', 'settings', 'home', 'tasks', 'notes', 'projects', 'pages', 'knowledge', 'connections', 'search', 'screen']
+let railRenderCondition: ts.Expression | undefined
+function findRailCondition(node: ts.Node) {
+  if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken
+    && ts.isJsxSelfClosingElement(node.right) && node.right.tagName.getText(host) === 'ActivityRail') {
+    railRenderCondition = node.left
+  }
+  ts.forEachChild(node, findRailCondition)
+}
+findRailCondition(host)
+if (!railRenderCondition) throw new Error('Actual ActivityRail render condition absent')
 
 describe('actual combined sidebar preference and rail geometry', () => {
   it.each(routes)('restores, toggles, persists, and reloads the sidebar on %s', route => {
@@ -83,15 +91,17 @@ describe('actual combined sidebar preference and rail geometry', () => {
   it('the primary sidebar suppresses duplicate rail geometry for every flag and collapse state', () => {
     expect(ownsPrimaryNavigation).toBe(true)
     for (const unifiedShellEnabled of [false, true]) for (const workbenchEnabled of [false, true]) for (const topChromeEnabled of [false, true]) for (const activityRailCollapsed of [false, true]) {
-      const activityRailRendered = evaluate(shell, declaration(shell, 'activityRailRendered'), { unifiedShellEnabled, workbenchEnabled, topChromeEnabled })
       const granularChrome = evaluate(host, declaration(host, 'granularChrome'), { unifiedShell: unifiedShellEnabled, workbenchEnabled })
       const chrome = evaluate(host, declaration(host, 'chrome'), {
         resolveWorkbenchChrome, granularChrome, unifiedShell: unifiedShellEnabled, topChrome: topChromeEnabled,
         tabGroups: false, browserSurface: false, harnessInspector: false,
       })
-      const offset = evaluate(shell, declaration(shell, 'unifiedRailOffset'), { activityRailRendered, activityRailCollapsed, activityRailWidth, PANEL_GAP })
-      expect(activityRailRendered).toBe(chrome.showRail && !ownsPrimaryNavigation)
-      expect(offset).toBe(chrome.showRail && !ownsPrimaryNavigation ? activityRailWidth(activityRailCollapsed) + PANEL_GAP : 0)
+      const activityRailRendered = evaluate(host, railRenderCondition!, { chrome, ownsPrimaryNavigation })
+      const offset = evaluate(shell, declaration(shell, 'unifiedRailOffset'), { activityRailCollapsed })
+      expect(activityRailRendered).toBe(false)
+      expect(offset).toBe(0)
+      // Standalone hosts still honor chrome flags when AppShell is absent.
+      expect(evaluate(host, railRenderCondition!, { chrome, ownsPrimaryNavigation: false })).toBe(chrome.showRail)
     }
   })
 })

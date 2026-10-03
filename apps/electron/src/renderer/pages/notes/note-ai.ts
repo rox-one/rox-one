@@ -1,8 +1,4 @@
 import type { AIActionMode } from './NotesAIMenu'
-import { ROX_DEFAULT_PARENT_MODEL } from '@craft-agent/shared/config/rox-public-models'
-
-/** Default free Rox parent model — never a missing SiYuan/CY model. */
-export const NOTES_AI_MODEL = ROX_DEFAULT_PARENT_MODEL
 export const NOTES_AI_PROMPTS_STORAGE_KEY = 'notes:ai-prompts'
 
 export const NOTES_AI_PROMPT_KEYS: Record<AIActionMode, string> = {

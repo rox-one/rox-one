@@ -49,6 +49,7 @@ import {
   shiftWidget,
   widgetSpan,
   widgetRowSpan,
+  widgetWidth,
   type HomeDashboardLayout,
   type HomeWidgetId,
   type HomeWidgetPlacement,
@@ -124,12 +125,14 @@ class WidgetBoundary extends React.Component<{ fallback: React.ReactNode; childr
 function SortableWidget({
   placement,
   span,
+  width,
   editing,
   onChange,
   layout,
 }: {
   placement: HomeWidgetPlacement
   span: number
+  width: number
   editing: boolean
   layout: HomeDashboardLayout
   onChange: (next: HomeDashboardLayout) => void
@@ -152,7 +155,7 @@ function SortableWidget({
       ref={setNodeRef}
       data-home-cell={placement.id}
       data-home-size={placement.size}
-      className={cn('min-w-0', isDragging && 'relative z-10 opacity-80')}
+      className={cn('min-h-0 min-w-0', isDragging && 'relative z-10 opacity-80')}
       style={{ gridColumn: `span ${span} / span ${span}`, gridRow: `span ${widgetRowSpan(placement.size)}`, transform: CSS.Translate.toString(transform), transition }}
     >
       <WidgetBoundary
@@ -163,7 +166,20 @@ function SortableWidget({
           </div>
         }
       >
-        <Widget edit={edit} span={span} size={placement.size} />
+        <Widget edit={edit} width={width} size={placement.size} />
+      </WidgetBoundary>
+    </div>
+  )
+}
+
+function WidgetPreview({ id }: { id: HomeWidgetId }) {
+  const { t } = useTranslation()
+  const [ref, width] = useContainerWidth<HTMLDivElement>()
+  const Preview = HOME_WIDGETS[id].Component
+  return (
+    <div ref={ref} role="region" className="mt-2 h-[232px] min-w-0 rounded-[10px] border border-foreground/10" data-home-preview={id} aria-label={t('workbench.home.picker.preview')}>
+      <WidgetBoundary fallback={<p className="p-3 text-[12px] text-muted-foreground">{t('workbench.home.widgetFailed')}</p>}>
+        <Preview edit={null} width={width} size="S" />
       </WidgetBoundary>
     </div>
   )
@@ -198,7 +214,6 @@ function WidgetPicker({ layout, onToggle, onClose }: { layout: HomeDashboardLayo
               {group.widgets.map((id) => {
                 const def = HOME_WIDGETS[id]
                 const Icon = def.icon
-                const Preview = def.Component
                 const added = used.has(id)
                 return (
                   <li key={id} className="min-w-0" onMouseEnter={() => setPreviewId(id)} onMouseLeave={() => setPreviewId((current) => current === id ? null : current)}>
@@ -234,13 +249,7 @@ function WidgetPicker({ layout, onToggle, onClose }: { layout: HomeDashboardLayo
                         {added ? t('workbench.home.picker.added') : t('workbench.home.picker.add')}
                       </span>
                     </button>
-                    {previewId === id ? (
-                      <div role="region" className="mt-2 max-h-[180px] overflow-hidden rounded-[10px] border border-foreground/10" data-home-preview={id} aria-label={t('workbench.home.picker.preview')}>
-                        <WidgetBoundary fallback={<p className="p-3 text-[12px] text-muted-foreground">{t('workbench.home.widgetFailed')}</p>}>
-                          <Preview edit={null} span={12} />
-                        </WidgetBoundary>
-                      </div>
-                    ) : null}
+                    {previewId === id ? <WidgetPreview id={id} /> : null}
                   </li>
                 )
               })}
@@ -494,6 +503,7 @@ export function HomeFrontPage() {
                       key={placement.id}
                       placement={placement}
                       span={widgetSpan(placement.size, width)}
+                      width={widgetWidth(widgetSpan(placement.size, width), width)}
                       editing={editing}
                       layout={layout}
                       onChange={updateDraft}

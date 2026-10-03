@@ -191,6 +191,11 @@ html.dark .rox-mode-pill-item[data-mode="inbox"] { --mode-color: oklch(0.76 0.13
   z-index: 1;
 }
 
+/* Wide browser tabs yield space to the fixed titlebar actions and mode pill. */
+.rox-topbar-right-actions > :not(.rox-topbar-browser-strip) {
+  flex-shrink: 0;
+}
+
 html[data-contrast="high"] .rox-mode-pill {
   background: color-mix(in oklch, var(--foreground) 11%, transparent);
   box-shadow: none;

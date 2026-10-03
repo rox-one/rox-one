@@ -24,6 +24,7 @@ export type ShellMaterialFallbackReason =
   | 'no-healthy-paint'
   | 'window-destroyed'
   | 'gpu-failure'
+  | 'material-unavailable'
   | 'zen-disabled'
 
 export interface ResolveShellMaterialInput {

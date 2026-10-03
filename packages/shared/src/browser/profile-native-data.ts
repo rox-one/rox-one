@@ -75,39 +75,132 @@ function xmlText(value: string): string {
   })
 }
 
+function parseSafariXml(raw: string): unknown {
+  const unsupported = (): never => { throw new Error('browser-bookmarks-format-unsupported') }
+  let cursor = 0
+  const whitespace = () => {
+    while (cursor < raw.length && ' \t\r\n\ufeff'.includes(raw[cursor]!)) cursor++
+  }
+  const comment = () => {
+    const end = raw.indexOf('-->', cursor + 4)
+    if (end === -1) unsupported()
+    cursor = end + 3
+  }
+  const misc = (header = false) => {
+    while (cursor < raw.length) {
+      whitespace()
+      if (raw.startsWith('<!--', cursor)) comment()
+      else if (raw.startsWith('<?', cursor)) {
+        const end = raw.indexOf('?>', cursor + 2)
+        if (end === -1) unsupported()
+        cursor = end + 2
+      } else if (header && raw.startsWith('<!DOCTYPE', cursor)) {
+        // Skip declarations, including quoted URLs/internal subsets, without resolving entities.
+        cursor += 9
+        let quote = '', brackets = 0, closed = false
+        while (cursor < raw.length) {
+          const character = raw[cursor++]!
+          if (quote) { if (character === quote) quote = '' }
+          else if (character === '"' || character === "'") quote = character
+          else if (character === '[') brackets++
+          else if (character === ']') { if (brackets === 0) unsupported(); brackets-- }
+          else if (character === '>' && brackets === 0) { closed = true; break }
+        }
+        if (!closed) unsupported()
+      } else break
+    }
+  }
+  type Tag = { name: string; closing: boolean; empty: boolean }
+  const tag = (): Tag => {
+    misc()
+    if (raw[cursor++] !== '<') unsupported()
+    const closing = raw[cursor] === '/'
+    if (closing) cursor++
+    const start = cursor
+    while (cursor < raw.length && raw.charCodeAt(cursor) >= 97 && raw.charCodeAt(cursor) <= 122) cursor++
+    const name = raw.slice(start, cursor)
+    if (!name) unsupported()
+    whitespace()
+    if (name === 'plist' && !closing) {
+      let quote = ''
+      while (cursor < raw.length && (quote || raw[cursor] !== '>')) {
+        const character = raw[cursor++]!
+        if (quote) { if (character === quote) quote = '' }
+        else if (character === '"' || character === "'") quote = character
+        else if (character === '<') unsupported()
+      }
+      const empty = raw[cursor - 1] === '/'
+      if (raw[cursor++] !== '>') unsupported()
+      return { name, closing, empty }
+    }
+    const empty = !closing && raw[cursor] === '/'
+    if (empty) cursor++
+    if (raw[cursor++] !== '>') unsupported()
+    return { name, closing, empty }
+  }
+  const text = (opening: Tag): string => {
+    if (opening.empty) return ''
+    const chunks: string[] = []
+    while (cursor < raw.length) {
+      const end = raw.indexOf('<', cursor)
+      if (end === -1) unsupported()
+      chunks.push(xmlText(raw.slice(cursor, end)))
+      cursor = end
+      if (raw.startsWith('<!--', cursor)) comment()
+      else if (raw.startsWith('<![CDATA[', cursor)) {
+        const end = raw.indexOf(']]>', cursor + 9)
+        if (end === -1) unsupported()
+        chunks.push(raw.slice(cursor + 9, end))
+        cursor = end + 3
+      } else {
+        if (!raw.startsWith('</', cursor)) unsupported()
+        const closing = tag()
+        if (!closing.closing || closing.name !== opening.name) unsupported()
+        return chunks.join('')
+      }
+    }
+    return unsupported()
+  }
+  const parse = (opening: Tag, depth: number): unknown => {
+    if (opening.closing || depth > 128) unsupported()
+    if (opening.name === 'dict') {
+      const record: Record<string, unknown> = Object.create(null)
+      if (opening.empty) return record
+      while (true) {
+        const key = tag()
+        if (key.closing && key.name === 'dict') return record
+        if (key.closing || key.name !== 'key') unsupported()
+        record[text(key)] = parse(tag(), depth + 1)
+      }
+    }
+    if (opening.name === 'array') {
+      const values: unknown[] = []
+      if (opening.empty) return values
+      while (true) {
+        const next = tag()
+        if (next.closing && next.name === 'array') return values
+        values.push(parse(next, depth + 1))
+      }
+    }
+    if (!['string', 'integer', 'real', 'date', 'data', 'true', 'false'].includes(opening.name)) unsupported()
+    const value = text(opening)
+    return opening.name === 'string' ? value : null
+  }
+  // Every scan advances the same cursor; malformed scalar openers never restart a suffix search.
+  misc(true)
+  const wrapper = tag()
+  if (wrapper.name !== 'plist' || wrapper.closing || wrapper.empty) unsupported()
+  const root = parse(tag(), 0)
+  const closing = tag()
+  if (closing.name !== 'plist' || !closing.closing) unsupported()
+  misc()
+  if (cursor !== raw.length) unsupported()
+  return root
+}
+
 /** The non-secret Safari bookmark plist format; no external XML resources are resolved. */
 export function parseSafariBookmarks(raw: string): IndexedItem[] {
-  let root: unknown
-  if (raw.trim().startsWith('{')) root = JSON.parse(raw)
-  else {
-    const content = raw.match(/<plist\b[^>]*>([\s\S]*?)<\/plist>/)?.[1]
-    if (!content) throw new Error('browser-bookmarks-format-unsupported')
-    const tokens = content.match(/<(?:key|string|integer|real|date|data)>[\s\S]*?<\/(?:key|string|integer|real|date|data)>|<(?:dict|array)>|<\/(?:dict|array)>|<(?:true|false)\s*\/>|<(?:string|dict|array)\s*\/>/g) ?? []
-    let cursor = 0
-    const parse = (depth: number): unknown => {
-      if (depth > 128) throw new Error('browser-bookmarks-format-unsupported')
-      const token = tokens[cursor++] ?? ''
-      if (token === '<dict>') {
-        const record: Record<string, unknown> = {}
-        while (tokens[cursor] && tokens[cursor] !== '</dict>') {
-          const key = tokens[cursor++]?.match(/^<key>([\s\S]*)<\/key>$/)?.[1]
-          if (key === undefined) throw new Error('browser-bookmarks-format-unsupported')
-          record[xmlText(key)] = parse(depth + 1)
-        }
-        if (tokens[cursor++] !== '</dict>') throw new Error('browser-bookmarks-format-unsupported')
-        return record
-      }
-      if (token === '<array>') {
-        const values: unknown[] = []
-        while (tokens[cursor] && tokens[cursor] !== '</array>') values.push(parse(depth + 1))
-        if (tokens[cursor++] !== '</array>') throw new Error('browser-bookmarks-format-unsupported')
-        return values
-      }
-      if (/^<string>/.test(token)) return xmlText(token.slice(8, -9))
-      return null
-    }
-    root = parse(0)
-  }
+  const root: unknown = raw.trim().startsWith('{') ? JSON.parse(raw) : parseSafariXml(raw)
   const rows: Record<string, unknown>[] = []
   const visit = (value: unknown, depth: number) => {
     if (!value || typeof value !== 'object' || depth > 128 || rows.length >= ITEM_LIMIT) return

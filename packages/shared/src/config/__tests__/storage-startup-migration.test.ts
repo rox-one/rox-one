@@ -740,4 +740,47 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     expect(modelIdsOf(findConnection(configPath, 'rox-kimi'))).toEqual(['rox/r1-max', 'rox/max'])
     expect(JSON.parse(readFileSync(workspaceConfigPath, 'utf8')).defaults.model).toBe('rox/max')
   })
+
+  it('upgrades old onboarding Rox defaults with a separate marker and preserves private catalogs', () => {
+    const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
+    const workspaceConfigPath = join(workspaceRoot, 'config.json')
+    const workspaceConfig = JSON.parse(readFileSync(workspaceConfigPath, 'utf8'))
+    workspaceConfig.defaults = { model: 'rox/standard', defaultLlmConnection: 'omp' }
+    writeFileSync(workspaceConfigPath, JSON.stringify(workspaceConfig))
+    const canonical = { slug: 'rox-kimi', name: 'ROX', providerType: 'omp', authType: 'none', models: ['rox/standard'], defaultModel: 'rox/standard', createdAt: 1 }
+    const legacy = { slug: 'omp', name: 'Rox', providerType: 'omp', authType: 'none', models: ['rox/standard', 'rox/max', 'rox/fast'], defaultModel: 'rox/standard', createdAt: 1 }
+    const privateCatalog = { ...legacy, slug: 'omp-3', models: ['rox/standard', 'private/model'] }
+    const privateEndpoint = { ...legacy, slug: 'omp-4', baseUrl: 'https://private.example.com/v1' }
+    writeRootConfig(configPath, workspaceRoot, [canonical, legacy, { ...legacy, slug: 'omp-2', defaultModel: 'rox/max' }, privateCatalog, privateEndpoint])
+    const rootConfig = JSON.parse(readFileSync(configPath, 'utf8'))
+    // A user's post-migration canonical choice must not be changed by the alias migration.
+    rootConfig.migrationsApplied = ['rox-kimi-public-models-v1', 'rox-connection-display-name-v1', 'rox-r1-max-default-v1']
+    writeFileSync(configPath, JSON.stringify(rootConfig))
+
+    runMigration(configDir)
+    expect(findConnection(configPath, 'omp').defaultModel).toBe('rox/r1-max')
+    expect(modelIdsOf(findConnection(configPath, 'omp'))).toEqual(['rox/r1-max'])
+    expect(findConnection(configPath, 'omp-2').defaultModel).toBe('rox/max')
+    expect(modelIdsOf(findConnection(configPath, 'omp-2'))).toEqual(['rox/r1-max', 'rox/max'])
+    expect(findConnection(configPath, 'rox-kimi')).toEqual(canonical)
+    expect(findConnection(configPath, 'omp-3')).toEqual(privateCatalog)
+    expect(findConnection(configPath, 'omp-4')).toEqual(privateEndpoint)
+    expect(JSON.parse(readFileSync(workspaceConfigPath, 'utf8')).defaults.model).toBe('rox/r1-max')
+    expect(JSON.parse(readFileSync(configPath, 'utf8')).migrationsApplied).toContain('rox-onboarding-r1-max-default-v1')
+    const afterFirstRun = readFileSync(configPath, 'utf8')
+    runMigration(configDir)
+    expect(readFileSync(configPath, 'utf8')).toBe(afterFirstRun)
+  })
+
+  it('preserves a seeded slug explicitly repointed to a private runtime', () => {
+    const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
+    const privateRuntime = {
+      slug: 'rox-kimi', name: 'Private relay', providerType: 'omp', authType: 'api_key',
+      baseUrl: 'https://private.example.com/v1',
+      models: ['rox/standard', 'kimi-K3', 'private/model'], defaultModel: 'rox/standard', createdAt: 1,
+    }
+    writeRootConfig(configPath, workspaceRoot, [privateRuntime])
+    runMigration(configDir)
+    expect(findConnection(configPath, 'rox-kimi')).toEqual(privateRuntime)
+  })
 })

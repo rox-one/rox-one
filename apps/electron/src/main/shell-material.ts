@@ -6,10 +6,11 @@
  * ON: show once, apply vibrancy/mica only after a healthy paint.
  */
 
-import { BrowserWindow, nativeTheme, systemPreferences } from 'electron'
+import { app, BrowserWindow, nativeTheme, systemPreferences } from 'electron'
 import { release } from 'os'
 import { isZenShellEnabled, getZenShellMaterialPreference } from '@craft-agent/shared/config'
 import {
+  WINDOWS_MICA_BUILD,
   snapshotZenShell,
   type ResolvedShellMaterial,
   type ShellPlatform,
@@ -18,7 +19,29 @@ import {
 import { initialZenWindowState, reduceZenWindow, type ZenWindowState } from '../shared/shell-window-lifecycle'
 import { windowLog } from './logger'
 
-const attached = new WeakMap<BrowserWindow, { state: ZenWindowState }>()
+interface ZenWindowRecord {
+  state: ZenWindowState
+  materialFailed: boolean
+  onSnapshot?: (snapshot: ZenShellSnapshot) => void
+}
+
+// Strong references live only until the window's `closed` event. One app-level
+// GPU listener handles every window without accumulating EventEmitter listeners.
+const attached = new Map<BrowserWindow, ZenWindowRecord>()
+const snapshotListeners = new WeakMap<BrowserWindow, (snapshot: ZenShellSnapshot) => void>()
+
+export function setZenShellSnapshotListener(window: BrowserWindow, listener: (snapshot: ZenShellSnapshot) => void): void {
+  snapshotListeners.set(window, listener)
+  const record = attached.get(window)
+  if (record) record.onSnapshot = listener
+}
+
+function onChildProcessGone(_event: unknown, details: { type: string }): void {
+  if (details.type !== 'GPU') return
+  for (const [window, record] of attached) {
+    if (!window.isDestroyed()) dispatch(window, record, { type: 'gpu-crash' })
+  }
+}
 
 function currentPlatform(): ShellPlatform {
   if (process.platform === 'darwin' || process.platform === 'win32' || process.platform === 'linux') {
@@ -35,7 +58,7 @@ function windowsBuild(): number | undefined {
 function queryReduceTransparency(): boolean {
   if (process.platform === 'darwin') {
     try {
-      return systemPreferences.getUserDefault('AppleReduceTransparency', 'boolean') === true
+      if (systemPreferences.getUserDefault('AppleReduceTransparency', 'boolean') === true) return true
     } catch {
       // fall through
     }
@@ -45,6 +68,11 @@ function queryReduceTransparency(): boolean {
 
 function queryHighContrast(): boolean {
   return nativeTheme.shouldUseHighContrastColors === true
+}
+
+/** Accessibility applies to the legacy material path as well as Zen. */
+export function nativeAccessibilityPrefersSolid(): boolean {
+  return queryHighContrast() || queryReduceTransparency()
 }
 
 export function peekZenShellSnapshot(opts?: {
@@ -65,6 +93,20 @@ export function peekZenShellSnapshot(opts?: {
   })
 }
 
+/** Return this window's painted capability, rather than predicting a future paint. */
+export function peekZenShellSnapshotForWindow(window: BrowserWindow | null | undefined): ZenShellSnapshot {
+  const record = window ? attached.get(window) : undefined
+  const snapshot = peekZenShellSnapshot({
+    paintHealthy: record !== undefined && record.state.paintGeneration === record.state.generation,
+    windowDestroyed: window?.isDestroyed() ?? false,
+    gpuFailed: record !== undefined && record.state.generation > 0 && record.state.paintGeneration !== record.state.generation,
+  })
+  if (record?.materialFailed && snapshot.material !== 'solid') {
+    return { ...snapshot, material: 'solid', fallbackReason: 'material-unavailable' }
+  }
+  return snapshot
+}
+
 function clearNativeMaterial(window: BrowserWindow): void {
   if (window.isDestroyed()) return
   try {
@@ -73,35 +115,43 @@ function clearNativeMaterial(window: BrowserWindow): void {
     } else if (process.platform === 'win32' && typeof window.setBackgroundMaterial === 'function') {
       window.setBackgroundMaterial('none')
     }
-    window.setBackgroundColor(nativeTheme.shouldUseDarkColors ? '#0c0c0d' : '#f4f4f5')
   } catch (error) {
     windowLog.warn('Failed to clear Zen Shell material:', error)
   }
+  // The opaque fill is still required when a native compositor API refuses
+  // to clear its material (for example, while its GPU process is recovering).
+  try {
+    window.setBackgroundColor(nativeTheme.shouldUseDarkColors ? '#0c0c0d' : '#f4f4f5')
+  } catch (error) {
+    windowLog.warn('Failed to restore opaque Zen Shell background:', error)
+  }
 }
 
-function applyNativeMaterial(window: BrowserWindow, material: ResolvedShellMaterial): void {
-  if (window.isDestroyed()) return
+function applyNativeMaterial(window: BrowserWindow, material: ResolvedShellMaterial): boolean {
+  if (window.isDestroyed()) return false
   try {
     if (material === 'vibrancy' && process.platform === 'darwin') {
       window.setVibrancy('under-window')
       window.setBackgroundColor('#00000000')
       ;(window as unknown as { setVisualEffectState?: (state: string) => void })
         .setVisualEffectState?.('active')
-      return
+      return true
     }
     if (material === 'mica' && process.platform === 'win32' && typeof window.setBackgroundMaterial === 'function') {
       window.setBackgroundMaterial('mica')
       window.setBackgroundColor('#00000000')
-      return
+      return true
     }
     clearNativeMaterial(window)
+    return material === 'solid'
   } catch (error) {
     windowLog.warn('Failed to apply Zen Shell material:', error)
     clearNativeMaterial(window)
+    return false
   }
 }
 
-function dispatch(window: BrowserWindow, record: { state: ZenWindowState }, event: Parameters<typeof reduceZenWindow>[1]): void {
+function dispatch(window: BrowserWindow, record: ZenWindowRecord, event: Parameters<typeof reduceZenWindow>[1]): void {
   record.state = reduceZenWindow(record.state, event)
   if (record.state.clearMaterial) {
     clearNativeMaterial(window)
@@ -110,12 +160,13 @@ function dispatch(window: BrowserWindow, record: { state: ZenWindowState }, even
     window.show()
   }
   if (record.state.applyMaterial && !window.isDestroyed()) {
-    const snap = peekZenShellSnapshot({
-      paintHealthy: record.state.paintGeneration === record.state.generation,
-      windowDestroyed: window.isDestroyed(),
-    })
-    applyNativeMaterial(window, snap.material)
+    // Retry an unavailable native API on an explicit policy change, but report
+    // its actual result to the renderer so its canvas does not stay transparent.
+    record.materialFailed = false
+    const snap = peekZenShellSnapshotForWindow(window)
+    record.materialFailed = !applyNativeMaterial(window, snap.material)
   }
+  if (!window.isDestroyed()) record.onSnapshot?.(peekZenShellSnapshotForWindow(window))
 }
 
 /**
@@ -123,9 +174,13 @@ function dispatch(window: BrowserWindow, record: { state: ZenWindowState }, even
  * at window creation (or after a live enable). The legacy `revealWindow`
  * `isVisible()` early-return stays on the OFF path.
  */
-export function attachZenWindowPolicy(window: BrowserWindow): void {
-  if (attached.has(window)) return
-  const record = { state: initialZenWindowState() }
+export function attachZenWindowPolicy(window: BrowserWindow, onSnapshot?: (snapshot: ZenShellSnapshot) => void): void {
+  const existing = attached.get(window)
+  if (existing) {
+    if (onSnapshot) existing.onSnapshot = onSnapshot
+    return
+  }
+  const record: ZenWindowRecord = { state: initialZenWindowState(), materialFailed: false, onSnapshot: onSnapshot ?? snapshotListeners.get(window) }
   // Live enable on an already-visible window: treat current frame as healthy paint.
   if (!window.isDestroyed() && window.isVisible()) {
     record.state = {
@@ -134,32 +189,27 @@ export function attachZenWindowPolicy(window: BrowserWindow): void {
       paintGeneration: record.state.generation,
     }
   }
+  if (attached.size === 0) app.on('child-process-gone', onChildProcessGone)
   attached.set(window, record)
 
   window.once('ready-to-show', () => {
     if (window.isDestroyed()) return
+    clearTimeout(paintTimeout)
     dispatch(window, record, { type: 'ready-to-show' })
   })
   window.webContents.once('did-finish-load', () => {
     if (window.isDestroyed()) return
     dispatch(window, record, { type: 'did-finish-load' })
   })
-  setTimeout(() => {
+  const paintTimeout = setTimeout(() => {
     if (window.isDestroyed()) return
     dispatch(window, record, { type: 'timeout' })
   }, 4000)
 
-  const onGpuCrash = () => {
-    if (window.isDestroyed()) return
-    dispatch(window, record, { type: 'gpu-crash' })
-  }
-  const contents = window.webContents as unknown as {
-    on(event: string, listener: () => void): void
-  }
-  contents.on('gpu-crashed', onGpuCrash)
-  contents.on('child-process-gone', onGpuCrash)
   window.on('closed', () => {
+    clearTimeout(paintTimeout)
     attached.delete(window)
+    if (attached.size === 0) app.removeListener('child-process-gone', onChildProcessGone)
   })
 }
 
@@ -187,6 +237,14 @@ export function reapplyZenShellOnWindow(window: BrowserWindow): void {
  */
 export function applyLegacyMaterial(window: BrowserWindow): void {
   if (window.isDestroyed()) return
+  if (nativeAccessibilityPrefersSolid()) {
+    clearNativeMaterial(window)
+    return
+  }
+  if (process.platform === 'win32' && (windowsBuild() ?? 0) >= WINDOWS_MICA_BUILD) {
+    applyNativeMaterial(window, 'mica')
+    return
+  }
   if (process.platform === 'darwin') {
     try {
       window.setVibrancy('under-window')

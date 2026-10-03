@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'
 import type { BrowserCookieAutoStatus } from '../../../shared/types'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import type { BrowserDataAutoStatus, DiscoveredProfile, ImportSummary } from '@craft-agent/shared/browser/profile-import'
+import type { BrowserCredentialCapability } from '@craft-agent/shared/browser/browser-credential-host'
 import { browserImportConsent, browserImportProfileSelection } from './browser-import-consent'
 
 const STATE_KEYS: Record<DiscoveredProfile['state'], string> = {
@@ -36,6 +37,10 @@ export default function BrowserProfileImportPanel() {
   const workspace = useActiveWorkspace()
   const activeWorkspaceId = useRef(workspace?.id)
   activeWorkspaceId.current = workspace?.id
+  const workspaceEpoch = useRef({ id: workspace?.id, generation: 0 })
+  if (workspaceEpoch.current.id !== workspace?.id) {
+    workspaceEpoch.current = { id: workspace?.id, generation: workspaceEpoch.current.generation + 1 }
+  }
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [profiles, setProfiles] = useState<DiscoveredProfile[]>([])
@@ -49,6 +54,7 @@ export default function BrowserProfileImportPanel() {
   const [dataAuto, setDataAuto] = useState<BrowserDataAutoStatus | null>(null)
   const [dataBusy, setDataBusy] = useState(false)
   const [manualOpen, setManualOpen] = useState(false)
+  const [credentialCapability, setCredentialCapability] = useState<BrowserCredentialCapability | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -108,6 +114,9 @@ export default function BrowserProfileImportPanel() {
   useEffect(() => {
     setDataAuto(null)
     setSelectedId(null)
+    setSummary(null)
+    setLoading(false)
+    setError(null)
     void refreshDataAuto()
     const timer = window.setInterval(() => void refreshDataAuto(), 15_000)
     return () => window.clearInterval(timer)
@@ -138,10 +147,14 @@ export default function BrowserProfileImportPanel() {
   const cookiePreferred = categories?.includes('cookies') ?? false
   const consent = browserImportConsent(categories ?? [], selectedProfile?.family, domains)
   const scopedCookies = consent.cookies
+  const credentialSupported = credentialCapability?.supported === true
   const canImport = Boolean(workspace?.id && selectedId && categories &&
-    (consent.historyBookmarks || consent.cookies) &&
+    (consent.historyBookmarks || consent.cookies || (consent.credentials && credentialSupported)) &&
     selectedProfile?.state !== 'locked' && selectedProfile?.state !== 'unsupported')
   const dataSelected = categories?.includes('history') || categories?.includes('bookmarks')
+  const credentialDescription = !selectedId ? t('settings.browserImport.credentials.selectProfile')
+    : credentialSupported ? t('settings.browserImport.credentials.available')
+    : t('settings.browserImport.credentials.unavailable')
   const dataLine = !dataAuto?.enabled ? t('settings.browserImport.dataAuto.off')
     : !dataSelected ? t('settings.browserImport.dataAuto.paused')
     : dataAuto.error ? t('settings.browserImport.dataAuto.error')
@@ -153,6 +166,17 @@ export default function BrowserProfileImportPanel() {
     const timer = window.setInterval(() => void refreshCookieAuto(), cookieBusy ? 1500 : 15_000)
     return () => window.clearInterval(timer)
   }, [refreshCookieAuto, cookieBusy])
+
+  useEffect(() => {
+    let cancelled = false
+    setCredentialCapability(null)
+    if (workspace?.id && selectedId) {
+      void window.electronAPI.browserCredentialCapabilities({ workspaceId: workspace.id, profileId: selectedId })
+        .then((capability) => { if (!cancelled) setCredentialCapability(capability) })
+        .catch(() => { if (!cancelled) setCredentialCapability({ supported: false, mechanism: null }) })
+    }
+    return () => { cancelled = true }
+  }, [workspace?.id, selectedId])
 
   const setCookieConsent = useCallback(async (on: boolean) => {
     setCookieError(null)
@@ -221,14 +245,27 @@ export default function BrowserProfileImportPanel() {
 
   const runImport = async (dryRun: boolean) => {
     if (!workspace?.id || !selectedId || !canImport || loading) return
+    const generation = workspaceEpoch.current.generation
     setLoading(true)
     setError(null)
+    setSummary(null)
     try {
-      setSummary(await window.electronAPI.importBrowserProfile({ workspaceId: workspace.id, profileId: selectedId, consent, dryRun }))
+      const result = await window.electronAPI.importBrowserProfile({ workspaceId: workspace.id, profileId: selectedId, consent, dryRun })
+      if (activeWorkspaceId.current !== workspace.id || workspaceEpoch.current.generation !== generation) return
+      setSummary(result)
+      if (result.credentialAccess === 'cancelled' || result.credentialAccess === 'denied') {
+        setError(t(`settings.browserImport.credentials.${result.credentialAccess}`))
+      } else if (result.credentialAccess === 'unavailable') {
+        setError(t('settings.browserImport.credentials.error'))
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      if (activeWorkspaceId.current === workspace.id && workspaceEpoch.current.generation === generation) {
+        const message = err instanceof Error ? err.message : String(err)
+        setError(message.startsWith('browser-credentials-') || message.startsWith('protected-credential-')
+          ? t('settings.browserImport.credentials.error') : message)
+      }
     } finally {
-      setLoading(false)
+      if (workspaceEpoch.current.generation === generation) setLoading(false)
     }
   }
 
@@ -295,8 +332,8 @@ export default function BrowserProfileImportPanel() {
           ))}
           <SettingsRow label={<span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-muted-foreground" />{t('settings.browserImport.osAccessTitle')}</span>}
             data-testid="browser-profile-os-access"
-            description={t('settings.browserImport.osAccessUnavailable')} wrapDescription
-            action={<span className="rounded-md bg-foreground/5 px-2 py-1 text-[11px] text-muted-foreground">{t('settings.browserImport.accessUnavailable')}</span>}
+            description={credentialDescription} wrapDescription
+            action={<span className="rounded-md bg-foreground/5 px-2 py-1 text-[11px] text-muted-foreground">{credentialSupported ? t('settings.browserImport.credentials.requiresAccess') : t('settings.browserImport.accessUnavailable')}</span>}
           />
         </SettingsCard>
       </SettingsSection>
@@ -363,14 +400,16 @@ export default function BrowserProfileImportPanel() {
             </span>
           </label>)}
         </div>}
-        {summary ? <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="browser-profile-import-summary" aria-live="polite">
+        {summary ? <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="browser-profile-import-summary" aria-live="polite">
           {[
             ['onboarding.environment.browserImportBookmarks', summary.counts.bookmarks],
             ['onboarding.environment.browserImportHistory', summary.counts.history],
             ['settings.browserImport.consentCookies', summary.counts.cookies],
+            ['onboarding.environment.browserImportCredentials', summary.counts.credentials],
             ['settings.browserImport.skipped', summary.counts.skipped],
           ].map(([key, count]) => <div key={key} className="rounded-lg bg-foreground/5 px-3 py-2"><span className="block text-lg font-semibold tabular-nums">{count}</span><span className="text-[11px] text-muted-foreground">{t(String(key))}</span></div>)}
         </div> : null}
+        {summary?.unsupportedCredentials ? <p className="text-xs text-muted-foreground">{t('settings.browserImport.credentials.skipped')}</p> : null}
       </div> : null}
       {error ? <p role="alert" className="text-xs text-destructive">{error}</p> : null}
     </section>

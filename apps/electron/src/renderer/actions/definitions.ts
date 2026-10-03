@@ -134,6 +134,7 @@ export const actions = {
     description: 'Switch to titlebar mode #1',
     defaultHotkey: 'mod+1',
     category: 'Navigation',
+    when: '!menuOpen',
   },
   'mode.slot2': {
     id: 'mode.slot2',
@@ -141,6 +142,7 @@ export const actions = {
     description: 'Switch to titlebar mode #2',
     defaultHotkey: 'mod+2',
     category: 'Navigation',
+    when: '!menuOpen',
   },
   'mode.slot3': {
     id: 'mode.slot3',
@@ -148,6 +150,7 @@ export const actions = {
     description: 'Switch to titlebar mode #3',
     defaultHotkey: 'mod+3',
     category: 'Navigation',
+    when: '!menuOpen',
   },
   'mode.slot4': {
     id: 'mode.slot4',
@@ -155,6 +158,7 @@ export const actions = {
     description: 'Switch to titlebar mode #4',
     defaultHotkey: 'mod+4',
     category: 'Navigation',
+    when: '!menuOpen',
   },
   'mode.slot5': {
     id: 'mode.slot5',
@@ -162,6 +166,7 @@ export const actions = {
     description: 'Switch to titlebar mode #5',
     defaultHotkey: 'mod+5',
     category: 'Navigation',
+    when: '!menuOpen',
   },
   'mode.slot6': {
     id: 'mode.slot6',
@@ -169,6 +174,7 @@ export const actions = {
     description: 'Switch to titlebar mode #6',
     defaultHotkey: 'mod+6',
     category: 'Navigation',
+    when: '!menuOpen',
   },
   'mode.slot7': {
     id: 'mode.slot7',
@@ -176,6 +182,7 @@ export const actions = {
     description: 'Switch to titlebar mode #7',
     defaultHotkey: 'mod+7',
     category: 'Navigation',
+    when: '!menuOpen',
   },
 
   // ═══════════════════════════════════════════

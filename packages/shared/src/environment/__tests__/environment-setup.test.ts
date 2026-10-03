@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
@@ -8,6 +8,7 @@ import {
   finishQuestionnaire,
   getDefaultEnvironmentPrefs,
   loadEnvironmentPrefs,
+  getEnvironmentPrefsPath,
   pendingQuestionIds,
   saveEnvironmentPrefs,
 } from '../index.ts'
@@ -52,6 +53,20 @@ describe('environment questionnaire', () => {
     expect(reopened.browserImport).toEqual({ status: 'answered', value: [] })
     saveEnvironmentPrefs({ notifications: answerChoice(true) }, dir)
     expect(loadEnvironmentPrefs(dir).browserImport.value).toEqual([])
+  })
+
+  it('keeps default import choices when a partially persisted first-run profile has no browser answer', () => {
+    const dir = tmp()
+    writeFileSync(getEnvironmentPrefsPath(dir), JSON.stringify({ notifications: answerChoice(false) }))
+    expect(loadEnvironmentPrefs(dir).browserImport).toEqual(getDefaultEnvironmentPrefs().browserImport)
+    saveEnvironmentPrefs({ modelPlacement: answerChoice('cloud') }, dir)
+    expect(loadEnvironmentPrefs(dir).browserImport).toEqual(getDefaultEnvironmentPrefs().browserImport)
+  })
+
+  it('preserves an explicitly unanswered browser choice rather than enabling it during normalization', () => {
+    const dir = tmp()
+    writeFileSync(getEnvironmentPrefsPath(dir), JSON.stringify({ browserImport: { status: 'skipped', value: null } }))
+    expect(loadEnvironmentPrefs(dir).browserImport).toEqual({ status: 'skipped', value: null })
   })
 
   it('lets the user skip optional voice and browser import without losing prior answers', () => {

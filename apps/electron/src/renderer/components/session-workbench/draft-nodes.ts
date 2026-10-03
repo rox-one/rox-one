@@ -246,7 +246,12 @@ export function parseSessionDraftGraph(raw: string | null, sessionId: string): S
         if (!knownNodeIds.has(edge.source) || !knownNodeIds.has(edge.target)) continue
         if (source?.kind === 'output') continue
         if (wouldCreateDraftEdgeCycle(edges.filter((e) => e.kind !== 'context'), edge)) continue
-        edges.push(edge)
+        // Older keyboard/conversion paths omitted the condition handle. The
+        // workflow's default output is its true branch, so restore that handle.
+        const sourceHandle = source?.kind === 'condition'
+          ? edge.sourceHandle ?? (edge.sourcePort === 'false' || edge.sourcePort === `${source.id}:false` ? `${source.id}:false` : `${source.id}:true`)
+          : edge.sourceHandle
+        edges.push({ ...edge, ...(sourceHandle ? { sourceHandle } : {}) })
       }
     }
     return { v: 1, sessionId, nodes, edges }

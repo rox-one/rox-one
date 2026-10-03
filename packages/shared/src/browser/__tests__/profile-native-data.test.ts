@@ -83,4 +83,62 @@ describe('native browser history and bookmarks', () => {
     expect(imported.bookmarks).toEqual([{ kind: 'bookmark', url: 'https://bookmark.example?a=1&b=2', title: 'A & B' }])
     expect(parseSafariBookmarks(JSON.stringify({ Children: [{ URLString: 'https://json.example', URIDictionary: { title: 'Binary plist converted by plutil' } }] }))).toHaveLength(1)
   })
+
+  it('preserves nested Safari folders, scalar metadata, empty elements and XML text', () => {
+    const xml = `<?xml version="1.0"?>
+      <!DOCTYPE plist PUBLIC "fixture" "https://never-fetch.example">
+      <plist version="1.0">
+        <dict>
+          <key>WebBookmarkFileVersion</key><integer>1</integer>
+          <key>Metadata</key><dict>
+            <key>real</key><real>1.5</real><key>date</key><date>2026-01-01T00:00:00Z</date>
+            <key>data</key><data>AA==</data><key>enabled</key><true/><key>disabled</key><false />
+            <key>empty</key><dict/><key>children</key><array />
+          </dict>
+          <key>Ch&#105;ldren</key><array>
+            <!-- Folder metadata and empty children are not bookmarks. -->
+            <dict><key>Children</key><array>
+              <dict>
+                <key>UR&#76;String</key><string>https://nested.example/?a=1&amp;b=2</string>
+                <key>URIDictionary</key><dict><key>title</key>
+                  <string>A &lt;B&gt; &quot;C&quot; &apos;D&apos; &#65;&#x1F98A;<!-- ignored --><![CDATA[<raw>&amp;]]></string>
+                </dict>
+              </dict>
+              <dict><key>URLString</key><string>https://empty-title.example</string>
+                <key>URIDictionary</key><dict><key>title</key><string /></dict>
+              </dict>
+            </array></dict>
+          </array>
+        </dict>
+      </plist>`
+    expect(parseSafariBookmarks(xml)).toEqual([
+      { kind: 'bookmark', url: 'https://nested.example/?a=1&b=2', title: `A <B> "C" 'D' A🦊<raw>&amp;` },
+      { kind: 'bookmark', url: 'https://empty-title.example', title: '' },
+    ])
+  })
+
+  it('rejects an unterminated key followed by many scalar openers', () => {
+    // The former global regex rescanned the remaining suffix at every <data> opener.
+    // A large input exercises that failure path without a machine-dependent timing assertion.
+    const xml = `<plist><dict><key>${'<data>'.repeat(100_000)}</dict></plist>`
+    expect(() => parseSafariBookmarks(xml)).toThrow('browser-bookmarks-format-unsupported')
+  })
+
+  it('rejects mismatched, missing, unknown and trailing plist tokens', () => {
+    const malformed = [
+      '<plist><dict><key>URLString</key><string>https://invalid.example</data></dict></plist>',
+      '<plist><dict><key>URLString</key></dict></plist>',
+      '<plist><dict><key>Children</key><array></dict></array></plist>',
+      '<plist><dict><key>Children</key><unknown/></dict></plist>',
+      '<plist><dict/><dict/></plist>',
+      '<plist><dict/></plist><array/>',
+      '<plist><dict/>',
+      '<plist version="1.0><dict/></plist>',
+      '<!DOCTYPE plist [<plist><dict/></plist>',
+      `<plist>${'<array>'.repeat(130)}<dict/>${'</array>'.repeat(130)}</plist>`,
+    ]
+    for (const xml of malformed) {
+      expect(() => parseSafariBookmarks(xml)).toThrow('browser-bookmarks-format-unsupported')
+    }
+  })
 })

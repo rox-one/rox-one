@@ -25,7 +25,7 @@ describe('browser profile import RPC', () => {
     const discovered = handlers.get(RPC_CHANNELS.browserProfile.DISCOVER)!({}, undefined)
     expect(discovered).toEqual([])
 
-    expect(() =>
+    await expect(
       handlers.get(RPC_CHANNELS.browserProfile.IMPORT)!({}, {
         workspaceId: 'missing',
         profileId: 'chromium:none',
@@ -37,6 +37,6 @@ describe('browser profile import RPC', () => {
           domains: [],
         },
       }),
-    ).toThrow('Choose exact domains before importing cookies')
+    ).rejects.toThrow('Choose exact domains before importing cookies')
   })
 })

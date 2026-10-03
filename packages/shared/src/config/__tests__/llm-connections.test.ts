@@ -3,6 +3,7 @@ import '../../../tests/setup/register-pi-model-resolver.ts'
 import {
   getDefaultModelsForConnection,
   getDefaultModelForConnection,
+  getModelsForProviderType,
   PI_PREFERRED_DEFAULTS,
   isCompatProvider,
   isAnthropicProvider,
@@ -45,6 +46,17 @@ describe('getDefaultModelsForConnection', () => {
     expect(models.length).toBeGreaterThan(0)
   })
 
+})
+
+describe('provider registry fallback', () => {
+  it('uses R1 Max for Rox when a persisted catalog is missing', () => {
+    const models = getModelsForProviderType('omp')
+    expect(models.map(model => model.id)).toEqual(['rox/r1-max'])
+    expect(models[0]!.name).toBe('Rox R1 Max')
+    expect(getModelsForProviderType('anthropic')).toEqual(ANTHROPIC_MODELS)
+    expect(getModelsForProviderType('pi_compat')).toEqual([])
+    expect(getModelsForProviderType('anthropic_compat')).toEqual([])
+  })
 })
 
 // ============================================================

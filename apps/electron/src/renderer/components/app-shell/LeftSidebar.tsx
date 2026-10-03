@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react"
 import * as React from "react"
-import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react"
+import { AnimatePresence, motion, useIsPresent, useReducedMotion, type Variants } from "motion/react"
 
 import { useTranslation } from "react-i18next"
 
@@ -232,7 +232,8 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
             return (
               <button key={link.id} type="button" title={link.title} aria-label={link.title}
                 aria-current={link.variant === 'default' ? 'page' : undefined}
-                onClick={() => { onExpand?.(link); link.onClick?.() }}
+                data-sidebar-link-id={link.id}
+                onClick={() => { if (onExpand) onExpand(link); else link.onClick?.() }}
                 className={cn('group mx-auto grid size-9 place-items-center rounded-xl outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring', link.variant === 'default' ? 'bg-foreground/[0.09]' : 'hover:bg-foreground/[0.06]')}>
                 <span className="flex size-5 items-center justify-center [&>svg]:size-5">{renderIcon(link)}</span>
               </button>
@@ -338,7 +339,7 @@ function ExpandableSection({
 
   const navButton = (
     <SidebarButton
-      link={navParent ? { ...link, onClick: () => { link.onClick?.(); handleToggle() } } : link}
+      link={link}
       itemProps={itemProps}
       groupDisclosure={!navParent}
       sectionId={sectionId}
@@ -372,7 +373,7 @@ function ExpandableSection({
       {link.items && (
         <AnimatePresence initial={false}>
           {link.expanded && (
-            <motion.div
+            <SidebarSectionBody
               ref={bodyRef}
               id={sectionId}
               initial={{ height: 0, opacity: 0, marginTop: 0, marginBottom: 0 }}
@@ -380,16 +381,26 @@ function ExpandableSection({
               exit={{ height: 0, opacity: 0, marginTop: 0, marginBottom: 0 }}
               transition={{ duration, ease: 'easeInOut' }}
               className="overflow-hidden"
-              aria-hidden={!link.expanded}
             >
               {renderExpandedContent(link, getItemProps, focusedItemId, isNested)}
-            </motion.div>
+            </SidebarSectionBody>
           )}
         </AnimatePresence>
       )}
     </div>
   )
 }
+
+// AnimatePresence keeps exiting content mounted for the closing animation.
+// Remove it from native focus traversal as soon as the disclosure closes.
+const SidebarSectionBody = React.forwardRef<HTMLDivElement, React.ComponentProps<typeof motion.div>>(
+  function SidebarSectionBody(props, ref) {
+    const isPresent = useIsPresent()
+    // React 18 supports the native attribute through a string-valued spread;
+    // its HTML types predate inert, and boolean unknown attributes are omitted.
+    return <motion.div {...props} {...(isPresent ? {} : { inert: '' })} ref={ref} aria-hidden={!isPresent} />
+  },
+)
 
 // ============================================================
 // Expanded Content Renderer
@@ -587,6 +598,7 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
         title={link.tooltip}
         aria-current={link.variant === 'default' ? 'page' : undefined}
         data-tutorial={link.dataTutorial}
+        data-sidebar-link-id={link.id}
         aria-expanded={link.expandable ? !!link.expanded : undefined}
         aria-controls={link.expandable ? sectionId : undefined}
         aria-label={groupAriaLabel}

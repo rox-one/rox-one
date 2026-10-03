@@ -69,13 +69,17 @@ export function classifyMapConnection(
 
   if (sourceIsDraft && targetIsDraft) {
     const steps = ctx.draftEdges.filter((edge) => draftEdgeKind(edge) === 'step')
-    if (steps.some((edge) => edge.source === source && edge.target === target && (edge.sourceHandle ?? '') === (connection.sourceHandle ?? '') && (edge.targetHandle ?? '') === (connection.targetHandle ?? ''))) {
+    // Keyboard connections use the condition's first branch, just like workflow
+    // export. Every persisted condition edge must name an actual visible handle.
+    const sourceHandle = sourceDraft?.kind === 'condition' ? connection.sourceHandle ?? `${source}:true` : connection.sourceHandle
+    if (sourceDraft?.kind === 'condition' && sourceHandle !== `${source}:true` && sourceHandle !== `${source}:false`) return { ok: false, reason: 'unknown' }
+    if (steps.some((edge) => edge.source === source && edge.target === target && (edge.sourceHandle ?? (sourceDraft?.kind === 'condition' ? `${source}:true` : '')) === (sourceHandle ?? '') && (edge.targetHandle ?? '') === (connection.targetHandle ?? ''))) {
       return { ok: false, reason: 'duplicate' }
     }
     if (wouldCreateDraftEdgeCycle(steps, { source, target })) return { ok: false, reason: 'cycle' }
     return {
       ok: true, kind: 'step', source, target,
-      ...(connection.sourceHandle ? { sourceHandle: connection.sourceHandle } : {}),
+      ...(sourceHandle ? { sourceHandle } : {}),
       ...(connection.targetHandle ? { targetHandle: connection.targetHandle } : {}),
     }
   }

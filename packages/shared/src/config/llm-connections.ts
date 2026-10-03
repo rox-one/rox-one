@@ -623,6 +623,8 @@ export function getModelsForProviderType(providerType: LlmProviderType, piAuthPr
     return _piModelResolver(piAuthProvider);
   }
 
+  if (providerType === 'omp') return toRoxSelectableModelDefinitions();
+
   // Anthropic uses Claude models with bare Anthropic IDs.
   return ANTHROPIC_MODELS;
 }

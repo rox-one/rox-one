@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { buildInviteUrl } from '@craft-agent/shared/collaboration'
 import { VIEWER_URL } from '@craft-agent/shared/branding'
 import {
-  SessionLinkError, acceptSessionInvite, copySessionLink, createSessionLink, parseSessionLink,
+  SessionLinkError, acceptSessionInvite, copySessionLink, createSessionLink, joinAndOpenSession, parseSessionLink,
 } from '../session-sharing'
 
 const inviteUrl = buildInviteUrl('ada', 'sess-1', 'ab'.repeat(16))
@@ -28,6 +28,62 @@ describe('session URL entry', () => {
     ]) {
       expect(parseSessionLink(url)).toBeNull()
     }
+  })
+})
+
+describe('join request context', () => {
+  const destination = parseSessionLink(inviteUrl)!
+  if (destination.kind !== 'invite') throw new Error('Expected invitation')
+
+  function fixture() {
+    let current = true
+    const calls: string[] = []
+    const session = { id: 'sess-1', workspaceId: 'workspace-target' }
+    const ports = {
+      command: async () => ({ ok: true, sessionId: session.id, workspaceId: session.workspaceId }),
+      readSession: async () => { calls.push('read'); return session },
+      currentWorkspace: () => 'workspace-source',
+      switchWorkspace: async () => { calls.push('switch') },
+      openSession: async () => { calls.push('open') },
+      isCurrent: () => current,
+    }
+    return { ports, calls, cancel: () => { current = false } }
+  }
+
+  it('opens the actual session only after its target workspace switches', async () => {
+    const f = fixture()
+    await joinAndOpenSession(destination, f.ports)
+    expect(f.calls).toEqual(['read', 'switch', 'open'])
+  })
+
+  it('does not consume an invitation after the caller has already left', async () => {
+    const f = fixture(); f.cancel()
+    f.ports.command = async () => { throw new Error('Command must not run') }
+    await expect(joinAndOpenSession(destination, f.ports)).rejects.toMatchObject({ code: 'cancelled' })
+    expect(f.calls).toEqual([])
+  })
+
+  it('discards an invitation response after a workspace switch instead of reading or opening it', async () => {
+    const f = fixture()
+    const command = f.ports.command
+    f.ports.command = async () => { f.cancel(); return command() }
+    await expect(joinAndOpenSession(destination, f.ports)).rejects.toMatchObject({ code: 'cancelled' })
+    expect(f.calls).toEqual([])
+  })
+
+  it('does not switch workspace after a stale session read', async () => {
+    const f = fixture()
+    const read = f.ports.readSession
+    f.ports.readSession = async () => { f.cancel(); return read() }
+    await expect(joinAndOpenSession(destination, f.ports)).rejects.toMatchObject({ code: 'cancelled' })
+    expect(f.calls).toEqual(['read'])
+  })
+
+  it('does not navigate after its asynchronous workspace switch is superseded', async () => {
+    const f = fixture()
+    f.ports.switchWorkspace = async () => { f.calls.push('switch'); f.cancel() }
+    await expect(joinAndOpenSession(destination, f.ports)).rejects.toMatchObject({ code: 'cancelled' })
+    expect(f.calls).toEqual(['read', 'switch'])
   })
 })
 
@@ -60,6 +116,7 @@ describe('session share and collaborator actions', () => {
   it('rejects a wrong-kind link or missing payload instead of reporting success', async () => {
     await expect(createSessionLink(async () => ({ success: true, url: inviteUrl }), 'sess-1', 'share')).rejects.toBeInstanceOf(SessionLinkError)
     await expect(createSessionLink(async () => undefined, 'sess-1', 'invite')).rejects.toBeInstanceOf(SessionLinkError)
+    await expect(createSessionLink(async () => ({ success: true, url: inviteUrl }), 'other-session', 'invite')).rejects.toMatchObject({ code: 'invalid' })
   })
 
   it('propagates transport failures and keeps clipboard failures recoverable', async () => {

@@ -18,7 +18,7 @@ function nodes(node: React.ReactNode): React.ReactElement<any>[] {
 async function flush() { for (let i = 0; i < 12; i++) await Promise.resolve() }
 
 /** Execute the real dialog's input, submit and workspace effect callbacks. */
-function harness(options: { targetWorkspace?: string; responseWorkspace?: string; missing?: boolean; denied?: boolean; switchFailed?: boolean } = {}) {
+function harness(options: { targetWorkspace?: string; responseWorkspace?: string; missing?: boolean; denied?: boolean; switchFailed?: boolean; remote?: boolean; deferredJoin?: boolean } = {}) {
   const slots: any[] = []
   let cursor = 0
   let activeWorkspaceId = 'workspace-a'
@@ -29,7 +29,12 @@ function harness(options: { targetWorkspace?: string; responseWorkspace?: string
   const events: string[] = []
   const success: string[] = []
   let frameId = 0
+  let releaseJoin!: () => void
+  const joinGate = options.deferredJoin ? new Promise<void>(resolve => { releaseJoin = resolve }) : Promise.resolve()
   const session = { id: 'sess-1', workspaceId: options.targetWorkspace ?? 'workspace-b', messages: [] }
+  const remoteSession = { id: 'sess-1', workspaceId: '12345678-1234-1234-1234-123456789abc', workspaceName: 'Remote team', name: 'Published session',
+    access: 'read-only', publishedAt: 123, transcriptTruncated: false, lastMessageAt: 123,
+    messages: [{ id: 'message-1', role: 'assistant', content: 'Published answer', timestamp: 123 }] }
   const fakeReact = {
     ...React,
     useState(initial: unknown) {
@@ -70,7 +75,9 @@ function harness(options: { targetWorkspace?: string; responseWorkspace?: string
       electronAPI: {
         sessionCommand: async (id: string, command: any) => {
           events.push(`command:${id}:${command.type}`)
+          await joinGate
           return options.denied ? { ok: false, error: 'invalid' }
+            : options.remote ? { ok: true, sessionId: id, workspaceId: remoteSession.workspaceId, role: 'editor', accountId: 'acc-1', remoteSession }
             : { ok: true, sessionId: id, workspaceId: options.responseWorkspace ?? options.targetWorkspace ?? 'workspace-b', role: 'editor', accountId: 'acc-1' }
         },
         getSessionMessages: async (id: string) => { events.push(`read:${id}`); return options.missing ? null : session },
@@ -107,13 +114,58 @@ function harness(options: { targetWorkspace?: string; responseWorkspace?: string
   view.find(node => node.type === 'input')!.props.onChange({ target: { value: invitation } }); render()
   return {
     events, success, render,
+    releaseJoin: () => releaseJoin(),
+    changeWorkspace(workspaceId: string) { activeWorkspaceId = workspaceId; metadata = new Map(); render() },
+    unmount() { for (const slot of slots) slot?.cleanup?.() },
+    presentLink() {
+      listeners.get(sharing.SESSION_LINK_EVENT)!({ detail: { kind: 'invite', url: invitation, copied: false, workspaceId: activeWorkspaceId } } as unknown as Event)
+      render()
+    },
     submit: () => view.find(node => node.type === 'form')!.props.onSubmit({ preventDefault() {} }) as Promise<void>,
     runFrames() { for (const [id, callback] of [...frames]) { frames.delete(id); callback(0) } },
     error: () => view.find(node => node.props.role === 'alert')?.props.children,
+    readOnlyProjection: () => view.find(node => node.props['data-remote-session-access'] === 'read-only'),
+    hasForm: () => view.some(node => node.type === 'form'),
   }
 }
 
 describe('Join session dialog behavior', () => {
+  it('invalidates a delayed join across A → B → A without loading, navigation or a success toast', async () => {
+    const h = harness({ remote: true, deferredJoin: true })
+    const completion = h.submit(); await flush()
+    h.changeWorkspace('workspace-c')
+    h.changeWorkspace('workspace-a')
+    h.releaseJoin(); await completion; h.render()
+    expect(h.events).toEqual(['command:sess-1:joinBroInvite'])
+    expect(h.success).toEqual([])
+    expect(h.readOnlyProjection()).toBeUndefined()
+    expect(h.hasForm()).toBe(false)
+  })
+
+  it('keeps the join form while an unrelated publication completes during its pending request', async () => {
+    const h = harness({ denied: true, deferredJoin: true })
+    const completion = h.submit(); await flush(); h.presentLink()
+    expect(h.hasForm()).toBe(true)
+    h.releaseJoin(); await completion; h.render()
+    expect(h.error()).toBe('sessionSharing.error.invalid')
+  })
+
+  it('ignores a delayed join after the host is unmounted', async () => {
+    const h = harness({ remote: true, deferredJoin: true })
+    const completion = h.submit(); await flush(); h.unmount()
+    h.releaseJoin(); await completion
+    expect(h.events).toEqual(['command:sess-1:joinBroInvite'])
+    expect(h.success).toEqual([])
+  })
+
+  it('opens a remote published transcript for viewing without creating an editable session or switching local workspace', async () => {
+    const h = harness({ remote: true, missing: true })
+    await h.submit(); h.render()
+    expect(h.events).toEqual(['command:sess-1:joinBroInvite', 'success'])
+    expect(h.success).toEqual(['sessionSharing.joinedReadOnly'])
+    expect(h.readOnlyProjection()).toBeDefined()
+    expect(h.hasForm()).toBe(false)
+  })
   it('switches workspace and opens actual loaded session after workspace restoration before showing success', async () => {
     const h = harness()
     const completion = h.submit(); await flush(); h.render()

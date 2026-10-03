@@ -1,4 +1,4 @@
-import { parseInviteUrl, type JoinResult } from '@craft-agent/shared/collaboration'
+import { parseInviteUrl, requireRemoteSessionProjection, type JoinResult, type RemoteSessionProjection } from '@craft-agent/shared/collaboration'
 import { VIEWER_URL } from '@craft-agent/shared/branding'
 import type { SessionCommand } from '@craft-agent/shared/protocol'
 
@@ -11,6 +11,8 @@ export interface SessionLink {
   url: string
   expiresAt?: number
   copied: boolean
+  /** Workspace that requested publication; stale results must not open elsewhere. */
+  workspaceId?: string
 }
 
 export class SessionLinkError extends Error {
@@ -26,6 +28,7 @@ export type SessionLinkDestination =
 export interface JoinedSessionTarget {
   sessionId: string
   workspaceId?: string
+  remoteSession?: RemoteSessionProjection
 }
 
 /** A join action must never open an arbitrary URL found on the clipboard. */
@@ -61,6 +64,7 @@ export async function createSessionLink(
   if (!destination || destination.kind !== (kind === 'invite' ? 'invite' : 'viewer')) {
     throw new SessionLinkError('', 'invalid')
   }
+  if (destination.kind === 'invite' && destination.sessionId !== sessionId) throw new SessionLinkError('', 'invalid')
   return { kind, url: destination.url, expiresAt: result.expiresAt }
 }
 
@@ -81,6 +85,12 @@ export async function acceptSessionInvite(
   const result = await command(destination.sessionId, { type: 'joinBroInvite', url: destination.url }) as JoinResult | undefined
   if (!result?.ok) throw new SessionLinkError('', result?.error)
   if (result.sessionId !== destination.sessionId) throw new SessionLinkError('', 'invalid')
+  if (result.remoteSession) {
+    let remoteSession: RemoteSessionProjection
+    try { remoteSession = requireRemoteSessionProjection(result.remoteSession) } catch { throw new SessionLinkError('', 'invalid') }
+    if (remoteSession.id !== result.sessionId || remoteSession.workspaceId !== result.workspaceId) throw new SessionLinkError('', 'invalid')
+    return { sessionId: result.sessionId, workspaceId: result.workspaceId, remoteSession }
+  }
   return { sessionId: result.sessionId, workspaceId: result.workspaceId }
 }
 
@@ -93,16 +103,33 @@ export async function joinAndOpenSession<T extends { id: string; workspaceId: st
     currentWorkspace(): string | null
     switchWorkspace(workspaceId: string): Promise<void>
     openSession(session: T): Promise<void>
+    openRemoteSession?(session: RemoteSessionProjection): Promise<void>
+    /** Invalidates UI work when the caller leaves its original context. */
+    isCurrent?(): boolean
   },
 ): Promise<void> {
+  const requireCurrent = () => {
+    if (ports.isCurrent && !ports.isCurrent()) throw new SessionLinkError('', 'cancelled')
+  }
+  requireCurrent()
   const target = await acceptSessionInvite(ports.command, destination)
+  requireCurrent()
+  if (target.remoteSession) {
+    if (!ports.openRemoteSession) throw new SessionLinkError('', 'remote_unavailable')
+    await ports.openRemoteSession(target.remoteSession)
+    requireCurrent()
+    return
+  }
   const session = await ports.readSession(target.sessionId)
+  requireCurrent()
   if (!session || session.id !== target.sessionId || !session.workspaceId
     || target.workspaceId && session.workspaceId !== target.workspaceId) {
     throw new SessionLinkError('', 'invalid')
   }
   if (session.workspaceId !== ports.currentWorkspace()) await ports.switchWorkspace(session.workspaceId)
+  requireCurrent()
   await ports.openSession(session)
+  requireCurrent()
 }
 
 export function requestJoinSession(): void {

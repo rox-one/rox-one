@@ -23,7 +23,6 @@ import type {
 import type { AIActionMode } from '../notes/NotesAIMenu'
 import {
   NOTES_AI_ACTIONS,
-  NOTES_AI_MODEL,
   NOTES_AI_PROMPT_KEYS,
   NOTES_AI_PROMPTS_STORAGE_KEY,
   parseNotesAiPrompts,
@@ -218,7 +217,7 @@ export default function KnowledgeSettingsPage() {
           <p className="px-4 pb-3 text-sm text-muted-foreground">{t('knowledge.local.engineOptional')}</p>
           <SettingsRow
             label={t('knowledge.local.aiPrompts')}
-            description={t('notes.ai.defaultModel', { model: NOTES_AI_MODEL })}
+            description={t('notes.ai.workspaceModel')}
           >
             <div className="flex w-full max-w-xl flex-col gap-2 pt-1">
               {NOTES_AI_ACTIONS.map((mode: AIActionMode) => (

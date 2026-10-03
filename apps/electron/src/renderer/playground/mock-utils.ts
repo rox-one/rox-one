@@ -721,6 +721,7 @@ export const mockElectronAPI = {
     imported: 420,
     lastRunAt: Date.now(),
   }),
+  browserCredentialCapabilities: async () => ({ supported: false, mechanism: null }),
   importBrowserProfile: async () => ({
     dryRun: true,
     profileId: '',

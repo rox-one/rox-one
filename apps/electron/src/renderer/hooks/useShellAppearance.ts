@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import type { ZenShellSnapshot } from '../../shared/shell-appearance'
-import { readDesktopAppearance } from '@/lib/desktop-appearance'
+import { subscribeDesktopShellAppearance } from '@/lib/shell-appearance-subscription'
 
 function applySnapshot(snapshot: ZenShellSnapshot): void {
   const root = document.documentElement
@@ -23,19 +23,8 @@ function applySnapshot(snapshot: ZenShellSnapshot): void {
 export function useShellAppearance(): void {
   useEffect(() => {
     const api = typeof window === 'undefined' ? undefined : window.electronAPI
-    if (!api?.getShellSnapshot || api.getRuntimeEnvironment?.() !== 'electron') return undefined
-
-    let cancelled = false
-    const cancelRead = readDesktopAppearance(api, () => api.getShellSnapshot(), snapshot => {
-      if (!cancelled && snapshot) applySnapshot(snapshot)
-    }, error => { if (error) console.warn('Desktop shell appearance unavailable:', error) })
-    const unsubscribe = api.onShellChanged?.((snapshot) => {
-      if (!cancelled) applySnapshot(snapshot)
+    return subscribeDesktopShellAppearance(api, applySnapshot, error => {
+      if (error) console.warn('Desktop shell appearance unavailable:', error)
     })
-    return () => {
-      cancelled = true
-      cancelRead()
-      unsubscribe?.()
-    }
   }, [])
 }

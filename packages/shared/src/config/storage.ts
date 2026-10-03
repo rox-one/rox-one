@@ -71,6 +71,7 @@ import {
 } from './models.ts';
 import {
   connectionUsesLegacyRoxInternalModels,
+  connectionUsesBuiltInRoxModels,
   ROX_CONNECTION_DISPLAY_NAME_MIGRATION,
   ROX_DEFAULT_CONNECTION_NAME,
   ROX_DEFAULT_CONNECTION_SLUG,
@@ -78,6 +79,7 @@ import {
   ROX_GATEWAY_BASE_URL,
   ROX_KIMI_PUBLIC_MODELS_MIGRATION,
   ROX_R1_MAX_DEFAULT_MIGRATION,
+  ROX_ONBOARDING_R1_MAX_DEFAULT_MIGRATION,
   isRoxPublicModelId,
   isRoxLegacyInternalModelId,
   toRoxPublicConnectionModels,
@@ -3417,42 +3419,48 @@ function migrateRoxConnectionDisplayName(config: StoredConfig): boolean {
 
 /** Upgrade only the bundled connection. Stored sessions keep their explicit legacy model IDs. */
 function migrateRoxR1MaxDefault(config: StoredConfig): boolean {
-  if (config.migrationsApplied?.includes(ROX_R1_MAX_DEFAULT_MIGRATION)) return false;
+  let changed = false;
+  const applied = new Set(config.migrationsApplied ?? []);
+  const pendingMarkers = new Set<string>();
+  for (const connection of config.llmConnections ?? []) {
+    if (!connectionUsesBuiltInRoxModels(connection)) continue;
+    const marker = connection.slug === ROX_DEFAULT_CONNECTION_SLUG
+      ? ROX_R1_MAX_DEFAULT_MIGRATION : ROX_ONBOARDING_R1_MAX_DEFAULT_MIGRATION;
+    if (applied.has(marker)) continue;
 
-  const connection = config.llmConnections?.find((entry) =>
-    entry.slug === ROX_DEFAULT_CONNECTION_SLUG && entry.providerType === 'omp');
-  if (!connection) return false;
+    const shouldReplaceDefault = !connection.defaultModel
+      || connection.defaultModel === 'rox/standard'
+      || isRoxLegacyInternalModelId(connection.defaultModel);
+    if (shouldReplaceDefault) connection.defaultModel = ROX_DEFAULT_PARENT_MODEL;
 
-  const shouldReplaceDefault = !connection.defaultModel
-    || connection.defaultModel === 'rox/standard'
-    || isRoxLegacyInternalModelId(connection.defaultModel);
-  if (shouldReplaceDefault) connection.defaultModel = ROX_DEFAULT_PARENT_MODEL;
+    // Keep user-defined endpoints if they were added to the bundled connection.
+    const customModels = (connection.models ?? []).filter((entry) => {
+      const id = typeof entry === 'string' ? entry : entry.id;
+      return !isRoxPublicModelId(id) && !isRoxLegacyInternalModelId(id);
+    });
+    const selectedLegacyModel = !shouldReplaceDefault && connection.defaultModel !== ROX_DEFAULT_PARENT_MODEL
+      ? toRoxPublicModelDefinitions().filter((entry) => entry.id === connection.defaultModel)
+      : [];
+    // An explicit legacy preference must stay in the stored catalog so the next
+    // startup's default validation does not silently replace it.
+    connection.models = [...toRoxPublicConnectionModels(), ...selectedLegacyModel, ...customModels];
 
-  // Keep user-defined endpoints if they were added to the bundled connection.
-  const customModels = (connection.models ?? []).filter((entry) => {
-    const id = typeof entry === 'string' ? entry : entry.id;
-    return !isRoxPublicModelId(id) && !isRoxLegacyInternalModelId(id);
-  });
-  const selectedLegacyModel = !shouldReplaceDefault && connection.defaultModel !== ROX_DEFAULT_PARENT_MODEL
-    ? toRoxPublicModelDefinitions().filter((entry) => entry.id === connection.defaultModel)
-    : [];
-  // An explicit legacy preference must stay in the stored catalog so the next
-  // startup's default validation does not silently replace it.
-  connection.models = [...toRoxPublicConnectionModels(), ...selectedLegacyModel, ...customModels];
+    for (const workspace of config.workspaces ?? []) {
+      const workspaceConfig = loadWorkspaceConfig(workspace.rootPath);
+      if (!workspaceConfig?.defaults?.model) continue;
+      const effectiveSlug = workspaceConfig.defaults.defaultLlmConnection ?? config.defaultLlmConnection;
+      if (effectiveSlug !== connection.slug) continue;
+      const model = workspaceConfig.defaults.model;
+      if (model !== 'rox/standard' && !isRoxLegacyInternalModelId(model)) continue;
+      workspaceConfig.defaults.model = ROX_DEFAULT_PARENT_MODEL;
+      saveWorkspaceConfig(workspace.rootPath, workspaceConfig);
+    }
 
-  for (const workspace of config.workspaces ?? []) {
-    const workspaceConfig = loadWorkspaceConfig(workspace.rootPath);
-    if (!workspaceConfig?.defaults?.model) continue;
-    const effectiveSlug = workspaceConfig.defaults.defaultLlmConnection ?? config.defaultLlmConnection;
-    if (effectiveSlug !== connection.slug) continue;
-    const model = workspaceConfig.defaults.model;
-    if (model !== 'rox/standard' && !isRoxLegacyInternalModelId(model)) continue;
-    workspaceConfig.defaults.model = ROX_DEFAULT_PARENT_MODEL;
-    saveWorkspaceConfig(workspace.rootPath, workspaceConfig);
+    pendingMarkers.add(marker);
+    changed = true;
   }
-
-  config.migrationsApplied = [...(config.migrationsApplied ?? []), ROX_R1_MAX_DEFAULT_MIGRATION];
-  return true;
+  if (changed) config.migrationsApplied = [...(config.migrationsApplied ?? []), ...pendingMarkers];
+  return changed;
 }
 
 /**

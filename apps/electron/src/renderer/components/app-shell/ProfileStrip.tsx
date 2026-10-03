@@ -52,13 +52,20 @@ export function ProfileStrip({
   compact = false,
 }: ProfileStripProps) {
   const { t } = useTranslation()
-  const displayName = data.displayName || t('profile.defaultName')
+  const detailsId = React.useId()
+  const displayName = data.displayName.trim() || t('profile.defaultName')
   const plan = data.plan ?? 'standard'
+  const planLabel = t(`settings.account.plan.${plan}`)
   const balanceLabel =
     data.balance === null || !Number.isFinite(data.balance)
       ? t('profile.balanceEmpty')
       : t('profile.balance', { amount: data.balance })
   const spentLabel = data.spentUsd != null && data.spentUsd > 0 ? formatCostUsd(data.spentUsd) : null
+  const accountDetails = [
+    planLabel,
+    `${t('profile.balanceLabel')} ${balanceLabel}`,
+    spentLabel ? t('profile.spent', { amount: spentLabel }) : null,
+  ].filter(Boolean).join(' · ')
   const avatarFallback = defaultAvatarFallback ?? (
     <img
       src={bundledDefaultAvatar}
@@ -72,19 +79,21 @@ export function ProfileStrip({
       type="button"
       onClick={onClick}
       className={cn(
-        'group w-full flex items-center rounded-xl border border-foreground/5',
+        'group min-w-0 w-full flex items-center overflow-hidden rounded-xl border border-foreground/5',
         'bg-background/35 text-left shadow-minimal backdrop-blur-xl',
         'hover:bg-background/65 hover:border-foreground/10 transition-[background-color,border-color,box-shadow] duration-200 motion-reduce:transition-none',
-        compact ? 'justify-center p-1.5' : 'gap-2.5 p-2.5',
+        compact ? 'justify-center p-0.5' : 'gap-2.5 p-2.5',
         'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
         className,
       )}
       aria-label={t('profile.openSettings', { name: displayName })}
-      title={compact ? `${displayName} · ${t(`settings.account.plan.${plan}`)} · ${t('profile.balanceLabel')} ${balanceLabel}` : undefined}
+      aria-describedby={detailsId}
+      title={`${displayName} · ${accountDetails}`}
       data-tutorial="profile-strip"
       data-compact={compact || undefined}
     >
-      <Avatar className="h-9 w-9 shrink-0 rounded-xl ring-1 ring-foreground/10">
+      <span id={detailsId} className="sr-only">{accountDetails}</span>
+      <Avatar className={cn('shrink-0 rounded-xl ring-1 ring-foreground/10', compact ? 'size-8' : 'size-9')}>
         {data.avatar ? <AvatarImage src={data.avatar} alt="" /> : null}
         <AvatarFallback
           delayMs={0}
@@ -99,14 +108,14 @@ export function ProfileStrip({
         </span>
         <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[10px] leading-4">
           <span className="truncate rounded-md border border-foreground/5 bg-foreground/5 px-1.5 font-medium text-foreground/70">
-            {t(`settings.account.plan.${plan}`)}
+            {planLabel}
           </span>
           <span
-          className="truncate text-muted-foreground tabular-nums"
-          data-testid="profile-strip-balance"
-          title={spentLabel ? t('profile.spentTooltip') : undefined}
-        >
-          {t('profile.balanceLabel')} {balanceLabel}
+            className="min-w-0 truncate text-muted-foreground tabular-nums"
+            data-testid="profile-strip-balance"
+            title={spentLabel ? t('profile.spentTooltip') : undefined}
+          >
+            {t('profile.balanceLabel')} {balanceLabel}
           </span>
         </span>
         {spentLabel ? <span className="mt-0.5 block truncate text-[10px] text-muted-foreground/70" title={t('profile.spentTooltip')}>{t('profile.spent', { amount: spentLabel })}</span> : null}

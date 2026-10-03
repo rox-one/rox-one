@@ -77,6 +77,7 @@ export function useSessionMenuActions({
 }: UseSessionMenuActionsOptions): SessionMenuActions {
   const { t } = useTranslation()
   const sessionId = item.id
+  const workspaceId = item.workspaceId
   const sharedUrl = item.sharedUrl
   const propLabels = item.labels
 
@@ -139,7 +140,7 @@ export function useSessionMenuActions({
     try {
       const link = await createSessionLink(window.electronAPI.sessionCommand, sessionId, kind)
       const copied = await copySessionLink(link.url, text => navigator.clipboard.writeText(text))
-      presentSessionLink({ ...link, copied })
+      presentSessionLink({ ...link, copied, workspaceId })
     } catch (error) {
       const membership = error instanceof SessionLinkError && error.code === 'membership_required'
       const invalid = error instanceof SessionLinkError && error.code === 'invalid'
@@ -150,7 +151,7 @@ export function useSessionMenuActions({
     } finally {
       toast.dismiss(progress)
     }
-  }, [sessionId, t])
+  }, [sessionId, workspaceId, t])
 
   const share = React.useCallback(() => publishLink('share'), [publishLink])
 
@@ -187,8 +188,8 @@ export function useSessionMenuActions({
   const copySharedLink = React.useCallback(async () => {
     if (!sharedUrl) return
     const copied = await copySessionLink(sharedUrl, text => navigator.clipboard.writeText(text))
-    presentSessionLink({ kind: 'share', url: sharedUrl, copied })
-  }, [sharedUrl, t])
+    presentSessionLink({ kind: 'share', url: sharedUrl, copied, workspaceId })
+  }, [sharedUrl, workspaceId])
 
   const updateShare = React.useCallback(async () => {
     try {

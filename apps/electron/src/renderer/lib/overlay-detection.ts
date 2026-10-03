@@ -23,6 +23,8 @@ const OVERLAY_SELECTORS = [
 
   // Dropdown menus
   '[data-slot="dropdown-menu-content"]',
+  // Shared StyledDropdown uses Radix directly and has no data-slot attribute.
+  '[role="menu"][data-state="open"]',
 
   // Context menus (right-click)
   '[data-slot="context-menu-content"]',

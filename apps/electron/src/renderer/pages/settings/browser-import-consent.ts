@@ -13,7 +13,7 @@ export function browserImportConsent(
     bookmarks: categories.includes('bookmarks'),
     cookies: categories.includes('cookies') && family === 'chromium' && domains.length > 0,
     credentials: categories.includes('credentials'),
-    // The native host currently has no OS-approved password import adapter.
+    // Preferences request access; the native host supplies its own grant.
     osCredentialsApproved: false,
     domains,
   }

@@ -69,8 +69,8 @@ export function specToDraftGraph(spec: SessionWorkflowSpec): SessionDraftGraph {
       const sourcePort = source?.outputs.find((port) => port.id === edge.sourcePort || port.name === edge.sourcePort)
       // Only condition branches have named visible handles. Single-port nodes
       // use their default handle; preserve canonical port IDs separately.
-      const sourceHandle = source?.kind === 'condition' && sourcePort
-        ? `${source.id}:${sourcePort.name}`
+      const sourceHandle = source?.kind === 'condition'
+        ? `${source.id}:${sourcePort?.name ?? 'true'}`
         : undefined
       return {
         id: edge.id,

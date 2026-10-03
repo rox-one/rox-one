@@ -293,9 +293,9 @@ describe('Issue 15 privileged profile import', () => {
       dryRun: false,
     })
     expect(summary.accessedStores).toContain('cookies')
-    expect(summary.accessedStores).toContain('credentials')
+    expect(summary.accessedStores).not.toContain('credentials')
     expect(summary.counts.cookies).toBeGreaterThan(0)
-    expect(summary.counts.credentials).toBe(1)
+    expect(summary.counts.credentials).toBe(0)
     const vault = fs.files.get('/ws/cookie-vault.json') ?? ''
     expect(vault).toContain('aes-256-gcm')
     expect(vault.includes(COOKIE_SECRET)).toBe(false)

@@ -7,7 +7,14 @@ export function handleSidebarTreeKeyDown(event: KeyboardEvent<HTMLElement>): voi
   if (target.closest('input, textarea, select, [contenteditable="true"]')) return
   const root = target.closest<HTMLElement>('[data-focus-zone="sidebar"]') ?? event.currentTarget
   const items = Array.from(root.querySelectorAll<HTMLElement>('button:not([disabled]), summary, a[href]'))
-    .filter(item => item.getClientRects().length > 0 && !item.closest('[hidden]'))
+    .filter(item => item.getClientRects().length > 0 && !item.closest('[hidden], [inert], [aria-hidden="true"]'))
+    .filter(item => {
+      // Chromium can retain layout rects for a closed disclosure's content.
+      // Only its own summary remains navigable; an outer folded group hides that too.
+      const closed = item.closest('details:not([open])')
+      if (!closed) return true
+      return item === closed.querySelector(':scope > summary') && !closed.parentElement?.closest('details:not([open])')
+    })
   if (!items.length) return
   const index = items.indexOf(target)
   const direction = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0

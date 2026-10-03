@@ -1146,12 +1146,12 @@ html .chrome-rail {
   --shell-glass-surface: var(--shell-glass-rail);
 }
 
-html [data-shell-role="chrome"].chrome-rail {
+html [data-shell-role="chrome"].chrome-rail:not([data-compact-profile]) {
   border-radius: 0 0 0 var(--shell-window-radius);
 }
 
 html [data-inspector-panel] {
-  border-radius: var(--rox-radius-panel) 0 0 var(--rox-radius-panel);
+  border-radius: var(--rox-radius-panel) 0 var(--shell-window-radius) var(--rox-radius-panel);
 }
 
 /* Explicit opaque mode and native capability/accessibility fallbacks win over
@@ -1161,6 +1161,11 @@ html[data-contrast="high"] {
   --shell-glass-topbar: var(--surface-elevated);
   --shell-glass-rail: var(--surface-rail);
   --shell-glass-strip: var(--surface-elevated);
+  /* Scenic surface tokens carry alpha. Dropping backdrop-filter alone does
+     not make them opaque, so explicitly restore full alpha in this fallback. */
+  --shell-glass-topbar: rgb(from var(--surface-elevated) r g b / 1);
+  --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1);
+  --shell-glass-strip: rgb(from var(--surface-elevated) r g b / 1);
 }
 
 html[data-shell-material="solid"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]),
@@ -1174,6 +1179,9 @@ html[data-contrast="high"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [dat
     --shell-glass-topbar: var(--surface-elevated);
     --shell-glass-rail: var(--surface-rail);
     --shell-glass-strip: var(--surface-elevated);
+    --shell-glass-topbar: rgb(from var(--surface-elevated) r g b / 1);
+    --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1);
+    --shell-glass-strip: rgb(from var(--surface-elevated) r g b / 1);
   }
 }
 
@@ -1182,10 +1190,31 @@ html[data-contrast="high"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [dat
     --shell-glass-topbar: var(--surface-elevated);
     --shell-glass-rail: var(--surface-rail);
     --shell-glass-strip: var(--surface-elevated);
+    --shell-glass-topbar: rgb(from var(--surface-elevated) r g b / 1);
+    --shell-glass-rail: rgb(from var(--surface-rail) r g b / 1);
+    --shell-glass-strip: rgb(from var(--surface-elevated) r g b / 1);
   }
 
   html :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]),
   html[data-shell-style="zen"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]) {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (forced-colors: active) {
+  html,
+  html[data-shell-style="zen"] {
+    --shell-glass-topbar: Canvas;
+    --shell-glass-rail: Canvas;
+    --shell-glass-strip: Canvas;
+  }
+
+  html :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]),
+  html[data-shell-style="zen"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel]) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }

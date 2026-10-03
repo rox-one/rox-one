@@ -36,6 +36,39 @@ describe('single sidebar keyboard navigation', () => {
     expect(f.controls.some(control => control.focused)).toBe(false)
   })
 
+  it('skips inert closing-animation content even while it has layout rectangles', () => {
+    const f = fixture()
+    f.controls[1].getClientRects = () => [{}]
+    f.controls[1].closest = selector => selector.includes('[inert]') ? {} : null
+    handleSidebarTreeKeyDown(f.event('ArrowDown'))
+    expect(f.controls[2].focused).toBe(true)
+    expect(f.controls[1].focused).toBe(false)
+  })
+
+  it('skips closed native disclosure content even when Chromium keeps nonempty layout rectangles', () => {
+    let focused = -1
+    const closedGroup = { querySelector: () => controls[1], parentElement: null }
+    const nestedClosedGroup = { querySelector: () => controls[3], parentElement: { closest: () => closedGroup } }
+    const controls = [0, 1, 2, 3, 4, 5].map(index => ({
+      tagName: index === 1 || index === 3 ? 'SUMMARY' : 'BUTTON',
+      getClientRects: () => [{}], // Native closed details does not guarantee zero rects.
+      closest(selector: string): unknown {
+        if (selector.includes('data-focus-zone')) return root
+        if (selector === 'details:not([open])') return index === 1 || index === 2 ? closedGroup : index === 3 || index === 4 ? nestedClosedGroup : null
+        return null
+      },
+      focus() { focused = index },
+    }))
+    const root = { querySelectorAll: () => controls }
+    const event = (index: number, key: string) => ({ key, target: controls[index], currentTarget: root, preventDefault() {} }) as unknown as KeyboardEvent<HTMLElement>
+    handleSidebarTreeKeyDown(event(0, 'ArrowDown'))
+    expect(focused).toBe(1) // The folded group's own summary stays reachable.
+    handleSidebarTreeKeyDown(event(1, 'ArrowDown'))
+    expect(focused).toBe(5) // Its content and nested summary are skipped.
+    handleSidebarTreeKeyDown(event(5, 'ArrowUp'))
+    expect(focused).toBe(1)
+  })
+
   it('reserves unmodified numbered platform shortcuts for surfaces with no duplicate defaults', () => {
     for (let slot = 1; slot <= 7; slot++) {
       const matches = Object.values(actions).filter(action => action.defaultHotkey === `mod+${slot}`)

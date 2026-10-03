@@ -263,6 +263,7 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.browserPane.KEY,
 
   RPC_CHANNELS.browserProfile.DISCOVER,
+  RPC_CHANNELS.browserProfile.CREDENTIAL_CAPABILITIES,
   RPC_CHANNELS.browserProfile.IMPORT,
   RPC_CHANNELS.browserProfile.ROLLBACK,
   RPC_CHANNELS.browserProfile.DELETE,

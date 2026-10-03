@@ -61,7 +61,7 @@ import { ALL_KINDS, isActive, sortInbox } from '@/pages/inbox/inbox-model'
 import { getSessionTitle } from '@/utils/session'
 import { isHomeSessionInWorkspace, pickRecentHomeSessions } from '../home-model'
 import { buildMiniDashboard, formatDashboardCost, formatTokenCount, syncStatusLabelKey } from '../mini-dashboard'
-import { widgetItemLimit, type HomeWidgetId, type HomeWidgetSize } from './dashboard-layout'
+import { widgetContentLayout, widgetItemLimit, widgetRowSpan, type HomeWidgetId, type HomeWidgetSize } from './dashboard-layout'
 import {
   TASK_LISTS,
   buildAutomationsOverview,
@@ -88,8 +88,8 @@ export interface WidgetProps {
   edit: WidgetEditProps | null
   /** Persisted size controls height independently of the responsive width. */
   size?: HomeWidgetSize
-  /** Resolved column span (1..12) — lets a widget show more when it is wide. */
-  span: number
+  /** Actual card width; a full grid span can still be a narrow card. */
+  width: number
 }
 
 // ---------------------------------------------------------------------------
@@ -174,7 +174,7 @@ function rowsFor(size: HomeWidgetSize, base: number): number {
 // Сводка
 // ---------------------------------------------------------------------------
 
-function SummaryWidget({ edit, span }: WidgetProps) {
+function SummaryWidget({ edit, width }: WidgetProps) {
   const { t } = useTranslation()
   const workspace = useActiveWorkspace()
   const { active } = useHomeSessions()
@@ -184,7 +184,7 @@ function SummaryWidget({ edit, span }: WidgetProps) {
   const unknown = t('dashboard.unknown')
   return (
     <WidgetFrame testId="summary" title={t('workbench.home.w.summary')} edit={edit} meta={workspace?.name}>
-      <div className={cn('grid gap-x-2 gap-y-1', span >= 12 ? 'grid-cols-6' : span >= 6 ? 'grid-cols-3' : 'grid-cols-2')}>
+      <div className={cn('grid gap-x-2 gap-y-1', widgetContentLayout(width).summaryColumns === 6 ? 'grid-cols-6' : widgetContentLayout(width).summaryColumns === 3 ? 'grid-cols-3' : 'grid-cols-2')}>
         <WidgetStat label={t('dashboard.sessions')} value={snap.sessions} onClick={() => navigate(routes.view.allSessions())} />
         <WidgetStat label={t('dashboard.activeAgents')} value={snap.activeAgents} tone={snap.activeAgents > 0 ? 'accent' : undefined} onClick={() => navigate(routes.view.screen('agents'))} />
         <WidgetStat label={t('workbench.home.summary.conductor')} value={snap.tasks == null ? unknown : snap.tasks} onClick={() => navigate(routes.view.tasks())} />
@@ -240,7 +240,7 @@ function RecordButton({ rec }: { rec: ReturnType<typeof useRecordAction> }) {
   )
 }
 
-function QuickActionsWidget({ edit, span }: WidgetProps) {
+function QuickActionsWidget({ edit, width }: WidgetProps) {
   const { t } = useTranslation()
   const workspace = useActiveWorkspace()
   const setOmniboxOpen = useSetAtom(omniboxOpenAtom)
@@ -283,7 +283,7 @@ function QuickActionsWidget({ edit, span }: WidgetProps) {
   ]
   return (
     <WidgetFrame testId="quickActions" title={t('workbench.home.w.quickActions')} edit={edit}>
-      <div className={cn('grid h-full gap-2 pb-5', span >= 12 ? 'grid-cols-4' : 'grid-cols-2')}>
+      <div className={cn('grid h-full gap-2 pb-5', widgetContentLayout(width).quickActionColumns === 4 ? 'grid-cols-4' : 'grid-cols-2')}>
         {actions.map((a) => (
           <button
             key={a.key}
@@ -310,18 +310,18 @@ function QuickActionsWidget({ edit, span }: WidgetProps) {
 // Недавние сессии
 // ---------------------------------------------------------------------------
 
-function RecentSessionsWidget({ edit, span, size = 'S' }: WidgetProps) {
+function RecentSessionsWidget({ edit, width, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(60_000)
   const { active } = useHomeSessions()
-  const recent = useMemo(() => pickRecentHomeSessions(active, widgetItemLimit(size, 5, span >= 12 ? 2 : 1)), [active, span, size])
+  const recent = useMemo(() => pickRecentHomeSessions(active, widgetItemLimit(size, 5, widgetContentLayout(width).listColumns)), [active, width, size])
   return (
     <WidgetFrame testId="recentSessions" title={t('workbench.home.recent')} onOpen={() => navigate(routes.view.allSessions())} edit={edit} meta={active.length ? String(active.length) : undefined}>
       {recent.length === 0 ? (
         <WidgetEmpty text={t('workbench.home.emptySessions')} hint={t('workbench.home.recentEmptyHint')} action={{ label: t('workbench.home.quick.newSession'), onClick: () => navigate(routes.action.newSession()) }} />
       ) : (
-        <WidgetList columns={span >= 12 ? 2 : 1}>
+        <WidgetList columns={widgetContentLayout(width).listColumns}>
           {recent.map((s) => (
             <WidgetRow
               key={s.id}
@@ -448,15 +448,15 @@ function InboxWidget({ edit, size = 'S' }: WidgetProps) {
 // Расход и токены
 // ---------------------------------------------------------------------------
 
-function UsageWidget({ edit, span }: WidgetProps) {
+function UsageWidget({ edit, width, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(5 * 60_000)
   const { all } = useHomeSessions()
   const usage = useMemo(() => buildUsageOverview(all, now, 7), [all, now])
-  const models = useMemo(() => usageByModel(all, usage.days[0]!.start).filter((m) => m.tokens > 0).slice(0, 4), [all, usage])
+  const models = useMemo(() => usageByModel(all, usage.days[0]!.start).filter((m) => m.tokens > 0).slice(0, rowsFor(size, 4)), [all, usage, size])
   const max = Math.max(1, ...usage.days.map((d) => d.tokens))
-  const wide = span >= 6
+  const wide = widgetContentLayout(width).splitPanels
   const open = () => navigate(routes.view.screen('agents'))
   return (
     <WidgetFrame testId="usage" title={t('workbench.home.w.usage')} onOpen={open} edit={edit} meta={t('workbench.home.usage.window')}>
@@ -502,14 +502,14 @@ function UsageWidget({ edit, span }: WidgetProps) {
 // Модели
 // ---------------------------------------------------------------------------
 
-function ModelsWidget({ edit, span }: WidgetProps) {
+function ModelsWidget({ edit, width, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const now = useNow(5 * 60_000)
   const { all } = useHomeSessions()
   const { llmConnections, workspaceDefaultLlmConnection } = useAppShellContext()
   const since = startOfLocalDay(now) - 6 * 86_400_000
   const connections = useMemo(() => connectionUsage(llmConnections, all, since, workspaceDefaultLlmConnection), [llmConnections, all, since, workspaceDefaultLlmConnection])
-  const models = useMemo(() => usageByModel(all, since).slice(0, 3), [all, since])
+  const models = useMemo(() => usageByModel(all, since).slice(0, rowsFor(size, 3)), [all, since, size])
   const names = useMemo(() => new Map(llmConnections.map((c) => [c.slug, c.name])), [llmConnections])
   const defaultSlug = connections.find((c) => c.isDefault)?.slug
   const open = () => navigate(routes.view.settings('ai'))
@@ -518,10 +518,10 @@ function ModelsWidget({ edit, span }: WidgetProps) {
       {connections.length === 0 ? (
         <WidgetEmpty text={t('workbench.home.models.empty')} hint={t('workbench.home.models.emptyHint')} action={{ label: t('workbench.home.models.connect'), onClick: open }} />
       ) : (
-        <div className={cn('grid h-full min-h-0 gap-x-4', span >= 6 && models.length > 0 ? 'grid-cols-2' : 'grid-cols-1')}>
+        <div className={cn('grid h-full min-h-0 gap-x-4', widgetContentLayout(width).splitPanels && models.length > 0 ? 'grid-cols-2' : 'grid-cols-1')}>
           <div className="min-w-0">
             <WidgetList>
-              {connections.slice(0, span >= 6 ? 4 : 2).map((c) => (
+              {connections.slice(0, rowsFor(size, 4)).map((c) => (
                 <WidgetRow
                   key={c.slug}
                   testId={c.slug}
@@ -538,7 +538,7 @@ function ModelsWidget({ edit, span }: WidgetProps) {
             <div className="min-w-0">
               <SectionLabel>{t('workbench.home.models.used')}</SectionLabel>
               <WidgetList>
-                {models.slice(0, span >= 6 ? 3 : 2).map((m) => (
+                {models.map((m) => (
                   <WidgetRow
                     key={m.model || `@${m.connection}`}
                     title={m.model || t('workbench.home.models.defaultOf', { name: names.get(m.connection ?? defaultSlug ?? '') || m.connection || defaultSlug || '—' })}
@@ -619,13 +619,13 @@ function BalanceWidget({ edit }: WidgetProps) {
 // Задачи
 // ---------------------------------------------------------------------------
 
-function TasksWidget({ edit, span, size = 'S' }: WidgetProps) {
+function TasksWidget({ edit, width, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(60_000)
   const tasks = usePersonalTasks()
   const focus = useFocusState()
-  const top = useMemo(() => topOpenTasks(tasks, focus.top3, now, widgetItemLimit(size, 5, span >= 12 ? 2 : 1)), [tasks, focus.top3, now, span, size])
+  const top = useMemo(() => topOpenTasks(tasks, focus.top3, now, widgetItemLimit(size, 5, widgetContentLayout(width).listColumns)), [tasks, focus.top3, now, width, size])
   const dayStart = startOfLocalDay(now)
   return (
     <WidgetFrame
@@ -640,7 +640,7 @@ function TasksWidget({ edit, span, size = 'S' }: WidgetProps) {
       ) : (
         <div className="flex h-full min-h-0 flex-col">
           {top.overdue > 0 ? <p className="mb-0.5 text-[12px] font-bold text-destructive">{t('workbench.home.tasks.overdue', { count: top.overdue })}</p> : null}
-          <WidgetList columns={span >= 12 ? 2 : 1}>
+          <WidgetList columns={widgetContentLayout(width).listColumns}>
             {top.top.map((task) => (
               <WidgetRow
                 key={task.id}
@@ -686,7 +686,7 @@ function transcriptTone(status: string): 'success' | 'danger' | 'accent' | 'mute
   return status === 'done' ? 'success' : status === 'failed' ? 'danger' : status === 'running' || status === 'queued' ? 'accent' : 'muted'
 }
 
-function MeetingsWidget({ edit, span, size = 'S' }: WidgetProps) {
+function MeetingsWidget({ edit, width, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(60_000)
@@ -704,7 +704,7 @@ function MeetingsWidget({ edit, span, size = 'S' }: WidgetProps) {
       ) : empty ? (
         <WidgetEmpty text={t('workbench.home.meetings.empty')} hint={t('workbench.home.meetings.emptyHint')} action={{ label: t('workbench.home.meetings.plan'), onClick: () => open() }} />
       ) : (
-        <div className={cn('grid h-full min-h-0 gap-x-4', span >= 12 ? 'grid-cols-2' : 'grid-cols-1')}>
+        <div className={cn('grid h-full min-h-0 gap-x-4', widgetContentLayout(width).listColumns === 2 ? 'grid-cols-2' : 'grid-cols-1')}>
           <div className="min-w-0">
             {overview.live ? (
               <WidgetList>
@@ -750,14 +750,14 @@ function MeetingsWidget({ edit, span, size = 'S' }: WidgetProps) {
 // Звонки
 // ---------------------------------------------------------------------------
 
-function CallsWidget({ edit, span, size = 'S' }: WidgetProps) {
+function CallsWidget({ edit, width, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(60_000)
   const workspace = useActiveWorkspace()
   const rec = useRecordAction()
   const { available, loaded, meetings } = useLocalMeetings(workspace?.id ?? null)
-  const calls = useMemo(() => recentCalls(meetings, widgetItemLimit(size, 4, span >= 12 ? 2 : 1)), [meetings, span, size])
+  const calls = useMemo(() => recentCalls(meetings, widgetItemLimit(size, 4, widgetContentLayout(width).listColumns)), [meetings, width, size])
   const totalMs = useMemo(() => recentCalls(meetings, Number.MAX_SAFE_INTEGER).filter((m) => (m.startedAt ?? m.createdAt) >= startOfLocalDay(now) - 6 * 86_400_000).reduce((sum, m) => sum + (m.durationMs || 0), 0), [meetings, now])
   const open = (id?: string) => navigate(routes.view.meetings(id))
   return (
@@ -774,7 +774,7 @@ function CallsWidget({ edit, span, size = 'S' }: WidgetProps) {
       ) : loaded && calls.length === 0 ? (
         <WidgetEmpty text={t('workbench.home.calls.empty')} hint={t('workbench.home.calls.emptyHint')} action={{ label: rec.recording ? t('workbench.home.quick.recording') : t('workbench.home.meetings.record'), onClick: () => void rec.record() }} />
       ) : (
-        <WidgetList columns={span >= 12 ? 2 : 1}>
+        <WidgetList columns={widgetContentLayout(width).listColumns}>
           {calls.map((m) => {
             const live = m.status === 'recording' || m.status === 'paused'
             return (
@@ -977,13 +977,13 @@ function AutomationsWidget({ edit, size = 'S' }: WidgetProps) {
 // Лента
 // ---------------------------------------------------------------------------
 
-function FeedWidget({ edit, span, size = 'S' }: WidgetProps) {
+function FeedWidget({ edit, width, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(60_000)
   const workspace = useActiveWorkspace()
   const feed = useFeedItems(workspace?.id ?? null, { retainStale: true })
-  const latest = feed.items.slice(0, widgetItemLimit(size, 5, span >= 12 ? 2 : 1))
+  const latest = feed.items.slice(0, widgetItemLimit(size, 5, widgetContentLayout(width).listColumns))
   return (
     <WidgetFrame testId="feed" title={t('workbench.home.w.feed')} onOpen={() => navigate(routes.view.feed())} edit={edit}>
       {feed.refreshing && !feed.loaded ? (
@@ -1011,7 +1011,7 @@ function FeedWidget({ edit, span, size = 'S' }: WidgetProps) {
               </WidgetButton>
             </div>
           ) : null}
-          <WidgetList columns={span >= 12 ? 2 : 1}>
+          <WidgetList columns={widgetContentLayout(width).listColumns}>
             {latest.map((item) => (
               <WidgetRow
                 key={item.id}
@@ -1053,13 +1053,13 @@ function useNotes(workspaceId: string | null): { available: boolean; loaded: boo
   return state
 }
 
-function NotesWidget({ edit, span, size = 'S' }: WidgetProps) {
+function NotesWidget({ edit, width, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(60_000)
   const workspace = useActiveWorkspace()
   const state = useNotes(workspace?.id ?? null)
-  const shown = useMemo(() => recentByUpdated(state.notes, widgetItemLimit(size, 5, span >= 12 ? 2 : 1)), [state.notes, span, size])
+  const shown = useMemo(() => recentByUpdated(state.notes, widgetItemLimit(size, 5, widgetContentLayout(width).listColumns)), [state.notes, width, size])
   return (
     <WidgetFrame testId="notes" title={t('workbench.home.w.notes')} onOpen={() => navigate(routes.view.notes())} edit={edit}>
       {!state.available ? (
@@ -1067,7 +1067,7 @@ function NotesWidget({ edit, span, size = 'S' }: WidgetProps) {
       ) : state.loaded && shown.length === 0 ? (
         <WidgetEmpty text={t('workbench.home.notes.empty')} action={{ label: t('workbench.home.quick.newNote'), onClick: () => navigate(routes.view.notes()) }} />
       ) : (
-        <WidgetList columns={span >= 12 ? 2 : 1}>
+        <WidgetList columns={widgetContentLayout(width).listColumns}>
           {shown.map((note) => (
             <WidgetRow key={note.id} testId={note.id} onClick={() => navigate(routes.view.notes(note.id))} leading={<FileText className="h-3.5 w-3.5" />} title={note.title || t('notes.untitled')} trailing={fmt.ago(note.updatedAt, now)} />
           ))}
@@ -1154,7 +1154,7 @@ function RadarWidget({ edit, size = 'S' }: WidgetProps) {
 // Трекер задач
 // ---------------------------------------------------------------------------
 
-function TaskTrackerWidget({ edit, span }: WidgetProps) {
+function TaskTrackerWidget({ edit, width }: WidgetProps) {
   const { t } = useTranslation()
   const now = useNow(60_000)
   const tasks = usePersonalTasks()
@@ -1165,11 +1165,11 @@ function TaskTrackerWidget({ edit, span }: WidgetProps) {
   return (
     <WidgetFrame testId="taskTracker" title={t('workbench.home.w.taskTracker')} onOpen={open} edit={edit} meta={stats.doneToday ? t('workbench.home.taskTracker.doneToday', { count: stats.doneToday }) : undefined}>
       <div className="flex h-full min-h-0 flex-col">
-        <div className={cn('grid gap-1', span >= 6 ? 'grid-cols-4' : 'grid-cols-2')}>
+        <div className={cn('grid gap-1', widgetContentLayout(width).trackerColumns === 4 ? 'grid-cols-4' : 'grid-cols-2')}>
           <WidgetStat label={t('workbench.home.taskTracker.open')} value={stats.open} onClick={open} />
           <WidgetStat label={t('workbench.home.taskTracker.overdue')} value={stats.overdue} tone={stats.overdue ? 'danger' : undefined} onClick={open} />
-          {span >= 6 ? <WidgetStat label={t('workbench.home.taskTracker.today')} value={stats.today} tone={stats.today ? 'accent' : undefined} onClick={open} /> : null}
-          {span >= 6 ? <WidgetStat label={t('workbench.home.taskTracker.doneWeek')} value={stats.doneWeek} /> : null}
+          <WidgetStat label={t('workbench.home.taskTracker.today')} value={stats.today} tone={stats.today ? 'accent' : undefined} onClick={open} />
+          <WidgetStat label={t('workbench.home.taskTracker.doneWeek')} value={stats.doneWeek} />
         </div>
         {stats.open > 0 ? (
           <div className="mt-1 px-1.5">
@@ -1202,7 +1202,7 @@ function TaskTrackerWidget({ edit, span }: WidgetProps) {
 // Трекер входящих
 // ---------------------------------------------------------------------------
 
-function InboxTrackerWidget({ edit, span }: WidgetProps) {
+function InboxTrackerWidget({ edit, width, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const { counts, loaded } = useInboxItems({ withRemote: true })
   const kinds = ALL_KINDS.filter((k) => counts.byKind[k] > 0)
@@ -1220,8 +1220,8 @@ function InboxTrackerWidget({ edit, span }: WidgetProps) {
         {kinds.length === 0 ? (
           <p className="text-[12px] leading-4 text-muted-foreground">{loaded ? t('workbench.home.inbox.empty') : '…'}</p>
         ) : (
-          <ul className={cn('-mx-1.5 min-w-0', span >= 12 ? 'grid grid-cols-2 gap-x-4' : 'flex flex-col')}>
-            {kinds.slice(0, span >= 12 ? 8 : 4).map((k) => (
+          <ul className={cn('min-w-0', widgetContentLayout(width).listColumns === 2 ? 'grid grid-cols-2 gap-x-4' : 'flex flex-col')}>
+            {kinds.slice(0, widgetItemLimit(size, 4, widgetContentLayout(width).listColumns)).map((k) => (
               <li key={k} className="min-w-0" data-home-row={`kind-${k}`}>
                 <button type="button" onClick={open} className="rox-home-row flex w-full min-w-0 items-center gap-2 rounded-[6px] px-1.5 py-1 text-left">
                   <span className="w-[42%] min-w-0 shrink-0 truncate text-[13px] leading-5 text-foreground">{t(`inbox.kind.${k}`)}</span>
@@ -1250,7 +1250,7 @@ const CALENDAR_ICON: Record<CalendarEventKind, React.ComponentType<{ className?:
   note: FileText,
 }
 
-function CalendarWidget({ edit, span, size = 'S' }: WidgetProps) {
+function CalendarWidget({ edit, width, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(5 * 60_000)
@@ -1278,7 +1278,7 @@ function CalendarWidget({ edit, span, size = 'S' }: WidgetProps) {
     else navigate(routes.view.notes(id))
   }
   const total = days.reduce((sum, d) => sum + d.events.length, 0)
-  const wide = span >= 6
+  const wide = widgetContentLayout(width).calendarView === 'week'
   const perDay = widgetItemLimit(size, 3)
   const today = startOfLocalDay(now)
   return (
@@ -1320,28 +1320,43 @@ function CalendarWidget({ edit, span, size = 'S' }: WidgetProps) {
             })}
           </div>
         ) : (
-          <ul className="-mx-1.5 flex min-h-0 flex-1 flex-col" data-home-calendar="list">
+          <ul className="flex flex-col" data-home-calendar="list">
             {days.map((day) => {
               const isToday = day.start === today
-              const first = day.events[0]
+              const shown = day.events.slice(0, widgetRowSpan(size) - 1)
               return (
-                <li key={day.start} className="min-w-0">
-                  <button
-                    type="button"
-                    disabled={!first}
-                    onClick={() => first && openEvent(first.kind, first.id)}
-                    className="rox-home-row flex w-full min-w-0 items-center gap-2 rounded-[6px] px-1.5 py-0.5 text-left disabled:cursor-default"
-                  >
-                    <span className={cn('w-12 shrink-0 text-[12px] uppercase', isToday ? 'font-bold text-accent' : 'text-muted-foreground')}>{fmt.weekday(day.start)} {new Date(day.start).getDate()}</span>
-                    <span className={cn('min-w-0 flex-1 truncate text-[12px]', first ? 'text-foreground' : 'text-muted-foreground')}>{first ? first.title : '—'}</span>
-                    {day.events.length > 1 ? <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">+{day.events.length - 1}</span> : null}
-                  </button>
+                <li key={day.start} className="min-w-0 shrink-0">
+                  {shown.length === 0 ? (
+                    <div className="flex items-center gap-2 px-1.5 py-0.5 text-[12px] text-muted-foreground">
+                      <span className={cn('w-12 shrink-0 uppercase', isToday && 'font-bold text-accent')}>{fmt.weekday(day.start)} {new Date(day.start).getDate()}</span>
+                      <span>—</span>
+                    </div>
+                  ) : shown.map((event, index) => {
+                    const Icon = CALENDAR_ICON[event.kind]
+                    return (
+                      <button
+                        key={`${event.kind}-${event.id}`}
+                        type="button"
+                        onClick={() => openEvent(event.kind, event.id)}
+                        title={`${t(`workbench.home.calendar.kind.${event.kind}`)} · ${event.title}`}
+                        data-home-row={`calendar-${event.kind}-${event.id}`}
+                        className="rox-home-row flex w-full min-w-0 items-center gap-2 rounded-[6px] px-1.5 py-0.5 text-left"
+                      >
+                        <span className={cn('w-12 shrink-0 text-[12px] uppercase', isToday ? 'font-bold text-accent' : 'text-muted-foreground')}>
+                          {index === 0 ? `${fmt.weekday(day.start)} ${new Date(day.start).getDate()}` : null}
+                        </span>
+                        <Icon className={cn('h-3 w-3 shrink-0', event.overdue ? 'text-destructive' : 'text-muted-foreground')} />
+                        <span className={cn('min-w-0 flex-1 truncate text-[12px]', event.overdue ? 'text-destructive' : 'text-foreground')}>{event.title}</span>
+                        {index === 0 && day.events.length > shown.length ? <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">+{day.events.length - shown.length}</span> : null}
+                      </button>
+                    )
+                  })}
                 </li>
               )
             })}
           </ul>
         )}
-        <p className="mt-1 truncate text-[11px] text-muted-foreground" title={t('workbench.home.calendar.external')} data-home-calendar-note="">
+        <p className="mt-auto shrink-0 truncate pt-1 text-[11px] text-muted-foreground" title={t('workbench.home.calendar.external')} data-home-calendar-note="">
           {t('workbench.home.calendar.external')}
         </p>
       </div>

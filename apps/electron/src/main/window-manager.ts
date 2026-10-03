@@ -9,7 +9,7 @@ import { classifyExternalUrl, formatBlockedUrlError } from '@craft-agent/shared/
 import { RPC_CHANNELS, type WindowCloseRequestSource } from '../shared/types'
 import { getExtensionHostManager } from './extension-host-manager'
 import type { SavedWindow } from './window-state'
-import { attachZenWindowPolicy, reapplyZenShellOnWindow, peekZenShellSnapshot } from './shell-material'
+import { attachZenWindowPolicy, reapplyZenShellOnWindow, peekZenShellSnapshotForWindow, nativeAccessibilityPrefersSolid, setZenShellSnapshotListener } from './shell-material'
 import { WINDOWS_MICA_BUILD } from '../shared/shell-appearance'
 
 // Vite dev server URL for hot reload
@@ -22,6 +22,7 @@ const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
  */
 function getWindowsBackgroundMaterial(): 'mica' | undefined {
   if (process.platform !== 'win32') return undefined
+  if (nativeAccessibilityPrefersSolid()) return undefined
 
   // os.release() returns "10.0.xxxxx" where xxxxx is the build number
   const buildNumber = parseInt(release().split('.')[2] || '0', 10)
@@ -283,6 +284,9 @@ export class WindowManager {
 
     // Zen ON: show once + apply material after healthy paint (see shell-material.ts).
     // Zen OFF: existing revealWindow — isVisible() early-return is intentional.
+    setZenShellSnapshotListener(window, snapshot => {
+      this.pushToWindow(window, RPC_CHANNELS.appearance.SHELL_CHANGED, snapshot)
+    })
     if (zenEnabled) {
       attachZenWindowPolicy(window)
     } else {
@@ -291,7 +295,7 @@ export class WindowManager {
       // unless first paint actually arrived.
       const revealWindow = (opts?: { vibrancy?: boolean }) => {
         if (window.isDestroyed() || window.isVisible()) return
-        if (isMac && opts?.vibrancy !== false) {
+        if (isMac && opts?.vibrancy !== false && !nativeAccessibilityPrefersSolid()) {
           try {
             window.setVibrancy('under-window')
             // setVisualEffectState появился в новых типах Electron; на старых
@@ -481,7 +485,7 @@ export class WindowManager {
       this.pushToWindow(window, RPC_CHANNELS.theme.SYSTEM_CHANGED, nativeTheme.shouldUseDarkColors)
       // OS contrast/transparency changes also update material on existing windows.
       reapplyZenShellOnWindow(window)
-      this.pushToWindow(window, RPC_CHANNELS.appearance.SHELL_CHANGED, peekZenShellSnapshot())
+      this.pushToWindow(window, RPC_CHANNELS.appearance.SHELL_CHANGED, peekZenShellSnapshotForWindow(window))
     }
     nativeTheme.on('updated', themeHandler)
 

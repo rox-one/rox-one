@@ -88,7 +88,6 @@ import {
   alignBoxes,
   distributeBoxes,
   keyboardConnectTarget,
-  magneticPorts,
   tileBoxes,
   type AlignMode,
   type DistributeMode,
@@ -112,6 +111,7 @@ import {
 import { shortSceneTitle } from './scene-tools'
 import { canvasCenter, canvasMenuPosition, centeredNodePosition, isCanvasTextInput, menuFocusIndex, nearestFreeNodePosition } from './canvas-interactions'
 import { draftGraphToSpec, loadWorkflowDocument, persistWorkflowDocument, specToDraftGraph } from './workflow-document'
+import { convertDraftGraphNode, reconcileCanvasNodes } from './canvas-node-editing'
 import {
   compareVersions,
   exportSpec,
@@ -122,7 +122,6 @@ import {
   replayRun,
   runWorkflow,
   saveVersion,
-  convertNodeKind,
   isProductionWorkflowSuccess,
   type WorkflowRun,
 } from '@craft-agent/shared/workflows'
@@ -719,19 +718,11 @@ function EditorInner({
   )
 
   React.useEffect(() => {
-    setNodes(
-      flowSeedNodes.map((n) => ({
-        ...n,
-        selected: n.id === selectedId,
-      })),
-    )
+    setNodes((previous) => reconcileCanvasNodes(flowSeedNodes, previous, selectedId))
     // Keep pin positions; toFlowElements already applied pin.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- selection applied via selectedId separately
   }, [projectedKey, graph, pin, camera, flowSeedNodes])
 
-  React.useEffect(() => {
-    setNodes((prev) => prev.map((n) => ({ ...n, selected: n.id === selectedId })))
-  }, [selectedId])
 
   React.useEffect(() => {
     const scene = graph.scenes.find((s) => s.id === selectedId)
@@ -872,6 +863,7 @@ function EditorInner({
       })
       initialFitDoneRef.current = true
       persistDraftGraph({ nodes: [...draftNodes, next], edges: draftEdges })
+      setNodes((previous) => previous.map((node) => ({ ...node, selected: false })))
       setSelectedId(next.id)
       hasContextPositionRef.current = false
     },
@@ -893,6 +885,7 @@ function EditorInner({
       })
       initialFitDoneRef.current = true
       persistDraftGraph({ nodes: [...draftNodes, next], edges: draftEdges })
+      setNodes((previous) => previous.map((node) => ({ ...node, selected: false })))
       setSelectedId(next.id)
       hasContextPositionRef.current = false
     },
@@ -1079,26 +1072,7 @@ function EditorInner({
   const handleConvert = React.useCallback(
     (kind: SessionNodeKind, targetId = selectedId) => {
       if (!targetId || !draftNodes.some((node) => node.id === targetId)) return
-      const nextNodes = draftNodes.map((node) => {
-        if (node.id !== targetId) return node
-        const converted = convertNodeKind(
-          draftGraphToSpec({ v: 1, sessionId, nodes: [node], edges: [] }).nodes[0]!, kind,
-        )
-        return {
-          ...node, kind: converted.kind, title: node.title,
-          role: kind === 'annotation_frame' ? 'frame' as const : node.role === 'frame' || node.role === 'group' ? 'node' as const : node.role,
-        }
-      })
-      persistDraftGraph({
-        nodes: nextNodes,
-        edges: draftEdges
-          .filter((edge) => kind === 'annotation_frame' ? edge.source !== targetId && edge.target !== targetId : kind !== 'output' || edge.source !== targetId || edge.kind === 'context')
-          .map((edge) => ({
-            ...edge,
-            ...(edge.source === targetId ? { sourcePort: undefined, ...(kind !== 'condition' ? { sourceHandle: undefined } : {}) } : {}),
-            ...(edge.target === targetId ? { targetPort: undefined } : {}),
-          })),
-      })
+      persistDraftGraph(convertDraftGraphNode({ v: 1, sessionId, nodes: draftNodes, edges: draftEdges }, targetId, kind))
     },
     [draftEdges, draftNodes, persistDraftGraph, selectedId, sessionId],
   )
@@ -1149,6 +1123,7 @@ function EditorInner({
 
   const closeInspector = React.useCallback(() => {
     setSelectedId(null)
+    setNodes((previous) => previous.map((node) => ({ ...node, selected: false })))
   }, [])
 
   const openPicker = React.useCallback((clientX: number, clientY: number, flowPosition?: { x: number; y: number }, placement: 'point' | 'center' = 'point') => {
@@ -1240,6 +1215,22 @@ function EditorInner({
               return
             }
             if (isCanvasTextInput(event.target)) return
+            if ((event.key === 'Delete' || event.key === 'Backspace') &&
+                event.target instanceof Element && canvasRef.current?.contains(event.target) &&
+                !event.target.closest('button, [role="menu"]')) {
+              const deleted = new Set(nodes.filter((node) => node.selected && isDraftFlowNode(node)).map((node) => node.id))
+              if (deleted.size > 0 || selectedDraftEdgeId) {
+                event.preventDefault()
+                event.stopPropagation()
+                persistDraftGraph({
+                  nodes: draftNodes.filter((node) => !deleted.has(node.id)),
+                  edges: draftEdges.filter((edge) => !deleted.has(edge.source) && !deleted.has(edge.target) && edge.id !== selectedDraftEdgeId),
+                })
+                if (selectedId && deleted.has(selectedId)) setSelectedId(null)
+                setSelectedDraftEdgeId(null)
+              }
+              return
+            }
             if (!selectedId) return
             if (!(event.altKey || event.metaKey) || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return
             event.preventDefault()
@@ -1248,18 +1239,14 @@ function EditorInner({
                 : event.key === 'ArrowRight' ? 'right'
                   : event.key === 'ArrowUp' ? 'top'
                     : 'bottom'
-            const boxes = nodes.map((node) => boxOf(node))
+            const boxes = nodes.filter((node) => node.id === selectedId || verdictFor({ source: selectedId, target: node.id }).ok).map((node) => boxOf(node))
             const target = keyboardConnectTarget(selectedId, direction, boxes)
             if (!target) return
-            const fromBox = boxes.find((box) => box.id === selectedId)
-            const toBox = boxes.find((box) => box.id === target)
-            const magnet = fromBox && toBox ? magneticPorts(fromBox, toBox) : null
             const verdict = verdictFor({ source: selectedId, target })
             if (verdict.ok) {
               const next = createSessionDraftEdge(verdict)
               persistDraftGraph({ nodes: draftNodes, edges: [...draftEdges, next] })
             }
-            void magnet
           }}
         >
           <div
@@ -1520,6 +1507,7 @@ function EditorInner({
                 setPicker(null)
                 setSelectedDraftEdgeId(null)
                 setSelectedId(node.id)
+                setNodes((previous) => previous.map((item) => ({ ...item, selected: item.id === node.id })))
                 setNodeMenu({ x: event.clientX, y: event.clientY, target: node.type, id: node.id })
               }
             }}
@@ -1562,19 +1550,20 @@ function EditorInner({
               })
             }}
             onMoveStart={(event) => { if (event) initialFitDoneRef.current = true }}
-            onNodeDragStop={(_e, node) => {
-              if (isDraftFlowNode(node)) {
+            onNodeDragStop={(_e, node, draggedNodes) => {
+              const moved = draggedNodes.length > 0 ? draggedNodes : [node]
+              const draftPositions = new Map(moved.filter(isDraftFlowNode).map((item) => [item.id, item.position]))
+              if (draftPositions.size > 0) {
                 persistDraftGraph({
-                  nodes: draftNodes.map((draftNode) =>
-                    draftNode.id === node.id
-                      ? { ...draftNode, position: { x: node.position.x, y: node.position.y } }
-                      : draftNode,
-                  ),
+                  nodes: draftNodes.map((draftNode) => {
+                    const position = draftPositions.get(draftNode.id)
+                    return position ? { ...draftNode, position: { x: position.x, y: position.y } } : draftNode
+                  }),
                   edges: draftEdges,
                 })
-                return
               }
-              if (node.type === 'scene') {
+              const movedScenes = moved.filter((item) => item.type === 'scene')
+              if (movedScenes.length > 0) {
                 persistPin({
                   v: 1,
                   sessionId,
@@ -1582,7 +1571,9 @@ function EditorInner({
                   ...(viewportRef.current ? { viewport: viewportRef.current } : {}),
                   nodes: {
                     ...(pin?.nodes ?? {}),
-                    [node.id]: { ...(pin?.nodes[node.id] ?? {}), x: node.position.x, y: node.position.y },
+                    ...Object.fromEntries(movedScenes.map((item) => [item.id, {
+                      ...(pin?.nodes[item.id] ?? {}), x: item.position.x, y: item.position.y,
+                    }])),
                   },
                 })
               }

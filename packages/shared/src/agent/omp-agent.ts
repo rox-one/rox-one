@@ -106,7 +106,7 @@ import {
 import { executeBrowserToolCommand } from './browser-tool-runtime.ts';
 import { runGithubUserSessionTool } from '../connections/github-user-tool.ts';
 import { saveBinaryResponse } from '../utils/binary-detection.ts';
-import { isRoxPublicModelId, type OmpModelCandidate } from '../config/rox-public-models.ts';
+import { isRoxPublicModelId, ROX_PUBLIC_MODEL_IDS, type OmpModelCandidate } from '../config/rox-public-models.ts';
 import { ompStateHasModel, resolveVerifiedOmpModelTarget } from './omp-model-selection.ts';
 import { OmpRpcLineGuard, OmpRpcTransport, supportsOmpRpcV2 } from './omp-rpc-transport.ts';
 import { resolveConfigDir } from "../config/paths.ts"
@@ -150,7 +150,7 @@ export class OmpStartupAbortedError extends Error {
  */
 const OMP_CRAFT_CONTEXT_PROMPT = [
   'You are running inside the Craft Agents desktop app as an embedded agent backend.',
-  'Public model IDs are rox/explore, rox/standard, rox/max, rox/vision, and rox/fast.',
+  `Public model IDs are ${ROX_PUBLIC_MODEL_IDS.join(', ')}.`,
   'Do not request raw provider or internal model names.',
   'In addition to your built-in tools, Craft exposes host tools (mcp__session__*):',
   '- mcp__session__spawn_session — create independent child sessions that run in parallel,',

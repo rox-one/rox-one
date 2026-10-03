@@ -299,13 +299,10 @@ function AppShellContent({
   const [storedSidebarVisible, setIsSidebarVisible] = React.useState(() => {
     return storage.get(storage.KEYS.sidebarVisible, !defaultCollapsed)
   })
-  // W1 unified shell: when the activity rail is mounted, the absolute sidebar
-  // sashes shift right by the rail width (+ one PANEL_GAP); zero when OFF.
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
   const harnessInspectorEnabled = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
   const inspectorSuppressed = useInspectorSuppressed()
   const statusBarEnabled = useAtomValue(featureWorkbenchStatusBarV1Atom)
-  // PR-2: the rail offset follows the same two-key decision as the host.
   const workbenchUserPreference = useAtomValue(featureWorkbenchAtom)
   const workbenchAvailability = resolveWorkbenchAvailability(
     workbenchOperatorCapability,
@@ -319,7 +316,6 @@ function AppShellContent({
   const terminalClearance = (bottomTerminalOpen ? bottomDockHeight : 0) + PANEL_EDGE_INSET + 4
   // WorkspaceSurfaceHost suppresses its ActivityRail while AppShell owns primary navigation.
   // Keep its geometric offset at zero regardless of experimental chrome flags.
-  const activityRailRendered = false
   const unifiedRailOffset = 0 // AppShell owns the single primary sidebar.
   // Preserve the saved expanded-label preference across every route. The compact
   // icon rail remains available when labels are collapsed; focus mode hides both.
@@ -520,10 +516,12 @@ function AppShellContent({
   const [applicationSectionsOpenFor, setApplicationSectionsOpenFor] = useState<string | null>(null)
   const hasContextualSidebar = isInboxNavigation(navState) || isFeedNavigation(navState) || isNotesNavigation(navState)
     || isTasksNavigation(navState) || isMeetingsNavigation(navState) || isSettingsNavigation(navState) || isScreenNavigation(navState)
+  const pendingSidebarRevealId = React.useRef<string | null>(null)
   const handleExpandNavigation = useCallback((link: LinkItem) => {
+    pendingSidebarRevealId.current = link.id
     setIsSidebarVisible(true)
-    setApplicationSectionsOpenFor(link.id.replace(/^nav:/, ''))
-  }, [])
+    setApplicationSectionsOpenFor(contextualSidebarKey)
+  }, [contextualSidebarKey])
 
   const store = useStore()
   const panelStack = useAtomValue(panelStackAtom)
@@ -903,6 +901,18 @@ function AppShellContent({
       return next
     })
   }, [])
+  const toggleSidebarSection = React.useCallback((id: string, current: boolean, onNavigate: () => void, activate = false) => {
+    if (!current || activate) onNavigate()
+    if (current) {
+      toggleExpanded(id)
+    } else {
+      setCollapsedItems(previous => {
+        const next = new Set(previous)
+        next.delete(id)
+        return next
+      })
+    }
+  }, [toggleExpanded])
   // Sources state (workspace-scoped)
   const [sources, setSources] = React.useState<LoadedSource[]>([])
   // Sync sources to atom for NavigationContext auto-selection
@@ -1134,6 +1144,14 @@ function AppShellContent({
 
   // Register focus zones
   const { zoneRef: sidebarRef, isFocused: sidebarFocused } = useFocusZone({ zoneId: 'sidebar' })
+  React.useLayoutEffect(() => {
+    if (isSidebarCollapsed || !pendingSidebarRevealId.current) return
+    const button = Array.from(sidebarRef.current?.querySelectorAll<HTMLButtonElement>('[data-sidebar-link-id]') ?? [])
+      .find(element => element.dataset.sidebarLinkId === pendingSidebarRevealId.current)
+    if (!button) return
+    button.focus()
+    pendingSidebarRevealId.current = null
+  }, [isSidebarCollapsed, applicationSectionsOpenFor, sidebarRef])
 
   // Global keyboard shortcuts using centralized action registry
   // Actions are defined in @/actions/definitions.ts
@@ -2347,10 +2365,10 @@ function AppShellContent({
       label: String(workspaceSessionMetas.length),
       icon: APP_NAV_DESTINATIONS_BY_ID.sessions.icon,
       variant: sessionFilter?.kind === 'allSessions' ? "default" : "ghost",
-      onClick: handleAllSessionsClick,
+      onClick: () => toggleSidebarSection('nav:allSessions', isSessionsNavigation(navState), handleAllSessionsClick, true),
       expandable: true,
       expanded: isSessionsNavigation(navState) && isExpanded('nav:allSessions'),
-      onToggle: () => { if (isSessionsNavigation(navState)) toggleExpanded('nav:allSessions'); else setCollapsedItems(prev => { const next = new Set(prev); next.delete('nav:allSessions'); return next }) },
+      onToggle: () => toggleSidebarSection('nav:allSessions', isSessionsNavigation(navState), handleAllSessionsClick),
       actions: (
         <div className="flex shrink-0 items-center gap-0.5">
           <button type="button" onClick={() => window.dispatchEvent(new Event('craft:join-session'))} title={t('sessionMenu.join')} aria-label={t('sessionMenu.join')} className="grid size-7 place-items-center rounded-lg text-foreground/50 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring"><Link2 className="size-3.5" aria-hidden /></button>
@@ -2423,7 +2441,7 @@ function AppShellContent({
       // Only highlighted when "Labels" itself is selected (not sub-labels)
       variant: (sessionFilter?.kind === 'label' && sessionFilter.labelId === '__all__') ? "default" as const : "ghost" as const,
       // Clicking navigates to "all labeled sessions" view
-      onClick: () => handleLabelClick('__all__'),
+      onClick: () => { handleLabelClick('__all__'); toggleExpanded('nav:labels') },
       expandable: true,
       expanded: isExpanded('nav:labels'),
       onToggle: () => toggleExpanded('nav:labels'),
@@ -2445,10 +2463,10 @@ function AppShellContent({
       icon: APP_NAV_DESTINATIONS_BY_ID.projects.icon,
       // Highlight only when on Projects view itself, not when a child is "active" (jumped-to filter)
       variant: isProjectsNavigation(navState) ? "default" : "ghost",
-      onClick: handleProjectsClick,
+      onClick: () => toggleSidebarSection('nav:projects', isProjectsNavigation(navState), handleProjectsClick, true),
       expandable: projects.length > 0,
       expanded: isProjectsNavigation(navState) && isExpanded('nav:projects'),
-      onToggle: () => { if (isProjectsNavigation(navState)) toggleExpanded('nav:projects'); else setCollapsedItems(prev => { const next = new Set(prev); next.delete('nav:projects'); return next }) },
+      onToggle: () => toggleSidebarSection('nav:projects', isProjectsNavigation(navState), handleProjectsClick),
       contextMenu: {
         type: 'projects' as const,
         onAddProject: openAddProject,
@@ -2468,10 +2486,10 @@ function AppShellContent({
       label: String(pages.length),
       icon: APP_NAV_DESTINATIONS_BY_ID.pages.icon,
       variant: (isPagesNavigation(navState) && !navState.details) ? "default" : "ghost",
-      onClick: handlePagesClick,
+      onClick: () => toggleSidebarSection('nav:pages', isPagesNavigation(navState), handlePagesClick, true),
       expandable: pages.length > 0,
       expanded: isPagesNavigation(navState) && isExpanded('nav:pages'),
-      onToggle: () => { if (isPagesNavigation(navState)) toggleExpanded('nav:pages'); else setCollapsedItems(prev => { const next = new Set(prev); next.delete('nav:pages'); return next }) },
+      onToggle: () => toggleSidebarSection('nav:pages', isPagesNavigation(navState), handlePagesClick),
       items: pages.map(p => ({
         id: `nav:pages:${p.config.id}`,
         title: p.config.name,
@@ -2511,11 +2529,11 @@ function AppShellContent({
       label: String(sources.length),
       icon: APP_NAV_DESTINATIONS_BY_ID.sources.icon,
       variant: (isSourcesNavigation(navState) && !sourceFilter) ? "default" : "ghost",
-      onClick: handleSourcesClick,
+      onClick: () => toggleSidebarSection('nav:sources', isSourcesNavigation(navState), handleSourcesClick, true),
       dataTutorial: "sources-nav",
       expandable: true,
       expanded: isSourcesNavigation(navState) && isExpanded('nav:sources'),
-      onToggle: () => { if (isSourcesNavigation(navState)) toggleExpanded('nav:sources'); else setCollapsedItems(prev => { const next = new Set(prev); next.delete('nav:sources'); return next }) },
+      onToggle: () => toggleSidebarSection('nav:sources', isSourcesNavigation(navState), handleSourcesClick),
       contextMenu: {
         type: 'sources',
         onAddSource: () => openAddSource(),
@@ -2589,10 +2607,10 @@ function AppShellContent({
       label: String(automations.length),
       icon: APP_NAV_DESTINATIONS_BY_ID.automations.icon,
       variant: (isAutomationsNavigation(navState) && !automationFilter) ? "default" : "ghost",
-      onClick: handleAutomationsClick,
+      onClick: () => toggleSidebarSection('nav:automations', isAutomationsNavigation(navState), handleAutomationsClick, true),
       expandable: true,
       expanded: isAutomationsNavigation(navState) && isExpanded('nav:automations'),
-      onToggle: () => { if (isAutomationsNavigation(navState)) toggleExpanded('nav:automations'); else setCollapsedItems(prev => { const next = new Set(prev); next.delete('nav:automations'); return next }) },
+      onToggle: () => toggleSidebarSection('nav:automations', isAutomationsNavigation(navState), handleAutomationsClick),
       contextMenu: {
         type: 'automations' as const,
         onAddAutomation: openAddAutomation,
@@ -2706,7 +2724,7 @@ function AppShellContent({
 
       {isAutoCompact && !isSidebarAndNavigatorHidden && (
         <div data-compact-profile className="chrome-rail fixed bottom-1 left-1 z-panel flex h-11 items-center gap-1 rounded-xl px-1" data-shell-role="chrome">
-          <ProfileStrip data={profileStripWithSpend} compact onClick={() => handleSettingsClick('account')} className="w-10 px-1 py-1" />
+          <ProfileStrip data={profileStripWithSpend} compact onClick={() => handleSettingsClick('account')} className="w-10 p-0.5" />
           <button type="button" onClick={() => handleSettingsClick()} aria-label={t('sidebar.settings')} title={t('sidebar.settings')} className="grid size-9 place-items-center rounded-lg text-foreground/60 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring">
             <Settings className="size-4" aria-hidden />
           </button>
