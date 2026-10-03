@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
+import { formatHotkeyDisplay } from '@/lib/platform'
 import {
   Badge,
   Button,
@@ -423,7 +424,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
           onKeyDown={(event) => { if (event.key === 'Escape') setQuery('') }}
           className="h-7 min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-text-muted"
         />
-        {query ? <button type="button" className="text-[11px] text-text-muted hover:text-foreground" onClick={() => setQuery('')}>{t('meetings.screen.clearSearch')}</button> : <span className="text-[11px] text-text-muted">⌘F</span>}
+        {query ? <button type="button" className="text-[11px] text-text-muted hover:text-foreground" onClick={() => setQuery('')}>{t('meetings.screen.clearSearch')}</button> : <span className="text-[11px] text-text-muted">{formatHotkeyDisplay('mod+f')}</span>}
       </div>
       {bannerNode}
       <div ref={listTarget} role="listbox" aria-label={t('meetings.title')} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="meetings-list">
