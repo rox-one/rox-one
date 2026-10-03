@@ -1403,17 +1403,23 @@ function AppShellContent({
     setSkills([])
     if (!activeWorkspaceId) return
     let cancelled = false
-    let receivedUpdate = false
-    const cleanup = window.electronAPI.onSkillsChanged((workspaceId, updatedSkills) => {
+    let requestVersion = 0
+    const refreshSkills = async () => {
+      const version = ++requestVersion
+      try {
+        const loaded = await window.electronAPI.getSkills(activeWorkspaceId, activeSessionWorkingDirectory)
+        if (!cancelled && version === requestVersion) setSkills(loaded || [])
+      } catch (err) {
+        if (!cancelled && version === requestVersion) console.error('[Chat] Failed to load skills:', err)
+      }
+    }
+    const cleanup = window.electronAPI.onSkillsChanged((workspaceId) => {
       if (cancelled || workspaceId !== activeWorkspaceId) return
-      receivedUpdate = true
-      setSkills(updatedSkills || [])
+      // This event's workspace-only catalog excludes project and OMP variants.
+      // Reload through the same scoped API used for the initial complete catalog.
+      void refreshSkills()
     })
-    window.electronAPI.getSkills(activeWorkspaceId, activeSessionWorkingDirectory).then((loaded) => {
-      if (!cancelled && !receivedUpdate) setSkills(loaded || [])
-    }).catch(err => {
-      if (!cancelled) console.error('[Chat] Failed to load skills:', err)
-    })
+    void refreshSkills()
     return () => { cancelled = true; cleanup() }
   }, [activeWorkspaceId, activeSessionWorkingDirectory])
 

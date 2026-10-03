@@ -35,7 +35,7 @@ import {
   isTerminalNavigation,
 } from '@/contexts/NavigationContext'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
-import { isScreenNavigation } from '../../../shared/types'
+import { isScreenNavigation, type LoadedSource, type LoadedSkill } from '../../../shared/types'
 import ChatPage from '@/pages/ChatPage'
 import { HomeFrontPage } from '@/platform/HomeFrontPage'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
@@ -127,25 +127,74 @@ export function MainContentPanel({
   const selectedSourceSlug = isSourcesNavigation(navState) ? navState.details?.sourceSlug : undefined
   const selectedSkillSlug = isSkillsNavigation(navState) && navState.details?.type === 'skill'
     ? navState.details.skillSlug : undefined
-  const [missingEntity, setMissingEntity] = useState<{ routeKey: string; missing: boolean } | null>(null)
+  const entityApi = typeof window === 'undefined' ? undefined : window.electronAPI
+  const supportsEntityLookup = Boolean(activeWorkspaceId && (
+    selectedSourceSlug ? entityApi?.getSources : selectedSkillSlug ? entityApi?.getSkills : undefined
+  ))
+  const [entityPresence, setEntityPresence] = useState<{
+    routeKey: string
+    status: 'present' | 'missing' | 'unavailable'
+    detailEpoch?: number
+  } | null>(null)
   useEffect(() => {
-    setMissingEntity(null)
+    setEntityPresence(null)
     if (!activeWorkspaceId || (!selectedSourceSlug && !selectedSkillSlug)) return
     let cancelled = false
+    let receivedUpdate = false
+    let lookupVersion = 0
+    const sourcePresence = (sources: LoadedSource[]) => setEntityPresence({
+      routeKey,
+      status: sources.some(source => source.config.slug === selectedSourceSlug) ? 'present' : 'missing',
+    })
+    const skillPresence = (skills: LoadedSkill[], refreshEpoch = 0) => {
+      const skill = skills.find(skill => skill.slug === selectedSkillSlug)
+      setEntityPresence({
+        routeKey,
+        status: skill ? 'present' : 'missing',
+        // Non-workspace pages also subscribe to the partial workspace snapshot.
+        // Remount their read-only detail from the full, correctly scoped catalog.
+        detailEpoch: skill && skill.source !== 'workspace' ? refreshEpoch : 0,
+      })
+    }
+    const refreshPresence = async (fromUpdate = false) => {
+      const version = ++lookupVersion
+      try {
+        const entities = selectedSourceSlug
+          ? await entityApi?.getSources(activeWorkspaceId)
+          : await entityApi?.getSkills(activeWorkspaceId, activeSessionWorkingDirectory)
+        if (cancelled || version !== lookupVersion) return
+        if (!Array.isArray(entities)) throw new Error('Invalid entity snapshot')
+        if (selectedSourceSlug) sourcePresence(entities as LoadedSource[])
+        else skillPresence(entities as LoadedSkill[], fromUpdate ? version : 0)
+      } catch {
+        if (!cancelled && version === lookupVersion) setEntityPresence({ routeKey, status: 'unavailable' })
+      }
+    }
     // These snapshots are authoritative only for the selected workspace. Keep the
     // route selected after deletion so its missing state survives subsequent events.
     const cleanup = selectedSourceSlug
-      ? window.electronAPI?.onSourcesChanged?.((workspaceId, sources) => {
+      ? entityApi?.onSourcesChanged?.((workspaceId, sources) => {
         if (cancelled || workspaceId !== activeWorkspaceId) return
-        setMissingEntity({ routeKey, missing: !sources.some(source => source.config.slug === selectedSourceSlug) })
+        receivedUpdate = true
+        lookupVersion++
+        sourcePresence(sources)
       })
-      : window.electronAPI?.onSkillsChanged?.((workspaceId, skills) => {
+      : entityApi?.onSkillsChanged?.((workspaceId, skills) => {
         if (cancelled || workspaceId !== activeWorkspaceId) return
-        setMissingEntity({ routeKey, missing: !skills.some(skill => skill.slug === selectedSkillSlug) })
+        receivedUpdate = true
+        // Broadcasts omit project/OMP skills; absence there does not mean deletion.
+        if (supportsEntityLookup) void refreshPresence(true)
+        else skillPresence(skills)
       })
+    // Resolve presence before mounting a detail page whose first error could stick
+    // through later live updates. Newer snapshots outrank this initial read.
+    if (supportsEntityLookup && !receivedUpdate) void refreshPresence()
     return () => { cancelled = true; cleanup?.() }
-  }, [activeWorkspaceId, selectedSourceSlug, selectedSkillSlug, routeKey])
-  const selectedEntityMissing = missingEntity?.routeKey === routeKey && missingEntity.missing
+  }, [activeWorkspaceId, selectedSourceSlug, selectedSkillSlug, routeKey, activeSessionWorkingDirectory, supportsEntityLookup])
+  const selectedEntityStatus = entityPresence?.routeKey === routeKey ? entityPresence.status : null
+  const selectedEntityPending = supportsEntityLookup && selectedEntityStatus === null
+  const detailKey = entityPresence?.routeKey === routeKey && entityPresence.detailEpoch
+    ? `${routeKey}:${entityPresence.detailEpoch}` : routeKey
 
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const visibleSessionIds = useMemo(
@@ -213,7 +262,7 @@ export function MainContentPanel({
   )
 
   const wrapWithStoplight = (content: React.ReactNode) => (
-    <StoplightProvider key={routeKey} value={isSidebarAndNavigatorHidden}>
+    <StoplightProvider key={detailKey} value={isSidebarAndNavigatorHidden}>
       <React.Suspense fallback={pageFallback}>
         {content}
       </React.Suspense>
@@ -229,16 +278,25 @@ export function MainContentPanel({
     </StoplightProvider>
   )
 
-  const missingEntityPanel = (family: 'source' | 'skill', message: string) => wrapWithStoplight(
+  const entityRecoveryPanel = (
+    family: 'source' | 'skill',
+    message: string,
+    status: 'missing' | 'unavailable' = 'missing',
+  ) => wrapWithStoplight(
     <Panel variant="grow" className={className}>
       <div
         role="status"
         className="flex h-full items-center justify-center text-muted-foreground"
-        data-testid="route-entity-missing"
+        data-testid={`route-entity-${status}`}
         data-route-family={family}
       >
         <p className="text-sm">{message}</p>
       </div>
+    </Panel>,
+  )
+  const entityLoadingPanel = () => wrapWithStoplight(
+    <Panel variant="grow" className={className}>
+      <div aria-busy="true" data-testid="route-entity-loading" className="h-full">{pageFallback}</div>
     </Panel>,
   )
 
@@ -272,7 +330,9 @@ export function MainContentPanel({
       )
     }
     if (navState.details) {
-      if (selectedEntityMissing) return missingEntityPanel('source', t('sourceInfo.notFound'))
+      if (selectedEntityPending) return entityLoadingPanel()
+      if (selectedEntityStatus === 'missing') return entityRecoveryPanel('source', t('sourceInfo.notFound'))
+      if (selectedEntityStatus === 'unavailable') return entityRecoveryPanel('source', t('sourceInfo.failedToLoad'), 'unavailable')
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
           <SourceInfoPage sourceSlug={navState.details.sourceSlug} workspaceId={activeWorkspaceId || ''} />
@@ -303,7 +363,9 @@ export function MainContentPanel({
       )
     }
     if (navState.details?.type === 'skill') {
-      if (selectedEntityMissing) return missingEntityPanel('skill', t('skillInfo.notFound'))
+      if (selectedEntityPending) return entityLoadingPanel()
+      if (selectedEntityStatus === 'missing') return entityRecoveryPanel('skill', t('skillInfo.notFound'))
+      if (selectedEntityStatus === 'unavailable') return entityRecoveryPanel('skill', t('skillInfo.failedToLoad'), 'unavailable')
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
           <SkillInfoPage

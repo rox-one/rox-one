@@ -31,11 +31,13 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
 
     it(`keeps a live ${kind.toLowerCase()} deletion ahead of a pending initial snapshot`, async () => {
       const initial = deferred<string[]>()
+      const refreshed = deferred<string[]>()
+      let reads = 0
       let event: ((workspace: string, data: string[]) => void) | undefined
       let data: string[] = []
       let unsubscribed = false
       const api = {
-        [`get${kind}`]: () => initial.promise,
+        [`get${kind}`]: () => ++reads === 1 ? initial.promise : refreshed.promise,
         [`on${kind}Changed`]: (callback: NonNullable<typeof event>) => { event = callback; return () => { unsubscribed = true } },
       }
       const bindings = {
@@ -47,6 +49,7 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
       event!('other-workspace', ['wrong-entity'])
       expect(data).toEqual([])
       event!('current', [])
+      refreshed.resolve([])
       initial.resolve(['deleted-entity']); await settle()
       expect(data).toEqual([])
       offLoad?.(); offEvent?.()
@@ -55,6 +58,54 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
       expect(data).toEqual([])
     })
   }
+
+  it('keeps project and OMP skills when a workspace-only event invalidates the full catalog', async () => {
+    const initial = deferred<string[]>()
+    const refreshed = deferred<string[]>()
+    let reads = 0
+    let event!: (workspace: string, data: string[]) => void
+    let data: string[] = []
+    const requests: unknown[][] = []
+    const cleanup = appShellEffect('electronAPI.getSkills(', {
+      window: { electronAPI: {
+        getSkills: (...args: unknown[]) => { requests.push(args); return ++reads === 1 ? initial.promise : refreshed.promise },
+        onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
+      } },
+      activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
+      setSkills: (next: string[]) => { data = next }, console,
+    })
+    initial.resolve(['workspace-skill', 'project-skill', 'omp-skill']); await settle()
+    event('current', ['workspace-skill'])
+    expect(data).toEqual(['workspace-skill', 'project-skill', 'omp-skill'])
+    refreshed.resolve(['workspace-updated', 'project-skill', 'omp-skill']); await settle()
+    expect(data).toEqual(['workspace-updated', 'project-skill', 'omp-skill'])
+    expect(requests).toEqual([['current', '/work/project'], ['current', '/work/project']])
+    cleanup?.()
+  })
+
+  it('accepts only the newest scoped skill refresh after consecutive workspace events', async () => {
+    const responses = [deferred<string[]>(), deferred<string[]>(), deferred<string[]>()]
+    let reads = 0
+    let event!: (workspace: string, data: string[]) => void
+    let data: string[] = []
+    const cleanup = appShellEffect('electronAPI.getSkills(', {
+      window: { electronAPI: {
+        getSkills: () => responses[reads++]!.promise,
+        onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
+      } },
+      activeWorkspaceId: 'current', activeSessionWorkingDirectory: undefined,
+      setSkills: (next: string[]) => { data = next }, console,
+    })
+    responses[0]!.resolve(['initial']); await settle()
+    event('foreign', ['wrong']); expect(reads).toBe(1)
+    event('current', ['partial-older']); event('current', ['partial-newer'])
+    responses[2]!.resolve(['full-newer', 'omp']); await settle()
+    responses[1]!.resolve(['full-older']); await settle()
+    expect(data).toEqual(['full-newer', 'omp'])
+    cleanup?.()
+    event('current', ['after-cleanup'])
+    expect(reads).toBe(3)
+  })
 
   it('recovers from request rejection and unmount without installing stale data', async () => {
     const request = deferred<string[]>()
