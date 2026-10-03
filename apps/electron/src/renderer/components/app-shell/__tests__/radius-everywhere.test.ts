@@ -3,10 +3,10 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 /**
- * Formerly `ship-rox-radius-everywhere` (every shell panel a rounded box).
- * Superseded by the one-surface shell: panes sit flush on one background and
- * are separated by a single hairline divider. Radius tokens stay for floating
- * surfaces (conation cards, popovers).
+ * Rounded-panel shell (Mark, 2026-09-29): every shell pane is a flat,
+ * borderless rounded box (`--rox-radius-panel` 10px) separated by a 4px
+ * PANEL_GAP / edge inset so the rounding reads against the background.
+ * No outlines or shadows; high contrast gets an inset 1px ring.
  */
 const appShell = join(import.meta.dir, '..')
 const platform = join(import.meta.dir, '../../../platform')
@@ -20,10 +20,11 @@ const uiCss = readFileSync(join(import.meta.dir, '../../../../../../../packages/
 const rendererCss = readFileSync(join(import.meta.dir, '../../../index.css'), 'utf8')
 
 describe('one-surface shell', () => {
-  it('keeps radius tokens for floating surfaces but no panel gaps', () => {
+  it('rounded panels sit on a 4px gap/inset grid', () => {
     expect(constants).toContain('export const RADIUS_EDGE = 8')
     expect(constants).toContain('export const RADIUS_INNER = 8')
-    expect(constants).toContain('export const PANEL_GAP = 0')
+    expect(constants).toContain('export const PANEL_GAP = 4')
+    expect(constants).toContain('export const PANEL_EDGE_INSET = 4')
     expect(constants).toContain('export const CENTER_MIN_WIDTH = 420')
   })
 
@@ -62,7 +63,9 @@ describe('one-surface shell', () => {
   it('defines divider tokens for standard and high contrast', () => {
     expect(uiCss).toContain('--rox-shell-divider: color-mix(in oklch, var(--foreground) 6%, transparent);')
     expect(uiCss).toContain('--rox-shell-divider: color-mix(in oklch, var(--foreground) 10%, transparent);')
-    expect(uiCss).toMatch(/\.rox-shell-pane\s*\{[^}]*border-radius:\s*0;[^}]*box-shadow:\s*none;/)
+    expect(uiCss).toContain('--rox-radius-panel: 10px;')
+    expect(uiCss).toMatch(/\.rox-shell-pane\s*\{[^}]*border-radius:\s*var\(--rox-radius-panel\);[^}]*box-shadow:\s*none;/)
+    expect(uiCss).toMatch(/html\[data-contrast="high"\] \.rox-shell-pane\s*\{[^}]*inset 0 0 0 1px/)
     expect(rendererCss).toContain('html[data-scenic] .rox-shell-pane')
   })
 })

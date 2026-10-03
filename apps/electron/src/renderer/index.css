@@ -1247,6 +1247,29 @@ html[data-contrast="high"] :is([data-radix-popper-content-wrapper], [role="menu"
   box-shadow: inset 0 -2px 0 var(--focus);
 }
 
+/* ActivityRail rows (platform/RailRow.tsx): high-contrast safety, mirroring
+   the titlebar mode pill — solid accent for the active row, stronger text,
+   and a system outline when the OS forces colors (backgrounds are dropped). */
+html[data-contrast="high"] .rox-rail-row {
+  color: color-mix(in oklch, var(--foreground) 90%, transparent);
+}
+html[data-contrast="high"] .rox-rail-row[aria-disabled="true"] {
+  color: color-mix(in oklch, var(--foreground) 50%, transparent);
+}
+html[data-contrast="high"] .rox-rail-row:not([aria-disabled="true"]):not([aria-current="page"]):hover {
+  background: color-mix(in oklch, var(--foreground) 14%, transparent);
+}
+html[data-contrast="high"] .rox-rail-row[aria-current="page"] {
+  background: var(--accent);
+  color: var(--background);
+}
+@media (forced-colors: active) {
+  .rox-rail-row[aria-current="page"] {
+    outline: 1px solid CanvasText;
+    outline-offset: -1px;
+  }
+}
+
 /* Главная widgets (platform/home): flat tone steps, never outlines. High
    contrast gets stronger tones so widgets and hovered rows stay distinct. */
 .rox-home-widget {
@@ -1286,6 +1309,7 @@ html[data-contrast="high"] .rox-home-tile.rox-home-tile-added {
 }
 html[data-contrast="high"] .rox-home-toggle[aria-checked="false"] {
   background-color: color-mix(in oklch, var(--foreground) 45%, transparent);
+
 }
 
 .rox-inspector-terminal ::selection {

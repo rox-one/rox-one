@@ -80,7 +80,7 @@ export const KEYS = {
   featureUnifiedShell: 'feature-unified-shell',
   workbenchLegacyEnabled: 'feature-unified-shell', // Bounded compatibility read only
   surfaceLayout: 'surface-layout', // Surface layout transport (URL search string; derived via platform/layout-snapshot.ts), workspace-scoped
-  activityRailCollapsed: 'activity-rail-collapsed',
+  activityRailCollapsed: 'activity-rail-collapsed', // Preserve the user's existing collapse preference
   inspectorVisible: 'inspector-visible',
   inspectorChromeCollapsed: 'inspector-chrome-collapsed',
   inspectorSection: 'inspector-section',

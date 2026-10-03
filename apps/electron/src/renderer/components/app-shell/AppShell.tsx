@@ -97,8 +97,8 @@ import {
 import { APP_NAV_DESTINATIONS_BY_ID } from "./nav-destinations"
 import {
   WorkspaceSurfaceHost,
-  ACTIVITY_RAIL_WIDTH,
-  ACTIVITY_RAIL_COLLAPSED_WIDTH,
+  activityRailWidth,
+  useEffectiveRailCollapsed,
   StatusBarHost,
   shouldShowStatusBar,
   resolveWorkbenchAvailability,
@@ -106,7 +106,7 @@ import {
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
 import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { useInspectorSuppressed } from "@/platform/inspector-suppression"
-import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, activityRailCollapsedAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom, bottomTerminalOpenAtom, bottomDockHeightAtom } from "@/atoms/unified-shell"
+import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom, bottomTerminalOpenAtom, bottomDockHeightAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -227,23 +227,6 @@ interface AppShellProps {
   workbenchOperatorCapability?: unknown
 }
 
-/** Screens that render full-width and do not use the sessions sidebar. */
-export function shouldHideSessionsSidebar(navState: NavigationState): boolean {
-  return isSettingsNavigation(navState)
-    || isHomeNavigation(navState)
-    || isTasksNavigation(navState)
-    || isMeetingsNavigation(navState)
-    || isInboxNavigation(navState)
-    || isFeedNavigation(navState)
-    || isScreenNavigation(navState)
-    || isNotesNavigation(navState)
-    || isMemoryNavigation(navState)
-    || isProjectsNavigation(navState)
-    || isPagesNavigation(navState)
-    || isKnowledgeNavigation(navState)
-    || isConnectionsNavigation(navState)
-}
-
 export function AppShell(props: AppShellProps) {
   const [mini, setMini] = useState(() => new URLSearchParams(window.location.search).get('mini') === 'true')
 
@@ -334,23 +317,22 @@ function AppShellContent({
     workbenchUserPreference,
   )
   const workbenchEnabled = workbenchAvailability === 'enabled'
-  const activityRailCollapsed = useAtomValue(activityRailCollapsedAtom)
+  const { collapsed: activityRailCollapsed } = useEffectiveRailCollapsed()
   const inspectorVisible = useAtomValue(inspectorVisibleAtom)
   const bottomTerminalOpen = useAtomValue(bottomTerminalOpenAtom)
   const bottomDockHeight = useAtomValue(bottomDockHeightAtom)
   // Collapsed terminal has no bottom strip (the TopBar button is the entry point).
   const terminalClearance = (bottomTerminalOpen ? bottomDockHeight : 0) + PANEL_EDGE_INSET + 4
-  const unifiedRailOffset = (unifiedShellEnabled || topChromeEnabled || workbenchEnabled)
-    ? (activityRailCollapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH) + PANEL_GAP
+  // Same predicate as WorkspaceSurfaceHost's `chrome.showRail`
+  // (unifiedShell || topChrome gated by unifiedShell/workbench): never
+  // reserve rail width when the rail is not rendered.
+  const activityRailRendered = unifiedShellEnabled
+    || ((unifiedShellEnabled || workbenchEnabled) && topChromeEnabled)
+  const unifiedRailOffset = activityRailRendered
+    ? activityRailWidth(activityRailCollapsed) + PANEL_GAP
     : 0
-  // The sessions sidebar (statuses / labels / views) is contextual to Chats:
-  // Settings and the full-width module screens hide it so their content is
-  // not squeezed. Only when the activity rail is mounted (it keeps navigation
-  // reachable). Display-only: the persisted visibility is untouched.
-  const earlyNavState = useNavigationState()
-  const routeHidesSessionsSidebar = (unifiedShellEnabled || topChromeEnabled)
-    && shouldHideSessionsSidebar(earlyNavState)
-  const isSidebarVisible = storedSidebarVisible && !routeHidesSessionsSidebar
+  // The visible toggle follows the saved preference on every route.
+  const isSidebarVisible = storedSidebarVisible
   const [storedSidebarWidth, setSidebarWidth] = React.useState(() => {
     return loadShellLayout(null).sidebarWidth
   })

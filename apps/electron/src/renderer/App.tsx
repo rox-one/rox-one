@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { waitForTransportConnected } from './lib/transport-wait'
+import { decideStartupAppState, isStartupAuthorityDenial, probeWithRetry } from './lib/startup-setup-needs'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/useTheme'
 import type { ThemeOverrides } from '@config/theme'
@@ -304,7 +306,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   // App state: loading -> check auth -> onboarding or ready
   const [appState, setAppState] = useState<AppState>('loading')
   const [setupNeeds, setSetupNeeds] = useState<SetupNeeds | null>(null)
-  const [webBootstrapError, setWebBootstrapError] = useState('')
+  const [startupBootstrapError, setStartupBootstrapError] = useState('')
+  const [startupAttempt, setStartupAttempt] = useState(0)
   const [callerAuthority, setCallerAuthority] = useState<'native' | 'local' | null>(null)
   const callerAuthorityRef = useRef(callerAuthority)
   callerAuthorityRef.current = callerAuthority
@@ -847,65 +850,107 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           })
           return
         }
-        // Get this window's workspace ID (passed via URL query param from main process)
-        const wsId = await window.electronAPI.getWindowWorkspace()
-        setWindowWorkspaceId(wsId)
-
-        const identity = await window.electronAPI.getOrgIdentity()
+        // A failed read is unavailable, never evidence of an absent workspace
+        // or a completed Welcome. Only fresh caller identity can authorize entry.
+        let workspaceProbe = await probeWithRetry(() => window.electronAPI.getWindowWorkspace())
+        if (cancelled) return
+        const identityProbe = await probeWithRetry(() => window.electronAPI.getOrgIdentity())
+        if (cancelled) return
+        if (!identityProbe.ok) throw identityProbe.error
+        const identity = identityProbe.value
         if (!identity || identity.authority !== 'native' && identity.authority !== 'local') {
           throw new Error('runtime-identity-unavailable')
         }
-        setCallerAuthority(identity.authority)
+        let startupSetupNeeds: SetupNeeds | null = null
         if (identity.authority === 'local') {
-          setSetupNeeds(await window.electronAPI.getSetupNeeds())
+          const setupProbe = await probeWithRetry(() => window.electronAPI.getSetupNeeds())
+          if (cancelled) return
+          if (!setupProbe.ok) throw setupProbe.error
+          startupSetupNeeds = setupProbe.value
         }
-
-        const savedDisplayName = identity?.name?.trim()
-        if (!savedDisplayName) {
-          setAppState('onboarding')
-          return
+        if (!workspaceProbe.ok) {
+          if (isStartupAuthorityDenial(workspaceProbe.error)) throw workspaceProbe.error
+          const transportProbe = await probeWithRetry(
+            () => waitForTransportConnected(window.electronAPI, { timeoutMs: 12_000 }),
+            { delaysMs: [] },
+          )
+          if (cancelled) return
+          if (!transportProbe.ok) throw transportProbe.error
+          workspaceProbe = await probeWithRetry(() => window.electronAPI.getWindowWorkspace())
+          if (cancelled) return
         }
-
-        // An explicit persisted display name is completion authority. Ensure a
-        // Rox default for new profiles while preserving existing selections.
-        const runtime = await ensureRoxRuntimeDefault(window.electronAPI)
-        if (runtime.status === 'failed') {
-          toast.error(t('onboarding.errors.saveConfigFailed'))
-          setAppState('onboarding')
-          return
+        if (!workspaceProbe.ok) throw workspaceProbe.error
+        const startupState = decideStartupAppState({ identityProbe, workspaceProbe })
+        if (startupState === 'transport-unavailable') throw new Error('runtime-identity-unavailable')
+        let startupConnections: LlmConnectionWithStatus[] | null = null
+        let startupDefaultSlug: string | undefined
+        if (startupState !== 'onboarding') {
+          const runtimeProbe = await probeWithRetry(
+            () => ensureRoxRuntimeDefault(window.electronAPI), { delaysMs: [] },
+          )
+          if (cancelled) return
+          if (!runtimeProbe.ok) throw runtimeProbe.error
+          if (runtimeProbe.value.status === 'failed') throw new Error(runtimeProbe.value.error)
+          if (identity.authority === 'native') {
+            // The configuration-only runtime read already supplies this slug;
+            // never request host accounts or credentials for a native caller.
+            startupConnections = []
+            startupDefaultSlug = runtimeProbe.value.slug
+          } else {
+            const connectionsProbe = await probeWithRetry(() => window.electronAPI.listLlmConnectionsWithStatus())
+            if (cancelled) return
+            if (!connectionsProbe.ok) throw connectionsProbe.error
+            startupConnections = connectionsProbe.value
+            startupDefaultSlug = resolveDefaultConnectionSlug(connectionsProbe.value)
+          }
         }
-
-        if (identity.authority === 'native') {
-          const summary = await window.electronAPI.getStartupRuntimeSummary()
-          setLlmConnections([])
-          setDefaultLlmConnectionSlug(summary?.slug)
-        } else {
-          const connections = await window.electronAPI.listLlmConnectionsWithStatus()
-          setLlmConnections(connections)
-          setDefaultLlmConnectionSlug(resolveDefaultConnectionSlug(connections))
+        // Runtime setup and transport recovery can outlive the original actor
+        // or window binding. Publish only after current readback matches both.
+        const finalIdentityProbe = await probeWithRetry(() => window.electronAPI.getOrgIdentity())
+        if (cancelled) return
+        if (!finalIdentityProbe.ok) throw finalIdentityProbe.error
+        const currentIdentity = finalIdentityProbe.value
+        if (!currentIdentity || currentIdentity.userId !== identity.userId
+          || currentIdentity.authority !== identity.authority
+          || identity.authority === 'native' && currentIdentity.issuer !== identity.issuer) {
+          throw new Error('runtime-identity-changed')
         }
-        if (!wsId) {
-          setAppState('workspace-picker')
-        } else {
-          setAppState('ready')
+        const finalWorkspaceProbe = await probeWithRetry(() => window.electronAPI.getWindowWorkspace())
+        if (cancelled) return
+        if (!finalWorkspaceProbe.ok) throw finalWorkspaceProbe.error
+        if (finalWorkspaceProbe.value !== workspaceProbe.value) throw new Error('runtime-workspace-changed')
+        const finalStartupState = decideStartupAppState({ identityProbe: finalIdentityProbe, workspaceProbe: finalWorkspaceProbe })
+        if (finalStartupState === 'transport-unavailable'
+          || startupState === 'onboarding' && finalStartupState !== 'onboarding') {
+          // A newly completed profile needs a fresh pass through runtime setup.
+          throw new Error('runtime-profile-changed')
         }
+        setCallerAuthority(identity.authority)
+        setWindowWorkspaceId(workspaceProbe.value)
+        setSetupNeeds(startupSetupNeeds)
+        if (startupConnections !== null && finalStartupState !== 'onboarding') {
+          setLlmConnections(startupConnections)
+          setDefaultLlmConnectionSlug(startupDefaultSlug)
+        }
+        setAppState(finalStartupState)
       } catch (error) {
         if (cancelled) return
         if (webTransportBootstrap) {
           setCallerAuthority(null)
-          setWebBootstrapError(error instanceof Error ? error.message : String(error))
+          setStartupBootstrapError(error instanceof Error ? error.message : String(error))
           setAppState('transport-unavailable')
           return
         }
         console.error('Failed to check auth state:', error)
-        toast.error(t('settings.account.loadFailed', { message: error instanceof Error ? error.message : String(error) }))
-        setAppState('onboarding')
+        setCallerAuthority(null)
+        setStartupBootstrapError(error instanceof Error ? error.message : String(error))
+        setAppState('transport-unavailable')
       }
     }
 
     void initialize()
     return () => { cancelled = true }
-  }, [resolveDefaultConnectionSlug, t, webTransportBootstrap, markHostSessionsUnavailable])
+  }, [resolveDefaultConnectionSlug, t, webTransportBootstrap, markHostSessionsUnavailable, startupAttempt])
 
   // Session selection state
   const [sessionSelection, setSession] = useSession()
@@ -2224,7 +2269,12 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     return (
       <div role="alert" className="flex h-screen flex-col items-center justify-center gap-3 px-4 text-center">
         <h1>{t('webui.connectionFailed')}</h1>
-        <p>{webBootstrapError}</p>
+        <p>{startupBootstrapError}</p>
+        <button type="button" className="rounded px-3 py-2 hover:bg-muted" onClick={() => {
+          setStartupBootstrapError('')
+          setAppState('loading')
+          setStartupAttempt(attempt => attempt + 1)
+        }}>{t('common.retry')}</button>
       </div>
     )
   }

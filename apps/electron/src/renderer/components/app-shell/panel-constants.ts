@@ -1,12 +1,13 @@
 /**
  * Gap between adjacent panels (sidebar ↔ navigator ↔ content ↔ right sidebar).
- * One-surface shell: panes sit flush and are separated by a 1px hairline
- * (`rox-shell-divider-*`), not by gaps between rounded boxes.
+ * Rounded-panel shell: panes are borderless rounded boxes (radius
+ * `--rox-radius-panel`, 10px) separated by this gap instead of hairlines, so
+ * the rounding reads against the shell background.
  */
-export const PANEL_GAP = 0
+export const PANEL_GAP = 4
 
-/** Padding from window edges to outermost panels (flush in the one-surface shell) */
-export const PANEL_EDGE_INSET = 0
+/** Padding from window edges to outermost panels (4px grid). */
+export const PANEL_EDGE_INSET = 4
 
 /**
  * Corner radius tokens for floating surfaces (conation cards etc.). Shell panes
@@ -31,10 +32,13 @@ export const CENTER_MIN_WIDTH = 420
 /** Extra vertical space reserved in panel stack for box-shadows. */
 export const PANEL_STACK_VERTICAL_OVERFLOW = 0
 
-/** Space between the TopBar and the desktop panel stack (flush: one surface). */
-export const PANEL_STACK_TOP_INSET = 0
+/** Space between the TopBar and the desktop panel stack. */
+export const PANEL_STACK_TOP_INSET = 4
 
-/** Space under the desktop panel stack (flush: one surface). */
+/**
+ * Space under the desktop panel stack. The outer shell already pads the
+ * bottom by PANEL_EDGE_INSET, so the stack itself adds nothing.
+ */
 export const PANEL_STACK_BOTTOM_INSET = 0
 
 /**
