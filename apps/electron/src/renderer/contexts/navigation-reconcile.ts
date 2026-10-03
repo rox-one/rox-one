@@ -4,6 +4,12 @@ import type { NavigationState } from '../../shared/types'
 
 export type AutoSelectionResolver = (state: NavigationState) => NavigationState
 
+/** Preserve raw view query bytes when automatic selection changes only its path. */
+export function preserveRouteQuery(originalRoute: string, resolvedRoute: string): ViewRoute {
+  const index = originalRoute.indexOf('?')
+  return (index < 0 ? resolvedRoute : resolvedRoute.split('?')[0] + originalRoute.slice(index)) as ViewRoute
+}
+
 /**
  * Normalize a panel route during URL reconciliation.
  *
@@ -25,5 +31,5 @@ export function normalizePanelRouteForReconcile(
   }
 
   const resolved = resolveAutoSelection(navState)
-  return buildRouteFromNavigationState(resolved) as ViewRoute
+  return preserveRouteQuery(route, buildRouteFromNavigationState(resolved))
 }
