@@ -1,3 +1,10 @@
+## Product Learning foundation recovery plan — 2026-10-03
+
+1. Freeze final a6 source and import only contracts/core/persistence/analytics; pr_scout owns these interfaces, historical_sweep integrates dependent UI/runtime/current consumers without copying old shell/pages.
+2. Inspect evidence/correlation and durable ownership boundaries. Retain original negative controls; reproduce and fix diagnostic accessor validation/serialization race through single captured own data properties, preserving interfaces.
+3. Exercise pure engine and real Chromium IndexedDB across isolated windows, storage/transaction/future-version failures, scoped reset and privacy/retention. Verify renderer types/build without claiming route/native feature acceptance.
+4. Reconcile live main, freeze source/proof/log receipt, publish/attach a separate PR. Notify dependent worker of exact interfaces/head and preserve every original branch; lead reviews and merges.
+
 # Golden Gate surface tab recovery — 2026-10-03
 
 Owner: root. Source5def9ffd36dc160fdc7c908784e0ef97ba6a732e → current-consumer comparison → title loader/navigation helpers → unit failure/cache/workspace controls and actual Chromium SurfaceTabs interactions → renderer strict types/build → separate PR/exact merge readback. Depends on current unified-shell atoms and pending panel focus repair1415; preserve its aria-controls contract when integrating.
