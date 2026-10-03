@@ -1,3 +1,11 @@
+# Credential locator boundary validation — 2026-10-03
+
+Owner: locator boundary-validation lead; independent reviewer: integration-status worker. User authorization includes source repair, GitHub delivery and merge into main. Initial reproduction base: `635fc495d02c3fe1380740444cb90cf4fbdb58d9`. PR #1407 independently delivered the same executable own-descriptor correction during this validation. PR #1408 preserves that production source and its 54 regressions, and adds 64 cases covering attachment, disk reload, persisted nonmutation, frozen records for all variants and ordinary Proxy get traps.
+
+`validateLocator` must derive the discriminator and every required provider field exclusively from own enumerable data descriptors. Missing fields reject even when Object.prototype supplies data or getters; validation must not execute inherited getters or ordinary locator get traps. Preserve rejection of symbols, accessors, hidden/unknown fields and custom/null prototypes, string normalization, and valid frozen records.
+
+Acceptance covers all ten provider variants through real registration, provider replacement, attachment and disk reload: invalid input cannot change registry or persisted metadata; corrupt persisted rows are skipped without repair writes. Focused regressions must fail on the base and pass on the correction. Full core tests, core TypeScript, unchanged validate:ci, relevant hosted CI/lifecycle checks, independent review and exact remote merge readback establish delivery. No deployment or native UI acceptance is inferred.
+
 ## Golden Gate device diagnostics recovery — 2026-10-03
 
 Owner: integration worker in isolated `codex/recover-golden-diagnostics-20261003`. Recover the genuinely absent native diagnostics slice from preserved branch `codex/golden-gate-workspace`, exact revision `5def9ffd36dc160fdc7c908784e0ef97ba6a732e` (closed unmerged PR #584). Source file hashes and the 90 recovered locale keys are recorded in `docs/golden-diagnostics-source.json`.
@@ -509,11 +517,3 @@ Owner: `fix/credential-locator-own-fields-20261003`, based on main `635fc495d02c
 Credential locators must contain their discriminator and every required value as their own enumerable data properties. Capture descriptor values into a null-prototype record before dispatch or normalization; never evaluate an own or inherited getter. Inherited `Object.prototype.value` must not turn an accessor descriptor into a data descriptor. Preserve valid frozen/readonly records, exact field allowlists, registry identity and persistence formats. Failed registration and provider replacement must leave registry state unchanged.
 
 Acceptance: negative data/getter cases for every locator variant and required field, zero getter invocations, unchanged state after rejection, existing valid/frozen positives, complete core suite and TypeScript, unchanged comprehensive CI command, and actual built-server HTTP/WebSocket authentication, shutdown and persistence/restart checks. Bind results to the delivered revision; Linux reproduction and hosted macOS checks are separate evidence.
-
-# Credential locator boundary validation — 2026-10-03
-
-Owner: locator boundary-validation lead; independent reviewer: integration-status worker. User authorization includes source repair, GitHub delivery and merge into main. Initial reproduction base: `635fc495d02c3fe1380740444cb90cf4fbdb58d9`. PR #1407 independently delivered the same executable own-descriptor correction during this validation. PR #1408 preserves that production source and its 54 regressions, and adds 64 cases covering attachment, disk reload, persisted nonmutation, frozen records for all variants and ordinary Proxy get traps.
-
-`validateLocator` must derive the discriminator and every required provider field exclusively from own enumerable data descriptors. Missing fields reject even when Object.prototype supplies data or getters; validation must not execute inherited getters or ordinary locator get traps. Preserve rejection of symbols, accessors, hidden/unknown fields and custom/null prototypes, string normalization, and valid frozen records.
-
-Acceptance covers all ten provider variants through real registration, provider replacement, attachment and disk reload: invalid input cannot change registry or persisted metadata; corrupt persisted rows are skipped without repair writes. Focused regressions must fail on the base and pass on the correction. Full core tests, core TypeScript, unchanged validate:ci, relevant hosted CI/lifecycle checks, independent review and exact remote merge readback establish delivery. No deployment or native UI acceptance is inferred.
