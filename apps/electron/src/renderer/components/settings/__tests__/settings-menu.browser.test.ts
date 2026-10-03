@@ -1,0 +1,44 @@
+import {afterAll,beforeAll,describe,expect,it} from 'bun:test'
+import {existsSync} from 'node:fs'
+import {resolve} from 'node:path'
+import {chromium,expect as playwrightExpect,type Browser,type Page} from 'playwright/test'
+const repository=resolve(import.meta.dirname,'../../../../../../..'),fixture=resolve(import.meta.dirname,'fixtures/menu-select')
+const executablePath=process.env.CHROMIUM_EXECUTABLE??chromium.executablePath(),endpoint='http://127.0.0.1:5240'
+const caseTimeout=Math.min(120000,Math.max(30000,Number(process.env.ROX_SETTINGS_BROWSER_TIMEOUT_MS)||30000))
+const expectDOM=playwrightExpect.configure({timeout:10000})
+const plain=(page:Page)=>page.getByRole('button',{name:/^Setting language /})
+const custom=(page:Page)=>page.getByRole('button',{name:/^Custom theme /})
+const commits=(page:Page)=>page.evaluate(()=>(window as any).__settingsFixture.commits)
+const active=(page:Page)=>page.getByRole('listbox').evaluate(element=>document.getElementById(element.getAttribute('aria-activedescendant')??'')?.textContent??'')
+
+describe.skipIf(!existsSync(executablePath))('production settings menu and row accessibility',()=>{
+ let server:ReturnType<typeof Bun.spawn>|undefined,browser:Browser
+ const stop=async()=>{server?.kill('SIGKILL');await browser?.close();await server?.exited}
+ beforeAll(async()=>{try{server=Bun.spawn(['node',resolve(repository,'node_modules/vite/bin/vite.js'),'--config',resolve(fixture,'vite.config.ts'),'--port','5240'],{cwd:repository,stdout:'ignore',stderr:'ignore'});const deadline=Date.now()+30000;for(;;){if(server.exitCode!==null)throw Error('Settings fixture exited');try{const response=await fetch(endpoint);if(response.ok){if(!(await response.text()).includes('rox-settings-menu-fixture'))throw Error('Foreign owner occupies fixture port');break}}catch(error){if(error instanceof Error&&error.message.includes('Foreign owner'))throw error}if(Date.now()>deadline)throw Error('Settings fixture startup timeout');await Bun.sleep(100)}browser=await chromium.launch({executablePath,headless:true,args:['--no-sandbox']})}catch(error){await stop();throw error}},45000)
+ afterAll(stop,caseTimeout)
+ const withPage=async(run:(page:Page)=>Promise<void>)=>{const context=await browser.newContext({viewport:{width:1200,height:900},reducedMotion:'reduce'}),page=await context.newPage(),errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));try{await page.goto(endpoint);await expectDOM(plain(page)).toBeVisible();await run(page);expect(errors).toEqual([])}catch(error){throw Error('Production settings fixture failed; pageErrors='+JSON.stringify(errors)+'; body='+await page.locator('body').innerText(),{cause:error})}finally{await context.close()}}
+ it('connects visible row labels and descriptions, including explicit caller overrides',async()=>withPage(async page=>{
+  await expectDOM(plain(page)).toHaveAccessibleName('Setting language English');await expectDOM(plain(page)).toHaveAccessibleDescription('Language selection stays unchanged until confirmation');await expectDOM(custom(page)).toHaveAccessibleDescription('Live theme preview');await expectDOM(page.getByRole('button',{name:'Explicit control',exact:true})).toHaveAccessibleDescription('Caller description Row description');
+  await plain(page).click();await expectDOM(page.getByRole('listbox',{name:'Setting language',exact:true})).toBeVisible();await expectDOM(plain(page)).toHaveAttribute('aria-controls',await page.getByRole('listbox').getAttribute('id') as string);await page.keyboard.press('Escape');await expectDOM(plain(page)).toBeFocused();
+ }),caseTimeout)
+ it('moves through enabled visible options without committing, then Enter selects and returns focus',async()=>withPage(async page=>{
+  await plain(page).focus();await page.keyboard.press('ArrowDown');await expectDOM(page.getByRole('listbox')).toBeFocused();await expectDOM.poll(()=>active(page)).toContain('English');await page.keyboard.press('ArrowDown');await expectDOM.poll(()=>active(page)).toContain('Español');await page.keyboard.press('ArrowDown');await expectDOM.poll(()=>active(page)).toContain('Français');expect(await commits(page)).toEqual([]);
+  await page.keyboard.press('End');await expectDOM.poll(()=>active(page)).toContain('日本語');await page.keyboard.press('ArrowDown');await expectDOM.poll(()=>active(page)).toContain('English');await page.keyboard.press('Home');await page.keyboard.press('ArrowUp');await expectDOM.poll(()=>active(page)).toContain('日本語');await page.keyboard.press('Enter');await expectDOM(page.getByRole('listbox')).toHaveCount(0);expect(await commits(page)).toEqual([{control:'plain',value:'jp'}]);await expectDOM(plain(page)).toBeFocused();
+ }),caseTimeout)
+ it('typeahead cycles repeated letters and mouse/keyboard preview never commits on Escape',async()=>withPage(async page=>{
+  await plain(page).click();await page.keyboard.press('e');await expectDOM.poll(()=>active(page)).toContain('Español');await page.keyboard.press('e');await expectDOM.poll(()=>active(page)).toContain('English');await page.waitForTimeout(750);await page.keyboard.press('f');await expectDOM.poll(()=>active(page)).toContain('Français');
+  await page.getByRole('option',{name:/Français/}).hover();expect(await commits(page)).toEqual([]);await page.keyboard.press('Escape');await expectDOM(plain(page)).toBeFocused();expect(await commits(page)).toEqual([]);expect(await page.evaluate(()=>(window as any).__settingsFixture.hovers.at(-1))).toBeNull();
+ }),caseTimeout)
+ it('filters actual options and preserves search Home/End editing and empty-result safety',async()=>withPage(async page=>{
+  await custom(page).click();const input=page.getByRole('combobox',{name:'Search...',exact:true});await expectDOM(input).toBeFocused();await input.fill('French');await expectDOM(page.getByRole('option')).toHaveCount(1);await expectDOM(page.getByRole('option')).toContainText('Français');await input.press('Home');expect(await input.evaluate(element=>(element as HTMLInputElement).selectionStart)).toBe(0);await input.press('End');expect(await input.evaluate(element=>(element as HTMLInputElement).selectionStart)).toBe(6);
+  await input.fill('NO_MATCH');await expectDOM(page.getByRole('status')).toHaveText('No results found');await input.press('ArrowDown');await input.press('Enter');expect(await commits(page)).toEqual([]);await input.fill('French');await input.press('Enter');expect(await commits(page)).toEqual([{control:'search',value:'fr'}]);await expectDOM(custom(page)).toBeFocused();
+ }),caseTimeout)
+ it('fences composing/modifier keys, disabled choices and disabled whole controls',async()=>withPage(async page=>{
+  await plain(page).evaluate(element=>element.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',isComposing:true,bubbles:true})));await expectDOM(page.getByRole('listbox')).toHaveCount(0);await plain(page).click();const list=page.getByRole('listbox');await list.evaluate(element=>{for(const key of ['ArrowDown','Enter'])element.dispatchEvent(new KeyboardEvent('keydown',{key,isComposing:true,bubbles:true}));element.dispatchEvent(new KeyboardEvent('keydown',{key:'End',ctrlKey:true,bubbles:true}));element.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',keyCode:229,bubbles:true}))});await expectDOM.poll(()=>active(page)).toContain('English');expect(await commits(page)).toEqual([]);
+  const unavailable=page.getByRole('option',{name:/Unavailable/});await expectDOM(unavailable).toBeDisabled();await unavailable.evaluate(element=>element.dispatchEvent(new MouseEvent('click',{bubbles:true})));expect(await commits(page)).toEqual([]);await page.evaluate(()=>(window as any).__settingsFixture.disable(true));await expectDOM(page.getByRole('listbox')).toHaveCount(0);await expectDOM(plain(page)).toBeDisabled();expect(await page.evaluate(()=>(window as any).__settingsFixture.hovers.at(-1))).toBeNull();
+ }),caseTimeout)
+ it('keeps active descendants valid when options change and refuses an all-disabled menu',async()=>withPage(async page=>{
+  await plain(page).click();await page.evaluate(()=>(window as any).__settingsFixture.replaceOptions([{value:'fr',label:'Français'},{value:'es',label:'Español'}]));await expectDOM(page.getByRole('option')).toHaveCount(2);await expectDOM.poll(()=>active(page)).toContain('Français');await page.keyboard.press('End');await expectDOM.poll(()=>active(page)).toContain('Español');await page.keyboard.press('Space');expect(await commits(page)).toEqual([{control:'plain',value:'es'}]);
+  await page.getByRole('button',{name:'Disabled choices English',exact:true}).click();await expectDOM(page.getByRole('listbox')).not.toHaveAttribute('aria-activedescendant');await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');expect(await commits(page)).toEqual([{control:'plain',value:'es'}]);await page.keyboard.press('Escape');await expectDOM(page.getByRole('button',{name:'Disabled choices English',exact:true})).toBeFocused();
+ }),caseTimeout)
+})
