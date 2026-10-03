@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { PersonalTaskStore, type PersonalTask, type PersonalTaskPutResult } from '@rox/core/tasks/personal'
-import { PersonalTaskPersistStore } from '@rox/server-core/tasks/personal-persist'
+import { PersonalTaskPersistStore } from '../../../../../../packages/server-core/src/tasks/personal-persist'
 import { capturePersonalTaskScope, hydratePersonalTasks, importPersonalTasksConfirmed, loadPersonalTaskStore, persistPersonalTaskStore, setPersonalTaskScope } from '../personal-tasks'
 import type { PersonalTasksApi } from '../personal-tasks-sync'
 const priorWindow = globalThis.window, priorStorage = globalThis.localStorage
