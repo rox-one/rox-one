@@ -1,9 +1,26 @@
-import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync, renameSync, openSync, closeSync } from 'node:fs';
+import { join, dirname, basename } from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { tmpdir, homedir } from 'node:os';
 import { OMP_WORKER_POLICY_SOURCE } from '../../packages/shared/src/agent/omp-worker-policy.ts';
 // Pinned Bun 1.3.14; optional ROX_OMP_PACKAGE_DIR points to a pinned 18.4.12 package.
 // All provider responses are native in-memory fixtures; every fetch is forbidden.
+export function writeWorkerEvidence(outputPath: string, evidence: unknown): void {
+ const pending=join(dirname(outputPath), `.${basename(outputPath)}.${randomUUID()}.pending`);
+ let created=false;
+ try {
+  const fd=openSync(pending,'wx',0o600);
+  created=true;
+  try { writeFileSync(fd,JSON.stringify(evidence,null,2)+'\n'); }
+  finally { closeSync(fd); }
+  // Replace the directory entry rather than following a pre-existing output symlink.
+  renameSync(pending,outputPath);
+ } finally {
+  if(created)rmSync(pending,{force:true});
+ }
+}
+
+async function main(): Promise<void> {
 const root=mkdtempSync(join(tmpdir(),'rox-native-worker-loop-'));
 process.env.PI_CODING_AGENT_DIR=join(root,'profile');
 process.env.OMP_PROFILE='default';
@@ -70,6 +87,9 @@ try{
  if(!containsMagicKeyword(revisedTask?.task??'','workflowz'))throw new Error('Native task execution did not preserve assignment revision');
  if(networkAttempts)throw new Error('Unexpected network attempt');
  const evidence={scope:'Full native SDK parent prompt, actual task tool dispatch and restricted child provider loop using native in-memory mock stream. No external API or credentials.',ompVersion:packageVersion,networkAttempts,paidProviderRequests:0,requestedThinking:'max',supportedMaximum:supportedMax,parentThinking:session.thinkingLevel,parentInitialThinking:'auto',childDefaultThinking:'medium',callerEffort:'lo',parentTools:session.getEnabledToolNames(),revisedTask,requests: calls.map(call=>({kind:call.child?'child':call.tools.length?'parent':'native-task-label-auxiliary',tools:call.tools,reasoning:call.reasoning,systemPolicyPresent:JSON.stringify(call.systemPrompt).includes('ROX mandatory execution policy'),projectedUserText:call.messages.filter(message=>message.role==='user').map(textOf),nativeNoticeText:call.messages.filter(message=>message.role==='developer').map(textOf)})),hooks,taskResult:taskResult.result,assertionsPassed:true,boundary:'Native task label generation is a separate tool-free auxiliary completion without AgentSession thinking/context hooks; its text inherits the assignment keywords. No installed-app or remote provider acceptance.'};
- writeFileSync(outputPath,JSON.stringify(evidence,null,2)+'\n');
+ writeWorkerEvidence(outputPath,evidence);
  console.log(JSON.stringify({networkAttempts,requests:evidence.requests.map(call=>({kind:call.kind,tools:call.tools,reasoning:call.reasoning})),hooks:hooks.length,parentThinking:session.thinkingLevel,supportedMax,assertionsPassed:true}));
 }finally{await session?.dispose();auth?.close?.();rmSync(root,{recursive:true,force:true});}
+}
+
+if(import.meta.main)await main();
