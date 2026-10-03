@@ -812,3 +812,8 @@ Recover the strict local calendar-day check from preserved Golden source5def9ffd
 ### Golden per-task form draft recovery — 2026-10-04
 
 Recover source5def9ffd per-task unsubmitted link/tag input through the existing modern TasksPage → TaskDetail consumer. Drafts remain ephemeral input only; canonical notes/task mutations, native actor/workspace CAS/ACK/readback, background import barriers and Product signals keep their owners. Input belongs to its captured caller generation and panel/workspace lifetime; scope ABA/unmount and obsolete rendered submissions cannot revive or write it. Clear only the submitted field value; keep other task drafts and link kind.
+
+
+## Notes source-path classification recovery — 2026-10-04
+
+Owner: historical branch worker; dependency: externally merged Notes1465 on2338adb95. Validate existing path components from the canonical Notes root toward the requested target before classifying absence. A file in place of a parent directory is a document authority change; a missing requested note remains NOT_FOUND only under a healthy authorized source. Symlinks, inaccessible sources, journal failures and permission revocation retain their existing refusal. This helper is read-only and creates no directory or credential. The temporary-file fixture uses the same canonical native root contract as NativeAuthority, including macOS temporary-directory aliases. Evidence: integration-history/note-read-parent-validation-20261004; bounded RPC/native-port/UI-callback checks do not claim installed Electron or OS identity acceptance.

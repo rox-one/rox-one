@@ -1,0 +1,28 @@
+{
+  "source_pr": 1465,
+  "source_sha": "6f59c9629ae44cbc13e1c8af1c1fd6282871969a",
+  "externally_merged_head": "a4298cd345d7aa99c75e033bc9fedf85e475d64c",
+  "main_baseline": "2338adb95cb986157f9c14dbf949c2d19b26f65a",
+  "change": "Read-only canonical-root\u2192parent\u2192target validation order; canonical native-root temp fixture only",
+  "negative": {
+    "executable_canonical_fixture": "35pass/2fail: parent corruption reported ENOTDIR/HANDLER_ERROR",
+    "initial_uncanonical_mac_fixture": "source alias refusals retained separately; not interpreted as native authority acceptance"
+  },
+  "current_checks": {
+    "actual_handlers_loopback_transport_and_Notes_callbacks": "37pass/0fail/172assertions",
+    "realNativeAuthority_Journal_RoutedClient_controls": "5pass/0fail/48assertions; declared30000ms local fixture budget, same assertions",
+    "strict_server_core_Node22_types": {
+      "exit_code": 0
+    }
+  },
+  "retained_failed_attempt": "Mixed broader native/write capability process crashed Bun1.3.14 SIG133 after five write-probe cases; not accepted; isolated actual NativeContent five controls succeeded",
+  "runtime_path_sha256": {
+    "packages/server-core/src/handlers/rpc/note-read-error.ts": "6d9406bfc1d2a6de7b72d356d768a012571d513287e6397c03c130a920ad5378",
+    "packages/server-core/src/handlers/rpc/__tests__/notes-missing.test.ts": "c790a1a045869e5db9fd7b39e56d98ad8cb65b6115a5b8dcea09865ef4928d83"
+  },
+  "limits": [
+    "No new auth/credential/grant/write; NativeAuthority and journal CAS remain unchanged",
+    "No installed Electron, live external provider or OS bootstrap claim"
+  ],
+  "branches_deleted": false
+}

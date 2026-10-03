@@ -1003,3 +1003,10 @@ Collection recovery qualification completed on current bb047:33/0/80 native-stor
 ### Golden per-task form draft recovery — 2026-10-04
 
 Owner recent_features; depends on current Tasks1456, strict date1470 and Product1454. Preserve old source and modern Things UI. Exercise actual two-task link/kind/tag retention, submitted-field-only clearing, actor/workspace ABA, unmount and stale pre-render button denial, plus all retained task import/responsive cases and current native commit controls. Retain the before-fix lost draft and fixture failure history; qualify current Electron types with own workspace dependency resolution, record exact source/log hashes, reconcile all current docs without deletions, publish separate PR for parent review/merge.
+
+
+## Notes source-path classification recovery — 2026-10-04
+
+1. Freeze source1465/6f59 and its external merge2338; retain negative current-source evidence. After correcting only the fixture's canonical root, actual current controls reproduce35pass/2fail for a corrupt parent directory and its transport classification.
+2. Validate ancestors before the requested file, preserving exact ENOENT-path matching, canonical-root and symlink guards, unchanged current native ownership fences and positive missing-note behavior.
+3. Qualify the actual registered Notes/content handlers, real temporary files and loopback transport, current Notes page callbacks, relevant authority controls and server-core types. Retain prior failures, append documentation, push a separate narrow PR; parent owns review/merge.
