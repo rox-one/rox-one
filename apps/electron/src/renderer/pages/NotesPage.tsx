@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { NotesInspectorToggle, NotesRailTools, NotesResponsiveRail, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
+import { notesAuxiliaryFits } from './notes/notes-layout'
 import { EMPTY_COMMENT_DRAFT, noteCommentDraftKey, updateCommentDraft, type NoteCommentDraft } from './notes/comment-drafts'
 import { capabilityErrorCode, readScopedCapability } from '@/lib/scoped-capability-read'
 import { hasNativeNotesTransport } from '@/lib/notes-capability'
@@ -312,6 +314,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [sideNoteChip, setSideNoteChip] = React.useState<{ title: string; path: string } | null>(null)
   const [rightSessionFocusToken, setRightSessionFocusToken] = React.useState(0)
   const sideSessionId = rightSessionContext?.sessionId ?? null
+  React.useEffect(() => {
+    if (rightSessionContext && rightSessionContext.workspaceId !== activeWorkspaceId) {
+      setRightSessionContext(null); setSideSessionPrompt(''); setSideNoteChip(null)
+    }
+  }, [activeWorkspaceId, rightSessionContext])
   const [notes, setNotes] = React.useState<NoteSummary[]>([])
   // Stable insertion order for sidebar — only updated on full refreshes, not optimistic saves
   const [sidebarOrder, setSidebarOrder] = React.useState<string[]>([])
@@ -385,14 +392,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [railLayout, setRailLayout] = useNotesRailLayout()
   // Width of the document row (СОДЕРЖАНИЕ | note | КОММЕНТАРИИ) so the side
   // rails can yield before the note column gets unreadably narrow.
-  const [docRowEl, setDocRowEl] = React.useState<HTMLDivElement | null>(null)
-  const [docRowWidth, setDocRowWidth] = React.useState(0)
-  React.useEffect(() => {
-    if (!docRowEl || typeof ResizeObserver === 'undefined') return
-    const observer = new ResizeObserver(([entry]) => setDocRowWidth(entry?.contentRect.width ?? 0))
-    observer.observe(docRowEl)
-    return () => observer.disconnect()
-  }, [docRowEl])
+  const [setDocRowEl, docRowWidth] = useNotesPanelWidth<HTMLDivElement>()
+  const [setShellEl, shellWidth] = useNotesPanelWidth<HTMLDivElement>()
+  const [inspectorSheetOpen, setInspectorSheetOpen] = React.useState(false)
+  const inlineAuxiliary = notesAuxiliaryFits(shellWidth, inspectorCollapsed, Boolean(rightSessionContext))
+  const [railSheet, setRailSheet] = React.useState<'toc' | 'comments' | null>(null)
   const [foldedHeadingIds, setFoldedHeadingIds] = React.useState<string[]>([])
   const [commandQuery, setCommandQuery] = React.useState<string | null>(null)
   const [commandIndex, setCommandIndex] = React.useState(0)
@@ -569,6 +573,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     noteViewCapabilities,
     'standard',
   )
+  React.useEffect(() => { setRailSheet(null); setInspectorSheetOpen(false) }, [activeWorkspaceId, activeNote?.id, noteView])
   const noteMindMapGraph = React.useMemo((): MindMapGraph | null => {
     if (!activeNote) return null
     if (noteView !== 'map' || !visibleBlockTree) return null
@@ -1947,12 +1952,13 @@ h1,h2,h3{margin-top:1.5em}
   }
 
   const toggleInspector = React.useCallback(() => {
+    if (!inlineAuxiliary) { setInspectorSheetOpen(open => !open); return }
     setInspectorCollapsed(prev => {
       const next = !prev
       localStorage.setItem('notes:inspector-collapsed', JSON.stringify(next))
       return next
     })
-  }, [])
+  }, [inlineAuxiliary])
 
   const handleRichEditorReady = React.useCallback((editor: TiptapEditorHandle | null) => {
     richEditorRef.current = editor
@@ -2083,7 +2089,7 @@ h1,h2,h3{margin-top:1.5em}
   return (
     <>
     <NotesEditorHeadlineStyles />
-    <div className="notes-shell flex h-full min-w-0">
+    <div ref={setShellEl} className="notes-shell flex h-full min-w-0">
       <ShellSidebarPortal
         className="notes-side-surface shrink-0 flex flex-col min-h-0"
         style={{ width: railLayout.vaultCollapsed ? 0 : railLayout.vault }}
@@ -2209,6 +2215,7 @@ h1,h2,h3{margin-top:1.5em}
               </button>
             </div>
           )}
+          <NotesInspectorToggle inline={inlineAuxiliary} open={inspectorSheetOpen} onToggle={toggleInspector} />
           <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} />
           <button
             className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40"
@@ -2289,12 +2296,15 @@ h1,h2,h3{margin-top:1.5em}
         </Dialog>
 
         {activeNote ? (
+          <div className="flex min-w-0 items-center">
           <EntityViewTabs
             value={noteView}
             onChange={setNoteView}
             capabilities={noteViewCapabilities}
             className="min-w-0 flex-wrap"
           />
+          {noteView === 'standard' ? <NotesRailTools tocShown={tocShown} commentsShown={commentsShown} sheet={railSheet} onOpen={setRailSheet} onCollapse={(rail) => setRailLayout({ [`${rail}Collapsed`]: true })} /> : null}
+          </div>
         ) : null}
 
         <div className="relative flex-1 min-h-0">
@@ -2409,7 +2419,7 @@ h1,h2,h3{margin-top:1.5em}
             </div></div>
           ) : (
             <div ref={setDocRowEl} className="flex h-full min-h-0">
-            {tocShown ? (
+            <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView])} inline={tocShown} open={railSheet === 'toc'} title={t('notes.toc.title')} onClose={() => setRailSheet(null)}>
             <NotesToc
               markdown={content}
               width={railLayout.toc}
@@ -2436,14 +2446,15 @@ h1,h2,h3{margin-top:1.5em}
                 heading?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }}
             />
-            ) : null}
-            <NotesRailSash
+            </NotesResponsiveRail>
+            {tocShown ? <NotesRailSash
               width={railLayout.toc}
               onWidth={(toc) => setRailLayout({ toc })}
               collapsed={railLayout.tocCollapsed}
               onToggle={() => setRailLayout({ tocCollapsed: !railLayout.tocCollapsed })}
               label={t('notes.layout.resizeToc')}
-            />
+              maximumWidth={Math.max(140, docRowWidth - NOTE_COLUMN_MIN - (commentsShown ? railLayout.comments : 0))}
+            /> : null}
             <div
               className="notes-editor relative h-full min-w-0 flex-1 overflow-y-auto px-10 pb-16 pt-8"
               onMouseUp={(event) => {
@@ -2645,15 +2656,16 @@ h1,h2,h3{margin-top:1.5em}
                 />
               ) : null}
             </div>
-            <NotesRailSash
+            {commentsShown ? <NotesRailSash
               width={railLayout.comments}
               invert
               onWidth={(comments) => setRailLayout({ comments })}
               collapsed={railLayout.commentsCollapsed}
               onToggle={() => setRailLayout({ commentsCollapsed: !railLayout.commentsCollapsed })}
               label={t('notes.layout.resizeComments')}
-            />
-            {activeNote && commentsShown ? (
+              maximumWidth={Math.max(140, docRowWidth - NOTE_COLUMN_MIN - (tocShown ? railLayout.toc : 0))}
+            /> : null}
+            {activeNote ? <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView])} inline={commentsShown} open={railSheet === 'comments'} title={t('notes.comments.title')} onClose={() => setRailSheet(null)}>
               <NotesComments
                 noteId={activeNote.id}
                 draftQuote={commentDraftQuote}
@@ -2678,13 +2690,14 @@ h1,h2,h3{margin-top:1.5em}
                   setDirty(true)
                 }}
               />
-            ) : null}
+            </NotesResponsiveRail> : null}
             </div>
           )}
         </div>
       </main>
 
       {rightSessionContext && (
+        <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, rightSessionContext.sessionId])} inline={inlineAuxiliary} open={!inlineAuxiliary} title={t('notes.sideSession.title')} onClose={closeSideSession}>
         <RightSessionShell
           context={rightSessionContext}
           prompt={sideSessionPrompt}
@@ -2697,8 +2710,10 @@ h1,h2,h3{margin-top:1.5em}
           onSend={sendSideSession}
           onClose={closeSideSession}
         />
+        </NotesResponsiveRail>
       )}
 
+      <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView])} inline={inlineAuxiliary} open={!inlineAuxiliary && inspectorSheetOpen} title={t('notes.inspector.title')} onClose={() => setInspectorSheetOpen(false)}>
       <NoteInspector
         activeNote={activeNote}
         content={content}
@@ -2771,9 +2786,10 @@ h1,h2,h3{margin-top:1.5em}
             }
           }
         }}
-        collapsed={inspectorCollapsed}
+        collapsed={inlineAuxiliary && inspectorCollapsed}
         onToggleCollapsed={toggleInspector}
       />
+      </NotesResponsiveRail>
     </div>
     <Dialog open={Boolean(markerPreview)} onOpenChange={(open) => { if (!open && !markerBusy) { setMarkerPreview(null); setMarkerError(null) } }}>
       <DialogContent>

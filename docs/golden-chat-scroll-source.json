@@ -2,7 +2,7 @@
   "source_sha": "5def9ffd36dc160fdc7c908784e0ef97ba6a732e",
   "source_branch": "codex/golden-gate-workspace",
   "source_pr": 584,
-  "integration_main": "fd6e2f2cebafeb5bbf464aef45604ce4e7fcaca1",
+  "integration_main": "a3754c9eaab274b2f99d6a931659b0cac91a9993",
   "owner": "pr_scout",
   "dependent_overlap_owner": "historical_sweep adds Product Learning target/signal instrumentation after this current ChatDisplay integration",
   "source_helper": {

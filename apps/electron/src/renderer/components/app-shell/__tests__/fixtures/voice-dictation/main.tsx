@@ -11,7 +11,7 @@ import '../../../../../index.css'
 // No native microphone, network transcription or shared key is used here.
 const query = new URLSearchParams(location.search)
 const calls: Array<{ method: string; args?: unknown }> = []
-let prefs = { sttEngine: 'cloud-rox', cloudAsrConsent: query.get('consent') !== 'false', privacyMigrationPending: query.get('migration') === 'true', selectedInputDeviceId: null }
+let prefs = { trailingSpace: query.get('trailingSpace') === 'true', delivery: query.get('delivery') === 'clipboard' ? 'clipboard' : 'draft', sttEngine: 'cloud-rox', cloudAsrConsent: query.get('consent') !== 'false', privacyMigrationPending: query.get('migration') === 'true', selectedInputDeviceId: null }
 let resolveStop: ((value: unknown) => void) | undefined
 let resolveConsent: ((value: unknown) => void) | undefined
 let resolveMicrophone: ((value: unknown) => void) | undefined
@@ -47,6 +47,7 @@ const api = {
     if (query.get('deferredStop') === 'true') return new Promise((resolve) => { resolveStop = resolve })
     return { job: 'ready', transcript }
   },
+  async copyVoiceText(args: unknown) { record('copyVoiceText', args); if (query.get('failedCopy') === 'true') throw new Error('Synthetic clipboard denial'); return { ok: true } },
   async transcribeVoice() { record('transcribeVoice'); throw new Error('Duplicate ASR is forbidden') },
   async cancelVoiceCapture() { record('cancelVoiceCapture') },
 }

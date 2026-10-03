@@ -8,8 +8,10 @@ permissions:
   contents: read
 jobs:
   validate:
-    # Standard hosted macOS runners support this public repository without runner registration.
-    runs-on: macos-15
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -22,6 +24,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      - run: bun test packages/core
       - run: bun run validate:ci
         env:
           # The hosted Electron TypeScript graph exceeded Node's default ~2 GiB heap.

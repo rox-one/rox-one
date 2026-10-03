@@ -5,6 +5,13 @@
 3. Exercise real production ChatDisplay/Radix/messages in nested DOM: outer/window position, reduced/normal motion, focused/unfocused history, document hidden, delayed commit, old ResizeObserver/queued frames A→B→A/unmount, history anchoring and explicit jump. Keep failure history and controlled fixture boundaries explicit; run types/build and current adjacent tests.
 4. Reconcile live main, freeze source/proof/log receipts, publish/attach separate PR, preserve every source branch. Notify dependent instrumentation owner of exact ChatDisplay source before parent merges.
 
+## Product Learning foundation recovery plan — 2026-10-03
+
+1. Freeze final a6 source and import only contracts/core/persistence/analytics; pr_scout owns these interfaces, historical_sweep integrates dependent UI/runtime/current consumers without copying old shell/pages.
+2. Inspect evidence/correlation and durable ownership boundaries. Retain original negative controls; reproduce and fix diagnostic accessor validation/serialization race through single captured own data properties, preserving interfaces.
+3. Exercise pure engine and real Chromium IndexedDB across isolated windows, storage/transaction/future-version failures, scoped reset and privacy/retention. Verify all foundation modules with strict renderer compiler options and actual browser bundling without claiming route/native feature acceptance.
+4. Reconcile live main, freeze source/proof/log receipt, publish/attach a separate PR. Notify dependent worker of exact interfaces/head and preserve every original branch; lead reviews and merges.
+
 ## Golden Gate Settings menu recovery plan — 2026-10-03
 
 1. Verify actual current consumers and source intent before import: current menu is a Popover with no arrow/typeahead model; Appearance and ZenShell custom SettingsRow slots lack label/description relationships.
@@ -726,6 +733,26 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 
 Evidence and delivery receipt: `docs/credential-locator-own-data-validation.md`. .codegraph is absent in the frozen repository; targeted symbol/caller inspection supplies the bounded source map. Native work and Vercel account deployment status remain outside this locator correction.
 
+## Credential metadata own-data repair and integration — 2026-10-03
+
+The user authorized full source repair, GitHub writes and merge into `main`. The original checkout and its unrelated CSS edits are preserved. One lead owns the isolated `fix/credential-metadata-own-data-20261003` source branch; an independent reviewer owns separate evidence artifacts. Initial integration base: `829e2cbd840e2980b421038457866d0efd0893f2`.
+
+The integration at `b1526a85f6db5a6cdf668438e484f62ce15e6f29` preserves PR #1407's locator implementation and inherited-field tests, adds only distinct locator controls, and retains main's MCP onboarding step. A prior macOS full-CI attempt hit 17 subprocess timeouts; the unchanged 109-test config gate subsequently passed with the original deadlines. Preserve both receipts and verify the complete integrated candidate on Linux and hosted runners.
+
+| Task | Owner | Dependencies | Verification / delivery |
+| --- | --- | --- | --- |
+| LOC-STATE | Lead | none | Exact fresh main, clean isolated checkout, live PR and publishing policy readback |
+| LOC-FIX | Lead | LOC-STATE | Own-data snapshots in registry/attachment; regressions for all locator variants, accessors, frozen controls and persisted state |
+| LOC-REVIEW | Independent reviewer | LOC-STATE, LOC-FIX | Source hashes, adversarial holdout, negative controls and actionable compatibility findings |
+| LOC-VERIFY | Lead | LOC-FIX | Pinned Linux Bun 1.3.14 full core, core TypeScript, unchanged CI alias and separate MCP onboarding script; preserve any initial failures and exact logs |
+| LOC-CI | Lead | LOC-FIX | Full core suite, unchanged CI alias and main's separate MCP onboarding step on hosted Ubuntu 24.04 and macOS 15; existing permissions/install/deadlines/assertions retained |
+| LOC-DELIVER | Lead | LOC-REVIEW, LOC-VERIFY, LOC-CI | Commit/push scoped files, publish a current PR, resolve actionable feedback, merge main, read back delivered source and save revision-bound report |
+
+The earlier local-only candidate and its results remain historical evidence. They do not replace complete verification of this new base or the delivered revision. Integration receipts, commands, exits, source/artifact hashes, actual hosted run URLs and final main identity are saved outside the checkout; no publication or acceptance is inferred from a task launch. This slice does not change broader native/provider/platform acceptance.
+
+
+Integration with current main `d8c92f96363f47e0b72e7296a36aa23a9227a691` preserves its OMP 18.4.12 private native fork and stored-prefix recovery, MCP runtime, Compound additions and UI-001 detail/storage validation. The UI user-message anchor feeds the runtime inclusive native fork. Module imports and fixture aliases use the renamed `@rox` workspace packages; protocol identifiers and legacy migration strings remain unchanged.
+
 ## Credential locator repair plan — 2026-10-03
 
 | Task | Owner | Depends on | Owned files | Verification |
@@ -766,6 +793,16 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 - Delivery: isolated `codex/recover-calendar-sync-fence-20261003` and separate PR; original branches preserved, lead owns merge.
 
 
+### Voice archive recovery ownership and verification (2026-10-03)
+
+- Owner: recent-features worker. Dependencies: current actor-scoped voice HistoryIndex, native authority and request fences, registered RPC/channel-map and actual Settings/composer lifecycle. Lead owns ordered merge; original source branches remain intact.
+- Recover current UI search/detail/revisions/edit/select/delete/export/play plus explicit draft/clipboard completion. Add scoped handlers where current ports are absent; retain expected-selected CAS, foreign-record ownership, bounded text, path-free bounded audio frames, final integrity verification and local-only managed-owner clipboard writes. No legacy global capture, fake receipt/provider or default cloud consent is restored.
+- Verify actual authenticated WS actor/read-only/stale/oversize/symlink/persistence/restart controls; actual local-only clipboard RPC remote/forged/dead/moved-owner rejection; complete audio-byte/frame replacement/digest/dispose controls; actual Chromium current UI search/edit/select/stale/copy/export/play/delete/out-of-order/unmount/web denial and composer delivery. Run relevant shared/server/Electron types, protocol catalog/routing and all locale parity; qualify renderer/main/preload builds on the delivered source.
+- Native OS microphone/provider/installed clipboard acceptance and the full Voice/Meeting program remain separate from synthetic bounded integration evidence.
+
+Current foreground PTT also restores the explicit Right Control and disabled presets alongside the default Right Alt/Option. Stored current-schema preferences are normalized and consumed by the same managed foreground key owner; left/wrong modifiers remain untouched, repeat is paired once, changed held modifiers cancel once, and the existing key-up completion contract survives mode changes. These controls do not claim OS-wide modifier capture.
+
+An explicit current-schema trailing-space preference applies to draft and clipboard completion, while the missing/legacy preference preserves current no-trailing-space behavior. Real Chromium completion controls verify both targets.
 ## Validated personal task import recovery — 2026-10-03
 
 1. Historical worker maps Golden's consumed import guard to actual current TasksPage onImport and cache tryFromJson consumers. Root owns other Golden UI; this recovery changes core validation and tests only.
@@ -780,6 +817,14 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 3. Execute actual component state/setters across A/B/workspace changes, stale edit/clear callbacks, missing identity and delimiter collisions. Restore exact pre-change NotesPage for negative proof, then restore candidate before final checks. Run current native read-lifecycle and comment controls plus consumed Electron types.
 4. Publish a separate codex PR with source/head/test provenance; root owns merge. Preserve original Golden branch and mark this one feature separately in its cumulative source disposition.
 
+Review qualification: each audio frame binds the opened leaf to captured BigInt dev/ino identities for every ancestor before any read and rechecks them after the frame; canonical path equality alone is insufficient. A deterministic real-directory replacement fixture returns a foreign frame on the earlier helper and rejects before any foreign descriptor read after the repair. All19 newly added labels have authored translations in all12 locales. Native WS fixture initialization is sequenced through authenticated read readiness; 500ms transport and 20s test deadlines, concurrent capture and all privacy assertions remain intact.
+
+## Golden narrow Notes tools and sash — 2026-10-03
+
+1. Historical integration recovers only the consumed width lease, responsive rail and focus helpers; current NativeNotesPage remains the sole data/editor owner. Depend on existing Dialog and localized Contents/Comments labels, current EntityViewTabs and primary-sidebar vault portal.
+2. Wire sheets for hidden Contents/Comments, using current auto-hide computation rather than source360px all-rail policy. Scope-close to workspace/document/view; keep existing editor mounted and native authority unchanged.
+3. Recover Notes sash keyboard/leased pointer callbacks with current width bounds, foreign-pointer isolation and Escape/blur/cancel/unmount cleanup.
+4. Run actual component/NativeNotesPage callback, observer, hidden/inert/visibility/focus and pointer cancellation tests; substitute original page/sash as before-source negative controls then restore exact candidate. Run relevant existing Notes document/view/comment controls and Electron types, reconcile latestmain, push/attach separate PR. Final Chromium qualification:38 tests/251 assertions pass across6 files, including6 production-component DOM cases, hidden/inert/scope close, focus return, document-draft retention, pointer cancellation and IME/current normalized bounds. Fixture controls the document owner; complete NativeNotesPage/backend and installed native acceptance remain independently gated. Original failure evidence is retained: corrected fixture inert property and allowed bounded browser teardown, without relaxing production guards. Actual Inspector/RightSession narrow sheets are a separate pending recovery.
 
 ## Golden service navigation and guidance recovery — 2026-10-03
 
@@ -787,3 +832,14 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 2. Recover the source's workspace-scoped dismissal key/helper; compose it into today's flat SidebarChrome/PromoSlot using the existing all-locale `common.dismiss` key. Fence focus by captured workspace and connected/visible profile owner. Keep reminders independent.
 3. Execute actual component callbacks with real panel atoms and controlled local storage: mounted-route/draft preservation, preferred match, missing-service fallback, explicit subroutes, compact mode, durable workspace isolation and stale-callback focus. Verify current DOM keyboard/disclosure, panel lanes, promo policy and Electron types. Run before-source negative controls, restore exact files, reconcile live main without replacing later docs, publish a separate PR and retain all source branches.
 4. Acceptance is bounded source and renderer integration; do not claim installed native UI, old sidebar layout recovery, full Golden source-family completion or production acceptance.
+
+
+## Golden current Notes auxiliary sheets — 2026-10-03
+
+Owner: historical integration; dependency: PR1433 production responsive rail and focus owner. Source Golden5def9ffd actually wraps NoteInspector and RightSessionShell in narrow sheets. Recover that behavior on today's real owners without replaying source1100px policy, toolbar, sidebar or authority. Current Notes460px document plus existing320px Inspector/32px collapsed rail and380px session determine whether auxiliary owners fit; retained hidden panels preserve the last useful width. Narrow Inspector button opens a sheet without changing its persisted collapse preference; workspace/document/view changes revoke it. Existing session creation, prompt draft callback, send/close and bound entity reference remain canonical. Narrow session context opens its same shell in a sheet; expanding to fit must retain the session rather than invoke close. Hidden/inert owners revoke sheets through the same current guard; close restores focus only in its captured scope.
+
+Verify actual current page delegation and toggle callbacks, width policy and real Chromium production Inspector/RightSession consumers across narrow/wide, edit/Escape, draft retention, hidden/scope close and persisted preference refusal. Use controlled document/auth ports; no new server authority or installed native acceptance. Publish a separate PR after1433, retain original branches; lead owns merge.
+
+Auxiliary verification receipt: 33 tests / 142 assertions pass across six consumed control and browser files, including six real current NoteInspector/RightSessionShell Chromium cases. Original current page fails three regression controls while two independent helper/wide controls still pass. Existing read-generation, document IA, contextual session and keyed comment drafts remain passing. Fixture supplies controlled note/context callbacks and drafts; no backend/native credentials, external actions or installed-native acceptance. Source fixture failure from an incomplete NoteDocument shape was corrected without relaxing production guards.
+
+Voice archive follow-up: open the leaf with NOFOLLOW/NONBLOCK before validating its regular-file size and current path identity, then verify all ancestor identities before any read and after the frame. This removes reliance on a pre-open leaf path stat while retaining bounded/no-read failure controls.
