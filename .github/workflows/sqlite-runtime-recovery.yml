@@ -19,6 +19,8 @@ on:
       - 'apps/electron/src/renderer/**'
       - 'apps/electron/src/main/native-replica.ts'
       - 'apps/electron/src/main/__tests__/native-notes-runtime.test.ts'
+      - 'apps/electron/src/main/index.ts'
+      - 'apps/electron/src/main/__tests__/rox-readiness-ui-001.second-instance-startup.test.ts'
   push:
     branches: [fix/september-sqlite-runtime-20260930, cloud/all-surfaces-20260930, fix/cloud-sqlite-runtime-20260930]
   workflow_dispatch:
@@ -100,6 +102,7 @@ jobs:
             scripts/__tests__/check-i18n-coverage.test.ts \
             packages/pi-agent-server/src/custom-endpoint-registration.test.ts \
             apps/electron/src/main/__tests__/native-notes-runtime.test.ts \
+            apps/electron/src/main/__tests__/rox-readiness-ui-001.second-instance-startup.test.ts \
             apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts \
             apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts \
             apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts \
