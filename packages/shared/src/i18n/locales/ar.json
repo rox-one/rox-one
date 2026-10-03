@@ -2503,6 +2503,7 @@
   "inspector.info": "معلومات",
   "inspector.kind.session": "Session",
   "inspector.outline": "المخطط التفصيلي",
+  "inspector.resize": "تغيير عرض لوحة التفاصيل",
   "inspector.tab.browser": "Browser",
   "inspector.tab.context": "Context",
   "inspector.tab.files": "Files",

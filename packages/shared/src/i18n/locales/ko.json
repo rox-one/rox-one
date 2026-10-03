@@ -2503,6 +2503,7 @@
   "inspector.info": "정보",
   "inspector.kind.session": "Session",
   "inspector.outline": "개요",
+  "inspector.resize": "검사기 너비 조절",
   "inspector.tab.browser": "Browser",
   "inspector.tab.context": "Context",
   "inspector.tab.files": "Files",

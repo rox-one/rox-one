@@ -2503,6 +2503,7 @@
   "inspector.info": "信息",
   "inspector.kind.session": "Session",
   "inspector.outline": "大纲",
+  "inspector.resize": "调整检查器宽度",
   "inspector.tab.browser": "浏览器",
   "inspector.tab.context": "上下文",
   "inspector.tab.files": "文件",

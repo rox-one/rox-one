@@ -2505,6 +2505,7 @@
   "inspector.info": "Informacje",
   "inspector.kind.session": "Session",
   "inspector.outline": "Konspekt",
+  "inspector.resize": "Zmień szerokość inspektora",
   "inspector.tab.browser": "Przeglądarka",
   "inspector.tab.context": "Kontekst",
   "inspector.tab.files": "Pliki",

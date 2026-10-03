@@ -2503,6 +2503,7 @@
   "inspector.info": "情報",
   "inspector.kind.session": "Session",
   "inspector.outline": "アウトライン",
+  "inspector.resize": "インスペクターの幅を変更",
   "inspector.tab.browser": "ブラウザ",
   "inspector.tab.context": "コンテキスト",
   "inspector.tab.files": "ファイル",

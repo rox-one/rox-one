@@ -1,3 +1,7 @@
+## Inspector resize interaction recovery — 2026-10-03
+
+Recover the actually consumed Golden Gate InspectorResizeSash keyboard/pointer controller from source 5def9ffd36dc160fdc7c908784e0ef97ba6a732e. Current InspectorHost remains the sole consumer and width owner. Resize previews stay transient; only completed interactions commit the existing bounded persistent atom. Escape, pointer cancellation, capture loss, window blur, unmount, hide and changed layout bounds cancel previews and restore pointer/body ownership. Arrow keys, Shift, Home/End, Enter and double-click reset use current320px default,280–1400 limits,72% viewport cap and center-priority/overlay layout. Preserve current Inspector content, connection controls, retained browser and one primary sidebar. Verify real current host DOM, failure/recovery/persistence, existing layout/controller tests, types/build and12locales; installed compositor acceptance remains separate.
+
 # Golden Gate surface tab recovery — 2026-10-03
 
 Recover Golden Gate title-loader success-only bounded caching, shared pending requests, failed/offline retry on navigation, and actual SurfaceTabs roving keyboard navigation/close focus. Preserve the current route registries, compact top-bar portal, embedded browser exclusion, authenticated Knowledge API and native authority. No source connection or filesystem authority is added.

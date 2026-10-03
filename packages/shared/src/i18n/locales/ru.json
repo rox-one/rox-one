@@ -2505,6 +2505,7 @@
   "inspector.info": "Инфо",
   "inspector.kind.session": "Сессия",
   "inspector.outline": "Структура",
+  "inspector.resize": "Изменить ширину инспектора",
   "inspector.tab.browser": "Браузер",
   "inspector.tab.context": "Контекст",
   "inspector.tab.files": "Файлы",
