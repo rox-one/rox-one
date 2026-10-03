@@ -497,13 +497,17 @@ describe('OMP typed native runtime bridge', () => {
       eventQueue: { enqueue: (event: AgentEvent) => void; isComplete: boolean };
     };
     const events: AgentEvent[] = [];
+    let actualSidecarCalls = 0;
+    setHostBashPort(async () => { actualSidecarCalls++; throw new Error('env-less fixture sidecar must be bypassed'); });
     internals._isProcessing = true;
     internals.runtimeObservationRunId = 'originating-run';
     internals.eventQueue.enqueue = event => events.push(event);
     const observer = internals.createHostBashObserver('exact-provider-tool-id', 'originating-run', () => true);
     const cached = internals.getSessionToolContext();
     try {
+      expect(typeof cached.getHostBashEnv).toBe('function');
       const result = await internals.executeHostSessionTool('bash', { command: "printf 'actual-out'; printf 'actual-err' >&2; exit 7" }, observer);
+      expect(actualSidecarCalls).toBe(0);
       expect(result.isError).toBe(true);
       expect(cached.hostBashObserver).toBeUndefined();
       const observations = events.flatMap(event => event.type === 'runtime_observation' ? [event.observation] : []);
@@ -519,7 +523,7 @@ describe('OMP typed native runtime bridge', () => {
       observer({ phase: 'completed', execution: 'local', command: 'old', cwd: fake.workspaceRoot,
         occurredAt: Date.now(), monotonicMs: performance.now(), result: { stdout: 'late', stderr: '', exitCode: 0, timedOut: false, cwd: fake.workspaceRoot, durationMs: 1 } });
       expect(events).toHaveLength(captured);
-    } finally { internals._isProcessing = false; agent.destroy(); fake.cleanup(); }
+    } finally { setHostBashPort(null); internals._isProcessing = false; agent.destroy(); fake.cleanup(); }
   });
 
   it('creates a new attempt only for an actually started sidecar-to-local fallback', async () => {
@@ -528,6 +532,7 @@ describe('OMP typed native runtime bridge', () => {
     const internals = agent as unknown as {
       _isProcessing: boolean; runtimeObservationRunId: string;
       createHostBashObserver: (toolCallId: string, generation: string, active: () => boolean) => (evidence: HostBashObservation) => void;
+      getSessionToolContext: () => SessionToolContext;
       executeHostSessionTool: (name: string, args: Record<string, unknown>, observer?: (evidence: HostBashObservation) => void) => Promise<{ content: string; isError: boolean }>;
       eventQueue: { enqueue: (event: AgentEvent) => void };
     };
@@ -538,6 +543,11 @@ describe('OMP typed native runtime bridge', () => {
     internals.runtimeObservationRunId = 'actual-fallback-run';
     internals.eventQueue.enqueue = event => events.push(event);
     try {
+      const actualContext = internals.getSessionToolContext();
+      expect(typeof actualContext.getHostBashEnv).toBe('function');
+      // The optional legacy port cannot accept managed per-call environments.
+      // Clone only this fixture caller; the production cached context is intact.
+      internals.getSessionToolContext = () => ({ ...actualContext, getHostBashEnv: undefined });
       const observer = internals.createHostBashObserver('same-native-tool-id', 'actual-fallback-run', () => true);
       const result = await internals.executeHostSessionTool('bash', { command: "printf 'local-fallback-output'" }, observer);
       expect(actualSidecarCalls).toBe(1);

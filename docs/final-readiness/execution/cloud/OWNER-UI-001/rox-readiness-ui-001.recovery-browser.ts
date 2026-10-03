@@ -26,6 +26,10 @@ function read(method,ws,directory) {
  return error?Promise.reject(error):Promise.resolve(snapshot);
 }
 window.electronAPI={
+ getRuntimeTraceSnapshot:async(query)=>({schemaVersion:1,workspaceId:query.workspaceId,sessionId:query.sessionId,
+  runs:[],events:[],coverage:{state:'unavailable',source:'runtime',missing:['ui001-runtime-not-recorded'],reason:'UI-001 recovery fixture does not record runtime execution'}}),
+ readRuntimeTraceEvents:async()=>{throw new Error('Runtime event paging is outside this recovery fixture')},
+ readRuntimeTracePayload:async()=>{throw new Error('Runtime payload reads are outside this recovery fixture')},
  getSources:(ws)=>read('sources',ws),getSkills:(ws,directory)=>read('skills',ws,directory),
  getSourcePermissionsConfig:async()=>null,getWorkspaceSettings:async()=>({localMcpEnabled:false}),
  onSourcesChanged:(fn)=>{sourceListeners.add(fn);return()=>sourceListeners.delete(fn)},
