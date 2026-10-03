@@ -95,6 +95,7 @@ import { MoveDialog, type MoveDestination } from './tasks/MoveDialog'
 import { TaskDetail } from './tasks/TaskDetail'
 import { TaskSidebar } from './tasks/TaskSidebar'
 import { getSessionTitle } from '@/utils/session'
+import { taskDelegationErrorKey, type TaskDelegationErrorKey } from './tasks/delegation-errors'
 
 const SORTS: TaskSortId[] = ['order', 'due', 'priority', 'project', 'title']
 const CHIP_TONE: Record<AgentChip, Tone> = { running: 'success', review: 'warning', todo: 'accent', done: 'muted', linked: 'muted' }
@@ -161,7 +162,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const [sort, setSort] = useState<TaskSortId>('order')
   const [localSelectedId, setLocalSelectedId] = useState<string | null>(null)
   const [delegating, setDelegating] = useState(false)
-  const [delegateError, setDelegateError] = useState<string | null>(null)
+  const [delegateError, setDelegateError] = useState<TaskDelegationErrorKey | null>(null)
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState<string | null>(null)
   const [pendingDone, setPendingDone] = useState<ReadonlySet<string>>(new Set())
@@ -285,7 +286,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
         tour.emit(observation, signal.name, signal.level, signal.origin, signal.eventToken)
       }
     } catch (error) {
-      setDelegateError(error instanceof Error ? error.message : String(error))
+      setDelegateError(taskDelegationErrorKey(error))
     } finally {
       delegationInFlight.current = false
       setDelegating(false)
@@ -1290,7 +1291,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
       sessionMap={sessionMap}
       agentChip={selectedChip}
       delegating={delegating}
-      delegateError={delegateError}
+      delegateError={delegateError ? t(delegateError) : null}
       canDelegate={Boolean(workspace?.id && nativeTasks && delegationApi)}
       onDelegate={() => void delegate(selected)}
       onToggleComplete={() => toggleComplete(selected)}
