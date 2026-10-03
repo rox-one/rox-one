@@ -4533,7 +4533,7 @@
   "productTour.first-result.first.compose.title": "Опиши нужный результат",
   "productTour.first-result.first.execution.body": "Здесь видны ход работы и действия агента. Во время выполнения здесь же доступна остановка.",
   "productTour.first-result.first.execution.title": "Следи за выполнением",
-  "productTour.first-result.first.permissions.body": "Сейчас выбран режим «{{mode}}». Он определяет согласование действий, но не заменяет права доступа к файлам и сервисам.",
+  "productTour.first-result.first.permissions.body": "Выбранный режим определяет согласование действий, но не заменяет права доступа к файлам и сервисам.",
   "productTour.first-result.first.permissions.title": "Проверь разрешения",
   "productTour.first-result.first.result.body": "Открой результат и проверь, подходит ли он для твоей задачи. При необходимости уточни запрос в этой же сессии.",
   "productTour.first-result.first.result.title": "Проверь ответ",

@@ -4513,7 +4513,7 @@
   "productTour.first-result.first.compose.title": "Írd le a kívánt eredményt",
   "productTour.first-result.first.execution.body": "Itt látható az előrehaladás és az ügynök műveletei. Futás közben itt le is állíthatod a feladatot.",
   "productTour.first-result.first.execution.title": "Kövesd a végrehajtást",
-  "productTour.first-result.first.permissions.body": "A jelenlegi mód: „{{mode}}”. A jóváhagyásokat szabályozza, de nem helyettesíti a fájlok és szolgáltatások hozzáférési jogait.",
+  "productTour.first-result.first.permissions.body": "A kiválasztott mód a jóváhagyásokat szabályozza, de nem helyettesíti a fájlok és szolgáltatások hozzáférési jogait.",
   "productTour.first-result.first.permissions.title": "Ellenőrizd az engedélyeket",
   "productTour.first-result.first.result.body": "Olvasd el az eredményt, és ellenőrizd, megfelel-e az igényeidnek. Ugyanebben a munkamenetben pontosíthatod.",
   "productTour.first-result.first.result.title": "Ellenőrizd a választ",

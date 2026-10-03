@@ -4513,7 +4513,7 @@
   "productTour.first-result.first.compose.title": "صف النتيجة المطلوبة",
   "productTour.first-result.first.execution.body": "تعرض هذه المنطقة التقدم وإجراءات الوكيل. يمكنك إيقاف المهمة هنا أثناء تنفيذها.",
   "productTour.first-result.first.execution.title": "تابع التنفيذ",
-  "productTour.first-result.first.permissions.body": "الوضع الحالي هو «{{mode}}». يتحكم في الموافقات، لكنه لا يحل محل حقوق الوصول إلى الملفات والخدمات.",
+  "productTour.first-result.first.permissions.body": "يتحكم الوضع المحدد في الموافقات، لكنه لا يحل محل حقوق الوصول إلى الملفات والخدمات.",
   "productTour.first-result.first.permissions.title": "راجع الأذونات",
   "productTour.first-result.first.result.body": "اقرأ النتيجة وتحقق من ملاءمتها لاحتياجاتك. واصل في هذه الجلسة لتحسينها عند الحاجة.",
   "productTour.first-result.first.result.title": "راجع الإجابة",

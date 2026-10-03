@@ -66,11 +66,11 @@ const definitions = [
         "copy": {
           "ru": {
             "title": "Проверь разрешения",
-            "body": "Сейчас выбран режим «{{mode}}». Он определяет согласование действий, но не заменяет права доступа к файлам и сервисам."
+            "body": "Выбранный режим определяет согласование действий, но не заменяет права доступа к файлам и сервисам."
           },
           "en": {
             "title": "Check permissions",
-            "body": "The current mode is “{{mode}}”. It controls approvals; it does not replace file or service access controls."
+            "body": "The selected mode controls approvals; it does not replace file or service access controls."
           }
         },
         "completion": {

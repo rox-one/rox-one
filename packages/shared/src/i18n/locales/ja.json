@@ -4513,7 +4513,7 @@
   "productTour.first-result.first.compose.title": "必要な成果を説明しよう",
   "productTour.first-result.first.execution.body": "進捗とエージェントの操作が表示されます。タスクの実行中はここで停止することもできます。",
   "productTour.first-result.first.execution.title": "実行状況を見よう",
-  "productTour.first-result.first.permissions.body": "現在のモードは「{{mode}}」です。操作の承認を制御しますが、ファイルやサービスのアクセス権限に代わるものではありません。",
+  "productTour.first-result.first.permissions.body": "選択したモードは操作の承認を制御しますが、ファイルやサービスのアクセス権限に代わるものではありません。",
   "productTour.first-result.first.permissions.title": "権限を確認しよう",
   "productTour.first-result.first.result.body": "結果を読み、目的に合っているか確認してください。必要に応じてこのセッションで依頼を調整できます。",
   "productTour.first-result.first.result.title": "回答を確認しよう",

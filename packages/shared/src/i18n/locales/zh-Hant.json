@@ -4513,7 +4513,7 @@
   "productTour.first-result.first.compose.title": "描述所需成果",
   "productTour.first-result.first.execution.body": "這裡顯示進度與代理操作。任務執行時也可以在這裡停止。",
   "productTour.first-result.first.execution.title": "查看執行過程",
-  "productTour.first-result.first.permissions.body": "目前模式為「{{mode}}」。它控制操作核准，但不能取代檔案與服務的存取權限。",
+  "productTour.first-result.first.permissions.body": "所選模式控制操作核准，但不能取代檔案與服務的存取權限。",
   "productTour.first-result.first.permissions.title": "檢查權限",
   "productTour.first-result.first.result.body": "閱讀結果，檢查是否符合需求。需要調整時，可以繼續在本工作階段提問。",
   "productTour.first-result.first.result.title": "檢查回答",

@@ -4513,7 +4513,7 @@
   "productTour.first-result.first.compose.title": "Describe the result",
   "productTour.first-result.first.execution.body": "This area shows progress and agent actions. While the task is running, you can stop it here.",
   "productTour.first-result.first.execution.title": "Follow execution",
-  "productTour.first-result.first.permissions.body": "The current mode is “{{mode}}”. It controls approvals; it does not replace file or service access controls.",
+  "productTour.first-result.first.permissions.body": "The selected mode controls approvals; it does not replace file or service access controls.",
   "productTour.first-result.first.permissions.title": "Check permissions",
   "productTour.first-result.first.result.body": "Read the result and check whether it meets your needs. Continue in this session to refine it.",
   "productTour.first-result.first.result.title": "Review the answer",

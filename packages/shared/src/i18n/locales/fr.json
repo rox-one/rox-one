@@ -4513,7 +4513,7 @@
   "productTour.first-result.first.compose.title": "Décris le résultat",
   "productTour.first-result.first.execution.body": "Cette zone affiche la progression et les actions de l'agent. Tu peux y arrêter la tâche pendant son exécution.",
   "productTour.first-result.first.execution.title": "Suis l'exécution",
-  "productTour.first-result.first.permissions.body": "Le mode actuel est « {{mode}} ». Il contrôle les approbations, sans remplacer les droits d'accès aux fichiers ou services.",
+  "productTour.first-result.first.permissions.body": "Le mode sélectionné contrôle les approbations, sans remplacer les droits d'accès aux fichiers ou services.",
   "productTour.first-result.first.permissions.title": "Vérifie les autorisations",
   "productTour.first-result.first.result.body": "Lis le résultat et vérifie qu'il répond à tes besoins. Poursuis dans cette session pour l'affiner.",
   "productTour.first-result.first.result.title": "Vérifie la réponse",
