@@ -6,12 +6,13 @@ const root = resolve(import.meta.dir, '..')
 const source = process.argv[2]
 const runtime = process.argv[3]
 if (!source || !runtime) throw new Error('Pass isolated merged checkout and qualified Bun executable')
-const dir = join(root, 'docs/final-readiness/parallel-work/postmerge')
-mkdirSync(dir, { recursive: true })
 const commit = (await Bun.$`git -C ${source} rev-parse HEAD`.quiet()).stdout.toString().trim()
+const dir = join(root, 'docs/final-readiness/parallel-work/postmerge', commit)
+mkdirSync(dir, { recursive: true })
 const version = (await Bun.$`${runtime} --version`.quiet()).stdout.toString().trim()
 const results: any[] = []
 const configRoot = mkdtempSync(join(tmpdir(), 'rox-integration-check-'))
+process.on('exit', () => rmSync(configRoot, { recursive: true, force: true }))
 const check = async (name: string, command: string[], cwd = source) => {
   const started = Date.now()
   const child = Bun.spawn(command, { cwd, stdout: 'pipe', stderr: 'pipe', env: {
