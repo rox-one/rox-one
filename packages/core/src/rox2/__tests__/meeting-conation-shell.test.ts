@@ -42,4 +42,15 @@ describe('meeting Conation shells fail-closed (Mail/CRM/calendar/room)', () => {
     expect(gated.live).toBe(false)
     expect(gated.rox2.verification).toBe('unverified')
   })
+
+  for (const verification of ['receipt_verified', 'readback_verified'] as const) {
+    test(`queued shells reject ${verification} instead of treating it as pending`, () => {
+      expect(() => assertMeetingConationShellNotLive({
+        executionMode: 'live',
+        lifecycle: 'queued',
+        verification,
+        entityId: 'meetings.mail.queued',
+      })).toThrow('queued meeting Conation shell must not report verified')
+    })
+  }
 })

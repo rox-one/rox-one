@@ -100,11 +100,11 @@ describe('memory proposal RPC (Issue 13)', () => {
     expect(approved.projectId).toBe('proj_rox')
     expect(approved.sessionId).toBe('sess_learn')
     expect(approved.provenance.consentEventId).toBeTruthy()
+    const consentEventId = approved.provenance.consentEventId
+    if (!consentEventId) throw new Error('Approval must include a consent event')
     const memory = readFileSync(join(workspaceRoot, 'projects', 'rox', 'MEMORY.md'), 'utf-8')
     expect(memory).toContain('Rox desktop app')
     expect(memory).toContain('sess_learn')
-    const consentEventId = approved.provenance.consentEventId
-    if (!consentEventId) throw new Error('approved project memory is missing its consent event')
     expect(memory).toContain(consentEventId)
     expect(existsSync(join(configDir, 'memory', 'lessons.jsonl'))).toBe(false)
   })

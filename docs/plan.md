@@ -477,3 +477,8 @@ Expanded consumer lease: FocusPage.tsx joins the two production fixes and two te
 ## Integrated Focus notification gates (2026-10-02)
 
 Independent review required and accepted the additional FocusPage consumer seam after the initial queue-only candidate. Root transferred three production modules and two test/fixture files. `/root/focus_recon` ran five complete serial local gates on frozen4879 source `4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923`. Scoped hook/storage and actual mounted component negative controls are recorded separately from native product and OS notification evidence. Registry records31/29 partial facets and0 full original acceptance; original contracts and all prior unrelated overlays remain preserved.
+
+
+## PR1317 recovery evidence retained during integration
+
+The original recovery plan is preserved in [this historical receipt](integration-history/pr-1317-plan.md). It describes its recorded source revision and does not supersede current September/cloud/native contracts or claim final product acceptance. Unique recovery source deltas are integrated separately.

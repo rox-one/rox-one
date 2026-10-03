@@ -359,3 +359,8 @@ Owner: isolated Projects producer; September integration, independent review and
 Deferred session notifications are identified by workspaceId and sessionId together. Repeated notifications within that pair retain their first queue position, update preview/time and increment count; other workspace entries remain independent. The latest 100 distinct entries remain retained. Disabled session notifications exit before reading/writing the Focus queue, preventing private title/body retention even during active Focus. Existing enabled Focus and normal supported native-notification behavior is preserved. Full Focus navigation, draining, actor scope, timer persistence and product/platform acceptance remain outside this slice.
 
 The Focus page projects deferred notifications only for its current workspace; absent workspace shows no entries. Row identity is the JSON-encoded workspace/session pair. Clicking a displayed row removes only that pair and uses the existing current-workspace session route. Clear Queue removes only current-workspace entries, preserving foreign-workspace records. Global Focus timer/history, other page behavior and actor storage remain unchanged; no cross-workspace navigation or automatic delivery is introduced.
+
+
+## PR1317 recovery evidence retained during integration
+
+The original recovery spec is preserved in [this historical receipt](integration-history/pr-1317-spec.md). It describes its recorded source revision and does not supersede current September/cloud/native contracts or claim final product acceptance. Unique recovery source deltas are integrated separately.
