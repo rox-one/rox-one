@@ -593,11 +593,18 @@ Dependencies: current server entry point and helper build commands at main
    owned by the lead. Hosted Cursor provisioning remains unverified.
 
 
+## Legacy binding replay recovery (2026-10-03)
+
+Binding replay recovery: compare the exact legacy identity alongside the canonical encoded identity; verify raw-key migration followed by repeated imports, and negative controls for wrong kind, unrelated ID and foreign workspace. Run the existing platform-contract tests before separate PR publication.
 The recent worker owns the gstack command redirect prerequisite in an isolated security worktree. Input is the three identical shipped BrowseClient copies at runtime revision `05f1e3741`; dependencies are the existing bearer/port validation and portable provenance catalogs. Verify real HTTP redirects fail before any destination request, direct commands retain authentication, and patch hashes match all parent and portable notices. The lead integrates the committed prerequisite into the runtime PR and retains remote CodeQL closure as a separate pending gate.
+
+## Native Notes Knowledge read projection (2026-10-03)
+
+Owner: historical branch recovery. Add NativeNotesKnowledgeProvider over nativeNotesKnowledgeAccess and explicitly authenticated RPC read handlers; preserve existing SiYuan compatibility reads for legacy contexts. Verify real WebSocket principal authentication, committed note search/read/backlinks, exclusion of loose Markdown files, foreign workspace/global connection rejection, forged/missing principal denial, invalidation of captured readers after revocation, and explicit CAPABILITY_DISABLED for unscoped agent calls. Existing Knowledge RPC/tool runtime tests remain green. Native visual Notes/agent adoption is outside this bounded API proof.
 
 ## Selective editor block recovery — 2026-10-03
 
-Owner: recent feature worker; integration owner: branch audit lead. Source dependency: `1f56af31d3658ee9880105361ad5312324f36ab8`; base: live main `cc56c95c75cb7bedd025e1b9af60a5312d0cf119`.
+Owner: recent feature worker; integration owner: branch audit lead. Source dependency: `1f56af31d3658ee9880105361ad5312324f36ab8`; base: live main `1cd651a921b5f7f8f6f27c4e1bb30502ef8081c3`.
 
 1. Recover only ColumnsBlock, DocumentFolding and rox-block-syntax plus focused source tests and styles; retain current editor/shell behavior.
 2. Wire Notes folding preferences and replace placeholder slash insertions with real nodes. Supply legacy parser/serializer adapters required by the current default engine; preserve existing column aliases and literal code fences.

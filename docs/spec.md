@@ -458,10 +458,17 @@ failure must stop before subsequent work. Hosted Cursor execution and provider
 credentials require their own verification. See `docs/cursor-cloud-server.md`.
 
 
+## Legacy binding replay recovery (2026-10-03)
+
+Recovered binding idempotency: migrating a legacy unencoded four-slot external binding key must preserve entity identity across all identical encoded-key reimports. Foreign workspace, wrong kind and unrelated entity IDs still quarantine. Owner: historical branch recovery. Source: cursor/contract-status-split-93d2 @fa254fe0f2e2504dd399202ee00e2d3b2a8a7b6b.
 The canonical and portable gstack browser clients must send authenticated commands only to their selected literal loopback endpoint. HTTP redirects must fail through the existing non-2xx error contract without forwarding the command body or capability. Real HTTP 307/308 negative controls cover both same-origin and another-port destinations; normal authenticated POST commands retain their arguments and tab scope.
+
+## Native Notes Knowledge read projection (2026-10-03)
+
+Recover the useful read-only local-Markdown Knowledge API from codex/rox-ui-dev-loop-20260901 @1f56af31d3658ee9880105361ad5312324f36ab8 as a projection of authenticated canonical Native Notes. List connections, capabilities, ranked search with path/attribute/notebook filters, get, context and backlinks must use the current journal-backed Notes reader and captured authorization fence. Local references retain the current wire contract with provider local-markdown and workspace connection ID. No credential/default connection is persisted and no alternate filesystem producer exists. Mutations, automatic provider promotion, watch and external deep links stay unavailable. Agent native reads remain unavailable until the host supplies authenticated session delegation; session/workspace IDs cannot create a NativePrincipal.
 
 ## Selective editor recovery from September source — 2026-10-03
 
-Branch `codex/rox-ui-dev-loop-20260901` at `1f56af31d3658ee9880105361ad5312324f36ab8` contains absent heading/task-list folding, resizable two/three-column document blocks and portable spoiler/details controls. Recover only these editor behaviors onto main `cc56c95c75cb7bedd025e1b9af60a5312d0cf119`, with actual Notes/slash-menu consumers. The source's larger UI rewrite and legacy filesystem provider are outside this PR; native authenticated Notes authority and canonical mutation/journal paths remain authoritative.
+Branch `codex/rox-ui-dev-loop-20260901` at `1f56af31d3658ee9880105361ad5312324f36ab8` contains absent heading/task-list folding, resizable two/three-column document blocks and portable spoiler/details controls. Recover only these editor behaviors onto main `1cd651a921b5f7f8f6f27c4e1bb30502ef8081c3`, with actual Notes/slash-menu consumers. The source's larger UI rewrite and legacy filesystem provider are outside this PR; native authenticated Notes authority and canonical mutation/journal paths remain authoritative.
 
 The default legacy Markdown engine and official engine must preserve content across parse/edit/export/reopen. Recover the source's portable `:::rox-columns`/`:::rox-column` syntax with validated normalized widths, support the previous slash-menu `:::columns 2/3` aliases, and preserve Obsidian `[!spoiler]-`/`[!details]+` markers without escaping away their meaning. Fold preferences are scoped by workspace/document and separate from Markdown. Read-only callout/resize interactions cannot change document content. Preserve newer comments, mixed task-list handling, trailing nodes, controlled echoes and no-save authority flips. Labels exist in all 12 current locales. Source tests/builds establish bounded integration; native visual interaction acceptance remains separately verifiable.
