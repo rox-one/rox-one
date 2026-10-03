@@ -21,6 +21,23 @@ describe('actual modern Tasks import and content-width DOM', {skip:!enabled},()=
   beforeEach(async()=>{context=await browser.newContext({viewport:{width:1440,height:900}});page=await context.newPage();page.setDefaultTimeout(5000);await page.goto(base,{waitUntil:'domcontentloaded'});await page.getByTestId('task-row-existing').waitFor()},{timeout:30_000})
   afterEach(async()=>{await context?.close()},{timeout:30_000})
   after(async()=>{server?.closeAllConnections();const closed=server?new Promise<void>(resolve=>server.close(()=>resolve())):Promise.resolve();try{await browser?.close()}finally{await closed}},{timeout:30_000})
+  it('rejects impossible ISO dates in the actual task schedule form without persisting a different day',async()=>{
+    await page.getByTestId('task-row-existing').click();await page.getByTestId('task-when').click()
+    const form=page.getByTestId('task-when-popover'), input=form.getByRole('textbox')
+    for(const value of ['2026-02-31','2026-13-01','2026-02-00']) {
+      await input.fill(value);await input.press('Enter')
+      assert.equal(await form.isVisible(),true)
+      assert.equal((await state()).rows.find((task:any)=>task.id==='existing').startAt,undefined)
+      assert.equal((await state()).calls.some((call:string)=>call.startsWith('put:')),false)
+    }
+  },{timeout:30_000})
+  it('accepts a leap day in the actual task schedule form and persists that exact local calendar day',async()=>{
+    await page.getByTestId('task-row-existing').click();await page.getByTestId('task-when').click()
+    const form=page.getByTestId('task-when-popover');await form.getByRole('textbox').fill('2028-02-29');await form.getByRole('textbox').press('Enter')
+    await form.waitFor({state:'hidden'});await waitPut()
+    const day=await page.evaluate(()=>{const at=(window as any).tasksFixture.rows().find((task:any)=>task.id==='existing').startAt;const d=new Date(at);return[d.getFullYear(),d.getMonth()+1,d.getDate(),d.getHours()]})
+    assert.deepEqual(day,[2028,2,29,0])
+  },{timeout:30_000})
   it('keeps edits made while file.text is pending, and announces import only after the native ACK',async()=>{
     await page.evaluate(()=>{const ui=(window as any).tasksFixture;ui.holdFile=true;ui.holdPut=true})
     await upload();await page.evaluate(()=>(window as any).tasksFixture.edit('Edited during file read'))
