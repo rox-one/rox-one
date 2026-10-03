@@ -695,6 +695,19 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 4. Publish a separate PR on the isolated codex branch and read back its exact head. Lead owns ordered main merge. Original source branch remains intact. The historical worker separately owns an authenticated read-only KnowledgeProvider adapter; this editor PR introduces no filesystem provider or new native permissions.
 
 
+# Credential locator boundary validation — 2026-10-03
+
+| Task | Owner | Dependency | Verification |
+| --- | --- | --- | --- |
+| Freeze current main and preserve existing work | Lead | Live GitHub SHA | Clean isolated branch at 635fc495; primary dirty CSS remains untouched |
+| Reproduce own-field fallback at all boundaries | Lead | Frozen source | Initial 63-case suite: base 10 pass / 53 fail; final 64-case suite also covers inherited descriptor.value; fixtures restored synchronously |
+| Snapshot own descriptor values into a null-prototype record | Lead | Failing regressions | Own fields only, zero getter/get-trap reads, frozen compatibility, no mutation on rejection |
+| Validate candidate and independently review | Lead / integration-status reviewer | Correction | Full core, core TypeScript, unchanged validate:ci and source review |
+| Integrate concurrent main repair without losing either matrix | Lead / independent reviewer | PR #1407 production fix and 54 regressions | Preserve identical upstream executable source and all 64 added boundary cases; revalidate combined revision |
+| Publish and merge the exact verified PR head | Lead | Passed checks and review | Hosted validation/lifecycle, bound merge request, remote main ancestry/source readback |
+
+Evidence and delivery receipt: `docs/credential-locator-own-data-validation.md`. .codegraph is absent in the frozen repository; targeted symbol/caller inspection supplies the bounded source map. Native work and Vercel account deployment status remain outside this locator correction.
+
 ## Credential locator repair plan — 2026-10-03
 
 | Task | Owner | Depends on | Owned files | Verification |
@@ -734,6 +747,13 @@ Verify a populated schema2 fixture upgrade, unchanged older checksums/rows/insta
 - Verification: deterministic deferred adapters reproduce stale event/cursor overwrite, stale conflict/delete replacement and newer-failure/older-success races before the fix; after the fix verify all three and independent-account/revocation controls, plus the complete calendar suite and core types.
 - Delivery: isolated `codex/recover-calendar-sync-fence-20261003` and separate PR; original branches preserved, lead owns merge.
 
+
+## Validated personal task import recovery — 2026-10-03
+
+1. Historical worker maps Golden's consumed import guard to actual current TasksPage onImport and cache tryFromJson consumers. Root owns other Golden UI; this recovery changes core validation and tests only.
+2. Add a pure current-model row validator at tryFromJson before store construction. Preserve old empty/missing-collection/version compatibility and richer modern optional fields and link kinds. Use existing quarantine reason/raw preservation.
+3. Verify modern rich export roundtrip, malformed/duplicate/nested rows, nonfinite JSON overflow, cache original/staging separation, and executed current file callback refusing writes for invalid input and preserving existing tasks for valid input. Restore exact old store for negative controls, then restore candidate.
+4. Run relevant personal task/cache/import tests and consumed core/Electron types. Publish a separate PR with exact source/revision/proof; root merges. Retain original Golden branch and do not imply other Golden UI or installed/native acceptance.
 
 ## Scoped Notes comment draft recovery — 2026-10-03
 
