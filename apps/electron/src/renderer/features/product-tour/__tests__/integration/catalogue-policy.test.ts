@@ -30,7 +30,8 @@ test('the shipped catalogue has exactly the independently specified 25 tours / 5
   expect(catalogue).toHaveLength(25)
   const actual = catalogue.flatMap(tour => tour.steps.map(step => ({ tourId: tour.id, id: step.id, testId: step.testId, target: step.target, completion: step.completion, handoff: step.handoff, optional: step.optional, onUnavailable: step.onUnavailable })))
   expect(actual).toHaveLength(56)
-  expect(actual).toEqual(matrix.steps)
+  // JSON widens literal IDs at compile time; runtime equality still checks every independent policy field.
+  expect(actual).toEqual(matrix.steps as typeof actual)
   expect(new Set(actual.map(step => step.testId)).size).toBe(56)
 })
 
