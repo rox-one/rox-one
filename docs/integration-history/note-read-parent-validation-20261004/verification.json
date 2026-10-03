@@ -25,7 +25,7 @@
     "No installed Electron, live external provider or OS bootstrap claim"
   ],
   "branches_deleted": false,
-  "reconciled_main": "0b3d2e584ff7bf5f44eb257d7fa34b0e142bc13f",
+  "reconciled_main": "790216a785189279c376f5b144f76dc2da97795b",
   "qualification_runtime_blobs_unchanged_after_merge": true,
   "deleted_paths_against_current_main": []
 }
