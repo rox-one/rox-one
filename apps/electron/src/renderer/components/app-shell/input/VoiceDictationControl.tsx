@@ -257,8 +257,8 @@ export function VoiceDictationControl({
     } finally {
       startingRef.current = false
       if (captureId === captureIdRef.current) setStarting(false)
+      tourSignals.handoff(dictationObservation, false)
     }
-    finally { tourSignals.handoff(dictationObservation, false) }
   }, [finishRecording, prefs, stopTracks, t, tourSignals])
 
   const enableCloudTranscription = useCallback(async () => {
