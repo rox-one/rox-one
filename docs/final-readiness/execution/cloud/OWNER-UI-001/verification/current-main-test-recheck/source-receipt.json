@@ -1,0 +1,32 @@
+{
+  "testedBaseRevision": "bb047b946da41346301cffe88a43db0adf621dcf",
+  "actualSourceSha256": {
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "47de25aa61eac95f05c5c8e092171d3ab9eea8a748983b794045d225b0cd5a9c",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "284020622cacdae95efd48727a59a98ae5f1f4c1984ee7ec20e054dd58260d60",
+    "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "043db03383e22503b434319d836fa2a7bd921030a8c05815fac82d6db82c19c0",
+    "apps/electron/src/shared/route-parser.ts": "c6d324f368b7924ba1980e6b20036672374782807f5944d88e16a9c0de22a134",
+    "apps/electron/src/shared/types.ts": "bf7d165e7bd97e3900b59904c930ef4892a66bf3b9b3d8196cecacb4f74fe441",
+    "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "b0a9fa69f2edd9b94871cb7df0b00e4e4fdfb2d84b47cdf2f56f99f794188ffd",
+    "apps/electron/src/renderer/lib/nav-helpers.ts": "887a8fbc1ba56a3c1e6d5fccd4bdd1c0ef174ed3a32cd92f65301dba6699cd49",
+    "apps/electron/src/renderer/atoms/panel-stack.ts": "b669a999d338e69c5d6975e322aaab1170638141351696d05d219d786239259c",
+    "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff",
+    "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": "92b4d399c1bdfdd095c6e1fe83011a6fe2378e9b075552fdeed4ad8b62d3365c",
+    "apps/electron/src/renderer/App.tsx": "e3597ca83fd399eda20dd74b5b2a4ea04cfe01fc0e1acb8d5ec81bc1c325fb9b",
+    "apps/electron/src/renderer/contexts/navigation-history.ts": "da8884b5cd39fa877d2d06793af008c84e123f9d4dd9137ea555c751585df159",
+    "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": "e1d6cf6b1f3c251a9f57a3ed8540d851e440856c658a291ac1a7d14b07f84c13",
+    "apps/electron/src/renderer/hooks/usePanelResize.ts": "ac50c51b98b9e1a782cb964e2dfe6ae7ff976777733c0cac0467acf1a4eb02dd",
+    "apps/electron/src/renderer/components/app-shell/panel-constants.ts": "6166298674f6ea0d50c69223d366aba54f443f4d1262a0483a4b3331c3902fc9",
+    "apps/electron/src/renderer/lib/panel-workspace-layout.ts": "865a6d20ea9ed91c45238015afd948c7d09a5d671c255b31343786b3133545a5",
+    "apps/electron/src/renderer/atoms/sessions.ts": "98138d1255f09fe6a44e507f3087e21ffbe9076b12baab7adab3a2560b9ebb81",
+    "apps/electron/src/renderer/lib/local-storage.ts": "0686d0e67d1cf5c29bfc424d7c9d6b6dbbd7034b5ed8d18dff862bb355244230",
+    "apps/electron/src/renderer/components/app-shell/service-navigation.ts": "c70de20413482f2873923d92a7582336b6ff29bb7e77038b6b37eff5867decfd",
+    "apps/electron/src/renderer/components/app-shell/nav-destinations.ts": "bb6617b42816f5302c90601290ab440cbc7efed22cdd7df168b5bc7f4f4ea6a2",
+    "apps/electron/src/renderer/lib/panel-url.ts": "739481afb14184d51e6f8922601a52184bd7d7ec53013b3112e61048a41bfea3",
+    "apps/electron/src/renderer/lib/route-recovery.tsx": "532d3690f2bda1321cb4d95cf29e6bbe4821f041678feb1758e00aa0019ab5d7",
+    "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "f5f04a4484d2d596cc3b450fedf0a05026e69203236e96e8305e2d35bc9ce011"
+  },
+  "matchesCommittedCandidate": true,
+  "sourcesStableAfterTestsAndRendererBuild": true,
+  "productSourceDiffFromMain": []
+}
