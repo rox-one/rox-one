@@ -16,6 +16,20 @@ The first catalog did not contain the exact requested `rox/standard` route. The 
 
 ## Lifecycle
 
+Child `exit` does not imply drained stdio. The adapter retains that child's
+stdout/readline and stderr ownership until `close`, then finishes the chunk
+decoder before resetting the transport or detaching the child. This preserves
+buffered final response chunks and the last line without a newline. A received
+unfinished sequence fails with the exact `OMP RPC chunk sequence was truncated`
+protocol error. Startup failure classification settles immediately at this same
+boundary using the per-child stderr signature latch and startup-generation fence.
+The existing 250 ms exit fallback bounds pipes held open by descendants: it
+closes only the captured reader and finalizes failure, without claiming EOF.
+Close and fallback share one finalizer; stale predecessor callbacks cannot finish
+or reset a successor's decoder. Per-attempt profile/overlay disposal remains
+independently tied to the child's actual close. Deterministic actual-callback
+coverage is in `rox-readiness-ui-001.omp-stdio-close.test.ts`.
+
 Managed Windows launches use the verified native-policy overlay's `src/cli.ts`
 under native Bun; `rox.cmd`/`omp.cmd` and the original package CLI are not spawned.
 Relative managed-launcher and Bun override paths are anchored to the child cwd;

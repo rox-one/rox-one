@@ -1,0 +1,42 @@
+{
+  "inputRevision": "b91f9ef55405794f3f53bcc904066e3aaa06fe4a",
+  "workingTreeProductModified": true,
+  "command": [
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+    "test",
+    "./packages/shared/src/agent/__tests__/rox-readiness-ui-001.omp-stdio-close.test.ts"
+  ],
+  "nodeVersion": "v24.21.0",
+  "bunVersion": "1.3.14",
+  "childPid": 69583,
+  "observedExitCode": 0,
+  "startedAt": "2026-10-03T23:17:17.356682+00:00",
+  "finishedAt": "2026-10-03T23:17:18.720891+00:00",
+  "logPath": "logs/expanded-omp-stdio-callback-green-b91.log.gz",
+  "logSha256": "b2d4b02d5387bb548a209df0e1e9d852083f9f20a872cd1822339ac9eebe9fa4",
+  "before": {
+    "packages/shared/src/agent/omp-agent.ts": "9040dc6f6de81530223bc9e74d2f52433bfa0233fbf131db18f8558c787a2657",
+    "packages/shared/src/agent/omp-rpc-transport.ts": "11015bcd3e12234f87317bc41380ffc721f7e193a8174efcbd53ac2121d8869d",
+    "packages/shared/src/agent/errors.ts": "e01b9f2849882ec5dcd39d51532fd998d634f4e1b4c06acedaae0c32fc6500d2",
+    "packages/shared/src/agent/__tests__/rox-readiness-ui-001.omp-stdio-close.test.ts": "f24bfe9f61ff7a3573ff3a1330208f46c9724db9fc0a5137b15c27e6cb037987",
+    "package.json": "98724000f09751b73e02a3de7393022e5c23a98c27a1576904ae90dff2a0b24c"
+  },
+  "after": {
+    "packages/shared/src/agent/omp-agent.ts": "9040dc6f6de81530223bc9e74d2f52433bfa0233fbf131db18f8558c787a2657",
+    "packages/shared/src/agent/omp-rpc-transport.ts": "11015bcd3e12234f87317bc41380ffc721f7e193a8174efcbd53ac2121d8869d",
+    "packages/shared/src/agent/errors.ts": "e01b9f2849882ec5dcd39d51532fd998d634f4e1b4c06acedaae0c32fc6500d2",
+    "packages/shared/src/agent/__tests__/rox-readiness-ui-001.omp-stdio-close.test.ts": "f24bfe9f61ff7a3573ff3a1330208f46c9724db9fc0a5137b15c27e6cb037987",
+    "package.json": "98724000f09751b73e02a3de7393022e5c23a98c27a1576904ae90dff2a0b24c"
+  },
+  "sourcesStable": true,
+  "failClosedOmpCliOverride": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/omp-forbidden-native-fallback",
+  "noProviderCalls": true,
+  "noProcessesSpawnedByTest": true,
+  "counts": {
+    "pass": 7,
+    "fail": 0,
+    "assertions": 29
+  },
+  "rawLogSha256": "b2d4b02d5387bb548a209df0e1e9d852083f9f20a872cd1822339ac9eebe9fa4",
+  "archiveSha256": "579f66b392892ad9db2407ee93886b5e774d9cc27b80fc167226038ec9a8a5de"
+}

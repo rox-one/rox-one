@@ -1,0 +1,28 @@
+{
+  "archives": [
+    {
+      "path": "logs/expanded-ipc-snapshot-baseline-b91f9ef.log.gz",
+      "originalBytes": 2190,
+      "originalSha256": "4dd7bc60fd389bf8c0db27757d4c13ab24a4a200556251ca6145b27e1c74e43a",
+      "archiveSha256": "4e22076bb11920352f3e429093612aca88a63ccf9e8f0ecb143e29c9c8ef5eda"
+    },
+    {
+      "path": "logs/expanded-ipc-snapshot-file-green-b91f9ef.log.gz",
+      "originalBytes": 796,
+      "originalSha256": "eb5a6b57751a633499dcd042068f086eea21a4d30d22be2de4e6692d926320cc",
+      "archiveSha256": "868b9afdcbdd3eae1a6dc94f3fe6213b2317c7a36b5398c030490b9eabc291b2"
+    },
+    {
+      "path": "logs/expanded-ipc-snapshot-protocol-routing-green-b91f9ef.log.gz",
+      "originalBytes": 2867,
+      "originalSha256": "04bfec3964223cbce062cb290e2d6951d9b25fa21977d0b72a1513d97316fd47",
+      "archiveSha256": "021d211742c232207c1fd2b8816c0ed8300045e5fe4f39fd13660d4bf3926141"
+    },
+    {
+      "path": "logs/expanded-omp-final-ui-a8ec92a-job.log.gz",
+      "originalBytes": 2677166,
+      "originalSha256": "c7dff8f522e4e14c05de70819d7d6fdc7c2234d475472feab5acf558a4cd38e5",
+      "archiveSha256": "f701459c5ec9541dfb0030d6e973bdb71c8fe518fd43f0b6e77ab8eba8c7095b"
+    }
+  ]
+}
