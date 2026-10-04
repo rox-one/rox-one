@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "purpose": "Fresh main recheck; repair obsolete storage-event test fixture only",
+  "inputRevision": "47b5fcd270ff7abff163533b60f4d9fa5d5f8f27",
+  "branch": "fix/ui-001-recheck-20261004",
+  "mergedAlready": [
+    "1400",
+    "1420",
+    "1424",
+    "1471",
+    "1478"
+  ],
+  "productChanges": [],
+  "changedExistingPaths": [
+    "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts"
+  ],
+  "testSha256": "e6bc36cf192f62347abeee95e9c995652a1912854c3631181c3013c8255cb6eb",
+  "runtime": {
+    "bun": "1.3.14",
+    "bunExecutableSha256": "e0c90ec15d33363e6b70713d56bc3b2c7585c17f40a0fe0f8fd9305901d4e233",
+    "node": "v26.8.2",
+    "system": "macOS-27.0-arm64-arm-64bit"
+  },
+  "sourceReadback": [
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "sha256": "47de25aa61eac95f05c5c8e092171d3ab9eea8a748983b794045d225b0cd5a9c",
+      "equalsBase": true
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+      "sha256": "25d578841296e23475383a7556857f0677da3931b8beb6c248775ee7ac8333a6",
+      "equalsBase": true
+    },
+    {
+      "path": "apps/electron/src/renderer/atoms/unified-shell.ts",
+      "sha256": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+      "equalsBase": true
+    },
+    {
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "sha256": "8e4535909c47b15de52e79e3715d88e997dc40f1d6d65f38d0581989dd18bb43",
+      "equalsBase": true
+    },
+    {
+      "path": "apps/electron/src/shared/route-parser.ts",
+      "sha256": "c6d324f368b7924ba1980e6b20036672374782807f5944d88e16a9c0de22a134",
+      "equalsBase": true
+    },
+    {
+      "path": "bun.lock",
+      "sha256": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff",
+      "equalsBase": true
+    }
+  ],
+  "checks": [
+    {
+      "name": "geometry-before",
+      "cwd": "apps/electron",
+      "command": [
+        "/Users/t/Projects/rox-release-20261003/apps/electron/vendor/bun/bun",
+        "test",
+        "src/renderer/atoms/rox-readiness-ui-001.layout.test.ts",
+        "src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts"
+      ],
+      "pass": 18,
+      "fail": 4,
+      "assertions": 171
+    },
+    {
+      "name": "geometry-after",
+      "pass": 22,
+      "fail": 0,
+      "assertions": 195
+    },
+    {
+      "name": "incorrect-event-payload-adapter-negative-control",
+      "sourceLocation": "scratch copies outside product tree",
+      "pass": 11,
+      "fail": 2,
+      "expectedFailure": true,
+      "reason": "Both stale queued event regressions reject replaying event.newValue"
+    },
+    {
+      "name": "unchanged-ui-recovery-ci-unit-entrypoint",
+      "pass": 876,
+      "skip": 141,
+      "fail": 0,
+      "assertions": 3654,
+      "files": 117,
+      "browserOptIn": false,
+      "command": [
+        "bun",
+        "test",
+        "--timeout",
+        "30000",
+        "./apps/electron/src/renderer/components/app-shell/__tests__",
+        "./apps/electron/src/shared/__tests__",
+        "./apps/electron/src/renderer/contexts/__tests__",
+        "./apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
+        "./apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts",
+        "./apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts",
+        "./apps/electron/src/renderer/atoms/rox-readiness-ui-001.panels.test.ts"
+      ],
+      "environment": {
+        "CHROMIUM_EXECUTABLE": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-2/work/ui001-separate-browser-phase"
+      }
+    },
+    {
+      "name": "electron-types",
+      "command": [
+        "/Users/t/Projects/rox-release-20261003/apps/electron/vendor/bun/bun",
+        "run",
+        "tsc",
+        "--noEmit"
+      ],
+      "cwd": "apps/electron",
+      "exitCode": 0,
+      "diagnostics": 0
+    }
+  ],
+  "failureHistoryRetained": true,
+  "logManifest": [
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/geometry-fixture-20261004/ui-001-geometry-red.log.gz",
+      "rawSha256": "ee32b214e25d29bfe4211ab95fd2654daa76459c6b1166011e9a39d186665071",
+      "compressedSha256": "052234dde035ea137db0b2f8d710f941fa297a62b861d64bf05e961ab3e07e44"
+    },
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/geometry-fixture-20261004/ui-001-geometry-green.log.gz",
+      "rawSha256": "58d74d2b03ddadf62c6cd81d5ef2ad8e71e5245ac75e7f3eee8b4e13d9b9b1a4",
+      "compressedSha256": "9dae28cc5ebf1d0076ab0f0b3d0c98ddad862bf8c90da01c07b06775318f69ef"
+    },
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/geometry-fixture-20261004/ui-001-geometry-mutation.log.gz",
+      "rawSha256": "3007eb079d9492a69d472789701e258619c4624f90c06327d7be42cfb5837904",
+      "compressedSha256": "ef6eb80cf967afc240bac17eada62390bb542bc78cf27a4fc4f5aa21f3fe16ba"
+    },
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/geometry-fixture-20261004/ui-001-main-regression.log.gz",
+      "rawSha256": "1a862d641f4bb1684e76293cb1c4f378640aac59a1be268981d23e6e3ffbf5a7",
+      "compressedSha256": "052a18100d75fa7aea827f9e9d148b881e5093d4d8a699378aaf631ce4ef698c"
+    },
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/geometry-fixture-20261004/ui-001-main-install.log.gz",
+      "rawSha256": "b9877cf484575a39b998785ecfa7e8c00303938a0717def22ab8647ee7b05eca",
+      "compressedSha256": "18597fd8f2b58bc4ae5e085f69c0c2c0449255a7b721b1acb68075b2584ad963"
+    },
+    {
+      "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/geometry-fixture-20261004/ui-001-main-typecheck.log.gz",
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compressedSha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    }
+  ],
+  "review": "Independent read-only review found no actionable issues; committed storage mutations and stale queued events retain separate controls.",
+  "originalAcceptanceUnchanged": true,
+  "fullDoDClosed": false,
+  "remainingAcceptance": [
+    "Installed Windows 10/11 and supported DPI target matrix",
+    "Packaged/native macOS overlay and Retina acceptance on the integrated candidate",
+    "Actual hosted web and canonical service/provider receipts",
+    "Immutable release replay across original acceptance targets"
+  ],
+  "delivery": {
+    "method": "new branch and pull request",
+    "target": "rox-one/rox-one:main",
+    "remoteReceipt": "Provided after this verification receipt; no main merge requested."
+  }
+}
