@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
 import ts from 'typescript'
 import * as shared from '@rox/shared/projects'
+import * as sharedAuth from '@rox/shared/auth'
 import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import { createWorkspaceAtPath as createWorkspace } from '@rox/shared/workspaces'
 import * as nativeSidebarMetadata from './native-sidebar-metadata'
@@ -40,6 +41,7 @@ function fixture() {
   const registryLookup = (id: string) => registry?.id === id ? registry : null
   const dependencies: Record<string, unknown> = {
     fs: {}, path: { join },
+    '@rox/shared/auth': sharedAuth,
     '@rox/shared/workspaces': {},
     '@rox/shared/protocol': { CodedError, RPC_CHANNELS },
     '@rox/shared/config': { getWorkspaceByNameOrId: registryLookup },
