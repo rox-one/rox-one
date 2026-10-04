@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import ts from 'typescript'
 import * as shared from '@rox/shared/projects'
 import { CodedError } from '@rox/shared/protocol'
+import { LOCAL_ROX_CALLER, peekRoxAccountAuthority } from '@rox/shared/auth'
 import { NativeAuthority, type NativeIssuedCredential } from '../../authority/native-authority'
 import type { RequestContext } from '../../transport/types'
 
@@ -65,6 +66,7 @@ function fixture() {
     getWorkspaceByNameOrId: (id: string) => id === workspace.id ? { id, rootPath: root } : null,
     loadShared: async () => shared, projectInputLines: async () => [],
     log: { info() {}, warn() {} }, CodedError, TEXT_EXCERPT_CHARS: 1500,
+    peekRoxAccountAuthority, LOCAL_ROX_CALLER,
   }
   const request = { mode: 'improve', text: 'draft', roadmapRevision: shared.loadProjectRoadmap(root, slug).roadmap.revision }
   return { authority, admin, issued, context, workspace, slug, environment, request, calls: () => providerCalls }
