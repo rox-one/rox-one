@@ -61,8 +61,8 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
         + 'Do not run two inspector-resize suites in parallel; use INSPECTOR_RESIZE_FIXTURE_URL for a shared server.',
       )
     }
-    await page.goto(endpoint, { waitUntil: 'commit', timeout: 180000 })
-    await page.waitForSelector('[data-inspector-fixture-ready="true"]', { timeout: 180000 })
+    await page.goto(endpoint, { waitUntil: 'commit', timeout: 240000 })
+    await page.waitForSelector('[data-inspector-fixture-ready="true"]', { timeout: 240000 })
     await page.waitForFunction(() => Boolean((window as any).__inspectorFixture), undefined, { timeout: 180000 })
     await expectDOM(page.getByRole('separator')).toBeVisible().catch(async error => {
       console.error('Owned fixture DOM:', (await page.locator('body').innerHTML()).slice(0, 1800))
@@ -110,15 +110,18 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
           },
         )
         exited = new Promise(resolve => { ui!.once('exit', resolve); ui!.once('error', resolve) })
-        const deadline = Date.now() + 180000
+        const deadline = Date.now() + 240000
         for (;;) {
           if (ui.exitCode !== null) throw Error(`Inspector resize fixture vite exited during startup (code ${ui.exitCode})`)
           try {
             const response = await fetch(endpoint)
-            if (response.ok && (await response.text()).includes('rox-inspector-resize-fixture')) break
+            if (response.ok && (await response.text()).includes('rox-inspector-resize-fixture')) {
+              const entry = await fetch(`${endpoint}/main.tsx`)
+              if (entry.ok) break
+            }
           } catch { /* retry until deadline */ }
-          if (Date.now() > deadline) throw Error('Inspector resize fixture startup timeout')
-          await Bun.sleep(100)
+          if (Date.now() > deadline) throw Error('Inspector resize fixture startup timeout (waited for HTML + main.tsx transform)')
+          await Bun.sleep(250)
         }
       }
       browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox', browserMarker] })
