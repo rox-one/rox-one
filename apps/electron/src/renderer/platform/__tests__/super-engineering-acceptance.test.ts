@@ -38,6 +38,15 @@ describe('super.engineering wave-2 acceptance', () => {
     const shell = readFileSync(join(srcRoot, 'renderer/components/app-shell/AppShell.tsx'), 'utf8')
     expect(shell).toContain('SuperEngineeringShellExtras')
     expect(shell).toContain("useAction('view.toggleInspector'")
+    expect(shell).toContain('onMenuToggleInspector')
+  })
+
+  it('routes View menu inspector item through craft dropdown', () => {
+    const menu = readFileSync(join(srcRoot, 'renderer/components/app-menu/DesktopAppMenu.tsx'), 'utf8')
+    expect(menu).toContain("item.id === 'toggleInspector'")
+    expect(menu).toContain('toggleInspector: onToggleInspector')
+    const api = readFileSync(join(srcRoot, 'transport/channel-map.ts'), 'utf8')
+    expect(api).toContain('onMenuToggleInspector')
   })
 
   it('shimmers session titles while streaming in SE profile', () => {

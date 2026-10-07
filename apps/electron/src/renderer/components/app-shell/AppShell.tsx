@@ -2211,6 +2211,13 @@ function AppShellContent({
   }, [inspectorEdgeMode, seProfile, setInspectorEdgeMode, setInspectorUserOpened, setInspectorVisible])
   useAction('view.toggleInspector', handleToggleInspector)
 
+  React.useEffect(() => {
+    const cleanup = window.electronAPI.onMenuToggleInspector?.(() => {
+      handleToggleInspector()
+    })
+    return cleanup
+  }, [handleToggleInspector])
+
   const handleNewBrowserWindow = useCallback(() => {
     if (isWebUI) {
       setWebBrowserOpen(true)
@@ -2784,6 +2791,7 @@ function AppShellContent({
           canGoForward={canGoForward}
           onToggleSidebar={handleToggleSidebar}
           onToggleFocusMode={() => setIsSidebarAndNavigatorHidden(prev => !prev)}
+          onToggleInspector={handleToggleInspector}
           onAddSessionPanel={() => handleNewChat(true)}
           onAddBrowserPanel={() => { void handleNewBrowserWindow() }}
           onOpenMap={handleOpenMap}

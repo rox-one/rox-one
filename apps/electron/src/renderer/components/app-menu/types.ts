@@ -15,4 +15,5 @@ export interface AppMenuProps {
   onOpenStoredUserPreferences: () => void
   onToggleSidebar?: () => void
   onToggleFocusMode?: () => void
+  onToggleInspector?: () => void
 }

@@ -388,7 +388,9 @@ html[data-ui-profile="super-engineering"] {
 
 html[data-ui-profile="super-engineering"] .cm-content,
 html[data-ui-profile="super-engineering"] .cm-line,
-html[data-ui-profile="super-engineering"] pre code {
+html[data-ui-profile="super-engineering"] pre code,
+html[data-ui-profile="super-engineering"] .npm__react-simple-code-editor__textarea,
+html[data-ui-profile="super-engineering"] .npm__react-simple-code-editor__pre {
   font-size: calc(var(--font-size-base) * var(--se-editor-font-scale, 1));
 }
 

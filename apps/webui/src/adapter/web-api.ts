@@ -189,6 +189,7 @@ export function createWebApi(options: WebApiOptions): {
     onMenuKeyboardShortcuts: () => () => {},
     onMenuToggleFocusMode: () => () => {},
     onMenuToggleSidebar: () => () => {},
+    onMenuToggleInspector: () => () => {},
     onDeepLinkNavigate: () => () => {},
 
     // Menu actions — no-ops (web has no native menu)

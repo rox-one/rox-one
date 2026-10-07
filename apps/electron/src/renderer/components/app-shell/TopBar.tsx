@@ -80,6 +80,7 @@ interface TopBarProps {
   canGoForward: boolean
   onToggleSidebar: () => void
   onToggleFocusMode: () => void
+  onToggleInspector?: () => void
   onAddSessionPanel: () => void
   onAddBrowserPanel: () => void
   onOpenMap: () => void
@@ -118,6 +119,7 @@ export function TopBar({
   canGoForward,
   onToggleSidebar,
   onToggleFocusMode,
+  onToggleInspector,
   onAddSessionPanel,
   onAddBrowserPanel,
   onOpenMap,
@@ -337,6 +339,7 @@ export function TopBar({
           onOpenStoredUserPreferences={onOpenStoredUserPreferences}
           onToggleSidebar={onToggleSidebar}
           onToggleFocusMode={onToggleFocusMode}
+          onToggleInspector={onToggleInspector}
         />
         {isCompact && (
           <CompactWorkspaceMenu onOpenBrowser={onAddBrowserPanel} />

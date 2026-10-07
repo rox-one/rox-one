@@ -199,7 +199,7 @@ export function ShikiCodeEditor({
         placeholder={placeholder}
         style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: 14,
+          fontSize: 'calc(14px * var(--se-editor-font-scale, 1))',
           lineHeight: 1.6,
           minHeight: '100%',
           backgroundColor,
