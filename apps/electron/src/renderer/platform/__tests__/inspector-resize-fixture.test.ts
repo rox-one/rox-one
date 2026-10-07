@@ -8,7 +8,7 @@ describe('inspector-resize browser fixture', () => {
     expect(fixture).toContain('featureWorkbenchHarnessInspectorV1Atom')
     expect(fixture).toContain('panelStackAtom')
     expect(fixture).toContain('routes.view.allSessions')
-    expect(fixture).toContain('inspectorUserOpenedAtom, true')
+    expect(fixture).not.toContain('inspectorUserOpenedAtom')
     expect(fixture).toContain('featureWorkbenchHarnessInspectorV1')
     expect(fixture).toContain('localStorage.setItem')
     expect(fixture).toContain('getSessionFiles')
