@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'bun:test'
-import superEngineering from '../../../resources/themes/super-engineering.json'
+import type { ThemeFile } from '@config/theme'
+import superEngineeringJson from '../../../resources/themes/super-engineering.json'
 import { persistThemeSelection, resolveUiProfile, resolveVisualMode } from './theme-resolution'
+
+const superEngineering = superEngineeringJson as ThemeFile
 
 describe('resolveUiProfile', () => {
   it('reads super-engineering preset profile', () => {
