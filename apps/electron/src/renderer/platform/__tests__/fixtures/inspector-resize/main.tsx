@@ -89,6 +89,3 @@ function Fixture() {
   return <main className="flex h-[500px] w-full bg-background text-foreground" data-inspector-fixture-ready={ready ? 'true' : undefined}><div data-panel-role="content" className="min-w-0 flex-1"><input aria-label="Editor" defaultValue="Unsent draft" /><output data-testid="persisted-width">{width}</output></div>{mounted && <InspectorHost />}</main>
 }
 createRoot(document.getElementById('root')!).render(<Provider store={store}><TooltipProvider><Fixture /></TooltipProvider></Provider>)
-
-
-[You have received this identical output 3 times. Re-reading '/Users/t/Projects/rox-one/apps/electron/src/renderer/platform/__tests__/fixtures/inspector-resize/main.tsx:raw' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]

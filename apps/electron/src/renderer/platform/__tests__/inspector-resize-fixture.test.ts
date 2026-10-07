@@ -14,5 +14,6 @@ describe('inspector-resize browser fixture', () => {
     expect(fixture).toContain('inspectorChromeCollapsed')
     expect(fixture).toContain('data-inspector-fixture-ready')
     expect(fixture).toContain('getSessionFiles')
+    expect(fixture).not.toMatch(/You have received this identical/)
   })
 })
