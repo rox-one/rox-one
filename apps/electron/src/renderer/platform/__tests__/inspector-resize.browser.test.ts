@@ -1,13 +1,17 @@
 import { beforeAll, afterAll, describe, test, expect } from 'bun:test'
-import { existsSync, mkdirSync } from 'node:fs'
+import { existsSync, mkdirSync, createWriteStream } from 'node:fs'
 import { spawn, execFileSync, type ChildProcess } from 'node:child_process'
 import { resolve } from 'node:path'
+import { tmpdir } from 'node:os'
 import { chromium, expect as browserExpect, type Browser, type Page } from 'playwright/test'
 
 const repository = resolve(import.meta.dirname, '../../../../../..')
 const fixture = resolve(import.meta.dirname, 'fixtures/inspector-resize')
 const executablePath = process.env.CHROMIUM_EXECUTABLE ?? chromium.executablePath()
-const endpoint = 'http://127.0.0.1:5264'
+/** Per-process port avoids SIGTERM races when two browser suites share 5264. */
+const fixturePort = Number(process.env.INSPECTOR_RESIZE_FIXTURE_PORT)
+  || (5300 + (process.pid % 300))
+const endpoint = `http://127.0.0.1:${fixturePort}`
 const browserMarker = `--rox-inspector-resize-fixture=20261003-root-${process.pid}`
 const expectDOM = browserExpect.configure({ timeout: 60000 })
 const invoke = async (page: Page, action: string, ...args: unknown[]) => {
@@ -36,22 +40,29 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
   }
   beforeAll(async () => {
     try {
-      ui = spawn('node', [resolve(repository, 'node_modules/vite/bin/vite.js'), '--config', resolve(fixture, 'vite.config.ts'), '--port', '5264'], { cwd: repository, stdio: 'ignore', detached: true })
+      const viteLog = createWriteStream(resolve(tmpdir(), `rox-inspector-resize-vite-${process.pid}.log`))
+      ui = spawn(
+        'node',
+        [resolve(repository, 'node_modules/vite/bin/vite.js'), '--config', resolve(fixture, 'vite.config.ts'), '--port', String(fixturePort), '--strictPort'],
+        { cwd: repository, stdio: ['ignore', 'pipe', 'pipe'], detached: true },
+      )
+      ui.stdout?.pipe(viteLog)
+      ui.stderr?.pipe(viteLog)
       exited = new Promise(resolve => { ui!.once('exit', resolve); ui!.once('error', resolve) })
       const deadline = Date.now() + 55000
       for (;;) {
-        if (ui.exitCode !== null) throw Error('Owned surface tabs fixture exited during startup')
+        if (ui.exitCode !== null) throw Error(`Inspector resize fixture vite exited during startup (code ${ui.exitCode})`)
         try {
           const response = await fetch(endpoint)
           if (response.ok) {
             if (!(await response.text()).includes('rox-inspector-resize-fixture')) throw Error('Different process owns inspector fixture port')
-            const listener = execFileSync('lsof', ['-nP', '-iTCP:5264', '-sTCP:LISTEN', '-Fp'], { encoding: 'utf8' }).trim()
-            const pids = listener.split('\n').filter(field => field.startsWith('p')).map(field => field.slice(1))
-            if (!pids.length || pids.some(pid => Number(execFileSync('ps', ['-p', pid, '-o', 'pgid='], { encoding: 'utf8' }).trim()) !== ui!.pid)) throw Error('Different process owns inspector fixture port')
+            const listener = execFileSync('lsof', ['-nP', `-iTCP:${fixturePort}`, '-sTCP:LISTEN', '-Fp'], { encoding: 'utf8' }).trim()
+            const listenPid = Number(listener.split('\n').find(field => field.startsWith('p'))?.slice(1) ?? '')
+            if (!listenPid || listenPid !== ui!.pid) throw Error('Different process owns inspector fixture port')
             break
           }
         } catch (error) { if (error instanceof Error && error.message.includes('owns inspector')) throw error }
-        if (Date.now() > deadline) throw Error('Surface tabs fixture startup timeout')
+        if (Date.now() > deadline) throw Error('Inspector resize fixture startup timeout')
         await Bun.sleep(100)
       }
       browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox', browserMarker] })
@@ -67,7 +78,12 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
   afterAll(stop, 30000)
 
   const load = async () => {
-    if (ui?.exitCode !== null) throw Error(`Inspector fixture vite exited (code ${ui?.exitCode ?? 'unknown'})`)
+    if (ui?.exitCode !== null) {
+      throw Error(
+        `Inspector fixture vite exited (code ${ui?.exitCode ?? 'unknown'}) on port ${fixturePort}. `
+        + `Avoid parallel runs on a fixed port; log: ${resolve(tmpdir(), `rox-inspector-resize-vite-${process.pid}.log`)}`,
+      )
+    }
     const page = await browser!.newPage({ viewport: { width: 1280, height: 720 } })
     page.on('pageerror', error => console.error('Fixture browser error:', error.message))
     await page.goto(endpoint, { waitUntil: 'networkidle', timeout: 120000 })
