@@ -19,5 +19,8 @@ describe('inspector-resize browser fixture', () => {
     const viteConfig = readFileSync(join(import.meta.dirname, 'fixtures/inspector-resize/vite.config.ts'), 'utf8')
     expect(viteConfig).toContain("find: 'react'")
     expect(viteConfig).toContain('node_modules/react')
+    expect(viteConfig).toContain('react/jsx-runtime')
+    expect(viteConfig).toContain("find !== 'react'")
+    expect(fixture).toContain('packages/ui/src/components/tooltip')
   })
 })
