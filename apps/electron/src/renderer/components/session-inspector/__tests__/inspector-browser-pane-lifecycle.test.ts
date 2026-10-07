@@ -27,7 +27,7 @@ describe('Issue 14 pane lifecycle and link routing', () => {
   it('hides on unmount and restores instead of leaving a dead pane', () => {
     expect(page).toContain('persist = true')
     expect(page).toContain("t('browser.restore')")
-    expect(page).toContain("t('browser.closed')")
+    expect(page).toContain("'browser.closed'")
     expect(mainPanel).toContain('<BrowserPanelPage instanceId={instanceId} panelId={panelId} persist />')
   })
 
