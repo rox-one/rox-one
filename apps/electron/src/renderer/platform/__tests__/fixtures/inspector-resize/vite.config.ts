@@ -10,7 +10,8 @@ export default defineConfig(async environment => {
   return {
     ...production,
     root,
-    cacheDir: resolve(tmpdir(), 'rox-inspector-resize-fixture-20261003'),
+    cacheDir: process.env.INSPECTOR_RESIZE_VITE_CACHE
+      ?? resolve(tmpdir(), `rox-inspector-resize-fixture-${process.pid}`),
     resolve: {
       ...production.resolve,
       alias: [
