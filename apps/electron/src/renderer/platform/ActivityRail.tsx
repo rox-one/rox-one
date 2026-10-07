@@ -30,7 +30,7 @@ import {
 import { CHROME_DENSITY } from './chrome-density'
 import { ExtraScreensRailGroup } from '../pages/extra-screens/ExtraScreensRailGroup'
 import { RailRow } from './RailRow'
-import { routes } from '@/shared/routes'
+import { routes } from '../../shared/routes'
 
 export { RailRow } from './RailRow'
 

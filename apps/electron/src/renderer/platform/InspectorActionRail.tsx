@@ -24,7 +24,7 @@ import {
   ROX_TASKS_COMPOSE_EVENT,
 } from './inspector-compose-events'
 import { useNavigation } from '@/contexts/NavigationContext'
-import { routes } from '@/shared/routes'
+import { routes } from '../../shared/routes'
 import { cn } from '@/lib/utils'
 import { CHROME_DENSITY } from './chrome-density'
 

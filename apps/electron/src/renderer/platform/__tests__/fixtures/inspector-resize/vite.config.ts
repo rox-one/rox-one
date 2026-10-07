@@ -14,6 +14,7 @@ export default defineConfig(async environment => {
     resolve: {
       ...production.resolve,
       alias: [
+        { find: '@/shared/routes', replacement: resolve(repository, 'apps/electron/src/shared/routes.ts') },
         { find: '@/context/AppShellContext', replacement: resolve(root, 'context.ts') },
         { find: '@/contexts/NavigationContext', replacement: resolve(root, 'navigation.ts') },
         { find: '@/components/session-inspector/SessionInspectorBody', replacement: resolve(root, 'leaves.tsx') },
