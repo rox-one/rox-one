@@ -110,7 +110,7 @@ function withBoundedLayoutSize(
 /** Wave flag: unified shell chrome (ActivityRail + SurfaceTabs + InspectorHost). Master stays off. */
 export const featureUnifiedShellAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureUnifiedShell),
-  true,
+  false,
   undefined,
   { getOnInit: true },
 )

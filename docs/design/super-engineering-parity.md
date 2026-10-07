@@ -1,6 +1,6 @@
 # super.engineering UX parity (rox-one)
 
-**Branch:** `feat/super-engineering-ui-parity`  
+**Branch:** `main` (parity merged; profile opt-in)  
 **Reference spec:** `/Users/t/Pictures/Shots/Agents/super-engineering-ux-20261007/super-engineering-UX-spec-2026-10-07.md`  
 **Reference frames:** `.../reference-frames/` (14 PNG)  
 **PRD:** [`docs/tasks/prd-super-engineering-ui-profile.md`](../tasks/prd-super-engineering-ui-profile.md)  

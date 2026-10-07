@@ -68,7 +68,7 @@
       "title": "Composer & git bar",
       "allowlist": [
         "apps/electron/src/renderer/platform/GitStatusBar.tsx",
-        "apps/electron/src/renderer/components/chat/InputContainer.tsx",
+        "apps/electron/src/renderer/components/app-shell/input/InputContainer.tsx",
         "apps/electron/src/renderer/platform/__tests__/*git*"
       ],
       "forbidden": []
