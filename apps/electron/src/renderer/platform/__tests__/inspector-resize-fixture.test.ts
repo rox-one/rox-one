@@ -22,6 +22,7 @@ describe('inspector-resize browser fixture', () => {
     expect(viteConfig).toContain('react/jsx-runtime')
     expect(viteConfig).toContain("find !== 'react'")
     expect(viteConfig).toContain('rox-ui-stub.tsx')
-    expect(viteConfig).toContain("find: '@rox/ui'")
+    expect(viteConfig).toContain('inspector-fixture-rox-ui-barrel-stub')
+    expect(fixture).toContain('parseAnsi')
   })
 })

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-/** Minimal @rox/ui stand-in so InspectorHost mounts without a second React graph from Radix. */
+/** Minimal @rox/ui stand-in for barrel imports (`import { … } from '@rox/ui'`). */
 export function TooltipProvider({ children }: { children: ReactNode }) {
   return children
 }
@@ -15,4 +15,8 @@ export function TooltipTrigger({ children }: { children: ReactNode }) {
 
 export function TooltipContent() {
   return null
+}
+
+export function parseAnsi(input: string): Array<{ text: string }> {
+  return [{ text: input }]
 }
