@@ -180,8 +180,12 @@ export class CredentialManager {
       try {
         stored = backend instanceof SecureStorageBackend ? await backend.getStrict(id) : await backend.get(id);
       } catch (error) {
-        if (backend instanceof SecureStorageBackend && error instanceof CredentialStoreError && error.code === 'WRITE_BLOCKED') {
-          // Vault needs operator repair; local WS may still use the legacy session token.
+        if (
+          backend instanceof SecureStorageBackend
+          && error instanceof CredentialStoreError
+          && (error.code === 'WRITE_BLOCKED' || error.code === 'PROVIDER_UNAVAILABLE')
+        ) {
+          // Vault unreadable pending repair; local WS may still use the legacy session token.
           return null;
         }
         throw error;
