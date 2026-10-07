@@ -32,6 +32,12 @@ function inspectorFixtureModuleStubPlugin(): Plugin {
       if (clean === '@rox/ui') return roxUiStub
       const stub = fixtureModuleStubs[clean]
       if (stub) return stub
+      // optimizeDeps / @fs paths can bypass @/ aliases; still force fixture stubs.
+      if (clean.includes('/contexts/NavigationContext')) return fixtureModuleStubs['@/contexts/NavigationContext']
+      if (clean.includes('/context/AppShellContext')) return fixtureModuleStubs['@/context/AppShellContext']
+      if (clean.includes('/session-inspector/SessionInspectorBody')) return fixtureModuleStubs['@/components/session-inspector/SessionInspectorBody']
+      if (clean.includes('/session-inspector/InspectorBrowserPane')) return fixtureModuleStubs['@/components/session-inspector/InspectorBrowserPane']
+      if (clean.includes('/session-inspector/InspectorTerminal')) return fixtureModuleStubs['@/components/session-inspector/InspectorTerminal']
       return null
     },
   }

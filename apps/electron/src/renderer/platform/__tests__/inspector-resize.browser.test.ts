@@ -83,6 +83,7 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
     }
     await page.goto(endpoint, { waitUntil: 'commit', timeout: playwrightActionTimeoutMs })
     await page.waitForSelector('[data-inspector-fixture-ready="true"]', { state: 'attached', timeout: playwrightActionTimeoutMs })
+    // Ready marker is set before InspectorHost mounts; fixture API appears after a successful render.
     await page.waitForFunction(() => Boolean((window as any).__inspectorFixture), undefined, { timeout: playwrightActionTimeoutMs })
     await expectDOM(page.getByRole('separator')).toBeVisible().catch(async error => {
       console.error('Owned fixture DOM:', (await page.locator('body').innerHTML()).slice(0, 1800))
