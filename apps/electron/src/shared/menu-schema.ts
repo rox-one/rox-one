@@ -204,6 +204,17 @@ export const VIEW_MENU: MenuSection = {
       ipcChannel: RPC_CHANNELS.menu.TOGGLE_INSPECTOR,
       icon: 'PanelRight',
     },
+    {
+      type: 'action',
+      id: 'toggleChatPictureInPicture',
+      actionId: 'view.toggleChatPictureInPicture',
+      labelKey: 'menu.toggleChatPictureInPicture',
+      shortcut: 'CmdOrCtrl+Shift+P',
+      shortcutDisplayMac: '⌘⇧P',
+      shortcutDisplayOther: 'Ctrl+Shift+P',
+      ipcChannel: RPC_CHANNELS.menu.TOGGLE_CHAT_PICTURE_IN_PICTURE,
+      icon: 'PictureInPicture2',
+    },
   ],
 }
 

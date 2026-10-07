@@ -46,7 +46,11 @@ export function GitStatusBar({ workspaceRootPath, className }: GitStatusBarProps
         aria-pressed={showIdentityError}
       >
         <AlertCircle className="size-3.5" aria-hidden />
-        {showIdentityError ? t('se.git.identityStub') : t('se.git.configure')}
+        {identityNeedsAttention
+          ? showIdentityError
+            ? t('se.git.identityStub')
+            : t('se.git.identityFailed')
+          : t('se.git.configure')}
       </button>
     </div>
   )

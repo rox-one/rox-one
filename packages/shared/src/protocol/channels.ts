@@ -368,6 +368,7 @@ export const RPC_CHANNELS = {
     TOGGLE_FOCUS_MODE: 'menu:toggleFocusMode',
     TOGGLE_SIDEBAR: 'menu:toggleSidebar',
     TOGGLE_INSPECTOR: 'menu:toggleInspector',
+    TOGGLE_CHAT_PICTURE_IN_PICTURE: 'menu:toggleChatPictureInPicture',
     QUIT: 'menu:quit',
     MINIMIZE: 'menu:minimize',
     MAXIMIZE: 'menu:maximize',

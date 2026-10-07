@@ -69,4 +69,20 @@ describe('super.engineering wave-3 acceptance', () => {
     expect(extras).toContain('SeChatPictureInPicture')
     expect(extras).toContain("useAction('view.toggleChatPictureInPicture'")
   })
+
+  it('exposes chat PiP in View menu schema and craft dropdown', () => {
+    const schema = readFileSync(join(srcRoot, 'shared/menu-schema.ts'), 'utf8')
+    expect(schema).toContain('toggleChatPictureInPicture')
+    expect(schema).toContain('TOGGLE_CHAT_PICTURE_IN_PICTURE')
+    const menu = readFileSync(join(srcRoot, 'renderer/components/app-menu/DesktopAppMenu.tsx'), 'utf8')
+    expect(menu).toContain('toggleChatPictureInPicture')
+    const shell = readFileSync(join(srcRoot, 'renderer/components/app-shell/AppShell.tsx'), 'utf8')
+    expect(shell).toContain('onMenuToggleChatPictureInPicture')
+  })
+
+  it('loads full welcome phrase list for hub taglines', () => {
+    const taglines = readFileSync(join(srcRoot, 'renderer/constants/hub-taglines.ts'), 'utf8')
+    expect(taglines).toContain('room-temperature superconductor')
+    expect(taglines.match(/^\s+'/gm)?.length ?? 0).toBeGreaterThanOrEqual(30)
+  })
 })

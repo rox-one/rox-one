@@ -16,4 +16,5 @@ export interface AppMenuProps {
   onToggleSidebar?: () => void
   onToggleFocusMode?: () => void
   onToggleInspector?: () => void
+  onToggleChatPictureInPicture?: () => void
 }

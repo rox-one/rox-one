@@ -80,6 +80,7 @@ import { WorkspaceNavigator } from '@/components/workspace/WorkspaceNavigator'
 import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
 import { useSeEditorZoom } from '@/hooks/useSeEditorZoom'
 import { inspectorEdgeRevealModeAtom } from '@/atoms/panel-auto-hide'
+import { seChatPipOpenAtom } from '@/atoms/se-chat-pip'
 import { inspectorUserOpenedAtom } from '@/atoms/unified-shell'
 import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
@@ -2218,6 +2219,19 @@ function AppShellContent({
     return cleanup
   }, [handleToggleInspector])
 
+  const setChatPipOpen = useSetAtom(seChatPipOpenAtom)
+  const handleToggleChatPictureInPicture = useCallback(() => {
+    if (!seProfile) return
+    setChatPipOpen((v) => !v)
+  }, [seProfile, setChatPipOpen])
+
+  React.useEffect(() => {
+    const cleanup = window.electronAPI.onMenuToggleChatPictureInPicture?.(() => {
+      handleToggleChatPictureInPicture()
+    })
+    return cleanup
+  }, [handleToggleChatPictureInPicture])
+
   const handleNewBrowserWindow = useCallback(() => {
     if (isWebUI) {
       setWebBrowserOpen(true)
@@ -2792,6 +2806,7 @@ function AppShellContent({
           onToggleSidebar={handleToggleSidebar}
           onToggleFocusMode={() => setIsSidebarAndNavigatorHidden(prev => !prev)}
           onToggleInspector={handleToggleInspector}
+          onToggleChatPictureInPicture={handleToggleChatPictureInPicture}
           onAddSessionPanel={() => handleNewChat(true)}
           onAddBrowserPanel={() => { void handleNewBrowserWindow() }}
           onOpenMap={handleOpenMap}

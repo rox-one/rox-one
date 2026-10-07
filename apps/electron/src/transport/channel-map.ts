@@ -214,6 +214,7 @@ export const CHANNEL_MAP = {
   onMenuToggleFocusMode: listener(RPC_CHANNELS.menu.TOGGLE_FOCUS_MODE),
   onMenuToggleSidebar: listener(RPC_CHANNELS.menu.TOGGLE_SIDEBAR),
   onMenuToggleInspector: listener(RPC_CHANNELS.menu.TOGGLE_INSPECTOR),
+  onMenuToggleChatPictureInPicture: listener(RPC_CHANNELS.menu.TOGGLE_CHAT_PICTURE_IN_PICTURE),
 
   // Deep link
   onDeepLinkNavigate: listener(RPC_CHANNELS.deeplink.NAVIGATE),

@@ -35,6 +35,7 @@ type MenuActionHandlers = {
   toggleFocusMode?: () => void
   toggleSidebar?: () => void
   toggleInspector?: () => void
+  toggleChatPictureInPicture?: () => void
 }
 
 const roleHandlers: Record<string, () => void> = {
@@ -101,7 +102,9 @@ function renderSubmenuItem(
         ? actionHandlers.toggleSidebar
         : item.id === 'toggleInspector'
           ? actionHandlers.toggleInspector
-          : undefined
+          : item.id === 'toggleChatPictureInPicture'
+            ? actionHandlers.toggleChatPictureInPicture
+            : undefined
     return (
       <StyledDropdownMenuItem key={item.id} onClick={handler}>
         {Icon && <Icon className="h-3.5 w-3.5" />}
@@ -148,6 +151,7 @@ export function DesktopAppMenu({
   onToggleSidebar,
   onToggleFocusMode,
   onToggleInspector,
+  onToggleChatPictureInPicture,
 }: AppMenuProps) {
   const { t } = useTranslation()
   const [isDebugMode, setIsDebugMode] = useState(false)
@@ -169,6 +173,7 @@ export function DesktopAppMenu({
     toggleFocusMode: onToggleFocusMode,
     toggleSidebar: onToggleSidebar,
     toggleInspector: onToggleInspector,
+    toggleChatPictureInPicture: onToggleChatPictureInPicture,
   }
 
   return (

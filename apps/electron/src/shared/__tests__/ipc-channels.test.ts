@@ -371,6 +371,7 @@ const EXPECTED_CHANNELS: string[] = [
   'menu:quit',
   'menu:redo',
   'menu:selectAll',
+  'menu:toggleChatPictureInPicture',
   'menu:toggleDevTools',
   'menu:toggleFocusMode',
   'menu:toggleInspector',

@@ -39,6 +39,14 @@ super.engineering is **GPUI (Rust)**; rox-one is **Electron + React + Vite**. Pa
 | W2-D | Session title shimmer while streaming (SE profile) | **Done** |
 | W3-A | Per-branch upstream ahead/behind | **Done** (`readBranchUpstreamTracks` in `workspace.ts`) |
 | W3-B | Chat PiP surface (SE profile, ⌘⇧P) | **Done** (`SeChatPictureInPicture`, `view.toggleChatPictureInPicture`) |
+| W3-C | View menu PiP + craft dropdown + macOS menu IPC | **Done** (`menu:toggleChatPictureInPicture`) |
+| W3-D | Hub taglines from SE binary `welcome-phrase-*` | **Done** (`hub-taglines.ts`, 35+ phrases) |
+| W3-E | Git identity strip copy (frame 10) | **Done** (`se.git.identityFailed` + details toggle) |
+
+## Manual QA only (not code)
+
+- Reference PNG gaps listed in UX spec § «Скриншоты, которых не хватает» — capture on Mac when needed.
+- **TestCT / Tailscale:** closed checkpoint `tailscale-testct-ssh-20261003`; do not change network without new incident.
 
 ## Sidebar architecture (summary)
 
