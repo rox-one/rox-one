@@ -15,5 +15,8 @@ describe('inspector-resize browser fixture', () => {
     expect(fixture).toContain('data-inspector-fixture-ready')
     expect(fixture).toContain('getSessionFiles')
     expect(fixture).not.toMatch(/You have received this identical/)
+    const viteConfig = readFileSync(join(import.meta.dirname, 'fixtures/inspector-resize/vite.config.ts'), 'utf8')
+    expect(viteConfig).toContain("find: 'react'")
+    expect(viteConfig).toContain('node_modules/react')
   })
 })

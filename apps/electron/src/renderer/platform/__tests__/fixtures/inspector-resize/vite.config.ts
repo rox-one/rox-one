@@ -3,6 +3,8 @@ import { resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 const root = import.meta.dirname
 const repository = resolve(root, '../../../../../../../..')
+const reactRoot = resolve(repository, 'node_modules/react')
+const reactDomRoot = resolve(repository, 'node_modules/react-dom')
 export default defineConfig(async environment => {
   const loaded = await loadConfigFromFile(environment, resolve(repository, 'apps/electron/vite.config.ts'))
   if (!loaded) throw new Error('Current production renderer configuration unavailable')
@@ -15,6 +17,8 @@ export default defineConfig(async environment => {
     resolve: {
       ...production.resolve,
       alias: [
+        { find: 'react', replacement: reactRoot },
+        { find: 'react-dom', replacement: reactDomRoot },
         { find: '@/shared/routes', replacement: resolve(repository, 'apps/electron/src/shared/routes.ts') },
         { find: '@/context/AppShellContext', replacement: resolve(root, 'context.ts') },
         { find: '@/contexts/NavigationContext', replacement: resolve(root, 'navigation.ts') },
@@ -28,6 +32,7 @@ export default defineConfig(async environment => {
     optimizeDeps: {
       ...production.optimizeDeps,
       entries: [resolve(root, 'index.html')],
+      include: [...new Set([...(production.optimizeDeps?.include ?? []), 'react', 'react-dom', 'react/jsx-runtime', 'jotai'])],
     },
     server: { host: '127.0.0.1', strictPort: true, hmr: false, watch: null, fs: { allow: [repository] } },
   }
