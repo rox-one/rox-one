@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "branch": "feat/super-engineering-ui-parity",
+  "updated": "2026-10-07",
+  "goal": "Opt-in super.engineering UI profile; default Rox unchanged.",
+  "reference": {
+    "uxSpec": "/Users/t/Pictures/Shots/Agents/super-engineering-ux-20261007/super-engineering-UX-spec-2026-10-07.md",
+    "parity": "docs/design/super-engineering-parity.md",
+    "architecture": "docs/design/super-engineering-spec.md"
+  },
+  "mergeOrder": ["W1-A", "W1-B", "W1-C", "W1-D", "W1-E", "W1-F", "W1-G", "W1-H", "W1-I", "INTEGRATOR"],
+  "agents": {
+    "W1-A": {
+      "title": "Tokens & theme",
+      "allowlist": [
+        "apps/electron/resources/themes/super-engineering.json",
+        "apps/electron/src/renderer/context/ThemeContext.tsx",
+        "apps/electron/src/renderer/context/theme-resolution.ts",
+        "packages/ui/src/styles/index.css",
+        "apps/electron/src/renderer/context/__tests__/*theme*"
+      ],
+      "forbidden": ["apps/electron/src/renderer/components/app-shell/AppShell.tsx"]
+    },
+    "W1-B": {
+      "title": "Icon & rail styling",
+      "allowlist": [
+        "apps/electron/src/renderer/components/icons/se/**",
+        "apps/electron/src/renderer/lib/se-icon-map.ts",
+        "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+        "apps/electron/src/renderer/components/app-shell/LeftSidebar.tsx",
+        "apps/electron/src/renderer/components/app-shell/__tests__/*icon*",
+        "apps/electron/src/renderer/components/app-shell/__tests__/*se-icon*"
+      ],
+      "forbidden": ["apps/electron/src/renderer/components/app-shell/AppShell.tsx"]
+    },
+    "W1-C": {
+      "title": "Workspace navigator",
+      "allowlist": [
+        "apps/electron/src/renderer/atoms/workbench-layout.ts",
+        "apps/electron/src/renderer/components/workspace/**",
+        "apps/electron/src/renderer/hooks/useWorkspaceGitModel.ts",
+        "apps/electron/src/renderer/components/workspace/__tests__/**"
+      ],
+      "forbidden": ["apps/electron/src/renderer/components/app-shell/AppShell.tsx"]
+    },
+    "W1-D": {
+      "title": "Edge-reveal panels",
+      "allowlist": [
+        "apps/electron/src/renderer/atoms/panel-auto-hide.ts",
+        "apps/electron/src/renderer/hooks/useEdgeRevealPanel.ts",
+        "apps/electron/src/renderer/platform/inspector-layout.ts",
+        "apps/electron/src/renderer/platform/__tests__/*edge*",
+        "apps/electron/src/renderer/platform/__tests__/zen-shell*"
+      ],
+      "forbidden": ["apps/electron/src/renderer/components/app-shell/AppShell.tsx"]
+    },
+    "W1-E": {
+      "title": "Hub & taglines",
+      "allowlist": [
+        "apps/electron/src/renderer/components/ui/ScrambleTagline.tsx",
+        "apps/electron/src/renderer/constants/hub-taglines.ts",
+        "apps/electron/src/renderer/components/hub/**",
+        "apps/electron/src/renderer/lib/motion/super-engineering-springs.ts"
+      ],
+      "forbidden": []
+    },
+    "W1-F": {
+      "title": "Composer & git bar",
+      "allowlist": [
+        "apps/electron/src/renderer/platform/GitStatusBar.tsx",
+        "apps/electron/src/renderer/components/chat/InputContainer.tsx",
+        "apps/electron/src/renderer/platform/__tests__/*git*"
+      ],
+      "forbidden": []
+    },
+    "W1-G": {
+      "title": "Onboarding & sheets",
+      "allowlist": [
+        "apps/electron/src/renderer/components/onboarding/**",
+        "apps/electron/src/renderer/components/app-shell/WhatsNewSheet.tsx",
+        "apps/electron/src/renderer/components/hub/QuickStartDialog.tsx",
+        "apps/electron/src/renderer/components/hub/CloneFromUrlDialog.tsx"
+      ],
+      "forbidden": []
+    },
+    "W1-H": {
+      "title": "Settings & View menu",
+      "allowlist": [
+        "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx",
+        "apps/electron/src/renderer/actions/definitions.ts",
+        "apps/electron/src/main/menu*.ts",
+        "apps/electron/src/main/index.ts"
+      ],
+      "forbidden": ["apps/electron/src/renderer/components/app-shell/AppShell.tsx"]
+    },
+    "W1-I": {
+      "title": "Docs & acceptance",
+      "allowlist": [
+        "docs/design/**",
+        "docs/tasks/**",
+        "apps/electron/src/renderer/platform/__tests__/super-engineering-acceptance.test.ts"
+      ],
+      "forbidden": []
+    },
+    "INTEGRATOR": {
+      "title": "Shell composition only",
+      "allowlist": [
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+        "apps/electron/src/renderer/platform/WorkspaceSurfaceHost.tsx",
+        "apps/electron/src/renderer/components/app-shell/ShellLayoutMode.tsx"
+      ],
+      "dependsOn": ["W1-A", "W1-B", "W1-C", "W1-D"]
+    }
+  },
+  "rules": [
+    "Default theme and uiProfile remain Rox; SE only when user selects super-engineering theme.",
+    "No edits under apps/electron/.ua/ or packages/ui/.ua/.",
+    "Integrator is the only agent that may touch AppShell.tsx.",
+    "Run bun test on touched packages before handoff."
+  ]
+}
