@@ -14,7 +14,7 @@ export function InspectorBrowserPane() {
   const [instanceId, setInstanceId] = React.useState<string | null>(null)
   const [error, setError] = React.useState<string | null>(null)
   const [cookieStatus, setCookieStatus] = React.useState<BrowserCookieAutoStatus | null>(null)
-  const [useImportedCookies, setUseImportedCookies] = React.useState(false)
+  const [useImportedCookies, setUseImportedCookies] = React.useState(true)
   const createdImportedRef = React.useRef<string | null>(null)
 
   React.useEffect(() => {
@@ -22,7 +22,8 @@ export function InspectorBrowserPane() {
       void window.electronAPI.browserCookieAutoStatus()
         .then((status) => {
           setCookieStatus(status)
-          if (!status.consent) setUseImportedCookies(false)
+          if (status.consent) setUseImportedCookies(true)
+          else setUseImportedCookies(false)
         })
         .catch(() => setCookieStatus(null))
     }
@@ -101,48 +102,14 @@ export function InspectorBrowserPane() {
 
   if (!instanceId) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex items-center gap-2 px-2 py-1 text-xs">
-        <label className="flex items-center gap-1" title={cookieStatus?.consent ? cookieStatus.domains?.join(', ') : t('settings.browserImport.auto.noImportedConsent')}>
-          <input
-            type="checkbox"
-            checked={useImportedCookies}
-            disabled={!cookieStatus?.consent}
-            onChange={(event) => setUseImportedCookies(event.target.checked)}
-          />
-          {t('settings.browserImport.auto.useImportedCookies')}
-        </label>
-        {cookieStatus?.consent && cookieStatus.domains?.length ? (
-          <span className="truncate text-muted-foreground">
-            {t('settings.browserImport.auto.domainsLabel')}: {cookieStatus.domains.join(', ')}
-          </span>
-        ) : null}
-        </div>
-        <div className="flex min-h-0 flex-1 items-center justify-center text-[12px] text-muted-foreground">
-          {t('common.loading')}
-        </div>
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-[12px] text-muted-foreground">
+        {t('common.loading')}
       </div>
     )
   }
 
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col">
-      <div className="flex items-center gap-2 px-2 py-1 text-xs">
-        <label className="flex items-center gap-1" title={cookieStatus?.consent ? cookieStatus.domains?.join(', ') : t('settings.browserImport.auto.noImportedConsent')}>
-          <input
-            type="checkbox"
-            checked={useImportedCookies}
-            disabled={!cookieStatus?.consent}
-            onChange={(event) => setUseImportedCookies(event.target.checked)}
-          />
-          {t('settings.browserImport.auto.useImportedCookies')}
-        </label>
-        {cookieStatus?.consent && cookieStatus.domains?.length ? (
-          <span className="truncate text-muted-foreground">
-            {t('settings.browserImport.auto.domainsLabel')}: {cookieStatus.domains.join(', ')}
-          </span>
-        ) : null}
-      </div>
       <div className="relative min-h-0 w-full flex-1">
         <div className="absolute inset-0 min-h-0 min-w-0">
           <BrowserPanelPage instanceId={instanceId} persist />

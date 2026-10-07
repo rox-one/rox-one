@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import { useAtomValue } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { activityRailCollapsedAtom } from '@/atoms/unified-shell'
 import {
   featureUnifiedShellAtom,
   featureWorkbenchAtom,
@@ -52,6 +53,7 @@ export function WorkspaceSurfaceHost({
   const workbenchEnabled = availability === 'enabled'
   const granularChrome = unifiedShell || workbenchEnabled
   const edgeReveal = useEdgeRevealPanel(granularChrome || ownsPrimaryNavigation)
+  const setActivityRailCollapsed = useSetAtom(activityRailCollapsedAtom)
   const chrome = resolveWorkbenchChrome({
     unifiedShell,
     modeRegistry: false,
@@ -64,6 +66,15 @@ export function WorkspaceSurfaceHost({
 
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1 items-stretch">
+      {chrome.showRail && !ownsPrimaryNavigation && (
+        <div
+          className="absolute left-0 top-0 bottom-0 z-50"
+          style={{ width: edgeReveal.edgeZonePx }}
+          onPointerEnter={() => setActivityRailCollapsed(false)}
+          data-testid="activity-rail-edge-zone"
+          aria-hidden
+        />
+      )}
       <div
         className="absolute right-0 top-0 bottom-0 z-50"
         style={{ width: edgeReveal.edgeZonePx }}

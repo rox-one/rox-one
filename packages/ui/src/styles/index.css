@@ -21,6 +21,7 @@
 
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 
 /* =============================================================================
    SEMANTIC TOKENS
@@ -132,7 +133,7 @@
      Rox (Ioskeley Mono) stays the monospace face for code, terminal and
      command input via --font-mono. Inter/system remain explicit preferences. */
   --font-ui-narrow: "Arial Narrow", "Arial Narrow", Arial, sans-serif;
-  --font-sans: "Arial Narrow", "Arial Narrow", Arial, sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif;
   --font-serif: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --font-mono: "Rox", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --font-chat: var(--font-sans);
@@ -291,7 +292,7 @@
 
 /* The default ("rox") UI preset renders in Arial Narrow; code stays on --font-mono. */
 html[data-font="rox"] {
-  --font-sans: "Arial Narrow", "Arial Narrow", Arial, sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif;
   --font-default: var(--font-sans);
 }
 

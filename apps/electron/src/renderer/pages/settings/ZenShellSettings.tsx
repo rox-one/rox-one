@@ -38,9 +38,15 @@ export function ZenShellSettings() {
       const unsubscribe = subscribeWebChromePreference(setWebPreference)
       return () => { mounted.current = false; unsubscribe() }
     }
+    if (typeof api?.setZenShell === 'function' || typeof api?.getZenShellSnapshot === 'function') {
+      setNativeAvailable(true)
+    }
     const unsubscribe = subscribeDesktopShellAppearance(api, next => {
       setSnapshot(next); setNativeAvailable(true)
-    }, error => { setNativeAvailable(false); if (error) console.warn('Desktop shell settings unavailable:', error) })
+    }, error => {
+      if (typeof api?.setZenShell !== 'function') setNativeAvailable(false)
+      if (error) console.warn('Desktop shell settings unavailable:', error)
+    })
     return () => { mounted.current = false; unsubscribe() }
   }, [isWeb])
 

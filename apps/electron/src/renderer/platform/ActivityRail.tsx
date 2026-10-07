@@ -18,7 +18,7 @@
  */
 import { useSyncExternalStore, type ReactNode } from 'react'
 import { useAtom } from 'jotai'
-import { ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { ChevronsLeft, ChevronsRight, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { activityRailCollapsedAtom, activityRailNarrowOverrideAtom } from '@/atoms/unified-shell'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
@@ -30,6 +30,7 @@ import {
 import { CHROME_DENSITY } from './chrome-density'
 import { ExtraScreensRailGroup } from '../pages/extra-screens/ExtraScreensRailGroup'
 import { RailRow } from './RailRow'
+import { routes } from '@/shared/routes'
 
 export { RailRow } from './RailRow'
 
@@ -102,6 +103,7 @@ function RailItem({ dest, collapsed }: { dest: AppNavDestination; collapsed: boo
       disabled={disabled}
       active={!disabled && dest.isActive(navState)}
       onClick={() => void navigate(dest.route!())}
+      muted
       testId={`rail-item-${dest.id}`}
     />
   )
@@ -115,6 +117,7 @@ function RailSection({ collapsed, children }: { collapsed: boolean; children: Re
 
 export function ActivityRail() {
   const { t } = useTranslation()
+  const { navigate } = useNavigation()
   const { collapsed, toggle } = useEffectiveRailCollapsed()
   const toggleLabel = collapsed ? t('rail.expand') : t('rail.collapse')
 
@@ -135,11 +138,19 @@ export function ActivityRail() {
         ))}
       </RailSection>
       <ExtraScreensRailGroup collapsed={collapsed} />
-      <div className={cn('mt-auto pt-[8px]', collapsed ? '' : 'flex')}>
+      <div className={cn('mt-auto flex flex-col gap-[4px] pt-[8px]', collapsed ? 'items-center' : 'items-stretch')}>
+        <RailRow
+          icon={Settings}
+          label={t('sidebar.settings')}
+          collapsed={collapsed}
+          muted
+          onClick={() => void navigate(routes.view.settings())}
+          testId="rail-settings"
+        />
         <RailRow
           icon={collapsed ? ChevronsRight : ChevronsLeft}
           label={toggleLabel}
-          collapsed
+          collapsed={collapsed}
           muted
           onClick={toggle}
           testId="rail-toggle"

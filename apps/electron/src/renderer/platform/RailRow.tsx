@@ -45,7 +45,7 @@ export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disable
           : active
             ? 'bg-accent/10 text-accent font-medium'
             : muted
-              ? 'text-muted-foreground/70 hover:bg-foreground/5 hover:text-foreground'
+              ? 'text-foreground/45 hover:bg-foreground/5 hover:text-foreground'
               : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
       )}
     >

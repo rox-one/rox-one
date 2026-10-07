@@ -23,6 +23,8 @@ export const ROX_DEEPLINK_SCHEME = 'rox'
 export const ROX_LEGACY_DEEPLINK_SCHEME = 'craftagents'
 
 export const ROX_CONFIG_DIR_NAME = '.rox'
+/** Visible product home (no leading dot). Used when present or after migration. */
+export const ROX_VISIBLE_CONFIG_DIR_NAME = 'rox'
 export const ROX_LEGACY_CONFIG_DIR_NAME = '.craft-agent'
 
 export const ROX_CONFIG_DIR_ENV = 'ROX_CONFIG_DIR'

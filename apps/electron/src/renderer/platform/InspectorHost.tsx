@@ -48,6 +48,7 @@ import { CENTER_MIN_WIDTH, PANEL_MIN_WIDTH } from '@/components/app-shell/panel-
 import { ConnectionInfoSection } from './ConnectionInfoSection'
 import { SessionInspectorBody } from '@/components/session-inspector/SessionInspectorBody'
 import { InspectorBrowserPane } from '@/components/session-inspector/InspectorBrowserPane'
+import { InspectorActionRail } from './InspectorActionRail'
 import { InspectorTerminal } from '@/components/session-inspector/InspectorTerminal'
 import {
   INSPECTOR_LIVE_SECTIONS,
@@ -202,6 +203,7 @@ export function InspectorHost() {
       ? `${workspace.rootPath.replace(/[\\/]+$/, '')}/sessions/${sessionId}`
       : undefined
   const [terminalOpen, setTerminalOpen] = useState(false)
+  const bottomTerminalOpen = useAtomValue(bottomTerminalOpenAtom)
   const [userOpened, setUserOpened] = useAtom(inspectorUserOpenedAtom)
   const setAutoCollapsed = useSetAtom(inspectorAutoCollapsedAtom)
 
@@ -325,6 +327,39 @@ export function InspectorHost() {
     setChromeCollapsed(true)
     setVisible(false)
     setTerminalOpen(false)
+  }
+
+  if (!sessionMode) {
+    if (chromeCollapsed) {
+      return (
+        <button
+          type="button"
+          aria-label={t('inspector.expand')}
+          onClick={() => {
+            setChromeCollapsed(false)
+            setVisible(true)
+            setUserOpened(true)
+          }}
+          className="chrome-strip rox-shell-pane rox-shell-divider-l pointer-events-auto flex h-full w-[28px] shrink-0 items-center justify-center hover:bg-foreground/5"
+          data-inspector="collapsed"
+        >
+          <ChevronsRight className="h-3.5 w-3.5 rotate-180" />
+        </button>
+      )
+    }
+    return (
+      <InspectorActionRail
+        browserPanelActive={false}
+        terminalActive={bottomTerminalOpen}
+        onCollapse={collapseChrome}
+        onBrowserOpen={() => {
+          setChromeCollapsed(false)
+          setSection('browser')
+          setVisible(true)
+          setUserOpened(true)
+        }}
+      />
+    )
   }
 
   // R-hide = 28px restore strip. Click expands chrome and shows the panel.

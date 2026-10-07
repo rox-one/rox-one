@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ChevronDown, Cpu } from 'lucide-react'
+import { Cpu } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
@@ -38,9 +38,7 @@ export function DeviceStatusChip({ className }: { className?: string }) {
           className={cn('inline-flex h-7 min-h-[var(--control-hit-min)] min-w-[var(--control-hit-min)] shrink-0 items-center gap-1.5 rounded-md border border-border/60 px-2 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', className)}
           style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
         >
-          <Cpu className="size-3.5" aria-hidden="true" />
-          <span>{t('deviceDiagnostics.device')}</span>
-          <ChevronDown className="size-3 opacity-60" aria-hidden="true" />
+          <Cpu className="size-4" aria-hidden="true" />
         </button>
       </PopoverTrigger>
       {open && (

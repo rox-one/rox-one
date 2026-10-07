@@ -428,7 +428,7 @@ export default function AppearanceSettingsPage() {
           window.electronAPI.getHomeDir?.() ?? Promise.resolve(''),
         ])
         setToolIcons(mappings)
-        setToolIconsJsonPath(`${homeDir}/.rox/tool-icons/tool-icons.json`)
+        setToolIconsJsonPath(`${homeDir}/rox/tool-icons/tool-icons.json`)
       } catch (error) {
         console.error('Failed to load tool icon mappings:', error)
       }
@@ -810,11 +810,21 @@ export default function AppearanceSettingsPage() {
                       ''
                     return (
                       <SettingsRow key={column.id} label={t(column.labelKey)}>
-                        <SettingsMenuSelect
-                          value={dropStatusId}
-                          onValueChange={(value) => setColumnStatus(column.id, value)}
-                          options={columnStatusOptions}
-                        />
+                        <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center">
+                          <SettingsMenuSelect
+                            value={columnStatusOptions.some(o => o.value === dropStatusId) ? dropStatusId : ''}
+                            onValueChange={(value) => setColumnStatus(column.id, value)}
+                            options={columnStatusOptions}
+                          />
+                          <input
+                            type="text"
+                            className="h-8 min-w-0 flex-1 rounded-[var(--radius-control)] border border-foreground/10 bg-transparent px-2 text-[13px] outline-none focus-visible:ring-1 focus-visible:ring-accent"
+                            placeholder={t('settings.appearance.kanbanColumnStatusCustom')}
+                            value={dropStatusId}
+                            onChange={(e) => setColumnStatus(column.id, e.target.value)}
+                            aria-label={t('settings.appearance.kanbanColumnStatusCustom')}
+                          />
+                        </div>
                       </SettingsRow>
                     )
                   })}

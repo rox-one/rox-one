@@ -123,8 +123,9 @@
 
 | Task | State | Evidence |
 |---|---|---|
-| T-00 | in_progress | credentials.enc missing on disk |
-| T-01 | pending | zip at Downloads |
-| T-03+ | pending | |
+| T-00 | done | credentials restored from .bak |
+| T-01 | done | wave 1 commit |
+| T-03 | done | inspector hidden default |
+| T-04–T-19 | done | wave 2 — Ghostty T-20 still candidate |
 
 **Next action:** Execute T-01, T-03, T-16 error fix in parallel after T-00 restore.

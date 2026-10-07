@@ -8,10 +8,12 @@
  * Sources and conflicting files remain preserved.
  */
 import { importLegacyConfig } from './legacy-config-migration.ts';
+import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import {
   ROX_CONFIG_DIR_NAME,
+  ROX_VISIBLE_CONFIG_DIR_NAME,
 } from '../identity/manifest.ts';
 
 const warnedCraftNames = new Set<string>();
@@ -58,7 +60,9 @@ export function resolveConfigDir(
 ): string {
   const override = getEnv('CONFIG_DIR', env);
   if (override) return override;
-  const roxDir = join(homeDir, ROX_CONFIG_DIR_NAME);
+  const visibleDir = join(homeDir, ROX_VISIBLE_CONFIG_DIR_NAME);
+  const hiddenDir = join(homeDir, ROX_CONFIG_DIR_NAME);
+  const roxDir = existsSync(visibleDir) ? visibleDir : hiddenDir;
   importLegacyConfig(homeDir, roxDir);
   return roxDir;
 }

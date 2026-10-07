@@ -148,7 +148,8 @@ export default function CloudRunsSettingsPage() {
     try {
       const getConfig = window.electronAPI?.getCloudRunsConfig
       if (typeof getConfig !== 'function') throw new Error(t('common.unavailable'))
-      const next = await getConfig()
+      const raw = await getConfig()
+      const next = raw.provider ? raw : { ...raw, provider: 'daytona' as const }
       setConfig(next)
       setDraft(draftFromConfig(next))
     } catch (error) {

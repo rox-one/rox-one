@@ -45,17 +45,17 @@ export function SidebarChrome({
     }
   }, [workspaceId])
   return (
-    <div className="rox-shell-divider-t shrink-0 space-y-2 px-1.5 py-2">
+    <div className="rox-shell-divider-t shrink-0 space-y-3 px-1.5 py-2 pb-3">
       {visiblePromoKind && !collapsed ? (
         <PromoSlot kind={visiblePromoKind} reminderDueCount={reminderDueCount} onCta={onPromoCta} onDismiss={visiblePromoKind === 'onboarding' ? onDismissGuidance : undefined} />
       ) : null}
       {/* Flat account row: no outline/shadow card, subtle hover fill only. */}
       <div ref={profileContainerRef} data-guidance-workspace={workspaceId || '_default'}><ProfileStrip data={profile} onClick={onProfileClick} compact={collapsed} className={collapsed ? "px-0" : "px-2"} /></div>
       <div className={cn('flex gap-1', collapsed ? 'flex-col items-center' : 'items-center justify-between px-1')}>
-        <button type="button" onClick={onOpenSettings} aria-label={t('sidebar.settings')} title={t('sidebar.settings')} className="grid size-8 place-items-center rounded-lg text-foreground/60 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring">
+        <button type="button" onClick={onOpenSettings} aria-label={t('sidebar.settings')} title={t('sidebar.settings')} className="grid size-8 place-items-center rounded-lg text-foreground/45 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring">
           <Settings className="size-4" aria-hidden />
         </button>
-        <button type="button" onClick={onToggleSidebar} aria-label={t(collapsed ? 'rail.expand' : 'rail.collapse')} title={t(collapsed ? 'rail.expand' : 'rail.collapse')} aria-expanded={!collapsed} className="grid size-8 place-items-center rounded-lg text-foreground/60 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring">
+        <button type="button" onClick={onToggleSidebar} aria-label={t(collapsed ? 'rail.expand' : 'rail.collapse')} title={t(collapsed ? 'rail.expand' : 'rail.collapse')} aria-expanded={!collapsed} className="grid size-8 place-items-center rounded-lg text-foreground/45 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring">
           {collapsed ? <ChevronsRight className="size-4" aria-hidden /> : <ChevronsLeft className="size-4" aria-hidden />}
         </button>
       </div>
