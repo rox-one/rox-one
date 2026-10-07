@@ -35,6 +35,6 @@ bun test \
   packages/cloud-runner/src/__tests__/daytona-provider.test.ts
 ```
 
-**Last run:** 60 pass, 1 skip, 0 fail (8+2 files).
+**Last run:** 59 pass, 1 skip, 0 fail (10 files).
 
 **Manual (user):** mode bar × inspector rail actions × cloud settings × meetings record CTA × screen map comments.
