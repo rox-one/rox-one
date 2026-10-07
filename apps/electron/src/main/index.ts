@@ -79,7 +79,7 @@ Sentry.setUser({ id: machineId })
 
 import { join, delimiter } from 'path'
 import { refreshLegacySeededWorkspaceIcons } from './brand-icon-migration'
-import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync } from 'fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, readdirSync } from 'fs'
 import { resolveOemManagedLayout } from '@rox/shared/knowledge/oem-pin'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 
@@ -229,8 +229,22 @@ if (isDebugMode) {
     })
   }
 
+  if (!process.env.UV_PYTHON) {
+    const pyRoot = join(CONFIG_DIR, 'toolchain', 'python', '3.12')
+    if (existsSync(pyRoot)) {
+      for (const entry of readdirSync(pyRoot)) {
+        if (!entry.startsWith('cpython-3.12')) continue
+        const candidate = join(pyRoot, entry, 'bin', process.platform === 'win32' ? 'python.exe' : 'python3.12')
+        if (existsSync(candidate)) {
+          process.env.UV_PYTHON = candidate
+          break
+        }
+      }
+    }
+  }
+
   if (isDebugMode) {
-    mainLog.info('CLI tools configured:', { uvBinary: process.env.CRAFT_UV, binDir, scriptsDir, bundledUvExists })
+    mainLog.info('CLI tools configured:', { uvBinary: process.env.CRAFT_UV, binDir, scriptsDir, bundledUvExists, uvPython: process.env.UV_PYTHON ?? null })
   }
 }
 
@@ -497,9 +511,16 @@ app.whenReady().then(async () => {
   // Initialize bundled docs
   initializeDocs()
 
-  // Sync bundled skill packs into ~/.agents/skills/ (fire-and-forget: the call
-  // never throws; user edits inside installed skills survive via hash-merge)
-  ensureBundledSkills()
+  // Sync bundled skill packs into ~/.agents/skills/ (never throws; hash-merge).
+  // Defer off the critical path so the first window can open without waiting
+  // for hundreds of skill files to copy on every cold start.
+  setImmediate(() => {
+    try {
+      ensureBundledSkills()
+    } catch (err) {
+      mainLog.warn('[bundled-skills] deferred sync failed:', err)
+    }
+  })
 
   // Initialize bundled release notes
   initializeReleaseNotes()
