@@ -16,7 +16,7 @@ import {
   inspectorUserOpenedAtom,
   inspectorVisibleAtom,
 } from '@/atoms/unified-shell'
-import { routes } from '../../../../../../shared/routes'
+import { routes } from '../../../../../shared/routes'
 import { getKeyString, KEYS } from '@/lib/local-storage'
 import en from '../../../../../../../../packages/shared/src/i18n/locales/en.json'
 import '../../../../index.css'
