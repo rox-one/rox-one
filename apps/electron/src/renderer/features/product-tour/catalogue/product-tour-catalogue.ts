@@ -66,11 +66,11 @@ const definitions = [
         "copy": {
           "ru": {
             "title": "Проверь разрешения",
-            "body": "Сейчас выбран режим «{{mode}}». Он определяет согласование действий, но не заменяет права доступа к файлам и сервисам."
+            "body": "Выбранный режим определяет согласование действий, но не заменяет права доступа к файлам и сервисам."
           },
           "en": {
             "title": "Check permissions",
-            "body": "The current mode is “{{mode}}”. It controls approvals; it does not replace file or service access controls."
+            "body": "The selected mode controls approvals; it does not replace file or service access controls."
           }
         },
         "completion": {
@@ -534,7 +534,7 @@ const definitions = [
   {
     "id": "OBT-06",
     "slug": "dictation",
-    "version": 2,
+    "version": 3,
     "title": "Голосовой ввод",
     "goal": "Продиктовать черновик и проверить текст.",
     "why": "Упростить ввод, не связывая обучение с постоянной записью.",
@@ -582,7 +582,7 @@ const definitions = [
       },
       {
         "id": "voice.review",
-        "version": 2,
+        "version": 3,
         "target": "composer.input",
         "routeKey": "keep",
         "copy": {
@@ -602,7 +602,7 @@ const definitions = [
           "priorState": "same-attempt",
           "requireAcknowledgementAfterEvidence": true
         },
-        "handoff": false,
+        "handoff": true,
         "optional": false,
         "notes": "Не считать обычный ввод доказательством диктовки. Отказ в разрешении не считать ошибкой пользователя.",
         "scope": "bound-panel",
@@ -1206,7 +1206,7 @@ const definitions = [
   {
     "id": "OBT-13",
     "slug": "session-workflow",
-    "version": 1,
+    "version": 2,
     "title": "Организация сессий",
     "goal": "Использовать статусы, метки и представления.",
     "why": "Не превращать список рабочих диалогов в свалку.",
@@ -1289,7 +1289,7 @@ const definitions = [
       },
       {
         "id": "workflow.board",
-        "version": 1,
+        "version": 2,
         "target": "sessions.view-switcher",
         "routeKey": "keep",
         "copy": {
@@ -1309,7 +1309,7 @@ const definitions = [
           "priorState": "allow-current-state",
           "requireAcknowledgementAfterEvidence": true
         },
-        "handoff": false,
+        "handoff": true,
         "optional": false,
         "notes": "",
         "scope": "bound-panel",

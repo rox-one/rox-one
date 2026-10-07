@@ -4603,7 +4603,7 @@
   "productTour.first-result.first.compose.title": "Beschreibe das Ergebnis",
   "productTour.first-result.first.execution.body": "Hier siehst du Fortschritt und Aktionen des Agenten. Während die Aufgabe läuft, kannst du sie hier stoppen.",
   "productTour.first-result.first.execution.title": "Verfolge die Ausführung",
-  "productTour.first-result.first.permissions.body": "Der aktuelle Modus ist „{{mode}}“. Er steuert Freigaben, ersetzt aber keine Zugriffsrechte auf Dateien oder Dienste.",
+  "productTour.first-result.first.permissions.body": "Der ausgewählte Modus steuert Freigaben, ersetzt aber keine Zugriffsrechte auf Dateien oder Dienste.",
   "productTour.first-result.first.permissions.title": "Prüfe die Berechtigungen",
   "productTour.first-result.first.result.body": "Lies das Ergebnis und prüfe, ob es deine Anforderungen erfüllt. Verfeinere es bei Bedarf in dieser Sitzung.",
   "productTour.first-result.first.result.title": "Prüfe die Antwort",

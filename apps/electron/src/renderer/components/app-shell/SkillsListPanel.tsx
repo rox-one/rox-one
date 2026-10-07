@@ -289,7 +289,7 @@ export function SkillsListPanel({
   )
 
   return (
-    <div ref={skillsTarget} className="min-h-0" data-product-tour-target="skills.list">
+    <div ref={skillsTarget} className="flex min-h-0 flex-1 flex-col" data-product-tour-target="skills.list">
     <style>{`
       [data-list-role="skills"] [data-skill-row] {
         content-visibility: auto;

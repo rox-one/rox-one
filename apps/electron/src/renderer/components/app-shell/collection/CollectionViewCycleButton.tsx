@@ -1,9 +1,12 @@
-import { useTourSignals, useTourTarget, type TourObservation } from '@/features/product-tour/runtime/hooks'
+import { useTourSignals, useTourTarget, TourRuntimeContext, TourScopeContext } from '@/features/product-tour/runtime/hooks'
+import { beginCollectionViewChange, consumeCollectionViewChange, hasCollectionViewChange } from '@/features/product-tour/runtime/collection-view-observation'
+import { measureTargetGeometry } from '@/features/product-tour/ui/geometry'
+import { observeTargetGeometry } from '@/features/product-tour/ui/geometry-observer'
 import { useNavigationState, isSessionsNavigation } from '@/contexts/NavigationContext'
 import * as React from 'react'
 import { CalendarRange, ChevronDown, LayoutGrid, List, Table2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { PremiumMenu } from '@rox/ui'
+import { PremiumMenu } from '@/components/ui/premium-menu'
 import { useHotkeyLabel } from '@/actions/useHotkeyLabel'
 import { cn } from '@/lib/utils'
 import type { CollectionViewMode } from '../kanban/BoardListToggle'
@@ -37,16 +40,42 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
   const { t } = useTranslation()
   const navigation = useNavigationState()
   const isSessionCollection = isSessionsNavigation(navigation)
+  const requestedDestination = isSessionsNavigation(navigation) && navigation.filter.kind === 'allSessions'
+    && !navigation.details && (navigation.viewMode ?? 'list') === value
+  const runtime = React.useContext(TourRuntimeContext)
+  const scope = React.useContext(TourScopeContext)
+  const owner = runtime?.observationOwner ?? runtime
   const viewTarget = useTourTarget('sessions.view-switcher')
   const tourSignals = useTourSignals()
-  const pendingView = React.useRef<{ observation: TourObservation | null; value: CollectionViewMode } | null>(null)
+  const viewElement = React.useRef<HTMLDivElement | null>(null)
+  const registerView = React.useCallback((element: HTMLDivElement | null) => {
+    viewElement.current = element
+    if (isSessionCollection) viewTarget(element)
+  }, [isSessionCollection, viewTarget])
   React.useEffect(() => {
-    const pending = pendingView.current
-    if (isSessionCollection && pending?.value === value) {
-      pendingView.current = null
-      tourSignals.emit(pending.observation, 'sessions.view-visible', 'observed', 'ui-observation')
+    const element = viewElement.current
+    if (!requestedDestination || !runtime?.enabled || !owner || !scope || !element) return
+    const current = tourSignals.capture()
+    if (!current || !hasCollectionViewChange(owner, current.binding, scope, value)) return
+    let completed = false
+    let stop = () => {}
+    // A prop change alone is insufficient: the requested destination must have
+    // committed, remain in the captured scope, and be visible through clipping.
+    const complete = () => {
+      const observation = consumeCollectionViewChange(owner, tourSignals.capture(), scope, value, !!measureTargetGeometry(element))
+      if (observation) {
+        completed = true
+        stop()
+        tourSignals.emit(observation, 'sessions.view-visible', 'observed', 'ui-observation')
+      } else {
+        const active = tourSignals.capture()
+        if (!active || !hasCollectionViewChange(owner, active.binding, scope, value)) stop()
+      }
     }
-  }, [value, isSessionCollection, tourSignals])
+    complete()
+    if (!completed) stop = observeTargetGeometry(element, complete)
+    return () => stop()
+  }, [value, requestedDestination, runtime, owner, scope, tourSignals])
   const [menuOpen, setMenuOpen] = React.useState(false)
   const triggerRef = React.useRef<HTMLButtonElement>(null)
   const Icon = ICONS[value]
@@ -66,10 +95,10 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
   }
 
   const applyMode = React.useCallback((mode: CollectionViewMode) => {
-    if (isSessionCollection) pendingView.current = { observation: tourSignals.capture(), value: mode }
+    if (isSessionCollection && owner) beginCollectionViewChange(owner, tourSignals.capture(), mode, value)
     if (mode !== value) rememberCollectionView(value)
     onChange(mode)
-  }, [onChange, value, isSessionCollection, tourSignals])
+  }, [onChange, value, isSessionCollection, owner, tourSignals])
 
   const nextLabel = t('collection.view.cycleNext', { mode: t(LABEL_KEY[next]) })
   const prevLabel = t('collection.view.cyclePrev', { mode: t(LABEL_KEY[prev]) })

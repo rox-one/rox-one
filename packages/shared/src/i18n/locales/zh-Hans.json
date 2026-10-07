@@ -4603,7 +4603,7 @@
   "productTour.first-result.first.compose.title": "描述所需结果",
   "productTour.first-result.first.execution.body": "这里显示进度和智能体操作。任务运行时也可以在这里停止。",
   "productTour.first-result.first.execution.title": "查看执行过程",
-  "productTour.first-result.first.permissions.body": "当前模式为“{{mode}}”。它控制操作审批，但不能代替文件和服务的访问权限。",
+  "productTour.first-result.first.permissions.body": "所选模式控制操作审批，但不能代替文件和服务的访问权限。",
   "productTour.first-result.first.permissions.title": "检查权限",
   "productTour.first-result.first.result.body": "阅读结果，检查是否符合需求。需要调整时，可以继续在本会话中提问。",
   "productTour.first-result.first.result.title": "检查回答",

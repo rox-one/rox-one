@@ -1,5 +1,5 @@
 export { createTargetRegistry, type TargetRegistryOptions } from './target-registry'
-export { measureTargetGeometry, type TargetGeometry, type TargetRect } from './geometry'
+export { measureTargetGeometry, measureTourTargetGeometry, type TargetGeometry, type TargetRect } from './geometry'
 export { SpotlightOverlay, type SpotlightOverlayProps } from './SpotlightOverlay'
 export { TourPopover, type TourPopoverProps } from './TourPopover'
 export { TourErrorBoundary, type TourErrorBoundaryProps } from './TourErrorBoundary'

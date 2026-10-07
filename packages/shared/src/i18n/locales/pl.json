@@ -4609,7 +4609,7 @@
   "productTour.first-result.first.compose.title": "Opisz oczekiwany wynik",
   "productTour.first-result.first.execution.body": "Tutaj widać postęp i działania agenta. Podczas pracy możesz tu zatrzymać zadanie.",
   "productTour.first-result.first.execution.title": "Obserwuj wykonanie",
-  "productTour.first-result.first.permissions.body": "Obecny tryb to „{{mode}}”. Steruje zatwierdzaniem działań, ale nie zastępuje praw dostępu do plików i usług.",
+  "productTour.first-result.first.permissions.body": "Wybrany tryb steruje zatwierdzaniem działań, ale nie zastępuje praw dostępu do plików i usług.",
   "productTour.first-result.first.permissions.title": "Sprawdź uprawnienia",
   "productTour.first-result.first.result.body": "Przeczytaj wynik i sprawdź, czy odpowiada potrzebom. Kontynuuj w tej sesji, aby go dopracować.",
   "productTour.first-result.first.result.title": "Sprawdź odpowiedź",

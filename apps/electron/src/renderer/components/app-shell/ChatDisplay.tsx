@@ -10,6 +10,8 @@ import { useChatOutputFollow } from "./useChatOutputFollow"
 import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { resolvePublishedToolSource } from '@/features/product-tour/adapters/connections'
 import { beginChatUserTurn, beginChatPermissionResponse, cancelChatUserTurn, deriveExecutionCapabilities, observeChatSessionReopened } from '@/features/product-tour/adapters/chat'
+import { followChatOutput } from "./chat-scroll"
+import { useChatOutputFollow } from "./useChatOutputFollow"
 import { createMessageTts } from '@/lib/message-tts'
 import { useAuthenticatedReactionActor } from '@/hooks/useMessageReactionActor'
 import { messageActionId } from '@/lib/message-action-id'
@@ -2183,7 +2185,15 @@ const handleFollowUpChipClick = useCallback((item: {
                     return (
                       <div
                         key={turnKey}
-                        ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey); if (isNativeFinal) finalTarget(el); if (hasNativeSourceResult) toolResultTarget(el) }}
+                        ref={el => {
+                          if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey)
+                          // A completed answer may be much taller than the chat viewport.
+                          // Bind its real content surface, never the turn's thinking or unrelated chrome.
+                          const responses = el?.querySelectorAll<HTMLElement>('[data-search-root="response"]')
+                          const response = responses?.item(responses.length - 1) ?? null
+                          if (isNativeFinal) finalTarget(response)
+                          if (hasNativeSourceResult) toolResultTarget(response ?? el?.querySelector<HTMLElement>('[data-search-exclude="true"]') ?? null)
+                        }}
                         className={cn(
                           "pt-2",
                           "rounded-lg transition-all duration-200",

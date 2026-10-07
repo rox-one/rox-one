@@ -4603,7 +4603,7 @@
   "productTour.first-result.first.compose.title": "원하는 결과를 설명하세요",
   "productTour.first-result.first.execution.body": "진행 상황과 에이전트 작업이 표시됩니다. 작업이 실행 중일 때 여기서 중지할 수도 있습니다.",
   "productTour.first-result.first.execution.title": "실행을 살펴보세요",
-  "productTour.first-result.first.permissions.body": "현재 모드는 “{{mode}}”입니다. 작업 승인을 제어하지만 파일이나 서비스 접근 권한을 대신하지 않습니다.",
+  "productTour.first-result.first.permissions.body": "선택한 모드는 작업 승인을 제어하지만 파일이나 서비스 접근 권한을 대신하지 않습니다.",
   "productTour.first-result.first.permissions.title": "권한을 확인하세요",
   "productTour.first-result.first.result.body": "결과가 필요에 맞는지 확인하세요. 더 다듬으려면 이 세션에서 대화를 이어 가세요.",
   "productTour.first-result.first.result.title": "답변을 검토하세요",

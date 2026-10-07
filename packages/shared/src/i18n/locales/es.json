@@ -4603,7 +4603,7 @@
   "productTour.first-result.first.compose.title": "Describe el resultado",
   "productTour.first-result.first.execution.body": "Aquí ves el progreso y las acciones del agente. Puedes detener la tarea aquí mientras se ejecuta.",
   "productTour.first-result.first.execution.title": "Sigue la ejecución",
-  "productTour.first-result.first.permissions.body": "El modo actual es «{{mode}}». Controla las aprobaciones, pero no sustituye los permisos de acceso a archivos o servicios.",
+  "productTour.first-result.first.permissions.body": "El modo seleccionado controla las aprobaciones, pero no sustituye los permisos de acceso a archivos o servicios.",
   "productTour.first-result.first.permissions.title": "Revisa los permisos",
   "productTour.first-result.first.result.body": "Lee el resultado y comprueba si satisface tus necesidades. Continúa en esta sesión para ajustarlo.",
   "productTour.first-result.first.result.title": "Revisa la respuesta",

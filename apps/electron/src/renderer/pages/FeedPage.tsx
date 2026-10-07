@@ -161,6 +161,12 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
   const shell = useOptionalAppShellContext()
   const api = typeof window !== 'undefined' ? window.electronAPI : undefined
   const scope = useFeedCaller(shell?.activeWorkspaceId ?? null, api)
+  const tourSignals = useTourSignals()
+  useEffect(() => {
+    if (!scope.caller) return tourSignals.capability('feed.available', scope.failed
+      ? { state: 'unavailable', reason: 'not-authorized' }
+      : { state: 'pending', reason: 'installing' })
+  }, [tourSignals, scope.caller, scope.failed])
   if (!scope.caller) return <div className="flex h-full flex-col items-center justify-center gap-3" data-testid="feed-page">
     <EmptyState title={t(scope.failed ? 'feed.loadError' : 'feed.loading')} />
     {scope.failed ? <Button onClick={scope.retry}>{t('feed.refresh')}</Button> : null}
@@ -360,8 +366,8 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   })
   const feedCapability = useMemo(() => inboxFeedCapabilities({
     workspacePresent: !!workspaceId, inboxApi: false, inboxLoaded: false, inboxFailed: false,
-    feedApi: typeof api?.feedList === 'function', feedLoaded: loaded, feedFailed: !!loadError, feedItems: data.items,
-  })['feed.available']!, [workspaceId, api?.feedList, loaded, loadError, data.items])
+    feedApi: typeof rawApi?.feedList === 'function', feedLoaded: loaded, feedFailed: !!loadError, feedItems: data.items,
+  })['feed.available']!, [workspaceId, rawApi?.feedList, loaded, loadError, data.items])
   useEffect(() => tourSignals.capability('feed.available', feedCapability),
     [tourSignals, feedCapability])
 
