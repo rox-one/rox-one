@@ -132,6 +132,24 @@ export class CredentialManager {
     return this.writeBackend?.name || null;
   }
 
+  /**
+   * When the encrypted vault was quarantined (decrypt/malformed), restore from
+   * credentials.enc.bak if present so local transport and API keys work again.
+   */
+  async tryRestoreVaultFromBackup(): Promise<'ok' | 'restored' | 'unavailable'> {
+    await this.ensureInitialized();
+    const backend = this.writeBackend;
+    if (!(backend instanceof SecureStorageBackend)) return 'unavailable';
+    const repair = backend.getRepairState();
+    if (repair.status === 'ok') return 'ok';
+    try {
+      const restored = await backend.restoreFromBackup();
+      return restored ? 'restored' : 'unavailable';
+    } catch {
+      return 'unavailable';
+    }
+  }
+
   async getMigrationBackend(): Promise<CredentialMigrationBackend> {
     await this.ensureInitialized();
     if (

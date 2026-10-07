@@ -495,6 +495,17 @@ app.whenReady().then(async () => {
     else if (result) mainLog.info('[windows-bootstrap]', result)
   }
 
+  try {
+    const vault = await getCredentialManager().tryRestoreVaultFromBackup()
+    if (vault === 'restored') {
+      mainLog.warn('[credentials] Recovered credentials.enc from backup after vault repair')
+    } else if (vault === 'unavailable') {
+      mainLog.error('[credentials] Encrypted credential vault needs repair; local WS auth may fail until restored')
+    }
+  } catch (err) {
+    mainLog.error('[credentials] Vault auto-restore failed:', err)
+  }
+
   // Initialize backend runtime bootstrapping (Codex vendor root, Claude SDK runtime paths).
   initializeBackendHostRuntime({
     hostRuntime: {
