@@ -17,14 +17,14 @@
 - **Cloud:** `packages/cloud-runner` `DaytonaProvider` + `CloudRunsSettingsPage` + `CloudRunsChip`; fix `[object Object]` errors via structured error serialization.
 - **Secrets:** Today — local `credentials.enc` + `service-secrets.env` + builtin MCP seed (`packages/shared/src/sources/`); **no** central user DB in desktop app yet. PocketID track = new `docs/pocket-sso/` + server-side entitlement DB (task T-18 scout).
 
-**Current state (verified 2026-10-07, orchestrator re-audit @ `c2eaba3b5`):**
+**Current state (verified 2026-10-07, orchestrator re-audit @ `f686769ea`):**
 - Branch `feat/super-engineering-ui-parity`; credentials: legacy-token fallback in `4f2612511` (T-00 manual relaunch still user-owned).
 - `inspectorVisibleAtom` default **`false`**; knowledge rail sections = `browser` only (`inspector-model.ts`).
 - `WorkspaceIconRail` off when unified shell / workbench chrome active (`workspace-rail.ts`, `App.tsx`).
 - Icons: `apps/electron/resources/icon.{icns,png}`, `workspace-icon.png` (T-01).
-- Tool-icons UI resolves `~/rox/tool-icons/tool-icons.json` (`AppearanceSettingsPage.tsx`).
+- Tool-icons UI resolves config-dir `tool-icons/tool-icons.json` (`AppearanceSettingsPage.tsx`; default config `~/rox`).
 - Fresh-profile defaults: `featureUnifiedShellAtom` + `featureWorkbenchHarnessInspectorV1Atom` **on** (`unified-shell.ts`).
-- **Gate:** `bun test` on 8 files in Delivery verification → **41 pass** (2026-10-07).
+- **Gate:** `docs/plans/2026-10-07-shell-plan-review.md` command → **59 pass, 1 skip, 0 fail** (10 files, 2026-10-07).
 
 ## Task graph
 
