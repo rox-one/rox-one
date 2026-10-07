@@ -138,7 +138,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
   }, [activeWorkspaceId, pageSlug, contentDigest, hasContent, pageLoaded, leaseRetry, pagesAvailable, t])
 
   const currentLease = leaseState?.workspaceId === activeWorkspaceId
-    && leaseState?.lease.pageSlug === pageSlug && leaseState?.lease.contentDigest === contentDigest
+    && pageLeaseMatches(leaseState.lease, pageSlug, contentDigest)
     ? leaseState : null
   const currentLeaseError = leaseError?.contentDigest === contentDigest ? leaseError?.message : null
 
