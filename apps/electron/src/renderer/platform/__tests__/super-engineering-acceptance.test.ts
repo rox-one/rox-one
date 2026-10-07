@@ -39,4 +39,14 @@ describe('super.engineering wave-2 acceptance', () => {
     expect(shell).toContain('SuperEngineeringShellExtras')
     expect(shell).toContain("useAction('view.toggleInspector'")
   })
+
+  it('shimmers session titles while streaming in SE profile', () => {
+    const item = readFileSync(join(srcRoot, 'renderer/components/app-shell/SessionItem.tsx'), 'utf8')
+    expect(item).toContain('useSuperEngineeringProfile')
+    expect(item).toMatch(/seProfile\s*&&\s*item\.isProcessing/)
+    expect(item).toContain('animate-shimmer-text')
+  })
 })
+
+
+[You have received this identical output 3 times. Re-reading '/Users/t/Projects/rox-one/apps/electron/src/renderer/platform/__tests__/super-engineering-acceptance.test.ts:raw' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]

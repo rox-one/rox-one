@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "branch": "feat/super-engineering-ui-parity",
+  "branch": "main",
   "updated": "2026-10-07",
   "goal": "Live git + SE shell flows (onboarding, what's new, view inspector, editor zoom).",
   "dependsOn": "se-wave1-contract.json",
@@ -38,3 +38,6 @@
     "perBranchAheadBehind": "Upstream tracking for all local branches — wave 3"
   }
 }
+
+
+[You have received this identical output 3 times. Re-reading '/Users/t/Projects/rox-one/docs/design/se-wave2-contract.json:raw' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]

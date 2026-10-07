@@ -1,6 +1,6 @@
 # super.engineering UI profile — technical spec (rox-one)
 
-**Status:** Wave 1–2 complete on branch `feat/super-engineering-ui-parity`  
+**Status:** Wave 1–2 complete on `main` (opt-in profile)  
 **Contracts:** [`se-wave1-contract.json`](./se-wave1-contract.json), [`se-wave2-contract.json`](./se-wave2-contract.json)
 
 ## 1. Scope
