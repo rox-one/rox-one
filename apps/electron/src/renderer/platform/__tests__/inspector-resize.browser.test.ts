@@ -120,16 +120,17 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
     if (!fixtureReady) {
       throw Error(`Inspector resize fixture never finished setup${setupError ? `: ${setupError}` : ''}`)
     }
-    if (ui?.exitCode !== null) {
+    if (ui && ui.exitCode !== null) {
       throw Error(
-        `Inspector fixture vite exited (code ${ui?.exitCode ?? 'unknown'}) on port ${fixturePort || 'external'}. `
+        `Inspector fixture vite exited (code ${ui.exitCode}) on port ${fixturePort}. `
         + 'Do not run two inspector-resize suites in parallel; use INSPECTOR_RESIZE_FIXTURE_URL for a shared server.',
       )
     }
     const page = await browser!.newPage({ viewport: { width: 1280, height: 720 } })
     page.on('pageerror', error => console.error('Fixture browser error:', error.message))
-    await page.goto(endpoint, { waitUntil: 'networkidle', timeout: 120000 })
-    await page.waitForFunction(() => Boolean((window as any).__inspectorFixture), undefined, { timeout: 120000 })
+    // Vite dev server never reaches networkidle (HMR / long-poll); wait on the fixture API instead.
+    await page.goto(endpoint, { waitUntil: 'commit', timeout: 180000 })
+    await page.waitForFunction(() => Boolean((window as any).__inspectorFixture), undefined, { timeout: 180000 })
     await page.waitForSelector('[data-session-inspector="true"]', { timeout: 120000 })
     await expectDOM(page.getByRole('separator')).toBeVisible().catch(async error => {
       console.error('Owned fixture DOM:', (await page.locator('body').innerHTML()).slice(0, 1800))
@@ -150,7 +151,7 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
       const id = await page.getByRole('separator').getAttribute('aria-controls')
       expect(await page.locator('[data-inspector-panel]').getAttribute('id')).toBe(id)
     } finally { await page.close() }
-  }, 120000)
+  })
   test.serial('pointer cancellation restores width and body state; completion commits once', async () => {
     const page = await load()
     try {
@@ -164,7 +165,7 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
       await page.mouse.move(box.x + 2, box.y + 80); await page.mouse.down(); await page.mouse.move(box.x - 40, box.y + 80); await page.mouse.up()
       await expectDOM(page.getByTestId('persisted-width')).toHaveText('362')
     } finally { await page.close() }
-  }, 120000)
+  })
   test.serial('keyboard bounds preserve center space and reset the current default', async () => {
     const page = await load()
     try {
@@ -175,7 +176,7 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
       await sash.dblclick(); await expectDOM(page.getByTestId('persisted-width')).toHaveText('320')
       expect(await page.getByRole('textbox').inputValue()).toBe('Unsent draft')
     } finally { await page.close() }
-  }, 120000)
+  })
   test.serial('unmount and window blur cancel pending capture and never persist preview', async () => {
     const page = await load()
     try {
@@ -188,7 +189,7 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
       await sash.focus(); expect(await invoke(page, 'keyPreviewAndCancel', 'blur')).toEqual({ preview: '328', persisted: 320, cancelled: '320', saved: 320 })
       await expectDOM(sash).toHaveAttribute('aria-valuenow', '320'); expect(await persisted(page)).toBe(320)
     } finally { await page.close() }
-  }, 120000)
+  })
   test.serial('a narrower layout cancels capture and keeps saved width for an explicit overlay', async () => {
     const page = await load()
     try {
@@ -205,6 +206,6 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
       await page.emulateMedia({ reducedMotion: 'reduce' })
       if (process.env.INSPECTOR_SCREENSHOT) await page.screenshot({ path: process.env.INSPECTOR_SCREENSHOT })
     } finally { await page.close() }
-  }, 120000)
+  })
 
 })
