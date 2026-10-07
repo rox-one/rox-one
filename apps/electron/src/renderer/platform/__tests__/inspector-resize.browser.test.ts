@@ -67,10 +67,16 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
   afterAll(stop, 30000)
 
   const load = async () => {
+    if (ui?.exitCode !== null) throw Error(`Inspector fixture vite exited (code ${ui?.exitCode ?? 'unknown'})`)
     const page = await browser!.newPage({ viewport: { width: 1280, height: 720 } })
     page.on('pageerror', error => console.error('Fixture browser error:', error.message))
-    await page.goto(endpoint, { waitUntil: 'commit', timeout: 60000 })
-    await expectDOM(page.getByRole('separator')).toBeVisible().catch(async error => { console.error('Owned fixture DOM:', (await page.locator('body').innerHTML()).slice(0, 1800)); throw error })
+    await page.goto(endpoint, { waitUntil: 'networkidle', timeout: 120000 })
+    await page.waitForFunction(() => Boolean((window as any).__inspectorFixture), undefined, { timeout: 120000 })
+    await page.waitForSelector('[data-session-inspector="true"]', { timeout: 120000 })
+    await expectDOM(page.getByRole('separator')).toBeVisible().catch(async error => {
+      console.error('Owned fixture DOM:', (await page.locator('body').innerHTML()).slice(0, 1800))
+      throw error
+    })
     return page
   }
   const persisted = (page: Page) => invoke(page, 'width')
@@ -144,3 +150,6 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
   }, 120000)
 
 })
+
+
+[You have received this identical output 4 times. Re-reading '/Users/t/Projects/rox-one/apps/electron/src/renderer/platform/__tests__/inspector-resize.browser.test.ts:raw' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]

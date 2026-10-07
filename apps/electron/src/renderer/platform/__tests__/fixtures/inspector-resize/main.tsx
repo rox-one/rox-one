@@ -23,6 +23,11 @@ import '../../../../index.css'
 await i18n.use(initReactI18next).init({ lng: 'en', fallbackLng: 'en', resources: { en: { translation: en } }, keySeparator: false })
 const FIXTURE_SESSION_ID = 'fixture-session'
 const FIXTURE_PANEL_ID = 'fixture-panel'
+if (typeof localStorage !== 'undefined') {
+  localStorage.setItem(getKeyString(KEYS.inspectorVisible), JSON.stringify(true))
+  localStorage.setItem(getKeyString(KEYS.featureWorkbenchHarnessInspectorV1), JSON.stringify(true))
+  localStorage.setItem(getKeyString(KEYS.inspectorPanelWidth), JSON.stringify(320))
+}
 const store = createStore()
 store.set(inspectorVisibleAtom, true)
 store.set(inspectorChromeCollapsedAtom, false)
@@ -83,3 +88,6 @@ function Fixture() {
   return <main className="flex h-[500px] w-full bg-background text-foreground"><div data-panel-role="content" className="min-w-0 flex-1"><input aria-label="Editor" defaultValue="Unsent draft" /><output data-testid="persisted-width">{width}</output></div>{mounted && <InspectorHost />}</main>
 }
 createRoot(document.getElementById('root')!).render(<Provider store={store}><TooltipProvider><Fixture /></TooltipProvider></Provider>)
+
+
+[You have received this identical output 3 times. Re-reading '/Users/t/Projects/rox-one/apps/electron/src/renderer/platform/__tests__/fixtures/inspector-resize/main.tsx:raw' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]
