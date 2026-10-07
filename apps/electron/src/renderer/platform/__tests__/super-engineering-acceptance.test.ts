@@ -47,3 +47,17 @@ describe('super.engineering wave-2 acceptance', () => {
     expect(item).toContain('animate-shimmer-text')
   })
 })
+
+describe('super.engineering wave-3 acceptance', () => {
+  it('tracks upstream for all local branches', () => {
+    const workspace = readFileSync(join(srcRoot, '../../../packages/shared/src/git/workspace.ts'), 'utf8')
+    expect(workspace).toContain('readBranchUpstreamTracks')
+    expect(workspace).toContain('%(upstream:track)')
+  })
+
+  it('ships chat PiP toggle in SE shell extras', () => {
+    const extras = readFileSync(join(srcRoot, 'renderer/components/app-shell/SuperEngineeringShellExtras.tsx'), 'utf8')
+    expect(extras).toContain('SeChatPictureInPicture')
+    expect(extras).toContain("useAction('view.toggleChatPictureInPicture'")
+  })
+})

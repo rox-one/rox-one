@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "branch": "main",
+  "updated": "2026-10-08",
+  "goal": "Wave 3 SE polish: multi-branch upstream stats + in-app chat PiP.",
+  "dependsOn": "se-wave2-contract.json",
+  "agents": {
+    "W3-A": {
+      "title": "Per-branch upstream stats",
+      "paths": [
+        "packages/shared/src/git/workspace.ts",
+        "apps/electron/src/renderer/components/workspace/WorkspaceNavigator.tsx"
+      ]
+    },
+    "W3-B": {
+      "title": "Chat picture-in-picture",
+      "paths": [
+        "apps/electron/src/renderer/atoms/se-chat-pip.ts",
+        "apps/electron/src/renderer/components/app-shell/SeChatPictureInPicture.tsx",
+        "apps/electron/src/renderer/components/app-shell/SuperEngineeringShellExtras.tsx",
+        "apps/electron/src/renderer/actions/definitions.ts"
+      ]
+    }
+  }
+}

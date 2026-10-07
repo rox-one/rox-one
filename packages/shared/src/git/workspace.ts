@@ -77,6 +77,34 @@ function readLocalBranchNames(cwd: string): string[] {
   }
 }
 
+/** Upstream ahead/behind per local branch via `for-each-ref %(upstream:track)`. */
+function readBranchUpstreamTracks(cwd: string): Map<string, { ahead: number; behind: number }> {
+  const map = new Map<string, { ahead: number; behind: number }>()
+  try {
+    const raw = execGitReadOnly(
+      ['for-each-ref', '--format=%(refname:short)\t%(upstream:track)', 'refs/heads'],
+      cwd,
+    )
+    for (const line of raw.split(/\r?\n/)) {
+      const tab = line.indexOf('\t')
+      if (tab < 0) continue
+      const name = line.slice(0, tab).trim()
+      const track = line.slice(tab + 1).trim()
+      if (!name) continue
+      let ahead = 0
+      let behind = 0
+      const aheadMatch = track.match(/ahead (\d+)/)
+      const behindMatch = track.match(/behind (\d+)/)
+      if (aheadMatch) ahead = Number(aheadMatch[1]) || 0
+      if (behindMatch) behind = Number(behindMatch[1]) || 0
+      map.set(name, { ahead, behind })
+    }
+  } catch {
+    /* empty */
+  }
+  return map
+}
+
 const EMPTY_SNAPSHOT: GitWorkspaceSnapshot = {
   isRepo: false,
   repoLabel: 'workspace',
@@ -108,13 +136,17 @@ export function readGitWorkspaceSnapshot(dirPath: string): GitWorkspaceSnapshot 
   const diff = readGitDiffNumstat(dirPath)
   const identity = readGitIdentity(dirPath)
   const names = readLocalBranchNames(dirPath)
+  const upstreamTracks = readBranchUpstreamTracks(dirPath)
   const branches: GitWorkspaceBranchRow[] = names.map((name) => {
     const isCurrent = name === current
+    const track = upstreamTracks.get(name)
+    const ahead = track?.ahead ?? (isCurrent ? status.ahead : 0)
+    const behind = track?.behind ?? (isCurrent ? status.behind : 0)
     return {
       name,
       isCurrent,
-      ahead: isCurrent ? status.ahead : 0,
-      behind: isCurrent ? status.behind : 0,
+      ahead,
+      behind,
       additions: isCurrent ? diff.additions : 0,
       deletions: isCurrent ? diff.deletions : 0,
     }

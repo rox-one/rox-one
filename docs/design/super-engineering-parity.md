@@ -37,7 +37,8 @@ super.engineering is **GPUI (Rust)**; rox-one is **Electron + React + Vite**. Pa
 | W2-B | SE onboarding dialog + What's New wiring | **Done** |
 | W2-C | `view.toggleInspector`, editor zoom setting | **Done** |
 | W2-D | Session title shimmer while streaming (SE profile) | **Done** |
-| W3 | PiP, per-branch upstream stats | Deferred (`se-wave2-contract.json`) |
+| W3-A | Per-branch upstream ahead/behind | **Done** (`readBranchUpstreamTracks` in `workspace.ts`) |
+| W3-B | Chat PiP surface (SE profile, ⌘⇧P) | **Done** (`SeChatPictureInPicture`, `view.toggleChatPictureInPicture`) |
 
 ## Sidebar architecture (summary)
 

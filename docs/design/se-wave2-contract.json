@@ -32,9 +32,5 @@
       "title": "Streaming sidebar polish",
       "paths": ["apps/electron/src/renderer/components/app-shell/SessionItem.tsx"]
     }
-  },
-  "deferred": {
-    "pictureInPicture": "Native PiP chat surface — wave 3",
-    "perBranchAheadBehind": "Upstream tracking for all local branches — wave 3"
   }
 }

@@ -54,6 +54,12 @@ export function WorkspaceNavigator({ workspaceRootPath, className }: WorkspaceNa
               {layout === 'detailed' && (
                 <span className="shrink-0 text-[11px] text-rose-400/90">-{branch.deletions}</span>
               )}
+              {layout === 'detailed' && branch.ahead > 0 && (
+                <span className="shrink-0 text-[11px] text-sky-400/90">↑{branch.ahead}</span>
+              )}
+              {layout === 'detailed' && branch.behind > 0 && (
+                <span className="shrink-0 text-[11px] text-amber-400/90">↓{branch.behind}</span>
+              )}
             </button>
             {layout === 'compact' && hoverBranch?.id === branch.id && (
               <div className="absolute left-full top-0 z-50 ml-2 w-48">

@@ -208,6 +208,13 @@ export const actions = {
     defaultHotkey: 'mod+shift+i',
     category: 'View',
   },
+  'view.toggleChatPictureInPicture': {
+    id: 'view.toggleChatPictureInPicture',
+    labelKey: 'shortcuts.action.toggleChatPictureInPicture',
+    description: 'Toggle floating chat (super.engineering PiP)',
+    defaultHotkey: 'mod+shift+p',
+    category: 'View',
+  },
 
   'collection.viewNext': {
     id: 'collection.viewNext',

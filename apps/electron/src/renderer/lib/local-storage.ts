@@ -67,6 +67,7 @@ export const KEYS = {
   seOnboardingComplete: 'se-onboarding-complete',
   seWhatsNewSeen: 'se-whats-new-seen',
   seEditorZoomPercent: 'se-editor-zoom-percent',
+  seChatPipOpen: 'se-chat-pip-open',
 
   // What's New
   // What's New — per-version seen list (timeline)

@@ -1,6 +1,10 @@
 import * as React from 'react'
+import { useSetAtom } from 'jotai'
+import { useAction } from '@/actions'
+import { seChatPipOpenAtom } from '@/atoms/se-chat-pip'
 import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
 import { WhatsNewSheet } from './WhatsNewSheet'
+import { SeChatPictureInPicture } from './SeChatPictureInPicture'
 import {
   SuperEngineeringOnboardingDialog,
   useSeOnboardingGate,
@@ -28,6 +32,12 @@ export function SuperEngineeringShellExtras() {
   const se = useSuperEngineeringProfile()
   const onboarding = useSeOnboardingGate(se)
   const [whatsNewOpen, setWhatsNewOpen] = React.useState(false)
+  const setChatPipOpen = useSetAtom(seChatPipOpenAtom)
+
+  useAction('view.toggleChatPictureInPicture', () => {
+    if (!se) return
+    setChatPipOpen((v) => !v)
+  })
 
   React.useEffect(() => {
     if (!se || onboarding.shouldShow) return
@@ -51,6 +61,7 @@ export function SuperEngineeringShellExtras() {
           if (!open) markWhatsNewSeen()
         }}
       />
+      <SeChatPictureInPicture />
     </>
   )
 }

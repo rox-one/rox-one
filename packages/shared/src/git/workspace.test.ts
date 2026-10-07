@@ -38,4 +38,17 @@ describe('readGitWorkspaceSnapshot', () => {
     expect(snap.branches.some((b) => b.isCurrent && b.name === 'main')).toBe(true)
   })
 
+  it('reports upstream track for each local branch', () => {
+    const dir = gitRepo()
+    const env = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' }
+    const git = (args: string[]) => execFileSync('git', args, { cwd: dir, stdio: 'pipe', env })
+    git(['branch', 'feature'])
+    git(['branch', '-u', 'main', 'feature'])
+    const snap = readGitWorkspaceSnapshot(dir)
+    const feature = snap.branches.find((b) => b.name === 'feature')
+    expect(feature).toBeDefined()
+    expect(feature!.ahead).toBe(0)
+    expect(feature!.behind).toBe(0)
+  })
+
 })
