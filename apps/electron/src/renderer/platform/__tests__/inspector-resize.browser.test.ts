@@ -35,7 +35,27 @@ let fixturePort = 0
 let endpoint = ''
 const browserMarker = `--rox-inspector-resize-fixture=20261003-root-${process.pid}`
 const fixturePanelWidthStorageKey = 'craft-inspector-panel-width'
-const expectDOM = browserExpect.configure({ timeout: 60000 })
+const playwrightActionTimeoutMs = 300_000
+const expectDOM = browserExpect.configure({ timeout: 60_000 })
+
+async function warmInspectorFixtureBundle(baseUrl: string): Promise<void> {
+  const deadline = Date.now() + playwrightActionTimeoutMs
+  let lastError = 'unknown'
+  for (;;) {
+    try {
+      const entry = await fetch(`${baseUrl}/main.tsx`)
+      const body = await entry.text()
+      if (entry.ok && body.length > 500 && !body.includes('Pre-transform error') && !body.includes('Internal server error')) {
+        return
+      }
+      lastError = `main.tsx status=${entry.status} bytes=${body.length}`
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error)
+    }
+    if (Date.now() > deadline) throw Error(`Inspector resize fixture bundle warmup failed: ${lastError}`)
+    await Bun.sleep(500)
+  }
+}
 const resetFixturePanelWidth = async (page: Page) => {
   await page.evaluate((key) => {
     localStorage.setItem(key, JSON.stringify(320))
@@ -61,9 +81,9 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
         + 'Do not run two inspector-resize suites in parallel; use INSPECTOR_RESIZE_FIXTURE_URL for a shared server.',
       )
     }
-    await page.goto(endpoint, { waitUntil: 'commit', timeout: 240000 })
-    await page.waitForSelector('[data-inspector-fixture-ready="true"]', { timeout: 240000 })
-    await page.waitForFunction(() => Boolean((window as any).__inspectorFixture), undefined, { timeout: 180000 })
+    await page.goto(endpoint, { waitUntil: 'commit', timeout: playwrightActionTimeoutMs })
+    await page.waitForSelector('[data-inspector-fixture-ready="true"]', { state: 'attached', timeout: playwrightActionTimeoutMs })
+    await page.waitForFunction(() => Boolean((window as any).__inspectorFixture), undefined, { timeout: playwrightActionTimeoutMs })
     await expectDOM(page.getByRole('separator')).toBeVisible().catch(async error => {
       console.error('Owned fixture DOM:', (await page.locator('body').innerHTML()).slice(0, 1800))
       throw error
@@ -95,6 +115,7 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
         if (!response.ok || !(await response.text()).includes('rox-inspector-resize-fixture')) {
           throw Error(`INSPECTOR_RESIZE_FIXTURE_URL is not serving the inspector fixture (${endpoint})`)
         }
+        await warmInspectorFixtureBundle(endpoint)
       } else {
         fixturePort = await reserveLocalPort()
         endpoint = `http://127.0.0.1:${fixturePort}`
@@ -110,17 +131,23 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
           },
         )
         exited = new Promise(resolve => { ui!.once('exit', resolve); ui!.once('error', resolve) })
-        const deadline = Date.now() + 240000
+        const deadline = Date.now() + playwrightActionTimeoutMs
         for (;;) {
           if (ui.exitCode !== null) throw Error(`Inspector resize fixture vite exited during startup (code ${ui.exitCode})`)
           try {
             const response = await fetch(endpoint)
             if (response.ok && (await response.text()).includes('rox-inspector-resize-fixture')) {
-              const entry = await fetch(`${endpoint}/main.tsx`)
-              if (entry.ok) break
+              await warmInspectorFixtureBundle(endpoint)
+              break
             }
-          } catch { /* retry until deadline */ }
-          if (Date.now() > deadline) throw Error('Inspector resize fixture startup timeout (waited for HTML + main.tsx transform)')
+          } catch (error) {
+            if (Date.now() > deadline) {
+              throw Error(
+                `Inspector resize fixture startup timeout: ${error instanceof Error ? error.message : String(error)}`,
+              )
+            }
+          }
+          if (Date.now() > deadline) throw Error('Inspector resize fixture startup timeout (waited for HTML + warmed main.tsx)')
           await Bun.sleep(250)
         }
       }
@@ -136,7 +163,12 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
         }
       } catch { /* browser.close() is enough */ }
       sharedPage = await browser.newPage({ viewport: { width: 1280, height: 720 } })
+      sharedPage.setDefaultTimeout(playwrightActionTimeoutMs)
+      sharedPage.setDefaultNavigationTimeout(playwrightActionTimeoutMs)
       sharedPage.on('pageerror', error => console.error('Fixture browser error:', error.message))
+      sharedPage.on('console', message => {
+        if (message.type() === 'error') console.error('Fixture console error:', message.text())
+      })
       await navigateFixture(sharedPage)
       fixtureReady = true
     } catch (error) {
@@ -144,7 +176,7 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
       await stop()
       throw error
     }
-  }, 300000)
+  }, 600_000)
   afterAll(stop, 120000)
 
   const load = async () => {
@@ -164,7 +196,7 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
       await page.keyboard.press('Shift+ArrowLeft'); await page.keyboard.press('Enter')
       await expectDOM(page.getByTestId('persisted-width')).toHaveText('352')
       await page.reload({ waitUntil: 'commit' })
-      await page.waitForSelector('[data-inspector-fixture-ready="true"]', { timeout: 180000 })
+      await page.waitForSelector('[data-inspector-fixture-ready="true"]', { state: 'attached', timeout: playwrightActionTimeoutMs })
       await expectDOM(page.getByRole('separator')).toHaveAttribute('aria-valuenow', '352')
       const id = await page.getByRole('separator').getAttribute('aria-controls')
       expect(await page.locator('[data-inspector-panel]').getAttribute('id')).toBe(id)

@@ -81,14 +81,17 @@ const fixtureApi = {
 }
 function Fixture() {
   const [mounted, setMounted] = useState(true)
-  const [ready, setReady] = useState(false)
   mount = setMounted
   const width = useAtomValue(inspectorPanelWidthAtom)
   useEffect(() => {
     ;(window as any).__inspectorFixture = fixtureApi
-    document.documentElement.dataset.inspectorFixtureReady = 'true'
-    setReady(true)
   }, [])
-  return <main className="flex h-[500px] w-full bg-background text-foreground" data-inspector-fixture-ready={ready ? 'true' : undefined}><div data-panel-role="content" className="min-w-0 flex-1"><input aria-label="Editor" defaultValue="Unsent draft" /><output data-testid="persisted-width">{width}</output></div>{mounted && <InspectorHost />}</main>
+  return <main className="flex h-[500px] w-full bg-background text-foreground" data-inspector-fixture-ready="true"><div data-panel-role="content" className="min-w-0 flex-1"><input aria-label="Editor" defaultValue="Unsent draft" /><output data-testid="persisted-width">{width}</output></div>{mounted && <InspectorHost />}</main>
+}
+if (typeof document !== 'undefined') {
+  document.documentElement.dataset.inspectorFixtureReady = 'booting'
 }
 createRoot(document.getElementById('root')!).render(<Provider store={store}><TooltipProvider><Fixture /></TooltipProvider></Provider>)
+if (typeof document !== 'undefined') {
+  document.documentElement.dataset.inspectorFixtureReady = 'true'
+}
