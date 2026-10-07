@@ -23,9 +23,12 @@ await i18n.use(initReactI18next).init({ lng: 'en', fallbackLng: 'en', resources:
 const FIXTURE_SESSION_ID = 'fixture-session'
 const FIXTURE_PANEL_ID = 'fixture-panel'
 if (typeof localStorage !== 'undefined') {
+  const panelWidthKey = getKeyString(KEYS.inspectorPanelWidth)
+  if (localStorage.getItem(panelWidthKey) == null) {
+    localStorage.setItem(panelWidthKey, JSON.stringify(320))
+  }
   localStorage.setItem(getKeyString(KEYS.inspectorVisible), JSON.stringify(true))
   localStorage.setItem(getKeyString(KEYS.featureWorkbenchHarnessInspectorV1), JSON.stringify(true))
-  localStorage.setItem(getKeyString(KEYS.inspectorPanelWidth), JSON.stringify(320))
   localStorage.setItem(getKeyString(KEYS.inspectorChromeCollapsed), JSON.stringify(false))
 }
 const store = createStore()

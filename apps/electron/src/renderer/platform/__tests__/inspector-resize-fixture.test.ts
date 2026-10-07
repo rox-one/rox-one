@@ -11,6 +11,7 @@ describe('inspector-resize browser fixture', () => {
     expect(fixture).not.toContain('inspectorUserOpenedAtom')
     expect(fixture).toContain('featureWorkbenchHarnessInspectorV1')
     expect(fixture).toContain('localStorage.setItem')
+    expect(fixture).toContain('getItem(panelWidthKey) == null')
     expect(fixture).toContain('inspectorChromeCollapsed')
     expect(fixture).toContain('data-inspector-fixture-ready')
     expect(fixture).toContain('getSessionFiles')

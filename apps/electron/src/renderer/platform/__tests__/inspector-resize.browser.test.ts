@@ -34,7 +34,13 @@ async function reserveLocalPort(): Promise<number> {
 let fixturePort = 0
 let endpoint = ''
 const browserMarker = `--rox-inspector-resize-fixture=20261003-root-${process.pid}`
+const fixturePanelWidthStorageKey = 'craft-inspector-panel-width'
 const expectDOM = browserExpect.configure({ timeout: 60000 })
+const resetFixturePanelWidth = async (page: Page) => {
+  await page.evaluate((key) => {
+    localStorage.setItem(key, JSON.stringify(320))
+  }, fixturePanelWidthStorageKey)
+}
 const invoke = async (page: Page, action: string, ...args: unknown[]) => {
   await page.waitForFunction(() => Boolean((window as any).__inspectorFixture))
   return page.evaluate(({ action, args }) => (window as any).__inspectorFixture[action](...args), { action, args })
@@ -140,6 +146,7 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
 
   const load = async () => {
     if (!sharedPage) throw Error(`Inspector resize fixture never finished setup${setupError ? `: ${setupError}` : ''}`)
+    await resetFixturePanelWidth(sharedPage)
     await navigateFixture(sharedPage)
     await sharedPage.setViewportSize({ width: 1280, height: 720 })
     return sharedPage
