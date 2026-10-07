@@ -6,6 +6,7 @@ import { promisify } from 'util'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { emptyGitWorkingTreeStatus } from '@rox/shared/git/status'
 import { readGitBranchName, readGitWorkingTreeStatus } from '@rox/shared/git/exec'
+import { readGitWorkspaceSnapshot } from '@rox/shared/git/workspace'
 import { getWorkspaceByNameOrId, getGitBashPath, setGitBashPath, clearGitBashPath } from '@rox/shared/config'
 import { classifyExternalUrl, formatBlockedUrlError } from '@rox/shared/utils/url-safety'
 import { isRoxDeeplinkProtocol } from '@rox/shared/identity'
@@ -42,6 +43,7 @@ export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.releaseNotes.GET_LATEST_VERSION,
   RPC_CHANNELS.git.GET_BRANCH,
   RPC_CHANNELS.git.GET_STATUS,
+  RPC_CHANNELS.git.GET_WORKSPACE_SNAPSHOT,
   RPC_CHANNELS.gitbash.CHECK,
   RPC_CHANNELS.gitbash.BROWSE,
   RPC_CHANNELS.gitbash.SET_PATH,
@@ -210,6 +212,14 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
       return emptyGitWorkingTreeStatus()
     }
     return readGitWorkingTreeStatus(dirPath)
+  })
+
+  server.handle(RPC_CHANNELS.git.GET_WORKSPACE_SNAPSHOT, async (_ctx, dirPath: string) => {
+    if (typeof dirPath !== 'string' || dirPath.length === 0) return readGitWorkspaceSnapshot('')
+    if (!isValidWorkingDirectory(dirPath).valid || isSensitiveAgentCwd(dirPath)) {
+      return readGitWorkspaceSnapshot('')
+    }
+    return readGitWorkspaceSnapshot(dirPath)
   })
 
   // Git Bash detection and configuration (Windows only)

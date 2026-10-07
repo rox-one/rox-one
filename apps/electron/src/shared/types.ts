@@ -2159,6 +2159,23 @@ export interface ElectronAPI {
     behind: number
     entries: Array<{ path: string; index: string; worktree: string }>
   }>
+  getGitWorkspaceSnapshot(dirPath: string): Promise<{
+    isRepo: boolean
+    repoLabel: string
+    currentBranch: string | null
+    dirtyFileCount: number
+    additions: number
+    deletions: number
+    identityError: string | null
+    branches: Array<{
+      name: string
+      isCurrent: boolean
+      ahead: number
+      behind: number
+      additions: number
+      deletions: number
+    }>
+  }>
   openInEditor(dirPath: string): Promise<{ opened: boolean; editor?: string; reason?: string }>
 
   // Git Bash (Windows)

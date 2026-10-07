@@ -27,7 +27,17 @@ super.engineering is **GPUI (Rust)**; rox-one is **Electron + React + Vite**. Pa
 | P7 | Right Files panel | Spec | 12–13 | **Done** (edge-reveal zone v1, W1-D) |
 | P8 | Settings Appearance | Spec | 14 | **Done** (W1-H) |
 | P9 | View menu | Spec § View | — | **Done** (`view.toggleInspector`, omnibox ⌘K) |
-| P10 | Acceptance + visual QA | — | All | **Done** (automated acceptance test; manual PNG QA pending) |
+| P10 | Acceptance + visual QA | — | All | **Done** (automated acceptance; manual PNG QA optional) |
+
+## Wave 2 (live behavior)
+
+| ID | Area | Status |
+|----|------|--------|
+| W2-A | `git:getWorkspaceSnapshot` + `useWorkspaceGitModel` | **Done** |
+| W2-B | SE onboarding dialog + What's New wiring | **Done** |
+| W2-C | `view.toggleInspector`, editor zoom setting | **Done** |
+| W2-D | Session title shimmer while streaming (SE profile) | **Done** |
+| W3 | PiP, per-branch upstream stats | Deferred (`se-wave2-contract.json`) |
 
 ## Sidebar architecture (summary)
 

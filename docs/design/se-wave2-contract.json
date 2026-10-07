@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "branch": "feat/super-engineering-ui-parity",
+  "updated": "2026-10-07",
+  "goal": "Live git + SE shell flows (onboarding, what's new, view inspector, editor zoom).",
+  "dependsOn": "se-wave1-contract.json",
+  "agents": {
+    "W2-A": {
+      "title": "Workspace git IPC",
+      "paths": [
+        "packages/shared/src/git/workspace.ts",
+        "apps/electron/src/renderer/hooks/useWorkspaceGitModel.ts"
+      ]
+    },
+    "W2-B": {
+      "title": "Shell integration",
+      "paths": [
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+        "apps/electron/src/renderer/components/app-shell/SuperEngineeringShellExtras.tsx",
+        "apps/electron/src/renderer/components/onboarding/SuperEngineeringOnboardingDialog.tsx"
+      ]
+    },
+    "W2-C": {
+      "title": "View menu + editor zoom",
+      "paths": [
+        "apps/electron/src/shared/menu-schema.ts",
+        "apps/electron/src/renderer/pages/settings/SuperEngineeringAppearanceSettings.tsx",
+        "packages/ui/src/styles/index.css"
+      ]
+    },
+    "W2-D": {
+      "title": "Streaming sidebar polish",
+      "paths": ["apps/electron/src/renderer/components/app-shell/SessionItem.tsx"]
+    }
+  },
+  "deferred": {
+    "pictureInPicture": "Native PiP chat surface — wave 3",
+    "perBranchAheadBehind": "Upstream tracking for all local branches — wave 3"
+  }
+}

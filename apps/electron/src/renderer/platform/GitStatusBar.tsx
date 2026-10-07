@@ -16,6 +16,7 @@ export function GitStatusBar({ workspaceRootPath, className }: GitStatusBarProps
   const git = useWorkspaceGitModel(workspaceRootPath)
   const [identityOpen, setIdentityOpen] = React.useState(false)
   const showIdentityError = identityOpen || Boolean(git.identityError)
+  const identityNeedsAttention = Boolean(git.identityError)
 
   if (!se) return null
 
@@ -36,9 +37,13 @@ export function GitStatusBar({ workspaceRootPath, className }: GitStatusBarProps
       </div>
       <button
         type="button"
-        className="inline-flex items-center gap-1 text-amber-400/90 hover:underline"
+        className={cn(
+          'inline-flex items-center gap-1 hover:underline',
+          identityNeedsAttention ? 'text-amber-400/90' : 'text-muted-foreground',
+        )}
         onClick={() => setIdentityOpen((open) => !open)}
         data-testid="git-identity-stub"
+        aria-pressed={showIdentityError}
       >
         <AlertCircle className="size-3.5" aria-hidden />
         {showIdentityError ? t('se.git.identityStub') : t('se.git.configure')}

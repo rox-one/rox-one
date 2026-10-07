@@ -1,7 +1,7 @@
 # super.engineering UI profile — technical spec (rox-one)
 
-**Status:** Wave 1 in progress on branch `feat/super-engineering-ui-parity`  
-**Contract:** [`se-wave1-contract.json`](./se-wave1-contract.json)
+**Status:** Wave 1–2 complete on branch `feat/super-engineering-ui-parity`  
+**Contracts:** [`se-wave1-contract.json`](./se-wave1-contract.json), [`se-wave2-contract.json`](./se-wave2-contract.json)
 
 ## 1. Scope
 
@@ -28,7 +28,7 @@ Mirror `~/.super.engineering/settings.json`:
 **Compact:** short labels; git/PR on hover (`WorktreeHoverCard`, 200–300ms).  
 **Detailed:** branch rows with diff stats (+128/−12).
 
-Data layer: `useWorkspaceGitModel()` (stub OK in wave 1; fixtures for UI).
+Data layer: `useWorkspaceGitModel()` via `git:getWorkspaceSnapshot` IPC (wave 2).
 
 ## 4. Icons
 

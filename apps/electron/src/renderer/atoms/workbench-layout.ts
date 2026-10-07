@@ -16,3 +16,10 @@ export const seAutoHideSidebarsAtom = atomWithStorage<boolean>(
   undefined,
   { getOnInit: true },
 )
+
+export const seEditorZoomPercentAtom = atomWithStorage<number>(
+  getKeyString(KEYS.seEditorZoomPercent),
+  100,
+  undefined,
+  { getOnInit: true },
+)

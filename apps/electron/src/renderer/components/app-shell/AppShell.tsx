@@ -3,7 +3,7 @@ import * as React from "react"
 import { useTranslation, Trans } from "react-i18next"
 import { isInternalAgentSession } from "@rox/shared/sessions/internal-prompts"
 import { useRef, useState, useEffect, useCallback, useMemo } from "react"
-import { useAtomValue, useStore } from "jotai"
+import { useAtom, useAtomValue, useStore } from "jotai"
 import { motion, AnimatePresence } from "motion/react"
 import {
   Archive,
@@ -75,7 +75,12 @@ import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
 import { LeftSidebar, type LinkItem, type SidebarItem as SidebarLinkItem } from "./LeftSidebar"
 import { ShellLayoutMode } from './ShellLayoutMode'
+import { SuperEngineeringShellExtras } from './SuperEngineeringShellExtras'
 import { WorkspaceNavigator } from '@/components/workspace/WorkspaceNavigator'
+import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
+import { useSeEditorZoom } from '@/hooks/useSeEditorZoom'
+import { inspectorEdgeRevealModeAtom } from '@/atoms/panel-auto-hide'
+import { inspectorUserOpenedAtom } from '@/atoms/unified-shell'
 import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { enabledExtraScreenIdsAtom } from "@/atoms/extra-screens"
@@ -273,6 +278,7 @@ function AppShellContent({
   topBarLeftInset = 0,
   workbenchOperatorCapability = true,
 }: AppShellProps) {
+  useSeEditorZoom()
   // Destructure commonly used values from context
   // Note: sessions is NOT destructured here - we use sessionMetaMapAtom instead
   // to prevent closures from retaining the full messages array
@@ -2188,6 +2194,22 @@ function AppShellContent({
   const setInspectorChromeCollapsed = useSetAtom(inspectorChromeCollapsedAtom)
   const setInspectorSection = useSetAtom(inspectorSectionAtom)
   const setInspectorPanelWidth = useSetAtom(inspectorPanelWidthAtom)
+  const seProfile = useSuperEngineeringProfile()
+  const [inspectorEdgeMode, setInspectorEdgeMode] = useAtom(inspectorEdgeRevealModeAtom)
+  const setInspectorUserOpened = useSetAtom(inspectorUserOpenedAtom)
+
+  const handleToggleInspector = useCallback(() => {
+    if (seProfile) {
+      const next = inspectorEdgeMode === 'pinned' ? 'hidden' : 'pinned'
+      setInspectorEdgeMode(next)
+      const open = next === 'pinned'
+      setInspectorVisible(open)
+      setInspectorUserOpened(open)
+      return
+    }
+    setInspectorVisible((v) => !v)
+  }, [inspectorEdgeMode, seProfile, setInspectorEdgeMode, setInspectorUserOpened, setInspectorVisible])
+  useAction('view.toggleInspector', handleToggleInspector)
 
   const handleNewBrowserWindow = useCallback(() => {
     if (isWebUI) {
@@ -3425,6 +3447,8 @@ function AppShellContent({
 
       {/* Y4: first-run memory onboarding — shown once when no lessons exist */}
       <OnboardingDialog workspaceId={activeWorkspaceId ?? undefined} presentationAllowed={!productLearning?.enabled || (navState.navigator === 'memory' && ['idle', 'paused', 'blocked', 'finished'].includes(productLearning.state.phase))} />
+
+      <SuperEngineeringShellExtras />
 
       </ShellSidebarContext.Provider>
     </AppShellProvider>

@@ -382,6 +382,13 @@ html[data-ui-profile="super-engineering"] {
   --rox-radius-composer: 10px;
   --font-size-base: 13px;
   --shell-motion-disclosure: 320ms;
+  --se-editor-font-scale: 1;
+}
+
+html[data-ui-profile="super-engineering"] .cm-content,
+html[data-ui-profile="super-engineering"] .cm-line,
+html[data-ui-profile="super-engineering"] pre code {
+  font-size: calc(var(--font-size-base) * var(--se-editor-font-scale, 1));
 }
 
 html[data-ui-profile="super-engineering"] .input-container {

@@ -64,6 +64,9 @@ export const KEYS = {
   seAutoHideSidebars: 'se-auto-hide-sidebars',
   seInspectorEdgeRevealMode: 'se-inspector-edge-reveal-mode',
   seInspectorEdgeHoverActive: 'se-inspector-edge-hover-active',
+  seOnboardingComplete: 'se-onboarding-complete',
+  seWhatsNewSeen: 'se-whats-new-seen',
+  seEditorZoomPercent: 'se-editor-zoom-percent',
 
   // What's New
   // What's New — per-version seen list (timeline)

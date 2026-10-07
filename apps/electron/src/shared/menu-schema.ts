@@ -193,6 +193,17 @@ export const VIEW_MENU: MenuSection = {
       ipcChannel: RPC_CHANNELS.menu.TOGGLE_SIDEBAR,
       icon: 'PanelLeft',
     },
+    {
+      type: 'action',
+      id: 'toggleInspector',
+      actionId: 'view.toggleInspector',
+      labelKey: 'menu.toggleInspector',
+      shortcut: 'CmdOrCtrl+Shift+I',
+      shortcutDisplayMac: '⌘⇧I',
+      shortcutDisplayOther: 'Ctrl+Shift+I',
+      ipcChannel: RPC_CHANNELS.menu.TOGGLE_INSPECTOR,
+      icon: 'PanelRight',
+    },
   ],
 }
 

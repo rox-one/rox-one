@@ -26,6 +26,7 @@ import { collectionDisplayAtom } from "@/atoms/collection-display"
 import { useAtomValue } from "jotai"
 import { extractLabelId } from "@rox/shared/labels"
 import { getAppLocale } from '@rox/shared/i18n'
+import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
 
 function formatSessionDue(item: SessionMeta): string | undefined {
   const dueValue = item.dueDate ?? (item as SessionMeta & { due?: number | null }).due
@@ -79,6 +80,7 @@ export function SessionItem({
   onRangeSelect,
 }: SessionItemProps) {
   const ctx = useSessionListContext()
+  const seProfile = useSuperEngineeringProfile()
   const { t } = useTranslation()
   const { workspaces, isCompactMode } = useAppShellContext()
   const { density, hoverActions: hoverActionsEnabled } = useAtomValue(collectionDisplayAtom)
@@ -285,7 +287,10 @@ export function SessionItem({
         </>
       }
       title={ctx.searchQuery ? highlightMatch(title, ctx.searchQuery) : title}
-      titleClassName={cn("text-[13px]", item.isAsyncOperationOngoing && "animate-shimmer-text")}
+      titleClassName={cn(
+        "text-[13px]",
+        (item.isAsyncOperationOngoing || (seProfile && item.isProcessing)) && "animate-shimmer-text",
+      )}
       subtitle={previewText ? <span className="text-text-secondary">{previewText}</span> : undefined}
       titleSuffix={
         (projectName || hasMessagingBinding) ? (

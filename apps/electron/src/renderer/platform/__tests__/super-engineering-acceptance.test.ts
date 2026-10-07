@@ -27,3 +27,16 @@ describe('super.engineering wave-1 acceptance', () => {
     expect(json.uiProfile).toBe('super-engineering')
   })
 })
+
+describe('super.engineering wave-2 acceptance', () => {
+  it('loads workspace git via IPC hook', () => {
+    const hook = readFileSync(join(srcRoot, 'renderer/hooks/useWorkspaceGitModel.ts'), 'utf8')
+    expect(hook).toContain('getGitWorkspaceSnapshot')
+  })
+
+  it('wires SE shell extras and inspector toggle', () => {
+    const shell = readFileSync(join(srcRoot, 'renderer/components/app-shell/AppShell.tsx'), 'utf8')
+    expect(shell).toContain('SuperEngineeringShellExtras')
+    expect(shell).toContain("useAction('view.toggleInspector'")
+  })
+})

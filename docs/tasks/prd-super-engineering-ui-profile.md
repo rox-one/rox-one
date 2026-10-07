@@ -23,49 +23,63 @@ Optional dark glass agent-IDE shell for users who want super.engineering-like UX
 **Description:** As a user, I want a super.engineering color theme so the app matches the reference IDE.
 
 **Acceptance:**
-- [ ] `super-engineering.json` appears in theme picker
-- [ ] Selecting it sets `data-ui-profile="super-engineering"` on `<html>`
-- [ ] Default new profile still uses Rox light theme
-- [ ] Typecheck passes
+- [x] `super-engineering.json` appears in theme picker
+- [x] Selecting it sets `data-ui-profile="super-engineering"` on `<html>`
+- [x] Default new profile still uses Rox light theme
+- [x] Typecheck passes
 
 ### US-SE-002: Workspace navigator skeleton
 **Description:** As a developer with a repo, I want a left project panel like SE.
 
 **Acceptance:**
-- [ ] Compact/Detailed toggle in Appearance (persisted)
-- [ ] Detailed shows branch row + mock stats from fixture
-- [ ] Compact shows hover card delay ≥200ms
-- [ ] Rox-default layout unchanged without SE theme
+- [x] Compact/Detailed toggle in Appearance (persisted)
+- [x] Detailed shows branch row + diff stats from live git snapshot
+- [x] Compact shows hover card delay ≥200ms
+- [x] Rox-default layout unchanged without SE theme
 
 ### US-SE-003: Git status strip
 **Description:** As a user, I see branch and dirty count above the composer (frame 10).
 
 **Acceptance:**
-- [ ] `GitStatusBar` visible in SE workspace mode
-- [ ] Click on identity error opens details (stub OK)
-- [ ] Verify in browser with SE theme + mock repo
+- [x] `GitStatusBar` visible in SE workspace mode
+- [x] Click on identity error opens details (stub OK)
+- [x] Live git IPC when workspace root is set
 
 ### US-SE-004: Hub tagline
 **Description:** As a user on empty hub, I see rotating scramble taglines (frames 05–06).
 
 **Acceptance:**
-- [ ] `ScrambleTagline` cycles phrases from `hub-taglines.ts`
-- [ ] Scramble phase uses charset noise between phrases
-- [ ] Reduced motion → cross-fade only
+- [x] `ScrambleTagline` cycles phrases from `hub-taglines.ts`
+- [x] Scramble phase uses charset noise between phrases
+- [x] Reduced motion → cross-fade only
 
 ### US-SE-005: Edge-reveal inspector
 **Description:** As a user, I can hide the right panel and reveal it by hovering the edge.
 
 **Acceptance:**
-- [ ] Three states: hidden → hover (~8px) → pinned
-- [ ] Interruptible spring; respects `auto_hide_sidebars`
-- [ ] zen-shell acceptance tests still pass
+- [x] Three states: hidden → hover (~8px) → pinned
+- [x] Interruptible spring; respects `auto_hide_sidebars`
+- [x] zen-shell acceptance tests still pass
+
+## User stories (wave 2)
+
+### US-SE-006: Live workspace git
+- [x] `git:getWorkspaceSnapshot` RPC
+- [x] Navigator + git bar use IPC (no mock branches)
+
+### US-SE-007: SE first-run overlays
+- [x] Four-step onboarding dialog when profile active
+- [x] What's New sheet once per profile install
+
+### US-SE-008: View + editor zoom split
+- [x] `view.toggleInspector` action wired in shell
+- [x] Editor zoom % in SE appearance (UI zoom via existing View menu)
 
 ## Functional requirements
 
 - FR-1: `uiProfile` derived from theme JSON field `uiProfile` when present.
 - FR-2: `ShellLayoutMode` enum: `rox-default` | `se-workspace`.
-- FR-3: Parallel agents obey `se-wave1-contract.json` allowlists.
+- FR-3: Parallel agents obey `se-wave1-contract.json` / `se-wave2-contract.json` allowlists.
 - FR-4: INTEGRATOR merges shell after W1-A–D complete.
 
 ## Success metrics
@@ -76,5 +90,5 @@ Optional dark glass agent-IDE shell for users who want super.engineering-like UX
 
 ## Open questions
 
-- Ship SE onboarding only on first run with SE theme, or global wizard variant?
-- Extract taglines from SE binary vs curated list for v1?
+- Ship SE onboarding only on first run with SE theme, or global wizard variant? **Resolved:** SE-only dialog + skip.
+- Extract taglines from SE binary vs curated list for v1? **Curated list for v1.**

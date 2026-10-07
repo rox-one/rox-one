@@ -175,6 +175,7 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.menu.KEYBOARD_SHORTCUTS,
   RPC_CHANNELS.menu.TOGGLE_FOCUS_MODE,
   RPC_CHANNELS.menu.TOGGLE_SIDEBAR,
+  RPC_CHANNELS.menu.TOGGLE_INSPECTOR,
   RPC_CHANNELS.menu.QUIT,
   RPC_CHANNELS.menu.MINIMIZE,
   RPC_CHANNELS.menu.MAXIMIZE,
@@ -985,6 +986,7 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   // git — workspace filesystem
   RPC_CHANNELS.git.GET_BRANCH,
   RPC_CHANNELS.git.GET_STATUS,
+  RPC_CHANNELS.git.GET_WORKSPACE_SNAPSHOT,
 
   // resources — workspace resource export/import
   RPC_CHANNELS.resources.EXPORT,

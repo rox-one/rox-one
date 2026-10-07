@@ -367,6 +367,7 @@ export const RPC_CHANNELS = {
     KEYBOARD_SHORTCUTS: 'menu:keyboardShortcuts',
     TOGGLE_FOCUS_MODE: 'menu:toggleFocusMode',
     TOGGLE_SIDEBAR: 'menu:toggleSidebar',
+    TOGGLE_INSPECTOR: 'menu:toggleInspector',
     QUIT: 'menu:quit',
     MINIMIZE: 'menu:minimize',
     MAXIMIZE: 'menu:maximize',
@@ -800,6 +801,7 @@ export const RPC_CHANNELS = {
   git: {
     GET_BRANCH: 'git:getBranch',
     GET_STATUS: 'git:getStatus',
+    GET_WORKSPACE_SNAPSHOT: 'git:getWorkspaceSnapshot',
   },
   gitbash: {
     CHECK: 'gitbash:check',

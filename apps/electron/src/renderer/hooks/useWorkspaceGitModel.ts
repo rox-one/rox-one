@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import type { GitWorkspaceSnapshot } from '@rox/shared/git/workspace'
 
 export type WorkspaceGitBranch = {
   id: string
@@ -16,24 +17,77 @@ export type WorkspaceGitModel = {
   dirtyFileCount: number
   identityError: string | null
   branches: readonly WorkspaceGitBranch[]
+  loading: boolean
 }
 
-const MOCK_BRANCHES: WorkspaceGitBranch[] = [
-  { id: 'main', name: 'main', ahead: 0, behind: 0, additions: 12, deletions: 4, isCurrent: true },
-  { id: 'feat/se', name: 'feat/super-engineering-ui-parity', ahead: 3, behind: 0, additions: 128, deletions: 12, isCurrent: false },
-  { id: 'fix', name: 'fix/inspector-edge', ahead: 0, behind: 2, additions: 6, deletions: 1, isCurrent: false },
-]
+function branchId(name: string): string {
+  return name.replace(/\//g, '--')
+}
 
-/** UI-only git fixture until workspace git IPC is wired (SE wave 1). */
+function emptyModel(workspaceRootPath: string | null | undefined): WorkspaceGitModel {
+  const label = workspaceRootPath?.split('/').filter(Boolean).pop() ?? 'workspace'
+  return {
+    repoLabel: label,
+    currentBranch: '—',
+    dirtyFileCount: 0,
+    identityError: null,
+    branches: [],
+    loading: Boolean(workspaceRootPath),
+  }
+}
+
+function mapSnapshot(snap: GitWorkspaceSnapshot): WorkspaceGitModel {
+  const branches: WorkspaceGitBranch[] = snap.branches.map((row) => ({
+    id: branchId(row.name),
+    name: row.name,
+    ahead: row.ahead,
+    behind: row.behind,
+    additions: row.additions,
+    deletions: row.deletions,
+    isCurrent: row.isCurrent,
+  }))
+  return {
+    repoLabel: snap.repoLabel,
+    currentBranch: snap.currentBranch ?? '—',
+    dirtyFileCount: snap.dirtyFileCount,
+    identityError: snap.identityError,
+    branches,
+    loading: false,
+  }
+}
+
+const REFRESH_MS = 8000
+
+/** Live workspace git model for super.engineering profile (IPC-backed). */
 export function useWorkspaceGitModel(workspaceRootPath: string | null | undefined): WorkspaceGitModel {
-  return useMemo(() => {
-    const label = workspaceRootPath?.split('/').filter(Boolean).pop() ?? 'workspace'
-    return {
-      repoLabel: label,
-      currentBranch: 'feat/super-engineering-ui-parity',
-      dirtyFileCount: 7,
-      identityError: null,
-      branches: MOCK_BRANCHES,
+  const [model, setModel] = useState<WorkspaceGitModel>(() => emptyModel(workspaceRootPath))
+
+  useEffect(() => {
+    if (!workspaceRootPath) {
+      setModel(emptyModel(null))
+      return
+    }
+    let cancelled = false
+    const load = async () => {
+      const api = window.electronAPI?.getGitWorkspaceSnapshot
+      if (!api) {
+        if (!cancelled) setModel({ ...emptyModel(workspaceRootPath), loading: false })
+        return
+      }
+      try {
+        const snap = await api(workspaceRootPath)
+        if (!cancelled) setModel(mapSnapshot(snap))
+      } catch {
+        if (!cancelled) setModel({ ...emptyModel(workspaceRootPath), loading: false })
+      }
+    }
+    void load()
+    const id = window.setInterval(() => void load(), REFRESH_MS)
+    return () => {
+      cancelled = true
+      window.clearInterval(id)
     }
   }, [workspaceRootPath])
+
+  return useMemo(() => model, [model])
 }
