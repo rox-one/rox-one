@@ -12,7 +12,6 @@ import type { InspectorSectionId } from '@/atoms/unified-shell'
  * cleanly) but are not offered until they have real content.
  */
 export const KNOWLEDGE_INSPECTOR_SECTION_IDS: readonly InspectorSectionId[] = [
-  'info',
   'browser',
 ]
 
@@ -34,8 +33,8 @@ export const INSPECTOR_SECTION_IDS: readonly InspectorSectionId[] = [
   'context',
 ]
 
-/** Knowledge sections rendered by InfoSection; browser is handled directly by InspectorHost. */
-export const INSPECTOR_LIVE_SECTIONS: readonly InspectorSectionId[] = ['info']
+/** Knowledge sections with live content in InspectorHost (info removed — panel stays closed by default). */
+export const INSPECTOR_LIVE_SECTIONS: readonly InspectorSectionId[] = ['browser']
 
 export const SESSION_INSPECTOR_LIVE_SECTIONS: readonly InspectorSectionId[] = [
   'files',
@@ -58,9 +57,10 @@ export function isInspectorSectionId(value: unknown): value is InspectorSectionI
   return typeof value === 'string' && (INSPECTOR_SECTION_IDS as readonly string[]).includes(value)
 }
 
-/** Persisted values can be arbitrary (older builds); fall back to `info`. */
+/** Persisted values can be arbitrary (older builds); fall back to `browser`. */
 export function normalizeInspectorSection(value: unknown): InspectorSectionId {
-  return isInspectorSectionId(value) ? value : 'info'
+  if (isInspectorSectionId(value) && value !== 'info') return value
+  return 'browser'
 }
 
 export interface InspectorUiState {

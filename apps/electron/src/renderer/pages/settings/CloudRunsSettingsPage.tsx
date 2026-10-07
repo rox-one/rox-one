@@ -101,6 +101,23 @@ function SettingText({ label, description }: { label: string; description: strin
   )
 }
 
+function formatUnknownError(error: unknown): string {
+  if (error instanceof Error) return error.message
+  if (typeof error === 'string') return error
+  if (error && typeof error === 'object') {
+    const record = error as { message?: unknown; code?: unknown; error?: unknown }
+    if (typeof record.message === 'string' && record.message.trim()) return record.message
+    if (typeof record.error === 'string' && record.error.trim()) return record.error
+    if (typeof record.code === 'string' && record.code.trim()) return record.code
+    try {
+      return JSON.stringify(error)
+    } catch {
+      return String(error)
+    }
+  }
+  return String(error)
+}
+
 function translateCloudRunsError(message: string, t: (key: string) => string): string {
   if (message.startsWith('security.assurance.')) return t(message)
   return message
@@ -112,7 +129,7 @@ export default function CloudRunsSettingsPage() {
   const [draft, setDraft] = React.useState<FieldDraft | null>(null)
   // config-read is device-read: config.json is only read after the user
   // explicitly grants it. Opening the page is not a grant.
-  const [granted, setGranted] = React.useState(false)
+  const [granted, setGranted] = React.useState(() => settingsRuntimeSource() === 'native')
   const [loading, setLoading] = React.useState(false)
   const [loadError, setLoadError] = React.useState<string | null>(null)
   const [saveError, setSaveError] = React.useState<string | null>(null)
@@ -135,7 +152,7 @@ export default function CloudRunsSettingsPage() {
       setConfig(next)
       setDraft(draftFromConfig(next))
     } catch (error) {
-      setLoadError(error instanceof Error ? error.message : String(error))
+      setLoadError(formatUnknownError(error))
     } finally {
       setLoading(false)
     }
@@ -174,7 +191,7 @@ export default function CloudRunsSettingsPage() {
         }),
       )
       .catch((error) => {
-        const message = translateCloudRunsError(error instanceof Error ? error.message : String(error), t)
+        const message = translateCloudRunsError(formatUnknownError(error), t)
         setSaveError(message)
         setFailedPatch(nextPatch)
         toast.error(t('cloudRuns.error'), { description: message })

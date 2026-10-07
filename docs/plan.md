@@ -1,3 +1,9 @@
+## Active plan (2026-10-07) — ROX shell, cloud runs, secrets
+
+Executable task graph: [docs/plans/2026-10-07-rox-shell-cloud-platform.md](plans/2026-10-07-rox-shell-cloud-platform.md)
+
+---
+
 ## Current architecture and container repair — local dependency graph
 
 1. Lead: fetch canonical main, freeze source SHA and merged PR ancestry, create isolated branch. Preserve unrelated dirty worktrees, especially `rox-release-20261003`; no force push, no Cloud dispatch.

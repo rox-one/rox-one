@@ -325,7 +325,7 @@ export default function AppearanceSettingsPage() {
   )
   // Workspace selector placement toggle
   const [workspaceSelectorRail, setWorkspaceSelectorRail] = useState(() =>
-    storage.get(storage.KEYS.workspaceSelectorRail, true)
+    storage.get(storage.KEYS.workspaceSelectorRail, false)
   )
   const handleWorkspaceSelectorRailChange = useCallback((checked: boolean) => {
     if (!appearancePrefLive()) return
@@ -428,7 +428,7 @@ export default function AppearanceSettingsPage() {
           window.electronAPI.getHomeDir?.() ?? Promise.resolve(''),
         ])
         setToolIcons(mappings)
-        setToolIconsJsonPath(`${homeDir}/.craft-agent/tool-icons/tool-icons.json`)
+        setToolIconsJsonPath(`${homeDir}/.rox/tool-icons/tool-icons.json`)
       } catch (error) {
         console.error('Failed to load tool icon mappings:', error)
       }

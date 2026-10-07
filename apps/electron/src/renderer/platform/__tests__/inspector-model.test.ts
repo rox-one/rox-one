@@ -20,10 +20,11 @@ describe('inspector-model session harness', () => {
     expect(INSPECTOR_SECTION_IDS).not.toContain('terminal')
   })
 
-  it('normalizes unknown persisted sections to info', () => {
+  it('normalizes unknown persisted sections to browser and drops legacy info', () => {
     expect(normalizeInspectorSection('files')).toBe('files')
-    expect(normalizeInspectorSection('terminal')).toBe('info')
-    expect(normalizeInspectorSection(undefined)).toBe('info')
+    expect(normalizeInspectorSection('terminal')).toBe('browser')
+    expect(normalizeInspectorSection('info')).toBe('browser')
+    expect(normalizeInspectorSection(undefined)).toBe('browser')
   })
 
   it('toggles hide on a second click of the same section', () => {
