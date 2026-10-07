@@ -1,6 +1,7 @@
 import { beforeAll, afterAll, describe, test, expect } from 'bun:test'
-import { existsSync, mkdirSync, createWriteStream } from 'node:fs'
+import { existsSync, createWriteStream } from 'node:fs'
 import { spawn, execFileSync, type ChildProcess } from 'node:child_process'
+import { createServer } from 'node:net'
 import { resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { chromium, expect as browserExpect, type Browser, type Page } from 'playwright/test'
@@ -8,10 +9,27 @@ import { chromium, expect as browserExpect, type Browser, type Page } from 'play
 const repository = resolve(import.meta.dirname, '../../../../../..')
 const fixture = resolve(import.meta.dirname, 'fixtures/inspector-resize')
 const executablePath = process.env.CHROMIUM_EXECUTABLE ?? chromium.executablePath()
-/** Per-process port avoids SIGTERM races when two browser suites share 5264. */
-const fixturePort = Number(process.env.INSPECTOR_RESIZE_FIXTURE_PORT)
-  || (5300 + (process.pid % 300))
-const endpoint = `http://127.0.0.1:${fixturePort}`
+
+async function reserveLocalPort(): Promise<number> {
+  const configured = Number(process.env.INSPECTOR_RESIZE_FIXTURE_PORT)
+  if (configured > 0) return configured
+  return await new Promise((resolvePort, reject) => {
+    const server = createServer()
+    server.once('error', reject)
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address()
+      if (!address || typeof address === 'string') {
+        server.close(() => reject(new Error('Could not reserve inspector fixture port')))
+        return
+      }
+      const port = address.port
+      server.close(error => (error ? reject(error) : resolvePort(port)))
+    })
+  })
+}
+
+let fixturePort = 0
+let endpoint = ''
 const browserMarker = `--rox-inspector-resize-fixture=20261003-root-${process.pid}`
 const expectDOM = browserExpect.configure({ timeout: 60000 })
 const invoke = async (page: Page, action: string, ...args: unknown[]) => {
@@ -40,6 +58,8 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
   }
   beforeAll(async () => {
     try {
+      fixturePort = await reserveLocalPort()
+      endpoint = `http://127.0.0.1:${fixturePort}`
       const viteLog = createWriteStream(resolve(tmpdir(), `rox-inspector-resize-vite-${process.pid}.log`))
       ui = spawn(
         'node',
@@ -49,7 +69,7 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
       ui.stdout?.pipe(viteLog)
       ui.stderr?.pipe(viteLog)
       exited = new Promise(resolve => { ui!.once('exit', resolve); ui!.once('error', resolve) })
-      const deadline = Date.now() + 55000
+      const deadline = Date.now() + 180000
       for (;;) {
         if (ui.exitCode !== null) throw Error(`Inspector resize fixture vite exited during startup (code ${ui.exitCode})`)
         try {
@@ -58,7 +78,14 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
             if (!(await response.text()).includes('rox-inspector-resize-fixture')) throw Error('Different process owns inspector fixture port')
             const listener = execFileSync('lsof', ['-nP', `-iTCP:${fixturePort}`, '-sTCP:LISTEN', '-Fp'], { encoding: 'utf8' }).trim()
             const listenPid = Number(listener.split('\n').find(field => field.startsWith('p'))?.slice(1) ?? '')
-            if (!listenPid || listenPid !== ui!.pid) throw Error('Different process owns inspector fixture port')
+            const ownerPid = ui!.pid
+            let childPids: number[] = []
+            try {
+              childPids = execFileSync('pgrep', ['-P', String(ownerPid)], { encoding: 'utf8' }).trim().split(/\s+/).filter(Boolean).map(Number)
+            } catch { /* node vite usually listens in the spawn pid */ }
+            if (!listenPid || (listenPid !== ownerPid && !childPids.includes(listenPid))) {
+              throw Error('Different process owns inspector fixture port')
+            }
             break
           }
         } catch (error) { if (error instanceof Error && error.message.includes('owns inspector')) throw error }
@@ -74,7 +101,7 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
       }
       if (!ownedChromePid) throw Error('Owned temporary Chrome PID could not be verified')
     } catch (error) { await stop(); throw error }
-  }, 60000)
+  }, 240000)
   afterAll(stop, 30000)
 
   const load = async () => {
@@ -96,7 +123,7 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
     return page
   }
   const persisted = (page: Page) => invoke(page, 'width')
-  test('actual host keyboard preview is transient, Escape restores and Enter/reload persist', async () => {
+  test.serial('actual host keyboard preview is transient, Escape restores and Enter/reload persist', async () => {
     const page = await load()
     try {
       const sash = page.getByRole('separator'); await sash.focus()
@@ -109,7 +136,7 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
       expect(await page.locator('[data-inspector-panel]').getAttribute('id')).toBe(id)
     } finally { await page.close() }
   }, 120000)
-  test('pointer cancellation restores width and body state; completion commits once', async () => {
+  test.serial('pointer cancellation restores width and body state; completion commits once', async () => {
     const page = await load()
     try {
       const sash = page.getByRole('separator'), box = (await sash.boundingBox())!
@@ -123,7 +150,7 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
       await expectDOM(page.getByTestId('persisted-width')).toHaveText('362')
     } finally { await page.close() }
   }, 120000)
-  test('keyboard bounds preserve center space and reset the current default', async () => {
+  test.serial('keyboard bounds preserve center space and reset the current default', async () => {
     const page = await load()
     try {
       const sash = page.getByRole('separator'); await sash.focus()
@@ -134,7 +161,7 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
       expect(await page.getByRole('textbox').inputValue()).toBe('Unsent draft')
     } finally { await page.close() }
   }, 120000)
-  test('unmount and window blur cancel pending capture and never persist preview', async () => {
+  test.serial('unmount and window blur cancel pending capture and never persist preview', async () => {
     const page = await load()
     try {
       const sash = page.getByRole('separator'), box = (await sash.boundingBox())!
@@ -147,7 +174,7 @@ describe.skipIf(!existsSync(executablePath))('actual InspectorHost resize lifecy
       await expectDOM(sash).toHaveAttribute('aria-valuenow', '320'); expect(await persisted(page)).toBe(320)
     } finally { await page.close() }
   }, 120000)
-  test('a narrower layout cancels capture and keeps saved width for an explicit overlay', async () => {
+  test.serial('a narrower layout cancels capture and keeps saved width for an explicit overlay', async () => {
     const page = await load()
     try {
       const sash = page.getByRole('separator'), box = (await sash.boundingBox())!
