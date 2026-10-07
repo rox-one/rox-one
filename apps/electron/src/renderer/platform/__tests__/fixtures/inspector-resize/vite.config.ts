@@ -4,23 +4,34 @@ import { tmpdir } from 'node:os'
 
 const root = import.meta.dirname
 const repository = resolve(root, '../../../../../../../..')
+const electronRenderer = resolve(repository, 'apps/electron/src/renderer')
 const reactRoot = resolve(repository, 'node_modules/react')
 const reactDomRoot = resolve(repository, 'node_modules/react-dom')
 const roxUiStub = resolve(root, 'rox-ui-stub.tsx')
 
+const fixtureModuleStubs: Record<string, string> = {
+  '@/context/AppShellContext': resolve(root, 'context.ts'),
+  '@/contexts/NavigationContext': resolve(root, 'navigation.ts'),
+  '@/components/session-inspector/SessionInspectorBody': resolve(root, 'leaves.tsx'),
+  '@/components/session-inspector/InspectorBrowserPane': resolve(root, 'leaves.tsx'),
+  '@/components/session-inspector/InspectorTerminal': resolve(root, 'leaves.tsx'),
+}
+
 function productionAliasEntries(production: { resolve?: { alias?: Record<string, string> } }) {
   return Object.entries(production.resolve?.alias ?? {})
-    .filter(([find]) => find !== 'react' && find !== 'react-dom')
+    .filter(([find]) => find !== 'react' && find !== 'react-dom' && find !== '@')
     .map(([find, replacement]) => ({ find, replacement: replacement as string }))
 }
 
-function inspectorFixtureRoxUiStubPlugin(): Plugin {
+function inspectorFixtureModuleStubPlugin(): Plugin {
   return {
-    name: 'inspector-fixture-rox-ui-barrel-stub',
+    name: 'inspector-fixture-module-stubs',
     enforce: 'pre',
     resolveId(id) {
       const clean = (id.split('?')[0] || id).replace(/\\/g, '/')
       if (clean === '@rox/ui') return roxUiStub
+      const stub = fixtureModuleStubs[clean]
+      if (stub) return stub
       return null
     },
   }
@@ -36,17 +47,14 @@ export default defineConfig(async environment => {
     root,
     cacheDir: process.env.INSPECTOR_RESIZE_VITE_CACHE
       ?? resolve(tmpdir(), `rox-inspector-resize-fixture-${process.pid}`),
-    plugins: [inspectorFixtureRoxUiStubPlugin(), ...productionPlugins],
+    plugins: [inspectorFixtureModuleStubPlugin(), ...productionPlugins],
     resolve: {
       ...production.resolve,
       alias: [
-        ...productionAliasEntries(production),
         { find: '@/shared/routes', replacement: resolve(repository, 'apps/electron/src/shared/routes.ts') },
-        { find: '@/context/AppShellContext', replacement: resolve(root, 'context.ts') },
-        { find: '@/contexts/NavigationContext', replacement: resolve(root, 'navigation.ts') },
-        { find: '@/components/session-inspector/SessionInspectorBody', replacement: resolve(root, 'leaves.tsx') },
-        { find: '@/components/session-inspector/InspectorBrowserPane', replacement: resolve(root, 'leaves.tsx') },
-        { find: '@/components/session-inspector/InspectorTerminal', replacement: resolve(root, 'leaves.tsx') },
+        ...Object.entries(fixtureModuleStubs).map(([find, replacement]) => ({ find, replacement })),
+        ...productionAliasEntries(production),
+        { find: '@', replacement: electronRenderer },
         { find: 'react', replacement: reactRoot },
         { find: 'react/jsx-runtime', replacement: resolve(reactRoot, 'jsx-runtime.js') },
         { find: 'react/jsx-dev-runtime', replacement: resolve(reactRoot, 'jsx-dev-runtime.js') },
