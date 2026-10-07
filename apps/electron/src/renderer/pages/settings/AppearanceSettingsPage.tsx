@@ -63,6 +63,7 @@ import { readDesktopAppearance, saveDesktopAppearance } from '@/lib/desktop-appe
 import { WorkbenchChromeSettings } from './WorkbenchChromeSettings'
 import { ConationShellSettings } from './ConationShellSettings'
 import { ZenShellSettings } from './ZenShellSettings'
+import { SuperEngineeringAppearanceSettings } from './SuperEngineeringAppearanceSettings'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -754,6 +755,7 @@ export default function AppearanceSettingsPage() {
                 </SettingsCard>
               </SettingsSection>
 
+              <SuperEngineeringAppearanceSettings />
               <ZenShellSettings />
               <WorkbenchChromeSettings />
               <ConationShellSettings />

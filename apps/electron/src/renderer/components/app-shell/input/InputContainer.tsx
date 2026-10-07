@@ -10,6 +10,7 @@ import type { StructuredInputState, StructuredResponse, InputMode } from './stru
 import { getStructuredInputMaxHeight } from './structured-height'
 import { BackgroundFinishedChip } from '../BackgroundFinishedChip'
 import { CloudRunsChip } from '@/components/cloud-runs/CloudRunsChip'
+import { GitStatusBar } from '@/platform/GitStatusBar'
 
 interface InputContainerProps extends Omit<FreeFormInputProps, 'inputRef'> {
   /** Structured input state - when present, shows structured UI instead of freeform */
@@ -25,6 +26,8 @@ interface InputContainerProps extends Omit<FreeFormInputProps, 'inputRef'> {
    * Forced off when compactMode is true (EditPopover / inline chats).
    */
   showCloudRunsChip?: boolean
+  /** Workspace root for SE git status strip (optional). */
+  workspaceRootPath?: string | null
 }
 
 // Animation timing - synced across height and opacity
@@ -57,6 +60,7 @@ export function InputContainer({
   isProcessing,
   onAnimatedHeightChange,
   showCloudRunsChip = true,
+  workspaceRootPath,
   ...freeFormProps
 }: InputContainerProps) {
   const adminRequestTarget = useTourTarget('permission.request', { sessionId: freeFormProps.sessionId, variant: compactMode ? 'compact' : 'regular' })
@@ -257,6 +261,7 @@ export function InputContainer({
 
   return (
     <div className="relative">
+      <GitStatusBar workspaceRootPath={workspaceRootPath} />
       {/* Hidden measuring div - only needed for structured inputs (freeform uses onHeightChange) */}
       {mode !== 'freeform' && (
         <div

@@ -18,16 +18,16 @@ super.engineering is **GPUI (Rust)**; rox-one is **Electron + React + Vite**. Pa
 | ID | Area | Spec | Frames | Code status |
 |----|------|------|--------|-------------|
 | P0 | Design doc + frames | ✓ | ✓ | **Done** (this branch S0) |
-| P1 | Theme `super-engineering.json`, tokens, `data-ui-profile`, glass/blur | Spec § tokens | 01, 15 | Theme JSON seeded; wiring **W1-A** |
-| P2 | Onboarding 1–4 | §01–04 | 01–04 | Partial; **W1-G** |
-| P3 | Project hub + scramble taglines | §05–08 | 05+ | **W1-E** |
-| P4 | What's New, Quick start, Clone | Spec | 07–09 | **W1-G** |
-| P5 | Workspace shell + auto-hide | Spec | 09–11 | **W1-C**, **W1-D** |
-| P6 | Git status bar | Spec | 10–11 | **W1-F** |
-| P7 | Right Files panel | Spec | 12–13 | **W1-D** |
-| P8 | Settings Appearance | Spec | 14 | **W1-H** |
-| P9 | View menu | Spec § View | — | **W1-H** |
-| P10 | Acceptance + visual QA | — | All | **W1-I** |
+| P1 | Theme `super-engineering.json`, tokens, `data-ui-profile`, glass/blur | Spec § tokens | 01, 15 | **Done** (W1-A) |
+| P2 | Onboarding 1–4 | §01–04 | 01–04 | **Done** (SE welcome overlay, W1-G v1) |
+| P3 | Project hub + scramble taglines | §05–08 | 05+ | **Done** (W1-E) |
+| P4 | What's New, Quick start, Clone | Spec | 07–09 | **Done** (dialogs + sheet, W1-G) |
+| P5 | Workspace shell + auto-hide | Spec | 09–11 | **Done** (navigator + atoms, W1-C/H) |
+| P6 | Git status bar | Spec | 10–11 | **Done** (W1-F) |
+| P7 | Right Files panel | Spec | 12–13 | **Done** (edge-reveal zone v1, W1-D) |
+| P8 | Settings Appearance | Spec | 14 | **Done** (W1-H) |
+| P9 | View menu | Spec § View | — | **Done** (`view.toggleInspector`, omnibox ⌘K) |
+| P10 | Acceptance + visual QA | — | All | **Done** (automated acceptance test; manual PNG QA pending) |
 
 ## Sidebar architecture (summary)
 

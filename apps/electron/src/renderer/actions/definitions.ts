@@ -201,6 +201,13 @@ export const actions = {
     defaultHotkey: 'mod+.',
     category: 'View',
   },
+  'view.toggleInspector': {
+    id: 'view.toggleInspector',
+    labelKey: 'shortcuts.action.toggleInspector',
+    description: 'Toggle right inspector panel (super.engineering profile)',
+    defaultHotkey: 'mod+shift+i',
+    category: 'View',
+  },
 
   'collection.viewNext': {
     id: 'collection.viewNext',

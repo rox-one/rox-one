@@ -5,6 +5,8 @@ import { AnimatePresence, motion, useIsPresent, useReducedMotion, type Variants 
 import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
+import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
+import { SE_RAIL_ACTIVE_BUTTON_CLASS, SE_RAIL_INACTIVE_BUTTON_CLASS } from '@/lib/se-icon-map'
 import {
   isNavigableExpandable,
   restoreFocusToToggle,
@@ -576,6 +578,7 @@ interface SidebarButtonProps {
 // and pass props like data-state="open" directly onto this button element.
 const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & React.ButtonHTMLAttributes<HTMLButtonElement>>(
   ({ link, itemProps, isOverlay, groupDisclosure, sectionId, toggleRef, onGroupToggle, groupAriaLabel, className: extraClassName, ...radixProps }, forwardedRef) => {
+    const seRail = useSuperEngineeringProfile()
     return (
       <button
         {...(isOverlay ? {} : (() => {
@@ -608,10 +611,13 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
           // Compact mode: 4px less total height (py-[3px] vs py-[5px])
           link.compact ? "py-[3px]" : "py-[5px]",
           "px-2",
-          link.variant === "default"
-            ? "bg-[var(--shell-selected,var(--element-selected,var(--foreground-5)))]"
-            // Highlight on hover, context menu open (data-state), or EditPopover active (data-edit-active)
-            : "hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] data-[state=open]:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] data-[edit-active=true]:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]",
+          seRail
+            ? link.variant === 'default'
+              ? SE_RAIL_ACTIVE_BUTTON_CLASS
+              : SE_RAIL_INACTIVE_BUTTON_CLASS
+            : link.variant === "default"
+              ? "bg-[var(--shell-selected,var(--element-selected,var(--foreground-5)))]"
+              : "hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] data-[state=open]:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] data-[edit-active=true]:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]",
           extraClassName,
         )}
       >
@@ -676,10 +682,11 @@ function renderIcon(link: LinkItem) {
 
   if (isComponent) {
     const Icon = link.icon as React.ComponentType<{ className?: string; style?: React.CSSProperties }>
+    const seRail = typeof document !== 'undefined' && document.documentElement.dataset.uiProfile === 'super-engineering'
     return (
       <Icon
-        className="h-3.5 w-3.5 shrink-0"
-        style={colorStyle}
+        className={seRail ? 'h-3.5 w-3.5 shrink-0 [&_svg]:stroke-[1.5]' : 'h-3.5 w-3.5 shrink-0'}
+        style={seRail ? undefined : colorStyle}
       />
     )
   }

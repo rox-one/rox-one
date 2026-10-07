@@ -19,6 +19,7 @@ import { SurfaceTabs } from './SurfaceTabs'
 import { resolveWorkbenchAvailability } from './workbench-rollout'
 import { resolveWorkbenchChrome } from './workbench-chrome'
 import { RetainedSurface } from './RetainedSurface'
+import { useEdgeRevealPanel } from '@/hooks/useEdgeRevealPanel'
 
 export interface WorkspaceSurfaceHostProps {
   children: ReactNode
@@ -50,6 +51,7 @@ export function WorkspaceSurfaceHost({
   )
   const workbenchEnabled = availability === 'enabled'
   const granularChrome = unifiedShell || workbenchEnabled
+  const edgeReveal = useEdgeRevealPanel(granularChrome || ownsPrimaryNavigation)
   const chrome = resolveWorkbenchChrome({
     unifiedShell,
     modeRegistry: false,
@@ -61,7 +63,15 @@ export function WorkspaceSurfaceHost({
   })
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 items-stretch">
+    <div className="relative flex min-h-0 min-w-0 flex-1 items-stretch">
+      <div
+        className="absolute right-0 top-0 bottom-0 z-50"
+        style={{ width: edgeReveal.edgeZonePx }}
+        onPointerEnter={edgeReveal.onEdgePointerEnter}
+        onPointerLeave={edgeReveal.onEdgePointerLeave}
+        data-testid="inspector-edge-zone"
+        aria-hidden
+      />
       {chrome.showRail && !ownsPrimaryNavigation && <ActivityRail />}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {chrome.showSurfaceTabs && <SurfaceTabs />}

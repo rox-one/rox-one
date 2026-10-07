@@ -384,6 +384,13 @@ html[data-ui-profile="super-engineering"] {
   --shell-motion-disclosure: 320ms;
 }
 
+html[data-ui-profile="super-engineering"] .input-container {
+  background: color-mix(in oklch, var(--paper) 72%, transparent);
+  backdrop-filter: blur(var(--chrome-glass-blur));
+  -webkit-backdrop-filter: blur(var(--chrome-glass-blur));
+  border: 1px solid color-mix(in oklch, var(--foreground) 8%, transparent);
+}
+
 /* =============================================================================
    TAILWIND V4 THEME INTEGRATION
 ============================================================================= */

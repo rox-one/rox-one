@@ -74,6 +74,8 @@ import type { CollectionViewMode } from "./kanban/BoardListToggle"
 import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
 import { LeftSidebar, type LinkItem, type SidebarItem as SidebarLinkItem } from "./LeftSidebar"
+import { ShellLayoutMode } from './ShellLayoutMode'
+import { WorkspaceNavigator } from '@/components/workspace/WorkspaceNavigator'
 import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { enabledExtraScreenIdsAtom } from "@/atoms/extra-screens"
@@ -2821,18 +2823,27 @@ function AppShellContent({
                     <SettingsNavigator selectedSubpage={navState.subpage ?? null} onSelectSubpage={subpage => handleSettingsClick(subpage)} />
                   )}
                 </div>
-                {hasContextualSidebar && !isSidebarCollapsed ? (
-                  <details className="group/application-sections mx-1 mt-2 rounded-[var(--radius-card)] bg-foreground/[0.025]" data-application-sections
-                    open={applicationSectionsOpenFor === contextualSidebarKey}
-                    onToggle={event => setApplicationSectionsOpenFor(event.currentTarget.open ? contextualSidebarKey : null)}>
-                    <summary className="flex cursor-pointer list-none items-center gap-2 rounded-[var(--radius-control)] px-3 py-2.5 text-[11px] font-semibold text-foreground/50 outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-                      <Layers className="size-3.5 text-accent" aria-hidden />
-                      <span className="min-w-0 flex-1 truncate">{t('sidebar.applicationSections')}</span>
-                      <ChevronRight className="size-3.5 transition-transform group-open/application-sections:rotate-90 motion-reduce:transition-none" aria-hidden />
-                    </summary>
-                    {globalSidebarNavigation}
-                  </details>
-                ) : globalSidebarNavigation}
+                <ShellLayoutMode workspaceRootPath={activeWorkspace?.rootPath}>
+                  {(layoutMode) => (
+                    <>
+                      {layoutMode === 'se-workspace' && !isSidebarCollapsed && (
+                        <WorkspaceNavigator workspaceRootPath={activeWorkspace?.rootPath} />
+                      )}
+                      {hasContextualSidebar && !isSidebarCollapsed ? (
+                        <details className="group/application-sections mx-1 mt-2 rounded-[var(--radius-card)] bg-foreground/[0.025]" data-application-sections
+                          open={applicationSectionsOpenFor === contextualSidebarKey}
+                          onToggle={event => setApplicationSectionsOpenFor(event.currentTarget.open ? contextualSidebarKey : null)}>
+                          <summary className="flex cursor-pointer list-none items-center gap-2 rounded-[var(--radius-control)] px-3 py-2.5 text-[11px] font-semibold text-foreground/50 outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                            <Layers className="size-3.5 text-accent" aria-hidden />
+                            <span className="min-w-0 flex-1 truncate">{t('sidebar.applicationSections')}</span>
+                            <ChevronRight className="size-3.5 transition-transform group-open/application-sections:rotate-90 motion-reduce:transition-none" aria-hidden />
+                          </summary>
+                          {globalSidebarNavigation}
+                        </details>
+                      ) : globalSidebarNavigation}
+                    </>
+                  )}
+                </ShellLayoutMode>
                 </div>
                 <div className="shrink-0">
                   <SidebarChrome

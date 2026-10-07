@@ -59,6 +59,11 @@ export const KEYS = {
   showConnectionIcons: 'show-connection-icons',
   projectColorTreatment: 'project-color-treatment', // 'stripe' | 'stripe-tint'
   workspaceSelectorRail: 'workspace-selector-rail',
+  /** super.engineering profile (opt-in via theme) */
+  seLeftSidebarLayout: 'se-left-sidebar-layout',
+  seAutoHideSidebars: 'se-auto-hide-sidebars',
+  seInspectorEdgeRevealMode: 'se-inspector-edge-reveal-mode',
+  seInspectorEdgeHoverActive: 'se-inspector-edge-hover-active',
 
   // What's New
   // What's New — per-version seen list (timeline)

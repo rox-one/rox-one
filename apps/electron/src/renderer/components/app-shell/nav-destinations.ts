@@ -9,6 +9,7 @@
  *   route (via NavigationContext) and active-state predicate.
  *
  * Do NOT duplicate this list per consumer: add a destination here once.
+ * SE profile rail styling: see `lib/se-icon-map.ts` (stroke 1.5, active bg-white/6).
  * Wave-gated destinations carry `route: null` + `disabledTooltipKey`; the
  * rail renders them disabled-with-tooltip (spec degradation rule). Knowledge
  * was rail-gated in W1 and navigates since W2 — when the feature flag is off

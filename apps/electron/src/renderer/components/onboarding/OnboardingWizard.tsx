@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { WelcomeStep } from "./WelcomeStep"
+import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
+import { SuperEngineeringOnboarding } from './SuperEngineeringOnboarding'
 import type { ApiSetupMethod } from "./APISetupStep"
 import { ProviderSelectStep, type ProviderChoice } from "./ProviderSelectStep"
 import { CredentialsStep, type CredentialStatus } from "./CredentialsStep"
@@ -137,6 +139,7 @@ export function OnboardingWizard({
   editInitialValues,
   className
 }: OnboardingWizardProps) {
+  const seProfile = useSuperEngineeringProfile()
   // 'complete' is terminal: close the wizard exactly once per arrival.
   const finishedRef = useRef(false)
   useEffect(() => {
@@ -152,7 +155,17 @@ export function OnboardingWizard({
   const renderStep = () => {
     switch (state.step) {
       case 'welcome':
-        return (
+        return seProfile ? (
+          <div className="mx-auto max-w-lg px-6 py-8">
+            <SuperEngineeringOnboarding step="welcome" className="mb-6" />
+            <WelcomeStep
+              isExistingUser={state.isExistingUser}
+              onContinue={onContinue}
+              isLoading={state.isCheckingGitBash}
+              isFinishing={state.isFinishing}
+            />
+          </div>
+        ) : (
           <WelcomeStep
             isExistingUser={state.isExistingUser}
             onContinue={onContinue}
