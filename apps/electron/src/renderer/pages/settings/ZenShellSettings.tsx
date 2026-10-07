@@ -38,7 +38,7 @@ export function ZenShellSettings() {
       const unsubscribe = subscribeWebChromePreference(setWebPreference)
       return () => { mounted.current = false; unsubscribe() }
     }
-    if (typeof api?.setZenShell === 'function' || typeof api?.getZenShellSnapshot === 'function') {
+    if (typeof api?.setZenShell === 'function' || typeof api?.getShellSnapshot === 'function') {
       setNativeAvailable(true)
     }
     const unsubscribe = subscribeDesktopShellAppearance(api, next => {
