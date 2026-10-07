@@ -474,6 +474,8 @@ export interface ThemeFile extends ThemeOverrides {
   source?: string;
   supportedModes?: ('light' | 'dark')[];
   shikiTheme?: ShikiThemeConfig;
+  /** Optional shell profile for `html[data-ui-profile]` (e.g. super-engineering). */
+  uiProfile?: string;
 }
 
 /**

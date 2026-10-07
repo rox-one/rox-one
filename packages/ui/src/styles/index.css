@@ -373,6 +373,18 @@ html[data-contrast="high"] :focus-visible {
 }
 
 /* =============================================================================
+   UI PROFILES (opt-in shells; default Rox unchanged)
+============================================================================= */
+
+html[data-ui-profile="super-engineering"] {
+  --chrome-glass-blur: 20px;
+  --rox-radius-panel: 8px;
+  --rox-radius-composer: 10px;
+  --font-size-base: 13px;
+  --shell-motion-disclosure: 320ms;
+}
+
+/* =============================================================================
    TAILWIND V4 THEME INTEGRATION
 ============================================================================= */
 

@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'bun:test'
-import { persistThemeSelection, resolveVisualMode } from './theme-resolution'
+import superEngineering from '../../../resources/themes/super-engineering.json'
+import { persistThemeSelection, resolveUiProfile, resolveVisualMode } from './theme-resolution'
+
+describe('resolveUiProfile', () => {
+  it('reads super-engineering preset profile', () => {
+    expect(resolveUiProfile(superEngineering)).toBe('super-engineering')
+  })
+  it('rejects invalid profile tokens', () => {
+    expect(resolveUiProfile({ uiProfile: 'bad profile!' })).toBeUndefined()
+    expect(resolveUiProfile(null)).toBeUndefined()
+  })
+})
 
 describe('palette appearance and selection persistence', () => {
   it('keeps light-only and dark-only palettes consistent on opposite system modes', () => {

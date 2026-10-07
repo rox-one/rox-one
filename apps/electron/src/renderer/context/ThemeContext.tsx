@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo, type ReactNode } from 'react'
 import * as storage from '@/lib/local-storage'
-import { resolveVisualMode, persistThemeSelection } from './theme-resolution'
+import { resolveVisualMode, persistThemeSelection, resolveUiProfile } from './theme-resolution'
 import {
   resolveTheme,
   mergeThemeOverrides,
@@ -387,6 +387,13 @@ export function ThemeProvider({
       root.dataset.blurred = 'true'
     } else {
       delete root.dataset.blurred
+    }
+
+    const uiProfile = resolveUiProfile(presetTheme)
+    if (uiProfile) {
+      root.dataset.uiProfile = uiProfile
+    } else {
+      delete root.dataset.uiProfile
     }
 
   }, [presetTheme, visualMode, isScenic, resolvedTheme])

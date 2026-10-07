@@ -1,3 +1,14 @@
+import type { ThemeFile } from '@config/theme'
+
+/** Sanitized `data-ui-profile` value from a preset theme file, if any. */
+export function resolveUiProfile(preset: ThemeFile | null | undefined): string | undefined {
+  const raw = preset?.uiProfile
+  if (typeof raw !== 'string') return undefined
+  const trimmed = raw.trim()
+  if (!trimmed || !/^[a-z0-9-]+$/.test(trimmed)) return undefined
+  return trimmed
+}
+
 /** Palette mode is separate from requested/system mode and window material. */
 export function resolveVisualMode(
   requested: 'light' | 'dark',
