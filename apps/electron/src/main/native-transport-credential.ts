@@ -13,7 +13,11 @@ export async function resolveNativeTransportCredential(options: {
   legacyToken: string
 }): Promise<string> {
   const binding = options.getBinding()
-  if (!binding || binding.workspaceId !== options.expectedWorkspaceId) throw new Error('Native transport window binding unavailable')
+  if (!binding) throw new Error('Native transport window binding unavailable')
+  const expected = options.expectedWorkspaceId.trim()
+  if (expected && binding.workspaceId !== expected) {
+    throw new Error('Native transport window binding unavailable')
+  }
   const credential = await options.credentials.getNativeTransportCredential(binding.workspaceId)
   const current = options.getBinding()
   if (!current || current.workspaceId !== binding.workspaceId || current.nativeRoot !== binding.nativeRoot) {

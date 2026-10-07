@@ -41,11 +41,11 @@ describe('window-local bootstrap workspace authority', () => {
     expect(readBoundWindowWorkspace(replaced, f.manager)).toBe('')
     expect(f.lookups()).toBe(0)
   })
-  test('iframes and missing sender frames cannot obtain the main-frame binding', () => {
+  test('iframes cannot obtain the main-frame binding; null frame is allowed for preload bootstrap', () => {
     const f = fixture()
     expect(readBoundWindowWorkspace({ ...f.event, senderFrame: { url: 'https://foreign.example.test' } } as unknown as IpcMainEvent, f.manager)).toBe('')
-    expect(readBoundWindowWorkspace({ ...f.event, senderFrame: null } as unknown as IpcMainEvent, f.manager)).toBe('')
-    expect(f.lookups()).toBe(0)
+    expect(readBoundWindowWorkspace({ ...f.event, senderFrame: null } as unknown as IpcMainEvent, f.manager)).toBe('workspace-A')
+    expect(f.lookups()).toBe(1)
   })
   test('destroyed windows and contents do not retain bootstrap authority', () => {
     const windowFixture = fixture(); windowFixture.destroyWindow()

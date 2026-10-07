@@ -59,6 +59,13 @@ test('only absent enrollment falls back; revoked, malformed and foreign-root cre
   await expect(resolveNativeTransportCredential(f.options())).rejects.toThrow('denied')
 })
 
+test('empty expected workspace id uses the live window binding', async () => {
+  const f = fixture()
+  await f.manager().setNativeTransportCredential('workspace-a', f.issued.credential)
+  const token = await resolveNativeTransportCredential({ ...f.options(), expectedWorkspaceId: '' })
+  expect(token).toBe(f.issued.credential)
+})
+
 test('foreign workspace, destroyed window and workspace switch during secure-store await reject', async () => {
   const f = fixture()
   await f.manager().setNativeTransportCredential('workspace-a', f.issued.credential)

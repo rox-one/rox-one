@@ -123,17 +123,24 @@ if (isClientOnly) {
   // whichever server owns the workspace (local or remote).
 
   const wsPort: number = ipcRenderer.sendSync('__get-ws-port')
-  const workspaceId: string = ipcRenderer.sendSync('__get-workspace-id')
+  const readBoundWorkspaceId = (): string => {
+    const value = ipcRenderer.sendSync('__get-workspace-id')
+    return typeof value === 'string' ? value : ''
+  }
+  const workspaceId: string = readBoundWorkspaceId()
   const localClientProof: string = ipcRenderer.sendSync('__get-local-client-proof')
 
   const localClient = new WsRpcClient(`ws://127.0.0.1:${wsPort}`, {
     workspaceId,
     webContentsId,
     localClientProof,
-    resolveTarget: async () => ({
-      url: `ws://127.0.0.1:${wsPort}`,
-      token: await ipcRenderer.invoke('__resolve-local-ws-token', workspaceId),
-    }),
+    resolveTarget: async () => {
+      const boundWorkspaceId = readBoundWorkspaceId()
+      return {
+        url: `ws://127.0.0.1:${wsPort}`,
+        token: await ipcRenderer.invoke('__resolve-local-ws-token', boundWorkspaceId),
+      }
+    },
     autoReconnect: true,
     mode: 'local',
     clientCapabilities: [...LOCAL_CLIENT_CAPABILITIES],

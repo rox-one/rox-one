@@ -1306,8 +1306,9 @@ app.whenReady().then(async () => {
               return workspace ? { workspaceId: workspace.id, nativeRoot: workspace.rootPath } : null
             },
           })
-        } catch {
+        } catch (err) {
           // Never propagate storage/provider exceptions or enrolled secrets through IPC errors.
+          mainLog.warn('[native-transport] resolve-local-ws-token failed:', err)
           throw new Error('Local transport credential unavailable or denied')
         }
       })
