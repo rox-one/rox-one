@@ -6,14 +6,58 @@ import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import { TooltipProvider } from '@rox/ui'
 import { InspectorHost } from '@/platform/InspectorHost'
-import { inspectorPanelWidthAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom } from '@/atoms/unified-shell'
+import { focusedPanelIdAtom, panelStackAtom } from '@/atoms/panel-stack'
+import { sessionMetaMapAtom } from '@/atoms/sessions'
+import {
+  featureWorkbenchHarnessInspectorV1Atom,
+  inspectorChromeCollapsedAtom,
+  inspectorPanelWidthAtom,
+  inspectorSectionAtom,
+  inspectorUserOpenedAtom,
+  inspectorVisibleAtom,
+} from '@/atoms/unified-shell'
+import { routes } from '@/shared/routes'
 import { getKeyString, KEYS } from '@/lib/local-storage'
 import en from '../../../../../../../../packages/shared/src/i18n/locales/en.json'
 import '../../../../index.css'
 await i18n.use(initReactI18next).init({ lng: 'en', fallbackLng: 'en', resources: { en: { translation: en } }, keySeparator: false })
+const FIXTURE_SESSION_ID = 'fixture-session'
+const FIXTURE_PANEL_ID = 'fixture-panel'
 const store = createStore()
 store.set(inspectorVisibleAtom, true)
 store.set(inspectorChromeCollapsedAtom, false)
+store.set(featureWorkbenchHarnessInspectorV1Atom, true)
+store.set(inspectorSectionAtom, 'files')
+store.set(inspectorUserOpenedAtom, true)
+store.set(
+  sessionMetaMapAtom,
+  new Map([
+    [
+      FIXTURE_SESSION_ID,
+      {
+        id: FIXTURE_SESSION_ID,
+        workspaceId: 'synthetic-workspace',
+        workingDirectory: '/tmp/fixture-workspace',
+      },
+    ],
+  ]),
+)
+store.set(panelStackAtom, [
+  {
+    id: FIXTURE_PANEL_ID,
+    route: routes.view.allSessions(FIXTURE_SESSION_ID),
+    proportion: 1,
+    panelType: 'session',
+    laneId: 'main',
+  },
+])
+store.set(focusedPanelIdAtom, FIXTURE_PANEL_ID)
+if (typeof window !== 'undefined') {
+  window.electronAPI = {
+    ...(window.electronAPI ?? {}),
+    getSessionFiles: async () => [{ type: 'file', path: 'readme.md' }],
+  } as typeof window.electronAPI
+}
 let mount: (value: boolean) => void
 ;(window as any).__inspectorFixture = {
   width: () => store.get(inspectorPanelWidthAtom),
