@@ -4,6 +4,7 @@ import {
   Calendar,
   ChevronsRight,
   Globe,
+  Pin,
   Plus,
   SquareTerminal,
   SquareCheck,
@@ -15,17 +16,19 @@ import {
   focusedPanelIndexAtom,
   pushPanelAtom,
 } from '@/atoms/panel-stack'
-import { bottomTerminalOpenAtom } from '@/atoms/unified-shell'
+import { inspectorEdgeRevealModeAtom } from '@/atoms/panel-auto-hide'
+import { bottomTerminalOpenAtom, inspectorUserOpenedAtom, inspectorVisibleAtom } from '@/atoms/unified-shell'
+import {
+  ROX_MEETINGS_COMPOSE_EVENT,
+  ROX_NOTES_COMPOSE_EVENT,
+  ROX_TASKS_COMPOSE_EVENT,
+} from './inspector-compose-events'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { routes } from '@/shared/routes'
 import { cn } from '@/lib/utils'
 import { CHROME_DENSITY } from './chrome-density'
 
 const INSPECTOR_RAIL_WIDTH = CHROME_DENSITY.railWidth
-
-export const ROX_TASKS_COMPOSE_EVENT = 'rox:tasks:compose'
-export const ROX_MEETINGS_COMPOSE_EVENT = 'rox:meetings:compose'
-export const ROX_NOTES_COMPOSE_EVENT = 'rox:notes:compose'
 
 type InspectorActionRailProps = {
   browserPanelActive: boolean
@@ -79,6 +82,10 @@ export function InspectorActionRail({
   const pushPanel = useSetAtom(pushPanelAtom)
   const panelIndex = useAtomValue(focusedPanelIndexAtom)
   const setBottomTerminalOpen = useSetAtom(bottomTerminalOpenAtom)
+  const setEdgeMode = useSetAtom(inspectorEdgeRevealModeAtom)
+  const setInspectorVisible = useSetAtom(inspectorVisibleAtom)
+  const setInspectorUserOpened = useSetAtom(inspectorUserOpenedAtom)
+  const edgeMode = useAtomValue(inspectorEdgeRevealModeAtom)
 
   const openAdjacent = useCallback(
     (route: ReturnType<typeof routes.view.tasks>) => {
@@ -125,6 +132,12 @@ export function InspectorActionRail({
     setBottomTerminalOpen(true)
   }, [setBottomTerminalOpen])
 
+  const onPin = useCallback(() => {
+    setEdgeMode('pinned')
+    setInspectorVisible(true)
+    setInspectorUserOpened(true)
+  }, [setEdgeMode, setInspectorUserOpened, setInspectorVisible])
+
   return (
     <div
       className="chrome-rail rox-shell-pane flex h-full shrink-0 flex-col items-center gap-0.5 py-1.5 rox-shell-divider-l"
@@ -147,6 +160,13 @@ export function InspectorActionRail({
         <Globe className="h-4 w-4" />
       </ActionButton>
       <div className="mt-auto flex flex-col items-center gap-0.5">
+        <ActionButton
+          label={t('inspector.pin')}
+          active={edgeMode === 'pinned'}
+          onClick={onPin}
+        >
+          <Pin className="h-4 w-4" />
+        </ActionButton>
         <ActionButton label={t('inspector.action.terminal')} active={terminalActive} onClick={onTerminal}>
           <SquareTerminal className="h-4 w-4" />
         </ActionButton>

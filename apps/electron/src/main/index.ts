@@ -539,7 +539,7 @@ app.whenReady().then(async () => {
   // Ensure default permissions file exists (copies bundled default.json on first run)
   ensureDefaultPermissions()
 
-  // Seed tool icons to ~/.craft-agent/tool-icons/ (copies bundled SVGs on first run)
+  // Seed tool icons to {configDir}/tool-icons/ (copies bundled SVGs on first run)
   ensureToolIcons()
 
   // Seed preset themes to ~/.craft-agent/themes/ (copies bundled theme JSONs on first run)

@@ -86,6 +86,11 @@ export function InspectorBrowserPane() {
       cancelled = true
       requestGeneration += 1
       window.removeEventListener(INTERNAL_BROWSER_OPEN_EVENT, onOpen)
+      const importedId = createdImportedRef.current
+      createdImportedRef.current = null
+      if (importedId) {
+        void window.electronAPI.browserPane.destroy(importedId).catch(() => undefined)
+      }
       lifetime.release()
     }
   }, [cookieStatus?.consent, useImportedCookies])

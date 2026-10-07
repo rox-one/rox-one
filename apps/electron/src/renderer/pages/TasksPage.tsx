@@ -47,6 +47,7 @@ import { useActiveWorkspace, useOptionalAppShellContext } from '@/context/AppShe
 import { useProjects } from '@/hooks/useProjects'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { useAction } from '@/actions'
+import { ROX_TASKS_COMPOSE_EVENT } from '@/platform/inspector-compose-events'
 import {
   loadPersonalTaskStore,
   persistPersonalTaskStore,
@@ -184,6 +185,11 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const [tagFilter, setTagFilter] = useState<string | null>(null)
   const [pendingDone, setPendingDone] = useState<ReadonlySet<string>>(new Set())
   const [quickEntry, setQuickEntry] = useState<{ initial: string } | null>(null)
+  useEffect(() => {
+    const onCompose = () => setQuickEntry({ initial: '' })
+    window.addEventListener(ROX_TASKS_COMPOSE_EVENT, onCompose)
+    return () => window.removeEventListener(ROX_TASKS_COMPOSE_EVENT, onCompose)
+  }, [])
   const [moveFor, setMoveFor] = useState<string | null>(null)
   const [popover, setPopover] = useState<'when' | 'deadline' | null>(null)
   const [confirm, setConfirm] = useState<null | { kind: 'emptyTrash' } | { kind: 'removeArea'; id: string } | { kind: 'removeHeading'; id: string }>(null)

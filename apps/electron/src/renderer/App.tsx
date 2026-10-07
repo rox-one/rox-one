@@ -351,7 +351,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [workspaceSelectorRail, setWorkspaceSelectorRail] = useState(() =>
-    storage.get(storage.KEYS.workspaceSelectorRail, true)
+    storage.get(storage.KEYS.workspaceSelectorRail, false)
   )
 
   useEffect(() => {
@@ -360,7 +360,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       setWorkspaceSelectorRail(
         typeof customEvent.detail === 'boolean'
           ? customEvent.detail
-          : storage.get(storage.KEYS.workspaceSelectorRail, true)
+          : storage.get(storage.KEYS.workspaceSelectorRail, false)
       )
     }
 

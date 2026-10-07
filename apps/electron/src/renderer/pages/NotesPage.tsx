@@ -31,6 +31,7 @@ import {
   revisionByEntityId,
 } from '@/components/session-workbench/right-session-shell'
 import { navigate, routes } from '@/lib/navigate'
+import { ROX_NOTES_COMPOSE_EVENT } from '@/platform/inspector-compose-events'
 import { cn } from '@/lib/utils'
 import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
 import {
@@ -1251,6 +1252,12 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     setCreateInFolder(folder ?? projectFolder)
     setCreateDialogOpen(true)
   }
+
+  React.useEffect(() => {
+    const onCompose = () => openCreateNoteDialog()
+    window.addEventListener(ROX_NOTES_COMPOSE_EVENT, onCompose)
+    return () => window.removeEventListener(ROX_NOTES_COMPOSE_EVENT, onCompose)
+  }, [activeProjectSlug])
 
   const handleCreateFolder = async () => {
     if (!activeWorkspaceId || !createFolderName.trim()) return

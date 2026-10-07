@@ -2617,6 +2617,7 @@
   "inspector.git.empty": "Рабочее дерево чистое",
   "inspector.git.notRepo": "Это не git-репозиторий",
   "inspector.hide": "Скрыть инспектор",
+  "inspector.pin": "Закрепить инспектор",
   "inspector.action.newSession": "Новая сессия",
   "inspector.action.newTask": "Новая задача",
   "inspector.action.newEvent": "Новое событие",

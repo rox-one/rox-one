@@ -4326,7 +4326,7 @@ import { copyFileSync } from 'fs';
 const TOOL_ICONS_DIR_NAME = 'tool-icons';
 
 /**
- * Returns the path to the tool-icons directory: ~/.craft-agent/tool-icons/
+ * Returns the path to the tool-icons directory: {configDir}/tool-icons/ (default ~/.rox or ~/rox).
  */
 export function getToolIconsDir(): string {
   return join(resolveConfigDir(), TOOL_ICONS_DIR_NAME);

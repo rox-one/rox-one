@@ -2615,6 +2615,7 @@
   "inspector.git.empty": "Working tree clean",
   "inspector.git.notRepo": "Not a git repository",
   "inspector.hide": "Hide inspector",
+  "inspector.pin": "Pin inspector",
   "inspector.action.newSession": "New session",
   "inspector.action.newTask": "New task",
   "inspector.action.newEvent": "New event",

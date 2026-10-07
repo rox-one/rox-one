@@ -123,9 +123,26 @@
 
 | Task | State | Evidence |
 |---|---|---|
-| T-00 | done | credentials restored from .bak |
-| T-01 | done | wave 1 commit |
-| T-03 | done | inspector hidden default |
-| T-04–T-19 | done | wave 2 — Ghostty T-20 still candidate |
+| T-00 | done | credentials `.bak` / legacy token |
+| T-01 | done | `5e839a627` icons |
+| T-02 | done | `resolveConfigDir` prefers `~/rox`; migration doc |
+| T-03 | done | inspector hidden; no info rail |
+| T-04 | done | `InspectorActionRail` + compose listeners |
+| T-05 | done | gray rail, settings row, workspace rail default off |
+| T-06 | done | `SidebarChrome` spacing |
+| T-07 | done | edge zones L/R + pin control |
+| T-08 | done | cookies default; destroy imported webview on unmount |
+| T-09 | done | meetings `pb-16` |
+| T-10 | done | Inter default sans |
+| T-11 | done | kanban custom status field |
+| T-12 | done | tool-icons under config dir |
+| T-13 | done | unified shell + harness inspector defaults on |
+| T-14 | done | Zen native availability probe |
+| T-15 | done | device CPU icon chip |
+| T-16–T-17 | done | cloud runs errors + `docs/cloud-runs-runtime.md` |
+| T-18 | done | `2026-10-07-secrets-model.md` |
+| T-19 | done | `user-secrets-provision.ts` + unit test |
+| T-20 | documented | `ghostty-terminal-spike.md` (blocked) |
+| T-21 | done | `docs/design/rox-screen-map-ru.md` |
 
-**Next action:** Execute T-01, T-03, T-16 error fix in parallel after T-00 restore.
+**Next action:** User UI pass on screen map; optional Ghostty/PTY column split.

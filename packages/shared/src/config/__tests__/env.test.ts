@@ -38,6 +38,19 @@ describe('getEnv', () => {
 });
 
 describe('resolveConfigDir', () => {
+  it('prefers ~/rox when that directory exists', () => {
+    const homeDir = join(homedir(), '.rox-visible-pref-home');
+    rmSync(homeDir, { recursive: true, force: true });
+    mkdirSync(join(homeDir, 'rox'), { recursive: true });
+    mkdirSync(join(homeDir, '.rox'), { recursive: true });
+    writeFileSync(join(homeDir, '.rox', 'marker.txt'), 'hidden');
+    try {
+      expect(resolveConfigDir({}, homeDir)).toBe(join(homeDir, 'rox'));
+    } finally {
+      rmSync(homeDir, { recursive: true, force: true });
+    }
+  });
+
   it('accepts ROX_CONFIG_DIR then CRAFT_CONFIG_DIR then ~/.rox (clean install)', () => {
     expect(resolveConfigDir({ ROX_CONFIG_DIR: '/tmp/rox-cfg' }, '/home/u')).toBe('/tmp/rox-cfg');
     expect(resolveConfigDir({ CRAFT_CONFIG_DIR: '/tmp/craft-cfg' }, '/home/u')).toBe('/tmp/craft-cfg');
