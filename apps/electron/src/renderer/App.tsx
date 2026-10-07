@@ -78,6 +78,7 @@ import {
   pushBackgroundFinishedAtom,
 } from '@/atoms/background-finished'
 import { visibleSessionIdsAtom } from '@/atoms/panel-stack'
+import { featureUnifiedShellAtom, featureWorkbenchAtom } from '@/atoms/unified-shell'
 import { getSessionTitle } from '@/utils/session'
 import { extractBadges } from '@/lib/mentions'
 import { getDefaultStore } from 'jotai'
@@ -353,6 +354,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   const [workspaceSelectorRail, setWorkspaceSelectorRail] = useState(() =>
     storage.get(storage.KEYS.workspaceSelectorRail, false)
   )
+  const unifiedShell = useAtomValue(featureUnifiedShellAtom)
+  const workbenchEnabled = useAtomValue(featureWorkbenchAtom)
+  const unifiedShellChrome = unifiedShell || workbenchEnabled
 
   useEffect(() => {
     const handleWorkspaceSelectorRailChanged = (event: Event) => {
@@ -2215,7 +2219,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
-  const showWorkspaceIconRail = !webTransportBootstrap && shouldShowWorkspaceIconRail(workspaceSelectorRail, viewportWidth)
+  const showWorkspaceIconRail =
+    !webTransportBootstrap
+    && shouldShowWorkspaceIconRail(workspaceSelectorRail, viewportWidth, unifiedShellChrome)
 
   const handleReconnectTransport = useCallback(() => {
     void window.electronAPI.reconnectTransport().catch((error) => {

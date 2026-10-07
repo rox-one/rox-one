@@ -24,6 +24,10 @@ describe('shouldShowWorkspaceIconRail', () => {
     )
     expect(shouldShowWorkspaceIconRail(true, 1200)).toBe(true)
   })
+
+  it('is hidden when unified shell chrome is active', () => {
+    expect(shouldShowWorkspaceIconRail(true, 1200, true)).toBe(false)
+  })
 })
 
 describe('getTopBarLeftInset', () => {

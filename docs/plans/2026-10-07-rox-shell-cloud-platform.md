@@ -17,9 +17,10 @@
 - **Cloud:** `packages/cloud-runner` `DaytonaProvider` + `CloudRunsSettingsPage` + `CloudRunsChip`; fix `[object Object]` errors via structured error serialization.
 - **Secrets:** Today — local `credentials.enc` + `service-secrets.env` + builtin MCP seed (`packages/shared/src/sources/`); **no** central user DB in desktop app yet. PocketID track = new `docs/pocket-sso/` + server-side entitlement DB (task T-18 scout).
 
-**Current state (verified 2026-10-07):**
-- Branch `feat/super-engineering-ui-parity`; credentials vault on disk **broken** (`credentials.enc` missing; `.bak` decrypt_failed) — WS bootstrap uses legacy token after `4f2612511`.
-- `inspectorVisibleAtom` default **`true`** → info panel always open (`atoms/unified-shell.ts`).
+**Current state (verified 2026-10-07, re-audit):**
+- Branch `feat/super-engineering-ui-parity` @ `f4a520d2b` (+ local fixes); credentials: legacy-token fallback path in `4f2612511`.
+- `inspectorVisibleAtom` default **`false`**; info rail removed from knowledge inspector.
+- `WorkspaceIconRail` suppressed when unified shell / workbench chrome active (`workspace-rail.ts` + `App.tsx`).
 - Icons at `apps/electron/resources/icon.{icns,png}`; user archive `/Users/t/Downloads/app-icon.zip`.
 - `AppearanceSettingsPage` tool-icons path still references `.craft-agent` in copy + `EditPopover`.
 - `featureWorkbenchHarnessInspectorV1Atom` defaults **off** in storage; user wants tab+inspector panel **on** by default.
