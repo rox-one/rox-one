@@ -517,6 +517,7 @@ export class SecureStorageBackend implements CredentialBackend, CredentialMigrat
 
     if (store) {
       this.cachedStore = store;
+      this.repairState = { status: 'ok' };
       return store;
     }
 
@@ -526,6 +527,7 @@ export class SecureStorageBackend implements CredentialBackend, CredentialMigrat
     if (store) {
       // Dual-read: do not rewrite on get. Cutover is commitLegacyMigration().
       this.cachedStore = store;
+      this.repairState = { status: 'ok' };
       return store;
     }
 
@@ -535,6 +537,7 @@ export class SecureStorageBackend implements CredentialBackend, CredentialMigrat
     if (store) {
       // Dual-read: do not rewrite on get. Cutover is commitLegacyMigration().
       this.cachedStore = store;
+      this.repairState = { status: 'ok' };
       return store;
     }
 
