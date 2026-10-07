@@ -25,6 +25,10 @@ export default defineConfig(async environment => {
       ],
       dedupe: ['react', 'react-dom', 'jotai'],
     },
+    optimizeDeps: {
+      ...production.optimizeDeps,
+      entries: [resolve(root, 'index.html')],
+    },
     server: { host: '127.0.0.1', strictPort: true, hmr: false, watch: null, fs: { allow: [repository] } },
   }
 })

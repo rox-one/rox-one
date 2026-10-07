@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { flushSync } from 'react-dom'
 import { createStore, Provider, useAtomValue } from 'jotai'
@@ -26,6 +26,7 @@ if (typeof localStorage !== 'undefined') {
   localStorage.setItem(getKeyString(KEYS.inspectorVisible), JSON.stringify(true))
   localStorage.setItem(getKeyString(KEYS.featureWorkbenchHarnessInspectorV1), JSON.stringify(true))
   localStorage.setItem(getKeyString(KEYS.inspectorPanelWidth), JSON.stringify(320))
+  localStorage.setItem(getKeyString(KEYS.inspectorChromeCollapsed), JSON.stringify(false))
 }
 const store = createStore()
 store.set(inspectorVisibleAtom, true)
@@ -62,7 +63,7 @@ if (typeof window !== 'undefined') {
   } as typeof window.electronAPI
 }
 let mount: (value: boolean) => void
-;(window as any).__inspectorFixture = {
+const fixtureApi = {
   width: () => store.get(inspectorPanelWidthAtom),
   keyPreviewAndCancel: (cancel: string) => {
     const sash = document.querySelector<HTMLElement>('[role="separator"]')!
@@ -77,9 +78,15 @@ let mount: (value: boolean) => void
 }
 function Fixture() {
   const [mounted, setMounted] = useState(true)
+  const [ready, setReady] = useState(false)
   mount = setMounted
   const width = useAtomValue(inspectorPanelWidthAtom)
-  return <main className="flex h-[500px] w-full bg-background text-foreground"><div data-panel-role="content" className="min-w-0 flex-1"><input aria-label="Editor" defaultValue="Unsent draft" /><output data-testid="persisted-width">{width}</output></div>{mounted && <InspectorHost />}</main>
+  useEffect(() => {
+    ;(window as any).__inspectorFixture = fixtureApi
+    document.documentElement.dataset.inspectorFixtureReady = 'true'
+    setReady(true)
+  }, [])
+  return <main className="flex h-[500px] w-full bg-background text-foreground" data-inspector-fixture-ready={ready ? 'true' : undefined}><div data-panel-role="content" className="min-w-0 flex-1"><input aria-label="Editor" defaultValue="Unsent draft" /><output data-testid="persisted-width">{width}</output></div>{mounted && <InspectorHost />}</main>
 }
 createRoot(document.getElementById('root')!).render(<Provider store={store}><TooltipProvider><Fixture /></TooltipProvider></Provider>)
 
