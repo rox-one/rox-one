@@ -17,13 +17,14 @@
 - **Cloud:** `packages/cloud-runner` `DaytonaProvider` + `CloudRunsSettingsPage` + `CloudRunsChip`; fix `[object Object]` errors via structured error serialization.
 - **Secrets:** Today — local `credentials.enc` + `service-secrets.env` + builtin MCP seed (`packages/shared/src/sources/`); **no** central user DB in desktop app yet. PocketID track = new `docs/pocket-sso/` + server-side entitlement DB (task T-18 scout).
 
-**Current state (verified 2026-10-07, re-audit):**
-- Branch `feat/super-engineering-ui-parity` @ `f4a520d2b` (+ local fixes); credentials: legacy-token fallback path in `4f2612511`.
-- `inspectorVisibleAtom` default **`false`**; info rail removed from knowledge inspector.
-- `WorkspaceIconRail` suppressed when unified shell / workbench chrome active (`workspace-rail.ts` + `App.tsx`).
-- Icons at `apps/electron/resources/icon.{icns,png}`; user archive `/Users/t/Downloads/app-icon.zip`.
-- `AppearanceSettingsPage` tool-icons path still references `.craft-agent` in copy + `EditPopover`.
-- `featureWorkbenchHarnessInspectorV1Atom` defaults **off** in storage; user wants tab+inspector panel **on** by default.
+**Current state (verified 2026-10-07, orchestrator re-audit @ `c2eaba3b5`):**
+- Branch `feat/super-engineering-ui-parity`; credentials: legacy-token fallback in `4f2612511` (T-00 manual relaunch still user-owned).
+- `inspectorVisibleAtom` default **`false`**; knowledge rail sections = `browser` only (`inspector-model.ts`).
+- `WorkspaceIconRail` off when unified shell / workbench chrome active (`workspace-rail.ts`, `App.tsx`).
+- Icons: `apps/electron/resources/icon.{icns,png}`, `workspace-icon.png` (T-01).
+- Tool-icons UI resolves `~/rox/tool-icons/tool-icons.json` (`AppearanceSettingsPage.tsx`).
+- Fresh-profile defaults: `featureUnifiedShellAtom` + `featureWorkbenchHarnessInspectorV1Atom` **on** (`unified-shell.ts`).
+- **Gate:** `bun test` on 8 files in Delivery verification → **41 pass** (2026-10-07).
 
 ## Task graph
 
@@ -146,4 +147,4 @@
 | T-20 | documented | `ghostty-terminal-spike.md` (blocked) |
 | T-21 | done | `docs/design/rox-screen-map-ru.md` |
 
-**Next action:** User UI pass on screen map; optional Ghostty/PTY column split.
+**Next action:** User UI pass on `docs/design/rox-screen-map-ru.md`. T-20 remains **blocked** (`docs/plans/ghostty-terminal-spike.md`); terminal column split is a follow-on refactor, not table closure.
