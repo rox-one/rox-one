@@ -59,7 +59,7 @@ export default defineConfig(async environment => {
       alias: [
         { find: '@/shared/routes', replacement: resolve(repository, 'apps/electron/src/shared/routes.ts') },
         ...Object.entries(fixtureModuleStubs).map(([find, replacement]) => ({ find, replacement })),
-        ...productionAliasEntries(production),
+        ...productionAliasEntries(production as { resolve?: { alias?: Record<string, string> } }),
         { find: '@', replacement: electronRenderer },
         { find: 'react', replacement: reactRoot },
         { find: 'react/jsx-runtime', replacement: resolve(reactRoot, 'jsx-runtime.js') },

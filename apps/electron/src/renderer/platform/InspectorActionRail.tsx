@@ -24,7 +24,7 @@ import {
   ROX_TASKS_COMPOSE_EVENT,
 } from './inspector-compose-events'
 import { useNavigation } from '@/contexts/NavigationContext'
-import { routes } from '../../shared/routes'
+import { routes, type ViewRoute } from '../../shared/routes'
 import { cn } from '@/lib/utils'
 import { CHROME_DENSITY } from './chrome-density'
 
@@ -88,7 +88,7 @@ export function InspectorActionRail({
   const edgeMode = useAtomValue(inspectorEdgeRevealModeAtom)
 
   const openAdjacent = useCallback(
-    (route: ReturnType<typeof routes.view.tasks>) => {
+    (route: ViewRoute) => {
       const afterIndex = panelIndex >= 0 ? panelIndex : undefined
       pushPanel({ route, afterIndex })
     },

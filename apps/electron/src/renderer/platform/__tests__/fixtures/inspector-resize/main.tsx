@@ -62,8 +62,8 @@ store.set(focusedPanelIdAtom, FIXTURE_PANEL_ID)
 if (typeof window !== 'undefined') {
   window.electronAPI = {
     ...(window.electronAPI ?? {}),
-    getSessionFiles: async () => [{ type: 'file', path: 'readme.md' }],
-  } as typeof window.electronAPI
+    getSessionFiles: async () => [{ type: 'file', path: 'readme.md', name: 'readme.md' }],
+  } as unknown as typeof window.electronAPI
 }
 let mount: (value: boolean) => void
 const fixtureApi = {
