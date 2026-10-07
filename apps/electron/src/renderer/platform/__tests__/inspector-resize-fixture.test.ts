@@ -21,6 +21,7 @@ describe('inspector-resize browser fixture', () => {
     expect(viteConfig).toContain('node_modules/react')
     expect(viteConfig).toContain('react/jsx-runtime')
     expect(viteConfig).toContain("find !== 'react'")
-    expect(fixture).toContain('packages/ui/src/components/tooltip')
+    expect(viteConfig).toContain('rox-ui-stub.tsx')
+    expect(viteConfig).toContain("find: '@rox/ui'")
   })
 })

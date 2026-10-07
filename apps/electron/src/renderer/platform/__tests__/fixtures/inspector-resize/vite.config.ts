@@ -9,7 +9,7 @@ const reactDomRoot = resolve(repository, 'node_modules/react-dom')
 
 function productionAliasEntries(production: { resolve?: { alias?: Record<string, string> } }) {
   return Object.entries(production.resolve?.alias ?? {})
-    .filter(([find]) => find !== 'react' && find !== 'react-dom')
+    .filter(([find]) => find !== 'react' && find !== 'react-dom' && find !== '@rox/ui')
     .map(([find, replacement]) => ({ find, replacement: replacement as string }))
 }
 
@@ -26,6 +26,7 @@ export default defineConfig(async environment => {
       ...production.resolve,
       alias: [
         ...productionAliasEntries(production),
+        { find: '@rox/ui', replacement: resolve(root, 'rox-ui-stub.tsx') },
         { find: '@/shared/routes', replacement: resolve(repository, 'apps/electron/src/shared/routes.ts') },
         { find: '@/context/AppShellContext', replacement: resolve(root, 'context.ts') },
         { find: '@/contexts/NavigationContext', replacement: resolve(root, 'navigation.ts') },
@@ -41,18 +42,8 @@ export default defineConfig(async environment => {
       dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime', 'jotai'],
     },
     optimizeDeps: {
-      ...production.optimizeDeps,
       entries: [resolve(root, 'index.html')],
-      include: [
-        ...new Set([
-          ...(production.optimizeDeps?.include ?? []),
-          'react',
-          'react-dom',
-          'react/jsx-runtime',
-          'react/jsx-dev-runtime',
-          'jotai',
-        ]),
-      ],
+      include: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime', 'jotai', 'react-i18next', 'i18next'],
     },
     server: { host: '127.0.0.1', strictPort: true, hmr: false, watch: null, fs: { allow: [repository] } },
   }
