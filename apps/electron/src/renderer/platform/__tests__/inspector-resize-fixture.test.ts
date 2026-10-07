@@ -8,6 +8,8 @@ describe('inspector-resize browser fixture', () => {
     expect(fixture).toContain('featureWorkbenchHarnessInspectorV1Atom')
     expect(fixture).toContain('panelStackAtom')
     expect(fixture).toContain('routes.view.allSessions')
+    expect(fixture).toContain('inspectorUserOpenedAtom, true')
+    expect(fixture).not.toContain('@/shared/routes')
     expect(fixture).toContain('getSessionFiles')
   })
 })

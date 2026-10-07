@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { flushSync } from 'react-dom'
 import { createStore, Provider, useAtomValue } from 'jotai'
@@ -16,7 +16,7 @@ import {
   inspectorUserOpenedAtom,
   inspectorVisibleAtom,
 } from '@/atoms/unified-shell'
-import { routes } from '@/shared/routes'
+import { routes } from '../../../../../../shared/routes'
 import { getKeyString, KEYS } from '@/lib/local-storage'
 import en from '../../../../../../../../packages/shared/src/i18n/locales/en.json'
 import '../../../../index.css'
@@ -27,7 +27,7 @@ const store = createStore()
 store.set(inspectorVisibleAtom, true)
 store.set(inspectorChromeCollapsedAtom, false)
 store.set(featureWorkbenchHarnessInspectorV1Atom, true)
-store.set(inspectorSectionAtom, 'files')
+store.set(inspectorSectionAtom, 'git')
 store.set(inspectorUserOpenedAtom, true)
 store.set(
   sessionMetaMapAtom,
@@ -76,6 +76,10 @@ function Fixture() {
   const [mounted, setMounted] = useState(true)
   mount = setMounted
   const width = useAtomValue(inspectorPanelWidthAtom)
+  // InspectorHost resets userOpened when sessionId mounts; re-assert after child effects.
+  useEffect(() => {
+    store.set(inspectorUserOpenedAtom, true)
+  }, [])
   return <main className="flex h-[500px] w-full bg-background text-foreground"><div data-panel-role="content" className="min-w-0 flex-1"><input aria-label="Editor" defaultValue="Unsent draft" /><output data-testid="persisted-width">{width}</output></div>{mounted && <InspectorHost />}</main>
 }
 createRoot(document.getElementById('root')!).render(<Provider store={store}><TooltipProvider><Fixture /></TooltipProvider></Provider>)
