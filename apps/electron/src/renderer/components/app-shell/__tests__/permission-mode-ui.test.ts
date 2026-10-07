@@ -72,6 +72,7 @@ function uiHarness(kind: 'desktop' | 'compact') {
     },
   }
   const bindings = {
+    useTourTarget: () => () => {},
     React: react, useTranslation: () => ({ t: (key: string) => key }), cn: (...args: unknown[]) => args.filter(Boolean).join(' '),
     // Tour registration is a declared seam; the actual permission callbacks
     // and incoming ref-registration assertions remain part of this harness.

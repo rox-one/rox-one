@@ -46,6 +46,10 @@ export function VoiceDictationControl({
   onInputChange,
 }: VoiceDictationControlProps) {
   const { t } = useTranslation()
+  const voiceTarget = useTourTarget('composer.voice', { variant: compactMode ? 'compact' : 'regular' })
+  const tourSignals = useTourSignals()
+  const dictationObservationRef = useRef<TourObservation | null>(null)
+  useEffect(() => tourSignals.capability('voice.available', typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof window.electronAPI?.startVoiceCapture === 'function' ? { state: 'ready' } : { state: 'unavailable', reason: 'api-unavailable' }), [tourSignals])
   const [prefs, setPrefs] = useState<VoicePrefs | null>(null)
   const voiceTarget = useTourTarget('composer.voice', { variant: compactMode ? 'compact' : 'regular' })
   const tourSignals = useTourSignals()
