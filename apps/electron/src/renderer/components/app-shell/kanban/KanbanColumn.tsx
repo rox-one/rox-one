@@ -591,7 +591,7 @@ function ColumnHeader({
       <PopoverContent
         align="start"
         sideOffset={4}
-        className="dark w-64 space-y-3 border-border/50 bg-background/80 p-3 shadow-modal-small backdrop-blur-xl backdrop-saturate-150"
+        className="w-64 space-y-3 border-border/50 p-3 shadow-modal-small"
         style={{ borderRadius: 'var(--radius-card)' }}
         data-no-dnd="true"
       >
