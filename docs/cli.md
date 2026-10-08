@@ -128,13 +128,20 @@ craft-cli listen session:event
 craft-cli migrate-config              # Move ~/.rox to ~/rox (never deletes)
 craft-cli migrate-config --dry-run    # Preview only, write nothing
 craft-cli migrate-config --revert     # Move ~/rox back to ~/.rox
-craft-cli migrate-config --auto       # Non-interactive (for install scripts)
+craft-cli migrate-config --auto       # Install scripts: only when the flag is on
 ```
 
-Local-only: needs no server URL and works regardless of the
+Local-only: needs no server URL. The manual forms work regardless of the
 `storage.visible-root.v1` flag. `~/.rox` is left as a symlink
-(Windows: junction) to `~/rox`; `--revert` is refused while
-`~/rox/.migration/conflicts` is non-empty.
+(Windows: junction) to `~/rox`. `--revert` is refused while
+`~/rox/.migration/conflicts` is non-empty, while the flag is still on
+(env or persisted — the next launch would migrate again) and while a live
+Rox process holds `~/rox/.server.lock`.
+
+`--auto` never prompts and does nothing (exit 0) unless the flag is active;
+with the flag on it exits 1 when the migration is deferred (live locks),
+`~/.rox` points elsewhere, or the move fails. Every non-zero exit leaves the
+legacy home in place; nothing is ever deleted.
 
 ### Run (Self-Contained)
 

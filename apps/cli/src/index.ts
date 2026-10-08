@@ -861,42 +861,87 @@ async function cmdListen(client: CliRpcClient, args: CliArgs): Promise<void> {
 // symlink (Windows: junction) to `~/rox`.
 // ---------------------------------------------------------------------------
 
-async function cmdMigrateConfig(args: CliArgs): Promise<void> {
+export interface MigrateConfigRun {
+  /** Process exit code: 0 ok / skipped, 1 not done (deferred, refused, failed), 2 usage. */
+  code: number
+  /** Human-readable lines (non-JSON mode). */
+  lines: string[]
+  /** Machine-readable result (JSON mode). */
+  json: Record<string, unknown>
+}
+
+/**
+ * `migrate-config` core, side-effect free apart from the migration itself
+ * (testable with a temp `--home` and an explicit env).
+ *
+ * - default: the manual path — runs regardless of `storage.visible-root.v1`.
+ * - `--auto`: for install scripts; never prompts, runs only when the flag is
+ *   active (env override or persisted workbench flag) and is a no-op
+ *   otherwise; any outcome that leaves the user on the legacy home
+ *   (deferred, symlink elsewhere, error) exits non-zero.
+ * - `--revert`: manual only (refused by the migrator while the flag is on).
+ */
+export async function runMigrateConfig(
+  args: CliArgs,
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
+): Promise<MigrateConfigRun> {
   const { homedir } = await import('node:os')
   const { isVisibleRoxHomeActive } = await import('@rox/shared/config')
-  const { migrateHiddenRoxHome, revertVisibleRoxHome } = await import('@rox/shared/identity')
+  const { migrateHiddenRoxHome, revertVisibleRoxHome, VISIBLE_HOME_USABLE_OUTCOMES } = await import('@rox/shared/identity')
   const homeDir = args.homeDirOverride ?? homedir()
+  const flagActive = isVisibleRoxHomeActive(env, homeDir)
+  const dry = args.dryRun ? ' (dry run)' : ''
+  if (args.auto && args.revert) {
+    return { code: 2, lines: ['--auto cannot be combined with --revert'], json: { error: 'auto-revert-unsupported' } }
+  }
   if (args.revert) {
-    const result = revertVisibleRoxHome({ homeDir, dryRun: args.dryRun })
-    out(
-      args.json
-        ? result
-        : result.outcome === 'reverted'
-          ? `Reverted: ~/rox moved back to ~/.rox${args.dryRun ? ' (dry run)' : ''}`
-          : `Revert ${args.dryRun ? '(dry run) ' : ''}${result.outcome}: ${result.diagnostics.join('; ') || 'nothing to do'}`,
-      args.json,
-    )
-    if (result.outcome !== 'reverted' && result.outcome !== 'noop') process.exit(1)
-    return
-  }
-  const result = migrateHiddenRoxHome({ homeDir, dryRun: args.dryRun })
-  if (args.json) {
-    out(result, true)
-  } else {
-    const lines = [
-      `Config home: ${result.visibleDir}`,
-      `Outcome: ${result.outcome}${args.dryRun ? ' (dry run)' : ''}`,
-      `Visible-root flag active: ${isVisibleRoxHomeActive(process.env, homeDir) || args.auto ? 'yes' : 'no'}`,
-    ]
-    if (result.conflicts.length > 0) {
-      lines.push(`Conflicts kept under .migration/conflicts: ${result.conflicts.join(', ')}`)
+    const result = revertVisibleRoxHome({ homeDir, env, dryRun: args.dryRun })
+    const ok = result.outcome === 'reverted' || result.outcome === 'noop'
+    return {
+      code: ok ? 0 : 1,
+      lines: [
+        result.outcome === 'reverted'
+          ? `Reverted: ~/rox moved back to the hidden home${dry}`
+          : `Revert ${result.outcome}${dry}: ${result.diagnostics.join('; ') || 'nothing to do'}`,
+      ],
+      json: { ...result },
     }
-    if (result.reportPath) lines.push(`Report: ${result.reportPath}`)
-    if (result.announceToast && !args.dryRun) lines.push('Rox files are now in the ~/rox folder')
-    if (result.diagnostics.length > 0) lines.push(`Notes: ${result.diagnostics.join('; ')}`)
-    out(lines.join('\n'), false)
   }
-  if (result.outcome === 'deferred-locked') process.exit(1)
+  if (args.auto && !flagActive) {
+    return {
+      code: 0,
+      lines: ['Skipped: storage.visible-root.v1 is off (nothing changed)'],
+      json: { outcome: 'skipped-flag-off', flagActive: false },
+    }
+  }
+  let result: Awaited<ReturnType<typeof migrateHiddenRoxHome>>
+  try {
+    result = migrateHiddenRoxHome({ homeDir, env, dryRun: args.dryRun })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    return { code: 1, lines: [`Migration failed (nothing deleted): ${message}`], json: { outcome: 'error', error: message } }
+  }
+  const usable = VISIBLE_HOME_USABLE_OUTCOMES.has(result.outcome)
+  const lines = [
+    `Config home: ${result.visibleDir}`,
+    `Outcome: ${result.outcome}${dry}`,
+    `Visible-root flag active: ${flagActive ? 'yes' : 'no'}`,
+  ]
+  if (result.conflicts.length > 0) {
+    lines.push(`Conflicts kept under .migration/conflicts: ${result.conflicts.join(', ')}`)
+  }
+  if (result.reportPath) lines.push(`Report: ${result.reportPath}`)
+  if (result.announceToast && !args.dryRun) lines.push('Rox files are now in the ~/rox folder')
+  if (result.diagnostics.length > 0) lines.push(`Notes: ${result.diagnostics.join('; ')}`)
+  return { code: usable || result.outcome === 'skipped-env-override' ? 0 : 1, lines, json: { ...result, flagActive } }
+}
+
+async function cmdMigrateConfig(args: CliArgs): Promise<void> {
+  const run = await runMigrateConfig(args)
+  if (args.json) out(run.json, true)
+  else if (run.code === 0) out(run.lines.join('\n'), false)
+  else err(run.lines.join('\n'))
+  if (run.code !== 0) process.exit(run.code)
 }
 
 // ---------------------------------------------------------------------------
@@ -2048,7 +2093,9 @@ Commands:
                          --dry-run       Preview only, write nothing
                          --revert        Move ~/rox back to ~/.rox (refused
                                          with conflicts)
-                         --auto          Non-interactive (for install scripts)
+                         --auto          Install scripts: no prompts, runs only
+                                         when storage.visible-root.v1 is on,
+                                         exits 1 if deferred or failed
                          --home <path>   Test override for the home directory
   --validate-server      Multi-step server integration test
                          --verbose, -v       Show server stderr output

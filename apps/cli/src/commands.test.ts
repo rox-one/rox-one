@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'bun:test'
-import { formatCliSessionError, parseArgs, resolveApiKey, shouldSetupLlmConnection } from './index.ts'
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { formatCliSessionError, parseArgs, resolveApiKey, runMigrateConfig, shouldSetupLlmConnection } from './index.ts'
 
 // ---------------------------------------------------------------------------
 // Arg parsing tests
@@ -462,4 +465,62 @@ describe('migrate-config args (W1-13)', () => {
     expect(revert.revert).toBe(true)
     expect(revert.auto).toBe(true)
   })
+})
+
+describe('migrate-config --auto semantics (W1-13 fix1)', () => {
+  async function withHome(run: (home: string) => Promise<void>): Promise<void> {
+    const home = mkdtempSync(join(tmpdir(), 'rox-cli-migrate-'))
+    try {
+      await run(home)
+    } finally {
+      rmSync(home, { recursive: true, force: true })
+    }
+  }
+  const argsFor = (home: string, ...flags: string[]) => parseArgs(['bun', 'index.ts', 'migrate-config', ...flags, '--home', home])
+
+  it('--auto is a no-op with exit 0 while the flag is off', () =>
+    withHome(async (home) => {
+      mkdirSync(join(home, '.rox'))
+      writeFileSync(join(home, '.rox', 'a.txt'), 'a')
+      const run = await runMigrateConfig(argsFor(home, '--auto'), {})
+      expect(run.code).toBe(0)
+      expect(run.json.outcome).toBe('skipped-flag-off')
+      expect(existsSync(join(home, 'rox'))).toBe(false)
+    }))
+
+  it('--auto migrates when the flag is on and reports it truthfully', () =>
+    withHome(async (home) => {
+      mkdirSync(join(home, '.rox'))
+      writeFileSync(join(home, '.rox', 'a.txt'), 'a')
+      const run = await runMigrateConfig(argsFor(home, '--auto'), { ROX_STORAGE_VISIBLE_ROOT: '1' })
+      expect(run.code).toBe(0)
+      expect(run.json.outcome).toBe('migrated')
+      expect(run.lines).toContain('Visible-root flag active: yes')
+      expect(lstatSync(join(home, '.rox')).isSymbolicLink()).toBe(true)
+    }))
+
+  it('--auto exits non-zero when the migration is deferred by a live lock', () =>
+    withHome(async (home) => {
+      mkdirSync(join(home, '.rox'))
+      writeFileSync(join(home, '.rox', '.server.lock'), JSON.stringify({ pid: process.ppid, startedAt: Date.now() }))
+      const run = await runMigrateConfig(argsFor(home, '--auto'), { ROX_STORAGE_VISIBLE_ROOT: '1' })
+      expect(run.code).toBe(1)
+      expect(run.json.outcome).toBe('deferred-locked')
+      expect(existsSync(join(home, 'rox'))).toBe(false)
+    }))
+
+  it('manual run reports the real flag state and works with the flag off', () =>
+    withHome(async (home) => {
+      mkdirSync(join(home, '.rox'))
+      const run = await runMigrateConfig(argsFor(home, '--dry-run'), {})
+      expect(run.code).toBe(0)
+      expect(run.lines).toContain('Visible-root flag active: no')
+      expect(existsSync(join(home, 'rox'))).toBe(false)
+    }))
+
+  it('--auto with --revert is a usage error', () =>
+    withHome(async (home) => {
+      const run = await runMigrateConfig(argsFor(home, '--auto', '--revert'), {})
+      expect(run.code).toBe(2)
+    }))
 })
