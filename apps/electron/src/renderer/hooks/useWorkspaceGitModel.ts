@@ -58,7 +58,7 @@ function mapSnapshot(snap: GitWorkspaceSnapshot): WorkspaceGitModel {
 
 const REFRESH_MS = 8000
 
-/** Live workspace git model for super.engineering profile (IPC-backed). */
+/** Live workspace git model for the SE profile (IPC-backed). */
 export function useWorkspaceGitModel(workspaceRootPath: string | null | undefined): WorkspaceGitModel {
   const [model, setModel] = useState<WorkspaceGitModel>(() => emptyModel(workspaceRootPath))
 

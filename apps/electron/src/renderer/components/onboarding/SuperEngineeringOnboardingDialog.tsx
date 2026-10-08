@@ -60,7 +60,7 @@ export function SuperEngineeringOnboardingDialog({ open, onOpenChange }: SuperEn
           <DialogTitle>{t('se.onboarding.dialogTitle')}</DialogTitle>
           <DialogDescription>{t('se.onboarding.dialogDesc')}</DialogDescription>
         </DialogHeader>
-        <SuperEngineeringOnboarding step={step} />
+        <SuperEngineeringOnboarding step={step} showHeader={step !== 'welcome'} />
         <DialogFooter className="gap-2 sm:justify-between">
           <Button type="button" variant="ghost" onClick={finish}>
             {t('se.onboarding.skip')}
