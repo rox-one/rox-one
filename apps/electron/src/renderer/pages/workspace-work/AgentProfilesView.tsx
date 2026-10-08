@@ -3,37 +3,48 @@ import { useTranslation } from 'react-i18next'
 import { Bot, Plus, RefreshCw, Star, Trash2 } from 'lucide-react'
 import type { AgentProfile, AgentProfileInput } from '@rox/shared/workspace-work'
 import { useWorkspaceWork } from '@/lib/useWorkspaceWork'
+import { useQuery } from '@tanstack/react-query'
+import { roxQueryClient } from '@/lib/query/client'
+import { roxKeys } from '@/lib/query/keys'
 
 const fieldClass = 'w-full rounded-lg border border-border/70 bg-background px-2.5 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
 const buttonClass = 'inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg border border-border/70 px-2.5 py-1.5 text-[13px] transition-colors motion-reduce:transition-none hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none'
 type CatalogItem = { slug: string; name: string }
 type ProfileDraft = AgentProfileInput & { id: string | null; expectedRevision: number }
+type Catalog = { sources: CatalogItem[]; skills: CatalogItem[] }
+
+/** Slugs and names only (persistable): sources and skills of one workspace. */
+async function readCatalog(workspaceId: string): Promise<Catalog> {
+  const [sources, skills] = await Promise.all([window.electronAPI.getSources(workspaceId), window.electronAPI.getSkills(workspaceId)])
+  return {
+    sources: sources.filter(source => source.workspaceId === workspaceId).map(source => ({ slug: source.config.slug, name: source.config.name })),
+    skills: [...new Map<string, CatalogItem>(skills.filter(skill => !skill.shadowedByCraft).map(skill => [skill.slug, { slug: skill.slug, name: skill.metadata.name }])).values()],
+  }
+}
 
 export function AgentProfilesView({ workspaceId }: { workspaceId: string; projectId?: string }) {
   const { t } = useTranslation()
   const work = useWorkspaceWork(workspaceId)
   const { snapshot } = work
   const [draft, setDraft] = useState<ProfileDraft | null>(null)
-  const [catalog, setCatalog] = useState<{ sources: CatalogItem[]; skills: CatalogItem[]; loading: boolean; error: boolean }>({ sources: [], skills: [], loading: true, error: false })
-  const [catalogReload, setCatalogReload] = useState(0)
+  // PERF-09: shared cache; sources/skills change events invalidate it (lib/query/event-bridge.ts).
+  const catalogQuery = useQuery({
+    queryKey: roxKeys.agentsCatalog(workspaceId),
+    queryFn: () => readCatalog(workspaceId),
+    enabled: !!workspaceId,
+  }, roxQueryClient())
+  const { data: catalogData, isError: catalogFailed } = catalogQuery
+  const catalog = useMemo(() => ({
+    sources: catalogData?.sources ?? [],
+    skills: catalogData?.skills ?? [],
+    loading: !catalogData && !catalogFailed,
+    error: !catalogData && catalogFailed,
+  }), [catalogData, catalogFailed])
   const [sourceQuery, setSourceQuery] = useState('')
   const [skillQuery, setSkillQuery] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
 
   useEffect(() => { setDraft(null); setDeleteTarget(null); setSourceQuery(''); setSkillQuery('') }, [workspaceId])
-  useEffect(() => {
-    let active = true
-    setCatalog({ sources: [], skills: [], loading: true, error: false })
-    Promise.resolve().then(() => Promise.all([window.electronAPI.getSources(workspaceId), window.electronAPI.getSkills(workspaceId)])).then(([sources, skills]) => {
-      if (!active) return
-      setCatalog({
-        sources: sources.filter(source => source.workspaceId === workspaceId).map(source => ({ slug: source.config.slug, name: source.config.name })),
-        skills: [...new Map<string, CatalogItem>(skills.filter(skill => !skill.shadowedByCraft).map(skill => [skill.slug, { slug: skill.slug, name: skill.metadata.name }])).values()],
-        loading: false, error: false,
-      })
-    }, () => { if (active) setCatalog({ sources: [], skills: [], loading: false, error: true }) })
-    return () => { active = false }
-  }, [workspaceId, catalogReload])
 
   const canManage = snapshot?.access.canManage === true
   const busy = work.pending || !snapshot
@@ -79,7 +90,7 @@ export function AgentProfilesView({ workspaceId }: { workspaceId: string; projec
   return <section className="flex h-full min-h-0 flex-col bg-background font-sans text-[13px]" data-testid="agent-profiles-view">
     <header className="flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3">
       <Bot className="size-4 text-accent" aria-hidden /><h2 className="mr-auto text-[15px] font-semibold">{t('navigation.work.profiles.title')}</h2>
-      <button type="button" className={buttonClass} disabled={work.loading} onClick={() => { void work.refresh(); setCatalogReload(value => value + 1) }} aria-label={t('navigation.work.refresh')}><RefreshCw className="size-3.5" aria-hidden /></button>
+      <button type="button" className={buttonClass} disabled={work.loading} onClick={() => { void work.refresh(); void catalogQuery.refetch() }} aria-label={t('navigation.work.refresh')}><RefreshCw className="size-3.5" aria-hidden /></button>
       <button type="button" className={buttonClass} disabled={!canManage || busy} onClick={() => begin()}><Plus className="size-3.5" aria-hidden />{t('navigation.work.profiles.new')}</button>
     </header>
     <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">

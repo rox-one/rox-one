@@ -57,6 +57,7 @@ import { handleSidebarTreeKeyDown } from '@/components/app-shell/sidebar-keyboar
 import { NotesNavigationSidebar } from './notes/NotesNavigationSidebar'
 import { NoteInspector } from './notes/NoteInspector'
 import type { NoteTask } from './notes/NoteInspector'
+import { cachedNotesList, fetchNotesList, notesTaskCache } from '@/lib/query/notes-cache'
 import { NotesAIMenu } from './notes/NotesAIMenu'
 import type { AIActionMode } from './notes/NotesAIMenu'
 import { NotesDialogs } from './notes/NotesDialogs'
@@ -484,9 +485,10 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     // Retire contextual metadata from another workspace; the session and its canonical draft stay durable.
     if (rightSessionContext && rightSessionContext.workspaceId !== activeWorkspaceId) setRightSessionContext(null)
   }, [activeWorkspaceId, rightSessionContext])
-  const [notes, setNotes] = React.useState<NoteSummary[]>([])
+  // PERF-09: a revisit paints the cached list at once; refreshNotes revalidates it.
+  const [notes, setNotes] = React.useState<NoteSummary[]>(() => cachedNotesList(activeWorkspaceId) ?? [])
   // Stable insertion order for sidebar — only updated on full refreshes, not optimistic saves
-  const [sidebarOrder, setSidebarOrder] = React.useState<string[]>([])
+  const [sidebarOrder, setSidebarOrder] = React.useState<string[]>(() => (cachedNotesList(activeWorkspaceId) ?? []).map(n => n.id))
   const [searchResults, setSearchResults] = React.useState<NoteSummary[] | null>(null)
   const [activeNote, setActiveNote] = React.useState<NoteDocument | null>(null)
   const activeNoteRef = React.useRef(activeNote)
@@ -551,7 +553,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const externalChangeToastIdRef = React.useRef<string | number | null>(null)
   const [missingLinkTarget, setMissingLinkTarget] = React.useState<string | null>(null)
   const [allAssets, setAllAssets] = React.useState<NoteAsset[]>([])
-  const [allTasks, setAllTasks] = React.useState<NoteTask[]>([])
+  const [allTasks, setAllTasks] = React.useState<NoteTask[]>(() => [...notesTaskCache<NoteTask>(activeWorkspaceId).tasks.values()].flat())
   const [assetDialogOpen, setAssetDialogOpen] = React.useState(false)
   const [assetRenameTarget, setAssetRenameTarget] = React.useState<NoteAsset | null>(null)
   const [assetRenameName, setAssetRenameName] = React.useState('')
@@ -611,8 +613,9 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeWorkspaceId, selectedNoteId])
   const taskRequestRef = React.useRef(0)
   const taskCacheWorkspaceRef = React.useRef<string | null>(activeWorkspaceId ?? null)
-  const taskCacheRef = React.useRef<Map<string, NoteTask[]>>(new Map())
-  const taskCacheUpdatedAtRef = React.useRef<Map<string, number>>(new Map())
+  // PERF-09: per-workspace task cache shared across visits (only changed notes are re-read).
+  const taskCacheRef = React.useRef<Map<string, NoteTask[]>>(notesTaskCache<NoteTask>(activeWorkspaceId).tasks)
+  const taskCacheUpdatedAtRef = React.useRef<Map<string, number>>(notesTaskCache<NoteTask>(activeWorkspaceId).updatedAt)
   const nativeRevisionByNoteRef = React.useRef<Map<string, number | null>>(new Map())
   const expectedRevisionByNoteRef = React.useRef<Map<string, string>>(new Map())
   const mutationOptions = React.useCallback((workspaceId: string, noteId: string, expectedRevision?: number | null): NoteMutationOptions => ({
@@ -804,7 +807,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     const listed = soupDocumentListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return
     await readScopedCapability({
-      read: () => window.electronAPI.listNotes(activeWorkspaceId),
+      read: () => fetchNotesList(activeWorkspaceId, () => window.electronAPI.listNotes(activeWorkspaceId)),
       isCurrent: () => readsMountedRef.current && request === notesListRequestRef.current
         && readWorkspaceRef.current === activeWorkspaceId,
       onAvailable: next => {
@@ -859,8 +862,10 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const refreshTasks = React.useCallback(async (sourceNotes?: NoteSummary[]) => {
     const request = ++taskRequestRef.current
     if (taskCacheWorkspaceRef.current !== (activeWorkspaceId ?? null)) {
-      taskCacheRef.current.clear()
-      taskCacheUpdatedAtRef.current.clear()
+      // Switch to the new workspace's cache; the old one stays valid for its workspace.
+      const cache = notesTaskCache<NoteTask>(activeWorkspaceId)
+      taskCacheRef.current = cache.tasks
+      taskCacheUpdatedAtRef.current = cache.updatedAt
       taskCacheWorkspaceRef.current = activeWorkspaceId ?? null
     }
     if (!activeWorkspaceId) {

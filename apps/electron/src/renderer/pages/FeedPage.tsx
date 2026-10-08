@@ -89,6 +89,13 @@ import { inboxFeedCapabilities } from '@/features/product-tour/adapters/work/inb
 import { useFeedReaderTour } from '@/features/product-tour/adapters/work/inbox-feed/use-feed-reader-tour'
 import { useFeedCaller, type FeedCaller } from './feed/feed-caller'
 import { toErrorMessage } from '@/lib/errors'
+import { roxQueryClient } from '@/lib/query/client'
+import { roxKeys } from '@/lib/query/keys'
+
+/** PERF-09: last list per (workspace, actor), memory only; the page revalidates on mount. */
+function cachedFeed(workspaceId: string | null, caller: FeedCaller): FeedListResult | null {
+  return workspaceId ? roxQueryClient().getQueryData<FeedListResult>(roxKeys.feed(workspaceId, caller.preferenceKey)) ?? null : null
+}
 
 type View = FeedView
 type Density = 'list' | 'cards'
@@ -209,9 +216,9 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const tourSignals = useTourSignals()
   const sourcesTourRef = useTourTarget('feed.sources')
 
-  const [data, setData] = useState<FeedListResult>(EMPTY)
-  const [loadedWorkspaceId, setLoadedWorkspaceId] = useState<string | null | undefined>()
-  const [sourceDataWorkspaceId, setSourceDataWorkspaceId] = useState<string | null | undefined>()
+  const [data, setData] = useState<FeedListResult>(() => cachedFeed(workspaceId, caller) ?? EMPTY)
+  const [loadedWorkspaceId, setLoadedWorkspaceId] = useState<string | null | undefined>(() => cachedFeed(workspaceId, caller) ? workspaceId : undefined)
+  const [sourceDataWorkspaceId, setSourceDataWorkspaceId] = useState<string | null | undefined>(() => cachedFeed(workspaceId, caller) ? workspaceId : undefined)
   const loaded = loadedWorkspaceId !== undefined && loadedWorkspaceId === workspaceId
   const [loadError, setLoadError] = useState<string | null>(null)
   const [initialPrefs] = useState(() => loadPrefs(workspaceId, caller))
@@ -233,9 +240,10 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
-    setData(EMPTY)
-    setLoadedWorkspaceId(undefined)
-    setSourceDataWorkspaceId(undefined)
+    const cached = cachedFeed(workspaceId, caller)
+    setData(cached ?? EMPTY)
+    setLoadedWorkspaceId(cached ? workspaceId : undefined)
+    setSourceDataWorkspaceId(cached ? workspaceId : undefined)
     setLoadError(null)
     const stored = loadPrefs(workspaceId, caller)
     setView(stored.view)
@@ -282,6 +290,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
       const res = await api.feedList(workspaceId)
       if (generation !== loadGeneration.current || !current()) return
       setData(res ?? EMPTY)
+      if (workspaceId) roxQueryClient().setQueryData(roxKeys.feed(workspaceId, caller.preferenceKey), res ?? EMPTY)
       setSourceDataWorkspaceId(workspaceId)
       setLoadError(null)
     } catch (e) {
@@ -292,7 +301,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
         setNow(Date.now())
       }
     }
-  }, [api, workspaceId, current])
+  }, [api, workspaceId, current, caller.preferenceKey])
 
   useEffect(() => {
     void load()
