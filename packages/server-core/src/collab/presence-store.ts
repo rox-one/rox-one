@@ -12,7 +12,7 @@
  */
 
 import {
-  PRESENCE_TTL_SECONDS, liveViewers, mergePresenceStatus, presenceChangedAllowed, presenceTransition, statusForHeartbeat,
+  PRESENCE_TTL_SECONDS, liveViewers, presenceAudience, mergePresenceStatus, presenceChangedAllowed, presenceTransition, statusForHeartbeat,
   type PresenceHeartbeatPayload, type PresenceHeartbeatResult, type PresenceObjectPayload, type PresenceObjectResult, type PresenceState,
   type PresenceStatus, type PresenceTransition,
 } from '@rox/core/collab'
@@ -81,7 +81,8 @@ export class PresenceStore {
     const next = statusForHeartbeat(payload.status, 0)
     const transition = presenceTransition(principalId, stored?.state ?? null, next, now)
     const emit = transition ? presenceChangedAllowed(stored?.emittedAt ?? null, transition, now) : false
-    const notify = emit ? [...(await this.audience(workspaceId, principalId))] : []
+    // The people who *see* the actor: themselves excluded, deduplicated, sorted.
+    const notify = emit ? presenceAudience(principalId, await this.audience(workspaceId, principalId)) : []
     const state: PresenceState = {
       status: next,
       device: payload.device,
