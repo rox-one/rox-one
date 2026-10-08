@@ -54,6 +54,12 @@ const FILE_EXEMPTS: FileExempt[] = [
     reason: 'legacy remote token fallback candidates (read-only, never written)',
     lineMustMatch: ['~/rox', '~/.rox/', '~/.craft-agent', 'token', '.env', 'Legacy', 'legacy', 'fallback', 'probe'],
   },
+  {
+    file: 'packages/shared/src/i18n/locales/',
+    reason: 'local-ASR model hint keeps its pre-W1-13 legacy text while storage.visible-root.v1 defaults OFF (flag-OFF UI must not change; revisit with W3-02)',
+    dirPrefix: true,
+    lineMustMatch: ['"meetings.local.missing.no-model"', '"meetings.local.tr.unavailableBody"'],
+  },
   { file: 'apps/electron/resources/skills/', reason: 'bundled skill content (owned by skill authors incl. vendored scripts; not Rox storage)', dirPrefix: true },
   { file: 'docs/plans/2026-10-07-rox-visible-config-migration.md', reason: 'the migration policy doc (intentional legacy-path narrative, W1-13 note)' },
   { file: 'docs/cli.md', reason: 'documents rox migrate-config itself (intentional legacy-path narrative)' },
