@@ -558,3 +558,60 @@ describe('a mention right after a literal `!` (#1505 fix3)', () => {
     })
   }
 })
+
+describe('a mention inside Markdown link text (legacy engine, as in Notes) (#1505 fix6)', () => {
+  const inlineShape = (editor: Editor) =>
+    (editor.getJSON().content?.[0]?.content ?? []).map((n) => [n.type, n.type === 'text' ? String(n.text ?? '') : String(n.attrs?.ref ?? ''), (n.marks ?? []).map((m) => m.type === 'link' ? `link:${String(m.attrs?.href ?? '')}` : m.type)])
+
+  it('`[x [[task:1]] y](http://z)` and `[[[task:1]]](url)` keep the link; the mention carries the link mark; saves are byte-identical', () => {
+    const cases: Array<[string, unknown[]]> = [
+      ['[x [[task:1]] y](http://z)', [['text', 'x ', ['link:http://z']], ['mention', 'task:1', ['link:http://z']], ['text', ' y', ['link:http://z']]]],
+      ['[[[task:1]]](url)', [['mention', 'task:1', ['link:url']]]],
+      ['[x [[doc:2| Plan ]] y](http://z)', [['text', 'x ', ['link:http://z']], ['mention', 'note:2', ['link:http://z']], ['text', ' y', ['link:http://z']]]],
+    ]
+    for (const [markdown, shape] of cases) {
+      const editor = makeEditor('legacy', markdown)
+      const loaded = inlineShape(editor)
+      const out = toMarkdown(editor, 'legacy')
+      editor.destroy()
+      expect({ markdown, loaded }).toEqual({ markdown, loaded: shape })
+      expect(out).toBe(markdown)
+      // Flag off (as main): the link survives too, with the syntax as link text.
+      const off = makeEditor('legacy', markdown, { entityNodes: false })
+      const offShape = inlineShape(off)
+      off.destroy()
+      expect(offShape.every((n) => (n[2] as string[]).some((m) => m.startsWith('link:')))).toBe(true)
+      expect(offShape.some((n) => n[0] === 'mention')).toBe(false)
+    }
+  })
+
+  it('a picker-inserted chip that then gets a link applied saves as one link and reloads the same', () => {
+    const editor = makeEditor('legacy', 'see')
+    editor.commands.focus('end')
+    editor.commands.insertContent({ type: 'text', text: ' ' })
+    editor.commands.insertEntityMention({ ref: 'task:1' })
+    editor.commands.insertContent({ type: 'text', text: ' now' })
+    const end = editor.state.doc.firstChild!.nodeSize - 1
+    editor.chain().setTextSelection({ from: 1, to: end }).setLink({ href: 'http://z' }).run()
+    const out = toMarkdown(editor, 'legacy')
+    editor.destroy()
+    expect(out).toBe('[see [[task:1]] now](http://z)')
+    const reloaded = makeEditor('legacy', out)
+    expect(inlineShape(reloaded)).toEqual([['text', 'see ', ['link:http://z']], ['mention', 'task:1', ['link:http://z']], ['text', ' now', ['link:http://z']]])
+    expect(toMarkdown(reloaded, 'legacy')).toBe(out)
+    reloaded.destroy()
+  })
+
+  it('`a [[task:1]] b` and `[[task:1]](url)` are unchanged (no link is invented)', () => {
+    for (const markdown of ['a [[task:1]] b', '[[task:1]](url)', '[a](b) [[task:1]] [c](d)']) {
+      const editor = makeEditor('legacy', markdown)
+      const out = toMarkdown(editor, 'legacy')
+      const mentions = entityNodes(editor).length
+      editor.destroy()
+      expect({ markdown, out, mentions }).toEqual({ markdown, out: markdown, mentions: 1 })
+    }
+    const plain = makeEditor('legacy', '[[task:1]](url)')
+    expect(inlineShape(plain)).toEqual([['mention', 'task:1', []], ['text', '(url)', []]])
+    plain.destroy()
+  })
+})

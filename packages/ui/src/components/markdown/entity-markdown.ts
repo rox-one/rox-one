@@ -261,16 +261,22 @@ export function installEntityMarkdownRules(md: MarkdownItLike): void {
   installed.add(md)
 
   md.inline.ruler.before('link', 'rox_entity_mention', (state, silent) => {
+    // Never consume in silent mode. markdown-it only scans silently to skip
+    // over tokens, e.g. parseLinkLabel(…, disableNested) for a link label:
+    // a `[` consumed there reads as a nested link and aborts the whole link,
+    // so `[x [[task:1]] y](http://z)` would lose its link and be escaped on
+    // save. Returning false lets the scan step over `[[` as plain brackets;
+    // the label is then tokenized normally and the mention lands inside the
+    // link (carrying the link mark).
+    if (silent) return false
     if (state.src.charCodeAt(state.pos) !== 0x5b /* [ */) return false
     // A preceding unescaped `!` belongs to an embed; leave it as text inline.
     // `\![[…]]` (written by the serializer after a literal `!`) is a mention.
     if (endsWithUnescapedBang(state.src, state.pos)) return false
     const match = matchEntityMention(state.src.slice(state.pos, state.posMax))
     if (!match) return false
-    if (!silent) {
-      const token = state.push('rox_entity_mention', '', 0)
-      token.meta = { ref: match.ref, label: match.label, source: match.raw }
-    }
+    const token = state.push('rox_entity_mention', '', 0)
+    token.meta = { ref: match.ref, label: match.label, source: match.raw }
     state.pos += match.raw.length
     return true
   })

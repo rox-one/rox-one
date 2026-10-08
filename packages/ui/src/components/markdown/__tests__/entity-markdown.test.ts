@@ -231,4 +231,14 @@ describe('review fixes (#1505 fix3)', () => {
     expect(inline.map((t) => t.type)).toContain('escape')
     expect(endsWithUnescapedBang(inline.find((t) => t.type === 'escape')!.raw)).toBe(false)
   })
+
+  it('markdown-it: the mention rule never consumes in silent mode, so a mention inside link text keeps the link (#1505 fix6)', () => {
+    const md = new MarkdownIt()
+    installEntityMarkdownRules(md)
+    const types = (src: string) => (md.parseInline(src, {})[0]?.children ?? []).map((t) => t.type)
+    expect(types('[x [[task:1]] y](http://z)')).toEqual(['link_open', 'text', 'rox_entity_mention', 'text', 'link_close'])
+    expect(types('[[[task:1]]](url)')).toEqual(['link_open', 'rox_entity_mention', 'link_close'])
+    expect(types('a [[task:1]] b')).toEqual(['text', 'rox_entity_mention', 'text'])
+    expect(types('[[task:1]](url)')).toEqual(['rox_entity_mention', 'text'])
+  })
 })
