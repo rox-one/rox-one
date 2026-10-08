@@ -423,8 +423,6 @@ const NOTE_COLUMN_MIN = 460
 export default function NotesPage(props: NotesPageProps) {
   const { t } = useTranslation()
   const { activeWorkspaceId } = useAppShellContext()
-  // The panel-layout mode is read here so Notes honours it in every surface.
-  const { mode: panelLayoutMode } = usePanelWorkspaceLayout()
   const unavailableSignals = useKnowledgeSignals({ workspaceId: activeWorkspaceId ?? undefined })
   const notesTransportAvailable = hasNativeNotesTransport(window.electronAPI)
   React.useEffect(() => {
