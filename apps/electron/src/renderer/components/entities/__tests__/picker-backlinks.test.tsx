@@ -59,6 +59,10 @@ describe('buildEntityPickerItems', () => {
     const options = Array.from(mounted.container.querySelectorAll('[role="option"]')).map((o) => o.textContent)
     const input = mounted.container.querySelector('input')!
     await act(async () => {
+      // Type into the focused field, as a user would. (Bun may evaluate the
+      // CommonJS react-dom before the DOM is installed, which leaves React on
+      // its input-event polyfill; that path needs a focused element.)
+      input.focus()
       input.dispatchEvent(new testWindow.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }) as unknown as Event)
     })
     await mounted.unmount()

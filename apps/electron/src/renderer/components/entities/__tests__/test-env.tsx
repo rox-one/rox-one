@@ -18,14 +18,27 @@ console.error = (...args: unknown[]) => {
 }
 
 import * as React from 'react'
+import { mock } from 'bun:test'
+
+// Radix picks `useLayoutEffect` once, at module load: a no-op when no
+// `document` exists. When a DOM-less test file in the same `bun test` process
+// imported Radix first, portals (popover, context menu, dialog) would never
+// mount here. Re-bind it to React's hook now that the DOM is installed (Bun
+// patches already-loaded modules in place).
+mock.module('@radix-ui/react-use-layout-effect', () => ({ useLayoutEffect: React.useLayoutEffect }))
+
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createRoot, type Root } from 'react-dom/client'
 import { act } from 'react'
-import { initReactI18next } from 'react-i18next'
+import { initReactI18next, setI18n } from 'react-i18next'
 import axe from 'axe-core'
 import { setupI18n } from '@rox/shared/i18n'
 
 export const i18n = setupI18n([initReactI18next])
+// setupI18n is idempotent: when another test file in the same `bun test`
+// process initialised i18next first (without the React plugin), bind it to
+// react-i18next explicitly so components translate instead of echoing keys.
+setI18n(i18n)
 
 export type TestLang = 'ru' | 'en'
 export type TestTheme = 'light' | 'dark'
