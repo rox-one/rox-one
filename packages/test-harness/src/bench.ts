@@ -7,6 +7,11 @@
  * ref parse/format from `@rox/core/entities`, array projections shaped
  * like the work-map rows and the list-view filter) and reports measured
  * milliseconds alongside the budget.
+ *
+ * Each bench runs `warmup` untimed iterations, then `samples` timed ones,
+ * and reports the median, so a single JIT-cold or noisy-runner sample does
+ * not decide the result. On PRs the perf gate is report-only (`warn`)
+ * unless `ROX_BENCH_STRICT=1` (see `perfGate`).
  */
 import { formatEntityRef, parseEntityRef } from '@rox/core/entities'
 
@@ -18,9 +23,34 @@ export const MICRO_BENCH_BUDGETS = {
 
 export interface MicroBenchResult {
   name: 'resolve' | 'work-map' | 'list-view'
+  /** Median of the timed samples. */
   measuredMs: number
+  samplesMs: number[]
   budgetMs: number
   pass: boolean
+}
+
+export interface MicroBenchOptions {
+  warmup?: number
+  samples?: number
+}
+
+export const DEFAULT_WARMUP = 3
+export const DEFAULT_SAMPLES = 7
+
+export function median(values: number[]): number {
+  if (values.length === 0) throw new Error('median of no samples')
+  const sorted = [...values].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  return sorted.length % 2 === 1 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2
+}
+
+function sample(run: () => number, opts: MicroBenchOptions): { measuredMs: number; samplesMs: number[] } {
+  const warmup = Math.max(0, opts.warmup ?? DEFAULT_WARMUP)
+  const count = Math.max(1, opts.samples ?? DEFAULT_SAMPLES)
+  for (let i = 0; i < warmup; i += 1) run()
+  const samplesMs = Array.from({ length: count }, () => run())
+  return { measuredMs: median(samplesMs), samplesMs }
 }
 
 function nowMs(): number {
@@ -70,28 +100,14 @@ function benchListFilter(): number {
   return nowMs() - t0
 }
 
-export function runMicroBenchmarks(): MicroBenchResult[] {
-  const resolve = benchResolve()
-  const workMap = benchWorkMap()
-  const listView = benchListFilter()
-  return [
-    {
-      name: 'resolve',
-      measuredMs: resolve,
-      budgetMs: MICRO_BENCH_BUDGETS.resolveBatch100Ms,
-      pass: resolve < MICRO_BENCH_BUDGETS.resolveBatch100Ms,
-    },
-    {
-      name: 'work-map',
-      measuredMs: workMap,
-      budgetMs: MICRO_BENCH_BUDGETS.workMap1000Ms,
-      pass: workMap < MICRO_BENCH_BUDGETS.workMap1000Ms,
-    },
-    {
-      name: 'list-view',
-      measuredMs: listView,
-      budgetMs: MICRO_BENCH_BUDGETS.listFilter10kMs,
-      pass: listView < MICRO_BENCH_BUDGETS.listFilter10kMs,
-    },
+export function runMicroBenchmarks(opts: MicroBenchOptions = {}): MicroBenchResult[] {
+  const benches: Array<[MicroBenchResult['name'], () => number, number]> = [
+    ['resolve', benchResolve, MICRO_BENCH_BUDGETS.resolveBatch100Ms],
+    ['work-map', benchWorkMap, MICRO_BENCH_BUDGETS.workMap1000Ms],
+    ['list-view', benchListFilter, MICRO_BENCH_BUDGETS.listFilter10kMs],
   ]
+  return benches.map(([name, run, budgetMs]) => {
+    const { measuredMs, samplesMs } = sample(run, opts)
+    return { name, measuredMs, samplesMs, budgetMs, pass: measuredMs < budgetMs }
+  })
 }

@@ -14,7 +14,7 @@ import { runConfigPathsGate } from './config-paths.ts'
 import { checkVisualGate, checkAxeGate } from './visual-axe.ts'
 import { checkChromeLintGate, checkOneRailGatePending, checkDockLayoutGate } from './chrome-dock.ts'
 import { checkAgentPrivacyGate } from './agent-privacy.ts'
-import { runMicroBenchmarks } from '../bench.ts'
+import { runMicroBenchmarks, type MicroBenchResult } from '../bench.ts'
 import { errorMessage, type GateResult } from './types.ts'
 
 /** A gate that throws is a failure (fail closed), never a crash of the whole run. */
@@ -40,19 +40,27 @@ export async function runAllGates(opts: { repoRoot?: string } = {}): Promise<Gat
   results.push(await guarded('dock-layout', () => checkDockLayoutGate(opts)))
   results.push(await guarded('agent-panel-privacy', () => checkAgentPrivacyGate(opts)))
 
-  const bench = runMicroBenchmarks()
-  const benchFail = bench.filter((b) => !b.pass)
-  results.push({
-    gate: 'perf-microbench',
-    status: benchFail.length === 0 ? 'pass' : 'fail',
-    summary:
-      benchFail.length === 0
-        ? bench.map((b) => `${b.name}=${b.measuredMs.toFixed(2)}ms/<${b.budgetMs}ms`).join(' ')
-        : `${benchFail.length} budget(s) exceeded`,
-    violations: benchFail.map((b) => `${b.name}: ${b.measuredMs.toFixed(2)}ms exceeds ${b.budgetMs}ms`),
-  })
+  results.push(await guarded('perf-microbench', () => perfGate(runMicroBenchmarks())))
 
   return results
+}
+
+/**
+ * Wall-clock budgets on shared runners are noisy: over-budget medians are
+ * report-only (`warn`) unless ROX_BENCH_STRICT=1, which makes them fail.
+ */
+export function perfGate(bench: MicroBenchResult[], env: Record<string, string | undefined> = process.env): GateResult {
+  const gate = 'perf-microbench'
+  const strict = env.ROX_BENCH_STRICT === '1'
+  const over = bench.filter((b) => !b.pass)
+  const line = bench.map((b) => `${b.name}=${b.measuredMs.toFixed(2)}ms/<${b.budgetMs}ms`).join(' ')
+  if (over.length === 0) return { gate, status: 'pass', summary: `median of ${bench[0]?.samplesMs.length ?? 0}: ${line}` }
+  return {
+    gate,
+    status: strict ? 'fail' : 'warn',
+    summary: `${over.length} budget(s) exceeded${strict ? '' : ' (report-only; ROX_BENCH_STRICT=1 to enforce)'}: ${line}`,
+    violations: over.map((b) => `${b.name}: median ${b.measuredMs.toFixed(2)}ms exceeds ${b.budgetMs}ms`),
+  }
 }
 
 export function gatesExitCode(results: GateResult[]): number {

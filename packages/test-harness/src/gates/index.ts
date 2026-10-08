@@ -18,4 +18,4 @@ export {
 } from './chrome-dock.ts'
 export { checkAgentPrivacy, checkAgentPrivacyGate, type AttachDecision } from './agent-privacy.ts'
 export { checkProvenanceFiles, type ProvenanceFile } from './provenance.ts'
-export { runAllGates, gatesExitCode, formatGateResults } from './run-all.ts'
+export { runAllGates, gatesExitCode, formatGateResults, perfGate } from './run-all.ts'

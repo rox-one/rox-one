@@ -12,7 +12,7 @@ export {
   type SeededUser,
   type SeededSpace,
 } from './seed.ts'
-export { runMicroBenchmarks, MICRO_BENCH_BUDGETS, type MicroBenchResult } from './bench.ts'
+export { runMicroBenchmarks, MICRO_BENCH_BUDGETS, median, type MicroBenchResult, type MicroBenchOptions } from './bench.ts'
 export {
   VISUAL_VIEWPORTS,
   VISUAL_PROFILES,
