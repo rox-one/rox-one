@@ -13,15 +13,27 @@
  *
  * Reads are fail-soft: unknown/unsafe/corrupt ids yield null and are skipped
  * from list; corrupt sibling files are left on disk.
+ *
+ * W1-06 (#1503) — schema v3 (WorkItem, DATA-MODEL §5.1): the file becomes
+ * `{id, revision, schemaVersion: 3, task, work}`. `task` stays the v2
+ * PersonalTask the Tasks UI reads and writes (get/list/put are unchanged);
+ * `work` holds the v3-only WorkItem fields (derived ones are recomputed from
+ * `task` on every write, v3-only ones survive UI writes). v2 files are read
+ * as before (backward compatible) and upgraded in place by MIG-01 without a
+ * revision bump; meta gains a derived `work` block (MIG-02).
  */
 import { closeSync, copyFileSync, existsSync, mkdirSync, openSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync, writeSync } from 'fs'
 import { basename, join } from 'path'
-import type { PersonalTask, PersonalTaskMeta, PersonalTaskMigrationMarker, PersonalTaskWrite } from '@rox/core/tasks/personal'
+import type { PersonalTask, PersonalTaskMeta, PersonalTaskMigrationMarker, PersonalTaskWorkMeta, PersonalTaskWrite, TaskProject, TaskStatusDefinition, WorkItem, WorkItemExtension } from '@rox/core/tasks/personal'
+import { LOCAL_PRINCIPAL_ID, PERSONAL_TASK_SCHEMA_VERSION_V3, deriveWorkItemExtension, deriveWorkMeta, fromWorkItem, isoToEpoch, taskProjectToList, toWorkItem } from '@rox/core/tasks/personal'
 
 const TASK_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/
 
-/** v2 = Things-style fields (checklist, trashedAt, reminderAt, source, repeat modes). */
-export const PERSONAL_TASK_SCHEMA_VERSION = 2
+/**
+ * v2 = Things-style fields (checklist, trashedAt, reminderAt, source, repeat modes).
+ * v3 = WorkItem (`work` half beside the v2 task; W1-06 #1503).
+ */
+export const PERSONAL_TASK_SCHEMA_VERSION = PERSONAL_TASK_SCHEMA_VERSION_V3
 
 export type { PersonalTaskMeta, PersonalTaskMigrationMarker } from '@rox/core/tasks/personal'
 
@@ -38,10 +50,67 @@ export type PersonalTaskDeleteResult =
   | { status: 'removed' }
   | { status: 'conflict'; current: PersistedPersonalTask | null }
 
+export interface PersistedWorkItem {
+  item: WorkItem
+  revision: number
+}
+
+export type WorkItemWriteResult =
+  | { status: 'accepted'; record: PersistedWorkItem }
+  | { status: 'conflict'; current: PersistedWorkItem | null }
+
+/** A v2 project read as a v3 task list (W1-06 `task_lists.*` on the local authority). */
+export interface PersistedTaskList {
+  id: string
+  revision: number
+  data: Record<string, unknown>
+}
+
+export type TaskListWriteResult =
+  | { status: 'accepted'; revision: number }
+  | { status: 'conflict'; current: PersistedTaskList | null }
+
+/**
+ * Bus-side state of one local task list, kept in `meta.work.listState`: the
+ * CAS revision, a fingerprint of the project it last wrote (a later UI edit
+ * bumps the revision it reads at) and the v3 fields without a v2 slot.
+ */
+interface TaskListBusState {
+  revision: number
+  fingerprint: string
+  extra: Record<string, unknown>
+  /** Written by the bus after the Tasks UI last listed (`markTaskListsSeen`): a UI meta write keeps the disk version. */
+  unseen?: boolean
+  /** Removed by the bus (tombstone until the UI listed): a stale UI meta write cannot bring it back. */
+  removed?: boolean
+}
+
+/** Serializes meta.json writers (UI `writeMeta` and the bus list writes). `~` never appears in a task id. */
+const META_LOCK_ID = 'meta~lock'
+/** Task-list fields stored on the v2 project itself (the rest go to `listState.extra`). */
+const LIST_PROJECT_FIELDS = new Set(['id', 'revision', 'name', 'notes', 'deadlineAt', 'groupId', 'archivedAt', 'deletedAt', 'createdAt'])
+
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`
+  if (value && typeof value === 'object') return `{${Object.keys(value).sort().filter(key => (value as Record<string, unknown>)[key] !== undefined).map(key => `${JSON.stringify(key)}:${stableJson((value as Record<string, unknown>)[key])}`).join(',')}}`
+  return JSON.stringify(value)
+}
+
+const optionalString = (value: unknown): string | undefined => (typeof value === 'string' && value.length > 0 ? value : undefined)
+const optionalEpoch = (value: unknown): number | undefined => (typeof value === 'string' ? isoToEpoch(value) : undefined)
+
+export interface PersonalTaskPersistStoreOptions {
+  /** Owner written into v3 records created from v2 data (default: the local principal). */
+  ownerPrincipalId?: string
+}
+
 interface PersistFile {
   id: string
   revision: number
   task: PersonalTask
+  /** 3 once the `work` half has been written (absent on v2 files). */
+  schemaVersion?: number
+  work?: WorkItemExtension
 }
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
@@ -62,6 +131,15 @@ function isPersonalTask(value: unknown): value is PersonalTask {
   return true
 }
 
+function isWorkItemExtension(value: unknown): value is WorkItemExtension {
+  if (!isPlainRecord(value)) return false
+  if (typeof value.statusKey !== 'string' || value.statusKey.length === 0) return false
+  if (typeof value.ownerPrincipalId !== 'string' || value.ownerPrincipalId.length === 0) return false
+  if (value.authority !== 'local' && value.authority !== 'workspace') return false
+  if (!Array.isArray(value.assigneeIds) || !value.assigneeIds.every((id) => typeof id === 'string')) return false
+  return true
+}
+
 export function parsePersonalTaskPersistFile(content: string): PersistFile | null {
   try {
     const parsed: unknown = JSON.parse(content)
@@ -69,7 +147,13 @@ export function parsePersonalTaskPersistFile(content: string): PersistFile | nul
     if (typeof parsed.id !== 'string' || !TASK_ID_RE.test(parsed.id)) return null
     if (typeof parsed.revision !== 'number' || !Number.isInteger(parsed.revision) || parsed.revision < 1) return null
     if (!isPersonalTask(parsed.task) || parsed.task.id !== parsed.id) return null
-    return { id: parsed.id, revision: parsed.revision, task: parsed.task }
+    const file: PersistFile = { id: parsed.id, revision: parsed.revision, task: parsed.task }
+    // A malformed `work` half is ignored (re-derived), never a reason to drop the task.
+    if (typeof parsed.schemaVersion === 'number' && isWorkItemExtension(parsed.work)) {
+      file.schemaVersion = parsed.schemaVersion
+      file.work = parsed.work
+    }
+    return file
   } catch {
     return null
   }
@@ -79,18 +163,40 @@ function tasksEqual(a: PersonalTask, b: PersonalTask): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
 }
 
+function workEqual(a: WorkItemExtension | undefined, b: WorkItemExtension | undefined): boolean {
+  return JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
+}
+
+export interface PersonalTaskV3MigrationReport {
+  id: 'MIG-01' | 'MIG-02'
+  dryRun: boolean
+  at: number
+  scanned: number
+  upgraded: number
+  alreadyCurrent: number
+  failed: string[]
+  /** Unreadable / corrupt files: left on disk untouched and not retried (the list read skips them too). */
+  skipped: string[]
+}
+
 export class PersonalTaskPersistStore {
   /** {root}/personal-tasks — personal (config-dir) scope, not the DAG `tasks/` tree. */
   readonly dir: string
 
-  constructor(rootDir: string) {
+  readonly ownerPrincipalId: string
+
+  constructor(rootDir: string, options: PersonalTaskPersistStoreOptions = {}) {
     this.dir = join(rootDir, 'personal-tasks')
+    this.ownerPrincipalId = options.ownerPrincipalId ?? LOCAL_PRINCIPAL_ID
     this.cleanupOrphanTmp()
   }
 
   put(task: PersonalTask): PersistedPersonalTask {
     this.assertSafeId(task.id)
-    return this.withRecordLock(task.id, () => this.putUnlocked(task))
+    return this.withRecordLock(task.id, () => {
+      if (this.occupant(task.id)) throw new TypeError(`Personal-task file name of ${JSON.stringify(task.id)} is taken by another id (case-insensitive filesystem)`)
+      return this.putUnlocked(task)
+    })
   }
 
   putIfRevision(write: PersonalTaskWrite): PersonalTaskWriteResult {
@@ -103,6 +209,8 @@ export class PersonalTaskPersistStore {
       if ((current?.revision ?? null) !== write.expectedRevision) {
         return { status: 'conflict', current: current ? { task: current.task, revision: current.revision } : null }
       }
+      // The file name is taken by another id (case-insensitive filesystem): never overwrite it.
+      if (!current && this.occupant(write.task.id)) return { status: 'conflict', current: null }
       return { status: 'accepted', record: this.putUnlocked(write.task) }
     })
   }
@@ -117,13 +225,52 @@ export class PersonalTaskPersistStore {
     return this.readAll().map((record) => ({ task: record.task, revision: record.revision }))
   }
 
+  /** v3 view of one task (WorkItem; v2 files answer through read aliases). */
+  getWorkItem(id: string): PersistedWorkItem | null {
+    const record = this.readRecord(id)
+    if (!record) return null
+    return { item: this.toItem(record), revision: record.revision }
+  }
+
+  listWorkItems(): PersistedWorkItem[] {
+    return this.readAll().map((record) => ({ item: this.toItem(record), revision: record.revision }))
+  }
+
+  /**
+   * Command-path write (reference handlers): the full WorkItem, CAS on the
+   * file revision (`null` = create-only). Any change bumps the revision.
+   */
+  putWorkItem(item: WorkItem, expectedRevision: number | null): WorkItemWriteResult {
+    this.assertSafeId(item.id)
+    if (expectedRevision !== null && (!Number.isInteger(expectedRevision) || expectedRevision < 1)) {
+      throw new TypeError('Expected task revision must be null or a positive integer')
+    }
+    return this.withRecordLock(item.id, () => {
+      const current = this.readRecord(item.id)
+      if ((current?.revision ?? null) !== expectedRevision) {
+        return { status: 'conflict', current: current ? { item: this.toItem(current), revision: current.revision } : null }
+      }
+      // Create on a file name taken by another id (case-insensitive filesystem): a conflict, revision only.
+      const occupant = current ? null : this.occupant(item.id)
+      if (occupant) return { status: 'conflict', current: null }
+      const { task, work } = fromWorkItem(item, current?.task ?? null)
+      if (current && tasksEqual(current.task, task) && workEqual(current.work, work)) {
+        return { status: 'accepted', record: { item: this.toItem(current), revision: current.revision } }
+      }
+      const revision = (current?.revision ?? 0) + 1
+      const file: PersistFile = { id: task.id, revision, schemaVersion: PERSONAL_TASK_SCHEMA_VERSION_V3, task, work }
+      this.writeRecord(file)
+      return { status: 'accepted', record: { item: this.toItem(file), revision } }
+    })
+  }
+
   /** Remove one task file. Unknown/unsafe ids are a no-op (false). */
   delete(id: string): boolean {
     if (!TASK_ID_RE.test(id)) return false
     return this.withRecordLock(id, () => {
-      const path = this.recordPath(id)
-      if (!existsSync(path)) return false
-      unlinkSync(path)
+      // Only this id's own file (never another task's on a case-insensitive filesystem).
+      if (!this.readRecord(id)) return false
+      unlinkSync(this.recordPath(id))
       return true
     })
   }
@@ -154,14 +301,284 @@ export class PersonalTaskPersistStore {
     }
   }
 
+  /**
+   * Full meta write from the Tasks UI (`personalTasks:put`, no base). Merged
+   * against the lists the command bus wrote (`work.listState`), so a stale UI
+   * copy can neither drop nor revert them:
+   * - a bus list missing from the UI write is kept, unless the UI trashed it
+   *   (disk copy trashed, or its last `project.trash|restore` audit entry is a
+   *   trash): `emptyTrash` is the only UI hard delete;
+   * - a bus list the UI has not listed since the bus wrote it keeps the disk
+   *   version; a bus-removed one stays removed;
+   * - any other UI change to a bus list bumps its CAS revision past the one
+   *   the bus last served, so a later stale `task_lists.*` write conflicts.
+   */
   writeMeta(meta: PersonalTaskMeta): void {
+    this.withRecordLock(META_LOCK_ID, () => {
+      const states = this.readListState()
+      const merged = this.mergeUiMeta(meta, this.readMeta(), states)
+      this.writeMetaUnlocked(merged, states)
+    })
+  }
+
+  /** The Tasks UI listed the store: bus writes so far are now visible to it (see `writeMeta`). */
+  markTaskListsSeen(): void {
+    if (!Object.values(this.readListState()).some(state => state.unseen)) return
+    this.withRecordLock(META_LOCK_ID, () => {
+      const states = this.readListState()
+      let changed = false
+      for (const [id, state] of Object.entries(states)) {
+        if (!state.unseen) continue
+        changed = true
+        if (state.removed) delete states[id]
+        else states[id] = { revision: state.revision, fingerprint: state.fingerprint, extra: state.extra }
+      }
+      const meta = this.readMeta()
+      if (changed && meta) this.writeMetaUnlocked(meta, states)
+    })
+  }
+
+  private mergeUiMeta(meta: PersonalTaskMeta, disk: PersonalTaskMeta | null, states: Record<string, TaskListBusState>): PersonalTaskMeta {
+    const projects = [...(meta.projects ?? [])]
+    const lastUiAction = new Map<string, string>()
+    for (const entry of meta.audit ?? []) {
+      if ((entry?.action === 'project.trash' || entry?.action === 'project.restore') && typeof entry.detail === 'string') lastUiAction.set(entry.detail, entry.action)
+    }
+    const untracked = projects.filter(project => project?.id && !states[project.id])
+    for (const [id, state] of Object.entries(states)) {
+      const index = projects.findIndex(entry => entry?.id === id)
+      if (state.removed) {
+        if (index >= 0 && state.unseen) projects.splice(index, 1)
+        continue
+      }
+      const onDisk = disk?.projects.find(entry => entry?.id === id) ?? null
+      if (!onDisk) {
+        if (index < 0) delete states[id]
+        continue
+      }
+      if (index < 0) {
+        if (!state.unseen && (onDisk.trashedAt != null || lastUiAction.get(id) === 'project.trash')) delete states[id]
+        else projects.push(onDisk)
+        continue
+      }
+      if (stableJson(projects[index]) === stableJson(onDisk)) continue
+      if (state.unseen) {
+        projects[index] = onDisk
+        continue
+      }
+      states[id] = { ...state, revision: this.projectAsList(onDisk, state).revision + 1, fingerprint: stableJson(projects[index]) }
+    }
+    // A UI change to a list the bus never wrote starts its CAS tracking too (revision 1 → 2, …),
+    // so a bus write still holding revision 1 conflicts.
+    for (const project of untracked) {
+      const onDisk = disk?.projects.find(entry => entry?.id === project.id)
+      if (onDisk && stableJson(onDisk) !== stableJson(project)) {
+        states[project.id] = { revision: this.projectAsList(onDisk, undefined).revision + 1, fingerprint: stableJson(project), extra: {} }
+      }
+    }
+    return { ...meta, projects }
+  }
+
+  // ── W1-06: v2 projects as v3 task lists (local `task_lists.*`) ─────────
+
+  /** The v2 project `id` as a task-list record (the Tasks UI and the bus share one list). */
+  getTaskList(id: string): PersistedTaskList | null {
+    const project = this.readMeta()?.projects.find(entry => entry?.id === id)
+    return project ? this.projectAsList(project, this.readListState()[id]) : null
+  }
+
+  /** CAS write of a task list onto its v2 project (created at the end of the sidebar when new). */
+  putTaskList(id: string, data: Record<string, unknown>, expectedRevision: number | null): TaskListWriteResult {
+    this.assertSafeId(id)
+    const name = optionalString(data.name)?.trim()
+    if (!name) throw new TypeError('Task list name is required')
+    return this.withRecordLock(META_LOCK_ID, () => {
+      const meta = this.readMeta() ?? { projects: [], areas: [], headings: [], audit: [] }
+      const states = this.readListState()
+      const index = meta.projects.findIndex(entry => entry?.id === id)
+      const previous = index >= 0 ? meta.projects[index]! : null
+      const current = previous ? this.projectAsList(previous, states[id]) : null
+      if ((current?.revision ?? null) !== expectedRevision) return { status: 'conflict', current }
+      const project = {
+        ...(previous ?? {}),
+        id,
+        name,
+        notes: optionalString(data.notes),
+        deadlineAt: optionalEpoch(data.deadlineAt),
+        areaId: optionalString(data.groupId),
+        completedAt: optionalEpoch(data.archivedAt),
+        trashedAt: optionalEpoch(data.deletedAt),
+        // A UI project without `createdAt` stays without one.
+        createdAt: previous ? previous.createdAt : optionalEpoch(data.createdAt) ?? Date.now(),
+        order: previous?.order ?? meta.projects.reduce((max, entry) => Math.max(max, Number(entry?.order) || 0), 0) + 1,
+      } as TaskProject
+      for (const key of Object.keys(project) as (keyof TaskProject)[]) if (project[key] === undefined) delete project[key]
+      const extra = Object.fromEntries(Object.entries(data).filter(([key, value]) => !LIST_PROJECT_FIELDS.has(key) && value !== undefined))
+      const revision = (current?.revision ?? 0) + 1
+      const projects = [...meta.projects]
+      if (index >= 0) projects[index] = project
+      else projects.push(project)
+      this.writeMetaUnlocked({ ...meta, projects }, { ...states, [id]: { revision, fingerprint: stableJson(project), extra, unseen: true } })
+      return { status: 'accepted', revision }
+    })
+  }
+
+  /** Hard delete of a list (its v2 project); tasks keep their `projectId` like a UI delete. */
+  removeTaskList(id: string): boolean {
+    return this.withRecordLock(META_LOCK_ID, () => {
+      const meta = this.readMeta()
+      if (!meta || !meta.projects.some(entry => entry?.id === id)) return false
+      const states = this.readListState()
+      const project = meta.projects.find(entry => entry?.id === id)!
+      // Tombstone until the UI listed: a stale UI meta write must not resurrect the list.
+      states[id] = { revision: this.projectAsList(project, states[id]).revision + 1, fingerprint: '', extra: {}, removed: true, unseen: true }
+      this.writeMetaUnlocked({ ...meta, projects: meta.projects.filter(entry => entry?.id !== id) }, states)
+      return true
+    })
+  }
+
+  private readListState(): Record<string, TaskListBusState> {
+    const parsed = this.readJson(this.metaPath)
+    const raw = isPlainRecord(parsed) && isPlainRecord(parsed.work) && isPlainRecord(parsed.work.listState) ? parsed.work.listState : {}
+    const out: Record<string, TaskListBusState> = {}
+    for (const [id, state] of Object.entries(raw)) {
+      if (isPlainRecord(state) && Number.isInteger(state.revision) && typeof state.fingerprint === 'string') {
+        out[id] = {
+          revision: state.revision as number,
+          fingerprint: state.fingerprint,
+          extra: isPlainRecord(state.extra) ? state.extra : {},
+          ...(state.unseen === true ? { unseen: true } : {}),
+          ...(state.removed === true ? { removed: true } : {}),
+        }
+      }
+    }
+    return out
+  }
+
+  private projectAsList(project: TaskProject, state: TaskListBusState | undefined): PersistedTaskList {
+    const list = taskProjectToList(project, this.ownerPrincipalId)
+    const extra = state?.extra ?? {}
+    // A UI edit since the last bus write moves the revision on, so stale CAS writes conflict.
+    const revision = state ? state.revision + (state.fingerprint === stableJson(project) ? 0 : 1) : 1
+    const data: Record<string, unknown> = {
+      ...extra,
+      name: list.name,
+      ownerType: extra.ownerType ?? list.ownerType,
+      ownerId: extra.ownerId ?? list.ownerId,
+      sortKey: extra.sortKey ?? list.sortKey,
+      statusSetEnabled: extra.statusSetEnabled ?? list.statusSetEnabled,
+    }
+    if (list.notes !== undefined) data.notes = list.notes
+    if (list.deadlineAt !== undefined) data.deadlineAt = list.deadlineAt
+    if (list.groupId !== undefined) data.groupId = list.groupId
+    if (list.createdAt !== undefined) data.createdAt = list.createdAt
+    if (list.completedAt !== undefined) data.archivedAt = list.completedAt
+    if (list.trashedAt !== undefined) data.deletedAt = list.trashedAt
+    return { id: project.id, revision, data }
+  }
+
+  private writeMetaUnlocked(meta: PersonalTaskMeta, listState?: Record<string, TaskListBusState>): void {
+    const previous = this.readJson(this.metaPath)
+    const statusSets = isPlainRecord(previous) && isPlainRecord(previous.work) && isPlainRecord(previous.work.statusSets)
+      ? previous.work.statusSets as Record<string, TaskStatusDefinition[]>
+      : undefined
+    const states = listState ?? (isPlainRecord(previous) && isPlainRecord(previous.work) && isPlainRecord(previous.work.listState) ? previous.work.listState : undefined)
     this.writeJsonAtomic(this.metaPath, {
       projects: meta.projects ?? [],
       areas: meta.areas ?? [],
       headings: meta.headings ?? [],
       // Audit is append-only history; keep it bounded on disk.
       audit: (meta.audit ?? []).slice(-2000),
+      // MIG-02: v3 lists / sections / groups, derived from the v2 arrays (same ids).
+      work: { ...deriveWorkMeta(meta, this.ownerPrincipalId, statusSets), ...(states && Object.keys(states).length > 0 ? { listState: states } : {}) },
     })
+  }
+
+  /** v3 meta view (MIG-02): task lists, sections and list groups; derived when the file predates v3. */
+  readWorkMeta(): PersonalTaskWorkMeta {
+    const parsed = this.readJson(this.metaPath)
+    const meta = this.readMeta()
+    const statusSets = isPlainRecord(parsed) && isPlainRecord(parsed.work) && isPlainRecord(parsed.work.statusSets)
+      ? parsed.work.statusSets as Record<string, TaskStatusDefinition[]>
+      : undefined
+    return deriveWorkMeta(meta ?? {}, this.ownerPrincipalId, statusSets)
+  }
+
+  /**
+   * MIG-01 (task files) + MIG-02 (meta): write the v3 `work` half in place.
+   * Idempotent (v3 files are skipped), never bumps a revision, never deletes;
+   * run after `ensureSchemaBackup(3)`. `dryRun` only counts.
+   */
+  migrateToV3(options: { dryRun?: boolean; now?: number } = {}): PersonalTaskV3MigrationReport[] {
+    const now = options.now ?? Date.now()
+    const dryRun = options.dryRun === true
+    const tasks: PersonalTaskV3MigrationReport = { id: 'MIG-01', dryRun, at: now, scanned: 0, upgraded: 0, alreadyCurrent: 0, failed: [], skipped: [] }
+    let names: string[] = []
+    try { names = readdirSync(this.dir).filter((name) => name.endsWith('.json')).sort() } catch { names = [] }
+    for (const name of names) {
+      const id = name.slice(0, -'.json'.length)
+      if (!TASK_ID_RE.test(id)) continue
+      tasks.scanned += 1
+      try {
+        const upgraded = this.withRecordLock(id, () => {
+          let record: PersistFile | null
+          try { record = this.readRecord(id) } catch { record = null }
+          if (!record) return null
+          if (record.schemaVersion === PERSONAL_TASK_SCHEMA_VERSION_V3 && record.work) return false
+          if (!dryRun) {
+            this.writeRecord({ ...record, schemaVersion: PERSONAL_TASK_SCHEMA_VERSION_V3, work: deriveWorkItemExtension(record.task, record.work, { ownerPrincipalId: this.ownerPrincipalId }) })
+          }
+          return true
+        })
+        // Unreadable: skipped (not failed), so `isMigratedToV3` settles instead of rescanning forever.
+        if (upgraded === null) tasks.skipped.push(id)
+        else if (upgraded) tasks.upgraded += 1
+        else tasks.alreadyCurrent += 1
+      } catch {
+        tasks.failed.push(id)
+      }
+    }
+    const meta: PersonalTaskV3MigrationReport = { id: 'MIG-02', dryRun, at: now, scanned: 0, upgraded: 0, alreadyCurrent: 0, failed: [], skipped: [] }
+    const rawMeta = this.readJson(this.metaPath)
+    if (isPlainRecord(rawMeta)) {
+      meta.scanned = 1
+      const current = isPlainRecord(rawMeta.work) && rawMeta.work.schemaVersion === PERSONAL_TASK_SCHEMA_VERSION_V3
+      if (current) meta.alreadyCurrent = 1
+      else {
+        meta.upgraded = 1
+        if (!dryRun) {
+          const parsed = this.readMeta()
+          if (parsed) this.writeMeta(parsed)
+        }
+      }
+    }
+    if (!dryRun) {
+      this.writeMigrationReport(tasks)
+      this.writeMigrationReport(meta)
+    }
+    return [tasks, meta]
+  }
+
+  /** Whether a non-dry MIG-01 + MIG-02 run already completed without failures (skips the startup scan). */
+  isMigratedToV3(): boolean {
+    const done = (id: string) => {
+      const report = this.readJson(this.migrationReportPath(id))
+      return isPlainRecord(report) && report.dryRun === false && Array.isArray(report.failed) && report.failed.length === 0
+    }
+    return done('MIG-01') && done('MIG-02')
+  }
+
+  /** `{root}/.craft/migrations/<id>.json` (DATA-MODEL §6.2 report location, root = config dir). */
+  migrationReportPath(id: string): string {
+    return join(this.dir, '..', '.craft', 'migrations', `${id}.json`)
+  }
+
+  private writeMigrationReport(report: PersonalTaskV3MigrationReport): void {
+    const path = this.migrationReportPath(report.id)
+    mkdirSync(join(path, '..'), { recursive: true })
+    const tmp = `${path}.${Date.now()}-${process.pid}.tmp`
+    writeFileSync(tmp, `${JSON.stringify(report)}\n`)
+    renameSync(tmp, path)
   }
 
   /**
@@ -196,6 +613,12 @@ export class PersonalTaskPersistStore {
     }
     this.writeJsonAtomic(this.schemaPath, { version, migratedAt: now, backupDir, copied })
     return backupDir
+  }
+
+  /** Whether the schema marker (written after a successful backup) is at `version` or newer. */
+  hasSchemaBackup(version = PERSONAL_TASK_SCHEMA_VERSION): boolean {
+    const marker = this.readJson(this.schemaPath)
+    return isPlainRecord(marker) && typeof marker.version === 'number' && marker.version >= version
   }
 
   readMigration(): PersonalTaskMigrationMarker | null {
@@ -236,11 +659,26 @@ export class PersonalTaskPersistStore {
     renameSync(tmp, path)
   }
 
+  private toItem(record: PersistFile): WorkItem {
+    return toWorkItem(record.task, record.revision, record.work ?? null, { ownerPrincipalId: this.ownerPrincipalId })
+  }
+
   private readRecord(id: string): PersistFile | null {
     if (!TASK_ID_RE.test(id)) return null
     const path = this.recordPath(id)
     if (!existsSync(path)) return null
-    return parsePersonalTaskPersistFile(readFileSync(path, 'utf8'))
+    const parsed = parsePersonalTaskPersistFile(readFileSync(path, 'utf8'))
+    // Case-insensitive filesystem: `task1.json` can resolve to `Task1.json` — another task.
+    return parsed && parsed.id === id ? parsed : null
+  }
+
+  /** The record of another id the path of `id` resolves to (case-insensitive filesystems), if any. */
+  private occupant(id: string): PersistFile | null {
+    const path = this.recordPath(id)
+    if (!existsSync(path)) return null
+    let parsed: PersistFile | null
+    try { parsed = parsePersonalTaskPersistFile(readFileSync(path, 'utf8')) } catch { return null }
+    return parsed && parsed.id !== id ? parsed : null
   }
 
   private readAll(): PersistFile[] {
@@ -274,9 +712,17 @@ export class PersonalTaskPersistStore {
 
   private putUnlocked(task: PersonalTask): PersistedPersonalTask {
     const existing = this.readRecord(task.id)
-    if (existing && tasksEqual(existing.task, task)) return { task: existing.task, revision: existing.revision }
+    // v2 (UI) write: derived v3 fields follow `task`; v3-only fields survive.
+    const work = deriveWorkItemExtension(task, existing?.work, { ownerPrincipalId: this.ownerPrincipalId })
+    if (existing && tasksEqual(existing.task, task)) {
+      // Same task payload: never bump the revision. A v2 file is upgraded in place (MIG-01 semantics).
+      if (existing.schemaVersion !== PERSONAL_TASK_SCHEMA_VERSION_V3 || !workEqual(existing.work, work)) {
+        this.writeRecord({ ...existing, schemaVersion: PERSONAL_TASK_SCHEMA_VERSION_V3, work })
+      }
+      return { task: existing.task, revision: existing.revision }
+    }
     const revision = (existing?.revision ?? 0) + 1
-    this.writeRecord({ id: task.id, revision, task })
+    this.writeRecord({ id: task.id, revision, schemaVersion: PERSONAL_TASK_SCHEMA_VERSION_V3, task, work })
     return { task, revision }
   }
 

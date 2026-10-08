@@ -48,8 +48,9 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
   // Panel refresh after mutations: same payload shape as SessionManager's
   // fs-watcher broadcast (workspaceId, skills) that AppShell subscribes to.
   const broadcastSkillsChanged = async (workspaceId: string, workspaceRoot: string): Promise<void> => {
-    const { loadAllSkills } = await import('@rox/shared/skills')
-    pushTyped(server, RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId }, workspaceId, loadAllSkills(workspaceRoot))
+    const { loadAllSkills, toSkillSummaries } = await import('@rox/shared/skills')
+    // Metadata payload; listeners reload bodies through GET_DETAILS.
+    pushTyped(server, RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId }, workspaceId, toSkillSummaries(loadAllSkills(workspaceRoot)))
   }
 
   // Get all skills for a workspace (and optionally project-level skills from workingDirectory)
@@ -68,12 +69,13 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     const effectiveWorkingDir = workingDirectory && existsSync(workingDirectory)
       ? workingDirectory
       : undefined
-    const { loadAllSkills } = await import('@rox/shared/skills')
+    const { loadAllSkills, toSkillSummaries } = await import('@rox/shared/skills')
     // includeShadowedOmp: the skills panel shows OMP variants shadowed by a
     // craft skill of the same slug as inactive (craft-wins) with an explanation.
     const skills = loadAllSkills(workspace.rootPath, effectiveWorkingDir, { includeOmp: true, includeShadowedOmp: true })
     deps.platform.logger?.info(`SKILLS_GET: Loaded ${skills.length} skills from ${workspace.rootPath}`)
-    return skills
+    // Summaries only (PERF-06): bodies are served by GET_DETAILS on open.
+    return toSkillSummaries(skills)
   }, { nativeAction: 'read' })
 
   // Selected-only read: workspace and project authority are resolved on the server.

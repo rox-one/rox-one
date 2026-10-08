@@ -1,0 +1,23 @@
+{
+  "projectId": "proj-beta",
+  "revision": 1,
+  "cycles": [
+    {
+      "id": "cycle-draft",
+      "projectId": "proj-beta",
+      "title": "Draft cycle",
+      "startDate": "2026-10-01",
+      "endDate": "2026-10-01",
+      "timezone": "UTC",
+      "status": "draft",
+      "revision": 0,
+      "objectives": [
+        { "id": "obj-a", "title": "Objective without weights", "weight": 0, "keyResults": [
+          { "id": "kr-ok", "title": "Signed contracts", "weight": 0, "measurement": { "kind": "numeric", "baseline": 0, "target": 5, "current": 1, "unit": "" } },
+          { "id": "kr-broken", "title": "No measurement" }
+        ] },
+        { "title": "Objective without id", "weight": 1, "keyResults": [] }
+      ]
+    }
+  ]
+}

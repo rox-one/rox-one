@@ -28,6 +28,14 @@ const CHANNELS = {
 // Instance ID is passed via query parameter by BrowserPaneManager
 const instanceId = new URLSearchParams(location.search).get('instanceId') || ''
 
+// The main process pushes the full toolbar state once on did-finish-load.
+// Keep the latest state/theme colour from preload start and replay it to each
+// new subscriber, so a renderer that subscribes late never misses it.
+let latestState: { value: unknown } | null = null
+let latestThemeColor: { value: string | null } | null = null
+ipcRenderer.on(CHANNELS.STATE_UPDATE, (_event, state: unknown) => { latestState = { value: state } })
+ipcRenderer.on(CHANNELS.THEME_COLOR, (_event, color: string | null) => { latestThemeColor = { value: color } })
+
 contextBridge.exposeInMainWorld('browserToolbar', {
   instanceId,
   navigate: (url: string) => ipcRenderer.invoke(CHANNELS.NAVIGATE, instanceId, url),
@@ -44,11 +52,13 @@ contextBridge.exposeInMainWorld('browserToolbar', {
   onStateUpdate: (callback: (state: unknown) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, state: unknown) => callback(state)
     ipcRenderer.on(CHANNELS.STATE_UPDATE, handler)
+    if (latestState) callback(latestState.value)
     return () => { ipcRenderer.removeListener(CHANNELS.STATE_UPDATE, handler) }
   },
   onThemeColor: (callback: (color: string | null) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, color: string | null) => callback(color)
     ipcRenderer.on(CHANNELS.THEME_COLOR, handler)
+    if (latestThemeColor) callback(latestThemeColor.value)
     return () => { ipcRenderer.removeListener(CHANNELS.THEME_COLOR, handler) }
   },
   onForceCloseMenu: (callback: (payload: { reason?: string }) => void) => {

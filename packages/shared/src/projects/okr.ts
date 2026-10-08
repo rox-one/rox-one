@@ -117,6 +117,126 @@ export function loadProjectOkr(workspaceRootPath: string, projectSlug: string): 
   return document
 }
 
+export interface LenientProjectOkr {
+  document: ProjectOkrDocument
+  /** Human-readable notes about what was skipped or defaulted (migration report). */
+  dropped: string[]
+  /** True when the strict reader (`loadProjectOkr`) rejected the file. */
+  lenient: boolean
+}
+
+type Loose = Record<string, unknown>
+const isObject = (value: unknown): value is Loose => !!value && typeof value === 'object' && !Array.isArray(value)
+const text = (value: unknown): string | null => (typeof value === 'string' && value.trim() ? value : null)
+const finite = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null)
+
+function lenientEvidence(raw: unknown): OkrEvidence[] {
+  if (!Array.isArray(raw)) return []
+  const seen = new Set<string>()
+  const out: OkrEvidence[] = []
+  for (const item of raw) {
+    if (!isObject(item) || !text(item.id) || !text(item.label) || seen.has(item.id as string)) continue
+    seen.add(item.id as string)
+    out.push({
+      id: item.id as string, label: item.label as string,
+      ...(text(item.source) ? { source: item.source as string } : {}),
+      ...(text(item.uri) ? { uri: item.uri as string } : {}),
+      ...(text(item.observedAt) ? { observedAt: item.observedAt as string } : {}),
+    })
+  }
+  return out
+}
+
+function lenientMeasurement(raw: unknown): OkrMeasurement | null {
+  if (!isObject(raw)) return null
+  const extra = {
+    ...(text(raw.source) ? { source: raw.source as string } : {}),
+    ...(text(raw.measuredAt) ? { measuredAt: raw.measuredAt as string } : {}),
+    ...(raw.freshness === 'fresh' || raw.freshness === 'stale' || raw.freshness === 'unknown' ? { freshness: raw.freshness as 'fresh' | 'stale' | 'unknown' } : {}),
+    ...(text(raw.freshnessCheckedAt) ? { freshnessCheckedAt: raw.freshnessCheckedAt as string } : {}),
+  }
+  if (raw.kind === 'numeric') {
+    const baseline = finite(raw.baseline)
+    const target = finite(raw.target)
+    if (baseline === null || target === null) return null
+    const direction = raw.direction === 'increase' || raw.direction === 'decrease' ? raw.direction : target >= baseline ? 'increase' : 'decrease'
+    return { kind: 'numeric', direction, baseline, target, current: finite(raw.current), unit: typeof raw.unit === 'string' ? raw.unit : '', evidence: lenientEvidence(raw.evidence), ...extra }
+  }
+  if (raw.kind === 'binary') {
+    return { kind: 'binary', achieved: typeof raw.achieved === 'boolean' ? raw.achieved : null, evidence: lenientEvidence(raw.evidence), ...extra }
+  }
+  return null
+}
+
+/**
+ * MIG-04 (W1-06, #1503) reader: the strict `loadProjectOkr` document when it
+ * validates, otherwise a best-effort read that keeps every structurally usable
+ * cycle / objective / key result (draft files written by older builds or by
+ * hand still migrate). Returns `null` when the project or its `okr.json` is
+ * missing. Never writes.
+ */
+export function readProjectOkrLenient(workspaceRootPath: string, projectSlug: string): LenientProjectOkr | null {
+  const project = loadProjectConfig(workspaceRootPath, projectSlug)
+  if (!project) return null
+  const path = join(getProjectPath(workspaceRootPath, projectSlug), 'okr.json')
+  if (!existsSync(path)) return null
+  try {
+    return { document: loadProjectOkr(workspaceRootPath, projectSlug), dropped: [], lenient: false }
+  } catch {
+    // fall through to the lenient read
+  }
+  const dropped: string[] = []
+  let raw: unknown
+  try { raw = JSON.parse(readFileSync(path, 'utf8').replace(/^\uFEFF/, '')) } catch {
+    return { document: { projectId: project.id, revision: 0, cycles: [] }, dropped: ['okr.json is not valid JSON'], lenient: true }
+  }
+  const rawCycles = isObject(raw) && Array.isArray(raw.cycles) ? raw.cycles : []
+  const cycles: OkrCycle[] = []
+  const cycleIds = new Set<string>()
+  for (const rawCycle of rawCycles) {
+    if (!isObject(rawCycle) || !text(rawCycle.id) || cycleIds.has(rawCycle.id as string)) { dropped.push('cycle without a unique id'); continue }
+    const id = rawCycle.id as string
+    cycleIds.add(id)
+    const objectives: OkrObjective[] = []
+    const objectiveIds = new Set<string>()
+    for (const rawObjective of Array.isArray(rawCycle.objectives) ? rawCycle.objectives : []) {
+      if (!isObject(rawObjective) || !text(rawObjective.id) || !text(rawObjective.title) || objectiveIds.has(rawObjective.id as string)) { dropped.push(`cycle ${id}: objective without id or title`); continue }
+      objectiveIds.add(rawObjective.id as string)
+      const keyResults: OkrKeyResult[] = []
+      const keyResultIds = new Set<string>()
+      for (const rawKr of Array.isArray(rawObjective.keyResults) ? rawObjective.keyResults : []) {
+        const measurement = isObject(rawKr) ? lenientMeasurement(rawKr.measurement) : null
+        if (!isObject(rawKr) || !text(rawKr.id) || !text(rawKr.title) || keyResultIds.has(rawKr.id as string) || !measurement) {
+          dropped.push(`objective ${rawObjective.id as string}: unusable key result`)
+          continue
+        }
+        keyResultIds.add(rawKr.id as string)
+        keyResults.push({
+          id: rawKr.id as string, title: rawKr.title as string, weight: finite(rawKr.weight) !== null && (rawKr.weight as number) >= 0 ? rawKr.weight as number : 1, measurement,
+          ...(text(rawKr.owner) ? { owner: rawKr.owner as string } : {}), ...(text(rawKr.status) ? { status: rawKr.status as string } : {}),
+        })
+      }
+      objectives.push({
+        id: rawObjective.id as string, title: rawObjective.title as string,
+        ...(text(rawObjective.description) ? { description: rawObjective.description as string } : {}),
+        weight: finite(rawObjective.weight) !== null && (rawObjective.weight as number) >= 0 ? rawObjective.weight as number : 1,
+        ...(text(rawObjective.owner) ? { owner: rawObjective.owner as string } : {}),
+        keyResults,
+      })
+    }
+    const status = rawCycle.status === 'published' || rawCycle.status === 'archived' ? rawCycle.status : 'draft'
+    cycles.push({
+      id, projectId: project.id, title: text(rawCycle.title) ?? id,
+      startDate: typeof rawCycle.startDate === 'string' ? rawCycle.startDate : '', endDate: typeof rawCycle.endDate === 'string' ? rawCycle.endDate : '',
+      timezone: text(rawCycle.timezone) ?? 'UTC', status, revision: Number.isSafeInteger(rawCycle.revision) ? rawCycle.revision as number : 0, objectives,
+      ...(text(rawCycle.publishedAt) ? { publishedAt: rawCycle.publishedAt as string } : {}),
+      ...(text(rawCycle.archivedAt) ? { archivedAt: rawCycle.archivedAt as string } : {}),
+    })
+  }
+  const revision = isObject(raw) && Number.isSafeInteger(raw.revision) ? raw.revision as number : 0
+  return { document: { projectId: project.id, revision, cycles }, dropped, lenient: true }
+}
+
 /** Synchronous compare-and-swap keeps read/compare/atomic replace indivisible in the local RPC process. */
 export function saveProjectOkr(
   workspaceRootPath: string,

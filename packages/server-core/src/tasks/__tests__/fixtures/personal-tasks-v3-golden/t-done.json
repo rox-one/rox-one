@@ -1,0 +1,47 @@
+{
+  "id": "t-done",
+  "revision": 1,
+  "task": {
+    "id": "t-done",
+    "title": "Pay rent",
+    "notes": "",
+    "list": "anytime",
+    "areaId": "a-home",
+    "tags": [],
+    "priority": "high",
+    "evening": true,
+    "links": [
+      {
+        "kind": "mail",
+        "id": "thr-2"
+      },
+      {
+        "kind": "workflowRun",
+        "id": "run-5"
+      },
+      {
+        "kind": "feed",
+        "id": "fi-1"
+      },
+      {
+        "kind": "decision",
+        "id": "d-4"
+      },
+      {
+        "kind": "session",
+        "id": "s-1"
+      }
+    ],
+    "order": 0,
+    "createdAt": 1780000000000,
+    "completedAt": 1781000000000
+  },
+  "schemaVersion": 3,
+  "work": {
+    "authority": "local",
+    "ownerPrincipalId": "local",
+    "statusKey": "done",
+    "assigneeIds": [],
+    "listGroupId": "a-home"
+  }
+}

@@ -37,7 +37,10 @@ function safeError(error: unknown): string {
   return error instanceof Error && errorCodes.has(error.message) ? error.message : 'browser-data-read-failed'
 }
 
-function statePath(root: string): string { return join(root, '.rox', 'browser-data-auto-import.json') }
+function statePath(root: string): string {
+  // W1-13 (D-v2-11): workspace-local `.rox` state stays inside the visible tree.
+  return join(root, '.rox', 'browser-data-auto-import.json')
+}
 function readState(root: string): StoredData {
   try {
     const path = statePath(root)

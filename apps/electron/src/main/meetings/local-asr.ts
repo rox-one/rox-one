@@ -10,6 +10,7 @@ import { delimiter, join } from 'node:path'
 import type { LocalAsrEngine } from '../../shared/meetings-local'
 import { modelLabel, parseWhisperProgress, pickWhisperModel } from './local-model'
 import { DEEPGRAM_TRANSCRIPTION_MODEL } from '@rox/shared/voice'
+import { ROX_HIDDEN_HOME_LINK_NAME } from '@rox/shared/identity'
 import { loadVoicePrefs } from '@rox/shared/voice'
 
 const BIN_DIRS = ['/opt/homebrew/bin', '/usr/local/bin', '/opt/local/bin', '/usr/bin']
@@ -29,8 +30,11 @@ export function findBinary(names: readonly string[], env: NodeJS.ProcessEnv = pr
   return null
 }
 
-export function modelDirs(configDir: string): string[] {
-  const dirs = [join(configDir, 'models'), join(homedir(), '.rox', 'models')]
+export function modelDirs(configDir: string, homeDir: string = homedir()): string[] {
+  // W1-13: the resolved config dir first, then the legacy hidden-home models
+  // dir (models downloaded there before a ROX_CONFIG_DIR override or a
+  // pre-existing ~/rox keep being detected — same list as before W1-13).
+  const dirs = [join(configDir, 'models'), join(homeDir, ROX_HIDDEN_HOME_LINK_NAME, 'models')]
   return [...new Set(dirs)]
 }
 

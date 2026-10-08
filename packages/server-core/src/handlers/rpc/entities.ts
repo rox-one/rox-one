@@ -27,6 +27,14 @@ import { closeEntityLinkStores, getEntityLinkStore } from '../../entities/link-s
 import { DefaultResolverHost } from '../../entities/resolver-host.ts'
 import { ensureNoteLinksPruned, noteLinkSourceProbeFor, observeEntitiesLinksEnabled } from '../../entities/note-links-indexer.ts'
 import { getEntitiesWorkbenchFlags } from '../../entities/workbench-flags.ts'
+// W1-04 (#1501): every resolve / link listing / link write is ACL-checked.
+import {
+  canWriteLink,
+  filterBacklinks,
+  filterOutgoingLinks,
+  resolveEntityAclGate,
+  type EntityAclFactory,
+} from '../../entities/acl-gate.ts'
 
 export const HANDLED_CHANNELS = [RPC_CHANNELS.entities.LINKS, RPC_CHANNELS.entities.RESOLVE] as const
 
@@ -45,13 +53,23 @@ export type EntitiesLinksResult =
  */
 const resolverRegistrations: Resolver[] = []
 const hostsByWorkspace = new Map<string, DefaultResolverHost>()
+// W1-04 (#1501): the ACL gate is installed once, when the host is created; a
+// host is rebuilt only if a different runtime ACL factory registers, or if
+// building its (async) gate failed — the next request then retries.
+const hostAclFactory = new WeakMap<DefaultResolverHost, EntityAclFactory | undefined>()
 
-function hostForWorkspace(workspaceId: string): DefaultResolverHost {
+function hostForWorkspace(workspaceId: string, acl?: EntityAclFactory): DefaultResolverHost {
   let host = hostsByWorkspace.get(workspaceId)
-  if (!host) {
-    host = new DefaultResolverHost()
-    for (const resolver of resolverRegistrations) host.register(resolver)
-    hostsByWorkspace.set(workspaceId, host)
+  if (!host || hostAclFactory.get(host) !== acl) {
+    const gate = resolveEntityAclGate(workspaceId, acl)
+    const created = new DefaultResolverHost({ acl: gate })
+    gate.catch(() => {
+      if (hostsByWorkspace.get(workspaceId) === created) hostsByWorkspace.delete(workspaceId)
+    })
+    for (const resolver of resolverRegistrations) created.register(resolver)
+    hostsByWorkspace.set(workspaceId, created)
+    hostAclFactory.set(created, acl)
+    host = created
   }
   return host
 }
@@ -129,6 +147,14 @@ export interface EntitiesHandlerRuntime {
    * explicit env override (see `isEntitiesLinksEnabled`).
    */
   enabledWorkbenchFlags?: ReadonlySet<string> | (() => ReadonlySet<string> | undefined)
+  /**
+   * W1-04 (#1501): ACL runtime for a workspace — `{ acl, principalFor }`,
+   * sync or async. Defaults to the local single-user shim (`createLocalAcl`,
+   * owner of everything) so local behaviour is unchanged; shared / remote
+   * hosts inject the workspace ACL and its principal mapping (guest kind,
+   * status, placeholders — as `WorkspaceAcl.principalFor`) here.
+   */
+  acl?: EntityAclFactory
 }
 
 function resolveEnabledFlags(runtime: EntitiesHandlerRuntime): ReadonlySet<string> | undefined {
@@ -167,6 +193,10 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
         : { ok: true, op: 'backlinks', links: [] }
     }
     const workspace = requireWorkspace(ctx, workspaceId)
+    const gate = await resolveEntityAclGate(workspace.id, runtime.acl)
+    if ((request.op === 'add' || request.op === 'remove') && !(await canWriteLink(gate, actorFor(ctx), request.from))) {
+      throw new CodedError('FORBIDDEN', 'Entity link access denied')
+    }
     const store = getEntityLinkStore(workspace.rootPath)
     // First store use after the flag turned on: drop indexer rows of notes
     // deleted/renamed while it was off (review 4, owner decision).
@@ -193,7 +223,7 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
         return { ok: true, op: 'remove', removed }
       }
       case 'outgoing':
-        return { ok: true, op: 'outgoing', links: store.outgoing(request.ref) }
+        return { ok: true, op: 'outgoing', links: await filterOutgoingLinks(gate, actorFor(ctx), request.ref, store.outgoing(request.ref)) }
       case 'backlinks': {
         const page = store.backlinks(request.ref, {
           kinds: request.kinds,
@@ -202,9 +232,10 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
           limit: request.limit,
         // One notes-root resolution per call, then existsSync per source id.
         }, { sourceExists: noteLinkSourceProbeFor(workspace) })
+        const links = await filterBacklinks(gate, actorFor(ctx), request.ref, page.links)
         return page.nextCursor
-          ? { ok: true, op: 'backlinks', links: page.links, nextCursor: page.nextCursor }
-          : { ok: true, op: 'backlinks', links: page.links }
+          ? { ok: true, op: 'backlinks', links, nextCursor: page.nextCursor }
+          : { ok: true, op: 'backlinks', links }
       }
     }
   })
@@ -216,7 +247,7 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
     // must never trust the workspaceId argument. Hosts are keyed by the
     // validated id so unknown ids never allocate hosts.
     const workspace = requireWorkspace(ctx, workspaceId)
-    const previews = await hostForWorkspace(workspace.id).resolve(request.refs, actorFor(ctx))
+    const previews = await hostForWorkspace(workspace.id, runtime.acl).resolve(request.refs, actorFor(ctx))
     return previews.map(redactPreviewForWire)
   }, { nativeAction: 'read' })
 }

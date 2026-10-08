@@ -50,6 +50,11 @@ export interface CliArgs {
   model: string
   apiKey: string
   baseUrl: string
+  // migrate-config flags (W1-13: local-only, works regardless of the flag)
+  dryRun: boolean
+  revert: boolean
+  auto: boolean
+  homeDirOverride?: string
 }
 
 export function parseArgs(argv: string[]): CliArgs {
@@ -75,6 +80,10 @@ export function parseArgs(argv: string[]): CliArgs {
   let model = ''
   let apiKey = ''
   let baseUrl = ''
+  let dryRun = false
+  let revert = false
+  let auto = false
+  let homeDirOverride: string | undefined
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
@@ -138,6 +147,18 @@ export function parseArgs(argv: string[]): CliArgs {
       case '--base-url':
         baseUrl = args[++i] ?? ''
         break
+      case '--dry-run':
+        dryRun = true
+        break
+      case '--revert':
+        revert = true
+        break
+      case '--auto':
+        auto = true
+        break
+      case '--home':
+        homeDirOverride = args[++i]
+        break
       case '--help':
       case '-h':
         command = 'help'
@@ -166,7 +187,7 @@ export function parseArgs(argv: string[]): CliArgs {
   if (!apiKey) apiKey = process.env.LLM_API_KEY ?? ''
   if (!baseUrl) baseUrl = process.env.LLM_BASE_URL ?? ''
 
-  return { url, token, workspace, timeout, json, tlsCa, sendTimeout, command, rest, sources, mode, outputFormat, noCleanup, noSpinner, verbose, serverEntry, workspaceDir, provider, model, apiKey, baseUrl }
+  return { url, token, workspace, timeout, json, tlsCa, sendTimeout, command, rest, sources, mode, outputFormat, noCleanup, noSpinner, verbose, serverEntry, workspaceDir, provider, model, apiKey, baseUrl, dryRun, revert, auto, homeDirOverride }
 }
 
 // ---------------------------------------------------------------------------
@@ -830,6 +851,102 @@ async function cmdListen(client: CliRpcClient, args: CliArgs): Promise<void> {
   await new Promise(() => {
     // Never resolves — Ctrl+C exits
   })
+}
+
+// ---------------------------------------------------------------------------
+// migrate-config (W1-13: `~/.rox` → `~/rox`, MIG-13)
+//
+// Local-only: needs no server URL and works regardless of the
+// `storage.visible-root.v1` flag. Never deletes; `~/.rox` is left as a
+// symlink (Windows: junction) to `~/rox`.
+// ---------------------------------------------------------------------------
+
+export interface MigrateConfigRun {
+  /** Process exit code: 0 ok / skipped, 1 not done (deferred, refused, failed), 2 usage. */
+  code: number
+  /** Human-readable lines (non-JSON mode). */
+  lines: string[]
+  /** Machine-readable result (JSON mode). */
+  json: Record<string, unknown>
+}
+
+/**
+ * `migrate-config` core, side-effect free apart from the migration itself
+ * (testable with a temp `--home` and an explicit env).
+ *
+ * - default: the manual path — runs regardless of `storage.visible-root.v1`.
+ * - `--auto`: for install scripts; never prompts, runs only when the flag is
+ *   active (env override or persisted workbench flag) and is a no-op
+ *   otherwise; any outcome that leaves the user on the legacy home
+ *   (deferred, symlink elsewhere, error) exits non-zero.
+ * - `--revert`: manual only (refused by the migrator while the flag is on).
+ */
+export async function runMigrateConfig(
+  args: CliArgs,
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
+): Promise<MigrateConfigRun> {
+  const { homedir } = await import('node:os')
+  const { isVisibleRoxHomeActive } = await import('@rox/shared/config')
+  const { migrateHiddenRoxHome, revertVisibleRoxHome, VISIBLE_HOME_USABLE_OUTCOMES } = await import('@rox/shared/identity')
+  const homeDir = args.homeDirOverride ?? homedir()
+  const flagActive = isVisibleRoxHomeActive(env, homeDir)
+  const dry = args.dryRun ? ' (dry run)' : ''
+  if (args.auto && args.revert) {
+    return { code: 2, lines: ['--auto cannot be combined with --revert'], json: { error: 'auto-revert-unsupported' } }
+  }
+  if (args.revert) {
+    const result = revertVisibleRoxHome({ homeDir, env, dryRun: args.dryRun })
+    const ok = result.outcome === 'reverted' || result.outcome === 'noop'
+    return {
+      code: ok ? 0 : 1,
+      lines: [
+        result.outcome === 'reverted'
+          ? `Reverted: ~/rox moved back to the hidden home${dry}`
+          : `Revert ${result.outcome}${dry}: ${result.diagnostics.join('; ') || 'nothing to do'}`,
+      ],
+      json: { ...result },
+    }
+  }
+  if (args.auto && !flagActive) {
+    return {
+      code: 0,
+      lines: ['Skipped: storage.visible-root.v1 is off (nothing changed)'],
+      json: { outcome: 'skipped-flag-off', flagActive: false },
+    }
+  }
+  let result: Awaited<ReturnType<typeof migrateHiddenRoxHome>>
+  try {
+    // An explicit run retries a merge whose final rename failed earlier
+    // (the boot migration waits for its cooldown); --auto never forces it.
+    result = migrateHiddenRoxHome({ homeDir, env, dryRun: args.dryRun, retryFailedMerge: !args.auto })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    return { code: 1, lines: [`Migration failed (nothing deleted): ${message}`], json: { outcome: 'error', error: message } }
+  }
+  const usable = VISIBLE_HOME_USABLE_OUTCOMES.has(result.outcome)
+  const lines = [
+    `Config home: ${result.visibleDir}`,
+    `Outcome: ${result.outcome}${dry}`,
+    `Visible-root flag active: ${flagActive ? 'yes' : 'no'}`,
+  ]
+  if (result.conflicts.length > 0) {
+    lines.push(`Conflicts kept under .migration/conflicts: ${result.conflicts.join(', ')}`)
+  }
+  if (result.relaunchRequired) {
+    lines.push('The compatibility link could not be created: restart running Rox apps and servers so they use ~/rox')
+  }
+  if (result.reportPath) lines.push(`Report: ${result.reportPath}`)
+  if (result.announceToast && !args.dryRun) lines.push('Rox files are now in the ~/rox folder')
+  if (result.diagnostics.length > 0) lines.push(`Notes: ${result.diagnostics.join('; ')}`)
+  return { code: usable || result.outcome === 'skipped-env-override' ? 0 : 1, lines, json: { ...result, flagActive } }
+}
+
+async function cmdMigrateConfig(args: CliArgs): Promise<void> {
+  const run = await runMigrateConfig(args)
+  if (args.json) out(run.json, true)
+  else if (run.code === 0) out(run.lines.join('\n'), false)
+  else err(run.lines.join('\n'))
+  if (run.code !== 0) process.exit(run.code)
 }
 
 // ---------------------------------------------------------------------------
@@ -1977,6 +2094,14 @@ Commands:
   cancel <id>            Cancel in-progress processing
   invoke <channel> [...] Raw RPC call with JSON args
   listen <channel>       Subscribe to push events (Ctrl+C to stop)
+  migrate-config         Move ~/.rox to ~/rox (MIG-13, never deletes)
+                         --dry-run       Preview only, write nothing
+                         --revert        Move ~/rox back to ~/.rox (refused
+                                         with conflicts)
+                         --auto          Install scripts: no prompts, runs only
+                                         when storage.visible-root.v1 is on,
+                                         exits 1 if deferred or failed
+                         --home <path>   Test override for the home directory
   --validate-server      Multi-step server integration test
                          --verbose, -v       Show server stderr output
 
@@ -2031,6 +2156,13 @@ export async function main(argv: string[] = process.argv): Promise<void> {
   // validate can spawn its own server or use --url
   if (args.command === 'validate') {
     await cmdValidate(args)
+    return
+  }
+
+  // migrate-config is local-only (W1-13): no server URL needed, works
+  // regardless of the storage.visible-root.v1 flag.
+  if (args.command === 'migrate-config') {
+    await cmdMigrateConfig(args)
     return
   }
 

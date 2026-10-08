@@ -10,10 +10,9 @@
 
 import * as React from 'react'
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { codeToHtml, bundledLanguages, type BundledLanguage } from 'shiki'
+import type { BundledLanguage } from 'shiki'
 import { cn } from '../../lib/utils'
 import { LANGUAGE_MAP } from './language-map'
-import { resolveShikiTheme } from './zedShikiThemes'
 import { useShikiTheme } from '../../context/ShikiThemeContext'
 
 export interface ShikiCodeViewerProps {
@@ -50,9 +49,16 @@ const LANGUAGE_ALIASES: Record<string, BundledLanguage> = {
   'objc': 'objc',
 }
 
-function isValidLanguage(lang: string): lang is BundledLanguage {
-  const normalized = LANGUAGE_ALIASES[lang] || lang
-  return normalized in bundledLanguages
+// Shiki's runtime loads on the first highlight (shared chunk with CodeBlock),
+// so overlays that embed this viewer keep Shiki off the startup bundle
+// (PERF-04). Lines render unhighlighted until it arrives, as before.
+let shikiModule: Promise<typeof import('../markdown/shiki-highlight')> | null = null
+function loadShiki() {
+  shikiModule ??= import('../markdown/shiki-highlight').catch((error: unknown) => {
+    shikiModule = null
+    throw error
+  })
+  return shikiModule
 }
 
 function getLanguageFromPath(filePath: string, explicit?: string): string {
@@ -97,13 +103,12 @@ export function ShikiCodeViewer({
     async function highlight() {
       // Use provided shikiTheme or fall back to github theme based on mode
       const resolvedShikiTheme = activeShikiTheme || (theme === 'dark' ? 'github-dark' : 'github-light')
-      const lang = isValidLanguage(resolvedLang) ? resolvedLang : 'text'
 
       try {
-        const html = await codeToHtml(code, {
-          lang,
-          theme: resolveShikiTheme(resolvedShikiTheme),
-        })
+        const { highlightCode } = await loadShiki()
+        if (cancelled) return
+        // Plain text unless the alias-normalized language is a bundled grammar.
+        const html = await highlightCode(code, resolvedLang, LANGUAGE_ALIASES[resolvedLang] || resolvedLang, resolvedShikiTheme)
 
         if (!cancelled) {
           setHighlighted(html)
