@@ -2114,6 +2114,11 @@ export class PiAgent extends BaseAgent {
           if (att.markdownPath) {
             pathInfo += `\n[Markdown version: ${att.markdownPath}]`;
           }
+          // Audio attached to the chat is transcribed on attach: hand the model
+          // the recognized text next to the stored path.
+          if (att.transcript?.status === 'done' && att.transcript.text.trim()) {
+            pathInfo += `\n[Transcript${att.transcript.language ? ` (${att.transcript.language})` : ''}]\n${att.transcript.text.trim()}`;
+          }
           attachmentParts.push(pathInfo);
         }
       }

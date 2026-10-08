@@ -107,6 +107,15 @@ export const CHANNEL_MAP = {
   browserCookieAutoStatus: invoke(RPC_CHANNELS.browserProfile.COOKIE_AUTO_STATUS),
   browserCookieAutoSet: invoke(RPC_CHANNELS.browserProfile.COOKIE_AUTO_SET),
   browserCookieAutoRun: invoke(RPC_CHANNELS.browserProfile.COOKIE_AUTO_RUN),
+  // Browser Intelligence Pipeline (local-only; reads/stages on this machine)
+  getBrowserIntelState: invoke(RPC_CHANNELS.browserIntel.GET_STATE),
+  setBrowserIntelConsent: invoke(RPC_CHANNELS.browserIntel.SET_CONSENT),
+  getBrowserIntelStats: invoke(RPC_CHANNELS.browserIntel.GET_STATS),
+  getBrowserIntelSlots: invoke(RPC_CHANNELS.browserIntel.GET_SLOTS),
+  startBrowserIntelRun: invoke(RPC_CHANNELS.browserIntel.START_RUN),
+  cancelBrowserIntelRun: invoke(RPC_CHANNELS.browserIntel.CANCEL_RUN),
+  onBrowserIntelProgress: listener(RPC_CHANNELS.browserIntel.PROGRESS),
+  onBrowserIntelStateChanged: listener(RPC_CHANNELS.browserIntel.STATE_CHANGED),
   exportRemoteSessionTransfer: invoke(RPC_CHANNELS.sessions.EXPORT_REMOTE_TRANSFER),
   importRemoteSessionTransfer: invoke(RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER),
   getPendingPlanExecution: invoke(RPC_CHANNELS.sessions.GET_PENDING_PLAN_EXECUTION),
@@ -257,6 +266,8 @@ export const CHANNEL_MAP = {
   fabricRevokeConnection: invoke(RPC_CHANNELS.fabric.REVOKE_CONNECTION),
   fabricGithubStatus: invoke(RPC_CHANNELS.fabric.GITHUB_STATUS),
   fabricInfisicalHealth: invoke(RPC_CHANNELS.fabric.INFISICAL_HEALTH),
+  fabricInfisicalPreviewAccount: invoke(RPC_CHANNELS.fabric.INFISICAL_PREVIEW_ACCOUNT),
+  fabricInfisicalCommitImport: invoke(RPC_CHANNELS.fabric.INFISICAL_COMMIT_IMPORT),
 
   // Extension Center (S-05)
   extensionsListCatalog: invoke(RPC_CHANNELS.extensions.LIST_CATALOG),

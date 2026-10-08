@@ -298,7 +298,7 @@ export function PanelStackContainer({
           transition={transition}
           aria-hidden={!hasNavigator || (isCompact && hasSelectedContent) || undefined}
           {...(!hasNavigator || (isCompact && hasSelectedContent) ? { inert: '' } : {})}
-          className="overflow-hidden shrink-0 z-[2] rox-shell-pane rox-shell-divider-r"
+          className={`overflow-hidden shrink-0 z-[2] rox-shell-pane ${hasNavigator ? 'rox-shell-divider-r' : ''}`}
           style={{
             position: isCompact ? 'absolute' : 'relative',
             flexGrow: expandedNavigator ? 1 : 0,

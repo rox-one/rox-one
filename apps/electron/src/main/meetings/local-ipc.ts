@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { CONFIG_DIR, getWorkspaceByNameOrId } from '@rox/shared/config'
 import { getServerServiceKey } from '@rox/shared/config/server-services'
 import { DeepgramTranscriptionAdapter, deepgramTranscriptionOptions } from '@rox/shared/voice'
-import { MEETINGS_LOCAL_IPC as C, type LocalMeetingPatch, type LocalTranscriptSegmentUpdate } from '../../shared/meetings-local'
+import { MEETINGS_LOCAL_IPC as C, type LocalMeetingPatch, type LocalMeetingSource, type LocalTranscriptSegmentUpdate } from '../../shared/meetings-local'
 import { detectEngine } from './local-asr'
 import { IMPORTABLE_AUDIO_EXTENSIONS, isMeetingId } from './local-model'
 import { LocalMeetingStore, type LocalTranscriptionContext } from './local-store'
@@ -199,7 +199,7 @@ export function registerLocalMeetingsIpc(log?: (message: string, error?: unknown
     return true
   })
 
-  handle(C.REC_START, (e, input: { meetingId?: string; title: string; workspaceId: string | null; mimeType: string }) => {
+  handle(C.REC_START, (e, input: { meetingId?: string; title: string; workspaceId: string | null; mimeType: string; source?: LocalMeetingSource; calendarEventId?: string }) => {
     const context = contextFor(e, input.workspaceId)
     if (input.meetingId) meetingContext(e, input.meetingId)
     return s.recStart({ ...input, workspaceId: windowBindings!.getWorkspaceForWindow(e.sender.id)!, owner: e.sender.id, transcriptionContext: context })

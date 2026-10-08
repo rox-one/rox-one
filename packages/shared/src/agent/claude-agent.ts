@@ -2455,6 +2455,25 @@ This is a branched conversation. All prior messages in this conversation are par
   // formatWorkspaceCapabilities() is now in PromptBuilder
 
   /**
+   * Describe one attachment for the model prompt: file name, stored path, and —
+   * for audio transcribed at attach time — the recognized text itself, so the
+   * model works from the transcript instead of the raw recording.
+   */
+  private formatAttachmentPromptInfo(attachment: FileAttachment): string {
+    let info = `[Attached file: ${attachment.name}]`;
+    info += `\n[Stored at: ${attachment.storedPath}]`;
+    if (attachment.markdownPath) {
+      info += `\n[Markdown version: ${attachment.markdownPath}]`;
+    }
+    const transcript = attachment.transcript;
+    if (transcript?.status === 'done' && transcript.text.trim()) {
+      info += `\n[Transcript${transcript.language ? ` (${transcript.language})` : ''}]`;
+      info += `\n${transcript.text.trim()}`;
+    }
+    return info;
+  }
+
+  /**
    * Build a simple text prompt with embedded text file contents (for text-only messages)
    * Prepends date/time context for prompt caching optimization (keeps system prompt static)
    * Injects session state (including mode state) for every message
@@ -2482,12 +2501,7 @@ This is a branched conversation. All prior messages in this conversation are par
     if (attachments) {
       for (const attachment of attachments) {
         if (attachment.storedPath) {
-          let pathInfo = `[Attached file: ${attachment.name}]`;
-          pathInfo += `\n[Stored at: ${attachment.storedPath}]`;
-          if (attachment.markdownPath) {
-            pathInfo += `\n[Markdown version: ${attachment.markdownPath}]`;
-          }
-          parts.push(pathInfo);
+          parts.push(this.formatAttachmentPromptInfo(attachment));
         }
       }
     }
@@ -2532,13 +2546,9 @@ This is a branched conversation. All prior messages in this conversation are par
         // Add path info text block so the agent knows where the file is stored
         // This enables the agent to use the Read tool to access text/office files
         if (attachment.storedPath) {
-          let pathInfo = `[Attached file: ${attachment.name}]\n[Stored at: ${attachment.storedPath}]`;
-          if (attachment.markdownPath) {
-            pathInfo += `\n[Markdown version: ${attachment.markdownPath}]`;
-          }
           contentBlocks.push({
             type: 'text',
-            text: pathInfo,
+            text: this.formatAttachmentPromptInfo(attachment),
           });
         }
 

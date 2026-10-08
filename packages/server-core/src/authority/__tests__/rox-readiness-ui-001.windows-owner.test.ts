@@ -37,7 +37,7 @@ test('Windows ownership keeps a fixed encoded script and a literal target outsid
   expect(script).not.toContain('$identity.Groups')
   expect(script).not.toContain(target)
   expect(script).not.toContain('Set-Acl')
-  expect(invocations[0]!.options).toMatchObject({ timeout: 30_000, maxBuffer: 1_024, windowsHide: true,
+  expect(invocations[0]!.options).toMatchObject({ timeout: 60_000, maxBuffer: 1_024, windowsHide: true,
     stdio: ['ignore', 'pipe', 'pipe'], env: { ...env, ROX_NATIVE_OWNER_PROBE_PATH: target } })
   expect(env.ROX_NATIVE_OWNER_PROBE_PATH).toBe('stale inherited target')
 })
@@ -110,7 +110,7 @@ async function runOwnerHost(program: string) {
       'SystemDrive', 'ComSpec', 'PATHEXT', 'NUMBER_OF_PROCESSORS', 'PROCESSOR_ARCHITECTURE', 'OS']) {
       if (process.env[key]) environment[key] = process.env[key]
     }
-    return await captureTestCommand(['node', executable], { cwd: root, environment, timeoutMs: 60_000 })
+    return await captureTestCommand(['node', executable], { cwd: root, environment, timeoutMs: 420_000 })
   } finally { rmSync(directory, { recursive: true, force: true }) }
 }
 
@@ -150,7 +150,7 @@ if (process.platform === 'win32') test('actual Windows identity accepts the user
   expect({ exitCode: result.exitCode, stdout: result.stdout, stderr: result.stderr, timedOut: result.timedOut }).toEqual({
     exitCode: 0, stdout: 'actual Windows user/default-token-owner/foreign ACL callback guards passed\n', stderr: '', timedOut: false,
   })
-}, 90_000)
+}, 480_000)
 
 // Real Node host execution also exposes the Windows SID/ACL command and the
 // complete constructor/reopen path in the Windows CI lane; no native UI starts.
@@ -179,4 +179,4 @@ test('real Node host creates and reopens authority while retaining hardlink and 
     expect({ exitCode: resultHost.exitCode, stdout: resultHost.stdout, stderr: resultHost.stderr, timedOut: resultHost.timedOut }).toEqual({
       exitCode: 0, stdout: 'actual native authority owner/create/reopen/hardlink/alias guards passed\n', stderr: '', timedOut: false,
     })
-}, 90_000)
+}, 480_000)

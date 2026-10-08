@@ -141,5 +141,12 @@ describe('PRD acceptance: context docs in system prompt', () => {
     const spawnArgs = getOmpSpawnSystemPromptArgs(composed)
     expect(spawnArgs).toEqual(['--append-system-prompt', composed])
     expect(spawnArgs[1]).toContain(marker)
+
+    // No registered provider → the composed prompt is byte-identical across
+    // calls and contains no cognitive-profile block (users who never opt in
+    // see the exact same payload as before this feature).
+    const composedAgain = composeOmpAppendSystemPrompt({ workingDirectory: configDir })
+    expect(composedAgain).toBe(composed)
+    expect(composed).not.toContain('<user_cognitive_profile>')
   })
 })

@@ -37,6 +37,7 @@ import type { EntityRef } from '@rox/core/entities'
 // W1-08 (#1505): entity links/preview bridge types.
 import type { EntityLink, EntityPreview } from '@rox/core/entities'
 import type { EntityLinksRequest } from '@rox/shared/entities'
+import type { RoxAccountSnapshot } from '@rox/shared/auth'
 
 // Mode types from dedicated subpath export (avoids pulling in SDK)
 import type { PermissionMode } from '@rox/shared/agent/modes';
@@ -318,8 +319,8 @@ export type {
 
 import type { ViewConfig as KnowledgeViewConfig } from '@rox/shared/views';
 export type { KnowledgeViewConfig };
-import type { SecretRefEntry, SecretRefsSettingsPayload } from '@rox/shared/secrets';
-export type { SecretRefEntry, SecretRefsSettingsPayload };
+import type { SecretRefEntry, SecretRefsSettingsPayload, InfisicalAccountPreview, InfisicalAccountPreviewInput } from '@rox/shared/secrets';
+export type { SecretRefEntry, SecretRefsSettingsPayload, InfisicalAccountPreview, InfisicalAccountPreviewInput };
 import type { ZenShellSnapshot } from './shell-appearance';
 import type { ListDocTreeResult } from '@rox/core/knowledge/providers/siyuan';
 
@@ -549,6 +550,12 @@ import type {
   SiyuanSurfaceState,
   ExtensionSurfaceState,
 } from '@rox/shared/protocol'
+
+// Browser Intelligence Pipeline contract — frozen in the workspace package
+// `@rox/browser-intel` (already linked into this app's node_modules). Type-only
+// so nothing from the package is bundled into the renderer.
+import type { BrowserIntelState, IntelligenceStats, ProfileSlotRecord, PipelineProgress } from '@rox/browser-intel'
+export type { BrowserIntelState, IntelligenceStats, ProfileSlotRecord, PipelineProgress }
 
 export interface WorkGraphConnectionRecord {
   readonly id: string
@@ -869,6 +876,8 @@ export interface ElectronAPI {
     scannedAt: number
     cachePath: string
     truncated?: boolean
+    aborted?: boolean
+    unavailable?: 'not-live'
   }>
   foreignPersistSessions(args: {
     workspaceId: string
@@ -896,6 +905,15 @@ export interface ElectronAPI {
   browserCookieAutoStatus(): Promise<BrowserCookieAutoStatus>
   browserCookieAutoSet(args: { consent: boolean; profileId?: string; domains?: string[] }): Promise<BrowserCookieAutoStatus>
   browserCookieAutoRun(): Promise<BrowserCookieAutoStatus>
+  // Browser Intelligence Pipeline (local-only; reads/stages on this machine)
+  getBrowserIntelState(): Promise<BrowserIntelState>
+  setBrowserIntelConsent(consent: boolean): Promise<BrowserIntelState>
+  getBrowserIntelStats(): Promise<IntelligenceStats>
+  getBrowserIntelSlots(): Promise<ProfileSlotRecord[]>
+  startBrowserIntelRun(): Promise<{ started: boolean }>
+  cancelBrowserIntelRun(): Promise<{ cancelled: boolean }>
+  onBrowserIntelProgress(cb: (progress: PipelineProgress) => void): () => void
+  onBrowserIntelStateChanged(cb: (state: BrowserIntelState) => void): () => void
   importBrowserProfile(args: {
     workspaceId: string
     profileId: string
@@ -1515,6 +1533,8 @@ export interface ElectronAPI {
   getCredentialMigrationStatus(): Promise<CredentialMigrationResult<CredentialMigrationStatusDto>>
   rollbackCredentialMigration(migrationId: string): Promise<CredentialMigrationResult<CredentialMigrationRollbackDto>>
   fabricInfisicalHealth(): Promise<{ available: boolean; providerId?: string }>
+  fabricInfisicalPreviewAccount(input: InfisicalAccountPreviewInput): Promise<InfisicalAccountPreview>
+  fabricInfisicalCommitImport(input: InfisicalAccountPreviewInput & { clientSecret: string; workspaceId?: string }): Promise<{ id: string }>
   fabricListConnections(...args: unknown[]): Promise<unknown>
   fabricCreateConnection(...args: unknown[]): Promise<unknown>
   fabricListCredentials(...args: unknown[]): Promise<unknown>
@@ -1699,14 +1719,18 @@ export interface ElectronAPI {
     connected: boolean
     authBaseUrl: string
     user: { id?: string; email?: string; name?: string } | null
-    account?: import('@rox/shared/auth').RoxAccountSnapshot | null
+    account?: RoxAccountSnapshot | null
     connectError?: string | null
     connectExpiresAt?: number | null
+    /** True while the last snapshot is served from cache during a broker outage. */
+    updating?: boolean
+    /** Epoch ms of the last snapshot the broker confirmed; null when never synced. */
+    lastSyncedAt?: number | null
   }>
   clearRoxCloud(): Promise<{ success: boolean }>
   /** Real rox.one balance (GET /api/me/balance) for the connected Rox cloud account. */
   getRoxBalance(): Promise<
-    | { status: 'ok'; balance: number }
+    | { status: 'ok'; balance: number; updating?: boolean; syncedAt?: number | null }
     | { status: 'disconnected' }
     | { status: 'error'; message: string }
   >
@@ -1835,6 +1859,12 @@ export interface ElectronAPI {
     audioBase64: string
     mimeType?: string
     language?: string
+    /**
+     * True when transcribing a file the user explicitly attached to a chat
+     * message. With a server-configured Deepgram key this authorizes the
+     * one-shot upload without the dictation consent dialog.
+     */
+    attachedFile?: boolean
   }): Promise<{
     text: string
     engine: string

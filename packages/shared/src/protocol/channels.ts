@@ -433,6 +433,8 @@ export const RPC_CHANNELS = {
     REVOKE_CONNECTION: 'fabric:revokeConnection',
     GITHUB_STATUS: 'fabric:githubStatus',
     INFISICAL_HEALTH: 'fabric:infisicalHealth',
+    INFISICAL_PREVIEW_ACCOUNT: 'fabric:infisicalPreviewAccount',
+    INFISICAL_COMMIT_IMPORT: 'fabric:infisicalCommitImport',
   },
   extensions: {
     LIST_CATALOG: 'extensions:listCatalog',
@@ -888,6 +890,19 @@ export const RPC_CHANNELS = {
     COOKIE_AUTO_STATUS: 'browserProfile:cookieAutoStatus',
     COOKIE_AUTO_SET: 'browserProfile:cookieAutoSet',
     COOKIE_AUTO_RUN: 'browserProfile:cookieAutoRun',
+  },
+  // browserIntel — Browser Intelligence Pipeline surface. Reads the local
+  // browser profile stores and stages them on this machine only; all channels
+  // are LOCAL_ONLY (never proxied to a remote server).
+  browserIntel: {
+    GET_STATE: 'browserIntel:getState',
+    SET_CONSENT: 'browserIntel:setConsent',
+    GET_STATS: 'browserIntel:getStats',
+    GET_SLOTS: 'browserIntel:getSlots',
+    START_RUN: 'browserIntel:startRun',
+    CANCEL_RUN: 'browserIntel:cancelRun',
+    PROGRESS: 'browserIntel:progress',
+    STATE_CHANGED: 'browserIntel:stateChanged',
   },
   automations: {
     GET: 'automations:get',

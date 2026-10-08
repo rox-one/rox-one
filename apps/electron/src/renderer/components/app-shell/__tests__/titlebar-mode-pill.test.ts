@@ -74,11 +74,18 @@ describe('titlebar mode pill source contract', () => {
     expect(tileMark).toContain('rox-avatar-ink-white.png')
     expect(tileMark).not.toContain('rox-mark-tile-')
   })
-  it('exposes the mode pill on Главная without requiring experimental Workbench chrome', () => {
+  it('exposes the mode pill on every non-compact surface', () => {
     const appShell = read('components/app-shell/AppShell.tsx')
-    expect(topBar).toContain('const showModePill = !isCompact && (modeBarActive ?? !surfaceNavigationActive)')
-    expect(appShell).toContain('modeBarActive={isHomeNavigation(navState)}')
+    expect(topBar).toContain('const showModePill = !isCompact')
+    expect(topBar).not.toContain('modeBarActive')
+    expect(appShell).not.toContain('modeBarActive')
     expect(topBar).not.toContain('const showModePill = chrome.showModeBar')
+  })
+  it('renders muted monochrome icons with a neutral active highlight', () => {
+    expect(pillCss).not.toContain('--mode-color')
+    // No per-mode oklch accents and no filled icon plate.
+    expect(pillCss).not.toContain('oklch(0.55')
+    expect(pillCss).toContain('color-mix(in oklch, var(--foreground) 55%, transparent)')
   })
 
 })

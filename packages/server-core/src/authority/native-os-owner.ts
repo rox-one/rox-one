@@ -10,7 +10,6 @@ const OWNER_PATH_ENV = 'ROX_NATIVE_OWNER_PROBE_PATH'
  * malformed still fails closed. It is large enough for the one-time Windows
  * PowerShell cold start on a fresh host instead of misreporting ownership.
  */
-const PROBE_TIMEOUT_MS = 30_000
 const OWNER_SCRIPT = `
 $ErrorActionPreference = 'Stop'
 $identity = $null
@@ -66,7 +65,7 @@ export function requireOsOwner(path: string, dependencies: OsOwnerDependencies =
     const result = (dependencies.exec ?? execFileSync)(executable,
       ['-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', OWNER_COMMAND], {
         env: { ...env, [OWNER_PATH_ENV]: path }, encoding: 'utf8', windowsHide: true,
-        timeout: PROBE_TIMEOUT_MS, maxBuffer: 1_024, stdio: ['ignore', 'pipe', 'pipe'],
+        timeout: 60_000, maxBuffer: 1_024, stdio: ['ignore', 'pipe', 'pipe'],
       })
     if (result.trim() === '1') return
   } catch { /* Missing, denied, timed-out and malformed probes all fail closed. */ }

@@ -371,7 +371,7 @@ export function LocalMeetingDetail(props: {
   ]
 
   const tr = transcriptTone(m)
-  const sourceLabel = m.source === 'import' ? t('meetings.local.source.import') : m.source === 'microphone' ? t('meetings.local.source.mic') : t('meetings.local.source.none')
+  const sourceLabel = m.source === 'import' ? t('meetings.local.source.import') : m.source === 'microphone' ? t('meetings.local.source.mic') : m.source === 'calendar' ? t('meetings.local.source.calendar') : t('meetings.local.source.none')
 
   const header = (
     <header className="px-5 pt-4">

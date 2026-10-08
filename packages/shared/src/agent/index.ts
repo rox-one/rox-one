@@ -13,6 +13,14 @@ export * from './omp-first-run.ts';
 export * from './live-turn-gate.ts';
 export * from './options.ts';
 
+// Cognitive profile injection (host-registered provider, consumed at OMP spawn)
+export {
+  setCognitiveProfileProvider,
+  getCognitiveProfileBlock,
+  sanitizeCognitiveProfileBlock,
+  resetCognitiveProfileProvider,
+} from './cognitive-profile.ts';
+
 // Export session-scoped-tools - tools scoped to a specific session
 export {
   // Session-scoped tools provider

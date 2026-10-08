@@ -98,7 +98,11 @@
       "comment": "Calendar read operations: read events, filter by date"
     },
     {
-      "pattern": "^(pdf-tool|xlsx-tool|img-tool|docx-tool|pptx-tool|ical-tool)\\s*$",
+      "pattern": "^hindsight\\s+(--check|--help)\\b",
+      "comment": "Browser history extraction: resolve executable, print help (read-only)"
+    },
+    {
+      "pattern": "^(pdf-tool|xlsx-tool|img-tool|docx-tool|pptx-tool|ical-tool|hindsight)\\s*$",
       "comment": "CLI tools: bare invocation (prints help)"
     },
     {

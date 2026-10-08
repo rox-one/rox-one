@@ -13,6 +13,13 @@ export { InlineExecution, mapToolEventToActivity, type InlineExecutionProps, typ
 export { TurnCardActionsMenu, type TurnCardActionsMenuProps } from './TurnCardActionsMenu'
 export { SessionViewer, type SessionViewerProps, type SessionViewerMode } from './SessionViewer'
 export { UserMessageBubble, type UserMessageBubbleProps } from './UserMessageBubble'
+export {
+  AudioTranscriptActionsProvider,
+  AudioTranscriptActionsContext,
+  type AudioTranscriptActions,
+  type AudioTranscriptRetry,
+  type AudioTranscriptContext,
+} from './audio-transcript-actions'
 export { MessageHoverDock, type MessageHoverDockProps } from './MessageHoverDock'
 export { SideThreadMenu, type SideThreadMenuProps } from './SideThreadMenu'
 export {

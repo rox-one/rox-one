@@ -16,7 +16,7 @@ const sidPattern = /^S-1-\d+(?:-\d+){1,15}$/
  * and module-analysis build on a fresh host, which never completes inside a
  * bare 5s budget and therefore cannot cache itself between probes.
  */
-const PROBE_TIMEOUT_MS = 45_000
+const PROBE_TIMEOUT_MS = 180_000
 
 function ownerFailure(): Error {
   return new Error('maintenance requires the state directory OS owner')
@@ -141,7 +141,7 @@ function windowsPrivatePaths(paths: readonly PrivatePath[], operation: WindowsOp
   const executable = win32.join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe')
   const result = spawnSync(executable, ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(windowsPrivatePathsScript, 'utf16le').toString('base64')], {
     input: Buffer.from(JSON.stringify({ paths, operation }), 'utf8').toString('base64'),
-    encoding: 'utf8', windowsHide: true, timeout: PROBE_TIMEOUT_MS, maxBuffer: 64 * 1024,
+    encoding: 'utf8', windowsHide: true, timeout: 180_000, maxBuffer: 64 * 1024,
     // No inherited PowerShell module/profile or runtime-loader overrides, but the
     // user/temp locations PowerShell needs for its one-time start and module cache.
     env: windowsProbeEnvironment(systemRoot, executable, process.env),
