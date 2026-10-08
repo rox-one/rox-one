@@ -129,10 +129,10 @@ describe('~/rox linking into the hidden tree (finding 1)', () => {
     }))
 })
 
-describe('conflict stashes are never overwritten (finding 2)', () => {
-  // Attempt 1 stashes the older visible config (V0) and copies the hidden
-  // one in, then the final rename fails (e.g. Windows EBUSY). The app keeps
-  // writing to ~/rox; attempt 2 stashes the other side.
+describe('conflict stashes are never overwritten (finding 2; review 7: ~/rox with user data wins)', () => {
+  // Attempt 1 stashes the legacy config (H) — ~/rox holds user data and is
+  // authoritative — then the final rename fails (e.g. Windows EBUSY). The app
+  // keeps writing to ~/rox; the retry never stashes H again.
   const failFinalRenameOnce = () => {
     let failed = false
     return (source: string, destination: string): void => {
@@ -150,29 +150,35 @@ describe('conflict stashes are never overwritten (finding 2)', () => {
     utimesSync(join(home, 'rox', 'config.json'), new Date('2020-01-01'), new Date('2020-01-01'))
   }
 
-  it('repro: a retry after a failed rename keeps V0 (per-attempt dirs)', () =>
+  it('repro: a retry after a failed rename keeps ~/rox and its stash of H; nothing is stashed twice', () =>
     withHome((home) => {
       plant(home)
       const failed = migrateHiddenRoxHome(opts(home, { timestamp: 'ts-a', rename: failFinalRenameOnce() }))
       expect(failed.outcome).toBe('deferred-unmovable')
-      expect(failed.diagnostics).toEqual(['storage.migration.mergeRenameFailed', 'rename:EBUSY'])
-      expect(readFileSync(join(home, 'rox', '.migration', 'conflicts', 'ts-a', 'config.json'), 'utf8')).toContain('V0')
+      expect(failed.diagnostics).toEqual(['storage.migration.mergeRenameFailed', 'rename:EBUSY', 'attempts:1'])
+      expect(failed.conflicts).toEqual(['ts-a/config.json'])
+      expect(readFileSync(join(home, 'rox', '.migration', 'conflicts', 'ts-a', 'config.json'), 'utf8')).toContain('"H"')
+      expect(readFileSync(join(home, 'rox', 'config.json'), 'utf8')).toContain('V0')
       writeFileSync(join(home, 'rox', 'config.json'), '{"workspaces":[{"id":"V1"}]}') // newer edit in ~/rox
       const result = migrateHiddenRoxHome(opts(home, { timestamp: 'ts-b' }))
       expect(result.outcome).toBe('merged')
-      expect(readFileSync(join(home, 'rox', '.migration', 'conflicts', 'ts-a', 'config.json'), 'utf8')).toContain('V0')
-      expect(result.conflicts).toEqual(expect.arrayContaining(['ts-a/config.json', 'ts-b/config.json']))
+      expect(readFileSync(join(home, 'rox', 'config.json'), 'utf8')).toContain('V1')
+      expect(readFileSync(join(home, 'rox', '.migration', 'conflicts', 'ts-a', 'config.json'), 'utf8')).toContain('"H"')
+      expect(result.conflicts).toEqual(['ts-a/config.json'])
+      expect(existsSync(join(home, 'rox', '.migration', 'conflicts', 'ts-b'))).toBe(false)
     }))
 
-  it('same attempt id: a differing stash gets a suffix instead of replacing V0', () =>
+  it('same attempt id: a changed legacy version gets a suffix instead of replacing the first stash', () =>
     withHome((home) => {
       plant(home)
       expect(migrateHiddenRoxHome(opts(home, { rename: failFinalRenameOnce() })).outcome).toBe('deferred-unmovable')
-      writeFileSync(join(home, 'rox', 'config.json'), '{"workspaces":[{"id":"V1"}]}')
+      // An external writer still on the legacy path changes it after the first attempt.
+      writeFileSync(join(home, '.rox', 'config.json'), '{"workspaces":[{"id":"H2-longer"}]}')
       const result = migrateHiddenRoxHome(opts(home))
-      expect(readFileSync(join(home, 'rox', '.migration', 'conflicts', 'ts-r3', 'config.json'), 'utf8')).toContain('V0')
-      expect(readFileSync(join(home, 'rox', '.migration', 'conflicts', 'ts-r3', 'config.json.1'), 'utf8')).toContain('"H"')
-      expect(result.conflicts).toEqual(expect.arrayContaining(['ts-r3/config.json', 'ts-r3/config.json.1']))
+      expect(readFileSync(join(home, 'rox', '.migration', 'conflicts', 'ts-r3', 'config.json'), 'utf8')).toContain('"H"')
+      expect(readFileSync(join(home, 'rox', '.migration', 'conflicts', 'ts-r3', 'config.json.1'), 'utf8')).toContain('H2-longer')
+      expect(readFileSync(join(home, 'rox', 'config.json'), 'utf8')).toContain('V0')
+      expect(result.conflicts).toEqual(['ts-r3/config.json', 'ts-r3/config.json.1'])
     }))
 })
 
@@ -181,19 +187,43 @@ describe('incomplete-merge marker around the final rename (finding 3)', () => {
     plantHidden(home)
     write(join(home, 'rox', 'config.json'), '{"workspaces":[]}')
   }
+  /** ~/rox holds user data too: the import path (marker, final rename to `.rox.migrated-<ts>`). */
+  const plantBothWithData = (home: string): void => {
+    plantHidden(home)
+    write(join(home, 'rox', 'workspaces', 'v', 'notes.md'), 'visible')
+  }
 
-  it('linkDir failing with ~/.rox still free: original put back, marker restored, retry merges', () =>
+  it('linkDir failing with ~/.rox still free: original put back, marker restored with the failure, retry merges', () =>
     withHome((home) => {
-      plantBoth(home)
+      plantBothWithData(home)
       expect(() =>
         migrateHiddenRoxHome(opts(home, { linkDir: () => { throw errno('EPERM') } })),
       ).toThrow('EPERM')
       expect(lstatSync(join(home, '.rox')).isDirectory()).toBe(true)
       expect(readFileSync(join(home, '.rox', 'config.json'), 'utf8')).toContain('real')
       expect(migratedLeftovers(home)).toEqual([])
-      expect(readMergeIncompleteMarker(join(home, 'rox'))?.choice).toBe('hidden')
-      expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, '.rox'))
+      const marker = readMergeIncompleteMarker(join(home, 'rox'))
+      expect(marker?.choice).toBe('visible')
+      expect(marker?.lastFailure).toEqual(expect.objectContaining({ code: 'EPERM', attempts: 1 }))
+      expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, 'rox'))
       expect(migrateHiddenRoxHome(opts(home, { timestamp: 'ts-retry' })).outcome).toBe('merged')
+      expect(lstatSync(join(home, '.rox')).isSymbolicLink()).toBe(true)
+      expect(readFileSync(join(home, 'rox', 'workspaces', 'real', 'notes.md'), 'utf8')).toBe('mine')
+    }))
+
+  it('data-less ~/rox, linkDir failing: the move is rolled back onto ~/.rox; the retry moves and settles the aside', () =>
+    withHome((home) => {
+      plantBoth(home)
+      expect(() =>
+        migrateHiddenRoxHome(opts(home, { linkDir: () => { throw errno('EPERM') } })),
+      ).toThrow('EPERM')
+      expect(lstatSync(join(home, '.rox')).isDirectory()).toBe(true)
+      expect(existsSync(join(home, 'rox'))).toBe(false)
+      expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, '.rox'))
+      const retry = migrateHiddenRoxHome(opts(home, { timestamp: 'ts-retry' }))
+      expect(retry.outcome).toBe('migrated')
+      expect(retry.conflicts).toEqual(['ts-r3/config.json'])
+      expect(readFileSync(join(home, 'rox', 'config.json'), 'utf8')).toContain('real')
       expect(lstatSync(join(home, '.rox')).isSymbolicLink()).toBe(true)
     }))
 

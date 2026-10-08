@@ -61,10 +61,11 @@ const write = (path: string, content: string, mtime?: Date): void => {
   writeFileSync(path, content)
   if (mtime) spawnSync('touch', ['-d', mtime.toISOString(), path])
 }
+/** Both trees hold user data: the import path (`~/rox` authoritative, final rename to `.rox.migrated-<ts>`). */
 const plantBoth = (home: string): void => {
   write(join(home, '.rox', 'config.json'), '{"workspaces":[{"id":"real"}]}')
   write(join(home, '.rox', 'workspaces', 'real', 'notes.md'), 'mine')
-  write(join(home, 'rox', 'config.json'), '{"workspaces":[]}')
+  write(join(home, 'rox', 'config.json'), '{"workspaces":[{"id":"v"}]}')
 }
 const opts = (home: string, extra?: Partial<MigrateHiddenRoxHomeOptions>): MigrateHiddenRoxHomeOptions => ({
   homeDir: home,
@@ -150,7 +151,7 @@ describe('no destructive probe: non-destructive pre-checks (option A)', () => {
 describe('a failed final rename keeps ~/.rox and retries in bounds', () => {
   const T0 = Date.parse('2026-10-08T07:00:00Z')
 
-  it('transient (EBUSY): retried on the next launches, then held for the cooldown; ~/.rox wins meanwhile', () =>
+  it('transient (EBUSY): retried on the next launches, then held for the cooldown; ~/rox stays authoritative meanwhile', () =>
     withHome((home) => {
       plantBoth(home)
       const copy = countingCopy()
@@ -161,9 +162,9 @@ describe('a failed final rename keeps ~/.rox and retries in bounds', () => {
           opts(home, { timestamp: `l${attempt}`, rename: fail.rename, copyFile: copy.copyFile, now: () => T0 + attempt }),
         )
         expect(result.outcome).toBe('deferred-unmovable')
-        expect(result.diagnostics).toEqual(['storage.migration.mergeRenameFailed', 'rename:EBUSY'])
+        expect(result.diagnostics).toEqual(['storage.migration.mergeRenameFailed', 'rename:EBUSY', `attempts:${attempt}`])
         expect(readMergeIncompleteMarker(join(home, 'rox'))?.lastFailure).toEqual({ code: 'EBUSY', at: T0 + attempt, attempts: attempt })
-        expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, '.rox'))
+        expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, 'rox'))
         copies = copy.calls.length
       }
       const held = migrateHiddenRoxHome(opts(home, { timestamp: 'held', rename: fail.rename, copyFile: copy.copyFile, now: () => T0 + 3_600_000 }))
@@ -172,6 +173,7 @@ describe('a failed final rename keeps ~/.rox and retries in bounds', () => {
         'storage.migration.mergeRetryLater',
         'failed:EBUSY',
         `retryAfter:${new Date(T0 + ROX_MERGE_TRANSIENT_RETRIES + ROX_MERGE_RETRY_COOLDOWN_MS).toISOString()}`,
+        `attempts:${ROX_MERGE_TRANSIENT_RETRIES}`,
       ])
       expect(copy.calls.length).toBe(copies)
       expect(existsSync(join(home, 'rox', '.migration', 'conflicts', 'held'))).toBe(false)
@@ -199,7 +201,7 @@ describe('a failed final rename keeps ~/.rox and retries in bounds', () => {
       plantBoth(home)
       const fail = failFinalRename(home, 'EXDEV')
       migrateHiddenRoxHome(opts(home, { rename: fail.rename, now: () => T0 }))
-      // The app keeps using ~/.rox meanwhile.
+      // A writer still on the legacy path (started before the merge) adds a file meanwhile.
       write(join(home, '.rox', 'workspaces', 'real', 'later.md'), 'written after the failure')
       const forced = migrateHiddenRoxHome(opts(home, { timestamp: 'forced', retryFailedMerge: true, now: () => T0 + 5 }))
       expect(forced.outcome).toBe('merged')

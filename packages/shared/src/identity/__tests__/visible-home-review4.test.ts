@@ -86,27 +86,28 @@ describe('merge copies are atomic (finding 1)', () => {
     copyFileSync(source, destination)
   }
 
-  it('hidden-wins path: a crash mid-copy leaves the old target; the retry installs the intact file', () =>
+  it('stash path: a crash mid-copy leaves no truncated stash; the retry keeps the intact legacy file once', () =>
     withHome((home) => {
       plantBoth(home)
       write(join(home, '.rox', 'big.json'), INTACT, new Date('2025-01-01'))
       write(join(home, 'rox', 'big.json'), OLD, new Date('2020-01-01'))
       expect(() => migrateHiddenRoxHome(opts(home, { timestamp: 'ts-a', copyFile: crashingCopy('big.json') }))).toThrow('EIO')
-      // The target was never truncated (the old code left 100 bytes with a fresh mtime that won the retry).
+      // ~/rox (user data) is authoritative: its file is never replaced.
       expect(readFileSync(join(home, 'rox', 'big.json'), 'utf8')).toBe(OLD)
       // A killed process would also leave its temp behind.
-      writeFileSync(join(home, 'rox', '.big.json.rox-copy.tmp'), INTACT.slice(0, 100))
+      mkdirSync(join(home, 'rox', '.migration', 'conflicts', 'ts-a'), { recursive: true })
+      writeFileSync(join(home, 'rox', '.migration', 'conflicts', 'ts-a', '.big.json.rox-copy.tmp'), INTACT.slice(0, 100))
 
-      const result = migrateHiddenRoxHome(opts(home, { timestamp: 'ts-b' }))
+      // A thrown error is held by the retry rule; an explicit migrate-config retries at once.
+      const result = migrateHiddenRoxHome(opts(home, { timestamp: 'ts-b', retryFailedMerge: true }))
       expect(result.outcome).toBe('merged')
-      expect(readFileSync(join(home, 'rox', 'big.json'), 'utf8')).toBe(INTACT)
-      expect(existsSync(join(home, 'rox', '.big.json.rox-copy.tmp'))).toBe(false)
-      // Only the old visible version is stashed; never a truncated copy.
+      expect(readFileSync(join(home, 'rox', 'big.json'), 'utf8')).toBe(OLD)
+      // Never a truncated stash; the intact legacy file is kept exactly once.
       for (const rel of conflictFiles(home)) {
         const full = join(home, 'rox', '.migration', 'conflicts', rel)
-        if (lstatSync(full).isFile()) expect(readFileSync(full, 'utf8')).not.toBe(INTACT.slice(0, 100))
+        if (lstatSync(full).isFile() && !rel.endsWith('.rox-copy.tmp')) expect(readFileSync(full, 'utf8')).toBe(INTACT)
       }
-      expect(conflictFiles(home)).toContain(join('ts-b', 'big.json'))
+      expect(result.conflicts).toEqual(['ts-b/big.json'])
     }))
 
   it('new-file path: a crash mid-copy leaves no target; the retry copies it whole', () =>
@@ -117,7 +118,7 @@ describe('merge copies are atomic (finding 1)', () => {
       expect(existsSync(join(home, 'rox', 'new.json'))).toBe(false)
       expect(readdirSync(join(home, 'rox')).filter((n) => n.endsWith('.rox-copy.tmp'))).toEqual([])
 
-      const result = migrateHiddenRoxHome(opts(home, { timestamp: 'ts-b' }))
+      const result = migrateHiddenRoxHome(opts(home, { timestamp: 'ts-b', retryFailedMerge: true }))
       expect(result.outcome).toBe('merged')
       expect(readFileSync(join(home, 'rox', 'new.json'), 'utf8')).toBe(INTACT)
       expect(result.conflicts).toEqual([])
@@ -225,7 +226,7 @@ describe('a legacy dir that cannot be renamed away defers (finding 3)', () => {
       expect(existsSync(join(home, '.rox', ROX_HOME_MIGRATION_MANIFEST_NAME))).toBe(false)
     }))
 
-  it('both trees: a failed final rename defers, keeps ~/.rox authoritative and does not copy again on the next launch', () =>
+  it('both trees: a failed final rename defers, keeps ~/rox (user data) authoritative and does not copy again on the next launch', () =>
     withHome((home) => {
       plantBoth(home)
       write(join(home, '.rox', 'big.json'), 'H', new Date('2025-01-01'))
@@ -234,12 +235,12 @@ describe('a legacy dir that cannot be renamed away defers (finding 3)', () => {
       const now = Date.parse('2026-10-08T07:00:00Z')
       const first = migrateHiddenRoxHome(opts(home, { timestamp: 'launch-1', rename: pinnedRename(home), copyFile: copy.copyFile, now: () => now }))
       expect(first.outcome).toBe('deferred-unmovable')
-      expect(first.diagnostics).toEqual(['storage.migration.mergeRenameFailed', 'rename:EXDEV'])
+      expect(first.diagnostics).toEqual(['storage.migration.mergeRenameFailed', 'rename:EXDEV', 'attempts:1'])
       const copiedOnce = copy.calls.length
       expect(copiedOnce).toBeGreaterThan(0)
       expect(lstatSync(join(home, '.rox')).isDirectory()).toBe(true)
-      expect(readMergeIncompleteMarker(join(home, 'rox'))).toMatchObject({ choice: 'hidden', lastFailure: { code: 'EXDEV', at: now, attempts: 1 } })
-      expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, '.rox'))
+      expect(readMergeIncompleteMarker(join(home, 'rox'))).toMatchObject({ choice: 'visible', lastFailure: { code: 'EXDEV', at: now, attempts: 1 } })
+      expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, 'rox'))
       const second = migrateHiddenRoxHome(opts(home, { timestamp: 'launch-2', rename: pinnedRename(home), copyFile: copy.copyFile, now: () => now + 60_000 }))
       expect(second.outcome).toBe('deferred-retry')
       expect(second.diagnostics[0]).toBe('storage.migration.mergeRetryLater')

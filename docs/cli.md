@@ -142,27 +142,48 @@ The migration itself also defers while the desktop app or a server is running,
 and when `~/rox` already holds files that are not a Rox home (nothing is moved,
 merged or re-permissioned). A `~/rox` that is only a link into the legacy
 home is replaced by the real folder (the link itself is removed, never its
-target). When both folders hold different versions of a file, the unused one
-is kept under `~/rox/.migration/conflicts/<timestamp>/` (one folder per
-attempt; nothing there is ever overwritten). Only `migrate-config` and the desktop app (once,
-at launch, with the flag on) ever move files; other commands just read the
-current location.
+target). Only `migrate-config` and the desktop app (once, at launch, with the
+flag on) ever move files; other commands just read the current location.
+
+When both folders exist, the one Rox already uses stays in charge before,
+during and after the move, so no process ever switches folders halfway:
+
+- `~/rox` holds your data (it has workspaces): Rox keeps using `~/rox`, and
+  what `~/.rox` still has is brought over. Files missing in `~/rox` are
+  copied, identical files are skipped, and a different `~/.rox` version is
+  kept under `~/rox/.migration/conflicts/<timestamp>/` (one folder per
+  attempt; nothing there is ever overwritten). `~/rox` always keeps its own
+  version. Then `~/.rox` is renamed to `~/.rox.migrated-<timestamp>`.
+  A retry (see below) remembers what it already brought over in
+  `~/rox/.migration/imported.jsonl`, so files you changed or deleted in
+  `~/rox` meanwhile are never brought back and nothing is kept twice.
+- `~/rox` has no data yet: `~/.rox` stays in use until it is renamed into
+  place. The old `~/rox` is first moved into `~/.rox/.migration/` (files
+  `~/.rox` lacks are copied into `~/.rox` before that), and afterwards only
+  its files that differ are kept under `conflicts/`. Nothing is ever copied
+  into `~/rox` while `~/.rox` is the folder in use.
 
 Files are copied atomically (temp file, then rename), so an interrupted
-merge never leaves a truncated file behind. A link inside `~/rox` (for
-example to a dotfiles repo) is never written through: the legacy version is
-kept under `conflicts/` instead. A legacy link that differs from `~/rox` is
-kept there too. Before copying, the migration checks (without renaming
-anything) that `~/.rox` is not a mount point or a separate volume, that
-`~/rox` is on the same disk and that your home folder is writable; otherwise
-it defers (`deferred-unmovable`) without copying anything. Lock files and
-migration bookkeeping at the top of `~/.rox` are not copied; they stay in the
-archived `~/.rox.migrated-<timestamp>`. If renaming `~/.rox` still fails after
-a merge (for example a file is open in another program), `~/.rox` stays in use
-and the partial copy in `~/rox` is not used. A file in use is retried at the
-next launches (up to three times); after that, or for any other error, the app
-waits 24 hours before copying again. `craft-cli migrate-config` retries at once.
-The Settings page shows why the last move was postponed.
+merge never leaves a truncated file behind. Two files of the same size with
+the same modification time count as identical; otherwise they are compared in
+chunks, so a file of any size is never read into memory at once. A link
+inside `~/rox` (for example to a dotfiles repo) is never written through: the
+legacy version is kept under `conflicts/` instead. A legacy link that differs
+from `~/rox` is kept there too. Before copying, the migration checks (without
+renaming anything) that `~/.rox` is not a mount point or a separate volume and
+that your home folder is writable; when `~/rox` itself has to be moved aside,
+it must be on the same disk too. Otherwise it defers (`deferred-unmovable`)
+without copying anything. Lock files and migration bookkeeping at the top of
+`~/.rox` are not copied; they stay in the archived
+`~/.rox.migrated-<timestamp>`. If a Rox process starts on `~/.rox` while files
+are being brought over, renaming `~/.rox` waits for the next launch. If renaming
+`~/.rox` fails (for example a file is open in another program), or bringing
+files over fails (an unreadable file, a full disk), the folder in use stays
+in use and `~/.rox` keeps everything. A file in use is retried at the next launches (up
+to three times); after that, or for any other error, the app waits 24 hours
+before trying again. `craft-cli migrate-config` retries at once. The Settings
+page shows why the last move was postponed. If the app stopped right after
+renaming `~/.rox`, the next launch creates the missing `~/.rox` link.
 
 While it runs, the migration holds `~/.rox-migrate.lock` (removed afterwards,
 refreshed during long merges). It also honours the desktop app's runtime lock in the temp

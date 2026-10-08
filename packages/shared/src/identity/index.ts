@@ -75,6 +75,8 @@ export {
   ROX_DESKTOP_APP_LOCK_NAME,
   ROX_HOME_MARKER_NAMES,
   ROX_MERGE_INCOMPLETE_MARKER_NAME,
+  ROX_MERGE_IMPORTED_SIDECAR_NAME,
+  hasIncompleteVisibleHomeMerge,
   buildVisibleHomeManifest,
   defaultVisibleHomePaths,
   desktopAppRuntimeLockPath,

@@ -212,7 +212,12 @@ export function uninstallBrandConfig(options?: {
 // Safety contract:
 // - Never deletes user data. The hidden tree is moved/renamed, never removed;
 //   after a merge the original is kept as `.rox.migrated-<ts>`. A legacy dir
-//   that cannot be renamed (cross-device, mount point) defers; nothing is copied.
+//   that cannot be renamed (mount point, file in use) defers; nothing is
+//   copied into `~/rox` while `~/.rox` is the live tree. Only byte-identical
+//   duplicates of a data-less `~/rox` moved aside are dropped.
+// - With both trees present the authoritative one is the one the read-only
+//   resolution uses (`~/rox` when it holds user data), before, during and
+//   after a failed attempt.
 // - `~/.rox` is left as a symlink (Windows: directory junction) to `~/rox`.
 // - Live locked files (server-core / storage writers) defer the migration;
 //   stale locks (dead PID, previous boot, expired TTL) do not.
@@ -233,6 +238,7 @@ import {
   readdirSync as _readdirMigration,
   readFileSync as _readMigrationFile,
   readlinkSync as _readlinkMigration,
+  readSync as _readMigrationFd,
   renameSync as _renameMigration,
   rmdirSync as _rmdirMigration,
   statSync as _statMigration,
@@ -454,7 +460,11 @@ export function readPersistedVisibleRootFlag(homeDir: string = homedir()): boole
  * Returns the file path written.
  */
 export function writePersistedVisibleRootFlag(enabled: boolean, homeDir: string = homedir()): string {
-  const file = visibleRootFlagFilePath(homeDir)
+  return _writeVisibleRootFlagFile(visibleRootFlagFilePath(homeDir), enabled)
+}
+
+/** Read-modify-write of one `workbench-flags.json` (temp + rename). */
+function _writeVisibleRootFlagFile(file: string, enabled: boolean): string {
   const current = _readEnabledFlags(file) ?? []
   const next = current.filter((id) => id !== ROX_STORAGE_VISIBLE_ROOT_FLAG_ID)
   if (enabled) next.push(ROX_STORAGE_VISIBLE_ROOT_FLAG_ID)
@@ -620,16 +630,17 @@ export interface MigrateHiddenRoxHomeOptions {
    */
   copyFile?: (source: string, destination: string) => void
   /**
-   * Retry a merge whose final rename failed even inside the cooldown (an
-   * explicit `migrate-config`). The boot migration waits for a change in the
-   * legacy dir or `ROX_MERGE_RETRY_COOLDOWN_MS`.
+   * Retry a failed merge at once, even while `_mergeRetryBlocked` holds it
+   * (an explicit `migrate-config`). The boot migration retries a transient
+   * failure at the next launches (`ROX_MERGE_TRANSIENT_RETRIES`), otherwise
+   * after `ROX_MERGE_RETRY_COOLDOWN_MS`.
    */
   retryFailedMerge?: boolean
   /** Merged entries between two heartbeats of the migration lock (tests). */
   lockHeartbeatEvery?: number
 }
 
-/** A failed final merge rename is retried after this long (or a legacy change). */
+/** A held failed merge (see `_mergeRetryBlocked`) is retried after this long. */
 export const ROX_MERGE_RETRY_COOLDOWN_MS = 24 * 60 * 60 * 1000
 
 /** Default merged entries between two migration-lock heartbeats. */
@@ -1050,10 +1061,76 @@ function _liveHomeLockHolders(dir: string, options?: MigrateHiddenRoxHomeOptions
   return holders
 }
 
+/** Chunk size of streamed reads (hashing, byte comparison): never a whole-file buffer. */
+const _STREAM_CHUNK_BYTES = 1024 * 1024
+
+/** Calls `onChunk` for each chunk of a regular file (no-follow open where supported). */
+function _forEachFileChunk(path: string, onChunk: (chunk: Buffer) => void): void {
+  const fd = _openMigrationLock(path, _fsConstants.O_RDONLY | _O_NOFOLLOW)
+  try {
+    const buffer = Buffer.allocUnsafe(_STREAM_CHUNK_BYTES)
+    for (;;) {
+      const read = _readMigrationFd(fd, buffer, 0, buffer.length, null)
+      if (read <= 0) return
+      onChunk(buffer.subarray(0, read))
+    }
+  } finally {
+    _closeMigrationLock(fd)
+  }
+}
+
+/** sha256 of a file, streamed in 1 MiB chunks (no `readFileSync`: files of any size). */
 function _sha256File(path: string): string {
   const hash = _createMigrationHash('sha256')
-  hash.update(_statMigration(path).isFile() ? _readMigrationFile(path) : Buffer.alloc(0))
+  if (_statMigration(path).isFile()) _forEachFileChunk(path, (chunk) => hash.update(chunk))
   return hash.digest('hex')
+}
+
+/** Byte equality of two regular files, streamed chunk by chunk with an early exit. */
+function _sameBytes(a: string, b: string): boolean {
+  const fdA = _openMigrationLock(a, _fsConstants.O_RDONLY | _O_NOFOLLOW)
+  try {
+    const fdB = _openMigrationLock(b, _fsConstants.O_RDONLY | _O_NOFOLLOW)
+    try {
+      const bufA = Buffer.allocUnsafe(_STREAM_CHUNK_BYTES)
+      const bufB = Buffer.allocUnsafe(_STREAM_CHUNK_BYTES)
+      for (;;) {
+        const readA = _readMigrationFd(fdA, bufA, 0, bufA.length, null)
+        let readB = 0
+        while (readB < readA) {
+          const n = _readMigrationFd(fdB, bufB, readB, readA - readB, null)
+          if (n <= 0) break
+          readB += n
+        }
+        if (readA !== readB) return false
+        if (readA === 0) return _readMigrationFd(fdB, bufB, 0, 1, null) === 0
+        if (!bufA.subarray(0, readA).equals(bufB.subarray(0, readB))) return false
+      }
+    } finally {
+      _closeMigrationLock(fdB)
+    }
+  } finally {
+    _closeMigrationLock(fdA)
+  }
+}
+
+/**
+ * Two regular files hold the same content. Equal size plus the same mtime (to
+ * the millisecond: a copy made by the merge keeps both) counts as identical
+ * without reading anything; otherwise the bytes are compared in chunks.
+ * `trustMeta: false` always compares bytes (used before deleting a file).
+ */
+function _filesIdentical(
+  a: string,
+  statA: import('node:fs').Stats,
+  b: string,
+  statB: import('node:fs').Stats,
+  options?: { trustMeta?: boolean },
+): boolean {
+  if (statA.size !== statB.size) return false
+  // Within 1 ms: a copy's mtime is set from a millisecond Date (rounded or truncated).
+  if (options?.trustMeta !== false && Math.abs(statA.mtimeMs - statB.mtimeMs) < 1) return true
+  return _sameBytes(a, b)
 }
 
 function _posixRel(root: string, absolute: string): string {
@@ -1513,6 +1590,36 @@ export function isForeignVisibleHome(dir: string): boolean {
 export const ROX_MERGE_INCOMPLETE_MARKER_NAME = 'merge-incomplete.json'
 
 /**
+ * Sidecar of an incomplete merge (`~/rox/.migration/imported.jsonl`): every
+ * legacy path the import already handled (copied, identical, stashed) with
+ * the legacy entry's size + mtime / link target, and the attempt dirs that
+ * hold its stashes. A retry skips handled paths whose legacy entry is
+ * unchanged, so files the user edited or deleted in `~/rox` meanwhile are
+ * never resurrected or re-stashed. Removed when the merge completes.
+ */
+export const ROX_MERGE_IMPORTED_SIDECAR_NAME = 'imported.jsonl'
+
+/**
+ * Prefix of the dir (under `~/.rox/.migration/`, so `~/rox/.migration/` after
+ * the move) holding a data-less `~/rox` moved aside before `~/.rox` is
+ * renamed into its place. Settled into `.migration/conflicts/<ts>/` (only the
+ * differing files remain) once the move completed.
+ */
+const _VISIBLE_BEFORE_PREFIX = 'visible-before-'
+
+/** Bookkeeping under `.migration/` that is never imported (merge state of either tree). */
+function _isMigrationDirBookkeeping(rel: string): boolean {
+  const prefix = `${ROX_HOME_MIGRATION_DIR_NAME}/`
+  if (!rel.startsWith(prefix)) return false
+  const name = rel.slice(prefix.length)
+  return (
+    name === ROX_MERGE_INCOMPLETE_MARKER_NAME ||
+    name === ROX_MERGE_IMPORTED_SIDECAR_NAME ||
+    name.startsWith(_VISIBLE_BEFORE_PREFIX)
+  )
+}
+
+/**
  * Root entries of the legacy dir a merge never carries into `~/rox`: the
  * migration manifest, the Settings migration state, and lock files
  * (`.app.lock`, `.server.lock`, `*.lock`, their temps). They stay in the
@@ -1529,11 +1636,13 @@ const _TRANSIENT_MERGE_RENAME_CODES: ReadonlySet<string> = new Set(['EPERM', 'EA
 export const ROX_MERGE_TRANSIENT_RETRIES = 3
 
 /**
- * Whether the boot migration must not copy again after a failed final
- * rename: a transient code (file in use) is retried at the next launch up to
+ * Whether the boot migration must not run the import again after a failed
+ * merge (final rename, a thrown copy error, or a compat-link rollback): a
+ * transient code (file in use) is retried at the next launch up to
  * `ROX_MERGE_TRANSIENT_RETRIES` times; after that, and for any other code,
  * only once `ROX_MERGE_RETRY_COOLDOWN_MS` has passed. A different legacy
- * tree drops the marker earlier; an explicit `migrate-config` always retries.
+ * tree (another inode) drops the marker earlier; an explicit
+ * `migrate-config` always retries.
  */
 function _mergeRetryBlocked(failure: NonNullable<MergeIncompleteMarker['lastFailure']>, now: number): boolean {
   if (now < failure.at || now - failure.at >= ROX_MERGE_RETRY_COOLDOWN_MS) return false
@@ -1545,14 +1654,19 @@ export interface MergeIncompleteMarker {
   /** Pre-merge snapshot: whether each tree held user data. */
   hiddenHasData: boolean
   visibleHasData: boolean
-  /** The dir processes keep using until the merge completes. */
+  /**
+   * The dir every process uses until the merge completes. A merge only runs
+   * when `~/rox` holds user data, so this build always writes `visible` (the
+   * same dir as the pre-merge resolution); `hidden` is only read from markers
+   * of earlier builds.
+   */
   choice: 'hidden' | 'visible'
   /** `dev:ino` of the hidden tree the snapshot was taken from. */
   hiddenId?: string
   /**
-   * Last failed final rename of `~/.rox` after a complete copy. `~/.rox`
-   * stays authoritative; see `_mergeRetryBlocked` for when the boot
-   * migration copies again.
+   * Last failed attempt (final rename, thrown import error, compat-link
+   * rollback). `~/rox` stays authoritative; see `_mergeRetryBlocked` for when
+   * the boot migration imports again.
    */
   lastFailure?: { code: string; at: number; attempts: number }
 }
@@ -1613,14 +1727,17 @@ function _pathPresent(path: string): boolean {
 
 /**
  * Everything kept under `.migration/conflicts/` (all attempts), as posix
- * paths relative to it; empty directories end with `/`.
+ * paths relative to it; empty directories end with `/`. Temps of a stash
+ * copy that was killed midway (`.<name>.rox-copy.tmp`) are not conflicts.
  */
 function _listConflicts(conflictsRoot: string): string[] {
   const out: string[] = []
   const walk = (dir: string, rel: string): void => {
     let names: string[]
     try {
-      names = _readdirMigration(dir)
+      const raw = _readdirMigration(dir)
+      names = raw.filter((name) => !(name.startsWith('.') && name.endsWith('.rox-copy.tmp')))
+      if (names.length === 0 && raw.length > 0) return // only a dead temp
     } catch {
       return
     }
@@ -1670,13 +1787,243 @@ export function readMergeIncompleteMarker(visibleDir: string): MergeIncompleteMa
     }
   } catch {
     try {
-      // Present but unreadable/garbled: still an incomplete merge.
+      // Present but unreadable/garbled: still an incomplete merge, which
+      // this build only starts into a `~/rox` holding user data.
       _lstatMigration(mergeIncompleteMarkerPath(visibleDir))
-      return { startedAt: 0, hiddenHasData: true, visibleHasData: false, choice: 'hidden' }
+      return { startedAt: 0, hiddenHasData: true, visibleHasData: true, choice: 'visible' }
     } catch {
       return undefined
     }
   }
+}
+
+function _mergeSidecarPath(visibleDir: string): string {
+  return join(visibleDir, ROX_HOME_MIGRATION_DIR_NAME, ROX_MERGE_IMPORTED_SIDECAR_NAME)
+}
+
+type _ImportRecord =
+  | { k: 'f'; s: number; m: number }
+  | { k: 'l'; l: string }
+  | { k: 'd' }
+  /** A legacy subtree stashed whole (a `~/rox` file or link at its path). */
+  | { k: 't' }
+
+interface _ImportSidecar {
+  handled: Map<string, _ImportRecord>
+  /** Attempt dirs under `.migration/conflicts/` that hold this merge's stashes. */
+  attempts: string[]
+}
+
+/** Best effort: missing file → empty; torn or foreign lines are skipped. */
+function _readImportSidecar(visibleDir: string): _ImportSidecar {
+  const handled = new Map<string, _ImportRecord>()
+  const attempts: string[] = []
+  let raw = ''
+  try {
+    raw = _readMigrationFile(_mergeSidecarPath(visibleDir), 'utf8')
+  } catch {
+    return { handled, attempts }
+  }
+  for (const line of raw.split('\n')) {
+    if (!line) continue
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(line)
+    } catch {
+      continue
+    }
+    if (typeof parsed !== 'object' || parsed === null) continue
+    const entry = parsed as { p?: unknown; k?: unknown; s?: unknown; m?: unknown; l?: unknown; a?: unknown }
+    if (typeof entry.a === 'string' && entry.a && !entry.a.includes('/') && !entry.a.includes('..')) {
+      if (!attempts.includes(entry.a)) attempts.push(entry.a)
+      continue
+    }
+    if (typeof entry.p !== 'string' || !entry.p) continue
+    if (entry.k === 'f' && typeof entry.s === 'number' && typeof entry.m === 'number') {
+      handled.set(entry.p, { k: 'f', s: entry.s, m: entry.m })
+    } else if (entry.k === 'l' && typeof entry.l === 'string') {
+      handled.set(entry.p, { k: 'l', l: entry.l })
+    } else if (entry.k === 'd' || entry.k === 't') {
+      handled.set(entry.p, { k: entry.k })
+    }
+  }
+  return { handled, attempts }
+}
+
+function _removeImportSidecar(visibleDir: string): void {
+  try {
+    _unlinkMigration(_mergeSidecarPath(visibleDir))
+  } catch {
+    // absent
+  }
+}
+
+/**
+ * Whether `~/rox` holds the marker of a merge that has not completed while
+ * the legacy dir is still a real directory (Settings keeps its deferral note).
+ */
+export function hasIncompleteVisibleHomeMerge(homeDir: string = homedir()): boolean {
+  const paths = defaultVisibleHomePaths(homeDir)
+  try {
+    if (!_lstatMigration(paths.hiddenDir).isDirectory()) return false
+  } catch {
+    return false
+  }
+  const marker = readMergeIncompleteMarker(paths.visibleDir)
+  return marker !== undefined && _markerMatchesHidden(marker, paths.hiddenDir)
+}
+
+/** `~/.rox.migrated-<ts>` exists: a merge renamed the legacy dir away. */
+function _hasMigratedLegacySibling(homeDir: string): boolean {
+  try {
+    return _readdirMigration(homeDir).some((name) => name.startsWith(`${ROX_HIDDEN_HOME_LINK_NAME}.migrated-`))
+  } catch {
+    return false
+  }
+}
+
+/** Keep `storage.visible-root.v1` ON in this flags file (other ids untouched). */
+function _ensureVisibleRootFlagIn(file: string): void {
+  if (_readEnabledFlags(file)?.includes(ROX_STORAGE_VISIBLE_ROOT_FLAG_ID) === true) return
+  _writeVisibleRootFlagFile(file, true)
+}
+
+/**
+ * Copy every entry of `source` that `destination` lacks (files atomically
+ * with mode + times, links as links, dirs recursively). Existing entries are
+ * never touched; nothing is written through a link on either side; root
+ * bookkeeping (locks, Settings state, manifest) and merge bookkeeping under
+ * `.migration/` are skipped. Used before a data-less `~/rox` is moved aside.
+ */
+function _importMissingEntries(source: string, destination: string, copyFile: _CopyFileFn): void {
+  const walk = (rel: string): void => {
+    for (const name of _readdirMigration(rel ? join(source, rel) : source)) {
+      const childRel = rel ? `${rel}/${name}` : name
+      if (!rel && _isMergeRootBookkeeping(name)) continue
+      if (_isMigrationDirBookkeeping(childRel)) continue
+      const from = join(source, childRel)
+      const to = join(destination, childRel)
+      const st = _lstatMigration(from)
+      let existing: import('node:fs').Stats | undefined
+      try {
+        existing = _lstatMigration(to)
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException | null)?.code !== 'ENOENT') throw error
+        existing = undefined
+      }
+      if (st.isSymbolicLink()) {
+        if (!existing) {
+          mkdirSync(_dirnameMigration(to), { recursive: true })
+          _symlinkMigration(_readlinkMigration(from), to)
+        }
+      } else if (st.isDirectory()) {
+        if (existing && !existing.isDirectory()) continue
+        if (!existing) mkdirSync(to, { recursive: true, mode: 0o700 })
+        walk(childRel)
+        if (!existing) {
+          try {
+            _chmodMigration(to, st.mode & 0o777)
+          } catch {
+            // best effort
+          }
+        }
+      } else if (st.isFile() && !existing) {
+        _copyFilePreservingMeta(from, to, st, copyFile)
+      }
+    }
+  }
+  walk('')
+}
+
+/**
+ * Drop from a moved-aside `~/rox` everything the home now has identically
+ * (bytes compared; never through links) and stale bookkeeping. What remains
+ * differs from the home or is absent there (never moved back in: the home
+ * may have deleted it since, and nothing is resurrected).
+ */
+function _pruneAside(dir: string, visibleDir: string, rel: string): void {
+  for (const name of _readdirMigration(dir)) {
+    const childRel = rel ? `${rel}/${name}` : name
+    const full = join(dir, name)
+    const st = _lstatMigration(full)
+    if ((!rel && _isMergeRootBookkeeping(name)) || _isMigrationDirBookkeeping(childRel)) {
+      if (!st.isDirectory()) _unlinkMigration(full)
+      continue
+    }
+    const target = join(visibleDir, childRel)
+    let targetStat: import('node:fs').Stats | undefined
+    try {
+      targetStat = _lstatMigration(target)
+    } catch {
+      targetStat = undefined
+    }
+    if (!targetStat) continue
+    if (st.isDirectory()) {
+      if (!targetStat.isDirectory()) continue
+      _pruneAside(full, visibleDir, childRel)
+      try {
+        _rmdirMigration(full)
+      } catch {
+        // differing entries remain
+      }
+      continue
+    }
+    if (st.isSymbolicLink()) {
+      if (targetStat.isSymbolicLink() && _readlinkMigration(target) === _readlinkMigration(full)) _unlinkMigration(full)
+      continue
+    }
+    if (st.isFile() && targetStat.isFile() && _filesIdentical(full, st, target, targetStat, { trustMeta: false })) {
+      _unlinkMigration(full)
+    }
+  }
+}
+
+/**
+ * Settle every `~/rox/.migration/visible-before-<ts>` (a data-less `~/rox`
+ * moved aside before `~/.rox` took its place): prune it, then keep what
+ * differs under `.migration/conflicts/<ts>/`. Returns those conflict paths.
+ * A link at the aside root is kept as is (never followed).
+ */
+function _settleVisibleBefore(visibleDir: string): string[] {
+  const migrationDir = join(visibleDir, ROX_HOME_MIGRATION_DIR_NAME)
+  let names: string[]
+  try {
+    names = _readdirMigration(migrationDir)
+  } catch {
+    return []
+  }
+  const conflicts: string[] = []
+  for (const name of names) {
+    if (!name.startsWith(_VISIBLE_BEFORE_PREFIX)) continue
+    const aside = join(migrationDir, name)
+    let st: import('node:fs').Stats
+    try {
+      st = _lstatMigration(aside)
+    } catch {
+      continue
+    }
+    if (st.isDirectory()) {
+      _pruneAside(aside, visibleDir, '')
+      try {
+        _rmdirMigration(aside)
+        continue
+      } catch {
+        // differing entries remain
+      }
+    }
+    const conflictsRoot = join(migrationDir, 'conflicts')
+    mkdirSync(conflictsRoot, { recursive: true, mode: 0o700 })
+    const stem = name.slice(_VISIBLE_BEFORE_PREFIX.length) || 'visible'
+    let attempt = stem
+    for (let n = 1; _pathPresent(join(conflictsRoot, attempt)); n++) attempt = `${stem}.${n}`
+    _renameMigration(aside, join(conflictsRoot, attempt))
+    if (st.isDirectory()) {
+      conflicts.push(..._listConflicts(join(conflictsRoot, attempt)).map((rel) => `${attempt}/${rel}`))
+    } else {
+      conflicts.push(attempt)
+    }
+  }
+  return conflicts
 }
 
 type VisibleHomeState =
@@ -1743,10 +2090,12 @@ function _classifyVisibleHome(paths: VisibleHomePaths, platform: NodeJS.Platform
 /**
  * Read-only flag-ON resolution for every process that must not migrate
  * (CLI, headless server, scripts, a second app instance, and the desktop app
- * before its single-instance lock). Never writes. `~/rox` only when it
- * already is the home (symlinked / visible-only / a fresh machine); a legacy
- * home awaiting migration, a foreign `~/rox`, or an incomplete merge whose
- * pre-merge snapshot chose the legacy dir keep `~/.rox`.
+ * before its single-instance lock). Never writes. `~/rox` when it already is
+ * the home (symlinked / visible-only / a fresh machine) or, with both trees
+ * present, when it holds user data — the same tree the migrator keeps
+ * authoritative before, during and after a merge (its marker says
+ * `visible`). A legacy home awaiting migration, a foreign `~/rox`, or a
+ * data-less `~/rox` keep `~/.rox`.
  */
 export function resolveVisibleHomeWithoutMigration(
   homeDir: string = homedir(),
@@ -1819,33 +2168,80 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     })
   }
 
+  // Crash recovery once `~/rox` already is the home (never in a dry run, best
+  // effort): a data-less `~/rox` moved aside into the legacy tree is settled,
+  // and a compat link missing after a completed move (crash between the
+  // final rename and the link) is created again.
+  const settleAside = (): string[] => {
+    if (dryRun) return []
+    try {
+      return _settleVisibleBefore(paths.visibleDir)
+    } catch {
+      return [] // retried at the next run
+    }
+  }
+  const restoreCompatLink = (): string[] => {
+    if (dryRun) return []
+    const evidence =
+      _pathPresent(mergeIncompleteMarkerPath(paths.visibleDir)) ||
+      _pathPresent(join(paths.visibleDir, ROX_HOME_MIGRATION_MANIFEST_NAME)) ||
+      _hasMigratedLegacySibling(paths.homeDir)
+    if (!evidence) return []
+    try {
+      linkDir(paths.visibleDir, paths.hiddenDir, linkType)
+    } catch {
+      return ['storage.migration.compatLinkMissing']
+    }
+    _removeMergeIncompleteMarker(paths.visibleDir)
+    _removeImportSidecar(paths.visibleDir)
+    try {
+      _unlinkMigration(join(paths.visibleDir, ROX_HOME_MIGRATION_MANIFEST_NAME))
+    } catch {
+      // absent
+    }
+    return ['storage.migration.compatLinkRestored']
+  }
+
   // States that need no move. Re-evaluated after the process lock: another
   // process may have migrated meanwhile.
   const settled = (state: VisibleHomeState): VisibleHomeMigrationResult | undefined => {
     switch (state) {
-      case 'symlinked':
+      case 'symlinked': {
         if (!dryRun && existsSync(paths.visibleDir)) _ensurePrivateDir(paths.visibleDir)
-        return done('already-symlinked')
+        const conflicts = settleAside()
+        return done('already-symlinked', conflicts.length > 0 ? { conflicts } : undefined)
+      }
       case 'symlink-elsewhere':
-        return done('symlink-elsewhere', { diagnostics: ['storage.migration.symlinkElsewhere'] })
+        // Same choice as the read-only resolution, so Settings can say which dir Rox uses.
+        return done('symlink-elsewhere', {
+          diagnostics: [
+            'storage.migration.symlinkElsewhere',
+            existsSync(paths.visibleDir) && roxHomeHasUserData(paths.visibleDir) ? 'uses:visible' : 'uses:hidden',
+          ],
+        })
       case 'foreign':
         return done('deferred-foreign', { diagnostics: ['storage.migration.deferredForeign'] })
       case 'clean':
         if (!dryRun) _ensurePrivateDir(paths.visibleDir)
         return done('clean-install')
-      case 'visible-only':
+      case 'visible-only': {
         if (!dryRun) _ensurePrivateDir(paths.visibleDir)
-        return done('already-visible')
+        const diagnostics = restoreCompatLink()
+        const conflicts = settleAside()
+        return done('already-visible', { diagnostics, conflicts })
+      }
       default:
         return undefined
     }
   }
-  // Non-destructive pre-checks that the legacy dir can be renamed away at
-  // the end of a merge, run before anything is copied: it is not a mount
-  // point (same device as its parent; on Windows not a reparse point or a
-  // volume root), `~/rox` is on the same device, and the parent is
-  // writable. Nothing is renamed: the running app never loses its dir.
-  const mergePrecheckBlocker = (): string | undefined => {
+  // Non-destructive pre-checks that the legacy dir can be renamed at the end
+  // (to `~/.rox.migrated-<ts>` after an import, or into `~/rox`), run before
+  // anything is copied: it is not a mount point (same device as its parent;
+  // on Windows not a reparse point or a volume root) and the parent is
+  // writable. `checkVisibleDevice`: the `~/rox` entry itself is renamed (moved
+  // aside into the legacy tree), so it must be on that device too. Nothing is
+  // renamed here: the running app never loses its dir.
+  const mergePrecheckBlocker = (checkVisibleDevice: boolean): string | undefined => {
     try {
       if (_lstatMigration(paths.hiddenDir).isSymbolicLink()) return 'reparse-point'
       const hiddenDev = _statMigration(paths.hiddenDir).dev
@@ -1858,7 +2254,7 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
           if (/^\\\\\?\\Volume\{/i.test(real) || trimmed.toLowerCase() === root.toLowerCase()) return 'volume-root'
         }
       }
-      if (_statMigration(paths.visibleDir).dev !== hiddenDev) return 'cross-device'
+      if (checkVisibleDevice && _lstatMigration(paths.visibleDir).dev !== hiddenDev) return 'cross-device'
     } catch (error) {
       return (error as NodeJS.ErrnoException | null)?.code ?? 'stat-failed'
     }
@@ -1869,8 +2265,8 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     }
     return undefined
   }
-  const deferredUnmovable = (blocker: string): VisibleHomeMigrationResult =>
-    done('deferred-unmovable', { diagnostics: ['storage.migration.legacyNotRenamable', `rename:${blocker}`] })
+  const deferredUnmovable = (blocker: string, code = 'storage.migration.legacyNotRenamable'): VisibleHomeMigrationResult =>
+    done('deferred-unmovable', { diagnostics: [code, `rename:${blocker}`] })
   const lockHolders = (bothExist: boolean): string[] =>
     options?.isLocked
       ? options.isLocked(paths.hiddenDir)
@@ -1883,8 +2279,25 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
       diagnostics: ['storage.migration.deferredLocked', ...holders.map((h) => `locked:${h}`)],
     })
 
+  // A repair (pending aside, missing compat link) only runs under the
+  // process lock, never racing a `--revert` that holds it.
+  const needsRepair = (state: VisibleHomeState): boolean => {
+    if (state !== 'symlinked' && state !== 'visible-only') return false
+    try {
+      if (_readdirMigration(join(paths.visibleDir, ROX_HOME_MIGRATION_DIR_NAME)).some((n) => n.startsWith(_VISIBLE_BEFORE_PREFIX))) return true
+    } catch {
+      // no .migration dir
+    }
+    return (
+      state === 'visible-only' &&
+      (_pathPresent(mergeIncompleteMarkerPath(paths.visibleDir)) ||
+        _pathPresent(join(paths.visibleDir, ROX_HOME_MIGRATION_MANIFEST_NAME)) ||
+        _hasMigratedLegacySibling(paths.homeDir))
+    )
+  }
+
   let state = _classifyVisibleHome(paths, platform)
-  const early = settled(state)
+  const early = dryRun || !needsRepair(state) ? settled(state) : undefined
   if (early) return early
 
   // Only `~/.rox` (real dir), or both real dirs: check live writers first.
@@ -1931,7 +2344,13 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     base.manifest = manifest
     const summary = summarizeVisibleHomeManifest(manifest)
 
-    if (state === 'hidden-only') {
+    /**
+     * `~/rox` is absent: one atomic rename of `~/.rox` into its place plus
+     * the compat link. Nothing is copied, so a deferral never leaves a partial
+     * tree anywhere. A data-less `~/rox` moved aside into the legacy tree
+     * (below) is settled afterwards.
+     */
+    const moveHiddenIntoVisible = (outcome: 'migrated' | 'merged'): VisibleHomeMigrationResult => {
       // Crash evidence while the move is in flight; removed once verified.
       const manifestPath = join(paths.hiddenDir, ROX_HOME_MIGRATION_MANIFEST_NAME)
       try {
@@ -1939,8 +2358,6 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
       } catch {
         // best effort; equality is still verified after the move
       }
-      // Only `~/.rox`: one atomic rename. EXDEV means `~/.rox` cannot leave
-      // its volume (mount point, overlayfs lower dir): defer, copy nothing.
       const dropScaffolding = (): void => {
         try {
           _unlinkMigration(manifestPath)
@@ -1987,9 +2404,11 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
             if (rollbackError === error) throw error
           }
         }
-        const result = done('migrated', {
+        const conflicts = settleAside()
+        const result = done(outcome, {
           manifest: buildVisibleHomeManifest(paths.visibleDir, { hash: false }),
-          diagnostics: ['storage.migration.compatLinkMissing'],
+          conflicts,
+          diagnostics: [...(conflicts.length > 0 ? ['storage.migration.conflictsKept'] : []), 'storage.migration.compatLinkMissing'],
           announceToast: true,
           relaunchRequired: true,
         })
@@ -2005,37 +2424,80 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
           // already gone
         }
       }
-      const result = done('migrated', {
-        manifest: after,
-        diagnostics: equal ? [] : ['storage.migration.checksumMismatch'],
-        announceToast: true,
-      })
+      const conflicts = settleAside()
+      const diagnostics = equal ? [] : ['storage.migration.checksumMismatch']
+      if (conflicts.length > 0) diagnostics.push('storage.migration.conflictsKept')
+      const result = done(outcome, { manifest: after, conflicts, diagnostics, announceToast: true })
       result.reportPath = _writeMigrationReport(paths.visibleDir, timestamp, result, summary)
       return result
     }
 
-    // Both real dirs: per-file merge into `~/rox`. Identical files are
-    // skipped; for differing files a tree without user data (fresh defaults)
-    // always loses; otherwise the newer mtime wins. The loser is kept under
-    // `.migration/conflicts/`. The user-data snapshot is taken once, before
-    // the first attempt, and recorded in an incomplete-merge marker: a merge
-    // that failed halfway never lets its partial copy (or later writes to it)
-    // win a retry, and read-only resolution keeps the pre-merge choice.
-    // A legacy dir that cannot be renamed away defers before anything is
-    // copied or stashed (non-destructive checks; no repeated merge per launch).
-    const mergeBlocker = mergePrecheckBlocker()
-    if (mergeBlocker) return deferredUnmovable(mergeBlocker)
+    if (state === 'hidden-only') return moveHiddenIntoVisible('migrated')
+
+    // Both real dirs. The authoritative tree is the one the read-only
+    // resolution already uses (`resolveVisibleHomeWithoutMigration`): `~/rox`
+    // when it holds user data, else `~/.rox`. It stays authoritative before,
+    // during and after a failed attempt, so no process ever switches trees.
+    // - `~/rox` authoritative: the leftovers of `~/.rox` are imported into it
+    //   (missing files copied, identical skipped, differing legacy versions
+    //   stashed under `.migration/conflicts/<ts>/`), then `~/.rox` is renamed
+    //   to `~/.rox.migrated-<ts>` (inside $HOME: `~/rox` may be on any volume).
+    // - `~/.rox` authoritative (data-less `~/rox`): `~/rox` is moved aside into
+    //   the legacy tree and `~/.rox` takes its place with one rename; nothing
+    //   is ever copied into `~/rox` while `~/.rox` is the live tree.
+    let previous = readMergeIncompleteMarker(paths.visibleDir)
+    // A marker of a different hidden tree (the original was renamed away and
+    // something recreated `~/.rox`) is stale.
+    const stalePrevious = previous !== undefined && !_markerMatchesHidden(previous, paths.hiddenDir)
+    if (stalePrevious) previous = undefined
+    // A marker of an earlier build that kept `~/.rox` authoritative while it
+    // copied into `~/rox`: `~/rox` holds a stale partial copy, so it is moved
+    // aside whole (identical files dropped, the rest kept as conflicts) and
+    // nothing of it is imported into the live `~/.rox`.
+    const hiddenChoiceMarker = previous !== undefined && previous.choice !== 'visible'
+    if (hiddenChoiceMarker) previous = undefined
+    const visibleAuthoritative = !hiddenChoiceMarker && (previous !== undefined || roxHomeHasUserData(paths.visibleDir))
+    const blocker = mergePrecheckBlocker(!visibleAuthoritative)
+    if (blocker) return deferredUnmovable(blocker)
+    if (stalePrevious || hiddenChoiceMarker) {
+      _removeMergeIncompleteMarker(paths.visibleDir)
+      _removeImportSidecar(paths.visibleDir)
+    }
+
+    if (!visibleAuthoritative) {
+      // 1. Legacy-missing entries of the data-less `~/rox` are copied into
+      //    `~/.rox` first (e.g. the workbench flags that switched the
+      //    visible home on), so every crash point leaves a consistent home.
+      const flagWasOn = readPersistedVisibleRootFlag(paths.homeDir)
+      if (!hiddenChoiceMarker) _importMissingEntries(paths.visibleDir, paths.hiddenDir, copyFile)
+      if (flagWasOn) _ensureVisibleRootFlagIn(join(paths.hiddenDir, ROX_WORKBENCH_FLAGS_FILE_NAME))
+      holders = lockHolders(true)
+      if (holders.length > 0) return deferredByHolders(holders)
+      // 2. `~/rox` moves aside into the legacy tree (one rename).
+      const asideParent = join(paths.hiddenDir, ROX_HOME_MIGRATION_DIR_NAME)
+      _ensurePrivateDir(asideParent)
+      try {
+        rename(paths.visibleDir, join(asideParent, `${_VISIBLE_BEFORE_PREFIX}${timestamp}`))
+      } catch (error) {
+        const code = (error as NodeJS.ErrnoException | null)?.code
+        if (code === 'EXDEV' || code === 'EPERM' || code === 'EACCES' || code === 'EBUSY' || code === 'ENOTEMPTY' || code === 'EEXIST') {
+          return deferredUnmovable(code, 'storage.migration.visibleNotRenamable')
+        }
+        throw error
+      }
+      // 3. Hidden-only from here: rename + link, then the aside is settled
+      //    (identical files dropped, the rest kept under conflicts).
+      manifest = buildVisibleHomeManifest(paths.hiddenDir, { hash: false })
+      base.manifest = manifest
+      return moveHiddenIntoVisible('merged')
+    }
+
     _ensurePrivateDir(paths.visibleDir)
     const hiddenId = _treeId(paths.hiddenDir)
-    let previous = readMergeIncompleteMarker(paths.visibleDir)
-    // A snapshot of a different hidden tree (the original was renamed away
-    // and something recreated `~/.rox`) is stale: take a fresh one.
-    if (previous && !_markerMatchesHidden(previous, paths.hiddenDir)) previous = undefined
     const nowMs = options?.now?.() ?? Date.now()
-    // An earlier final rename failed: `~/.rox` stays authoritative and the
-    // boot migration does not copy again until the retry rule allows it (no
-    // copy loop per launch). The legacy dir's mtime is not a trigger: the
-    // app's own lock and config writes change it on every launch.
+    // An earlier attempt failed: the boot migration does not import again
+    // until the retry rule allows it (no walk per launch). The legacy dir's
+    // mtime is not a trigger: lock and config writes change it all the time.
     const lastFailure = previous?.lastFailure
     if (lastFailure && options?.retryFailedMerge !== true && _mergeRetryBlocked(lastFailure, nowMs)) {
       return done('deferred-retry', {
@@ -2043,40 +2505,57 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
           'storage.migration.mergeRetryLater',
           `failed:${lastFailure.code}`,
           `retryAfter:${new Date(lastFailure.at + ROX_MERGE_RETRY_COOLDOWN_MS).toISOString()}`,
+          `attempts:${lastFailure.attempts}`,
         ],
       })
     }
-    const hiddenHasData = previous?.hiddenHasData ?? roxHomeHasUserData(paths.hiddenDir)
-    const visibleHasData = previous?.visibleHasData ?? roxHomeHasUserData(paths.visibleDir)
     const marker: MergeIncompleteMarker = previous ?? {
       startedAt: nowMs,
-      hiddenHasData,
-      visibleHasData,
-      // Until the merge completes, the intact legacy home wins whenever it
-      // holds user data (a partial ~/rox is mixed); ~/rox only when the
-      // legacy home had nothing to lose.
-      choice: hiddenHasData || !visibleHasData ? 'hidden' : 'visible',
+      hiddenHasData: roxHomeHasUserData(paths.hiddenDir),
+      visibleHasData: true,
+      choice: 'visible',
       ...(hiddenId ? { hiddenId } : {}),
     }
-    // Strict: without the marker a partial merge could later win.
-    if (!previous) _writeMergeIncompleteMarker(paths.visibleDir, marker)
-    const recordFailure = (error: unknown): string => {
+    if (!previous) {
+      // A fresh merge: no handled paths yet. Strict marker write.
+      _removeImportSidecar(paths.visibleDir)
+      _writeMergeIncompleteMarker(paths.visibleDir, marker)
+    }
+    const sidecar: _ImportSidecar = previous ? _readImportSidecar(paths.visibleDir) : { handled: new Map(), attempts: [] }
+    let pendingLines: string[] = []
+    const flushSidecar = (): void => {
+      if (pendingLines.length === 0) return
+      const lines = pendingLines.join('')
+      pendingLines = []
+      _appendMigrationFile(_mergeSidecarPath(paths.visibleDir), lines, { encoding: 'utf8', mode: 0o600 })
+    }
+    const record = (rel: string, entry: _ImportRecord): void => {
+      sidecar.handled.set(rel, entry)
+      pendingLines.push(`${JSON.stringify({ p: rel, ...entry })}\n`)
+    }
+    const noteAttempt = (): void => {
+      if (sidecar.attempts.includes(timestamp)) return
+      sidecar.attempts.push(timestamp)
+      pendingLines.push(`${JSON.stringify({ a: timestamp })}\n`)
+    }
+    const recordFailure = (error: unknown): { code: string; attempts: number } => {
       const code = (error as NodeJS.ErrnoException | null)?.code ?? 'error'
       const attempts = lastFailure?.code === code ? lastFailure.attempts + 1 : 1
       try {
         _writeMergeIncompleteMarker(paths.visibleDir, { ...marker, lastFailure: { code, at: nowMs, attempts } })
       } catch {
-        // the marker without lastFailure still keeps ~/.rox authoritative
+        // the marker without lastFailure still keeps ~/rox authoritative
       }
-      return code
+      return { code, attempts }
     }
+    const conflictsRoot = join(paths.visibleDir, ROX_HOME_MIGRATION_DIR_NAME, 'conflicts')
+    /** This merge's stashes (every attempt of it), never older merges' ones. */
+    const mergeConflicts = (): string[] =>
+      sidecar.attempts.flatMap((ts) => _listConflicts(join(conflictsRoot, ts)).map((rel) => `${ts}/${rel}`))
     const heartbeatEvery = Math.max(1, options?.lockHeartbeatEvery ?? _LOCK_HEARTBEAT_EVERY)
     let mergedEntries = 0
-    const preferHidden = hiddenHasData && !visibleHasData
-    const preferVisible = visibleHasData && !hiddenHasData
-    const conflictsRoot = join(paths.visibleDir, ROX_HOME_MIGRATION_DIR_NAME, 'conflicts')
     // Per attempt: a retry never overwrites an earlier stash (it may be the
-    // only copy left of a losing file). Same-attempt collisions get a suffix.
+    // only copy left of a legacy version). Same-attempt collisions get a suffix.
     const attemptRoot = join(conflictsRoot, timestamp)
     const freeTarget = (rel: string): string => {
       const base = join(attemptRoot, rel)
@@ -2086,70 +2565,120 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
         if (!_pathPresent(candidate)) return candidate
       }
     }
-    const stash = (source: string, rel: string): void => {
-      _copyFilePreservingMeta(source, freeTarget(rel), _lstatMigration(source), copyFile)
+    /** The same legacy bytes (size + mtime) are already kept by an earlier attempt of this merge. */
+    const alreadyStashed = (rel: string, st: import('node:fs').Stats): boolean => {
+      for (const ts of sidecar.attempts) {
+        const base = join(conflictsRoot, ts, rel)
+        for (let n = 0; ; n++) {
+          let kept: import('node:fs').Stats
+          try {
+            kept = _lstatMigration(n === 0 ? base : `${base}.${n}`)
+          } catch {
+            break
+          }
+          if (kept.isFile() && kept.size === st.size && Math.abs(kept.mtimeMs - st.mtimeMs) < 1) return true
+        }
+      }
+      return false
     }
-    // A legacy directory where `~/rox` has a file: keep the whole subtree.
+    const stash = (source: string, rel: string): void => {
+      const st = _lstatMigration(source)
+      if (alreadyStashed(rel, st)) return
+      noteAttempt()
+      const target = freeTarget(rel)
+      try {
+        _copyFilePreservingMeta(source, target, st, copyFile)
+      } catch (error) {
+        // No empty stash dirs left behind (they would read as conflicts).
+        for (let dir = _dirnameMigration(target); dir.startsWith(attemptRoot); dir = _dirnameMigration(dir)) {
+          try {
+            _rmdirMigration(dir)
+          } catch {
+            break
+          }
+        }
+        throw error
+      }
+    }
+    // A legacy entry where `~/rox` has something else: keep the whole subtree.
     const stashTree = (source: string, rel: string): void => {
       const st = _lstatMigration(source)
       if (st.isSymbolicLink()) {
+        noteAttempt()
         const target = freeTarget(rel)
         mkdirSync(_dirnameMigration(target), { recursive: true })
         _symlinkMigration(_readlinkMigration(source), target)
         return
       }
       if (st.isDirectory()) {
+        noteAttempt()
         mkdirSync(join(attemptRoot, rel), { recursive: true })
         for (const name of _readdirMigration(source)) stashTree(join(source, name), `${rel}/${name}`)
         return
       }
       if (st.isFile()) stash(source, rel)
     }
+    const lstatOrUndefined = (path: string): import('node:fs').Stats | undefined => {
+      try {
+        return _lstatMigration(path)
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException | null)?.code !== 'ENOENT') throw error
+        return undefined
+      }
+    }
+    // `~/rox` wins everything it has, including deletions since an earlier
+    // attempt: a handled path whose legacy entry is unchanged is skipped; a
+    // changed one is never resurrected where `~/rox` no longer has it, only
+    // stashed. Nothing is ever written through a link on the `~/rox` side.
     const mergeEntry = (rel: string): void => {
-      if (++mergedEntries % heartbeatEvery === 0) release.touch()
+      if (++mergedEntries % heartbeatEvery === 0) {
+        release.touch()
+        flushSidecar()
+      }
+      if (_isMigrationDirBookkeeping(rel)) return
       const from = join(paths.hiddenDir, rel)
       const to = join(paths.visibleDir, rel)
       const fromStat = _lstatMigration(from)
+      const handled = sidecar.handled.get(rel)
       if (fromStat.isSymbolicLink()) {
-        let toStat: import('node:fs').Stats | undefined
-        try {
-          toStat = _lstatMigration(to)
-        } catch {
-          toStat = undefined
-        }
         const link = _readlinkMigration(from)
+        if (handled?.k === 'l' && handled.l === link) return
+        const toStat = lstatOrUndefined(to)
         if (!toStat) {
-          mkdirSync(_dirnameMigration(to), { recursive: true })
-          _symlinkMigration(link, to)
-          return
+          if (handled) {
+            stashTree(from, rel)
+          } else {
+            mkdirSync(_dirnameMigration(to), { recursive: true })
+            _symlinkMigration(link, to)
+          }
+        } else {
+          let same = false
+          try {
+            same = toStat.isSymbolicLink() && _readlinkMigration(to) === link
+          } catch {
+            same = false
+          }
+          if (!same) stashTree(from, rel)
         }
-        // Same link on both sides: nothing to keep. Anything else in ~/rox
-        // stays; the legacy link is stashed (and reported), never dropped.
-        let same = false
-        try {
-          same = toStat.isSymbolicLink() && _readlinkMigration(to) === link
-        } catch {
-          same = false
-        }
-        if (!same) stashTree(from, rel)
+        record(rel, { k: 'l', l: link })
         return
       }
       if (fromStat.isDirectory()) {
-        let toStat: import('node:fs').Stats | undefined
-        try {
-          toStat = _lstatMigration(to)
-        } catch {
-          toStat = undefined
-        }
+        if (handled?.k === 't') return
+        const toStat = lstatOrUndefined(to)
         if (toStat && !toStat.isDirectory()) {
           stashTree(from, rel)
+          record(rel, { k: 't' })
           return
         }
+        // Removed from ~/rox since an earlier attempt handled it: stays removed.
+        if (!toStat && handled) return
+        if (!handled) record(rel, { k: 'd' })
         // New dirs stay owner-writable until their subtree is merged, then get
         // the source mode (a failed attempt never leaves an unwritable dir
         // that would block the retry).
         if (!toStat) mkdirSync(to, { recursive: true, mode: 0o700 })
-        for (const name of _readdirMigration(from)) mergeEntry(rel ? `${rel}/${name}` : name)
+        for (const name of _readdirMigration(from)) mergeEntry(`${rel}/${name}`)
         if (!toStat) {
           try {
             _chmodMigration(to, fromStat.mode & 0o777)
@@ -2160,89 +2689,99 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
         return
       }
       if (!fromStat.isFile()) return
+      if (handled?.k === 'f' && handled.s === fromStat.size && handled.m === fromStat.mtimeMs) return
       // Leftover of a copy that crashed on an earlier attempt.
       _dropCopyTemp(to)
-      // lstat: a link at the ~/rox side (to a dotfiles repo, or dangling) is
-      // a conflict — the legacy file is stashed and the link and its target
-      // stay untouched. Nothing is ever written through a link.
-      let toStat: import('node:fs').Stats | undefined
-      try {
-        toStat = _lstatMigration(to)
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException | null)?.code !== 'ENOENT') throw error
-        toStat = undefined
-      }
+      const toStat = lstatOrUndefined(to)
       if (!toStat) {
-        _copyFilePreservingMeta(from, to, fromStat, copyFile)
-        return
-      }
-      if (!toStat.isFile()) {
-        stash(from, rel)
-        return
-      }
-      if (toStat.size === fromStat.size && _sha256File(from) === _sha256File(to)) return
-      const hiddenWins = preferHidden ? true : preferVisible ? false : fromStat.mtimeMs > toStat.mtimeMs
-      if (hiddenWins) {
-        stash(to, rel)
-        _copyFilePreservingMeta(from, to, fromStat, copyFile)
-      } else {
+        // Never handled: copy it in. Handled before but gone from ~/rox (the
+        // user deleted it) and changed in ~/.rox since: keep that version aside.
+        if (handled) stash(from, rel)
+        else _copyFilePreservingMeta(from, to, fromStat, copyFile)
+      } else if (!toStat.isFile() || !_filesIdentical(from, fromStat, to, toStat)) {
+        // A link at the ~/rox side (dotfiles, dangling) or different bytes:
+        // ~/rox keeps its version; the legacy one is stashed and reported.
         stash(from, rel)
       }
+      record(rel, { k: 'f', s: fromStat.size, m: fromStat.mtimeMs })
     }
-    // A thrown copy error keeps the marker (resumable, retried next launch).
-    for (const name of _readdirMigration(paths.hiddenDir)) {
-      // Migration bookkeeping and per-dir locks stay in the archived legacy
-      // dir; they are never carried into ~/rox.
-      if (_isMergeRootBookkeeping(name)) continue
-      mergeEntry(name)
+    try {
+      for (const name of _readdirMigration(paths.hiddenDir)) {
+        // Migration bookkeeping and per-dir locks stay in the archived legacy
+        // dir; they are never carried into ~/rox.
+        if (_isMergeRootBookkeeping(name)) continue
+        mergeEntry(name)
+      }
+      flushSidecar()
+    } catch (error) {
+      // Resumable: the handled paths are kept, and the retry rule applies
+      // (no full walk on every launch for an unreadable file or a full disk).
+      try {
+        flushSidecar()
+      } catch {
+        // the retry re-checks unrecorded paths (identical ones are skipped)
+      }
+      recordFailure(error)
+      throw error
     }
+    // A writer that started during the import (it would write into files
+    // already handled): defer the final rename; the next launch resumes.
+    holders = lockHolders(true)
+    if (holders.length > 0) return deferredByHolders(holders)
     const mergedFrom = `${paths.hiddenDir}.migrated-${timestamp}`
     try {
       rename(paths.hiddenDir, mergedFrom)
     } catch (error) {
-      // The intact ~/.rox stays authoritative (marker choice); the copy in
-      // ~/rox stays marked incomplete and unused. Retried after a change in
-      // the legacy dir, the cooldown, or an explicit migrate-config.
-      const code = recordFailure(error)
+      // ~/rox stays authoritative (marker choice 'visible'); ~/.rox keeps
+      // everything. Retried by the rule in `_mergeRetryBlocked` or an
+      // explicit migrate-config; handled paths are not imported again.
+      const failure = recordFailure(error)
       return done('deferred-unmovable', {
-        conflicts: _listConflicts(conflictsRoot),
-        diagnostics: ['storage.migration.mergeRenameFailed', `rename:${code}`],
+        conflicts: mergeConflicts(),
+        diagnostics: ['storage.migration.mergeRenameFailed', `rename:${failure.code}`, `attempts:${failure.attempts}`],
       })
     }
-    // The merge is complete in ~/rox from here on: the marker must not keep
-    // pointing processes at a legacy path that is gone (or gets recreated).
+    // The import is complete in ~/rox from here on: the marker must not keep
+    // describing a legacy tree that is gone (or gets recreated).
     _removeMergeIncompleteMarker(paths.visibleDir)
-    const conflicts = _listConflicts(conflictsRoot)
+    const conflicts = mergeConflicts()
     const diagnostics = conflicts.length > 0 ? ['storage.migration.conflictsKept'] : []
     try {
       linkDir(paths.visibleDir, paths.hiddenDir, linkType)
     } catch (error) {
       // Legacy path still free: put the original back (state as before the
-      // final step, marker restored; a retry re-merges identical files).
+      // final step, marker restored with the failure so the retry rule
+      // applies; the sidecar keeps the retry from importing again).
       if (!_pathPresent(paths.hiddenDir)) {
+        let restored = false
         try {
           rename(mergedFrom, paths.hiddenDir)
-          _writeMergeIncompleteMarker(paths.visibleDir, { ...marker, lastFailure: undefined })
+          restored = true
+        } catch {
+          restored = false
+        }
+        if (restored) {
+          recordFailure(error)
           throw error
-        } catch (rollbackError) {
-          if (rollbackError === error) throw error
         }
       }
+      _removeImportSidecar(paths.visibleDir)
       const result = done('merged', {
         conflicts,
         diagnostics: [...diagnostics, 'storage.migration.compatLinkMissing'],
         announceToast: true,
         relaunchRequired: true,
       })
-      result.reportPath = _writeMigrationReport(paths.visibleDir, timestamp, result, summarizeVisibleHomeManifest(manifest))
+      result.reportPath = _writeMigrationReport(paths.visibleDir, timestamp, result, summary)
       return result
     }
+    _removeImportSidecar(paths.visibleDir)
     const result = done('merged', {
       conflicts,
       diagnostics,
       announceToast: true,
     })
-    result.reportPath = _writeMigrationReport(paths.visibleDir, timestamp, result, summarizeVisibleHomeManifest(manifest))
+    result.reportPath = _writeMigrationReport(paths.visibleDir, timestamp, result, summary)
     return result
   } finally {
     release()

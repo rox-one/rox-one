@@ -40,6 +40,7 @@ import {
   ROX_STORAGE_VISIBLE_ROOT_FLAG_ID,
   VISIBLE_HOME_USABLE_OUTCOMES,
   clearStorageMigrationState,
+  hasIncompleteVisibleHomeMerge,
   migrateHiddenRoxHome,
   recordStorageMigrationFailure,
   recordStorageMigrationOutcome,
@@ -152,9 +153,10 @@ export function runVisibleHomeAutoMigration(options?: {
   const homeDir = options?.homeDir ?? homedir();
   if (!isVisibleRoxHomeActive(env, homeDir)) {
     // Flag OFF: a deferral note from an earlier flag-ON launch no longer
-    // applies (only ever removes that file; creates nothing).
+    // applies (only ever removes that file; creates nothing) — unless a merge
+    // is still incomplete, which the note keeps explaining.
     try {
-      clearStorageMigrationState(homeDir);
+      if (!hasIncompleteVisibleHomeMerge(homeDir)) clearStorageMigrationState(homeDir);
     } catch {
       // best effort
     }

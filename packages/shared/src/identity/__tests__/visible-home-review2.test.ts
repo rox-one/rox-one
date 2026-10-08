@@ -184,7 +184,7 @@ describe('foreign ~/rox (finding 4)', () => {
     }))
 })
 
-describe('incomplete merge (finding 3)', () => {
+describe('incomplete merge (finding 3; review 7: the pre-merge resolution stays authoritative)', () => {
   const plantBoth = (home: string): void => {
     // Legacy home holds the user's data; ~/rox is a fresh default home.
     write(join(home, '.rox', 'config.json'), '{"workspaces":[{"id":"real"}]}')
@@ -192,62 +192,71 @@ describe('incomplete merge (finding 3)', () => {
     write(join(home, '.rox', 'secret', 'token'), 'shh')
     write(join(home, 'rox', 'config.json'), '{"workspaces":[]}')
   }
+  const plantBothWithData = (home: string): void => {
+    write(join(home, 'rox', 'config.json'), '{"workspaces":[{"id":"v"}]}')
+    // A different size: same-size files with the same mtime count as identical.
+    write(join(home, '.rox', 'config.json'), '{"workspaces":[{"id":"hidden"}]}')
+    write(join(home, '.rox', 'secret', 'token'), 'shh')
+  }
 
-  it('a merge that throws midway keeps ~/.rox intact and the marker pins the legacy choice', () =>
+  it('a data-less ~/rox never receives a partial copy: ~/.rox takes its place in one rename', () =>
     withHome((home) => {
       plantBoth(home)
-      chmodSync(join(home, '.rox', 'secret'), 0o000) // EACCES while merging
-      expect(() => migrateHiddenRoxHome(opts(home))).toThrow()
-      chmodSync(join(home, '.rox', 'secret'), 0o700)
-      // Legacy home untouched and still a real dir.
-      expect(lstatSync(join(home, '.rox')).isDirectory()).toBe(true)
-      expect(readFileSync(join(home, '.rox', 'config.json'), 'utf8')).toContain('real')
-      const marker = readMergeIncompleteMarker(join(home, 'rox'))
-      expect(marker).toEqual(expect.objectContaining({ hiddenHasData: true, visibleHasData: false, choice: 'hidden' }))
-      // ~/rox now "has data" (copied workspaces) but must not win.
-      expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, '.rox'))
+      chmodSync(join(home, '.rox', 'secret'), 0o000) // unreadable, but never read: renamed whole
+      const result = migrateHiddenRoxHome(opts(home))
+      chmodSync(join(home, 'rox', 'secret'), 0o700)
+      expect(result.outcome).toBe('merged')
+      expect(readFileSync(join(home, 'rox', 'config.json'), 'utf8')).toContain('real')
+      expect(readFileSync(join(home, 'rox', 'secret', 'token'), 'utf8')).toBe('shh')
+      // The default config is kept, never lost.
+      expect(result.conflicts).toEqual(['ts-r2/config.json'])
+      expect(readFileSync(join(home, 'rox', '.migration', 'conflicts', 'ts-r2', 'config.json'), 'utf8')).toBe('{"workspaces":[]}')
+      expect(existsSync(mergeIncompleteMarkerPath(join(home, 'rox')))).toBe(false)
+      expect(lstatSync(join(home, '.rox')).isSymbolicLink()).toBe(true)
+      expect(readdirSync(home).filter((n) => n.startsWith('.rox.migrated-'))).toEqual([])
     }))
 
-  it('a retry uses the pre-merge snapshot: newer writes into the partial ~/rox never beat the real config', () =>
+  it('an import that throws midway keeps ~/.rox intact and the marker keeps ~/rox (with user data) authoritative', () =>
     withHome((home) => {
-      plantBoth(home)
+      plantBothWithData(home)
+      expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, 'rox'))
+      chmodSync(join(home, '.rox', 'secret'), 0o000) // EACCES while importing
+      expect(() => migrateHiddenRoxHome(opts(home))).toThrow()
+      chmodSync(join(home, '.rox', 'secret'), 0o700)
+      expect(lstatSync(join(home, '.rox')).isDirectory()).toBe(true)
+      expect(readFileSync(join(home, '.rox', 'config.json'), 'utf8')).toContain('"hidden"')
+      const marker = readMergeIncompleteMarker(join(home, 'rox'))
+      expect(marker).toEqual(expect.objectContaining({ hiddenHasData: true, visibleHasData: true, choice: 'visible' }))
+      expect(marker?.lastFailure).toEqual(expect.objectContaining({ code: 'EACCES', attempts: 1 }))
+      expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, 'rox'))
+    }))
+
+  it('the retry keeps ~/rox and its edits; only what is left is imported', () =>
+    withHome((home) => {
+      plantBothWithData(home)
       chmodSync(join(home, '.rox', 'secret'), 0o000)
       expect(() => migrateHiddenRoxHome(opts(home))).toThrow()
       chmodSync(join(home, '.rox', 'secret'), 0o700)
-      // Something rewrote the default config in ~/rox later (newer mtime).
-      writeFileSync(join(home, 'rox', 'config.json'), '{"workspaces":[{"id":"default"}]}')
-      utimesSync(join(home, '.rox', 'config.json'), new Date('2020-01-01'), new Date('2020-01-01'))
-      const result = migrateHiddenRoxHome(opts(home))
+      writeFileSync(join(home, 'rox', 'config.json'), '{"workspaces":[{"id":"v2"}]}') // the app keeps working in ~/rox
+      const result = migrateHiddenRoxHome(opts(home, { timestamp: 'ts-r2b' }))
       expect(result.outcome).toBe('merged')
-      expect(readFileSync(join(home, 'rox', 'config.json'), 'utf8')).toContain('real')
-      expect(result.conflicts).toContain('ts-r2/config.json')
+      expect(readFileSync(join(home, 'rox', 'config.json'), 'utf8')).toContain('v2')
+      expect(readFileSync(join(home, 'rox', 'secret', 'token'), 'utf8')).toBe('shh')
+      // The legacy config is stashed exactly once (whichever attempt reached it first).
+      expect(result.conflicts).toHaveLength(1)
+      expect(result.conflicts[0]).toMatch(/^ts-r2b?\/config\.json$/)
       expect(existsSync(mergeIncompleteMarkerPath(join(home, 'rox')))).toBe(false)
       expect(lstatSync(join(home, '.rox')).isSymbolicLink()).toBe(true)
       expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, 'rox'))
     }))
 
-  it('a failed merge prefers the intact legacy home even when ~/rox had data', () =>
+  it('~/rox without user data is never the merge target: the resolution and the move both keep ~/.rox first', () =>
     withHome((home) => {
-      write(join(home, 'rox', 'config.json'), '{"workspaces":[{"id":"v"}]}')
+      write(join(home, 'rox', 'config.json'), '{"workspaces":[]}')
       write(join(home, '.rox', 'config.json'), '{"workspaces":[{"id":"h"}]}')
-      write(join(home, '.rox', 'secret', 'token'), 'shh')
-      chmodSync(join(home, '.rox', 'secret'), 0o000)
-      expect(() => migrateHiddenRoxHome(opts(home))).toThrow()
-      chmodSync(join(home, '.rox', 'secret'), 0o700)
-      expect(readMergeIncompleteMarker(join(home, 'rox'))?.choice).toBe('hidden')
       expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, '.rox'))
-    }))
-
-  it('~/rox keeps winning a failed merge only when the legacy home had no user data', () =>
-    withHome((home) => {
-      write(join(home, 'rox', 'config.json'), '{"workspaces":[{"id":"v"}]}')
-      write(join(home, '.rox', 'config.json'), '{"workspaces":[]}')
-      write(join(home, '.rox', 'secret', 'token'), 'shh')
-      chmodSync(join(home, '.rox', 'secret'), 0o000)
-      expect(() => migrateHiddenRoxHome(opts(home))).toThrow()
-      chmodSync(join(home, '.rox', 'secret'), 0o700)
-      expect(readMergeIncompleteMarker(join(home, 'rox'))?.choice).toBe('visible')
-      expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, 'rox'))
+      expect(migrateHiddenRoxHome(opts(home)).outcome).toBe('merged')
+      expect(readFileSync(join(home, 'rox', 'config.json'), 'utf8')).toContain('"h"')
     }))
 })
 
@@ -318,7 +327,7 @@ describe('plain-PID lock staleness (finding 9)', () => {
 describe('recursive conflict stash (finding 10)', () => {
   it('a legacy directory colliding with a ~/rox file is stashed whole and blocks revert', () =>
     withHome((home) => {
-      write(join(home, 'rox', 'config.json'), '{}')
+      write(join(home, 'rox', 'config.json'), '{"workspaces":[{"id":"v"}]}') // ~/rox holds user data: import path
       write(join(home, 'rox', 'a'), 'visible file')
       write(join(home, '.rox', 'a', 'top.txt'), 'top')
       write(join(home, '.rox', 'a', 'b', 'c', 'deep.txt'), 'deep')

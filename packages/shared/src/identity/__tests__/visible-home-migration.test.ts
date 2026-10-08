@@ -120,31 +120,53 @@ describe('migrateHiddenRoxHome start states', () => {
       expect(existsSync(result.reportPath!)).toBe(true)
     }))
 
-  it('both real dirs → merged: newer mtime wins, loser kept under .migration/conflicts', () =>
+  it('both real dirs, data-less ~/rox → merged: ~/.rox takes its place, the differing ~/rox file kept under conflicts', () =>
     withHome((home) => {
-      mkdirSync(join(home, 'rox', 'workspaces'), { recursive: true }) // a Rox home (marker)
+      mkdirSync(join(home, 'rox', 'workspaces'), { recursive: true }) // a Rox home (marker), no user data
       writeFileSync(join(home, 'rox', 'only-visible.txt'), 'visible')
-      writeFileSync(join(home, 'rox', 'conflict.txt'), 'old-visible')
+      writeFileSync(join(home, 'rox', 'conflict.txt'), 'new-visible')
       writeHiddenFile(home, 'only-hidden.txt', 'hidden')
-      writeHiddenFile(home, 'conflict.txt', 'new-hidden')
-      // Make the hidden copy newer.
-      const oldDate = new Date('2020-01-01')
-      const newDate = new Date('2026-01-01')
-      utimesSync(join(home, 'rox', 'conflict.txt'), oldDate, oldDate)
-      utimesSync(join(home, '.rox', 'conflict.txt'), newDate, newDate)
+      writeHiddenFile(home, 'conflict.txt', 'old-hidden')
+      // The visible copy is newer: ~/.rox still wins (it is the live tree).
+      utimesSync(join(home, '.rox', 'conflict.txt'), new Date('2020-01-01'), new Date('2020-01-01'))
 
       const result = migrateHiddenRoxHome(baseOptions(home))
       expect(result.outcome).toBe('merged')
       expect(readFileSync(join(home, 'rox', 'only-visible.txt'), 'utf8')).toBe('visible')
       expect(readFileSync(join(home, 'rox', 'only-hidden.txt'), 'utf8')).toBe('hidden')
-      expect(readFileSync(join(home, 'rox', 'conflict.txt'), 'utf8')).toBe('new-hidden')
+      expect(readFileSync(join(home, 'rox', 'conflict.txt'), 'utf8')).toBe('old-hidden')
+      expect(result.conflicts).toEqual(['ts-001/conflict.txt'])
+      expect(readFileSync(join(home, 'rox', ROX_HOME_MIGRATION_DIR_NAME, 'conflicts', 'ts-001', 'conflict.txt'), 'utf8')).toBe(
+        'new-visible',
+      )
+      expect(lstatSync(join(home, '.rox')).isSymbolicLink()).toBe(true)
+      // One rename of the legacy tree into place: no archived copy.
+      expect(readdirSync(home).sort()).toEqual(['.rox', 'rox'])
+    }))
+
+  it('both real dirs, ~/rox with user data → merged: ~/rox wins, legacy leftovers imported, differing legacy file stashed', () =>
+    withHome((home) => {
+      mkdirSync(join(home, 'rox', 'workspaces', 'ws'), { recursive: true }) // user data
+      writeFileSync(join(home, 'rox', 'only-visible.txt'), 'visible')
+      writeFileSync(join(home, 'rox', 'conflict.txt'), 'old-visible')
+      writeHiddenFile(home, 'only-hidden.txt', 'hidden')
+      writeHiddenFile(home, 'conflict.txt', 'new-hidden!')
+      // The legacy copy is newer: ~/rox still wins (no mtime rule).
+      utimesSync(join(home, 'rox', 'conflict.txt'), new Date('2020-01-01'), new Date('2020-01-01'))
+
+      const result = migrateHiddenRoxHome(baseOptions(home))
+      expect(result.outcome).toBe('merged')
+      expect(readFileSync(join(home, 'rox', 'only-visible.txt'), 'utf8')).toBe('visible')
+      expect(readFileSync(join(home, 'rox', 'only-hidden.txt'), 'utf8')).toBe('hidden')
+      expect(readFileSync(join(home, 'rox', 'conflict.txt'), 'utf8')).toBe('old-visible')
       expect(result.conflicts).toEqual(['ts-001/conflict.txt']) // per-attempt stash dir
       expect(readFileSync(join(home, 'rox', ROX_HOME_MIGRATION_DIR_NAME, 'conflicts', 'ts-001', 'conflict.txt'), 'utf8')).toBe(
-        'old-visible',
+        'new-hidden!',
       )
       expect(lstatSync(join(home, '.rox')).isSymbolicLink()).toBe(true)
       // Original kept under a timestamped name — never deleted.
       expect(existsSync(join(home, '.rox.migrated-ts-001'))).toBe(true)
+      expect(existsSync(join(home, 'rox', ROX_HOME_MIGRATION_DIR_NAME, 'imported.jsonl'))).toBe(false)
     }))
 
   it('negative: ~/.rox symlink elsewhere → no-op with warning', () =>
