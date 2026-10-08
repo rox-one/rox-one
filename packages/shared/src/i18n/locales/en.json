@@ -5564,7 +5564,6 @@
   "productTour.workspace.workspace.scope.title": "Your current context",
   "profile.accountSettings": "Account settings",
   "profile.balance": "{{amount}}",
-  "profile.balanceEmpty": "—",
   "profile.balanceLabel": "Balance",
   "profile.balanceUnknown": "No data",
   "profile.defaultName": "User",

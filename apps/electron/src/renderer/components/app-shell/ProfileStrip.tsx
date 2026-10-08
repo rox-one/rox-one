@@ -82,9 +82,10 @@ export function ProfileStrip({
   const plan = data.plan ?? 'standard'
   const planLabel = t(`settings.account.plan.${plan}`)
   const balanceKnown = data.balance !== null && Number.isFinite(data.balance)
-  // The screen-reader description keeps the long-standing "unknown" dash; the
-  // visible surfaces use a neutral "no data" status instead of a bare dash.
-  const descriptionBalance = balanceKnown ? t('profile.balance', { amount: data.balance }) : t('profile.balanceEmpty')
+  // Every surface — the visible row, the hover title and the screen-reader
+  // description — reports the same honest "no data" status instead of a dash,
+  // so an unknown cabinet balance can never look like a real zero.
+  const descriptionBalance = balanceKnown ? t('profile.balance', { amount: data.balance }) : t('profile.balanceUnknown')
   const balanceLabel = balanceKnown ? t('profile.balance', { amount: data.balance }) : t('profile.balanceUnknown')
   const spentLabel = data.spentUsd != null && data.spentUsd > 0 ? formatCostUsd(data.spentUsd) : null
   const accountDetails = [

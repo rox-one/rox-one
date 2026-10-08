@@ -5564,7 +5564,6 @@
   "productTour.workspace.workspace.scope.title": "Dein aktueller Kontext",
   "profile.accountSettings": "Kontoeinstellungen",
   "profile.balance": "{{amount}}",
-  "profile.balanceEmpty": "—",
   "profile.balanceLabel": "Guthaben",
   "profile.balanceUnknown": "Keine Daten",
   "profile.defaultName": "Benutzer",

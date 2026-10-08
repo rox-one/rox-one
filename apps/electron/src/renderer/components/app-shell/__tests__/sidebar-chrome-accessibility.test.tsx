@@ -16,7 +16,7 @@ await i18n.init({
     'profile.defaultName': 'User',
     'profile.balance': '{{amount}}',
     'profile.balanceLabel': 'Balance',
-    'profile.balanceEmpty': '—',
+    'profile.balanceUnknown': 'No data',
     'settings.account.plan.standard': 'Standard',
     'promo.onboardingTitle': 'Set up memory',
     'promo.onboardingBody': 'Add lessons so Rox remembers your preferences.',

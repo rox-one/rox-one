@@ -5564,7 +5564,6 @@
   "productTour.workspace.workspace.scope.title": "現在の作業環境",
   "profile.accountSettings": "アカウント設定",
   "profile.balance": "{{amount}}",
-  "profile.balanceEmpty": "—",
   "profile.balanceLabel": "残高",
   "profile.balanceUnknown": "データなし",
   "profile.defaultName": "ユーザー",

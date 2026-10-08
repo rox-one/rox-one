@@ -5564,7 +5564,6 @@
   "productTour.workspace.workspace.scope.title": "目前的工作脈絡",
   "profile.accountSettings": "帳戶設定",
   "profile.balance": "{{amount}}",
-  "profile.balanceEmpty": "—",
   "profile.balanceLabel": "餘額",
   "profile.balanceUnknown": "無資料",
   "profile.defaultName": "使用者",

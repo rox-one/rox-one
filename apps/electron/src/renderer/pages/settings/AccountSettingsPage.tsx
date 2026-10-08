@@ -85,7 +85,7 @@ function errorMessage(error: unknown): string {
 }
 
 function formatBalance(balance: number | null, t: (key: string, opts?: Record<string, unknown>) => string): string {
-  if (balance === null || !Number.isFinite(balance)) return t('profile.balanceEmpty')
+  if (balance === null || !Number.isFinite(balance)) return t('profile.balanceUnknown')
   return t('profile.balance', { amount: balance })
 }
 
