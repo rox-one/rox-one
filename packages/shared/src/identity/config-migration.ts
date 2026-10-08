@@ -564,8 +564,6 @@ export interface MigrateHiddenRoxHomeOptions {
   skipProcessLock?: boolean
   /** Process lock path (default `$HOME/.rox-migrate.lock`, next to the homes). */
   processLockPath?: string
-  /** Older lock locations still honoured when live (tests; default the tmpdir lock). */
-  legacyProcessLockPaths?: string[]
   /** Current uid for lock owner checks (tests; default `process.getuid()`). */
   getuid?: () => number | undefined
   /** Injectable lstat for lock owner checks (tests fake a foreign owner). */
@@ -887,20 +885,6 @@ export function desktopAppRuntimeLockPaths(configDir: string, options?: RuntimeL
 }
 
 /**
- * Probe set: every current location plus the direct-in-base paths earlier
- * builds wrote (read with the same owner/link checks, never written).
- */
-function _desktopRuntimeLockProbePaths(configDir: string, options?: RuntimeLockLocationOptions): string[] {
-  const name = _runtimeLockName(configDir, options)
-  return [
-    ...new Set([
-      ...desktopAppRuntimeLockPaths(configDir, { ...options, create: false }),
-      ..._runtimeLockBases(options).map((base) => join(base, name)),
-    ]),
-  ]
-}
-
-/**
  * Electron main: hold the desktop app lock(s) for the process lifetime.
  * Returns the release function (call on quit). Best effort: a failed write
  * never blocks startup. Every lock is written with `_writeFileAtomicNoFollow`
@@ -954,7 +938,7 @@ function _liveHomeLockHolders(dir: string, options?: MigrateHiddenRoxHomeOptions
   const own: LockOwnershipOptions = { getuid: options?.getuid, lstat: options?.lockLstat }
   const runtimeLocks = options?.desktopRuntimeLockPath
     ? [options.desktopRuntimeLockPath(dir)]
-    : _desktopRuntimeLockProbePaths(dir, { env: options?.env ?? process.env, ...own })
+    : desktopAppRuntimeLockPaths(dir, { env: options?.env ?? process.env, ...own, create: false })
   for (const path of runtimeLocks) probes.push(['desktop-app', path])
   let desktopLive = false
   for (const [name, path] of probes) {
@@ -1245,11 +1229,6 @@ function _defaultProcessLockPath(options?: MigrateHiddenRoxHomeOptions): string 
   return join(options?.homeDir ?? homedir(), ROX_MIGRATION_LOCK_FILE_NAME)
 }
 
-/** Lock location of earlier builds (`${tmpdir()}/rox-migrate-<uid>.lock`): still honoured when live. */
-function _legacyProcessLockPaths(options?: MigrateHiddenRoxHomeOptions): string[] {
-  return options?.legacyProcessLockPaths ?? [join(tmpdir(), `rox-migrate-${_lockUid()}.lock`)]
-}
-
 /**
  * O_EXCL|O_NOFOLLOW process lock carrying `{ pid, startedAt, nonce }`. A
  * lock left by a dead PID, a previous boot, older than
@@ -1270,11 +1249,6 @@ function _acquireProcessLock(options?: MigrateHiddenRoxHomeOptions): (() => void
     // A lock being written right now has no PID for a moment.
     pidlessTtlMs: 60_000,
     ...own,
-  }
-  // A live lock at the old tmpdir location (a still-running older build) defers too.
-  for (const legacy of _legacyProcessLockPaths(options)) {
-    if (legacy === lockPath) continue
-    if (isLockFileLive(legacy, liveness)) return { deferred: legacy }
   }
   const token = JSON.stringify({ pid: process.pid, startedAt: now, nonce: _randomLockBytes(8).toString('hex') })
   const deferred = { deferred: lockPath }

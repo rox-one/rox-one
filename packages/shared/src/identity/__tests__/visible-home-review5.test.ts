@@ -68,7 +68,6 @@ const opts = (home: string, extra?: Partial<MigrateHiddenRoxHomeOptions>): Migra
   homeDir: home,
   env: {},
   timestamp: 'ts-r5',
-  legacyProcessLockPaths: [join(home, 'no-legacy-lock')],
   desktopRuntimeLockPath: (dir) => join(home, `runtime-${dir.endsWith('.rox') ? 'hidden' : 'visible'}.lock`),
   ...(extra ?? {}),
 })
@@ -169,25 +168,28 @@ describe('lock readers ignore links and foreign owners (finding 1)', () => {
       expect(migrateHiddenRoxHome(opts(home, { lockLstat: foreign })).outcome).toBe('migrated')
     }))
 
-  it('a foreign or linked legacy /tmp/rox-migrate-<uid>.lock is ignored', () =>
+  it('a linked $HOME/.rox-migrate.lock is ignored (taken over, its target untouched)', () =>
     withHome((home) => {
       plantHidden(home)
-      const legacy = join(home, 'old-tmp', `rox-migrate-${uid}.lock`)
-      write(join(home, 'live.lock'), liveContent())
-      mkdirSync(join(home, 'old-tmp'))
-      symlinkSync(join(home, 'live.lock'), legacy)
-      const linked = migrateHiddenRoxHome(opts(home, { legacyProcessLockPaths: [legacy], dryRun: false, skipProcessLock: false }))
+      const lock = join(home, 'proc', 'rox-migrate.lock')
+      const content = liveContent()
+      write(join(home, 'live.lock'), content)
+      mkdirSync(join(home, 'proc'))
+      symlinkSync(join(home, 'live.lock'), lock)
+      const linked = migrateHiddenRoxHome(opts(home, { processLockPath: lock }))
       expect(linked.outcome).toBe('migrated')
+      expect(readFileSync(join(home, 'live.lock'), 'utf8')).toBe(content)
     }))
 
-  it('a foreign-owned legacy lock is ignored, an own one defers', () =>
+  it('an own live process lock defers; a foreign-owned one is never live', () =>
     withHome((home) => {
       plantHidden(home)
-      const legacy = join(home, 'old-tmp', `rox-migrate-${uid}.lock`)
-      write(legacy, liveContent())
-      expect(migrateHiddenRoxHome(opts(home, { legacyProcessLockPaths: [legacy] })).outcome).toBe('deferred-locked')
-      const foreign = foreignLstat((p) => p === legacy)
-      expect(migrateHiddenRoxHome(opts(home, { legacyProcessLockPaths: [legacy], lockLstat: foreign })).outcome).toBe('migrated')
+      const lock = join(home, 'proc', 'rox-migrate.lock')
+      write(lock, liveContent())
+      expect(migrateHiddenRoxHome(opts(home, { processLockPath: lock })).outcome).toBe('deferred-locked')
+      const foreign = foreignLstat((p) => p === lock)
+      expect(isLockFileLive(lock, { ...liveness, lstat: foreign })).toBe(false)
+      expect(isLockFileLive(lock, { ...liveness, getuid: () => uid + 1 })).toBe(false)
     }))
 })
 

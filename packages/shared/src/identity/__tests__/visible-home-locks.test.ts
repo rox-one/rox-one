@@ -45,7 +45,6 @@ const opts = (home: string, extra?: Partial<MigrateHiddenRoxHomeOptions>): Migra
   homeDir: home,
   env: {},
   timestamp: 'ts-locks',
-  legacyProcessLockPaths: [join(home, 'no-legacy-lock')],
   ...(extra ?? {}),
 })
 
@@ -121,17 +120,6 @@ describe('migration process lock next to the homes', () => {
       rmSync(lock)
       expect(migrateHiddenRoxHome(opts(home)).outcome).toBe('migrated')
       expect(existsSync(lock)).toBe(false)
-    }))
-
-  it('a live lock at the old tmpdir location (older build) still defers', () =>
-    withHome((home) => {
-      plantHidden(home)
-      const legacy = join(home, 'old-tmp', 'rox-migrate-0.lock')
-      liveLock(legacy)
-      const result = migrateHiddenRoxHome(opts(home, { legacyProcessLockPaths: [legacy] }))
-      expect(result.outcome).toBe('deferred-locked')
-      expect(result.diagnostics).toContain(`locked:${legacy}`)
-      expect(existsSync(join(home, ROX_MIGRATION_LOCK_FILE_NAME))).toBe(false)
     }))
 
   it('a dry run never creates the lock', () =>
