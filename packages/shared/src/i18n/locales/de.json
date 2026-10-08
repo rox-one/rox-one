@@ -7536,6 +7536,8 @@
   "storage.settings.migrationDeferredInUse": "Verschieben verschoben: Dateien in ~/.rox werden von einem anderen Programm verwendet – wir versuchen es beim nächsten Start erneut",
   "storage.settings.migrationDeferredLocked": "Verschieben aufgeschoben: Rox läuft in einem anderen Fenster oder Prozess",
   "storage.settings.migrationDeferredUnmovable": "~/.rox konnte nicht verschoben werden (separates Volume oder Einhängepunkt) – Ihre Daten bleiben in ~/.rox",
+  "storage.settings.migrationDeferredUnmovableVisible": "Rox verwendet ~/rox; die Reste in ~/.rox ließen sich nicht verschieben und bleiben dort",
+  "storage.settings.migrationDeferredVisibleInUse": "Verschieben verschoben: Dateien in ~/rox werden von einem anderen Programm verwendet – wir versuchen es beim nächsten Start erneut",
   "storage.settings.migrationFailed": "Verschieben nach ~/rox nicht möglich – es sind keine Dateien verloren gegangen",
   "storage.settings.migrationRetryLater": "Verschieben nach einem fehlgeschlagenen Versuch aufgeschoben – Rox verwendet bis dahin ~/rox; neuer Versuch in 24 Stunden",
   "storage.settings.migrationSymlinkElsewhere": "~/.rox ist ein Link auf einen anderen Ordner und wurde daher nicht verändert – Rox verwendet ~/rox",

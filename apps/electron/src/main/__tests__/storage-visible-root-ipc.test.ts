@@ -211,6 +211,44 @@ describe('W1-13 review 5: last migration outcome in Settings (no popup)', () => 
     expect(key('symlink-elsewhere', ['storage.migration.symlinkElsewhere', 'uses:hidden'])).toBe('storage.settings.migrationFailed')
   })
 
+  it('review 8: a busy ~/rox on the move-aside path names ~/rox; an authoritative ~/rox pre-check deferral says Rox uses ~/rox', () => {
+    const base = { enabled: true, activeAtLaunch: true, locked: false, restartRequired: false }
+    const at = '2026-10-08T07:00:00.000Z'
+    const key = (diagnostics: string[]) => storageMigrationStatusMessageKey({ ...base, lastMigration: { kind: 'deferred-unmovable', diagnostics, at } })
+    for (const code of ['EPERM', 'EACCES', 'EBUSY']) {
+      expect(key(['storage.migration.visibleNotRenamable', `rename:${code}`])).toBe('storage.settings.migrationDeferredVisibleInUse')
+    }
+    for (const code of ['EXDEV', 'ENOTEMPTY', 'EEXIST']) {
+      expect(key(['storage.migration.visibleNotRenamable', `rename:${code}`])).toBe('storage.settings.migrationFailed')
+    }
+    for (const code of ['mount-point', 'volume-root', 'reparse-point', 'cross-device', 'parent-not-writable', 'EACCES']) {
+      expect(key(['storage.migration.legacyNotRenamable', `rename:${code}`, 'uses:visible'])).toBe('storage.settings.migrationDeferredUnmovableVisible')
+    }
+    // Without `uses:visible` (a data-less ~/rox: ~/.rox stays the home) the texts are unchanged.
+    expect(key(['storage.migration.legacyNotRenamable', 'rename:mount-point'])).toBe('storage.settings.migrationDeferredUnmovable')
+    expect(key(['storage.migration.legacyNotRenamable', 'rename:EBUSY'])).toBe('storage.settings.migrationDeferredInUse')
+    // A failed merge rename keeps its own texts.
+    expect(key(['storage.migration.mergeRenameFailed', 'rename:EBUSY', 'attempts:1'])).toBe('storage.settings.migrationDeferredInUse')
+
+    const dir = join(import.meta.dir, '../../../../../packages/shared/src/i18n/locales')
+    const en = JSON.parse(readFileSync(join(dir, 'en.json'), 'utf8')) as Record<string, string>
+    const ru = JSON.parse(readFileSync(join(dir, 'ru.json'), 'utf8')) as Record<string, string>
+    expect(en['storage.settings.migrationDeferredVisibleInUse']).toContain('~/rox ')
+    expect(en['storage.settings.migrationDeferredVisibleInUse']).not.toContain('~/.rox')
+    expect(ru['storage.settings.migrationDeferredVisibleInUse']).toBe('Перенос отложен: файлы в ~/rox заняты другой программой, повторим при следующем запуске')
+    expect(ru['storage.settings.migrationDeferredUnmovableVisible']).toBe('Rox работает с ~/rox; остатки в ~/.rox перенести не удалось, они остаются там')
+  })
+
+  it('review 8: the locale files stay valid JSON without duplicate keys', () => {
+    const dir = join(import.meta.dir, '../../../../../packages/shared/src/i18n/locales')
+    for (const locale of ['ar', 'de', 'en', 'es', 'fr', 'hu', 'ja', 'ko', 'pl', 'ru', 'zh-Hans', 'zh-Hant']) {
+      const text = readFileSync(join(dir, `${locale}.json`), 'utf8')
+      const parsed = JSON.parse(text) as Record<string, string>
+      const keys = [...text.matchAll(/^\s*"((?:[^"\\]|\\.)*)"\s*:/gm)].map((m) => m[1])
+      expect(keys.length).toBe(Object.keys(parsed).length)
+    }
+  })
+
   it('every message exists in all 12 locales, with the Russian text as specified', () => {
     const locales = ['ar', 'de', 'en', 'es', 'fr', 'hu', 'ja', 'ko', 'pl', 'ru', 'zh-Hans', 'zh-Hant']
     const keys = [
@@ -221,6 +259,8 @@ describe('W1-13 review 5: last migration outcome in Settings (no popup)', () => 
       'storage.settings.migrationRetryLater',
       'storage.settings.migrationFailed',
       'storage.settings.migrationSymlinkElsewhere',
+      'storage.settings.migrationDeferredVisibleInUse',
+      'storage.settings.migrationDeferredUnmovableVisible',
     ]
     const dir = join(import.meta.dir, '../../../../../packages/shared/src/i18n/locales')
     for (const locale of locales) {

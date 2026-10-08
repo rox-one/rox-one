@@ -7536,6 +7536,8 @@
   "storage.settings.migrationDeferredInUse": "遷移已延後：~/.rox 中的檔案正被其他程式使用，將在下次啟動時重試",
   "storage.settings.migrationDeferredLocked": "搬移已延後：Rox 正在另一個視窗或程序中執行",
   "storage.settings.migrationDeferredUnmovable": "無法移動 ~/.rox（獨立磁碟區或掛載點）— 資料仍保留在 ~/.rox 中",
+  "storage.settings.migrationDeferredUnmovableVisible": "Rox 正在使用 ~/rox；~/.rox 中的剩餘檔案無法移動，將保留在原處",
+  "storage.settings.migrationDeferredVisibleInUse": "遷移已延後：~/rox 中的檔案正被其他程式使用，將在下次啟動時重試",
   "storage.settings.migrationFailed": "無法遷移到 ~/rox——沒有檔案遺失",
   "storage.settings.migrationRetryLater": "遷移嘗試失敗後已延後——在此期間 Rox 使用 ~/rox，將在 24 小時後重試",
   "storage.settings.migrationSymlinkElsewhere": "~/.rox 是指向其他資料夾的連結，因此保持不變——Rox 使用 ~/rox",

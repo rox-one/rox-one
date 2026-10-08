@@ -7536,6 +7536,8 @@
   "storage.settings.migrationDeferredInUse": "Az áthelyezés elhalasztva: a ~/.rox fájljait egy másik program használja – a következő indításkor újrapróbáljuk",
   "storage.settings.migrationDeferredLocked": "Az áthelyezés elhalasztva: a Rox egy másik ablakban vagy folyamatban fut",
   "storage.settings.migrationDeferredUnmovable": "A ~/.rox nem helyezhető át (külön kötet vagy csatolási pont) — az adatai a ~/.rox mappában maradnak",
+  "storage.settings.migrationDeferredUnmovableVisible": "A Rox a ~/rox mappát használja; a ~/.rox maradékai nem helyezhetők át, ezért ott maradnak",
+  "storage.settings.migrationDeferredVisibleInUse": "Az áthelyezés elhalasztva: a ~/rox fájljait egy másik program használja – a következő indításkor újrapróbáljuk",
   "storage.settings.migrationFailed": "Nem sikerült áthelyezni a ~/rox mappába – egyetlen fájl sem veszett el",
   "storage.settings.migrationRetryLater": "Az áthelyezés egy sikertelen kísérlet után elhalasztva – addig a Rox a ~/rox mappát használja; 24 óra múlva újrapróbáljuk",
   "storage.settings.migrationSymlinkElsewhere": "A ~/.rox egy másik mappára mutató hivatkozás, ezért változatlanul maradt – a Rox a ~/rox mappát használja",

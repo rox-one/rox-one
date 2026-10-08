@@ -71,10 +71,18 @@ export function storageMigrationStatusMessageKey(state: StorageVisibleRootState)
       const code = diagnosticValue(last, 'rename:')
       const attempts = Number(diagnosticValue(last, 'attempts:'))
       const merge = last.diagnostics?.includes('storage.migration.mergeRenameFailed') === true
+      // The data-less `~/rox` could not be moved aside (e.g. Explorer holds
+      // it open): it is `~/rox` that is busy, `~/.rox` stays the home.
+      if (last.diagnostics?.includes('storage.migration.visibleNotRenamable') === true) {
+        return code && IN_USE_CODES.has(code) ? 'storage.settings.migrationDeferredVisibleInUse' : 'storage.settings.migrationFailed'
+      }
       // The failure that starts the 24 h hold (see `_mergeRetryBlocked`).
       if (merge && Number.isFinite(attempts) && attempts >= STORAGE_MERGE_TRANSIENT_RETRIES) {
         return 'storage.settings.migrationRetryLater'
       }
+      // A pre-check deferral while `~/rox` is authoritative (it holds data):
+      // Rox runs on `~/rox`, only the leftovers stay in `~/.rox`.
+      if (!merge && last.diagnostics?.includes('uses:visible') === true) return 'storage.settings.migrationDeferredUnmovableVisible'
       if (code && IN_USE_CODES.has(code)) return 'storage.settings.migrationDeferredInUse'
       // Any other failed merge rename is held for 24 hours right away.
       if (merge) return 'storage.settings.migrationRetryLater'

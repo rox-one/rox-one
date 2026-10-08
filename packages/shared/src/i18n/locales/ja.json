@@ -7536,6 +7536,8 @@
   "storage.settings.migrationDeferredInUse": "移動を延期しました: ~/.rox 内のファイルが別のプログラムで使用中です。次回の起動時に再試行します",
   "storage.settings.migrationDeferredLocked": "移動を延期しました: Rox が別のウィンドウまたはプロセスで実行中です",
   "storage.settings.migrationDeferredUnmovable": "~/.rox を移動できませんでした（別のボリュームまたはマウントポイント）— データは ~/.rox に残ります",
+  "storage.settings.migrationDeferredUnmovableVisible": "Rox は ~/rox を使用しています。~/.rox に残ったファイルは移動できなかったため、そのまま残ります",
+  "storage.settings.migrationDeferredVisibleInUse": "移動を延期しました: ~/rox 内のファイルが別のプログラムで使用中です。次回の起動時に再試行します",
   "storage.settings.migrationFailed": "~/rox に移動できませんでした — ファイルは失われていません",
   "storage.settings.migrationRetryLater": "移動に失敗したため延期しました — その間 Rox は ~/rox を使用します。24 時間後に再試行します",
   "storage.settings.migrationSymlinkElsewhere": "~/.rox は別のフォルダーへのリンクのため、そのままにしました — Rox は ~/rox を使用します",

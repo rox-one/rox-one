@@ -7540,6 +7540,8 @@
   "storage.settings.migrationDeferredInUse": "تم تأجيل النقل: ملفات في ~/.rox قيد الاستخدام من برنامج آخر، سنعيد المحاولة عند التشغيل التالي",
   "storage.settings.migrationDeferredLocked": "تم تأجيل النقل: Rox قيد التشغيل في نافذة أو عملية أخرى",
   "storage.settings.migrationDeferredUnmovable": "تعذّر نقل ~/.rox (وحدة تخزين منفصلة أو نقطة تركيب) — تبقى بياناتك في ~/.rox",
+  "storage.settings.migrationDeferredUnmovableVisible": "يستخدم Rox المجلد ~/rox؛ تعذّر نقل ما تبقّى في ~/.rox فيبقى هناك",
+  "storage.settings.migrationDeferredVisibleInUse": "تم تأجيل النقل: ملفات في ~/rox قيد الاستخدام من برنامج آخر، سنعيد المحاولة عند التشغيل التالي",
   "storage.settings.migrationFailed": "تعذّر النقل إلى ~/rox — لم تُفقد أي ملفات",
   "storage.settings.migrationRetryLater": "تم تأجيل النقل بعد محاولة فاشلة — يستخدم Rox المجلد ~/rox في الأثناء، وسنعيد المحاولة بعد 24 ساعة",
   "storage.settings.migrationSymlinkElsewhere": "~/.rox رابط إلى مجلد آخر، لذا تُرك كما هو — يستخدم Rox المجلد ~/rox",
