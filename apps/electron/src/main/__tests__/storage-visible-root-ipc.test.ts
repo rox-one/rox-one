@@ -110,7 +110,7 @@ describe('W1-13 review 5: last migration outcome in Settings (no popup)', () => 
     expect(on.lastMigration).toEqual({
       kind: 'deferred-unmovable', diagnostic: 'storage.migration.legacyNotRenamable', at: '2026-10-08T07:00:00.000Z',
     })
-    expect(storageMigrationStatusMessageKey(on)).toBe('storage.settings.deferredUnmovable')
+    expect(storageMigrationStatusMessageKey(on)).toBe('storage.settings.migrationDeferredUnmovable')
     const off = handlers.set(false)
     expect(off.lastMigration).toBeUndefined()
     expect(existsSync(stateFile())).toBe(false)
@@ -127,12 +127,12 @@ describe('W1-13 review 5: last migration outcome in Settings (no popup)', () => 
   it('the explanatory line only shows for a deferral while the toggle is ON', () => {
     const base = { enabled: true, activeAtLaunch: true, locked: false, restartRequired: false }
     const at = '2026-10-08T07:00:00.000Z'
-    expect(storageMigrationStatusMessageKey({ ...base, lastMigration: { kind: 'deferred-locked', at } })).toBe('storage.settings.deferredLocked')
+    expect(storageMigrationStatusMessageKey({ ...base, lastMigration: { kind: 'deferred-locked', at } })).toBe('storage.settings.migrationDeferredLocked')
     expect(storageMigrationStatusMessageKey({ ...base, lastMigration: { kind: 'relaunch-required', at } })).toBeUndefined()
     expect(storageMigrationStatusMessageKey({ ...base, enabled: false, lastMigration: { kind: 'deferred-locked', at } })).toBeUndefined()
     // Env-locked toggle: the launch state decides.
     expect(storageMigrationStatusMessageKey({ ...base, enabled: false, locked: true, lastMigration: { kind: 'deferred-unmovable', at } }))
-      .toBe('storage.settings.deferredUnmovable')
+      .toBe('storage.settings.migrationDeferredUnmovable')
   })
 
   it('both strings exist in all 12 locales, with the Russian text as specified', () => {
@@ -140,11 +140,11 @@ describe('W1-13 review 5: last migration outcome in Settings (no popup)', () => 
     const dir = join(import.meta.dir, '../../../../../packages/shared/src/i18n/locales')
     for (const locale of locales) {
       const messages = JSON.parse(readFileSync(join(dir, `${locale}.json`), 'utf8')) as Record<string, string>
-      expect(messages['storage.settings.deferredUnmovable']?.length).toBeGreaterThan(0)
-      expect(messages['storage.settings.deferredLocked']?.length).toBeGreaterThan(0)
+      expect(messages['storage.settings.migrationDeferredUnmovable']?.length).toBeGreaterThan(0)
+      expect(messages['storage.settings.migrationDeferredLocked']?.length).toBeGreaterThan(0)
     }
     const ru = JSON.parse(readFileSync(join(dir, 'ru.json'), 'utf8')) as Record<string, string>
-    expect(ru['storage.settings.deferredUnmovable']).toBe('Не удалось перенести ~/.rox (отдельный том или точка монтирования) — данные остаются в ~/.rox')
-    expect(ru['storage.settings.deferredLocked']).toBe('Перенос отложен: Rox запущен в другом окне или процессе')
+    expect(ru['storage.settings.migrationDeferredUnmovable']).toBe('Не удалось перенести ~/.rox (отдельный том или точка монтирования) — данные остаются в ~/.rox')
+    expect(ru['storage.settings.migrationDeferredLocked']).toBe('Перенос отложен: Rox запущен в другом окне или процессе')
   })
 })

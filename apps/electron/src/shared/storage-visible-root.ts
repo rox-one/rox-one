@@ -35,9 +35,9 @@ export function storageMigrationStatusMessageKey(state: StorageVisibleRootState)
   if (!toggleOn) return undefined
   switch (state.lastMigration?.kind) {
     case 'deferred-unmovable':
-      return 'storage.settings.deferredUnmovable'
+      return 'storage.settings.migrationDeferredUnmovable'
     case 'deferred-locked':
-      return 'storage.settings.deferredLocked'
+      return 'storage.settings.migrationDeferredLocked'
     default:
       return undefined
   }
