@@ -5,8 +5,6 @@
  */
 import { useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import * as Icons from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuSub,
@@ -20,6 +18,7 @@ import {
 import { useSlotContributions } from './useSlots'
 import { useAtomValue } from 'jotai'
 import { enabledShellFlagsAtom, flagContextKeys } from './unified-flags'
+import { resolveLucideIcon } from './lucide-icon'
 import {
   buildGlobalCreateMenu,
   GLOBAL_CREATE_SLOT,
@@ -28,14 +27,8 @@ import {
   type GlobalCreateRunDeps,
 } from './global-create'
 
-function iconFor(name: string | undefined): LucideIcon | null {
-  if (!name) return null
-  const icon = (Icons as unknown as Record<string, LucideIcon | undefined>)[name]
-  return icon ?? null
-}
-
 function EntryLabel({ entry, label }: { entry: GlobalCreateMenuEntry; label: string }) {
-  const Icon = iconFor(entry.icon)
+  const Icon = resolveLucideIcon(entry.icon)
   return (
     <>
       {Icon && <Icon className="h-3.5 w-3.5" />}

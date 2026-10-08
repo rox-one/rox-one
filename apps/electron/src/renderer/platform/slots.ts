@@ -196,7 +196,8 @@ export function compareSlotContributions(a: SlotContribution, b: SlotContributio
   return 0
 }
 
-function flagList(flag: SlotContribution['flag']): readonly string[] {
+/** A contribution's `flag` as a list (none → []). */
+export function flagList(flag: SlotContribution['flag']): readonly string[] {
   if (flag === undefined) return []
   return typeof flag === 'string' ? [flag] : flag
 }

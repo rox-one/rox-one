@@ -9,7 +9,9 @@ const isComponent = (value: unknown): value is LucideIcon =>
   typeof value === 'function' || (typeof value === 'object' && value !== null && '$$typeof' in value)
 
 export function resolveLucideIcon(name: string | undefined | null): LucideIcon | null {
-  if (!name) return null
+  // Icon components are PascalCase; lowercase exports (`icons`,
+  // `createLucideIcon`) are helpers and must never render as a component.
+  if (!name || !/^[A-Z]/.test(name)) return null
   const icon = (Icons as unknown as Record<string, unknown>)[name]
   return isComponent(icon) ? icon : null
 }

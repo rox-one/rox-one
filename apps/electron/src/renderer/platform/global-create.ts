@@ -16,6 +16,7 @@ import { UNIFIED_SURFACE_FLAGS, isUnifiedSurfaceId } from '../../shared/surface-
 import { WORKBENCH_FLAG } from '@rox/core/platform'
 import {
   addSlotRegistrySeeder,
+  flagList,
   getSlotRegistry,
   isSlotContributionVisible,
   type SlotContribution,
@@ -213,7 +214,7 @@ function routeGateOpen(intent: GlobalCreateIntent | undefined, ctx: SlotListCont
 }
 
 function hasFlag(flag: SlotContribution['flag']): boolean {
-  return flag !== undefined && (typeof flag === 'string' ? flag.length > 0 : flag.length > 0)
+  return flagList(flag).length > 0
 }
 
 /** Pure: visible menu (slot order; hidden children dropped; empty parents dropped). */
