@@ -197,12 +197,19 @@ interface SessionRuntimeHooks {
   captureException: (error: unknown, context?: { errorSource?: string; sessionId?: string }) => void
   onSessionStarted: () => void
   onSessionStopped: () => void
+  /**
+   * Awaited before a new agent backend (and its child processes) is created.
+   * The Electron host uses it to wait for the background login-shell env
+   * capture (PATH/nvm/pyenv) on macOS; resolves immediately once captured.
+   */
+  beforeAgentSpawn: () => Promise<void>
 }
 
 const defaultSessionRuntimeHooks: SessionRuntimeHooks = {
   updateBadgeCount: () => {},
   onSessionStarted: () => {},
   onSessionStopped: () => {},
+  beforeAgentSpawn: async () => {},
   captureException: (error, context) => {
     const err = error instanceof Error ? error : new Error(String(error))
     if (_platform?.captureError) {
@@ -4536,6 +4543,13 @@ export class SessionManager implements ISessionManager {
    * 4. fallback: no connection configured
    */
   private async getOrCreateAgent(managed: ManagedSession): Promise<AgentInstance> {
+    if (!managed.agent) {
+      try {
+        await sessionRuntimeHooks.beforeAgentSpawn()
+      } catch (error) {
+        sessionLog.warn('[runtime-hooks] beforeAgentSpawn failed:', error)
+      }
+    }
     const execution = await this.roxExecutionForSession(managed)
     const assertOwner = () => this.assertRoxSessionExecution(managed.id, execution)
     assertOwner()

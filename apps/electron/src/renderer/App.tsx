@@ -115,6 +115,7 @@ import { toast } from 'sonner'
 import { initializeAuthenticatedWebRenderer, loadAuthenticatedWebWorkspaceMetadata, type AuthenticatedWebTransportBootstrap } from '@/lib/authenticated-web-bootstrap'
 import { runPersonalTaskScopeTransition, setPersonalTaskScope } from '@/lib/personal-tasks'
 import { toErrorMessage } from '@/lib/errors'
+import { markFirstMeaningfulPaint, markRendererOnce } from '@/lib/startup-perf'
 
 type AppState = 'loading' | 'onboarding' | 'reauth' | 'workspace-picker' | 'ready' | 'transport-unavailable'
 
@@ -489,6 +490,15 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       setSplashExiting(true)
     }
   }, [isFullyReady, splashExiting])
+
+  // PERF-01: first meaningful paint = session list ready and main UI committed.
+  useEffect(() => {
+    if (isFullyReady) markFirstMeaningfulPaint()
+  }, [isFullyReady])
+  // First settled screen of any kind (onboarding/picker/reauth on fresh profiles).
+  useEffect(() => {
+    if (appState !== 'loading') markRendererOnce(`renderer:interactive:${appState}`)
+  }, [appState])
 
   // Handler for when splash exit animation completes
   const handleSplashExitComplete = useCallback(() => {

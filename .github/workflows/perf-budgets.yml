@@ -8,6 +8,13 @@ on:
       - 'packages/server-core/src/observability/**'
       - 'packages/server-core/src/transport/server.ts'
       - 'scripts/bench/renderer-perf-report.ts'
+      - 'apps/electron/scripts/perf/**'
+      - 'apps/electron/src/main/index.ts'
+      - 'apps/electron/src/main/startup-marks.ts'
+      - 'apps/electron/src/main/shell-env.ts'
+      - 'apps/electron/src/main/windows-bootstrap.ts'
+      - 'apps/electron/src/shared/startup-perf.ts'
+      - 'packages/shared/src/skills/bundled*.ts'
       - '.github/workflows/perf-budgets.yml'
   pull_request:
     paths:
@@ -16,6 +23,13 @@ on:
       - 'packages/server-core/src/observability/**'
       - 'packages/server-core/src/transport/server.ts'
       - 'scripts/bench/renderer-perf-report.ts'
+      - 'apps/electron/scripts/perf/**'
+      - 'apps/electron/src/main/index.ts'
+      - 'apps/electron/src/main/startup-marks.ts'
+      - 'apps/electron/src/main/shell-env.ts'
+      - 'apps/electron/src/main/windows-bootstrap.ts'
+      - 'apps/electron/src/shared/startup-perf.ts'
+      - 'packages/shared/src/skills/bundled*.ts'
       - '.github/workflows/perf-budgets.yml'
   workflow_dispatch:
 jobs:
@@ -40,3 +54,26 @@ jobs:
           path: |
             renderer-perf-2000.md
             renderer-perf-bundle.md
+  # PERF-01: launch the built app and compare startup marks with the audit
+  # budgets (CI ×4). Report-only and non-blocking until shell-first boot lands.
+  electron-startup:
+    runs-on: [self-hosted, macos-toolchain]
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: '1.3.10' }
+      - run: bun install --frozen-lockfile
+        env: { GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}' }
+      - name: Build Electron app
+        run: bun run electron:build
+      - name: Startup bench (report-only)
+        run: bun run perf:startup -- --runs 3 --ci --md electron-startup.md --out electron-startup.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: electron-startup-bench
+          path: |
+            electron-startup.md
+            electron-startup.json

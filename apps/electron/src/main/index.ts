@@ -1,11 +1,20 @@
+// PERF-01: must stay the first import so `main:entry` precedes heavy module evaluation.
+import { markStartup, markStartupOnce, recordRendererMark, reportStartupTimelineWhenSettled, whenStartupMark } from './startup-marks'
+import { STARTUP_MARKS, STARTUP_PERF_MARK_CHANNEL, isValidRendererMarkName } from '../shared/startup-perf'
 import { createPocketAccountStore } from './pocket-account-store'
 import { RoxAccountAuthority, setRoxAccountAuthority } from '@rox/shared/auth'
 import { validateConfigurationCliEntries } from './configuration-cli-compat'
 import { resolveNumberedUserDataDir } from './numbered-user-data'
 // Load user's shell environment first (before other imports that may use env)
-// This ensures tools like Homebrew, nvm, etc. are available to the agent
-import { loadShellEnv } from './shell-env'
-loadShellEnv()
+// This ensures tools like Homebrew, nvm, etc. are available to the agent.
+// PERF-03: non-blocking — applies the cached env (or fallback PATH) now and
+// refreshes from the login shell in the background; agent spawns await it.
+import { shellEnvSpawnGate, startShellEnvLoad } from './shell-env'
+import { registerSpawnEnvGate, whenSpawnEnvReady } from '@rox/shared/toolchain/spawn-readiness'
+startShellEnvLoad()
+// Builtin MCP / MCP validation / git / siyuan / agent spawns await this gate.
+registerSpawnEnvGate('shell-env', shellEnvSpawnGate)
+markStartup(STARTUP_MARKS.shellEnv)
 
 import './brand-config-boot'
 
@@ -121,7 +130,7 @@ import { getDefaultWorkspacesDir } from '@rox/shared/workspaces'
 import { resolveWorkspaceMachineName } from '@rox/shared/os/user-display-name'
 import { ensureDemoPage } from '@rox/shared/pages'
 import { initializeDocs } from '@rox/shared/docs'
-import { ensureBundledSkills } from '@rox/shared/skills'
+import { ensureBundledSkillsInBackground, whenBundledSkillsReadyForAgents } from '@rox/shared/skills'
 import { initializeReleaseNotes } from '@rox/shared/release-notes'
 import { ensureDefaultPermissions } from '@rox/shared/agent/permissions-config'
 import { ensureToolIcons, ensurePresetThemes } from '@rox/shared/config'
@@ -570,6 +579,16 @@ app.whenReady().then(async () => {
     },
   })
 
+  markStartup(STARTUP_MARKS.appReady)
+  // PERF-01: one compact `[perf] startup …` line (and ROX_PERF_OUT JSON) with ROX_PERF=1.
+  reportStartupTimelineWhenSettled((line) => mainLog.info(line))
+  // Renderer startup/navigation marks (fire-and-forget, Rox windows only).
+  ipcMain.on(STARTUP_PERF_MARK_CHANNEL, (event, name: unknown, epochMs: unknown) => {
+    if (!isValidRendererMarkName(name) || typeof epochMs !== 'number') return
+    if (!isRegisteredRoxRendererWebContents(event.sender)) return
+    recordRendererMark(name, epochMs)
+  })
+
   // Export packaged state as env var so logger.ts (and headless Bun) don't need 'electron'
   process.env.CRAFT_IS_PACKAGED = app.isPackaged ? 'true' : 'false'
 
@@ -578,18 +597,41 @@ app.whenReady().then(async () => {
   setBundledAssetsRoot(__dirname)
 
   if (process.platform === 'win32' && !process.env.CRAFT_SERVER_URL) {
-    const { initializeWindowsBootstrap } = await import('./windows-bootstrap')
+    markStartup(STARTUP_MARKS.winBootstrapStart)
+    const { initializeWindowsBootstrap, scheduleWindowsBootstrapRepair, createWindowsRepairSpawnGate } = await import('./windows-bootstrap')
     const { getToolchainDependencyMode, getGitBashPath } = await import('@rox/shared/config')
-    const result = await initializeWindowsBootstrap({
+    const bootstrapOptions = {
       isPackaged: app.isPackaged,
       resourcesPath: process.resourcesPath,
       managedRoot: join(CONFIG_DIR, 'toolchain'),
       preference: getToolchainDependencyMode(),
       gitBashPreference: getGitBashPath(),
-    })
+      appVersion: app.getVersion(),
+    }
+    // PERF-03: parallel, cached `--version` probes; never runs bootstrap.ps1 here.
+    const result = await initializeWindowsBootstrap(bootstrapOptions)
+    markStartup(STARTUP_MARKS.winBootstrapEnd)
     // Structured non-secret diagnostics; never log receipt errors or process output.
-    if (result?.missingTools.length || result?.recoveryCode) mainLog.warn('[windows-bootstrap]', result)
+    if (result?.missingTools.length) mainLog.warn('[windows-bootstrap]', result)
     else if (result) mainLog.info('[windows-bootstrap]', result)
+    if (result?.repairNeeded) {
+      // Offline repair runs at most once per backoff window, after first paint —
+      // or immediately once a spawn needs the prerequisites (gate waiter expedites).
+      // Spawns wait up to 6 s from bootstrap.ps1 start, 12 s overall; latching.
+      const repairGate = createWindowsRepairSpawnGate()
+      registerSpawnEnvGate('windows-repair', repairGate.gate)
+      void scheduleWindowsBootstrapRepair({
+        ...bootstrapOptions,
+        missingTools: result.missingTools,
+        mode: result.mode,
+        after: whenStartupMark(STARTUP_MARKS.rendererFirstPaint),
+        signals: repairGate.signals,
+      }).then((repair) => {
+        if (repair.ran) mainLog.warn('[windows-bootstrap] background repair', repair)
+        else mainLog.info('[windows-bootstrap] background repair skipped', repair)
+      }).catch((err) => mainLog.warn('[windows-bootstrap] background repair failed:', err))
+        .finally(() => repairGate.settle())
+    }
   }
 
   try {
@@ -618,15 +660,18 @@ app.whenReady().then(async () => {
   // Initialize bundled docs
   initializeDocs()
 
-  // Sync bundled skill packs into ~/.agents/skills/ (never throws; hash-merge).
-  // Defer off the critical path so the first window can open without waiting
-  // for hundreds of skill files to copy on every cold start.
-  setImmediate(() => {
-    try {
-      ensureBundledSkills()
-    } catch (err) {
-      mainLog.warn('[bundled-skills] deferred sync failed:', err)
-    }
+  // Sync bundled skill packs into <config>/skills (never throws; hash-merge).
+  // PERF-02: claimed now (so the server bootstrap does not run it again), but
+  // the work starts only after the renderer's first paint: an O(1) stamp check,
+  // and only when the bundle/config changed a full merge in a worker thread.
+  void ensureBundledSkillsInBackground({
+    workerScript: join(__dirname, 'bundled-skills-worker.cjs'),
+    after: whenStartupMark(STARTUP_MARKS.rendererFirstPaint).then(() => markStartup(STARTUP_MARKS.skillsSyncStart)),
+    log: (level, message, data) => mainLog[level](message, data),
+  }).then((outcome) => {
+    if (outcome.via === 'inline') markStartupOnce(STARTUP_MARKS.skillsSyncInline)
+    markStartupOnce(STARTUP_MARKS.skillsSyncEnd)
+    if (outcome.status === 'failed') mainLog.warn('[bundled-skills] background sync failed:', outcome.error)
   })
 
   // Initialize bundled release notes
@@ -1057,6 +1102,14 @@ app.whenReady().then(async () => {
             updateBadgeCount,
             onSessionStarted,
             onSessionStopped,
+            // PERF-03: a new agent waits (bounded, latching) for the spawn env
+            // (macOS shell capture / Windows repair) and, only on first install
+            // or upgrade (stamp miss), for the bundled-skills merge (~10 s cap).
+            // Both run concurrently: worst case max(env, 10 s), and the skills
+            // merge is released immediately rather than after the env wait.
+            beforeAgentSpawn: async () => {
+              await Promise.all([whenSpawnEnvReady(), whenBundledSkillsReadyForAgents(10_000)])
+            },
             captureException: (error, context) => {
               Sentry.captureException(error instanceof Error ? error : new Error(String(error)), {
                 tags: {
@@ -1231,6 +1284,7 @@ app.whenReady().then(async () => {
         },
       })
 
+      markStartup(STARTUP_MARKS.serverReady)
       // Capture module-level references for before-quit cleanup and deep-link handlers
       sessionManager = instance.sessionManager
       oauthFlowStore = instance.oauthFlowStore
@@ -1433,6 +1487,7 @@ app.whenReady().then(async () => {
       })
 
       ipcMain.on('__get-ws-port', (e) => {
+        markStartupOnce(STARTUP_MARKS.wsPortHanded)
         e.returnValue = instance.port
       })
       ipcMain.handle('__resolve-local-ws-token', async (event, expectedWorkspaceId: unknown) => {
