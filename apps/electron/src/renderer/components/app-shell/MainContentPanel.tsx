@@ -42,7 +42,7 @@ import {
   isTerminalNavigation,
 } from '@/contexts/NavigationContext'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
-import { isScreenNavigation, type LoadedSource, type LoadedSkill } from '../../../shared/types'
+import { isScreenNavigation, isSurfaceNavigation, type LoadedSource, type LoadedSkill } from '../../../shared/types'
 import { buildRouteFromNavigationState } from '../../../shared/route-parser'
 import ChatPage from '@/pages/ChatPage'
 import { HomeFrontPage } from '@/platform/HomeFrontPage'
@@ -77,6 +77,8 @@ const SearchPage = lazyRoutePage(() => import('@/pages/SearchPage'))
 const NotesPage = lazyRoutePage(() => import('@/pages/NotesPage'))
 const ConnectionsPage = lazyRoutePage(() => import('@/pages/ConnectionsPage'))
 const ExtraScreenHost = lazyRoutePage(() => import('@/pages/extra-screens/ExtraScreenHost'))
+// W1-07 (#1504): unified mode roots; reachable only while their mode flag is on.
+const SurfaceHost = lazyRoutePage(() => import('@/platform/SurfaceHost'))
 const TasksPage = lazyRoutePage(() => import('@/pages/TasksPage'))
 const MeetingsPage = lazyRoutePage(() => import('@/pages/MeetingsPage'))
 const InboxPage = lazyRoutePage(() => import('@/pages/InboxPage'))
@@ -690,6 +692,14 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <FeedPage selectedId={navState.details?.itemId ?? null} />
+      </Panel>
+    )
+  }
+
+  if (isSurfaceNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <SurfaceHost surface={navState.surface} />
       </Panel>
     )
   }

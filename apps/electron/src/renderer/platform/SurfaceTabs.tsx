@@ -34,6 +34,7 @@ import { surfaceTabFromRoute, type SurfaceKnowledgeRef } from './layout-snapshot
 import { APP_NAV_DESTINATIONS } from '@/components/app-shell/nav-destinations'
 import { EXTRA_SCREENS } from '@/pages/extra-screens/registry'
 import { getModeRegistry } from './mode-registry-bootstrap'
+import { UNIFIED_MODES } from './modes-seed'
 import { CHROME_DENSITY } from './chrome-density'
 import { createKnowledgeTabTitleLoader } from './knowledge-tab-titles'
 import { surfaceTabRovingId, surfaceTabKeyboardTarget, surfaceTabCloseTarget } from './surface-tab-navigation'
@@ -187,6 +188,11 @@ export function SurfaceTabs() {
     }
     for (const mode of getModeRegistry().list()) {
       if (mode.rootRoute) map.set(root(mode.rootRoute), mode.titleKey)
+    }
+    // W1-07: unified mode roots only parse while their flag is on, so their
+    // titles can be mapped unconditionally.
+    for (const { contribution } of UNIFIED_MODES) {
+      if (contribution.rootRoute) map.set(root(contribution.rootRoute), contribution.titleKey)
     }
     for (const screen of EXTRA_SCREENS) map.set(screen.id, screen.labelKey)
     return map
