@@ -239,16 +239,11 @@ describe('a legacy dir that cannot be renamed away defers (finding 3)', () => {
       expect(readFileSync(join(home, 'rox', 'big.json'), 'utf8')).toBe('V')
     }))
 
-  it('a renamable legacy dir is unaffected by the probe (no leftovers)', () =>
+  it('a renamable legacy dir is unaffected by the merge probe (no leftovers)', () =>
     withHome((home) => {
-      write(join(home, '.rox', 'config.json'), '{"workspaces":[{"id":"real"}]}')
-      const result = migrateHiddenRoxHome(opts(home, {
-        rename: (s, d) => {
-          if (s === join(home, '.rox') && d === join(home, 'rox')) throw errno('EXDEV')
-          renameSync(s, d)
-        },
-      }))
-      expect(result.outcome).toBe('migrated')
+      plantBoth(home)
+      const result = migrateHiddenRoxHome(opts(home))
+      expect(result.outcome).toBe('merged')
       expect(readdirSync(home).filter((n) => n.endsWith('-probe'))).toEqual([])
     }))
 })

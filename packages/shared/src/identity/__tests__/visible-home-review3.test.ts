@@ -1,7 +1,7 @@
 /**
  * W1-13 (#1510) review-3 regressions: `~/rox` linking into the hidden tree,
  * per-attempt conflict stashes, marker lifecycle around the final rename,
- * compat-link failures (rollback / relaunch) and the EXDEV swap. The flag
+ * compat-link failures (rollback / relaunch) and EXDEV. The flag
  * file location (finding 6) is in visible-home-flag-location.test.ts.
  *
  * SAFETY: temp HOME (`mkdtemp`) + explicit `homeDir`/`env` only.
@@ -261,39 +261,20 @@ describe('hidden-only compat-link failure (finding 4)', () => {
     }))
 })
 
-describe('EXDEV swap failure (finding 5)', () => {
-  const exdevRename = (options: { failSwap: boolean; failMoveBack: boolean }) =>
-    (source: string, destination: string): void => {
-      if (source.endsWith('.rox') && destination.endsWith('rox') && !destination.endsWith('.rox')) throw errno('EXDEV')
-      if (options.failSwap && destination.includes('.rox.migrated-') && !destination.endsWith('-probe')) throw errno('EBUSY')
-      if (options.failMoveBack && destination.includes('rox.tmp-')) throw errno('EBUSY')
-      renameSync(source, destination)
-    }
-
-  it('moves our staging copy back out of ~/rox: state exactly as before', () =>
+describe('EXDEV (finding 5; review 4/5: no copy fallback any more)', () => {
+  it('defers with nothing copied: state exactly as before', () =>
     withHome((home) => {
       plantHidden(home)
-      expect(() => migrateHiddenRoxHome(opts(home, { rename: exdevRename({ failSwap: true, failMoveBack: false }) }))).toThrow('EBUSY')
+      const result = migrateHiddenRoxHome(opts(home, {
+        rename: (source, destination) => {
+          if (source === join(home, '.rox') && destination === join(home, 'rox')) throw errno('EXDEV')
+          renameSync(source, destination)
+        },
+      }))
+      expect(result.outcome).toBe('deferred-unmovable')
       expect(readdirSync(home).sort()).toEqual(['.rox'])
       expect(readdirSync(join(home, '.rox')).sort()).toEqual(['config.json', 'workspaces'])
       expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, '.rox'))
-    }))
-
-  it('if the copy cannot leave ~/rox, the legacy tree is pinned by the marker', () =>
-    withHome((home) => {
-      plantHidden(home)
-      expect(() => migrateHiddenRoxHome(opts(home, { rename: exdevRename({ failSwap: true, failMoveBack: true }) }))).toThrow('EBUSY')
-      expect(readMergeIncompleteMarker(join(home, 'rox'))?.choice).toBe('hidden')
-      expect(resolveVisibleHomeWithoutMigration(home)).toBe(join(home, '.rox'))
-      expect(readdirSync(join(home, '.rox')).sort()).toEqual(['config.json', 'workspaces'])
-    }))
-
-  it('the successful EXDEV path still migrates', () =>
-    withHome((home) => {
-      plantHidden(home)
-      const result = migrateHiddenRoxHome(opts(home, { rename: exdevRename({ failSwap: false, failMoveBack: false }) }))
-      expect(result.outcome).toBe('migrated')
-      expect(lstatSync(join(home, '.rox')).isSymbolicLink()).toBe(true)
-      expect(migratedLeftovers(home)).toEqual(['.rox.migrated-ts-r3'])
+      expect(migratedLeftovers(home)).toEqual([])
     }))
 })

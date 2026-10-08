@@ -211,7 +211,8 @@ export function uninstallBrandConfig(options?: {
 //
 // Safety contract:
 // - Never deletes user data. The hidden tree is moved/renamed, never removed;
-//   on Windows / cross-device the original is kept as `.rox.migrated-<ts>`.
+//   after a merge the original is kept as `.rox.migrated-<ts>`. A legacy dir
+//   that cannot be renamed (cross-device, mount point) defers; nothing is copied.
 // - `~/.rox` is left as a symlink (Windows: directory junction) to `~/rox`.
 // - Live locked files (server-core / storage writers) defer the migration;
 //   stale locks (dead PID, previous boot, expired TTL) do not.
@@ -404,7 +405,7 @@ export interface VisibleHomeManifestEntry {
   path: string
   kind: 'file' | 'symlink' | 'dir'
   size?: number
-  /** Only when built with `{ hash: true }` (EXDEV verification, tests). */
+  /** Only when built with `{ hash: true }` (tests). */
   sha256?: string
   /** Permission bits (`stat.mode & 0o777`). */
   mode?: number
@@ -883,72 +884,6 @@ function _copyFilePreservingMeta(
     _dropCopyTemp(destination)
     throw error
   }
-}
-
-function _copyTreeWithModes(
-  source: string,
-  destination: string,
-  isRoot = true,
-  copyFile: _CopyFileFn = _defaultCopyFile,
-): void {
-  const st = _lstatMigration(source)
-  if (st.isSymbolicLink()) {
-    mkdirSync(_dirnameMigration(destination), { recursive: true })
-    try {
-      _symlinkMigration(_readlinkMigration(source), destination)
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException | null)?.code !== 'EEXIST') throw error
-    }
-    return
-  }
-  if (st.isDirectory()) {
-    mkdirSync(destination, { recursive: true, mode: 0o700 })
-    for (const name of _readdirMigration(source)) {
-      // The in-flight manifest is migration scaffolding, not user data.
-      if (isRoot && name === ROX_HOME_MIGRATION_MANIFEST_NAME) continue
-      _copyTreeWithModes(join(source, name), join(destination, name), false, copyFile)
-    }
-    // Source mode after the children are in (restrictive dirs stay copyable).
-    if (!isRoot) {
-      try {
-        _chmodMigration(destination, st.mode & 0o777)
-      } catch {
-        // best effort
-      }
-    }
-    return
-  }
-  if (st.isFile()) _copyFilePreservingMeta(source, destination, st, copyFile)
-}
-
-/**
- * EXDEV verification: every manifest file exists in the copy with the same
- * size and the same SHA-256 as its source (hashing happens only here).
- */
-function _verifyCopyAgainstSource(
-  sourceRoot: string,
-  copyRoot: string,
-  manifest: readonly VisibleHomeManifestEntry[],
-): string[] {
-  const mismatches: string[] = []
-  for (const entry of manifest) {
-    const full = join(copyRoot, entry.path)
-    try {
-      if (entry.kind === 'file') {
-        const st = _statMigration(full)
-        if (!st.isFile() || st.size !== entry.size || _sha256File(full) !== _sha256File(join(sourceRoot, entry.path))) {
-          mismatches.push(entry.path)
-        }
-      } else if (entry.kind === 'symlink') {
-        if (_readlinkMigration(full) !== entry.link) mismatches.push(entry.path)
-      } else if (!_lstatMigration(full).isDirectory()) {
-        mismatches.push(entry.path)
-      }
-    } catch {
-      mismatches.push(entry.path)
-    }
-  }
-  return mismatches
 }
 
 /**
@@ -1463,9 +1398,9 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
     }
   }
   // The legacy dir must be renamable in place (it is not a mount point and
-  // its parent allows the rename): otherwise the final rename of a copy or
-  // merge would fail after all the work, and every launch would repeat a
-  // full copy. Probed by renaming it to a sibling and straight back.
+  // its parent allows the rename): otherwise the final rename of a merge
+  // would fail after all the work, and every launch would repeat it.
+  // Probed by renaming it to a sibling and straight back.
   const legacyRenameBlocker = (): string | undefined => {
     try {
       if (_statMigration(paths.hiddenDir).dev !== _statMigration(paths.homeDir).dev) return 'mount-point'
@@ -1567,33 +1502,8 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
       } catch {
         // best effort; equality is still verified after the move
       }
-      // Only `~/.rox`: atomic rename, EXDEV falls back to copy + verify + swap.
-      const migratedPath = `${paths.hiddenDir}.migrated-${timestamp}`
-      const staging = `${paths.visibleDir}.tmp-${process.pid}`
-      // Our own cross-device copy (never user data): move it back out of ~/rox.
-      const discardCopy = (): boolean => {
-        try {
-          rename(paths.visibleDir, staging)
-        } catch {
-          return false
-        }
-        rmSync(staging, { recursive: true, force: true })
-        return true
-      }
-      // Last resort when the copy cannot leave ~/rox: pin the legacy tree.
-      const pinHidden = (): void => {
-        try {
-          _writeMergeIncompleteMarker(paths.visibleDir, {
-            startedAt: options?.now?.() ?? Date.now(),
-            hiddenHasData: true,
-            visibleHasData: false,
-            choice: 'hidden',
-            ...(_treeId(paths.hiddenDir) ? { hiddenId: _treeId(paths.hiddenDir) } : {}),
-          })
-        } catch {
-          // best effort
-        }
-      }
+      // Only `~/.rox`: one atomic rename. EXDEV means `~/.rox` cannot leave
+      // its volume (mount point, overlayfs lower dir): defer, copy nothing.
       const dropScaffolding = (): void => {
         try {
           _unlinkMigration(manifestPath)
@@ -1607,45 +1517,11 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
       } catch {
         originalMode = undefined
       }
-      let moved = false
-      let viaCopy = false
       try {
-        try {
-          rename(paths.hiddenDir, paths.visibleDir)
-          moved = true
-        } catch (error) {
-          if ((error as NodeJS.ErrnoException | null)?.code !== 'EXDEV') throw error
-        }
-        if (!moved) {
-          // Copy nothing unless the original can be renamed away afterwards.
-          const blocker = legacyRenameBlocker()
-          if (blocker) {
-            dropScaffolding()
-            return deferredUnmovable(blocker)
-          }
-          rmSync(staging, { recursive: true, force: true })
-          _ensurePrivateDir(staging)
-          _copyTreeWithModes(paths.hiddenDir, staging, true, copyFile)
-          const mismatches = _verifyCopyAgainstSource(paths.hiddenDir, staging, manifest)
-          if (mismatches.length > 0) {
-            // Our own staging copy only; the original is untouched.
-            rmSync(staging, { recursive: true, force: true })
-            throw new Error(`Cross-device copy verification failed: ${mismatches.slice(0, 5).join(', ')}`)
-          }
-          rename(staging, paths.visibleDir)
-          try {
-            // Never delete: keep the original under a timestamped name.
-            rename(paths.hiddenDir, migratedPath)
-          } catch (error) {
-            // The original never moved: take our copy back out so the state
-            // is exactly as before (or pin the legacy tree if we cannot).
-            if (!discardCopy()) pinHidden()
-            throw error
-          }
-          viaCopy = true
-        }
+        rename(paths.hiddenDir, paths.visibleDir)
       } catch (error) {
-        if (!moved && !viaCopy) dropScaffolding()
+        dropScaffolding()
+        if ((error as NodeJS.ErrnoException | null)?.code === 'EXDEV') return deferredUnmovable('EXDEV')
         throw error
       }
       _ensurePrivateDir(paths.visibleDir)
@@ -1656,30 +1532,19 @@ export function migrateHiddenRoxHome(options?: MigrateHiddenRoxHomeOptions): Vis
         // every process keeps a valid config dir; otherwise the data stays in
         // ~/rox and the caller must restart onto it.
         if (!_pathPresent(paths.hiddenDir)) {
-          if (moved) {
-            try {
-              rename(paths.visibleDir, paths.hiddenDir)
-              if (originalMode !== undefined) {
-                try {
-                  _chmodMigration(paths.hiddenDir, originalMode)
-                } catch {
-                  // best effort
-                }
+          try {
+            rename(paths.visibleDir, paths.hiddenDir)
+            if (originalMode !== undefined) {
+              try {
+                _chmodMigration(paths.hiddenDir, originalMode)
+              } catch {
+                // best effort
               }
-              dropScaffolding()
-              throw error
-            } catch (rollbackError) {
-              if (rollbackError === error) throw error
             }
-          } else {
-            try {
-              rename(migratedPath, paths.hiddenDir)
-              if (!discardCopy()) pinHidden()
-              dropScaffolding()
-              throw error
-            } catch (rollbackError) {
-              if (rollbackError === error) throw error
-            }
+            dropScaffolding()
+            throw error
+          } catch (rollbackError) {
+            if (rollbackError === error) throw error
           }
         }
         const result = done('migrated', {

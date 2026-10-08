@@ -179,7 +179,7 @@ describe('migrateHiddenRoxHome safety', () => {
       expect(result.outcome).toBe('skipped-env-override')
     }))
 
-  it('cross-device (EXDEV) → copy + verify + swap, original kept as .migrated-<ts>', () =>
+  it('cross-device (EXDEV) → deferred-unmovable: nothing copied, legacy home untouched', () =>
     withHome((home) => {
       writeHiddenFile(home, 'a.txt', 'aaa')
       writeHiddenFile(home, 'sub/b.txt', 'bbb')
@@ -191,11 +191,11 @@ describe('migrateHiddenRoxHome safety', () => {
         renameSync(src, dst)
       }
       const result = migrateHiddenRoxHome(baseOptions(home, { rename }))
-      expect(result.outcome).toBe('migrated')
-      expect(visibleHomeManifestsEqual(before, buildVisibleHomeManifest(join(home, 'rox')))).toBe(true)
-      expect(existsSync(join(home, '.rox.migrated-ts-001', 'a.txt'))).toBe(true)
-      expect(lstatSync(join(home, '.rox')).isSymbolicLink()).toBe(true)
-      expect(existsSync(join(home, 'rox.tmp-process'))).toBe(false)
+      expect(result.outcome).toBe('deferred-unmovable')
+      expect(result.diagnostics).toEqual(['storage.migration.legacyNotRenamable', 'rename:EXDEV'])
+      expect(visibleHomeManifestsEqual(before, buildVisibleHomeManifest(join(home, '.rox')))).toBe(true)
+      expect(readdirSync(home).sort()).toEqual(['.rox'])
+      expect(existsSync(join(home, '.rox', ROX_HOME_MIGRATION_MANIFEST_NAME))).toBe(false)
     }))
 
   it('Windows platform → directory junction via linkDir', () =>
@@ -470,23 +470,6 @@ describe('no full-tree hashing on the atomic path', () => {
       expect(report.summary).toEqual({ files: 2, dirs: 1, symlinks: 0, bytes: 4099 })
     }))
 
-  it('EXDEV copy path verifies content and preserves mtimes', () =>
-    withHome((home) => {
-      writeHiddenFile(home, 'a.txt', 'aaa')
-      const when = new Date('2021-05-05')
-      utimesSync(join(home, '.rox', 'a.txt'), when, when)
-      const rename: MigrateHiddenRoxHomeOptions['rename'] = (src, dst) => {
-        if (src === join(home, '.rox') && dst === join(home, 'rox')) {
-          throw Object.assign(new Error('EXDEV'), { code: 'EXDEV' })
-        }
-        renameSync(src, dst)
-      }
-      const result = migrateHiddenRoxHome(baseOptions(home, { rename }))
-      expect(result.outcome).toBe('migrated')
-      expect(result.diagnostics).toEqual([])
-      expect(lstatSync(join(home, 'rox', 'a.txt')).mtimeMs).toBe(when.getTime())
-      expect(existsSync(join(home, 'rox', ROX_HOME_MIGRATION_MANIFEST_NAME))).toBe(false)
-    }))
 })
 
 describe('revertVisibleRoxHome safety', () => {
