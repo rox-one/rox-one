@@ -17,7 +17,10 @@
  *   control). Optional `CHROME_SURFACES: string[]` = surfaces that must
  *   have a schema (UI-SPEC §26.2/§26.3).
  * - right-dock.ts: `computeDockMode` | `dockMode` | `resolveDockMode`
- *   `(width, sidebar, inspector, agent) => 'sideBySide' | 'sharedDock' | 'overlay'`.
+ *   `(width, sidebar, inspector, agent) => 'sideBySide' | 'sharedDock' | 'overlay'`,
+ *   where `sidebar` is the PRE-collapse width and auto-collapse to 56 is
+ *   tried before sharedDock (§18.4 "Order"; owner decision, review 2).
+ *   A `{ mode }` object return is accepted too.
  */
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
@@ -36,7 +39,7 @@ export interface ChromeSchema {
   centerControls: number
 }
 
-type DockFn = (width: number, sidebar: number, inspector: number, agent: number) => DockMode | Promise<DockMode>
+type DockFn = (width: number, sidebar: number, inspector: number, agent: number) => DockMode | { mode: DockMode } | Promise<DockMode | { mode: DockMode }>
 
 function defaultRoot(): string {
   return join(import.meta.dir, '..', '..', '..', '..')
@@ -167,13 +170,14 @@ export async function checkDockLayoutGate(opts: { repoRoot?: string; computeMode
   for (const row of buildDockTable()) {
     let got: DockMode
     try {
-      got = await compute(row.width, row.sidebar, row.inspector, row.agent)
+      const out = (await compute(row.width, row.sidebar, row.inspector, row.agent)) as DockMode | { mode?: DockMode }
+      got = (typeof out === 'object' && out !== null ? out.mode : out) as DockMode
     } catch (error) {
       violations.push(`W=${row.width} S=${row.sidebar} I=${row.inspector} A=${row.agent}: threw ${errorMessage(error)}`)
       continue
     }
     if (got !== row.expected) {
-      violations.push(`W=${row.width} S=${row.sidebar} I=${row.inspector} A=${row.agent}: got ${got}, want ${row.expected}`)
+      violations.push(`W=${row.width} S=${row.sidebar} I=${row.inspector} A=${row.agent}: got ${got}, want ${row.expected}${row.autoCollapsed ? ' (sidebar auto-collapsed first)' : ''}`)
     }
     if (got === 'sideBySide' && row.mainWidth < 640) {
       violations.push(`W=${row.width}: MAIN is ${row.mainWidth} (< 640)`)

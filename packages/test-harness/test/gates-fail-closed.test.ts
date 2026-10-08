@@ -10,8 +10,6 @@ import { checkChromeLintGate, checkDockLayoutGate, CHROME_PATH, RIGHT_DOCK_PATH 
 import { checkAgentPrivacyGate, AGENT_CONTEXT_PATH } from '../src/gates/agent-privacy.ts'
 import { runPermissionMatrixGate } from '../src/gates/permission-matrix.ts'
 import { checkVisualGate } from '../src/gates/visual-axe.ts'
-import { referenceDockMode } from '../src/fixtures/dock.ts'
-import { PRIVACY_EXPECTATIONS } from '../src/fixtures/privacy.ts'
 
 const PERMISSIONS_PATH = join('packages', 'core', 'src', 'entities', 'permissions.ts')
 
@@ -63,9 +61,22 @@ describe('dock-layout: present input must be evaluated', () => {
     expect(res.status).toBe('fail')
     expect(res.violations?.join(' ')).toContain('computeDockMode')
   })
-  test('a correct exported function passes the table', async () => {
-    const src = `export ${referenceDockMode.toString().replace(/^function \w+/, 'function computeDockMode')}\n`
+  test('a correct exported function passes the table (self-contained §18.4 engine with auto-collapse first)', async () => {
+    const src = `
+const fits = (w, s, i, a) => w >= 48 + s + 640 + i + a + 44
+export function computeDockMode(width, sidebar, inspector, agent) {
+  if (fits(width, sidebar, inspector, agent)) return { mode: 'sideBySide', sidebar }
+  if (sidebar > 56 && fits(width, 56, inspector, agent)) return { mode: 'sideBySide', sidebar: 56 }
+  return { mode: width >= 1280 ? 'sharedDock' : 'overlay', sidebar }
+}
+`
     expect((await checkDockLayoutGate({ repoRoot: repo({ [RIGHT_DOCK_PATH]: src }) })).status).toBe('pass')
+  })
+  test('an engine that never auto-collapses the sidebar fails on the collapse rows', async () => {
+    const src = `export function computeDockMode(w, s, i, a) { return w >= 48 + s + 640 + i + a + 44 ? 'sideBySide' : w >= 1280 ? 'sharedDock' : 'overlay' }\n`
+    const res = await checkDockLayoutGate({ repoRoot: repo({ [RIGHT_DOCK_PATH]: src }) })
+    expect(res.status).toBe('fail')
+    expect(res.violations?.join('\n')).toContain('W=1280 S=280 I=328 A=0: got sharedDock, want sideBySide (sidebar auto-collapsed first)')
   })
 })
 
@@ -78,9 +89,13 @@ describe('agent-panel-privacy: present input must be evaluated', () => {
   test('context.ts that throws on import fails', async () => {
     expect((await checkAgentPrivacyGate({ repoRoot: repo({ [AGENT_CONTEXT_PATH]: THROWS }) })).status).toBe('fail')
   })
-  test('a wired decideAttach runs the §18.3 fixtures', async () => {
-    const table = JSON.stringify(Object.fromEntries(PRIVACY_EXPECTATIONS.map((e) => [e.ref, { attach: e.autoAttach, redacted: e.redacted }])))
-    const good = `const T = ${table}\nexport function decideAttach(ref) { return T[ref] }\n`
+  test('a wired decideAttach(candidate, actor) runs the §18.3 fixtures, deciding from candidate facts only', async () => {
+    const good = `export function decideAttach(c, actor) {
+  if (!actor || typeof actor.principalId !== 'string') throw new Error('actor missing')
+  const hidden = !c.canRead || (c.authority === 'local' && !c.isFocus) || (c.isDm === true && !c.isOpenDm)
+  return { attach: !hidden, redacted: hidden }
+}
+`
     expect((await checkAgentPrivacyGate({ repoRoot: repo({ [AGENT_CONTEXT_PATH]: good }) })).status).toBe('pass')
     const leaky = `export function decideAutoAttach() { return { attach: true, redacted: false } }\n`
     expect((await checkAgentPrivacyGate({ repoRoot: repo({ [AGENT_CONTEXT_PATH]: leaky }) })).status).toBe('fail')

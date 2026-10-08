@@ -1,29 +1,51 @@
 /**
  * W1-10 (#1507) — agent-panel privacy fixtures (TECH-SPEC §18.3).
  *
- * Shipped as data plus pending tests; W1-15 fills in the real provider.
- * Rules under test:
- * 1. a private (`authority: 'local'`) note that is not the focus is never
+ * Shipped as data; W1-15 (#1512) supplies the real provider. Rules under
+ * test (§18.3 item 1):
+ * 1. a note with `authority: 'local'` that is not the focus is never
  *    auto-attached;
- * 2. another user's DM is never auto-attached;
- * 3. restricted refs are redacted to `{ kind, restricted: true }`.
+ * 2. DMs other than the open one are never auto-attached;
+ * 3. a ref the actor cannot read is never auto-attached and is redacted to
+ *    `{ ref, restricted: true }`.
+ *
+ * The provider receives the whole candidate (every fact the decision
+ * depends on) plus the acting user, so a correct implementation never has
+ * to recognise fixture ids.
  */
+
+export interface PrivacyActor {
+  principalId: string
+  workspaceId: string
+}
 
 export interface PrivacyCandidate {
   ref: string
+  /** Entity kind of the ref (`note`, `channel-message`, `goal`, `task`, …). */
+  entityKind: string
+  /** Harness classification of the case (documentation; not needed to decide). */
   kind: 'local-note' | 'dm' | 'restricted' | 'allowed'
   authority?: 'local' | 'workspace'
+  /** The ref is the panel's focus. */
   isFocus?: boolean
+  /** The ref is a direct-message item. */
+  isDm?: boolean
+  /** The DM is the one currently open. */
   isOpenDm?: boolean
+  /** The actor may read the ref (ACL already evaluated by the resolver). */
+  canRead: boolean
 }
 
+/** The acting user every fixture is evaluated for. */
+export const PRIVACY_ACTOR: PrivacyActor = { principalId: 'p-privacy-actor', workspaceId: 'ws-privacy' }
+
 export const PRIVACY_FIXTURES: PrivacyCandidate[] = [
-  { ref: 'note:private-diary', kind: 'local-note', authority: 'local', isFocus: false },
-  { ref: 'note:focus-doc', kind: 'allowed', authority: 'workspace', isFocus: true },
-  { ref: 'channel-message:other-dm-1', kind: 'dm', isOpenDm: false },
-  { ref: 'channel-message:open-dm-1', kind: 'allowed', isOpenDm: true },
-  { ref: 'goal:secret-goal', kind: 'restricted' },
-  { ref: 'task:visible-task', kind: 'allowed', authority: 'workspace' },
+  { ref: 'note:private-diary', entityKind: 'note', kind: 'local-note', authority: 'local', isFocus: false, canRead: true },
+  { ref: 'note:focus-doc', entityKind: 'note', kind: 'allowed', authority: 'workspace', isFocus: true, canRead: true },
+  { ref: 'channel-message:other-dm-1', entityKind: 'channel-message', kind: 'dm', authority: 'workspace', isDm: true, isOpenDm: false, canRead: true },
+  { ref: 'channel-message:open-dm-1', entityKind: 'channel-message', kind: 'allowed', authority: 'workspace', isDm: true, isOpenDm: true, canRead: true },
+  { ref: 'goal:secret-goal', entityKind: 'goal', kind: 'restricted', authority: 'workspace', canRead: false },
+  { ref: 'task:visible-task', entityKind: 'task', kind: 'allowed', authority: 'workspace', canRead: true },
 ]
 
 export interface PrivacyExpectation {
@@ -40,3 +62,9 @@ export const PRIVACY_EXPECTATIONS: PrivacyExpectation[] = [
   { ref: 'goal:secret-goal', autoAttach: false, redacted: true },
   { ref: 'task:visible-task', autoAttach: true, redacted: false },
 ]
+
+/** A reference decision derived only from candidate facts (used by self-tests). */
+export function referencePrivacyDecision(c: PrivacyCandidate): { attach: boolean; redacted: boolean } {
+  const hidden = !c.canRead || (c.authority === 'local' && !c.isFocus) || (c.isDm === true && !c.isOpenDm)
+  return { attach: !hidden, redacted: hidden }
+}
