@@ -7,6 +7,8 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   timeout: 90_000,
+  globalTimeout: 150_000,
+  use: { actionTimeout: 15_000 },
   expect: { timeout: 20_000 },
   outputDir: resolve(import.meta.dirname, '../../../test-results/product-tour/native'),
   reporter: [['list'], ['json', { outputFile: resolve(import.meta.dirname, '../../../test-results/product-tour/native.json') }]],
