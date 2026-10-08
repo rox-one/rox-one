@@ -2,10 +2,11 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { chromium, expect as expectDOM, type Browser, type Page } from 'playwright/test'
+import { resolveChromiumExecutable } from '../../test-utils/chromium-executable'
 
 const repository=resolve(import.meta.dirname,'../../../../../..')
 const fixture=resolve(import.meta.dirname,'fixtures/update-checker')
-const executablePath='/usr/bin/chromium'
+const executablePath=await resolveChromiumExecutable()
 const url='http://127.0.0.1:5322'
 const proofDirectory=process.env.UPDATE_CHECKER_PROOF_DIR
 type Fixture={calls:string[];initial(version:string):void;dismissal():void;available(version:string):void;idle():void;progress(value:number):void;cleanup():{availabilityCleanup:number;progressCleanup:number}}

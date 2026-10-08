@@ -52,6 +52,8 @@ export const WORKBENCH_FLAG = {
   modeMeetingsV1: 'workbench.mode.meetings.v1',
   modeInboxV1: 'workbench.mode.inbox.v1',
   modeFeedV1: 'workbench.mode.feed.v1',
+  /** Entities (W1-02) — link store, resolver and deep links. Default OFF. */
+  entitiesLinksV1: 'entities.links.v1',
 } as const;
 
 export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
@@ -212,6 +214,8 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   { id: WORKBENCH_FLAG.modeMeetingsV1, defaultValue: true, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.modeInboxV1, defaultValue: true, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.modeFeedV1, defaultValue: true, dependencies: [], rollbackSafe: true },
+  // Entities (W1-02): default OFF — inert until explicitly enabled.
+  { id: WORKBENCH_FLAG.entitiesLinksV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   // Extra screens («Ещё»): workbench.mode.<id>.v1, default ON
   ...EXTRA_SCREEN_FEATURE_FLAGS,
 ];

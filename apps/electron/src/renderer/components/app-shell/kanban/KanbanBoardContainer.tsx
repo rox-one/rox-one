@@ -43,6 +43,8 @@ import type { SpecNode } from './task-spec-form'
 import type {
   BuiltInKanbanColumnId,
   KanbanColumnId,
+  KanbanColumnMeta,
+  KanbanModelConnection,
   KanbanModelProviderGroup,
   KanbanProject,
   KanbanTask,
@@ -97,6 +99,21 @@ function buildModelCatalog(connections: LlmConnectionWithStatus[]): {
   }
 
   return { groups, modelToConnection }
+}
+
+/**
+ * Reduce a live connection to the non-secret fields a task badge needs. The badge
+ * draws the provider that actually serves the session, so an inherited model on a
+ * Pi/Rox route no longer borrows the Anthropic mark from the legacy default model.
+ */
+function toKanbanModelConnection(connection: LlmConnectionWithStatus | undefined): KanbanModelConnection | undefined {
+  if (!connection) return undefined
+  return {
+    name: connection.name,
+    providerType: connection.providerType,
+    baseUrl: connection.baseUrl,
+    piAuthProvider: connection.piAuthProvider,
+  }
 }
 
 function groupCollapseStorageKey(workspaceId: string): string {
@@ -406,6 +423,13 @@ function KanbanBoardContainerInner() {
     [llmConnections],
   )
 
+  // Session meta stores only the connection slug; the badge needs the connection's
+  // provider/base URL, so resolve slugs back to the live connection objects.
+  const connectionsBySlug = React.useMemo(
+    () => new Map(llmConnections.map(connection => [connection.slug, connection])),
+    [llmConnections],
+  )
+
   const activeColumns = React.useMemo(
     () => resolveBoardColumns(boardConfig),
     [boardConfig],
@@ -440,11 +464,26 @@ function KanbanBoardContainerInner() {
       slugs.map(async (slug): Promise<readonly [string, SpecNodeSummary[]]> => {
         try {
           const res = await window.electronAPI.getTask(activeWorkspaceId, slug)
-          const spec = res.spec as { defaults?: { model?: string }; nodes?: SpecNode[] } | undefined
+          const spec = res.spec as {
+            defaults?: { model?: string; llmConnection?: string }
+            nodes?: SpecNode[]
+          } | undefined
           const defaultModel = spec?.defaults?.model
+          const defaultConnection = toKanbanModelConnection(
+            spec?.defaults?.llmConnection ? connectionsBySlug.get(spec.defaults.llmConnection) : undefined,
+          )
           return [
             slug,
-            (spec?.nodes ?? []).map(n => ({ id: n.id, title: n.title || n.id, model: n.model ?? defaultModel })),
+            (spec?.nodes ?? []).map(n => ({
+              id: n.id,
+              title: n.title || n.id,
+              model: n.model ?? defaultModel,
+              // A node without its own connection inherits the task default, exactly
+              // like its model: the row must draw whatever will really run it.
+              modelConnection: n.llmConnection
+                ? toKanbanModelConnection(connectionsBySlug.get(n.llmConnection))
+                : defaultConnection,
+            })),
           ]
         } catch {
           return [slug, []]
@@ -456,7 +495,7 @@ function KanbanBoardContainerInner() {
     return () => {
       cancelled = true
     }
-  }, [activeWorkspaceId, specSlugsKey, editorOpen])
+  }, [activeWorkspaceId, specSlugsKey, editorOpen, connectionsBySlug])
 
   const tasks = React.useMemo(() => {
     const childrenByParent = new Map<string, SessionMeta[]>()
@@ -480,18 +519,26 @@ function KanbanBoardContainerInner() {
         id: child.id,
         title: getSessionTitle(child),
         runState: deriveRunState(child, statusesById),
-        model: child.model ?? DEFAULT_MODEL,
+        // `child.model` is omitted when the child inherits the orchestrator's route:
+        // the row then shows the connection it really runs on instead of a guessed model.
+        model: child.model,
+        modelConnection: toKanbanModelConnection(
+          child.llmConnection ? connectionsBySlug.get(child.llmConnection) : undefined,
+        ),
         taskNodeId: child.taskNodeId,
         createdAt: child.createdAt,
       }))
       const specNodes = meta.taskSlug ? specNodesBySlug.get(meta.taskSlug) : undefined
-      const subtasks = mergeSubtaskRows(specNodes, children, DEFAULT_MODEL)
+      const subtasks = mergeSubtaskRows(specNodes, children)
       result.push({
         id: meta.id,
         title: getSessionTitle(meta),
         column,
         statusId,
-        model: meta.model ?? DEFAULT_MODEL,
+        model: meta.model,
+        modelConnection: toKanbanModelConnection(
+          meta.llmConnection ? connectionsBySlug.get(meta.llmConnection) : undefined,
+        ),
         llmConnection: meta.llmConnection,
         projectId: meta.projectId,
         priority: meta.priority ?? 'none',
@@ -507,7 +554,7 @@ function KanbanBoardContainerInner() {
       })
     }
     return result
-  }, [metaMap, statusesById, specNodesBySlug, collectionFilters, collectionDisplay])
+  }, [metaMap, statusesById, specNodesBySlug, collectionFilters, collectionDisplay, connectionsBySlug])
 
   const visibleTasks = React.useMemo(() => {
     if (projectFilter.length === 0) return tasks

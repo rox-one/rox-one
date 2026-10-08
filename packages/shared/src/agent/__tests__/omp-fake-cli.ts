@@ -7,9 +7,10 @@
  * fail in scripted ways (exit before ready, malformed ready, silence).
  *
  * The fake is a plain CJS script executed by the current runtime
- * (process.execPath) through a generated shell wrapper.
+ * (process.execPath) through a generated wrapper. Windows uses the same
+ * bin/omp.cmd + package/dist/cli.js layout as the installed toolchain.
  */
-import { mkdtempSync, writeFileSync, readFileSync, existsSync, rmSync, chmodSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, existsSync, promises as fsPromises, chmodSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AgentEvent } from '@rox/core/types';
@@ -33,7 +34,7 @@ export interface FakeOmp {
   setScenario(name: string): void;
   readRpcLog(): Array<Record<string, unknown>>;
   readArgvLog(): string[][];
-  cleanup(): void;
+  cleanup(): Promise<void>;
 }
 
 const FAKE_OMP_JS = String.raw`'use strict';
@@ -111,9 +112,13 @@ if (pIdx !== -1) {
     process.exit(1);
   }
   const prompt = process.argv[pIdx + 1] || '';
-  fs.writeSync(1, 'fake-omp answer: ' + prompt.slice(0, 60) + '\n');
-  process.exit(0);
-}
+  // Real OMP waits for stdin EOF in print mode. Pin the host's stdin.end().
+  process.stdin.resume();
+  process.stdin.on('end', () => {
+    fs.writeSync(1, 'fake-omp answer: ' + prompt.slice(0, 60) + '\n');
+    process.exit(0);
+  });
+} else {
 
 const scenario = readScenario();
 let hostToolResultsReceived = 0;
@@ -330,19 +335,34 @@ switch (scenario) {
     rpcLoop();
     break;
 }
+}
 `;
 
 export function createFakeOmp(scenario = 'healthy'): FakeOmp {
-  const dir = mkdtempSync(join(tmpdir(), 'omp-fake-'));
+  const dir = mkdtempSync(join(tmpdir(), 'omp fake & % !-'));
   const workspaceRoot = join(dir, 'workspace');
   mkdirSync(workspaceRoot, { recursive: true });
 
   const scriptPath = join(dir, 'fake-omp.js');
   writeFileSync(scriptPath, FAKE_OMP_JS);
 
-  const binPath = join(dir, 'fake-omp');
-  writeFileSync(binPath, `#!/bin/sh\nexec "${process.execPath}" "${scriptPath}" "$@"\n`);
-  chmodSync(binPath, 0o755);
+  let binPath: string;
+  if (process.platform === 'win32') {
+    const binDir = join(dir, 'bin');
+    const packageDir = join(dir, 'package');
+    mkdirSync(binDir);
+    mkdirSync(join(packageDir, 'dist'), { recursive: true });
+    writeFileSync(join(packageDir, 'package.json'), JSON.stringify({
+      name: '@oh-my-pi/pi-coding-agent', bin: { omp: 'dist/cli.js' },
+    }));
+    writeFileSync(join(packageDir, 'dist', 'cli.js'), FAKE_OMP_JS);
+    binPath = join(binDir, 'omp.cmd');
+    writeFileSync(binPath, '@echo off\r\n"%CRAFT_BUN_PATH%" "%~dp0..\\package\\dist\\cli.js" %*\r\n');
+  } else {
+    binPath = join(dir, 'fake-omp');
+    writeFileSync(binPath, `#!/bin/sh\nexec "${process.execPath}" "${scriptPath}" "$@"\n`);
+    chmodSync(binPath, 0o755);
+  }
 
   const scenarioFile = join(dir, 'scenario');
   writeFileSync(scenarioFile, scenario);
@@ -378,14 +398,28 @@ export function createFakeOmp(scenario = 'healthy'): FakeOmp {
         .filter((l) => l.trim())
         .map((l) => JSON.parse(l) as string[]);
     },
-    cleanup() {
-      rmSync(dir, { recursive: true, force: true });
+    async cleanup() {
+      // destroy() sends SIGTERM; Windows may briefly retain the child's cwd.
+      // Bun on Windows does not consistently honor fs.rm's retry options.
+      // Explicit async retries let the parent's child-process handles close;
+      // still fail loudly if a real survivor keeps the directory locked.
+      for (let attempt = 0; ; attempt += 1) {
+        try {
+          await fsPromises.rm(dir, { recursive: true, force: true });
+          return;
+        } catch (error) {
+          const code = (error as NodeJS.ErrnoException).code;
+          if (attempt >= 40 || !['EBUSY', 'EPERM', 'ENOTEMPTY'].includes(code ?? '')) throw error;
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+      }
     },
   };
 }
 
 const ENV_KEYS = [
   'OMP_CLI_PATH',
+  'CRAFT_BUN_PATH',
   'FAKE_OMP_SCENARIO_FILE',
   'FAKE_OMP_RPC_LOG',
   'FAKE_OMP_ARGV_LOG',
@@ -401,6 +435,7 @@ export function useFakeOmpEnv(fake: FakeOmp): () => void {
   for (const key of ENV_KEYS) saved.set(key, process.env[key]);
 
   process.env.OMP_CLI_PATH = fake.binPath;
+  process.env.CRAFT_BUN_PATH = process.execPath;
   process.env.FAKE_OMP_SCENARIO_FILE = fake.scenarioFile;
   process.env.FAKE_OMP_RPC_LOG = fake.rpcLog;
   process.env.FAKE_OMP_ARGV_LOG = fake.argvLog;

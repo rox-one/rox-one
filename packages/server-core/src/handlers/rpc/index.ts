@@ -71,6 +71,8 @@ export function cleanupCoreClientResources(clientId: string): void {
 }
 import { registerBrowserPaneHandlers } from './browser-pane'
 import { registerBrowserProfileImportHandlers } from './browser-profile-import'
+import { registerEntitiesHandlers, type EntitiesHandlerRuntime } from './entities.ts'
+import { getEntitiesWorkbenchFlags } from '../../entities/workbench-flags.ts'
 
 export interface CoreRpcRegistrationOptions {
   /**
@@ -80,6 +82,14 @@ export interface CoreRpcRegistrationOptions {
    * channel registrations and the app fails to boot.
    */
   browserPane?: boolean
+  /**
+   * Runtime for the entity handlers. Defaults to the process-wide live
+   * workbench-flag source (Electron main publishes renderer toggles there);
+   * pass an explicit runtime in tests. The flag is read live on every call —
+   * never a registration-time snapshot — with `CRAFT_FEATURE_ENTITIES_LINKS`
+   * as the env override.
+   */
+  entities?: EntitiesHandlerRuntime
 }
 
 export function registerCoreRpcHandlers(
@@ -147,5 +157,6 @@ export function registerCoreRpcHandlers(
   registerKnowledgeHandlers(server, deps)
   registerMindmapHandlers(server, deps)
   registerBrowserProfileImportHandlers(server, deps)
+  registerEntitiesHandlers(server, deps, options?.entities ?? { enabledWorkbenchFlags: getEntitiesWorkbenchFlags })
   if (options?.browserPane !== false) registerBrowserPaneHandlers(server, deps)
 }

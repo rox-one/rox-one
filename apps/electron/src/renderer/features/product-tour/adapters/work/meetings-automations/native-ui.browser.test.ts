@@ -3,6 +3,7 @@ import { createServer, type Server } from 'node:http'
 import { build } from 'esbuild'
 import { chromium, type Browser, type Page } from '@playwright/test'
 import { resolve } from 'node:path'
+import { resolveChromiumExecutable } from '../../../../../test-utils/chromium-executable'
 
 // Real renderer components and DOM; the native transport is an isolated explicit fixture.
 // This is component evidence, not a macOS microphone or full App acceptance claim.
@@ -10,7 +11,6 @@ const root = resolve(import.meta.dir, '../../../../../../../../..')
 let server: Server, browser: Browser, base: string
 const stubs: Record<string, string> = {
   'react-i18next': `export const useTranslation=()=>({t:(key,options)=>key,i18n:{language:'en',resolvedLanguage:'en'}});`,
-  '@/context/AppShellContext': `export const useOptionalAppShellContext=()=>({activeWorkspaceId:window.fixture.workspaceId}); const context={onToggleAutomation:()=>window.fixture.mutations.push('toggle'),onDeleteAutomation:()=>window.fixture.mutations.push('delete'),getAutomationHistory:async()=>[]}; export const useAppShellContext=()=>context;`,
   '@/contexts/NavigationContext': `export const useNavigation=()=>({navigateToSession:()=>{}});`,
   '@/lib/navigate': `export const routes={view:{meetings:id=>id,connections:()=>null,automations:()=>null}}; export const navigate=id=>window.fixture.select(id);`,
   '@rox/shared/i18n': `export const getAppLocale=()=> 'en';`,
@@ -60,7 +60,7 @@ async function bundle() {
     f.previewProfile=()=>buildSummaryPrompt({title:f.meeting.title,participants:[],segments:[],language:'en',recipeId:'client',slash:'/client'});
     f.finishTranscript=()=>deferredTranscript?.({engine:'fixture',model:'fixture',language:'en',createdAt:10,elapsedMs:1,revision:1,segments:[{id:'segment-a',startMs:0,endMs:1000,text:'Private fixture transcript'}]});
     f.mount=(surface,mode)=>{f.surface=surface;f.selectedId=surface==='automation'?'automation-a':mode==='empty'?null:'meeting-a';
-      f.meeting=mode==='summary'?{...emptyMeeting,summary:{text:'Private native summary',generated:false,updatedAt:10}}:mode==='transcript'?{...emptyMeeting,audio:{file:'fixture.webm',mimeType:'audio/webm',bytes:100},transcript:{status:'done',progress:1,segments:1,revision:1,finishedAt:10}}:emptyMeeting;
+      f.meeting=mode==='summary'?{...emptyMeeting,summary:{text:'Private native summary',generated:false,updatedAt:10}}:mode==='action'?{...emptyMeeting,actions:[{id:'action-a',text:'Existing native action',done:false,createdAt:1}]}:mode==='transcript'?{...emptyMeeting,audio:{file:'fixture.webm',mimeType:'audio/webm',bytes:100},transcript:{status:'done',progress:1,segments:1,revision:1,finishedAt:10}}:emptyMeeting;
       f.delayTranscript=mode==='transcript';f.render()};
     f.inspect=()=>({mutations:f.mutations,events:f.events,accepted:f.accepted,capabilities:f.capabilities,
       targets:Object.fromEntries(Object.entries(f.targets).map(([id,t])=>[id,{context:t.context,testId:t.element.dataset.testid,role:t.element.getAttribute('role'),connected:t.element.isConnected}]))});
@@ -70,6 +70,9 @@ async function bundle() {
     bundle: true, write: false, platform: 'browser', format: 'iife', jsx: 'automatic', tsconfig: resolve(root, 'apps/electron/tsconfig.json'),
     plugins: [{ name: 'isolated-native-transport', setup(builder) {
       builder.onResolve({ filter: /.*/ }, args => {
+        if (args.path === '@/context/AppShellContext' || args.path === '@/lib/extra-screens/personal-task-bridge') {
+          return { path: resolve(import.meta.dir, 'native-boundaries.fixture.ts') }
+        }
         // The real pure recipe/planning modules avoid the barrel's host-only artifact I/O.
         // Keep native components and planning logic intact; only narrow their import entry.
         if (args.path === '@rox/shared/meeting-agents') {
@@ -94,7 +97,7 @@ beforeAll(async () => {
   })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
   base = 'http://127.0.0.1:' + (server.address() as { port: number }).port
-  browser = await chromium.launch({ headless: true, executablePath: process.env.ROX_BROWSER_PATH ?? '/usr/bin/chromium', args: ['--no-sandbox'] })
+  browser = await chromium.launch({ headless: true, executablePath: await resolveChromiumExecutable(), args: ['--no-sandbox'] })
 }, 30_000)
 
 afterAll(async () => { await browser?.close(); server?.close() }, 30_000)
@@ -139,6 +142,23 @@ describe('A11 rendered native surfaces', () => {
     expect(await page.evaluate(() => (window as any).fixture.previewProfile()))
       .toContain('Role perspectives: rox.meeting.analyst, rox.meeting.scribe.')
     await page.getByRole('tab', { name: 'meetings.local.tab.actions' }).click()
+    expect((await inspect(page)).events).toHaveLength(1)
+    expect((await inspect(page)).mutations).toEqual([])
+    await page.close()
+  })
+
+  it('T-MEETINGS-RESULT: a mounted native action conversion stays idle on Start and replay', async () => {
+    const page = await fixture('meetings', 'action')
+    await page.evaluate(() => (window as any).fixture.start('run-a'))
+    expect((await inspect(page)).events).toEqual([])
+    expect((await inspect(page)).mutations).toEqual([])
+    await page.getByRole('tab', { name: 'meetings.local.tab.actions' }).click()
+    expect(await page.getByTestId('meeting-action-to-task').isVisible()).toBe(true)
+    const opened = await inspect(page)
+    expect(opened.accepted).toHaveLength(1)
+    expect(opened.accepted[0].name).toBe('meeting.artifact-opened')
+    expect(opened.accepted[0].level).toBe('observed')
+    for (const token of ['run-b', 'run-c']) await page.evaluate(token => (window as any).fixture.start(token), token)
     expect((await inspect(page)).events).toHaveLength(1)
     expect((await inspect(page)).mutations).toEqual([])
     await page.close()

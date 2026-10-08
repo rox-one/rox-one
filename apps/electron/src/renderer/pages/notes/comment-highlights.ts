@@ -4,6 +4,15 @@ export type NoteHighlightComment = {
   body: string
 }
 
+export function selectedNoteQuote(
+  editor: Pick<HTMLElement, 'contains'> | null,
+  selection: Pick<Selection, 'anchorNode' | 'focusNode' | 'toString'> | null,
+): string {
+  if (!editor || !selection?.anchorNode || !selection.focusNode) return ''
+  if (!editor.contains(selection.anchorNode) || !editor.contains(selection.focusNode)) return ''
+  return selection.toString().trim()
+}
+
 export function quoteOffsets(haystack: string, quote: string): Array<{ start: number; end: number }> {
   const needle = quote.trim()
   if (!needle) return []

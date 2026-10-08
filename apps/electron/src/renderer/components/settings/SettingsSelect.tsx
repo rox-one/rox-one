@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
+import { useSettingsFieldDescription } from './SettingsFieldContext'
 
 export interface SettingsSelectOption {
   /** Value for this option */
@@ -70,29 +71,31 @@ export function SettingsSelect({
   inCard = false,
 }: SettingsSelectProps) {
   const { t } = useTranslation()
+  const field = useSettingsFieldDescription()
   const id = React.useId()
+  const descriptionId = description ? `${id}-description` : undefined
   const effectivePlaceholder = placeholder ?? t('common.select')
 
   return (
     <div
       className={cn(
         'space-y-2',
-        inCard && 'px-4 py-3.5',
+        inCard && settingsUI.rowPadding,
         className
       )}
     >
-      {label && (
+      {(label || description) && (
         <div className={settingsUI.labelGroup}>
-          <Label htmlFor={id} className={settingsUI.label}>
+          {label && <Label htmlFor={id} className={settingsUI.label}>
             {label}
-          </Label>
+          </Label>}
           {description && (
-            <p className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
+            <p id={descriptionId} className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
           )}
         </div>
       )}
       <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-        <SelectTrigger id={id} className="w-full bg-muted/50">
+        <SelectTrigger id={id} aria-labelledby={label ? undefined : field.labelId} aria-describedby={descriptionId ?? field.descriptionId} className="w-full">
           <SelectValue placeholder={effectivePlaceholder} />
         </SelectTrigger>
         <SelectContent>
@@ -146,14 +149,15 @@ export function SettingsSelectRow({
 }: SettingsSelectRowProps) {
   const { t } = useTranslation()
   const id = React.useId()
+  const descriptionId = description ? `${id}-description` : undefined
   const effectivePlaceholder = placeholder ?? t('common.select')
 
   return (
     <div
       data-layout="settings-row"
       className={cn(
-        'flex items-center justify-between',
-        inCard ? 'px-4 py-3.5' : 'py-3',
+        settingsUI.row,
+        inCard ? settingsUI.rowPadding : settingsUI.rowPaddingStandalone,
         className
       )}
     >
@@ -162,12 +166,12 @@ export function SettingsSelectRow({
           {label}
         </Label>
         {description && (
-          <p className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
+          <p id={descriptionId} className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
         )}
       </div>
-      <div data-layout="settings-control" className="ml-4 shrink-0">
+      <div data-layout="settings-control" className={settingsUI.control}>
         <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-          <SelectTrigger id={id} className="w-[180px] bg-muted/50">
+          <SelectTrigger id={id} aria-describedby={descriptionId} className="w-[180px]">
             <SelectValue placeholder={effectivePlaceholder} />
           </SelectTrigger>
           <SelectContent>

@@ -472,6 +472,10 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.fabric.GITHUB_STATUS,
   RPC_CHANNELS.fabric.INFISICAL_HEALTH,
 
+  // Entities (W1-02) — the link store is a workspace-local SQLite file.
+  RPC_CHANNELS.entities.LINKS,
+  RPC_CHANNELS.entities.LINKS_CHANGED,
+
 ])
 
 // ---------------------------------------------------------------------------
@@ -1094,6 +1098,9 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.messaging.ALLOW_PENDING_SENDER,
   RPC_CHANNELS.messaging.SET_BINDING_ACCESS,
   RPC_CHANNELS.messaging.SET_DISCORD_GUILD_TRIGGER,
+
+  // Entities (W1-02) — resolution may fan out to the workspace owner.
+  RPC_CHANNELS.entities.RESOLVE,
 ])
 
 // ---------------------------------------------------------------------------

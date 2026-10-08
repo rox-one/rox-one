@@ -192,7 +192,10 @@ export function AutomationGraphEditor({
                   const layout = fittedById.get(node.id)
                   if (!layout) return null
                   const Icon = NODE_ICON[node.kind]
-                  const label = nodeDisplayLabel(node, nodeKindLabels)
+                  const label = nodeDisplayLabel(
+                    node.kind === 'group' ? { kind: node.kind, label: node.label } : node,
+                    nodeKindLabels,
+                  )
                   const isSelected = node.id === selectedId
                   return (
                     <button

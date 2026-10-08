@@ -399,11 +399,13 @@ export function InspectorHost() {
             // Not enough room beside the center column: float over the content
             // instead of squeezing the chat below CENTER_MIN_WIDTH.
             layout.overlay
-              ? 'absolute inset-y-0 z-40 shadow-[-12px_0_32px_rgba(0,0,0,0.28)]'
+              ? 'absolute inset-y-0 z-40 shadow-strong'
               : 'relative',
           )}
           style={layout.overlay ? { width: layout.width, right: INSPECTOR_RAIL_WIDTH } : { width: layout.width }}
           id={controlsId}
+          role="complementary"
+          aria-label={t(titleKey)}
           data-inspector-panel={layout.overlay ? 'overlay' : 'docked'}
         >
           <InspectorResizeSash

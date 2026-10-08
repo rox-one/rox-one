@@ -81,7 +81,7 @@ export interface TaskRunnerDeps {
 
 export interface RunOptions {
   /** Trusted host-captured owner; producer telemetry never supplies account authority. */
-  roxExecutionContext?: import('@rox/shared/auth').RoxExecutionContext;
+  roxExecutionContext?: RoxExecutionContext;
   /** The task's persistent parent/orchestrator session (author + final verifier). */
   orchestratorSessionId?: string;
   /** Resolved task param values (merged over the spec's declared defaults). */

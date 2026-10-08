@@ -69,6 +69,10 @@ interface ThemeContextType {
   previewColorTheme: string | null
   /** Set temporary preview theme for hover preview. Pass null to clear. */
   setPreviewColorTheme: (theme: string | null) => void
+  /** Temporary preview mode (story/hover state) - not persisted or broadcast */
+  previewMode: ThemeMode | null
+  /** Set temporary preview mode for the UI. Pass null to restore the app mode. */
+  setPreviewMode: (mode: ThemeMode | null) => void
   /** Where effectiveColorTheme came from for current render cycle */
   effectiveColorThemeSource: 'preview' | 'workspace' | 'app'
   /** How the preset theme was resolved */
@@ -124,6 +128,11 @@ interface ThemeProviderProps {
   defaultFont?: FontFamily
   /** Active workspace ID for workspace-level theme overrides */
   activeWorkspaceId?: string | null
+  /**
+   * App-level theme override. When omitted, ThemeProvider subscribes to the
+   * main process via useAppTheme(); pass a value to override that source.
+   */
+  appTheme?: ThemeOverrides | null
 }
 
 function getSystemPreference(): 'light' | 'dark' {
@@ -151,7 +160,8 @@ export function ThemeProvider({
   defaultMode = 'dark',
   defaultColorTheme = 'pierre',
   defaultFont = 'rox',
-  activeWorkspaceId = null
+  activeWorkspaceId = null,
+  appTheme: appThemeProp
 }: ThemeProviderProps) {
   const stored = loadStoredTheme()
 
@@ -173,6 +183,7 @@ export function ThemeProvider({
   const [systemPreference, setSystemPreference] = useState<'light' | 'dark'>(getSystemPreference)
   const [systemPrefersMoreContrast, setSystemPrefersMoreContrast] = useState(prefersMoreContrast)
   const [previewColorTheme, setPreviewColorTheme] = useState<string | null>(null)
+  const [previewMode, setPreviewMode] = useState<ThemeMode | null>(null)
 
   // === Workspace-level theme override ===
   const [workspaceColorTheme, setWorkspaceColorThemeState] = useState<string | null>(null)
@@ -185,7 +196,11 @@ export function ThemeProvider({
   const workspaceReadVersion = useRef(0)
   const workspaceRef = useRef(activeWorkspaceId)
   workspaceRef.current = activeWorkspaceId
-  const [appTheme, setAppTheme] = useState<ThemeOverrides | null>(null)
+
+  // App theme overrides: an explicit prop wins, otherwise the main-process
+  // source is tracked by useAppTheme (live IPC updates beat the bootstrap read).
+  const ipcAppTheme = useAppTheme()
+  const appTheme = appThemeProp !== undefined ? appThemeProp : ipcAppTheme
 
   // Load app-level colorTheme from config.json on mount (only if user hasn't overridden)
   useEffect(() => {
@@ -203,25 +218,16 @@ export function ThemeProvider({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Only run on mount
 
-  // App overrides participate in the same singleton CSS resolver as presets.
-  useEffect(() => {
-    let cancelled = false
-    let receivedLiveTheme = false
-    const api = window.electronAPI
-    api?.getAppTheme?.().then(theme => {
-      if (!cancelled && !receivedLiveTheme) setAppTheme(theme)
-    }).catch(error => console.warn('App theme overrides unavailable:', error))
-    const unsubscribe = api?.onAppThemeChange?.(theme => { receivedLiveTheme = true; if (!cancelled) setAppTheme(theme) })
-    return () => { cancelled = true; unsubscribe?.() }
-  }, [])
-
   // === Preset theme state (singleton) ===
   const [presetTheme, setPresetTheme] = useState<ThemeFile | null>(null)
   const [themeResolvedFrom, setThemeResolvedFrom] = useState<'none' | 'ipc' | 'fallback'>('none')
   const [themeLoadError, setThemeLoadError] = useState<string | null>(null)
 
   // === Derived values ===
-  const resolvedMode = mode === 'system' ? systemPreference : mode
+  // Preview mode is UI-only: it changes the resolved mode without touching the
+  // persisted app preference. Preview > app mode; 'system' defers to the OS.
+  const requestedMode = previewMode ?? mode
+  const resolvedMode = requestedMode === 'system' ? systemPreference : requestedMode
   const resolvedContrast = resolveContrast(contrast, systemPrefersMoreContrast)
   // Effective theme: preview > workspace override > app default
   const effectiveColorTheme = previewColorTheme ?? workspaceColorTheme ?? colorTheme
@@ -691,6 +697,8 @@ export function ThemeProvider({
         effectiveColorTheme,
         previewColorTheme,
         setPreviewColorTheme,
+        previewMode,
+        setPreviewMode,
         effectiveColorThemeSource,
         themeResolvedFrom,
         themeLoadError,
@@ -707,6 +715,47 @@ export function ThemeProvider({
       {children}
     </ThemeContext.Provider>
   )
+}
+
+/**
+ * Subscribe to the app-level theme override owned by the main process.
+ *
+ * The live IPC channel is authoritative and a re-subscription opens a new
+ * generation: the initial `getAppTheme` bootstrap read is discarded once a
+ * live `onAppThemeChange` update has arrived (or the hook re-subscribes), so a
+ * late bootstrap response can never overwrite a newer live value.
+ */
+export function useAppTheme(): ThemeOverrides | null {
+  const [appTheme, setAppTheme] = useState<ThemeOverrides | null>(null)
+  const generationRef = useRef(0)
+
+  useEffect(() => {
+    const api = window.electronAPI
+    if (!api?.getAppTheme && !api?.onAppThemeChange) return
+
+    const generation = ++generationRef.current
+    let cancelled = false
+
+    const unsubscribe = api?.onAppThemeChange?.(theme => {
+      // Any live update invalidates an in-flight bootstrap read.
+      generationRef.current = generation + 1
+      if (!cancelled) setAppTheme(theme)
+    })
+
+    api?.getAppTheme?.().then(theme => {
+      if (cancelled || generationRef.current !== generation) return
+      setAppTheme(theme)
+    }).catch(error => {
+      console.warn('App theme overrides unavailable:', error)
+    })
+
+    return () => {
+      cancelled = true
+      unsubscribe?.()
+    }
+  }, [])
+
+  return appTheme
 }
 
 export function useTheme(): ThemeContextType {

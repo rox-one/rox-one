@@ -1,6 +1,7 @@
-import { closeSync, chmodSync, fsyncSync, openSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
+import { closeSync, fsyncSync, openSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { pathToFileURL } from 'node:url'
 import { NativeAuthority } from './native-authority.ts'
+import { secureOsPrivatePaths } from './os-private-path.ts'
 
 
 export interface LocalMaintenanceResult {
@@ -17,10 +18,12 @@ function option(args: readonly string[], name: string): string {
 function privateDelivery(path: string, issue: () => string): void {
   const descriptor = openSync(path, 'wx', 0o600)
   try {
+    // Windows mode bits do not protect a DACL. Secure this still-empty file
+    // before consuming a one-time enrollment or issuing administrator bytes.
+    secureOsPrivatePaths([{ path, kind: 'file' }])
     const secret = issue()
     writeFileSync(descriptor, `${secret}\n`, { encoding: 'utf8' })
     fsyncSync(descriptor)
-    chmodSync(path, 0o600)
   } catch (error) {
     unlinkSync(path)
     throw error
