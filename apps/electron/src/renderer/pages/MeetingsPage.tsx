@@ -41,6 +41,9 @@ import {
 } from './meetings/local-meetings-model'
 import { getAppLocale } from '@rox/shared/i18n'
 import { MeetingRequestTracker } from './meetings/request-state'
+import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { meetingsAutomationCapabilities } from '@/features/product-tour/adapters/work/meetings-automations'
+import { useMeetingArtifactTour } from '@/features/product-tour/adapters/work/meetings-automations/useMeetingArtifactTour'
 import { consumePendingCompose } from '@/platform/inspector-compose-events'
 
 const ERROR_KEYS: Record<string, string> = {

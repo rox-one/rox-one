@@ -619,8 +619,7 @@ export class McpClientPool {
    * Resolve the LLM-facing proxy name for an original MCP tool name.
    */
   getProxyToolName(slug: string, originalName: string): string | null {
-    if (this.clients.get(slug)?.isClosed === true) return null;
-    return this.sourceToolProxyNames.get(slug)?.get(originalName) ?? null;
+    return this.isConnected(slug) ? this.sourceToolProxyNames.get(slug)?.get(originalName) ?? null : null;
   }
 
   /**
@@ -760,13 +759,8 @@ export class McpClientPool {
     } catch (err) {
       // A request may have reached the server before the transport failed.
       // Restore the connection for subsequent calls without replaying it.
-      // A client that already reports its transport closed is a different case:
-      // teardown/rebuild is left to the next reconcile (same-config sync, an
-      // explicit ensureConnected, or the pre-call recovery gate), so this call
-      // reports the failure against the source as it actually is.
-      const transportKnownClosed = client?.isConnected?.() === false || client?.isClosed === true;
-      if (client && !transportKnownClosed && this.clients.get(slug) === client && this.activeConfigs.has(slug) &&
-          !options?.signal?.aborted && needsConnectionRecovery(err)) {
+      if (client && this.clients.get(slug) === client && this.activeConfigs.has(slug) &&
+          !options?.signal?.aborted && (client.isConnected?.() === false || needsConnectionRecovery(err))) {
         await waitForRecovery(this.recoverClient(slug, client), options?.signal).catch(recoveryError => {
           if (!options?.signal?.aborted) {
             this.debug(`Failed to recover MCP source ${slug}: ${recoveryError instanceof Error ? recoveryError.message : String(recoveryError)}`);
