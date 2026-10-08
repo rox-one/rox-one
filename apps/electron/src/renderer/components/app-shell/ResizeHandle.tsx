@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { useResizeGradient } from '@/hooks/useResizeGradient'
 import { useHorizontalResizeGradient } from '@/hooks/useHorizontalResizeGradient'
+import { useDocumentResizingFlag } from '@/hooks/useDocumentResizingFlag'
 import {
   PANEL_SASH_HIT_WIDTH,
   PANEL_SASH_HIT_WIDTH_COARSE,
@@ -78,6 +79,8 @@ export function ResizeHandle({
   const { ref, handlers, gradientStyle } = vertical ? verticalGradient : horizontalGradient
   const hit = sashHitWidthPx()
   const label = t(labelKey)
+  // Covers drags driven outside usePanelResize (AppShell sidebar/navigator).
+  useDocumentResizingFlag(dragging)
   const valueText = t('shell.resize.valuePx', { value: Math.round(valueNow) })
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
