@@ -61,6 +61,50 @@ describe('slot registry dedupe', () => {
     expect(registry.slots()).toEqual([])
   })
 
+  it('disposing an override restores the previous entry (per-key stack)', () => {
+    const registry = createSlotRegistry()
+    registry.register({ id: 'docs.files', slot: 'docs.tabs', titleKey: 'seed', source: 'shell.w1-07' })
+    const override = registry.register({ id: 'docs.files', slot: 'docs.tabs', titleKey: 'wave2', source: 'wave2' })
+    expect(registry.get('docs.tabs', 'docs.files')?.titleKey).toBe('wave2')
+    let calls = 0
+    registry.onDidChange(() => calls++)
+    override.dispose()
+    expect(registry.get('docs.tabs', 'docs.files')?.titleKey).toBe('seed')
+    expect(ids(registry.list('docs.tabs', NONE))).toEqual(['docs.files'])
+    expect(calls).toBe(1)
+    override.dispose() // idempotent
+    expect(registry.get('docs.tabs', 'docs.files')?.source).toBe('shell.w1-07')
+    expect(calls).toBe(1)
+  })
+
+  it('disposing a shadowed entry keeps the override live and stays silent', () => {
+    const registry = createSlotRegistry()
+    const seed = registry.register({ id: 'k', slot: 'docs.tabs', source: 'seed' })
+    const mid = registry.register({ id: 'k', slot: 'docs.tabs', source: 'mid' })
+    const top = registry.register({ id: 'k', slot: 'docs.tabs', source: 'top' })
+    let calls = 0
+    registry.onDidChange(() => calls++)
+    mid.dispose()
+    expect(calls).toBe(0)
+    expect(registry.get('docs.tabs', 'k')?.source).toBe('top')
+    top.dispose()
+    expect(registry.get('docs.tabs', 'k')?.source).toBe('seed')
+    seed.dispose()
+    expect(registry.all('docs.tabs')).toEqual([])
+    expect(registry.slots()).toEqual([])
+  })
+
+  it('an identical re-registration is its own stack entry', () => {
+    const registry = createSlotRegistry()
+    const entry = { id: 'k', slot: 'docs.tabs' as SlotId, source: 'same' }
+    const a = registry.register(entry)
+    const b = registry.register(entry)
+    b.dispose()
+    expect(registry.get('docs.tabs', 'k')?.source).toBe('same')
+    a.dispose()
+    expect(registry.get('docs.tabs', 'k')).toBeUndefined()
+  })
+
   it('notifies listeners on register and dispose', () => {
     const registry = createSlotRegistry()
     let calls = 0

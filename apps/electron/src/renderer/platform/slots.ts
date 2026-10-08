@@ -13,9 +13,10 @@
  *   other wave-1 packages build on are listed in `RESERVED_SLOT_PATTERNS`, so
  *   W1-15 (#1512) and W1-08 (#1505) register without editing this file.
  * - Contributions are keyed by `(slot, id)`. Registering the same key again
- *   **replaces** the earlier contribution (dedupe, last wins — wave-2 packages
- *   replace W1-07 placeholders and HMR re-registers cleanly). Disposing a
- *   replaced handle is a no-op.
+ *   **overrides** the earlier contribution (dedupe, last wins — wave-2 packages
+ *   override W1-07 placeholders and HMR re-registers cleanly). Registrations
+ *   per key form a stack: disposing the live override restores the previous
+ *   entry (e.g. the W1-07 seed); disposing a shadowed handle just drops it.
  * - `list()` is deterministic: `order` ascending (default 1000), then id.
  * - A contribution is listed only when **every** flag in `flag` is enabled and
  *   its `when` expression holds (`evaluateWhen` from `@rox/core/platform`).
@@ -213,7 +214,12 @@ export function isSlotContributionVisible(contribution: SlotContribution, ctx: S
 // ---------------------------------------------------------------------------
 
 class SlotRegistryImpl implements SlotRegistry {
-  private readonly bySlot = new Map<SlotId, Map<string, SlotContribution>>()
+  /**
+   * Per slot, per id: a stack of registrations. The top one is live (last
+   * wins); disposing it restores the one below (e.g. a W1-07 seed after a
+   * wave-2 override is disposed). Disposing a buried entry only drops it.
+   */
+  private readonly bySlot = new Map<SlotId, Map<string, SlotContribution[]>>()
   private readonly listeners = new Set<() => void>()
 
   register<P>(contribution: SlotContribution<P>): Disposable {
@@ -229,16 +235,25 @@ class SlotRegistryImpl implements SlotRegistry {
       this.bySlot.set(contribution.slot, entries)
     }
     const stored = { ...contribution } as SlotContribution
-    entries.set(contribution.id, stored)
+    const stack = entries.get(contribution.id) ?? []
+    stack.push(stored)
+    entries.set(contribution.id, stack)
     this.notify()
+    let disposed = false
     return {
       dispose: () => {
+        if (disposed) return
+        disposed = true
         const current = this.bySlot.get(contribution.slot)
+        const live = current?.get(contribution.id)
         // Only remove the exact registration this handle created.
-        if (current?.get(contribution.id) !== stored) return
-        current.delete(contribution.id)
+        const index = live ? live.indexOf(stored) : -1
+        if (!current || !live || index < 0) return
+        const wasTop = index === live.length - 1
+        live.splice(index, 1)
+        if (live.length === 0) current.delete(contribution.id)
         if (current.size === 0) this.bySlot.delete(contribution.slot)
-        this.notify()
+        if (wasTop) this.notify()
       },
     }
   }
@@ -250,11 +265,12 @@ class SlotRegistryImpl implements SlotRegistry {
   all<P = unknown>(slot: SlotId): SlotContribution<P>[] {
     const entries = this.bySlot.get(slot)
     if (!entries) return []
-    return ([...entries.values()] as SlotContribution<P>[]).sort(compareSlotContributions)
+    return ([...entries.values()].map((stack) => stack[stack.length - 1]!) as SlotContribution<P>[]).sort(compareSlotContributions)
   }
 
   get<P = unknown>(slot: SlotId, id: string): SlotContribution<P> | undefined {
-    return this.bySlot.get(slot)?.get(id) as SlotContribution<P> | undefined
+    const stack = this.bySlot.get(slot)?.get(id)
+    return stack?.[stack.length - 1] as SlotContribution<P> | undefined
   }
 
   slots(): SlotId[] {
