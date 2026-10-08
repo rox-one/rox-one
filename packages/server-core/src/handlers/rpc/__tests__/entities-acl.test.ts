@@ -218,4 +218,11 @@ describe('entities handlers with a workspace ACL', () => {
     expect((await f.resolve({ refs: [goal, note] }) as EntityPreview[]).map(p => p.status)).toEqual(['no_access', 'no_access'])
     await expect(f.links({ op: 'add', from: note, to: goal, relation: 'mentions' })).rejects.toThrow('Entity link access denied')
   })
+
+  it('a FORBIDDEN principal mapping yields no_access previews and a refused write, not an RPC error', async () => {
+    const f = fixture(async () => ({ acl: workspaceAcl([]), principalFor: () => { throw Object.assign(new Error('FORBIDDEN'), { code: 'FORBIDDEN' }) } }))
+    expect((await f.resolve({ refs: [goal] }) as EntityPreview[]).map(p => p.status)).toEqual(['no_access'])
+    expect(await f.links({ op: 'outgoing', ref: note })).toEqual({ ok: true, op: 'outgoing', links: [] })
+    await expect(f.links({ op: 'add', from: note, to: goal, relation: 'mentions' })).rejects.toThrow('Entity link access denied')
+  })
 })

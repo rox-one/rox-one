@@ -70,24 +70,53 @@ export function principalForActor(workspaceId: string, actor: Actor): AclPrincip
   return { id: actor.id, workspaceId, kind: actor.kind === 'agent' ? 'bot' : 'human' }
 }
 
+/** Error codes a principal mapping uses to say "not a member here" — mapped to a denial, not an RPC error. */
+const DENIAL_CODES: ReadonlySet<string> = new Set(['FORBIDDEN', 'WORKSPACE_MISMATCH', 'NOT_MEMBER', 'not_member'])
+
+function isDenialError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+  const { code, statusCode } = error as { code?: unknown; statusCode?: unknown }
+  return (typeof code === 'string' && DENIAL_CODES.has(code)) || statusCode === 403
+}
+
+/** A principal every check denies (`inactive`) before any fact read; never cached. */
+function deniedPrincipal(workspaceId: string, actor: Actor): AclPrincipal {
+  return { id: actor.id, workspaceId, status: 'deactivated' }
+}
+
 /**
  * Gate for one workspace. Without arguments: the local shim (owner of
  * everything) with the default actor mapping. With an injected ACL the
- * principal mapping is mandatory, and every mapped principal must belong to
- * `workspaceId` — a mismatch fails closed (the principal is treated as
- * deactivated, so every check is denied).
+ * principal mapping is mandatory, and:
+ * - a mapped principal of another workspace fails closed (denied) and logs a
+ *   warning with the two workspace ids only (no actor / principal data), so
+ *   a mis-wired host (e.g. a local id vs the cloud UUID) is visible;
+ * - a mapping that throws FORBIDDEN / not-a-member is a denial result, not an
+ *   RPC error; any other failure propagates.
  */
 export function createEntityAclGate(workspaceId: string): EntityAclGate
 export function createEntityAclGate(workspaceId: string, acl: Acl, principalFor: EntityAclRuntime['principalFor']): EntityAclGate
 export function createEntityAclGate(workspaceId: string, acl?: Acl, principalFor?: EntityAclRuntime['principalFor']): EntityAclGate {
   if (!acl) return { acl: LOCAL_ACL, principalFor: actor => principalForActor(workspaceId, actor) }
   if (typeof principalFor !== 'function') throw new Error('An injected entity ACL requires principalFor')
+  const warned = new Set<string>()
   return {
     acl,
     async principalFor(actor) {
-      const principal = await principalFor(actor)
+      let principal: AclPrincipal
+      try {
+        principal = await principalFor(actor)
+      } catch (error) {
+        if (isDenialError(error)) return deniedPrincipal(workspaceId, actor)
+        throw error
+      }
       if (principal && principal.workspaceId === workspaceId) return principal
-      return { id: actor.id, workspaceId, status: 'deactivated' }
+      const principalWorkspaceId = typeof principal?.workspaceId === 'string' ? principal.workspaceId : String(principal?.workspaceId)
+      if (!warned.has(principalWorkspaceId)) {
+        warned.add(principalWorkspaceId)
+        console.warn('[entities-acl] principal workspace mismatch; denying', { gateWorkspaceId: workspaceId, principalWorkspaceId })
+      }
+      return deniedPrincipal(workspaceId, actor)
     },
   }
 }

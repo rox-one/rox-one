@@ -3,7 +3,7 @@
  * rights; denied refs never reach a resolver; minimal → title only.
  */
 
-import { describe, expect, it } from 'bun:test'
+import { describe, expect, it, spyOn } from 'bun:test'
 import { createAcl, MemoryAclFacts } from '@rox/core/acl'
 import type { Actor, EntityPreview, EntityRef, Resolver } from '@rox/core/entities'
 import { DefaultResolverHost } from '../resolver-host.ts'
@@ -144,5 +144,38 @@ describe('injected ACL requires its principal mapping (review 3)', () => {
   it('a principal of the gate workspace passes through unchanged', async () => {
     const gate = createEntityAclGate(WS, createAcl(facts()), actor => ({ id: actor.id, workspaceId: WS, kind: 'guest' }))
     expect(await gate.principalFor(alice)).toEqual({ id: 'alice', workspaceId: WS, kind: 'guest' })
+  })
+})
+
+describe('acl-gate mismatch and denial mapping (review 4)', () => {
+  it('a workspace mismatch is denied and warns once with the workspace ids only', async () => {
+    const warn = spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const gate = createEntityAclGate(WS, createAcl(facts()), actor => ({ id: actor.id, workspaceId: 'cloud-uuid', kind: 'human' }))
+      for (let i = 0; i < 2; i++) expect(await gate.principalFor(alice)).toMatchObject({ workspaceId: WS, status: 'deactivated' })
+      expect(warn).toHaveBeenCalledTimes(1)
+      const [message, details] = warn.mock.calls[0]!
+      expect(String(message)).toContain('workspace mismatch')
+      expect(details).toEqual({ gateWorkspaceId: WS, principalWorkspaceId: 'cloud-uuid' })
+      expect(JSON.stringify(warn.mock.calls)).not.toContain('alice')
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
+  it('a principalFor FORBIDDEN / non-member throw becomes a denial, not an error', async () => {
+    for (const error of [Object.assign(new Error('FORBIDDEN'), { code: 'FORBIDDEN' }), Object.assign(new Error('x'), { code: 'not_member' }), Object.assign(new Error('y'), { statusCode: 403 })]) {
+      const gate = createEntityAclGate(WS, createAcl(facts()), () => { throw error })
+      const principal = await gate.principalFor(alice)
+      expect(await gate.acl.evaluate(principal, 'view', open)).toMatchObject({ allowed: false, reason: 'inactive' })
+      const host = new DefaultResolverHost({ acl: gate })
+      host.register(recordingResolver([]))
+      expect((await host.resolve([open], alice)).map(p => p.status)).toEqual(['no_access'])
+    }
+  })
+
+  it('other principalFor failures still propagate (fail closed as an error)', async () => {
+    const gate = createEntityAclGate(WS, createAcl(facts()), async () => { throw new Error('db down') })
+    await expect(gate.principalFor(alice)).rejects.toThrow('db down')
   })
 })
