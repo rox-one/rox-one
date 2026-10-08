@@ -6910,6 +6910,8 @@
   "settings.appearance.zenShellMaterialDesc": "玻璃在可用时跟随系统。不透明保持纯色背景。系统使用平台默认值。",
   "settings.appearance.zenShellMaterialGlass": "玻璃",
   "settings.appearance.zenShellMaterialOpaque": "不透明",
+  "settings.appearance.lowPowerMode": "低功耗模式",
+  "settings.appearance.lowPowerModeDesc": "关闭模糊和半透明效果并减少动画，使滚动更流畅。在 Windows 和没有 GPU 加速的电脑上默认开启。",
   "settings.appearance.zenShellMaterialSystem": "系统",
   "settings.appearance.zenShellQaBrowser": "浏览器面板",
   "settings.appearance.zenShellQaClicks": "点击：{{count}}",

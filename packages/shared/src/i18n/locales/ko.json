@@ -6910,6 +6910,8 @@
   "settings.appearance.zenShellMaterialDesc": "유리는 가능할 때 시스템을 따릅니다. 불투명은 단색 배경을 유지합니다. 시스템은 플랫폼 기본값을 사용합니다.",
   "settings.appearance.zenShellMaterialGlass": "유리",
   "settings.appearance.zenShellMaterialOpaque": "불투명",
+  "settings.appearance.lowPowerMode": "저전력 모드",
+  "settings.appearance.lowPowerModeDesc": "흐림 및 반투명 효과를 끄고 애니메이션을 줄여 스크롤을 더 부드럽게 합니다. Windows 및 GPU 가속이 없는 컴퓨터에서는 기본적으로 켜져 있습니다.",
   "settings.appearance.zenShellMaterialSystem": "시스템",
   "settings.appearance.zenShellQaBrowser": "브라우저 패널",
   "settings.appearance.zenShellQaClicks": "클릭: {{count}}",

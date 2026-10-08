@@ -6910,6 +6910,8 @@
   "settings.appearance.zenShellMaterialDesc": "Glas folgt dem System, wenn verfügbar. Undurchsichtig hält einen festen Hintergrund. System nutzt die Plattformvorgabe.",
   "settings.appearance.zenShellMaterialGlass": "Glas",
   "settings.appearance.zenShellMaterialOpaque": "Undurchsichtig",
+  "settings.appearance.lowPowerMode": "Energiesparmodus",
+  "settings.appearance.lowPowerModeDesc": "Schaltet Unschärfe und Transparenz ab und reduziert Animationen für flüssigeres Scrollen. Unter Windows und auf Computern ohne GPU-Beschleunigung standardmäßig aktiv.",
   "settings.appearance.zenShellMaterialSystem": "System",
   "settings.appearance.zenShellQaBrowser": "Browserbereich",
   "settings.appearance.zenShellQaClicks": "Klicks: {{count}}",

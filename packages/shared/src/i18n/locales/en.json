@@ -6910,6 +6910,8 @@
   "settings.appearance.zenShellMaterialDesc": "Glass follows the system when available. Opaque keeps a solid background. System uses the platform default.",
   "settings.appearance.zenShellMaterialGlass": "Glass",
   "settings.appearance.zenShellMaterialOpaque": "Opaque",
+  "settings.appearance.lowPowerMode": "Low-power mode",
+  "settings.appearance.lowPowerModeDesc": "Turns off blur and translucency and reduces animation for smoother scrolling. On by default on Windows and on computers without GPU acceleration.",
   "settings.appearance.zenShellMaterialSystem": "System",
   "settings.appearance.zenShellQaBrowser": "Browser panel",
   "settings.appearance.zenShellQaClicks": "Clicks: {{count}}",

@@ -6913,6 +6913,8 @@
   "settings.appearance.zenShellMaterialDesc": "Le verre suit le système lorsqu’il est disponible. Opaque conserve un fond uni. Système utilise la valeur de la plateforme.",
   "settings.appearance.zenShellMaterialGlass": "Verre",
   "settings.appearance.zenShellMaterialOpaque": "Opaque",
+  "settings.appearance.lowPowerMode": "Mode économie d'énergie",
+  "settings.appearance.lowPowerModeDesc": "Désactive le flou et la transparence et réduit les animations pour un défilement plus fluide. Activé par défaut sous Windows et sur les ordinateurs sans accélération GPU.",
   "settings.appearance.zenShellMaterialSystem": "Système",
   "settings.appearance.zenShellQaBrowser": "Panneau du navigateur",
   "settings.appearance.zenShellQaClicks": "Clics : {{count}}",

@@ -6,6 +6,13 @@
  * run this resolver — the existing window/material path stays in charge.
  */
 
+import {
+  isRenderProfilePreference,
+  type RenderProfile,
+  type RenderProfilePreference,
+  type RenderProfileReason,
+} from './render-profile'
+
 export const ZEN_SHELL_FLAG = 'shell.zen.v1' as const
 
 /** Electron's backgroundMaterial API requires Windows 11 22H2 or newer. */
@@ -51,6 +58,22 @@ export interface ZenShellSnapshot {
   material: ResolvedShellMaterial
   platform: ShellPlatform
   fallbackReason?: ShellMaterialFallbackReason
+  /** PERF-07: effective rendering profile; absent means `standard`. */
+  renderProfile?: RenderProfile
+  renderProfilePreference?: RenderProfilePreference
+  renderProfileReason?: RenderProfileReason
+}
+
+export interface ZenShellRenderProfileState {
+  profile: RenderProfile
+  preference: RenderProfilePreference
+  reason: RenderProfileReason
+}
+
+export interface ZenShellPatch {
+  enabled?: boolean
+  materialPreference?: ShellMaterialPreference
+  renderProfile?: RenderProfilePreference
 }
 
 const MATERIAL_PREFERENCES = new Set<ShellMaterialPreference>(['system', 'glass', 'opaque'])
@@ -67,24 +90,21 @@ export function parseShellMaterialPreference(value: unknown): ShellMaterialPrefe
 }
 
 /**
- * SET_ZEN_SHELL accepts only `{ enabled?, materialPreference? }`.
+ * SET_ZEN_SHELL accepts only `{ enabled?, materialPreference?, renderProfile? }`.
  * BrowserWindow constructor keys and any extra field are rejected.
  */
-export function parseZenShellPatch(raw: unknown): {
-  enabled?: boolean
-  materialPreference?: ShellMaterialPreference
-} {
+export function parseZenShellPatch(raw: unknown): ZenShellPatch {
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
     throw new Error('Invalid zen shell patch')
   }
   const obj = raw as Record<string, unknown>
-  const allowed = new Set(['enabled', 'materialPreference'])
+  const allowed = new Set(['enabled', 'materialPreference', 'renderProfile'])
   for (const key of Object.keys(obj)) {
     if (!allowed.has(key)) {
       throw new Error(`Unexpected zen shell field: ${key}`)
     }
   }
-  const patch: { enabled?: boolean; materialPreference?: ShellMaterialPreference } = {}
+  const patch: ZenShellPatch = {}
   if ('enabled' in obj) {
     if (typeof obj.enabled !== 'boolean') {
       throw new Error('zen shell enabled must be boolean')
@@ -96,6 +116,12 @@ export function parseZenShellPatch(raw: unknown): {
       throw new Error('zen shell materialPreference must be system, glass, or opaque')
     }
     patch.materialPreference = obj.materialPreference as ShellMaterialPreference
+  }
+  if ('renderProfile' in obj) {
+    if (!isRenderProfilePreference(obj.renderProfile)) {
+      throw new Error('zen shell renderProfile must be auto, performance, or standard')
+    }
+    patch.renderProfile = obj.renderProfile
   }
   return patch
 }
@@ -141,9 +167,12 @@ export function resolveShellMaterial(input: ResolveShellMaterialInput): Resolved
   return { material: 'solid', fallbackReason: 'unsupported-platform' }
 }
 
-export function snapshotZenShell(input: ResolveShellMaterialInput): ZenShellSnapshot {
+export function snapshotZenShell(
+  input: ResolveShellMaterialInput,
+  renderProfile?: ZenShellRenderProfileState,
+): ZenShellSnapshot {
   const resolved = resolveShellMaterial(input)
-  return {
+  const snapshot: ZenShellSnapshot = {
     flag: ZEN_SHELL_FLAG,
     enabled: input.zenEnabled,
     preference: input.preference,
@@ -151,4 +180,10 @@ export function snapshotZenShell(input: ResolveShellMaterialInput): ZenShellSnap
     platform: input.platform,
     fallbackReason: resolved.fallbackReason,
   }
+  if (renderProfile) {
+    snapshot.renderProfile = renderProfile.profile
+    snapshot.renderProfilePreference = renderProfile.preference
+    snapshot.renderProfileReason = renderProfile.reason
+  }
+  return snapshot
 }

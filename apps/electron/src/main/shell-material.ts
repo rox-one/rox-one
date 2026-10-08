@@ -18,6 +18,7 @@ import {
 } from '../shared/shell-appearance'
 import { initialZenWindowState, reduceZenWindow, type ZenWindowState } from '../shared/shell-window-lifecycle'
 import { windowLog } from './logger'
+import { peekRenderProfile } from './render-profile'
 
 interface ZenWindowRecord {
   state: ZenWindowState
@@ -80,17 +81,19 @@ export function peekZenShellSnapshot(opts?: {
   windowDestroyed?: boolean
   gpuFailed?: boolean
 }): ZenShellSnapshot {
+  const platform = currentPlatform()
+  // PERF-07: the low-power profile rides the same snapshot as the material.
   return snapshotZenShell({
     zenEnabled: isZenShellEnabled(),
     preference: getZenShellMaterialPreference(),
-    platform: currentPlatform(),
+    platform,
     windowsBuild: windowsBuild(),
     reduceTransparency: queryReduceTransparency(),
     highContrast: queryHighContrast(),
     paintHealthy: opts?.paintHealthy ?? true,
     windowDestroyed: opts?.windowDestroyed ?? false,
     gpuFailed: opts?.gpuFailed ?? false,
-  })
+  }, peekRenderProfile(platform))
 }
 
 /** Return this window's painted capability, rather than predicting a future paint. */
