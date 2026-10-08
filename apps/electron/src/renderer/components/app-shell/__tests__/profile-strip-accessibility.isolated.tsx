@@ -55,7 +55,8 @@ describe('ProfileStrip accessible account details', () => {
   test('unknown and non-finite balances stay unknown rather than presenting invalid amounts', () => {
     for (const balance of [null, Number.NaN, Number.POSITIVE_INFINITY]) {
       const html = render({ ...profile, balance }, true)
-      expect(description(html)).toBe('Pro · Balance —')
+      // Copy comes from the shipped locale, so a rename cannot leave a stale literal here.
+      expect(description(html)).toBe(`Pro · Balance ${en['profile.balanceUnknown']}`)
       expect(html).not.toContain('NaN')
       expect(html).not.toContain('Infinity')
     }

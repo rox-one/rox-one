@@ -5564,7 +5564,6 @@
   "productTour.workspace.workspace.scope.title": "현재 작업 맥락",
   "profile.accountSettings": "계정 설정",
   "profile.balance": "{{amount}}",
-  "profile.balanceEmpty": "—",
   "profile.balanceLabel": "잔액",
   "profile.balanceUnknown": "데이터 없음",
   "profile.defaultName": "사용자",

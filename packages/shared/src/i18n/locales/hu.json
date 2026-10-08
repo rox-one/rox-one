@@ -5564,7 +5564,6 @@
   "productTour.workspace.workspace.scope.title": "Jelenlegi munkakörnyezeted",
   "profile.accountSettings": "Fiókbeállítások",
   "profile.balance": "{{amount}}",
-  "profile.balanceEmpty": "—",
   "profile.balanceLabel": "Egyenleg",
   "profile.balanceUnknown": "Nincs adat",
   "profile.defaultName": "Felhasználó",

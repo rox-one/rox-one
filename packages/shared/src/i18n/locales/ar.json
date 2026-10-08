@@ -5576,7 +5576,6 @@
   "productTour.workspace.workspace.scope.title": "سياقك الحالي",
   "profile.accountSettings": "إعدادات الحساب",
   "profile.balance": "{{amount}}",
-  "profile.balanceEmpty": "—",
   "profile.balanceLabel": "الرصيد",
   "profile.balanceUnknown": "لا توجد بيانات",
   "profile.defaultName": "المستخدم",
