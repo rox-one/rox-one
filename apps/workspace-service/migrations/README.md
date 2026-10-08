@@ -177,11 +177,22 @@ keys over free-text or client-supplied values are scoped:
 ## Rollback
 
 Migrations are **additive only**: new tables, nullable-or-defaulted columns,
-new indexes. There is no down migration by design (checksum-bound history has
-no downgrade path). The documented rollback is to **disable the feature flags**;
-no module binds these tables until its flag ships (all default OFF), so with
-flags off the package is inert and the tables stay empty. If DDL itself must be
-reverted on a staging copy, restore from the pre-migration snapshot.
+new indexes. There is no down migration by design.
+
+- **Feature rollback** (keep this binary): disable the feature flags. No module
+  binds these tables until its flag ships (all default OFF), so with flags off
+  the package is inert and the tables stay empty.
+- **Binary rollback is not possible after the first start.** That start records
+  `01, 01, 48, 502…552` in `rox_schema_migration`. An older binary (current
+  `main`) loads only `01` (+ `48`), finds history it does not ship and fails
+  **every** start with `MIGRATION_HISTORY_MISSING`. The **only** way back to an
+  older binary is to restore the **pre-upgrade snapshot** (taken before the first
+  start of this binary) and lose every write since. Take that snapshot before
+  upgrading.
+- **No in-place corrections.** From the first start every file here is
+  checksum-locked: editing a shipped file fails startup with `MIGRATION_CHANGED`.
+  Any later DDL correction (index, constraint, column) ships as a **new
+  `553+` file** (see "Adding a migration").
 
 ## Table ownership (one writer per table, PLAN §1.3)
 
@@ -201,8 +212,12 @@ checks run without a DB; migrate-up runs against `ROX_TEST_PG_URL`, else a temp
 never read). `ROX_TEST_PG_REQUIRED=1` turns the skip into a failure. Runs: (a)
 empty DB, (b) `01 + 48` then the new files, (c) re-run no-op, (d) tampered
 checksum → `MIGRATION_CHANGED`, old-loader upgrade paths (`01` only, `01 + 48`),
-real `createWorkspaceServer` startup + restart, plus `EXPLAIN` index-use
-assertions on the key queries above.
+real `createWorkspaceServer` startup + restart, tenant-scoped keys and project
+FKs, the extension preflight (role without `CREATE` on a fresh database → clear
+error then success after a DBA pre-install; extension in another schema → clear
+error; needs a superuser test connection, else that test logs and returns), plus
+`EXPLAIN` index-use assertions on the key queries above (skewed seed + `ANALYZE`,
+no `Sort` node, index definitions pinned).
 
 Run with `bun run workspace-service:test` (or `bun test apps/workspace-service/test`).
 CI runs them in the `workspace-migrations` job of `.github/workflows/ci.yml`

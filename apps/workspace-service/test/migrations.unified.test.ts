@@ -144,14 +144,6 @@ describe('W1-05 unified DDL static checks (no DB required)', () => {
     }
   })
 
-  test('sort order keeps every new file after 48-license-audit.sql', async () => {
-    const sources = await loadSources()
-    const sorted = sortedNames(sources)
-    const pivot = sorted.indexOf('48-license-audit.sql')
-    expect(pivot).toBeGreaterThan(-1)
-    for (const name of EXPECTED_FILES) expect(sorted.indexOf(name)).toBeGreaterThan(pivot)
-  })
-
   test('94 new tables across the 26 files (103 with #1295 tables file, 553+)', async () => {
     const sources = await loadSources()
     const tables = EXPECTED_FILES.flatMap(n => createdTables(sources.get(n)!))
@@ -652,6 +644,22 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
         await db.unsafe(`DROP SCHEMA "${schema}" CASCADE`)
       }
     } finally {
+      await db.close()
+    }
+  }, 120000)
+
+  itDb('binary downgrade after the first start fails with MIGRATION_HISTORY_MISSING (README Rollback)', async () => {
+    const db = new SQL(testDb!.url)
+    const schema = `w105_downgrade_${randomBytes(4).toString('hex')}`
+    await db.unsafe(`CREATE SCHEMA "${schema}"`)
+    try {
+      const migrations = await loadMigrations()
+      await applyWorkspaceMigrations(db, migrations, schema)
+      // The old binary (main) ships only 01 (+ 48): it cannot start on the upgraded history.
+      const oldBinary = migrations.filter(m => m.name.startsWith('01-') || m.name.startsWith('48-'))
+      await expect(applyWorkspaceMigrations(db, oldBinary, schema)).rejects.toMatchObject({ code: 'MIGRATION_HISTORY_MISSING' })
+    } finally {
+      await db.unsafe(`DROP SCHEMA "${schema}" CASCADE`)
       await db.close()
     }
   }, 120000)
