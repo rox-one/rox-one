@@ -9,8 +9,10 @@
       "@rox/shared": ["../../packages/shared/src/index.ts"],
       "@rox/shared/*": ["../../packages/shared/src/*"],
       "@rox/server-core": ["../../packages/server-core/src/index.ts"],
-      "@rox/server-core/*": ["../../packages/server-core/src/*"]
+      "@rox/server-core/*": ["../../packages/server-core/src/*"],
+      "@rox/test-harness": ["../../packages/test-harness/src/index.ts"],
+      "@rox/test-harness/*": ["../../packages/test-harness/src/*"]
     }
   },
-  "include": ["src/**/*", "../../packages/shared/src/**/*.d.ts"], "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*", "test/**/*", "../../packages/shared/src/**/*.d.ts"], "exclude": ["node_modules", "dist"]
 }

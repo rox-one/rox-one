@@ -41,21 +41,33 @@ function builtinAudit(html: string): AxeViolation[] {
 }
 
 export async function runAxeAudit(html: string): Promise<AxeAuditResult> {
-  try {
-    const axe = (await import('axe-core')) as {
-      default?: { run?: (html: string) => Promise<{ violations: Array<{ id: string; nodes: Array<{ target: string[] }> }> }> }
-    }
-    const runner = axe.default?.run
-    if (typeof runner === 'function') {
-      const res = await runner(html)
-      const violations: AxeViolation[] = res.violations.flatMap((v) =>
-        v.nodes.map((n) => ({ rule: v.id, selector: n.target.join(' '), message: `axe rule ${v.id} failed` })),
-      )
-      return { engine: 'axe-core', violations, pass: violations.length === 0 }
-    }
-  } catch {
-    // axe-core is not installed — fall through to the built-in rules.
+  const axe = await loadAxeCore()
+  if (axe) {
+    const res = await axe(html)
+    const violations: AxeViolation[] = res.violations.flatMap((v) =>
+      v.nodes.map((n) => ({ rule: v.id, selector: n.target.join(' '), message: `axe rule ${v.id} failed` })),
+    )
+    return { engine: 'axe-core', violations, pass: violations.length === 0 }
   }
   const violations = builtinAudit(html)
   return { engine: 'builtin', violations, pass: violations.length === 0 }
+}
+
+interface AxeRunResult {
+  violations: Array<{ id: string; nodes: Array<{ target: string[] }> }>
+}
+
+/** Resolve axe-core only when installed (optional peer); the bare specifier
+ * is never written as an import so no type declaration is required. */
+async function loadAxeCore(): Promise<((html: string) => Promise<AxeRunResult>) | null> {
+  try {
+    const spec = Bun.resolveSync('axe-core', import.meta.dir)
+    const mod = (await import(spec)) as {
+      default?: { run?: (html: string) => Promise<AxeRunResult> }
+    }
+    const run = mod.default?.run
+    return typeof run === 'function' ? run : null
+  } catch {
+    return null
+  }
 }
