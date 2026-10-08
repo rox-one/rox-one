@@ -4,7 +4,7 @@
  * Shared by `scripts/check-provenance.ts`. Three rules (TECH-SPEC §6.1):
  * 1. files mentioning `operately` (case-insensitive, TS/TSX) must carry the
  *    per-file provenance header;
- * 2. nothing may declare `Source: operately/app/ee` (Enterprise Edition is
+ * 2. nothing may declare an Enterprise-Edition source path (it is
  *    never reused);
  * 3. new code must contain no GPL/AGPL markers.
  *
@@ -25,7 +25,11 @@ export interface ProvenanceOptions {
 }
 
 export const PROVENANCE_HEADER_RE = /Portions adapted from Operately/i
-export const EE_SOURCE_RE = /Source:\s*operately\/app\/ee/i
+// NOTE: the forbidden Enterprise-Edition source literal is assembled from
+// parts so this detector's own sources do not trip the declaration rule.
+// The assembled pattern still matches the contiguous text in scanned files.
+const EE_PATH = `operately${'/'}app/ee`
+export const EE_SOURCE_RE = new RegExp(`Source:\\s*${EE_PATH}`, 'i')
 const OPERATELY_MENTION_RE = /operately/i
 const GPL_MARKER_RE = /GNU (General|Affero General) Public License|AGPL/i
 
@@ -38,7 +42,7 @@ export function checkProvenanceFiles(files: ProvenanceFile[], opts: ProvenanceOp
   const violations: string[] = []
   for (const { path, content } of files) {
     if (EE_SOURCE_RE.test(content)) {
-      violations.push(`${path}: declares Source: operately/app/ee (Enterprise Edition must never be reused)`)
+      violations.push(`${path}: declares an Enterprise-Edition source (${EE_PATH}); it must never be reused`)
       continue
     }
     if (excluded(path, prefixes)) continue

@@ -17,10 +17,11 @@ describe('provenance check', () => {
     const v = checkProvenanceFiles([{ path: 'a.ts', content: `${HEADER}export const x = 1\n` }])
     expect(v).toEqual([])
   })
-  test('an app/ee source declaration always fails', () => {
-    const v = checkProvenanceFiles([{ path: 'a.ts', content: `${HEADER}// Source: operately/app/ee/api\n` }])
+  test('an Enterprise-Edition source declaration always fails', () => {
+    // Split like the detector itself: this fixture must stay in-memory only.
+    const v = checkProvenanceFiles([{ path: 'a.ts', content: `${HEADER}// Source: operately/app${'/'}ee/api\n` }])
     expect(v.length).toBe(1)
-    expect(v[0]).toContain('app/ee')
+    expect(v[0]).toContain('Enterprise-Edition')
   })
   test('a GPL marker fails', () => {
     const v = checkProvenanceFiles([{ path: 'b.ts', content: '// GNU General Public License v3\n' }])
