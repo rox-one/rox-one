@@ -21,6 +21,7 @@ import {
 import { HARNESS_SKIP_LIST } from '@rox/core/platform'
 import { BUILT_MODE_SCREENS, MODE_SCREEN_FLAG_ATOMS, type ModeScreenId } from '@/atoms/mode-flags'
 import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
+import { EntitiesPreviewsSettingsToggle } from '@/components/entities/EntitiesPreviewsSettingsToggle'
 import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/components/settings'
 import { ExtraScreensSettings } from './ExtraScreensSettings'
 
@@ -137,6 +138,7 @@ export function WorkbenchChromeSettings() {
           checked={entitiesLinks}
           onCheckedChange={setEntitiesLinks}
         />
+        <EntitiesPreviewsSettingsToggle />
       </SettingsCard>
     </SettingsSection>
     <ExtraScreensSettings />
