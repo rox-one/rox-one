@@ -1,8 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import type { TourProgress } from '../contracts'
-import { inLearningBrowser, startLearningBrowserTests, stopLearningBrowserTests } from '../persistence/browser-test-harness'
+import { inLearningBrowser, learningBrowserLifecycleBudget, learningBrowserTestBudget, startLearningBrowserTests, stopLearningBrowserTests } from '../persistence/browser-test-harness'
 import { sanitizeLearningEvent } from './events'
 import { computeLearningMetrics } from './metrics'
+
+const budget = learningBrowserTestBudget()
 
 test('DATA-07 allowlist discards all content and correlation IDs including disguised enum values', () => {
   const event = sanitizeLearningEvent({ eventName: 'step-verified', tourId: 'OBT-01', stepId: 'first.send', version: 1, evidenceLevel: 'verified',
@@ -40,8 +42,8 @@ test('metrics count milestones separately and deduplicate replay snapshots', () 
 })
 
 describe('real IndexedDB private diagnostics', () => {
-  beforeAll(startLearningBrowserTests, Math.min(120_000, Math.max(20_000, Number(process.env.ROX_LEARNING_BROWSER_TIMEOUT_MS) || 20_000)))
-  afterAll(stopLearningBrowserTests, Math.min(120_000, Math.max(20_000, Number(process.env.ROX_LEARNING_BROWSER_TIMEOUT_MS) || 20_000)))
+  beforeAll(startLearningBrowserTests, learningBrowserLifecycleBudget)
+  afterAll(stopLearningBrowserTests, learningBrowserLifecycleBudget)
 
   test('DATA-08 disabled diagnostics store no events, opt-in enables safe log and disabling clears only log', async () => {
     const result = await inLearningBrowser(page => page.evaluate(async () => {
@@ -72,7 +74,7 @@ describe('real IndexedDB private diagnostics', () => {
     expect(JSON.stringify(result.log)).not.toContain('raw-native-event')
     expect(result.cleared).toEqual({ status: 'saved', value: [] })
     expect(result.profile.status === 'saved' && result.profile.value.preferences.invitationsEnabled).toBeTrue()
-  })
+  }, budget)
 
   test('diagnostic retention caps 500 records and removes records older than seven days', async () => {
     const result = await inLearningBrowser(page => page.evaluate(async () => {
@@ -88,5 +90,5 @@ describe('real IndexedDB private diagnostics', () => {
     expect(result.capped.status === 'saved' && result.capped.value).toHaveLength(500)
     expect(result.capped.status === 'saved' && result.capped.value[0]?.version).toBe(6)
     expect(result.expired).toEqual({ status: 'saved', value: [] })
-  }, Math.min(120_000, Math.max(20_000, Number(process.env.ROX_LEARNING_BROWSER_TIMEOUT_MS) || 20_000)))
+  }, budget)
 })

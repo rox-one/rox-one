@@ -37,7 +37,9 @@ test('Windows ownership keeps a fixed encoded script and a literal target outsid
   expect(script).not.toContain('$identity.Groups')
   expect(script).not.toContain(target)
   expect(script).not.toContain('Set-Acl')
-  expect(invocations[0]!.options).toMatchObject({ timeout: 2_000, maxBuffer: 1_024, windowsHide: true,
+  // The deadline only bounds a wedged subprocess; it must tolerate the one-time
+  // Windows PowerShell cold start so a fresh host does not misreport ownership.
+  expect(invocations[0]!.options).toMatchObject({ timeout: 20_000, maxBuffer: 1_024, windowsHide: true,
     stdio: ['ignore', 'pipe', 'pipe'], env: { ...env, ROX_NATIVE_OWNER_PROBE_PATH: target } })
   expect(env.ROX_NATIVE_OWNER_PROBE_PATH).toBe('stale inherited target')
 })
@@ -100,10 +102,17 @@ async function runOwnerHost(program: string) {
     const executable = join(directory, 'owner-host.cjs')
     writeFileSync(executable, result.outputFiles[0]!.contents)
     const environment: NodeJS.ProcessEnv = { NODE_NO_WARNINGS: '1' }
-    for (const key of ['PATH', 'Path', 'SystemRoot', 'WINDIR', 'HOME', 'USERPROFILE', 'TMPDIR', 'TMP', 'TEMP']) {
+    // A real Windows host inherits the standard OS/user locations. Windows
+    // PowerShell needs them to start and to persist its per-user module-analysis
+    // cache; a stripped environment makes every probe re-analyze modules and
+    // exceed any sane deadline. Only OS paths are forwarded, never CI secrets.
+    for (const key of ['PATH', 'Path', 'SystemRoot', 'WINDIR', 'windir', 'HOME', 'USERPROFILE', 'USERNAME',
+      'USERDOMAIN', 'HOMEDRIVE', 'HOMEPATH', 'TMPDIR', 'TMP', 'TEMP', 'LOCALAPPDATA', 'APPDATA',
+      'ALLUSERSPROFILE', 'PROGRAMDATA', 'PROGRAMFILES', 'ProgramFiles', 'ProgramW6432', 'PUBLIC',
+      'SystemDrive', 'ComSpec', 'PATHEXT', 'NUMBER_OF_PROCESSORS', 'PROCESSOR_ARCHITECTURE', 'OS']) {
       if (process.env[key]) environment[key] = process.env[key]
     }
-    return await captureTestCommand(['node', executable], { cwd: root, environment, timeoutMs: 15_000 })
+    return await captureTestCommand(['node', executable], { cwd: root, environment, timeoutMs: 60_000 })
   } finally { rmSync(directory, { recursive: true, force: true }) }
 }
 
@@ -143,7 +152,7 @@ if (process.platform === 'win32') test('actual Windows identity accepts the user
   expect({ exitCode: result.exitCode, stdout: result.stdout, stderr: result.stderr, timedOut: result.timedOut }).toEqual({
     exitCode: 0, stdout: 'actual Windows user/default-token-owner/foreign ACL callback guards passed\n', stderr: '', timedOut: false,
   })
-}, 20_000)
+}, 60_000)
 
 // Real Node host execution also exposes the Windows SID/ACL command and the
 // complete constructor/reopen path in the Windows CI lane; no native UI starts.
@@ -172,4 +181,4 @@ test('real Node host creates and reopens authority while retaining hardlink and 
     expect({ exitCode: resultHost.exitCode, stdout: resultHost.stdout, stderr: resultHost.stderr, timedOut: resultHost.timedOut }).toEqual({
       exitCode: 0, stdout: 'actual native authority owner/create/reopen/hardlink/alias guards passed\n', stderr: '', timedOut: false,
     })
-}, 20_000)
+}, 60_000)

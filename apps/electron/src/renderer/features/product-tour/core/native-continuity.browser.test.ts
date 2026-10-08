@@ -34,16 +34,16 @@ beforeAll(async () => {
   stage('continuity:bundle:ready')
   server = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch(request) { return new URL(request.url).pathname === '/script.js' ? new Response(script, { headers: { 'content-type': 'text/javascript' } }) : new Response('<!doctype html><div id="root"></div><script type="module" src="/script.js"></script>', { headers: { 'content-type': 'text/html' } }) } })
   stage('continuity:browser:launch')
-  browser = await chromium.launch({ executablePath: await resolveChromiumExecutable(), headless: true, args: ['--no-sandbox'] })
+  browser = await chromium.launch({ executablePath: await resolveChromiumExecutable(), headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] })
   stage('continuity:browser:ready')
-}, 30_000)
+}, 90_000)
 afterAll(async () => {
   if (!isolatedCase) return
   stage('continuity:browser:close')
   await browser?.close()
   server?.stop(true)
   stage('continuity:browser:closed')
-}, 30_000)
+}, 90_000)
 
 function browserTest(name: string, operation: () => Promise<void>) {
   if (isolatedCase && isolatedCase !== name) return
@@ -209,6 +209,7 @@ for (const action of ['stop', 'cancel'] as const) for (const deferred of [false,
     hide() {}
     destroy() { this.destroyed = true; this.emit('closed') }
     async loadURL() {}
+    async loadFile() {}
   }
   // Only the OS Electron surface is replaced. Command authorization and delivery
   // below run through the actual overlay owner and authenticated hotkey router.

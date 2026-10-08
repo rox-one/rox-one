@@ -9,6 +9,14 @@ interface PrivatePath {
 type WindowsOperation = 'secure' | 'require-private'
 const fullControl = 2032127
 const sidPattern = /^S-1-\d+(?:-\d+){1,15}$/
+/**
+ * Bounded child deadline for the ownership probe. The descriptor policy in
+ * validateWindowsPrivatePaths is unchanged; this only bounds the wait for a
+ * wedged subprocess and is sized for the one-time Windows PowerShell cold start
+ * and module-analysis build on a fresh host, which never completes inside a
+ * bare 5s budget and therefore cannot cache itself between probes.
+ */
+const PROBE_TIMEOUT_MS = 20_000
 
 function ownerFailure(): Error {
   return new Error('maintenance requires the state directory OS owner')
@@ -108,14 +116,37 @@ export function resolveWindowsSystemRoot(): string {
   return systemRoot
 }
 
+/**
+ * The probe child needs the OS/user locations Windows PowerShell uses to start
+ * and to persist its per-user module-analysis cache; the security-relevant
+ * selectors stay pinned and PowerShell/runtime-loader overrides (PS*, COMPLUS_*,
+ * DOTNET_*) are deliberately not inherited. Without these a probe re-analyzes
+ * every module in PSModulePath on each run, which both exceeds the deadline and
+ * can never be cached because the run is killed mid-analysis.
+ */
+function windowsProbeEnvironment(systemRoot: string, executable: string, inherited: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const environment: NodeJS.ProcessEnv = {
+    SystemRoot: systemRoot, WINDIR: systemRoot, windir: systemRoot,
+    PSModulePath: win32.join(win32.dirname(executable), 'Modules'),
+  }
+  for (const name of ['ALLUSERSPROFILE', 'APPDATA', 'LOCALAPPDATA', 'PROGRAMDATA', 'PROGRAMFILES', 'ProgramFiles',
+    'ProgramW6432', 'PUBLIC', 'SystemDrive', 'USERPROFILE', 'HOMEDRIVE', 'HOMEPATH', 'TEMP', 'TMP',
+    'ComSpec', 'PATH', 'Path', 'PATHEXT', 'NUMBER_OF_PROCESSORS', 'PROCESSOR_ARCHITECTURE', 'OS']) {
+    const value = inherited[name]
+    if (typeof value === 'string' && value !== '') environment[name] = value
+  }
+  return environment
+}
+
 function windowsPrivatePaths(paths: readonly PrivatePath[], operation: WindowsOperation): void {
   const systemRoot = resolveWindowsSystemRoot()
   const executable = win32.join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe')
   const result = spawnSync(executable, ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(windowsPrivatePathsScript, 'utf16le').toString('base64')], {
     input: Buffer.from(JSON.stringify({ paths, operation }), 'utf8').toString('base64'),
-    encoding: 'utf8', windowsHide: true, timeout: 5_000, maxBuffer: 64 * 1024,
-    // No inherited PowerShell module/profile or runtime-loader overrides.
-    env: { SystemRoot: systemRoot, WINDIR: systemRoot, PSModulePath: win32.join(win32.dirname(executable), 'Modules') },
+    encoding: 'utf8', windowsHide: true, timeout: PROBE_TIMEOUT_MS, maxBuffer: 64 * 1024,
+    // No inherited PowerShell module/profile or runtime-loader overrides, but the
+    // user/temp locations PowerShell needs for its one-time start and module cache.
+    env: windowsProbeEnvironment(systemRoot, executable, process.env),
   })
   if (result.error || result.signal || result.status !== 0) {
     // Report only fixed stage tags and OS process codes. Arbitrary PowerShell

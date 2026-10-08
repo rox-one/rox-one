@@ -172,7 +172,7 @@ catch (error) { console.log(JSON.stringify({ message: error.message, requestTime
   expect(proof.message).toContain('Windows private authority stage: input-ready')
   expect(proof.message).not.toContain('xxx')
   expect(proof.message.length).toBeLessThan(1024)
-  expect(proof.requestTimeout).toBe(5_000)
+  expect(proof.requestTimeout).toBe(20_000)
 })
 
 test('actual OS branch secures a new authority and its sidecars before a durable reopen', () => {
