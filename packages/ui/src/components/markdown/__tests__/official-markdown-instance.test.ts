@@ -9,8 +9,9 @@ import { Editor, type AnyExtension } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import { Mathematics } from '@tiptap/extension-mathematics'
 import { Markdown } from '@tiptap/markdown'
-import { Marked, marked } from 'marked'
-import { PerEditorMarkdown } from '../official-markdown'
+import { Lexer, Marked, marked } from 'marked'
+import { PerEditorMarkdown, createEditorMarked } from '../official-markdown'
+import { PARITY_CORPUS, measure, type Flag, type ParityResult } from './official-parity-fixture'
 import { EntityEmbed } from '../extensions/EntityEmbed'
 import { EntityMention } from '../extensions/EntityMention'
 import { preprocessMarkdownForOfficial, postprocessMarkdownFromOfficial } from '../TiptapMarkdownEditor'
@@ -104,5 +105,53 @@ describe('official engine: private marked instance per editor (#1505 fix4)', () 
     const instance = instanceOf(editor)
     editor.destroy()
     expect(instance).toBe(own as unknown as MarkedLike)
+  })
+
+})
+
+/** main's behaviour: the same corpus on the global `marked`, measured in a child process. */
+function globalControl(flag: Flag): ParityResult[] {
+  const script = new URL('./official-global-control.ts', import.meta.url).pathname
+  const run = Bun.spawnSync([process.execPath, script, flag], { stdout: 'pipe', stderr: 'pipe' })
+  if (run.exitCode !== 0) throw new Error(`global control failed: ${run.stderr.toString()}`)
+  return JSON.parse(run.stdout.toString()) as ParityResult[]
+}
+
+describe('official engine: nested lexing on the private instance matches global marked (#1505 fix5)', () => {
+  for (const flag of ['off', 'on'] as const) {
+    it(`flag ${flag}: math, underline and [[task:1]] in 1. / - [ ] / nested task items, bullets and quotes match main`, () => {
+      const control = globalControl(flag)
+      const actual = PARITY_CORPUS.map((source) => measure(flag, markdownExtension, source))
+      expect(actual).toEqual(control)
+      // Sanity: the control really tokenizes inside every container shape.
+      const total = (key: string) => control.reduce((n, r) => n + (r.counts[key] ?? 0), 0)
+      expect(total('inlineMath')).toBe(17)
+      expect(total('mark:underline')).toBe(7)
+      expect(total('mention')).toBe(flag === 'on' ? 8 : 0)
+    })
+  }
+
+  it('`1. set $\\{x\\}$ ok` round-trips byte-identical (flag on and off)', () => {
+    for (const flag of ['off', 'on'] as const) {
+      const result = measure(flag, markdownExtension, '1. set $\\{x\\}$ ok')
+      expect({ flag, out: result.out }).toEqual({ flag, out: '1. set $\\{x\\}$ ok' })
+      expect(result.counts.inlineMath).toBe(1)
+    }
+  })
+
+  it('the instance Lexer / Parser default to the instance options, never the global ones', () => {
+    const inst = createEditorMarked() as unknown as {
+      defaults: object
+      use: (ext: unknown) => void
+      Lexer: { new (): { options: object; inlineTokens(src: string): Array<{ type: string }> }; lex(src: string): unknown[]; lexInline(src: string): Array<{ type: string }> }
+      Parser: { new (): { options: object } }
+    }
+    inst.use({ extensions: [{ name: 'probe', level: 'inline', start: (src: string) => src.indexOf('%%'), tokenizer: (src: string) => (src.startsWith('%%') ? { type: 'probe', raw: '%%' } : undefined) }] })
+    expect(new inst.Lexer().options).toBe(inst.defaults)
+    expect(new inst.Parser().options).toBe(inst.defaults)
+    expect(new inst.Lexer().inlineTokens('a %% b').map((t) => t.type)).toContain('probe')
+    expect(inst.Lexer.lexInline('a %% b').map((t) => t.type)).toContain('probe')
+    // The global marked never learns the probe tokenizer.
+    expect(new Lexer().inlineTokens('a %% b').map((t) => t.type)).not.toContain('probe')
   })
 })
