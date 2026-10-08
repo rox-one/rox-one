@@ -5,6 +5,8 @@ name: UI Lint Ratchet
 # On pull_request the PR's baseline is also compared with the base branch's copy, so a PR cannot
 # raise a count (or weaken a rule's severity) by editing the baseline in the same PR. Owners
 # approve such growth with the `ui-baseline-override` label (see eslint-baselines/README.md).
+# The comparison uses the merge commit's own first parent (HEAD^1: the base commit this merge was
+# built on), not the moving base-branch tip, so re-runs and races compare like with like.
 on:
   push:
     branches: [main]
@@ -24,25 +26,27 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # pull_request checks out the merge commit; depth 2 brings its parents (HEAD^1 = base).
+          fetch-depth: 2
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with: { bun-version: '1.3.14' }
       # eslint/stylelint need no install scripts; skipping them keeps this job hermetic.
       - run: bun install --frozen-lockfile --ignore-scripts
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
-      - name: Fetch the base branch (baseline + rename detection)
+      - name: Check the merge commit's base is available
         if: github.event_name == 'pull_request'
-        env:
-          BASE_REF: ${{ github.base_ref }}
-        run: git fetch --no-tags --depth=50 origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
+        run: |
+          git rev-parse --verify --quiet 'HEAD^2^{commit}' >/dev/null || { echo "HEAD is not the PR merge commit"; exit 1; }
+          git rev-parse --verify 'HEAD^1^{commit}'
       - name: Rule and ratchet unit tests
-        run: bun test apps/electron/eslint-rules packages/ui/eslint-rules scripts/__tests__/lint-baseline.test.ts
+        run: bun test apps/electron/eslint-rules packages/ui/eslint-rules scripts/__tests__/lint-baseline.test.ts scripts/__tests__/stylelint-rules.test.ts
       - name: Ratchet (per-rule, per-file counts may only go down)
         if: github.event_name != 'pull_request'
         run: bun run lint:ui-tokens
-      - name: Ratchet vs the base branch's baseline
+      - name: Ratchet vs the base commit's baseline (merge commit's first parent)
         if: github.event_name == 'pull_request'
         env:
-          BASE_REF: ${{ github.base_ref }}
           UI_BASELINE_OVERRIDE: ${{ contains(github.event.pull_request.labels.*.name, 'ui-baseline-override') && '1' || '0' }}
-        run: bun run lint:ui-tokens --base "origin/${BASE_REF}"
+        run: bun run lint:ui-tokens --base 'HEAD^1'

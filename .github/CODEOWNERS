@@ -1,4 +1,9 @@
-# UI-A2 (#1568): the UI lint ratchet baseline and the rules it counts need owner review.
+# UI-A2 (#1568): the UI lint ratchet baseline, the rules it counts and the gate itself need owner review.
+# (Binds only when branch protection requires code-owner review.)
 /eslint-baselines/ @agisota
 /apps/electron/eslint-rules/ @agisota
 /packages/ui/eslint-rules/ @agisota
+/scripts/lint-baseline.ts @agisota
+/scripts/stylelint/ @agisota
+/.stylelintrc.cjs @agisota
+/.github/workflows/ui-lint-ratchet.yml @agisota
