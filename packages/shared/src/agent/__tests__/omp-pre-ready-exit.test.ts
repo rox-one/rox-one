@@ -17,9 +17,11 @@ import { PassThrough } from 'node:stream';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { AgentEvent } from '@craft-agent/core/types';
+import type { AgentEvent } from '@rox/core/types';
 import type { BackendConfig } from '../backend/types.ts';
 import { drainWithTimeout } from './omp-fake-cli.ts';
+import { createPocketFixture } from '../../auth/__tests__/pocket-test-fixture.ts';
+import { setRoxAccountAuthority, LOCAL_ROX_CALLER } from '../../auth/rox-account-authority.ts';
 
 // ---------------------------------------------------------------------------
 // Mocked spawn harness (must be installed BEFORE OmpAgent is imported).
@@ -126,14 +128,14 @@ function makeConfig(workspaceRoot: string): BackendConfig {
   } as unknown as BackendConfig;
 }
 
-function setup(next: MockScenario): InstanceType<typeof OmpAgent> {
+function setup(next: MockScenario, overrides: Partial<BackendConfig> = {}): InstanceType<typeof OmpAgent> {
   scenario = next;
   // resolveOmpExecutableOrExplain() returns OMP_CLI_PATH verbatim; the mocked
   // spawn ignores the binary path, but the seam must still resolve.
   process.env.OMP_CLI_PATH = 'mocked-omp-for-tests';
   const root = mkdtempSync(join(tmpdir(), 'omp-pre-ready-'));
   tmpRoots.push(root);
-  const agent = new OmpAgent(makeConfig(root));
+  const agent = new OmpAgent({ ...makeConfig(root), ...overrides });
   agents.push(agent);
   return agent;
 }
@@ -232,7 +234,17 @@ describe('OmpAgent pre-ready exit (mocked spawn)', () => {
 
 describe('OmpAgent queryLlm over mocked one-shot spawn', () => {
   it('passes request.model via --model and reports it as the effective model', async () => {
-    const agent = setup({ kind: 'print' });
+    // A public Rox model id routes through the trusted-account credential path
+    // (mainline runOneShot gate), so install the account fixture before
+    // building the agent — same pattern as omp-query-llm.test.ts.
+    const pocket = createPocketFixture();
+    await pocket.authority.start(LOCAL_ROX_CALLER);
+    await pocket.authority.state(LOCAL_ROX_CALLER);
+    setRoxAccountAuthority(pocket.authority);
+    const agent = setup(
+      { kind: 'print' },
+      { roxExecutionContext: await pocket.authority.capture(LOCAL_ROX_CALLER) },
+    );
 
     const result = await agent.queryLlm({ prompt: 'summarize', model: 'rox/standard' });
 
