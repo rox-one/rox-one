@@ -182,7 +182,13 @@ export class EntityLinkStore {
     if (version === 0) this.db.exec(`PRAGMA user_version=${ENTITY_LINK_SCHEMA_VERSION}`)
   }
 
-  /** Upsert a link by `(from, relation, to)`; returns the stored record. */
+  /**
+   * Upsert a link by `(from, relation, to)`; returns the stored record.
+   * An add that sets a role or any anchor takes ownership of an existing row
+   * (`created_by` becomes this author), so a writer that only reconciles its
+   * own rows (the note indexer) never rewrites or deletes the user's role /
+   * anchor. A bare add (no role, no anchor) keeps the existing author.
+   */
   add(input: AddEntityLinkInput): EntityLink {
     const dedupeKey = entityLinkDedupeKey(input)
     const anchor = input.anchor ?? {}
@@ -196,6 +202,10 @@ export class EntityLinkStore {
          ON CONFLICT(dedupe_key) DO UPDATE SET
            role=excluded.role, anchor_block_id=excluded.anchor_block_id, anchor_seq=excluded.anchor_seq,
            anchor_line=excluded.anchor_line, anchor_target_id=excluded.anchor_target_id,
+           created_by=CASE
+             WHEN excluded.role IS NOT NULL OR excluded.anchor_block_id IS NOT NULL OR excluded.anchor_seq IS NOT NULL
+               OR excluded.anchor_line IS NOT NULL OR excluded.anchor_target_id IS NOT NULL
+             THEN excluded.created_by ELSE entity_links.created_by END,
            revision=entity_links.revision + 1
          RETURNING *`,
       )
