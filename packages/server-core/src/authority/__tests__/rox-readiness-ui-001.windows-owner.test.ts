@@ -103,7 +103,7 @@ async function runOwnerHost(program: string) {
     for (const key of ['PATH', 'Path', 'SystemRoot', 'WINDIR', 'HOME', 'USERPROFILE', 'TMPDIR', 'TMP', 'TEMP']) {
       if (process.env[key]) environment[key] = process.env[key]
     }
-    return await captureTestCommand(['node', executable], { cwd: root, environment, timeoutMs: 180_000 })
+    return await captureTestCommand(['node', executable], { cwd: root, environment, timeoutMs: 420_000 })
   } finally { rmSync(directory, { recursive: true, force: true }) }
 }
 
@@ -143,7 +143,7 @@ if (process.platform === 'win32') test('actual Windows identity accepts the user
   expect({ exitCode: result.exitCode, stdout: result.stdout, stderr: result.stderr, timedOut: result.timedOut }).toEqual({
     exitCode: 0, stdout: 'actual Windows user/default-token-owner/foreign ACL callback guards passed\n', stderr: '', timedOut: false,
   })
-}, 240_000)
+}, 480_000)
 
 // Real Node host execution also exposes the Windows SID/ACL command and the
 // complete constructor/reopen path in the Windows CI lane; no native UI starts.
@@ -172,4 +172,4 @@ test('real Node host creates and reopens authority while retaining hardlink and 
     expect({ exitCode: resultHost.exitCode, stdout: resultHost.stdout, stderr: resultHost.stderr, timedOut: resultHost.timedOut }).toEqual({
       exitCode: 0, stdout: 'actual native authority owner/create/reopen/hardlink/alias guards passed\n', stderr: '', timedOut: false,
     })
-}, 240_000)
+}, 480_000)

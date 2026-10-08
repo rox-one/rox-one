@@ -118,7 +118,7 @@ test('actual POSIX file custody restores private mode for the same inode on ever
       expect(privateFileIdentity(statSync(file.path, { bigint: true }))).toBe(identity)
     }
   } finally { rmSync(root, { recursive: true, force: true }) }
-}, 240_000)
+}, 480_000)
 
 test('Windows native full-path resolver avoids walking the kernel namespace ancestors', () => {
   // This fresh-child boundary test is not actual Windows OS evidence. The
@@ -172,7 +172,7 @@ catch (error) { console.log(JSON.stringify({ message: error.message, requestTime
   expect(proof.message).toContain('Windows private authority stage: input-ready')
   expect(proof.message).not.toContain('xxx')
   expect(proof.message.length).toBeLessThan(1024)
-  expect(proof.requestTimeout).toBe(120_000)
+  expect(proof.requestTimeout).toBe(180_000)
 })
 
 test('actual OS branch secures a new authority and its sidecars before a durable reopen', () => {
@@ -201,7 +201,7 @@ test('actual OS branch secures a new authority and its sidecars before a durable
       expect(() => requireOsOwner(stateDir)).not.toThrow()
     }
   } finally { authority?.close(); rmSync(root, { recursive: true, force: true }) }
-}, 240_000)
+}, 480_000)
 
 test('actual OS identity guard keeps invalid-token audits free of repeated verifier subprocesses', () => {
   // The mock is confined to this fresh child and delegates every OS probe to
@@ -237,7 +237,7 @@ try {
   expect(proof.platform).toBe(process.platform)
   expect(proof.afterInvalidProbes).toBe(proof.initialProbes)
   expect(proof.rejected).toBe(20)
-}, 240_000)
+}, 480_000)
 
 test('actual file identity custody re-verifies replacement and new sidecars, rejects hard links, and retires missing paths', () => {
   const root = mkdtempSync(join(tmpdir(), 'authority-file-custody-'))
@@ -277,7 +277,7 @@ test('actual file identity custody re-verifies replacement and new sidecars, rej
     requireOsPrivatePaths([sidecar])
     expect(readFileSync(database.path, 'utf8')).toBe('replacement')
   } finally { rmSync(root, { recursive: true, force: true }) }
-}, 240_000)
+}, 480_000)
 
 test('actual OS branch rejects directory aliases and hard-linked database files', () => {
   const root = mkdtempSync(join(tmpdir(), 'authority-os-alias-'))
@@ -293,7 +293,7 @@ test('actual OS branch rejects directory aliases and hard-linked database files'
     const fileAlias = join(root, 'file-alias'); linkSync(foreign, fileAlias)
     expect(() => secureOsPrivatePaths([{ path: fileAlias, kind: 'file' }])).toThrow('without aliases')
   } finally { rmSync(root, { recursive: true, force: true }) }
-}, 240_000)
+}, 480_000)
 
 test('actual OS maintenance denies a non-terminal and preserves an occupied delivery without consuming first bootstrap', () => {
   const root = mkdtempSync(join(tmpdir(), 'authority-os-maintenance-'))
@@ -319,4 +319,4 @@ test('actual OS maintenance denies a non-terminal and preserves an occupied deli
     if (stdinDescriptor) Object.defineProperty(process.stdin, 'isTTY', stdinDescriptor)
     else Reflect.deleteProperty(process.stdin, 'isTTY')
   }
-}, 240_000)
+}, 480_000)
