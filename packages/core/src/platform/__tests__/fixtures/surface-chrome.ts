@@ -12,7 +12,7 @@
  * Every `titleKey` here exists in all 12 locales (asserted by the client test),
  * so the fixture cannot hide a typo behind "test-only" keys.
  */
-import type { EntityKind } from '../../../../entities/kinds.ts'
+import type { EntityKind } from '../../../entities/kinds.ts'
 import {
   buildRowContextMenu,
   type MenuItemSpec,

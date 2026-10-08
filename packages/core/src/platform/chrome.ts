@@ -285,7 +285,7 @@ export interface SidebarHeaderCreate {
    */
   default: CommandType
   /** `▾` lists the surface's other create items (subset of the global create menu). */
-  menu: CommandType[]
+  menu: readonly CommandType[]
 }
 
 export interface SidebarSchema {

@@ -76,11 +76,14 @@ export interface RightDockLayout {
   /** MAIN width after the dock took its share. */
   mainWidth: number
   inspectorWidth: number
+  /** Agent panel width wherever it renders (0 while it is closed or minimised). */
   agentWidth: number
   /** Shared dock: one column holding both panels. */
   columnWidth: number
-  /** Agents that dock (open, not minimised) always render through this module. */
+  /** True only while the agent column occupies layout width (never in an overlay). */
   docksAgent: boolean
+  /** Panel is open (docked, shared or floating) — the shell renders it. */
+  agentVisible: boolean
   /** 📌 is offered while the panel can dock; disabled in the overlay (§25.5 rule 3). */
   canPin: boolean
   /** Shared-dock tab strip: the agent tab is always first. */
@@ -112,88 +115,63 @@ export function clampAgentWidth(width: number): number {
 
 export function rightDockLayout(input: RightDockInput): RightDockLayout {
   const agentWidth = clampAgentWidth(input.agent.width)
-  const docksAgent = input.agent.open && input.agent.minimised !== true
+  const agentVisible = input.agent.open && input.agent.minimised !== true
   const inspector = input.inspector.open ? inspectorWidth(input) : 0
   const userSidebar = input.sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : input.sidebarWidth
   const collapsedWidth = Math.min(userSidebar, SIDEBAR_COLLAPSED_WIDTH)
   const mayAutoCollapse = input.allowSidebarAutoCollapse || input.sidebarCollapsed
-  const agentShare = docksAgent ? agentWidth : 0
 
-  const base = {
+  const layout = (
+    mode: RightDockMode,
+    sidebarCollapsed: boolean,
+    sidebarWidth: number,
+    dockWidth: number,
+    options: { columnWidth?: number; tabStrip?: RightDockLayout['tabStrip'] } = {},
+  ): RightDockLayout => ({
+    mode,
+    sidebarCollapsed,
+    sidebarWidth,
+    mainWidth: input.windowWidth - RAIL_WIDTH - sidebarWidth - dockWidth - ACTION_RAIL_WIDTH,
     inspectorWidth: inspector,
-    agentWidth: docksAgent ? agentWidth : 0,
-    docksAgent,
-    tabStrip: null,
-  } as const
+    agentWidth: agentVisible ? agentWidth : 0,
+    columnWidth: options.columnWidth ?? 0,
+    docksAgent: agentVisible && mode !== 'overlay',
+    agentVisible,
+    canPin: mode !== 'overlay',
+    tabStrip: options.tabStrip ?? null,
+  })
 
-  // No agent in the dock: MAIN is whatever the base layout gives it.
-  if (!docksAgent) {
-    const sidebar = userSidebar
+  // No agent column: MAIN is whatever the base layout gives it.
+  if (!agentVisible) {
     return {
-      ...base,
-      mode: 'overlay',
-      sidebarCollapsed: input.sidebarCollapsed,
-      sidebarWidth: sidebar,
-      mainWidth: input.windowWidth - RAIL_WIDTH - sidebar - inspector - ACTION_RAIL_WIDTH,
-      columnWidth: inspector,
-      canPin: false,
+      ...layout('overlay', input.sidebarCollapsed, userSidebar, inspector),
+      docksAgent: false,
+      tabStrip: null,
     }
   }
 
   // Rule 1 with the sidebar as the user left it.
-  if (sideBySideFits(input.windowWidth, userSidebar, inspector, agentShare)) {
-    return {
-      ...base,
-      mode: 'sideBySide',
-      sidebarCollapsed: input.sidebarCollapsed,
-      sidebarWidth: userSidebar,
-      mainWidth: input.windowWidth - RAIL_WIDTH - userSidebar - inspector - agentShare - ACTION_RAIL_WIDTH,
-      columnWidth: 0,
-      canPin: true,
-    }
+  if (sideBySideFits(input.windowWidth, userSidebar, inspector, agentWidth)) {
+    return layout('sideBySide', input.sidebarCollapsed, userSidebar, inspector + agentWidth)
   }
 
   // Rule 4: auto-collapse the sidebar before the agent shrinks MAIN.
-  if (mayAutoCollapse && sideBySideFits(input.windowWidth, collapsedWidth, inspector, agentShare)) {
-    return {
-      ...base,
-      mode: 'sideBySide',
-      sidebarCollapsed: true,
-      sidebarWidth: collapsedWidth,
-      mainWidth: input.windowWidth - RAIL_WIDTH - collapsedWidth - inspector - agentShare - ACTION_RAIL_WIDTH,
-      columnWidth: 0,
-      canPin: true,
-    }
+  if (mayAutoCollapse && sideBySideFits(input.windowWidth, collapsedWidth, inspector, agentWidth)) {
+    return layout('sideBySide', true, collapsedWidth, inspector + agentWidth)
   }
 
   // Rule 2: shared dock — one column, the wider of the two preferred widths.
-  const columnWidth = Math.max(inspector, agentShare)
+  const columnWidth = Math.max(inspector, agentWidth)
   if (input.windowWidth >= SHARED_DOCK_MIN_WINDOW_WIDTH) {
+    const tabStrip = { height: SHARED_DOCK_TAB_STRIP_HEIGHT, agentFirst: true as const, agentVisible: true }
     for (const sidebar of [userSidebar, collapsedWidth]) {
       if (sidebar === collapsedWidth && !mayAutoCollapse) continue
       if (input.windowWidth - RAIL_WIDTH - sidebar - columnWidth - ACTION_RAIL_WIDTH >= MAIN_MIN_WIDTH) {
-        return {
-          ...base,
-          mode: 'sharedDock',
-          sidebarCollapsed: sidebar === collapsedWidth,
-          sidebarWidth: sidebar,
-          mainWidth: input.windowWidth - RAIL_WIDTH - sidebar - columnWidth - ACTION_RAIL_WIDTH,
-          columnWidth,
-          canPin: true,
-          tabStrip: { height: SHARED_DOCK_TAB_STRIP_HEIGHT, agentFirst: true, agentVisible: true },
-        }
+        return layout('sharedDock', sidebar === collapsedWidth, sidebar, columnWidth, { columnWidth, tabStrip })
       }
     }
   }
 
   // Rule 3: overlay — the panel floats and takes no layout width.
-  return {
-    ...base,
-    mode: 'overlay',
-    sidebarCollapsed: input.sidebarCollapsed,
-    sidebarWidth: userSidebar,
-    mainWidth: input.windowWidth - RAIL_WIDTH - userSidebar - inspector - ACTION_RAIL_WIDTH,
-    columnWidth: 0,
-    canPin: false,
-  }
+  return layout('overlay', input.sidebarCollapsed, userSidebar, inspector)
 }

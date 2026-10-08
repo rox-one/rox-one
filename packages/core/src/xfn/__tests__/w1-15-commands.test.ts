@@ -356,6 +356,11 @@ describe('W1-15 capability discovery and risk classes', () => {
     expect(xfnAvailability(registry, 'X-13')).toEqual({ available: false, reason: 'not_bound' })
     const harnessed = harness()
     expect(xfnAvailability(harnessed.registry, 'X-13')).toEqual({ available: true })
+    // X-20 / X-21 / X-25 have no command to discover through: the flag decides.
+    expect(xfnAvailability(registry, 'X-20')).toEqual({ available: false, reason: 'unavailable' })
+    expect(xfnAvailability(registry, 'X-20', { isFlagEnabled: () => false })).toEqual({ available: false, reason: 'flag_off' })
+    expect(xfnAvailability(registry, 'X-20', { isFlagEnabled: () => true })).toEqual({ available: true })
+    expect(xfnAvailability(registry, 'X-25', { isFlagEnabled: () => false })).toEqual({ available: false, reason: 'flag_off' })
     expect(commandAvailability(harnessed.registry, 'entities.drop')).toEqual({ available: true })
     expect(commandAvailability(harnessed.registry, 'nope.nope')).toEqual({ available: false, reason: 'unknown_command' })
   })

@@ -68,7 +68,6 @@ export interface XfnCapability {
   risk: RiskClass | 'as-resolved' | 'max-of-items' | 'own-else-consequential' | 'none'
   undo: string
   titleKey: string
-  descriptionKey: string
   /** Wave-2 package that replaces the reference handler (§20 owner module). */
   replacedBy: string
 }
@@ -78,74 +77,74 @@ export const XFN_CAPABILITIES: readonly XfnCapability[] = [
   {
     id: 'X-13', commands: ['entities.drop'], queries: [], uiCommands: [],
     ownerModule: 'core', risk: 'as-resolved', undo: 'via the resolved command',
-    titleKey: 'xfn.x13.title', descriptionKey: 'xfn.x13.description', replacedBy: 'XFN (#1534)',
+    titleKey: 'xfn.x13.title', replacedBy: 'XFN (#1534)',
   },
   {
     id: 'X-14', commands: ['calendar.create_time_block'], dispatches: ['calendar.create_event', 'links.add'], queries: [], uiCommands: [],
     ownerModule: 'calendar', risk: 'routine', undo: 'yes',
-    titleKey: 'xfn.x14.title', descriptionKey: 'xfn.x14.description', replacedBy: 'XFN (#1534)',
+    titleKey: 'xfn.x14.title', replacedBy: 'XFN (#1534)',
   },
   {
     id: 'X-15', commands: ['meetings.publish_outcomes', 'decisions.create'], dispatches: ['tasks.create', 'docs.append_block', 'im.send_message'],
     queries: [], uiCommands: [], ownerModule: 'meetings', risk: 'consequential', undo: 'per created item',
-    titleKey: 'xfn.x15.title', descriptionKey: 'xfn.x15.description', replacedBy: 'XFN (#1534)',
+    titleKey: 'xfn.x15.title', replacedBy: 'XFN (#1534)',
   },
   {
     id: 'X-16', commands: ['reminders.create', 'reminders.cancel'], queries: [], uiCommands: [],
     ownerModule: 'tasks', risk: 'routine', undo: 'yes',
-    titleKey: 'xfn.x16.title', descriptionKey: 'xfn.x16.description', replacedBy: 'XFN (#1534)',
+    titleKey: 'xfn.x16.title', replacedBy: 'XFN (#1534)',
   },
   {
     id: 'X-17', commands: ['checkins.draft_from_activity'], queries: [], uiCommands: [],
     ownerModule: 'goals', risk: 'routine', undo: '—',
-    titleKey: 'xfn.x17.title', descriptionKey: 'xfn.x17.description', replacedBy: 'XFN (#1534)',
+    titleKey: 'xfn.x17.title', replacedBy: 'XFN (#1534)',
   },
   {
     id: 'X-18', commands: ['goals.link_work', 'goals.unlink_work'], dispatches: ['links.add', 'links.remove'], queries: [], uiCommands: [],
     ownerModule: 'goals', risk: 'own-else-consequential', undo: 'yes',
-    titleKey: 'xfn.x18.title', descriptionKey: 'xfn.x18.description', replacedBy: 'XFN (#1534)',
+    titleKey: 'xfn.x18.title', replacedBy: 'XFN (#1534)',
   },
   {
     id: 'X-19', commands: ['commands.batch'], queries: [], uiCommands: [],
     ownerModule: 'core', risk: 'max-of-items', undo: 'yes (group)',
-    titleKey: 'xfn.x19.title', descriptionKey: 'xfn.x19.description', replacedBy: 'XFN (#1534)',
+    titleKey: 'xfn.x19.title', replacedBy: 'XFN (#1534)',
   },
   {
     id: 'X-20', commands: [], queries: ['people.get_overview'], uiCommands: [],
     ownerModule: 'contacts', risk: 'none', undo: '—',
-    titleKey: 'xfn.x20.title', descriptionKey: 'xfn.x20.description', replacedBy: 'XFN (#1534)',
+    titleKey: 'xfn.x20.title', replacedBy: 'XFN (#1534)',
   },
   {
     id: 'X-21', commands: [], queries: ['agenda.today'], uiCommands: [],
     ownerModule: 'core', risk: 'none', undo: '—',
-    titleKey: 'xfn.x21.title', descriptionKey: 'xfn.x21.description', replacedBy: 'XFN (#1534)',
+    titleKey: 'xfn.x21.title', replacedBy: 'XFN (#1534)',
   },
   {
     id: 'X-22',
     commands: ['tasks.create_from_email', 'calendar.create_event_from_email', 'docs.create_from_email', 'im.share_entity'],
     dispatches: ['tasks.create', 'calendar.create_event', 'docs.create_document', 'im.send_message', 'drive.import_attachment', 'links.add'],
     queries: [], uiCommands: [], ownerModule: 'tasks', risk: 'consequential', undo: 'yes',
-    titleKey: 'xfn.x22.title', descriptionKey: 'xfn.x22.description', replacedBy: 'XFN (#1534)',
+    titleKey: 'xfn.x22.title', replacedBy: 'XFN (#1534)',
   },
   {
     id: 'X-23', commands: ['forms.configure_on_submit', 'tables.insert_row'], dispatches: ['tasks.create', 'im.send_message'], queries: [], uiCommands: [],
     ownerModule: 'forms', risk: 'consequential', undo: 'per action',
-    titleKey: 'xfn.x23.title', descriptionKey: 'xfn.x23.description', replacedBy: 'XFN (#1534)',
+    titleKey: 'xfn.x23.title', replacedBy: 'XFN (#1534)',
   },
   {
     id: 'X-24', commands: ['vc.start_meeting'], dispatches: ['links.add'], queries: [], uiCommands: [],
     ownerModule: 'meetings', risk: 'consequential', undo: 'end call',
-    titleKey: 'xfn.x24.title', descriptionKey: 'xfn.x24.description', replacedBy: 'XFN (#1534)',
+    titleKey: 'xfn.x24.title', replacedBy: 'XFN (#1534)',
   },
   {
     id: 'X-25', commands: [], queries: [], uiCommands: ['agents.panel_open'],
     ownerModule: 'agent-panel', risk: 'none', undo: '—',
-    titleKey: 'xfn.x25.title', descriptionKey: 'xfn.x25.description', replacedBy: 'AGP (#1532)',
+    titleKey: 'xfn.x25.title', replacedBy: 'AGP (#1532)',
   },
   {
     id: 'X-26', commands: ['entities.pin', 'entities.unpin', 'entities.reorder_pins'], dispatches: ['links.add', 'links.remove'], queries: [], uiCommands: [],
     ownerModule: 'core', risk: 'routine', undo: 'yes',
-    titleKey: 'xfn.x26.title', descriptionKey: 'xfn.x26.description', replacedBy: 'XFN (#1534)',
+    titleKey: 'xfn.x26.title', replacedBy: 'XFN (#1534)',
   },
 ]
 
@@ -207,8 +206,20 @@ export function commandAvailability(registry: CommandRegistry, command: CommandT
 }
 
 /** Discover every command of a capability; the first unavailable one decides. */
-export function xfnAvailability(registry: CommandRegistry, id: XfnId): XfnAvailability {
-  for (const command of xfnCapability(id).commands) {
+export function xfnAvailability(
+  registry: CommandRegistry,
+  id: XfnId,
+  /** Flag source, required for X-20 / X-21 / X-25 — they have no command to discover through. */
+  flags?: { isFlagEnabled(flag: string): boolean },
+): XfnAvailability {
+  const capability = xfnCapability(id)
+  if (capability.commands.length === 0) {
+    if (!flags) return { available: false, reason: 'unavailable' }
+    return flags.isFlagEnabled(XFN_CAPABILITIES_WORKBENCH_FLAG)
+      ? { available: true }
+      : { available: false, reason: 'flag_off' }
+  }
+  for (const command of capability.commands) {
     const availability = commandAvailability(registry, command)
     if (!availability.available) return availability
   }
