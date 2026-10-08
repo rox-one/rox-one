@@ -1,10 +1,44 @@
 /** W1-10 self-test: Postgres fixture (env URL probed, docker opt-in only, cleanup on failure). */
 import { describe, expect, test } from 'bun:test'
-import { ensurePostgres, parseDockerPort, resolvePostgresUrl, type DockerResult } from '../src/postgres.ts'
+import {
+  CONTAINER_LABEL,
+  CLEANUP_SIGNALS,
+  LABEL_CLEANUP_COMMAND,
+  ensurePostgres,
+  parseDockerPort,
+  resolvePostgresUrl,
+  type CleanupSignal,
+  type DockerResult,
+  type LifecycleEvent,
+  type ProcessLifecycle,
+} from '../src/postgres.ts'
 
 const ok = (stdout = ''): DockerResult => ({ exitCode: 0, stdout, stderr: '' })
 const bad = (stderr = 'boom'): DockerResult => ({ exitCode: 1, stdout: '', stderr })
 const fast = { sleep: async () => {}, readinessTimeoutMs: 0, pollIntervalMs: 0 }
+
+/** Records listeners instead of touching the real process; `emit` simulates a signal. */
+function fakeLifecycle() {
+  const listeners = new Map<LifecycleEvent, Set<(signal?: CleanupSignal) => void>>()
+  const reraised: CleanupSignal[] = []
+  const lifecycle: ProcessLifecycle = {
+    on: (event, fn) => {
+      if (!listeners.has(event)) listeners.set(event, new Set())
+      listeners.get(event)!.add(fn)
+    },
+    off: (event, fn) => {
+      listeners.get(event)?.delete(fn)
+    },
+    reraise: (signal) => {
+      reraised.push(signal)
+    },
+  }
+  const count = () => [...listeners.values()].reduce((n, set) => n + set.size, 0)
+  const emit = (event: LifecycleEvent) => {
+    for (const fn of [...(listeners.get(event) ?? [])]) fn(event === 'exit' ? undefined : event)
+  }
+  return { lifecycle, listeners, reraised, count, emit }
+}
 
 function fakeDocker(script: (args: string[]) => DockerResult) {
   const calls: string[][] = []
@@ -78,6 +112,57 @@ describe('postgres fixture', () => {
   test('opt-in docker without a daemon throws a clear error', async () => {
     const { docker } = fakeDocker(() => bad())
     await expect(ensurePostgres({ ROX_TEST_PG_DOCKER: '1' } as NodeJS.ProcessEnv, { ...fast, docker })).rejects.toThrow('docker')
+  })
+
+  describe('container cleanup on exit and signals', () => {
+    const liveDocker = () => fakeDocker((args) => (args[0] === 'port' ? ok('127.0.0.1:49400\n') : ok('id\n')))
+    const nameOf = (calls: string[][]) => {
+      const run = calls.find((c) => c[0] === 'run')!
+      return run[run.indexOf('--name') + 1]
+    }
+
+    for (const signal of CLEANUP_SIGNALS) {
+      test(`${signal}: removes the container, detaches every listener and re-raises the signal`, async () => {
+        const { calls, docker } = liveDocker()
+        const life = fakeLifecycle()
+        const fx = await ensurePostgres({ ROX_TEST_PG_DOCKER: '1' } as NodeJS.ProcessEnv, { ...fast, docker, probe: async () => true, lifecycle: life.lifecycle })
+        expect(fx.status).toBe('live')
+        expect([...life.listeners.keys()].sort()).toEqual(['SIGINT', 'SIGTERM', 'exit'])
+        expect(life.count()).toBe(3)
+        life.emit(signal)
+        expect(calls.filter((c) => c[0] === 'rm')).toEqual([['rm', '-f', nameOf(calls)]])
+        expect(life.count()).toBe(0)
+        expect(life.reraised).toEqual([signal])
+      })
+    }
+
+    test('process exit removes the container', async () => {
+      const { calls, docker } = liveDocker()
+      const life = fakeLifecycle()
+      await ensurePostgres({ ROX_TEST_PG_DOCKER: '1' } as NodeJS.ProcessEnv, { ...fast, docker, probe: async () => true, lifecycle: life.lifecycle })
+      life.emit('exit')
+      expect(calls.some((c) => c[0] === 'rm' && c[2] === nameOf(calls))).toBe(true)
+    })
+
+    test('cleanup() and every failure path detach the exit and signal listeners', async () => {
+      const ok1 = liveDocker()
+      const life = fakeLifecycle()
+      const fx = await ensurePostgres({ ROX_TEST_PG_DOCKER: '1' } as NodeJS.ProcessEnv, { ...fast, docker: ok1.docker, probe: async () => true, lifecycle: life.lifecycle })
+      await fx.cleanup!()
+      expect(life.count()).toBe(0)
+      expect(life.reraised).toEqual([])
+
+      const failing = fakeLifecycle()
+      const notReady = fakeDocker((args) => (args[0] === 'port' ? ok('127.0.0.1:49401') : ok()))
+      await expect(ensurePostgres({ ROX_TEST_PG_DOCKER: '1' } as NodeJS.ProcessEnv, { ...fast, docker: notReady.docker, probe: async () => false, lifecycle: failing.lifecycle }))
+        .rejects.toThrow('readiness')
+      expect(failing.count()).toBe(0)
+    })
+
+    test('the label cleanup command (for SIGKILLed workers) targets this fixture\'s label', () => {
+      expect(CONTAINER_LABEL).toBe('rox.test-harness=w1-10')
+      expect(LABEL_CLEANUP_COMMAND).toBe(`docker rm -f $(docker ps -aq --filter label=${CONTAINER_LABEL})`)
+    })
   })
 
   test('parseDockerPort reads IPv4 / IPv6 mappings', () => {

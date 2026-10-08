@@ -11,8 +11,15 @@
  *    picked by Docker (`-p 127.0.0.1::5432`, read back with `docker port`),
  *    so there are no fixed-port collisions. The fixture returns `live` only
  *    after `SELECT 1` succeeds, and removes the container (`docker rm -f`)
- *    on every failure path, on `cleanup()` and at process exit.
+ *    on every failure path, on `cleanup()`, at process exit and on
+ *    SIGINT / SIGTERM (the handler removes the container, detaches itself
+ *    and re-raises the signal so the default termination still happens).
  * 3. Otherwise `skipped` — never pulls an image on a plain test run.
+ *
+ * A SIGKILLed or crashed worker runs no handler at all. Every container
+ * carries the label `rox.test-harness=w1-10`, so leftovers are removed with:
+ *
+ *   docker rm -f $(docker ps -aq --filter label=rox.test-harness=w1-10)
  */
 import { randomBytes } from 'node:crypto'
 import { SQL } from 'bun'
@@ -39,7 +46,36 @@ export interface PostgresFixtureDeps {
   /** How long to wait for `SELECT 1` before giving up (default 60 s). */
   readinessTimeoutMs?: number
   pollIntervalMs?: number
+  /** Process hooks for exit / signal cleanup (default: the real `process`). */
+  lifecycle?: ProcessLifecycle
 }
+
+/** Signals on which an opt-in container is removed before the process dies. */
+export const CLEANUP_SIGNALS = ['SIGINT', 'SIGTERM'] as const
+export type CleanupSignal = (typeof CLEANUP_SIGNALS)[number]
+export type LifecycleEvent = 'exit' | CleanupSignal
+
+export interface ProcessLifecycle {
+  on(event: LifecycleEvent, listener: (signal?: CleanupSignal) => void): void
+  off(event: LifecycleEvent, listener: (signal?: CleanupSignal) => void): void
+  /** Deliver the signal again after cleanup, so the default action (terminate) runs. */
+  reraise(signal: CleanupSignal): void
+}
+
+export const processLifecycle: ProcessLifecycle = {
+  on: (event, listener) => {
+    process.on(event, listener)
+  },
+  off: (event, listener) => {
+    process.removeListener(event, listener)
+  },
+  reraise: (signal) => {
+    process.kill(process.pid, signal)
+  },
+}
+
+/** Shell command that removes every container this fixture ever started. */
+export const LABEL_CLEANUP_COMMAND = 'docker rm -f $(docker ps -aq --filter label=rox.test-harness=w1-10)'
 
 export const POSTGRES_IMAGE = 'postgres:16'
 export const CONTAINER_LABEL = 'rox.test-harness=w1-10'
@@ -123,11 +159,26 @@ export async function ensurePostgres(env: NodeJS.ProcessEnv = process.env, deps:
   const remove = () => {
     docker(['rm', '-f', name])
   }
+  const lifecycle = deps.lifecycle ?? processLifecycle
   const onExit = () => remove()
-  process.once('exit', onExit)
+  const onSignal: Record<CleanupSignal, () => void> = {
+    SIGINT: () => handleSignal('SIGINT'),
+    SIGTERM: () => handleSignal('SIGTERM'),
+  }
+  const detach = () => {
+    lifecycle.off('exit', onExit)
+    for (const sig of CLEANUP_SIGNALS) lifecycle.off(sig, onSignal[sig])
+  }
+  const handleSignal = (sig: CleanupSignal) => {
+    remove()
+    detach()
+    lifecycle.reraise(sig)
+  }
+  lifecycle.on('exit', onExit)
+  for (const sig of CLEANUP_SIGNALS) lifecycle.on(sig, onSignal[sig])
   const fail = (message: string): never => {
     remove()
-    process.removeListener('exit', onExit)
+    detach()
     throw new Error(message)
   }
 
@@ -148,12 +199,12 @@ export async function ensurePostgres(env: NodeJS.ProcessEnv = process.env, deps:
       reason: `ephemeral ${POSTGRES_IMAGE} container ${name}`,
       cleanup: async () => {
         remove()
-        process.removeListener('exit', onExit)
+        detach()
       },
     }
   } catch (error) {
     remove()
-    process.removeListener('exit', onExit)
+    detach()
     throw error
   }
 }

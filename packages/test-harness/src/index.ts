@@ -5,7 +5,14 @@
  * CI gate runners consumed by `scripts/check-provenance.ts`,
  * `scripts/run-unified-gates.ts` and the `unified-gates` CI job.
  */
-export { resolvePostgresUrl, ensurePostgres, type PostgresFixture } from './postgres.ts'
+export {
+  resolvePostgresUrl,
+  ensurePostgres,
+  CLEANUP_SIGNALS,
+  LABEL_CLEANUP_COMMAND,
+  type PostgresFixture,
+  type ProcessLifecycle,
+} from './postgres.ts'
 export {
   seedTwoUserWorkspace,
   type SeededWorkspace,
