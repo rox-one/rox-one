@@ -155,10 +155,9 @@ jobs:
           # (`pw:browser [pid][out]`). It is the only trace of how far a fresh-profile
           # product boot reached before the first window, and this lane has no other.
           DEBUG: pw:browser
-        run: bun scripts/product-tour/run-native.ts
-        env:
           # Keep the isolated profile on disk so a red lane ships userData logs in the artifact.
           ROX_PRODUCT_TOUR_NATIVE_KEEP_PROFILE: '1'
+        run: bun scripts/product-tour/run-native.ts
       - name: Upload native smoke evidence and unresolved platform gates
         if: always()
         uses: actions/upload-artifact@v4
