@@ -54,7 +54,7 @@ documents to `checkVisualGate`, `checkAxeGate` and `checkOneRailGate`.
 |---|---|---|---|
 | `ddl-zod-parity` | `apps/workspace-service/migrations/5NN-*.sql` and zod modules in `packages/shared/src/domain/*.ts` | #1502, #1503 | Tables are every `CREATE TABLE` in the 5NN files **plus every table they extend with `ALTER TABLE … ADD [COLUMN]`** (added columns join the column list). Each table pairs with a zod object named after it (`work_item` → `WorkItem` / `WorkItemSchema` / `workItemSchema` / `…Row`), or a `<table>.ts` file. Columns compare case-insensitively against keys (`link_id` = `linkId`). **An unpaired table fails** unless it is in the shrink-only allowlist `allowlists/ddl-unpaired-tables.json` (see below). Zod modules present with **zero pairs** fails. Before #1503 the gate is pending only while every table is allowlisted. |
 | `permission-matrix` | `packages/core/src/entities/permissions.ts` | #1501 | `export function generatePermissionMatrix()` returning #1501's frozen rows `{ action, role, tags, championAbsent, hasChildren, kind, effectiveRole, allowed, reason? }`. The gate checks the shape (role lattice `minimal < viewer < commenter < editor < manager < owner` or `null`, known tags), no duplicate rows (keyed on kind, action, role, tags, championAbsent, hasChildren), and DATA-MODEL §8 against its own transcription: `effectiveRole` from the §8.2.2 tag roles, no access without a tag, viewer/minimal never edit, minimal only sees titles, only the owner transfers, a denied row has a `reason`, and every `allowed` equals the §8.3 rule (champion/reviewer grants, reviewer check-in only while the champion is absent, no goal deletion while children exist). An action the transcription does not know fails. |
-| `risk-class` | `packages/core/src/commands/catalogue/index.ts` (`COMMAND_CATALOGUE`) and, when present, `packages/server-core/src/commands/registry.ts` (`createCommandRegistry()`) | #1500, #1508 | The **runtime** catalogue is imported (tuple-form `moduleCatalogue(…)` entries included); bindings and `riskClass` are read from the registry, because #1508 sets `riskClass` through `bindSchema`. Every **gated** command (bound handler or `schemaBound: true`) has a `riskClass` function. Unbound placeholders are reported as pending, never as failures. Exceptions: `allowlists/command-gates.json#riskClass`. |
+| `risk-class` | `packages/core/src/commands/catalogue/index.ts` (`COMMAND_CATALOGUE`); once it exists, `packages/server-core/src/commands/registry.ts` (`createWiredCommandRegistry()`) is **required** | #1500, #1508 | The **runtime** catalogue is imported (tuple-form `moduleCatalogue(…)` entries included); bindings and `riskClass` are read from the fully wired registry (see [Command registry contract](#command-registry-contract)), because modules bind handlers there and #1508 sets `riskClass` through `bindSchema`. Every **gated** command (bound handler or `schemaBound: true`) has a `riskClass` function. Unbound placeholders are reported as pending, never as failures. A missing registry module or export fails. Exceptions: `allowlists/command-gates.json#riskClass`. |
 | `negative-tests` | same catalogue / registry | #1500 | Each gated command has its own non-skipped `test()`/`it()` block that names the command id (block, title or enclosing `describe`) and shows a negative outcome: a whole-word keyword in a title (denied, forbidden, wrong scope, rate limit, quota, conflict, expired) or an exact error-code literal (`'FORBIDDEN'`, `'RATE_LIMITED'`, `'conflict'`, …) / 403·409·429 status assertion in the body. Identifiers such as `resolveConflict` do not count. Only `*.test`/`*.spec` files under `packages`, `apps/workspace-service`, `tests` and `e2e` are read; `packages/test-harness` (self-test fixtures) is skipped and symlinks are not followed. Exceptions: `allowlists/command-gates.json#negativeTests`. |
 | `config-paths` | `scripts/check-config-paths.ts` | #1510 | Script exit code decides. |
 | `chrome-schema-lint` | `packages/core/src/platform/chrome.ts` | #1512 | Exports `CHROME_SCHEMAS` \| `chromeSchemas` \| `SURFACE_CHROME_SCHEMAS` \| `listChromeSchemas()` \| `getChromeSchemas()` of `{ surface, rightZone \| right, centerControls \| center }`. Optional `CHROME_SURFACES: string[]` lists surfaces that must have a schema. |
@@ -64,6 +64,32 @@ documents to `checkVisualGate`, `checkAxeGate` and `checkOneRailGate`.
 | `perf-microbench` | built in | #1507 | See [Perf micro-benchmarks](#perf-micro-benchmarks). |
 | provenance (`scripts/check-provenance.ts`) | built in | #1507 | Diffs against `ROX_PROVENANCE_BASE`, else `origin/$GITHUB_BASE_REF`, else `origin/main`. Fails closed if git or the base cannot answer (CI uses `fetch-depth: 0`). All rules apply to **source files only** (docs, NOTICE and JSON inventories may quote the rules): GPL/AGPL licence headers and SPDX ids; Operately derivation claims without the provenance header; and Enterprise-Edition origin declarations in comments: a `Source:` line naming the Operately EE tree, a §6.1 `file:` line pointing into the EE app directory, or a GitHub `operately/operately` blob/tree URL into it. Only the gate's own fixture files (listed in `FIXTURE_FILES`) are exempt from the first two rules; nothing is exempt from the EE rule. |
 
+## Command registry contract
+
+Owner decision (#1507 review 3), to be frozen in #1500's `registry.ts` header:
+
+- `packages/server-core/src/commands/registry.ts` exports
+  **`createWiredCommandRegistry()`**, callable with no arguments (it may return
+  a promise), returning the `CommandRegistry` with **every module's handlers
+  and schemas bound**;
+- the wiring goes through **one `COMMAND_MODULES` list** in that file. Every
+  wave-2 module (W1-06+) registers there: its handlers (`registry.bind`), its
+  zod schemas (`bindSchema`, #1503) and risk classes
+  (`bindSchema(type, schema, { riskClass })`, #1508). `CommandService` and the
+  RPC `sharedRegistry` build their registry from the same factory, so the gate
+  sees exactly what production dispatches;
+- `createCommandRegistry()` (bare factory) is not read: bindings made by its
+  callers are invisible to it, so a gate reading it stays green while real
+  handlers ship.
+
+The `risk-class` and `negative-tests` gates call `createWiredCommandRegistry()`
+and read `registry.get(type)` / `registry.handler(type)`. Once
+`packages/core/src/commands/catalogue/index.ts` exists, a missing `registry.ts`,
+a missing `createWiredCommandRegistry` export, a throw or a registry without
+`get` / `handler` **fails** both gates with a message naming the contract
+(fail closed; **merge order: #1500 before #1507**). Without the catalogue both
+gates are pending.
+
 ## Shrink-only allowlists
 
 Owner decisions (#1507 review 2) allow a few checked-in exceptions in
@@ -72,7 +98,7 @@ Owner decisions (#1507 review 2) allow a few checked-in exceptions in
 | File | Key | Gate | Seeded with |
 |---|---|---|---|
 | `ddl-unpaired-tables.json` | `tables` | `ddl-zod-parity` | every table of #1502's 5NN migrations (none had a zod schema when the gate landed) |
-| `command-gates.json` | `riskClass`, `negativeTests` | `risk-class`, `negative-tests` | nothing (the only gated command on #1500, `system.ping`, passes both) |
+| `command-gates.json` | `riskClass`, `negativeTests` | `risk-class`, `negative-tests` | nothing (the only gated command on #1500, `system.ping`, passes both once `createWiredCommandRegistry()` exists) |
 
 The lists may only shrink:
 

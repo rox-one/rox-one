@@ -5,7 +5,7 @@
  * catalogue.ts) must carry a `riskClass` function on its registry
  * definition. #1508 sets it through `registry.bindSchema(type, schema,
  * { riskClass })`, so the check reads the runtime registry from
- * `createCommandRegistry()`, not catalogue source. Unbound placeholders
+ * `createWiredCommandRegistry()` (catalogue.ts), not catalogue source. Unbound placeholders
  * are reported as pending. Exceptions: `riskClass` in
  * `packages/test-harness/allowlists/command-gates.json` (shrink-only).
  */

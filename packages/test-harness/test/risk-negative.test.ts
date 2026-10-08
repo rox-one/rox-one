@@ -2,7 +2,8 @@
  * W1-10 self-test: riskClass + negative-test gates against synthetic
  * catalogues in #1500's real shape — `moduleCatalogue(module, flag, [[type,
  * authority], …])` tuples exported as `COMMAND_CATALOGUE`, plus a
- * `createCommandRegistry()` factory that binds handlers / schemas. Command
+ * `createWiredCommandRegistry()` factory (#1507 review 3 contract) that binds
+ * every module's handlers / schemas. Command
  * ids use the `zz_fixture.*` namespace so they can never collide with a real
  * catalogue id (the negative-test walk also skips packages/test-harness).
  */
@@ -55,10 +56,10 @@ export const COMMAND_CATALOGUE = [...ZZ_FIXTURE_COMMANDS]
  * Registry factory in #1500's shape: get(type) / handler(type) / bindSchema.
  * `bindings` lists `[type, { handler?, schema?, riskClass? }]`.
  */
-function registrySource(bindings: Array<[string, { handler?: boolean; schema?: boolean; riskClass?: boolean }]>): string {
+function registrySource(bindings: Array<[string, { handler?: boolean; schema?: boolean; riskClass?: boolean }]>, factory = 'createWiredCommandRegistry'): string {
   return `
 import { COMMAND_CATALOGUE } from '../../../core/src/commands/catalogue/index.ts'
-export function createCommandRegistry() {
+export function ${factory}() {
   const defs = new Map(COMMAND_CATALOGUE.map((d) => [d.type, { ...d }]))
   const handlers = new Map()
   const registry = {
@@ -81,13 +82,15 @@ export function createCommandRegistry() {
 `
 }
 
-function repo(opts: { registry?: Parameters<typeof registrySource>[0] | string; index?: string; tests?: Record<string, string> } = {}): string {
+/** `registry`: bindings for a wired registry (default: wired, nothing bound), raw source, or `null` = no registry.ts. */
+function repo(opts: { registry?: Parameters<typeof registrySource>[0] | string | null; index?: string; tests?: Record<string, string> } = {}): string {
   const files: Record<string, string> = {
     [`${CAT}/entry.ts`]: ENTRY,
     [`${CAT}/zz_fixture.ts`]: FIXTURE_MODULE,
     [`${CAT}/index.ts`]: opts.index ?? INDEX,
   }
-  if (opts.registry !== undefined) files[REG] = typeof opts.registry === 'string' ? opts.registry : registrySource(opts.registry)
+  const registry = opts.registry === undefined ? [] : opts.registry
+  if (registry !== null) files[REG] = typeof registry === 'string' ? registry : registrySource(registry)
   for (const [name, src] of Object.entries(opts.tests ?? {})) files[name] = src
   return dir('w1-10-cat-', files)
 }
@@ -96,7 +99,7 @@ function repo(opts: { registry?: Parameters<typeof registrySource>[0] | string; 
 const NO_ALLOWLIST = { entries: [], baseEntries: null }
 
 describe('runtime catalogue reader', () => {
-  test('tuple-form moduleCatalogue entries parse (the real #1500 shape); every entry is unbound without a registry', async () => {
+  test('tuple-form moduleCatalogue entries parse (the real #1500 shape); every entry is unbound while the wired registry binds nothing', async () => {
     const readout = await loadCatalogue({ repoRoot: repo() })
     expect(readout.problems).toEqual([])
     expect(readout.commands.map((c) => [c.type, c.module, c.gated])).toEqual([
@@ -104,9 +107,9 @@ describe('runtime catalogue reader', () => {
       ['zz_fixture.delete', 'zz_fixture', false],
       ['zz_fixture.archive', 'zz_fixture', false],
     ])
-    expect(readout.bindingSource).toBe('catalogue-only')
+    expect(readout.bindingSource).toBe('registry')
   })
-  test('bindings and riskClass come from createCommandRegistry() (bindSchema with riskClass, as #1508 does)', async () => {
+  test('bindings and riskClass come from createWiredCommandRegistry() (bindSchema with riskClass, as #1508 does)', async () => {
     const readout = await loadCatalogue({
       repoRoot: repo({ registry: [['zz_fixture.create', { handler: true }], ['zz_fixture.delete', { schema: true, riskClass: true }]] }),
     })
@@ -126,7 +129,36 @@ describe('runtime catalogue reader', () => {
     const badEntry = await loadCatalogue({ repoRoot: repo({ index: `export const COMMAND_CATALOGUE = [{ type: 'nodot', module: 'x', schemaBound: false }]` }) })
     expect(badEntry.problems.join(' ')).toContain("dotted type")
     const badRegistry = await loadCatalogue({ repoRoot: repo({ registry: `export const nothing = 1` }) })
-    expect(badRegistry.problems.join(' ')).toContain('must export createCommandRegistry()')
+    expect(badRegistry.problems.join(' ')).toContain('must export createWiredCommandRegistry()')
+    const throwing = await loadCatalogue({ repoRoot: repo({ registry: `export function createWiredCommandRegistry() { throw new Error('wiring boom') }` }) })
+    expect(throwing.problems.join(' ')).toContain('wiring boom')
+  })
+  test('catalogue present but registry.ts missing fails closed (no silent catalogue-only downgrade)', async () => {
+    const root = repo({ registry: null })
+    const readout = await loadCatalogue({ repoRoot: root })
+    expect(readout.present).toBe(true)
+    expect(readout.problems.join(' ')).toContain(`${REG}: missing while ${CAT}/index.ts exists`)
+    expect(readout.problems.join(' ')).toContain('merge #1500 before #1507')
+    for (const res of [await checkRiskClassPresence({ repoRoot: root, allowlist: NO_ALLOWLIST }), await checkNegativeTestPresence({ repoRoot: root, allowlist: NO_ALLOWLIST })]) {
+      expect(res.status).toBe('fail')
+      expect(res.violations?.join(' ')).toContain('missing while')
+    }
+  })
+  test('a registry with only the bare createCommandRegistry() (bindings made in callers) fails closed with the contract', async () => {
+    const root = repo({ registry: registrySource([['zz_fixture.create', { handler: true, riskClass: true }]], 'createCommandRegistry') })
+    const res = await checkRiskClassPresence({ repoRoot: root, allowlist: NO_ALLOWLIST })
+    expect(res.status).toBe('fail')
+    const text = res.violations?.join(' ') ?? ''
+    expect(text).toContain('must export createWiredCommandRegistry()')
+    expect(text).toContain('COMMAND_MODULES')
+    expect(text).toContain('createCommandRegistry() alone does not see bindings made by callers')
+  })
+  test('an async createWiredCommandRegistry() is awaited', async () => {
+    const src = registrySource([['zz_fixture.create', { handler: true, riskClass: true }]]).replace('export function createWiredCommandRegistry()', 'function wired()')
+      + `\nexport async function createWiredCommandRegistry() { return wired() }\n`
+    const readout = await loadCatalogue({ repoRoot: repo({ registry: src }) })
+    expect(readout.problems).toEqual([])
+    expect(readout.commands.find((c) => c.type === 'zz_fixture.create')).toMatchObject({ bound: true, gated: true, hasRiskClass: true })
   })
 })
 

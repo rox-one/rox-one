@@ -7,11 +7,17 @@
  *   `COMMAND_CATALOGUE: CommandDefinition[]`. Definitions come from
  *   `moduleCatalogue('<module>', flag, [['tasks.create', 'by-target'], …])`
  *   tuples or from object literals; the gate sees the resulting objects.
- * - `packages/server-core/src/commands/registry.ts` (#1500), when present,
- *   must export `createCommandRegistry()`. Its registry is the source of
- *   truth for handler bindings (`registry.handler(type)`) and for the
- *   definitions after `bindSchema(type, schema, { riskClass })` (W1-06
- *   #1503 binds schemas, W1-11 #1508 sets risk classes there).
+ * - `packages/server-core/src/commands/registry.ts` (#1500) must export
+ *   `createWiredCommandRegistry()` (owner decision, #1507 review 3): a
+ *   factory, callable with no arguments, returning the registry with EVERY
+ *   module's handlers and schemas bound through the single
+ *   `COMMAND_MODULES` list in that file (each wave-2 module registers
+ *   there; W1-06 #1503 binds schemas and W1-11 #1508 sets risk classes
+ *   through `bindSchema(type, schema, { riskClass })` there too). Its
+ *   registry is the source of truth for handler bindings
+ *   (`registry.handler(type)`) and post-bindSchema definitions
+ *   (`registry.get(type)`). `createCommandRegistry()` alone is not enough:
+ *   it binds only what its own body binds, while modules bind in callers.
  *
  * Scope (owner decision, #1507 review 2): only commands with a bound
  * handler, or with `schemaBound: true`, are GATED. Every other catalogue
@@ -19,9 +25,10 @@
  * pending, never as a failure.
  *
  * Input policy (types.ts): no catalogue module = input absent (pending).
- * A catalogue or registry module that exists but cannot be imported, lacks
- * the export, throws or has the wrong shape is a problem, and the gates
- * FAIL on it (fail closed).
+ * Once the catalogue exists, the registry module is REQUIRED (#1500 ships
+ * both; merge order #1500 before #1507): a missing registry.ts, a missing
+ * `createWiredCommandRegistry` export, an import error, a throw or a wrong
+ * shape is a problem and the gates FAIL (fail closed).
  */
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
@@ -30,6 +37,8 @@ import { errorMessage } from './types.ts'
 export const CATALOGUE_PATH = join('packages', 'core', 'src', 'commands', 'catalogue')
 export const CATALOGUE_MODULE_PATH = join(CATALOGUE_PATH, 'index.ts')
 export const COMMAND_REGISTRY_PATH = join('packages', 'server-core', 'src', 'commands', 'registry.ts')
+/** The fully wired registry factory the gates call (#1507 review 3 owner decision). */
+export const WIRED_REGISTRY_EXPORT = 'createWiredCommandRegistry'
 export const COMMAND_ID_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z0-9_-]+)+$/
 
 /** What the gates need to know about one registered command. */
@@ -37,7 +46,7 @@ export interface CatalogueCommand {
   type: string
   module: string
   schemaBound: boolean
-  /** A handler is bound in the registry from `createCommandRegistry()`. */
+  /** A handler is bound in the registry from `createWiredCommandRegistry()`. */
   bound: boolean
   /** `riskClass` is a function on the (registry) definition. */
   hasRiskClass: boolean
@@ -63,7 +72,7 @@ export interface CatalogueInputs {
   repoRoot?: string
   /** Absolute path of the catalogue module (self-tests). */
   catalogueModulePath?: string
-  /** Absolute path of the registry-factory module (self-tests); `null` = do not look for one. */
+  /** Absolute path of the registry-factory module (self-tests only); `null` = skip the registry (catalogue-only readout). */
   registryModulePath?: string | null
 }
 
@@ -93,23 +102,26 @@ export async function loadCatalogue(opts: CatalogueInputs = {}): Promise<Catalog
   const list = catalogueModule.COMMAND_CATALOGUE
   if (!Array.isArray(list)) return broken(`${CATALOGUE_MODULE_PATH}: must export COMMAND_CATALOGUE (an array of CommandDefinition)`)
 
-  // Registry factory: bindings + post-bindSchema definitions.
+  // Registry factory: bindings + post-bindSchema definitions. Required once the catalogue exists.
   let registry: RegistryLike | null = null
   const registryPath = opts.registryModulePath === undefined ? join(root, COMMAND_REGISTRY_PATH) : opts.registryModulePath
-  if (registryPath && existsSync(registryPath)) {
+  const factory = `${COMMAND_REGISTRY_PATH}: ${WIRED_REGISTRY_EXPORT}()`
+  if (registryPath && !existsSync(registryPath)) {
+    problems.push(`${COMMAND_REGISTRY_PATH}: missing while ${CATALOGUE_MODULE_PATH} exists; the gates read handler and schema bindings from ${WIRED_REGISTRY_EXPORT}() there (merge #1500 before #1507; fail closed)`)
+  } else if (registryPath) {
     try {
       const mod = (await import(registryPath)) as Record<string, unknown>
-      if (typeof mod.createCommandRegistry !== 'function') {
-        problems.push(`${COMMAND_REGISTRY_PATH}: must export createCommandRegistry()`)
+      if (typeof mod[WIRED_REGISTRY_EXPORT] !== 'function') {
+        problems.push(`${COMMAND_REGISTRY_PATH}: must export ${WIRED_REGISTRY_EXPORT}(), the registry with every module's handlers and schemas bound via COMMAND_MODULES (#1507 review 3 contract; merge #1500 before #1507). ${typeof mod.createCommandRegistry === 'function' ? 'createCommandRegistry() alone does not see bindings made by callers. ' : ''}Failing closed.`)
       } else {
-        const made = (mod.createCommandRegistry as (o: object) => unknown)({})
-        if (made === null || typeof made !== 'object') problems.push(`${COMMAND_REGISTRY_PATH}: createCommandRegistry() returned ${made === null ? 'null' : typeof made}`)
+        const made = await (mod[WIRED_REGISTRY_EXPORT] as () => unknown)()
+        if (made === null || typeof made !== 'object') problems.push(`${factory} returned ${made === null ? 'null' : typeof made}`)
         else if (typeof (made as RegistryLike).handler !== 'function' || typeof (made as RegistryLike).get !== 'function') {
-          problems.push(`${COMMAND_REGISTRY_PATH}: the registry must expose get(type) and handler(type)`)
+          problems.push(`${factory}: the registry must expose get(type) and handler(type)`)
         } else registry = made as RegistryLike
       }
     } catch (error) {
-      problems.push(`${COMMAND_REGISTRY_PATH}: createCommandRegistry() failed: ${errorMessage(error)}`)
+      problems.push(`${factory} failed: ${errorMessage(error)}`)
     }
   }
 
@@ -131,7 +143,7 @@ export async function loadCatalogue(opts: CatalogueInputs = {}): Promise<Catalog
       try {
         const live = registry.get(type)
         if (isRecord(live)) definition = live
-        else problems.push(`${type}: in COMMAND_CATALOGUE but not defined in createCommandRegistry()`)
+        else problems.push(`${type}: in COMMAND_CATALOGUE but not defined in ${WIRED_REGISTRY_EXPORT}()`)
         bound = typeof registry.handler(type) === 'function'
       } catch (error) {
         problems.push(`${type}: registry lookup failed: ${errorMessage(error)}`)
