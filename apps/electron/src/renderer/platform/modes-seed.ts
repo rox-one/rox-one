@@ -6,8 +6,10 @@
  * nulls their rootRoute while the flag is off — that is the capability gate
  * behind `requiredCapabilities`.
  */
-import type { ModeContribution } from '@rox/core/platform'
+import { WORKBENCH_FLAG, type ModeContribution } from '@rox/core/platform'
+import { kindDescriptor, type ModuleId } from '@rox/core/entities'
 import { routes } from '../../shared/routes'
+import type { UnifiedSurfaceId } from '../../shared/surface-routes'
 import {
   isHomeNavigation,
   isKnowledgeNavigation,
@@ -17,6 +19,7 @@ import {
   isNotesNavigation,
   isSessionsNavigation,
   isTasksNavigation,
+  isSurfaceNavigation,
   type NavigationState,
 } from '../../shared/types'
 import type { ModeScreenFlags, ModeScreenId } from '../atoms/mode-flags'
@@ -127,16 +130,81 @@ export const CORE_MODES: readonly SeededMode[] = [
   },
 ]
 
-/** Apply mode-screen flags: a flagged mode whose flag is off becomes non-navigable. */
+// ---------------------------------------------------------------------------
+// W1-07 (#1504): unified modes (UI-SPEC §3.1). Each carries `when: <flag id>`,
+// so `ModeRegistry.list()` drops it unless the caller passes the enabled flags
+// as context keys (`flagContextKeys`). With every flag OFF the pill, the ⌘1…7
+// slots and every `list()` caller see exactly the baseline seven modes.
+// ---------------------------------------------------------------------------
+
+/** Entity-owner modules whose kind-first routes highlight a unified mode. */
+const UNIFIED_MODE_OWNERS: Record<UnifiedSurfaceId, readonly ModuleId[]> = {
+  messenger: ['messenger'],
+  calendar: ['calendar'],
+  goals: ['goals', 'spaces', 'kpis'],
+  contacts: ['contacts'],
+}
+
+function isUnifiedModeActive(surface: UnifiedSurfaceId) {
+  return (navState: NavigationState): boolean => {
+    if (isSurfaceNavigation(navState)) return navState.surface === surface
+    if (navState.navigator !== 'entity') return false
+    return UNIFIED_MODE_OWNERS[surface].includes(kindDescriptor(navState.ref.kind).owner)
+  }
+}
+
+function unifiedMode(
+  surface: UnifiedSurfaceId,
+  order: number,
+  icon: string,
+  flag: string,
+): SeededMode {
+  return {
+    contribution: {
+      id: surface,
+      titleKey: `workbench.mode.${surface}`,
+      icon,
+      rootRoute: routes.view.surface(surface),
+      order,
+      defaultPinned: true,
+      layoutProfileId: 'agent',
+      when: flag,
+    },
+    isActive: isUnifiedModeActive(surface),
+  }
+}
+
+export const UNIFIED_MODES: readonly SeededMode[] = [
+  unifiedMode('messenger', 25, 'MessagesSquare', WORKBENCH_FLAG.modeMessengerV1),
+  unifiedMode('calendar', 35, 'CalendarDays', WORKBENCH_FLAG.modeCalendarV1),
+  unifiedMode('goals', 45, 'Target', WORKBENCH_FLAG.modeGoalsV1),
+  unifiedMode('contacts', 55, 'Contact', WORKBENCH_FLAG.modeContactsV1),
+]
+
+/** Every seeded mode (registered once by `mode-registry-bootstrap.ts`). */
+export const SEEDED_MODES: readonly SeededMode[] = [...CORE_MODES, ...UNIFIED_MODES]
+
+/** i18n key of the Notes mode while `docs.shared.v1` is on (PRD §11 #2). */
+export const DOCS_RELABEL_TITLE_KEY = 'workbench.mode.docs'
+
+/**
+ * Apply mode-screen flags: a flagged mode whose flag is off becomes
+ * non-navigable. `shellFlags` (enabled workbench flag ids) additionally
+ * relabels Notes → «Документы» while `docs.shared.v1` is on; omitted or
+ * empty = baseline labels.
+ */
 export function resolveSeededModes(
   modes: readonly ModeContribution[],
   flags: Partial<ModeScreenFlags>,
+  shellFlags: ReadonlySet<string> = new Set(),
 ): ModeContribution[] {
-  const byId = new Map(CORE_MODES.map((mode) => [mode.contribution.id, mode]))
+  const byId = new Map(SEEDED_MODES.map((mode) => [mode.contribution.id, mode]))
+  const docsShared = shellFlags.has(WORKBENCH_FLAG.docsSharedV1)
   return modes.map((mode) => {
+    const resolved = docsShared && mode.id === 'notes' ? { ...mode, titleKey: DOCS_RELABEL_TITLE_KEY } : mode
     const flag = byId.get(mode.id)?.flag
-    if (!flag || flags[flag] !== false) return mode
-    return { ...mode, rootRoute: null }
+    if (!flag || flags[flag] !== false) return resolved
+    return { ...resolved, rootRoute: null }
   })
 }
 

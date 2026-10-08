@@ -1,0 +1,642 @@
+{
+  "config": {
+    "configFile": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/playwright.config.ts",
+    "rootDir": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 15000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "",
+        "name": "",
+        "testDir": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map",
+        "testIgnore": [],
+        "testMatch": [
+          "*.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "version": "1.49.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "catalog.spec.ts",
+      "file": "catalog.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "production catalogs light 1280: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 3109,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T21:46:38.075Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-edd6c-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-1848f20929e5d4fcf3c2",
+          "file": "catalog.spec.ts",
+          "line": 49,
+          "column": 5
+        },
+        {
+          "title": "production catalogs light 1440: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 2174,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T21:46:41.352Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-1d9df-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-031e164bb76c025363d3",
+          "file": "catalog.spec.ts",
+          "line": 49,
+          "column": 5
+        },
+        {
+          "title": "production catalogs light 1920: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 2215,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T21:46:43.531Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-c5396-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-949fae91886441d04360",
+          "file": "catalog.spec.ts",
+          "line": 49,
+          "column": 5
+        },
+        {
+          "title": "production catalogs dark 1280: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 2235,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T21:46:45.752Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-68b35-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-d945e6207441fded7c8e",
+          "file": "catalog.spec.ts",
+          "line": 49,
+          "column": 5
+        },
+        {
+          "title": "production catalogs dark 1440: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 2100,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T21:46:47.991Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-752d8-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-e88d5840593139ed14df",
+          "file": "catalog.spec.ts",
+          "line": 49,
+          "column": 5
+        },
+        {
+          "title": "production catalogs dark 1920: actual rows, unknown metadata and bounded layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 2318,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T21:46:50.095Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/catalog-production-catalog-e397c-metadata-and-bounded-layout/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "30aa42b97d8966d0c2dc-cbd508fb4e405245880a",
+          "file": "catalog.spec.ts",
+          "line": 49,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "context.spec.ts",
+      "file": "context.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "grouped context is read-only and preserves root/child provenance in light",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "failed",
+                  "duration": 1601,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/context.spec.ts:15:32",
+                    "matcherResult": {
+                      "actual": false,
+                      "expected": true,
+                      "message": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                      "name": "toBe",
+                      "pass": false
+                    },
+                    "location": {
+                      "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/context.spec.ts",
+                      "column": 32,
+                      "line": 15
+                    },
+                    "snippet": "  13 |   await expect(page.getByTestId('received-count')).toHaveText('2')\n  14 |   const fixtureResponse = await request.post(`${server}/context-fixture`, { data: {} })\n> 15 |   expect(fixtureResponse.ok()).toBe(true)\n     |                                ^\n  16 |   const fixture = await fixtureResponse.json()\n  17 |   const before = await (await request.get(`${server}/stats`)).json()\n  18 |   await page.getByTestId('toggle-map').click()"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/context.spec.ts",
+                        "column": 32,
+                        "line": 15
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  13 |   await expect(page.getByTestId('received-count')).toHaveText('2')\n  14 |   const fixtureResponse = await request.post(`${server}/context-fixture`, { data: {} })\n> 15 |   expect(fixtureResponse.ok()).toBe(true)\n     |                                ^\n  16 |   const fixture = await fixtureResponse.json()\n  17 |   const before = await (await request.get(`${server}/stats`)).json()\n  18 |   await page.getByTestId('toggle-map').click()\n    at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/context.spec.ts:15:32"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T21:46:52.422Z",
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/context-grouped-context-is-22a30-t-child-provenance-in-light/test-failed-1.png"
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/context-grouped-context-is-22a30-t-child-provenance-in-light/video.webm"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/context-grouped-context-is-22a30-t-child-provenance-in-light/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/context.spec.ts",
+                    "column": 32,
+                    "line": 15
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "124b10fb0a2fec141b6d-189d89b73869a8761583",
+          "file": "context.spec.ts",
+          "line": 5,
+          "column": 49
+        },
+        {
+          "title": "grouped context is read-only and preserves root/child provenance in dark",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "status": "failed",
+                  "duration": 1975,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/context.spec.ts:15:32",
+                    "matcherResult": {
+                      "actual": false,
+                      "expected": true,
+                      "message": "\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                      "name": "toBe",
+                      "pass": false
+                    },
+                    "location": {
+                      "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/context.spec.ts",
+                      "column": 32,
+                      "line": 15
+                    },
+                    "snippet": "  13 |   await expect(page.getByTestId('received-count')).toHaveText('2')\n  14 |   const fixtureResponse = await request.post(`${server}/context-fixture`, { data: {} })\n> 15 |   expect(fixtureResponse.ok()).toBe(true)\n     |                                ^\n  16 |   const fixture = await fixtureResponse.json()\n  17 |   const before = await (await request.get(`${server}/stats`)).json()\n  18 |   await page.getByTestId('toggle-map').click()"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/context.spec.ts",
+                        "column": 32,
+                        "line": 15
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  13 |   await expect(page.getByTestId('received-count')).toHaveText('2')\n  14 |   const fixtureResponse = await request.post(`${server}/context-fixture`, { data: {} })\n> 15 |   expect(fixtureResponse.ok()).toBe(true)\n     |                                ^\n  16 |   const fixture = await fixtureResponse.json()\n  17 |   const before = await (await request.get(`${server}/stats`)).json()\n  18 |   await page.getByTestId('toggle-map').click()\n    at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/context.spec.ts:15:32"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T21:46:54.587Z",
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/test-failed-1.png"
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/video.webm"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/context-grouped-context-is-bcf5c-ot-child-provenance-in-dark/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/context.spec.ts",
+                    "column": 32,
+                    "line": 15
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "124b10fb0a2fec141b6d-23fbda9f3c32c6bc8c1c",
+          "file": "context.spec.ts",
+          "line": 5,
+          "column": 49
+        }
+      ]
+    },
+    {
+      "title": "overview.spec.ts",
+      "file": "overview.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "actual Fit overview shows the 200-card runtime window before panning",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "status": "passed",
+                  "duration": 3307,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T21:46:57.581Z",
+                  "attachments": [
+                    {
+                      "name": "runtime-overview.json",
+                      "contentType": "application/json",
+                      "body": "ewogICJjbGFzc2lmaWNhdGlvbiI6ICJwcm9kdWN0aW9uIHJlbmRlcmVyIHdpdGggZXhwbGljaXRseSBzeW50aGV0aWMgdHlwZWQgZml4dHVyZTsgb3ZlcnZpZXcgcHJvb2YsIG5vIG5ldyBsYXRlbmN5IGNsYWltIiwKICAiZml4dHVyZSI6IHsKICAgICJmaXh0dXJlRXZlbnRzIjogMTAwMDAsCiAgICAicHJvamVjdGVkTm9kZXMiOiAyMjEsCiAgICAiYWdlbnRzIjogMjAsCiAgICAiaW5ncmVzc01zIjogNjM1LjM5OTk5OTk5MTA1OTMsCiAgICAibW91bnRlZENhcmRzIjogMAogIH0sCiAgInZpc2liaWxpdHkiOiB7CiAgICAibW91bnRlZCI6IDIwMCwKICAgICJ2aXNpYmxlIjogMjAwLAogICAgInZpZXdwb3J0IjogewogICAgICAid2lkdGgiOiA4MzQuMjAzMTI1LAogICAgICAiaGVpZ2h0IjogNjI2CiAgICB9CiAgfSwKICAiY2FwdHVyZWRCZWZvcmVQYW4iOiB0cnVlLAogICJjYW1lcmEiOiB7CiAgICAieCI6IC0xMS4zODE4NzA1ODk0MDQ2MjcsCiAgICAieSI6IDI4My42MDI2MjM5OTM2Mzg4LAogICAgInpvb20iOiAwLjAxMTcyODQ1NjQxNTg2MzIzNAogIH0KfQ=="
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/overview-actual-Fit-overvi-495cb-ntime-window-before-panning/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6e2f4ad74dab265ac116-1ba3d495e3670c5ed6ba",
+          "file": "overview.spec.ts",
+          "line": 5,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "stream.spec.ts",
+      "file": "stream.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "real ChatDisplay stays mounted while the journal streams into the right dock",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "status": "passed",
+                  "duration": 5258,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T21:47:00.979Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/stream-real-ChatDisplay-st-ead37-streams-into-the-right-dock/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "31223a20abfa66f4a7a7-782e8af2bca0743deaae",
+          "file": "stream.spec.ts",
+          "line": 5,
+          "column": 1
+        },
+        {
+          "title": "pending permission and draft survive toggles in dark and narrow layouts",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "status": "passed",
+                  "duration": 2709,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T21:47:06.246Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/stream-pending-permission--69bb0--in-dark-and-narrow-layouts/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "31223a20abfa66f4a7a7-3eda6c93f39638598a7d",
+          "file": "stream.spec.ts",
+          "line": 53,
+          "column": 1
+        },
+        {
+          "title": "empty production chat keeps ROX welcome and suggestions above the lower composer",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "status": "passed",
+                  "duration": 2177,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T21:47:08.960Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/final-sourcefreeze-f02-headless-shell/stream-empty-production-ch-56ac8-ns-above-the-lower-composer/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "31223a20abfa66f4a7a7-e1a5bea64fb96385f2aa",
+          "file": "stream.spec.ts",
+          "line": 84,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-03T21:46:35.489Z",
+    "duration": 35736.818,
+    "expected": 10,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}

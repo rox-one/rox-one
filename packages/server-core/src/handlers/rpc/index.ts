@@ -45,6 +45,7 @@ import { registerCodeIntelligenceHandlers } from './code-intelligence'
 import { registerPagesHandlers } from './pages'
 import { registerKanbanHandlers } from './kanban'
 import { registerPersonalTasksHandlers } from './personal-tasks'
+import { registerWorkspaceWorkHandlers } from './workspace-work'
 import { registerFeedHandlers } from './feed'
 import { registerCollectionHandlers } from './collection'
 
@@ -62,6 +63,7 @@ import { registerMemoryProposalHandlers } from './memory-proposals'
 import { registerMemoryIoHandlers } from './memory-io'
 import { registerMemoryInsightsHandlers } from './memory-insights'
 import { registerSkillsPendingHandlers } from './skills-pending'
+import { registerLearningHandlers } from './learning'
 export function cleanupCoreClientResources(clientId: string): void {
   cleanupSessionFileWatchForClient(clientId)
   cleanupNotesWatchForClient(clientId)
@@ -133,6 +135,7 @@ export function registerCoreRpcHandlers(
   registerPagesHandlers(server, deps)
   registerKanbanHandlers(server, deps)
   registerPersonalTasksHandlers(server, deps)
+  registerWorkspaceWorkHandlers(server, deps)
   registerFeedHandlers(server, deps)
   registerCollectionHandlers(server, deps)
 
@@ -150,6 +153,7 @@ export function registerCoreRpcHandlers(
   registerMemoryIoHandlers(server, deps)
   registerMemoryInsightsHandlers(server, deps)
   registerSkillsPendingHandlers(server, deps)
+  registerLearningHandlers(server, deps)
   registerNotesHandlers(server, deps)
   if (deps.nativeData) registerNativeDataHandlers(server, deps)
   registerKnowledgeHandlers(server, deps)

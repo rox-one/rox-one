@@ -39,7 +39,6 @@ function frozenSource(versionDir: string): void {
     format: 'git-npm-local-source-v1', repo: lock.repo, commit: lock.commit,
   }));
 }
-
 function seed(entry: ToolEntry) {
   const paths = toolchainPaths(root);
   const version = path.join(paths.toolchainDir, entry.name, entry.version);

@@ -28,6 +28,18 @@ describe('ROX runtime config paths', () => {
     expect(validator.isCraftAgentConfig('/tmp/rox-custom-config-other/config.json')).toBe(false);
     expect(processor.isConfigFile('/tmp/rox-custom-config-other/preferences.json')).toBe(false);
   });
+  it('detects the visible flat rox root beside legacy dotted roots', () => {
+    process.env.ROX_CONFIG_DIR = '/tmp/rox-custom-config';
+    const validator = new ConfigValidator();
+    const processor = new PathProcessor();
+    for (const root of ['/home/u/rox', '/home/u/.rox', '/home/u/.craft-agent', '/home/u/.craft-agents']) {
+      expect(validator.isCraftAgentConfig(root + '/config.json')).toBe(true);
+      expect(validator.isCraftAgentConfig(root + '/workspaces/ws/sources/github/config.json')).toBe(true);
+      expect(processor.isConfigFile(root + '/workspaces/ws/permissions.json')).toBe(true);
+    }
+    expect(validator.isCraftAgentConfig('/home/u/rox-other/config.json')).toBe(false);
+    expect(processor.isConfigFile('/home/u/rox-other/preferences.json')).toBe(false);
+  });
   it('uses actual workspace paths for safe-mode guidance', () => {
     process.env.ROX_CONFIG_DIR = '/tmp/custom-root';
     expect(getPathHint('/tmp/custom-root/workspaces/ws/notes.txt', '/tmp/custom-root/workspaces/ws/sessions/s1/plans')).toContain('workspace root');

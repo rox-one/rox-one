@@ -172,6 +172,8 @@ export interface PoolClient {
   close(): Promise<void>;
   /** Transport health, when available. Older/in-process clients may omit it. */
   isConnected?(): boolean;
+  /** True after terminal transport closure, when the client reports it. */
+  readonly isClosed?: boolean;
 }
 
 /** Source PATH is authoritative; Windows children receive one unambiguous alias. */

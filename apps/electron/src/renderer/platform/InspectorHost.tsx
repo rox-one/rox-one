@@ -59,6 +59,8 @@ import {
 } from './inspector-model'
 import { InspectorResizeSash } from './InspectorResizeSash'
 import { inspectorResizeLimit } from './inspector-resize'
+import { navDestinationLabelKey } from './surface-shell'
+import { enabledShellFlagsAtom } from './unified-flags'
 import { CHROME_DENSITY } from './chrome-density'
 import { countSessionFiles, resolveInspectorLayout } from './inspector-layout'
 
@@ -101,6 +103,7 @@ function InfoSection() {
   const panelId = useAtomValue(focusedPanelIdAtom)
   const navState = useNavigationState()
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const shellFlags = useAtomValue(enabledShellFlagsAtom)
 
   if (isConnectionsNavigation(navState)) {
     return <ConnectionInfoSection />
@@ -119,7 +122,7 @@ function InfoSection() {
     : navState.navigator === 'home'
       ? t('workbench.mode.home')
       : destination
-        ? t(destination.labelKey)
+        ? t(navDestinationLabelKey(destination, shellFlags))
         : null
   const title = sessionMeta ? getSessionTitle(sessionMeta) : (sectionLabel ?? t('surfaceTabs.untitled'))
   const created = formatDate(sessionMeta?.createdAt)
@@ -399,11 +402,13 @@ export function InspectorHost() {
             // Not enough room beside the center column: float over the content
             // instead of squeezing the chat below CENTER_MIN_WIDTH.
             layout.overlay
-              ? 'absolute inset-y-0 z-40 shadow-[-12px_0_32px_rgba(0,0,0,0.28)]'
+              ? 'absolute inset-y-0 z-40 shadow-strong'
               : 'relative',
           )}
           style={layout.overlay ? { width: layout.width, right: INSPECTOR_RAIL_WIDTH } : { width: layout.width }}
           id={controlsId}
+          role="complementary"
+          aria-label={t(titleKey)}
           data-inspector-panel={layout.overlay ? 'overlay' : 'docked'}
         >
           <InspectorResizeSash

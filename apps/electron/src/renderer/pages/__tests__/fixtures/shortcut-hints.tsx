@@ -35,6 +35,7 @@ const { TaskDetail } = await import('../../tasks/TaskDetail')
 const { QuickEntry } = await import('../../tasks/QuickEntry')
 const { default: MeetingsPage } = await import('../../MeetingsPage')
 const { MemoryScreen } = await import('../../../components/memory/MemoryScreen')
+const { LearningScreen } = await import('../../../components/learning/LearningScreen')
 const { MultiSelectPanel } = await import('../../../components/app-shell/MultiSelectPanel')
 
 const i18n = setupI18n()
@@ -58,6 +59,7 @@ const surfaces = {
   quickEntry: render(<QuickEntry onClose={noop} onSubmit={noop} destinationLabel={i18n.t('tasks.projection.inbox')}
     projects={[]} areas={[]} now={task.createdAt} />),
   memory: render(<MemoryScreen />),
+  learning: render(<LearningScreen />),
   meetings: render(<MeetingsPage />),
   selection: render(<MultiSelectPanel count={2} />),
   registry: render(<ActionRegistryProvider><RegistryHints /></ActionRegistryProvider>),

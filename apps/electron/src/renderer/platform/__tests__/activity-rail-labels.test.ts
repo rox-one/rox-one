@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { CHROME_DENSITY } from '../chrome-density'
 import { RAIL_AUTO_COLLAPSE_BELOW, resolveRailCollapsed } from '../ActivityRail'
 import { APP_NAV_DESTINATIONS } from '../../components/app-shell/nav-destinations'
+import { CORE_MODES } from '../modes-seed'
 import { KEYS } from '../../lib/local-storage'
 
 const dir = import.meta.dir
@@ -45,6 +46,24 @@ describe('activity rail: expanded with labels by default', () => {
     expect(group).toContain('collapsed={collapsed}')
   })
 
+  it('renders the seven core modes in TZ order, not the flat destination list (A1)', () => {
+    // Behavioural pin: the rail's mode seed (icons, labels, order).
+    expect(CORE_MODES.map((mode) => mode.contribution.id)).toEqual([
+      'home',
+      'chat',
+      'meetings',
+      'tasks',
+      'notes',
+      'feed',
+      'inbox',
+    ])
+    // Source contract: the rail consumes that seed, never the 12-entry list.
+    expect(rail).toContain('CORE_MODES')
+    expect(rail).toContain('resolveSeededModes')
+    expect(rail).not.toContain('APP_NAV_DESTINATIONS')
+    expect(rail).toContain('testId={`rail-item-${mode.id}`}')
+  })
+
   it('keeps the collapse toggle at the bottom', () => {
     expect(rail).toContain('testId="rail-toggle"')
     expect(rail).toContain("t('rail.expand')")
@@ -63,6 +82,9 @@ describe('activity rail: expanded with labels by default', () => {
   it('every rail label exists in all 12 locales', () => {
     const keys = [
       ...APP_NAV_DESTINATIONS.map((d) => d.labelKey),
+      // A1: the rail renders the seven core modes.
+      ...CORE_MODES.map((mode) => mode.contribution.titleKey),
+      'workbench.mode.unavailable',
       'extraScreens.more', 'extraScreens.dossier.title', 'extraScreens.radar.title',
       'extraScreens.decisions.title', 'extraScreens.agents.title', 'extraScreens.focus.title',
       'rail.title', 'rail.expand', 'rail.collapse',

@@ -112,6 +112,37 @@ describe.skipIf(!existsSync(executablePath))('production native surface renderer
     await expectDOM(page.getByRole('checkbox')).toBeDisabled()
     expect((await last(page,'fixture-inspector-3'))?.rect?.width).toBe(300)
   }), 30000)
+  it('withdraws the surface when its last host unmounts so main can detach the view', async () => withPage('', async page => {
+    expect((await last(page))?.rect?.width).toBe(300)
+    await page.getByRole('button',{name:'Unmount first',exact:true}).click()
+    await expectDOM(page.getByTestId('first-host')).toHaveCount(0)
+    await expectDOM.poll(async () => (await last(page))?.rect).toBeNull()
+    expect((await calls(page)).some(row => row.method === 'sync' && row.id === 'shared' && row.rect === null)).toBe(true)
+  }), 30000)
+  it('replaces a retained pane lacking the cookie partition when consent is active', async () => withPage('?mode=retained', async page => {
+    await expectDOM.poll(async () => (await calls(page)).some(row => row.method === 'destroy' && row.id === 'retained-pane')).toBe(true)
+    await expectDOM.poll(async () => (await calls(page)).filter(row => row.method === 'create').at(-1)?.args?.useImportedCookies).toBe(true)
+    expect((await calls(page)).filter(row => row.method === 'navigate').some(row => row.id === 'retained-pane')).toBe(false)
+  }), 30000)
+  it('reuses a retained pane that already carries the cookie partition', async () => withPage('?mode=retained-cookie', async page => {
+    // The retained fixture resolves consent late; once it has, the pane must
+    // keep the cookie-isolated retained pane instead of replacing it.
+    await expectDOM.poll(async () => (await calls(page)).some(row => row.method === 'consent')).toBe(true)
+    await page.waitForTimeout(300)
+    expect((await calls(page)).some(row => row.method === 'destroy' && row.id === 'retained-pane')).toBe(false)
+    expect((await calls(page)).filter(row => row.method === 'create').length).toBe(0)
+  }), 30000)
+  it('persists the imported-cookies checkbox across a remount', async () => withPage('?mode=checkbox', async page => {
+    const consent = page.getByRole('checkbox')
+    await expectDOM(consent).toBeEnabled()
+    await expectDOM(consent).not.toBeChecked()
+    await consent.check()
+    await expectDOM(consent).toBeChecked()
+    await page.getByRole('button',{name:'Unmount panel',exact:true}).click()
+    await expectDOM(page.getByRole('checkbox')).toHaveCount(0)
+    await page.getByRole('button',{name:'Mount panel',exact:true}).click()
+    await expectDOM(page.getByRole('checkbox')).toBeChecked()
+  }), 30000)
   it('preserves imported-cookie consent controls and routes explicit opt-in to a private instance', async () => withPage('?mode=cookies', async page => {
     const consent = page.getByRole('checkbox')
     await expectDOM(consent).toBeEnabled()

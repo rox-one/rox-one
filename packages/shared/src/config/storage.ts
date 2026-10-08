@@ -62,6 +62,11 @@ import { SECRET_PROVIDER_IDS, SecretConfigError, toPublicSecretRef, type SecretR
 // Import LLM connection types and constants
 import type { LlmConnection } from './llm-connections.ts';
 import { DEFAULT_MEMORY_CONFIG, type MemoryConfig } from '../memory/types.ts';
+import {
+  DEFAULT_SKILLS_LEARNING_POLICY,
+  migrateAutoCreateFromSessions,
+  type SkillsLearningPolicy,
+} from '../memory/learning.ts';
 import { isValidProviderAuthCombination, getDefaultModelsForConnection, getDefaultModelForConnection, isPiProvider, toBedrockNativeId, type LlmProviderType } from './llm-connections.ts';
 import {
   getModelProvider,
@@ -154,7 +159,16 @@ export interface StoredConfig {
   };
   // Skills pipeline switches.
   skills?: {
-    autoCreateFromSessions?: boolean;  // gate skill candidates produced by distillation (default: false — candidates are dropped)
+    autoCreateFromSessions?: boolean;  // legacy gate (PRD §43) — superseded by `learning`, kept for migration
+    // Self-improvement policy (PRD §42). Missing keys fall back to DEFAULT_SKILLS_LEARNING_POLICY.
+    learning?: {
+      enabled?: boolean;                                 // master switch (default: true)
+      autoCreate?: 'off' | 'candidate' | 'autonomous';   // create skills from candidates (default: 'off')
+      autoImprove?: 'off' | 'candidate' | 'autonomous';  // improve existing skills (default: 'candidate')
+      minEvidence?: number;                              // integer 1..20 (default: 3)
+      minConfidence?: number;                            // 0..1 (default: 0.85)
+      requireVerification?: boolean;                     // require a verification pass before promotion (default: true)
+    };
   };
   // Bundled skill packs (runtime-context-marketplace §0.1). Slugs of packs from
   // apps/electron/resources/skills/ that should be skipped by ensureBundledSkills().
@@ -1415,6 +1429,52 @@ export function getMemoryConfig(): MemoryConfig {
  */
 export function getSkillsAutoCreateFromSessions(): boolean {
   return loadStoredConfig()?.skills?.autoCreateFromSessions === true;
+}
+
+/** Valid PRD §42 learning modes — anything else falls back to the default. */
+function isSkillsLearningMode(value: unknown): value is SkillsLearningPolicy['autoCreate'] {
+  return value === 'off' || value === 'candidate' || value === 'autonomous';
+}
+
+/**
+ * Skills learning policy (PRD §42), resolved field-by-field against
+ * DEFAULT_SKILLS_LEARNING_POLICY; invalid values fall back to their defaults.
+ * An explicit `skills.learning` object wins over the legacy
+ * `skills.autoCreateFromSessions` boolean entirely; when only the legacy flag is
+ * present it is migrated per PRD §43 (false → 'off', true → 'candidate').
+ */
+export function getSkillsLearningPolicy(): SkillsLearningPolicy {
+  const skills = loadStoredConfig()?.skills;
+  const raw = skills?.learning;
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    return migrateAutoCreateFromSessions(skills?.autoCreateFromSessions);
+  }
+  return {
+    enabled: raw.enabled !== undefined ? raw.enabled === true : DEFAULT_SKILLS_LEARNING_POLICY.enabled,
+    autoCreate: isSkillsLearningMode(raw.autoCreate) ? raw.autoCreate : DEFAULT_SKILLS_LEARNING_POLICY.autoCreate,
+    autoImprove: isSkillsLearningMode(raw.autoImprove) ? raw.autoImprove : DEFAULT_SKILLS_LEARNING_POLICY.autoImprove,
+    minEvidence:
+      typeof raw.minEvidence === 'number' && Number.isInteger(raw.minEvidence) && raw.minEvidence >= 1 && raw.minEvidence <= 20
+        ? raw.minEvidence
+        : DEFAULT_SKILLS_LEARNING_POLICY.minEvidence,
+    minConfidence:
+      typeof raw.minConfidence === 'number' && Number.isFinite(raw.minConfidence) && raw.minConfidence >= 0 && raw.minConfidence <= 1
+        ? raw.minConfidence
+        : DEFAULT_SKILLS_LEARNING_POLICY.minConfidence,
+    requireVerification:
+      raw.requireVerification !== undefined
+        ? raw.requireVerification === true
+        : DEFAULT_SKILLS_LEARNING_POLICY.requireVerification,
+  };
+}
+
+/**
+ * Workspace-scoped skills learning policy. Per-workspace overrides are not wired
+ * yet — this seam exists so callers already resolve through it; today it is the
+ * global policy unchanged.
+ */
+export function getSkillsLearningPolicyForWorkspace(_workspaceRoot?: string): SkillsLearningPolicy {
+  return getSkillsLearningPolicy();
 }
 
 /**

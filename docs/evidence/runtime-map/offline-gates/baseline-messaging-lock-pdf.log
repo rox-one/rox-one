@@ -1,0 +1,392 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/messaging-gateway/src/__tests__/access-control.test.ts:
+(pass) normalizeMessagingAccessMode > maps every legacy missing/open/inherit value to public-inbox [0.17ms]
+(pass) normalizeMessagingAccessMode > maps owner-only and allow-list to owner-control [0.03ms]
+(pass) evaluatePreBindingAccess > legacy open/missing is public-inbox, not route [0.24ms]
+(pass) evaluatePreBindingAccess > public-inbox is the same on every platform [0.09ms]
+(pass) evaluatePreBindingAccess > owner-control routes owners and rejects strangers [0.08ms]
+(pass) evaluatePreBindingAccess > rejects bots and disabled platforms [0.03ms]
+(pass) evaluateBindingAccess > legacy open/inherit binding cannot make an unknown sender tool-capable [0.32ms]
+(pass) evaluateBindingAccess > owner-control plus allow-list routes only listed senders [0.11ms]
+(pass) evaluateBindingAccess > owner-control on discord routes a listed owner [0.04ms]
+(pass) evaluateBindingAccess > owner-control without a sender list uses workspace owners [0.20ms]
+(pass) normalizeBindingConfig migration > persisted config without accessMode becomes public-inbox [0.03ms]
+(pass) normalizeBindingConfig migration > fresh BindingConfig defaults to owner-control [0.03ms]
+(pass) normalizeBindingConfig migration > legacy inherit/open persist as public-inbox [0.02ms]
+(pass) normalizeBindingConfig migration > fresh bindings on every platform write owner-control, never open [0.05ms]
+(pass) buildRejectionReply > returns null for bot-sender (silent drop) [0.04ms]
+(pass) buildRejectionReply > returns user-friendly text for not-owner [0.05ms]
+210 |   }) as never
+211 |
+212 |   it('evaluatePreBindingAccess: blocks everyone, even before pairing', async () => {
+213 |     const { evaluatePreBindingAccess } = await import('../access-control.ts')
+214 |     const r = evaluatePreBindingAccess({ msg: msg('u1'), workspaceConfig: ws('disabled') })
+215 |     expect(r).toEqual({ allow: false, reason: 'mode-disabled' })
+                    ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "allow": false,
+-   "reason": "mode-disabled",
++   "kind": "reject",
++   "reason": "disabled",
+  }
+
+- Expected  - 2
++ Received  + 2
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/packages/messaging-gateway/src/__tests__/access-control.test.ts:215:15)
+(fail) platform accessMode disabled (RX-TSK-0416) > evaluatePreBindingAccess: blocks everyone, even before pairing [0.44ms]
+225 |     const owner = evaluateBindingAccess({
+226 |       msg: msg('owner-1'),
+227 |       workspaceConfig: ws('disabled'),
+228 |       binding: { config: { accessMode: 'allow-list', allowedSenderIds: [] } as never },
+229 |     })
+230 |     expect(nonOwner).toEqual({ allow: false, reason: 'mode-disabled' })
+                           ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "allow": false,
+-   "reason": "mode-disabled",
++   "kind": "public-inbox",
+  }
+
+- Expected  - 2
++ Received  + 1
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/packages/messaging-gateway/src/__tests__/access-control.test.ts:230:22)
+(fail) platform accessMode disabled (RX-TSK-0416) > evaluateBindingAccess: beats binding-level open and the owners list [0.23ms]
+231 |     expect(owner).toEqual({ allow: false, reason: 'mode-disabled' })
+232 |   })
+233 |
+234 |   it('buildRejectionReply explains the disabled mode', async () => {
+235 |     const { buildRejectionReply } = await import('../access-control.ts')
+236 |     expect(buildRejectionReply('mode-disabled')).toContain('disabled')
+                                                       ^
+error: Received value must be an array type, or both received and expected values must be strings.
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/packages/messaging-gateway/src/__tests__/access-control.test.ts:236:50)
+(fail) platform accessMode disabled (RX-TSK-0416) > buildRejectionReply explains the disabled mode [0.15ms]
+
+packages/messaging-gateway/src/__tests__/gateway-button-access.test.ts:
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} adapter registered {
+  event: "adapter_registered",
+  platform: "telegram",
+  capabilities: {
+    messageEditing: true,
+    inlineButtons: true,
+    maxButtons: 10,
+    maxMessageLength: 4096,
+    markdown: "v2",
+    webhookSupport: false,
+  },
+}
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} gateway started {
+  event: "gateway_started",
+}
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} access-control rejected stimulus {
+  event: "access_rejected",
+  reason: "not-owner",
+  platform: "telegram",
+  channelId: "chat-1",
+  threadId: undefined,
+  senderId: "stranger",
+  senderUsername: undefined,
+  bindingId: undefined,
+  sessionId: undefined,
+}
+(pass) MessagingGateway button-press access gate > rejects bind: button press from non-owner on locked-down workspace [5.75ms]
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} adapter registered {
+  event: "adapter_registered",
+  platform: "telegram",
+  capabilities: {
+    messageEditing: true,
+    inlineButtons: true,
+    maxButtons: 10,
+    maxMessageLength: 4096,
+    markdown: "v2",
+    webhookSupport: false,
+  },
+}
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} gateway started {
+  event: "gateway_started",
+}
+[MessagingGateway] {
+  component: "binding-store",
+  workspaceId: "ws-test",
+} binding created {
+  event: "binding_created",
+  workspaceId: "ws-test",
+  sessionId: "sess-A",
+  platform: "telegram",
+  channelId: "chat-1",
+  threadId: undefined,
+  bindingId: "3440dd00-41e1-43f9-b3f0-621a98b100e9",
+  channelName: undefined,
+}
+(pass) MessagingGateway button-press access gate > allows bind: button press from workspace owner [1.04ms]
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} adapter registered {
+  event: "adapter_registered",
+  platform: "telegram",
+  capabilities: {
+    messageEditing: true,
+    inlineButtons: true,
+    maxButtons: 10,
+    maxMessageLength: 4096,
+    markdown: "v2",
+    webhookSupport: false,
+  },
+}
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} gateway started {
+  event: "gateway_started",
+}
+[MessagingGateway] {
+  component: "binding-store",
+  workspaceId: "ws-test",
+} binding created {
+  event: "binding_created",
+  workspaceId: "ws-test",
+  sessionId: "sess-A",
+  platform: "telegram",
+  channelId: "chat-1",
+  threadId: undefined,
+  bindingId: "968c6f2a-aa25-4028-a132-3e8cab927c71",
+  channelName: undefined,
+}
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} access-control rejected stimulus {
+  event: "access_rejected",
+  reason: "not-allowlisted",
+  platform: "telegram",
+  channelId: "chat-1",
+  threadId: undefined,
+  senderId: "bob",
+  senderUsername: undefined,
+  bindingId: "968c6f2a-aa25-4028-a132-3e8cab927c71",
+  sessionId: "sess-A",
+}
+(pass) MessagingGateway button-press access gate > rejects perm: button press from non-binding-allow-list sender [2.41ms]
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} adapter registered {
+  event: "adapter_registered",
+  platform: "telegram",
+  capabilities: {
+    messageEditing: true,
+    inlineButtons: true,
+    maxButtons: 10,
+    maxMessageLength: 4096,
+    markdown: "v2",
+    webhookSupport: false,
+  },
+}
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} gateway started {
+  event: "gateway_started",
+}
+[MessagingGateway] {
+  component: "binding-store",
+  workspaceId: "ws-test",
+} binding created {
+  event: "binding_created",
+  workspaceId: "ws-test",
+  sessionId: "sess-A",
+  platform: "telegram",
+  channelId: "chat-1",
+  threadId: undefined,
+  bindingId: "30773f54-9256-45cb-a368-7e2b7122e269",
+  channelName: undefined,
+}
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} perm response routed to session manager {
+  event: "perm_response_routed",
+  requestId: "request-1",
+  sessionId: "sess-A",
+  action: "allow",
+  delivered: true,
+  elapsedMs: 0,
+}
+(pass) MessagingGateway button-press access gate > allows perm: button press from binding-allow-list sender [1.01ms]
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} adapter registered {
+  event: "adapter_registered",
+  platform: "telegram",
+  capabilities: {
+    messageEditing: true,
+    inlineButtons: true,
+    maxButtons: 10,
+    maxMessageLength: 4096,
+    markdown: "v2",
+    webhookSupport: false,
+  },
+}
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} gateway started {
+  event: "gateway_started",
+}
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} access-control rejected stimulus {
+  event: "access_rejected",
+  reason: "bot-sender",
+  platform: "telegram",
+  channelId: "chat-1",
+  threadId: undefined,
+  senderId: "bot-id",
+  senderUsername: undefined,
+  bindingId: undefined,
+  sessionId: undefined,
+}
+(pass) MessagingGateway button-press access gate > silent-drops bot senders on button press (no reply, no side-effect) [0.41ms]
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} adapter registered {
+  event: "adapter_registered",
+  platform: "telegram",
+  capabilities: {
+    messageEditing: true,
+    inlineButtons: true,
+    maxButtons: 10,
+    maxMessageLength: 4096,
+    markdown: "v2",
+    webhookSupport: false,
+  },
+}
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} gateway started {
+  event: "gateway_started",
+}
+[MessagingGateway] {
+  component: "binding-store",
+  workspaceId: "ws-test",
+} binding created {
+  event: "binding_created",
+  workspaceId: "ws-test",
+  sessionId: "sess-A",
+  platform: "telegram",
+  channelId: "chat-1",
+  threadId: undefined,
+  bindingId: "81afd753-1f5b-4c87-960e-b0b733d1adc7",
+  channelName: undefined,
+}
+[MessagingGateway] {
+  component: "gateway",
+  workspaceId: "ws-test",
+} access-control rejected stimulus {
+  event: "access_rejected",
+  reason: "not-allowlisted",
+  platform: "telegram",
+  channelId: "chat-1",
+  threadId: undefined,
+  senderId: "bob",
+  senderUsername: undefined,
+  bindingId: "81afd753-1f5b-4c87-960e-b0b733d1adc7",
+  sessionId: "sess-A",
+}
+298 |       }),
+299 |     )
+300 |     const pending = h.gateway.getPendingStore().list('telegram')
+301 |     expect(pending).toHaveLength(1)
+302 |     expect(pending[0]!.userId).toBe('bob')
+303 |     expect(pending[0]!.reason).toBe('not-owner')
+                                     ^
+error: expect(received).toBe(expected)
+
+Expected: "not-owner"
+Received: "not-on-binding-allowlist"
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/packages/messaging-gateway/src/__tests__/gateway-button-access.test.ts:303:32)
+(fail) MessagingGateway button-press access gate > non-owner perm: rejection lands the sender in the pending store [1.11ms]
+
+packages/ui/src/__tests__/pdfjs-url-import.test.ts:
+(pass) pdfjs Vite ?url import under bun test > resolves pdfjs-dist/build/pdf.worker.min.mjs?url to a string [0.06ms]
+
+packages/server-core/src/bootstrap/lock-identity.test.ts:
+(pass) parseTasklistImageName > extracts the image name from a CSV data row [0.46ms]
+(pass) parseTasklistImageName > returns null for the no-tasks INFO message [0.04ms]
+(pass) parseTasklistImageName > returns null for empty or malformed output [0.11ms]
+(pass) parseTasklistImageName > uses only the first row of multi-line output [0.03ms]
+(pass) lockHolderMatchesLock (#978) > matches on identical execName [0.09ms]
+26 |   it('matches on identical execName', () => {
+27 |     expect(lockHolderMatchesLock(lockWith('ROX.exe'), 'ROX.exe', null)).toBe(true)
+28 |   })
+29 |
+30 |   it('matches execName case-insensitively', () => {
+31 |     expect(lockHolderMatchesLock(lockWith('craft agents.exe'), 'ROX.EXE', null)).toBe(true)
+                                                                                      ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/packages/server-core/src/bootstrap/lock-identity.test.ts:31:82)
+(fail) lockHolderMatchesLock (#978) > matches execName case-insensitively [0.09ms]
+(pass) lockHolderMatchesLock (#978) > matches dev shapes the legacy heuristic missed (bun holding the lock) [0.03ms]
+(pass) lockHolderMatchesLock (#978) > rejects a different executable even when its name contains "craft" [0.04ms]
+(pass) lockHolderMatchesLock (#978) > fails open when the live exec name cannot be determined [0.01ms]
+(pass) lockHolderMatchesLock (#978) > ignores the command line when execName is recorded [0.01ms]
+49 |     expect(lockHolderMatchesLock(lockWith('ROX.exe'), 'java', '/usr/bin/java -jar minecraft.jar')).toBe(false)
+50 |   })
+51 |
+52 |   describe('legacy locks without execName', () => {
+53 |     it('falls back to the craft-substring heuristic on the command line', () => {
+54 |       expect(lockHolderMatchesLock(lockWith(undefined), null, '/Applications/ROX.app/Contents/MacOS/ROX')).toBe(true)
+                                                                                                                ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/workspace/scratch/d0a9c1c6c094/worktrees/baseline-main/packages/server-core/src/bootstrap/lock-identity.test.ts:54:108)
+(fail) lockHolderMatchesLock (#978) > legacy locks without execName > falls back to the craft-substring heuristic on the command line [0.07ms]
+(pass) lockHolderMatchesLock (#978) > legacy locks without execName > fails open when the command line cannot be read [0.03ms]
+
+6 tests failed:
+(fail) platform accessMode disabled (RX-TSK-0416) > evaluatePreBindingAccess: blocks everyone, even before pairing [0.44ms]
+(fail) platform accessMode disabled (RX-TSK-0416) > evaluateBindingAccess: beats binding-level open and the owners list [0.23ms]
+(fail) platform accessMode disabled (RX-TSK-0416) > buildRejectionReply explains the disabled mode [0.15ms]
+(fail) MessagingGateway button-press access gate > non-owner perm: rejection lands the sender in the pending store [1.11ms]
+(fail) lockHolderMatchesLock (#978) > matches execName case-insensitively [0.09ms]
+(fail) lockHolderMatchesLock (#978) > legacy locks without execName > falls back to the craft-substring heuristic on the command line [0.07ms]
+
+ 32 pass
+ 6 fail
+ 70 expect() calls
+Ran 38 tests across 4 files. [1.71s]

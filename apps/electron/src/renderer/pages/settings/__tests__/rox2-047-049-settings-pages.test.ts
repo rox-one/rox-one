@@ -26,7 +26,7 @@ describe('ROX2-047..049 native settings pages', () => {
   test('extensions, import, and app stay in SETTINGS_PAGES without Conation flags', () => {
     expect(SETTINGS_HUB_REQUIRES_CONATION_FLAG).toBe(false)
     const ids = SETTINGS_PAGES.map((page) => page.id)
-    expect(ids.slice(6, 9)).toEqual([...ROX2_SETTINGS_WAVE3_PAGE_IDS])
+    expect(ids.slice(7, 10)).toEqual([...ROX2_SETTINGS_WAVE3_PAGE_IDS])
     expect(bindSettingsHubContext('ws-1', 'extensions').surfaceId).toBe('settings:extensions')
     expect(bindSettingsHubContext('ws-1', 'import', 'ask').permissionMode).toBe('ask')
   })
@@ -145,6 +145,7 @@ describe('ROX2-047..049 native settings pages', () => {
       source: 'native',
       granted: true,
     })
+    if (!isClaimableLive(verified)) throw new Error('expected a verified native action result')
     expect(normalizeRox2Result(verified).executionMode).toBe('live')
     expect(normalizeRox2Result(verified).lifecycle).toBe('succeeded')
     expect(normalizeRox2Result(verified).verification).toBe('receipt_verified')

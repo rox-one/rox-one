@@ -12,6 +12,7 @@ export default function ProposalInbox(props: {
   onClarify?: (proposal: MeetingProposalRow) => void
   onOpenTarget?: (proposal: MeetingProposalRow) => void
   pendingId?: string | null
+  pendingIds?: ReadonlySet<string>
 }) {
   const { t } = useTranslation()
   const [selected, setSelected] = useState<string[]>([])
@@ -40,14 +41,14 @@ export default function ProposalInbox(props: {
         <EmptyState title={t('meetings.screen.proposalsEmptyTitle')} body={t('meetings.screen.proposalsEmptyBody')} />
       ) : null}
       {props.proposals.map((proposal) => (
-        <div key={proposal.id} data-testid="meeting-proposal" className="flex items-start gap-2 rounded-[var(--radius-control)] px-2 py-1.5 hover:bg-foreground/[0.04]">
+        <article key={proposal.id} data-testid="meeting-proposal" aria-busy={props.pendingId === proposal.id || !!props.pendingIds?.has(proposal.id)} className="flex items-start gap-2 rounded-[var(--radius-control)] px-2 py-1.5 hover:bg-foreground/[0.04]">
           {proposal.status === 'proposed' ? (
             <input
               type="checkbox"
               className="mt-0.5 accent-[var(--accent)]"
               aria-label={proposal.title}
               checked={selected.includes(proposal.id)}
-              disabled={!props.onApprove || props.pendingId === proposal.id}
+              disabled={!props.onApprove || props.pendingId === proposal.id || !!props.pendingIds?.has(proposal.id)}
               onChange={(event) => {
                 setSelected((current) => (
                   event.target.checked
@@ -81,7 +82,7 @@ export default function ProposalInbox(props: {
               <>
                 <Button
                   data-testid="proposal-approve"
-                  disabled={!props.onApprove || props.pendingId === proposal.id}
+                  disabled={!props.onApprove || props.pendingId === proposal.id || !!props.pendingIds?.has(proposal.id)}
                   onClick={() => props.onApprove?.(proposal)}
                 >
                   {t('meetings.approve')}
@@ -89,7 +90,7 @@ export default function ProposalInbox(props: {
                 <Button
                   variant="ghost"
                   data-testid="proposal-reject"
-                  disabled={!props.onReject || props.pendingId === proposal.id}
+                  disabled={!props.onReject || props.pendingId === proposal.id || !!props.pendingIds?.has(proposal.id)}
                   onClick={() => props.onReject?.(proposal)}
                 >
                   {t('meetings.reject')}
@@ -98,7 +99,7 @@ export default function ProposalInbox(props: {
                   <Button
                     variant="ghost"
                     data-testid="proposal-clarify"
-                    disabled={props.pendingId === proposal.id}
+                    disabled={props.pendingId === proposal.id || !!props.pendingIds?.has(proposal.id)}
                     onClick={() => props.onClarify?.(proposal)}
                   >
                     {t('meetings.correctSegment')}
@@ -115,7 +116,7 @@ export default function ProposalInbox(props: {
               {t('meetings.openTarget')}
             </Button>
           </div>
-        </div>
+        </article>
       ))}
     </div>
   )

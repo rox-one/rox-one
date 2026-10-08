@@ -29,7 +29,7 @@ export function assertMeetingConationShellNotLive(result: Rox2Result): void {
   if (status.lifecycle === 'queued' && status.verification !== 'unverified') {
     throw new Error('queued meeting Conation shell must not report verified')
   }
-  if (status.lifecycle === 'queued' && status.ok === true) {
+  if (status.lifecycle === 'queued' && result.ok === true) {
     throw new Error('queued meeting Conation shell must not report success')
   }
 }

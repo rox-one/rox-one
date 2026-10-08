@@ -18,10 +18,10 @@ import {
   featureWorkbenchTabGroupsV2Atom,
   featureWorkbenchTopChromeV2Atom,
 } from '@/atoms/unified-shell'
-import { HARNESS_SKIP_LIST } from '@rox/core/platform'
 import { BUILT_MODE_SCREENS, MODE_SCREEN_FLAG_ATOMS, type ModeScreenId } from '@/atoms/mode-flags'
 import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
-import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/components/settings'
+import { useEntitiesLinksEffectiveState } from '@/lib/entities-links-sync'
+import { SettingsCard, SettingsSection, SettingsToggle } from '@/components/settings'
 import { ExtraScreensSettings } from './ExtraScreensSettings'
 
 function ModeScreenToggle({ id }: { id: ModeScreenId }) {
@@ -51,6 +51,10 @@ export function WorkbenchChromeSettings() {
   const [harnessExtCenter, setHarnessExtCenter] = useAtom(featureWorkbenchHarnessExtCenterV1Atom)
   const [harnessAgentTeams, setHarnessAgentTeams] = useAtom(featureWorkbenchHarnessAgentTeamsAtom)
   const [entitiesLinks, setEntitiesLinks] = useAtom(featureEntitiesLinksV1Atom)
+  // Main owns the effective state: CRAFT_FEATURE_ENTITIES_LINKS overrides the
+  // toggle in both directions, so show the forced value and lock the switch.
+  const entitiesLinksState = useEntitiesLinksEffectiveState()
+  const entitiesLinksForced = entitiesLinksState.envOverride !== undefined
 
   return (
     <>
@@ -133,8 +137,11 @@ export function WorkbenchChromeSettings() {
         />
         <SettingsToggle
           label={t('settings.appearance.entitiesLinks')}
-          description={t('settings.appearance.entitiesLinksDesc')}
-          checked={entitiesLinks}
+          description={entitiesLinksForced
+            ? t(entitiesLinksState.envOverride ? 'settings.appearance.entitiesEnvForcedOn' : 'settings.appearance.entitiesEnvForcedOff')
+            : t('settings.appearance.entitiesLinksDesc')}
+          checked={entitiesLinksForced ? entitiesLinksState.enabled : entitiesLinks}
+          disabled={entitiesLinksForced}
           onCheckedChange={setEntitiesLinks}
         />
       </SettingsCard>
@@ -147,24 +154,6 @@ export function WorkbenchChromeSettings() {
       <SettingsCard>
         {BUILT_MODE_SCREENS.map((id) => <ModeScreenToggle key={id} id={id} />)}
       </SettingsCard>
-    </SettingsSection>
-    <SettingsSection
-      title={t('settings.appearance.harnessSkipTitle')}
-      description={t('settings.appearance.harnessSkipDesc')}
-    >
-      <div data-testid="harness-skip-list">
-        <SettingsCard>
-          {HARNESS_SKIP_LIST.map((item) => (
-            <SettingsRow
-              key={item.id}
-              label={t(`settings.appearance.harnessSkip.${item.id}`)}
-              description={t(`settings.appearance.harnessSkip.${item.id}Desc`)}
-            >
-              <span className="text-xs opacity-60">{t('settings.appearance.harnessSkipNotInstalled')}</span>
-            </SettingsRow>
-          ))}
-        </SettingsCard>
-      </div>
     </SettingsSection>
     </>
   )

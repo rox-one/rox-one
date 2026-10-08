@@ -15,6 +15,7 @@ import { createLearningDiagnosticsRepository, type LearningEventName } from '../
 import { clearChatObservations } from '../adapters/chat'
 import { TourRuntimeContext, TourPanelScope, type TourRuntimePort } from './hooks'
 import { subscribeTourSignals } from './bridge'
+import { clearCollectionViewChanges, hasCollectionViewChange } from './collection-view-observation'
 import { navigationEntity, prerequisiteRoute, resolveTourRoute } from './routes'
 import { parseRouteToNavigationState } from '../../../../shared/route-parser'
 
@@ -84,6 +85,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const [enabled, updateEnabled] = useState(() => storage.get<boolean>(storage.KEYS.featureProductTourV1, false) === true)
   const [state, updateState] = useState<RuntimeState>(initialRuntimeState)
   const stateRef = useRef(state)
+  const observationOwner = useRef<object>({})
   const context = { workspaceId: workspaceId ?? '', panelId, ...navigationEntity(nav.navigationState) }
   const contextRef = useRef(context); contextRef.current = context
   const navRef = useRef(nav); navRef.current = nav
@@ -98,7 +100,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const pendingMode = useRef<'new' | 'resume' | 'replay'>('new')
   const [target, setTarget] = useState<TourTargetRegistration | null>(null)
   const [capRevision, setCapRevision] = useState(0)
-  const capabilityRecords = useRef(new Map<string, { token: object; value: CapabilitySnapshot[CapabilityId] }>())
+  const capabilityRecords = useRef(new Map<string, { token: object; value: CapabilitySnapshot[CapabilityId]; projects?: Map<object, NonNullable<CapabilitySnapshot[CapabilityId]>> }>())
   const repositories = useMemo(() => enabled ? {
     progress: createProgressRepository(), lease: createLeaseRepository({ allowMemoryOnlyLease: true }), profile: createLearningProfileRepository(), diagnostics: createLearningDiagnosticsRepository(),
   } : null, [enabled])
@@ -124,7 +126,14 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
     const values = { ...baseCapabilities(shellReady, { workspaceId: capabilityWorkspace, panelId: capabilityPanel, entityId: capabilityEntity }) }
     for (const [key, record] of capabilityRecords.current) {
       const [ws, panel, id] = JSON.parse(key) as [string, string, CapabilityId]
-      if (ws === capabilityWorkspace && panel === capabilityPanel) values[id] = record.value
+      if (ws !== capabilityWorkspace || panel !== capabilityPanel) continue
+      // A successful list read cannot mask a failed detail read or absent writer.
+      // Keep the existing single-producer policy for every other capability.
+      const contributions = record.projects ? [...record.projects.values()] : null
+      values[id] = contributions
+        ? contributions.find(value => value.state === 'denied' || value.state === 'unavailable')
+          ?? contributions.find(value => value.state === 'pending') ?? contributions[0] ?? record.value
+        : record.value
     }
     return values
   }, [shellReady, capabilityWorkspace, capabilityPanel, capabilityEntity, capRevision])
@@ -158,13 +167,19 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const valid = useCallback((binding: TourBinding) => enabledRef.current && !!leaseRef.current && leaseRef.current.expiresAt > Date.now() && stateRef.current.attempt?.binding.runToken === binding.runToken && contextRef.current.workspaceId === binding.workspaceId && contextRef.current.panelId === binding.panelId, [])
   const locate = useCallback(() => {
     const current = stateRef.current
-    if (current.phase !== 'locating' || !current.attempt || !current.definition || !valid(current.attempt.binding)) return
+    if (!current.attempt || !current.definition || !valid(current.attempt.binding)) return
+    const requestedCollection = current.attempt.stepId === 'workflow.board' && !INACTIVE.includes(current.phase)
+      && navRef.current.navigationState.navigator === 'sessions' && navRef.current.navigationState.filter.kind === 'allSessions'
+      && !navRef.current.navigationState.details
+      && hasCollectionViewChange(observationOwner.current, current.attempt.binding, contextRef.current, navRef.current.navigationState.viewMode ?? 'list')
+    if (current.phase !== 'locating' && !requestedCollection) return
     const step = current.definition.steps.find(item => item.id === current.attempt?.stepId)
     if (!step) return
     const result = registry.resolve(step.target, current.attempt.binding)
     if (result.status === 'ready') {
       setTarget(result.target)
-      sendRef.current({ type: 'TARGET_READY', runToken: current.attempt.binding.runToken, stepId: step.id })
+      // Refresh the replacement target without manufacturing another shown/evidence event.
+      if (current.phase === 'locating') sendRef.current({ type: 'TARGET_READY', runToken: current.attempt.binding.runToken, stepId: step.id })
     }
   }, [registry, valid])
   const runEffects = useCallback((effects: readonly TourEffect[]) => {
@@ -225,7 +240,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
           break
         case 'CANCEL_TIMEOUT': cancelTimeout(); break
         case 'HIDE': setTarget(null); break
-        case 'CLEANUP': cancelTimeout(); setTarget(null); releaseLease(); clearChatObservations(); break
+        case 'CLEANUP': cancelTimeout(); setTarget(null); releaseLease(); clearChatObservations(); clearCollectionViewChanges(observationOwner.current); break
         case 'PRESENT': break
         case 'ANNOUNCE': break
       }
@@ -237,7 +252,10 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
       if (!INACTIVE.includes(stateRef.current.phase)) sendRef.current({ type: 'PAUSE', runToken: attempt.binding.runToken, reason: 'lease-lost' })
       return
     }
-    const result = transition(stateRef.current, input)
+    const previous = stateRef.current
+    const result = transition(previous, input)
+    if (INACTIVE.includes(result.state.phase) || previous.attempt?.binding.runToken !== result.state.attempt?.binding.runToken
+      || previous.attempt?.stepId !== result.state.attempt?.stepId) clearCollectionViewChanges(observationOwner.current)
     stateRef.current = result.state
     updateState(result.state)
     runEffects(result.effects)
@@ -262,7 +280,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
     launchSequence.current += 1
     const attempt = stateRef.current.attempt
     if (attempt) sendRef.current({ type: 'PAUSE', runToken: attempt.binding.runToken, reason })
-    cancelTimeout(); releaseLease(); clearChatObservations()
+    cancelTimeout(); releaseLease(); clearChatObservations(); clearCollectionViewChanges(observationOwner.current)
   }, [cancelTimeout, releaseLease])
 
   useEffect(() => {
@@ -290,6 +308,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   useEffect(() => {
     if (!enabled) return
     const records = capabilityRecords.current
+    const collectionOwner = observationOwner.current
     const offSignals = subscribeTourSignals(signal => sendRef.current({ type: 'SIGNAL', signal }))
     const offTargets = registry.subscribe(locate)
     const offModals = modal.subscribe(() => setLayerRevision(value => value + 1))
@@ -302,7 +321,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
     return () => {
       offSignals(); offTargets(); offModals(); offLayers()
       window.removeEventListener('blur', onBlur); window.removeEventListener('focus', onFocus); document.removeEventListener('visibilitychange', onVisibility)
-      cancelTimeout(); releaseLease(); clearChatObservations(); records.clear()
+      cancelTimeout(); releaseLease(); clearChatObservations(); clearCollectionViewChanges(collectionOwner); records.clear()
     }
   }, [enabled, registry, locate, modal, layers, pause, cancelTimeout, releaseLease])
 
@@ -311,7 +330,10 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
     const attempt = state.attempt
     if (context.workspaceId !== attempt.binding.workspaceId || context.panelId !== attempt.binding.panelId) { pause('scope-changed'); return }
     const anchor = navigationAnchor.current
-    const expectedActionNavigation = attempt.stepId === 'parallel.new' || attempt.stepId === 'parallel.return' || attempt.stepId === 'search.open' || attempt.stepId === 'tasks.delegate'
+    const requestedCollection = attempt.stepId === 'workflow.board' && nav.navigationState.navigator === 'sessions'
+      && nav.navigationState.filter.kind === 'allSessions' && !nav.navigationState.details
+      && hasCollectionViewChange(observationOwner.current, attempt.binding, { workspaceId: context.workspaceId, panelId: context.panelId, sessionId: context.sessionId, entityId: context.entityId }, nav.navigationState.viewMode ?? 'list')
+    const expectedActionNavigation = requestedCollection || attempt.stepId === 'parallel.new' || attempt.stepId === 'parallel.return' || attempt.stepId === 'search.open' || attempt.stepId === 'tasks.delegate'
     if (!tourNavigation.current && !INACTIVE.includes(state.phase) && anchor?.runToken === attempt.binding.runToken && !expectedActionNavigation) {
       if (nav.navigationState.navigator !== anchor.navigator ||
         (anchor.navigator === 'sessions' && attempt.binding.sessionId && context.sessionId !== attempt.binding.sessionId) ||
@@ -323,7 +345,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
       if (step?.handoff) { cancelTimeout(); sendRef.current({ type: 'HANDOFF_OPEN', runToken: attempt.binding.runToken, stepId: attempt.stepId }) }
       else pause('modal-open')
     } else if (!otherLayers.length && state.phase === 'handed-off') sendRef.current({ type: 'HANDOFF_CLOSED', runToken: attempt.binding.runToken, stepId: attempt.stepId })
-  }, [enabled, context.workspaceId, context.panelId, context.sessionId, context.entityId, nav.navigationState.navigator, layerRevision, state.phase, state.attempt, state.definition, modal, layers, pause, cancelTimeout])
+  }, [enabled, context.workspaceId, context.panelId, context.sessionId, context.entityId, nav.navigationState, layerRevision, state.phase, state.attempt, state.definition, modal, layers, pause, cancelTimeout])
 
   useEffect(() => {
     const snapshot: EngineSnapshot = { enabled, shellReady, navigationReady: nav.isReady, navigationRevision: nav.navigationRevision, foreground, blockers: [], capabilities }
@@ -398,6 +420,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const port = useMemo<TourRuntimePort>(() => ({
     enabled,
     attemptToken: state.attempt?.binding.runToken,
+    observationOwner: observationOwner.current,
     capture(scope) {
       const current = stateRef.current
       const binding = current.attempt?.binding
@@ -415,6 +438,17 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
     register: targetRegistration => registry.register(targetRegistration),
     setCapability(scope, id, capability) {
       const key = JSON.stringify([scope.workspaceId, scope.panelId, id]); const token = {}
+      if (id === 'projects.available') {
+        const contributions = capabilityRecords.current.get(key)?.projects ?? new Map<object, NonNullable<CapabilitySnapshot[CapabilityId]>>()
+        contributions.set(token, capability)
+        capabilityRecords.current.set(key, { token, value: capability, projects: contributions })
+        setCapRevision(value => value + 1)
+        return () => {
+          if (capabilityRecords.current.get(key)?.projects !== contributions || !contributions.delete(token)) return
+          if (!contributions.size) capabilityRecords.current.delete(key)
+          setCapRevision(value => value + 1)
+        }
+      }
       capabilityRecords.current.set(key, { token, value: capability }); setCapRevision(value => value + 1)
       return () => { if (capabilityRecords.current.get(key)?.token === token) { capabilityRecords.current.delete(key); setCapRevision(value => value + 1) } }
     },

@@ -543,14 +543,14 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
   'edit-tool-icons': (location) => ({
     context: {
       label: 'Tool Icons',
-      filePath: location, // location is the full path to tool-icons.json
+      filePath: `${location}/tool-icons.json`,
       context:
         'The user wants to edit CLI tool icon mappings. ' +
-        'The file is tool-icons.json in ~/.craft-agent/tool-icons/. Icon image files live in the same directory. ' +
+        `The file is tool-icons.json in ${location}. Icon image files live in the same directory. ` +
         'Schema: { version: 1, tools: [{ id, displayName, icon, commands }] }. ' +
         'Each tool has: id (unique slug), displayName (shown in UI), icon (filename like "git.ico"), commands (array of CLI command names). ' +
         'Supported icon formats: .png, .ico, .svg, .jpg. Icons display at 20x20px. ' +
-        'Read ~/.craft-agent/docs/tool-icons.md for full format reference. ' +
+        `Read ${location}/../docs/tool-icons.md for full format reference. ` +
         'After editing, call config_validate with target "tool-icons" to verify the changes are valid. ' +
         'Confirm clearly when done.',
     },

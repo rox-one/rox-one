@@ -1,0 +1,231 @@
+{
+  "config": {
+    "configFile": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/playwright.config.ts",
+    "rootDir": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 15000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/functional-readable-final",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "",
+        "name": "",
+        "testDir": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map",
+        "testIgnore": [],
+        "testMatch": [
+          "*.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "version": "1.49.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "continuity.spec.ts",
+      "file": "continuity.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "pending credential input and existing draft survive map toggles without a response",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "passed",
+                  "duration": 3445,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:20:28.280Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/functional-readable-final/continuity-pending-credent-ba481--toggles-without-a-response/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cc77f0d4c920969ee960-fc368c5901d81d55eb5d",
+          "file": "continuity.spec.ts",
+          "line": 30,
+          "column": 1
+        },
+        {
+          "title": "the retained production editor restores pins, branch ports and saved versions",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "status": "failed",
+                  "duration": 12455,
+                  "error": {
+                    "message": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('tab', { name: 'Редактор', exact: true })\u001b[22m\n",
+                    "stack": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('tab', { name: 'Редактор', exact: true })\u001b[22m\n\n    at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/continuity.spec.ts:47:66",
+                    "location": {
+                      "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/continuity.spec.ts",
+                      "column": 66,
+                      "line": 47
+                    },
+                    "snippet": "  45 |   await page.goto('/?editor=1', { waitUntil: 'domcontentloaded' })\n  46 |   await page.getByTestId('toggle-map').click()\n> 47 |   await page.getByRole('tab', { name: 'Редактор', exact: true }).click()\n     |                                                                  ^\n  48 |   await expect(page.getByTestId('map-toolbar')).toBeVisible()\n  49 |   await expect(page.getByTestId('map-add-node')).toBeVisible()\n  50 |   const editor = page.locator('.runtime-editor-slot')"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/continuity.spec.ts",
+                        "column": 66,
+                        "line": 47
+                      },
+                      "message": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('tab', { name: 'Редактор', exact: true })\u001b[22m\n\n\n  45 |   await page.goto('/?editor=1', { waitUntil: 'domcontentloaded' })\n  46 |   await page.getByTestId('toggle-map').click()\n> 47 |   await page.getByRole('tab', { name: 'Редактор', exact: true }).click()\n     |                                                                  ^\n  48 |   await expect(page.getByTestId('map-toolbar')).toBeVisible()\n  49 |   await expect(page.getByTestId('map-add-node')).toBeVisible()\n  50 |   const editor = page.locator('.runtime-editor-slot')\n    at /workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/continuity.spec.ts:47:66"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:20:31.840Z",
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/functional-readable-final/continuity-the-retained-pr-90cae-ch-ports-and-saved-versions/test-failed-1.png"
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/functional-readable-final/continuity-the-retained-pr-90cae-ch-ports-and-saved-versions/video.webm"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/functional-readable-final/continuity-the-retained-pr-90cae-ch-ports-and-saved-versions/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/tests/e2e/runtime-map/continuity.spec.ts",
+                    "column": 66,
+                    "line": 47
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "cc77f0d4c920969ee960-9e68473ca2e03e01dad0",
+          "file": "continuity.spec.ts",
+          "line": 44,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "stream.spec.ts",
+      "file": "stream.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "real ChatDisplay stays mounted while the journal streams into the right dock",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "status": "passed",
+                  "duration": 7572,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T18:20:45.067Z",
+                  "attachments": [
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/workspace/scratch/d0a9c1c6c094/worktrees/validation/docs/evidence/runtime-map/browser-artifacts/functional-readable-final/stream-real-ChatDisplay-st-ead37-streams-into-the-right-dock/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "31223a20abfa66f4a7a7-782e8af2bca0743deaae",
+          "file": "stream.spec.ts",
+          "line": 5,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-03T18:19:38.108Z",
+    "duration": 74693.895,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

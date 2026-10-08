@@ -1,0 +1,1250 @@
+[
+  {
+    "id": "GG-001",
+    "title": "[Golden Gate] Единые токены, типографика, смысловой текст и общие примитивы",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Общие токены и стили дополнены доступными settings controls: связанными label/description/error, нативными radio groups, клавиатурной навигацией select и корректными switch/filter targets. Общие примитивы реализованы и проверены автоматически; contrast/visual/native приёмка остаётся открытой.\n\nПриоритет: **P0**. Трассировка: GG-R02, GG-R07, GG-R11, GG-R15. Экраны: все экраны, shared components.\n\n## Задача\n\nСвести shared/renderer цвета, поверхности, границы, размеры, focus и motion к общей системе Golden Gate с приоритетом выбранной пользователем темы. Закрепить роли UI/content/mono и семантику strong/link/explanation/code/mark.\n\n## Область кода / контракты\n\n- `packages/ui/src/styles/index.css`\n- `apps/electron/src/renderer/index.css`\n- `apps/electron/src/renderer/components/ui/button.tsx`\n- `apps/electron/src/renderer/components/settings/SettingsUIConstants.ts`\n- `packages/ui/src/components/markdown/Markdown.tsx`\n\n## Definition of Done\n\n- [ ] Legacy CSS aliases остаются совместимыми; system/light/dark/high contrast и именованные темы не сбрасываются после загрузки.\n- [ ] Pointer targets ≥28 px, coarse pointer ≥44 px; обычный текст ≥4.5:1, значимые границы ≥3:1; focus виден на всех поверхностях.\n- [ ] Настоящие ссылки, пояснения, code и mark имеют разные семантические роли; copy/export сохраняют текст.\n- [ ] Reduced motion/transparency применяются ко всем базовым примитивам; декоративных постоянных animation loops нет.\n\n## Проверка и доказательства\n\n- Token/font role проверки и renderer build.\n- Снимки button/input/menu/table/Markdown в light/dark/high contrast + RU/EN/длинная локаль и zoom 150%; визуальная часть заблокирована до разрешённого стенда.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nНет; базовая задача.\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nОбщие токены и стили дополнены доступными settings controls: связанными label/description/error, нативными radio groups, клавиатурной навигацией select и корректными switch/filter targets. Общие примитивы реализованы и проверены автоматически; contrast/visual/native приёмка остаётся открытой.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nОбщие токены и стили дополнены доступными settings controls: связанными label/description/error, нативными radio groups, клавиатурной навигацией select и корректными switch/filter targets. Общие примитивы реализованы и проверены автоматически; contrast/visual/native приёмка остаётся открытой.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P0",
+    "labels": [
+      "golden-gate",
+      "P0"
+    ],
+    "parent": 541,
+    "depends_on": [],
+    "requirements": [
+      "GG-R02",
+      "GG-R07",
+      "GG-R11",
+      "GG-R15"
+    ],
+    "screens": [
+      "все экраны",
+      "shared components"
+    ],
+    "files": [
+      "packages/ui/src/styles/index.css",
+      "apps/electron/src/renderer/index.css",
+      "apps/electron/src/renderer/components/ui/button.tsx",
+      "apps/electron/src/renderer/components/settings/SettingsUIConstants.ts",
+      "packages/ui/src/components/markdown/Markdown.tsx"
+    ],
+    "delivery_status": "implemented_automated_checks_pass_visual_acceptance_pending",
+    "github_issue": 553,
+    "github_url": "https://github.com/rox-one/rox-one/issues/553",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Общие токены и стили дополнены доступными settings controls: связанными label/description/error, нативными radio groups, клавиатурной навигацией select и корректными switch/filter targets. Общие примитивы реализованы и проверены автоматически; contrast/visual/native приёмка остаётся открытой.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-002",
+    "title": "[Golden Gate] Постоянная панель сервисов и контекстная навигация",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Контекстная навигация дополнена компактным профилем и подсказкой памяти, скрытием нулевых счётчиков и раскрытием секций по предпочтениям workspace. Все destinations сохраняются. Product keyboard/visual приёмка остаётся открытой.\n\nПриоритет: **P0**. Трассировка: GG-R01, GG-R03, GG-R05, GG-R14. Экраны: SH-02, SH-04, SC-01, SC-11.\n\n## Задача\n\nАгенты, заметки, память, браузер и автоматизация получают стабильные ориентиры; остальные реальные сервисы доступны через дополнительное меню, настройки закреплены. Sidebar показывает контекст выбранного сервиса.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/platform/ActivityRail.tsx`\n- `apps/electron/src/renderer/components/app-shell/nav-destinations.ts`\n- `apps/electron/src/renderer/components/app-shell/LeftSidebar.tsx`\n- `apps/electron/src/renderer/components/app-shell/AppShell.tsx`\n- `apps/electron/src/renderer/contexts/NavigationContext.tsx`\n\n## Definition of Done\n\n- [ ] Все реальные destinations из реестра доступны максимум за два действия, включая legacy views и settings.\n- [ ] Повторный выбор сервиса фокусирует уже открытую панель, если она существует; draft и route других панелей не меняются.\n- [ ] Back/forward, workspace switch и direct link дают согласованные selected rail/context/active panel.\n- [ ] Для Memory и локальных Notes учтены существующий navigator-host и внутренний vault; не теряются controls/filters.\n\n## Проверка и доказательства\n\n- Route/navigation unit проверки: существующая/отсутствующая панель, неизвестный route, workspace switch.\n- Keyboard-only обход всех destinations; narrow/overflow/tooltip и focus restoration в браузере; actual app визуальная проверка пока BLOCKED.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nКонтекстная навигация дополнена компактным профилем и подсказкой памяти, скрытием нулевых счётчиков и раскрытием секций по предпочтениям workspace. Все destinations сохраняются. Product keyboard/visual приёмка остаётся открытой.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nКонтекстная навигация дополнена компактным профилем и подсказкой памяти, скрытием нулевых счётчиков и раскрытием секций по предпочтениям workspace. Все destinations сохраняются. Product keyboard/visual приёмка остаётся открытой.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P0",
+    "labels": [
+      "golden-gate",
+      "P0"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R03",
+      "GG-R05",
+      "GG-R14"
+    ],
+    "screens": [
+      "SH-02",
+      "SH-04",
+      "SC-01",
+      "SC-11"
+    ],
+    "files": [
+      "apps/electron/src/renderer/platform/ActivityRail.tsx",
+      "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+      "apps/electron/src/renderer/components/app-shell/LeftSidebar.tsx",
+      "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+      "apps/electron/src/renderer/contexts/NavigationContext.tsx"
+    ],
+    "delivery_status": "implemented_automated_checks_pass_visual_acceptance_pending",
+    "github_issue": 555,
+    "github_url": "https://github.com/rox-one/rox-one/issues/555",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Контекстная навигация дополнена компактным профилем и подсказкой памяти, скрытием нулевых счётчиков и раскрытием секций по предпочтениям workspace. Все destinations сохраняются. Product keyboard/visual приёмка остаётся открытой.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-003",
+    "title": "[Golden Gate] Двумерная рабочая область 2×2 и 3×2 с сохранением размеров",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Grid 2×2/3×2, measured-track resize, отмена жестов и клавиатура реализованы. Ширины и раскрытия восстанавливаются отдельно для workspace; одиночный каталог использует свободную площадь; content viewport имеет минимум 320px с overflow fallback. Реальная геометрия 4/6 панелей и restart требуют native/visual приёмки.\n\nПриоритет: **P0**. Трассировка: GG-R04, GG-R05, GG-R06. Экраны: SH-03.\n\n## Задача\n\nДобавить отдельную от route геометрию auto/columns/grid-2/grid-3/focus. Четыре панели должны образовывать 2×2, пять–шесть — 3×2; пользователь управляет X/Y размерами.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx`\n- `apps/electron/src/renderer/components/app-shell/PanelSlot.tsx`\n- `apps/electron/src/renderer/components/app-shell/PanelResizeSash.tsx`\n- `apps/electron/src/renderer/atoms/panel-stack.ts`\n- `packages/core/src/platform/workbench/types.ts`\n\n## Definition of Done\n\n- [ ] 0/1/2/4/5/6/7 панелей имеют определённую раскладку без исчезновения объектов; пустая ячейка не считается панелью.\n- [ ] Resize по X и Y работает указателем и клавиатурой с min/max; auto не перезаписывает явный выбор режима.\n- [ ] Geometry/active panel/порядок сохраняются per workspace и переживают restart; повреждённый snapshot даёт безопасный fallback.\n- [ ] При переходе layout modes стабильные instance IDs, mounted editor state и draft остаются; focus возвращает предыдущую геометрию.\n\n## Проверка и доказательства\n\n- Pure geometry/storage tests: odd counts, clamp, migration, corrupt JSON, snapshot round-trip; baseline panel tests не регрессируют.\n- DOM grid bounds и 20 resize каждой оси; 4/6 панелей со смешанным контентом, zoom и narrow; скриншоты/реальный restart требуют разрешённого app/native стенда.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nGrid 2×2/3×2, measured-track resize, отмена жестов и клавиатура реализованы. Ширины и раскрытия восстанавливаются отдельно для workspace; одиночный каталог использует свободную площадь; content viewport имеет минимум 320px с overflow fallback. Реальная геометрия 4/6 панелей и restart требуют native/visual приёмки.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nGrid 2×2/3×2, measured-track resize, отмена жестов и клавиатура реализованы. Ширины и раскрытия восстанавливаются отдельно для workspace; одиночный каталог использует свободную площадь; content viewport имеет минимум 320px с overflow fallback. Реальная геометрия 4/6 панелей и restart требуют native/visual приёмки.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P0",
+    "labels": [
+      "golden-gate",
+      "P0"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001"
+    ],
+    "requirements": [
+      "GG-R04",
+      "GG-R05",
+      "GG-R06"
+    ],
+    "screens": [
+      "SH-03"
+    ],
+    "files": [
+      "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx",
+      "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx",
+      "apps/electron/src/renderer/components/app-shell/PanelResizeSash.tsx",
+      "apps/electron/src/renderer/atoms/panel-stack.ts",
+      "packages/core/src/platform/workbench/types.ts"
+    ],
+    "delivery_status": "implemented_automated_checks_pass_visual_acceptance_pending",
+    "github_issue": 556,
+    "github_url": "https://github.com/rox-one/rox-one/issues/556",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Grid 2×2/3×2, measured-track resize, отмена жестов и клавиатура реализованы. Ширины и раскрытия восстанавливаются отдельно для workspace; одиночный каталог использует свободную площадь; content viewport имеет минимум 320px с overflow fallback. Реальная геометрия 4/6 панелей и restart требуют native/visual приёмки.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-004",
+    "title": "[Golden Gate] Пространственный фокус, скрытые панели и native lifecycle",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Добавлены пространственные команды Cmd/Ctrl+Alt+стрелка, корректный переход в неполной сетке и восстановление фокуса после закрытия вкладки. Retained/native ownership сохраняется; Browser/SiYuan/Extension остаются focus-only и требуют полной видимости. Полноценный compositor нескольких native views не реализован.\n\nПриоритет: **P0**. Трассировка: GG-R05, GG-R06, GG-R11, GG-R13. Экраны: SH-03, SC-17, SC-21, SC-23, SC-24, SC-26.\n\n## Задача\n\nФокусировать ближайшую панель по направлению, сохраняя редактор и состояние; hidden/focus layout должны правильно передаваться встроенным browser/SiYuan/extension и terminal hosts.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/components/app-shell/PanelSlot.tsx`\n- `apps/electron/src/renderer/platform/InspectorHost.tsx`\n- `apps/electron/src/renderer/platform/PanelHost.tsx`\n- `apps/electron/src/renderer/pages/BrowserPanelPage.tsx`\n- `apps/electron/src/renderer/pages/KnowledgeSurfacePage.tsx`\n- `apps/electron/src/main/browser-pane-manager.ts`\n\n## Definition of Done\n\n- [ ] Направление выбирает геометрически ближайшего соседа; отсутствие соседа и disabled/hidden панели не крадут фокус.\n- [ ] Editor/terminal/IME сочетания не перехватываются; keyboard command зарегистрирован и описан.\n- [ ] Hidden surface не принимает input и не выполняет тяжёлые обновления; mount/native instance не пересоздаются от resize.\n- [ ] Inspector привязан к focused object; session-harness не дублируется; native bounds/clipping/occlusion/zoom корректны.\n\n## Проверка и доказательства\n\n- Unit tests геометрии focus и lifecycle mock: visible/hidden/remount/dispose.\n- Electron/macOS: keyboard route, minimize/restore, dialog поверх native view, browser history и tty сохраняются. Native acceptance BLOCKED в текущей среде.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-003 (#556), GG-002 (#555)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nДобавлены пространственные команды Cmd/Ctrl+Alt+стрелка, корректный переход в неполной сетке и восстановление фокуса после закрытия вкладки. Retained/native ownership сохраняется; Browser/SiYuan/Extension остаются focus-only и требуют полной видимости. Полноценный compositor нескольких native views не реализован.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nДобавлены пространственные команды Cmd/Ctrl+Alt+стрелка, корректный переход в неполной сетке и восстановление фокуса после закрытия вкладки. Retained/native ownership сохраняется; Browser/SiYuan/Extension остаются focus-only и требуют полной видимости. Полноценный compositor нескольких native views не реализован.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P0",
+    "labels": [
+      "golden-gate",
+      "P0"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-003",
+      "GG-002"
+    ],
+    "requirements": [
+      "GG-R05",
+      "GG-R06",
+      "GG-R11",
+      "GG-R13"
+    ],
+    "screens": [
+      "SH-03",
+      "SC-17",
+      "SC-21",
+      "SC-23",
+      "SC-24",
+      "SC-26"
+    ],
+    "files": [
+      "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx",
+      "apps/electron/src/renderer/platform/InspectorHost.tsx",
+      "apps/electron/src/renderer/platform/PanelHost.tsx",
+      "apps/electron/src/renderer/pages/BrowserPanelPage.tsx",
+      "apps/electron/src/renderer/pages/KnowledgeSurfacePage.tsx",
+      "apps/electron/src/main/browser-pane-manager.ts"
+    ],
+    "delivery_status": "native_lifecycle_fixes_tested_native_acceptance_blocked",
+    "github_issue": 557,
+    "github_url": "https://github.com/rox-one/rox-one/issues/557",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Добавлены пространственные команды Cmd/Ctrl+Alt+стрелка, корректный переход в неполной сетке и восстановление фокуса после закрытия вкладки. Retained/native ownership сохраняется; Browser/SiYuan/Extension остаются focus-only и требуют полной видимости. Полноценный compositor нескольких native views не реализован.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-005",
+    "title": "[Golden Gate] Чип устройства и ленивая read-only диагностика",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Диагностика загружается по запросу, отменяет опрос при скрытии/закрытии, ограничивает данные и исключает секреты. Добавлены retry после ошибки lazy import и отдельный live status без регулярного озвучивания timestamp. Unit/build подтверждены; реальные macOS process/network samples и idle CPU остаются открытыми.\n\nПриоритет: **P0**. Трассировка: GG-R09, GG-R12, GG-R13, GG-R14. Экраны: SH-06.\n\n## Задача\n\nДобавить компактную диагностическую поверхность с узким типизированным bridge. Показывать реальные доступные показатели, источник local/remote, время снимка и unavailable/partial/error.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/components/app-shell/TopBar.tsx`\n- `apps/electron/src/preload/bootstrap.ts`\n- `apps/electron/src/shared/types.ts`\n- `apps/electron/src/main/window-manager.ts`\n- `apps/electron/src/renderer/pages/settings/native-sidecar-health.ts`\n\n## Definition of Done\n\n- [ ] Первые данные запрашиваются только при открытии; при закрытой панели и hidden окне 0 диагностических poll.\n- [ ] Одновременно максимум один запрос; timeout/error/close игнорируют устаревший ответ и не создают новый цикл.\n- [ ] Недоступные метрики подписаны, не заменяются 0/healthy; timestamp и сторона измерения видимы.\n- [ ] API read-only и ограниченный: нет произвольного shell, секретов/environment/process command line; аргументы и ответ проверяются.\n\n## Проверка и доказательства\n\n- Bridge contract/validation tests, polling lifecycle tests с fake timers и unsupported API.\n- IPC trace 60s closed/60s open/hidden/reopen; реальные metric samples и native window visibility на Electron/macOS — BLOCKED до доступного стенда.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nДиагностика загружается по запросу, отменяет опрос при скрытии/закрытии, ограничивает данные и исключает секреты. Добавлены retry после ошибки lazy import и отдельный live status без регулярного озвучивания timestamp. Unit/build подтверждены; реальные macOS process/network samples и idle CPU остаются открытыми.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nДиагностика загружается по запросу, отменяет опрос при скрытии/закрытии, ограничивает данные и исключает секреты. Добавлены retry после ошибки lazy import и отдельный live status без регулярного озвучивания timestamp. Unit/build подтверждены; реальные macOS process/network samples и idle CPU остаются открытыми.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P0",
+    "labels": [
+      "golden-gate",
+      "P0"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001"
+    ],
+    "requirements": [
+      "GG-R09",
+      "GG-R12",
+      "GG-R13",
+      "GG-R14"
+    ],
+    "screens": [
+      "SH-06"
+    ],
+    "files": [
+      "apps/electron/src/renderer/components/app-shell/TopBar.tsx",
+      "apps/electron/src/preload/bootstrap.ts",
+      "apps/electron/src/shared/types.ts",
+      "apps/electron/src/main/window-manager.ts",
+      "apps/electron/src/renderer/pages/settings/native-sidecar-health.ts"
+    ],
+    "delivery_status": "implemented_automated_checks_pass_visual_acceptance_pending",
+    "github_issue": 558,
+    "github_url": "https://github.com/rox-one/rox-one/issues/558",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Диагностика загружается по запросу, отменяет опрос при скрытии/закрытии, ограничивает данные и исключает секреты. Добавлены retry после ошибки lazy import и отдельный live status без регулярного озвучивания timestamp. Unit/build подтверждены; реальные macOS process/network samples и idle CPU остаются открытыми.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-006",
+    "title": "[Golden Gate] Единый временный статус в заголовке",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Таймер статуса считает только видимое время и приостанавливается при hover/focus/menu/hidden. Контекст изолирован по workspace; уходящий статус немедленно становится inert и закрывает portal. Модельные и SSR проверки проходят; screen-reader/visual приёмка остаётся открытой.\n\nПриоритет: **P0**. Трассировка: GG-R08, GG-R11, GG-R14. Экраны: SH-05, SC-03, OV-04.\n\n## Задача\n\nСвести важные события к одному доступному сигналу в заголовке с приоритетом error/action-required/running/completed, привязкой к объекту и дедупликацией.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/components/app-shell/TopBar.tsx`\n- `apps/electron/src/renderer/platform/status-model.ts`\n- `apps/electron/src/renderer/components/app-shell/BackgroundFinishedChip.tsx`\n- `apps/electron/src/renderer/components/app-shell/ActiveTasksBar.tsx`\n- `apps/electron/src/renderer/App.tsx`\n\n## Definition of Done\n\n- [ ] 100 событий из нескольких сессий дают детерминированный приоритет и не повторяют один event ID.\n- [ ] Успех исчезает по таймеру, действие/ошибка сохраняются до решения; cancel не показывается как success.\n- [ ] Click открывает соответствующий существующий route/approval; статус не перехватывает ввод и focus.\n- [ ] Live region polite не повторяет одинаковый текст; reduced motion без перемещения; длинная RU строка не перекрывает toolbar.\n\n## Проверка и доказательства\n\n- Чистая модель: priority/dedupe/expiry/workspace isolation; fake timer tests.\n- Стриминг и simultaneous approval/error в app fixture, screen-reader/keyboard и narrow visual check; текущая визуальная часть BLOCKED.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nТаймер статуса считает только видимое время и приостанавливается при hover/focus/menu/hidden. Контекст изолирован по workspace; уходящий статус немедленно становится inert и закрывает portal. Модельные и SSR проверки проходят; screen-reader/visual приёмка остаётся открытой.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nТаймер статуса считает только видимое время и приостанавливается при hover/focus/menu/hidden. Контекст изолирован по workspace; уходящий статус немедленно становится inert и закрывает portal. Модельные и SSR проверки проходят; screen-reader/visual приёмка остаётся открытой.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P0",
+    "labels": [
+      "golden-gate",
+      "P0"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001"
+    ],
+    "requirements": [
+      "GG-R08",
+      "GG-R11",
+      "GG-R14"
+    ],
+    "screens": [
+      "SH-05",
+      "SC-03",
+      "OV-04"
+    ],
+    "files": [
+      "apps/electron/src/renderer/components/app-shell/TopBar.tsx",
+      "apps/electron/src/renderer/platform/status-model.ts",
+      "apps/electron/src/renderer/components/app-shell/BackgroundFinishedChip.tsx",
+      "apps/electron/src/renderer/components/app-shell/ActiveTasksBar.tsx",
+      "apps/electron/src/renderer/App.tsx"
+    ],
+    "delivery_status": "implemented_automated_checks_pass_visual_acceptance_pending",
+    "github_issue": 559,
+    "github_url": "https://github.com/rox-one/rox-one/issues/559",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Таймер статуса считает только видимое время и приостанавливается при hover/focus/menu/hidden. Контекст изолирован по workspace; уходящий статус немедленно становится inert и закрывает portal. Модельные и SSR проверки проходят; screen-reader/visual приёмка остаётся открытой.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-007",
+    "title": "[Golden Gate] Контекстные предложения применить или сохранить skill/workflow",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Подсказки учитывают статус текущего workspace, cooldown и отказ; повреждённая/устаревшая история нормализуется и ограничивается. Действия готовят черновик через существующий flow. Автоматические проверки проходят; продуктовая релевантность E06 не измерена.\n\nПриоритет: **P1**. Трассировка: GG-R10, GG-R07, GG-R14. Экраны: SH-07, SC-10, SC-19, SC-04.\n\n## Задача\n\nПоказывать одно объяснимое предложение на основе текущего объекта и доступного обработчика; использовать существующие apply/save editors и approval flow.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/components/ui/skill-mention-menu.tsx`\n- `apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx`\n- `apps/electron/src/renderer/components/session-workbench/SessionWorkflowEditor.tsx`\n- `apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx`\n\n## Definition of Done\n\n- [ ] Показ предложения не пишет файл, не запускает workflow и не вызывает генерацию; действие происходит только по click/keyboard activation.\n- [ ] Карточка показывает причину, цель, эффект и dismiss; отсутствующий handler исключает предложение.\n- [ ] Cooldown/entity scope и повторный показ детерминированы; максимум одна карточка одновременно.\n- [ ] Save открывает reviewable draft; ошибку можно повторить без потери draft; совпадения/ссылки используют общую семантику.\n\n## Проверка и доказательства\n\n- Policy tests eligible/ineligible/dismiss/cooldown/missing handler; spy подтверждает 0 mutations on render.\n- На размеченных примерах relevance precision ≥80%; пользовательский эксперимент E06 не считается выполненным без фактических данных.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-006 (#559)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nПодсказки учитывают статус текущего workspace, cooldown и отказ; повреждённая/устаревшая история нормализуется и ограничивается. Действия готовят черновик через существующий flow. Автоматические проверки проходят; продуктовая релевантность E06 не измерена.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nПодсказки учитывают статус текущего workspace, cooldown и отказ; повреждённая/устаревшая история нормализуется и ограничивается. Действия готовят черновик через существующий flow. Автоматические проверки проходят; продуктовая релевантность E06 не измерена.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-006"
+    ],
+    "requirements": [
+      "GG-R10",
+      "GG-R07",
+      "GG-R14"
+    ],
+    "screens": [
+      "SH-07",
+      "SC-10",
+      "SC-19",
+      "SC-04"
+    ],
+    "files": [
+      "apps/electron/src/renderer/components/ui/skill-mention-menu.tsx",
+      "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx",
+      "apps/electron/src/renderer/components/session-workbench/SessionWorkflowEditor.tsx",
+      "apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx"
+    ],
+    "delivery_status": "implemented_automated_checks_pass_visual_acceptance_pending",
+    "github_issue": 560,
+    "github_url": "https://github.com/rox-one/rox-one/issues/560",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Подсказки учитывают статус текущего workspace, cooldown и отказ; повреждённая/устаревшая история нормализуется и ограничивается. Действия готовят черновик через существующий flow. Автоматические проверки проходят; продуктовая релевантность E06 не измерена.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-008",
+    "title": "[Golden Gate] Коллекции сессий: список, доска, таблица и heatmap",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Одиночный каталог сессий расширяется до рабочей области без пустой detail-колонки и безымянной вкладки. Collection controls имеют доступные клавиатурные цели. Board/table/heatmap и фильтры сохраняются; их индивидуальная переработка и visual приёмка остаются открытыми.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R14, GG-R16, GG-R12. Экраны: SC-02, SC-05, SC-06, SC-07.\n\n## Задача\n\nПрименить общий compact collection chrome ко всем четырём видам, сохранив поиск, grouping/sort/filter, multi-select и bulk actions.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/components/app-shell/SessionList.tsx`\n- `apps/electron/src/renderer/components/app-shell/collection/CollectionViewChrome.tsx`\n- `apps/electron/src/renderer/components/app-shell/kanban/KanbanBoardContainer.tsx`\n- `apps/electron/src/renderer/components/app-shell/session-table/SessionTableHost.tsx`\n- `apps/electron/src/renderer/components/app-shell/session-heatmap/SessionHeatmapHost.tsx`\n\n## Definition of Done\n\n- [ ] All/flagged/archived/state/label/view filters работают во всех поддерживаемых видах; selection сохраняется между layout modes.\n- [ ] No data/no matches/loading/error различаются; bulk partial failure показывает результат по объектам и не сбрасывает остальные.\n- [ ] Board DnD имеет клавиатурную альтернативу и rollback; table семантична; heatmap сообщает число/дату без зависимости от цвета.\n- [ ] Long rows и 500 sessions не создают N+1 list reloads; управление доступно в grid панели и narrow window.\n\n## Проверка и доказательства\n\n- Existing collection/filter/grouping/board tests + meaningful route/selection transitions.\n- Fixtures 0/1/500 sessions, 100+ labels; screenshots list/board/table/heatmap и perf trace на одинаковом стенде; visual BLOCKED сейчас.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-002 (#555), GG-003 (#556)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nОдиночный каталог сессий расширяется до рабочей области без пустой detail-колонки и безымянной вкладки. Collection controls имеют доступные клавиатурные цели. Board/table/heatmap и фильтры сохраняются; их индивидуальная переработка и visual приёмка остаются открытыми.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nОдиночный каталог сессий расширяется до рабочей области без пустой detail-колонки и безымянной вкладки. Collection controls имеют доступные клавиатурные цели. Board/table/heatmap и фильтры сохраняются; их индивидуальная переработка и visual приёмка остаются открытыми.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-002",
+      "GG-003"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R14",
+      "GG-R16",
+      "GG-R12"
+    ],
+    "screens": [
+      "SC-02",
+      "SC-05",
+      "SC-06",
+      "SC-07"
+    ],
+    "files": [
+      "apps/electron/src/renderer/components/app-shell/SessionList.tsx",
+      "apps/electron/src/renderer/components/app-shell/collection/CollectionViewChrome.tsx",
+      "apps/electron/src/renderer/components/app-shell/kanban/KanbanBoardContainer.tsx",
+      "apps/electron/src/renderer/components/app-shell/session-table/SessionTableHost.tsx",
+      "apps/electron/src/renderer/components/app-shell/session-heatmap/SessionHeatmapHost.tsx"
+    ],
+    "delivery_status": "specific_flows_implemented_partial_screen_acceptance_pending",
+    "github_issue": 561,
+    "github_url": "https://github.com/rox-one/rox-one/issues/561",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Одиночный каталог сессий расширяется до рабочей области без пустой detail-колонки и безымянной вкладки. Collection controls имеют доступные клавиатурные цели. Board/table/heatmap и фильтры сохраняются; их индивидуальная переработка и visual приёмка остаются открытыми.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-009",
+    "title": "[Golden Gate] Чат, composer, разрешения и session views",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Composer уплотнён через раскрытие контекста/инструментов; Stop/model/dictation доступны. Устранены вложенные кнопки, перекрытие status, потеря позиции чтения и гонки диктовки между сессиями. Chat/input проверки проходят; IME/микрофон/permission flow в Electron и визуальная приёмка не подтверждены.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R05, GG-R07, GG-R14. Экраны: SC-03, SC-04, OV-04.\n\n## Задача\n\nСогласовать chat/header/composer/turn cards и graph/outline с Golden Gate без потери stream, drafts, attachments, @skills, tool groups и OMP approvals.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/pages/ChatPage.tsx`\n- `apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx`\n- `apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx`\n- `apps/electron/src/renderer/components/app-shell/input/StructuredInput.tsx`\n- `packages/ui/src/components/chat/TurnCard.tsx`\n- `apps/electron/src/renderer/components/session-workbench/SessionWorkflowEditor.tsx`\n\n## Definition of Done\n\n- [ ] Полный send→stream→tool→approval→complete/cancel/error сценарий сохраняет текущие mode/model/workingDir и draft.\n- [ ] Стриминг не сбрасывает пользовательскую scroll position; переход view/focus/layout не теряет attachments/IME/selection.\n- [ ] Map fork/rewrite/version/run и outline checkout возвращают правильный message/session; teamchat остаётся явно unavailable; SiYuan-only views gated.\n- [ ] Credential/admin/permission cards читаемы, доступны и не auto-accept; rich content единообразен с preview.\n\n## Проверка и доказательства\n\n- Chat lifecycle/mode/branch/turn tests; dirty draft и stable instance scenario.\n- Keyboard IME, Enter/Cmd-Enter, nested menus, long tool/error output, 4/6 panel chat; native permission round-trip отдельно.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-003 (#556), GG-004 (#557), GG-006 (#559)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nComposer уплотнён через раскрытие контекста/инструментов; Stop/model/dictation доступны. Устранены вложенные кнопки, перекрытие status, потеря позиции чтения и гонки диктовки между сессиями. Chat/input проверки проходят; IME/микрофон/permission flow в Electron и визуальная приёмка не подтверждены.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nComposer уплотнён через раскрытие контекста/инструментов; Stop/model/dictation доступны. Устранены вложенные кнопки, перекрытие status, потеря позиции чтения и гонки диктовки между сессиями. Chat/input проверки проходят; IME/микрофон/permission flow в Electron и визуальная приёмка не подтверждены.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-003",
+      "GG-004",
+      "GG-006"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R05",
+      "GG-R07",
+      "GG-R14"
+    ],
+    "screens": [
+      "SC-03",
+      "SC-04",
+      "OV-04"
+    ],
+    "files": [
+      "apps/electron/src/renderer/pages/ChatPage.tsx",
+      "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx",
+      "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx",
+      "apps/electron/src/renderer/components/app-shell/input/StructuredInput.tsx",
+      "packages/ui/src/components/chat/TurnCard.tsx",
+      "apps/electron/src/renderer/components/session-workbench/SessionWorkflowEditor.tsx"
+    ],
+    "delivery_status": "specific_flows_implemented_partial_screen_acceptance_pending",
+    "github_issue": 562,
+    "github_url": "https://github.com/rox-one/rox-one/issues/562",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Composer уплотнён через раскрытие контекста/инструментов; Stop/model/dictation доступны. Устранены вложенные кнопки, перекрытие status, потеря позиции чтения и гонки диктовки между сессиями. Chat/input проверки проходят; IME/микрофон/permission flow в Electron и визуальная приёмка не подтверждены.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-010",
+    "title": "[Golden Gate] Заметки: документ, rails, комментарии и свойства",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Notes document получает компактные rails, явные TOC/comments sheets, сохранение mounted editor и управляемую ширину. Исправлены устаревшие ответы, подтверждение save поверх свежего текста, workspace isolation и фокус скрытых sheets. Unit/SSR проходят; rich editor/IME/реальная синхронизация и visual приёмка открыты.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R05, GG-R07, GG-R14. Экраны: SC-14.\n\n## Задача\n\nУнифицировать vault/document/TOC/comments/inspector с новым shell. Сохранить Markdown round-trip, wiki links, footnotes, folds, assets, tasks/properties и AI side session.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/pages/NotesPage.tsx`\n- `apps/electron/src/renderer/pages/notes/NotesDocumentChrome.tsx`\n- `apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx`\n- `apps/electron/src/renderer/pages/notes/NoteInspector.tsx`\n- `apps/electron/src/renderer/pages/notes/document-ia.ts`\n- `packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx`\n\n## Definition of Done\n\n- [ ] Все create/move/rename/delete/import/export действия и rename impact доступны в новом layout; конфликт external edit не затирает несохранённое.\n- [ ] Table/list/link/code/math/heading/comments и semantic highlights копируются/сохраняются без изменения исходного смысла.\n- [ ] Rails уменьшаются/сворачиваются раньше основного текста; размеры/folds/scroll/draft восстанавливаются.\n- [ ] Пустой vault/search/no note, loading/saving/dirty/error/missing link имеют отдельные состояния и retry.\n\n## Проверка и доказательства\n\n- Existing note document/rename/wiki/view round-trip tests, conflict save scenario.\n- Long RU document + embedded assets/comments/footnotes, keyboard/IME/undo и grid 440px; app screenshots BLOCKED до разрешённого стенда.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-003 (#556), GG-004 (#557)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nNotes document получает компактные rails, явные TOC/comments sheets, сохранение mounted editor и управляемую ширину. Исправлены устаревшие ответы, подтверждение save поверх свежего текста, workspace isolation и фокус скрытых sheets. Unit/SSR проходят; rich editor/IME/реальная синхронизация и visual приёмка открыты.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nNotes document получает компактные rails, явные TOC/comments sheets, сохранение mounted editor и управляемую ширину. Исправлены устаревшие ответы, подтверждение save поверх свежего текста, workspace isolation и фокус скрытых sheets. Unit/SSR проходят; rich editor/IME/реальная синхронизация и visual приёмка открыты.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-003",
+      "GG-004"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R05",
+      "GG-R07",
+      "GG-R14"
+    ],
+    "screens": [
+      "SC-14"
+    ],
+    "files": [
+      "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "apps/electron/src/renderer/pages/notes/NotesDocumentChrome.tsx",
+      "apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx",
+      "apps/electron/src/renderer/pages/notes/NoteInspector.tsx",
+      "apps/electron/src/renderer/pages/notes/document-ia.ts",
+      "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx"
+    ],
+    "delivery_status": "specific_flows_implemented_partial_screen_acceptance_pending",
+    "github_issue": 563,
+    "github_url": "https://github.com/rox-one/rox-one/issues/563",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Notes document получает компактные rails, явные TOC/comments sheets, сохранение mounted editor и управляемую ширину. Исправлены устаревшие ответы, подтверждение save поверх свежего текста, workspace isolation и фокус скрытых sheets. Unit/SSR проходят; rich editor/IME/реальная синхронизация и visual приёмка открыты.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-011",
+    "title": "[Golden Gate] Заметки: таблица, canvas, outline, graph и map",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Общие Notes chrome и единое меню режимов сохраняют доступ к table/canvas/outline/graph/map. Доступность Map/Canvas проверена моделью и SSR. Индивидуальная геометрия, rendering и interactions каждой сложной поверхности не переработаны полностью; screen-specific backlog остаётся.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R05, GG-R12, GG-R14, GG-R16. Экраны: SC-15.\n\n## Задача\n\nПривести к общим controls все пять альтернативных представлений заметок, включая сохранённые views, formulas, filters, graph navigation и конверсию в task/session.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/pages/notes/NotesViewHost.tsx`\n- `apps/electron/src/renderer/pages/notes/note-views.ts`\n- `apps/electron/src/renderer/mindmap/MindMapHost.tsx`\n- `apps/electron/src/renderer/mindmap/engine/svg-engine.tsx`\n\n## Definition of Done\n\n- [ ] Table сохраняет filter/group/sort/columns/formulas после reopening; invalid saved JSON восстанавливается безопасно.\n- [ ] Canvas node/edge/viewport и outline folds сохраняются; fit/zoom доступен клавиатурой и в компактной панели.\n- [ ] Graph filter/progressive loading не теряет provenance; note→task/session требует явного действия и ведёт к реальному объекту.\n- [ ] Пустые и ошибочные наборы дают читаемое состояние; reduced motion не запускает постоянную GPU-анимацию.\n\n## Проверка и доказательства\n\n- Pure view/canvas/filter/formula/provenance tests + import invalid canvas.\n- Large graph/frame timing и visual comparison пяти режимов в light/dark; E02/E03 только после разрешённого app стенда.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-010 (#563)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nОбщие Notes chrome и единое меню режимов сохраняют доступ к table/canvas/outline/graph/map. Доступность Map/Canvas проверена моделью и SSR. Индивидуальная геометрия, rendering и interactions каждой сложной поверхности не переработаны полностью; screen-specific backlog остаётся.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nОбщие Notes chrome и единое меню режимов сохраняют доступ к table/canvas/outline/graph/map. Доступность Map/Canvas проверена моделью и SSR. Индивидуальная геометрия, rendering и interactions каждой сложной поверхности не переработаны полностью; screen-specific backlog остаётся.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-010"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R05",
+      "GG-R12",
+      "GG-R14",
+      "GG-R16"
+    ],
+    "screens": [
+      "SC-15"
+    ],
+    "files": [
+      "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "apps/electron/src/renderer/mindmap/MindMapHost.tsx",
+      "apps/electron/src/renderer/mindmap/engine/svg-engine.tsx"
+    ],
+    "delivery_status": "specific_flows_implemented_partial_screen_acceptance_pending",
+    "github_issue": 564,
+    "github_url": "https://github.com/rox-one/rox-one/issues/564",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Общие Notes chrome и единое меню режимов сохраняют доступ к table/canvas/outline/graph/map. Доступность Map/Canvas проверена моделью и SSR. Индивидуальная геометрия, rendering и interactions каждой сложной поверхности не переработаны полностью; screen-specific backlog остаётся.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-012",
+    "title": "[Golden Gate] Knowledge: поиск, встроенные документы, inspector и review изменений",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Knowledge titles используют bounded cache и дедупликацию запросов с retry; инспектор скрывает пустые session-scoped секции и сохраняет browser instance. Доступный resize реализован. Поиск/документы/review сложных изменений остаются частичной миграцией с открытой native/visual приёмкой.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R05, GG-R13, GG-R14. Экраны: SC-16, SC-17, SC-18, SC-26.\n\n## Задача\n\nСохранить отдельную от локальных Notes систему Knowledge: connections/notebooks/search/saved views, native SiYuan surfaces, map/outline, inspector и mutation proposals.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/knowledge/KnowledgeHome.tsx`\n- `apps/electron/src/renderer/knowledge/KnowledgeNavigator.tsx`\n- `apps/electron/src/renderer/pages/KnowledgeEntityPage.tsx`\n- `apps/electron/src/renderer/pages/KnowledgeSurfacePage.tsx`\n- `apps/electron/src/renderer/knowledge/KnowledgeDiff.tsx`\n- `apps/electron/src/renderer/knowledge/KnowledgeInspector.tsx`\n\n## Definition of Done\n\n- [ ] Search и saved view deep links корректно открывают документ/блок/database; no connection и no hits различаются.\n- [ ] Notebook/database не получают неподходящий companion inspector; selected connection/object всегда понятен.\n- [ ] Любая mutation проходит proposal/review; stale base/conflict/apply/reject/error не теряют данные.\n- [ ] Native mount/resize/visibility и export/deep links работают при layout change без пересоздания instance.\n\n## Проверка и доказательства\n\n- Knowledge route/search/view/proposal tests; feature-off/no API/connection error fixture.\n- Реальный SiYuan Electron smoke: mounted doc + 2×2 + modal + scroll/zoom + focus; native QA BLOCKED сейчас.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-003 (#556), GG-004 (#557)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nKnowledge titles используют bounded cache и дедупликацию запросов с retry; инспектор скрывает пустые session-scoped секции и сохраняет browser instance. Доступный resize реализован. Поиск/документы/review сложных изменений остаются частичной миграцией с открытой native/visual приёмкой.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nKnowledge titles используют bounded cache и дедупликацию запросов с retry; инспектор скрывает пустые session-scoped секции и сохраняет browser instance. Доступный resize реализован. Поиск/документы/review сложных изменений остаются частичной миграцией с открытой native/visual приёмкой.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-003",
+      "GG-004"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R05",
+      "GG-R13",
+      "GG-R14"
+    ],
+    "screens": [
+      "SC-16",
+      "SC-17",
+      "SC-18",
+      "SC-26"
+    ],
+    "files": [
+      "apps/electron/src/renderer/knowledge/KnowledgeHome.tsx",
+      "apps/electron/src/renderer/knowledge/KnowledgeNavigator.tsx",
+      "apps/electron/src/renderer/pages/KnowledgeEntityPage.tsx",
+      "apps/electron/src/renderer/pages/KnowledgeSurfacePage.tsx",
+      "apps/electron/src/renderer/knowledge/KnowledgeDiff.tsx",
+      "apps/electron/src/renderer/knowledge/KnowledgeInspector.tsx"
+    ],
+    "delivery_status": "specific_flows_implemented_partial_screen_acceptance_pending",
+    "github_issue": 565,
+    "github_url": "https://github.com/rox-one/rox-one/issues/565",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Knowledge titles используют bounded cache и дедупликацию запросов с retry; инспектор скрывает пустые session-scoped секции и сохраняет browser instance. Доступный resize реализован. Поиск/документы/review сложных изменений остаются частичной миграцией с открытой native/visual приёмкой.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-013",
+    "title": "[Golden Gate] Источники, навыки, память и Connection Fabric",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Общие navigation/settings primitives применены; устранены отсутствующие подписи Connection Fabric и неверный префикс tab keys. Источники, навыки и Memory сохраняют действия, но их индивидуальная переработка и интеграционная приёмка остаются backlog.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R03, GG-R10, GG-R14, GG-R16. Экраны: SC-09, SC-10, SC-11, SC-22.\n\n## Задача\n\nУнифицировать связанные ресурсные страницы без смешивания source, credential, skill и memory scopes. Дать полноценную площадь Memory, которая сейчас находится в navigator.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/pages/SourceInfoPage.tsx`\n- `apps/electron/src/renderer/pages/SkillInfoPage.tsx`\n- `apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx`\n- `apps/electron/src/renderer/components/app-shell/MemoryListPanel.tsx`\n- `apps/electron/src/renderer/pages/ConnectionsPage.tsx`\n\n## Definition of Done\n\n- [ ] Source tools/permissions/auth/edit, skill scopes/pending diff/approve/prune/export и memory lesson/conflict/promote/history доступны.\n- [ ] Connection tabs services/credentials/imports/policies/audit сохраняют реальный preview/confirm flow для rotate/revoke/import/unbind.\n- [ ] Missing API/auth/error/empty/not-found показаны отдельно; secret values не попадают в UI preview/logs.\n- [ ] Multi-select/transfer/context menu и editable drafts работают в compact/grid; unknown scope не выдаётся за workspace scope.\n\n## Проверка и доказательства\n\n- Resource route/filter/permission/credential model tests; import-preview→confirm и memory-conflict scenarios.\n- 5 Connection tabs + local/OMP skill diff + Memory editor snapshots, keyboard and error states; visual acceptance remains open.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-002 (#555), GG-007 (#560)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nОбщие navigation/settings primitives применены; устранены отсутствующие подписи Connection Fabric и неверный префикс tab keys. Источники, навыки и Memory сохраняют действия, но их индивидуальная переработка и интеграционная приёмка остаются backlog.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nОбщие navigation/settings primitives применены; устранены отсутствующие подписи Connection Fabric и неверный префикс tab keys. Источники, навыки и Memory сохраняют действия, но их индивидуальная переработка и интеграционная приёмка остаются backlog.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-002",
+      "GG-007"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R03",
+      "GG-R10",
+      "GG-R14",
+      "GG-R16"
+    ],
+    "screens": [
+      "SC-09",
+      "SC-10",
+      "SC-11",
+      "SC-22"
+    ],
+    "files": [
+      "apps/electron/src/renderer/pages/SourceInfoPage.tsx",
+      "apps/electron/src/renderer/pages/SkillInfoPage.tsx",
+      "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx",
+      "apps/electron/src/renderer/components/app-shell/MemoryListPanel.tsx",
+      "apps/electron/src/renderer/pages/ConnectionsPage.tsx"
+    ],
+    "delivery_status": "specific_flows_implemented_partial_screen_acceptance_pending",
+    "github_issue": 566,
+    "github_url": "https://github.com/rox-one/rox-one/issues/566",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Общие navigation/settings primitives применены; устранены отсутствующие подписи Connection Fabric и неверный префикс tab keys. Источники, навыки и Memory сохраняют действия, но их индивидуальная переработка и интеграционная приёмка остаются backlog.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-014",
+    "title": "[Golden Gate] Проекты и личные задачи, включая выбор по deep link",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Tasks получили адаптивный список/детали, компактные фильтры и дополнительные действия. Черновики тегов/заметок/ссылок изолированы по задаче; последовательные записи и ошибки не теряют свежий ввод; deep links сохранены. Project-specific переработка и real-server/visual приёмка остаются открытыми.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R05, GG-R14, GG-R16. Экраны: SC-08, SC-12.\n\n## Задача\n\nПривести Projects и Tasks к общей структуре master/detail, сохранить project assets/settings и task filters/properties/links. Устранить разрыв между tasks/task/{id} и selected task.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/pages/ProjectInfoPage.tsx`\n- `apps/electron/src/renderer/pages/TasksPage.tsx`\n- `apps/electron/src/renderer/lib/personal-tasks.ts`\n- `apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx`\n- `apps/electron/src/renderer/components/projects/CreateProjectDialog.tsx`\n\n## Definition of Done\n\n- [ ] Deep link tasks/task/{id} выбирает нужную задачу; unknown/deleted ID даёт not found с возвратом, а не случайную первую строку.\n- [ ] Project sessions/tasks/assets/settings полностью доступны; rename/color/icon/workingDir/draft сохраняются.\n- [ ] Task create/complete/priority/date/evening/tags/notes/project/link/import/export остаются рабочими.\n- [ ] Пустота/ошибки upload/save/import/calendar distinguishable; keyboard and narrow list→detail без потери выбора.\n\n## Проверка и доказательства\n\n- Route-selected task regression test, task store import/export/link tests.\n- Happy path create project→task→linked note→return + missing ID/error and keyboard; responsive screenshots pending.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-002 (#555), GG-003 (#556)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nTasks получили адаптивный список/детали, компактные фильтры и дополнительные действия. Черновики тегов/заметок/ссылок изолированы по задаче; последовательные записи и ошибки не теряют свежий ввод; deep links сохранены. Project-specific переработка и real-server/visual приёмка остаются открытыми.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nTasks получили адаптивный список/детали, компактные фильтры и дополнительные действия. Черновики тегов/заметок/ссылок изолированы по задаче; последовательные записи и ошибки не теряют свежий ввод; deep links сохранены. Project-specific переработка и real-server/visual приёмка остаются открытыми.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-002",
+      "GG-003"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R05",
+      "GG-R14",
+      "GG-R16"
+    ],
+    "screens": [
+      "SC-08",
+      "SC-12"
+    ],
+    "files": [
+      "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "apps/electron/src/renderer/pages/TasksPage.tsx",
+      "apps/electron/src/renderer/lib/personal-tasks.ts",
+      "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "apps/electron/src/renderer/components/projects/CreateProjectDialog.tsx"
+    ],
+    "delivery_status": "specific_flows_implemented_partial_screen_acceptance_pending",
+    "github_issue": 567,
+    "github_url": "https://github.com/rox-one/rox-one/issues/567",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Tasks получили адаптивный список/детали, компактные фильтры и дополнительные действия. Черновики тегов/заметок/ссылок изолированы по задаче; последовательные записи и ошибки не теряют свежий ввод; deep links сохранены. Project-specific переработка и real-server/visual приёмка остаются открытыми.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-015",
+    "title": "[Golden Gate] Встречи: каталог, запись, транскрипт и предложения",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Meetings получили адаптивный каталог/детали, раскрываемые вторичные блоки, явные busy/error/retry и устойчивый поиск. Запоздалые запросы и переключение записи не заменяют чужой черновик. Unit/SSR проходят; микрофон, транскрипт и предложения на реальном сервере требуют отдельной приёмки.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R05, GG-R13, GG-R14. Экраны: SC-13.\n\n## Задача\n\nУнифицировать meetings catalog/detail и все существующие capture/import/finalize/manual-note/correction/proposal flows. Проверить и исправить выбор meeting ID из route.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/pages/MeetingsPage.tsx`\n- `apps/electron/src/renderer/pages/meetings/MeetingDetail.tsx`\n- `apps/electron/src/renderer/pages/meetings/ProposalInbox.tsx`\n- `apps/electron/src/renderer/pages/meetings/capture-rpc.ts`\n- `apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx`\n\n## Definition of Done\n\n- [ ] meetings/meeting/{id} открывает именно этот объект; missing ID не выбирает другой без объяснения.\n- [ ] Start/pause/stop/import/finalize имеют корректные busy/error/permission состояния; Stop доступен пока идёт запись.\n- [ ] Manual note и segment correction сохраняют текст при ошибке; предложения task/note применяются единожды после review.\n- [ ] Panel focus/layout не прерывает запись и не перезапускает RPC; transcript/proposals доступны на narrow.\n\n## Проверка и доказательства\n\n- Existing meetings RPC/import/capture/finalize/proposal unit suite + route ID selection.\n- Реальные mic/media/native permission и 4-panel recording lifecycle требуют Electron/macOS; BLOCKED сейчас.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-002 (#555), GG-003 (#556)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nMeetings получили адаптивный каталог/детали, раскрываемые вторичные блоки, явные busy/error/retry и устойчивый поиск. Запоздалые запросы и переключение записи не заменяют чужой черновик. Unit/SSR проходят; микрофон, транскрипт и предложения на реальном сервере требуют отдельной приёмки.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nMeetings получили адаптивный каталог/детали, раскрываемые вторичные блоки, явные busy/error/retry и устойчивый поиск. Запоздалые запросы и переключение записи не заменяют чужой черновик. Unit/SSR проходят; микрофон, транскрипт и предложения на реальном сервере требуют отдельной приёмки.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-002",
+      "GG-003"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R05",
+      "GG-R13",
+      "GG-R14"
+    ],
+    "screens": [
+      "SC-13"
+    ],
+    "files": [
+      "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+      "apps/electron/src/renderer/pages/meetings/MeetingDetail.tsx",
+      "apps/electron/src/renderer/pages/meetings/ProposalInbox.tsx",
+      "apps/electron/src/renderer/pages/meetings/capture-rpc.ts",
+      "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx"
+    ],
+    "delivery_status": "specific_flows_implemented_partial_screen_acceptance_pending",
+    "github_issue": 568,
+    "github_url": "https://github.com/rox-one/rox-one/issues/568",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Meetings получили адаптивный каталог/детали, раскрываемые вторичные блоки, явные busy/error/retry и устойчивый поиск. Запоздалые запросы и переключение записи не заменяют чужой черновик. Unit/SSR проходят; микрофон, транскрипт и предложения на реальном сервере требуют отдельной приёмки.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-016",
+    "title": "[Golden Gate] Автоматизации: расписания, граф, тестирование и история",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Общие токены, headers и collection/settings primitives мигрируются и могут покрыть часть внешнего вида. Специфические действия/состояния этого семейства, индивидуальный редизайн и визуальная приёмка пока не объявлены завершёнными.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R05, GG-R10, GG-R14, GG-R16. Экраны: SC-19.\n\n## Задача\n\nПерестроить automation list/detail/workspace graph в общий compact интерфейс, сохранив scheduled/event/agentic filters, when/if/then, raw config, testing и replay.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/components/automations/AutomationsListPanel.tsx`\n- `apps/electron/src/renderer/components/automations/AutomationInfoPage.tsx`\n- `apps/electron/src/renderer/components/automations/AutomationGraphWorkspaceEditor.tsx`\n- `apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx`\n- `apps/electron/src/renderer/components/automations/CronBuilder.tsx`\n\n## Definition of Done\n\n- [ ] Cron/timezone/next runs и access/labels/Telegram topic остаются видимыми и редактируемыми по существующему контракту.\n- [ ] Invalid graph/config/schedule не применяются; test явно отличается от real run; paused/disabled/running/failure различимы.\n- [ ] Duplicate/enable/delete/replay не теряют selected automation и не выполняются от suggestion impression.\n- [ ] Graph, config/list alternative и execution timeline доступны клавиатурой; unsaved config/viewport сохраняются.\n\n## Проверка и доказательства\n\n- Automation parse/schedule/graph validation + test/replay handler tests.\n- Scenarios scheduled/event/agentic, empty workspace graph, partial run failure, narrow graph and keyboard; visuals pending.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-003 (#556), GG-007 (#560)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nОбщие токены, headers и collection/settings primitives мигрируются и могут покрыть часть внешнего вида. Специфические действия/состояния этого семейства, индивидуальный редизайн и визуальная приёмка пока не объявлены завершёнными.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-003",
+      "GG-007"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R05",
+      "GG-R10",
+      "GG-R14",
+      "GG-R16"
+    ],
+    "screens": [
+      "SC-19"
+    ],
+    "files": [
+      "apps/electron/src/renderer/components/automations/AutomationsListPanel.tsx",
+      "apps/electron/src/renderer/components/automations/AutomationInfoPage.tsx",
+      "apps/electron/src/renderer/components/automations/AutomationGraphWorkspaceEditor.tsx",
+      "apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx",
+      "apps/electron/src/renderer/components/automations/CronBuilder.tsx"
+    ],
+    "delivery_status": "shared_primitives_partial_screen_specific_backlog",
+    "github_issue": 569,
+    "github_url": "https://github.com/rox-one/rox-one/issues/569",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Общие токены, headers и collection/settings primitives мигрируются и могут покрыть часть внешнего вида. Специфические действия/состояния этого семейства, индивидуальный редизайн и визуальная приёмка пока не объявлены завершёнными.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "not_claimed",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only"
+    }
+  },
+  {
+    "id": "GG-017",
+    "title": "[Golden Gate] Pages: библиотека, preview, grants и совместное использование",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Общие токены, headers и collection/settings primitives мигрируются и могут покрыть часть внешнего вида. Специфические действия/состояния этого семейства, индивидуальный редизайн и визуальная приёмка пока не объявлены завершёнными.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R05, GG-R13, GG-R14. Экраны: SC-20, OV-05.\n\n## Задача\n\nОбновить library tiles и page shell; сохранить create blank/ask agent, project binding, folder, refresh preview, sharing и grant management.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/components/pages/PagesHome.tsx`\n- `apps/electron/src/renderer/components/pages/PageView.tsx`\n- `apps/electron/src/renderer/components/pages/PageFrame.tsx`\n- `apps/electron/src/renderer/components/pages/PageGrantRequestDialog.tsx`\n- `apps/electron/src/renderer/components/pages/SharePageDialog.tsx`\n\n## Definition of Done\n\n- [ ] No pages/no matches/no content/not found/lease loading/snapshot error — отдельные состояния с корректным действием.\n- [ ] Rename/design/preview/project/share/delete работают через текущие handlers; public copy retention не скрывается.\n- [ ] Grant requests показывают scope и требуют явного решения; source auth failures ведут к существующей авторизации.\n- [ ] Iframe/native preview не закрывает modal/menu; focus/scroll и page identity сохраняются при layout change.\n\n## Проверка и доказательства\n\n- Page route/lease/grant/source auth tests и no-content→design flow.\n- Permission/share/delete fixtures, real preview/native occlusion и keyboard focus; native визуальная приёмка BLOCKED.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-003 (#556), GG-004 (#557)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nОбщие токены, headers и collection/settings primitives мигрируются и могут покрыть часть внешнего вида. Специфические действия/состояния этого семейства, индивидуальный редизайн и визуальная приёмка пока не объявлены завершёнными.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-003",
+      "GG-004"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R05",
+      "GG-R13",
+      "GG-R14"
+    ],
+    "screens": [
+      "SC-20",
+      "OV-05"
+    ],
+    "files": [
+      "apps/electron/src/renderer/components/pages/PagesHome.tsx",
+      "apps/electron/src/renderer/components/pages/PageView.tsx",
+      "apps/electron/src/renderer/components/pages/PageFrame.tsx",
+      "apps/electron/src/renderer/components/pages/PageGrantRequestDialog.tsx",
+      "apps/electron/src/renderer/components/pages/SharePageDialog.tsx"
+    ],
+    "delivery_status": "shared_primitives_partial_screen_specific_backlog",
+    "github_issue": 570,
+    "github_url": "https://github.com/rox-one/rox-one/issues/570",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Общие токены, headers и collection/settings primitives мигрируются и могут покрыть часть внешнего вида. Специфические действия/состояния этого семейства, индивидуальный редизайн и визуальная приёмка пока не объявлены завершёнными.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "not_claimed",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only"
+    }
+  },
+  {
+    "id": "GG-018",
+    "title": "[Golden Gate] Browser, terminal, extensions и cloud run: поверхности и совместимость маршрутов",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Требуется сохранить и правильно открывать существующие поверхности. Создание отсутствующего backend terminal/cloud-run сервиса не входит в эту задачу: при отсутствии host достаточно честного unavailable состояния и пути к существующему dock/config/run UI. Native приёмка заблокирована.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R05, GG-R13, GG-R14. Экраны: SC-21, SC-23, SC-24, SC-25, SC-26, SC-27, OV-08.\n\n## Задача\n\nСогласовать chrome/lifecycle встроенных инструментов и закрыть немой fallback terminal/{id}, cloud-run/{id}: parser знает routes, MainContentPanel базы не имеет явных hosts. Conation deep-link companions сохраняют честную capability маркировку.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/pages/BrowserPanelPage.tsx`\n- `apps/electron/src/renderer/pages/ExtensionSurfacePage.tsx`\n- `apps/electron/src/renderer/platform/terminal-xterm.tsx`\n- `apps/electron/src/renderer/components/session-inspector/BottomTerminalDock.tsx`\n- `apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx`\n- `apps/electron/src/shared/route-parser.ts`\n\n## Definition of Done\n\n- [ ] terminal route открывает реальный terminal host либо явное unavailable объяснение; cloud run route ведёт к фактическому run/session host либо явному capability state.\n- [ ] Browser address/history/tabs/inspect, extension sandbox, terminal process и close/restore работают с существующими IDs.\n- [ ] Native surfaces не выступают поверх popup/dialog и не получают input, будучи скрытыми; bounds/clipping верны при zoom/resize/scroll.\n- [ ] Gated Conation Fund/Board/Mail не объявляются полноценными встроенными apps; deep links и errors доступны.\n\n## Проверка и доказательства\n\n- Route branch/round-trip and unsupported-host tests; existing browser/terminal/extension lifecycle suites.\n- Electron/macOS real browser+extension+tty+knowledge 2×2/3×2, hide/minimize/restart; required native proof BLOCKED сейчас.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-003 (#556), GG-004 (#557)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n**Граница scope:** добавление отсутствующих backend сервисов не требуется. Работать с уже существующими handlers/hosts и явной capability-деградацией.\n\n## Итоговая реализация и приёмка\n\nТребуется сохранить и правильно открывать существующие поверхности. Создание отсутствующего backend terminal/cloud-run сервиса не входит в эту задачу: при отсутствии host достаточно честного unavailable состояния и пути к существующему dock/config/run UI. Native приёмка заблокирована.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-003",
+      "GG-004"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R05",
+      "GG-R13",
+      "GG-R14"
+    ],
+    "screens": [
+      "SC-21",
+      "SC-23",
+      "SC-24",
+      "SC-25",
+      "SC-26",
+      "SC-27",
+      "OV-08"
+    ],
+    "files": [
+      "apps/electron/src/renderer/pages/BrowserPanelPage.tsx",
+      "apps/electron/src/renderer/pages/ExtensionSurfacePage.tsx",
+      "apps/electron/src/renderer/platform/terminal-xterm.tsx",
+      "apps/electron/src/renderer/components/session-inspector/BottomTerminalDock.tsx",
+      "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "apps/electron/src/shared/route-parser.ts"
+    ],
+    "delivery_status": "existing_surface_compatibility_backlog_native_acceptance_blocked",
+    "github_issue": 571,
+    "github_url": "https://github.com/rox-one/rox-one/issues/571",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Требуется сохранить и правильно открывать существующие поверхности. Создание отсутствующего backend terminal/cloud-run сервиса не входит в эту задачу: при отсутствии host достаточно честного unavailable состояния и пути к существующему dock/config/run UI. Native приёмка заблокирована.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "not_claimed",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only"
+    }
+  },
+  {
+    "id": "GG-019",
+    "title": "[Golden Gate] Настройки аккаунта, privacy, connections и организаций",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Общие settings fields/menu/radio/toggle переработаны для label/error/focus/keyboard и компактной компоновки. Connections локализация восстановлена. Backend account/privacy/org/auth flows и визуальная приёмка каждого экрана остаются открытыми.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R14, GG-R15, GG-R16. Экраны: ST-01, ST-02, ST-14, ST-18.\n\n## Задача\n\nМигрировать четыре страницы на общую форму/section систему с явными account/service/workspace/org scopes и реальными состояниями сохранения.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/pages/settings/AccountSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/PrivacySettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/AccountsSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/OrganizationsSettingsPage.tsx`\n\n## Definition of Done\n\n- [ ] Все поля и операции из ST-01/02/14/18 сохранены: profile/avatar/consent/export/deletion/service auth/health/migration/orgs/invites/identity.\n- [ ] Readonly/masked/invalid/saving/saved/error/pending/deletion-not-live различимы; secret/token не раскрываются по умолчанию.\n- [ ] Destructive/reset/invite операции имеют существующий явный confirm/submit; открыть страницу не значит отправить invite.\n- [ ] RU/EN/длинные names/IDs и narrow form корректны; keyboard labels/error associations и focus возврат подтверждены.\n\n## Проверка и доказательства\n\n- Existing settings account/privacy/accounts/organizations tests; API denied/error/pending fixtures.\n- Покрытие 4 страниц: default+empty+error+permission+save состояния; screenshot and keyboard checklist required, presently blocked.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nОбщие settings fields/menu/radio/toggle переработаны для label/error/focus/keyboard и компактной компоновки. Connections локализация восстановлена. Backend account/privacy/org/auth flows и визуальная приёмка каждого экрана остаются открытыми.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nОбщие settings fields/menu/radio/toggle переработаны для label/error/focus/keyboard и компактной компоновки. Connections локализация восстановлена. Backend account/privacy/org/auth flows и визуальная приёмка каждого экрана остаются открытыми.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R14",
+      "GG-R15",
+      "GG-R16"
+    ],
+    "screens": [
+      "ST-01",
+      "ST-02",
+      "ST-14",
+      "ST-18"
+    ],
+    "files": [
+      "apps/electron/src/renderer/pages/settings/AccountSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/PrivacySettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/AccountsSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/OrganizationsSettingsPage.tsx"
+    ],
+    "delivery_status": "specific_flows_implemented_partial_screen_acceptance_pending",
+    "github_issue": 572,
+    "github_url": "https://github.com/rox-one/rox-one/issues/572",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Общие settings fields/menu/radio/toggle переработаны для label/error/focus/keyboard и компактной компоновки. Connections локализация восстановлена. Backend account/privacy/org/auth flows и визуальная приёмка каждого экрана остаются открытыми.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-020",
+    "title": "[Golden Gate] Настройки Runtime, AI, App, Input и голос",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Общие settings fields/menu/radio/toggle обеспечивают согласованные размеры и доступную семантику. Диктовка composer исправлена отдельно. Настоящие Runtime/AI/voice операции и индивидуальная визуальная приёмка страниц не объявлены завершёнными.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R09, GG-R13, GG-R14, GG-R15. Экраны: ST-03, ST-09, ST-10, ST-12, OV-08.\n\n## Задача\n\nУнифицировать четыре страницы и voice section, сохранив backend/model/mode/toolchain/env/proxy/update/voice semantics. Диагностика не заменяет настройки.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/pages/settings/RuntimeSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/AppSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/InputSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/VoiceSettingsSection.tsx`\n\n## Definition of Done\n\n- [ ] Все свойства ST-03/09/10/12 доступны; current vs next session/respawn эффекты правильно подписаны.\n- [ ] Validation proxy/API key/custom model/env/voice и toolchain missing/offline/error работают без сброса draft.\n- [ ] Settings reads и device diagnostics lifecycle разделены; отсутствующий native method даёт unavailable.\n- [ ] Notifications/microphone/update/restart действия реальны; IME и Enter/Cmd-Enter проходят; locale parity соблюдён.\n\n## Проверка и доказательства\n\n- Existing AI/runtime/proxy/input/voice tests; failed save/auth expiry/toolchain fixtures.\n- Native microphone/notification/update window and voice overlay smoke на macOS, BLOCKED сейчас; 4 settings pages screenshots.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-005 (#558)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nОбщие settings fields/menu/radio/toggle обеспечивают согласованные размеры и доступную семантику. Диктовка composer исправлена отдельно. Настоящие Runtime/AI/voice операции и индивидуальная визуальная приёмка страниц не объявлены завершёнными.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nОбщие settings fields/menu/radio/toggle обеспечивают согласованные размеры и доступную семантику. Диктовка composer исправлена отдельно. Настоящие Runtime/AI/voice операции и индивидуальная визуальная приёмка страниц не объявлены завершёнными.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-005"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R09",
+      "GG-R13",
+      "GG-R14",
+      "GG-R15"
+    ],
+    "screens": [
+      "ST-03",
+      "ST-09",
+      "ST-10",
+      "ST-12",
+      "OV-08"
+    ],
+    "files": [
+      "apps/electron/src/renderer/pages/settings/RuntimeSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/AppSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/InputSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/VoiceSettingsSection.tsx"
+    ],
+    "delivery_status": "specific_flows_implemented_partial_screen_acceptance_pending",
+    "github_issue": 573,
+    "github_url": "https://github.com/rox-one/rox-one/issues/573",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Общие settings fields/menu/radio/toggle обеспечивают согласованные размеры и доступную семантику. Диктовка composer исправлена отдельно. Настоящие Runtime/AI/voice операции и индивидуальная визуальная приёмка страниц не объявлены завершёнными.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-021",
+    "title": "[Golden Gate] Settings hub, Appearance, Workspace, Context, Labels и Shortcuts",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Settings hub и общие settings controls унифицированы; подписи, описания, радиогруппы, списки выбора и клавиатурные состояния проверены автоматически. Действия отдельных настроек, Appearance contrast и native shortcuts требуют продуктовой приёмки.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R02, GG-R06, GG-R07, GG-R14, GG-R15. Экраны: ST-00, ST-04, ST-11, ST-13, ST-17, ST-22.\n\n## Задача\n\nПривести settings navigation/hub и пять страниц к компактной общей форме. Сохранить legacy Preferences внутри Context и все theme/workspace/rule controls.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/pages/settings/SettingsOverviewPage.tsx`\n- `apps/electron/src/renderer/pages/settings/SettingsNavigator.tsx`\n- `apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/ContextSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/WorkspaceSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/LabelsSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/ShortcutsPage.tsx`\n\n## Definition of Done\n\n- [ ] Реестр всех 22 страниц остаётся источником поиска/групп/route; overview открывается на compact.\n- [ ] Theme/font/language/zoom и workspace override приоритеты сохраняются; новый layout не перезаписывает старую тему.\n- [ ] Context dirty/template diff/keep mine/delete, labels hierarchy/rules и workspace sources/mode/path/TLS доступны.\n- [ ] Новые panel/spatial/resize shortcuts зарегистрированы и отображаются по платформе; все формы keyboard accessible.\n\n## Проверка и доказательства\n\n- Settings registry/component parity and route tests; context unsaved/template conflict; labels hierarchy; shortcut collision tests.\n- Screenshots overview+5 pages light/dark/contrast/zoom150, long RU names and keyboard; visual acceptance BLOCKED сейчас.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-002 (#555), GG-003 (#556), GG-004 (#557)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nSettings hub и общие settings controls унифицированы; подписи, описания, радиогруппы, списки выбора и клавиатурные состояния проверены автоматически. Действия отдельных настроек, Appearance contrast и native shortcuts требуют продуктовой приёмки.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nSettings hub и общие settings controls унифицированы; подписи, описания, радиогруппы, списки выбора и клавиатурные состояния проверены автоматически. Действия отдельных настроек, Appearance contrast и native shortcuts требуют продуктовой приёмки.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-002",
+      "GG-003",
+      "GG-004"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R02",
+      "GG-R06",
+      "GG-R07",
+      "GG-R14",
+      "GG-R15"
+    ],
+    "screens": [
+      "ST-00",
+      "ST-04",
+      "ST-11",
+      "ST-13",
+      "ST-17",
+      "ST-22"
+    ],
+    "files": [
+      "apps/electron/src/renderer/pages/settings/SettingsOverviewPage.tsx",
+      "apps/electron/src/renderer/pages/settings/SettingsNavigator.tsx",
+      "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/ContextSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/WorkspaceSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/LabelsSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/ShortcutsPage.tsx"
+    ],
+    "delivery_status": "specific_flows_implemented_partial_screen_acceptance_pending",
+    "github_issue": 574,
+    "github_url": "https://github.com/rox-one/rox-one/issues/574",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Settings hub и общие settings controls унифицированы; подписи, описания, радиогруппы, списки выбора и клавиатурные состояния проверены автоматически. Действия отдельных настроек, Appearance contrast и native shortcuts требуют продуктовой приёмки.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-022",
+    "title": "[Golden Gate] Настройки Knowledge, Marketplace, Extensions и Import",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Knowledge/Marketplace/Extensions/Import наследуют общие компактные settings controls и доступную семантику. Индивидуальные installer/import/error flows и native/visual приёмка остаются backlog.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R13, GG-R14, GG-R15, GG-R16. Экраны: ST-05, ST-06, ST-07, ST-08.\n\n## Задача\n\nСвести четыре страницы к общим catalog/form/progress/permission patterns с сохранением всех реальных capabilities, migrations, developer controls и imports.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/pages/settings/KnowledgeSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/MarketplaceSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/ExtensionsSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/ImportSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/BrowserProfileImportPanel.tsx`\n\n## Definition of Done\n\n- [ ] Local Notes и optional Knowledge engine не смешаны; detect/start/token/test/migrate partial outcome корректны.\n- [ ] Catalog filters/sort/progress/install/update/remove/deferred и stale statistics сохраняются.\n- [ ] Extension permissions/runtime/compatibility/host controls/URL allowlist/grant revoke доступны и не расширяют права автоматически.\n- [ ] Import scan/preview/select/persist/results/truncated различаются; partial results и failed save не очищают selection/draft.\n\n## Проверка и доказательства\n\n- Existing knowledge/extensions/catalog/import tests; no API/offline/partial migration/grant rejected fixtures.\n- 4 pages + browser profile preview keyboard, narrow table and permission dialogs; real native imports отдельно, BLOCKED сейчас.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-012 (#565), GG-018 (#571)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nKnowledge/Marketplace/Extensions/Import наследуют общие компактные settings controls и доступную семантику. Индивидуальные installer/import/error flows и native/visual приёмка остаются backlog.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nKnowledge/Marketplace/Extensions/Import наследуют общие компактные settings controls и доступную семантику. Индивидуальные installer/import/error flows и native/visual приёмка остаются backlog.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-012",
+      "GG-018"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R13",
+      "GG-R14",
+      "GG-R15",
+      "GG-R16"
+    ],
+    "screens": [
+      "ST-05",
+      "ST-06",
+      "ST-07",
+      "ST-08"
+    ],
+    "files": [
+      "apps/electron/src/renderer/pages/settings/KnowledgeSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/MarketplaceSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/ExtensionsSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/ImportSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/BrowserProfileImportPanel.tsx"
+    ],
+    "delivery_status": "specific_flows_implemented_partial_screen_acceptance_pending",
+    "github_issue": 575,
+    "github_url": "https://github.com/rox-one/rox-one/issues/575",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Knowledge/Marketplace/Extensions/Import наследуют общие компактные settings controls и доступную семантику. Индивидуальные installer/import/error flows и native/visual приёмка остаются backlog.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-023",
+    "title": "[Golden Gate] Настройки Permissions, Security, Messaging, Server и Cloud Runs",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Permissions/Security/Messaging/Server/Cloud Runs наследуют общие доступные settings controls. Существующие capability/permission контракты сохранены. Реальные серверные действия и визуальная приёмка остаются открытыми.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R13, GG-R14, GG-R15, GG-R16. Экраны: ST-15, ST-16, ST-19, ST-20, ST-21, OV-06.\n\n## Задача\n\nУнифицировать пять страниц и пять platform connect dialogs, не меняя security policy. Сохранить rule/audit/access/host/TLS/provider controls и явный scope каждого действия.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/pages/settings/PermissionsSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/SecuritySettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/MessagingSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/ServerSettingsPage.tsx`\n- `apps/electron/src/renderer/pages/settings/CloudRunsSettingsPage.tsx`\n- `apps/electron/src/renderer/components/messaging/MessagingDialogHost.tsx`\n\n## Definition of Done\n\n- [ ] Permission rules и lazy granted load не превращаются в auto-grant; security snapshot stale/unavailable и risk rationale/expiry валидируются.\n- [ ] Telegram/WhatsApp/Lark/Discord/WeChat connect/reconnect/QR/token/access/bindings работают; закрытые dialogs прекращают poll.\n- [ ] Server token masked, port/cert/key validation и restart explicit; remote не получает host-only controls.\n- [ ] Cloud provider/secret/limits/schedule/persona значения и gated native sandbox честно отображаются; все ошибки сохраняют ввод.\n\n## Проверка и доказательства\n\n- Existing permissions/security/messaging/server/cloudRuns tests, denied/expired/partial/runtime-offline cases.\n- 5 page state matrices + five connect flows keyboard/QR/timeout; true native/service integration BLOCKED без доступного стенда.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-005 (#558), GG-018 (#571)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nPermissions/Security/Messaging/Server/Cloud Runs наследуют общие доступные settings controls. Существующие capability/permission контракты сохранены. Реальные серверные действия и визуальная приёмка остаются открытыми.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nPermissions/Security/Messaging/Server/Cloud Runs наследуют общие доступные settings controls. Существующие capability/permission контракты сохранены. Реальные серверные действия и визуальная приёмка остаются открытыми.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-005",
+      "GG-018"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R13",
+      "GG-R14",
+      "GG-R15",
+      "GG-R16"
+    ],
+    "screens": [
+      "ST-15",
+      "ST-16",
+      "ST-19",
+      "ST-20",
+      "ST-21",
+      "OV-06"
+    ],
+    "files": [
+      "apps/electron/src/renderer/pages/settings/PermissionsSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/SecuritySettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/MessagingSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/ServerSettingsPage.tsx",
+      "apps/electron/src/renderer/pages/settings/CloudRunsSettingsPage.tsx",
+      "apps/electron/src/renderer/components/messaging/MessagingDialogHost.tsx"
+    ],
+    "delivery_status": "specific_flows_implemented_partial_screen_acceptance_pending",
+    "github_issue": 576,
+    "github_url": "https://github.com/rox-one/rox-one/issues/576",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Permissions/Security/Messaging/Server/Cloud Runs наследуют общие доступные settings controls. Существующие capability/permission контракты сохранены. Реальные серверные действия и визуальная приёмка остаются открытыми.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-024",
+    "title": "[Golden Gate] Onboarding, workspace wizard, меню, preview и общие состояния",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Пустое состояние сессий и инспектора переработано по присланному снимку; профиль и подсказка памяти компактны, раскрытие и отказ доступны. Меню/фильтры/поля имеют согласованный фокус. Полные onboarding/workspace wizard/preview/native picker сценарии остаются backlog.\n\nПриоритет: **P1**. Трассировка: GG-R01, GG-R07, GG-R11, GG-R14, GG-R15. Экраны: SH-01, SH-04, OV-01, OV-02, OV-03, OV-07.\n\n## Задача\n\nДовести единый дизайн до всех entry flows и temporary surfaces, включая rich preview и nested menu/annotation layers.\n\n## Область кода / контракты\n\n- `apps/electron/src/renderer/components/onboarding/OnboardingWizard.tsx`\n- `apps/electron/src/renderer/components/workspace/WorkspaceCreationScreen.tsx`\n- `apps/electron/src/renderer/components/ui/styled-dropdown.tsx`\n- `packages/ui/src/components/overlay/FullscreenOverlayBase.tsx`\n- `packages/ui/src/components/annotations/interaction-state-machine.ts`\n- `apps/electron/src/renderer/App.tsx`\n\n## Definition of Done\n\n- [ ] Все 9 onboarding states и create/open/remote/SSH workspace flows сохраняют validation/back/cancel/skip/error и реальное применение.\n- [ ] Button/menu/dialog/drawer/tooltip/rename/multi-select имеют единый focus, disabled/busy/destructive, collision и escape stack.\n- [ ] Image/PDF/code/text/Markdown/JSON/HTML/Mermaid/table/spreadsheet/doc/diff/terminal preview читаемы и сохраняют copy/download/zoom/navigation.\n- [ ] Annotation selection restore и rich text semantic parity подтверждены; i18n keys всех новых controls есть в 10 locales.\n\n## Проверка и доказательства\n\n- Existing onboarding/route/overlay/annotation tests; escape stack and selected text round-trip.\n- Keyboard-only first run→workspace→preview→close, auth pending/error and narrow+zoom states; native directory/auth dialogs отдельно.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-003 (#556), GG-004 (#557)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nПустое состояние сессий и инспектора переработано по присланному снимку; профиль и подсказка памяти компактны, раскрытие и отказ доступны. Меню/фильтры/поля имеют согласованный фокус. Полные onboarding/workspace wizard/preview/native picker сценарии остаются backlog.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nПустое состояние сессий и инспектора переработано по присланному снимку; профиль и подсказка памяти компактны, раскрытие и отказ доступны. Меню/фильтры/поля имеют согласованный фокус. Полные onboarding/workspace wizard/preview/native picker сценарии остаются backlog.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P1",
+    "labels": [
+      "golden-gate",
+      "P1"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-003",
+      "GG-004"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R07",
+      "GG-R11",
+      "GG-R14",
+      "GG-R15"
+    ],
+    "screens": [
+      "SH-01",
+      "SH-04",
+      "OV-01",
+      "OV-02",
+      "OV-03",
+      "OV-07"
+    ],
+    "files": [
+      "apps/electron/src/renderer/components/onboarding/OnboardingWizard.tsx",
+      "apps/electron/src/renderer/components/workspace/WorkspaceCreationScreen.tsx",
+      "apps/electron/src/renderer/components/ui/styled-dropdown.tsx",
+      "packages/ui/src/components/overlay/FullscreenOverlayBase.tsx",
+      "packages/ui/src/components/annotations/interaction-state-machine.ts",
+      "apps/electron/src/renderer/App.tsx"
+    ],
+    "delivery_status": "specific_flows_implemented_partial_screen_acceptance_pending",
+    "github_issue": 577,
+    "github_url": "https://github.com/rox-one/rox-one/issues/577",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Пустое состояние сессий и инспектора переработано по присланному снимку; профиль и подсказка памяти компактны, раскрытие и отказ доступны. Меню/фильтры/поля имеют согласованный фокус. Полные onboarding/workspace wizard/preview/native picker сценарии остаются backlog.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  },
+  {
+    "id": "GG-025",
+    "title": "[Golden Gate] Приёмка Golden Gate: visual, functional, performance и Electron/macOS",
+    "body": "Родитель: #541\n\n**Статус покрытия (2026-09-14):** Выполнены повторные targeted unit/SSR, интеграция main, type/build/i18n проверки и независимый review; точные команды и результаты в VERIFICATION.md. Присланный снимок просмотрен как baseline. Продуктовый URL запрещён browser policy; visual/macOS/GPU/packaging gates не пройдены. Issue остаётся открытым.\n\nПриоритет: **P0**. Трассировка: GG-R01, GG-R12, GG-R13, GG-R14, GG-R15, GG-R17. Экраны: все SH/SC/ST/OV.\n\n## Задача\n\nЗакрыть release gate только на доказательствах. Координатор сообщил: baseline renderer build PASSED (~67s), 11 baseline panel tests PASSED, baseline typecheck имеет 50 существующих ошибок. Доступный Cloud Browser policy-rejects локальный продуктовый URL; обход запрещён. Поэтому visual/native acceptance сейчас BLOCKED, reference screenshot не считается продуктовым аудитом.\n\n## Область кода / контракты\n\n- `docs/design/golden-gate/SCREEN-MATRIX.md`\n- `docs/design/golden-gate/QA-MATRIX.md`\n- `apps/electron/src/renderer/perf/budgets.ts`\n- `scripts/bench/renderer-perf-report.ts`\n- `apps/electron/src/shared/settings-registry.ts`\n\n## Definition of Done\n\n- [ ] Для всех 22 settings и всех экранных групп из матрицы приложен маршрут, данные, state coverage и фактический evidence level.\n- [ ] Renderer build, touched behavior tests и 10-locale parity проходят; новые type errors отделены от baseline, нет утверждения о чистом full tsc при существующих ошибках.\n- [ ] Cached switch p95≤120ms, 0 sessions.list; остальные целевые бюджеты измерены честно на одном стенде; no diagnostics poll closed/hidden.\n- [ ] Есть до/после продуктовые screenshots, keyboard/focus/reduced motion/contrast/zoom 4/6 panel flows и реальный Electron/macOS native lifecycle. Пока стенд policy-blocked, issue остаётся открытым.\n\n## Проверка и доказательства\n\n- Следовать QA-MATRIX.md: code, fixture browser, server, Electron/macOS и user experiment — отдельные уровни.\n- Прикрепить команды/логи/commit/стенд/артефакты и список unresolved findings. Нельзя обходить browser policy блокировку или закрывать visual gate по code review.\n\n- Приложить commit, фактически выполненную команду/сценарий и результат; наличие теста в коде не равно его прохождению.\n- Различать code inspection, fixture browser, real server, Electron/macOS. Непроверенный визуальный/native сценарий остаётся открытым.\n\n## Зависимости\n\nGG-001 (#553), GG-002 (#555), GG-003 (#556), GG-004 (#557), GG-005 (#558), GG-006 (#559), GG-007 (#560), GG-008 (#561), GG-009 (#562), GG-010 (#563), GG-011 (#564), GG-012 (#565), GG-013 (#566), GG-014 (#567), GG-015 (#568), GG-016 (#569), GG-017 (#570), GG-018 (#571), GG-019 (#572), GG-020 (#573), GG-021 (#574), GG-022 (#575), GG-023 (#576), GG-024 (#577)\n\nПодробная спецификация: `docs/design/golden-gate/PRD.md`, `SCREEN-MATRIX.md`, `QA-MATRIX.md`. Опубликованные связи GG-ID → GitHub issue перечислены в `docs/design/golden-gate/ISSUE-LINKS.md`.\n\n## Итоговая реализация и приёмка\n\nВыполнены повторные targeted unit/SSR, интеграция main, type/build/i18n проверки и независимый review; точные команды и результаты в VERIFICATION.md. Присланный снимок просмотрен как baseline. Продуктовый URL запрещён browser policy; visual/macOS/GPU/packaging gates не пройдены. Issue остаётся открытым.\n\nСводные доказательства: `docs/design/golden-gate/VERIFICATION.md`. Наличие реализации не закрывает визуальную приёмку.\n\n[Индекс ТЗ](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/README.md) · [Отчёт проверки](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/VERIFICATION.md).\n\n## Продолжение: polish и review\n\nВыполнены повторные targeted unit/SSR, интеграция main, type/build/i18n проверки и независимый review; точные команды и результаты в VERIFICATION.md. Присланный снимок просмотрен как baseline. Продуктовый URL запрещён browser policy; visual/macOS/GPU/packaging gates не пройдены. Issue остаётся открытым.\n\n[Подробное покрытие изменений](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/POLISH-REVIEW.md) · [Разбор исходного снимка](https://github.com/rox-one/rox-one/blob/codex/golden-gate-workspace/docs/design/golden-gate/SCREENSHOT-REVIEW.md).\n",
+    "priority": "P0",
+    "labels": [
+      "golden-gate",
+      "P0"
+    ],
+    "parent": 541,
+    "depends_on": [
+      "GG-001",
+      "GG-002",
+      "GG-003",
+      "GG-004",
+      "GG-005",
+      "GG-006",
+      "GG-007",
+      "GG-008",
+      "GG-009",
+      "GG-010",
+      "GG-011",
+      "GG-012",
+      "GG-013",
+      "GG-014",
+      "GG-015",
+      "GG-016",
+      "GG-017",
+      "GG-018",
+      "GG-019",
+      "GG-020",
+      "GG-021",
+      "GG-022",
+      "GG-023",
+      "GG-024"
+    ],
+    "requirements": [
+      "GG-R01",
+      "GG-R12",
+      "GG-R13",
+      "GG-R14",
+      "GG-R15",
+      "GG-R17"
+    ],
+    "screens": [
+      "все SH/SC/ST/OV"
+    ],
+    "files": [
+      "docs/design/golden-gate/SCREEN-MATRIX.md",
+      "docs/design/golden-gate/QA-MATRIX.md",
+      "apps/electron/src/renderer/perf/budgets.ts",
+      "scripts/bench/renderer-perf-report.ts",
+      "apps/electron/src/shared/settings-registry.ts"
+    ],
+    "delivery_status": "blocked_visual_native_release_gate",
+    "github_issue": 578,
+    "github_url": "https://github.com/rox-one/rox-one/issues/578",
+    "issue_state": "open",
+    "status_as_of": "2026-09-14",
+    "publication_status": "published_by_coordinator",
+    "coverage_notes": "Выполнены повторные targeted unit/SSR, интеграция main, type/build/i18n проверки и независимый review; точные команды и результаты в VERIFICATION.md. Присланный снимок просмотрен как baseline. Продуктовый URL запрещён browser policy; visual/macOS/GPU/packaging gates не пройдены. Issue остаётся открытым.",
+    "evidence_status": {
+      "code_inventory": "available",
+      "implementation_completion": "partial_scope_with_automated_evidence",
+      "visual_product": "blocked_by_browser_policy",
+      "native_macos": "not_verified",
+      "experiments": "proposed_only",
+      "user_screenshot": "reviewed_baseline_only"
+    }
+  }
+]

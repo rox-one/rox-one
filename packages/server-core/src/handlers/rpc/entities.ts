@@ -25,6 +25,7 @@ import type { RequestContext } from '../../transport/types.ts'
 import type { HandlerDeps } from '../handler-deps'
 import { closeEntityLinkStores, getEntityLinkStore } from '../../entities/link-store.ts'
 import { DefaultResolverHost } from '../../entities/resolver-host.ts'
+import { ensureNoteLinksPruned, noteLinkSourceProbeFor, observeEntitiesLinksEnabled } from '../../entities/note-links-indexer.ts'
 import { getEntitiesWorkbenchFlags } from '../../entities/workbench-flags.ts'
 // W1-04 (#1501): every resolve / link listing / link write is ACL-checked.
 import {
@@ -85,11 +86,11 @@ export function resetEntityResolvers(): void {
 }
 
 /**
- * Drop cached previews for one ref across every workspace host (realtime
+ * Drop cached previews for one ref in one workspace host (realtime
  * `entity.changed`). Exported next to `registerEntityResolver`.
  */
-export function invalidateEntity(_workspaceId: string, ref: EntityRef): void {
-  for (const host of hostsByWorkspace.values()) host.invalidate(ref)
+export function invalidateEntity(workspaceId: string, ref: EntityRef): void {
+  hostsByWorkspace.get(workspaceId)?.invalidate(ref)
 }
 
 /** Drop all cached previews for one workspace (exported next to `registerEntityResolver`). */
@@ -185,7 +186,7 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
 
   server.handle(RPC_CHANNELS.entities.LINKS, async (ctx, workspaceId: string, input: unknown): Promise<EntitiesLinksResult> => {
     const request: EntityLinksRequest = entityLinksRequestSchema.parse(input)
-    if (!isEnabled(runtime)) {
+    if (!observeEntitiesLinksEnabled(isEnabled(runtime))) {
       if (request.op === 'add' || request.op === 'remove') return { ok: false, reason: 'disabled' }
       return request.op === 'outgoing'
         ? { ok: true, op: 'outgoing', links: [] }
@@ -197,6 +198,11 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
       throw new CodedError('FORBIDDEN', 'Entity link access denied')
     }
     const store = getEntityLinkStore(workspace.rootPath)
+    // First store use after the flag turned on: drop indexer rows of notes
+    // deleted/renamed while it was off (review 4, owner decision).
+    if (ensureNoteLinksPruned(workspace) > 0) {
+      pushTyped(server, RPC_CHANNELS.entities.LINKS_CHANGED, { to: 'workspace', workspaceId: workspace.id }, workspace.id)
+    }
 
     switch (request.op) {
       case 'add': {
@@ -224,7 +230,8 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
           relations: request.relations,
           cursor: request.cursor,
           limit: request.limit,
-        })
+        // One notes-root resolution per call, then existsSync per source id.
+        }, { sourceExists: noteLinkSourceProbeFor(workspace) })
         const links = await filterBacklinks(gate, actorFor(ctx), request.ref, page.links)
         return page.nextCursor
           ? { ok: true, op: 'backlinks', links, nextCursor: page.nextCursor }

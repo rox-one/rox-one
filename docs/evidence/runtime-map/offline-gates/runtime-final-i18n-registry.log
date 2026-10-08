@@ -1,0 +1,119 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/i18n/__tests__/locale-parity.test.ts:
+(pass) i18n locale parity > ru has all EN keys [2.45ms]
+(pass) i18n locale parity > ru has no extra keys beyond EN [2.29ms]
+(pass) i18n locale parity > ru interpolation variables match EN [24.37ms]
+(pass) i18n locale parity > ar has all EN keys [0.99ms]
+(pass) i18n locale parity > ar has no extra keys beyond EN [0.91ms]
+(pass) i18n locale parity > ar interpolation variables match EN [17.92ms]
+(pass) i18n locale parity > de has all EN keys [0.62ms]
+(pass) i18n locale parity > de has no extra keys beyond EN [0.40ms]
+(pass) i18n locale parity > de interpolation variables match EN [18.01ms]
+(pass) i18n locale parity > zh-Hant has all EN keys [0.66ms]
+(pass) i18n locale parity > zh-Hant has no extra keys beyond EN [0.96ms]
+(pass) i18n locale parity > zh-Hant interpolation variables match EN [13.18ms]
+(pass) i18n locale parity > hu has all EN keys [0.67ms]
+(pass) i18n locale parity > hu has no extra keys beyond EN [0.42ms]
+(pass) i18n locale parity > hu interpolation variables match EN [7.24ms]
+(pass) i18n locale parity > fr has all EN keys [1.19ms]
+(pass) i18n locale parity > fr has no extra keys beyond EN [0.42ms]
+(pass) i18n locale parity > fr interpolation variables match EN [5.81ms]
+(pass) i18n locale parity > ko has all EN keys [0.73ms]
+(pass) i18n locale parity > ko has no extra keys beyond EN [0.52ms]
+(pass) i18n locale parity > ko interpolation variables match EN [9.19ms]
+(pass) i18n locale parity > zh-Hans has all EN keys [0.63ms]
+(pass) i18n locale parity > zh-Hans has no extra keys beyond EN [0.36ms]
+(pass) i18n locale parity > zh-Hans interpolation variables match EN [18.94ms]
+(pass) i18n locale parity > pl has all EN keys [0.64ms]
+(pass) i18n locale parity > pl has no extra keys beyond EN [0.64ms]
+(pass) i18n locale parity > pl interpolation variables match EN [19.03ms]
+(pass) i18n locale parity > ja has all EN keys [0.69ms]
+(pass) i18n locale parity > ja has no extra keys beyond EN [0.63ms]
+(pass) i18n locale parity > ja interpolation variables match EN [18.68ms]
+(pass) i18n locale parity > es has all EN keys [0.59ms]
+(pass) i18n locale parity > es has no extra keys beyond EN [0.70ms]
+(pass) i18n locale parity > es interpolation variables match EN [17.55ms]
+(pass) i18n locale parity > en plural forms are complete (_one has _other and vice versa) [3.54ms]
+(pass) i18n locale parity > ru plural forms are complete (_one has _other and vice versa) [2.59ms]
+(pass) i18n locale parity > ar plural forms are complete (_one has _other and vice versa) [2.61ms]
+(pass) i18n locale parity > de plural forms are complete (_one has _other and vice versa) [2.78ms]
+(pass) i18n locale parity > zh-Hant plural forms are complete (_one has _other and vice versa) [2.29ms]
+(pass) i18n locale parity > hu plural forms are complete (_one has _other and vice versa) [2.41ms]
+(pass) i18n locale parity > fr plural forms are complete (_one has _other and vice versa) [2.29ms]
+(pass) i18n locale parity > ko plural forms are complete (_one has _other and vice versa) [2.22ms]
+(pass) i18n locale parity > zh-Hans plural forms are complete (_one has _other and vice versa) [2.64ms]
+(pass) i18n locale parity > pl plural forms are complete (_one has _other and vice versa) [2.49ms]
+(pass) i18n locale parity > ja plural forms are complete (_one has _other and vice versa) [2.27ms]
+(pass) i18n locale parity > es plural forms are complete (_one has _other and vice versa) [2.20ms]
+(pass) i18n locale parity > en keys are sorted alphabetically [6.99ms]
+(pass) i18n locale parity > ru keys are sorted alphabetically [4.85ms]
+(pass) i18n locale parity > ar keys are sorted alphabetically [3.78ms]
+(pass) i18n locale parity > de keys are sorted alphabetically [5.46ms]
+(pass) i18n locale parity > zh-Hant keys are sorted alphabetically [3.69ms]
+(pass) i18n locale parity > hu keys are sorted alphabetically [9.47ms]
+(pass) i18n locale parity > fr keys are sorted alphabetically [4.09ms]
+(pass) i18n locale parity > ko keys are sorted alphabetically [6.32ms]
+(pass) i18n locale parity > zh-Hans keys are sorted alphabetically [2.96ms]
+(pass) i18n locale parity > pl keys are sorted alphabetically [3.41ms]
+(pass) i18n locale parity > ja keys are sorted alphabetically [3.44ms]
+(pass) i18n locale parity > es keys are sorted alphabetically [3.14ms]
+
+packages/shared/src/i18n/__tests__/locale-registry.test.ts:
+(pass) locale registry completeness > contains exactly the approved twelve language codes [0.03ms]
+(pass) locale registry completeness > every locale file on disk is registered in LOCALE_REGISTRY [0.05ms]
+(pass) locale registry completeness > every registry entry has a locale file on disk [0.06ms]
+(pass) locale registry entries > en has a non-empty nativeName [0.03ms]
+(pass) locale registry entries > en has messages (non-empty object) [1.30ms]
+(pass) locale registry entries > en has a dateLocale [0.05ms]
+(pass) locale registry entries > ru has a non-empty nativeName
+(pass) locale registry entries > ru has messages (non-empty object) [0.87ms]
+(pass) locale registry entries > ru has a dateLocale
+(pass) locale registry entries > es has a non-empty nativeName
+(pass) locale registry entries > es has messages (non-empty object) [0.38ms]
+(pass) locale registry entries > es has a dateLocale
+(pass) locale registry entries > zh-Hans has a non-empty nativeName
+(pass) locale registry entries > zh-Hans has messages (non-empty object) [1.66ms]
+(pass) locale registry entries > zh-Hans has a dateLocale
+(pass) locale registry entries > zh-Hant has a non-empty nativeName
+(pass) locale registry entries > zh-Hant has messages (non-empty object) [0.42ms]
+(pass) locale registry entries > zh-Hant has a dateLocale
+(pass) locale registry entries > ja has a non-empty nativeName
+(pass) locale registry entries > ja has messages (non-empty object) [0.40ms]
+(pass) locale registry entries > ja has a dateLocale
+(pass) locale registry entries > de has a non-empty nativeName
+(pass) locale registry entries > de has messages (non-empty object) [0.40ms]
+(pass) locale registry entries > de has a dateLocale
+(pass) locale registry entries > hu has a non-empty nativeName
+(pass) locale registry entries > hu has messages (non-empty object) [0.41ms]
+(pass) locale registry entries > hu has a dateLocale
+(pass) locale registry entries > pl has a non-empty nativeName
+(pass) locale registry entries > pl has messages (non-empty object) [0.35ms]
+(pass) locale registry entries > pl has a dateLocale
+(pass) locale registry entries > fr has a non-empty nativeName
+(pass) locale registry entries > fr has messages (non-empty object) [0.35ms]
+(pass) locale registry entries > fr has a dateLocale
+(pass) locale registry entries > ko has a non-empty nativeName
+(pass) locale registry entries > ko has messages (non-empty object) [0.39ms]
+(pass) locale registry entries > ko has a dateLocale
+(pass) locale registry entries > ar has a non-empty nativeName
+(pass) locale registry entries > ar has messages (non-empty object) [0.37ms]
+(pass) locale registry entries > ar has a dateLocale
+(pass) derived exports > SUPPORTED_LANGUAGE_CODES contains exactly the approved codes [0.07ms]
+(pass) derived exports > SUPPORTED_LANGUAGE_CODES matches registry keys [0.05ms]
+(pass) derived exports > LANGUAGES has an entry for every supported code [0.08ms]
+(pass) derived exports > LANGUAGES nativeNames match registry [0.06ms]
+(pass) getDateLocale > en resolves to English (US) [0.05ms]
+(pass) getDateLocale > ru resolves to Russian [0.01ms]
+(pass) getDateLocale > es resolves to Spanish
+(pass) getDateLocale > zh-Hans resolves to Simplified Chinese [0.01ms]
+(pass) getDateLocale > ja resolves to Japanese [0.02ms]
+(pass) getDateLocale > de resolves to German
+(pass) getDateLocale > ko resolves to Korean [0.02ms]
+(pass) getDateLocale > ar resolves to Arabic
+(pass) getDateLocale > unknown locale falls back to English
+
+ 109 pass
+ 0 fail
+ 143 expect() calls
+Ran 109 tests across 2 files. [864.00ms]

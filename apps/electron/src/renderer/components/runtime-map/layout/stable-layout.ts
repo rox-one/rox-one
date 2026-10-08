@@ -41,6 +41,27 @@ export function layoutRuntimeGraph(graph: RuntimeGraph, mode: TimelineMode = 'co
   return { positions, lanes, topologyVersion: graph.topologyVersion, comparableTime }
 }
 
+/** Explicit overview packs only the visible window; sequence within each real lane stays intact. */
+export function layoutRuntimeOverview(graph: RuntimeGraph, windowNodes: readonly RuntimeNode[], collapsed: ReadonlySet<string> = new Set()): RuntimeLayout {
+  const positions = new Map<string, RuntimePosition>()
+  const lanes = new Map<string, RuntimePosition>()
+  const sorted = windowNodes.filter(node => !collapsed.has(node.agentId)).sort((a, b) => a.seq - b.seq || a.id.localeCompare(b.id))
+  const agents = new Set(windowNodes.map(node => node.agentId))
+  let y = 44
+  const place = (agentId: string) => {
+    const members = sorted.filter(node => node.agentId === agentId)
+    members.forEach((node, index) => positions.set(node.id, { x: index * COLUMN_WIDTH, y }))
+    y += 94 // Compact 50px cards and an actual lane header fit without overlapping.
+  }
+  for (const lane of graph.lanes) if (agents.delete(lane.agentId)) {
+    lanes.set(lane.id, { x: -292 + lane.depth * 14, y })
+    place(lane.agentId)
+  }
+  // Keep observed nodes visible even if their lane metadata has not arrived yet.
+  for (const agentId of agents) place(agentId)
+  return { positions, lanes, topologyVersion: graph.topologyVersion, comparableTime: false }
+}
+
 export function nodeMatches(node: RuntimeNode, query: string, filter: string): boolean {
   if (filter === 'errors' && node.status !== 'failed' && node.status !== 'interrupted') return false
   if (filter === 'waiting' && node.status !== 'waiting-approval' && node.status !== 'queued' && node.kind !== 'approval') return false

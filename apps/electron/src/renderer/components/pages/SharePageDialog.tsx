@@ -18,6 +18,7 @@ import { Info_Alert } from '@/components/info'
 import type { LoadedPage, PageActionGrant } from '@rox/shared/pages/types'
 import { isPageGrantUsable } from '@rox/shared/pages/types'
 import { describeGrantAction, useGrantRemoval } from './grant-visuals'
+import { toErrorMessage } from '@/lib/errors'
 
 /**
  * Share dialog: publish / republish / password management / unpublish.
@@ -42,7 +43,7 @@ const PAGE_PASSWORD_MIN_LENGTH = 8
  * meant for people — strip the code before showing the message in the UI.
  */
 function displayShareError(err: unknown): string {
-  const raw = err instanceof Error ? err.message : String(err)
+  const raw = toErrorMessage(err)
   return raw.replace(/^PAGE_[A-Z0-9_]+:\s*/, '')
 }
 

@@ -60,5 +60,82 @@ describe('actual navigator loader availability gate',()=>{
   it('an obsolete connection-list continuation does not start a probe or local/private reads',async()=>{
     const connections=deferred<Array<{id:string}>>();let current=true,reads=0;const input=api({listConnections:()=>connections.promise,engineStatus:async()=>{reads++;return{running:true}},viewsList:async()=>{reads++;return[]},envelopeList:async()=>{reads++;return[]}});const pending=loadKnowledgeNavigatorData(input,{workspaceId:'A',probeKernel:true,isCurrent:()=>current});current=false;connections.resolve([{id:'one'}]);await pending;expect(reads).toBe(0)
   })
+})
 
+/** Branch suite (preserved): the tab-switch fast path skips kernel RPCs. */
+const never = new Promise<never>(() => {})
+
+describe('loadKnowledgeNavigatorData skipKernelReads', () => {
+  function slowKernelApi(): KnowledgeNavigatorApi & { kernelCalls: number } {
+    let kernelCalls = 0
+    const api: KnowledgeNavigatorApi & { kernelCalls: number } = {
+      kernelCalls: 0,
+      async listConnections() {
+        return [{ id: 'conn-1' }]
+      },
+      async listNotebooks() {
+        kernelCalls += 1
+        api.kernelCalls = kernelCalls
+        return never
+      },
+      async viewsList() {
+        return []
+      },
+      async envelopeList() {
+        return [
+          {
+            knowledgeRef: { scheme: 'siyuan', kind: 'document', id: 'doc-1' },
+            createdAt: 100,
+            updatedAt: 300,
+          },
+          {
+            knowledgeRef: { scheme: 'siyuan', kind: 'document', id: 'doc-2' },
+            createdAt: 100,
+            updatedAt: 200,
+          },
+        ]
+      },
+      async get() {
+        kernelCalls += 1
+        api.kernelCalls = kernelCalls
+        return never
+      },
+    }
+    return api
+  }
+
+  it('resolves fast with unavailable notebooks and zero kernel RPCs', async () => {
+    const api = slowKernelApi()
+    const started = Date.now()
+    const data = await loadKnowledgeNavigatorData(api, { skipKernelReads: true })
+    const elapsed = Date.now() - started
+    expect(data.notebooks).toEqual({ status: 'unavailable', items: [] })
+    expect(api.kernelCalls).toBe(0)
+    expect(elapsed).toBeLessThan(5_000)
+    // Local stores still load: envelopes render without kernel title lookups.
+    expect(data.recent).toHaveLength(2)
+    expect(data.recent[0]?.envelope.knowledgeRef.id).toBe('doc-1')
+    expect(data.recent[0]?.title).toBeUndefined()
+    expect(data.favorites).toHaveLength(0)
+  })
+
+  it('still hits the kernel when not skipping (documents the old cost)', async () => {
+    const api: KnowledgeNavigatorApi = {
+      async listConnections() {
+        return [{ id: 'conn-1' }]
+      },
+      async listNotebooks() {
+        return [{ id: 'nb-1', name: 'Research', icon: '', closed: false }]
+      },
+      async viewsList() {
+        return []
+      },
+      async envelopeList() {
+        return []
+      },
+    }
+    const data = await loadKnowledgeNavigatorData(api)
+    expect(data.notebooks.status).toBe('ok')
+    expect(data.notebooks.items).toHaveLength(1)
+  })
 })

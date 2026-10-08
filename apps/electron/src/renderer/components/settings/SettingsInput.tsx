@@ -9,10 +9,10 @@ import * as React from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 import { settingsUI } from './SettingsUIConstants'
+import { settingsDescriptionIds, useSettingsFieldDescription } from './SettingsFieldContext'
 
 export interface SettingsInputProps {
   /** Input label */
@@ -69,7 +69,11 @@ export function SettingsInput({
   onBlur,
   onKeyDown,
 }: SettingsInputProps) {
+  const { t } = useTranslation()
+  const field = useSettingsFieldDescription()
   const id = React.useId()
+  const descriptionId = description ? `${id}-description` : undefined
+  const errorId = error ? `${id}-error` : undefined
   const [showPassword, setShowPassword] = React.useState(false)
   const isPassword = type === 'password'
   const inputType = isPassword && showPassword ? 'text' : type
@@ -78,23 +82,24 @@ export function SettingsInput({
     <div
       className={cn(
         'space-y-2',
-        inCard && 'px-4 py-3.5',
+        inCard && settingsUI.rowPadding,
         className
       )}
     >
-      {label && (
+      {(label || description) && (
         <div className={settingsUI.labelGroup}>
-          <Label htmlFor={id} className={settingsUI.label}>
+          {label && <Label htmlFor={id} className={settingsUI.label}>
             {label}
-          </Label>
+          </Label>}
           {description && (
-            <p className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
+            <p id={descriptionId} className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
           )}
         </div>
       )}
       <div className="flex gap-2">
         <div className={cn(
-          'relative flex-1 rounded-md shadow-minimal has-[:focus-visible]:bg-background',
+          settingsUI.fieldFrame,
+          'flex-1',
           error && 'ring-1 ring-destructive'
         )}>
           <Input
@@ -104,19 +109,24 @@ export function SettingsInput({
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             disabled={disabled}
+            aria-labelledby={label ? undefined : field.labelId}
+            aria-describedby={settingsDescriptionIds(descriptionId ?? field.descriptionId, errorId)}
+            aria-invalid={error ? true : undefined}
             onBlur={onBlur}
             onKeyDown={onKeyDown}
             className={cn(
-              'bg-muted/50 border-0 shadow-none focus-visible:ring-0 focus-visible:outline-none focus-visible:bg-transparent',
-              isPassword && 'pr-10'
+              'shadow-none',
+              isPassword && 'pr-12'
             )}
           />
           {isPassword && (
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              tabIndex={-1}
+              disabled={disabled}
+              aria-label={t(showPassword ? 'settings.fields.hideValue' : 'settings.fields.showValue')}
+              aria-controls={id}
+              className="rox-control absolute right-1 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
             >
               {showPassword ? (
                 <EyeOff className="size-4" />
@@ -128,7 +138,7 @@ export function SettingsInput({
         </div>
         {action}
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p id={errorId} role="alert" className="text-sm text-destructive">{error}</p>}
     </div>
   )
 }
@@ -174,13 +184,15 @@ export function SettingsInputRow({
   inCard = true,
 }: SettingsInputRowProps) {
   const id = React.useId()
+  const descriptionId = description ? `${id}-description` : undefined
+  const errorId = error ? `${id}-error` : undefined
 
   return (
     <div
       data-layout="settings-row"
       className={cn(
-        'flex items-center justify-between',
-        inCard ? 'px-4 py-3.5' : 'py-3',
+        settingsUI.row,
+        inCard ? settingsUI.rowPadding : settingsUI.rowPaddingStandalone,
         className
       )}
     >
@@ -189,12 +201,13 @@ export function SettingsInputRow({
           {label}
         </Label>
         {description && (
-          <p className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
+          <p id={descriptionId} className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
         )}
-        {error && <p className={cn('text-sm text-destructive', settingsUI.labelDescriptionGap)}>{error}</p>}
+        {error && <p id={errorId} role="alert" className={cn('text-sm text-destructive', settingsUI.labelDescriptionGap)}>{error}</p>}
       </div>
       <div data-layout="settings-control" className={cn(
-        'ml-4 shrink-0 rounded-md shadow-minimal has-[:focus-visible]:bg-background',
+        settingsUI.fieldFrame,
+        'shrink-0',
         error && 'ring-1 ring-destructive'
       )}>
         <Input
@@ -204,7 +217,9 @@ export function SettingsInputRow({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
-          className="w-[200px] bg-muted/50 border-0 shadow-none focus-visible:ring-0 focus-visible:outline-none focus-visible:bg-transparent"
+          aria-describedby={settingsDescriptionIds(descriptionId, errorId)}
+          aria-invalid={error ? true : undefined}
+          className="w-[200px] shadow-none"
         />
       </div>
     </div>
@@ -252,7 +267,10 @@ export function SettingsSecretInput({
   onBlur,
 }: SettingsSecretInputProps) {
   const { t } = useTranslation()
+  const field = useSettingsFieldDescription()
   const id = React.useId()
+  const descriptionId = description ? `${id}-description` : undefined
+  const errorId = error ? `${id}-error` : undefined
   const resolvedPlaceholder = placeholder ?? t('common.enterValue')
   const [showValue, setShowValue] = React.useState(false)
 
@@ -260,22 +278,22 @@ export function SettingsSecretInput({
     <div
       className={cn(
         'space-y-2',
-        inCard && 'px-4 py-3.5',
+        inCard && settingsUI.rowPadding,
         className
       )}
     >
-      {label && (
+      {(label || description) && (
         <div className={settingsUI.labelGroup}>
-          <Label htmlFor={id} className={settingsUI.label}>
+          {label && <Label htmlFor={id} className={settingsUI.label}>
             {label}
-          </Label>
+          </Label>}
           {description && (
-            <p className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
+            <p id={descriptionId} className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
           )}
         </div>
       )}
       <div className={cn(
-        'relative rounded-md shadow-minimal bg-muted/50 has-[:focus-visible]:bg-background',
+        settingsUI.fieldFrame,
         error && 'ring-1 ring-destructive'
       )}>
         <Input
@@ -285,14 +303,19 @@ export function SettingsSecretInput({
           onChange={(e) => onChange(e.target.value)}
           placeholder={resolvedPlaceholder}
           disabled={disabled}
+          aria-labelledby={label ? undefined : field.labelId}
+          aria-describedby={settingsDescriptionIds(descriptionId ?? field.descriptionId, errorId)}
+          aria-invalid={error ? true : undefined}
           onBlur={onBlur}
-          className="pr-10 bg-transparent border-0 shadow-none focus-visible:ring-0 focus-visible:outline-none"
+          className="pr-12 shadow-none"
         />
         <button
           type="button"
           onClick={() => setShowValue(!showValue)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-          tabIndex={-1}
+          disabled={disabled}
+          aria-label={t(showValue ? 'settings.fields.hideValue' : 'settings.fields.showValue')}
+          aria-controls={id}
+          className="rox-control absolute right-1 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
         >
           {showValue ? (
             <EyeOff className="size-4" />
@@ -301,7 +324,7 @@ export function SettingsSecretInput({
           )}
         </button>
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p id={errorId} role="alert" className="text-sm text-destructive">{error}</p>}
     </div>
   )
 }

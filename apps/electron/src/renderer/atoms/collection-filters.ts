@@ -36,9 +36,57 @@ function cloneFiltersMap(
 
 /** Navigator filter key whose chips `collectionFiltersAtom` exposes. */
 export const collectionFilterKeyAtom = atom<string>('allSessions')
-
 /** Workspace-scoped per-key filters map (empty until loaded). */
 export const collectionFiltersMapAtom = atom<Record<string, CollectionFilters>>({})
+
+function stringArraysEqual(a?: string[], b?: string[]): boolean {
+  if (a === b) return true
+  if (!a || !b || a.length !== b.length) return false
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false
+  }
+  return true
+}
+
+/**
+ * Content equality for one key's chips. Missing and empty dimensions compare
+ * equal only when both are absent/empty in the same way the normalizer
+ * treats them (empty arrays are dropped on persist, so `[]` ≡ `undefined`).
+ */
+export function areCollectionFiltersEqual(a: CollectionFilters, b: CollectionFilters): boolean {
+  const norm = (v?: string[]) => (v && v.length > 0 ? v : undefined)
+  if (!stringArraysEqual(norm(a.status), norm(b.status))) return false
+  if (!stringArraysEqual(norm(a.priority), norm(b.priority))) return false
+  if (!stringArraysEqual(norm(a.projectId), norm(b.projectId))) return false
+  if (!stringArraysEqual(norm(a.labels), norm(b.labels))) return false
+  if (!stringArraysEqual(norm(a.model), norm(b.model))) return false
+  if (!stringArraysEqual(norm(a.agentFamily), norm(b.agentFamily))) return false
+  if ((a.flagged ?? undefined) !== (b.flagged ?? undefined)) return false
+  if ((a.hasUnread ?? undefined) !== (b.hasUnread ?? undefined)) return false
+  const da = a.due
+  const db = b.due
+  if (da === db) return true
+  if (!da || !db || da.type !== db.type) return false
+  if (da.type === 'next_n_days' && db.type === 'next_n_days') return da.days === db.days
+  if (da.type === 'range' && db.type === 'range') return da.start === db.start && da.end === db.end
+  return true
+}
+
+/** Content equality for whole per-key maps (key set + per-key chips). */
+export function areCollectionFiltersMapsEqual(
+  a: Record<string, CollectionFilters>,
+  b: Record<string, CollectionFilters>,
+): boolean {
+  const aKeys = Object.keys(a)
+  const bKeys = Object.keys(b)
+  if (aKeys.length !== bKeys.length) return false
+  for (const key of aKeys) {
+    const av = a[key]
+    const bv = b[key]
+    if (!bv || !areCollectionFiltersEqual(av ?? {}, bv)) return false
+  }
+  return true
+}
 
 /** True while a workspace filters load is in flight. */
 export const collectionFiltersLoadingAtom = atom(false)
@@ -84,6 +132,14 @@ export const collectionFiltersAtom = atom(
     const prevMap = get(collectionFiltersMapAtom)
     const prev = prevMap[key] ?? EMPTY_COLLECTION_FILTERS
     const next = typeof update === 'function' ? update(prev) : update
+    // No-op guard: persisting content-identical chips costs a disk write, a
+    // cross-window broadcast, and a fresh-identity re-render cascade in every
+    // collection consumer. Skip all three when nothing changed (e.g. rail
+    // navigation re-applying the stored chips for a key, or a double-fired
+    // toggle with an identical payload).
+    if (areCollectionFiltersEqual(prev, next ?? {})) {
+      return prev
+    }
     const nextMap = { ...prevMap, [key]: next }
     set(collectionFiltersMapAtom, nextMap)
 
@@ -102,7 +158,11 @@ export const collectionFiltersAtom = atom(
         if (
           collectionFiltersUpdateVersions.get(workspaceId) === version &&
           get(collectionFiltersLoadRevisionAtom) === revision &&
-          (activeWorkspaceId == null || activeWorkspaceId === workspaceId)
+          (activeWorkspaceId == null || activeWorkspaceId === workspaceId) &&
+          // The server echoes normalized content back; applying it with fresh
+          // identities re-renders every consumer even when nothing changed.
+          // Skip the write when the echo matches what is already stored.
+          !areCollectionFiltersMapsEqual(get(collectionFiltersMapAtom), saved)
         ) {
           set(collectionFiltersMapAtom, cloneFiltersMap(saved))
         }
