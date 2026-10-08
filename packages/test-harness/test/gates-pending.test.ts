@@ -47,3 +47,23 @@ describe('gates with missing sibling inputs', () => {
     }
   })
 })
+
+describe('runAllGates', () => {
+  test('awaits the async catalogue gates and can run a subset (--only)', async () => {
+    const { runAllGates } = await import('../src/gates/run-all.ts')
+    const res = await runAllGates({ repoRoot: emptyRoot, only: ['risk-class', 'negative-tests'], env: {} })
+    expect(res.map((r) => [r.gate, r.status])).toEqual([
+      ['risk-class', 'pending'],
+      ['negative-tests', 'pending'],
+    ])
+    await expect(runAllGates({ repoRoot: emptyRoot, only: ['no-such-gate'] })).rejects.toThrow('unknown gate')
+  })
+  test('perf-microbench reads ROX_BENCH_RUNS; a bad value fails the gate instead of crashing the run', async () => {
+    const { runAllGates } = await import('../src/gates/run-all.ts')
+    const [bad] = await runAllGates({ only: ['perf-microbench'], env: { ROX_BENCH_RUNS: '0' } })
+    expect(bad!.status).toBe('fail')
+    expect(bad!.violations?.join(' ')).toContain('ROX_BENCH_RUNS')
+    const [ok] = await runAllGates({ only: ['perf-microbench'], env: { ROX_BENCH_RUNS: '2' } })
+    expect(ok!.summary).toContain('median of 2 run medians')
+  })
+})

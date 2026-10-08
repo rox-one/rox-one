@@ -9,10 +9,21 @@
  *
  * It does not run the harness self-tests; CI runs `bun test
  * packages/test-harness` as a separate step before this script.
+ *
+ * `--only <gate>[,<gate>…]` runs a subset (bench-strict.yml runs
+ * `--only perf-microbench` with ROX_BENCH_STRICT=1 ROX_BENCH_RUNS=3).
  */
 import { runAllGates, gatesExitCode, formatGateResults } from '../packages/test-harness/src/gates/run-all.ts'
 
-const results = await runAllGates()
+function parseOnly(argv: string[]): string[] | undefined {
+  const i = argv.indexOf('--only')
+  if (i === -1) return undefined
+  const value = argv[i + 1]
+  if (!value || value.startsWith('--')) throw new Error('--only needs a comma-separated gate list')
+  return value.split(',').map((g) => g.trim()).filter(Boolean)
+}
+
+const results = await runAllGates({ only: parseOnly(process.argv.slice(2)) })
 console.log(formatGateResults(results))
 const count = (status: string) => results.filter((r) => r.status === status).length
 for (const r of results) for (const v of r.violations ?? []) console.log(`  - ${r.gate}: ${v}`)
