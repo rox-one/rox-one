@@ -232,6 +232,25 @@ describe('quick panels are Messenger-only (UI-SPEC §15)', () => {
     disconnect()
   })
 
+  it('messengerActive is lazy: not computed unless a when-clause reads it, then memoised', () => {
+    const provider = createStore()
+    const disconnect = connectShellStore(provider)
+    provider.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), true)
+    seedPanels(provider, 'n')
+    const kb = snapshotKeybindingContext()
+    // Baseline bindings never read it (flags-off keydown cost = main).
+    expect(evaluateWhen('!inputFocus', kb)).toBe(true)
+    expect(evaluateWhen(undefined, kb)).toBe(true)
+    // Focus moves to Messenger AFTER the snapshot: a lazy getter sees it.
+    seedPanels(provider, 'm')
+    expect(evaluateWhen('messengerActive', kb)).toBe(true)
+    // …and memoises it for the rest of this keydown.
+    seedPanels(provider, 'n')
+    expect(kb.messengerActive).toBe(true)
+    expect(Object.keys(kb)).toContain('messengerActive')
+    disconnect()
+  })
+
   it('the omnibox context provider exposes messengerActive for its store', () => {
     setUnifiedSurfaceRoutesEnabled(['messenger'])
     const store = createStore()
