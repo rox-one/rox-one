@@ -10,7 +10,7 @@
  * byte-identical to before (W1-09 acceptance).
  */
 
-import type { NotificationKind, ReviewAction, ReviewGroup } from '@rox/core/notify'
+import { tryNotificationKindDescriptor, type NotificationKind, type ReviewAction, type ReviewGroup } from '@rox/core/notify'
 import { formatEntityRef, isEntityKind, type EntityRef } from '@rox/core/entities'
 import type { TeamInboxItem } from '@rox/shared/team'
 
@@ -323,28 +323,23 @@ export function buildInboxItems(src: InboxSources): InboxItem[] {
     const kind = inboxKindForNotification(notification.kind)
     if (!enabled.has(kind)) continue
     const entity = entityRefOf(notification.entity)
-    const id = `notif:${notification.id}`
+    // The kind descriptor owns the Review group and the row action (UI-SPEC §12).
+    const descriptor = tryNotificationKindDescriptor(notification.kind)
     items.push({
-      id, kind, group: kind === 'review' ? 'decision' : 'message',
+      id: `notif:${notification.id}`, kind, group: kind === 'review' ? 'decision' : 'message',
       blocking: notification.kind === 'approval_request',
       title: entity ? formatEntityRef(entity) : notification.kind,
       source: entity?.kind ?? notification.kind,
       at: notification.at, data: notification,
       ...(entity ? { entity } : {}),
-      ...(kind === 'review' ? { reviewGroup: reviewGroupFor(notification.kind) } : {}),
+      ...(kind === 'review' && descriptor?.reviewGroup ? { reviewGroup: descriptor.reviewGroup } : {}),
+      ...(kind === 'review' && descriptor?.primaryAction ? { action: descriptor.primaryAction } : {}),
     })
   }
   return sortInbox(items)
 }
 
 const EMPTY_KIND_SET: ReadonlySet<InboxActivityKind> = new Set()
-
-/** The Review group a review-surface kind belongs to (UI-SPEC §12). */
-function reviewGroupFor(kind: NotificationKind): ReviewGroup {
-  if (kind === 'approval_request') return 'needs_approval'
-  if (kind === 'check_in_submitted' || kind === 'retrospective') return 'needs_review'
-  return 'due_soon'
-}
 
 /** Decisions first (blocking ones oldest-first: longest wait on top), then messages newest-first. */
 export function sortInbox(items: readonly InboxItem[]): InboxItem[] {

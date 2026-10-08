@@ -16,7 +16,6 @@ import { notificationReadRequestSchema } from '../../../../../packages/shared/sr
 import type { VerifiedActorSession } from '../../auth/verified-actor.ts'
 import { requireActor, requireUuid } from '../identity/commands.ts'
 import { HttpFailure, bearer, defineRoute, jsonBody, query, readBody, send, type WorkspaceRouteContext } from '../../routing.ts'
-import type { WorkspaceNotifyHttpAuthority } from './service.ts'
 
 /** Default page size of the Inbox list (the routing query grammar caps it at 100). */
 export const NOTIFY_DEFAULT_LIMIT = 50

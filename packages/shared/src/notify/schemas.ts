@@ -15,7 +15,6 @@ import {
   NOTIFICATION_CHANNELS,
   NOTIFICATION_EMAIL_STATES,
   NOTIFICATION_KINDS,
-  NOTIFICATION_SCHEMA_VERSION,
   isNotificationChannel,
   isNotificationKind,
   type NotificationEmailBatchRow,
@@ -166,6 +165,3 @@ export type NotificationReadPush = z.infer<typeof notificationReadPushSchema>
 export type NotificationReadRequest = z.infer<typeof notificationReadRequestSchema>
 export type NotificationListResultPayload = z.infer<typeof notificationListResultSchema>
 export type NotificationReadResultPayload = z.infer<typeof notificationReadResultSchema>
-
-/** The schema version a freshly parsed row must carry. */
-export const EXPECTED_NOTIFICATION_SCHEMA_VERSION = NOTIFICATION_SCHEMA_VERSION
