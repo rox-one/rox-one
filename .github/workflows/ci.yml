@@ -70,5 +70,23 @@ jobs:
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
       - run: bun test packages/test-harness
       - run: bun test apps/workspace-service/test e2e/unified
+      # On push (main) the default base, origin/main, IS HEAD: provenance would
+      # scan 0 files and the shrink-only allowlists would compare with
+      # themselves (#1507 review 3). Diff the pushed range instead: the
+      # pre-push tip github.event.before, or HEAD~1 when it is the all-zero
+      # SHA (new branch). A before SHA missing from the clone (force push)
+      # makes the checks fail closed. PRs keep origin/$GITHUB_BASE_REF.
+      - name: Provenance and allowlist base for push events
+        if: github.event_name == 'push'
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            BASE="$(git rev-parse HEAD~1)"
+          else
+            BASE="$BEFORE"
+          fi
+          echo "ROX_PROVENANCE_BASE=$BASE" >> "$GITHUB_ENV"
+          echo "provenance / allowlist base: $BASE"
       - run: bun run scripts/check-provenance.ts
       - run: bun run scripts/run-unified-gates.ts
