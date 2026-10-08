@@ -28,7 +28,7 @@ describe('micro-benchmarks', () => {
   })
   test('benches are labelled: resolve times real @rox/core code, work-map / list-view are synthetic until product code exists', () => {
     const kinds = Object.fromEntries(runMicroBenchmarks({ warmup: 0, samples: 1 }).map((r) => [r.name, r.kind]))
-    expect(kinds).toEqual({ resolve: 'real', 'work-map': 'synthetic', 'list-view': 'synthetic' })
+    expect(kinds).toEqual({ resolve: 'codec-only', 'work-map': 'synthetic', 'list-view': 'synthetic' })
   })
   test('an injected real implementation is timed and flips the label to real', () => {
     let calls = 0
@@ -78,6 +78,9 @@ describe('perf gate', () => {
     expect(res.summary).toContain('work-map[synthetic]=1.00ms/<300ms')
     expect(res.summary).toContain('median of 3 run medians (1 samples/run)')
     expect(res.summary).toContain('synthetic (no product code yet): work-map')
+    const codec = perfGate([{ ...over[0]!, kind: 'codec-only', measuredMs: 1, pass: true }], {})
+    expect(codec.summary).toContain('resolve[codec-only]=1.00ms/<40ms')
+    expect(codec.summary).toContain('codec-only (part of the budgeted path): resolve')
     expect(perfGate([], {}).status).toBe('fail')
   })
 })

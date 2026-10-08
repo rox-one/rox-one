@@ -118,14 +118,21 @@ Budgets (TECH-SPEC §7): batch resolve of 100 refs < 40 ms, Work Map 1,000 rows
 timed samples, and takes the median. `ROX_BENCH_RUNS=N` repeats the whole
 measurement and reports the median of the N run medians.
 
-Every result is labelled `real` (times product code) or `synthetic` (a
+Every result is labelled `real` (the product path the budget names),
+`codec-only` (product code, but only part of that path) or `synthetic` (a
 stand-in shaped like it), and the gate summary shows the label:
 
-- `resolve`: **real**, the `@rox/core/entities` ref codec;
+- `resolve`: **codec-only**, the `@rox/core/entities` ref parse/format over
+  100 refs; it does not time the batch resolve (lookup + ACL) the 40 ms budget
+  refers to;
 - `work-map`, `list-view`: **synthetic** until wave 2 lands the work-map
-  projection and the task list filter. Wire them through
-  `runMicroBenchmarks({ implementations: { 'work-map': fn } })`, which flips the
-  label to `real`.
+  projection and the task list filter.
+
+`runMicroBenchmarks({ implementations: { 'work-map': fn } })` times real code
+and labels it `real`, but the CI runner (`runAllGates` in
+`src/gates/run-all.ts`) passes no implementations today. **Wiring a wave-2
+implementation into CI needs a change in `run-all.ts`** (import it and pass it
+to `runMicroBenchmarks`); until then strict CI keeps timing the stand-ins.
 
 On PRs the gate is report-only (`warn` when over budget). Strict mode
 (`ROX_BENCH_STRICT=1`, over budget = `fail`) runs in

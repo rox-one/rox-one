@@ -77,7 +77,9 @@ export async function runAllGates(
  * report-only (`warn`) unless ROX_BENCH_STRICT=1, which makes them fail.
  * Strict mode runs on push to main and nightly (bench-strict.yml) with
  * ROX_BENCH_RUNS=3, i.e. the median of 3 run medians. Every bench is
- * labelled `real` or `synthetic` in the summary (see bench.ts).
+ * labelled `real`, `codec-only` or `synthetic` in the summary (see bench.ts).
+ * Note: runAllGates passes no `implementations`, so wiring a wave-2 product
+ * implementation into this gate requires changing the runner above.
  */
 export function perfGate(bench: MicroBenchResult[], env: Record<string, string | undefined> = process.env): GateResult {
   const gate = 'perf-microbench'
@@ -89,8 +91,10 @@ export function perfGate(bench: MicroBenchResult[], env: Record<string, string |
   const runs = first.runMediansMs.length
   const perRun = runs > 0 ? first.samplesMs.length / runs : 0
   const synthetic = bench.filter((b) => b.kind === 'synthetic').map((b) => b.name)
+  const codecOnly = bench.filter((b) => b.kind === 'codec-only').map((b) => b.name)
   const basis =
     `${runs > 1 ? `median of ${runs} run medians` : 'median'} (${perRun} samples/run)` +
+    (codecOnly.length > 0 ? `; codec-only (part of the budgeted path): ${codecOnly.join(', ')}` : '') +
     (synthetic.length > 0 ? `; synthetic (no product code yet): ${synthetic.join(', ')}` : '')
   if (over.length === 0) return { gate, status: 'pass', summary: `${basis}: ${line}` }
   return {

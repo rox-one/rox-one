@@ -5,15 +5,22 @@
  * Work Map with 1,000 rows first paint < 300 ms, task list filter over
  * 10k items < 50 ms.
  *
- * Real vs synthetic (owner decision, #1507 review 2): a bench times the
- * real product code where it exists, otherwise it is labelled `synthetic`
- * in the result and in the perf-gate summary, so nobody reads a synthetic
- * number as a product measurement.
- *   - `resolve`   — real: entity ref parse/format from `@rox/core/entities`.
+ * Labels (owner decision, #1507 review 2; refined in review 3): every result
+ * says what it timed, in the result and in the perf-gate summary, so nobody
+ * reads a stand-in number as a product measurement.
+ *   - `real`       — the product code path the budget refers to;
+ *   - `codec-only` — product code, but only part of the budgeted path;
+ *   - `synthetic`  — a stand-in shaped like the workload.
+ * Current benches:
+ *   - `resolve`   — codec-only: the `@rox/core/entities` ref parse/format over
+ *     100 refs, NOT the batch resolve (lookup + ACL) the 40 ms budget names;
  *   - `work-map`  — synthetic until the wave-2 work-map projection lands;
  *   - `list-view` — synthetic until the wave-2 task list filter lands.
- * Wave 2 wires the real code through `MicroBenchOptions.implementations`
- * (each entry flips that bench to `real`); no harness change is needed.
+ * `MicroBenchOptions.implementations` swaps in real code (each entry makes
+ * that bench `real`), but the only production caller, `perfGate(runMicro
+ * Benchmarks(…))` in gates/run-all.ts, passes none today: wiring a wave-2
+ * implementation into CI needs a change there (import the module and pass
+ * it in `implementations`). Until then CI keeps timing the stand-ins.
  *
  * Each bench runs `warmup` untimed iterations, then `samples` timed ones,
  * and takes the median. `runs` (ROX_BENCH_RUNS, default 1) repeats that
@@ -31,11 +38,11 @@ export const MICRO_BENCH_BUDGETS = {
 } as const
 
 export type MicroBenchName = 'resolve' | 'work-map' | 'list-view'
-export type MicroBenchKind = 'real' | 'synthetic'
+export type MicroBenchKind = 'real' | 'codec-only' | 'synthetic'
 
 export interface MicroBenchResult {
   name: MicroBenchName
-  /** `real` times product code; `synthetic` times a stand-in shaped like it. */
+  /** `real` times the budgeted product path; `codec-only` part of it; `synthetic` a stand-in shaped like it. */
   kind: MicroBenchKind
   /** Median of the per-run medians (the plain median when runs = 1). */
   measuredMs: number
@@ -106,7 +113,7 @@ function measure(work: BenchWork, opts: MicroBenchOptions): Pick<MicroBenchResul
 
 const RESOLVE_REFS = Array.from({ length: 100 }, (_, i) => `task:seed-${i}`)
 
-/** Real: the `@rox/core/entities` ref codec over a batch of 100 refs. */
+/** Codec-only: the `@rox/core/entities` ref codec over a batch of 100 refs (no lookup / ACL). */
 function resolveWork(): void {
   for (const raw of RESOLVE_REFS) {
     const parsed = parseEntityRef(raw)
@@ -150,22 +157,22 @@ function syntheticListFilter(): void {
 interface BenchSpec {
   name: MicroBenchName
   budgetMs: number
-  /** The real product code, or null while only a synthetic stand-in exists. */
-  real: BenchWork | null
-  synthetic: BenchWork
+  /** What runs when no implementation is injected, and its label. */
+  fallback: BenchWork
+  fallbackKind: Exclude<MicroBenchKind, 'real'>
 }
 
 const BENCHES: BenchSpec[] = [
-  { name: 'resolve', budgetMs: MICRO_BENCH_BUDGETS.resolveBatch100Ms, real: resolveWork, synthetic: resolveWork },
-  { name: 'work-map', budgetMs: MICRO_BENCH_BUDGETS.workMap1000Ms, real: null, synthetic: syntheticWorkMap },
-  { name: 'list-view', budgetMs: MICRO_BENCH_BUDGETS.listFilter10kMs, real: null, synthetic: syntheticListFilter },
+  { name: 'resolve', budgetMs: MICRO_BENCH_BUDGETS.resolveBatch100Ms, fallback: resolveWork, fallbackKind: 'codec-only' },
+  { name: 'work-map', budgetMs: MICRO_BENCH_BUDGETS.workMap1000Ms, fallback: syntheticWorkMap, fallbackKind: 'synthetic' },
+  { name: 'list-view', budgetMs: MICRO_BENCH_BUDGETS.listFilter10kMs, fallback: syntheticListFilter, fallbackKind: 'synthetic' },
 ]
 
 export function runMicroBenchmarks(opts: MicroBenchOptions = {}): MicroBenchResult[] {
   return BENCHES.map((spec) => {
-    const work = opts.implementations?.[spec.name] ?? spec.real
-    const kind: MicroBenchKind = work ? 'real' : 'synthetic'
-    const m = measure(work ?? spec.synthetic, opts)
+    const injected = opts.implementations?.[spec.name]
+    const kind: MicroBenchKind = injected ? 'real' : spec.fallbackKind
+    const m = measure(injected ?? spec.fallback, opts)
     return { name: spec.name, kind, ...m, budgetMs: spec.budgetMs, pass: m.measuredMs < spec.budgetMs }
   })
 }
