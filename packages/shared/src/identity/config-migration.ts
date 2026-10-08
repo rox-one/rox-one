@@ -449,7 +449,10 @@ export function visibleHomeManifestsEqual(
   const key = (entry: VisibleHomeManifestEntry): string =>
     `${entry.kind}:${entry.path}:${entry.size ?? ''}:${entry.sha256 ?? ''}:${entry.link ?? ''}`
   if (before.length !== after.length) return false
-  return before.every((entry, index) => key(entry) === key(after[index]))
+  return before.every((entry, index) => {
+    const other = after[index]
+    return other !== undefined && key(entry) === key(other)
+  })
 }
 
 function _ensurePrivateDir(path: string): void {
