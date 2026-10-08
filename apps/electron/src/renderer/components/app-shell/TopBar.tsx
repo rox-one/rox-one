@@ -372,7 +372,7 @@ export function TopBar({
           onOpenStoredUserPreferences={onOpenStoredUserPreferences}
           onToggleSidebar={onToggleSidebar}
           onToggleFocusMode={onToggleFocusMode}
-onToggleInspector={onToggleInspector}
+          onToggleInspector={onToggleInspector}
           onToggleChatPictureInPicture={onToggleChatPictureInPicture}
         />}
         {isCompact && (

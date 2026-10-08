@@ -44,7 +44,7 @@ export interface ParsedRoute {
 // Compound Route Types (new format)
 // =============================================================================
 
-export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'search' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home'
+export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'search' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'learning' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home'
   // Extra workbench screens («Ещё»): one navigator, screen id in `screen`
   | 'screen'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
@@ -84,7 +84,7 @@ export interface ParsedCompoundRoute {
  * handler so `rox://search?q=...` is accepted like renderer navigation.
  */
 export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
-  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home',
+  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'learning', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home',
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
   ...EXTRA_SCREEN_IDS,
 ]
@@ -251,6 +251,12 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
   if (first === 'memory') {
     if (segments.length !== 1) return null
     return { navigator: 'memory', details: null }
+  }
+
+  // Learning navigator (self-learning dashboard — PRD §25-30)
+  if (first === 'learning') {
+    if (segments.length !== 1) return null
+    return { navigator: 'learning', details: null }
   }
 
   // Personal tasks (Things-style; Issue 17)
@@ -593,6 +599,10 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return 'memory'
   }
 
+  if (parsed.navigator === 'learning') {
+    return 'learning'
+  }
+
   if (parsed.navigator === 'tasks') {
     if (!parsed.details) return 'tasks'
     return `tasks/task/${encodeURIComponent(parsed.details.id)}`
@@ -818,6 +828,11 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
   // Memory
   if (compound.navigator === 'memory') {
     return { type: 'view', name: 'memory', params: {} }
+  }
+
+  // Learning
+  if (compound.navigator === 'learning') {
+    return { type: 'view', name: 'learning', params: {} }
   }
 
   if (compound.navigator === 'tasks') {
@@ -1100,6 +1115,11 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     return { navigator: 'memory', details: null }
   }
 
+  // Learning
+  if (compound.navigator === 'learning') {
+    return { navigator: 'learning', details: null }
+  }
+
   if (compound.navigator === 'tasks') {
     if (!compound.details) {
       return { navigator: 'tasks', details: null }
@@ -1331,6 +1351,8 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       return { navigator: 'skills', details: null }
     case 'memory':
       return { navigator: 'memory', details: null }
+    case 'learning':
+      return { navigator: 'learning', details: null }
     case 'tasks':
       return { navigator: 'tasks', details: null }
     case 'inbox':
@@ -1573,6 +1595,13 @@ function navigationStateToCompoundRoute(state: Exclude<NavigationState, Unavaila
   if (state.navigator === 'memory') {
     return {
       navigator: 'memory',
+      details: null,
+    }
+  }
+
+  if (state.navigator === 'learning') {
+    return {
+      navigator: 'learning',
       details: null,
     }
   }

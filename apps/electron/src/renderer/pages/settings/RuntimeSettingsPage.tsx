@@ -35,6 +35,7 @@ import { DEFAULT_THINKING_LEVEL, THINKING_LEVELS } from '@rox/shared/agent/think
 import { SecretRefsSection } from './SecretRefsSection'
 import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
+import { toErrorMessage } from '@/lib/errors'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -144,7 +145,7 @@ const DETECT_ONLY_TOOLS: Record<string, true> = { docker: true, brew: true, 'cra
 
 /** Extract a displayable message from an unknown caught value. */
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
+  return toErrorMessage(error)
 }
 
 /** Format bytes as compact MB, locale-agnostic. */

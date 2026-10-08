@@ -1,30 +1,9 @@
 import type { ComponentEntry } from './types'
-import { CraftAgentsLogo } from '@/components/icons/CraftAgentsLogo'
 import { CraftAgentsSymbol } from '@/components/icons/CraftAgentsSymbol'
 import { PanelLeftRounded } from '@/components/icons/PanelLeftRounded'
 import { SquarePenRounded } from '@/components/icons/SquarePenRounded'
 
 export const iconComponents: ComponentEntry[] = [
-  {
-    id: 'craft-agents-logo',
-    name: 'CraftAgentsLogo',
-    category: 'Icons',
-    description: 'Full ROX branding logo with text',
-    component: CraftAgentsLogo,
-    props: [
-      {
-        name: 'className',
-        description: 'Tailwind classes for sizing and styling',
-        control: { type: 'string' },
-        defaultValue: 'h-8',
-      },
-    ],
-    variants: [
-      { name: 'Small', props: { className: 'h-6' } },
-      { name: 'Medium', props: { className: 'h-8' } },
-      { name: 'Large', props: { className: 'h-12' } },
-    ],
-  },
   {
     id: 'craft-agents-symbol',
     name: 'CraftAgentsSymbol',

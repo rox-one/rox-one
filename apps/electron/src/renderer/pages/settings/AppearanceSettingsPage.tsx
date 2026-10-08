@@ -17,7 +17,7 @@ import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopo
 import { useTheme } from '@/context/ThemeContext'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { routes } from '@/lib/navigate'
-import { Monitor, Sun, Moon } from 'lucide-react'
+import { Monitor, Sun, Moon, Plus, Trash2 } from 'lucide-react'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { ToolIconMapping } from '../../../shared/types'
 
@@ -29,7 +29,7 @@ import {
   SettingsMenuSelect,
   SettingsToggle,
 } from '@/components/settings'
-import { useAtom } from 'jotai'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import * as storage from '@/lib/local-storage'
 import { WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT } from '@/components/app-shell/workspace-rail'
 import { useWorkspaceIcons } from '@/hooks/useWorkspaceIcon'
@@ -37,8 +37,10 @@ import { WorkspaceAvatar } from '@/components/ui/workspace-avatar'
 import { ColorPicker } from '@/components/ui/color-picker'
 import { workspaceAvatarColorsAtom } from '@/atoms/workspace-avatar-colors'
 import { kanbanColumnColorsAtom, kanbanColumnStatusAtom, kanbanLivePulseAtom } from '@/atoms/kanban'
+import { sessionMetaMapAtom, updateSessionMetaAtom } from '@/atoms/sessions'
+import { Button } from '@/components/ui/button'
 import { showBackgroundFinishedChipAtom } from '@/atoms/background-finished'
-import { KANBAN_COLUMNS } from '@/components/app-shell/kanban/status-column'
+import { KANBAN_COLUMNS, resolveBoardColumns } from '@/components/app-shell/kanban/status-column'
 import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
 
@@ -150,6 +152,10 @@ export default function AppearanceSettingsPage() {
     themeResolvedFrom,
   } = useTheme()
   const { workspaces, sessionStatuses } = useAppShellContext()
+  // Kanban column assignment lives on session metadata; used to migrate tiles when a
+  // custom column is removed from settings (mirrors the board's own removal path).
+  const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const updateSessionMeta = useSetAtom(updateSessionMetaAtom)
 
   // Fetch workspace icons as data URLs (file:// URLs don't work in renderer)
   const workspaceIconMap = useWorkspaceIcons(workspaces)
@@ -163,8 +169,8 @@ export default function AppearanceSettingsPage() {
   // Tool icon mappings loaded from main process
   const [toolIcons, setToolIcons] = useState<ToolIconMapping[]>([])
 
-  // Resolved path to tool-icons.json (needed for EditPopover and "Edit File" action)
-  const [toolIconsJsonPath, setToolIconsJsonPath] = useState<string | null>(null)
+  // Tool icon config location resolved by main (real config dir; no renderer guessing)
+  const [toolIconsConfig, setToolIconsConfig] = useState<{ dir: string; configPath: string } | null>(null)
 
   // Connection icon visibility toggle
   const [showConnectionIcons, setShowConnectionIcons] = useState(() =>
@@ -323,6 +329,48 @@ export default function AppearanceSettingsPage() {
     ],
     [sessionStatuses, t]
   )
+
+  // Effective board columns: built-ins merged with custom columns from the workspace config.
+  const boardColumns = useMemo(() => resolveBoardColumns(kanbanBoardConfig), [kanbanBoardConfig])
+
+  const addKanbanColumn = useCallback(() => {
+    const base = kanbanBoardConfigRef.current ?? getDefaultKanbanBoardConfig()
+    void persistKanbanConfig({
+      ...base,
+      columns: [
+        ...base.columns,
+        {
+          id: `col-${crypto.randomUUID().slice(0, 8)}`,
+          label: t('kanban.column.newColumnName'),
+          isBuiltIn: false,
+          promptEnabled: false,
+          prompt: '',
+        },
+      ],
+    })
+  }, [persistKanbanConfig, t])
+
+  const removeKanbanColumn = useCallback(
+    (columnId: KanbanColumnId) => {
+      const base = kanbanBoardConfigRef.current ?? getDefaultKanbanBoardConfig()
+      const target = base.columns.find(c => c.id === columnId)
+      if (!target || target.isBuiltIn) return
+      const columns = base.columns.filter(c => c.id !== columnId)
+      const fallbackId = columns[0]?.id
+      if (!fallbackId) return
+      // Move any tiles off the removed column so they stay on the board.
+      for (const meta of sessionMetaMap.values()) {
+        if (meta.kanbanColumn !== columnId) continue
+        updateSessionMeta(meta.id, { kanbanColumn: fallbackId })
+        void window.electronAPI.sessionCommand(meta.id, {
+          type: 'setKanbanColumn',
+          column: fallbackId,
+        })
+      }
+      void persistKanbanConfig({ ...base, columns })
+    },
+    [persistKanbanConfig, sessionMetaMap, updateSessionMeta],
+  )
   // Workspace selector placement toggle
   const [workspaceSelectorRail, setWorkspaceSelectorRail] = useState(() =>
     storage.get(storage.KEYS.workspaceSelectorRail, false)
@@ -418,17 +466,15 @@ export default function AppearanceSettingsPage() {
     loadWorkspaceThemes()
   }, [])
 
-  // Load tool icon mappings and resolve the config file path on mount
+  // Load tool icon mappings and the real config location from main on mount
   useEffect(() => {
     const load = async () => {
       if (!window.electronAPI) return
       try {
-        const [mappings, homeDir] = await Promise.all([
-          window.electronAPI.getToolIconMappings?.() ?? Promise.resolve({}),
-          window.electronAPI.getHomeDir?.() ?? Promise.resolve(''),
-        ])
-        setToolIcons(mappings)
-        setToolIconsJsonPath(`${homeDir}/rox/tool-icons/tool-icons.json`)
+        const config = await window.electronAPI.getToolIconMappings?.()
+        if (!config) return
+        setToolIcons(config.mappings)
+        setToolIconsConfig({ dir: config.dir, configPath: config.configPath })
       } catch (error) {
         console.error('Failed to load tool icon mappings:', error)
       }
@@ -801,15 +847,25 @@ export default function AppearanceSettingsPage() {
               <SettingsSection
                 title={t("settings.appearance.kanbanColumnStatus")}
                 description={t("settings.appearance.kanbanColumnStatusDesc")}
+                action={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={addKanbanColumn}
+                    aria-label={t("kanban.column.add")}
+                    title={t("kanban.column.add")}
+                  >
+                    <Plus />
+                  </Button>
+                }
               >
                 <SettingsCard>
-                  {KANBAN_COLUMNS.map(column => {
-                    const dropStatusId =
-                      kanbanBoardConfig?.columns.find(c => c.id === column.id)?.dropStatusId ??
-                      column.dropStatusId ??
-                      ''
+                  {boardColumns.map(column => {
+                    const label = column.name ?? (column.labelKey ? t(column.labelKey) : column.id)
+                    const dropStatusId = column.dropStatusId ?? ''
                     return (
-                      <SettingsRow key={column.id} label={t(column.labelKey)}>
+                      <SettingsRow key={column.id} label={label}>
                         <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center">
                           <SettingsMenuSelect
                             value={columnStatusOptions.some(o => o.value === dropStatusId) ? dropStatusId : ''}
@@ -824,6 +880,18 @@ export default function AppearanceSettingsPage() {
                             onChange={(e) => setColumnStatus(column.id, e.target.value)}
                             aria-label={t('settings.appearance.kanbanColumnStatusCustom')}
                           />
+                          {!column.isBuiltIn && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 shrink-0 text-muted-foreground"
+                              onClick={() => removeKanbanColumn(column.id)}
+                              aria-label={t('kanban.column.remove')}
+                              title={t('kanban.column.remove')}
+                            >
+                              <Trash2 />
+                            </Button>
+                          )}
                         </div>
                       </SettingsRow>
                     )
@@ -836,13 +904,13 @@ export default function AppearanceSettingsPage() {
                 title={t("settings.appearance.toolIcons")}
                 description={t("settings.appearance.toolIconsDesc")}
                 action={
-                  toolIconsJsonPath ? (
+                  toolIconsConfig ? (
                     <EditPopover
                       trigger={<EditButton />}
-                      {...getEditConfig('edit-tool-icons', toolIconsJsonPath)}
+                      {...getEditConfig('edit-tool-icons', toolIconsConfig.dir)}
                       secondaryAction={{
                         label: t("settings.appearance.editFile"),
-                        filePath: toolIconsJsonPath,
+                        filePath: toolIconsConfig.configPath,
                       }}
                     />
                   ) : undefined

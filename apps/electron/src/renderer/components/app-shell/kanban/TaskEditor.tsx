@@ -28,6 +28,7 @@ import { SourceSelectorPopover } from '@/components/ui/SourceSelectorPopover'
 import { SkillSelectorPopover } from '@/components/ui/SkillSelectorPopover'
 import { WorkingDirectorySelector } from '../input/WorkingDirectorySelector'
 import type { LoadedSource, LoadedSkill } from '../../../../shared/types'
+import { toErrorMessage } from '@/lib/errors'
 
 // Client-side fallback for async generate: a touch longer than the server's GENERATE_TIMEOUT_MS
 // (180s) so the orchestrator's own timeout + result push can land before we give up locally.
@@ -807,7 +808,7 @@ export function TaskEditor({
       }, GENERATE_CLIENT_TIMEOUT_MS)
     } catch (err) {
       finishGenerate()
-      toast.error(t('tasks.toastCreateFailed'), { description: err instanceof Error ? err.message : String(err) })
+      toast.error(t('tasks.toastCreateFailed'), { description: toErrorMessage(err) })
     }
   }
 
@@ -898,7 +899,7 @@ export function TaskEditor({
       onClose()
       notifyCreated()
     } catch (err) {
-      toast.error(t('tasks.toastCreateFailed'), { description: err instanceof Error ? err.message : String(err) })
+      toast.error(t('tasks.toastCreateFailed'), { description: toErrorMessage(err) })
     } finally {
       setBusy(false)
     }

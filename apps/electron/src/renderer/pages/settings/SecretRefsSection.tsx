@@ -11,6 +11,7 @@ import { PremiumMenuSelect, Spinner } from '@rox/ui'
 import { SettingsSection, SettingsCard } from '@/components/settings'
 import type { SecretRefEntry, SecretRefsSettingsPayload } from '../../../shared/types'
 import { InfisicalUnavailableRow, secretRefRowShowsUnavailable } from './secret-refs-ui'
+import { toErrorMessage } from '@/lib/errors'
 
 const SECRET_PROVIDER_IDS = ['environment', 'local-encrypted', 'infisical'] as const
 type SecretProviderId = (typeof SECRET_PROVIDER_IDS)[number]
@@ -51,13 +52,13 @@ function codedErrorCode(error: unknown): string | undefined {
 }
 
 function deniedEnvVarFromMessage(error: unknown): string | undefined {
-  const message = error instanceof Error ? error.message : String(error)
+  const message = toErrorMessage(error)
   const match = message.match(/secret ref envVar not allowed:\s*(\S+)/)
   return match?.[1]
 }
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
+  return toErrorMessage(error)
 }
 
 export function SecretRefsSection({ onError }: { onError?: (message: string | null) => void }) {

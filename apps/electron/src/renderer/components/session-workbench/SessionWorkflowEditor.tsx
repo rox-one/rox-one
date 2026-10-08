@@ -125,6 +125,7 @@ import {
   isProductionWorkflowSuccess,
   type WorkflowRun,
 } from '@rox/shared/workflows'
+import { toErrorMessage } from '@/lib/errors'
 
 export type RelatedBranch = {
   id: string
@@ -955,7 +956,7 @@ function EditorInner({
       toast.success(t('entityView.mapVersionSaved'))
     } catch (error) {
       toast.error(t('entityView.mapValidationBlocked'), {
-        description: error instanceof Error ? error.message : String(error),
+        description: toErrorMessage(error),
       })
     }
   }, [currentSpec, t, workflowDoc])
@@ -994,7 +995,7 @@ function EditorInner({
         notifyWorkflowRun(run, t)
       } catch (error) {
         toast.error(t('entityView.mapValidationBlocked'), {
-          description: error instanceof Error ? error.message : String(error),
+          description: toErrorMessage(error),
         })
       }
     },
@@ -1016,7 +1017,7 @@ function EditorInner({
       notifyWorkflowRun(run, t)
     } catch (error) {
       toast.error(t('entityView.mapValidationBlocked'), {
-        description: error instanceof Error ? error.message : String(error),
+        description: toErrorMessage(error),
       })
     }
   }, [t, workflowDoc])
@@ -1062,7 +1063,7 @@ function EditorInner({
         persistDraftGraph(specToDraftGraph(spec))
       } catch (error) {
         toast.error(t('entityView.mapValidationBlocked'), {
-          description: error instanceof Error ? error.message : String(error),
+          description: toErrorMessage(error),
         })
       }
     },

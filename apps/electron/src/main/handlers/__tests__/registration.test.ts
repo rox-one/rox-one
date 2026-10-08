@@ -4,6 +4,7 @@ import type { HandlerDeps } from '../handler-deps'
 import { WORKSPACE_WORK_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/workspace-work'
 import { HANDLED_CHANNELS as RUNTIME_TRACE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/runtime-trace'
 import { HANDLED_CHANNELS as CODE_INTELLIGENCE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/code-intelligence'
+import { HANDLED_CHANNELS as LEARNING_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/learning'
 
 const registeredChannels: string[] = []
 
@@ -223,6 +224,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...meetings.MEETING_HANDLED_CHANNELS,
     ...personalTasks.PERSONAL_TASKS_HANDLED_CHANNELS,
     ...feed.FEED_HANDLED_CHANNELS,
+    ...runtimeTrace.HANDLED_CHANNELS,
     ...WORKSPACE_WORK_HANDLED_CHANNELS,
     ...RUNTIME_TRACE_HANDLED_CHANNELS,
     ...CODE_INTELLIGENCE_HANDLED_CHANNELS,
@@ -284,6 +286,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...extensionHost.HANDLED_CHANNELS,
     ...extensionSurface.HANDLED_CHANNELS,
     ...voiceClipboard.HANDLED_CHANNELS,
+    ...LEARNING_HANDLED_CHANNELS,
   ])
 }
 

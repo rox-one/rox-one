@@ -85,6 +85,7 @@ import {
 } from './home-data'
 import { Dot, SectionLabel, Toggle, WidgetButton, WidgetEmpty, WidgetFrame, WidgetList, WidgetRow, WidgetStat, type WidgetEditProps } from './widget-kit'
 import { QuickTaskInput } from './QuickTaskInput'
+import { toErrorMessage } from '@/lib/errors'
 
 export interface WidgetProps {
   edit: WidgetEditProps | null
@@ -591,7 +592,7 @@ function BalanceWidget({ edit }: WidgetProps) {
     try {
       setState(await api.getRoxBalance())
     } catch (e) {
-      const message = e instanceof Error ? e.message : String(e)
+      const message = toErrorMessage(e)
       // Never surfaced: logged for diagnostics, the widget shows «—».
       console.warn('[home] balance unavailable:', message)
       setState(/no handler/i.test(message) ? { status: 'unavailable' } : { status: 'error', message })

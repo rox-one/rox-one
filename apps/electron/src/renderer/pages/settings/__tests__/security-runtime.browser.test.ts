@@ -77,7 +77,7 @@ describe.skipIf(!existsSync(chromiumPath))('Security runtime production renderer
 
   it('Rox failures retry independently and optional runtime controls still execute confirmed real API calls', async () => {
     await load('rox=failed&openclaw=running&audit=ready')
-    await expectDOM(page.getByTestId('security-rox-status')).toHaveText('Could not load the Rox runtime status.')
+    await expectDOM(page.getByTestId('security-rox-status')).toHaveText('Could not load the Rox runtime status')
     await page.getByRole('button', { name: 'Stop', exact: true }).click()
     await expectDOM(page.getByRole('dialog')).toBeVisible()
     await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click()

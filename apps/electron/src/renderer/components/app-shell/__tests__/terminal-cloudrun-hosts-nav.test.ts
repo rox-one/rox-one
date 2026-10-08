@@ -7,8 +7,10 @@ import * as navigationGuards from '../../../../shared/types'
 import { parseRouteToNavigationState } from '../../../../shared/route-parser'
 import { createStore } from 'jotai/vanilla'
 import { bottomTerminalOpenAtom } from '../../../atoms/unified-shell'
-import { runtimeTraceScopeKey } from '../../../atoms/runtime-trace'
 import { navigationEntity } from '../../../features/product-tour/runtime/routes'
+import { runtimeTraceScopeKey, runtimeTraceSessionAtomFamily } from '../../../atoms/runtime-trace'
+import { runtimeCatalogCapabilities, runtimeCatalogScope } from '../../../lib/runtime-catalog-capabilities'
+import { loadRuntimeTrace } from '../../../event-processor/runtime-trace-ingress'
 
 const mainContentSource = readFileSync(join(__dirname, '../MainContentPanel.tsx'), 'utf8')
 const navContextSource = readFileSync(
@@ -54,6 +56,7 @@ function dispatch(route: string): React.ReactElement {
   const names = ['Panel', 'StoplightProvider', 'TourPanelScope', 'RouteErrorBoundary', 'SendResourceToWorkspaceDialog',
     'TerminalSurfacePage', 'CloudRunSurfacePage', 'ChatPage']
   const sessionMetaMapAtom = Symbol()
+  const store = createStore()
   const state = parseRouteToNavigationState(route)!
   const bindings: Record<string, unknown> = {
     ...navigationGuards, ...Object.fromEntries(names.map(name => [name, name])), React, navigationEntity,
@@ -62,20 +65,9 @@ function dispatch(route: string): React.ReactElement {
     useNavigationState: () => state, useNavigation: () => ({ isSessionsReady: true }),
     useAppShellContext: () => ({ activeWorkspaceId: 'workspace-owner', workspaces: [], sessionStatuses: [], projects: [], loadedProjects: [], labels: [], skills: [] }),
     sessionMetaMapAtom, automationsAtom: Symbol(),
-    useAtomValue: (atom: symbol) => atom === sessionMetaMapAtom ? new Map() : [],
-    useSetAtom: () => () => {},
-    useStore: () => ({ get: () => undefined, set: () => {}, sub: () => () => {} }),
-    useSession: () => [{ selected: null }],
-    runtimeTraceScopeKey, runtimeTraceSessionAtomFamily: () => Symbol('trace'),
-    loadRuntimeTrace: () => Promise.resolve(),
-    runtimeCatalogScope: () => undefined,
-    runtimeCatalogCapabilities: () => ({
-      available: [],
-      selected: [],
-      loaded: [],
-      applied: [],
-      usedCapabilities: [],
-    }),
+    useAtomValue: (atom: symbol | Parameters<typeof store.get>[0]) => typeof atom === 'symbol' ? atom === sessionMetaMapAtom ? new Map() : [] : store.get(atom), useSetAtom: () => () => {},
+    useSession: () => [{ selected: null }, () => {}], useStore: () => store,
+    runtimeTraceScopeKey, runtimeTraceSessionAtomFamily, runtimeCatalogCapabilities, runtimeCatalogScope, loadRuntimeTrace,
     knowledgeHomeViewAtom: Symbol(), knowledgeActiveViewIdAtom: Symbol(),
     TourPanelScope: ({ children }: { children: React.ReactNode }) => children, sourceSelection: selection, skillSelection: selection, automationSelection: selection,
     useSelectedResourceAvailability: () => ({ status: 'ready', retry() {} }),

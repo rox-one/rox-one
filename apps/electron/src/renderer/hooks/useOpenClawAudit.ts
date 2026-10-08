@@ -15,6 +15,7 @@ import type {
   OpenClawRuntimeStatus,
   SecurityAuditSnapshot,
 } from '@rox/shared/openclaw'
+import { toErrorMessage } from '@/lib/errors'
 
 export interface UseOpenClawAuditResult {
   /** False when OpenClaw handlers are absent on this transport. */
@@ -71,7 +72,7 @@ export function useOpenClawAudit(workspaceId: string | undefined): UseOpenClawAu
       .catch((err) => {
         if (cancelled) return
         console.error('[useOpenClawAudit] load failed:', err)
-        setError(err instanceof Error ? err.message : String(err))
+        setError(toErrorMessage(err))
         setIsLoading(false)
       })
 
@@ -90,7 +91,7 @@ export function useOpenClawAudit(workspaceId: string | undefined): UseOpenClawAu
         const next = await api.runSecurityAudit({ workspaceId, mode })
         setSnapshot(next)
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err))
+        setError(toErrorMessage(err))
       } finally {
         setRunningMode(null)
       }
@@ -106,7 +107,7 @@ export function useOpenClawAudit(workspaceId: string | undefined): UseOpenClawAu
         await api.acceptSecurityRisk({ workspaceId, fingerprint, rationale, expiresAt })
         refresh()
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err))
+        setError(toErrorMessage(err))
       }
     },
     [workspaceId, refresh],
@@ -120,7 +121,7 @@ export function useOpenClawAudit(workspaceId: string | undefined): UseOpenClawAu
         await api.revokeSecurityRiskAcceptance({ workspaceId, fingerprint })
         refresh()
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err))
+        setError(toErrorMessage(err))
       }
     },
     [workspaceId, refresh],

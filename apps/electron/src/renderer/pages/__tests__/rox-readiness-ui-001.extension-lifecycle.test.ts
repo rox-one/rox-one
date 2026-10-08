@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
+import { toErrorMessage } from '../../lib/errors'
 import ts from 'typescript'
 
 const source = readFileSync(new URL('../ExtensionSurfacePage.tsx', import.meta.url), 'utf8')
@@ -48,7 +49,7 @@ function fixture(api: Record<string, unknown> = {}, canonicalApi: Record<string,
     const creates: Array<() => (() => void) | undefined> = []
     const selected = { url: 'https://extension.example.test/view' as string | undefined, extensionId: 'extension', viewId: 'view', activeWorkspaceId: 'workspace', ...route }
     const bindings = {
-      releaseRef, instanceId, surfaceAttempt, durableKey: `ext:${selected.activeWorkspaceId}:${selected.extensionId}:${selected.viewId}`, ...selected, surfaceUrl: normalizedUrl(selected.url),
+      releaseRef, toErrorMessage, instanceId, surfaceAttempt, durableKey: `ext:${selected.activeWorkspaceId}:${selected.extensionId}:${selected.viewId}`, ...selected, surfaceUrl: normalizedUrl(selected.url),
       useEffect: (create: () => (() => void) | undefined) => creates.push(create), window: { electronAPI },
       releaseNativeSurface: async (id: string, sync: (id: string, rect: null) => Promise<unknown>) => { await sync(id, null) },
       ...Object.fromEntries(['InstanceId', 'Error', 'Removed'].map(name => [`set${name}`, (value: unknown) => { states[name] = value } ])),

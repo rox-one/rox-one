@@ -81,6 +81,7 @@ import {
   isPagesNavigation,
   isBrowserNavigation,
   isMemoryNavigation,
+  isLearningNavigation,
   isTasksNavigation,
   isMeetingsNavigation,
   isInboxNavigation,
@@ -116,7 +117,7 @@ export type { Route }
 
 // Re-export navigation state types for consumers
 export type { NavigationState, SessionFilter }
-export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isMemoryNavigation, isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isConnectionsNavigation, isHomeNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isTerminalNavigation, isExtensionNavigation }
+export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isMemoryNavigation, isLearningNavigation, isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isConnectionsNavigation, isHomeNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isTerminalNavigation, isExtensionNavigation }
 
 // =============================================================================
 // Context
@@ -608,6 +609,9 @@ export function NavigationProvider({
       }
 
       if (entries.length > 0) {
+        // Restore read-only map references for every actual panel, including
+        // unfocused panels and layouts published without a separate ?route=.
+        for (const entry of entries) requestRuntimeSelection(entry.route)
         const validTools: AuxiliaryTool[] = ['agent', 'tasks', 'automations', 'memory']
         const assignedTools = new Set<AuxiliaryTool>()
         const contexts = workspaceId ? decodeToolContexts(params.get('toolContexts'), workspaceId) : []
@@ -623,9 +627,7 @@ export function NavigationProvider({
         }
         // A malformed link must retain at least one primary working surface.
         if (entries.every(entry => entry.tool)) entries[0].tool = undefined
-        // Restore read-only map references for every actual panel, including
-        // unfocused panels and layouts published without a separate ?route=.
-        for (const entry of entries) requestRuntimeSelection(entry.route)
+
         store.set(reconcilePanelStackAtom, { entries, focusedIndex })
         const restored = store.get(panelStackAtom)
         const primaryIndex = Number(params.get('pi') ?? '0')
@@ -634,7 +636,7 @@ export function NavigationProvider({
         store.set(primaryPanelIdAtom, primary?.id ?? null)
       }
     },
-[store, requestRuntimeSelection, workspaceId]
+    [store, requestRuntimeSelection, workspaceId]
   )
 
   // Keep ref fresh for use in event handlers / effects that capture stale closures
@@ -1310,7 +1312,7 @@ export function NavigationProvider({
     lastSemanticHistoryKeyRef.current = getSemanticHistoryKey()
 
     // If nothing was in the URL, navigate to default
-if (!params.get('route') && !params.has('panels') && (!requested || requested === workspaceSlug)) {
+    if (!params.get('route') && !params.get('panels') && (!requested || requested === workspaceSlug)) {
       navigate(routes.view.inbox())
     }
 

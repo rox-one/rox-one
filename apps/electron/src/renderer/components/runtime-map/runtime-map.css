@@ -66,6 +66,16 @@
 .runtime-node[data-status=succeeded] .runtime-status-icon { color: var(--success, #498166); }
 .runtime-node[data-status=failed] .runtime-status-icon, .runtime-node[data-status=interrupted] .runtime-status-icon { color: var(--destructive, #ba5b5b); }
 .runtime-node[data-status=waiting-approval] .runtime-status-icon, .runtime-node[data-status=blocked] .runtime-status-icon { color: var(--warning, #ab741e); }
+/* PRD §30 learning kinds (registry in ./learning-nodes.ts): icon + header accent only. */
+.runtime-node-memory .runtime-node-icon, .runtime-node-skill .runtime-node-icon { color: var(--runtime-focus); }
+.runtime-node-policy .runtime-node-icon { color: var(--warning, #ab741e); }
+.runtime-node-outcome .runtime-node-icon { color: var(--success, #498166); }
+.runtime-node-evidence header, .runtime-node-policy header, .runtime-node-outcome header {
+  background: color-mix(in srgb, var(--runtime-focus) 5%, var(--runtime-header));
+  box-shadow: inset 3px 0 var(--runtime-muted);
+}
+.runtime-node-policy header { box-shadow: inset 3px 0 var(--warning, #ab741e); }
+.runtime-node-outcome header { box-shadow: inset 3px 0 var(--success, #498166); }
 .runtime-node-detail { padding: 9px 11px; min-height: 54px; }
 .runtime-node-detail p { margin: 0; font-size: 12px; line-height: 17px; color: var(--runtime-muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
 .runtime-node footer { padding: 7px 10px; border-top: 1px solid var(--runtime-border); display: flex; align-items: center; gap: 9px; color: var(--runtime-muted); font-size: 11px; line-height: 15px; }
@@ -139,6 +149,10 @@
 .runtime-event-list strong { font-size: 12px; font-weight: 550; overflow-wrap: anywhere; }
 .runtime-event-list p { margin: 3px 0; font-size: 11px; color: var(--runtime-muted); overflow-wrap: anywhere; }
 .runtime-event-list small { font-size: 10px; color: var(--runtime-muted); }
+/* PRD §30 learning chain rows: same box as event rows, marked as non-trace data. */
+.runtime-event-list > .runtime-learning-row { display: grid; grid-template-columns: 32px 1fr; width: 100%; border: 1px solid var(--runtime-border); border-left: 3px solid var(--runtime-focus); margin-bottom: 7px; padding: 9px; border-radius: 8px; }
+.runtime-event-list > .runtime-learning-row > span { grid-row: span 3; color: var(--runtime-muted); font-size: 10px; align-self: start; }
+.runtime-learning-kind { font-size: 10px; color: var(--runtime-muted); align-self: center; }
 .runtime-no-matches { position: absolute; left: 20px; right: 20px; top: 40%; text-align: center; color: var(--runtime-muted); pointer-events: none; }
 .runtime-context-canvas { display: flex; flex-direction: column; }
 .runtime-context-canvas > .react-flow { flex: 1; min-height: 0; }

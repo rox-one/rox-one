@@ -113,7 +113,7 @@ afterAll(async () => {
   await browser?.close()
   server?.close()
   stage('meetings:browser:closed')
-})
+}, 30_000)
 
 async function fixture(surface: 'meetings' | 'automation', mode = 'empty') {
   stage(`meetings:fixture:${surface}:${mode}:page`)

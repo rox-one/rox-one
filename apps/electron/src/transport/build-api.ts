@@ -41,8 +41,14 @@ export function buildClientApi(
           const result = await client.invoke(entry.channel, ...args)
           return entry.transform ? entry.transform(result) : result
         } catch (error) {
-          // contextBridge drops custom Error properties. Plain rejection data
-          // preserves the server's validated code for recovery in the renderer.
+          // Electron's contextBridge rebuilds native Errors from `message`
+          // alone (electron_api_context_bridge.cc, PassValueToOtherContextInner
+          // -> v8::Exception::Error(message)), so a thrown Error would lose
+          // `code`/`data`. A plain own-property object is copied verbatim, keeps
+          // the server's validated code for renderer recovery, and stays
+          // structuredClone-able. Do NOT replace this with a real Error:
+          // renderer code branches on `error.code`, and
+          // tests/lark-suite-extension/bridge-errors.test.ts pins this shape.
           if (typeof error === 'object' && error !== null && 'code' in error && isErrorCode(error.code)) {
             throw {
               code: error.code,

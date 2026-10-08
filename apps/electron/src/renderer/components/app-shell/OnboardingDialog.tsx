@@ -16,6 +16,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import type { LessonCategory } from '@rox/shared/memory/types'
+import { toErrorMessage } from '@/lib/errors'
 
 interface SeedLesson {
   key: 'memory.seed1' | 'memory.seed2' | 'memory.seed3'
@@ -88,7 +89,7 @@ export function OnboardingDialog({ workspaceId, presentationAllowed = true }: On
       if (chosen.length > 0) toast.success(t('memory.lessonAdded'))
     } catch (err) {
       toast.error(t('memory.lessonAddFailed'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: toErrorMessage(err),
       })
     } finally {
       setBusy(false)

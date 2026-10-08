@@ -19,7 +19,8 @@ export function leaf(name) { return function Surface(props) {
  return React.createElement('section', {'data-route-host':name,'data-mount':mount,'data-props':JSON.stringify(props)}, name);
 } }
 export const MultiSelectPanel = leaf('MultiSelectPanel');
-export const MemoryScreen = leaf('MemoryScreen'); export const ProjectsHomeInMain=leaf('ProjectsHomeInMain');
+export const MemoryScreen = leaf('MemoryScreen'); export const LearningScreen = leaf('LearningScreen');
+export const ProjectsHomeInMain=leaf('ProjectsHomeInMain');
 export const PageView=leaf('PageView'); export const SessionHeatmapHost=leaf('SessionHeatmapHost');
 export const HomeFrontPage=leaf('HomeFrontPage'); export const SettingsOverviewPage=leaf('SettingsOverviewPage');
 export const PagesHome=leaf('PagesHome'); export const KanbanBoardContainer=leaf('KanbanBoardContainer');
@@ -38,7 +39,7 @@ export const useNavigationState=()=>React.useContext(NavContext);
 export const useNavigation=()=>({...React.useContext(NavigationStatusContext),navigateToSource:()=>{}});
 export const useActiveWorkspace=()=>({id:React.useContext(ShellContext)?.activeWorkspaceId});
 export { isSessionsNavigation,isSourcesNavigation,isSettingsNavigation,isSkillsNavigation,isMemoryNavigation,
- isTasksNavigation,isMeetingsNavigation,isInboxNavigation,isFeedNavigation,isNotesNavigation,isAutomationsNavigation,
+ isLearningNavigation,isTasksNavigation,isMeetingsNavigation,isInboxNavigation,isFeedNavigation,isNotesNavigation,isAutomationsNavigation,
  isProjectsNavigation,isPagesNavigation,isBrowserNavigation,isKnowledgeNavigation,isDiffNavigation,isExtensionNavigation,
  isConnectionsNavigation,isHomeNavigation,isCloudRunNavigation,isTerminalNavigation } from ${JSON.stringify(types)};
 export const sessionMetaMapAtom=atom(new Map()); export const automationsAtom=atom([]);
@@ -109,7 +110,7 @@ window.ui001={render:(props)=>root.render(<Fixture {...props}/>),sources:(ws,dat
 window.ui001.render({});` : ''}
 `)
   const stubs = new Set([
-    '../memory/MemoryScreen', './ProjectsHomeInMain', './MultiSelectPanel', './collection/CollectionBulkBar',
+    '../memory/MemoryScreen', '../learning/LearningScreen', './ProjectsHomeInMain', './MultiSelectPanel', './collection/CollectionBulkBar',
     '@/pages/ChatPage', '@/platform/HomeFrontPage', '@/pages/settings/settings-pages', '@/pages/settings/SettingsOverviewPage',
     '../pages/PageView', './session-heatmap/SessionHeatmapHost', './SendResourceToWorkspaceDialog',
     '../pages/PagesHome', './kanban/KanbanBoardContainer', './session-table/SessionTableHost', '../automations/AutomationEditor',
@@ -132,7 +133,7 @@ window.ui001.render({});` : ''}
           if (options.realEntityPages && args.path === '@rox/ui') {
             // Keep its real tooltip exports without pulling unrelated markdown
             // font assets from the UI package's broad index into this fixture.
-            return { path: resolve(import.meta.dir, '../../../../../../../packages/ui/src/components/tooltip.tsx') }
+            return { path: tooltip }
           }
           if (args.path === '@rox/ui') return { path: 'entity-ui', namespace: 'ui001' }
           if (args.path === 'react-i18next') return { path: 'bindings', namespace: 'ui001' }

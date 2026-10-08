@@ -16,6 +16,7 @@ import {
 import { Spinner } from '@rox/ui'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import type { WhatsAppUiEvent } from '../../../shared/types'
+import { toErrorMessage } from '@/lib/errors'
 
 interface WhatsAppConnectDialogProps {
   open: boolean
@@ -153,5 +154,5 @@ function StatusRow({ icon, children }: { icon: React.ReactNode; children: React.
 }
 
 function errorMsg(err: unknown): string {
-  return err instanceof Error ? err.message : String(err)
+  return toErrorMessage(err)
 }

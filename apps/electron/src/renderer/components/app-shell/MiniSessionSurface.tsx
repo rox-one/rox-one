@@ -7,6 +7,7 @@ import { focusedSessionIdAtom } from '@/atoms/panel-stack'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { useAppShellContext, useSession } from '@/context/AppShellContext'
 import { resolveStatusDisplayLabel } from '@/config/session-status-config'
+import { toErrorMessage } from '@/lib/errors'
 import { navigate, routes } from '@/lib/navigate'
 import { VoiceDictationControl } from './input/VoiceDictationControl'
 
@@ -39,7 +40,7 @@ export function MiniSessionSurface() {
       context.onAttachmentsChange(sessionId, [])
       setDraft('')
     } catch (error) {
-      toast.error(String(error))
+      toast.error(toErrorMessage(error))
     } finally {
       setSending(false)
     }

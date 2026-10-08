@@ -41,6 +41,7 @@ import {
 } from '@/lib/memory-model'
 import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
 import { MemoryListPanel } from '@/components/app-shell/MemoryListPanel'
+import { toErrorMessage } from '@/lib/errors'
 
 const BUILTIN: LessonCategory[] = ['correction', 'preference', 'workflow', 'knowledge']
 const SORTS: MemorySort[] = ['usage', 'recency', 'tokens', 'conflicts']
@@ -310,7 +311,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       if (okKey && currentWorkspace.current === workspaceId) toast.success(t(okKey))
     } catch (error) {
       if (currentWorkspace.current === workspaceId && (error as { code?: string })?.code === 'AUTH_FAILED') setWriteDenied(true)
-      if (currentWorkspace.current === workspaceId) toast.error(t('memory.lessonUpdateFailed'), { description: error instanceof Error ? error.message : String(error) })
+      if (currentWorkspace.current === workspaceId) toast.error(t('memory.lessonUpdateFailed'), { description: toErrorMessage(error) })
     } finally {
       if (currentWorkspace.current === workspaceId) { setBusy(false); load() }
     }

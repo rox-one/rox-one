@@ -30,12 +30,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import type { Route } from '../../shared/routes'
 import { getModeRegistry } from './mode-registry-bootstrap'
-import { CORE_MODES, resolveSeededModes } from './modes-seed'
+import { CORE_MODES, resolveSeededModes, type SeededMode } from './modes-seed'
 import { modeScreenFlagsAtom } from '@/atoms/mode-flags'
 import { useInboxBlockingCount } from '@/hooks/useInboxItems'
 import { handleModePillKeyDown } from './mode-pill-keyboard'
 
-const MODE_ICONS: Record<string, LucideIcon> = {
+/** Name → glyph map for seeded modes; shared with `platform/ActivityRail.tsx`. */
+export const MODE_ICONS: Record<string, LucideIcon> = {
   BookOpen,
   Calendar,
   Home,
@@ -46,7 +47,9 @@ const MODE_ICONS: Record<string, LucideIcon> = {
   Rss,
 }
 
-const seedById = new Map(CORE_MODES.map((mode) => [mode.contribution.id, mode]))
+const seedById: Record<string, SeededMode> = Object.fromEntries(
+  CORE_MODES.map((mode) => [mode.contribution.id, mode]),
+)
 
 export interface ModeBarMetrics {
   /** Pill width with icons + labels. */
@@ -132,7 +135,7 @@ export function ModeBar({ collapsed = false, onMeasure }: ModeBarProps = {}) {
   const navState = useNavigationState()
   const flags = useAtomValue(modeScreenFlagsAtom)
   const modes = resolveSeededModes(getModeRegistry().list(), flags)
-  const activeId = modes.find((mode) => seedById.get(mode.id)?.isActive(navState))?.id ?? null
+  const activeId = modes.find((mode) => seedById[mode.id]?.isActive(navState))?.id ?? null
   const inboxBlocking = useInboxBlockingCount()
   const badges = { inbox: inboxBlocking }
 
