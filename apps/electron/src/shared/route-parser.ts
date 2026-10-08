@@ -29,6 +29,7 @@ import { EXTRA_SCREEN_IDS, buildExtraScreenRoute, isExtraScreenId, parseExtraScr
 import { isEntityCompoundRoute, parseEntityRoute } from './entity-routes'
 import { entityRoute, formatEntityRef, parseEntityRef, type EntityRef } from '@rox/core/entities'
 import { isEntitiesLinksEnabled } from '@rox/shared/feature-flags'
+import { isUnifiedSurfaceRouteEnabled, type UnifiedSurfaceId } from './surface-routes'
 
 /**
  * Entity-route gate (W1-02, product decision).
@@ -91,6 +92,8 @@ export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'searc
   | 'knowledge' | 'cloud-run' | 'extension' | 'diff' | 'terminal'
   // Kind-first entity routes (W1-01) that legacy branches do not own.
   | 'entity'
+  // Unified mode roots (W1-07): messenger / calendar / goals / contacts.
+  | 'surface'
 
 export interface ParsedCompoundRoute {
   /** The navigator type */
@@ -109,6 +112,8 @@ export interface ParsedCompoundRoute {
   viewMode?: 'list' | 'board' | 'table' | 'heatmap'
   /** Parsed entity reference (only for the `entity` navigator). */
   entityRef?: EntityRef
+  /** Unified mode root (only for the `surface` navigator, W1-07). */
+  surface?: UnifiedSurfaceId
   /**
    * Details page info (null for empty state).
    * W1 surface navigators reuse this shape: `id` is the entity id (runId /
@@ -138,12 +143,15 @@ export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
 
 export function isCompoundRoute(route: string): boolean {
   const firstSegment = route.split('?')[0].split('/')[0]
+  // W1-07: a unified mode root only exists while its mode flag is on.
+  if (isUnifiedSurfaceRouteEnabled(firstSegment)) return true
   if (ENTITY_ONLY_ROUTE_PREFIXES.has(firstSegment)) return isEntityRoutesEnabled()
   return COMPOUND_ROUTE_PREFIXES.includes(firstSegment)
 }
 
 /** Flag-aware prefix check for deep-link acceptance (`rox://<prefix>/...`). */
 export function isCompoundRoutePrefix(prefix: string): boolean {
+  if (isUnifiedSurfaceRouteEnabled(prefix)) return true
   if (ENTITY_ONLY_ROUTE_PREFIXES.has(prefix)) return isEntityRoutesEnabled()
   return (COMPOUND_ROUTE_PREFIXES as readonly string[]).includes(prefix)
 }
@@ -193,6 +201,12 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
         entityRef: entity.ref,
       }
     }
+  }
+
+  // Unified mode roots (W1-07). Bare root only; sub-pages are entity routes.
+  // With the mode flag off the gate is closed and parsing is unchanged.
+  if (segments.length === 1 && isUnifiedSurfaceRouteEnabled(first)) {
+    return { navigator: 'surface', surface: first, details: null }
   }
 
   if (first === 'search') {
@@ -694,6 +708,10 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return 'home'
   }
 
+  if (parsed.navigator === 'surface' && parsed.surface) {
+    return parsed.surface
+  }
+
   if (parsed.navigator === 'screen' && parsed.screen) {
     return buildExtraScreenRoute(parsed.screen, parsed.details?.id)
   }
@@ -927,6 +945,10 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
 
   if (compound.navigator === 'home') {
     return { type: 'view', name: 'home', params: {} }
+  }
+
+  if (compound.navigator === 'surface' && compound.surface) {
+    return { type: 'view', name: 'surface', params: { surface: compound.surface } }
   }
 
   if (compound.navigator === 'screen' && compound.screen) {
@@ -1219,6 +1241,10 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     return { navigator: 'home', details: null }
   }
 
+  if (compound.navigator === 'surface' && compound.surface) {
+    return { navigator: 'surface', surface: compound.surface, details: null }
+  }
+
   if (compound.navigator === 'screen' && compound.screen) {
     return {
       navigator: 'screen',
@@ -1450,6 +1476,11 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       return { navigator: 'connections', details: null }
     case 'home':
       return { navigator: 'home', details: null }
+    case 'surface': {
+      const surface = parsed.params.surface
+      if (!surface || !isUnifiedSurfaceRouteEnabled(surface)) return null
+      return { navigator: 'surface', surface, details: null }
+    }
     case 'screen': {
       const screen = parsed.params.screen
       if (!isExtraScreenId(screen)) return null
@@ -1706,6 +1737,14 @@ function navigationStateToCompoundRoute(state: Exclude<NavigationState, Unavaila
   if (state.navigator === 'home') {
     return {
       navigator: 'home',
+      details: null,
+    }
+  }
+
+  if (state.navigator === 'surface') {
+    return {
+      navigator: 'surface',
+      surface: state.surface,
       details: null,
     }
   }

@@ -52,6 +52,9 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
       return navState.details !== null
     case 'home':
       return true
+    case 'surface':
+      // Unified mode roots (W1-07) own the content panel like Home.
+      return true
     case 'screen':
       // Extra screens render their own list + detail in the content panel
       return true

@@ -12,6 +12,7 @@ import type { MeetingsLocalApi } from './meetings-local'
 import type { MailLocalApi } from './mail-local'
 import { buildExtraScreenRoute, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
 import { parseEntityRoute } from './entity-routes'
+import { isUnifiedSurfaceRouteEnabled, type UnifiedSurfaceId } from './surface-routes'
 import type {
   Message as CoreMessage,
   MessageRole as CoreMessageRole,
@@ -2829,6 +2830,18 @@ export interface EntityNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+/**
+ * Unified mode root (W1-07): `messenger`, `calendar`, `goals`, `contacts`.
+ * Exists only while the mode's `workbench.mode.<id>.v1` flag is on; the page
+ * comes from the surface-page registry (empty state until wave 2 registers).
+ */
+export interface SurfaceNavigationState {
+  navigator: 'surface'
+  surface: UnifiedSurfaceId
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
 /** A view address that cannot be resolved; retain it for recovery and history. */
 export interface UnavailableNavigationState {
   navigator: 'unavailable'
@@ -2866,6 +2879,7 @@ export type NavigationState =
   | ConnectionsNavigationState
   | HomeNavigationState
   | ScreenNavigationState
+  | SurfaceNavigationState
   | UnavailableNavigationState
 
 export const isUnavailableNavigation = (
@@ -2942,6 +2956,10 @@ export const isScreenNavigation = (
 export const isHomeNavigation = (
   state: NavigationState
 ): state is HomeNavigationState => state.navigator === 'home'
+
+export const isSurfaceNavigation = (
+  state: NavigationState
+): state is SurfaceNavigationState => state.navigator === 'surface'
 
 export const isKnowledgeNavigation = (
   state: NavigationState
@@ -3047,6 +3065,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'home') {
     return 'home'
+  }
+  if (state.navigator === 'surface') {
+    return state.surface
   }
   if (state.navigator === 'screen') {
     return buildExtraScreenRoute(state.screen, state.details?.itemId)
@@ -3278,6 +3299,8 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
 
   if (key === 'connections') return { navigator: 'connections', details: null }
   if (key === 'home') return { navigator: 'home', details: null }
+  // W1-07: unified mode roots, only while their mode flag is on.
+  if (isUnifiedSurfaceRouteEnabled(key)) return { navigator: 'surface', surface: key, details: null }
 
   // Kind-first entity keys mirror the route format: `entity/{route}`.
   if (key.startsWith('entity/')) {
