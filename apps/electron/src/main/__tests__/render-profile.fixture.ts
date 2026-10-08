@@ -58,7 +58,7 @@ mock.module('@rox/shared/config', () => ({
 }))
 mock.module('../logger', () => ({ windowLog: { warn() {} } }))
 
-const { peekRenderProfile, queryGpuSoftwareCompositing, queryHardwareInfo } = await import('../render-profile')
+const { peekRenderProfile, queryGpuSoftwareCompositing, queryHardwareInfo, resetHardwareInfoCacheForTests } = await import('../render-profile')
 const material = await import('../shell-material')
 type Window = Parameters<typeof material.attachZenWindowPolicy>[0]
 const asWindow = (window: FakeWindow) => window as unknown as Window
@@ -79,33 +79,42 @@ assert.equal(peekRenderProfile('linux').profile, 'performance')
 gpuCompositing = 'enabled'
 scenarios++
 
-// 3. Weak hardware (< 8 GiB RAM or <= 4 logical cores) turns it on on auto;
-//    unknown values are not weak.
-totalmem = 8 * 1024 ** 3 - 1
+// 3. Weak hardware (< 7.5 GiB RAM or <= 4 logical cores) turns it on on auto;
+//    unknown values are not weak. The probe is memoized per process.
+const hardware = (mem: number | undefined, cpus: number | undefined) => {
+  totalmem = mem
+  cpuCount = cpus
+  resetHardwareInfoCacheForTests()
+}
+hardware(7.5 * 1024 ** 3 - 1, 8)
 assert.deepEqual(peekRenderProfile('darwin'), { profile: 'performance', preference: 'auto', reason: 'weak-hardware' })
-totalmem = 8 * 1024 ** 3
+// A nominal 8 GB machine reporting usable memory (~7.7 GiB) is not weak.
+hardware(7.7 * 1024 ** 3, 8)
 assert.equal(peekRenderProfile('darwin').profile, 'standard')
-cpuCount = 4
+hardware(16 * 1024 ** 3, 4)
 assert.equal(peekRenderProfile('darwin').reason, 'weak-hardware')
-cpuCount = 5
+hardware(16 * 1024 ** 3, 5)
 assert.equal(peekRenderProfile('darwin').profile, 'standard')
-totalmem = undefined
-cpuCount = undefined
+hardware(undefined, undefined)
 assert.deepEqual(queryHardwareInfo(), {})
 assert.equal(peekRenderProfile('darwin').profile, 'standard')
-totalmem = 16 * 1024 ** 3
-cpuCount = 8
+hardware(16 * 1024 ** 3, 8)
 assert.deepEqual(queryHardwareInfo(), { totalMemoryBytes: 16 * 1024 ** 3, logicalCpuCount: 8 })
+// Memoized: later os changes are not re-probed until reset.
+totalmem = 2 * 1024 ** 3
+assert.deepEqual(queryHardwareInfo(), { totalMemoryBytes: 16 * 1024 ** 3, logicalCpuCount: 8 })
+assert.equal(peekRenderProfile('darwin').profile, 'standard')
+hardware(16 * 1024 ** 3, 8)
 scenarios++
 
 // 4. Explicit preference wins over platform, GPU and hardware.
 preference = 'standard'
 gpuCompositing = 'disabled_software'
-cpuCount = 2
+hardware(16 * 1024 ** 3, 2)
 assert.deepEqual(peekRenderProfile('win32'), { profile: 'standard', preference: 'standard', reason: 'user-standard' })
 preference = 'performance'
 gpuCompositing = 'enabled'
-cpuCount = 8
+hardware(16 * 1024 ** 3, 8)
 assert.deepEqual(peekRenderProfile('darwin'), { profile: 'performance', preference: 'performance', reason: 'user-performance' })
 scenarios++
 

@@ -32,8 +32,24 @@ export function queryGpuSoftwareCompositing(): boolean {
   }
 }
 
-/** Total RAM and logical core count; anything unreadable stays unknown. */
+let hardwareInfoCache: HardwareInfo | undefined
+
+/** Test seam: forget the per-process hardware probe. */
+export function resetHardwareInfoCacheForTests(): void {
+  hardwareInfoCache = undefined
+}
+
+/**
+ * Total RAM and logical core count; anything unreadable stays unknown.
+ * Neither changes at runtime, so the probe runs once per process.
+ */
 export function queryHardwareInfo(): HardwareInfo {
+  if (hardwareInfoCache) return hardwareInfoCache
+  hardwareInfoCache = probeHardwareInfo()
+  return hardwareInfoCache
+}
+
+function probeHardwareInfo(): HardwareInfo {
   const info: HardwareInfo = {}
   try {
     if (typeof os.totalmem === 'function') info.totalMemoryBytes = os.totalmem()

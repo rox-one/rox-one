@@ -8,7 +8,7 @@
  * `performance` means no CSS backdrop blur, solid surface tints, reduced
  * motion and no native vibrancy/Mica (the window material resolves to solid).
  * It is the default on Windows, wherever Chromium reports software or
- * blocklisted GPU compositing, and on weak hardware (< 8 GiB RAM or <= 4
+ * blocklisted GPU compositing, and on weak hardware (< 7.5 GiB RAM or <= 4
  * logical cores) (owner decision D11).
  */
 
@@ -49,8 +49,12 @@ export function isSoftwareCompositing(status: unknown): boolean {
   return !value.startsWith('enabled')
 }
 
-/** Below this much physical memory the machine counts as weak. */
-export const WEAK_TOTAL_MEMORY_BYTES = 8 * 1024 ** 3
+/**
+ * Below this much memory the machine counts as weak. `os.totalmem()` reports
+ * usable rather than installed RAM on Windows/Linux (a nominal 8 GB machine
+ * reads ~7.6–7.9 GiB), so the cut-off leaves a tolerance below 8 GiB.
+ */
+export const WEAK_TOTAL_MEMORY_BYTES = 7.5 * 1024 ** 3
 /** At or below this many logical cores the machine counts as weak. */
 export const WEAK_LOGICAL_CPU_COUNT = 4
 

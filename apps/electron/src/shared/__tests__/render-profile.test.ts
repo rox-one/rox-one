@@ -46,10 +46,13 @@ describe('PERF-07 resolveRenderProfile', () => {
 
 describe('PERF-07 weak hardware on auto', () => {
   const GiB = 1024 ** 3
-  it('counts < 8 GiB RAM or <= 4 logical cores as weak', () => {
-    expect(isWeakHardware({ totalMemoryBytes: 8 * GiB - 1, logicalCpuCount: 16 })).toBe(true)
+  it('counts < 7.5 GiB RAM or <= 4 logical cores as weak', () => {
+    expect(isWeakHardware({ totalMemoryBytes: 7.5 * GiB - 1, logicalCpuCount: 16 })).toBe(true)
     expect(isWeakHardware({ totalMemoryBytes: 32 * GiB, logicalCpuCount: 4 })).toBe(true)
     expect(isWeakHardware({ totalMemoryBytes: 8 * GiB, logicalCpuCount: 5 })).toBe(false)
+    // usable-vs-installed tolerance: a nominal 8 GB machine reads ~7.6–7.9 GiB
+    expect(isWeakHardware({ totalMemoryBytes: 7.6 * GiB, logicalCpuCount: 8 })).toBe(false)
+    expect(isWeakHardware({ totalMemoryBytes: 7.5 * GiB, logicalCpuCount: 8 })).toBe(false)
   })
 
   it('treats unknown values as not weak', () => {

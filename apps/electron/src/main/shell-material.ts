@@ -105,11 +105,18 @@ export function peekZenShellSnapshot(opts?: {
 /** Return this window's painted capability, rather than predicting a future paint. */
 export function peekZenShellSnapshotForWindow(window: BrowserWindow | null | undefined): ZenShellSnapshot {
   const record = window ? attached.get(window) : undefined
-  const snapshot = peekZenShellSnapshot({
+  return withMaterialFailure(record, peekPaintedSnapshot(window, record))
+}
+
+function peekPaintedSnapshot(window: BrowserWindow | null | undefined, record: ZenWindowRecord | undefined): ZenShellSnapshot {
+  return peekZenShellSnapshot({
     paintHealthy: record !== undefined && record.state.paintGeneration === record.state.generation,
     windowDestroyed: window?.isDestroyed() ?? false,
     gpuFailed: record !== undefined && record.state.generation > 0 && record.state.paintGeneration !== record.state.generation,
   })
+}
+
+function withMaterialFailure(record: ZenWindowRecord | undefined, snapshot: ZenShellSnapshot): ZenShellSnapshot {
   if (record?.materialFailed && snapshot.material !== 'solid') {
     return { ...snapshot, material: 'solid', fallbackReason: 'material-unavailable' }
   }
@@ -168,14 +175,16 @@ function dispatch(window: BrowserWindow, record: ZenWindowRecord, event: Paramet
   if (!window.isDestroyed() && record.state.shown && !window.isVisible()) {
     window.show()
   }
-  if (record.state.applyMaterial && !window.isDestroyed()) {
+  if (window.isDestroyed()) return
+  // One policy read per dispatch (preferences, GPU status and accessibility
+  // are all synchronous); the material result only adjusts this snapshot.
+  const snap = peekPaintedSnapshot(window, record)
+  if (record.state.applyMaterial) {
     // Retry an unavailable native API on an explicit policy change, but report
     // its actual result to the renderer so its canvas does not stay transparent.
-    record.materialFailed = false
-    const snap = peekZenShellSnapshotForWindow(window)
     record.materialFailed = !applyNativeMaterial(window, snap.material)
   }
-  if (!window.isDestroyed()) record.onSnapshot?.(peekZenShellSnapshotForWindow(window))
+  record.onSnapshot?.(withMaterialFailure(record, snap))
 }
 
 /**
