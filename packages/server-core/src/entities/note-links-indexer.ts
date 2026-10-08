@@ -9,7 +9,9 @@
  * backlinks panels refresh.
  *
  * Explicit syntax only (approved rules): `[[kind:id|label]]`, `![[…]]`
- * (relation `embeds`), `[[plain title]]` (→ note), `rox://…` links. Bare
+ * (relation `embeds` only when unescaped and the whole line is the embed,
+ * exactly like the renderer's `matchEntityEmbedLine`; an inline or escaped
+ * `![[…]]` is a `mentions`), `[[plain title]]` (→ note), `rox://…`. Bare
  * `kind:id` in prose never links. Frontmatter, fenced code blocks and inline
  * code spans are not scanned. The note text is never rewritten.
  *
@@ -27,7 +29,10 @@
  * Phantom sources: rows of notes deleted/renamed while the flag was off are
  * pruned when the store is first used after the flag turns on (and on every
  * later off → on transition); backlinks additionally hide sources that can
- * no longer be found (`noteLinkSourceExists`).
+ * no longer be found (`noteLinkSourceProbeFor`). The notes root is resolved
+ * once per prune run / backlinks call; when it is unavailable (unmounted
+ * custom notesPath, native workspace not resolvable) nothing is pruned or
+ * hidden, and a run where EVERY source reads as missing is skipped too.
  *
  * Inert when `entities.links.v1` is off: the enabled check runs before any
  * file read or store open, so flag-off behaviour is identical to main.
@@ -39,7 +44,7 @@
 import { isEntitiesLinksEnabled } from '@rox/shared/feature-flags'
 import { entityRefKey, type EntityRef, type EntityRelation } from '@rox/core/entities'
 import { extractRoxDeepLinks, parseWikilinkTarget } from './extract.ts'
-import { getEntityLinkStore, type DesiredOutgoingLink, type EntityLinkStore, type OutgoingOwnership } from './link-store.ts'
+import { getEntityLinkStore, type DesiredOutgoingLink, type OutgoingOwnership } from './link-store.ts'
 import { getEntitiesWorkbenchFlags, onEntitiesWorkbenchFlagsChanged } from './workbench-flags.ts'
 
 /** Author recorded on indexer-written links. */
@@ -63,12 +68,80 @@ export interface NoteLink {
   line: number
 }
 
+/** Max wikilink target / alias length (as the shared wikilink grammar). */
+const WIKILINK_PART_MAX = 512
+
+export interface WikilinkHit {
+  /** Index of the first `[`. */
+  start: number
+  /** Index after the closing `]]`. */
+  end: number
+  /** Raw target (alias stripped). */
+  inner: string
+}
+
 /**
- * `[[target|alias]]` / `![[target|alias]]` — same shape as
- * `wikilinkTargetsToRefs`, with bounded target/alias lengths so a line full
- * of unmatched `[[` costs O(line × 512), not O(line²).
+ * `[[target|alias]]` occurrences of one line — the same language as
+ * `/\[\[([^\]\n|]{1,512}?)(?:\|[^\]\n]{0,512})?\]\]/g`, found with an indexOf
+ * scan in O(line): every candidate `[[` shares the first `]`/`|` after it,
+ * so a failed terminator is never re-scanned (a line of 20k `[` costs one
+ * pass instead of 20k × 512 regex steps).
  */
-const WIKILINK_RE = /(!?)\[\[([^\]\n|]{1,512}?)(?:\|[^\]\n]{0,512})?\]\]/g
+export function scanWikilinks(text: string): WikilinkHit[] {
+  const hits: WikilinkHit[] = []
+  const n = text.length
+  let terminator = -1
+  const findTerminator = (from: number): number => {
+    for (let k = from; k < n; k++) {
+      const c = text.charCodeAt(k)
+      if (c === 93 /* ] */ || c === 124 /* | */ || c === 10 /* \n */) return k
+    }
+    return n
+  }
+  let i = 0
+  for (;;) {
+    i = text.indexOf('[[', i)
+    if (i === -1) break
+    const innerStart = i + 2
+    if (terminator < innerStart) terminator = findTerminator(innerStart)
+    const t = terminator
+    if (t >= n) break // no `]` or `|` anywhere after: no later match either
+    const length = t - innerStart
+    if (length === 0) { i = innerStart; continue }
+    if (length > WIKILINK_PART_MAX) { i = t - WIKILINK_PART_MAX - 2; continue }
+    let end = -1
+    const c = text.charCodeAt(t)
+    if (c === 93) {
+      if (text.charCodeAt(t + 1) === 93) end = t + 2
+    } else if (c === 124) {
+      const limit = Math.min(n, t + 1 + WIKILINK_PART_MAX)
+      let a = t + 1
+      while (a < limit) {
+        const d = text.charCodeAt(a)
+        if (d === 93 || d === 10) break
+        a++
+      }
+      if (text.charCodeAt(a) === 93 && text.charCodeAt(a + 1) === 93) end = a + 2
+    }
+    // Every start before `t` ends at the same terminator with the same result.
+    if (end === -1) { i = t; continue }
+    hits.push({ start: i, end, inner: text.slice(innerStart, t) })
+    i = end
+  }
+  return hits
+}
+
+/**
+ * Whole-line embed, as `matchEntityEmbedLine` in the renderer: the trimmed
+ * line is exactly this `![[…]]` (unescaped), with at most 3 leading spaces
+ * (4+ spaces or a tab is indented code).
+ */
+function isWholeLineEmbed(raw: string, hit: WikilinkHit): boolean {
+  if (hit.start === 0 || raw.charCodeAt(hit.start - 1) !== 33 /* ! */) return false
+  if (/^(?: {4}|\t)/.test(raw)) return false
+  return raw.trim() === raw.slice(hit.start - 1, hit.end)
+}
+
 const FENCE_RE = /^ {0,3}(`{3,}|~{3,})/
 
 /**
@@ -165,11 +238,11 @@ export function extractNoteLinks(markdown: string, self?: EntityRef, options: Ex
     }
     const text = stripInlineCode(raw)
     const lineNo = index + 1
-    for (const match of text.matchAll(WIKILINK_RE)) {
-      const inner = (match[2] ?? '').trim()
+    for (const hit of scanWikilinks(text)) {
+      const inner = hit.inner.trim()
       if (!inner) continue
       const ref = parseWikilinkTarget(inner)
-      if (ref) push(ref, match[1] === '!' ? 'embeds' : 'mentions', lineNo)
+      if (ref) push(ref, isWholeLineEmbed(raw, hit) ? 'embeds' : 'mentions', lineNo)
     }
     for (const link of extractRoxDeepLinks(text)) push(link.to, 'mentions', lineNo)
   }
@@ -218,20 +291,29 @@ export function noteEntityRef(noteId: string): EntityRef {
 // enabled observation counts); each workspace store is pruned once per
 // generation, on first use.
 
-type NoteSourceProbe = (workspace: NoteLinksWorkspace, noteId: string) => boolean
+/** Existence check for note ids of ONE workspace whose notes root was resolved. */
+export type NoteSourceProbe = (noteId: string) => boolean
+/**
+ * Resolves a workspace's notes root ONCE and returns a cheap per-id probe,
+ * or `null` when the root is unavailable (not an existing, readable
+ * directory; native workspace not resolvable). `null` means "unknown":
+ * nothing is pruned and every source counts as present.
+ */
+export type NoteSourceProbeFactory = (workspace: NoteLinksWorkspace) => NoteSourceProbe | null
 
-let noteSourceProbe: NoteSourceProbe | null = null
+let noteSourceProbeFactory: NoteSourceProbeFactory | null = null
 let lastObservedEnabled = false
 let enableGeneration = 0
 const prunedGeneration = new Map<string, number>()
+const warnedGeneration = new Map<string, number>()
 
 /**
- * The Notes handlers register how to tell whether a note id still exists.
- * Returns a disposer (clears the probe only if it is still this one).
+ * The Notes handlers register how to resolve a workspace's note existence.
+ * Returns a disposer (clears the factory only if it is still this one).
  */
-export function setNoteLinksSourceProbe(probe: NoteSourceProbe | null): () => void {
-  noteSourceProbe = probe
-  return () => { if (noteSourceProbe === probe) noteSourceProbe = null }
+export function setNoteLinksSourceProbe(factory: NoteSourceProbeFactory | null): () => void {
+  noteSourceProbeFactory = factory
+  return () => { if (noteSourceProbeFactory === factory) noteSourceProbeFactory = null }
 }
 
 /** Record the live flag value; an off → on transition re-arms pruning. */
@@ -245,41 +327,71 @@ export function observeEntitiesLinksEnabled(enabled: boolean): boolean {
 // them eagerly so a transition is seen even when no note op ran meanwhile.
 onEntitiesWorkbenchFlagsChanged(flags => { observeEntitiesLinksEnabled(isEntitiesLinksEnabled(flags)) })
 
-/**
- * False only when the source is a note the Notes handlers can no longer
- * find. Unknown kinds, no registered probe or a probe error count as present
- * (never hide or prune on uncertainty).
- */
-export function noteLinkSourceExists(workspace: NoteLinksWorkspace, ref: EntityRef): boolean {
-  if (ref.kind !== 'note' || !noteSourceProbe) return true
+function resolveProbe(workspace: NoteLinksWorkspace): NoteSourceProbe | null {
+  if (!noteSourceProbeFactory) return null
   try {
-    return noteSourceProbe(workspace, ref.id)
+    return noteSourceProbeFactory(workspace)
+  } catch {
+    return null
+  }
+}
+
+function safeExists(probe: NoteSourceProbe, noteId: string): boolean {
+  try {
+    return probe(noteId)
   } catch {
     return true
   }
 }
 
-/** Remove indexer-owned rows whose source note no longer exists. Returns rows removed. */
-export function pruneMissingNoteLinkSources(workspace: NoteLinksWorkspace, store: EntityLinkStore = getEntityLinkStore(workspace.rootPath)): number {
-  if (!noteSourceProbe) return 0
-  let removed = 0
-  for (const id of store.outgoingSourceIds('note', NOTE_LINKS_INDEXER_OWNERSHIP)) {
-    if (noteLinkSourceExists(workspace, noteEntityRef(id))) continue
-    removed += store.removeOutgoing(noteEntityRef(id), NOTE_LINKS_INDEXER_OWNERSHIP)
+/**
+ * Source-existence check for one backlinks call: resolves the workspace's
+ * notes root once. False only for a note the Notes authority can no longer
+ * find; unknown kinds, no factory, an unavailable root or a probe error
+ * count as present (never hide on uncertainty).
+ */
+export function noteLinkSourceProbeFor(workspace: NoteLinksWorkspace): (ref: EntityRef) => boolean {
+  let probe: NoteSourceProbe | null | undefined
+  return ref => {
+    if (ref.kind !== 'note') return true
+    if (probe === undefined) probe = resolveProbe(workspace)
+    return probe ? safeExists(probe, ref.id) : true
   }
-  return removed
 }
 
 /**
  * Prune once per enable generation per workspace (first store use after the
  * flag turned on). Call only while enabled. Returns rows removed.
+ *
+ * Fail-safe: an unavailable notes root skips the run WITHOUT marking the
+ * generation (retried on the next use, once the root is back); a run in
+ * which every indexed source reads as missing is skipped (marked) — that is
+ * far more likely a wrong root than a user who deleted every note.
  */
 export function ensureNoteLinksPruned(workspace: NoteLinksWorkspace, logger: Pick<Console, 'warn'> = console): number {
-  if (!noteSourceProbe || enableGeneration === 0) return 0
+  if (!noteSourceProbeFactory || enableGeneration === 0) return 0
   if (prunedGeneration.get(workspace.rootPath) === enableGeneration) return 0
+  const probe = resolveProbe(workspace)
+  if (!probe) {
+    if (warnedGeneration.get(workspace.rootPath) !== enableGeneration) {
+      warnedGeneration.set(workspace.rootPath, enableGeneration)
+      logger.warn(`[entities] notes root unavailable for workspace ${workspace.id}; not pruning note links`)
+    }
+    return 0
+  }
   prunedGeneration.set(workspace.rootPath, enableGeneration)
   try {
-    return pruneMissingNoteLinkSources(workspace)
+    const store = getEntityLinkStore(workspace.rootPath)
+    const ids = store.outgoingSourceIds('note', NOTE_LINKS_INDEXER_OWNERSHIP)
+    const missing = ids.filter(id => !safeExists(probe, id))
+    if (missing.length === 0) return 0
+    if (missing.length === ids.length) {
+      logger.warn(`[entities] all ${ids.length} indexed note(s) read as missing in workspace ${workspace.id}; not pruning`)
+      return 0
+    }
+    let removed = 0
+    for (const id of missing) removed += store.removeOutgoing(noteEntityRef(id), NOTE_LINKS_INDEXER_OWNERSHIP)
+    return removed
   } catch (error) {
     logger.warn('[entities] pruning links of missing notes failed:', error)
     return 0
@@ -288,10 +400,11 @@ export function ensureNoteLinksPruned(workspace: NoteLinksWorkspace, logger: Pic
 
 /** Test seam. */
 export function __resetNoteLinksPruneStateForTests(): void {
-  noteSourceProbe = null
+  noteSourceProbeFactory = null
   lastObservedEnabled = false
   enableGeneration = 0
   prunedGeneration.clear()
+  warnedGeneration.clear()
 }
 
 // ── Native-path ordering (review 4) ────────────────────────────────────────

@@ -10,7 +10,7 @@
  * the workspace link store after each step. Prints `verified-<scenario>`.
  */
 import assert from 'node:assert/strict'
-import { existsSync, mkdirSync } from 'node:fs'
+import { existsSync, mkdirSync, renameSync, rmSync } from 'node:fs'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 
@@ -22,12 +22,22 @@ const storage = await import('@rox/shared/config')
 const { RPC_CHANNELS } = await import('@rox/shared/protocol')
 const { registerNotesHandlers } = await import('../../notes.ts')
 const { getEntityLinkStore, closeEntityLinkStores } = await import('../../../../entities/link-store.ts')
-const { NOTE_LINKS_INDEXER_OWNERSHIP } = await import('../../../../entities/note-links-indexer.ts')
+const { NOTE_LINKS_INDEXER_OWNERSHIP, ensureNoteLinksPruned, noteLinkSourceProbeFor, observeEntitiesLinksEnabled } = await import('../../../../entities/note-links-indexer.ts')
 
 const workspaceRoot = join(process.env.ROX_NOTE_LINKS_ROOT!, 'workspace')
 mkdirSync(workspaceRoot, { recursive: true })
 storage.saveConfig(storage.createInitialStoredConfig())
 const workspace = storage.addWorkspace({ name: 'Links', rootPath: workspaceRoot, kind: 'personal' })
+const { loadWorkspaceConfig, saveWorkspaceConfig } = await import('@rox/shared/workspaces')
+// Legacy vault on a custom notesPath (external disk / cloud folder) so the
+// review 5 #1 unmount check exercises the real root resolution.
+const externalNotes = join(process.env.ROX_NOTE_LINKS_ROOT!, 'external-notes')
+if (scenario !== 'native') {
+  mkdirSync(externalNotes, { recursive: true })
+  const config = loadWorkspaceConfig(workspaceRoot)
+  assert.ok(config, 'workspace config exists')
+  saveWorkspaceConfig(workspaceRoot, { ...config, notesPath: externalNotes })
+}
 
 const handlers = new Map<string, (...args: any[]) => any>()
 const pushes: Array<{ channel: string; args: unknown[] }> = []
@@ -45,12 +55,14 @@ const entities = new Map<string, any>()
 // it landed (an older revision than what other saves already indexed).
 let lag: { marker: string; gate: Promise<void>; landed: () => void } | null = null
 let pullOverride: any[] | null = null
+// Review 5 #1: the native workspace briefly does not resolve.
+let nativeUnresolved = false
 const nativeData = {
   authority: {
     hasRegisteredWorkspaces: () => true,
     authorize: () => true,
     permissionFence: () => 'fixture-fence',
-    resolveWorkspace: () => ({ nativeRoot }),
+    resolveWorkspace: () => (nativeUnresolved ? null : { nativeRoot }),
   },
   sync: {
     pull: () => {
@@ -141,9 +153,11 @@ const store = getEntityLinkStore(workspaceRoot)
 const from = { kind: 'note' as const, id: saved.id }
 const ownedCount = () => store.outgoingSourceIds('note', NOTE_LINKS_INDEXER_OWNERSHIP).length
 const summary = () => store.outgoing(from).map(link => `${link.relation} ${link.to.kind}:${link.to.id}${link.anchor?.line ? `@${link.anchor.line}` : ''}`).sort()
+// The inline `![[note:Plan]]` is a mention: only a whole-line embed is an
+// embed (review 5 #7, as matchEntityEmbedLine).
 assert.deepEqual(summary(), [
-  'embeds note:Plan@4',
   'mentions goal:g1@9',
+  'mentions note:Plan@4',
   'mentions note:Встреча: итоги@9',
   'mentions task:42@4',
 ])
@@ -162,8 +176,8 @@ const revisionsBefore = revisions()
 const shiftedBody = body1.replace('---\nOwner', '---\nA brand new first body line.\nOwner')
 const shifted = await save(resaved0.id, shiftedBody)
 assert.deepEqual(summary(), [
-  'embeds note:Plan@5',
   'mentions goal:g1@10',
+  'mentions note:Plan@5',
   'mentions note:Встреча: итоги@10',
   'mentions task:42@5',
 ], 'anchors follow the shifted lines')
@@ -232,6 +246,9 @@ const keeper = native
   ? await invoke(RPC_CHANNELS.notes.CREATE, 'Keeper', undefined, op(null))
   : await invoke(RPC_CHANNELS.notes.CREATE, 'Keeper')
 await save(scratch.id, 'Scratch mentions [[task:phantom]]')
+// Keeper is indexed too: a prune run where EVERY source reads as missing is
+// skipped by design (review 5 #1), so the store needs a surviving source.
+await save(keeper.id, 'Keeper mentions [[task:early]]')
 assert.equal(store.backlinks({ kind: 'task', id: 'phantom' }).links.length, 1)
 process.env.CRAFT_FEATURE_ENTITIES_LINKS = '0'
 await remove(scratch.id)
@@ -267,6 +284,38 @@ if (native) {
 }
 await remove(keeper.id)
 assert.equal(ownedCount(), 0)
+
+// Review 5 #1: an unavailable notes root never prunes and hides nothing.
+const linksWorkspace = { id: workspace.id, rootPath: workspaceRoot }
+const guardA = native
+  ? await invoke(RPC_CHANNELS.notes.CREATE, 'Guard A', undefined, op(null))
+  : await invoke(RPC_CHANNELS.notes.CREATE, 'Guard A')
+const guardB = native
+  ? await invoke(RPC_CHANNELS.notes.CREATE, 'Guard B', undefined, op(null))
+  : await invoke(RPC_CHANNELS.notes.CREATE, 'Guard B')
+await save(guardA.id, 'A mentions [[task:guard]]')
+await save(guardB.id, 'B mentions [[task:guard]]')
+const guardBacklinks = () => store.backlinks({ kind: 'task', id: 'guard' }, {}, { sourceExists: noteLinkSourceProbeFor(linksWorkspace) }).links.length
+assert.equal(guardBacklinks(), 2)
+const rearm = () => { observeEntitiesLinksEnabled(false); observeEntitiesLinksEnabled(true) }
+let restore: () => void
+if (native) {
+  nativeUnresolved = true // resolveWorkspace() → null: never fall back to a vault root
+  restore = () => { nativeUnresolved = false }
+} else {
+  renameSync(externalNotes, `${externalNotes}.offline`) // custom notesPath unmounted
+  restore = () => renameSync(`${externalNotes}.offline`, externalNotes)
+}
+rearm()
+assert.equal(ensureNoteLinksPruned(linksWorkspace), 0, 'unavailable root: nothing pruned')
+assert.equal(guardBacklinks(), 2, 'unavailable root: every source counts as present')
+assert.equal(ownedCount(), 2)
+restore()
+// Same generation (the skipped run was not marked): B is really gone now.
+rmSync(native ? join(nativeRoot, 'notes', `${guardB.id}.md`) : join(externalNotes, `${guardB.id}.md`))
+assert.equal(guardBacklinks(), 1, 'a really missing source is hidden')
+assert.equal(ensureNoteLinksPruned(linksWorkspace), 1, 'root back: the missing note is pruned')
+assert.equal(ownedCount(), 1)
 
 closeEntityLinkStores()
 console.log(`verified-${scenario}`)

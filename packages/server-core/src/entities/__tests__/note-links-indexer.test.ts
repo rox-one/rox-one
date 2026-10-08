@@ -6,7 +6,7 @@
  * inertia.
  */
 import { afterEach, describe, expect, it } from 'bun:test'
-import { existsSync, mkdtempSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { closeEntityLinkStores, EntityLinkStore, getEntityLinkStore } from '../link-store.ts'
@@ -16,7 +16,8 @@ import {
   createNoteLinksSerializer,
   ensureNoteLinksPruned,
   extractNoteLinks,
-  noteLinkSourceExists,
+  noteLinkSourceProbeFor,
+  scanWikilinks,
   NOTE_LINKS_INDEXER_ACTOR,
   NOTE_LINKS_INDEXER_OWNERSHIP,
   NOTE_LINKS_MAX_LINE_CHARS,
@@ -41,13 +42,27 @@ afterEach(() => {
 
 describe('extractNoteLinks (explicit syntax only)', () => {
   it('links wikilinks, embeds, plain titles and rox:// with first-occurrence lines', () => {
-    const md = ['# Title', 'See [[task:42|Fix]] and ![[note:Plan]].', 'rox://goals/goal/g1, [[Итоги#Решения]], [[task:42]] again'].join('\n')
+    const md = ['# Title', 'See [[task:42|Fix]] and ![[note:Plan]].', 'rox://goals/goal/g1, [[Итоги#Решения]], [[task:42]] again', '![[note:Plan]]'].join('\n')
     expect(extractNoteLinks(md)).toEqual([
       { to: { kind: 'task', id: '42' }, relation: 'mentions', line: 2 },
-      { to: { kind: 'note', id: 'Plan' }, relation: 'embeds', line: 2 },
+      { to: { kind: 'note', id: 'Plan' }, relation: 'mentions', line: 2 },
       { to: { kind: 'note', id: 'Итоги' }, relation: 'mentions', line: 3 },
       { to: { kind: 'goal', id: 'g1' }, relation: 'mentions', line: 3 },
+      { to: { kind: 'note', id: 'Plan' }, relation: 'embeds', line: 4 },
     ])
+  })
+
+  it('embeds only for an unescaped whole-line ![[…]], like matchEntityEmbedLine (review 5 #7)', () => {
+    const relation = (line: string) => extractNoteLinks(line).map(link => link.relation)
+    expect(relation('![[task:1]]')).toEqual(['embeds'])
+    expect(relation('   ![[task:1|Label]]  ')).toEqual(['embeds'])
+    expect(relation('![[Plan]]')).toEqual(['embeds'])
+    expect(relation('\\![[task:1]]')).toEqual(['mentions'])
+    expect(relation('a ![[task:1]] b')).toEqual(['mentions'])
+    expect(relation('![[task:1]] tail')).toEqual(['mentions'])
+    expect(relation('    ![[task:1]]')).toEqual(['mentions'])
+    expect(relation('\t![[task:1]]')).toEqual(['mentions'])
+    expect(relation('![[task:1]]![[task:2]]')).toEqual(['mentions', 'mentions'])
   })
 
   it('never links bare kind:id, URLs or escaped wikilinks', () => {
@@ -244,6 +259,34 @@ describe('createNoteLinksIndexer', () => {
     expect(store.outgoing({ kind: 'note', id: 'n1' }).map(link => `${link.relation}:${link.to.id}`)).toEqual(['relates-to:g1'])
   })
 
+  it('a manual add with role + blockId over an indexer row takes ownership; save, removal and prune keep it (review 5 #3)', () => {
+    const root = tempRoot()
+    const workspace = { id: 'ws', rootPath: root }
+    const indexer = createNoteLinksIndexer({ isEnabled: () => true })
+    const store = getEntityLinkStore(root)
+    const n1 = { kind: 'note' as const, id: 'n1' }
+    indexer.index(workspace, 'n1', 'See [[task:1]]')
+    expect(store.outgoing(n1)[0]!.createdBy).toBe(NOTE_LINKS_INDEXER_ACTOR)
+    const manual = store.add({ from: n1, to: { kind: 'task', id: '1' }, relation: 'mentions', role: 'owner', anchor: { blockId: 'b7' }, createdBy: 'user-1' })
+    expect(manual.createdBy).toBe('user-1')
+    // Save with the mention still there: the indexer must not touch the row.
+    indexer.index(workspace, 'n1', 'Line\nSee [[task:1]] again')
+    expect(store.outgoing(n1)).toEqual([manual])
+    // Mention removed from the text: the user's row stays.
+    indexer.index(workspace, 'n1', 'No links')
+    expect(store.outgoing(n1)).toEqual([manual])
+    // Prune (source note reported missing) keeps it as well.
+    setNoteLinksSourceProbe(() => id => id !== 'n1')
+    store.replaceOutgoing({ kind: 'note', id: 'alive' }, [{ to: { kind: 'task', id: '2' }, relation: 'mentions' }], NOTE_LINKS_INDEXER_OWNERSHIP)
+    observeEntitiesLinksEnabled(false)
+    observeEntitiesLinksEnabled(true)
+    ensureNoteLinksPruned(workspace)
+    expect(store.outgoing(n1)).toEqual([manual])
+    // A bare add (no role, no anchor) does not take ownership.
+    indexer.index(workspace, 'n2', '[[task:3]]')
+    expect(store.add({ from: { kind: 'note', id: 'n2' }, to: { kind: 'task', id: '3' }, relation: 'mentions', createdBy: 'user-1' }).createdBy).toBe(NOTE_LINKS_INDEXER_ACTOR)
+  })
+
   it('inserting a line above the links: 0 pushes, 0 revision bumps, anchors refreshed (review 4 #2)', () => {
     const root = tempRoot()
     const pushes: string[] = []
@@ -259,6 +302,37 @@ describe('createNoteLinksIndexer', () => {
     const after = store.outgoing({ kind: 'note', id: 'n1' })
     expect(after.map(link => link.revision)).toEqual(before.map(link => link.revision))
     expect(after.map(link => link.anchor?.line)).toEqual(before.map(link => (link.anchor?.line ?? 0) + 1))
+  })
+})
+
+describe('wikilink scanner (review 5 #5)', () => {
+  const REFERENCE = /\[\[([^\]\n|]{1,512}?)(?:\|[^\]\n]{0,512})?\]\]/g
+  const viaRegex = (text: string) => [...text.matchAll(REFERENCE)].map(match => `${match.index}:${match[1]}`)
+  const viaScan = (text: string) => scanWikilinks(text).map(hit => `${hit.start}:${hit.inner}`)
+
+  it('matches the bounded regex language exactly (fuzzed)', () => {
+    const alphabet = ['[', '[', ']', ']', '|', 'a', 'b', ' ', '!', '\\']
+    let seed = 1499
+    const random = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648 }
+    for (let round = 0; round < 3000; round++) {
+      const length = Math.floor(random() * 40)
+      let text = ''
+      for (let k = 0; k < length; k++) text += alphabet[Math.floor(random() * alphabet.length)]
+      expect(viaScan(text)).toEqual(viaRegex(text))
+    }
+    for (const text of ['[[a]]', '[[a|b]]', '[[[a]]', '[[a]', '[[]]', '[[|x]]', '[[a|b|c]]', '[[a|]]', `[[${'x'.repeat(512)}]]`, `[[${'x'.repeat(513)}]]`,
+      `[[${'['.repeat(600)}a]]`, `[[a|${'y'.repeat(512)}]]`, `[[a|${'y'.repeat(513)}]]`, 'x [[a]] [[b|c]] ![[d]]']) {
+      expect(viaScan(text)).toEqual(viaRegex(text))
+    }
+  })
+
+  it('100 lines of 20k [ stay well under 200 ms', () => {
+    const md = Array.from({ length: 100 }, () => '['.repeat(NOTE_LINKS_MAX_LINE_CHARS - 1)).join('\n')
+    const started = performance.now()
+    expect(extractNoteLinks(md, undefined, { logger: { warn: () => {} } })).toEqual([])
+    const elapsed = performance.now() - started
+    // The bounded regex took ~59 ms per such line (~6 s here).
+    expect(elapsed).toBeLessThan(200)
   })
 })
 
@@ -338,6 +412,29 @@ describe('native-path ordering (review 4 #4)', () => {
   })
 })
 
+describe('native tombstones (review 5 #4)', () => {
+  it('delete tombstones the entity without bound until a create resets it; rename/move use the post-op revision', async () => {
+    const serializer = createNoteLinksSerializer()
+    const ran: string[] = []
+    await serializer.run('ws', 'n1', () => { ran.push('delete') }, { tombstone: { nativeId: 'e1', revision: Number.POSITIVE_INFINITY } })
+    await serializer.run('ws', 'n1', () => { ran.push('late-save-r9') }, { revision: { nativeId: 'e1', revision: 9 } })
+    await serializer.run('ws', 'n1', () => { ran.push('create') }, { revision: { nativeId: 'e1', revision: 1 }, reset: true })
+    expect(ran).toEqual(['delete', 'create'])
+    // Rename at post-op r6: an autosave that committed at r5 under the old id is stale.
+    await serializer.run('ws', 'old', () => { ran.push('rename-old') }, { tombstone: { nativeId: 'e2', revision: 6 } })
+    await serializer.run('ws', 'old', () => { ran.push('autosave-r5') }, { revision: { nativeId: 'e2', revision: 5 } })
+    expect(ran).toEqual(['delete', 'create', 'rename-old'])
+  })
+
+  it('notes.ts tombstones at the three sites', () => {
+    const source = readFileSync(new URL('../../handlers/rpc/notes.ts', import.meta.url), 'utf8')
+    expect(source).toContain('removeNativeNoteLinks(workspaceId, noteId, { nativeId: renamed.entity.nativeId, nativeRevision: renamed.entity.revision })')
+    expect(source).toContain('removeNativeNoteLinks(workspaceId, noteId, { nativeId: moved.entity.nativeId, nativeRevision: moved.entity.revision })')
+    expect(source).toContain('removeNativeNoteLinks(workspaceId, noteId, { nativeId: found.entity.nativeId, nativeRevision: Number.POSITIVE_INFINITY })')
+    expect(source).not.toContain('nativeRevision: found.entity.revision })')
+  })
+})
+
 describe('phantom-source pruning (review 4, owner decision)', () => {
   const seed = (root: string) => {
     const store = getEntityLinkStore(root)
@@ -353,7 +450,7 @@ describe('phantom-source pruning (review 4, owner decision)', () => {
     const workspace = { id: 'ws', rootPath: root }
     const store = seed(root)
     const existing = new Set(['alive'])
-    setNoteLinksSourceProbe((_ws, id) => existing.has(id))
+    setNoteLinksSourceProbe(() => id => existing.has(id))
     const pushes: string[] = []
     let enabled = true
     const indexer = createNoteLinksIndexer({ isEnabled: () => enabled, notify: id => pushes.push(id) })
@@ -379,18 +476,75 @@ describe('phantom-source pruning (review 4, owner decision)', () => {
     const store = seed(root)
     observeEntitiesLinksEnabled(true)
     expect(ensureNoteLinksPruned(workspace)).toBe(0) // no probe registered
-    expect(noteLinkSourceExists(workspace, { kind: 'note', id: 'gone' })).toBe(true)
+    expect(noteLinkSourceProbeFor(workspace)({ kind: 'note', id: 'gone' })).toBe(true)
     setNoteLinksSourceProbe(() => { throw new Error('vault offline') })
-    expect(noteLinkSourceExists(workspace, { kind: 'note', id: 'gone' })).toBe(true)
+    expect(noteLinkSourceProbeFor(workspace)({ kind: 'note', id: 'gone' })).toBe(true)
+    setNoteLinksSourceProbe(() => () => { throw new Error('stat failed') })
+    expect(noteLinkSourceProbeFor(workspace)({ kind: 'note', id: 'gone' })).toBe(true)
     expect(ensureNoteLinksPruned(workspace)).toBe(0)
     expect(store.outgoingSourceIds('note', NOTE_LINKS_INDEXER_OWNERSHIP)).toHaveLength(3)
     const { setEntitiesWorkbenchFlags, resetEntitiesWorkbenchFlags } = await import('../workbench-flags.ts')
     const { WORKBENCH_FLAG } = await import('@rox/core/platform')
-    setNoteLinksSourceProbe((_ws, id) => id === 'alive')
+    setNoteLinksSourceProbe(() => id => id === 'alive')
     resetEntitiesWorkbenchFlags() // published off
     setEntitiesWorkbenchFlags([WORKBENCH_FLAG.entitiesLinksV1]) // published on → new generation
     resetEntitiesWorkbenchFlags()
     expect(ensureNoteLinksPruned(workspace)).toBe(2)
-    expect(noteLinkSourceExists(workspace, { kind: 'task', id: 'anything' })).toBe(true)
+    expect(noteLinkSourceProbeFor(workspace)({ kind: 'task', id: 'anything' })).toBe(true)
+  })
+
+  it('an unavailable notes root never prunes, is not marked, and hides nothing (review 5 #1)', () => {
+    const root = tempRoot()
+    const workspace = { id: 'ws', rootPath: root }
+    const store = seed(root)
+    let mounted = false
+    const warnings: unknown[] = []
+    const logger = { warn: (...args: unknown[]) => { warnings.push(args) } }
+    setNoteLinksSourceProbe(() => (mounted ? id => id === 'alive' : null))
+    observeEntitiesLinksEnabled(true)
+    expect(ensureNoteLinksPruned(workspace, logger)).toBe(0)
+    expect(ensureNoteLinksPruned(workspace, logger)).toBe(0)
+    expect(warnings).toHaveLength(1) // logged once per generation
+    expect(store.outgoingSourceIds('note', NOTE_LINKS_INDEXER_OWNERSHIP)).toHaveLength(3)
+    expect(store.backlinks({ kind: 'task', id: 't' }, {}, { sourceExists: noteLinkSourceProbeFor(workspace) }).links).toHaveLength(3)
+    // Same generation, root back: the skipped run happens now.
+    mounted = true
+    expect(ensureNoteLinksPruned(workspace, logger)).toBe(2)
+    expect(store.outgoingSourceIds('note', NOTE_LINKS_INDEXER_OWNERSHIP)).toEqual(['alive'])
+  })
+
+  it('a run where every indexed source reads as missing is skipped (review 5 #1)', () => {
+    const root = tempRoot()
+    const workspace = { id: 'ws', rootPath: root }
+    const store = seed(root)
+    const warnings: unknown[] = []
+    setNoteLinksSourceProbe(() => () => false)
+    observeEntitiesLinksEnabled(true)
+    expect(ensureNoteLinksPruned(workspace, { warn: (...args: unknown[]) => { warnings.push(args) } })).toBe(0)
+    expect(warnings).toHaveLength(1)
+    expect(store.outgoingSourceIds('note', NOTE_LINKS_INDEXER_OWNERSHIP)).toHaveLength(3)
+  })
+
+  it('resolves the notes root once per backlinks call and once per prune run (review 5 #2)', () => {
+    const root = tempRoot()
+    const workspace = { id: 'ws', rootPath: root }
+    const store = getEntityLinkStore(root)
+    for (let n = 0; n < 60; n++) {
+      store.replaceOutgoing({ kind: 'note', id: `n${n}` }, [{ to: { kind: 'task', id: 't' }, relation: 'mentions' }], NOTE_LINKS_INDEXER_OWNERSHIP)
+    }
+    let resolutions = 0
+    let lookups = 0
+    setNoteLinksSourceProbe(() => { resolutions += 1; return id => { lookups += 1; return id !== 'n7' } })
+    const page = store.backlinks({ kind: 'task', id: 't' }, { limit: 100 }, { sourceExists: noteLinkSourceProbeFor(workspace) })
+    expect(page.links).toHaveLength(59)
+    expect(resolutions).toBe(1)
+    expect(lookups).toBe(60)
+    // A backlinks page without note sources never resolves the root.
+    resolutions = 0
+    expect(store.backlinks({ kind: 'goal', id: 'none' }, {}, { sourceExists: noteLinkSourceProbeFor(workspace) }).links).toEqual([])
+    expect(resolutions).toBe(0)
+    observeEntitiesLinksEnabled(true)
+    expect(ensureNoteLinksPruned(workspace)).toBe(1)
+    expect(resolutions).toBe(1)
   })
 })

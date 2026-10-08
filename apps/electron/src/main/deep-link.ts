@@ -279,11 +279,13 @@ export function isEntityOnlyDeepLink(url: string): boolean {
 }
 
 /**
- * Per-app deep-link sequence: every link entering `resolveDeepLinkTarget`
- * takes the next number. A held entity link that resolves after a LATER link
- * arrived is dropped, so the user's most recent link always wins (a held
- * link would otherwise navigate after a later non-entity link that was
- * handled immediately).
+ * Per-app EXTERNAL deep-link sequence: every link arriving through external
+ * ingress (`handleDeepLink`: OS open-url, second instance, cold start) takes
+ * the next number. A held external entity link that resolves after a LATER
+ * external link arrived is dropped, so the user's most recent link wins (a
+ * held link would otherwise navigate after a later non-entity link that was
+ * handled immediately). Internal navigations (`createWindow({ initialDeepLink })`,
+ * e.g. OPEN_SESSION_IN_NEW_WINDOW) neither bump nor supersede.
  */
 let deepLinkSequence = 0
 
@@ -295,13 +297,13 @@ export type DeepLinkDropReason = 'timeout' | 'superseded'
  */
 export async function resolveDeepLinkTargetDetailed(
   url: string,
-  options: { timeoutMs?: number } = {},
+  options: { timeoutMs?: number; external?: boolean } = {},
 ): Promise<{ target: DeepLinkTarget | null; dropped?: DeepLinkDropReason }> {
-  const sequence = ++deepLinkSequence
+  const sequence = options.external ? ++deepLinkSequence : null
   if (!isEntitiesLinksFlagKnown() && isEntityOnlyDeepLink(url)) {
     mainLog.info('[DeepLink] Holding entity link until the entities.links.v1 state is known:', url)
     const ready = await whenEntitiesLinksFlagKnown(options.timeoutMs ?? ENTITIES_FLAG_WAIT_MS)
-    if (sequence !== deepLinkSequence) {
+    if (sequence !== null && sequence !== deepLinkSequence) {
       mainLog.info('[DeepLink] Dropping held entity link superseded by a later link:', url)
       return { target: null, dropped: 'superseded' }
     }
@@ -317,8 +319,10 @@ export async function resolveDeepLinkTargetDetailed(
  * `parseDeepLink`, but an entity-only link that arrives before main knows
  * the `entities.links.v1` state (no durable copy, before the renderer's
  * first report) is held until the state is known and parsed then. On
- * timeout, or when a later link arrived meanwhile, it is dropped and logged.
- * Once the state is known nothing waits, so flags-off behaviour is main's.
+ * timeout it is dropped and logged. Internal callers (window-manager's
+ * `initialDeepLink`) use this form: they never supersede a held external
+ * link and are never superseded. Once the state is known nothing waits, so
+ * flags-off behaviour is main's.
  */
 export async function resolveDeepLinkTarget(
   url: string,
@@ -342,7 +346,7 @@ export async function handleDeepLink(
   resolveClientId?: (webContentsId: number) => string | undefined,
   preferredClientId?: string,
 ): Promise<DeepLinkResult> {
-  const { target, dropped } = await resolveDeepLinkTargetDetailed(url)
+  const { target, dropped } = await resolveDeepLinkTargetDetailed(url, { external: true })
 
   if (dropped === 'superseded') return { success: false, error: 'Deep link superseded by a later link' }
   if (!target) {

@@ -1,5 +1,5 @@
 import { open, realpath, lstat, mkdir, readdir, readFile, rename, rm, stat, unlink, writeFile } from 'fs/promises'
-import { existsSync, constants } from 'fs'
+import { accessSync, existsSync, constants, statSync } from 'fs'
 import { createHash } from 'node:crypto'
 import { basename, dirname, extname, join, relative, resolve, sep } from 'path'
 import { getWorkspaceByNameOrId, isImportProvenancedRelativePath } from '@rox/shared/config'
@@ -147,6 +147,17 @@ function getWorkspaceNotesRoot(workspaceId: string): string {
   const config = loadWorkspaceConfig(workspace.rootPath)
   if (config?.notesPath) return config.notesPath
   return join(getDefaultWorkspacesDir(), workspaceId, NOTES_DIR)
+}
+
+/** An existing directory we can list and read (an unmounted volume is not). */
+function isReadableDirectory(path: string): boolean {
+  try {
+    if (!statSync(path).isDirectory()) return false
+    accessSync(path, constants.R_OK | constants.X_OK)
+    return true
+  } catch {
+    return false
+  }
 }
 
 function getNotesRoot(workspaceRoot: string): string {
@@ -1243,10 +1254,19 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
   }
   // Phantom-source pruning and backlinks filtering ask the Notes authority
   // whether a source note id still exists (native journal root or vault).
-  const disposeNoteLinksProbe = setNoteLinksSourceProbe((workspace, noteId) => {
-    const native = deps.nativeData?.authority.resolveWorkspace(workspace.id)
+  // The root is resolved ONCE per prune run / backlinks call (config reads
+  // stay off the per-row path); an unavailable root returns null = unknown,
+  // so nothing is pruned or hidden (unmounted custom notesPath, a native
+  // workspace that does not resolve right now).
+  const disposeNoteLinksProbe = setNoteLinksSourceProbe(workspace => {
+    const authority = deps.nativeData?.authority
+    const native = authority?.resolveWorkspace(workspace.id)
+    // Once native authority owns any workspace, legacy vault roots are never
+    // the source of truth: an unresolved native workspace is "unknown".
+    if (!native && authority?.hasRegisteredWorkspaces()) return null
     const notesRoot = native ? join(native.nativeRoot, NOTES_DIR) : getWorkspaceNotesRoot(workspace.id)
-    return existsSync(notePathFromId(notesRoot, noteId))
+    if (!isReadableDirectory(notesRoot)) return null
+    return noteId => existsSync(notePathFromId(notesRoot, noteId))
   })
   server.onShutdown?.(disposeNoteLinksProbe)
   // Native (journal) paths index outside the vault lease: serialize per
@@ -1484,7 +1504,9 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       ])
       const renamed = await findNativeNote(deps, context, nextId)
       const note = await nativeNoteDocument(deps, context, renamed.entity, renamed.file, renamed.entities)
-      if (note.id !== noteId) await removeNativeNoteLinks(workspaceId, noteId, { nativeId: found.entity.nativeId, nativeRevision: found.entity.revision })
+      // Tombstone the old id with the post-op revision (same entity, newer
+      // than any autosave that committed before the rename).
+      if (note.id !== noteId) await removeNativeNoteLinks(workspaceId, noteId, { nativeId: renamed.entity.nativeId, nativeRevision: renamed.entity.revision })
       await indexNativeNoteLinks(workspaceId, note)
       changed({ workspaceId, reason: 'rename', noteId: note.id })
       return { note, updatedNotes: [] }
@@ -1512,7 +1534,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       ])
       const moved = await findNativeNote(deps, context, nextId)
       const note = await nativeNoteDocument(deps, context, moved.entity, moved.file, moved.entities)
-      if (note.id !== noteId) await removeNativeNoteLinks(workspaceId, noteId, { nativeId: found.entity.nativeId, nativeRevision: found.entity.revision })
+      if (note.id !== noteId) await removeNativeNoteLinks(workspaceId, noteId, { nativeId: moved.entity.nativeId, nativeRevision: moved.entity.revision })
       await indexNativeNoteLinks(workspaceId, note)
       changed({ workspaceId, reason: 'move', noteId: note.id })
       return { note }
@@ -1537,7 +1559,9 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
         path: file.path,
         content: null,
       })))
-      await removeNativeNoteLinks(workspaceId, noteId, { nativeId: found.entity.nativeId, nativeRevision: found.entity.revision })
+      // Unbounded tombstone: no later read of the deleted entity re-indexes
+      // this id; CREATE resets it for a new entity.
+      await removeNativeNoteLinks(workspaceId, noteId, { nativeId: found.entity.nativeId, nativeRevision: Number.POSITIVE_INFINITY })
       changed({ workspaceId, reason: 'delete', noteId })
       return true
     }

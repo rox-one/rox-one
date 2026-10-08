@@ -254,32 +254,49 @@ describe('main entities-links flag owner', () => {
     it('handleDeepLink and the first-window initialDeepLink go through the hold', () => {
       const deepLink = readFileSync(new URL('../deep-link.ts', import.meta.url), 'utf8')
       const windowManager = readFileSync(new URL('../window-manager.ts', import.meta.url), 'utf8')
-      expect(deepLink).toContain('const { target, dropped } = await resolveDeepLinkTargetDetailed(url)')
+      expect(deepLink).toContain('const { target, dropped } = await resolveDeepLinkTargetDetailed(url, { external: true })')
       expect(deepLink).toContain("if (dropped === 'superseded') return { success: false, error: 'Deep link superseded by a later link' }")
       expect(windowManager).toContain('const target = await resolveDeepLinkTarget(initialDeepLink)')
     })
 
-    it('a held entity link superseded by a later link is dropped (review 4 #9)', async () => {
+    it('a held external entity link superseded by a later external link is dropped (review 4 #9)', async () => {
       __resetDeepLinkSequenceForTests()
-      const held = resolveDeepLinkTargetDetailed('rox://docs/file/f-1', { timeoutMs: 1000 })
-      // A later non-entity link is handled immediately …
-      expect((await resolveDeepLinkTarget('rox://tasks/task/t-1'))?.view).toBe('tasks/task/t-1')
+      const held = resolveDeepLinkTargetDetailed('rox://docs/file/f-1', { timeoutMs: 1000, external: true })
+      // A later external non-entity link is handled immediately …
+      expect((await resolveDeepLinkTargetDetailed('rox://tasks/task/t-1', { external: true })).target?.view).toBe('tasks/task/t-1')
       applyEntitiesLinksFlag(true)
       // … so the older held link must not navigate after it.
       expect(await held).toEqual({ target: null, dropped: 'superseded' })
       // Without a later link the held one resolves normally; timeouts say so.
       __resetEntitiesLinksFlagForTests()
-      const alone = resolveDeepLinkTargetDetailed('rox://docs/file/f-2', { timeoutMs: 1000 })
+      const alone = resolveDeepLinkTargetDetailed('rox://docs/file/f-2', { timeoutMs: 1000, external: true })
       applyEntitiesLinksFlag(true)
       expect((await alone).target?.view).toBe('docs/file/f-2')
       __resetEntitiesLinksFlagForTests()
-      expect(await resolveDeepLinkTargetDetailed('rox://docs/file/f-3', { timeoutMs: 1 })).toEqual({ target: null, dropped: 'timeout' })
+      expect(await resolveDeepLinkTargetDetailed('rox://docs/file/f-3', { timeoutMs: 1, external: true })).toEqual({ target: null, dropped: 'timeout' })
+    })
+
+    it('internal navigations never supersede a held external link (review 5 #6b)', async () => {
+      __resetDeepLinkSequenceForTests()
+      const held = resolveDeepLinkTargetDetailed('rox://docs/file/f-9', { timeoutMs: 1000, external: true })
+      // createWindow({ initialDeepLink }) (e.g. OPEN_SESSION_IN_NEW_WINDOW) resolves internally.
+      expect((await resolveDeepLinkTarget('rox://tasks/task/t-2'))?.view).toBe('tasks/task/t-2')
+      expect((await resolveDeepLinkTargetDetailed('rox://tasks/task/t-3')).target?.view).toBe('tasks/task/t-3')
+      // An internal entity link held at the same time is not superseded either.
+      const internalHeld = resolveDeepLinkTarget('rox://docs/file/f-10', { timeoutMs: 1000 })
+      applyEntitiesLinksFlag(true)
+      expect((await held).target?.view).toBe('docs/file/f-9')
+      expect((await internalHeld)?.view).toBe('docs/file/f-10')
+      // Only handleDeepLink (external ingress) passes external: true; window-manager does not.
+      const windowManager = readFileSync(new URL('../window-manager.ts', import.meta.url), 'utf8')
+      expect(windowManager).not.toContain('external: true')
     })
 
     it('the cold-start pending link is not awaited in the init path (review 4 #9)', () => {
       const source = readFileSync(new URL('../index.ts', import.meta.url), 'utf8')
       expect(source).not.toContain('await handleDeepLink(pendingDeepLink')
-      expect(source).toContain('handleDeepLink(coldStartLink, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).then(')
+      expect(source).toContain('handleDeepLink(coldStartLink, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).catch(')
+      expect(source).not.toMatch(/retry: the link stays|kept for a retry/)
     })
   })
 })

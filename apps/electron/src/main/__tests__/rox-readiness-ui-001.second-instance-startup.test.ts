@@ -82,17 +82,18 @@ describe('UI-001 actual second-instance startup deep-link ingress', () => {
     expect(f.errors).toEqual([['Failed to handle deep link:', failure]])
   })
 
-  test('failed startup replay retains its URL until a successful retry', async () => {
+  test('a failed startup replay is logged and dropped: no retry machinery', async () => {
+    // #1499 review 5 (owner decision): the init path consumes the cold-start
+    // link without awaiting it (a held entity link must not delay init); a
+    // failure is logged and the link is dropped, never left pending.
     const f = fixture(), failure = new Error('not ready')
-    f.secondUrl('rox://retry'); f.ready({}); f.reject(failure)
-    // #1499 review 4 #9: the init path no longer awaits the replay (a held
-    // entity link must not delay init); a failure is logged, the URL kept.
-    await f.replay(); await Promise.resolve(); await Promise.resolve()
-    expect(f.errors).toEqual([['Failed to handle pending deep link:', failure]])
-    expect(f.pending()).toBe('rox://retry')
-    f.reject(); await f.replay()
+    f.secondUrl('rox://dropped'); f.ready({}); f.reject(failure)
+    await f.replay()
     expect(f.pending()).toBeNull()
-    expect(f.calls).toHaveLength(2)
+    await Promise.resolve(); await Promise.resolve()
+    expect(f.errors).toEqual([['Failed to handle pending deep link (dropped, no retry):', failure]])
+    f.reject(); await f.replay()
+    expect(f.calls).toHaveLength(1)
   })
 
   test('a launch without a protocol URL focuses and restores the existing first window', () => {
