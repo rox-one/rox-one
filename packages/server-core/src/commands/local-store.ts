@@ -16,6 +16,7 @@ import type { DomainEvent } from '@rox/core/events'
 import {
   CommandStoreUniqueViolation,
   KeyedMutex,
+  someErrorInChain,
   type CommandStore,
   type CommandStoreTransaction,
   type ListEventsOptions,
@@ -88,6 +89,16 @@ function toEvent(row: EventRow): DomainEvent {
   if (row.causation_id) event.causationId = row.causation_id
   if (row.correlation_id) event.correlationId = row.correlation_id
   return event
+}
+
+/** SQLITE_BUSY / LOCKED / IOERR / FULL / CANTOPEN / PROTOCOL (one error, no cause walk). */
+export function isTransientSqliteError(error: unknown): boolean {
+  const record = error as { code?: unknown; errcode?: unknown; errstr?: unknown; message?: unknown } | null
+  if (!record || typeof record !== 'object') return false
+  const text = `${String(record.code ?? '')} ${String(record.errstr ?? '')} ${String(record.message ?? '')}`
+  if (/SQLITE_(BUSY|LOCKED|IOERR|FULL|CANTOPEN|PROTOCOL)|database is locked|disk I\/O error|database or disk is full/i.test(text)) return true
+  const code = typeof record.errcode === 'number' ? record.errcode & 0xff : -1
+  return [5, 6, 10, 13, 14, 15].includes(code)
 }
 
 export class SqliteCommandStore implements CommandStore {
@@ -182,11 +193,7 @@ export class SqliteCommandStore implements CommandStore {
 
   /** SQLITE_BUSY / LOCKED / IOERR / FULL / CANTOPEN: nothing committed, retry later. */
   isTransientError(error: unknown): boolean {
-    const record = error as { code?: unknown; errcode?: unknown; errstr?: unknown; message?: unknown } | null
-    const text = `${String(record?.code ?? '')} ${String(record?.errstr ?? '')} ${String(record?.message ?? '')}`
-    if (/SQLITE_(BUSY|LOCKED|IOERR|FULL|CANTOPEN|PROTOCOL)|database is locked|disk I\/O error|database or disk is full/i.test(text)) return true
-    const code = typeof record?.errcode === 'number' ? record.errcode & 0xff : -1
-    return [5, 6, 10, 13, 14, 15].includes(code)
+    return someErrorInChain(error, isTransientSqliteError)
   }
 
   close(): void {

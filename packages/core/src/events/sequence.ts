@@ -20,6 +20,8 @@ export const DEFAULT_TOPIC_REPLAY_CAPACITY = 1000
 export const DEFAULT_TOPIC_WINDOW_IDLE_MS = 10 * 60 * 1000
 /** Upper bound of retained replay windows per log (least recently used are evicted first). */
 export const DEFAULT_MAX_TOPIC_WINDOWS = 5000
+/** Recently sequenced (topic, eventId, type) keys remembered for `appendOnce` dedupe. */
+export const DEFAULT_TOPIC_DEDUPE_CAPACITY = 10_000
 
 export type TopicReplay =
   | { kind: 'up_to_date'; latestSeq: number; epoch: string }
@@ -40,6 +42,8 @@ export interface TopicLogOptions {
   idleTtlMs?: number
   /** Keep at most this many replay windows (LRU eviction). */
   maxWindows?: number
+  /** Remember this many recent (topic, eventId, type) keys for `appendOnce`. */
+  dedupeCapacity?: number
   now?: () => number
 }
 
@@ -53,6 +57,9 @@ export class TopicLog {
   private readonly seqs = new Map<Topic, number>()
   /** Replay windows in least-recently-used order (Map insertion order). */
   private readonly windows = new Map<Topic, { frames: RealtimeEventFrame[]; touchedAt: number }>()
+  /** Bounded FIFO of recently sequenced publications → their frame. */
+  private readonly sequenced = new Map<string, RealtimeEventFrame>()
+  private readonly dedupeCapacity: number
   private lastSweep = 0
 
   constructor(options: TopicLogOptions = {}) {
@@ -60,6 +67,7 @@ export class TopicLog {
     this.idleTtlMs = Math.max(1, options.idleTtlMs ?? DEFAULT_TOPIC_WINDOW_IDLE_MS)
     this.maxWindows = Math.max(1, Math.floor(options.maxWindows ?? DEFAULT_MAX_TOPIC_WINDOWS))
     this.now = options.now ?? Date.now
+    this.dedupeCapacity = Math.max(0, Math.floor(options.dedupeCapacity ?? DEFAULT_TOPIC_DEDUPE_CAPACITY))
     this.epoch = options.epoch ?? randomEpoch()
   }
 
@@ -85,6 +93,24 @@ export class TopicLog {
     while (this.windows.size > this.maxWindows) this.windows.delete(this.windows.keys().next().value as Topic)
     if (now - this.lastSweep >= Math.min(this.idleTtlMs, 60_000)) this.evictIdle(now)
     return full
+  }
+
+  /**
+   * `append`, deduplicated by (topic, eventId, type): a domain event that is
+   * delivered again (relay retry after a partial failure) gets its original
+   * frame back with `fresh: false` instead of a new seq. Frames without an
+   * `eventId` always append.
+   */
+  appendOnce<P>(topic: Topic, frame: Omit<RealtimeEventFrame<P>, 'seq' | 'epoch' | 'frame' | 'topic'>): { frame: RealtimeEventFrame<P>; fresh: boolean } {
+    const eventId = (frame as { eventId?: unknown }).eventId
+    if (typeof eventId !== 'string' || this.dedupeCapacity === 0) return { frame: this.append(topic, frame), fresh: true }
+    const key = `${topic}\u0000${eventId}\u0000${String((frame as { type?: unknown }).type ?? '')}`
+    const existing = this.sequenced.get(key)
+    if (existing) return { frame: existing as RealtimeEventFrame<P>, fresh: false }
+    const full = this.append(topic, frame)
+    this.sequenced.set(key, full as RealtimeEventFrame)
+    while (this.sequenced.size > this.dedupeCapacity) this.sequenced.delete(this.sequenced.keys().next().value as string)
+    return { frame: full, fresh: true }
   }
 
   /** Drop replay windows idle for longer than the TTL (seq counters stay). */

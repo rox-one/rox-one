@@ -22,12 +22,16 @@
  * only; a failed publish never changes the receipt (projections are
  * re-derivable from the stored events).
  *
- * Failures: a deterministic handler bug is a terminal `rejected/INTERNAL`
- * receipt. A store / connection failure (and a handler error the store
- * classifies as transient: lost connection, deadlock, serialization failure,
- * pool timeout) commits nothing and is thrown as `CommandStoreUnavailable`,
- * so the host answers with a retryable error (HTTP 503) and the client's
- * outbox keeps the command.
+ * Failures: only *transient* infrastructure failures are retryable — an
+ * error the store classifies as transient (`isTransientError`: lost
+ * connection, deadlock, serialization failure, pool timeout; `cause` chains
+ * are walked) or a failure to open the transaction at all (connection /
+ * BEGIN, before the callback ran). Those commit nothing and are thrown as
+ * `CommandStoreUnavailable`, so the host answers 503 and the client's outbox
+ * retries. Every other error — a handler bug, or a deterministic store
+ * rejection (invalid byte sequence, numeric overflow, 25P02 after a handler
+ * swallowed a failed query) — is the terminal `rejected/INTERNAL` receipt, so
+ * one bad command can never wedge a workspace's FIFO.
  *
  * Used by server-core (authority `local`, SQLite store) and by
  * workspace-service (authority `workspace`, Postgres store).
@@ -161,7 +165,7 @@ export class CommandExecutor {
     try {
       previous = await this.store.findReceipt(input.workspaceId, envelope.idempotencyKey, envelope.commandId)
     } catch (error) {
-      throw this.unavailable(envelope, error)
+      return this.storeFailure(envelope, error)
     }
     if (previous) return this.replay(previous, envelope, input.actor, requestHash)
 
@@ -222,6 +226,18 @@ export class CommandExecutor {
     return new CommandStoreUnavailable(error)
   }
 
+  /**
+   * A store call failed: transient (or the transaction never opened) → throw
+   * `CommandStoreUnavailable` (retry); anything else is deterministic → the
+   * terminal INTERNAL receipt.
+   */
+  private storeFailure(envelope: CommandEnvelope, error: unknown, notOpened = false): CommandReceipt {
+    if (error instanceof CommandStoreUnavailable) throw error
+    if (notOpened || this.isTransient(error)) throw this.unavailable(envelope, error)
+    this.options.onStoreError?.(error, envelope)
+    return rejectedReceipt(envelope.commandId, 'INTERNAL', 'Command failed; no effect was committed')
+  }
+
   private async executeInTransaction(ctx: CommandPipelineContext): Promise<CommandReceipt> {
     const { envelope, workspaceId, actor } = ctx
     const handler = this.registry.handler(envelope.type)
@@ -230,8 +246,10 @@ export class CommandExecutor {
     const now = () => (this.options.now?.() ?? new Date()).toISOString()
 
     let outcome: TransactionOutcome
+    let opened = false
     try {
       outcome = await this.store.transaction(workspaceId, async tx => {
+        opened = true
         const existing = await tx.findReceipt(workspaceId, envelope.idempotencyKey, envelope.commandId)
         if (existing) return { kind: 'existing', stored: existing }
 
@@ -299,14 +317,15 @@ export class CommandExecutor {
         // A concurrent writer won; its transaction is the one effect.
         let stored: StoredCommandReceipt | null
         try { stored = await this.store.findReceipt(workspaceId, envelope.idempotencyKey, envelope.commandId) }
-        catch (findError) { throw this.unavailable(envelope, findError) }
+        catch (findError) { return this.storeFailure(envelope, findError) }
         if (stored) return this.replay(stored, envelope, actor, requestHash)
+        // The winner is not visible yet: a race, retry later.
         throw this.unavailable(envelope, error)
       }
       if (error instanceof HandlerFailure) return this.errorReceipt(envelope, error.original)
       if (error instanceof CommandConflict || error instanceof CommandRejection) return this.errorReceipt(envelope, error)
-      // Anything else came from the store (BEGIN, locks, inserts, COMMIT) or is transient.
-      throw this.unavailable(envelope, error)
+      // From the store (BEGIN, locks, inserts, COMMIT) or a transient handler error.
+      return this.storeFailure(envelope, error, !opened)
     }
 
     if (outcome.kind === 'existing') return this.replay(outcome.stored, envelope, actor, requestHash)

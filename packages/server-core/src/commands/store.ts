@@ -71,6 +71,31 @@ export class CommandStoreUnavailable extends Error {
   }
 }
 
+/** Maximum `error.cause` depth walked when classifying store errors. */
+export const MAX_ERROR_CAUSE_DEPTH = 8
+
+/**
+ * Whether `predicate` holds for `error` or any error in its `cause` chain
+ * (bounded, cycle-safe; AggregateError members are checked too). Handlers that
+ * wrap a driver error (`new Error('x', { cause })`) keep it classifiable.
+ */
+export function someErrorInChain(error: unknown, predicate: (candidate: unknown) => boolean, maxDepth = MAX_ERROR_CAUSE_DEPTH): boolean {
+  const seen = new Set<unknown>()
+  const queue: Array<{ value: unknown; depth: number }> = [{ value: error, depth: 0 }]
+  while (queue.length > 0) {
+    const { value, depth } = queue.shift()!
+    if (value === null || value === undefined || seen.has(value)) continue
+    seen.add(value)
+    try { if (predicate(value)) return true } catch { /* keep walking */ }
+    if (depth >= maxDepth || typeof value !== 'object') continue
+    const cause = (value as { cause?: unknown }).cause
+    if (cause !== undefined) queue.push({ value: cause, depth: depth + 1 })
+    const errors = (value as { errors?: unknown }).errors
+    if (Array.isArray(errors)) for (const item of errors.slice(0, 8)) queue.push({ value: item, depth: depth + 1 })
+  }
+  return false
+}
+
 /** A concurrent writer committed the same idempotency key / command id first. */
 export class CommandStoreUniqueViolation extends Error {
   constructor(message = 'command receipt already exists') {

@@ -64,14 +64,26 @@ export class InProcessEventBus {
   publish(events: readonly DomainEvent[]): RealtimeEventFrame[] {
     const frames: RealtimeEventFrame[] = []
     for (const event of events) {
-      for (const publication of this.projections.project(event)) {
-        const frame = this.log(event.workspaceId).append(publication.topic, {
+      // A projector that throws must not stall the stream: report it and skip
+      // this event, so the relay watermark still advances past it and the
+      // events after it are delivered (and nothing is re-sequenced).
+      let publications: Array<ReturnType<EventProjectionRegistry['project']>[number]>
+      try {
+        publications = [...this.projections.project(event)]
+      } catch (error) {
+        this.options.onListenerError?.(error)
+        continue
+      }
+      for (const publication of publications) {
+        const { frame, fresh } = this.log(event.workspaceId).appendOnce(publication.topic, {
           type: publication.type,
           payload: publication.payload ?? {},
           eventId: event.eventId,
           domainType: event.type,
           at: (this.options.now?.() ?? new Date()).toISOString(),
         })
+        // Already sequenced (redelivery): never notify twice under a new seq.
+        if (!fresh) continue
         frames.push(frame)
         for (const listener of this.listeners) {
           try { listener(event.workspaceId, frame, event) } catch (error) { this.options.onListenerError?.(error) }

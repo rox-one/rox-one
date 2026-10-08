@@ -8,7 +8,7 @@ import { describe, expect, test } from 'bun:test'
 import type { Authorizer } from '@rox/core/commands'
 import { CommandExecutor } from '../executor'
 import { CommandRouter, ENVELOPE_HEADROOM_BYTES } from '../router'
-import { CommandStoreUnavailable, InMemoryCommandStore, type CommandStore, type CommandStoreTransaction } from '../store'
+import { CommandStoreUnavailable, InMemoryCommandStore, someErrorInChain, type CommandStore, type CommandStoreTransaction } from '../store'
 import { ACTOR, WS, envelope, testRegistry } from './helpers'
 
 /** Wraps the in-memory store; `failNext` makes the next N operations throw like a lost connection. */
@@ -17,17 +17,28 @@ class FlakyStore implements CommandStore {
   failTransactions = 0
   failFinds = 0
   failCommit = false
-  transient = (error: unknown) => (error as { code?: string } | null)?.code === 'ECONNRESET'
+  /** Next commit throws this (deterministic) error instead. */
+  commitError: unknown = null
+  /** Next findReceipt throws this error instead. */
+  findError: unknown = null
+  /** Driver-like classification: connection loss, serialization, pool timeout (cause chain walked). */
+  transient = (error: unknown) => someErrorInChain(error, candidate => {
+    const record = candidate as { code?: string; errno?: string; message?: string }
+    return record.code === 'ECONNRESET' || record.code === 'ERR_POSTGRES_CONNECTION_CLOSED' ||
+      record.errno === '40001' || record.errno === '40P01' || record.message === 'pool timeout'
+  })
   async transaction<T>(workspaceId: string, fn: (tx: CommandStoreTransaction) => Promise<T>): Promise<T> {
     if (this.failTransactions > 0) { this.failTransactions -= 1; throw Object.assign(new Error('Connection terminated'), { code: 'ERR_POSTGRES_CONNECTION_CLOSED' }) }
     return this.inner.transaction(workspaceId, async tx => {
       const result = await fn(tx)
       if (this.failCommit) { this.failCommit = false; throw Object.assign(new Error('could not serialize access'), { errno: '40001' }) }
+      if (this.commitError) { const error = this.commitError; this.commitError = null; throw error }
       return result
     })
   }
   async findReceipt(...args: Parameters<CommandStore['findReceipt']>) {
     if (this.failFinds > 0) { this.failFinds -= 1; throw new Error('pool timeout') }
+    if (this.findError) { const error = this.findError; this.findError = null; throw error }
     return this.inner.findReceipt(...args)
   }
   listEvents(...args: Parameters<CommandStore['listEvents']>) { return this.inner.listEvents(...args) }
@@ -150,5 +161,67 @@ describe('router: serialized envelope must fit the service body limit with headr
     expect(await router.route({ workspaceId: WS, actor: ACTOR, envelope: big })).toMatchObject({ status: 'rejected', error: { code: 'PAYLOAD_TOO_LARGE' } })
     expect(await router.route({ workspaceId: WS, actor: ACTOR, envelope: envelope('test.remote_increment', { blob: 'x'.repeat(1000) }) })).toMatchObject({ status: 'queued' })
     expect(queued).toHaveLength(1)
+  })
+})
+
+describe('review 2: only transient store errors are retryable; the rest are terminal INTERNAL receipts', () => {
+  test('25P02 (in failed sql transaction) at commit → INTERNAL receipt, nothing committed, not thrown', async () => {
+    const f = setup()
+    const store = f.store as FlakyStore
+    store.commitError = Object.assign(new Error('current transaction is aborted, commands ignored until end of transaction block'), { errno: '25P02' })
+    const env = envelope('test.increment', {}, { commandId: 'c-25p02' })
+    const receipt = await f.run(env)
+    expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'INTERNAL' } })
+    expect(store.inner.counts()).toEqual({ receipts: 0, events: 0 })
+    expect(f.storeErrors).toHaveLength(1)
+  })
+
+  test('a deterministic receipt-lookup error (pre-policy replay) → INTERNAL, a pool timeout → retryable', async () => {
+    const f = setup()
+    const store = f.store as FlakyStore
+    store.findError = Object.assign(new Error('invalid byte sequence for encoding "UTF8": 0x00'), { errno: '22021' })
+    expect(await f.run(envelope('test.increment', {}, { commandId: 'c-22021' }))).toMatchObject({ status: 'rejected', error: { code: 'INTERNAL' } })
+    store.failFinds = 1
+    await expect(f.run(envelope('test.increment', {}, { commandId: 'c-pool' }))).rejects.toBeInstanceOf(CommandStoreUnavailable)
+  })
+
+  test('a handler error wrapping a deadlock (error.cause) is retryable; a wrapped constraint error is terminal', async () => {
+    const f = setup()
+    f.registry.unbind('test.increment')
+    let mode: 'deadlock' | 'constraint' | 'ok' = 'deadlock'
+    f.registry.bind('test.increment', async () => {
+      if (mode === 'deadlock') {
+        throw new Error('task repository failed', { cause: new Error('query failed', { cause: Object.assign(new Error('deadlock detected'), { errno: '40P01' }) }) })
+      }
+      if (mode === 'constraint') throw new Error('task repository failed', { cause: Object.assign(new Error('violates check constraint'), { errno: '23514' }) })
+      return { revision: 1 }
+    })
+    const env = envelope('test.increment', {}, { commandId: 'c-dead' })
+    await expect(f.run(env)).rejects.toBeInstanceOf(CommandStoreUnavailable)
+    mode = 'constraint'
+    expect(await f.run(envelope('test.increment', {}, { commandId: 'c-23514' }))).toMatchObject({ status: 'rejected', error: { code: 'INTERNAL' } })
+    mode = 'ok'
+    expect(await f.run(env)).toMatchObject({ status: 'applied' })
+  })
+
+  test('BEGIN failure is retryable even when the error itself is not classified transient', async () => {
+    const f = setup()
+    const store = f.store as FlakyStore
+    store.transient = () => false
+    store.failTransactions = 1
+    await expect(f.run(envelope('test.increment', {}, { commandId: 'c-begin' }))).rejects.toBeInstanceOf(CommandStoreUnavailable)
+  })
+
+  test('someErrorInChain walks causes and AggregateError members, bounded and cycle-safe', () => {
+    const leaf = Object.assign(new Error('x'), { code: 'HIT' })
+    const hit = (e: unknown) => (e as { code?: string }).code === 'HIT'
+    expect(someErrorInChain(new Error('a', { cause: new Error('b', { cause: leaf }) }), hit)).toBe(true)
+    expect(someErrorInChain(new AggregateError([new Error('n'), leaf]), hit)).toBe(true)
+    const cyclic = new Error('c') as Error & { cause?: unknown }
+    cyclic.cause = cyclic
+    expect(someErrorInChain(cyclic, hit)).toBe(false)
+    let deep: unknown = leaf
+    for (let i = 0; i < 20; i += 1) deep = new Error(`w${i}`, { cause: deep })
+    expect(someErrorInChain(deep, hit)).toBe(false)
   })
 })

@@ -10,10 +10,12 @@
  * `WorkspaceCommandSync` implements the router's `WorkspaceCommandSink`:
  * enqueue → `queued` receipt → drain (FIFO, single-flight, exponential
  * backoff on transport errors, stops at the first failure to keep order).
- * A 401 does not back off on a timer: the workspace pauses in the
- * `auth_required` state until the transport's credential changes (or the
- * host calls `credentialsChanged`). `start()` also drains workspaces that
- * only exist in the persisted outbox (`outbox.workspaceIds()`).
+ * A 401 pauses the workspace in `auth_required` until the credential the
+ * failed request used changes (or `credentialsChanged`), with a slow probe
+ * (one attempt per `authProbeIntervalMs`) in case the 401 was transient. A
+ * head command that keeps failing retryably is reported as `stuck` after
+ * `stuckAfterAttempts` and stays in place. `start()` also drains workspaces
+ * that only exist in the persisted outbox (`outbox.workspaceIds()`).
  */
 
 import { createHash } from 'node:crypto'
@@ -24,11 +26,19 @@ import type { CommandOutbox } from './outbox'
 
 export class WorkspaceTransportError extends Error {
   readonly status?: number
-  constructor(message: string, status?: number) {
+  /** Fingerprint of the credential the failed request actually used (never the secret). */
+  readonly credentialFingerprint?: string | null
+  constructor(message: string, status?: number, credentialFingerprint?: string | null) {
     super(message)
     this.name = 'WorkspaceTransportError'
     if (status !== undefined) this.status = status
+    if (credentialFingerprint !== undefined) this.credentialFingerprint = credentialFingerprint
   }
+}
+
+/** Opaque, non-reversible token fingerprint (sha256 prefix). */
+export function fingerprintCredential(token: string | null | undefined): string | null {
+  return token ? createHash('sha256').update(token).digest('hex').slice(0, 32) : null
 }
 
 export interface WorkspaceCommandTransport {
@@ -62,8 +72,7 @@ export class WorkspaceCommandHttpClient implements WorkspaceCommandTransport {
 
   async credentialFingerprint(): Promise<string | null> {
     try {
-      const token = await this.options.token()
-      return token ? createHash('sha256').update(token).digest('hex').slice(0, 32) : null
+      return fingerprintCredential(await this.options.token())
     } catch {
       return null
     }
@@ -73,8 +82,10 @@ export class WorkspaceCommandHttpClient implements WorkspaceCommandTransport {
     const fetchImpl = this.options.fetch ?? fetch
     const url = new URL(`/v1/workspaces/${encodeURIComponent(workspaceId)}/commands`, this.options.baseUrl)
     let response: Response
+    let used: string | null = null
     try {
       const token = await this.options.token()
+      used = fingerprintCredential(token)
       response = await fetchImpl(url, {
         method: 'POST',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
@@ -86,7 +97,7 @@ export class WorkspaceCommandHttpClient implements WorkspaceCommandTransport {
     }
     if (response.status >= 500 || response.status === 408 || response.status === 429 || response.status === 401) {
       await response.body?.cancel().catch(() => {})
-      throw new WorkspaceTransportError(`Workspace answered ${response.status}`, response.status)
+      throw new WorkspaceTransportError(`Workspace answered ${response.status}`, response.status, used)
     }
     let body: unknown
     try { body = await response.json() } catch { body = undefined }
@@ -115,6 +126,10 @@ export interface WorkspaceCommandSyncOptions {
   /** Backoff: base * 2^(attempts-1), capped. */
   backoffBaseMs?: number
   backoffMaxMs?: number
+  /** Report `stuck` once the head command failed this many times in a row (default 50). */
+  stuckAfterAttempts?: number
+  /** While `auth_required` with an unchanged credential, probe once per this interval (default backoffMaxMs). */
+  authProbeIntervalMs?: number
   batchSize?: number
   /** Drain automatically after enqueue (default true). */
   autoDrain?: boolean
@@ -123,9 +138,16 @@ export interface WorkspaceCommandSyncOptions {
 
 export interface WorkspaceSyncStatus {
   pending: number
-  /** `auth_required`: paused after a 401 until the credential changes. */
-  state: 'idle' | 'retrying' | 'auth_required'
+  /**
+   * `auth_required`: paused after a 401 until the credential changes (plus a
+   * slow probe). `stuck`: the head command failed retryably `stuckAfterAttempts`
+   * times in a row; it stays in place (order is preserved) and keeps retrying.
+   */
+  state: 'idle' | 'retrying' | 'auth_required' | 'stuck'
   lastError?: string
+  /** Head command of a `stuck` workspace and its attempt count. */
+  stuckCommandId?: string
+  attempts?: number
 }
 
 export interface DrainResult {
@@ -142,8 +164,8 @@ export class WorkspaceCommandSync implements WorkspaceCommandSink {
   private readonly again = new Set<string>()
   private timer: ReturnType<typeof setInterval> | null = null
   private readonly known = new Set<string>()
-  /** Workspaces paused after a 401 → fingerprint of the rejected credential. */
-  private readonly authPaused = new Map<string, string | null>()
+  /** Workspaces paused after a 401 → rejected credential fingerprint + next slow probe. */
+  private readonly authPaused = new Map<string, { rejected: string | null; nextProbeAt: number }>()
 
   constructor(options: WorkspaceCommandSyncOptions) {
     this.options = options
@@ -210,10 +232,13 @@ export class WorkspaceCommandSync implements WorkspaceCommandSink {
     const { outbox, transport } = this.options
     const batchSize = this.options.batchSize ?? 100
     let sent = 0
-    if (this.authPaused.has(workspaceId)) {
-      const rejected = this.authPaused.get(workspaceId) ?? null
+    const paused = this.authPaused.get(workspaceId)
+    if (paused) {
       const current = await this.fingerprint(workspaceId)
-      if (current === null || current === rejected) {
+      const changed = current !== null && current !== paused.rejected
+      // Slow probe: a 401 may have been a server-side blip or a race with a refresh.
+      const probe = this.now() >= paused.nextProbeAt
+      if (!changed && !probe) {
         const remaining = await outbox.count(workspaceId)
         this.options.onStatus?.(workspaceId, { pending: remaining, state: 'auth_required', lastError: 'Workspace answered 401' })
         return { sent: 0, failed: 0, remaining, authRequired: true }
@@ -233,9 +258,12 @@ export class WorkspaceCommandSync implements WorkspaceCommandSink {
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error)
           if (error instanceof WorkspaceTransportError && error.status === 401) {
-            // Credential problem, not an outage: no timer, wait for a new token.
-            const rejected = await this.fingerprint(workspaceId)
-            this.authPaused.set(workspaceId, rejected)
+            // Credential problem, not an outage: wait for a new token (plus a slow probe).
+            // The rejected credential is the one the request used, not whatever the host
+            // refreshed to while it was in flight.
+            const rejected = error.credentialFingerprint !== undefined ? error.credentialFingerprint : await this.fingerprint(workspaceId)
+            const probeInterval = this.options.authProbeIntervalMs ?? this.options.backoffMaxMs ?? 60_000
+            this.authPaused.set(workspaceId, { rejected, nextProbeAt: this.now() + probeInterval })
             await outbox.fail(workspaceId, entry.commandId, message, this.now())
             const remaining = await outbox.count(workspaceId)
             this.options.onStatus?.(workspaceId, { pending: remaining, state: 'auth_required', lastError: message })
@@ -245,7 +273,13 @@ export class WorkspaceCommandSync implements WorkspaceCommandSink {
           const delay = Math.min((this.options.backoffBaseMs ?? 1_000) * 2 ** (attempts - 1), this.options.backoffMaxMs ?? 60_000)
           await outbox.fail(workspaceId, entry.commandId, message, this.now() + delay)
           const remaining = await outbox.count(workspaceId)
-          this.options.onStatus?.(workspaceId, { pending: remaining, state: 'retrying', lastError: message })
+          const stuckAfter = this.options.stuckAfterAttempts ?? 50
+          if (attempts >= stuckAfter) {
+            // Defence in depth: surface it, but keep it at the head (FIFO order is the contract).
+            this.options.onStatus?.(workspaceId, { pending: remaining, state: 'stuck', lastError: message, stuckCommandId: entry.commandId, attempts })
+          } else {
+            this.options.onStatus?.(workspaceId, { pending: remaining, state: 'retrying', lastError: message })
+          }
           return { sent, failed: 1, remaining }
         }
         await outbox.complete(workspaceId, entry.commandId, receipt)

@@ -81,30 +81,36 @@ export class RealtimeSubscriber {
   }
 
   async subscribe(topics: string[]): Promise<RealtimeSubscribeTopicResult[]> {
+    // Each requested topic holds exactly one pending slot for this request and
+    // releases it exactly once (duplicates in `topics` or in the result can't
+    // unbalance the counter of a concurrent request).
+    const requested = [...new Set(topics)]
     const request: RealtimeSubscribeRequest = {
-      topics: topics.map(topic => {
+      topics: requested.map(topic => {
         const position = this.tracker.position(topic)
         return position ? { topic, sinceSeq: position.seq, epoch: position.epoch } : { topic }
       }),
     }
-    for (const topic of topics) {
+    for (const topic of requested) {
       const entry = this.pending.get(topic) ?? { requests: 0, frames: [] }
       entry.requests += 1
       this.pending.set(topic, entry)
     }
+    const unsettled = new Set(requested)
+    const settle = (topic: string): RealtimeFrame[] => (unsettled.delete(topic) ? this.settlePending(topic) : [])
     let result: RealtimeSubscribeResult
     try {
       result = await this.options.connection.subscribe(request)
     } catch (error) {
-      for (const topic of topics) this.settlePending(topic)
+      for (const topic of requested) settle(topic)
       throw error
     }
     for (const item of result.topics) {
       this.applyResult(item)
       // Frames that overtook the result: replayed ones are now duplicates.
-      for (const frame of this.settlePending(item.topic)) this.onFrame(frame)
+      for (const frame of settle(item.topic)) this.onFrame(frame)
     }
-    for (const topic of topics) for (const frame of this.settlePending(topic)) this.onFrame(frame)
+    for (const topic of requested) for (const frame of settle(topic)) this.onFrame(frame)
     return result.topics
   }
 

@@ -69,3 +69,31 @@ describe('isCommandBusEnabled', () => {
     }
   })
 })
+
+describe('review 2: text Postgres cannot store and unsafe revisions are VALIDATION', () => {
+  test.each([
+    ['NUL in commandId', { ...base, commandId: 'c\u0000' }],
+    ['control character in idempotencyKey', { ...base, idempotencyKey: 'k\n1' }],
+    ['DEL in correlationId', { ...base, correlationId: 'x\u007f' }],
+    ['NUL in a payload string', { ...base, payload: { title: 'a\u0000b' } }],
+    ['NUL in a payload key', { ...base, payload: { ['a\u0000']: 1 } }],
+    ['NUL deep in an array', { ...base, payload: { items: [{ nested: ['ok', 'bad\u0000'] }] } }],
+    ['lone surrogate in a payload string', { ...base, payload: { title: 'x\ud800y' } }],
+    ['revision beyond MAX_SAFE_INTEGER', { ...base, expectedRevision: 2 ** 53 }],
+    ['revision 1e300', { ...base, expectedRevision: 1e300 }],
+  ])('rejects %s', (_name, input) => {
+    const decoded = decodeCommandEnvelope(input)
+    expect(decoded.ok).toBe(false)
+  })
+
+  test('accepts MAX_SAFE_INTEGER, paired surrogates and escaped-looking text', () => {
+    expect(decodeCommandEnvelope({ ...base, expectedRevision: Number.MAX_SAFE_INTEGER }).ok).toBe(true)
+    expect(decodeCommandEnvelope({ ...base, payload: { emoji: '😀', literal: '\\u0000', tab: 'a\tb' } }).ok).toBe(true)
+  })
+
+  test('deep nesting is scanned without recursion limits', () => {
+    let payload: unknown = 'leaf\u0000'
+    for (let i = 0; i < 20_000; i += 1) payload = [payload]
+    expect(decodeCommandEnvelope({ ...base, payload }).ok).toBe(false)
+  })
+})

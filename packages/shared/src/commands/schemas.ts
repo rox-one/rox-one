@@ -19,7 +19,47 @@ import {
 import { MAX_SUBSCRIBE_TOPICS, normalizeTopic, type RealtimeSubscribeRequest } from '@rox/core/events'
 import { entityRefSchema } from '../entities/schemas'
 
-const idSchema = z.string().min(1).max(MAX_COMMAND_ID_LENGTH)
+/** Ids, keys and correlation ids: no NUL / C0 / DEL control characters (Postgres text rejects NUL). */
+const idSchema = z.string().min(1).max(MAX_COMMAND_ID_LENGTH).refine(value => !/[\u0000-\u001f\u007f]/.test(value), { message: 'control characters are not allowed' })
+
+/** Revisions must stay exact in JS numbers and in Postgres bigint. */
+const revisionSchema = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)
+
+const LONE_SURROGATE = /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/
+
+function unstorableString(value: string): string | null {
+  if (value.includes('\u0000')) return 'NUL characters are not allowed'
+  if (LONE_SURROGATE.test(value)) return 'unpaired UTF-16 surrogates are not allowed'
+  return null
+}
+
+/**
+ * Text Postgres `text` / `jsonb` cannot store: NUL (`\u0000`, 22P05 / 22021)
+ * and unpaired surrogates, in any string or object key of the envelope.
+ * Rejected as VALIDATION up front instead of failing deterministically in
+ * the store. Iterative (explicit stack), so deep nesting cannot overflow.
+ */
+export function findUnstorableText(value: unknown): string | null {
+  const stack: unknown[] = [value]
+  const seen = new Set<object>()
+  while (stack.length > 0) {
+    const current = stack.pop()
+    if (typeof current === 'string') {
+      const found = unstorableString(current)
+      if (found) return found
+      continue
+    }
+    if (current === null || typeof current !== 'object' || seen.has(current)) continue
+    seen.add(current)
+    if (Array.isArray(current)) { for (const item of current) stack.push(item); continue }
+    for (const [key, item] of Object.entries(current)) {
+      const found = unstorableString(key)
+      if (found) return found
+      stack.push(item)
+    }
+  }
+  return null
+}
 
 export const commandTypeSchema = z
   .string()
@@ -46,7 +86,7 @@ export const commandEnvelopeSchema = z
     idempotencyKey: idSchema.optional(),
     type: commandTypeSchema,
     target: entityRefSchema.optional(),
-    expectedRevision: z.number().int().nonnegative().optional(),
+    expectedRevision: revisionSchema.optional(),
     payload: z.unknown(),
     issuedAt: z.string().min(1).max(64).refine(value => !Number.isNaN(Date.parse(value)), { message: 'issuedAt must be an ISO timestamp' }),
     origin: originSchema.optional(),
@@ -83,7 +123,11 @@ function decode<T>(schema: z.ZodType<T>, input: unknown): DecodeResult<T> {
 
 /** Decode an untrusted envelope; `payload` is validated later against the command's schema. */
 export function decodeCommandEnvelope(input: unknown): DecodeResult<CommandEnvelope> {
-  return decode(commandEnvelopeSchema as unknown as z.ZodType<CommandEnvelope>, input)
+  const decoded = decode(commandEnvelopeSchema as unknown as z.ZodType<CommandEnvelope>, input)
+  if (!decoded.ok) return decoded
+  const unstorable = findUnstorableText(input)
+  if (unstorable) return { ok: false, message: unstorable, issues: [`(envelope): ${unstorable}`] }
+  return decoded
 }
 
 const receiptErrorSchema = z.object({
@@ -96,10 +140,10 @@ const baseReceiptSchema = z.object({
   commandId: idSchema,
   status: z.enum(COMMAND_RECEIPT_STATUSES),
   ref: entityRefSchema.optional(),
-  revision: z.number().int().nonnegative().optional(),
+  revision: revisionSchema.optional(),
   eventIds: z.array(z.string().min(1)).optional(),
   result: z.unknown().optional(),
-  conflict: z.object({ currentRevision: z.number().int().nonnegative(), current: z.unknown().optional() }).optional(),
+  conflict: z.object({ currentRevision: revisionSchema, current: z.unknown().optional() }).optional(),
   error: receiptErrorSchema.optional(),
   queuedAt: z.string().optional(),
 })
