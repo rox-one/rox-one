@@ -5970,6 +5970,7 @@
   "rail.knowledgeDisabled": "Knowledge — ナレッジワークスペース（ウェーブ W2）で提供予定",
   "rail.pin": "サイドバーを固定",
   "rail.title": "アクティビティレール",
+  "rail.unpin": "サイドバーの固定を解除",
   "research.citation.contradiction": "日付の矛盾",
   "research.citation.dateUnknown": "日付不明",
   "research.citation.hoverAria": "出典: {{title}}",

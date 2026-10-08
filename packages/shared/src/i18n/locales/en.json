@@ -5970,6 +5970,7 @@
   "rail.knowledgeDisabled": "Knowledge is not available yet",
   "rail.pin": "Pin sidebar",
   "rail.title": "Activity rail",
+  "rail.unpin": "Unpin sidebar",
   "research.citation.contradiction": "Conflicting dates",
   "research.citation.dateUnknown": "Date unknown",
   "research.citation.hoverAria": "Source: {{title}}",

@@ -342,8 +342,14 @@ function AppShellContent({
   const [storedSidebarVisible, setIsSidebarVisible] = React.useState(() => {
     return storage.get(storage.KEYS.sidebarVisible, !defaultCollapsed)
   })
+  // Persistent "pinned open" mode. Unlike the transient hover peek it survives
+  // restarts and keeps the rail expanded, so the sidebar never falls back to
+  // the icon rail on its own. Cleared by an explicit collapse.
+  const [sidebarPinned, setSidebarPinned] = React.useState(() => {
+    return storage.get(storage.KEYS.sidebarPinned, false)
+  })
   // Transient hover-reveal of the collapsed rail. Deliberately NOT persisted:
-  // only storedSidebarVisible is written back to storage.
+  // only storedSidebarVisible and sidebarPinned are written back to storage.
   const [sidebarPeek, setSidebarPeek] = React.useState(false)
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
   const browserSurfaceEnabled = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)
@@ -367,7 +373,7 @@ function AppShellContent({
   // icon rail remains available when labels are collapsed; focus mode hides both.
   // A hover peek expands every derived surface (width, labels, chrome branch)
   // without touching the persisted preference.
-  const isSidebarVisible = storedSidebarVisible || sidebarPeek
+  const isSidebarVisible = storedSidebarVisible || sidebarPeek || sidebarPinned
   const isSidebarCollapsed = !isSidebarVisible
   const isPrimarySidebarRendered = true
   const [shellSidebarSlot, setShellSidebarSlot] = useState<HTMLElement | null>(null)
@@ -1307,8 +1313,26 @@ function AppShellContent({
       setIsSidebarAndNavigatorHidden(false)
       return
     }
+    // An explicit collapse also releases the persistent pin, so the chevron
+    // never looks stuck.
+    if (sidebarPinned) {
+      setSidebarPinned(false)
+      setIsSidebarVisible(false)
+      return
+    }
     setIsSidebarVisible(v => !v)
-  }, [isSidebarAndNavigatorHidden])
+  }, [isSidebarAndNavigatorHidden, sidebarPinned])
+
+  // Pin keeps the rail expanded for good; unpinning leaves it as it is.
+  const handleToggleSidebarPin = useCallback(() => {
+    setSidebarPeek(false)
+    if (sidebarPinned) {
+      setSidebarPinned(false)
+      return
+    }
+    setSidebarPinned(true)
+    setIsSidebarVisible(true)
+  }, [sidebarPinned])
 
   // Hover-reveal gesture for the collapsed rail: 250 ms dwell expands it,
   // leaving collapses it again. Handlers are no-ops while it is already
@@ -1338,8 +1362,8 @@ function AppShellContent({
   // or the shell cannot host a hovered rail — so no stale pin survives on a
   // permanently expanded sidebar.
   React.useEffect(() => {
-    if (storedSidebarVisible || effectiveSidebarAndNavigatorHidden || isAutoCompact) setSidebarPeek(false)
-  }, [storedSidebarVisible, effectiveSidebarAndNavigatorHidden, isAutoCompact])
+    if (storedSidebarVisible || sidebarPinned || effectiveSidebarAndNavigatorHidden || isAutoCompact) setSidebarPeek(false)
+  }, [storedSidebarVisible, sidebarPinned, effectiveSidebarAndNavigatorHidden, isAutoCompact])
 
   // Sidebar toggle (CMD+B)
   useAction('view.toggleSidebar', handleToggleSidebar)
@@ -1897,6 +1921,11 @@ function AppShellContent({
   React.useEffect(() => {
     storage.set(storage.KEYS.sidebarVisible, storedSidebarVisible)
   }, [storedSidebarVisible])
+
+  // Persist the pinned sidebar mode to localStorage
+  React.useEffect(() => {
+    storage.set(storage.KEYS.sidebarPinned, sidebarPinned)
+  }, [sidebarPinned])
 
   // Persist focus mode state to localStorage
   React.useEffect(() => {
@@ -3037,17 +3066,17 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
                 {/* pb-4 provides clearance so the last item scrolls above the mask-fade-bottom gradient */}
                 <div className="flex-1 overflow-y-auto min-h-0 mask-fade-bottom pb-4">
                 {activeWorkspaceId && !isSidebarCollapsed && (
-                  <div className="px-3 py-2 border-b border-foreground/5">
-                    <label className="block text-[10px] text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>
+                  <div className="flex h-[var(--chrome-panel-header-height)] shrink-0 items-center gap-1.5 border-b border-border-subtle px-3">
+                    <label className="shrink-0 text-[10px] text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>
                     <select id="workspace-project-context" value={selectedProjectId ?? ''}
-                      className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs"
+                      className="min-w-0 flex-1 rounded-md border border-border bg-background px-1.5 py-1 text-[11px] leading-tight"
                       onChange={event => setProjectContexts(previous => ({ ...previous, [activeWorkspaceId]: event.target.value || null }))}>
                       <option value="">{t('navigation.allProjects')}</option>
                       {projects.map(project => <option key={project.config.id} value={project.config.id}>{project.config.name}</option>)}
                     </select>
                   </div>
                 )}
-                <div ref={setShellSidebarSlot} hidden={isSidebarCollapsed} data-primary-sidebar-context className="mb-2 border-b border-foreground/5 empty:hidden">
+                <div ref={setShellSidebarSlot} hidden={isSidebarCollapsed} data-primary-sidebar-context className="mb-2 border-b border-border-subtle empty:hidden">
                   {isSettingsNavigation(navState) && !isAutoCompact && (
                     <SettingsNavigator selectedSubpage={navState.subpage ?? null} onSelectSubpage={subpage => handleSettingsClick(subpage)} />
                   )}
@@ -3106,8 +3135,9 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
                     collapsed={isSidebarCollapsed}
                     onToggleSidebar={handleToggleSidebar}
                     onOpenSettings={() => handleSettingsClick()}
-                    showPin={sidebarPeek}
-                    onPin={() => { setSidebarPeek(false); setIsSidebarVisible(true) }}
+                    showPin={!isSidebarCollapsed}
+                    pinned={sidebarPinned}
+                    onPin={handleToggleSidebarPin}
                   />
                 </div>
               </div>

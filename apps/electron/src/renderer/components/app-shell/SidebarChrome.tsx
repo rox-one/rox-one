@@ -17,8 +17,11 @@ interface SidebarChromeProps {
   collapsed?: boolean
   onToggleSidebar?: () => void
   onOpenSettings?: () => void
-  /** Renders the "keep expanded" pin button; only meaningful during a hover peek. */
+  /** Renders the persistent "keep expanded" pin button. Available whenever the
+   *  rail is expanded, not only during a hover peek. */
   showPin?: boolean
+  /** Current pinned mode; drives the pressed state and label. */
+  pinned?: boolean
   onPin?: () => void
 }
 
@@ -33,6 +36,7 @@ export function SidebarChrome({
   onToggleSidebar,
   onOpenSettings,
   showPin = false,
+  pinned = false,
   onPin,
 }: SidebarChromeProps) {
   const { t } = useTranslation()
@@ -54,15 +58,15 @@ export function SidebarChrome({
       {visiblePromoKind && !collapsed ? (
         <PromoSlot kind={visiblePromoKind} reminderDueCount={reminderDueCount} onCta={onPromoCta} onDismiss={visiblePromoKind === 'onboarding' ? onDismissGuidance : undefined} />
       ) : null}
-{/* W-04: the control column stacks the hover-peek pin (when shown) above the
+{/* W-04: the control column stacks the persistent pin above the
           collapse/peek toggle, with the settings gear at the very bottom; the user
           plate sits below the whole column. A vertical stack keeps the order legible
           at the collapsed ~52px width, and `-mx-1.5` reclaims the shell padding so
           the column stays centred. */}
       <div className={cn('flex flex-col', collapsed ? '-mx-1.5 items-center gap-0.5' : 'items-start gap-1 px-1')}>
-        {showPin && !collapsed ? (
-          <button type="button" data-testid="rail-pin" onClick={onPin} aria-label={t('rail.pin')} title={t('rail.pin')} className="grid size-8 place-items-center rounded-lg text-foreground/80 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring">
-            <Pin className="size-4" aria-hidden />
+        {showPin ? (
+          <button type="button" data-testid="rail-pin" onClick={onPin} aria-pressed={pinned} aria-label={t(pinned ? 'rail.unpin' : 'rail.pin')} title={t(pinned ? 'rail.unpin' : 'rail.pin')} className={cn('grid size-8 place-items-center rounded-lg text-foreground/80 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring', pinned && 'bg-foreground/[0.08] text-foreground')}>
+            <Pin className={cn('size-4', pinned && 'fill-current')} aria-hidden />
           </button>
         ) : null}
         <button type="button" data-testid="rail-toggle" onClick={onToggleSidebar} aria-label={t(collapsed ? 'sidebar.show' : 'sidebar.hide')} title={t(collapsed ? 'sidebar.show' : 'sidebar.hide')} aria-expanded={!collapsed} className={cn('grid place-items-center rounded-lg text-foreground/45 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring', collapsed ? 'size-6' : 'size-8')}>

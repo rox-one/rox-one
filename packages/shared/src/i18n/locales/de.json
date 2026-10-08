@@ -5970,6 +5970,7 @@
   "rail.knowledgeDisabled": "Knowledge — kommt mit dem Knowledge-Arbeitsbereich (Welle W2)",
   "rail.pin": "Seitenleiste anheften",
   "rail.title": "Aktivitätsleiste",
+  "rail.unpin": "Seitenleiste lösen",
   "research.citation.contradiction": "Widersprüchliche Daten",
   "research.citation.dateUnknown": "Datum unbekannt",
   "research.citation.hoverAria": "Quelle: {{title}}",

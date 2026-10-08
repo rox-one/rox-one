@@ -42,7 +42,7 @@ export default function PlanWorkspacePage({ selectedId }: { selectedId?: string 
   }} />
   const meetings = <Suspense fallback={<div role="status">{t('common.loading')}</div>}><Meetings selectedId={selectedId} /></Suspense>
   return <div ref={root} data-mode-layout={mode} className="flex h-full min-h-0 min-w-0 flex-col">
-    <ShellSidebarPortal className="flex shrink-0 flex-wrap gap-1 border-b border-border p-2">
+    <ShellSidebarPortal className="flex min-h-[var(--chrome-panel-header-height)] shrink-0 flex-wrap items-center gap-1 p-2">
       {(['calendar', 'meetings'] as const).map(value => <button type="button" key={value} aria-current={section === value ? 'page' : undefined}
         className={`rounded px-3 py-2 text-left text-sm ${section === value ? 'bg-accent/10 text-accent' : 'text-muted-foreground'}`}
         onClick={() => { setSection(value); if (value === 'calendar') void navigate(routes.view.meetings(), { primary: true, skipAutoSelect: true }) }}>{t(`navigation.planSections.${value}`)}</button>)}

@@ -5996,6 +5996,7 @@
   "rail.knowledgeDisabled": "«База знаний» пока недоступна",
   "rail.pin": "Закрепить боковую панель",
   "rail.title": "Панель активности",
+  "rail.unpin": "Открепить боковую панель",
   "research.citation.contradiction": "Противоречие в датах",
   "research.citation.dateUnknown": "Дата неизвестна",
   "research.citation.hoverAria": "Источник: {{title}}",
