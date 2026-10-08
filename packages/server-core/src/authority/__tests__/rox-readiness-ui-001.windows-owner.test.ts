@@ -100,7 +100,14 @@ async function runOwnerHost(program: string) {
     const executable = join(directory, 'owner-host.cjs')
     writeFileSync(executable, result.outputFiles[0]!.contents)
     const environment: NodeJS.ProcessEnv = { NODE_NO_WARNINGS: '1' }
-    for (const key of ['PATH', 'Path', 'SystemRoot', 'WINDIR', 'HOME', 'USERPROFILE', 'TMPDIR', 'TMP', 'TEMP']) {
+    // A real Windows host inherits the standard OS/user locations. Windows
+    // PowerShell needs them to start and to persist its per-user module-analysis
+    // cache; a stripped environment makes every probe re-analyze modules and
+    // exceed any sane deadline. Only OS paths are forwarded, never CI secrets.
+    for (const key of ['PATH', 'Path', 'SystemRoot', 'WINDIR', 'windir', 'HOME', 'USERPROFILE', 'USERNAME',
+      'USERDOMAIN', 'HOMEDRIVE', 'HOMEPATH', 'TMPDIR', 'TMP', 'TEMP', 'LOCALAPPDATA', 'APPDATA',
+      'ALLUSERSPROFILE', 'PROGRAMDATA', 'PROGRAMFILES', 'ProgramFiles', 'ProgramW6432', 'PUBLIC',
+      'SystemDrive', 'ComSpec', 'PATHEXT', 'NUMBER_OF_PROCESSORS', 'PROCESSOR_ARCHITECTURE', 'OS']) {
       if (process.env[key]) environment[key] = process.env[key]
     }
     return await captureTestCommand(['node', executable], { cwd: root, environment, timeoutMs: 60_000 })

@@ -4,6 +4,13 @@ import { win32 } from 'node:path'
 
 const OWNER_ERROR = 'maintenance requires the state directory OS owner'
 const OWNER_PATH_ENV = 'ROX_NATIVE_OWNER_PROBE_PATH'
+/**
+ * Bounded child deadline. It only guards against a wedged probe: the ownership
+ * comparison below is unchanged and a subprocess that is missing, denied or
+ * malformed still fails closed. It is large enough for the one-time Windows
+ * PowerShell cold start on a fresh host instead of misreporting ownership.
+ */
+const PROBE_TIMEOUT_MS = 30_000
 const OWNER_SCRIPT = `
 $ErrorActionPreference = 'Stop'
 $identity = $null
@@ -51,10 +58,15 @@ export function requireOsOwner(path: string, dependencies: OsOwnerDependencies =
   try {
     // The fixed script reads its literal target from a private child environment.
     // No target, SID, ACL, profile command or subprocess error reaches public output.
+    // Windows PowerShell performs one-time startup optimization and builds its
+    // per-user module-analysis cache before the first command resolves; on a
+    // fresh host (e.g. a CI runner) that cold start exceeds a bare 2s budget and
+    // never completes to cache itself, so the deadline must tolerate it while
+    // remaining bounded and fail-closed on a genuine hang.
     const result = (dependencies.exec ?? execFileSync)(executable,
       ['-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', OWNER_COMMAND], {
         env: { ...env, [OWNER_PATH_ENV]: path }, encoding: 'utf8', windowsHide: true,
-        timeout: 30_000, maxBuffer: 1_024, stdio: ['ignore', 'pipe', 'pipe'],
+        timeout: PROBE_TIMEOUT_MS, maxBuffer: 1_024, stdio: ['ignore', 'pipe', 'pipe'],
       })
     if (result.trim() === '1') return
   } catch { /* Missing, denied, timed-out and malformed probes all fail closed. */ }

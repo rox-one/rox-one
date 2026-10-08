@@ -120,6 +120,17 @@ jobs:
         run: bun install --frozen-lockfile
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Warm Windows PowerShell for the OS-owner probe
+        # The probe launches the OS-installed Windows PowerShell with -NoProfile
+        # and a pinned child environment. A fresh runner has never started that
+        # engine, so the very first probe pays the one-time startup and module
+        # analysis cost and can be killed before it ever writes its cache. Pay
+        # that one-time cost here so the ownership probes start from a warm host.
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $oracle = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+          & $oracle -NoLogo -NoProfile -NonInteractive -Command 'Get-Acl -LiteralPath $env:SystemRoot | Out-Null; Get-Command ConvertTo-Json, ConvertFrom-Json, New-Object | Out-Null'
       - name: Verify actual OS-owner startup and reopen boundaries
         run: bun test --timeout 30000 ./packages/server-core/src/authority/__tests__/rox-readiness-ui-001.windows-owner.test.ts
       - name: Build the real desktop main, preload, renderer and resources
