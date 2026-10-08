@@ -262,3 +262,92 @@ describe('recordTranscript failure handling', () => {
     expect(calls.stop).toBe(1)
   })
 })
+
+describe('recordTranscript write coordination', () => {
+  /** Test double over the notes API; native channels are unused on these paths. */
+  function apiStub(overrides: Record<string, unknown>): FakeApi {
+    return { listNotes: async () => [], ...overrides } as unknown as FakeApi
+  }
+
+  it('retries a lost store claim and still files exactly one note', async () => {
+    let attempts = 0
+    const created = note({ id: 'note-1', revision: 'rev-1', sourceStoreId: 'markdown:store' })
+    const api = apiStub({
+      createNote: async () => {
+        attempts += 1
+        // RPC failures reach the renderer as plain objects, not Error instances.
+        if (attempts === 1) throw { code: 'rateLimited', message: 'Document claim requires recovery' }
+        return created
+      },
+      saveNote: async () => created,
+    })
+    const result = await recordTranscript(
+      { workspaceId: 'ws-1', text: 'Привет', source: 'dictation', at: AT },
+      { api },
+    )
+    expect(result).toEqual({ ok: true, noteId: 'note-1' })
+    expect(attempts).toBe(2)
+  }, 15_000)
+
+  it('does not retry a permanent store failure', async () => {
+    const deleted: string[] = []
+    const stub = note({ id: 'note-5', revision: 'rev-1', sourceStoreId: 'markdown:store' })
+    let saveAttempts = 0
+    const api = apiStub({
+      createNote: async () => stub,
+      saveNote: async () => {
+        saveAttempts += 1
+        throw new Error('store offline')
+      },
+      readNote: async () => stub,
+      deleteNote: async (_workspaceId: string, noteId: string) => { deleted.push(noteId); return true },
+    })
+    const result = await recordTranscript(
+      { workspaceId: 'ws-1', text: 'Привет', source: 'dictation', at: AT },
+      { api },
+    )
+    expect(result).toEqual({ ok: false, error: 'store offline' })
+    expect(saveAttempts).toBe(1)
+    expect(deleted).toEqual(['note-5'])
+  })
+
+  it('serialises concurrent transcript writes through one queue', async () => {
+    const events: string[] = []
+    const api = apiStub({
+      createNote: async (_workspaceId: string, title: string) => {
+        events.push(`create:${title}`)
+        await new Promise((resolve) => setTimeout(resolve, 5))
+        return note({ id: `note:${title}`, revision: 'rev-1', sourceStoreId: 'markdown:store' })
+      },
+      saveNote: async (_workspaceId: string, id: string) => {
+        events.push(`save:${id}`)
+        return note({ id })
+      },
+    })
+    await Promise.all([
+      recordTranscript({ workspaceId: 'ws-1', text: 'первый', source: 'dictation', at: AT }, { api }),
+      recordTranscript({ workspaceId: 'ws-1', text: 'второй', source: 'meeting', at: AT + 60_000 }, { api }),
+    ])
+    // The store claim is per-directory: the second write must not start before
+    // the first one committed, and vice versa.
+    expect(events.map((event) => event.split(':')[0])).toEqual(['create', 'save', 'create', 'save'])
+  })
+
+  it('deletes the created stub when the markdown save fails', async () => {
+    const deleted: string[] = []
+    const stub = note({ id: 'note-9', revision: 'rev-1', sourceStoreId: 'markdown:store' })
+    const api = apiStub({
+      createNote: async () => stub,
+      saveNote: async () => note({ id: 'other-note' }),
+      readNote: async () => stub,
+      deleteNote: async (_workspaceId: string, noteId: string) => { deleted.push(noteId); return true },
+    })
+    const result = await recordTranscript(
+      { workspaceId: 'ws-1', text: 'Привет', source: 'dictation', at: AT },
+      { api },
+    )
+    expect(result.ok).toBe(false)
+    expect(result.error).toContain('different document')
+    expect(deleted).toEqual(['note-9'])
+  })
+})

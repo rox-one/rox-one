@@ -73,8 +73,9 @@ export function createNativeVoiceOverlayHost(options: {
       const nextOwner = options.resolveOwner(input.context)
       if (!nextOwner || nextOwner.isDestroyed() || nextOwner.webContents.isDestroyed()) { this.retire(input.context.clientId); return }
       if (input.state.phase === 'hidden') { this.retire(input.context.clientId); return }
-      // Background actor events never replace another window's visible capture.
-      if (nextOwner !== owner && !nextOwner.isFocused()) return
+      // A visible capture is never replaced by a background actor, but the first
+      // surface must still appear while the app is in the background (hotkey paths).
+      if (child && nextOwner !== owner && !nextOwner.isFocused()) return
       if (nextOwner !== owner || latest?.context.clientId !== input.context.clientId) disposeSurface()
       if (latest?.state.recordingId !== input.state.recordingId) { stopSent = false; cancelSent = false }
       latest = input
@@ -95,8 +96,11 @@ export function createNativeVoiceOverlayHost(options: {
         created.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
         created.webContents.once('did-finish-load', () => { if (child === created) sendState() })
         created.once('closed', () => { if (child === created) disposeSurface() })
-        const url = app.isPackaged ? `file://${join(__dirname, '../renderer/voice-overlay.html')}` : `${process.env.VITE_DEV_SERVER_URL ?? 'http://localhost:5173'}/voice-overlay.html`
-        void created.loadURL(url).catch(() => { if (child === created) disposeSurface() })
+        // Packaged builds keep every renderer entry under dist/renderer next to main.cjs (see browser-pane-manager).
+        const loading = app.isPackaged
+          ? created.loadFile(join(__dirname, 'renderer', 'voice-overlay.html'))
+          : created.loadURL(`${process.env.VITE_DEV_SERVER_URL ?? 'http://localhost:5173'}/voice-overlay.html`)
+        void loading.catch(() => { if (child === created) disposeSurface() })
       }
       sendState()
       if (terminalTimer) clearTimeout(terminalTimer)

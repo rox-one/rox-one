@@ -120,7 +120,11 @@ export function PanelSlot({
     leadingAction: backButton,
     isFocusedPanel,
   }), [parentContext, closeButton, backButton, isFocusedPanel, entry.id])
-  const panelNavigation = navigation && navState ? { ...navigation, navigationState: navState } : navigation
+  // A workspace the shell cannot serve yet keeps every panel on the provider's
+  // unavailable state: no panel may claim a route from a foreign workspace.
+  const panelNavigation = navigation && navState && !navigation.unavailableWorkspaceSlug
+    ? { ...navigation, navigationState: navState }
+    : navigation
 
 
   const handlePointerDown = useCallback(() => {

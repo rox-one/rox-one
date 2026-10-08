@@ -32,7 +32,7 @@ export interface TranscriptRecordResult {
 
 type TranscriptNotesApi = Pick<
   ElectronAPI,
-  'createNote' | 'readNote' | 'saveNote' | 'nativeData' | 'nativeReplica' | 'listNotes'
+  'createNote' | 'readNote' | 'saveNote' | 'deleteNote' | 'nativeData' | 'nativeReplica' | 'listNotes'
 >
 
 export interface TranscriptRecordDeps {
@@ -81,48 +81,129 @@ export function transcriptMarkdown(input: TranscriptRecordInput): string {
   return `${lines.join('\n')}\n\n${body}`
 }
 
+/**
+ * Write coordination, carried over from the retired notebook writer (see
+ * docs/plans/2026-10-08-rox-user-batch.md, «Волна 4»): the notes commit store
+ * serialises writers behind a per-directory claim, so a lost claim is retried,
+ * and our own concurrent transcripts (a startup re-mirror of several meetings,
+ * a dictation filing while another one commits) queue behind each other.
+ */
+const CLAIM_RETRY_DELAYS_MS = [0, 400, 1000, 2000, 4000, 6000]
+
+/** `MarkdownCommitError` reaches the renderer either as an Error or as a plain RPC object. */
+function claimMessage(error: unknown): string {
+  if (typeof error === 'string') return error
+  if (error && typeof error === 'object') {
+    const message = 'message' in error && typeof error.message === 'string' ? error.message : ''
+    const code = 'code' in error && typeof error.code === 'string' ? error.code : ''
+    let serialized = ''
+    try {
+      const json = JSON.stringify(error)
+      if (typeof json === 'string') serialized = json
+    } catch {
+      /* Circular or unserialisable errors carry nothing extra. */
+    }
+    return [message, code, serialized].filter(Boolean).join(' ')
+  }
+  return error instanceof Error ? error.message : ''
+}
+
+function isClaimContention(error: unknown): boolean {
+  return /Document claim requires recovery|Document writer is busy|rateLimited/i.test(claimMessage(error))
+}
+
+/** Retry a store call whose claim was lost to another writer; other failures propagate. */
+async function withClaimRetry<T>(operation: () => Promise<T>): Promise<T> {
+  let lastError: unknown
+  for (const delay of CLAIM_RETRY_DELAYS_MS) {
+    if (delay) await new Promise((resolve) => setTimeout(resolve, delay))
+    try {
+      return await operation()
+    } catch (error) {
+      if (!isClaimContention(error)) throw error
+      lastError = error
+    }
+  }
+  throw lastError
+}
+
+/** Bound for one queued write: a store call stuck on the native journal must not wedge later notes. */
+const TRANSCRIPT_WRITE_DEADLINE_MS = 20_000
+let transcriptWriteTail: Promise<unknown> = Promise.resolve()
+
+/** Serialise transcript writes so concurrent callers never race the store claim. */
+function enqueueTranscriptWrite<T>(operation: () => Promise<T>): Promise<T> {
+  const { promise: deadline, reject } = Promise.withResolvers<never>()
+  const timer = setTimeout(() => reject(new Error('Transcript note write timed out')), TRANSCRIPT_WRITE_DEADLINE_MS)
+  const run = transcriptWriteTail.then(operation, operation)
+  const settled = Promise.race([run, deadline]).finally(() => clearTimeout(timer))
+  transcriptWriteTail = settled.catch(() => undefined)
+  return settled
+}
+
+/** A permanently failed save must not leave an empty transcript stub behind. */
+async function discardEmptyStub(api: TranscriptNotesApi, workspaceId: string, noteId: string, title: string): Promise<void> {
+  try {
+    const current = await api.readNote(workspaceId, noteId)
+    const body = (current.content ?? '').trim()
+    if (body && body !== `# ${title}`) return
+    await api.deleteNote(workspaceId, noteId)
+  } catch {
+    /* Cleanup is best-effort; the failed save is the reported outcome. */
+  }
+}
+
 export async function recordTranscript(
   input: TranscriptRecordInput,
   deps?: TranscriptRecordDeps,
 ): Promise<TranscriptRecordResult> {
+  const api = deps?.api ?? window.electronAPI
   try {
-    const api = deps?.api ?? window.electronAPI
-    const markdown = transcriptMarkdown(input)
-    const created = await api.createNote(
-      input.workspaceId,
-      transcriptNoteTitle(input),
-      TRANSCRIPTS_FOLDER,
-      { operationId: crypto.randomUUID(), expectedRevision: null, schemaVersion: 1 },
-    )
-    const nativeCapable = isNativeNoteDocument(created) &&
-      typeof created.nativeId === 'string' && created.nativeId.length > 0 &&
-      Number.isSafeInteger(created.nativeRevision) &&
-      Boolean(api.nativeReplica) && Boolean(api.nativeData)
-    if (nativeCapable) {
-      const controller = (deps?.createSyncController ?? createNativeNotesSyncController)()
+    return await enqueueTranscriptWrite(async () => {
+      const markdown = transcriptMarkdown(input)
+      const title = transcriptNoteTitle(input)
+      const created = await withClaimRetry(() => api.createNote(
+        input.workspaceId,
+        title,
+        TRANSCRIPTS_FOLDER,
+        { operationId: crypto.randomUUID(), expectedRevision: null, schemaVersion: 1 },
+      ))
       try {
-        await controller.start(input.workspaceId)
-        const queued = await controller.queueSave(created, markdown)
-        const receipts = await controller.flush()
-        if (!receipts.some(receipt => receipt.operationId === queued.operationId)) {
-          throw new Error('Native Notes transcript remains unacknowledged')
+        const nativeCapable = isNativeNoteDocument(created) &&
+          typeof created.nativeId === 'string' && created.nativeId.length > 0 &&
+          Number.isSafeInteger(created.nativeRevision) &&
+          Boolean(api.nativeReplica) && Boolean(api.nativeData)
+        if (nativeCapable) {
+          const controller = (deps?.createSyncController ?? createNativeNotesSyncController)()
+          try {
+            await controller.start(input.workspaceId)
+            const queued = await controller.queueSave(created, markdown)
+            const receipts = await controller.flush()
+            if (!receipts.some(receipt => receipt.operationId === queued.operationId)) {
+              throw new Error('Native Notes transcript remains unacknowledged')
+            }
+            return { ok: true, noteId: created.id }
+          } finally {
+            try { await controller.stop() } catch { /* stop must never mask the write result */ }
+          }
         }
-        return { ok: true, noteId: created.id }
-      } finally {
-        try { await controller.stop() } catch { /* stop must never mask the write result */ }
+        const saved = await withClaimRetry(() => api.saveNote(
+          input.workspaceId,
+          created.id,
+          markdown,
+          created.revision,
+          created.sourceStoreId,
+        ))
+        if (!saved.id || saved.id !== created.id) {
+          throw new Error('Notes markdown save returned a different document')
+        }
+        return { ok: true, noteId: saved.id }
+      } catch (error) {
+        // The note was created here, so its empty stub belongs to this failure.
+        await discardEmptyStub(api, input.workspaceId, created.id, title)
+        throw error
       }
-    }
-    const saved = await api.saveNote(
-      input.workspaceId,
-      created.id,
-      markdown,
-      created.revision,
-      created.sourceStoreId,
-    )
-    if (!saved.id || saved.id !== created.id) {
-      throw new Error('Notes markdown save returned a different document')
-    }
-    return { ok: true, noteId: saved.id }
+    })
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) }
   }

@@ -379,48 +379,180 @@ bun test \
 - Отладочный лог main-процесса включается `CRAFT_IS_PACKAGED=false` (в production-режиме транспорты `electron-log` выключены); флаг `--debug` в Electron 39 уходит в устаревший `node --debug` и даёт шум DEP0062 с петлёй релончей.
 - Первый холодный переход в «тяжёлые» разделы (все сессии, заметки) может не уложиться в 25 с — повторный прогон после прогрева проходит без таймаутов.
 
----
+## Волна 4 — конвергенция голосовой волны (VV-1…VV-6) с upstream `4739a0e54` + живая приёмка
 
-## Волна голоса и встреч (2026-10-08, четвёртая волна: VV-1…VV-5)
+**Что произошло.** Пока волна VV-1…VV-6 делалась в ветке `e01-decisions`, тот же запрос пользователя (10:44:21 —
+«Фаза 2 — запись и транскрибация») был реализован второй раз и влит в `origin/main` коммитом **`4739a0e54`**
+(2026-10-08 15:19, «feat(voice): meetings transcription + dictation, transcripts notebook, mailbox provisioning»):
+композерная волна `components/voice/VoiceLevelWave.tsx` + `use-microphone-level.ts`, заметки
+`lib/transcripts-notebook.ts` (content-addressed, `rox-transcript:<fnv1a>`), хост хоткея
+`voice/hotkey-dictation-host.tsx` (драфт новой сессии), уровень микрофона через общий контракт
+`VoiceHost.level()` → `voice:level` (protocol/routing → server-core rpc → transport map → overlay-owner →
+overlay-renderer), пиннинг модели `resolveDeepgramModel()` (nova-3 по умолчанию, апгрейд только по
+`DEEPGRAM_ALLOW_MODEL_UPGRADE`) и правки почты/встреч. Две реализации дублировали одну и ту же волну.
 
-**Требование пользователя (голосом, 2026-10-08):** (1) стабильная запись с real-time волной громкости у места диктовки в композере и во всплывающем мини-окне при свёрнутом/нефокусированном приложении; (2) транскрибация через Deepgram Nova-3 (`diarize`, автo-язык, абзацы/пунктуация); (3) вставка транскрипта в тот же чат при записи из чата либо в **драфт новой сессии** при хоткее без смонтированного композера; (4) все транскрипты сохраняются в заметках в раздел «Мои транскрипты»; (5) живое подтверждение записи встреч (A9).
+**Решение (конвергенция, не дубль).** Основой взята реализация из `main`; собственные дубли из ветки удалены
+(`level-meter`, `dictation-ownership`, `global-dictation`, `transcripts/notes`, `transcript-notes` и их тесты), из
+ветки лида перенесены **только фиксы, которых в `main` нет**. Итоговый код-дифф волны против `origin/main` —
+три файла: `main/voice/overlay-owner.ts`, его изолированный тест и `renderer/lib/transcripts-notebook.ts`.
 
-**Ревизия-носитель:** `51abb2478` (worktree `archive/rox-one-e01-wt`, ветка `e01-decisions`).
+**Фиксы в `apps/electron/src/main/voice/overlay-owner.ts`** (мини-оверлей при свёрнутом приложении):
+1. **Показ не зависит от фокуса владельца.** Было `const show = owner!.isFocused() && phase !== 'hidden'` плюс
+   `onBlur → hide` — при свёрнутом/нефронтовом приложении мини-окно не показывалось вовсе (это и есть основной
+   пользовательский сценарий «мини-оверлей при сворачивании»). Стало `const show = latest!.state.phase !== 'hidden'`;
+   `blur`-обработчик снят (регистрация и `removeListener`), гейт `|| !owner!.isFocused()` из обработчика команд
+   убран — «Стоп»/«Отмена» самого окна работают, пока приложение не в фокусе.
+2. **Первая публикация при нефронтовом владельце создаёт поверхность.** Guard
+   `if (nextOwner !== owner && !nextOwner.isFocused()) return` получает префикс `child &&`: живой поверхностью
+   по-прежнему не может завладеть фоновый актор, но первый показ (хоткей при свёрнутом приложении) не отбрасывается.
+3. **Упакованная сборка грузит свой entry.** Было `file://${join(__dirname, '../renderer/voice-overlay.html')}`
+   (каталогом выше — там файла нет), стало `created.loadFile(join(__dirname, 'renderer', 'voice-overlay.html'))`
+   (рядом с `main.cjs`, как у остальных renderer-entry) + `void loading.catch(…)`.
 
-### Разведка и решения (заморожены до реализации)
+**Фикс в `apps/electron/src/renderer/lib/transcripts-notebook.ts`** (заметка-транскрипт должна доживать до диска):
+до правки под конкуренцией за claim-гейт стора заметок запись падала и **молча терялась** (в консоли
+`[transcripts-notebook] transcript not saved Error: Document claim requires recovery`), а неудачная попытка
+оставляла **пустую заметку** — отсюда пустые 145–150 Б «Транскрипты встреч» и дубли `(2)`/`(3)`. Добавлено:
+1. **Ретраи с бэкоффом** (`[0, 400, 1000, 2000, 4000, 6000]` мс) на транзиентные ошибки claim-гейта
+   (`Document claim requires recovery`, `Document writer is busy`, `rateLimited`), включая RPC-ошибки в виде
+   plain-объекта (не `Error`);
+2. **Сериализация записей** (module-level очередь): стартовое зеркалирование нескольких встреч больше не воюет
+   само с собой за claim-гейт; у очереди есть **дедлайн 20 с**, чтобы один зависший вызов не заклинил следующие;
+3. **Уборка пустого стаба**: если запись тела так и не прошла, созданная этим вызовом пустая заметка удаляется
+   (только когда в ней нет ничего, кроме заголовка) — вместо неё остаётся предупреждение в консоли.
+Юнит-тест `renderer/lib/__tests__/transcripts-notebook.test.ts`: ретрай на claim-ошибку (2 попытки), отсутствие
+стаба при перманентной ошибке (`deleteNote` вызван, повтор не делается), сериализация двух параллельных
+транскриптов — **3 pass / 0 fail**.
 
-- **Владелец волны — renderer.** У main нет `MediaStream`, а `VoiceHost.overlay()` (`packages/shared/src/voice/host.ts:228-240`) жёстко отдаёт `rms: 0` — серверный уровень был бы фейком. Новый канал `rox:owned-voice-overlay:level`: `ipcRenderer.send` из `preload/bootstrap.ts` через `ElectronAPI.publishVoiceLevel?(level)`, `ipcMain.on` в `createNativeVoiceOverlayHost`; карта `webContentsId → rms` внутри owner-модуля (чужой отправитель игнорируется, не-число/NaN отбрасывается, значение клампится в 0..1), `sendState()` мержит `rms` перед `webContents.send`. Канал НЕ входит в `RPC_CHANNELS` → `shared/__tests__/ipc-channels.test.ts` не трогается; `scripts/check-raw-sends.sh` ловит только `(webContents|sender|window).send(`, поэтому `ipcMain.on`/`ipcRenderer.send` гейт не ломают (и сам скрипт — мёртвый: `rg: command not found` → всегда EXIT=0).
-- **Мини-окно показывается при `phase !== 'hidden'` независимо от фокуса владельца**: `onBlur → hide` снят, `onFocus → sendState()` оставлен, из guard'а команды снят `!owner.isFocused()` (сохранены `event.sender !== child.webContents` и `currentOwner()`); защита `nextOwner !== owner && !nextOwner.isFocused()` в `publish()` сохранена — чужой захват по-прежнему запрещён.
-- **Метр — общий util** `renderer/lib/voice/level-meter.ts`: семантика перенесена из `meetings/recorder.ts:89-115` без изменений (AnalyserNode `fftSize = 1024`, `rms = √(Σx²/n)`, `db = 20·log10(max(rms,1e-6))`, `v = clamp((db+60)/60,0,1)`, сглаживание `v > s ? v : s*0.8 + v*0.2`, округление до 0.01). Драйверы: `interval` (100 мс — встречи, побайтово прежнее поведение) и `frame` (rAF + watchdog `setInterval(200 мс)`, который эмитит только при устаревании кадра >350 мс — rAF троттлится в свёрнутом окне). Никогда не бросает: нет `AudioContext`/анализатора → no-op handle (безопасно для headless-фикстур).
-- **Запись переживает сворачивание/нефокус**: из `canStart()` убран гейт `document.hidden`, снят обработчик `visibilitychange → cancelRecording` (мини-окно теперь показывает запись при любом фокусе); явные stop/cancel/ошибка не меняются.
-- **Хоткей без композера** — новый `renderer/voice/global-dictation.tsx`, смонтированный в `AppShell.tsx`: при `isComposerPresent()` полностью бездействует (иначе двойная запись); владение — через `renderer/voice/dictation-ownership.ts` (`claimDictation`/`setDictationIntent`/`releaseDictation`/`peekIntent`/`currentOwner` + `registerComposerPresence`/`isComposerPresent`/`isComposerOwned`), куда переведён и `VoiceDictationControl`. Захват зеркалит проверенную последовательность композера (`getUserMedia` → `MediaRecorder` → `startVoiceCapture` → `grantVoicePermission` → чанки по 1 МиБ → `stopVoiceCapture` → `job.transcript`), consent-гейт `cloud-rox` повторён. Вставка — `navigate(routes.action.newSession({ input: text, send: false }), { newPanel: true, targetLaneId: 'main' })`: `NavigationContext` при `send !== 'true'` вызывает `onInputChange(session.id, parsed.params.input!)` через `setTimeout(…, 100)` — текст оказывается в **драфте** новой сессии, без автоотправки.
-- **«Мои транскрипты» — папка заметок, одна заметка на транскрипт.** `renderer/lib/transcripts/notes.ts`: `createNote(ws, title, 'Мои транскрипты', { operationId: crypto.randomUUID(), expectedRevision: null, schemaVersion: 1 })` (папку создаёт сам `ensureSafeNoteDirectory` — mkdir recursive + проверка симлинков; кириллица проходит `sanitizeFilename`), затем native-путь `createNativeNotesSyncController()` → `start(ws)` → `queueSave(created, markdown)` → `flush()` (receipt ищется по `operationId`) → `stop()`; фолбэк для markdown-документа — `saveNote(ws, id, markdown, revision, sourceStoreId)`. Шаблоны — `ProjectRoadmapPage.exportToNote` (~:648-700) и `NotesPage.duplicateNote` (~:1528-1550). Заметка на каждый транскрипт вместо дописывания в общий журнал: свежий документ от `createNote` уже несёт `nativeRevision`, поэтому CAS-цепочка не нужна (`queueSave` требует ровно одну свежую ревизию; повторный `queueSave` без нового `start` дал бы `HASH_CONFLICT`).
-- **Deepgram: адаптер уже соответствует ТЗ** (аудит `DeepgramAudit`). `packages/shared/src/voice/adapters/deepgram-transcription.ts:116-137` безусловно шлёт `model, version=latest, smart_format=true, punctuate=true, diarize_model=latest, paragraphs=true, utterances=true` и **ровно одно** из `detect_language=true` / `language=<code>`; `diarize=true` не шлётся. Единственная недетерминированность — `model`: при пустом `options.model` идёт лишний `GET https://api.deepgram.com/v1/models` и выбирается новейшая доступная Nova (nova-4+, если релизнута); константа `DEEPGRAM_TRANSCRIPTION_MODEL='nova-3'` (`contracts.ts:10`) — только фолбэк после неудачи. Продакшн-вызовы (`server-core/.../voice.ts:140-142`, `main/meetings/local-ipc.ts:86-88`, `local-store.ts:900`) всегда передают `model: process.env.DEEPGRAM_MODEL` (обычно `undefined`). Строгая фиксация nova-3 возможна явной передачей `model`/`DEEPGRAM_MODEL`; правок в адаптер не вносится — тесты сборки query уже есть (`deepgram-transcription.test.ts:81-100`).
+**Живая приёмка на бандле после конвергенции** (профиль `rox-verify`, порт 9334, фикстурный шов в гитигнорном
+`main.cjs`, после прогонов шов снят):
+- **Композер (VV-1, свежий профиль 9336)**: кнопка диктовки разложена и кликабельна
+  (`disabled: false`, `hitIsSelf: true`), композерная волна — `canvas` (`VoiceLevelWave`): 24 сэмпла, 7 различных
+  значений доли «нарисованных» пикселей (0.15…0.3429), транскрипт лёг в драфт (`"проверка диктовки "`, len 18),
+  тостов об ошибках нет; заметка-транскрипт записана в «Мои записи/Мои транскрипты» с телом и content-anchor
+  (`проверка диктовки.md`, `<!-- rox-transcript:96507d5c -->`), повторная идентичная диктовка **не создала
+  дубль** (content-addressed дедуп ✓).
+- **Мини-окно при свёрнутом/нефронтовом приложении (VV-2/VV-3, свежий профиль)**: запись запущена из композера,
+  приложение расфокусировано (`open -a Finder`, front = Finder) — оконный сервер видит `ROX Voice`
+  `420×72 @841,1233`, `onscreen: true`, pid 80909 (наш инстанс), по-оконный скриншот снят; в рендерере оверлея
+  16-полосный метр: 10 сэмплов, **27 различных высот**, 43–77 %; стоп **собственной кнопкой окна**
+  (`window.voiceOverlay.stop(recordingId)` → `{ok:true}`) вернул транскрипт в драфт композера. Это и есть
+  перенесённый фикс: без него `owner.isFocused()` + `onBlur → hide` не показали бы окно вовсе.
+- **Хоткей (VV-3) — живьём не воспроизводится в этом окружении.** Upstream перевёл вход глобальной диктовки на
+  OS-уровень (`globalShortcut` регистрируется в main, `before-input-event` в `main/voice/command-input.ts`),
+  а синтетическое событие клавиши из CDP такой шорткат не поднимает (инъекция настоящих keystrokes требует
+  Accessibility/TCC, которого у QA-сессии нет). Поэтому глобальный вход подтверждён юнит-тестами upstream
+  (`registration.isolated.ts` 2 pass, `command-input.test.ts` 10 pass) и живой проверкой самой цепочки
+  «оверлей → main → владелец → транскрипт» (стоп из оверлея выше). На волне лида (до конвергенции) тот же путь
+  проверялся живьём: синтетический Cmd+Shift+D из рендерера создавал сессию с драфтом (сессия `261008-silver-harbor`).
+- **Встречи (A9/VV-5)**: `[data-testid="meetings-start"]` («Начать запись») разложена и кликабельна на свежем
+  профиле (`630,79 119×28`, `hitIsSelf: true`, `inViewport: true`) и на 9334 (`535,109 113×23`, `hitIsSelf: true`);
+  запись встречи (панель записи, чип топ-бара `meeting-rec-indicator`, таймер `00:00→00:13`, живой метр
+  `levelMax 88`, `error: null`) и остановка из вкладки «Подробности» узкой `ModeScreen` проверены на 9334 —
+  интерфейс встреч волной не менялся. Реальный `whisper-cli` расшифровал 14 с (2 сегмента: «Привет, это проверка
+  голосового ввода в РАКС. Запись работает.»), а **зеркало в заметки на смерженном бандле** отработало на 9334:
+  в «Мои записи/Мои транскрипты» лежат «Транскрипт встречи: …» с телами (2.3 КБ и 9 КБ) и якорями
+  `<!-- rox-transcript:… -->`; пустые 145–150 Б файлы — артефакты до патча писателя. На свежем профиле запись
+  встречи повторно не снималась: холодный переход в «Встречи» не уложился в таймаут драйвера трижды подряд
+  (известная готча «тяжёлых разделов»), а home-дашборд в новом рабочем пространстве не монтируется — путь
+  «быстрое действие Главной» снят на 9334 (встреча `m-20261008-212658-g2cx`).
 
-### Граф слайсов (владельцы — файлы не пересекаются; лид — интеграция и единый прогон гейта)
+**Готчи живого прогона (для будущих QA-сессий).**
+- **`--use-mock-keychain` обязателен для патченного QA-бандла.** Фикстурный шов правит `main.cjs` → печать
+  ресурсов ломается (`codesign -v`: «a sealed resource is missing or invalid»), и каждый boot вешает запрос
+  Keychain на `Rox Safe Storage` (Chromium OSCrypt, `keychain_password_mac.mm`; в ACL чужие cdhash). Диалог
+  блокирует главный поток в `SecItemCopyMatching` (видно в `sample`), CDP принимает соединение и не отвечает;
+  `pkill -9 -f SecurityAgent.bundle` снимает ожидание, но упирается в экран `ROX_OS_SECURE_STORAGE_UNAVAILABLE`
+  (`pocket-account-store.ts:61`) с «Повторить» по кругу. Лечится флагом `--use-mock-keychain` в
+  `live-scripts/rox-qa-launch.sh` (продуктовый код не менялся).
+- **Свежий QA-профиль должен создать сам инстанс.** Если положить в пустой `ROX_CONFIG_DIR` только `voice.json`,
+  приложение остаётся в полу-инициализированном состоянии: писатель заметок работает (диктовка легла заметкой
+  `проверка диктовки.md` ✓), но сессии не персистятся (`[PersistenceQueue] Failed to write session … ENOENT:
+  rename … session.jsonl.tmp`) и **диктовка отдаёт пустой транскрипт без тоста** (и хоткей тогда не открывает
+  сессию с драфтом). Порядок для QA: дать приложению поднять профиль с нуля (свой `config.json` + рабочие
+  каталоги), затем остановить его, подменить `voice.json` (`sttEngine: local-whisper`, `delivery: draft`,
+  `trailingSpace: true`, `asrModelId: whisper-large-v3-turbo`, `recognitionLanguage: ru`), снова запустить.
+- **Профиль `cfg-merged` может «заклинить» запись заметок (окружение, не продукт).** С ~22:15 в профиле
+  `rox-verify/cfg-merged` **любая** запись заметок перестала отвечать: `listNotes`/`readNote` (чтения ✓)
+  отвечают, а `createNote`/`saveNote` висят — и 8 с, и 30 с (проверено и прямым вызовом
+  `window.electronAPI.createNote`, и из UI: стартовое зеркалирование встреч легло файлами 22:14–22:15, дальше —
+  тишина). При этом в нативных сторах чисто (`pending=0`, `aborted_operations=0`, `conflicts=0`), claim-локов
+  на диске нет, а мягкий перезапуск (`kill -TERM`, дать процессу выйти) **не помогает**. На **свежем профиле**
+  (`ROX_QA_ROOT=/tmp/rox-qa-fresh`, свой cfg/user-data) запись работает сразу ✓ — поэтому живая приёмка заметок
+  выполнена на нём. Практика для QA: если запись заметок в профиле висит, не тратить время на диагностику
+  стора, а поднимать свежий профиль (`ROX_QA_ROOT` в `live-scripts/rox-qa-launch.sh`).
+- **Инстанс живёт только в своей сессии**: приложение, поднятое внутри длинного bash-джоба, умирает вместе с
+  ним по дедлайну; запускать через `subprocess.Popen(..., start_new_session=True)` и `</dev/null`.
+- **`document.hasFocus()` в этом приложении недостоверен** (рапортует `true` даже когда спереди Finder):
+  критерий «Rox не на переднем плане» снимается оконным сервером (`lsappinfo front` / `winlist.m`).
+- **`window.voiceOverlay.stop()` требует `recordingId`** (сверяется с `latest.state.recordingId` при
+  `phase === 'recording'`); UI передаёт его из `onState` — вызов без аргумента молча ничего не делает.
+- **`meeting-rec-stop` с нулевым rect — не дефект вёрстки**: нулевой rect даёт узкая (`349 px`)
+  `ModeScreen`-панель (`components/mode-screen/ModeScreen.tsx:77`); переключение на вкладку «Подробности»
+  раскладывает кнопку (553,861 100×23, `hitIsSelf: true`), координатный клик останавливает запись.
+- **Оракулы без vision-канала** (`read <png>?q=` в этой сессии недоступен): оконный сервер
+  `live-scripts/winlist.m`, пиксельные статистики `live-scripts/png-stats.py`, OCR `swift /tmp/omp-ocr.swift`,
+  полный `screencapture -x` (4112×2658 = 2× от 2056×1329 pt). Уровень волны читается из DOM только там, где он
+  DOM (`span[style*="height"]` у оверлея); композерная волна — `canvas` (`VoiceLevelWave`), её живой оракул =
+  доля «нарисованных» пикселей канваса по сэмплам.
 
-| ID | Deliverable | Файлы (владелец) | Верификация |
+**Гейты после конвергенции** (все — на финальном дереве; файлы `*.isolated.ts` запускаются по одному, как в их
+врапперах — в общем прогоне их `mock.module('electron')` конфликтует): `bun run typecheck` (shared) EXIT=0 ·
+`sort-locales --check` EXIT=0 · `check-i18n-parity` → `i18n parity OK (11 locales, 9554 keys each)` ·
+`overlay-owner.test.ts` 1 pass (враппер, пинит `2 pass` и `0 fail` изолированного файла) ·
+`overlay-owner.isolated.ts` 2 pass / 0 fail / 27 expect · `command-input.test.ts` 10 pass · `registration.isolated.ts`
+2 pass · `renderer/lib/__tests__/transcripts-notebook.test.ts` 3 pass / 0 fail · `meeting-task-bridge.test.ts`
+7 pass · `ipc-channels.test.ts` 8 pass · `channel-map-parity.test.ts` 4 pass · `deepgram-transcription.test.ts`
+22 pass / 0 fail / 61 expect.
+
+## Волна 4b — перепроверка, разбор красного CI и программа его починки (2026-10-09)
+
+### Адверсариальная проверка «Волны 4» (независимый read-only агент)
+Итог: **8 пунктов CONFIRMED сырыми строками рецептов, 2 — без рецепта, 2 — склейка двух разных прогонов.**
+- CONFIRMED: кликабельность «Диктовки»; canvas-волна 24 сэмпла / 7 значений 0.15…0.3429; драфт `"проверка диктовки "` len 18; пустые тосты; заметка 152 B + якорь `96507d5c`; `ROX Voice` 420×72 `onscreen:true` (оконный сервер); A9 `630,79 119×28 hitIsSelf:true`; запись встречи (таймер 00:00→00:13, `levelMax 88`, whisper 2 сегмента); зеркало в заметки (2.3 КБ и 8.9 КБ, якоря).
+- Без рецепта были: (а) «повтор не создал дубль» и (б) «10 сэмплов / 27 высот / 43–77 %» — донор чисел найден (`/tmp/rox-overlay-port.ts`), но его stdout нигде не сохранён.
+- Склейка: в двух пунктах «pid 80909» (профиль fresh2) стоял рядом с «front = Finder» и `stop {ok:true}`, которые относятся к прогону 9334 (в прогоне 80909 спереди был OrbStack, стоп вернул `{ok:false, no overlay target}`).
+
+**Перепроверка на финальном бандле закрыла оба пробела** (свежий профиль `/tmp/rox-qa-fresh3`, порт 9336, квитанции `live/fresh3-*` и `live/overlay*.json` этого прогона):
+- **дедуп**: два идентичных прогона композера → ровно один `проверка диктовки.md` (152 B, sha256 в `live/fresh3-receipts.txt`);
+- **оверлей**: цель `ROX Voice` грузится из `…/app/dist/renderer/voice-overlay.html` (тот самый упакованный вход, который теперь пинит тест), 16 полос, 48 сэмплов, **42 различных ширины 41…78 %**;
+- **мини-окно при front = Finder** (`live/overlay-front-recording.txt`, `live/overlay-windows-recording.json`: owner=Rox, `ROX Voice` 420×72, `onscreen:true`) и **собственная кнопка стопа** → `{ok:true}` (`live/overlay-stop.json`), после — окна нет; хоткей-путь (оверлей → main → владелец) снова довёл транскрипт до композера (`live/overlay-hotkey-send.json` → `states[0].text = "проверка диктовки "`);
+- **встречи**: `live/fresh3-meetings-record.log` (13 с, координатный стоп) и зеркало-заметка «Транскрипт встречи…» с телом whisper и якорем `397fc1fa`;
+- **гейты на финальном дереве**: `sort-locales` EXIT=0 · `i18n parity OK (11 locales, 9553 keys each)` · `typecheck` 0 · `overlay-owner` 1/2 pass · `command-input` 10 · `registration` 2 · `transcripts-notebook` 3 · `meeting-task-bridge` 7 · `ipc-channels` 8 · `channel-map-parity` 4 · `deepgram` 22 — везде 0 fail. (Число ключей 9554 в строке выше — состояние на момент той проверки; после последующих мержей — 9553.)
+
+### Регрессия моей волны в CI — найдена, исправлена, подтверждена
+Факты: у workflow `product-tour-native` **нет ни одного зелёного прогона** (последние 200 запусков: 100 cancelled + 80 failure). Мой первый мерж `3f1a978e9` добавил четыре *новых* красных кейса `T-VOICE-OWNER` в job `browser-and-domain` — единственная регрессия волны.
+- Причина: тест-харнесс подменяет только OS-поверхность Electron фейковым окном, у которого был `loadURL`, но не `loadFile`; `overlay-owner.ts` грузит упакованный вход через `loadFile` → `TypeError: created.loadFile is not a function` в `publish()`. (Upstream использовал `loadURL('file://…/../renderer/voice-overlay.html')` — неверный путь в упаковке; это и был баг «оверлей не виден».)
+- Фикс (`83a8c393d`, в main): фейк получил оба метода и **пинит упакованный путь** (`renderer/voice-overlay.html`, без `..`). Локально 11 pass / 0 fail; **в CI на `83a8c393d` красных `T-VOICE-OWNER` больше нет** (job: 404 pass; среди `(fail)` — только унаследованные).
+
+### Унаследованные красные: атрибуция и программа починки
+На `83a8c393d` красными остаются (все были и на `b26b48b4b`/`dc7e8436f`): `T-MEETINGS-LIST/RESULT` (30 с таймаут), `T-PROJECT-OPEN…`, «A failed owned project detail…» — **реальные дефекты продукта**; `fresh-native-smoke (windows)` — 2 кейса, **жёсткие дедлайны проб 2 000/5 000 мс**; `fresh-native-smoke (macos)` — смоук убит по 180-с родительскому дедлайну. 15 таймаутов `persistence/progress.test.ts` в том прогоне оказались **флаком** (прошли сами).
+
+| Группа | Файлы | Правка | Проверка |
 |---|---|---|---|
-| VV-1 | Метр + владение + волна в композере | `lib/voice/level-meter.ts`, `voice/dictation-ownership.ts`, `input/VoiceDictationControl.tsx`, `input/FreeFormInputContextBadge.tsx`, `lib/meetings/recorder.ts` (ComposerWave) | unit (метр: математика/сглаживание/стоп; владение) + `voice-composer.test.ts`; живой прогон |
-| VV-2 | Мини-окно: снять focus-гейты, канал уровня | `main/voice/overlay-owner.ts`, `preload/bootstrap.ts`, `shared/types.ts`, оба `main/voice/__tests__` (OverlayLevelMain) | `cd apps/electron && bun test src/main/voice/__tests__/`; живой прогон без фокуса |
-| VV-3 | Хоткей без композера → драфт новой сессии | `voice/global-dictation.tsx`, монтаж в `components/app-shell/AppShell.tsx` (GlobalDictation) | source-тест wiring + живой хоткей |
-| VV-4 | Заметки «Мои транскрипты» | `lib/transcripts/notes.ts` (TranscriptNotes) | unit: билдеры + markdown/native ветки с фейковым api |
-| VV-5 | Встречи → заметки + живая проверка A9 | `lib/meetings/…` (MeetingNotes) | unit дедупа `meetingId:generation` + живой прогон A9 |
-| VV-6 | Первый запуск облачного диктанта: старт после закрытия консентного модала | `input/VoiceDictationControl.tsx` (`waitForComposerRelease`) | `voice-dictation.browser.test.ts` (кейс consent: red на HEAD → green) |
-| VV-G | Локали, гейт, сборка, живая приёмка | лид | `sort-locales --check`, i18n parity, 10-файловый гейт + затронутые, `typecheck`, живой прогон 9334 |
+| A. macOS-смоук | `tests/e2e/product-tour/native-harness.ts`, `native.config.ts` (+ `scripts/product-tour/run-native.ts`) | `rm` не был импортирован (teardown падал `ReferenceError`); CLI перестал убиваться по дедлайну: `timeout: 150_000`, `globalTimeout: 170_000`, родительский дедлайн 300_000, `actionTimeout: 15_000`, ожидание первой отрисовки 45_000; teardown ограничен 20 с с SIGKILL-фолбэком, удаление профиля — с ретраями и без падения теста; профиль перенесён в `test-results/product-tour/native/profiles/<pid>`, лог приложения (`home/Library/Logs/Electron/main.log`) цепляется к отчёту | было 180 с + SIGKILL и ноль информации; стало: CLI сам завершается, `native.json` пишется, и он назвал точную причину — `#root` числится «пустым», пока App держит состояние `loading` (`SplashScreen` — только SVG без текста), а выход из `loading` требует WS-проб транспорта (`waitForTransportConnected`, бюджет 12 с + `probeWithRetry`); 30-с таймаут `skills:get` — тот же симптом недоступного транспорта, а не причина: навыки грузятся пост-монтируемым эффектом и шелл не блокируют. Ожидание первой отрисовки поднято до 45 с |
+| B. Таймауты persistence | `…/persistence/browser-test-harness.ts` | `--disable-dev-shm-usage` в аргументы запуска Chromium (стандартный фикс 5-с «клина» в контейнерах) | `progress.test.ts` локально **17 pass / 0 fail** |
+| C. Дефекты продуктового tour | `pages/ProjectInfoPage.tsx`, `…/runtime/ProductTourProvider.tsx` | эффект `projects.available` не возвращал disposer и оставлял вечный pending; `ready` поднят выше `pending` в слиянии contributions | оба целевых кейса `project-collection.browser.test.ts` — **1 pass / 0 fail** (в CI были красными) |
+| D. Фикстура встреч | `…/meetings-automations/native-ui.browser.test.ts` | `finishCatalog` резолвил один запрос из нескольких ожидающих — теперь дренит все (как `finishTranscript`) | `T-MEETINGS-LIST/RESULT` (A → B → A) и ранее флаковавший `T-MEETINGS-RESULT: changing the panel…` — оба **1 pass / 0 fail** |
+| E. Windows-пробы | `authority/os-private-path.ts`, `native-os-owner.ts` (+2 согласующих теста) | сняты две строки перекодировки консоли — единственный код между маркерами `process-start`→`input-ready`, где вставал ребёнок; по итогам CI дедлайны проб подняты до 45 000/30 000 с синхронным подъёмом бюджетов тестов (реальные пробы; две mock-only проверки остались на 5 000) | локально `os-private-path.test.ts` **12/12**, `rox-readiness-ui-001.windows-owner.test.ts` **19/19** (на darwin win32-кейс скипается). В CI снятие перекодировок продвинуло стадии ребёнка с `process-start` до `input-complete` — прежний стоп убран; остаток (ACL/identity-работа дольше дедлайна) закрыт новыми бюджетами, вердикт лейна — в следующем прогоне |
 
-### Верификация (заполняется по мере прогонов)
+**Остаётся открытым (честно):** macOS-лейн после этих правок больше не «висит»: CLI сам завершается, пишет `native.json` и профиль с логом приложения. Его оставшийся блокер — поведение холодного старта, а не навыки (проверено отдельным разбором: `main.tsx:157` монтирует корень безусловно, `bootstrap.ts:36` ждёт только локали, а `skills:get` вызывается пост-монтируемым эффектом с `catch` — `AppShell.tsx:1575-1596`): пока WS-транспорт не поднялся, `App.tsx:2554-2556` держит состояние `loading` и рисует `SplashScreen` без текста, а тест «fresh product setup appears» считает `#root` пустым по `textContent` (SplashScreen — только SVG). Правильное решение — по вкусу владельца: дать сплэшу видимый текст/статус или раньше переводить `appState` в `transport-unavailable` (`App.tsx:1061-1073`), не выжидая полный бюджет WS-проб (`waitForTransportConnected` 12 с + `probeWithRetry`). Ожидание первой отрисовки в смоуке поднято до 45 с; итог — по прогону `2654da336`. Отдельно, для владельца: ограниченный quit-путь `apps/electron/src/main/index.ts:2052-2056` (`Promise.race` + `app.exit(0)` через 5 с), чтобы зависшая подсистема не оставляла зомби-процесс. Также восстановлены импорты сервера приёмки (`scripts/product-tour/serve-application.ts`), потерянные чужим мержем `20900316a`/`76e30c1b9` — без них e2e-шаг `browser-and-domain` не стартовал вовсе.
 
-- **Локальный ASR для живой приёмки**: `whisper-cli` (`/opt/homebrew/bin`), модель `/Users/t/rox/models/ggml-large-v3-turbo-q5_0.bin`, `ffmpeg`/`ffprobe` — `detectEngine()` при `sttEngine: 'local'` даёт `ready: true`, поэтому полный цикл диктовки проверяется живьём без ключа Deepgram. Готча: `voice.json` читается из `ROX_CONFIG_DIR` — писать `sttEngine: 'local'` в `cfg-merged/voice.json`, а не в localStorage (в overlay-окне localStorage не шарится).
-- **Ключа Deepgram на машине нет** (`service-secrets.env` отсутствует во всех проверенных конфиг-каталогах, `DEEPGRAM_MODEL`/`ROX_SERVICE_SECRETS_FILE` unset) — живая облачная транскрибация в QA не воспроизводится; проверяется сборка запроса/мок, а пользователю сообщается требуемый ключ.
-- **Чужие живые процессы Rox не трогать**: pid 11875 (:9226, `.rox-merge-dist-ud2`), pid 12906 (:9227, `.rox-merge-dist-ud3`), pid 16853 (`/Applications/Rox.app`, :9333). QA-инстанс лида — порт 9334, профиль `rox-verify`, убивать только его (`pkill -9 -f 'userdata[-]merged'`).
-- **Playwright-Chromium на этой машине — заглушка** (`~/Library/Caches/ms-playwright/` = 436 КБ, `Chromium.app/Contents/Frameworks` отсутствует → `dlopen … Chromium Framework` + SIGABRT даже после `rm -rf __dirlock && bunx playwright install chromium`, 472 с). Browser-сюиты прогоняются подменой на системный Chrome: `LEARNING_CHROMIUM_PATH=…/Google Chrome CHROMIUM_EXECUTABLE=…/Google Chrome` (`renderer/test-utils/chromium-executable.ts`).
-- **`voice-dictation.browser.test.ts` (Chrome-подмена)**: до фиксов волны 22 pass / 10 fail (каскад после трёх «microphone denied»-кейсов: провал START → 30-секундный таймаут → Bun добивал фикстуру, отсюда «element(s) not found» во всех последующих). После фикса `VoiceDictationControl.startRecording` (забор `stillCurrent = isCurrentCapture(captureId)` **до** `releaseDictation(owner)`; иначе `releaseDictation` обнулял владельца → `isCurrentCapture` = false → контрол залипал в `starting`, и `currentOwner()` блокировал следующий START у соседних кейсов) → 31 pass / 1 fail, причём единственный оставшийся (consent) падает и на HEAD без правок волны (stash трёх файлов: `0 pass / 1 fail`, тот же таймаут `Stop dictation`).
-- **VV-6 — red→green**: кейс «asks for cloud upload consent at first use and starts only after the saved grant» падал потому, что `enableCloudTranscription` звал `startRecording(next)` синхронно после `setConsentOpen(false)`, а Radix держит всё дерево приложения `aria-hidden` до конца exit-анимации → `canStart()` отбивал старт по `host.closest('[hidden], [inert], [aria-hidden="true"]')`. Замер релиза в браузере: `0/52/103 мс — blocked`, `155 мс — free` (`[role="dialog"]` исчезает одновременно). Фикс: `waitForComposerRelease()` (ожидание свободы хоста, граница 600 мс, шаг 25 мс) + повторная проверка `captureId` перед стартом → файл целиком **32 pass / 0 fail / 148 expect** (40,7 с).
-- **Сюита голоса без браузера** (`voice-composer` + `renderer/voice` + `lib/voice` + `lib/transcripts` + `lib/meetings` + `main/voice`): 72 pass / 0 fail / 260 expect; `bun run typecheck` — EXIT=0; `sort-locales --check` — EXIT=0; i18n parity — «OK (11 locales, 9331 keys each)»; 10-файловый гейт — 75 pass / 1 skip / 0 fail.
-- **`native-continuity.browser.test.ts` (T-VOICE-OWNER) — регрессия от VV-2, найденная первым прогоном**: подмена модуля `electron` в этом файле давала только `ipcMain.handle/removeHandler`, а `createNativeVoiceOverlayHost` теперь зовёт `ipcMain.on(VOICE_OVERLAY_LEVEL, …)` → `TypeError: ipcMain.on is not a function` на конструировании хоста, все 4 кейса `stop|cancel × before|after START` падали (7 pass / 4 fail), причём падение маскировало сами проверки. Фикс — достроить фейк до реального API Electron (`on` + `removeListener` поверх Map слушателей) → **4 pass / 0 fail** (39,4 с), файл целиком **11 pass / 0 fail** (82,7 с).
+**Итерация 3 (прогон `ef51e1cb9`, состояние на момент отчёта).**
+- **Unit-часть `browser-and-domain` — 407 pass / 0 fail** (было 386/22): фикс голосовой регрессии и группы B/C/D подтверждены зелёными в CI, включая все A11-кейсы (`T-MEETINGS-LIST/RESULT` A→B→A, `T-MEETINGS-RESULT: changing the panel…`, `A failed owned project detail…`, `T-PROJECT-OPEN…`).
+- **e2e-шаг впервые дошёл до своих тестов** (сервер стартует) и обнажил их собственный, ранее скрытый красный: `APP-05` (`tests/e2e/product-tour/product.application.spec.ts:73`, `nativeScope`/`getWorkspace…`) — отдельный продуктовый разбор.
+- **Windows-пробы**: продвижение стадий подтверждено (`process-start`→`input-ready`→`input-complete` после снятия перекодировок), но ACL/identity-работа не уложилась и в 45 с — тест дошёл до 62 с и упал на своём 60-с бюджетe. Три раунда (2/5 → 15 → 45/30 с) проблему не закрыли; похоже на холодный PowerShell+Defender на раннере. Решение за владельцем: либо ещё бюджет, либо измерять/оптимизировать пробу на windows-хосте (локально не воспроизводится).
+- **macOS**: с бюджетом 75 с тест называет точку — `locator('#onboarding-username')` не появляется за 75 с (`element(s) not found`). **Симптом воспроизведён локально** тем же смоуком (116 с, тот же локатор) на dev-сборке `apps/electron/dist/main.cjs`, тогда как живой QA-прогон в **упакованном** бандле онбординг видел и заполнял (`rox-onboard2.ts`, `onboarding-username`). То есть дело не в раннере, а в различии dev-сборки/харнесс-окружения и упакованного приложения — это и есть следующая точка разбора.
+- **Диагностика разблокирована**: харнесс сохраняет профиль при `ROX_PRODUCT_TOUR_NATIVE_KEEP_PROFILE=1` (включено в workflow), поэтому артефакт прогона несёт `native/profiles/<pid>/home/Library/Logs/Electron/main.log` — проверено локально: профиль остался, лог на месте (в нём — здоровый старт и `[bundled-skills] background sync finished … 34749 ms`).
 
-### Закрытие оговорок волны (2026-10-09, ветка `feat/e01-voice-wave`, follow-up)
+### Наблюдения окружения QA (не продукт волны)
+- `[PersistenceQueue] Failed to write session … ENOENT … rename … session.jsonl.tmp` пачками в свежем профиле: каталог `workspaces/<ws>/sessions` есть, отсутствуют каталоги конкретных сессий (включая авто-сессии агентов) — кандидат на отдельный разбор ядра сессий.
+- `[Chat] Failed to load skills: Request timeout: skills:get (30000ms)`; `[FreeFormInput] Failed to resume pending plan execution: Error: Connection lost` и `[WsRpc] Sequence gap` при реконнектах; сборка `mcp-server-qdrant` падает (`pyo3` vs Python 3.14) при провижининге MCP.
+- QA-профиль видит сессии локального сервера приложения (в списке — реальные сессии): прогоны не приватны, наружу ничего не отправляется.
+- Готча навигации: `meetings-record` жмёт `nav:home`, но с `route=meetings` дашборд не поднимается — нужен DOM-клик по `[data-sidebar-link-id="nav:home"]`.
+- `tests/e2e/product-tour/native-startup.test.ts` импортирует несуществующие `openNativeStartup`/`NativeStartupDiagnostics` — мёртвый файл, не запускается ни одним workflow.
+
+### Закрытие оговорок волны (2026-10-09, ветка `feat/e01-voice-wave` @ `c61a3536a`, follow-up)
 
 Четыре оговорки воркера закрыты; носитель до правок — `9694eb226`.
 
@@ -430,7 +562,7 @@ bun test \
 3. **VV-6 и порядок релиза — поведенческие тесты без браузера.** `renderer/voice/__tests__/dictation-hosts.isolated.tsx` (7 кейсов, happy-dom, стабы только на границе ОС) + обёртка `dictation-hosts.test.ts` (изолированный процесс: DOM должен существовать до загрузки Radix/React DOM независимо от соседних сюит). Кейсы: оба хоста → ровно один захват и он в композер (драфт обновлён, навигации нет); без композера → ровно один глобальный захват + драфт новой сессии (`newPanel: true`, `targetLaneId: 'main'`); скрытый композер (`aria-hidden`) → глобальный оверлей; одна диктовка → ровно одна заметка (`createNote`/`saveNote` ×1, папка «Мои транскрипты»); ptt-up — финальный транскрипт вставляется до `releaseDictation`; consent-старт ждёт снятия modal-`aria-hidden` (`waitForComposerRelease`).
 4. **Оверлей закреплён тестом.** `main/voice/__tests__/overlay-owner.isolated.ts` +1 кейс: при неfocused-владельце мини-окно показывается для всех не-`hidden` фаз (`permission/recording/saving/transcribing/enhancing/ready`) и скрывается только на `hidden`; обёртка ожидает `5 pass`. Граница: `publish()` по-прежнему не создаёт поверхность для **нового** неfocused-владельца (сознательно сохранённый guard «чужой фоновый захват не подменяет поверхность»); тест закрепляет поведение уже владеющей поверхности.
 
-**Проверки (носитель — HEAD ветки после коммитов).**
+**Проверки (носитель — `c61a3536a`, до merge с main).**
 
 - Профильная сюита (`src/renderer/voice` + `lib/voice` + `lib/transcripts` + `main/voice` + `voice-composer.test.ts`) → **60 pass / 0 fail** (9 файлов; +7 кейсов в isolated-обёртке).
 - Смежные (voice-clipboard, preload/voice-overlay, settings/voice-*, rox2-040, `lib/meetings`, `pages/meetings`) → **100 pass / 0 fail** (24 файла).
@@ -439,3 +571,25 @@ bun test \
 - `cd apps/electron && bunx tsc --noEmit` → EXIT=0.
 - Мутационные контроли: без `waitForComposerRelease` consent-кейс краснеет; без проверок видимости оба кейса про скрытый композер краснеют; без `shouldYieldDictation` арбитражный кейс краснеет.
 
+---
+
+## Волна 4c — merge main в PR #1624: разбор дублей, порт фиксов, приёмка (2026-10-09)
+
+**Что мерджится.** Ветка `feat/e01-voice-wave` (`c61a3536a`) = волна `9694eb226` (VV-1…VV-6, сессия `01a116e8`) + три follow-up-коммита (`737cf4615` — один арбитр хоткея, `890df235e` — единственный писатель заметок, `c61a3536a` — поведенческие тесты и оверлей-фаза). `origin/main` = `8c5abc7a3`.
+
+**Ключевой факт: в main волны нет.** Merge `e5e2fa5cb` («конвергенция волны голоса и встреч (VV-1…VV-6) с upstream `4739a0e54`») лежит в first-parent истории main, но его результат **удалил** файлы волны: `git diff 33d9b5e8e e5e2fa5cb` по голосовым путям = −1903/+578, `hotkey-dictation-host.tsx` восстановлен. Проверка tip'а (`8c5abc7a3`): 0 совпадений по `GlobalVoiceDictation`, `recordTranscript`, `TRANSCRIPTS_FOLDER`, `createVoiceLevelMeter`, `waitForComposerRelease`, `publishVoiceLevel`, `claimDictation`; `App.tsx` монтирует legacy `HotkeyDictationHost`; `lib/transcripts/notes.ts`, `lib/voice/level-meter.ts`, `lib/meetings/transcript-notes.ts`, `voice/dictation-ownership.ts` отсутствуют. Сохранились только отдельные хунки параллельной волны на «старых» файлах: `main/voice/overlay-owner.ts` (фазовый показ, `child &&`, `loadFile`) и `VoiceDictationControl.tsx` (до-волновая ветка: локальный `activeDictationOwner`, `document.hidden`-гейты, `useMicrophoneLevel`, `saveTranscriptToNotebook`), плюс фиксы ноутбук-райтера и его тест.
+
+**Вердикт: ветка несёт уникальное; дублей по существу нет, merge — `--no-ff`.** Конфликты и решения:
+- `VoiceDictationControl.tsx` → **наша версия**: main-вариант до-волновой и ничего своего к нашей не добавляет (`describeMicError`, маркер `[data-voice-dictation-host]`, consent-ожидание у нас есть, причём в виде `waitForComposerRelease`).
+- `main/voice/overlay-owner.ts` → наша версия **+ оба main-хунка**: `if (child && nextOwner !== owner && !nextOwner.isFocused())` (первая поверхность может появиться при неfocused-владельце — сценарий «хоткей из фона»; подмена живого оверлея фоном по-прежнему запрещена) и `loadFile(join(__dirname, 'renderer', 'voice-overlay.html'))` — верный боевой путь при `"main": "dist/main.cjs"` и `outDir dist/renderer` (прежний `file://${__dirname}/../renderer/...` был неверен).
+- `main/voice/__tests__/overlay-owner.isolated.ts` → union: наши кейсы (уровень, фазовый показ) + обновлённые ожидания main (`FakeWindow.loadFile`, первая поверхность при неfocused-владельце) → 5 pass.
+- `lib/transcripts-notebook.ts` (modify/delete) → **наше удаление** (модуль недостижим после cutover), а его фиксы из main перенесены в единственного писателя `lib/transcripts/notes.ts`: `withClaimRetry` (потеря claim у стора заметок), очередь `enqueueTranscriptWrite` (дедлайн 20 с), `discardEmptyStub` (удаление пустого стаба при сбое записи). Новые тесты: retry с RPC-формой ошибки (`{code:'rateLimited', message:'Document claim requires recovery'}`), отсутствие retry на постоянной ошибке, сериализация двух конкурентных записей, удаление стаба.
+- Тест main `lib/__tests__/transcripts-notebook.test.ts` удалён вместе с модулем — его сценарии покрыты перенесёнными тестами.
+- `docs/plans/…` → версия main + раздел «Закрытие оговорок волны» из ветки + эта секция.
+
+**Приёмка merge-коммита** (вершина `feat/e01-voice-wave` после merge):
+- `bun test src/renderer/voice src/main/voice src/renderer/lib/transcripts` → **56 pass / 0 fail** (7 файлов).
+- Расширенный профиль (+`lib/voice`, `voice-composer.test.ts`) → **64 pass / 0 fail** (9 файлов).
+- Смежные (voice-clipboard, preload/voice-overlay, settings/voice-*, rox2-040, `lib/meetings`, `pages/meetings`): 100 pass / 0 fail (24 файла); единственный красный, `meeting-extraction.browser.test.ts` (30-с hook-таймаут), — среда: с Chrome-подменой (`LEARNING_CHROMIUM_PATH`/`CHROMIUM_EXECUTABLE`) файл зелёный **7 pass / 0 fail** (та же готча, что в «Волне 4b»).
+- `sort-locales --check` / `check-i18n-parity` → EXIT=0 (11 локалей × 9551).
+- `cd apps/electron && bunx tsc --noEmit` → EXIT=0.
